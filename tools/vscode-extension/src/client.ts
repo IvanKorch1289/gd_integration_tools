@@ -16,9 +16,12 @@ import {
     ServerOptions,
     TransportKind,
     TextDocumentSyncKind,
-    ErrorAction,
-    CloseAction,
-} from 'vscode-languageclient/node';
+    TextDocumentChangeEvent,
+    DidChangeTextDocumentParams,
+    DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams,
+    DidCloseTextDocumentParams,
+} from 'vscode-languageclient';
 import * as vscode from 'vscode';
 
 /**
@@ -69,15 +72,58 @@ export function createGdLspClient(config: GdLspClientConfig): LanguageClient {
             { language: 'python', scheme: 'file' },
             { language: 'yaml', scheme: 'file' },
         ],
+        textDocumentSyncOptions: {
+            save: true,
+            openClose: true,
+            change: TextDocumentSyncKind.Incremental,
+        },
         diagnosticCollectionName: 'gd-integration-tools',
+        lifecycle: {
+            initialize: (params, progress) => {
+                progress.begin('Initializing GD Integration Tools LSP...');
+                return {
+                    capabilities: {
+                        textDocumentSync: TextDocumentSyncKind.Incremental,
+                        completionProvider: { resolveProvider: true, triggerCharacters: ['.', ':', '@'] },
+                        hoverProvider: true,
+                        codeLensProvider: { resolveProvider: true },
+                        definitionProvider: true,
+                        referencesProvider: true,
+                        documentFormattingProvider: true,
+                        renameProvider: true,
+                    },
+                };
+            },
+            initialized: () => {
+                progress.end();
+            },
+        },
         errorHandler: {
             error: (error, message, count) => {
                 console.error(`LSP Error (${count}):`, error, message);
-                return { action: ErrorAction.Continue };
+                return { action: 'continue' as const };
             },
             closed: () => {
                 console.warn('LSP connection closed, attempting restart');
-                return { action: CloseAction.Restart, message: 'Connection closed' };
+                return { action: 'restart' as const, message: 'Connection closed' };
+            },
+        },
+        middleware: {
+            didChange: (event, next) => {
+                // Custom middleware for change events
+                return next(event);
+            },
+            didOpen: (event, next) => {
+                // Custom middleware for open events
+                return next(event);
+            },
+            didSave: (event, next) => {
+                // Custom middleware for save events
+                return next(event);
+            },
+            didClose: (event, next) => {
+                // Custom middleware for close events
+                return next(event);
             },
         },
     };
@@ -124,7 +170,7 @@ export function createGdLspClient(config: GdLspClientConfig): LanguageClient {
  */
 export function registerGdHandlers(client: LanguageClient): void {
     // Handle GD run step requests
-    client.onRequest<GdRunStepResult, void>('gd/runStep', async (params) => {
+    client.onRequest<GdRunStepResult>('gd/runStep', async (params: GdRunStepParams) => {
         try {
             // This would typically call the GD backend
             return { success: true, output: 'Step executed successfully' };
@@ -134,7 +180,7 @@ export function registerGdHandlers(client: LanguageClient): void {
     });
 
     // Handle GD documentation requests
-    client.onRequest<GdDocumentationResult, void>('gd/documentation', async (params) => {
+    client.onRequest<GdDocumentationResult>('gd/documentation', async (params: GdDocumentationParams) => {
         try {
             // This would typically fetch documentation from the GD backend
             return {

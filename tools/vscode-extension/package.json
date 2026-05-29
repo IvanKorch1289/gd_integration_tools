@@ -1,7 +1,7 @@
 {
   "name": "gd-integration-tools",
   "displayName": "GD Integration Tools",
-  "description": "K5 S19 W2 + S33 W5: VSCode extension for GD Integration Tools — syntax highlighting, wizard commands, DSL-aware editing for .dsl.yaml and route.toml",
+  "description": "K5 S19 W2: VSCode extension for GD Integration Tools - syntax highlighting, hover docs, Run step CodeLens, and LSP client",
   "version": "0.1.0",
   "publisher": "k5-frontend-dx",
   "engines": {
@@ -15,11 +15,7 @@
   "activationEvents": [
     "onLanguage:python",
     "onLanguage:yaml",
-    "onLanguage:toml",
-    "onCommand:gd-integration-tools.runStep",
-    "workspaceContains:**/*.dsl.yaml",
-    "workspaceContains:**/route.toml",
-    "workspaceContains:**/plugin.toml"
+    "onCommand:gd-integration-tools.runStep"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -29,17 +25,6 @@
         "aliases": ["GD DSL", "gd-dsl"],
         "extensions": [".gd", ".gds"],
         "configuration": "./language-configuration.json"
-      },
-      {
-        "id": "dsl-yaml",
-        "aliases": ["DSL YAML"],
-        "filenames": ["*.dsl.yaml"],
-        "filenamePatterns": ["**/routes/**/*.yaml"]
-      },
-      {
-        "id": "dsl-toml",
-        "aliases": ["DSL TOML"],
-        "filenames": ["plugin.toml", "route.toml"]
       }
     ],
     "grammars": [
@@ -61,36 +46,6 @@
         "title": "GD: Show Documentation",
         "category": "GD Integration",
         "description": "Show documentation for current element"
-      },
-      {
-        "command": "gd-integration-tools.wizardRoute",
-        "title": "GD: Scaffold Route (make wizard-route)",
-        "category": "GD Integration Tools",
-        "description": "Run the interactive route wizard — creates routes/<name>/route.toml + *.dsl.yaml"
-      },
-      {
-        "command": "gd-integration-tools.wizardPlugin",
-        "title": "GD: Scaffold Plugin (make wizard-plugin)",
-        "category": "GD Integration Tools",
-        "description": "Run the interactive plugin wizard — creates extensions/<name>/"
-      },
-      {
-        "command": "gd-integration-tools.openRoutesFolder",
-        "title": "GD: Open Routes Folder",
-        "category": "GD Integration Tools",
-        "description": "Open the routes/ folder in VSCode explorer"
-      },
-      {
-        "command": "gd-integration-tools.openExtensionsFolder",
-        "title": "GD: Open Extensions Folder",
-        "category": "GD Integration Tools",
-        "description": "Open the extensions/ folder in VSCode explorer"
-      },
-      {
-        "command": "gd-integration-tools.validateRoute",
-        "title": "GD: Validate Route",
-        "category": "GD Integration Tools",
-        "description": "Run 'make routes' to validate the current route"
       }
     ],
     "codeLens": [
@@ -106,35 +61,6 @@
         "command": "gd-integration-tools.showDocs"
       }
     ],
-    "menus": {
-      "explorer/context": [
-        {
-          "when": "explorerResourceIsFolder == true && resourceLabel == 'routes'",
-          "command": "gd-integration-tools.wizardRoute",
-          "group": "gd@1"
-        },
-        {
-          "when": "explorerResourceIsFolder == true && resourceLabel == 'extensions'",
-          "command": "gd-integration-tools.wizardPlugin",
-          "group": "gd@1"
-        },
-        {
-          "when": "explorerResourceIsFolder == true",
-          "command": "gd-integration-tools.openRoutesFolder",
-          "group": "gd@10"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "gd-integration-tools.wizardRoute",
-          "when": "false"
-        },
-        {
-          "command": "gd-integration-tools.wizardPlugin",
-          "when": "false"
-        }
-      ]
-    },
     "configuration": {
       "type": "object",
       "title": "GD Integration Tools",
@@ -148,21 +74,6 @@
           "type": "string",
           "default": "localhost:8765",
           "description": "LSP server address"
-        },
-        "gdIntegrationTools.pythonCommand": {
-          "type": "string",
-          "default": "uv run python",
-          "description": "Python command to use for wizard CLIs (e.g. 'uv run python', 'python3')"
-        },
-        "gdIntegrationTools.routesDir": {
-          "type": "string",
-          "default": "routes",
-          "description": "Relative path to routes directory"
-        },
-        "gdIntegrationTools.extensionsDir": {
-          "type": "string",
-          "default": "extensions",
-          "description": "Relative path to extensions directory"
         }
       }
     }
@@ -171,7 +82,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-
+    "postinstall": "cd client && npm install",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
