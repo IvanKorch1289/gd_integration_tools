@@ -147,7 +147,7 @@ class SmartSessionManager:
             yield session
             if on_replica:
                 self._record_replica_success()
-        except Exception as _:
+        except Exception:
             if on_replica:
                 self._record_replica_failure()
             raise
@@ -177,10 +177,7 @@ class SmartSessionManager:
         if self._lag_exceeded:
             _logger.debug(
                 "smart_session.replica_lag_exceeded: fallback to primary",
-                extra={
-                    "lag_bytes": self._current_replay_lag_bytes,
-                    "budget_bytes": self._lag_budget_bytes,
-                },
+                extra={"lag_bytes": self._current_replay_lag_bytes, "budget_bytes": self._lag_budget_bytes},
             )
             return self._primary, False
         return self._replica, True
@@ -197,7 +194,7 @@ class SmartSessionManager:
 
             if not feature_flags.multi_replica_failover:
                 return False
-        except Exception as _:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             return False
         return (time.monotonic() - self._last_lag_check) >= self._lag_check_interval
 
@@ -225,9 +222,7 @@ class SmartSessionManager:
                 row = result.fetchone()
                 if row is not None:
                     self._current_replay_lag_bytes = int(row[0])
-                    self._lag_exceeded = (
-                        self._current_replay_lag_bytes > self._lag_budget_bytes
-                    )
+                    self._lag_exceeded = self._current_replay_lag_bytes > self._lag_budget_bytes
                     _logger.debug(
                         "smart_session.lag_checked",
                         extra={
