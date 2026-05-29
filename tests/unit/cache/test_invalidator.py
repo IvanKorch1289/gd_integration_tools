@@ -89,3 +89,90 @@ async def test_failing_backend_does_not_break_others() -> None:
     removed = await invalidator.invalidate("entity:orders")
 
     assert removed == 1  # только good отработал
+
+
+async def test_invalidate_pattern_removes_matching_keys() -> None:
+    """После invalidate_pattern удаляются ключи, matching glob pattern."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:list:page=1")
+    backend.bind_key_to_tag("entity:orders", "orders:list:page=2")
+    backend.bind_key_to_tag("entity:users", "users:list")
+
+    invalidator = CacheInvalidator([backend])
+    removed = await invalidator.invalidate_pattern("orders:*")
+
+    assert removed == 2
+    # Повторный invalidate — уже 0.
+    assert await invalidator.invalidate_pattern("orders:*") == 0
+    # Users key still exists
+    assert await invalidator.invalidate_pattern("users:*") == 1
+
+
+async def test_invalidate_pattern_wildcard() -> None:
+    """Паттерн с * удаляет все matching ключи."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:42")
+    backend.bind_key_to_tag("entity:orders", "orders:43")
+    backend.bind_key_to_tag("entity:orders", "orders:44")
+
+    invalidator = CacheInvalidator([backend])
+    removed = await invalidator.invalidate_pattern("orders:*")
+
+    assert removed == 3
+
+
+async def test_invalidate_tags_removes_tagged_keys() -> None:
+    """После invalidate_tags удаляются ключи с указанными тегами."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:list")
+    backend.bind_key_to_tag("entity:users", "users:list")
+    backend.bind_key_to_tag("table:orders", "table:orders:row")
+
+    invalidator = CacheInvalidator([backend])
+    removed = await invalidator.invalidate_tags("entity:orders", "table:orders")
+
+    assert removed == 2
+    # Users key still exists
+    assert await invalidator.invalidate_tags("entity:users") == 1
+
+
+async def test_invalidate_tags_is_alias_for_invalidate() -> None:
+    """invalidate_tags — alias для invalidate."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:list")
+
+    invalidator = CacheInvalidator([backend])
+    removed_tags = await invalidator.invalidate_tags("entity:orders")
+    removed_invalidate = await invalidator.invalidate("entity:orders")
+
+    assert removed_tags == 1
+    assert removed_invalidate == 0  # уже удалён
+
+
+async def test_invalidate_pattern_no_match() -> None:
+    """Паттерн без совпадений возвращает 0."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:list")
+
+    invalidator = CacheInvalidator([backend])
+    removed = await invalidator.invalidate_pattern("nonexistent:*")
+
+    assert removed == 0
+
+
+async def test_invalidate_table_removes_table_tagged_entries() -> None:
+    """После invalidate_table удаляются ключи с тегом table:<table>."""
+    backend = InMemoryCacheBackend()
+    backend.bind_key_to_tag("entity:orders", "orders:list")
+    backend.bind_key_to_tag("table:orders", "table:orders:row1")
+    backend.bind_key_to_tag("table:orders", "table:orders:row2")
+    backend.bind_key_to_tag("table:users", "table:users:row")
+
+    invalidator = CacheInvalidator([backend])
+    removed = await invalidator.invalidate_tags("table:orders")
+
+    assert removed == 2
+    # Orders entity key still exists
+    assert await invalidator.invalidate_tags("entity:orders") == 1
+    # Users table key still exists
+    assert await invalidator.invalidate_tags("table:users") == 1

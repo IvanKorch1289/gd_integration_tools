@@ -101,6 +101,52 @@ class AdminService:
         """
         return await get_admin_cache_storage_provider().invalidate_cache()
 
+    async def invalidate_cache_by_pattern(self, pattern: str) -> dict[str, Any]:
+        """
+        Инвалидирует кэш по glob-паттерну.
+
+        Args:
+            pattern: Glob pattern для поиска ключей (e.g., "entity:orders:*").
+
+        Returns:
+            dict с количеством удалённых ключей.
+        """
+        from src.backend.core.di.providers import get_cache_invalidator_provider
+
+        removed = await get_cache_invalidator_provider().invalidate_pattern(pattern)
+        return {"pattern": pattern, "removed": removed}
+
+    async def invalidate_cache_by_tag(self, *tags: str) -> dict[str, Any]:
+        """
+        Инвалидирует кэш по одному или нескольким тегам.
+
+        Args:
+            tags: Теги для инвалидации (e.g., "entity:orders", "table:orders").
+
+        Returns:
+            dict с количеством удалённых ключей.
+        """
+        from src.backend.core.di.providers import get_cache_invalidator_provider
+
+        removed = await get_cache_invalidator_provider().invalidate_tags(*tags)
+        return {"tags": list(tags), "removed": removed}
+
+    async def invalidate_table(self, table: str) -> dict[str, Any]:
+        """
+        Инвалидирует кэш по имени таблицы.
+
+        Args:
+            table: Имя таблицы для инвалидации.
+
+        Returns:
+            dict с количеством удалённых ключей.
+        """
+        from src.backend.core.di.providers import get_cache_invalidator_provider
+
+        tag = f"table:{table}"
+        removed = await get_cache_invalidator_provider().invalidate_tags(tag)
+        return {"table": table, "tag": tag, "removed": removed}
+
     # ------------------------------------------------------------------
     #  Информационные методы (introspection)
     # ------------------------------------------------------------------

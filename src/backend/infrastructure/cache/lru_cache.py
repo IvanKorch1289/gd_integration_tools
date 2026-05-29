@@ -110,6 +110,28 @@ class LruMemoryCache:
         """Время жизни записи в секундах (read-only)."""
         return self._cache.ttl
 
+    def _record_local_hit(self) -> None:
+        """Updates local metrics snapshot for admin API."""
+        try:
+            from src.backend.infrastructure.cache.metrics_collector import (
+                record_lru_hit,
+            )
+
+            record_lru_hit(self._scope)
+        except ImportError:
+            pass  # metrics_collector not available
+
+    def _record_local_miss(self) -> None:
+        """Updates local metrics snapshot for admin API."""
+        try:
+            from src.backend.infrastructure.cache.metrics_collector import (
+                record_lru_miss,
+            )
+
+            record_lru_miss(self._scope)
+        except ImportError:
+            pass  # metrics_collector not available
+
     async def get(self, key: str) -> Any | None:
         """Возвращает значение по ключу или ``None`` (с инкрементом метрики).
 
@@ -122,9 +144,11 @@ class LruMemoryCache:
         async with self._lock:
             value = self._cache.get(key)
         if value is None:
+            self._record_local_miss()
             if _metric_misses is not None:
                 _metric_misses.labels(scope=self._scope).inc()
             return None
+        self._record_local_hit()
         if _metric_hits is not None:
             _metric_hits.labels(scope=self._scope).inc()
         return value

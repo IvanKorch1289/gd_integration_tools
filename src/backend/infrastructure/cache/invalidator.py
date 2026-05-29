@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import asyncio
+import fnmatch
 import logging
 from typing import Protocol, runtime_checkable
 
@@ -61,6 +62,18 @@ class CacheBackendProtocol(Protocol):
         """
         ...
 
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """
+        Удаляет все ключи, matching glob pattern.
+
+        Args:
+            pattern: Glob pattern (e.g., "entity:*").
+
+        Returns:
+            Количество удалённых ключей (0 если не было совпадений).
+        """
+        ...
+
 
 class InMemoryCacheBackend:
     """
@@ -72,11 +85,13 @@ class InMemoryCacheBackend:
 
     def __init__(self) -> None:
         self._tag_to_keys: dict[str, set[str]] = {}
+        self._keys: set[str] = set()  # all registered keys for pattern matching
 
     def bind_key_to_tag(self, tag: str, key: str) -> None:
         """Регистрирует ключ в группе тега (используется тестами и
         кэширующим декоратором при записи)."""
         self._tag_to_keys.setdefault(tag, set()).add(key)
+        self._keys.add(key)
 
     async def delete_by_tag(self, tag: str) -> int:
         """
@@ -89,7 +104,27 @@ class InMemoryCacheBackend:
             Количество удалённых ключей.
         """
         keys = self._tag_to_keys.pop(tag, set())
+        for key in keys:
+            self._keys.discard(key)
         return len(keys)
+
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """
+        Удаляет все ключи, matching glob pattern.
+
+        Args:
+            pattern: Glob pattern (e.g., "entity:*" or "cache:orders:*").
+
+        Returns:
+            Количество удалённых ключей.
+        """
+        matching_keys = {key for key in self._keys if fnmatch.fnmatch(key, pattern)}
+        for key in matching_keys:
+            self._keys.discard(key)
+            # Remove from all tag groups
+            for tag_keys in self._tag_to_keys.values():
+                tag_keys.discard(key)
+        return len(matching_keys)
 
 
 class CacheInvalidator:
@@ -137,6 +172,41 @@ class CacheInvalidator:
                 continue
             total += int(r)
         return total
+
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """
+        Инвалидирует все ключи, matching glob pattern, во всех backend'ах.
+
+        Args:
+            pattern: Glob pattern (e.g., "entity:*" or "table:orders:*").
+
+        Returns:
+            Суммарное число удалённых ключей (по всем backend'ам).
+        """
+        if not pattern or not self._backends:
+            return 0
+        tasks = [backend.delete_by_pattern(pattern) for backend in self._backends]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        total = 0
+        for r in results:
+            if isinstance(r, Exception):
+                logger.warning("Ошибка инвалидации по паттерну: %s", r)
+                continue
+            total += int(r)
+        return total
+
+    async def invalidate_tags(self, *tags: str) -> int:
+        """
+        Инвалидирует все ключи, помеченные указанными тегами, во всех
+        backend'ах. Alias для :meth:`invalidate`.
+
+        Args:
+            tags: Один или несколько тегов.
+
+        Returns:
+            Суммарное число удалённых ключей (по всем backend'ам).
+        """
+        return await self.invalidate(*tags)
 
 
 # Глобальный singleton инвалидатора. По умолчанию пустой — backend'ы

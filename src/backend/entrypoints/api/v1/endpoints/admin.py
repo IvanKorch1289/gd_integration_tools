@@ -4,7 +4,11 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.infrastructure.cache.metrics_collector import get_cache_metrics_snapshot
 from src.backend.schemas.route_schemas.admin import (
+    AdminCacheInvalidatePatternSchema,
+    AdminCacheInvalidateTagsSchema,
+    AdminCacheInvalidateTableSchema,
     AdminCacheKeysQuerySchema,
     AdminCacheValuePathSchema,
     AdminToggleFeatureFlagQuerySchema,
@@ -70,6 +74,36 @@ ActionRouterBuilder(router).add_actions(
             description="Инвалидирует весь Redis-кэш.",
             service_getter=get_admin_service,
             service_method="invalidate_cache",
+        ),
+        ActionSpec(
+            name="invalidate_cache_by_pattern",
+            method="DELETE",
+            path="/cache/invalidate/pattern",
+            summary="Инвалидировать кэш по паттерну",
+            description="Инвалидирует все ключи, matching glob pattern.",
+            service_getter=get_admin_service,
+            service_method="invalidate_cache_by_pattern",
+            query_model=AdminCacheInvalidatePatternSchema,
+        ),
+        ActionSpec(
+            name="invalidate_cache_by_tag",
+            method="DELETE",
+            path="/cache/invalidate/tags",
+            summary="Инвалидировать кэш по тегам",
+            description="Инвалидирует все ключи с указанными тегами.",
+            service_getter=get_admin_service,
+            service_method="invalidate_cache_by_tag",
+            query_model=AdminCacheInvalidateTagsSchema,
+        ),
+        ActionSpec(
+            name="invalidate_table",
+            method="DELETE",
+            path="/cache/invalidate/table",
+            summary="Инвалидировать кэш по имени таблицы",
+            description="Инвалидирует все ключи с тегом table:<table>.",
+            service_getter=get_admin_service,
+            service_method="invalidate_table",
+            query_model=AdminCacheInvalidateTableSchema,
         ),
         # -- Introspection endpoints --
         ActionSpec(
@@ -160,4 +194,24 @@ router.add_api_route(
         "(без рестарта процесса). Используйте когда FS watcher недоступен."
     ),
     name="reload_config",
+)
+
+
+async def _get_cache_stats() -> dict[str, object]:
+    """Эндпоинт получения снимка метрик кэша.
+
+    Возвращает агрегированные метрики из всех tier'ов кэша.
+    """
+    return get_cache_metrics_snapshot()
+
+
+router.add_api_route(
+    path="/cache/stats",
+    endpoint=_get_cache_stats,
+    methods=["GET"],
+    summary="Метрики кэша",
+    description=(
+        "Возвращает снимок метрик кэша: hit/miss для LRU, RAG и semantic tier."
+    ),
+    name="get_cache_stats",
 )

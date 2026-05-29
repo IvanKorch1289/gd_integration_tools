@@ -150,6 +150,7 @@ class BaseService[
         response_schema: type[ConcreteResponseSchema] | None = None,
         request_schema: type[ConcreteRequestSchema] | None = None,
         version_schema: type[ConcreteVersionSchema] | None = None,
+        table_name: str | None = None,
     ) -> None:
         """Инициализация сервиса.
 
@@ -158,11 +159,14 @@ class BaseService[
             response_schema: Схема для преобразования данных.
             request_schema: Схема для валидации входных данных.
             version_schema: Схема для версий объекта.
+            table_name: Опциональное имя таблицы для table-based cache invalidation.
+                Если задано, генерируется дополнительный тег ``table:<table_name>``.
         """
         self.repo = repo
         self.response_schema = response_schema
         self.request_schema = request_schema
         self.version_schema = version_schema
+        self.table_name = table_name
         self.helper = self.HelperMethods(repo)
 
     def _entity_tag(self) -> str:
@@ -172,6 +176,12 @@ class BaseService[
         если хотите более короткий/осмысленный идентификатор сущности.
         """
         return f"entity:{self.__class__.__name__}"
+
+    def _table_tag(self) -> str | None:
+        """Возвращает table-based тег для инвалидации, если table_name задан."""
+        if self.table_name:
+            return f"table:{self.table_name}"
+        return None
 
     async def _invalidate_entity_cache(self, *, entity_id: Any = None) -> None:
         """Инвалидирует кэш сущности после write-операции.
@@ -186,6 +196,9 @@ class BaseService[
         await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
 
         tags = [self._entity_tag()]
+        table_tag = self._table_tag()
+        if table_tag:
+            tags.append(table_tag)
         if entity_id is not None:
             tags.append(f"{self._entity_tag()}:{entity_id}")
         await get_cache_invalidator_provider().invalidate(*tags)

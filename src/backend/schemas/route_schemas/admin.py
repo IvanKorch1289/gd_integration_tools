@@ -7,6 +7,9 @@ __all__ = (
     "AdminToggleFeatureFlagQuerySchema",
     "AdminCacheKeysQuerySchema",
     "AdminCacheValuePathSchema",
+    "AdminCacheInvalidatePatternSchema",
+    "AdminCacheInvalidateTagsSchema",
+    "AdminCacheInvalidateTableSchema",
 )
 
 
@@ -56,3 +59,42 @@ class AdminCacheValuePathSchema(BaseSchema):
     """
 
     key: str = Field(description="Ключ Redis.")
+
+
+class AdminCacheInvalidatePatternSchema(BaseSchema):
+    """
+    Query-схема для инвалидации кэша по glob-паттерну.
+
+    Attributes:
+        pattern: Glob pattern для поиска и удаления ключей.
+    """
+
+    pattern: str = Field(
+        description="Glob pattern для инвалидации (e.g., 'entity:orders:*')."
+    )
+
+
+class AdminCacheInvalidateTagsSchema(BaseSchema):
+    """
+    Query-схема для инвалидации кэша по тегам.
+
+    Attributes:
+        tags: Список тегов для инвалидации.
+    """
+
+    tags: list[str] = Field(
+        description="Список тегов для инвалидации (e.g., ['entity:orders', 'table:orders'])."
+    )
+
+
+class AdminCacheInvalidateTableSchema(BaseSchema):
+    """
+    Query-схема для инвалидации кэша по имени таблицы.
+
+    Attributes:
+        table: Имя таблицы для инвалидации.
+    """
+
+    table: str = Field(
+        description="Имя таблицы для инвалидации (e.g., 'orders')."
+    )
