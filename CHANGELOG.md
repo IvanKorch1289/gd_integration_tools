@@ -132,12 +132,17 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - _DEFAULT_THRESHOLD=75 in check_coverage_gate.py
 - CI --threshold updated to 75 in test.yml
 
+#### s19/adr-w1-r1-1-r1-5-r1-7
+- R1.1→ADR-0078: plugin.toml [[capabilities]] array format with name+scope
+- R1.5→ADR-0079: route.toml::slo inline TOML (p95_ms/p99_ms/timeout_ms/rps_target)
+- R1.7→ADR-0080: Single Entry policy naming — Coordinator/with_/Spec/Policy suffixes
+
 #### s19/adr-w2-r1-8-r1-9-r1-20
-- R1.8→ADR-0081 FastStream Redis (EventBus, finalized adr-w1)
+- R1.8→ADR-0081 FastStream Redis (EventBus, confirmed by adr-w1)
 - R1.9→ADR-0059 Granian RSGI (Accepted S6)
 - R1.20→ADR-0077 E2B sandbox (Accepted S28)
 
-### Total: 28 commits across 29 waves
+### Total: 28 commits across 29 documented waves
 
 ## [0.1.0] — 2025 — Initial release
 
