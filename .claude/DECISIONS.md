@@ -823,10 +823,9 @@ Unification = 20-30 LOC diff.
 
 ---
 
-## R1 Series ADR Finalization (S19 adr-w1 / adr-w2) — [wave:s19/adr-w2-r1-8-r1-9-r1-20]
+## R1 Series ADR Finalization (S19 adr-w1 / adr-w2)
 
-Sprint 19 adr-w2 confirms finalization of R1.8 (EventBus), R1.9 (Granian RSGI), and R1.20 (PluginSandboxAdapter).
-Full ADR documents are in `docs/adr/`:
+Sprint 19 finalized the following R-series open decisions. Full ADR documents are in `docs/adr/`:
 
 ### ADR-0078: plugin.toml Capability Syntax (R1.1) — **Accepted**
 
@@ -865,26 +864,4 @@ FastStream abstraction allows broker swap to NATS/Kafka without interface change
 | R1 Ref | Topic | ADR File | Status |
 |--------|-------|----------|--------|
 | R1.9 | Granian RSGI vs Uvicorn | ADR-0059 | Accepted (S6) |
-
----
-
-## Carryover: T4.1 / T5 (S29)
-
-### T4.1 — ЗАКРЫТЬ без action
-
-**Факт**: `src/backend/plugins/composition/` (2705 LOC, 10 модулей) = composition root, НЕ plugin.
-
-**Decision**: `src/backend/plugins/composition/` остаётся в `src/backend/plugins/` — это composition root (точка сборки DI-графа), не plugin в смысле V11. Т4.1 закрывается БЕЗ изменения кода.
-
-**Why**: composition root — это место где все DI-зависимости собираются вместе; это инфраструктурный артефакт, не бизнес-логика.
-
-### T5 — DEFERRED (до отдельной волны)
-
-**Факт**: ВСЕ plugins проекта используют `src.backend.*` — это системный паттерн, обусловленный структурой импорта Python. Рефакторинг всех plugins потребует отдельной волны с детальным планом миграции.
-
-**Decision**: T5 (layer violations — все plugins используют `src.backend.*`) откладывается до отдельной волны. Не блокирует текущий sprint.
-
-**Why**: 57 layer violations потребуют significant refactoring каждого plugin; требуется отдельный sprint с детальным analysis.
-
-**How to apply**: Записать в backlog отдельную волну после S29. Не пытаться исправить в рамках текущего плана.
 | R1.20 | PluginSandboxAdapter final strategy | ADR-0077 | Accepted (S28) |
