@@ -1,4 +1,4 @@
-"""K3 S5 W7 — :class:`PolicyMixin`: chainable .policy.* API в RouteBuilder.
+"""[wave:s19/k2-w3-adaptive-timeout-policy] K3 S5 W7 — :class:`PolicyMixin`: chainable .policy.* API в RouteBuilder.
 
 Wave ``[wave:s5/k3-w7-policy-chainable]``.
 
