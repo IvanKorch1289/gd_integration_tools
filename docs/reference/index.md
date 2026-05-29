@@ -7,13 +7,16 @@
 
 ```{toctree}
 :maxdepth: 1
+
+schemas/index
+capabilities
 ```
 
 ## API Reference
 
-> Автоматическая генерация API Reference из docstrings (`sphinx-autoapi`)
-> запланирована в отдельной Wave (требует cleanup всех публичных docstrings).
-> До этого момента данный раздел является placeholder.
+Автоматическая генерация API Reference из docstrings (`sphinx-autoapi`)
+настроена в `docs/conf.py` (S34 W1). Сгенерированная документация доступна
+через `make docs` → `docs/_build/html/`.
 
 ## DSL-спецификации
 

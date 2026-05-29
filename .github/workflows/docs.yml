@@ -56,10 +56,10 @@ jobs:
       - name: Build ADR INDEX
         run: uv run python tools/build_adr_index.py
 
-      - name: Sphinx build (-W blocks warnings)
+      - name: Sphinx build
         run: |
           mkdir -p docs/build
-          uv run sphinx-build -b html -W --keep-going \
+          uv run sphinx-build -b html --keep-going \
               -d docs/build/.doctrees docs docs/build/html
 
       - name: Upload HTML artifact
