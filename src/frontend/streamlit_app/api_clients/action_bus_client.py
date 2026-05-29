@@ -16,12 +16,17 @@ Lazy-import httpx: модуль не требует httpx в окружении 
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
+
+from src.frontend.streamlit_app.config import (
+    API_TIMEOUT_LONG,
+    API_TIMEOUT_SHORT,
+    get_api_base_url,
+)
 
 __all__ = ("get_action_spec", "invoke", "list_actions")
 
-_BASE_URL: str = os.environ.get("API_BASE_URL", "http://localhost:8000").rstrip("/")
+_BASE_URL = get_api_base_url().rstrip("/")
 
 # ---------------------------------------------------------------------------
 # Mock-данные (fallback когда backend недоступен)
@@ -104,7 +109,7 @@ def list_actions() -> list[dict[str, Any]]:
     try:
         import httpx  # noqa: PLC0415
 
-        with httpx.Client(timeout=5.0) as client:
+        with httpx.Client(timeout=API_TIMEOUT_SHORT) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/actions/list")
             response.raise_for_status()
             data = response.json()
@@ -139,7 +144,7 @@ def invoke(name: str, payload: dict[str, Any], mode: str) -> dict[str, Any]:
     try:
         import httpx  # noqa: PLC0415
 
-        with httpx.Client(timeout=30.0) as client:
+        with httpx.Client(timeout=API_TIMEOUT_LONG) as client:
             response = client.post(
                 f"{_BASE_URL}/api/v1/admin/actions/invoke", json=body
             )
@@ -182,7 +187,7 @@ def get_action_spec(name: str) -> dict[str, Any] | None:
     try:
         import httpx  # noqa: PLC0415
 
-        with httpx.Client(timeout=5.0) as client:
+        with httpx.Client(timeout=API_TIMEOUT_SHORT) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/actions/{name}/spec")
             if response.status_code == 404:  # noqa: PLR2004
                 return None

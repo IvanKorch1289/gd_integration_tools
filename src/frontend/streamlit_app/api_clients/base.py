@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import httpx
 
+from src.frontend.streamlit_app.config import get_api_base_url
+
 __all__ = ("BaseAPIClient", "get_base_client")
 
-_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+_BASE_URL = get_api_base_url()
 
 
 class BaseAPIClient:

@@ -275,4 +275,3 @@ class CacheSettings(BaseSettingsWithLoader):
 
 cache_settings = CacheSettings()
 """Глобальный экземпляр настроек cache backend factory."""
-"""Глобальные настройки Redis"""

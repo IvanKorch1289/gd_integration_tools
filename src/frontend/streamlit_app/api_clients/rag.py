@@ -7,6 +7,7 @@ from typing import Any
 import httpx
 
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.config import API_TIMEOUT_RAG
 
 __all__ = ("RAGClient",)
 
@@ -80,7 +81,7 @@ class RAGClient(BaseAPIClient):
     ) -> dict[str, Any]:
         """POST с multipart/form-data (для file uploads)."""
         headers = {k: v for k, v in self._headers().items() if k != "Content-Type"}
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=API_TIMEOUT_RAG) as client:
             response = client.request(
                 "POST",
                 f"{self._base_url}{path}",
