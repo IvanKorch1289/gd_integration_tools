@@ -202,6 +202,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    dsl_visual_editor_enabled: bool = Field(
+        default=False,
+        title="Sprint 19 K3 W5: DSL Visual Editor (Drag-Drop Route Builder)",
+        description=(
+            "S19 K3 W5. Owner: K3 DSL. "
+            "Активирует страницу 40_dsl_visual_editor.py — drag-drop route editor "
+            "с three-panel layout (step palette / canvas / properties). "
+            "Export to YAML. default-OFF до staging-smoke."
+        ),
+    )
+
     # ─── K6 — AI ───────────────────────────────────────────────────────────
     search_provider_searxng: bool = Field(
         default=False,
