@@ -1,4 +1,4 @@
-"""ConsolidationEngine — episodic → semantic (LLM-summarization, Wave D.6).
+"""[wave:s19/k4-w4-langmem-consolidation-impl] ConsolidationEngine — episodic → semantic (LLM-summarization).
 
 Алгоритм:
 
