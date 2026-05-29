@@ -22,7 +22,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.core.security.authorization_gateway import AuthorizationGateway
+from src.backend.core.security.authorization_gateway import (
+    AuthorizationGateway,
+)
 
 __all__ = ("check_route_permission",)
 
@@ -127,7 +129,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
         gateway = getattr(agent, "_authz_gateway", None)
         if gateway is not None:
             return gateway
-    except Exception as _:
+    except Exception:
         pass
 
     return None
