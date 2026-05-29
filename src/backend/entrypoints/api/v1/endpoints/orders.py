@@ -22,7 +22,7 @@ from src.backend.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from src.backend.services.core.orders import get_order_service
+from extensions.core_entities.orders.services.orders import get_order_service
 
 __all__ = ("router",)
 

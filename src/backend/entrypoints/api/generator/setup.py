@@ -4,7 +4,7 @@ from src.backend.entrypoints.api.generator.registry import (
 )
 from src.backend.schemas.route_schemas.orders import OrderIdPathSchema
 from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
-from src.backend.services.core.orders import get_order_service
+from extensions.core_entities.orders.services.orders import get_order_service
 from src.backend.workfolws.workflows_service import get_workflows_service
 
 __all__ = ("register_action_handlers",)

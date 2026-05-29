@@ -39,7 +39,7 @@ def register_action_handlers() -> None:
     )
     from src.backend.services.ai.ai_agent import get_ai_agent_service
     from src.backend.services.core.admin import get_admin_service
-    from src.backend.services.core.orders import get_order_service
+    from extensions.core_entities.orders.services.orders import get_order_service
     from src.backend.services.core.tech import get_tech_service
     from src.backend.services.integrations.dadata import get_dadata_service
     from src.backend.services.integrations.skb import get_skb_service
@@ -220,6 +220,21 @@ def register_action_handlers() -> None:
                 action="admin.invalidate_cache",
                 service_getter=get_admin_service,
                 service_method="invalidate_cache",
+            ),
+            ActionHandlerSpec(
+                action="admin.invalidate_cache_by_pattern",
+                service_getter=get_admin_service,
+                service_method="invalidate_cache_by_pattern",
+            ),
+            ActionHandlerSpec(
+                action="admin.invalidate_cache_by_tag",
+                service_getter=get_admin_service,
+                service_method="invalidate_cache_by_tag",
+            ),
+            ActionHandlerSpec(
+                action="admin.invalidate_table",
+                service_getter=get_admin_service,
+                service_method="invalidate_table",
             ),
         ]
     )

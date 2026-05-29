@@ -95,7 +95,7 @@ def register_all_services() -> None:
     from src.backend.services.ai.ai_agent import get_ai_agent_service
     from src.backend.services.core.admin import get_admin_service
     from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
-    from src.backend.services.core.orders import get_order_service
+    from extensions.core_entities.orders.services.orders import get_order_service
     from src.backend.services.core.tech import get_tech_service
     from extensions.core_entities.users.services.users import get_user_service
     from src.backend.services.integrations.dadata import get_dadata_service
