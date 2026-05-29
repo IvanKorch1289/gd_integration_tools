@@ -1,64 +1,88 @@
-"""K5 S19 W3: src/testkit/ public API для extensions/plugin authors.
+"""Public testkit API for plugin authors (K5 S19 W3, S-L10-1).
 
-Этот пакет предоставляет public API для написания тестов extensions и
-plugin authors. Активируется флагом ``testkit_public_api``.
+This package provides a stable public API for writing tests against
+GD Integration Tools plugins and extensions. It re-exports the most
+commonly used test doubles, fixtures, and assertion helpers from the
+internal testkit implementation.
 
-Публичный API:
-    * :class:`RouteRunner` — изолированный запуск DSL-route.
-    * :class:`WorkflowRunner` — запуск workflow в тестах.
-    * :class:`MockCapabilityGateway` — mock :class:`CapabilityGatewayProtocol`.
-    * :class:`FakeWorkflowBackend` — in-memory :class:`WorkflowBackend`.
-    * HAR recorder/replay fixtures (:mod:`testkit.recorder`, :mod:`testkit.replay`).
-    * :func:`assert_audit_event` — assertion helper для audit events.
-    * :func:`assert_metric_recorded` — assertion helper для metrics.
+Example usage in a plugin test::
 
-См. ``docs/testkit/`` для документации.
+    import pytest
+    from src.testkit import (
+        RouteRunner,
+        FakeWorkflowBackend,
+        MockCapabilityGateway,
+        assert_audit_event,
+        assert_metric_recorded,
+    )
+
+    @pytest.mark.asyncio
+    async def test_my_plugin_route():
+        runner = RouteRunner()
+        result = await runner.run("my_plugin.health", {"ping": True})
+        assert result.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_my_workflow():
+        backend = FakeWorkflowBackend()
+        # ... setup and run workflow tests
+
+Public API summary:
+
+* **RouteRunner** — isolated DSL-route execution without a live ASGI app.
+* **WorkflowRunner** — thin wrapper over DurableWorkflowRunner for tests.
+* **FakeWorkflowBackend** — in-memory WorkflowBackend implementation.
+* **MockCapabilityGateway** — configurable mock for CapabilityGatewayProtocol.
+* **recorder fixtures** — ``har_recorder``, ``har_cassette_path`` via
+  :func:`record` and :func:`replay` helpers.
+* **assert_audit_event** — assertion helper to verify audit events.
+* **assert_metric_recorded** — assertion helper to verify metrics were recorded.
 """
 
 from __future__ import annotations
 
-# Re-export all public components
+from src.testkit.assertions import (
+    assert_audit_event,
+    assert_metric_recorded,
+)
 from src.testkit.fake_workflow_backend import FakeWorkflowBackend
 from src.testkit.mock_capability_gateway import MockCapabilityGateway
-from src.testkit.route_runner import RouteRunResult, RouteRunner
-from src.testkit.workflow_runner import WorkflowRunResult, WorkflowRunner
-from src.testkit.assertions import assert_audit_event, assert_metric_recorded
-
-# Recorder/replay re-exports (from root testkit package)
-from testkit.recorder import (
+from src.testkit.recorder import (
     HARCassette,
     HAREntry,
     HARRecorder,
+    build_replay_transport,
     cassette,
     load_cassette,
     record_session,
+    save_cassette,
 )
-from testkit.replay import (
-    MissingCassetteEntry,
-    build_replay_transport,
-    load_cassette as load_replay_cassette,
-)
+from src.testkit.route_runner import RouteRunner, RouteRunResult
+from src.testkit.workflow_runner import WorkflowRunner, WorkflowRunResult
 
-__all__: tuple[str, ...] = (
+__all__ = (
     # RouteRunner
-    "RouteRunResult",
     "RouteRunner",
+    "RouteRunResult",
     # WorkflowRunner
-    "WorkflowRunResult",
     "WorkflowRunner",
-    # Mock / Fake
-    "MockCapabilityGateway",
+    "WorkflowRunResult",
+    # WorkflowBackend
     "FakeWorkflowBackend",
-    # Assertions
-    "assert_audit_event",
-    "assert_metric_recorded",
-    # HAR recorder/replay
+    # CapabilityGateway
+    "MockCapabilityGateway",
+    # Recorder/replay
     "HARCassette",
     "HAREntry",
     "HARRecorder",
-    "MissingCassetteEntry",
     "build_replay_transport",
     "cassette",
     "load_cassette",
     "record_session",
+    "save_cassette",
+    # Assertions
+    "assert_audit_event",
+    "assert_metric_recorded",
 )
+
+__version__ = "1.0.0"

@@ -1,10 +1,38 @@
-"""MockCapabilityGateway — mock implementation of CapabilityGatewayProtocol.
+"""MockCapabilityGateway — configurable test double for CapabilityGatewayProtocol.
 
-:class:`MockCapabilityGateway` implements :class:`CapabilityGatewayProtocol`
-for use in unit tests. It allows setting up expected capabilities declaratively
-and tracking check/declare calls for assertions.
+K5 S19 W3 (S-L10-1). Implements :class:`CapabilityGatewayProtocol
+<src.backend.core.interfaces.capability_gateway.CapabilityGatewayProtocol>`
+with programmable behavior for unit tests.
 
-Этот модуль — часть ``src/testkit/`` public API (K5 S19 W3).
+Unlike :class:`CapabilityGate <src.backend.core.security.capabilities.gate.CapabilityGate>`
+which uses the real capability vocabulary and scope-matching logic,
+``MockCapabilityGateway`` allows tests to:
+
+* Declare arbitrary capabilities without a vocabulary.
+* Configure per-plugin per-capability allow/deny behavior.
+* Record ``check()`` calls for assertion without depending on the
+  real authorization chain.
+
+Example::
+
+    from src.testkit import MockCapabilityGateway, assert_audit_event
+
+    gateway = MockCapabilityGateway()
+    gateway.declare("my_plugin", ["db.read", "db.write"])
+    gateway.add_check_result("my_plugin", "db.read", allowed=True)
+    gateway.add_check_result("my_plugin", "db.write", allowed=False)
+
+    # check() does not raise when allowed=True
+    gateway.check("my_plugin", "db.read", scope="users")
+
+    # check() raises CapabilityDeniedError when allowed=False
+    with pytest.raises(CapabilityDeniedError):
+        gateway.check("my_plugin", "db.write", scope="users")
+
+    # Inspect calls for custom assertions
+    assert gateway.check_calls == [
+        ("my_plugin", "db.read", "users"),
+    ]
 """
 
 from __future__ import annotations
@@ -15,185 +43,111 @@ from typing import Any
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 
-__all__ = ("MockCapabilityGateway",)
+__all__ = ("MockCapabilityGateway", "CapabilityDeniedError")
 
 
-@dataclass
-class CapabilityCheck:
-    """Record of a single capability check."""
+class CapabilityDeniedError(PermissionError):
+    """Raised by :meth:`MockCapabilityGateway.check` when configured to deny."""
+
+
+@dataclass(slots=True)
+class _CheckCall:
+    """Records a single ``check()`` invocation for later inspection."""
 
     plugin: str
     capability: str
     scope: str | None
-    outcome: str  # "granted" or "denied"
 
 
-@dataclass
 class MockCapabilityGateway:
-    """Mock :class:`CapabilityGatewayProtocol` для unit-тестов.
+    """Configurable mock for :class:`CapabilityGatewayProtocol`.
 
-    Features:
-        * Declarative setup: use ``declare(plugin, capabilities)`` to set up
-          expected capabilities.
-        * Tracking: ``checks`` records every ``check()`` call.
-        * Configurable: ``deny_unknown`` controls behavior for undeclared
-          plugin/capability pairs.
-        * ``check`` raises :class:`CapabilityDeniedError` by default when
-          capability is not declared or scope doesn't match.
-
-    Example:
-        >>> gateway = MockCapabilityGateway()
-        >>> gateway.declare("my-plugin", [CapabilityRef(name="db.read")])
-        >>> gateway.check("my-plugin", "db.read", None)  # OK
-        >>> assert len(gateway.checks) == 1
+    Attributes:
+        check_calls: List of all ``(plugin, capability, scope)`` tuples
+            passed to :meth:`check` since construction or the last
+            :meth:`reset_calls` call.
     """
 
-    _declarations: dict[str, dict[str, str | None]] = field(default_factory=dict)
-    checks: list[CapabilityCheck] = field(default_factory=list)
-    deny_unknown: bool = True  # If False, unknown capabilities are auto-granted
+    def __init__(
+        self,
+        *,
+        default_allowed: bool = True,
+    ) -> None:
+        """Initialize the mock.
+
+        Args:
+            default_allowed: If ``True`` (default), any capability check
+                that hasn't been explicitly configured via
+                :meth:`add_check_result` will be allowed. Set to ``False``
+                to require explicit configuration for all expected checks.
+        """
+        self._declared: dict[str, tuple[str, ...]] = {}
+        self._check_results: dict[tuple[str, str], bool] = {}
+        self._default_allowed = default_allowed
+        self._calls: list[_CheckCall] = []
+
+    # ─── CapabilityGatewayProtocol ─────────────────────────────────────────────
 
     def check(
         self, plugin: str, capability: str, scope: str | None = None
     ) -> None:
-        """Проверить capability; raise CapabilityDeniedError если не разрешена.
+        """Check capability; raises ``CapabilityDeniedError`` if configured to deny.
 
-        Args:
-            plugin: имя плагина.
-            capability: имя capability.
-            scope: запрошенный scope.
-
-        Raises:
-            CapabilityDeniedError: если capability не задекларирована
-                или scope не покрывается.
+        Records the call in :attr:`check_calls` for test inspection.
         """
-        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
-
-        declared = self._declarations.get(plugin, {}).get(capability)
-        if declared is None:
-            self.checks.append(CapabilityCheck(plugin, capability, scope, "denied"))
-            if self.deny_unknown:
-                raise CapabilityDeniedError(
-                    plugin=plugin,
-                    capability=capability,
-                    requested_scope=scope,
-                    declared_scope=None,
-                )
-            return
-
-        # Scope None means any scope is OK
-        if declared is not None and scope is not None and declared != scope:
-            self.checks.append(CapabilityCheck(plugin, capability, scope, "denied"))
-            if self.deny_unknown:
-                raise CapabilityDeniedError(
-                    plugin=plugin,
-                    capability=capability,
-                    requested_scope=scope,
-                    declared_scope=declared,
-                )
-            return
-
-        self.checks.append(CapabilityCheck(plugin, capability, scope, "granted"))
+        self._calls.append(_CheckCall(plugin=plugin, capability=capability, scope=scope))
+        key = (plugin, capability)
+        allowed = self._check_results.get(key, self._default_allowed)
+        if not allowed:
+            raise CapabilityDeniedError(
+                f"MockCapabilityGateway: {plugin}/{capability} denied "
+                f"(scope={scope!r})"
+            )
 
     def declare(self, plugin: str, capabilities: Iterable[object]) -> None:
-        """Задекларировать capabilities для плагина.
+        """Declare ``capabilities`` for ``plugin``.
 
-        Args:
-            plugin: имя плагина.
-            capabilities: iterable of CapabilityRef objects (or objects
-                with ``.name`` and optional ``.scope`` attributes).
+        ``capabilities`` can be strings (``"db.read"``) or
+        :class:`CapabilityRef <src.backend.core.security.capabilities.types.CapabilityRef>`
+        objects; only the names are stored.
         """
-        bucket = self._declarations.setdefault(plugin, {})
+        names: list[str] = []
         for cap in capabilities:
-            name: str
-            scope: str | None
             if hasattr(cap, "name"):
-                name = cap.name  # type: ignore[attr-defined]
-                scope = getattr(cap, "scope", None)
-            elif isinstance(cap, str):
-                name = cap
-                scope = None
+                # Assume CapabilityRef or similar duck-typed object
+                names.append(str(cap.name))
             else:
-                name = str(cap)
-                scope = None
-            bucket[name] = scope
+                names.append(str(cap))
+        self._declared[plugin] = tuple(names)
 
     def list_allocated(self, plugin: str) -> tuple[str, ...]:
-        """Вернуть имена задекларированных capabilities для плагина."""
-        return tuple(self._declarations.get(plugin, {}).keys())
+        """Return the tuple of capability names declared for ``plugin``."""
+        return self._declared.get(plugin, ())
 
-    def reset(self) -> None:
-        """Очистить все declarations и check history."""
-        self._declarations.clear()
-        self.checks.clear()
+    # ─── Test helpers ─────────────────────────────────────────────────────────
 
-    def assert_checked(
+    def add_check_result(
         self,
         plugin: str,
         capability: str,
         *,
-        scope: str | None = None,
-        times: int = 1,
+        allowed: bool,
     ) -> None:
-        """Assert that capability was checked specific number of times.
+        """Configure the result for a specific ``plugin``/``capability`` check.
 
         Args:
-            plugin: имя плагина.
-            capability: имя capability.
-            scope: опционально проверенный scope.
-            times: ожидаемое количество вызовов.
-
-        Raises:
-            AssertionError: если количество не совпадает.
+            plugin: Plugin identifier.
+            capability: Capability name.
+            allowed: If ``True``, ``check()`` will pass; if ``False``,
+                ``check()`` will raise ``CapabilityDeniedError``.
         """
-        matching = [
-            c for c in self.checks
-            if c.plugin == plugin and c.capability == capability and c.scope == scope
-        ]
-        actual = len(matching)
-        if actual != times:
-            raise AssertionError(
-                f"Expected {plugin}/{capability} (scope={scope!r}) "
-                f"to be checked {times} time(s), got {actual}"
-            )
+        self._check_results[(plugin, capability)] = allowed
 
-    def assert_granted(
-        self,
-        plugin: str,
-        capability: str,
-        *,
-        scope: str | None = None,
-    ) -> None:
-        """Assert that capability check resulted in 'granted'."""
-        matching = [
-            c for c in self.checks
-            if c.plugin == plugin
-            and c.capability == capability
-            and c.scope == scope
-            and c.outcome == "granted"
-        ]
-        if not matching:
-            raise AssertionError(
-                f"Expected {plugin}/{capability} (scope={scope!r}) "
-                f"to be granted, but was not"
-            )
+    @property
+    def check_calls(self) -> list[tuple[str, str, str | None]]:
+        """Return logged check calls as ``[(plugin, capability, scope), ...]``."""
+        return [(c.plugin, c.capability, c.scope) for c in self._calls]
 
-    def assert_denied(
-        self,
-        plugin: str,
-        capability: str,
-        *,
-        scope: str | None = None,
-    ) -> None:
-        """Assert that capability check resulted in 'denied'."""
-        matching = [
-            c for c in self.checks
-            if c.plugin == plugin
-            and c.capability == capability
-            and c.scope == scope
-            and c.outcome == "denied"
-        ]
-        if not matching:
-            raise AssertionError(
-                f"Expected {plugin}/{capability} (scope={scope!r}) "
-                f"to be denied, but was not"
-            )
+    def reset_calls(self) -> None:
+        """Clear :attr:`check_calls` between test assertions."""
+        self._calls.clear()
