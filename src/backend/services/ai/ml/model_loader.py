@@ -155,20 +155,18 @@ class MLModelLoader:
                 "torch не установлен; установите: uv add torch "
                 "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)"
             ) from exc
-        # SECURITY: weights_only=True first (no arbitrary code exec).
-        # Fallback to weights_only=False ONLY if model contains non-tensor data
-        # (e.g., custom classes, which is safe if AI_WORKSPACE is isolated).
-        # AI workspace isolation (V22 RLS) ensures only trusted content reaches this path.
+        # SECURITY (ADR-SEC-001 Option A): fail-fast if weights_only=True
+        # does not work. Accepting arbitrary code-execution risk via
+        # weights_only=False was removed. The workspace mount-path restriction
+        # (V22 RLS, AI_WORKSPACE=/ai-models/) is still respected upstream.
         try:
             return torch.load(path, map_location="cpu", weights_only=True)
-        except Exception as exc:
-            logger.warning(
-                "torch.load(weights_only=True) failed for %s (%s); "
-                "retrying with weights_only=False",
-                path,
-                exc,
-            )
-            return torch.load(path, map_location="cpu", weights_only=False)
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                f"torch.load(weights_only=True) failed for {path}. "
+                "Model may contain pickled code — refusing to load with "
+                "weights_only=False for security reasons (ADR-SEC-001)."
+            ) from exc
 
     def _load_torchscript(self, path: Path) -> Any:
         try:

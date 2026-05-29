@@ -7,6 +7,8 @@ from typing import Any
 
 import pytest
 
+pytest.importorskip("brotli", reason="brotli library not installed")
+
 from src.backend.entrypoints.middlewares.brotli_compression import (
     BrotliCompressionMiddleware,
 )

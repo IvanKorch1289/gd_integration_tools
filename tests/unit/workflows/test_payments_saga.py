@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.backend.dsl.workflow.compiler import compile_workflow
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -89,6 +91,7 @@ def test_payments_saga_steps_are_activity_declarations() -> None:
 
 def test_payments_saga_compiles_to_temporal_workflow_class() -> None:
     """Smoke: compile_workflow возвращает динамический @workflow.defn-класс."""
+    pytest.importorskip("temporalio")
     decl = build_payments_saga_workflow()
     compiled = compile_workflow(decl)
     assert compiled.name == "payments.charge_card"

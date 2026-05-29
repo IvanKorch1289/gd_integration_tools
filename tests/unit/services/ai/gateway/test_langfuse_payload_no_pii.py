@@ -1,7 +1,6 @@
 """Unit test для Block 1.2 (gap-ai-1.2, ADR-0072).
 
-Проверяет что LangFuseCostCallback (v2) и LangFuseCallbackV3 не отправляют
-сырые PII в Langfuse:
+Проверяет что LangFuseCallbackV3 (v3) не отправляет сырые PII в Langfuse:
 
 1. При ``LangFuseSettings.sanitize_traces=True`` + ``PRESIDIO_PII_ENABLED=True``
    ``input``/``output``/``metadata`` проходят через
@@ -9,6 +8,8 @@
 2. При ``sanitize_traces=False`` — passthrough.
 3. При ``PRESIDIO_PII_ENABLED=False`` — passthrough (single source of truth
    через feature_flag, даже если sanitize_traces=True).
+
+W11 GAP-AI: v2 удалён, тесты обновлены на v3.
 """
 
 from __future__ import annotations
@@ -42,148 +43,167 @@ class _StubSanitizer:
 
 
 @pytest.fixture()
-def stub_langfuse_client(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """Stub Langfuse client с capturing generation()."""
-    captured: dict[str, Any] = {}
+def stub_langfuse_v3_client() -> MagicMock:
+    """Stub Langfuse v3 client с capturing span.update()."""
+    fake_span = MagicMock()
+    fake_span.__enter__ = MagicMock(return_value=fake_span)
+    fake_span.__exit__ = MagicMock(return_value=False)
 
-    class _FakeGeneration:
-        def __call__(self, **kwargs: Any) -> None:
-            captured.update(kwargs)
+    fake_client = MagicMock()
+    fake_client.start_as_current_span.return_value = fake_span
 
-    class _FakeTrace:
-        generation = _FakeGeneration()
-
-    class _FakeLangfuse:
-        def __init__(self, **_: Any) -> None:
-            pass
-
-        def trace(self, **_: Any) -> _FakeTrace:
-            return _FakeTrace()
-
-    import sys
-    from types import ModuleType
-
-    fake_mod = ModuleType("langfuse")
-    fake_mod.Langfuse = _FakeLangfuse  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "langfuse", fake_mod)
-    return captured
+    return fake_client
 
 
-def test_callback_v2_anonymizes_when_flag_on(
-    monkeypatch: pytest.MonkeyPatch, stub_langfuse_client: dict[str, Any]
-) -> None:
-    """LangFuseCostCallback маскирует input/output при sanitize_traces=True."""
-    from src.backend.core.config import ai_2026, features
-    from src.backend.core.di import providers
-    from src.backend.services.ai.gateway.langfuse_callback import LangFuseCostCallback
+class TestLangFuseV3Anonymization:
+    """PII anonymization tests for LangFuseCallbackV3."""
 
-    monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "enabled", True, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
-    )
-    providers.set_ai_sanitizer_provider(_StubSanitizer())
-    try:
-        cb = LangFuseCostCallback()
-        kwargs = {
-            "model": "openai/gpt-4o-mini",
-            "messages": [
-                {"role": "user", "content": "ИНН 7707083893, договор №12345"},
-            ],
-            "metadata": {"tenant": "bank-msk", "route": "credit_check"},
-        }
-        response = MagicMock()
-        response.choices = [
-            MagicMock(message=MagicMock(content="Клиент Иванов 9998887"))
-        ]
-        response.usage = None
-        response.response_cost = 0.001
-        cb(kwargs, response)
+    async def test_callback_v3_anonymizes_when_flag_on(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        stub_langfuse_v3_client: MagicMock,
+    ) -> None:
+        """LangFuseCallbackV3 маскирует input/output при sanitize_traces=True."""
+        from src.backend.core.config import ai_2026, features
+        from src.backend.core.di import providers
+        from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+            LangFuseCallbackV3,
+        )
 
-        captured_input = stub_langfuse_client.get("input")
-        captured_output = stub_langfuse_client.get("output")
-        assert captured_input is not None
-        assert "7707083893" not in str(captured_input)
-        assert "12345" not in str(captured_input)
-        assert captured_output is not None
-        assert "9998887" not in str(captured_output)
-    finally:
-        providers._overrides.pop("ai_sanitizer", None)
+        monkeypatch.setattr(
+            features.feature_flags, "presidio_pii_enabled", True, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "enabled", True, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
+        )
+        providers.set_ai_sanitizer_provider(_StubSanitizer())
+        try:
+            cb = LangFuseCallbackV3()
+            cb._lf = stub_langfuse_v3_client
+            cb._inited = True
 
+            kwargs = {
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                    {"role": "user", "content": "ИНН 7707083893, договор №12345"},
+                ],
+                "metadata": {"tenant": "bank-msk", "route": "credit_check"},
+            }
+            response = MagicMock()
+            response.choices = [
+                MagicMock(message=MagicMock(content="Клиент Иванов 9998887"))
+            ]
+            response.usage = None
+            response.response_cost = 0.001
+            cb(kwargs, response)
 
-def test_callback_v2_passthrough_when_sanitize_traces_off(
-    monkeypatch: pytest.MonkeyPatch, stub_langfuse_client: dict[str, Any]
-) -> None:
-    """При sanitize_traces=False payload проходит без анонимизации."""
-    from src.backend.core.config import ai_2026, features
-    from src.backend.core.di import providers
-    from src.backend.services.ai.gateway.langfuse_callback import LangFuseCostCallback
+            # Verify anonymized messages were passed to start_as_current_span (input kwarg).
+            # output/metadata go to span.update — check both.
+            stub_langfuse_v3_client.start_as_current_span.assert_called_once()
+            fake_span = stub_langfuse_v3_client.start_as_current_span.return_value.__enter__.return_value
+            span_kwargs = stub_langfuse_v3_client.start_as_current_span.call_args.kwargs
+            captured_input = span_kwargs.get("input")
+            captured_metadata = fake_span.update.call_args.kwargs.get("metadata")
 
-    monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "enabled", True, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "sanitize_traces", False, raising=True
-    )
-    providers.set_ai_sanitizer_provider(_StubSanitizer())
-    try:
-        cb = LangFuseCostCallback()
-        kwargs = {
-            "model": "openai/gpt-4o-mini",
-            "messages": [{"role": "user", "content": "ИНН 7707083893"}],
-        }
-        response = MagicMock()
-        response.choices = [MagicMock(message=MagicMock(content="ok 12345"))]
-        response.usage = None
-        response.response_cost = 0.0
-        cb(kwargs, response)
+            assert captured_input is not None
+            assert "7707083893" not in str(captured_input)
+            assert "12345" not in str(captured_input)
+            assert captured_metadata is not None
+            # output is anonymized too
+            update_kwargs = fake_span.update.call_args.kwargs
+            assert "9998887" not in str(update_kwargs.get("output"))
+        finally:
+            providers._overrides.pop("ai_sanitizer", None)
 
-        captured_input = stub_langfuse_client.get("input")
-        # Passthrough — цифры остались.
-        assert "7707083893" in str(captured_input)
-    finally:
-        providers._overrides.pop("ai_sanitizer", None)
+    async def test_callback_v3_passthrough_when_sanitize_traces_off(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        stub_langfuse_v3_client: MagicMock,
+    ) -> None:
+        """При sanitize_traces=False payload проходит без анонимизации."""
+        from src.backend.core.config import ai_2026, features
+        from src.backend.core.di import providers
+        from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+            LangFuseCallbackV3,
+        )
 
+        monkeypatch.setattr(
+            features.feature_flags, "presidio_pii_enabled", True, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "enabled", True, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "sanitize_traces", False, raising=True
+        )
+        providers.set_ai_sanitizer_provider(_StubSanitizer())
+        try:
+            cb = LangFuseCallbackV3()
+            cb._lf = stub_langfuse_v3_client
+            cb._inited = True
 
-def test_callback_v2_passthrough_when_presidio_off(
-    monkeypatch: pytest.MonkeyPatch, stub_langfuse_client: dict[str, Any]
-) -> None:
-    """При PRESIDIO_PII_ENABLED=False payload не анонимизируется (single source)."""
-    from src.backend.core.config import ai_2026, features
-    from src.backend.core.di import providers
-    from src.backend.services.ai.gateway.langfuse_callback import LangFuseCostCallback
+            kwargs = {
+                "model": "openai/gpt-4o-mini",
+                "messages": [{"role": "user", "content": "ИНН 7707083893"}],
+            }
+            response = MagicMock()
+            response.choices = [MagicMock(message=MagicMock(content="ok 12345"))]
+            response.usage = None
+            response.response_cost = 0.0
+            cb(kwargs, response)
 
-    monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", False, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "enabled", True, raising=True
-    )
-    monkeypatch.setattr(
-        ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
-    )
-    providers.set_ai_sanitizer_provider(_StubSanitizer())
-    try:
-        cb = LangFuseCostCallback()
-        kwargs = {
-            "model": "openai/gpt-4o-mini",
-            "messages": [{"role": "user", "content": "ИНН 7707083893"}],
-        }
-        response = MagicMock()
-        response.choices = [MagicMock(message=MagicMock(content="ok 12345"))]
-        response.usage = None
-        response.response_cost = 0.0
-        cb(kwargs, response)
+            stub_langfuse_v3_client.start_as_current_span.assert_called_once()
+            span_kwargs = stub_langfuse_v3_client.start_as_current_span.call_args.kwargs
+            captured_input = span_kwargs.get("input")
+            # Passthrough — цифры остались.
+            assert "7707083893" in str(captured_input)
+        finally:
+            providers._overrides.pop("ai_sanitizer", None)
 
-        captured_input = stub_langfuse_client.get("input")
-        # PRESIDIO_PII_ENABLED=False → anonymize_trace_payload — no-op.
-        assert "7707083893" in str(captured_input)
-    finally:
-        providers._overrides.pop("ai_sanitizer", None)
+    async def test_callback_v3_passthrough_when_presidio_off(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        stub_langfuse_v3_client: MagicMock,
+    ) -> None:
+        """При PRESIDIO_PII_ENABLED=False payload не анонимизируется (single source)."""
+        from src.backend.core.config import ai_2026, features
+        from src.backend.core.di import providers
+        from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+            LangFuseCallbackV3,
+        )
+
+        monkeypatch.setattr(
+            features.feature_flags, "presidio_pii_enabled", False, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "enabled", True, raising=True
+        )
+        monkeypatch.setattr(
+            ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
+        )
+        providers.set_ai_sanitizer_provider(_StubSanitizer())
+        try:
+            cb = LangFuseCallbackV3()
+            cb._lf = stub_langfuse_v3_client
+            cb._inited = True
+
+            kwargs = {
+                "model": "openai/gpt-4o-mini",
+                "messages": [{"role": "user", "content": "ИНН 7707083893"}],
+            }
+            response = MagicMock()
+            response.choices = [MagicMock(message=MagicMock(content="ok 12345"))]
+            response.usage = None
+            response.response_cost = 0.0
+            cb(kwargs, response)
+
+            stub_langfuse_v3_client.start_as_current_span.assert_called_once()
+            span_kwargs = stub_langfuse_v3_client.start_as_current_span.call_args.kwargs
+            captured_input = span_kwargs.get("input")
+            # PRESIDIO_PII_ENABLED=False → anonymize_trace_payload — no-op.
+            assert "7707083893" in str(captured_input)
+        finally:
+            providers._overrides.pop("ai_sanitizer", None)

@@ -22,6 +22,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+pytest.importorskip("temporalio", reason="temporalio SDK not installed")
+
 from src.backend.infrastructure.workflow.lite_temporal_backend import (
     LiteTemporalBackend,
 )

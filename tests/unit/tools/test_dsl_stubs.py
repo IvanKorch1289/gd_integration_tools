@@ -44,7 +44,7 @@ def test_collect_public_methods_includes_only_public() -> None:
 
 def test_render_stub_contains_class_and_methods() -> None:
     methods = gds._collect_public_methods(_Demo)
-    stub = gds.render_stub("test.demo", "Demo", methods)
+    stub = gds.render_stub("test.demo", "Demo", methods, extra_imports=[])
     assert "class Demo:" in stub
     assert "def public_a" in stub
     assert "def public_b" in stub

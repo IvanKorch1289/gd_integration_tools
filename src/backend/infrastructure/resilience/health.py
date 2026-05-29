@@ -35,13 +35,14 @@ CB OPEN без fallback=down):
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.resilience.coordinator import (
-    ComponentStatus,
-    ResilienceCoordinator,
-    get_resilience_coordinator,
-)
+if TYPE_CHECKING:
+    from src.backend.infrastructure.resilience.coordinator import (
+        ComponentStatus,
+        ResilienceCoordinator,
+        get_resilience_coordinator,
+    )
 
 __all__ = (
     "build_resilience_health_check",
@@ -83,6 +84,10 @@ def build_resilience_health_check(
     async def _check(*, mode: str = "fast") -> dict[str, Any]:
         # ``mode`` принимается, но игнорируется: данные coordinator-а
         # предсчитаны (state-machine purgatory), нет смысла различать.
+        from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+            get_resilience_coordinator,
+        )
+
         coord = coordinator or get_resilience_coordinator()
         snapshot = coord.status().get(component)
         if snapshot is None:
@@ -108,6 +113,10 @@ def register_resilience_health_checks(
     ``health_aggregator`` принимается типа Any, чтобы избежать
     циклических импортов модулей ``application/`` ↔ ``resilience/``.
     """
+    from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+        get_resilience_coordinator,
+    )
+
     coord = coordinator or get_resilience_coordinator()
     for component in coord.list_components():
         health_aggregator.register(
@@ -120,5 +129,9 @@ def resilience_components_report(
     coordinator: ResilienceCoordinator | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Снимок состояния всех компонентов (для /components?mode=deep)."""
+    from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+        get_resilience_coordinator,
+    )
+
     coord = coordinator or get_resilience_coordinator()
     return {name: _component_to_dict(comp) for name, comp in coord.status().items()}
