@@ -29,10 +29,15 @@ class ClamAVTcpBackend(AntivirusBackend):
     name = "clamav_tcp"
 
     def __init__(
-        self, host: str = "127.0.0.1", port: int = 3310, timeout: float = 30.0
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float = 30.0,
     ) -> None:
-        self._host = host
-        self._port = port
+        from src.backend.core.config.waf import waf_settings
+
+        self._host = host if host is not None else waf_settings.clamav_host
+        self._port = port if port is not None else waf_settings.clamav_port
         self._timeout = timeout
 
     async def is_available(self) -> bool:

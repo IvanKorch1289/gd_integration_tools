@@ -65,7 +65,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         self,
         *,
         host: str = "",
-        port: int = 12201,
+        port: int | None = None,
         use_tls: bool = False,
         ca_bundle: str | None = None,
         level: str = "INFO",
@@ -77,6 +77,11 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         **_extra: Any,
     ) -> None:
         """Настраивает structlog + stdlib logging бэкенды."""
+        # Use settings defaults if not provided
+        from src.backend.core.config.services.logging import log_settings
+
+        if port is None:
+            port = log_settings.port
         try:
             import structlog
         except ImportError as exc:

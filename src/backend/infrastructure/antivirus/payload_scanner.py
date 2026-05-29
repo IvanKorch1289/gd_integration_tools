@@ -59,7 +59,7 @@ class ClamAVPayloadScanner:
         )
         from src.backend.core.net.waf import WafPolicy
 
-        scanner = ClamAVPayloadScanner(ClamAVTcpBackend(host="clamav", port=3310))
+        scanner = ClamAVPayloadScanner(ClamAVTcpBackend())
         policy = WafPolicy(strict=True, async_payload_scanner=scanner)
     """
 

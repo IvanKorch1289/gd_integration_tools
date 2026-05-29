@@ -41,8 +41,8 @@ class ClickHouseClient:
 
     def __init__(
         self,
-        host: str = "localhost",
-        http_port: int = 8123,
+        host: str | None = None,
+        http_port: int | None = None,
         database: str = "default",
         user: str = "default",
         password: str = "",
@@ -57,8 +57,11 @@ class ClickHouseClient:
         pool_pre_ping: bool = True,
         max_connections: int = 100,
     ) -> None:
-        self._host = host
-        self._http_port = http_port
+        # Use settings defaults if not provided
+        from src.backend.core.config.clickhouse import clickhouse_settings
+
+        self._host = host if host is not None else clickhouse_settings.host
+        self._http_port = http_port if http_port is not None else clickhouse_settings.http_port
         self._database = database
         self._user = user
         self._password = password

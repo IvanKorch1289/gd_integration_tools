@@ -1339,7 +1339,7 @@ class IntegrationMixin:
         *,
         host: str,
         topic: str,
-        port: int = 1883,
+        port: int | None = None,
         qos: int = 0,
         retain: bool = False,
         username: str | None = None,
@@ -1352,6 +1352,10 @@ class IntegrationMixin:
         См. :class:`MqttPublishProcessor` и
         :class:`~src.backend.infrastructure.sinks.mqtt_sink.MqttSink`.
         """
+        from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+
+        if port is None:
+            port = MqttSettings().broker_port
         from src.backend.dsl.engine.processors.sink_publish import MqttPublishProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]

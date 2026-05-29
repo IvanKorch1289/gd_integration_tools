@@ -24,6 +24,12 @@ from src.backend.dsl.codec.json import dumps_bytes
 __all__ = ("MqttSink",)
 
 
+def _default_mqtt_port() -> int:
+    """Returns default MQTT port from MqttSettings."""
+    from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+    return MqttSettings().broker_port
+
+
 @dataclass(slots=True)
 class MqttSink(Sink):
     """Sink публикации одного сообщения в MQTT-брокер.
@@ -50,7 +56,7 @@ class MqttSink(Sink):
     sink_id: str
     broker_host: str
     topic: str
-    broker_port: int = 1883
+    broker_port: int = field(default_factory=_default_mqtt_port)
     qos: int = 0
     retain: bool = False
     client_id: str | None = None

@@ -386,7 +386,7 @@ class MqttPublishProcessor(BaseProcessor):
         host: str,
         topic: str,
         *,
-        port: int = 1883,
+        port: int | None = None,
         qos: int = 0,
         retain: bool = False,
         username: str | None = None,
@@ -396,6 +396,10 @@ class MqttPublishProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         """Сохраняет MQTT broker config; клиент создаётся при ``process``."""
+        from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+
+        if port is None:
+            port = MqttSettings().broker_port
         super().__init__(name=name or f"mqtt_publish:{topic}")
         self._host = host
         self._port = port
