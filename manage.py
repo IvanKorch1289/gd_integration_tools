@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GD Integration Tools — CLI для управления проектом.
+"""[wave:s19/k2-w2] GD Integration Tools — CLI для управления проектом.
 
 Замена manage.sh: запуск backend/frontend, миграции, scaffolding, introspection.
 
