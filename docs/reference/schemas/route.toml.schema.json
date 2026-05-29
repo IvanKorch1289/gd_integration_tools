@@ -28,71 +28,12 @@
       "title": "CapabilityRef",
       "type": "object"
     },
-    "_RouteTimeoutModel": {
+    "SecurityModel": {
       "additionalProperties": false,
-      "description": "Pydantic-обёртка над :class:`RouteTimeoutSpec` для парсинга TOML.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в ``[timeout]``\nсекции на этапе load (вместо silent ignore).",
-      "properties": {
-        "connect": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Connect"
-        },
-        "read": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Read"
-        },
-        "total": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Total"
-        },
-        "write": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Write"
-        }
-      },
-      "title": "_RouteTimeoutModel",
-      "type": "object"
-    },
-    "_SecurityModel": {
-      "additionalProperties": false,
-      "description": "Pydantic-модель для секции ``[security]`` в route.toml.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в полях\nсекции на этапе load.",
+      "description": "Секция ``[security]`` в route.toml.\n\nK3 S19 W3: route_authz_requires_permission feature flag\nактивирует проверку permissions через AuthorizationGateway.",
       "properties": {
         "requires_permission": {
+          "default": [],
           "description": "Список required permissions в формате \"role:<role_name>\" или \"scope:<scope_name>\". При route_authz_requires_permission=True AuthorizationGateway проверяет наличие всех перечисленных permissions у principal перед dispatch на route.",
           "items": {
             "type": "string"
@@ -101,12 +42,12 @@
           "type": "array"
         }
       },
-      "title": "_SecurityModel",
+      "title": "SecurityModel",
       "type": "object"
     }
   },
   "additionalProperties": false,
-  "description": "Манифест маршрута V11 (``routes/<name>/route.toml``).\n\nСм. ADR-043 для полного описания формата, lifecycle и\ninvariant'а ``route.capabilities ⊆ union(plugins.capabilities)``.\n\nAttributes:\n    name: snake_case-имя маршрута; совпадает с каталогом\n        ``routes/<name>/``.\n    version: SemVer-строка маршрута.\n    requires_core: PEP-440 SpecifierSet — диапазон версий ядра.\n    requires_plugins: Mapping ``plugin_name → SemVer-spec`` для\n        плагинов, чьи Processor/Source/Sink/Action использует\n        pipeline.\n    tenant_aware: Если ``True`` — pipeline сознательно работает\n        в TenantContext.\n    feature_flag: ``True``/``False`` (статически вкл./выкл.),\n        ``str`` (имя ENV или dotted-path к\n        ``IFeatureFlagProvider``), ``None`` (по умолчанию вкл.).\n    tags: Тэги для admin-grouping и DSL-Linter.\n    description: Опц. человекочитаемая аннотация.\n    pipelines: Список path'ей ``*.dsl.yaml`` относительно\n        ``routes/<name>/`` (главный — первый, остальные — fragments).\n    capabilities: Декларация runtime-gate (см. ADR-044).\n        Должна быть подмножеством объединения capabilities\n        требуемых плагинов + публичных capabilities ядра\n        (проверка в :class:`RouteLoader`, а не в pydantic).\n    security: Опц. секция ``[security]`` с requires_permission.\n        K3 S19 W3: route_authz_requires_permission feature flag\n        активирует проверку permissions через AuthorizationGateway.\n    timeout: Конфигурация таймаутов (connect / read / write / total).",
+  "description": "Манифест маршрута V11 (``routes/<name>/route.toml``).\n\nСм. ADR-043 для полного описания формата, lifecycle и\ninvariant'а ``route.capabilities ⊆ union(plugins.capabilities)``.\n\nAttributes:\n    name: snake_case-имя маршрута; совпадает с каталогом\n        ``routes/<name>/``.\n    version: SemVer-строка маршрута.\n    requires_core: PEP-440 SpecifierSet — диапазон версий ядра.\n    requires_plugins: Mapping ``plugin_name → SemVer-spec`` для\n        плагинов, чьи Processor/Source/Sink/Action использует\n        pipeline.\n    tenant_aware: Если ``True`` — pipeline сознательно работает\n        в TenantContext.\n    feature_flag: ``True``/``False`` (статически вкл./выкл.),\n        ``str`` (имя ENV или dotted-path к\n        ``IFeatureFlagProvider``), ``None`` (по умолчанию вкл.).\n    tags: Тэги для admin-grouping и DSL-Linter.\n    description: Опц. человекочитаемая аннотация.\n    pipelines: Список path'ей ``*.dsl.yaml`` относительно\n        ``routes/<name>/`` (главный — первый, остальные — fragments).\n    capabilities: Декларация runtime-gate (см. ADR-044).\n        Должна быть подмножеством объединения capabilities\n        требуемых плагинов + публичных capabilities ядра\n        (проверка в :class:`RouteLoader`, а не в pydantic).",
   "properties": {
     "capabilities": {
       "default": [],
@@ -174,18 +115,13 @@
         "type": "string"
       },
       "title": "Requires Workflows",
-      "type": "object"
+      "type": "object",
+      "description": "K3 S19 W1: Workflow SemVer version requirements."
     },
     "security": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/_SecurityModel"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+      "$ref": "#/$defs/SecurityModel",
+      "default": null,
+      "title": "Security"
     },
     "tags": {
       "default": [],
@@ -199,17 +135,6 @@
       "default": false,
       "title": "Tenant Aware",
       "type": "boolean"
-    },
-    "timeout": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/_RouteTimeoutModel"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
     },
     "version": {
       "minLength": 1,
