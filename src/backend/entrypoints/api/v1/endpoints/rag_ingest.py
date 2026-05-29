@@ -62,17 +62,13 @@ class BulkDocument(BaseModel):
     """Схема одного документа для bulk ingest."""
 
     content: str = Field(..., description="Текстовый контент документа")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Метаданные документа"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Метаданные документа")
 
 
 class BulkIngestRequest(BaseModel):
     """Request body для POST /rag/bulk-ingest."""
 
-    documents: list[BulkDocument] = Field(
-        ..., min_length=1, description="Список документов"
-    )
+    documents: list[BulkDocument] = Field(..., min_length=1, description="Список документов")
     collection: str = Field(default="default", description="Namespace RAG collection")
 
 
@@ -121,18 +117,16 @@ async def bulk_rag_ingest(request: BulkIngestRequest) -> dict[str, Any]:
     for doc in request.documents:
         try:
             doc_id = await rag.ingest(
-                doc.content, metadata=doc.metadata, namespace=request.collection
+                doc.content,
+                metadata=doc.metadata,
+                namespace=request.collection,
             )
             payload["doc_ids"].append(doc_id)
         except Exception as exc:  # noqa: BLE001
-            payload["errors"].append(
-                {"content_preview": doc.content[:100], "error": str(exc)}
-            )
+            payload["errors"].append({"content_preview": doc.content[:100], "error": str(exc)})
         payload["processed"] += 1
 
-    payload["status"] = (
-        "completed" if not payload["errors"] else "completed_with_errors"
-    )
+    payload["status"] = "completed" if not payload["errors"] else "completed_with_errors"
     payload["finished_at"] = datetime.now(timezone.utc).isoformat()
 
     return payload

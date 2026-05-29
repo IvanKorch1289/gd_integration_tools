@@ -103,7 +103,10 @@ class K4APIClient(APIClient):
             return []
 
     def bulk_rag_ingest(
-        self, *, documents: list[dict[str, Any]], collection: str = "default"
+        self,
+        *,
+        documents: list[dict[str, Any]],
+        collection: str = "default",
     ) -> dict[str, Any]:
         """Bulk ingest documents via POST /api/v1/rag/bulk-ingest (S19 K4 W1).
 

@@ -1,6 +1,5 @@
 """AI/ML DSL процессоры — LLM, RAG, PII, prompt composition."""
 
-import re
 from typing import Any, Callable
 
 import orjson
@@ -58,13 +57,9 @@ class PromptComposerProcessor(BaseProcessor):
         try:
             prompt = self._template.format(**variables)
         except KeyError:
-            # Extract variable names from template using regex
-            vars_in_template = re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template)
-            # Fill missing template vars with empty string (setdefault keeps real values)
-            fill = {**variables}
-            for k in vars_in_template:
-                fill.setdefault(k, "")
-            prompt = self._template.format_map(fill)
+            prompt = self._template.format_map(
+                {**variables, **{k: "" for k in self._template.split("{") if "}" in k}}
+            )
         exchange.set_property(self._output_property, prompt)
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -116,9 +111,6 @@ class LLMCallProcessor(BaseProcessor):
                 if isinstance(exchange.in_message.body, str)
                 else str(exchange.in_message.body)
             )
-
-        # S30 w4: сохраняем prompt для NeMo output guardrails
-        exchange.set_property("llm.original_prompt", prompt)
 
         _log = logging.getLogger("dsl.ai")
 
@@ -863,27 +855,6 @@ class GuardrailsProcessor(BaseProcessor):
                     exchange.fail(f"Guardrail/rebuff: provider error: {exc}")
                     return
 
-        if "nemo" in config.enabled_providers:
-            try:
-                from src.backend.services.ai.guardrails.nemo_client import (
-                    get_nemo_guardrails_runtime,
-                )
-
-                runtime = get_nemo_guardrails_runtime()
-                if runtime is None:
-                    return  # GPU/FF unavailable — skip NeMo silently
-                prompt = exchange.get_property("llm.original_prompt", "")
-                nemo_result = await runtime.check_output(prompt=prompt, completion=text)
-                if not nemo_result.get("safe", True):
-                    exchange.fail(
-                        f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}"
-                    )
-                    return
-            except Exception as exc:  # noqa: BLE001
-                if config.block_on_failure:
-                    exchange.fail(f"Guardrail/nemo: provider error: {exc}")
-                    return
-
     def _resolve_config(self) -> Any:
         """Возвращает per-tenant guardrails config или None.
 
@@ -1128,7 +1099,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
             results = await rag.search(
                 query=query, top_k=top_k * 2, namespace=self._NAMESPACE
             )
-        except Exception as _:
+        except Exception:
             return []
 
         examples: list[dict[str, str]] = []

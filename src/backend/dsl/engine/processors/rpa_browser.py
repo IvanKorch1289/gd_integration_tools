@@ -54,10 +54,9 @@ def _extract_domain(url: str) -> str:
     try:
         # urlparse работает с "https://example.com/path?query"
         from urllib.parse import urlparse
-
         parsed = urlparse(url)
         return parsed.netloc or ""
-    except Exception as _:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return ""
 
 
@@ -183,7 +182,9 @@ class NavigateProcessor(BaseProcessor):
                 domain = _extract_domain(self._url)
                 if (tenant_id or user_id) and domain:
                     cookies = await cookie_store.restore_cookies(
-                        tenant_id=tenant_id, user_id=user_id, domain=domain
+                        tenant_id=tenant_id,
+                        user_id=user_id,
+                        domain=domain,
                     )
                     if cookies:
                         await ctx.add_cookies(cookies)

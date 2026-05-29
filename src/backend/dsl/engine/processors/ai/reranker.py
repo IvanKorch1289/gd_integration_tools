@@ -109,9 +109,7 @@ class RerankerProcessor(BaseProcessor):
         # Lazy-load cross-encoder model
         model = self._get_model()
         if model is None:
-            logger.warning(
-                "RerankerProcessor: model unavailable, returning candidates as-is"
-            )
+            logger.warning("RerankerProcessor: model unavailable, returning candidates as-is")
             exchange.set_property(self._output_property, candidates[: self._top_k])
             return
 
@@ -135,7 +133,9 @@ class RerankerProcessor(BaseProcessor):
             doc["rerank_score"] = float(score)
 
         reranked = sorted(
-            candidates, key=lambda d: d.get("rerank_score", 0.0), reverse=True
+            candidates,
+            key=lambda d: d.get("rerank_score", 0.0),
+            reverse=True,
         )
 
         exchange.set_property(self._output_property, reranked[: self._top_k])
@@ -154,9 +154,7 @@ class RerankerProcessor(BaseProcessor):
             from sentence_transformers import CrossEncoder  # noqa: PLC0415
 
             self._model = CrossEncoder(self._model_name)
-            logger.info(
-                "RerankerProcessor: loaded cross-encoder model %s", self._model_name
-            )
+            logger.info("RerankerProcessor: loaded cross-encoder model %s", self._model_name)
             return self._model
         except ImportError:
             logger.warning(
@@ -165,9 +163,7 @@ class RerankerProcessor(BaseProcessor):
             )
             return None
         except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "RerankerProcessor: failed to load model %s: %s", self._model_name, exc
-            )
+            logger.warning("RerankerProcessor: failed to load model %s: %s", self._model_name, exc)
             return None
 
     def to_spec(self) -> dict[str, Any] | None:

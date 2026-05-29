@@ -58,16 +58,12 @@ with tab_file:
         help="Перетащите файлы сюда или кликните для выбора",
     )
 
-    file_collection = st.text_input(
-        "Collection (namespace)", value="default", key="file_ns"
-    )
+    file_collection = st.text_input("Collection (namespace)", value="default", key="file_ns")
 
     if uploaded_files:
         st.write(f"**Выбрано файлов:** {len(uploaded_files)}")
         for f in uploaded_files:
-            st.write(
-                f"  • `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)"
-            )
+            st.write(f"  • `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)")
 
         if st.button("Ingest Files", type="primary", key="ingest_files"):
             documents = []
@@ -88,10 +84,7 @@ with tab_file:
                         result = client._request(
                             "POST",
                             "/api/v1/rag/bulk-ingest",
-                            json={
-                                "documents": documents,
-                                "collection": file_collection,
-                            },
+                            json={"documents": documents, "collection": file_collection},
                         )
                         st.success("Bulk ingest completed!")
                         st.json(result)
@@ -106,14 +99,8 @@ with tab_json:
 
     default_json = json.dumps(
         [
-            {
-                "content": "Первый тестовый документ для RAG.",
-                "metadata": {"source": "manual", "type": "test"},
-            },
-            {
-                "content": "Второй тестовый документ.",
-                "metadata": {"source": "manual", "type": "test"},
-            },
+            {"content": "Первый тестовый документ для RAG.", "metadata": {"source": "manual", "type": "test"}},
+            {"content": "Второй тестовый документ.", "metadata": {"source": "manual", "type": "test"}},
         ],
         ensure_ascii=False,
         indent=2,
@@ -126,9 +113,7 @@ with tab_json:
         help="JSON массив документов с полями content (str) и metadata (dict, опционально)",
     )
 
-    json_collection = st.text_input(
-        "Collection (namespace)", value="default", key="json_ns"
-    )
+    json_collection = st.text_input("Collection (namespace)", value="default", key="json_ns")
 
     col1, col2 = st.columns([1, 4])
     with col1:
@@ -166,10 +151,7 @@ with tab_json:
                         result = client._request(
                             "POST",
                             "/api/v1/rag/bulk-ingest",
-                            json={
-                                "documents": documents,
-                                "collection": json_collection,
-                            },
+                            json={"documents": documents, "collection": json_collection},
                         )
                         st.success("Bulk ingest completed!")
                         st.json(result)
@@ -184,15 +166,11 @@ st.divider()
 st.subheader("Recent Ingest Tasks")
 if st.button("Refresh Status", key="refresh_status"):
     try:
-        recent = client._request(
-            "GET", "/api/v1/rag/ingest/recent", params={"limit": 5}
-        )
+        recent = client._request("GET", "/api/v1/rag/ingest/recent", params={"limit": 5})
         items = recent.get("items", [])
         if items:
             for item in items:
-                with st.expander(
-                    f"Task: {item.get('task_id', '?')[:8]}... — {item.get('status', '?')}"
-                ):
+                with st.expander(f"Task: {item.get('task_id', '?')[:8]}... — {item.get('status', '?')}"):
                     st.json(item)
         else:
             st.info("No recent ingest tasks found.")
