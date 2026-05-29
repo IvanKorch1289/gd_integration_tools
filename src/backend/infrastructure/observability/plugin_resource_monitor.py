@@ -1,4 +1,4 @@
-"""Sprint 14 K2 W1 — per-plugin resource monitor для Prometheus.
+"""[wave:s19/k1-w2-current-frames-fallback] Sprint 14 K2 W1 — per-plugin resource monitor для Prometheus.
 
 Назначение:
     Периодически (interval=30s по default) снимает CPU/RSS-метрики
