@@ -133,18 +133,6 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    workflow_orchestrator_enabled: bool = Field(
-        default=False,
-        title="K4 S28 W4: OrchestratorEngine routing tasks between agents",
-        description=(
-            "K4 Sprint 28 Wave 4 (wave:s28/k4-w4-orchestrator-engine). "
-            "Owner: K4 AI/Workflow. Activates OrchestratorEngine.route() - "
-            "task -> agent routing based on RoutingRule with JMESPath evaluation. "
-            "When False, engine returns default_agent (if specified) "
-            "or raises ValueError. default-OFF until staging-smoke."
-        ),
-    )
-
     # ─── K5 — DSL ──────────────────────────────────────────────────────────
     frontend_schema_registry_ui: bool = Field(
         default=False,
@@ -190,19 +178,6 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    lsp_server_published: bool = Field(
-        default=False,
-        title="S19 K3 W4: LSP server published (YAML schema completion)",
-        description=(
-            "S19 K3 W4. Owner: K3 DSL. "
-            "Активирует YAML schema completion в LSP server "
-            "(tools/dsl_lsp/schema_completion.py + gd_dsl.yaml schema). "
-            "CompletionList с 22 step-type keywords (proxy, call_function, "
-            "crud_create, и т.д.) + JSON-Schema snippets. "
-            "default-OFF до staging-smoke completion в VSCode/JetBrains."
-        ),
-    )
-
     admin_marketplace_endpoints: bool = Field(
         default=False,
         title="Admin: Action-Bus + Plugin-Marketplace REST endpoints",
@@ -211,17 +186,6 @@ class FeatureFlags(BaseSettingsWithLoader):
             "Активирует /api/v1/admin/actions/* и /api/v1/admin/plugins/* — "
             "backend endpoints для Streamlit 50_Action_Bus.py + 60_Plugin_Marketplace.py. "
             "default-OFF до staging-smoke и интеграции с ActionHandlerRegistry + PluginLoader."
-        ),
-    )
-
-    dsl_visual_editor_enabled: bool = Field(
-        default=False,
-        title="Sprint 19 K3 W5: DSL Visual Editor (Drag-Drop Route Builder)",
-        description=(
-            "S19 K3 W5. Owner: K3 DSL. "
-            "Активирует страницу 40_dsl_visual_editor.py — drag-drop route editor "
-            "с three-panel layout (step palette / canvas / properties). "
-            "Export to YAML. default-OFF до staging-smoke."
         ),
     )
 
@@ -260,12 +224,12 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     langfuse_v3: bool = Field(
-        default=True,
+        default=False,
         title="AI: LangFuse 3.x callbacks",
         description=(
-            "K6 Wave 1. Owner: K6 AI/RAG. "
-            "LangFuse 3.x SDK — OTEL-native, лучше совместимость с self-hosted. "
-            "W11 GAP-AI: default-ON, v2 callback (langfuse_callback.py) удалён."
+            "K6 Wave 1. Owner: K6 AI/RAG. ETA: S2-W1. "
+            "Переключение на LangFuse 3.x SDK. default-OFF до полной "
+            "миграции callbacks и smoke на 1 trace + generation."
         ),
     )
 
@@ -1006,19 +970,6 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    multipart_rag_ingest: bool = Field(
-        default=False,
-        title="K4 W1: Bulk RAG ingest endpoint + Streamlit UI (multipart/form-data)",
-        description=(
-            "S19 K4 W1. Owner: K4 AI/RAG. "
-            "Активирует POST /api/v1/rag/bulk-ingest endpoint, который принимает "
-            'список {"content", "metadata"} документов, обрабатывает через embeddings '
-            "pipeline и сохраняет в Chroma. Также активирует страницу "
-            "85_RAG_Bulk_Upload.py с drag-drop файлом или textarea. "
-            "default-OFF до staging-smoke."
-        ),
-    )
-
     multimodal_rag_docling: bool = Field(
         default=False,
         title="K4 S5 W3: Multimodal RAG (docling + PaddleOCR/EasyOCR)",
@@ -1248,7 +1199,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "K3 Sprint 6 Wave 5. Owner: K3 DSL. ETA: S6-W5. "
             "Активирует .call_com(worker, method, params) DSL-шаг → REST к "
-            "src/backend/windows_worker/main.py через services/rpa/com_sidecar_client.py. "
+            "windows_worker/main.py через services/rpa/com_sidecar_client.py. "
             "default-OFF на Linux (mock); ON на Windows-worker docker."
         ),
     )
@@ -1944,6 +1895,30 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    ai_pr_review_enabled: bool = Field(
+        default=False,
+        title="K4 S15 W16: AI PR review GitHub Action (Claude API + WAF)",
+        description=(
+            "K4 Sprint 15 Wave 16 (wave:s15/k4-w1-ai-pr-review). "
+            "Owner: K4 AI/Innovation. Активирует .github/workflows/ai-pr-review.yml "
+            "Claude API review через make_http_client (WAF compliance). "
+            "При False — workflow self-skip через if-condition. "
+            "default-OFF до публикации ANTHROPIC_API_KEY secret и smoke."
+        ),
+    )
+
+    dsl_visual_editor_drag_drop: bool = Field(
+        default=False,
+        title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
+        description=(
+            "K3 Sprint 15 Wave 10 (wave:s15/k3-w2-dsl-visual-editor-finale). "
+            "Owner: K3 DSL/LSP. Активирует drag-drop через streamlit-elements "
+            "+ BPMN 2.0 export через lxml + undo/redo stack в session_state. "
+            "При False — page 31 в read-only режиме. "
+            "default-OFF до staging-smoke с reference workflow."
+        ),
+    )
+
     changelog_autogen_enabled: bool = Field(
         default=False,
         title="K5 S15 W15: changelog autogen из wave-tags (make release-notes)",
@@ -2251,7 +2226,7 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     # ─── K4 — Sprint 25 AI Gateway + Policy DSL (ADR-NEW-19/20/21) ────────
     ai_gateway_enforce: bool = Field(
-        default=True,
+        default=False,
         title="K4 S25 W1: AIGateway единая точка входа в AI (ADR-NEW-19)",
         description=(
             "K4 Sprint 25 Wave 1 (ADR-NEW-19, PLAN.md V22.4 §S25). Owner: K4 AI/Data + К1 Security. "
@@ -2259,7 +2234,7 @@ class FeatureFlags(BaseSettingsWithLoader):
             "(policy_resolve → sanitize → guards → render → invoke_llm → "
             "output_guards → output_sanitize → audit → cost). При False — "
             "scaffold-pass-through через _legacy_invoke (3 кодопути сохраняют интерфейс). "
-            "default-ON после S27 closure: 100% callsites обёрнуты, "
+            "default-OFF до S27 closure: 100% callsites обёрнуты, "
             "`make ai-gateway-coverage` strict zero violations."
         ),
     )
@@ -2299,7 +2274,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "K4 Sprint 26 Wave 1 (PLAN.md V22.4 §S26). Owner: K4 AI/Data. "
             "При True `tools/checks/check_hardcoded_prompts.py` валит CI при наличии "
-            'литералов `system_prompt=`, `system_message=`, `system="..."` длиннее '
+            "литералов `system_prompt=`, `system_message=`, `system=\"...\"` длиннее "
             "50 символов в src/backend/ (вне allowlist). При False — warn-only. "
             "default-OFF первый месяц после S26 W1 sweep → ON в S27 closure."
         ),
@@ -2521,7 +2496,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W1: workflow SemVer versioning in route.toml [requires_workflows]",
         description=(
             "K3 Sprint 19 Wave 1 (PLAN.md V22 §S19 W1, Func-rec #1). Owner: K3 DSL/Workflow. "
-            'При True route.toml поддерживает секцию [requires_workflows] = { wf_name = ">=1.0,<2.0" }. '
+            "При True route.toml поддерживает секцию [requires_workflows] = { wf_name = \">=1.0,<2.0\" }. "
             "RouteLoader.load() проверяет совместимость версий workflow при загрузке. "
             "RouteBuilder.invoke_workflow(name, version=...) принимает SemVer-range. "
             "Audit-event workflow.version.mismatch при несовместимости. "
@@ -2534,8 +2509,8 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W2: route composition via include:/extends: с cycle detection",
         description=(
             "K3 Sprint 19 Wave 2 (PLAN.md V22 §S19 W2, Func-rec #2). Owner: K3 DSL. "
-            'При True *.dsl.yaml поддерживает include: ["./common-steps.yaml"] (один уровень) '
-            'и extends: "./base-route.yaml". YAML-loader разрешает дерево включений '
+            "При True *.dsl.yaml поддерживает include: [\"./common-steps.yaml\"] (один уровень) "
+            "и extends: \"./base-route.yaml\". YAML-loader разрешает дерево включений "
             "с cycle detection (RuntimeError при цикле). JSON-Schema каталог обновляется. "
             "default-OFF до DSL linter integration и smoke-test."
         ),
@@ -2546,7 +2521,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W3: AuthorizationGateway route-level requires_permission",
         description=(
             "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, Func-rec #3). Owner: K3 DSL/Security. "
-            'При True route.toml поддерживает [security] requires_permission = ["role:admin", "scope:credit.read"]. '
+            "При True route.toml поддерживает [security] requires_permission = [\"role:admin\", \"scope:credit.read\"]. "
             "AuthorizationGateway (S17 ADR-NEW-1) проверяет permissions перед dispatch на route. "
             "Capability-gate в RouteLoader.load() валидирует синтаксис permission-string. "
             "default-OFF до integration-test с AuthorizationGateway."
@@ -2602,22 +2577,9 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    banking_ai_processors_enabled: bool = Field(
-        default=False,
-        title="K4 S19 W3: Banking AI processors - CreditScore, FraudDetection, RiskAssessment, CustomerSegmentation, LoanEligibility",
-        description=(
-            "K4 Sprint 19 Wave 3 (S-L4-1 closure). Owner: K4 AI. "
-            "При True активирует 5 AI-процессоров в dsl/engine/processors/ai/banking_processors.py: "
-            "CreditScoreProcessor / FraudDetectionProcessor / RiskAssessmentProcessor / "
-            "CustomerSegmentationProcessor / LoanEligibilityProcessor — LLM call через "
-            "instructor/litellm + structured output Pydantic + capability-gate ai.llm.litellm. "
-            "default-OFF до LLM integration smoke-tests."
-        ),
-    )
-
     langmem_consolidation_impl: bool = Field(
-        default=True,
-        title="S19 K4 W4b: LangMemService.consolidate() APScheduler job (wave:s19/k4-w4b)",
+        default=False,
+        title="K4 S19 W4: LangMemService.consolidate() implementation (S-L4-3 closure)",
         description=(
             "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W9, S-L4-3 closure). Owner: K4 AI/RAG. "
             "При True реализует LangMemService.consolidate(): episodic → semantic compaction "
@@ -2803,7 +2765,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K5 S19 W4: make new-adr + completions + release-notes + D3.js arch map",
         description=(
             "K5 Sprint 19 Wave 4 (PLAN.md V22 §S19 W16). Owner: K5 DX. "
-            'При True: make new-adr TITLE="..." + manage.py completions install + '
+            "При True: make new-adr TITLE=\"...\" + manage.py completions install + "
             "make release-notes + frontend/streamlit_app/pages/05_Architecture_Map.py (D3.js). "
             "default-OFF до quick-wins review."
         ),
