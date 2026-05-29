@@ -1,6 +1,0 @@
-extends: existence
-message: "Орфография: '%s' — заменить на корректное написание."
-level: suggestion
-ignorecase: true
-tokens:
-  - "(?i)компонент(а|ы|ов)?(?<!компонент)"

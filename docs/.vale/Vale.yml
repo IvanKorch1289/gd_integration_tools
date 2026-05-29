@@ -1,8 +1,0 @@
-extends: existence
-message: "Avoid using '%s'."
-ignorecase: true
-raw:
-  - \b[sS]anity\s+[cC]heck\b
-  - \b[mM]aster\s+[bB]ranch\b
-  - \b[wW]hitelist\b
-  - \b[bB]lacklist\b

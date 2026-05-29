@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Values.namespace.name }}
-  labels:
-    app.kubernetes.io/name: gd-integration-tools
-    pod-security.kubernetes.io/enforce: restricted

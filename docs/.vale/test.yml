@@ -1,4 +1,0 @@
-extends: existence
-message: "Avoid using test."
-raw:
-  - \btest\b

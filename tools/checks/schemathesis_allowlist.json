@@ -1,6 +1,0 @@
-{
-  "version": "1.0",
-  "created_at": "2026-05-14",
-  "description": "Sprint 6 K2 schemathesis allowlist — known false-positives и accepted divergences. Перегенерируется руками после анализа non_allowlisted violations.",
-  "violations": []
-}

@@ -1,5 +1,0 @@
-# Vale configuration for gd_integration_tools
-# S34 W5: Prose linter
-
-MinAlertLevel: suggestion
-StylesPath: .vale/styles
