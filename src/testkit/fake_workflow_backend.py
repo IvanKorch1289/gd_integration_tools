@@ -1,27 +1,16 @@
-"""Re-export of :class:`FakeWorkflowBackend <src.backend.core.workflow.fake_backend.FakeWorkflowBackend>`.
+"""FakeWorkflowBackend — re-export of in-memory WorkflowBackend implementation.
 
-K5 S19 W3 (S-L10-1). This module re-exports the in-memory
-:class:`WorkflowBackend <src.backend.core.workflow.backend.WorkflowBackend>`
-implementation from the core package for convenient access via
-``src.testkit.FakeWorkflowBackend``.
+Этот модуль — re-export :class:`FakeWorkflowBackend` из
+:mod:`src.backend.core.workflow.fake_backend` для удобного доступа
+через ``src.testkit`` public API.
 
-See the original implementation for full documentation:
+См. оригинальный модуль для документации.
 
-* :class:`FakeWorkflowBackend <src.backend.core.workflow.fake_backend.FakeWorkflowBackend>`
-* :class:`WorkflowBackend <src.backend.core.workflow.backend.WorkflowBackend>`
-* :class:`WorkflowHandle <src.backend.core.workflow.backend.WorkflowHandle>`
-* :class:`WorkflowResult <src.backend.core.workflow.backend.WorkflowResult>`
+Этот модуль — часть ``src/testkit/`` public API (K5 S19 W3).
 """
 
 from __future__ import annotations
 
-from src.backend.core.workflow import FakeWorkflowBackend as _Impl
-from src.backend.core.workflow import WorkflowBackend, WorkflowHandle, WorkflowResult
+from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
 
-# Re-export under the testkit namespace with the same class reference.
-# This avoids breaking existing code that imports FakeWorkflowBackend from
-# src.backend.core.workflow directly while providing a convenient
-# ``src.testkit.FakeWorkflowBackend`` import path.
-FakeWorkflowBackend = _Impl
-
-__all__ = ("FakeWorkflowBackend", "WorkflowBackend", "WorkflowHandle", "WorkflowResult")
+__all__ = ("FakeWorkflowBackend",)
