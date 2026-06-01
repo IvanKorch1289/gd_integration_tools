@@ -34,7 +34,6 @@ from src.backend.dsl.workflow.spec import (
     SignalWaitDeclaration,
     SleepDeclaration,
     WorkflowDeclaration,
-    WorkflowDiff,
     WorkflowStep,
 )
 from src.backend.dsl.workflow.yaml_io import (
