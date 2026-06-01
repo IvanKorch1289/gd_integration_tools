@@ -53,7 +53,7 @@ class IntegrationMixin:
         Основной способ связи DSL с бизнес-логикой. Action ищется
         в ActionHandlerRegistry по имени (e.g., "orders.add").
         """
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             DispatchActionProcessor(
                 action=action,
                 payload_factory=payload_factory,
@@ -83,7 +83,7 @@ class IntegrationMixin:
         ``timeout`` ограничивает SYNC-исполнение через ``asyncio.wait_for``;
         ``correlation_id`` — клиентский id для трассировки middleware/reply.
         """
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             InvokeProcessor(
                 action=action,
                 mode=mode,
@@ -100,7 +100,7 @@ class IntegrationMixin:
         self, route_id: str, *, result_property: str = "sub_result"
     ) -> "RouteBuilder":
         """Вызов другого зарегистрированного DSL-маршрута."""
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             PipelineRefProcessor(route_id=route_id, result_property=result_property)
         )
 
@@ -145,7 +145,7 @@ class IntegrationMixin:
             InvokeWorkflowProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             InvokeWorkflowProcessor(
                 name,
                 mode=mode,
@@ -181,7 +181,7 @@ class IntegrationMixin:
             CancelWorkflowProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CancelWorkflowProcessor(
                 workflow_id,
                 reason=reason,
@@ -209,7 +209,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.security import AuthValidateProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             AuthValidateProcessor(
                 methods=methods, result_property=result_property, required=required
             )
@@ -238,7 +238,7 @@ class IntegrationMixin:
             HeaderMapPolicy,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             ExposeProxyProcessor(
                 src=src,
                 methods=methods,
@@ -261,7 +261,7 @@ class IntegrationMixin:
             HeaderMapPolicy,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             ForwardToProcessor(
                 dst=dst,
                 pass_headers=pass_headers,
@@ -283,7 +283,7 @@ class IntegrationMixin:
         timeout: float = 30.0,
     ) -> "RouteBuilder":
         """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
-        return self.expose_proxy(  # type: ignore[attr-defined,no-any-return]
+        return self.expose_proxy(  
             src=src, methods=methods, header_map=header_map
         ).forward_to(
             dst=dst,
@@ -316,12 +316,12 @@ class IntegrationMixin:
         from src.backend.dsl.engine.processors.proxy import RedirectProcessor
 
         if target_url is not None:
-            return self._add(  # type: ignore[attr-defined,no-any-return]
+            return self._add(  # type: ignore[attr-defined]
                 RedirectProcessor(
                     mode="static", status_code=status_code, target_url=target_url
                 )
             )
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             RedirectProcessor(
                 mode="proxy",
                 status_code=status_code,
@@ -343,7 +343,7 @@ class IntegrationMixin:
         """Создать сущность через action ``<entity>.create``."""
         from src.backend.dsl.engine.processors.entity import EntityCreateProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EntityCreateProcessor(
                 entity=entity,
                 payload_from=payload_from,
@@ -361,7 +361,7 @@ class IntegrationMixin:
         """Прочитать сущность через action ``<entity>.get``."""
         from src.backend.dsl.engine.processors.entity import EntityGetProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EntityGetProcessor(
                 entity=entity, id_from=id_from, result_property=result_property
             )
@@ -378,7 +378,7 @@ class IntegrationMixin:
         """Обновить сущность через action ``<entity>.update``."""
         from src.backend.dsl.engine.processors.entity import EntityUpdateProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EntityUpdateProcessor(
                 entity=entity,
                 id_from=id_from,
@@ -397,7 +397,7 @@ class IntegrationMixin:
         """Удалить сущность через action ``<entity>.delete``."""
         from src.backend.dsl.engine.processors.entity import EntityDeleteProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EntityDeleteProcessor(
                 entity=entity, id_from=id_from, result_property=result_property
             )
@@ -417,7 +417,7 @@ class IntegrationMixin:
         """Получить страницу сущностей через action ``<entity>.list``."""
         from src.backend.dsl.engine.processors.entity import EntityListProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EntityListProcessor(
                 entity=entity,
                 filters_from=filters_from,
@@ -521,7 +521,7 @@ class IntegrationMixin:
         """Записать событие в immutable audit log (Wave 5.1)."""
         from src.backend.dsl.engine.processors.audit import AuditProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             AuditProcessor(
                 action=action,
                 action_from=action_from,
@@ -548,7 +548,7 @@ class IntegrationMixin:
         """Сканировать файл AV-бэкендом (Wave 2.4)."""
         from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             ScanFileProcessor(
                 s3_key_from=s3_key_from,
                 data_property=data_property,
@@ -585,7 +585,7 @@ class IntegrationMixin:
             DirectoryScanProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             DirectoryScanProcessor(
                 path=path,
                 pattern=pattern,
@@ -609,7 +609,7 @@ class IntegrationMixin:
         result_property: str | None = None,
     ) -> "RouteBuilder":
         """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "HttpCallProcessor",
             url=url,
@@ -654,7 +654,7 @@ class IntegrationMixin:
             result_property: Имя property для записи результата.
                 Если ``None`` — результат пишется в ``out_message.body``.
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.graphql_query",
             "GraphQLQueryProcessor",
             endpoint=endpoint,
@@ -672,7 +672,7 @@ class IntegrationMixin:
         self, sql: str, *, result_property: str = "db_result"
     ) -> "RouteBuilder":
         """SQL-запрос через SQLAlchemy (с валидацией: DDL/multi-statement запрещены)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "DatabaseQueryProcessor",
             sql=sql,
@@ -683,7 +683,7 @@ class IntegrationMixin:
         self, path: str | None = None, *, binary: bool = False
     ) -> "RouteBuilder":
         """Чтение локального файла в body (text или bytes)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "FileReadProcessor",
             path=path,
@@ -694,7 +694,7 @@ class IntegrationMixin:
         self, path: str | None = None, *, format: str = "auto"
     ) -> "RouteBuilder":
         """Запись body в файл. format: auto|json|csv|text."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "FileWriteProcessor",
             path=path,
@@ -705,7 +705,7 @@ class IntegrationMixin:
         self, bucket: str | None = None, key: str | None = None
     ) -> "RouteBuilder":
         """Загрузка объекта из S3."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "S3ReadProcessor",
             bucket=bucket,
@@ -720,7 +720,7 @@ class IntegrationMixin:
         content_type: str = "application/octet-stream",
     ) -> "RouteBuilder":
         """Выгрузка body в S3."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "S3WriteProcessor",
             bucket=bucket,
@@ -736,7 +736,7 @@ class IntegrationMixin:
         max_fires: int | None = None,
     ) -> "RouteBuilder":
         """Scheduled event source: интервал или cron-выражение."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "TimerProcessor",
             interval_seconds=interval_seconds,
@@ -752,7 +752,7 @@ class IntegrationMixin:
         result_property: str = "polled_data",
     ) -> "RouteBuilder":
         """Periodically вызывает action, результат → body."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.components",
             "PollingConsumerProcessor",
             source_action=source_action,
@@ -775,7 +775,7 @@ class IntegrationMixin:
         Использует ``ExternalDatabaseRegistry`` (через DI) для получения
         async-сессии. Параметры берутся из body / properties / headers.
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_query_external",
             "ExternalDbQueryProcessor",
             profile=profile,
@@ -810,7 +810,7 @@ class IntegrationMixin:
                 ``"properties"`` / ``"headers"`` / ``"none"``.
             result_property: Exchange property key for the result.
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.jdbc_query",
             "JdbcQueryProcessor",
             sql=sql,
@@ -844,7 +844,7 @@ class IntegrationMixin:
         Returns:
             ``RouteBuilder`` для chain-продолжения.
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web_search",
             "WebSearchProcessor",
             engine=engine,
@@ -888,7 +888,7 @@ class IntegrationMixin:
                 .build()
             )
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_call_procedure",
             "DbCallProcedureProcessor",
             profile=profile,
@@ -925,7 +925,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.notify import NotifyProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             NotifyProcessor(
                 channel=channel,
                 template_key=template_key,
@@ -966,7 +966,7 @@ class IntegrationMixin:
             AppriseNotifyProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             AppriseNotifyProcessor(
                 channel=channel,
                 title=title,
@@ -1010,11 +1010,11 @@ class IntegrationMixin:
                 channels=channels,
                 title=title,
                 body=body,
-                body_format=body_format,  # type: ignore[arg-type]
+                body_format=body_format,  
             )
             exch.set_property(result_property, results)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallableProcessor(_send_multi, name=f"notify_multi:{','.join(channels)}")
         )
 
@@ -1022,7 +1022,7 @@ class IntegrationMixin:
         self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
     ) -> "RouteBuilder":
         """Copy/move/rename файлов."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa",
             "FileMoveProcessor",
             src=src,
@@ -1038,7 +1038,7 @@ class IntegrationMixin:
         allowed_commands: list[str] | None = None,
     ) -> "RouteBuilder":
         """Shell-команда с whitelist и timeout."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa",
             "ShellExecProcessor",
             command=command,
@@ -1048,7 +1048,7 @@ class IntegrationMixin:
 
     def email(self, to: str, subject: str, body_template: str) -> "RouteBuilder":
         """Compose + send email через SMTP."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa",
             "EmailComposeProcessor",
             to=to,
@@ -1069,7 +1069,7 @@ class IntegrationMixin:
             if not exchange.in_message.headers.get(name):
                 exchange.fail(f"Missing required header: {name}")
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallableProcessor(_check, name=f"require_header:{name}")
         )
 
@@ -1087,7 +1087,7 @@ class IntegrationMixin:
                 return
             exchange.set_property("auth_token", token)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallableProcessor(_check, name="require_bearer")
         )
 
@@ -1104,7 +1104,7 @@ class IntegrationMixin:
                 return
             exchange.set_property("authenticated", True)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallableProcessor(_check, name="require_auth")
         )
 
@@ -1125,7 +1125,7 @@ class IntegrationMixin:
             if missing:
                 exchange.fail(f"Missing required fields: {missing}")
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallableProcessor(_check, name=f"require_fields:{','.join(required)}")
         )
 
@@ -1140,7 +1140,7 @@ class IntegrationMixin:
         output_property: str = "jwt",
     ) -> "RouteBuilder":
         """Подпись payload как JWT-токен (PyJWT)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "JwtSignProcessor",
             secret_key=secret_key,
@@ -1158,7 +1158,7 @@ class IntegrationMixin:
         output_property: str = "jwt_claims",
     ) -> "RouteBuilder":
         """Проверка JWT из заголовка; claims → property или fail."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "JwtVerifyProcessor",
             secret_key=secret_key,
@@ -1175,7 +1175,7 @@ class IntegrationMixin:
         algorithm: str = "sha256",
     ) -> "RouteBuilder":
         """HMAC-подпись outgoing webhook'а."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "WebhookSignProcessor",
             secret=secret,
@@ -1199,7 +1199,7 @@ class IntegrationMixin:
         остановки. ``prefix`` — опциональный схема-префикс (``"v1"``,
         ``"sha256"``), если подпись передаётся как ``v1=<hex>``.
         """
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "WebhookSignVerifyProcessor",
             secret=secret,
@@ -1213,7 +1213,7 @@ class IntegrationMixin:
         self, *, timeout_seconds: float = 30.0, fail_on_exceed: bool = True
     ) -> "RouteBuilder":
         """Установка дedline pipeline; downstream проверяет _deadline_at."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "DeadlineProcessor",
             timeout_seconds=timeout_seconds,
@@ -1245,7 +1245,7 @@ class IntegrationMixin:
             CallFunctionProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             CallFunctionProcessor(
                 ref=ref, payload_from=payload_from, result_property=result_property
             )
@@ -1265,7 +1265,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.get_setting import GetSettingProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GetSettingProcessor(path=path, to=to, default=default)
         )
 
@@ -1290,7 +1290,7 @@ class IntegrationMixin:
             ResponseValidatorProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             ResponseValidatorProcessor(schema=schema, on_error=on_error, source=source)
         )
 
@@ -1317,7 +1317,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.mask_pii import MaskPiiProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             MaskPiiProcessor(
                 targets=targets,
                 fields=fields,
@@ -1353,7 +1353,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.sink_publish import GrpcCallProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GrpcCallProcessor(
                 target=target,
                 full_method=full_method,
@@ -1382,7 +1382,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.sink_publish import SoapCallProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             SoapCallProcessor(
                 wsdl_url=wsdl_url,
                 operation=operation,
@@ -1417,7 +1417,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.sink_publish import MqPublishProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             MqPublishProcessor(
                 broker=broker,
                 url=url,
@@ -1444,7 +1444,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.sink_publish import WsPublishProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             WsPublishProcessor(
                 url=url,
                 extra_headers=extra_headers,
@@ -1478,7 +1478,7 @@ class IntegrationMixin:
             port = MqttSettings().broker_port
         from src.backend.dsl.engine.processors.sink_publish import MqttPublishProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             MqttPublishProcessor(
                 host=host,
                 topic=topic,
@@ -1532,7 +1532,7 @@ class IntegrationMixin:
         if default_to is not None:
             config["default_to"] = default_to
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="email",
                 config=config,
@@ -1566,7 +1566,7 @@ class IntegrationMixin:
         if extra_headers:
             config["extra_headers"] = dict(extra_headers)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="webhook",
                 config=config,
@@ -1606,7 +1606,7 @@ class IntegrationMixin:
             "ensure_dir": ensure_dir,
         }
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="file",
                 config=config,
@@ -1640,7 +1640,7 @@ class IntegrationMixin:
         if headers:
             config["headers"] = dict(headers)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="http",
                 config=config,
@@ -1748,7 +1748,7 @@ class IntegrationMixin:
             "content_type": content_type,
         }
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="s3",
                 config=config,
@@ -1811,7 +1811,7 @@ class IntegrationMixin:
         # Создаём source instance для smoke-валидации конструктора;
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
-        builder = cls(  # type: ignore[call-arg]
+        builder = cls(  
             route_id=route_id, source=f"webdav:{route_id}", description=description
         )
         return builder  # type: ignore[return-value]
@@ -1909,7 +1909,7 @@ class IntegrationMixin:
         if headers:
             config["headers"] = dict(headers)
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             GenericSinkPublishProcessor(
                 kind="nats_js",
                 config=config,
@@ -1943,7 +1943,7 @@ class IntegrationMixin:
             RenderDocxProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             RenderDocxProcessor(
                 RenderDocxParams(
                     template=template, context_from=context_from, output_to=output_to
@@ -1976,13 +1976,13 @@ class IntegrationMixin:
             RenderXlsxProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             RenderXlsxProcessor(
                 RenderXlsxParams(
                     template=template,
                     context_from=context_from,
                     output_to=output_to,
-                    mode=mode,  # type: ignore[arg-type]
+                    mode=mode,  
                 )
             )
         )
@@ -2017,7 +2017,7 @@ class IntegrationMixin:
         normalized: list[Rule] = [
             r if isinstance(r, Rule) else Rule(**r) for r in rules
         ]
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EvaluateRulesProcessor(
                 EvaluateRulesParams(
                     rules=normalized,
@@ -2068,7 +2068,7 @@ class IntegrationMixin:
             LLMStructuredProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             LLMStructuredProcessor(
                 model=model,
                 output_schema=output_schema,
@@ -2110,7 +2110,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             MLPredictProcessor(
                 model_endpoint=model,
                 input_field=input_field,
@@ -2172,7 +2172,7 @@ class IntegrationMixin:
         """
         from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
 
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             SshCommandProcessor(
                 host=host,
                 command=command,

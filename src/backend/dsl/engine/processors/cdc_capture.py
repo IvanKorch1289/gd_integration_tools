@@ -94,13 +94,9 @@ class CDCCaptureProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Подписывается на CDC и записывает события в result_property."""
-        from src.backend.infrastructure.clients.external.cdc import (
-            CDCEvent,
-            get_cdc_client,
-        )
+        from src.backend.infrastructure.clients.external.cdc import get_cdc_client
 
         client = get_cdc_client()
-        events: list[dict[str, Any]] = []
         subscription_id = self._subscription_id
 
         if subscription_id is None:

@@ -409,7 +409,7 @@ class LLMStructuredProcessor(BaseProcessor):
         if raw_response is None:
             return None
         try:
-            import litellm  # type: ignore[import-not-found]
+            import litellm  
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None

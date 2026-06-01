@@ -426,7 +426,7 @@ class HtmlToMarkdownProcessor(BaseProcessor):
     def _convert(html: str) -> str:
         """Опциональный путь через ``markdownify`` или fallback на эвристику."""
         try:
-            import markdownify as _mdfy  # type: ignore[import-not-found]
+            import markdownify as _mdfy  
         except ImportError:
             return _simple_html_to_markdown(html)
         return str(_mdfy.markdownify(html, heading_style="ATX"))

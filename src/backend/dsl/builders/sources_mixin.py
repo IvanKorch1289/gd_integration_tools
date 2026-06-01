@@ -94,7 +94,7 @@ class SourcesMixin:
             marker_dedup=marker_dedup,
         )
         source_instance = mod.WebDAVSource(cfg)
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"webdav:{route_id}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -153,7 +153,7 @@ class SourcesMixin:
             plugin=plugin,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"cdc:{table}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -208,7 +208,7 @@ class SourcesMixin:
             plugin=plugin,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"cdc-logical:{table}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -266,7 +266,7 @@ class SourcesMixin:
                 .build()
             )
         """
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}"
         )
         object.__setattr__(
@@ -335,7 +335,7 @@ class SourcesMixin:
             connect_url=bootstrap_servers,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"kafka:{topic}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -382,7 +382,7 @@ class SourcesMixin:
             connect_url=url,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"rabbitmq:{queue}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -420,7 +420,7 @@ class SourcesMixin:
         """
         # MQTT Source-класса пока нет в infrastructure/sources/
         # — используем строковый DSN; source_instance = None (будущее расширение)
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"mqtt:{topic}"
         )
         # Сохраняем параметры для будущей регистрации MQTTSource
@@ -474,7 +474,7 @@ class SourcesMixin:
             group=consumer_group,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"redis_streams:{stream}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -520,7 +520,7 @@ class SourcesMixin:
         source_instance = FileWatcherSource(
             path=Path(path), recursive=recursive, **kwargs
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"filewatcher:{path}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -561,7 +561,7 @@ class SourcesMixin:
         mod = importlib.import_module("src.backend.infrastructure.sources.webhook")
         WebhookSource = mod.WebhookSource  # noqa: N806
         source_instance = WebhookSource(source_id=route_id, path=path, **kwargs)
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"webhook:{path}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -598,7 +598,7 @@ class SourcesMixin:
                 .build()
             )
         """
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+        builder: RouteBuilder = cls(  
             route_id=route_id, source=f"schedule:{cron_expr}"
         )
         # Сохраняем cron и kwargs для последующей регистрации в APScheduler

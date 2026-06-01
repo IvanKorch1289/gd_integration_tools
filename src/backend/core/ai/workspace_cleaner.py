@@ -90,7 +90,7 @@ class AIWorkspaceCleaner:
         self._interval = interval_seconds
         self._ttl_days = ttl_days
         self._max_bytes = max_bytes
-        self._task: asyncio.Task | None = None  # type: ignore[type-arg]
+        self._task: asyncio.Task | None = None  
         self._stopped: bool = False
 
     async def start(self) -> None:

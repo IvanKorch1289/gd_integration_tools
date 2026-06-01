@@ -45,7 +45,7 @@ class MemoryMessage:
     role: str
     content: str
     ts: float
-    metadata: Mapping[str, object] = ()  # type: ignore[assignment]
+    metadata: Mapping[str, object] = ()  
 
 
 @dataclass(frozen=True, slots=True)

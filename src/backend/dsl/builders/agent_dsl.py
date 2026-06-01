@@ -255,9 +255,9 @@ class AgentDSLMixin:
 
         return self._add(  # type: ignore[attr-defined]
             GuardrailsApplyProcessor(
-                stage=stage,  # type: ignore[arg-type]
+                stage=stage,  
                 source_property=source_property,
-                on_block=on_block,  # type: ignore[arg-type]
+                on_block=on_block,  
                 categories=categories,
             )
         )

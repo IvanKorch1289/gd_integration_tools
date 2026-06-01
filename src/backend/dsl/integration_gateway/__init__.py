@@ -59,8 +59,8 @@ class VersionedRoute:
 
     base_id: str
     versions: dict[str, str]  # "v1" → route_id "v2" → route_id
-    deprecated: set[str] = None  # type: ignore[assignment]
-    sunset_dates: dict[str, str] = None  # type: ignore[assignment]
+    deprecated: set[str] = None  
+    sunset_dates: dict[str, str] = None  
 
     def __post_init__(self) -> None:
         if self.deprecated is None:

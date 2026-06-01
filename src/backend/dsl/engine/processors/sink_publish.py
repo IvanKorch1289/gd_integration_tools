@@ -263,7 +263,7 @@ class MqPublishProcessor(BaseProcessor):
 
         sink = MqSink(
             sink_id=self.name or f"mq:{self._broker}",
-            broker=self._broker,  # type: ignore[arg-type]
+            broker=self._broker,  
             url=self._url,
             topic=self._topic,
             extra=dict(self._extra),

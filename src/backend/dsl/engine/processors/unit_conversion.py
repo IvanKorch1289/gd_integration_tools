@@ -109,7 +109,7 @@ class UnitConversionProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  # type: ignore[assignment]
+                exchange.in_message.body = body  
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -131,7 +131,7 @@ class UnitConversionProcessor(BaseProcessor):
             pass
 
         try:
-            import pint  # type: ignore[import-not-found]
+            import pint  
         except ImportError as exc:
             exchange.fail(f"unit_conversion: pint not available: {exc}")
             return

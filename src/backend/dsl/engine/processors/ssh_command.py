@@ -69,7 +69,7 @@ class SshCommandProcessor(BaseProcessor):
         command: str,
         *,
         username: str | None = None,
-        password_from: str = "none",
+        password_from: str = "",  # empty = no password (use key auth)
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "ssh_result",
@@ -156,7 +156,7 @@ class SshCommandProcessor(BaseProcessor):
         }
         if self._username is not None:
             spec["username"] = self._username
-        if self._password_from != "none":
+        if self._password_from:  # non-empty = password is set
             spec["password_from"] = self._password_from
         if self._key_file is not None:
             spec["key_file"] = self._key_file

@@ -88,7 +88,7 @@ class JsonPathProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  # type: ignore[assignment]
+                exchange.in_message.body = body  
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -111,12 +111,12 @@ class JsonPathProcessor(BaseProcessor):
 
         try:
             from jsonpath_ng.ext import (
-                parse as _parse,  # type: ignore[import-not-found]
+                parse as _parse,  
             )
         except ImportError:
             try:
                 from jsonpath_ng import (
-                    parse as _parse,  # type: ignore[import-not-found,no-redef]
+                    parse as _parse,  
                 )
             except ImportError as exc:
                 exchange.fail(f"jsonpath: jsonpath-ng not available: {exc}")

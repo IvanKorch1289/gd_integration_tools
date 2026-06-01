@@ -133,7 +133,7 @@ class EventBusMixin:
                 ``"property:<name>"``). Default — ``body``.
             name: Имя процессора в трейсах.
         """
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EventBusPublishProcessor(topic=topic, payload_ref=payload_ref, name=name)
         )
 
@@ -149,7 +149,7 @@ class EventBusMixin:
                 .ack() в pipeline).
             name: Имя процессора в трейсах.
         """
-        return self._add(  # type: ignore[attr-defined,no-any-return]
+        return self._add(  # type: ignore[attr-defined]
             EventBusSubscribeProcessor(
                 topic_pattern=topic_pattern, ack_mode=ack_mode, name=name
             )

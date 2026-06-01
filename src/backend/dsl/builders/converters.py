@@ -30,11 +30,11 @@ class ConvertersMixin:
     порциями в Stage 2.1 продолжении.
     """
 
-    __slots__ = ()  # type: ignore[var-annotated]
+    __slots__ = ()  
 
     def hash(self, *, algorithm: str = "sha256") -> RouteBuilder:
         """Hash данных (sha256/md5/sha512)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa",
             "HashProcessor",
             algorithm=algorithm,
@@ -42,19 +42,19 @@ class ConvertersMixin:
 
     def encrypt(self, key: str) -> RouteBuilder:
         """AES шифрование (Fernet)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
         )
 
     def decrypt(self, key: str) -> RouteBuilder:
         """AES расшифровка (Fernet)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
         )
 
     def compress(self, *, algorithm: str = "gzip", level: int = 6) -> RouteBuilder:
         """Сжатие body (gzip/brotli/zstd)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "CompressProcessor",
             algorithm=algorithm,
@@ -63,7 +63,7 @@ class ConvertersMixin:
 
     def decompress(self, *, algorithm: str = "auto") -> RouteBuilder:
         """Распаковка body (auto-detect или явный algorithm)."""
-        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+        return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.enrichment",
             "DecompressProcessor",
             algorithm=algorithm,

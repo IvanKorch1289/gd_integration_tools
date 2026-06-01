@@ -292,4 +292,4 @@ class PolicyMixin:
     @property
     def policy(self) -> PolicyChain:
         """Возвращает PolicyChain proxy для chainable .policy.cache().policy.circuit_breaker()."""
-        return PolicyChain(self)  # type: ignore[arg-type]
+        return PolicyChain(self)  

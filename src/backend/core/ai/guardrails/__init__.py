@@ -13,4 +13,4 @@ from src.backend.core.ai.guardrails.llm_guard_client import (
     LLMGuardResult,
 )
 
-__all__ = ("LlamaGuardRuntime", "GuardResult")
+__all__ = ("LlamaGuardRuntime", "GuardResult", "LLMGuardClient", "LLMGuardResult")

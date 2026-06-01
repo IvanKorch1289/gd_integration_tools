@@ -174,7 +174,7 @@ class FlagsmithClient:
             make_http_client,
         )
 
-        self._client = make_http_client(  # type: ignore[assignment]
+        self._client = make_http_client(  
             base_url=self.api_url,
             headers={"X-Environment-Key": self.environment_key or ""},
             timeout=self.timeout_seconds,

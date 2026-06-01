@@ -1,0 +1,243 @@
+# .shared/permissions.yaml
+# ============================================================
+# Единый source of truth для permission rules Claude Code и Kimi Code.
+# Sprint 37 W1 — импортировано из .claude/settings.json + .kimi-code/config.toml.
+# Редактировать ТОЛЬКО этот файл; оба settings-файла auto-generated.
+#
+# Regenerate: make sync-permissions
+# Verify:     make verify-permissions
+# ============================================================
+#
+# КЛЮЧЕВОЕ: Claude и Kimi используют РАЗНЫЕ pattern-синтаксисы:
+#   Claude: Tool(cmd:arg) или Tool(cmd:*)  — colon отделяет cmd от args
+#   Kimi:   Tool(cmd arg *)               — shell-glob
+# Поэтому каждое правило имеет:
+#   - `pattern:` — Claude-форма (основная)
+#   - `kimi:`    — Kimi-форма (если отличается)
+#   - `# agent: claude-only` / `# agent: kimi-only` если не для обоих
+# ============================================================
+version: 1
+
+# === ALLOW: безопасные dev-операции ===
+allow:
+    - pattern: 'Bash(cat:*)'
+      kimi: 'Bash(cat *)'
+      reason: 'read-only fs'
+    - pattern: 'Bash(find:*)'
+      kimi: 'Bash(find *)'
+      reason: 'read-only fs'
+    - pattern: 'Bash(git diff:*)'
+      kimi: 'Bash(git diff *)'
+      reason: 'read-only git'
+    - pattern: 'Bash(git log:*)'
+      kimi: 'Bash(git log *)'
+      reason: 'read-only git'
+    - pattern: 'Bash(git show:*)'
+      kimi: 'Bash(git show *)'
+      reason: 'read-only git'
+    - pattern: 'Bash(git status:*)'
+      kimi: 'Bash(git status *)'
+      reason: 'read-only git'
+    - pattern: 'Bash(graphify:*)'
+      kimi: 'Bash(graphify *)'
+      reason: 'graphify CLI'
+    - pattern: 'Bash(ls:*)'
+      kimi: 'Bash(ls *)'
+      reason: 'read-only fs'
+    - pattern: 'Bash(make actions)'
+      reason: 'actions dump'
+    - pattern: 'Bash(make audit)'
+      reason: 'audit'
+    - pattern: 'Bash(make current-version)'
+      reason: 'version'
+    - pattern: 'Bash(make deps-check)'
+      reason: 'deps check'
+    - pattern: 'Bash(make deps-check-strict)'
+      reason: 'deps check strict'
+    - pattern: 'Bash(make docs)'
+      reason: 'docs build'
+    - pattern: 'Bash(make docs-rebuild)'
+      reason: 'docs rebuild'
+    - pattern: 'Bash(make format)'
+      reason: 'format'
+    - pattern: 'Bash(make format-check)'
+      reason: 'format check'
+    - pattern: 'Bash(make help)'
+      reason: 'make help'
+    - pattern: 'Bash(make lint)'
+      reason: 'lint'
+    - pattern: 'Bash(make lint-strict)'
+      reason: 'lint strict'
+    - pattern: 'Bash(make mr-description)'
+      reason: 'MR description'
+    - pattern: 'Bash(make next-version)'
+      reason: 'version'
+    - pattern: 'Bash(make phases)'
+      reason: 'phases'
+    - pattern: 'Bash(make profile-memray-stats)'
+      reason: 'memray profile'
+    - pattern: 'Bash(make progress)'
+      reason: 'progress'
+    - pattern: 'Bash(make readiness-check)'
+      reason: 'readiness check'
+    - pattern: 'Bash(make refurb-check)'
+      reason: 'refurb check'
+    - pattern: 'Bash(make routes)'
+      reason: 'routes dump'
+    - pattern: 'Bash(make secrets-check)'
+      reason: 'secrets check'
+    - pattern: 'Bash(make status)'
+      reason: 'status'
+    - pattern: 'Bash(make type-check)'
+      reason: 'type-check'
+    - pattern: 'Bash(make type-check-strict)'
+      reason: 'type-check strict'
+    - pattern: 'Bash(make vulture-check)'
+      reason: 'dead code check'
+    - pattern: 'Bash(poetry run detect-secrets:*)'
+      kimi: 'Bash(poetry run detect-secrets *)'
+      reason: 'secrets scan'
+    - pattern: 'Bash(poetry run mypy:*)'
+      kimi: 'Bash(poetry run mypy *)'
+      reason: 'type-check'
+    - pattern: 'Bash(poetry run ruff:*)'
+      kimi: 'Bash(poetry run ruff *)'
+      reason: 'linter'
+    - pattern: 'Bash(poetry run sphinx-apidoc:*)'
+      kimi: 'Bash(poetry run sphinx-apidoc *)'
+      reason: 'docs'
+    - pattern: 'Bash(poetry run sphinx-build:*)'
+      kimi: 'Bash(poetry run sphinx-build *)'
+      reason: 'docs'
+    - pattern: 'Bash(poetry run vulture:*)'
+      kimi: 'Bash(poetry run vulture *)'
+      reason: 'dead code'
+    - pattern: null  # kimi-only
+      kimi: 'Glob'
+      reason: 'default glob'
+      # agent: kimi-only
+    - pattern: null  # kimi-only
+      kimi: 'Grep'
+      reason: 'default grep'
+      # agent: kimi-only
+    - pattern: null  # kimi-only
+      kimi: 'Read'
+      reason: 'default read'
+      # agent: kimi-only
+    - pattern: 'Skill(compact-session *)'
+      # agent: claude-only
+    - pattern: 'Skill(plan-execute *)'
+      # agent: claude-only
+    - pattern: 'Skill(verify-change *)'
+      # agent: claude-only
+
+# === ASK: требует подтверждения ===
+ask:
+    - pattern: 'Agent(*)'
+      # agent: claude-only
+    - pattern: 'Bash(git add:*)'
+      kimi: 'Bash(git add *)'
+      reason: 'staging changes'
+    - pattern: 'Bash(git commit:*)'
+      kimi: 'Bash(git commit *)'
+      reason: 'commit'
+    - pattern: 'Bash(git tag:*)'
+      kimi: 'Bash(git tag *)'
+      reason: 'tag'
+    - pattern: 'Bash(make bump:*)'
+      kimi: 'Bash(make bump *)'
+      reason: 'version bump'
+    - pattern: 'Bash(make commit:*)'
+      kimi: 'Bash(make commit *)'
+      reason: 'commit (make target)'
+    - pattern: 'Skill(commit-work *)'
+      # agent: claude-only
+
+# === DENY: опасные операции и секреты ===
+deny:
+    - pattern: 'Bash(git push:*)'
+      kimi: 'Bash(git push *)'
+      reason: 'explicit push only'
+    - pattern: 'Bash(make clean-all:*)'
+      kimi: 'Bash(make clean-all *)'
+      reason: 'destructive clean'
+    - pattern: 'Bash(make git-sync:*)'
+      kimi: 'Bash(make git-sync *)'
+      reason: 'git sync'
+    - pattern: 'Bash(make push:*)'
+      kimi: 'Bash(make push *)'
+      reason: 'explicit push only'
+    - pattern: 'Bash(make ship-release:*)'
+      kimi: 'Bash(make ship-release *)'
+      reason: 'ship release'
+    - pattern: 'Bash(make ship:*)'
+      kimi: 'Bash(make ship *)'
+      reason: 'ship release'
+    - pattern: 'Bash(pip install:*)'
+      kimi: 'Bash(pip install *)'
+      reason: 'deps via pip forbidden (use uv)'
+    - pattern: 'Bash(poetry add:*)'
+      kimi: 'Bash(poetry add *)'
+      reason: 'deps locked (Sprint 36)'
+    - pattern: 'Bash(poetry remove:*)'
+      kimi: 'Bash(poetry remove *)'
+      reason: 'deps locked (Sprint 36)'
+    - pattern: 'Bash(rm -rf:*)'
+      kimi: 'Bash(rm -rf *)'
+      reason: 'destructive'
+    - pattern: 'Read(**/*.key)'
+      # agent: claude-only
+    - pattern: null  # kimi-only
+      kimi: 'Read(**/*.key)'
+      reason: 'private keys'
+      # agent: kimi-only
+    - pattern: 'Read(**/*.pem)'
+      # agent: claude-only
+    - pattern: null  # kimi-only
+      kimi: 'Read(**/*.pem)'
+      reason: 'TLS certs/keys'
+      # agent: kimi-only
+    - pattern: 'Read(**/*secret*)'
+      # agent: claude-only
+    - pattern: null  # kimi-only
+      kimi: 'Read(**/*secret*)'
+      reason: 'secret files'
+      # agent: kimi-only
+    - pattern: 'Read(**/*token*)'
+      # agent: claude-only
+    - pattern: null  # kimi-only
+      kimi: 'Read(**/*token*)'
+      reason: 'token files'
+      # agent: kimi-only
+    - pattern: 'Read(./.env)'
+      reason: 'secrets'
+    - pattern: 'Read(./.env.*)'
+      reason: 'secrets (local/prod)'
+    - pattern: 'Read(./secrets/**)'
+      reason: 'secrets dir'
+    - pattern: null  # kimi-only
+      kimi: 'Read(~/.aws/**)'
+      reason: 'aws creds'
+      # agent: kimi-only
+    - pattern: null  # kimi-only
+      kimi: 'Read(~/.ssh/**)'
+      reason: 'ssh keys'
+      # agent: kimi-only
+    - pattern: 'Skill(deploy *)'
+      # agent: claude-only
+    - pattern: 'Skill(release *)'
+      # agent: claude-only
+
+# === VAULT: персональный workspace Ivan'а (gitignored) ===
+# Правила чтения для vault/ — общие для обоих агентов.
+# Агент ОБЯЗАН читать vault/SESSIONS.md и vault/DECISIONS-LIVE.md при старте сессии.
+vault:
+  allow:
+    - "./vault/SESSIONS.md"            # история сессий (append-only)
+    - "./vault/DECISIONS-LIVE.md"      # открытые решения
+    - "./vault/knowledge/**"           # заметки обоих агентов
+    - "./vault/INDEX.md"               # указатель на артефакты
+  ask:
+    - "./vault/**"                     # запись в vault — с подтверждением
+  deny:
+    - "./vault/.private/**"            # если появится личное

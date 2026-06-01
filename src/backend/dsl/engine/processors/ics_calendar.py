@@ -105,7 +105,7 @@ class IcsCalendarProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  # type: ignore[assignment]
+                exchange.in_message.body = body  
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -115,7 +115,7 @@ class IcsCalendarProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     def _parse(self, raw: Any) -> list[dict[str, Any]]:
-        from icalendar import Calendar  # type: ignore[import-not-found]
+        from icalendar import Calendar  
 
         if isinstance(raw, str):
             cal = Calendar.from_ical(raw)
@@ -136,7 +136,7 @@ class IcsCalendarProcessor(BaseProcessor):
         return events
 
     def _render(self, events: list[dict[str, Any]]) -> bytes:
-        from icalendar import Calendar, Event  # type: ignore[import-not-found]
+        from icalendar import Calendar, Event  
 
         cal = Calendar()
         cal.add("prodid", "-//gd-integration-tools//DSL//RU")

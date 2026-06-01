@@ -91,7 +91,7 @@ class ResponseValidatorProcessor(BaseProcessor):
                 )
             module = importlib.import_module(module_name)
             cls = getattr(module, class_name)
-            return cls  # type: ignore[no-any-return]
+            return cls  
         return self.schema
 
     def _resolve_body(self, exchange: "Exchange[Any]") -> Any:

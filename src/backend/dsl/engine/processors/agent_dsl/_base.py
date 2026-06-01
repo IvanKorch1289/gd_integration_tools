@@ -241,8 +241,8 @@ class BaseAIProcessor(BaseProcessor):
                 actor=f"tenant:{exchange.meta.tenant_id or 'unknown'}",
                 resource=f"dsl_processor:{self.name}",
                 action="process",
-                outcome=outcome,  # type: ignore[arg-type]
-                severity=severity,  # type: ignore[arg-type]
+                outcome=outcome,  
+                severity=severity,  
                 correlation_id=exchange.meta.correlation_id,
                 tenant_id=exchange.meta.tenant_id,
                 route_name=exchange.meta.route_id,

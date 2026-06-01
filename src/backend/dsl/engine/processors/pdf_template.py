@@ -121,7 +121,7 @@ class PdfTemplateProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  # type: ignore[assignment]
+                exchange.in_message.body = body  
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -144,13 +144,13 @@ class PdfTemplateProcessor(BaseProcessor):
 
         # Lazy-import reportlab + jinja2
         try:
-            from reportlab.lib.pagesizes import (  # type: ignore[import-not-found]
+            from reportlab.lib.pagesizes import (  
                 A3,
                 A4,
                 A5,
                 LETTER,
             )
-            from reportlab.pdfgen import canvas  # type: ignore[import-not-found]
+            from reportlab.pdfgen import canvas  
         except ImportError as exc:
             exchange.fail(f"pdf_template: reportlab not available: {exc}")
             return

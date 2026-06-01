@@ -108,4 +108,4 @@ def clear_request_context(token: object) -> None:
     Args:
         token: Token, возвращённый :func:`bind_request_context`.
     """
-    REQUEST_CONTEXT_VAR.reset(token)  # type: ignore[arg-type]
+    REQUEST_CONTEXT_VAR.reset(token)  
