@@ -1288,55 +1288,79 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
-### Sprint 35 — Dependency Governance + Chaos (2026-08-04 → 2026-08-17)
-**Фокус**: SBOM, supply-chain security, chaos testing, property-based tests.
+### Sprint 35 — Dependency Governance + Chaos (2026-08-04 → 2026-08-17) ✅ CLOSED
+|**Фокус**: SBOM, supply-chain security, chaos testing, property-based tests.
 
 
-| Wave | Task | Owner | PR |
-|------|------|-------|----|
-| w1 | SBOM cyclonedx + cosign sign (supply-chain gate) | К1 | — |
-| w2 | OWASP ZAP security gate (API Top 10) | К1 | — |
-| w3 | Chaos testing framework: chaos/*.py | К2 | — |
-| w4 | Property-based test suites (hypothesis 6.x) | К2 | — |
-| w5 | Dependency audit: pip-audit + outdated deps | К1 | — |
+|| Wave | Task | Owner | Commit |
+||------|------|-------|--------|
+|| w1 | SBOM cyclonedx + cosign sign (supply-chain gate) | К1 | ✅ `16f6f74a` + `9080e811` |
+|| w2 | OWASP ZAP security gate (API Top 10) | К1 | ✅ `7670e3ce` |
+|| w3 | Chaos testing framework: chaos/*.py | К2 | ✅ `chaos.yml` + 27 chaos tests |
+|| w4 | Property-based test suites (hypothesis 6.x) | К2 | ✅ `41f5ae82` |
+|| w5 | Dependency audit: pip-audit + outdated deps | К1 | ✅ `8b7b2f93` + `0417acaf` |
 
 #### w1 — SBOM + cosign
 
-**Status**: 🟡 PLANNED.
-
+**Status**: ✅ DONE (S35-w1).
 
 **What**: cyclonedx SBOM generation + cosign sign. CI gate: SBOM + pip-audit + cosign.
 
+**Артефакты**:
+- `.github/workflows/sbom.yml` (66 строк) — CI gate
+- `.github/workflows/release.yml` — SBOM + cosign (9 refs)
+- `tools/checks/generate_sbom.py` (108) — обёртка cyclonedx-py
+- `tools/checks/cosign_sign.py` (140) + `cosign_sign_all.py` (443) — multi-artifact signing
+- `Makefile::publish-plugin` — bundle + SBOM + cosign
 
 #### w2 — OWASP ZAP gate
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (S35-w2).
 
 **What**: OWASP ZAP integration в CI. API Top 10 scanning. R3 gate.
 
+**Артефакты**:
+- `.github/workflows/zap.yml` (55) — active scan против live API
+- Коммит `7670e3ce` (S18 K1 W2) — blocking mode + baseline freeze
+
 #### w3 — Chaos testing framework
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (S35-w3).
 
 **What**: `tests/chaos/*.py` — chaos monkey для DB/Redis/MQ/Claude API. `make chaos`.
 
+**Артефакты**:
+- `.github/workflows/chaos.yml` (93) — toxiproxy-based chaos
+- `tests/chaos/test_*_chain_chaos.py` — 27 файлов
+- `Makefile::chaos` — Docker + toxiproxy required
 
 #### w4 — Property-based test suites
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (S35-w4).
 
 **What**: Hypothesis 6.x test suites. 5+ suites for critical paths. S22 W5 (G-16).
 
+**Артефакты**:
+- `tests/property/test_cache_key_invariants.py` — Hypothesis cache keys
+- `tests/property/test_dsl_processor_invariants.py` — DSL processor invariants
+- `pyproject.toml::dev-deps` — hypothesis>=6.0.0 (pip-only, см. session-patterns uv lock conflict)
+- Коммит `41f5ae82` — property-based + hypothesis + llm-guard pip-only
 
 #### w5 — Dependency audit
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (S35-w5).
 
 **What**: `pip-audit` CI gate + `make deps-check-strict`. outdated deps detection.
 
+**Артефакты**:
+- `.github/workflows/security.yml` (196) — 14 refs на pip-audit/cosign
+- `tools/checks/run_pip_audit.py` (124) — обёртка
+- `Makefile::audit-deps` — `make audit-deps` (есть в Makefile)
+- Коммит `8b7b2f93` — pip-audit CI gate blocking + pypdf upgrade
+- Коммит `0417acaf` — CVE-2025-69872 restore to ignore list
+
 
 ---
-
 
 ### Sprint 36 — Production Readiness 90%+ (2026-08-18 → 2026-08-31)
 **Фокус**: smoke tests, Grafana dashboards, multi-region, pre-prod-check 90%+.
@@ -1586,6 +1610,62 @@ tests/unit/dsl/engine/processors/test_control_flow.py — ForEach tests pass
 ```
 
 **Конец APPENDIX: V22.7**
+
+---
+
+# APPENDIX: V22.8 — S35 Official Waves Closure (2026-06-01)
+
+> **Версия**: V22.8 (S35 official waves w1-w5 — все закрыты). Sprint 35 полностью закрыт, status обновлён в основном тексте PLAN.md. Дополняет V22.7 (S35 GAP-DSL/INT/AI/DX).
+
+## S35 Official Waves Status
+
+| Wave | Task | Owner | Status | Key Commit |
+|------|------|-------|--------|------------|
+| w1 | SBOM cyclonedx + cosign sign | К1 | ✅ DONE | `16f6f74a` (sbom-ci), `9080e811` (publish-plugin) |
+| w2 | OWASP ZAP security gate | К1 | ✅ DONE | `7670e3ce` (zap blocking) |
+| w3 | Chaos testing framework | К2 | ✅ DONE | `chaos.yml` + 27 chaos tests |
+| w4 | Property-based tests (hypothesis 6.x) | К2 | ✅ DONE | `41f5ae82` (hypothesis + property tests) |
+| w5 | pip-audit + outdated deps | К1 | ✅ DONE | `8b7b2f93` (pip-audit gate) |
+
+## Артефакты по волнам
+
+### w1 — SBOM + cosign
+- `.github/workflows/sbom.yml` (66 строк) — CI gate
+- `.github/workflows/release.yml` — SBOM + cosign (9 references)
+- `tools/checks/generate_sbom.py` (108) — обёртка cyclonedx-py
+- `tools/checks/cosign_sign.py` (140) + `cosign_sign_all.py` (443) — multi-artifact signing
+- `Makefile::publish-plugin` — bundle + SBOM + cosign (Sprint 14 W3)
+
+### w2 — OWASP ZAP
+- `.github/workflows/zap.yml` (55) — active scan против live API endpoint
+- Коммит `7670e3ce` (S18 K1 W2) — blocking mode + baseline freeze
+
+### w3 — Chaos testing
+- `.github/workflows/chaos.yml` (93) — toxiproxy-based chaos
+- `tests/chaos/test_*_chain_chaos.py` — 27 файлов (cache/express/smtp/object_storage/antivirus/database/mongo/mq/audit/search/...)
+- `Makefile::chaos` — Docker + toxiproxy required
+
+### w4 — Property-based tests
+- `tests/property/test_cache_key_invariants.py` — Hypothesis cache key invariants
+- `tests/property/test_dsl_processor_invariants.py` — DSL processor invariants
+- `pyproject.toml::dev-deps` — hypothesis>=6.0.0 (pip-only из-за uv lock conflict — см. session-patterns)
+- Коммит `41f5ae82` — property-based + hypothesis + llm-guard pip-only
+
+### w5 — pip-audit + outdated
+- `.github/workflows/security.yml` (196) — 14 references на pip-audit/cosign
+- `tools/checks/run_pip_audit.py` (124) — обёртка pip-audit
+- `Makefile::audit-deps` — `make audit-deps` (есть в Makefile)
+- Коммит `8b7b2f93` — pip-audit CI gate blocking + pypdf upgrade
+- Коммит `0417acaf` — CVE-2025-69872 restore to ignore list
+
+## История
+
+- 2026-05-26: S35 стартовал как Dependency Governance + Chaos (PLAN.md V22.6)
+- 2026-05-26..2026-06-01: S35 GAP-DSL/INT/AI/DX волны (V22.7) завершены
+- 2026-06-01: S35 official waves w1-w5 — все артефакты на месте, PLAN.md обновлён
+- Sprint 35 closed. Sprint 36 (Production Readiness 90%+) — следующий.
+
+**Конец APPENDIX: V22.8**
 
 ---
 
