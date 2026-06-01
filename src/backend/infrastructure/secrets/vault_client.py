@@ -335,8 +335,10 @@ class VaultClient:
                                     new_version=new_version,
                                     old_secret_retained=True,
                                 )
-                                # Keep old secret active
-                                entry.old_secret_data = new_data
+                                # Do NOT store failed secret in old_secret_data —
+                                # get_active_secret() must continue returning
+                                # the currently active (valid) secret.
+                                # Retry will happen when vault provides a new version.
                                 entry.old_secret_timestamp = now
                                 continue
 
