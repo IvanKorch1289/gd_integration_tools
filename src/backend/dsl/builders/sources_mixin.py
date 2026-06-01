@@ -215,6 +215,78 @@ class SourcesMixin:
         return builder
 
     @classmethod
+    def from_cdc_capture(
+        cls,
+        route_id: str,
+        profile: str,
+        tables: list[str],
+        *,
+        strategy: str = "polling",
+        interval: float = 5.0,
+        timestamp_column: str = "updated_at",
+        batch_size: int = 100,
+        channel: str | None = None,
+        **kwargs: Any,
+    ) -> "RouteBuilder":
+        """Создаёт маршрут с источником CDC Capture.
+
+        Лениво импортирует :class:`CDCClient` из
+        ``infrastructure.clients.external.cdc``.
+
+        В отличие от :meth:`from_cdc` (источник логической репликации PostgreSQL),
+        этот метод подходит для любого профиля внешней БД с поддержкой
+        polling/listen_notify/logminer стратегий.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            profile: Имя профиля внешней БД.
+            tables: Список таблиц для отслеживания.
+            strategy: Стратегия CDC — ``polling`` (любая БД),
+                ``listen_notify`` (PostgreSQL LISTEN/NOTIFY),
+                ``logminer`` (Oracle LogMiner).
+            interval: Интервал polling в секундах (default 5.0).
+            timestamp_column: Столбец для polling-стратегии.
+            batch_size: Макс. событий за итерацию.
+            channel: Имя PostgreSQL-канала для listen_notify.
+            **kwargs: Дополнительные параметры для CDC-подписки.
+
+        Returns:
+            RouteBuilder с ``source`` установленным в ``cdc-capture:<profile>:<tables>``.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_cdc_capture(
+                    "orders.changes",
+                    profile="oracle_prod",
+                    tables=["orders", "customers"],
+                    strategy="polling",
+                )
+                .dispatch_action("analytics.process_changes")
+                .build()
+            )
+        """
+        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+            route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}"
+        )
+        object.__setattr__(
+            builder,
+            "_source_config",
+            {
+                "type": "cdc_capture",
+                "profile": profile,
+                "tables": tables,
+                "strategy": strategy,
+                "interval": interval,
+                "timestamp_column": timestamp_column,
+                "batch_size": batch_size,
+                "channel": channel,
+                **kwargs,
+            },
+        )
+        return builder
+
+    @classmethod
     def from_kafka(
         cls,
         route_id: str,

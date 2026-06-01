@@ -620,6 +620,54 @@ class IntegrationMixin:
             result_property=result_property,
         )
 
+    def graphql_query(
+        self,
+        endpoint: str,
+        query: str,
+        *,
+        variables: dict[str, Any] | None = None,
+        operation_name: str | None = None,
+        headers: dict[str, str] | None = None,
+        auth_token: str | None = None,
+        auth_header: str = "Authorization",
+        timeout: float = 30.0,
+        result_property: str | None = None,
+    ) -> "RouteBuilder":
+        """GraphQL query/mutation executor.
+
+        Выполняет GraphQL-запрос к указанному endpoint с поддержкой:
+        - query string и variables;
+        - operation name для batched queries;
+        - Bearer token authentication;
+        - custom headers;
+        - result writing в property или body.
+
+        Args:
+            endpoint: GraphQL endpoint URL.
+            query: GraphQL query или mutation string.
+            variables: Опциональные variables для query.
+            operation_name: Имя операции (для batched/named operations).
+            headers: Дополнительные HTTP headers.
+            auth_token: Bearer token для authentication.
+            auth_header: Имя auth header (default ``Authorization``).
+            timeout: Request timeout в секундах (default 30.0).
+            result_property: Имя property для записи результата.
+                Если ``None`` — результат пишется в ``out_message.body``.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+            "src.backend.dsl.engine.processors.graphql_query",
+            "GraphQLQueryProcessor",
+            endpoint=endpoint,
+            query=query,
+            variables=variables,
+            operation_name=operation_name,
+            headers=headers,
+            auth_token=auth_token,
+            auth_header=auth_header,
+            timeout=timeout,
+            result_property=result_property,
+        )
+
     def db_query(
         self, sql: str, *, result_property: str = "db_result"
     ) -> "RouteBuilder":
