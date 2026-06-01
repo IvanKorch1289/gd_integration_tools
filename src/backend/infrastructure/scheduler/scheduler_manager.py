@@ -3,11 +3,13 @@ from typing import Any
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.external_apis.logging_service import scheduler_logger
+from src.backend.infrastructure.logging import get_logger
 from src.backend.infrastructure.scheduler.scheduled_tasks import (
     check_all_services,
     consolidate_idle_sessions,
 )
+
+scheduler_logger = get_logger("scheduler")
 
 __all__ = ("scheduler_manager", "SchedulerManager", "get_scheduler_manager")
 

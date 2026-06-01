@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from functools import lru_cache
 from logging import (
     Filter,
@@ -228,6 +229,11 @@ def get_log_manager() -> LoggerManager:
     обращения, чтобы избежать сетевого resolve и привязки к event-loop'у
     в момент import.
     """
+    warnings.warn(
+        "logging_service is deprecated. Use infrastructure.logging.factory instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return LoggerManager(
         log_config=settings.logging,
         environment=settings.app.environment,

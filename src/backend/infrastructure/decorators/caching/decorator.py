@@ -16,7 +16,9 @@ from src.backend.infrastructure.clients.storage.redis import redis_client
 from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.backend.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.backend.infrastructure.decorators.caching.storage.disk import DiskTTLCache
-from src.backend.infrastructure.external_apis.logging_service import redis_logger
+from src.backend.infrastructure.logging import get_logger
+
+redis_logger = get_logger("redis")
 
 __all__ = ("CachingDecorator",)
 

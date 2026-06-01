@@ -20,7 +20,9 @@ from src.backend.core.config.settings import settings
 from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
 from src.backend.infrastructure.database.listeners import DatabaseListener
-from src.backend.infrastructure.external_apis.logging_service import db_logger
+from src.backend.infrastructure.logging import get_logger
+
+db_logger = get_logger("database")
 
 __all__ = (
     "DatabaseBundle",
