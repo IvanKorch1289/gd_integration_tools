@@ -128,6 +128,8 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
         if gateway is not None:
             return gateway
     except Exception:
+        _logger.debug("route_authz_gateway_resolve_failed", exc_info=True)
+        # Graceful degradation — caller handles None via fail-closed
         pass
 
     return None

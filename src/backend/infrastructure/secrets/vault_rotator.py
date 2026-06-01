@@ -44,10 +44,18 @@ from typing import Any
 import structlog
 
 from src.backend.core.config.features import feature_flags
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 __all__ = ("VaultSecretRotator", "get_vault_rotator")
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
+
+# Prometheus counter for vault validation failures
+_vault_validation_failed_counter = metrics_registry.counter(
+    "vault_validation_failed_total",
+    "Vault secret validation failures",
+    labels=("path",),
+)
 
 # Хранилище для зарегистрированных path'ов
 _PathCallbackEntry = tuple[
@@ -65,6 +73,7 @@ class VaultSecretRotator:
         _entries: Список (vault_path, callback, validator) для периодической проверки.
         _versions: Словарь path → последняя известная версия metadata.
         _old_secrets: Словарь path → (secret_data, timestamp) для drift-toleration.
+        _failed_versions: Словарь path → (failed_version, failed_timestamp) для повторных сбоев.
         _task: Фоновая asyncio.Task; None пока не запущен.
         _running: Флаг работы цикла.
         _drift_tolerance_seconds: Срок хранения старого секрета после появления нового.
@@ -89,6 +98,9 @@ class VaultSecretRotator:
         self._entries: list[_PathCallbackEntry] = []
         self._versions: dict[str, int | None] = {}
         self._old_secrets: dict[str, tuple[dict[str, Any], float]] = {}
+        self._failed_versions: dict[
+            str, tuple[int, float]
+        ] = {}  # path → (failed_version, timestamp)
         self._task: asyncio.Task[None] | None = None
         self._running: bool = False
         self._drift_tolerance = drift_tolerance_seconds
@@ -252,6 +264,20 @@ class VaultSecretRotator:
                                     new_version=new_version,
                                     old_secret_retained=True,
                                 )
+                                _vault_validation_failed_counter.labels(path=path).inc()
+                                # Track failed version for repeated failure detection
+                                self._failed_versions[path] = (new_version, now)
+                                # Check for repeated failure
+                                if cached_version == new_version:
+                                    prev_failed_ts = self._failed_versions.get(
+                                        path, (0, 0.0)
+                                    )[1]
+                                    logger.error(
+                                        "vault_rotator.validation_repeated_failure",
+                                        path=path,
+                                        version=new_version,
+                                        previous_failure_ts=prev_failed_ts,
+                                    )
                                 # Старый секрет остаётся активным
                                 self._versions[path] = cached_version
                                 continue

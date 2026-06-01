@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from dataclasses import dataclass
@@ -77,7 +78,12 @@ class VaultBackend:
         self._client = client
 
     def _ensure_client(self) -> Any:
-        """Lazy-init hvac.Client с выбранным методом auth."""
+        """Lazy-init hvac.Client с выбранным методом auth (blocking-safe).
+
+        Note:
+            When called from async context, use ``_ensure_client_async`` instead
+            to avoid blocking the event loop on hvac.auth.approle.login().
+        """
         if self._client is not None:
             return self._client
 
@@ -92,6 +98,8 @@ class VaultBackend:
         if self._config.token:
             client.token = self._config.token
         elif self._config.role_id and self._config.secret_id:
+            # For truly sync callers the blocking is acceptable since they are
+            # not on the async event loop's hot path.
             client.auth.approle.login(
                 role_id=self._config.role_id, secret_id=self._config.secret_id
             )
@@ -103,26 +111,63 @@ class VaultBackend:
         self._client = client
         return client
 
+    async def _ensure_client_async(self) -> Any:
+        """Async version of _ensure_client for use in async methods.
+
+        Runs hvac.auth.approle.login() in an executor to avoid blocking the
+        event loop (hvac library is synchronous).
+        """
+        if self._client is not None:
+            return self._client
+
+        try:
+            import hvac
+        except ImportError as exc:  # pragma: no cover — hvac уже в стеке
+            raise RuntimeError(
+                "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости"
+            ) from exc
+
+        client = hvac.Client(url=self._config.url, namespace=self._config.namespace)
+        if self._config.token:
+            client.token = self._config.token
+        elif self._config.role_id and self._config.secret_id:
+            # hvac.auth.approle.login() is blocking — run in executor to avoid
+            # blocking the async event loop
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: client.auth.approle.login(
+                    role_id=self._config.role_id, secret_id=self._config.secret_id
+                ),
+            )
+        else:
+            raise RuntimeError(
+                "Vault auth не сконфигурирован: задайте VAULT_TOKEN либо "
+                "VAULT_ROLE_ID + VAULT_SECRET_ID"
+            )
+        self._client = client
+        return client
+
     def get(self, name: str) -> SecretValue:
-        """Прочитать current version KV v2 secret'а."""
+        """Прочитать current version KV v2 secret'а (sync, backward compat)."""
         client = self._ensure_client()
         response = client.secrets.kv.v2.read_secret_version(
             path=name, mount_point=self._config.mount_point
         )
         return _unpack_kv_v2(name, response)
 
-    def get_versioned(self, name: str, version: int) -> SecretValue:
+    async def get_versioned(self, name: str, version: int) -> SecretValue:
         """Прочитать конкретную версию KV v2 secret'а (0 → current)."""
-        client = self._ensure_client()
+        client = await self._ensure_client_async()
         kwargs: dict[str, Any] = {"path": name, "mount_point": self._config.mount_point}
         if version > 0:
             kwargs["version"] = version
         response = client.secrets.kv.v2.read_secret_version(**kwargs)
         return _unpack_kv_v2(name, response)
 
-    def get_metadata(self, name: str) -> dict[str, Any]:
+    async def get_metadata(self, name: str) -> dict[str, Any]:
         """Прочитать metadata KV v2 (нужно :class:`RotationScheduler`)."""
-        client = self._ensure_client()
+        client = await self._ensure_client_async()
         meta = client.secrets.kv.v2.read_secret_metadata(
             path=name, mount_point=self._config.mount_point
         )

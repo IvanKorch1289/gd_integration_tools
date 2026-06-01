@@ -25,7 +25,6 @@ Usage::
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -33,10 +32,18 @@ from typing import Any
 
 import structlog
 
-from src.backend.infrastructure.secrets.vault_backend import VaultBackend, VaultConfig
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
+from src.backend.infrastructure.secrets.vault_backend import VaultBackend, VaultConfig
 
 __all__ = ("VaultClient", "VaultClientConfig", "get_vault_client")
+
+# Prometheus counter for vault validation failures
+_vault_validation_failed_counter = metrics_registry.counter(
+    "vault_validation_failed_total",
+    "Vault secret validation failures",
+    labels=("path",),
+)
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
@@ -83,6 +90,8 @@ class _SecretEntry:
         old_secret_data: Old secret data during drift-toleration window.
         old_secret_timestamp: When the old secret was superseded.
         active_secret_data: Currently active secret data.
+        failed_version: Version that failed validation (for repeated failure detection).
+        failed_version_timestamp: When the failed version was recorded.
     """
 
     path: str
@@ -92,6 +101,8 @@ class _SecretEntry:
     old_secret_data: dict[str, Any] = field(default_factory=dict)
     old_secret_timestamp: float = 0.0
     active_secret_data: dict[str, Any] = field(default_factory=dict)
+    failed_version: int | None = None
+    failed_version_timestamp: float = 0.0
 
 
 class VaultClient:
@@ -255,10 +266,9 @@ class VaultClient:
                 c. If validation passes, activate new secret
                 d. If validation fails, keep old secret active
         """
-        import hvac  # noqa: PLC0415 — lazy import
 
         if self._client is None:
-            self._client = self._get_client()
+            self._client = await self._get_client()
 
         now = time.time()
 
@@ -319,6 +329,21 @@ class VaultClient:
                                     new_version=new_version,
                                     old_secret_retained=True,
                                 )
+                                _vault_validation_failed_counter.labels(path=path).inc()
+                                # Track failed version for repeated failure detection
+                                entry.failed_version = new_version
+                                entry.failed_version_timestamp = now
+                                # Check if this version failed before (repeated failure)
+                                if (
+                                    entry.current_version is not None
+                                    and entry.current_version == new_version
+                                ):
+                                    logger.error(
+                                        "vault_client.validation_repeated_failure",
+                                        path=path,
+                                        version=new_version,
+                                        previous_failure_ts=entry.failed_version_timestamp,
+                                    )
                                 # Do NOT store failed secret in old_secret_data —
                                 # get_active_secret() must continue returning
                                 # the currently active (valid) secret.
@@ -353,7 +378,7 @@ class VaultClient:
                 # Trigger reconnect logic on next tick
                 self._client = None
 
-    def _get_client(self) -> Any:
+    async def _get_client(self) -> Any:
         """Create and authenticate hvac.Client with exponential backoff.
 
         Returns:
@@ -368,9 +393,15 @@ class VaultClient:
         if self._vault_config.token:
             client.token = self._vault_config.token
         elif self._vault_config.role_id and self._vault_config.secret_id:
-            client.auth.approle.login(
-                role_id=self._vault_config.role_id,
-                secret_id=self._vault_config.secret_id,
+            # hvac.auth.approle.login() is blocking — run in executor to avoid
+            # blocking the async event loop
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: client.auth.approle.login(
+                    role_id=self._vault_config.role_id,
+                    secret_id=self._vault_config.secret_id,
+                ),
             )
         else:
             raise RuntimeError(
