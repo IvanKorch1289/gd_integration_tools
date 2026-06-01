@@ -334,12 +334,14 @@ def _collect_public_methods(
         if name.startswith("_"):
             continue
         attr = inspect.getattr_static(cls, name, None)
-        if attr is None or not callable(attr):
+        if attr is None:
             continue
         if isinstance(attr, (staticmethod, classmethod)):
             target = attr.__func__
         else:
             target = attr
+        if not callable(target):
+            continue
         if not inspect.isfunction(target) and not inspect.ismethod(target):
             continue
         signature, return_type = _build_signature(target, module_ns)
