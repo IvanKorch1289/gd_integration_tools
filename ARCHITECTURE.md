@@ -312,6 +312,39 @@ CircuitBreaker, ExceptionHandler.
 Архитектурная правда — в коде, Graphify и `PLAN.md`.
 Если обзор расходится с кодом — доверять коду и Graphify.
 
+## GAP Closure — Waves 1–7 (S36 follow-up)
+
+### Unified Cache Architecture (Wave 3)
+
+- **Единый key-builder**: `core/utils/cache_keys.py::build_cache_key` — SHA-256 от
+  `(module, name, args, kwargs)`; используется и в `@cached` / `@multi_cached`,
+  и в `CachingDecorator`.
+- **Иерархия**: `@cached` / `@multi_cached` → `CachingDecorator`
+  (`infrastructure/decorators/caching/decorator.py`) → `redis_client`.
+- **Правило**: сервисы НЕ импортируют `CachingDecorator` напрямую — только через
+  `core/resilience/cache_decorators.py`.
+
+### Logging Architecture (Wave 2)
+
+- **4 стека** (март 2026):
+  1. `infrastructure/logging/factory.py` + `structlog_backend.py` — целевой;
+  2. `logging_service.py` — устарел (DeprecationWarning);
+  3. `infrastructure/logging/backends/graylog_gelf.py` — GELF bridge;
+  4. `infrastructure/logging/stdlib_backend.py` — bridge к legacy `LoggerManager`
+     (сохраняет handlers при миграции).
+- **Миграция**: потребители постепенно переходят на `get_logger(name)` из factory;
+  `StdlibLoggingBackend` обеспечивает обратную совместимость для позиционных
+  аргументов (`logger.info("msg", arg1, arg2)`).
+
+### CDC Adapter (Wave 5)
+
+- **Реальность**: `infrastructure/clients/external/cdc.py` содержит
+  production-ready `CDCClient` (polling / listen_notify / logminer).
+- **Протокол**: `infrastructure/cdc/*_backend.py` — стабы для `CDCSource` Protocol.
+- **Адаптер**: `infrastructure/cdc/cdc_client_adapter.py` преобразует callback-based
+  `CDCClient` в `AsyncIterator[CDCEvent]` через `asyncio.Queue`;
+  `__anext__` возвращает `None` при закрытии (контракт для graceful shutdown).
+
 ## Что обновлять при крупных изменениях
 
 Обновляй `ARCHITECTURE.md`, если:

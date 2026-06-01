@@ -1958,4 +1958,31 @@ tests/unit/dsl/engine/processors/test_control_flow.py — ForEach tests pass
 
 ---
 
+# APPENDIX: V22.10.2 — S36 Post-Closure Waves 1–7 (2026-06-01)
+
+> **Версия**: V22.10.2 (Waves 1–7 ✅). Пост-закрытие Sprint 36: исправление critical bugs,
+> технический долг, архитектурная документация.
+
+## Waves Summary
+
+| Wave | Scope | Key Changes | Tests |
+|------|-------|-------------|-------|
+| 1 | Resilience P0 | task_watchdog, backpressure, cache_decorators, retry, decorators — 5 critical fixes | +5 (100 total) |
+| 2 | Logging | DeprecationWarning в logging_service; StdlibLoggingBackend bridge; 3 consumers migrated | +4 |
+| 3 | Cache | `core/utils/cache_keys.py` — unified key builder; `@cached` / `@multi_cached` / `CachingDecorator` единый ключ | +4 |
+| 4 | AI | Удалён дубликат `llm_guard_client.py`; AGENT_FRAMEWORK_POLICY.md; mem0 в `UnifiedMemoryGateway`; BGE регистрация | 680 pass |
+| 5 | CDC | `cdc_client_adapter.py` — адаптер production `CDCClient` → `CDCSource` Protocol | +2 |
+| 6 | RPA & Files | `PdfReadProcessor` → `utilities/pdf_reader.read_pdf(bytes)`; `ArchiveProcessor` fallback `content`; ZIP validity test | +2 |
+| 7 | Cleanup | `vulture`/`deptry` baseline; ARCHITECTURE.md + PLAN.md docs (cache/logging/CDC) | — |
+
+## Verification
+
+- `pytest tests/unit/core/resilience/` — 106 passed
+- `pytest tests/unit/dsl/engine/processors/test_rpa.py` — 2 passed
+- `make lint` / `make type-check` — baseline (pre-existing)
+
+**Конец APPENDIX: V22.10.2**
+
+---
+
 **Конец PLAN.md V22.6 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`. Архив V0–V22.3: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension` / `feedback_plan_v22_4_ai_platform`.

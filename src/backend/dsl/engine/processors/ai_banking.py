@@ -139,7 +139,7 @@ async def _emit_audit(
             "resource": f"banking/{processor}",
             "action": event.split(".")[-1] if "." in event else event,
             "outcome": outcome,
-            "severity": severity,  # type: ignore[arg-type]
+            "severity": severity,  
             "details": {
                 "processor": processor,
                 "params": params,

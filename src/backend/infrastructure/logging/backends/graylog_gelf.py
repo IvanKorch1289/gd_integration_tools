@@ -232,7 +232,6 @@ class GraylogGelfLogSink(LogSink):
             return
         try:
             asyncio.get_running_loop()
-            return
         except RuntimeError:
             return
         from src.backend.core.utils.task_registry import get_task_registry
