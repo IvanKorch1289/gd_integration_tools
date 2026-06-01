@@ -111,11 +111,7 @@ class CachingDecorator:
         kwargs: dict[str, Any],
     ) -> str:
         return build_cache_key(
-            func,
-            args,
-            kwargs,
-            prefix=self.key_prefix,
-            exclude_self=self.exclude_self,
+            func, args, kwargs, prefix=self.key_prefix, exclude_self=self.exclude_self
         )
 
     def _pattern(self, pattern: str | None = None) -> str:

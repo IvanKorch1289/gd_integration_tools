@@ -69,10 +69,7 @@ class TaskWatchdog:
         self._stopped: bool = False
 
     def register(
-        self,
-        task: asyncio.Task,
-        deadline_seconds: float,
-        name: str = "",
+        self, task: asyncio.Task, deadline_seconds: float, name: str = ""
     ) -> None:
         """Зарегистрировать задачу с deadline.
 
