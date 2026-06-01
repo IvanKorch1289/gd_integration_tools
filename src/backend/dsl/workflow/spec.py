@@ -96,6 +96,10 @@ class SagaDeclaration(BaseModel):
         default_factory=list,
         description="Compensate-цепочка; пустая = best-effort без отката.",
     )
+    strict_compensate: bool = Field(
+        default=False,
+        description="If True, raise exception when compensation fails. Default False (best-effort).",
+    )
 
 
 class SignalWaitDeclaration(BaseModel):

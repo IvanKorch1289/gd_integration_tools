@@ -141,6 +141,8 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
             try:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
             except Exception as comp_exc:  # noqa: BLE001 — saga best-effort
+                if decl.strict_compensate:
+                    raise comp_exc
                 workflow.logger.warning(
                     "saga compensation failed for step %d: %s", compensate_idx, comp_exc
                 )
