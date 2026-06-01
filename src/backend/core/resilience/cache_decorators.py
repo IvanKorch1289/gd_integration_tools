@@ -101,7 +101,7 @@ def cached(
         else:
 
             def key_builder(*args: Any, **kwargs: Any) -> str:
-                return _format_key(key, args, kwargs)  [arg-type]
+                return _format_key(key, args, kwargs)
 
         # Подготавливаем underlying CachingDecorator с custom key_builder.
         def _underlying_key(

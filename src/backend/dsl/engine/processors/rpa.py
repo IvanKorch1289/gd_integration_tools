@@ -62,24 +62,18 @@ class PdfReadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
 
-        try:
-            from pypdf import PdfReader
-        except ImportError:
-            exchange.fail("pypdf not installed: pip install pypdf")
-            return
+        from src.backend.utilities.pdf_reader import read_pdf
 
         body = exchange.in_message.body
-        if isinstance(body, str):
-            reader = PdfReader(body)
-        elif isinstance(body, bytes):
-            reader = PdfReader(io.BytesIO(body))
-        else:
-            exchange.fail("pdf_read expects bytes or file path")
+        try:
+            text = read_pdf(body)
+        except Exception as exc:  # noqa: BLE001
+            exchange.fail(f"pdf_read failed: {exc}")
             return
 
-        pages = [page.extract_text() or "" for page in reader.pages]
+        pages = text.split("\n\n")
         result: dict[str, Any] = {
-            "text": "\n".join(pages),
+            "text": text,
             "pages": pages,
             "page_count": len(pages),
         }
@@ -413,18 +407,16 @@ class ArchiveProcessor(BaseProcessor):
 
             with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
                 for item in items:
-                    zf.writestr(item["name"], item["data"])
+                    data = item.get("data", item.get("content", b""))
+                    zf.writestr(item["name"], data)
         else:
             import tarfile
 
             with tarfile.open(fileobj=buf, mode="w:gz") as tf:
                 for item in items:
                     ti = tarfile.TarInfo(name=item["name"])
-                    data = (
-                        item["data"]
-                        if isinstance(item["data"], bytes)
-                        else item["data"].encode()
-                    )
+                    raw = item.get("data", item.get("content", b""))
+                    data = raw if isinstance(raw, bytes) else raw.encode()
                     ti.size = len(data)
                     tf.addfile(ti, io.BytesIO(data))
         return buf.getvalue()

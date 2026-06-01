@@ -81,13 +81,23 @@ def _read_pypdf(path: str) -> str:
     return _PAGE_SEP.join(page.extract_text() or "" for page in reader.pages)
 
 
-def read_pdf(path: Path | str) -> str:
-    """Прочитать текст из PDF-файла.
+def _read_pypdf_bytes(data: bytes) -> str:
+    """Fallback: pypdf reader из bytes."""
+    import io
+
+    from pypdf import PdfReader  # type: ignore[import-not-found]
+
+    reader = PdfReader(io.BytesIO(data))
+    return _PAGE_SEP.join(page.extract_text() or "" for page in reader.pages)
+
+
+def read_pdf(path: Path | str | bytes) -> str:
+    """Прочитать текст из PDF-файла или bytes.
 
     Каскад: pypdfium2 → pypdf → :class:`PdfReaderUnavailable`.
 
     Args:
-        path: Путь к PDF (Path или строка).
+        path: Путь к PDF (Path, строка) или bytes.
 
     Returns:
         Полный текст документа (страницы разделены ``\\n\\n``).
@@ -96,6 +106,14 @@ def read_pdf(path: Path | str) -> str:
         PdfReaderUnavailable: Если ни один backend не установлен.
         FileNotFoundError: Если файл не существует.
     """
+    if isinstance(path, bytes):
+        try:
+            return _read_pypdf_bytes(path)
+        except ImportError as exc:
+            raise PdfReaderUnavailable(
+                "pypdf не установлен. Установите `pypdf`."
+            ) from exc
+
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"PDF не найден: {p}")
