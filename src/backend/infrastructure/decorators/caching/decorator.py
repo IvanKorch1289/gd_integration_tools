@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import time
 from functools import wraps
 from pathlib import Path
@@ -10,6 +9,7 @@ from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.backend.core.config.settings import settings
+from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.dsl.codec.json import json_dumps, json_loads
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.clients.storage.redis import redis_client
@@ -110,14 +110,13 @@ class CachingDecorator:
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
     ) -> str:
-        key_data = {
-            "module": func.__module__,
-            "name": func.__name__,
-            "args": args[1:] if self.exclude_self and args else args,
-            "kwargs": dict(sorted(kwargs.items())),
-        }
-        digest = hashlib.sha256(json_dumps(key_data)).hexdigest()
-        return f"{self.key_prefix}:{digest}"
+        return build_cache_key(
+            func,
+            args,
+            kwargs,
+            prefix=self.key_prefix,
+            exclude_self=self.exclude_self,
+        )
 
     def _pattern(self, pattern: str | None = None) -> str:
         if not pattern:

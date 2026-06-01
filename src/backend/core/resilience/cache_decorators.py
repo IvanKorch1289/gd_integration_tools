@@ -13,15 +13,26 @@ API намеренно компактный:
 Lazy-import :mod:`infrastructure.decorators.caching` — core/ не имеет права
 зависеть от infrastructure статически (см. ADR-001 layers). Это decoration-
 time resolve, поэтому performance-cost ничтожен.
+
+ИЕРАРХИЯ КЭШИРОВАНИЯ:
+  @cached / @multi_cached (этот файл)
+     ↓ lazy import
+  infrastructure/decorators/caching/decorator.py (CachingDecorator)
+     ↓ lazy import
+  infrastructure/clients/storage/redis.py (redis_client)
+
+Вызывающий код использует ТОЛЬКО @cached / @multi_cached или кастомный key.
+Прямой импорт CachingDecorator из infrastructure запрещён из сервисов.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from functools import wraps
 from typing import Any, Awaitable, Callable, Literal, Mapping
+
+from src.backend.core.utils.cache_keys import build_cache_key
 
 __all__ = ("cached", "invalidate", "multi_cached")
 
@@ -90,7 +101,7 @@ def cached(
         else:
 
             def key_builder(*args: Any, **kwargs: Any) -> str:
-                return _format_key(key, args, kwargs)  # type: ignore[arg-type]
+                return _format_key(key, args, kwargs)  [arg-type]
 
         # Подготавливаем underlying CachingDecorator с custom key_builder.
         def _underlying_key(
@@ -188,13 +199,7 @@ def multi_cached(
         slots = ",".join(sorted(ttls))
 
         def _key_builder(*args: Any, **kwargs: Any) -> str:
-            try:
-                payload = json.dumps(
-                    {"args": args, "kwargs": kwargs}, sort_keys=True, default=str
-                )
-            except Exception:
-                payload = str((args, sorted(kwargs.items())))
-            return f"multi:{slots}:{payload}"
+            return build_cache_key(func, args, kwargs, prefix=f"multi:{slots}")
 
         return cached(ttl=min_ttl, key=_key_builder, backend="multi")(func)
 
