@@ -78,3 +78,23 @@ class TestCacheStatsEndpoint:
         """semantic_tier_hits equals rag_hits['l3'] (L3 is the semantic tier)."""
         result = await _get_cache_stats()
         assert result["semantic_tier_hits"] == result["rag_hits"]["l3"]
+
+    async def test_cache_stats_endpoint_returns_metrics(self) -> None:
+        """Test that the cache stats endpoint returns metrics from all tiers."""
+        result = await _get_cache_stats()
+        # Verify all expected fields are present
+        assert "lru_cache_hits" in result
+        assert "lru_cache_misses" in result
+        assert "rag_hits" in result
+        assert "rag_misses" in result
+        assert "semantic_tier_hits" in result
+        # Verify all values are non-negative integers
+        assert isinstance(result["lru_cache_hits"], int)
+        assert isinstance(result["lru_cache_misses"], int)
+        assert isinstance(result["semantic_tier_hits"], int)
+        assert result["lru_cache_hits"] >= 0
+        assert result["lru_cache_misses"] >= 0
+        assert result["semantic_tier_hits"] >= 0
+        # Verify RAG metrics have tier structure
+        assert isinstance(result["rag_hits"], dict)
+        assert isinstance(result["rag_misses"], dict)

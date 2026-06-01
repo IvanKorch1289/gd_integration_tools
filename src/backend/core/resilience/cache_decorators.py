@@ -18,6 +18,7 @@ time resolve, поэтому performance-cost ничтожен.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from functools import wraps
 from typing import Any, Awaitable, Callable, Literal, Mapping
@@ -185,7 +186,14 @@ def multi_cached(
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         slots = ",".join(sorted(ttls))
-        key_template = f"multi:{slots}:{{kwargs}}"
-        return cached(ttl=min_ttl, key=key_template, backend="multi")(func)
+
+        def _key_builder(*args: Any, **kwargs: Any) -> str:
+            try:
+                kw_part = json.dumps(kwargs, sort_keys=True, default=str)
+            except Exception:
+                kw_part = str(sorted(kwargs.items()))
+            return f"multi:{slots}:{kw_part}"
+
+        return cached(ttl=min_ttl, key=_key_builder, backend="multi")(func)
 
     return decorator

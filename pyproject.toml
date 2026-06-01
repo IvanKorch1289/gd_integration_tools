@@ -320,16 +320,15 @@ docs-ru = [
 dsl-extras-2 = [
     "standardwebhooks>=1.0.0,<2.0.0",
     "reportlab>=4.0.0,<5.0.0",
-    "pyjq>=2.6.0,<3.0.0",
+    # jmespath already in core deps (pyjq has no py3.14 wheels)
 ]
 # Sprint 5 — DSL расширения batch 3: LDAP / WebDAV / geo conversions.
-# aioldap3 и webdav4 — async клиенты, geopy — синхронный (use в thread executor).
-# S16 gate-w0-ops-reorg-smoke (2026-05-21): aioldap3 удалён из PyPI; ad_directory_client.py
-# имеет lazy-import + fallback на ldap3 → soft-dep не блокирует runtime.
+# ldap3 — sync LDAP client (used via asyncio.to_thread), webdav4 — async client,
+# geopy — sync (use in thread executor).
 dsl-extras-3 = [
     "webdav4>=0.10.0,<1.0.0",
     "geopy>=2.4.0,<3.0.0",
-    "ldap3>=2.9,<4",
+    "ldap3>=3.4,<4",
 ]
 # Sprint 5 — Workflow Result-monad для безопасного error-handling в processors.
 # rustedpy/result — typed Result[T, E] с методами is_ok/unwrap/map/and_then.
@@ -650,7 +649,7 @@ module = [
     "rank_bm25",
     "clickhouse_connect",
     "clickhouse_connect.*",
-    "aioldap3",
+    # "aioldap3",  # removed from PyPI 2026-05-21
     "apprise",
     "toxiproxy",
     "advanced_alchemy.*",

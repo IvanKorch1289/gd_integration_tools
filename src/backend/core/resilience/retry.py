@@ -30,6 +30,7 @@ from tenacity import (
     AsyncRetrying,
     RetryError,
     retry_if_exception_type,
+    retry_if_not_exception_type,
     stop_after_attempt,
     wait_exponential,
     wait_random,
@@ -83,6 +84,8 @@ def with_retry(
             if budget is not None:
                 await budget.record_attempt()
 
+            effective_retry = retry_if_exception_type(final_policy.retry_on)
+            effective_retry = effective_retry & retry_if_not_exception_type(RetryBudgetExhausted)
             retrying = AsyncRetrying(
                 stop=stop_after_attempt(final_policy.max_attempts),
                 wait=wait_exponential(
@@ -90,7 +93,7 @@ def with_retry(
                     exp_base=final_policy.backoff_multiplier,
                 )
                 + wait_random(0, final_policy.jitter),
-                retry=retry_if_exception_type(final_policy.retry_on),
+                retry=effective_retry,
                 reraise=True,
             )
             attempt_no = 0
