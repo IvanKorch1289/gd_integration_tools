@@ -79,6 +79,8 @@ def _build_retry_policy(
         kwargs["maximum_interval"] = timedelta(seconds=policy.maximum_interval_s)
     if policy.non_retryable_errors:
         kwargs["non_retryable_error_types"] = list(policy.non_retryable_errors)
+    if policy.jitter is not None:
+        kwargs["jitter"] = policy.jitter
     return TemporalRetryPolicy(**kwargs)
 
 
