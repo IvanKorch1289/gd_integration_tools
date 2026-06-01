@@ -13,6 +13,7 @@ from src.backend.dsl.engine.middleware import (
 )
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processor_pool import ProcessorPool, get_processor_pool
 from src.backend.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)
@@ -63,16 +64,23 @@ class ExecutionEngine:
         self,
         middleware: MiddlewareChain | None = None,
         validate_before_execute: bool = True,
+        pool: ProcessorPool | None = None,
     ) -> None:
         self._middleware = middleware or _default_middleware
         self._validate = validate_before_execute
         self._timeout_mw = self._find_timeout_middleware()
+        self._pool = pool or get_processor_pool()
 
     def _find_timeout_middleware(self) -> TimeoutMiddleware | None:
         for mw in self._middleware._middlewares:
             if isinstance(mw, TimeoutMiddleware):
                 return mw
         return None
+
+    @property
+    def pool(self) -> ProcessorPool:
+        """Returns the processor pool used by this engine."""
+        return self._pool
 
     @staticmethod
     def _check_feature_flag(pipeline: Pipeline) -> None:
@@ -240,4 +248,44 @@ class ExecutionEngine:
         self._finalize(
             current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000
         )
+        return current_exchange
+
+    async def execute_parallel(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        exchange: Exchange[Any] | None = None,
+        body: Any = None,
+        headers: dict[str, Any] | None = None,
+        context: ExecutionContext | None = None,
+    ) -> Exchange[Any]:
+        """Execute multiple processors in parallel using the processor pool.
+
+        Args:
+            processors: List of processors to execute.
+            exchange: Optional existing exchange.
+            body: Request body.
+            headers: Request headers.
+            context: Optional execution context.
+
+        Returns:
+            Exchange with results from all processors.
+        """
+        current_exchange = exchange or Exchange(
+            in_message=Message(body=body, headers=headers or {})
+        )
+        runtime_context = context or ExecutionContext()
+
+        trace_log = await self._pool.execute_parallel(
+            processors, current_exchange, runtime_context
+        )
+
+        current_exchange.set_property("_trace", trace_log)
+
+        if any(entry.get("status") == "error" for entry in trace_log):
+            errors = [e.get("error", "Unknown") for e in trace_log if e.get("status") == "error"]
+            current_exchange.fail("; ".join(errors))
+        else:
+            current_exchange.status = ExchangeStatus.completed
+
         return current_exchange
