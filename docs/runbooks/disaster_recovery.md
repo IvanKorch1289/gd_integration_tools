@@ -176,3 +176,22 @@
 
 **Версия runbook**: v0.1 (Sprint 17, K-OPS-5 scaffold).
 **Carryover в S18**: chaos-tests `make chaos` для каждого сценария; runbook-test-runner CI.
+
+---
+
+## Post-Incident Analysis (RCA / Root Cause Analysis)
+
+После каждого DR-инцидента обязательно проведение **Root Cause Analysis**:
+
+1. **Таймлайн**: точное время деградации / восстановления по логам (`dr_backup_age_seconds`, `pagerduty` события).
+2. **Root cause (причина)**: что именно вызвало disaster (network partition, data corruption, human error, dependency outage).
+3. **Detection latency**: сколько времени от инцидента до первого alert'а.
+4. **MTTR (Mean Time To Recovery)**: фактический vs target (SLO p95).
+5. **Action items**:
+   - что добавить в этот runbook;
+   - что вынести в ADR (если архитектурное);
+   - что автоматизировать (chaos-test, alert, runbook-test-runner).
+6. **Анализ тренда**: повторяется ли этот класс инцидентов? (RCA history за 90 дней)
+
+RCA-документ хранится в `vault/incidents/<YYYY-MM-DD>-<short-slug>.md` и линкуется в
+этот runbook в секции "Incident log" после события.

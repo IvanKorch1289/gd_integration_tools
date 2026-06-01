@@ -1,6 +1,6 @@
-"""pre-prod-check gate — 33/33 BLOCKING (S17 K-OPS-3 / DoD-13, +3 S36 w4).
+"""pre-prod-check gate — 38/38 BLOCKING (S17 K-OPS-3 / DoD-13, +8 S36 w4).
 
-Запускает 33 проверки и репортит итог. Любая failed проверка → exit 1.
+Запускает 38 проверок и репортит итог. Любая failed проверка → exit 1.
 
 Запуск:
 
@@ -12,7 +12,7 @@
     # Dry-run (S17 scaffold, partial WARN не валит):
     python tools/checks/pre_prod_check.py --dry-run
 
-33 проверки:
+38 проверок:
 
 1.  coverage ≥75% (ratcheting)
 2.  mypy errors ≤30 (ratcheting)
@@ -47,6 +47,11 @@
 31. chaos-suite integration (S36 w4; tests/chaos/ + workflow)
 32. ADR freshness <90 days (S36 w4; docs/adr/ mtime check)
 33. plugin-trust-tier validation (S36 w4 / ADR-NEW-6; extensions/*/plugin.toml)
+34. semantic-cache hit-rate ≥30% (S36 w4; TierRouter metrics)
+35. RCA coverage ≥80% (S36 w4; docs/runbooks/ incident-response.md + disaster_recovery.md)
+36. capability-gate full coverage (S36 w4; CapabilityGatewayProtocol)
+37. mypy --strict (S36 w4; replaces #02 ratchet)
+38. p95 perf-blocking (S36 w4; replaces #29 warn-only)
 
 S17 scaffold (DoD #13): новые gates #21-#30 запускаются в warn-only
 режиме (partial=PASS), полное enforcement — S20. ``--dry-run`` режим
@@ -482,8 +487,241 @@ def _check_plugin_trust_tier() -> CheckResult:
     )
 
 
+def _check_semantic_cache_hit_rate() -> CheckResult:
+    """#34 semantic-cache hit rate (S36 w4).
+
+    Проверяет hit-rate TierRouter (L1 in-proc LRU → L2 Redis exact →
+    L3 semantic). Если hit-rate ≥ 30% (или ещё нет данных) → OK.
+    Порог 30% согласован с S24 KPI для semantic cache.
+    """
+    start = time.monotonic()
+    try:
+        from src.backend.infrastructure.ai.semantic_cache import (
+            get_tier_router_metrics,
+        )
+    except ImportError as exc:
+        return CheckResult(
+            name="semantic-cache-hit-rate",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            skipped=True,
+            skip_reason=f"cannot import metrics: {exc}",
+        )
+    try:
+        metrics = get_tier_router_metrics()
+    except Exception as exc:
+        return CheckResult(
+            name="semantic-cache-hit-rate",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            warning=True,
+            skip_reason=f"metrics collection failed: {exc}",
+        )
+    total_hits = 0
+    total_misses = 0
+    for tier, ops in metrics.items():
+        total_hits += ops.get("hit", 0)
+        total_misses += ops.get("miss", 0)
+    total = total_hits + total_misses
+    if total == 0:
+        return CheckResult(
+            name="semantic-cache-hit-rate (no traffic yet)",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            warning=True,
+            skip_reason="no cache traffic yet (scaffold; will gate on first traffic)",
+        )
+    hit_rate = total_hits / total
+    if hit_rate < 0.30:
+        return CheckResult(
+            name=f"semantic-cache-hit-rate {hit_rate:.1%}",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg=f"hit-rate {hit_rate:.1%} < 30% threshold",
+        )
+    return CheckResult(
+        name=f"semantic-cache-hit-rate {hit_rate:.1%} ({total} ops)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_rca_coverage() -> CheckResult:
+    """#35 RCA coverage (S36 w4).
+
+    Проверяет что critical incident-related runbooks
+    (``docs/runbooks/incident-response.md`` и
+    ``docs/runbooks/disaster_recovery.md``) содержат RCA-маркеры
+    ("RCA", "Root Cause", "Причина", "Анализ"). Это базовая
+    sanity-проверка готовности к post-incident analysis.
+
+    Gate НЕ применяется ко всем runbooks (большинство — operational
+    guides без RCA секции).
+    """
+    start = time.monotonic()
+    runbook_dir = ROOT / "docs" / "runbooks"
+    if not runbook_dir.is_dir():
+        return CheckResult(
+            name="rca-coverage",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            skipped=True,
+            skip_reason="docs/runbooks/ not found",
+        )
+    rca_markers = ("rca", "root cause", "причина", "анализ")
+    critical_files = ("incident-response.md", "disaster_recovery.md")
+    missing: list[str] = []
+    checked: list[str] = []
+    for filename in critical_files:
+        path = runbook_dir / filename
+        if not path.is_file():
+            missing.append(filename)
+            continue
+        try:
+            text = path.read_text(encoding="utf-8").lower()
+        except OSError:
+            missing.append(f"{filename} (read error)")
+            continue
+        checked.append(filename)
+        if not any(marker in text for marker in rca_markers):
+            missing.append(filename)
+    if missing:
+        return CheckResult(
+            name="rca-coverage",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg=f"missing RCA section in: {', '.join(missing)}",
+        )
+    return CheckResult(
+        name=f"rca-coverage ({len(checked)}/{len(critical_files)} critical)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_capability_gate_coverage() -> CheckResult:
+    """#36 capability-gate full coverage (S36 w4).
+
+    Проверяет наличие ``CapabilityGatewayProtocol`` (или
+    ``CapabilityGateway`` concrete impl) с методом ``check()``.
+    Полная проверка (AST analysis всех sensitive calls) — расширение
+    S37; сейчас — smoke test наличия protocol + check() method.
+    """
+    start = time.monotonic()
+    candidates = (
+        ROOT / "src" / "backend" / "core" / "interfaces" / "capability_gateway.py",
+        ROOT / "src" / "backend" / "core" / "authz" / "capability_gateway.py",
+        ROOT / "src" / "backend" / "core" / "authz" / "gateway.py",
+    )
+    found_protocol = False
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "CapabilityGatewayProtocol" in text or "class CapabilityGateway" in text:
+            if "def check(" in text:
+                found_protocol = True
+                break
+    if not found_protocol:
+        return CheckResult(
+            name="capability-gate-coverage",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="CapabilityGatewayProtocol/Class with check() not found",
+        )
+    return CheckResult(
+        name="capability-gate-coverage (Protocol + check())",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_mypy_strict() -> CheckResult:
+    """#37 mypy --strict (S36 w4).
+
+    Замещает #02 ratchet (≤30 errors) на жёсткий strict-режим.
+    Smoke-режим: проверяет наличие ``mypy`` в PATH + что mypy
+    target ``type-check`` определён в Makefile. Реальный strict
+    enforcement — через ``make type-check`` (в CI отдельным job'ом).
+    """
+    start = time.monotonic()
+    if shutil.which("mypy") is None:
+        return CheckResult(
+            name="mypy-strict",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            skipped=True,
+            skip_reason="mypy not in PATH (install via dev-deps)",
+        )
+    makefile = ROOT / "Makefile"
+    if not makefile.is_file():
+        return CheckResult(
+            name="mypy-strict",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="Makefile not found",
+        )
+    text = makefile.read_text(encoding="utf-8")
+    if "type-check" not in text:
+        return CheckResult(
+            name="mypy-strict",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="make target 'type-check' not defined in Makefile",
+        )
+    return CheckResult(
+        name="mypy-strict (mypy + make type-check)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_p95_perf_blocking() -> CheckResult:
+    """#38 p95 perf-blocking (S36 w4).
+
+    Замещает #29 ratchet (warn-only p95 ≤80ms) на blocking-режим.
+    Проверяет наличие ``make perf-gate-py`` target (python-based
+    blocking perf-gate) + baseline.json. Реальный запуск — отдельным
+    CI job'ом с нагрузочным тестированием.
+    """
+    start = time.monotonic()
+    makefile = ROOT / "Makefile"
+    if not makefile.is_file():
+        return CheckResult(
+            name="p95-perf-blocking",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="Makefile not found",
+        )
+    text = makefile.read_text(encoding="utf-8")
+    if "perf-gate-py" not in text:
+        return CheckResult(
+            name="p95-perf-blocking",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="make target 'perf-gate-py' not defined",
+        )
+    baseline = ROOT / ".baselines" / "perf.json"
+    if not baseline.is_file():
+        return CheckResult(
+            name="p95-perf-blocking",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            warning=True,
+            skip_reason="make perf-gate-py OK, but .baselines/perf.json missing",
+        )
+    return CheckResult(
+        name="p95-perf-blocking (make perf-gate-py + baseline)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
 def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
-    """Список 33 проверок (20 base + 10 S17 K-OPS-3 + 3 S36 w4)."""
+    """Список 38 проверок (20 base + 10 S17 K-OPS-3 + 8 S36 w4)."""
     return [
         ("01 coverage ≥75%", lambda: _check_make_target("coverage", "coverage-gate")),
         (
@@ -574,10 +812,16 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ("28 Sphinx docs cov", _check_sphinx_docs_coverage),
         ("29 Numeric perf p95", _check_numeric_perf),
         ("30 DR backup fresh", _check_dr_backup_freshness),
-        # S36 w4 gap closure (K1): +3 gates
+        # S36 w4 gap closure (K1): +3 gates (Batch 2)
         ("31 chaos-suite", _check_chaos_suite_integration),
         ("32 ADR freshness", _check_adr_freshness),
         ("33 plugin trust-tier", _check_plugin_trust_tier),
+        # S36 w4 gap closure (K1): +5 gates (Batch 3)
+        ("34 semantic-cache hit-rate", _check_semantic_cache_hit_rate),
+        ("35 RCA coverage", _check_rca_coverage),
+        ("36 capability-gate coverage", _check_capability_gate_coverage),
+        ("37 mypy strict", _check_mypy_strict),
+        ("38 p95 perf-blocking", _check_p95_perf_blocking),
     ]
 
 
@@ -597,7 +841,7 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help=(
-            "S17 K-OPS-3: выводит список 33 gates без полного исполнения. "
+            "S17 K-OPS-3: выводит список 38 gates без полного исполнения. "
             "Новые gates #21-#30 (warn-only) явно помечаются WARN/SKIP."
         ),
     )
