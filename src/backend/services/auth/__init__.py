@@ -4,16 +4,15 @@
     Сервисы, работающие с внешними auth-системами (AD/LDAP, IdP'и),
     отделены от ``core/auth/`` (Protocols + value-objects) и
     ``infrastructure/auth/`` (адаптеры/clients). Здесь лежат
-    директорные клиенты — обёртки над ``ldap3``/``aioldap3`` для
+    директорные клиенты — обёртки над ``ldap3`` для
     AD lookups, валидации credentials и group resolution.
 
 Содержимое:
-    * :class:`AdDirectoryClient` — LDAP/AD сервис: bind / search /
+    * :class:`AdDirectoryClient` — async AD/LDAP client с методами
       validate_credentials / get_user_groups.
 
 Зависимости (optional extra ``dsl-extras-3``):
-    * ``aioldap3>=1.0`` — async LDAP client (предпочтительный);
-    * ``ldap3>=2.9`` — sync LDAP client (fallback через
+    * ``ldap3>=3.4`` — sync LDAP client (used via
       ``asyncio.to_thread``).
 
 Capability:

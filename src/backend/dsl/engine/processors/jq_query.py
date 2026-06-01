@@ -1,19 +1,19 @@
-"""DSL-процессор ``jq`` — фильтрация / трансформация через jq-выражения.
+"""DSL-процессор ``jq`` — фильтрация / трансформация через JMESPath-выражения.
 
 Wave ``[wave:s5/k3-w1-processor-pack-1]``.
 
-Использует библиотеку ``pyjq`` (из ``[dsl-extras-2]``). Lazy-import: если
+Использует библиотеку ``jmespath`` (из ``[core]`` deps). Lazy-import: если
 библиотека не установлена, процессор fail-завершается с понятной ошибкой.
 
 Контракт DSL (Camel-style Python)::
 
-    .jq(expr=".users | map(select(.age > 18)) | map(.name)", to="body.adults")
+    .jq(expr="users[*].name", to="body.names")
 
 YAML-форма::
 
     - jq:
-        expr: ".users | map(select(.age > 18)) | map(.name)"
-        to: body.adults
+        expr: "users[*].name"
+        to: body.names
 
 Feature flag: ``feature_flags.proc_jq`` (default-OFF).
 """
@@ -49,10 +49,10 @@ __all__ = ("JqProcessor",)
     tags=("jq", "query", "transform"),
 )
 class JqProcessor(BaseProcessor):
-    """Применяет jq-выражение к ``in_message.body``.
+    """Применяет JMESPath-выражение к ``in_message.body``.
 
     Args:
-        expr: jq-выражение (``.foo``, ``.[] | select(.a > 1)``, etc.).
+        expr: JMESPath-выражение (``users[*].name``, ``foo.bar.baz``, etc.).
         to: Куда положить результат (``body.<field>`` / ``properties.<name>``).
         mode: ``all`` (default — list всех результатов), ``first`` (первый),
             ``scalar`` (одно значение, иначе None).
@@ -103,14 +103,16 @@ class JqProcessor(BaseProcessor):
             pass
 
         try:
-            import pyjq  # type: ignore[import-not-found]
+            import jmespath  # type: ignore[import-not-found]
         except ImportError as exc:
-            exchange.fail(f"jq: pyjq not available: {exc}")
+            exchange.fail(f"jq: jmespath not available: {exc}")
             return
 
         body = exchange.in_message.body
         try:
-            results = pyjq.all(self._expr, body)
+            results = jmespath.search(self._expr, body)
+            if not isinstance(results, list):
+                results = [results] if results is not None else []
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"jq evaluation error: {exc}")
             return

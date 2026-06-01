@@ -1,7 +1,7 @@
 """AD/LDAP directory client (K1 S6 W1 — SAML+AD login).
 
 Назначение:
-    Тонкий async-фасад над ``ldap3``/``aioldap3`` для:
+    Тонкий async-фасад над ``ldap3`` для:
 
     * валидации credentials (bind с user DN/password);
     * поиска пользователей в AD/LDAP по userPrincipalName/sAMAccountName;
@@ -15,10 +15,10 @@
           authorization-policy (RBAC).
 
 Дизайн:
-    * Lazy-import ``ldap3``/``aioldap3`` — без extra'ы ``dsl-extras-3``
+    * Lazy-import ``ldap3`` — без extra'ы ``dsl-extras-3``
       импорт не падает; ``is_available()`` возвращает False.
-    * Сначала проба ``aioldap3`` (async native); fallback на ``ldap3``
-      через ``asyncio.to_thread`` (как в ``dsl/engine/processors/ldap_query.py``).
+    * Sync ``ldap3`` используется через ``asyncio.to_thread``
+      (как в ``dsl/engine/processors/ldap_query.py``).
     * Capability: ``directory.read.<server>`` — проверяется на caller-side
       (entrypoints/services через ``feature_flags.saml_ad_login_enabled``).
 
@@ -36,7 +36,7 @@ Feature-flag:
     )
     client = AdDirectoryClient(config=cfg)
     if not client.is_available():
-        raise RuntimeError("ldap3/aioldap3 not installed")
+        raise RuntimeError("ldap3 not installed")
 
     user = await client.find_user("alice@example.com")
     groups = await client.get_user_groups(user.dn)

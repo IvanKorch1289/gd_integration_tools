@@ -816,10 +816,10 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     proc_ldap_query: bool = Field(
         default=False,
-        title="K3 S5 W3: LdapQueryProcessor (aioldap3 search)",
+        title="K3 S5 W3: LdapQueryProcessor (ldap3 search)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
-            "Активирует LdapQueryProcessor — async LDAP search через aioldap3."
+            "Активирует LdapQueryProcessor — async LDAP search через ldap3."
         ),
     )
 
