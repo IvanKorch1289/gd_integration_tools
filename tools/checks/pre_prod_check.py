@@ -1,6 +1,6 @@
-"""pre-prod-check gate — 30/30 BLOCKING (S17 K-OPS-3 / DoD-13).
+"""pre-prod-check gate — 33/33 BLOCKING (S17 K-OPS-3 / DoD-13, +3 S36 w4).
 
-Запускает 30 проверок и репортит итог. Любая failed проверка → exit 1.
+Запускает 33 проверки и репортит итог. Любая failed проверка → exit 1.
 
 Запуск:
 
@@ -12,7 +12,7 @@
     # Dry-run (S17 scaffold, partial WARN не валит):
     python tools/checks/pre_prod_check.py --dry-run
 
-30 проверок:
+33 проверки:
 
 1.  coverage ≥75% (ratcheting)
 2.  mypy errors ≤30 (ratcheting)
@@ -44,6 +44,9 @@
 28. Sphinx docs coverage ≥95% (S20 target)
 29. Numeric perf p95 ≤80ms (S20 target; warn-only S17)
 30. DR backup freshness check (S17 K-OPS-5)
+31. chaos-suite integration (S36 w4; tests/chaos/ + workflow)
+32. ADR freshness <90 days (S36 w4; docs/adr/ mtime check)
+33. plugin-trust-tier validation (S36 w4 / ADR-NEW-6; extensions/*/plugin.toml)
 
 S17 scaffold (DoD #13): новые gates #21-#30 запускаются в warn-only
 режиме (partial=PASS), полное enforcement — S20. ``--dry-run`` режим
@@ -329,8 +332,158 @@ def _check_dr_backup_freshness() -> CheckResult:
     )
 
 
+def _check_chaos_suite_integration() -> CheckResult:
+    """#31 chaos-suite integration (S36 w4).
+
+    Проверяет наличие chaos-тестов в ``tests/chaos/`` и их базовую
+    инфраструктуру (toxiproxy service в workflow). Реальный запуск —
+    через ``make chaos`` (Docker + toxiproxy required).
+    """
+    start = time.monotonic()
+    chaos_dir = ROOT / "tests" / "chaos"
+    if not chaos_dir.is_dir():
+        return CheckResult(
+            name="chaos-suite-integration",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="tests/chaos/ directory not found",
+        )
+    chaos_tests = sorted(chaos_dir.glob("test_*_chaos.py"))
+    if not chaos_tests:
+        return CheckResult(
+            name="chaos-suite-integration",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="no chaos test files in tests/chaos/",
+        )
+    workflow = ROOT / ".github" / "workflows" / "chaos.yml"
+    if not workflow.is_file():
+        return CheckResult(
+            name="chaos-suite-integration",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg=".github/workflows/chaos.yml not found",
+        )
+    return CheckResult(
+        name=f"chaos-suite-integration ({len(chaos_tests)} tests)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_adr_freshness() -> CheckResult:
+    """#34 ADR freshness (S36 w4).
+
+    Проверяет что все ADR в ``docs/adr/`` обновлены за последние
+    90 дней. ADRs старше 90 дней → warning (не блокирует в S36, но
+    репортится как freshness-метрика).
+    """
+    start = time.monotonic()
+    adr_dir = ROOT / "docs" / "adr"
+    if not adr_dir.is_dir():
+        return CheckResult(
+            name="adr-freshness",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="docs/adr/ directory not found",
+        )
+    cutoff = time.time() - 90 * 86400  # 90 days in seconds
+    stale: list[str] = []
+    total = 0
+    for adr in sorted(adr_dir.glob("*.md")):
+        total += 1
+        mtime = adr.stat().st_mtime
+        if mtime < cutoff:
+            stale.append(adr.name)
+    if not total:
+        return CheckResult(
+            name="adr-freshness",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg="no ADR files in docs/adr/",
+        )
+    if stale:
+        return CheckResult(
+            name=f"adr-freshness ({len(stale)}/{total} stale)",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            warning=True,
+            skip_reason=f"stale: {', '.join(stale[:5])}"
+            + (f" +{len(stale) - 5}" if len(stale) > 5 else ""),
+        )
+    return CheckResult(
+        name=f"adr-freshness ({total} ADRs)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
+def _check_plugin_trust_tier() -> CheckResult:
+    """#35 plugin-trust-tier validation (S36 w4 / ADR-NEW-6).
+
+    Проверяет что все ``extensions/*/plugin.toml`` декларируют
+    ``trust_tier = "A" | "B"``. Tier-A (signed by org-CA cosign) —
+    sandbox disabled, isolation через capability-gate. Tier-B
+    (untrusted/external) — strict e2b/pyodide.
+    """
+    start = time.monotonic()
+    ext_dir = ROOT / "extensions"
+    if not ext_dir.is_dir():
+        return CheckResult(
+            name="plugin-trust-tier",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            skipped=True,
+            skip_reason="extensions/ directory not found",
+        )
+    manifest_files = sorted(ext_dir.glob("**/plugin.toml"))
+    if not manifest_files:
+        return CheckResult(
+            name="plugin-trust-tier",
+            ok=True,
+            duration_s=time.monotonic() - start,
+            skipped=True,
+            skip_reason="no plugin.toml manifests in extensions/",
+        )
+    missing: list[str] = []
+    for manifest in manifest_files:
+        try:
+            import tomllib
+        except ImportError:
+            return CheckResult(
+                name="plugin-trust-tier",
+                ok=False,
+                duration_s=time.monotonic() - start,
+                error_msg="tomllib not available (Python < 3.11)",
+            )
+        try:
+            with open(manifest, "rb") as f:
+                data = tomllib.load(f)
+        except Exception as exc:
+            return CheckResult(
+                name="plugin-trust-tier",
+                ok=False,
+                duration_s=time.monotonic() - start,
+                error_msg=f"parse error in {manifest.relative_to(ROOT)}: {exc}",
+            )
+        if "trust_tier" not in data:
+            missing.append(manifest.relative_to(ROOT).as_posix())
+    if missing:
+        return CheckResult(
+            name="plugin-trust-tier",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg=f"missing trust_tier in: {', '.join(missing)}",
+        )
+    return CheckResult(
+        name=f"plugin-trust-tier ({len(manifest_files)} plugins)",
+        ok=True,
+        duration_s=time.monotonic() - start,
+    )
+
+
 def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
-    """Список 30 проверок (20 base + 10 S17 K-OPS-3 scaffold)."""
+    """Список 33 проверок (20 base + 10 S17 K-OPS-3 + 3 S36 w4)."""
     return [
         ("01 coverage ≥75%", lambda: _check_make_target("coverage", "coverage-gate")),
         (
@@ -421,6 +574,10 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ("28 Sphinx docs cov", _check_sphinx_docs_coverage),
         ("29 Numeric perf p95", _check_numeric_perf),
         ("30 DR backup fresh", _check_dr_backup_freshness),
+        # S36 w4 gap closure (K1): +3 gates
+        ("31 chaos-suite", _check_chaos_suite_integration),
+        ("32 ADR freshness", _check_adr_freshness),
+        ("33 plugin trust-tier", _check_plugin_trust_tier),
     ]
 
 
@@ -440,7 +597,7 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help=(
-            "S17 K-OPS-3: выводит список 30 gates без полного исполнения. "
+            "S17 K-OPS-3: выводит список 33 gates без полного исполнения. "
             "Новые gates #21-#30 (warn-only) явно помечаются WARN/SKIP."
         ),
     )

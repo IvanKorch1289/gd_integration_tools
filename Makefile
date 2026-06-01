@@ -739,6 +739,19 @@ coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate 
 	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 75 --strict
 	@$(SUCCESS) "Coverage gate strict (75%) passed"
 
+pre-prod-check: ## S36 w4: 30+ gate pre-prod-check (BLOCKING, ratchet-aware)
+	@$(INFO) "Running pre-prod-check (30+ gates)..."
+	$(UV_RUN) python tools/checks/pre_prod_check.py
+
+pre-prod-check-dry-run: ## S36 w4: pre-prod-check --dry-run (печатает список gates без исполнения)
+	@$(INFO) "Dry-run pre-prod-check..."
+	$(UV_RUN) python tools/checks/pre_prod_check.py --dry-run
+
+pre-prod-check-ratchet: ## S36 w4: pre-prod-check + обновление baseline (--ratchet)
+	@$(INFO) "Running pre-prod-check + ratchet baseline..."
+	$(UV_RUN) python tools/checks/pre_prod_check.py --ratchet
+	@$(SUCCESS) "pre-prod-check baseline updated"
+
 ##@ Git & Release
 
 pre-commit: check-env ## Install and run pre-commit hooks
