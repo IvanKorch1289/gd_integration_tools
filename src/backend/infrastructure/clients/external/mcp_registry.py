@@ -227,11 +227,11 @@ class MCPClientRegistry:
             waf_policy = spec.waf_policy if spec.waf_policy else "strict"
             self._http_client = OutboundHttpClient(waf_policy=waf_policy)
             return self._http_client
-        except ImportError:
-            logger.warning("OutboundHttpClient not available, using httpx directly")
-            import httpx
-
-            return httpx.AsyncClient()
+        except ImportError as exc:
+            raise RuntimeError(
+                "OutboundHttpClient is required for MCP registry WAF compliance. "
+                "Ensure src.backend.core.net.outbound_http is importable."
+            ) from exc
 
     async def _resolve_api_key(self, client_name: str) -> str | None:
         """Резолвит API key для клиента из secrets.

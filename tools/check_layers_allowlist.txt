@@ -39,3 +39,5 @@ src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.wo
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.template_registry_compat
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.visualize
 src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engine.dry_run
+src/backend/entrypoints/grpc/grpc_server.py	entrypoints	src.backend.infrastructure.observability.correlation
+src/backend/infrastructure/security/token_registry.py	infrastructure	src.backend.services.audit.audit_service

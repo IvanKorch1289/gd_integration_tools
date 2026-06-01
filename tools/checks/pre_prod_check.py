@@ -736,7 +736,7 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         (
             "06 SBOM",
             lambda: _check_python_script(
-                "generate-sbom", "generate_sbom.py", "--output", "dist/sbom.cdx.json"
+                "generate-sbom", "generate_sbom.py", "--output-dir", "dist"
             ),
         ),
         (

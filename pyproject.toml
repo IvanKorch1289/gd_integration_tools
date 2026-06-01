@@ -328,7 +328,7 @@ dsl-extras-2 = [
 dsl-extras-3 = [
     "webdav4>=0.10.0,<1.0.0",
     "geopy>=2.4.0,<3.0.0",
-    "ldap3>=3.4,<4",
+    "ldap3>=2.9,<3",
 ]
 # Sprint 5 — Workflow Result-monad для безопасного error-handling в processors.
 # rustedpy/result — typed Result[T, E] с методами is_ok/unwrap/map/and_then.

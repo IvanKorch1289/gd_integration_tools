@@ -29,10 +29,15 @@ _TLS_RULES = ("B501", "B502", "B503", "B504", "B505", "B506", "B507")
 
 
 def _check_bandit_available() -> None:
-    """Проверяет наличие ``bandit`` в PATH."""
-    if shutil.which("bandit") is None:
+    """Проверяет наличие ``bandit`` в окружении (via python -m)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "bandit", "--version"],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
         print(
-            "[ERROR] 'bandit' не найден в PATH.\n"
+            "[ERROR] 'bandit' не найден в окружении.\n"
             "  Установите: pip install bandit\n"
             "  Или используйте extras: pip install '.[security]'",
             file=sys.stderr,
@@ -50,10 +55,13 @@ def run_bandit_tls(target: Path) -> int:
         количество high-severity TLS-нарушений (0 если чисто).
     """
     cmd = [
+        sys.executable,
+        "-m",
         "bandit",
         "-r",
         str(target),
         "-lll",
+        "-q",
         "-f",
         "json",
         "--tests",
