@@ -630,6 +630,12 @@ docs-vale: check-env ## К5: prose lint Markdown через Vale + proselint
 	@command -v vale >/dev/null 2>&1 && vale docs/ || $(INFO) "vale CLI not installed — skip"
 	@$(UV_RUN) python -m proselint docs/ || true
 
+check-docstrings: check-env ## S35 w3: docstring policy gate (Wave F.6) — pre-push hook
+	@$(INFO) "Running docstring policy check..."
+	@$(UV_RUN) python tools/check_docstrings.py \
+		src/backend/core src/backend/dsl/engine src/backend/core/interfaces \
+		&& $(SUCCESS) "docstring policy OK"
+
 ##@ Profiling
 
 profile-memray: check-env ## Run FastAPI under Memray
