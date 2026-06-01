@@ -45,6 +45,7 @@ from src.backend.dsl.engine.processors.business import (
     OutboxProcessor,
     TenantScopeProcessor,
 )
+from src.backend.dsl.engine.processors.cdc_capture import CDCCaptureProcessor
 from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
 from src.backend.dsl.engine.processors.components import (
     DatabaseQueryProcessor,
@@ -124,6 +125,7 @@ from src.backend.dsl.engine.processors.external import (
     CDCProcessor,
     MCPToolProcessor,
 )
+from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcessor
 from src.backend.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     BulkheadProcessor,
@@ -133,6 +135,8 @@ from src.backend.dsl.engine.processors.generic import (
     ShadowModeProcessor,
     SseSourceProcessor,
 )
+from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
+from src.backend.dsl.engine.processors.hitl_approval import HitlApprovalProcessor
 from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
 from src.backend.dsl.engine.processors.integration import (
     EventPublishProcessor,
@@ -230,6 +234,7 @@ __all__ = (
     "MCPToolProcessor",
     "AgentGraphProcessor",
     "CDCProcessor",
+    "CDCCaptureProcessor",
     "ChoiceBranch",
     "ChoiceProcessor",
     "TryCatchProcessor",
@@ -357,6 +362,8 @@ __all__ = (
     "TenantScopeProcessor",
     "CostTrackerProcessor",
     "HumanApprovalProcessor",
+    "HitlApprovalProcessor",
+    "AIRpaProcessor",
     "OutboxProcessor",
     "DataMaskingProcessor",
     "ComplianceLabelProcessor",
@@ -380,4 +387,5 @@ __all__ = (
     "Rule",
     "MLPredictProcessor",
     "SshCommandProcessor",
+    "GraphQLQueryProcessor",
 )

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("Pipeline",)
+__all__ = ("Pipeline", "PipelineCompiler", "CompiledPipeline")
 
 
 @dataclass(slots=True)
@@ -149,3 +150,69 @@ class Pipeline:
         lines.append("    .build()")
         lines.append(")")
         return "\n".join(lines)
+
+
+@dataclass(frozen=True, slots=True)
+class CompiledPipeline:
+    """Скомпилированный pipeline — кэшируемый результат компиляции.
+
+    Attrs:
+        pipeline: Исходный pipeline.
+        processor_names: Список имён процессоров в порядке выполнения.
+        is_valid: Флаг валидности pipeline.
+    """
+
+    pipeline: Pipeline
+    processor_names: tuple[str, ...]
+    is_valid: bool
+
+
+class PipelineCompiler:
+    """Компилятор DSL-pipeline с LRU-кэшированием результатов.
+
+    Кэширует результаты компиляции по route_id, чтобы повторные
+    вызовы ``compile()`` для одного и того же pipeline не выполняли
+    повторную работу.
+    """
+
+    @staticmethod
+    @lru_cache(maxsize=512)
+    def _compile_cached(route_id: str, processor_count: int) -> tuple[str, bool]:
+        """Внутренняя кэшируемая функция (принимает только хешируемые аргументы).
+
+        Args:
+            route_id: Уникальный идентификатор pipeline.
+            processor_count: Количество процессоров (для валидации).
+
+        Returns:
+            Кортеж (route_id, is_valid).
+        """
+        is_valid = processor_count > 0
+        return (route_id, is_valid)
+
+    def compile(self, pipeline: Pipeline) -> CompiledPipeline:
+        """Компилирует pipeline в кэшируемую структуру.
+
+        Args:
+            pipeline: Исходный DSL-pipeline.
+
+        Returns:
+            CompiledPipeline — скомпилированное представление.
+        """
+        processor_names = tuple(
+            getattr(p, "name", p.__class__.__name__) for p in pipeline.processors
+        )
+        processor_count = len(pipeline.processors)
+
+        # Используем кэшируемую внутреннюю функцию
+        cached_result = self._compile_cached(pipeline.route_id, processor_count)
+
+        return CompiledPipeline(
+            pipeline=pipeline,
+            processor_names=processor_names,
+            is_valid=cached_result[1],
+        )
+
+    def clear_cache(self) -> None:
+        """Очищает LRU-кеш компилятора."""
+        self._compile_cached.cache_clear()

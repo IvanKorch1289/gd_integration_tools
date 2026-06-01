@@ -519,3 +519,146 @@ class AgentDSLMixin:
                 ttl_s=ttl_s,
             )
         )
+
+    # ── W5 — AI-RPA + HITL (S28-29) ──
+
+    def ai_rpa(
+        self,
+        *,
+        task: str,
+        ui_context: dict[str, Any] | None = None,
+        action_property: str = "ai_rpa.action",
+        model: str = "gpt-4o",
+        temperature: float = 0.1,
+        to: str = "property:rpa.ai_decision",
+    ) -> "RouteBuilder":
+        """AI-driven RPA action selection via LLM (S28 W5, wave:s8/k3-rpa-ai-decide).
+
+        Анализирует задачу (natural language) и UI-контекст (screenshot/dom_snapshot)
+        через LLM и возвращает структурированный RPA action для последующего
+        выполнения через DesktopRpaProcessor или BrowserRpaProcessor.
+
+        Args:
+            task: Описание задачи на естественном языке.
+            ui_context: Dict с UI-данными (``screenshot``, ``dom_snapshot``).
+                Поддерживает property reference через ``${...}``.
+            action_property: Exchange property для записи выбранного action.
+            model: LLM model для принятия решений (default ``gpt-4o``).
+            temperature: Temperature для LLM (default ``0.1``).
+            to: Опц. путь записи результата
+                (``body.<field>`` / ``property:<name>``).
+
+        Example::
+
+            builder.ai_rpa(
+                task="Нажми кнопку 'Подтвердить' в диалоговом окне",
+                ui_context={"screenshot": "${rpa.screenshot}"},
+            )
+        """
+        from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
+
+        return self._add(  # type: ignore[attr-defined]
+            AIRpaProcessor(
+                task=task,
+                ui_context=ui_context,
+                action_property=action_property,
+                model=model,
+                temperature=temperature,
+                to=to,
+            )
+        )
+
+    def hitl_approval(
+        self,
+        *,
+        task: str,
+        approvers: list[str] | None = None,
+        timeout_seconds: float = 3600.0,
+        result_property: str = "hitl.decision",
+        priority: str = "normal",
+    ) -> "RouteBuilder":
+        """Human-In-The-Loop approval с timeout и multi-approver support (S28 W5).
+
+        Приостанавливает текущий pipeline, создаёт запрос на approval
+        и ожидает ответа от человека. Результат записывается в
+        ``result_property`` как dict с полями ``status``, ``approved_by``, ``reason``.
+
+        Args:
+            task: Описание задачи для approver'а.
+            approvers: Список email или ID approvers.
+            timeout_seconds: Timeout ожидания (default 3600).
+            result_property: Exchange property для записи результата.
+            priority: Приоритет (``critical``, ``high``, ``normal``, ``low``).
+
+        Example::
+
+            builder.hitl_approval(
+                task="Подтвердите перевод 50000 RUB на счёт получателя",
+                approvers=["manager@bank.ru"],
+                timeout_seconds=3600,
+            )
+        """
+        from src.backend.dsl.engine.processors.hitl_approval import (
+            HITLApprovalProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            HITLApprovalProcessor(
+                task=task,
+                approvers=approvers,
+                timeout_seconds=timeout_seconds,
+                result_property=result_property,
+                priority=priority,
+            )
+        )
+
+    # ── W5 — MCP Tool (S27 W3, S28 W5) ──
+
+    def mcp_tool(
+        self,
+        *,
+        tool_uri: str,
+        tool_name: str,
+        arguments_property: str = "body",
+        result_property: str = "mcp_result",
+        timeout_s: float = 30.0,
+    ) -> "RouteBuilder":
+        """Вызов MCP tool через FastMCP Client (S27 W3, S28 W5).
+
+        Подключается к MCP-серверу по ``tool_uri`` и вызывает
+        именованный tool с аргументами из ``arguments_property``.
+        Результат записывается в ``result_property``.
+
+        Args:
+            tool_uri: URI MCP-сервера
+                (``http://localhost:8000/mcp`` или ``file:///path/to/server.py``).
+            tool_name: Имя вызываемого tool'а в MCP-сервере.
+            arguments_property: Опц. путь к аргументам вызова
+                (``body`` / ``body.<key>`` / ``property:<name>``).
+                Default ``body`` — все тело сообщения как dict.
+            result_property: Свойство exchange для записи результата.
+                Default ``mcp_result``.
+            timeout_s: Timeout на вызов в секундах. Default ``30``.
+
+        Example::
+
+            builder.mcp_tool(
+                tool_uri="http://localhost:8000/mcp",
+                tool_name="database.query",
+                arguments_property="body.query_params",
+                result_property="mcp_result",
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
+            MCPToolProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            MCPToolProcessor(
+                tool_uri=tool_uri,
+                tool_name=tool_name,
+                arguments_property=arguments_property,
+                result_property=result_property,
+                timeout_s=timeout_s,
+            )
+        )

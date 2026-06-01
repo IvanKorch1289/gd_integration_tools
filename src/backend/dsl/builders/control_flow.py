@@ -21,6 +21,7 @@ from src.backend.dsl.engine.processors import (
     DelayProcessor,
     DispatchActionProcessor,
     FallbackChainProcessor,
+    HitlApprovalProcessor,
     IdempotentConsumerProcessor,
     LogProcessor,
     ParallelProcessor,
@@ -313,3 +314,59 @@ class ControlFlowMixin:
     def correlation_id(self, *, header: str = "x-correlation-id") -> "RouteBuilder":
         """Correlation Identifier: проставляет/пропагирует correlation-id."""
         return self._add(CorrelationIdProcessor(header=header))  # type: ignore[attr-defined,no-any-return]
+
+    # ── Human-in-the-loop ──
+
+    def hitl_approval(
+        self,
+        hitl_service: Any,
+        *,
+        title: str,
+        description: str = "",
+        approvers: list[str] | None = None,
+        timeout_seconds: float = 86_400.0,
+        payload_path: str | None = None,
+        request_info_processors: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        """HITL-approval: приостанавливает pipeline, ожидает approve/reject от оператора.
+
+        Использует :class:`HitlService` для регистрации pending signal и ожидания
+        решения. При ``approve`` — pipeline продолжается; при ``reject`` — Exchange
+        переводится в failed-состояние; при ``request_info`` — выполняются
+        ``request_info_processors`` и signal перерегистрируется.
+
+        Args:
+            hitl_service: Экземпляр :class:`HitlService`.
+            title: Заголовок запроса (отображается оператору).
+            description: Описание запроса.
+            approvers: Список user-id для уведомления (пустой = всем).
+            timeout_seconds: Максимальное время ожидания (default 24h).
+            payload_path: JMESPath к данным в body для формирования payload.
+            request_info_processors: Процессоры для сбора доп. информации.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_("loan.approve", source="http:/webhook")
+                .validate(LoanRequest)
+                .http_call("https://bank-api/decision")
+                .hitl_approval(
+                    hitl_service=hitl_service,
+                    title="Кредитное решение требует подтверждения",
+                    approvers=["manager@bank.com"],
+                )
+                .dispatch_action("loan.execute")
+                .build()
+            )
+        """
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            HitlApprovalProcessor(
+                hitl_service=hitl_service,
+                title=title,
+                description=description,
+                approvers=approvers,
+                timeout_seconds=timeout_seconds,
+                payload_path=payload_path,
+                request_info_processors=request_info_processors,
+            )
+        )
