@@ -16,6 +16,8 @@ from pydantic import ValidationError
 
 from src.backend.dsl.workflow import (
     ActivityDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
     RetryPolicy,
     SagaBuilder,
     SagaDeclaration,
@@ -211,84 +213,55 @@ def test_builder_multiple_sagas_in_one_workflow() -> None:
     assert len(wf.steps[2].compensate) == 0
 
 
-def test_workflow_builder_pause() -> None:
-    """Test that .pause() adds a PauseDeclaration step to the workflow."""
-    from src.backend.dsl.workflow.spec import PauseDeclaration
-
+def test_builder_pause_resume() -> None:
+    """pause() and resume() add PauseDeclaration/ResumeDeclaration steps."""
     wf = (
-        WorkflowBuilder("credit.flow")
-        .activity("credit.fetch_score", output_key="score")
+        WorkflowBuilder("pausable")
+        .activity("step.one", output_key="result")
         .pause(output_key="paused_at")
-        .activity("credit.approve")
+        .resume()
+        .activity("step.two")
         .build()
     )
-    assert len(wf.steps) == 3
+    assert len(wf.steps) == 4
     assert isinstance(wf.steps[0], ActivityDeclaration)
     assert isinstance(wf.steps[1], PauseDeclaration)
-    assert isinstance(wf.steps[2], ActivityDeclaration)
-    pause_step = wf.steps[1]
-    assert pause_step.type == "pause"
-    assert pause_step.output_key == "paused_at"
+    assert wf.steps[1].output_key == "paused_at"
+    assert isinstance(wf.steps[2], ResumeDeclaration)
+    assert wf.steps[2].checkpoint_id is None
+    assert isinstance(wf.steps[3], ActivityDeclaration)
 
 
-def test_workflow_builder_pause_without_output_key() -> None:
-    """Test that .pause() works without output_key."""
-    from src.backend.dsl.workflow.spec import PauseDeclaration
-
-    wf = WorkflowBuilder("flow").pause().build()
-    assert len(wf.steps) == 1
-    assert isinstance(wf.steps[0], PauseDeclaration)
-    assert wf.steps[0].output_key is None
-
-
-def test_workflow_builder_resume() -> None:
-    """Test that .resume() adds a ResumeDeclaration step to the workflow."""
-    from src.backend.dsl.workflow.spec import PauseDeclaration, ResumeDeclaration
-
-    wf = (
-        WorkflowBuilder("credit.flow")
-        .pause()
-        .activity("credit.approve")
-        .resume(checkpoint_id="wf_checkpoint_001")
+def test_builder_pause_resume_round_trip() -> None:
+    """pause/resume survive model_dump → model_validate round-trip."""
+    wf1 = (
+        WorkflowBuilder("flow")
+        .pause(output_key="ts")
+        .resume(checkpoint_id="ckpt-1")
         .build()
     )
-    assert len(wf.steps) == 3
-    assert isinstance(wf.steps[0], PauseDeclaration)
-    assert isinstance(wf.steps[1], ActivityDeclaration)
-    assert isinstance(wf.steps[2], ResumeDeclaration)
-    resume_step = wf.steps[2]
-    assert resume_step.type == "resume"
-    assert resume_step.checkpoint_id == "wf_checkpoint_001"
+    payload = wf1.model_dump()
+    wf2 = WorkflowDeclaration.model_validate(payload)
+    assert isinstance(wf2.steps[0], PauseDeclaration)
+    assert wf2.steps[0].output_key == "ts"
+    assert isinstance(wf2.steps[1], ResumeDeclaration)
+    assert wf2.steps[1].checkpoint_id == "ckpt-1"
 
 
-def test_workflow_builder_resume_without_checkpoint_id() -> None:
-    """Test that .resume() works without checkpoint_id."""
-    from src.backend.dsl.workflow.spec import ResumeDeclaration
-
-    wf = WorkflowBuilder("flow").resume().build()
-    assert len(wf.steps) == 1
-    assert isinstance(wf.steps[0], ResumeDeclaration)
-    assert wf.steps[0].checkpoint_id is None
-
-
-def test_workflow_builder_pause_resume_chain() -> None:
-    """Test that pause and resume can be chained together."""
-    from src.backend.dsl.workflow.spec import PauseDeclaration, ResumeDeclaration
-
+def test_builder_combined_includes_pause_resume() -> None:
+    """pause/resume coexist with other step types in a single workflow."""
     wf = (
-        WorkflowBuilder("flow")
-        .activity("step.one")
+        WorkflowBuilder("full")
+        .activity("start")
         .pause(output_key="p1")
-        .activity("step.two")
-        .resume(checkpoint_id="chk_1")
-        .activity("step.three")
+        .activity("mid")
+        .resume()
+        .sleep(1.0)
         .build()
     )
     assert len(wf.steps) == 5
-    assert isinstance(wf.steps[0], ActivityDeclaration)
-    assert isinstance(wf.steps[1], PauseDeclaration)
-    assert wf.steps[1].output_key == "p1"
-    assert isinstance(wf.steps[2], ActivityDeclaration)
-    assert isinstance(wf.steps[3], ResumeDeclaration)
-    assert wf.steps[3].checkpoint_id == "chk_1"
-    assert isinstance(wf.steps[4], ActivityDeclaration)
+    assert type(wf.steps[0]) is ActivityDeclaration
+    assert type(wf.steps[1]) is PauseDeclaration
+    assert type(wf.steps[2]) is ActivityDeclaration
+    assert type(wf.steps[3]) is ResumeDeclaration
+    assert type(wf.steps[4]) is SleepDeclaration

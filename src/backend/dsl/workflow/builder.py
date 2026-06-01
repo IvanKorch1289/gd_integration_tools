@@ -412,6 +412,34 @@ class WorkflowBuilder:
         )
         return self
 
+    def pause(self, output_key: str | None = None) -> Self:
+        """Добавить pause-шаг для приостановки workflow (S35 GAP-DSL-2).
+
+        Вызывает ``workflow.pause()`` из Temporal SDK.
+
+        Args:
+            output_key: Опц. имя property для сохранения timestamp паузы.
+
+        Returns:
+            Self для chain.
+        """
+        self._steps.append(PauseDeclaration(output_key=output_key))
+        return self
+
+    def resume(self, checkpoint_id: str | None = None) -> Self:
+        """Добавить resume-шаг для возобновления paused workflow (S35 GAP-DSL-2).
+
+        Вызывает ``workflow.resume()`` из Temporal SDK.
+
+        Args:
+            checkpoint_id: Опц. checkpoint_id для восстановления состояния.
+
+        Returns:
+            Self для chain.
+        """
+        self._steps.append(ResumeDeclaration(checkpoint_id=checkpoint_id))
+        return self
+
     def escalate(
         self,
         *,

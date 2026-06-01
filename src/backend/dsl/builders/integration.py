@@ -557,6 +557,45 @@ class IntegrationMixin:
             )
         )
 
+    def directory_scan(
+        self,
+        path: str,
+        pattern: str = "*",
+        *,
+        recursive: bool = False,
+        max_files: int = 1000,
+        sort_by: str = "name",
+        result_property: str = "directory_scan_result",
+    ) -> "RouteBuilder":
+        """Сканирует директорию и возвращает список файлов, подходящих под glob.
+
+        S35 GAP-INT-3: batch file processing.
+
+        Args:
+            path: Директория для сканирования.
+            pattern: glob-паттерн, например ``*.csv`` или ``**/*.json``.
+            recursive: Рекурсивный обход поддиректорий.
+            max_files: Максимальное число возвращаемых файлов.
+            sort_by: Сортировка результатов: ``name`` (default),
+                ``mtime`` (по времени изменения) или ``size``.
+            result_property: Имя property, куда будет записан результат
+                (список dict с ключами ``path``, ``name``, ``size``, ``mtime``).
+        """
+        from src.backend.dsl.engine.processors.fs_directory_scan import (
+            DirectoryScanProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            DirectoryScanProcessor(
+                path=path,
+                pattern=pattern,
+                recursive=recursive,
+                max_files=max_files,
+                sort_by=sort_by,
+                result_property=result_property,
+            )
+        )
+
     # ── HTTP / DB / file / S3 / timer / poll ──
 
     def http_call(
@@ -697,6 +736,39 @@ class IntegrationMixin:
             result_property=result_property,
             fetch=fetch,
             commit=commit,
+        )
+
+    def jdbc_query(
+        self,
+        sql: str,
+        profile: str,
+        *,
+        params_from: str = "body",
+        result_property: str = "jdbc_result",
+    ) -> "RouteBuilder":
+        """Execute arbitrary SQL against an external JDBC-compatible database profile.
+
+        Uses ``ExternalDatabaseRegistry`` to obtain an async session for the
+        given profile. SELECT queries return list[dict] via ``result_property``.
+        INSERT/UPDATE/DELETE return affected row count (int) via ``result_property``.
+
+        SQL is validated: DDL, DROP, GRANT, REVOKE, and multi-statement are blocked.
+        Bind-parameters are sourced from body / properties / headers.
+
+        Args:
+            sql: SQL query with ``:name`` bind-parameters.
+            profile: External database profile name.
+            params_from: Source of bind-parameters — ``"body"`` (default) /
+                ``"properties"`` / ``"headers"`` / ``"none"``.
+            result_property: Exchange property key for the result.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+            "src.backend.dsl.engine.processors.jdbc_query",
+            "JdbcQueryProcessor",
+            sql=sql,
+            profile=profile,
+            params_from=params_from,
+            result_property=result_property,
         )
 
     # ── K3 S5 W9: web_search ──
@@ -1997,5 +2069,70 @@ class IntegrationMixin:
                 output_property=output_property,
                 model_type=model_type,
                 name=name,
+            )
+        )
+
+    # ── SSH remote command execution (S35 GAP-INT-2) ──
+
+    def ssh_exec(
+        self,
+        host: str,
+        command: str,
+        *,
+        username: str | None = None,
+        password_from: str = "none",
+        key_file: str | None = None,
+        timeout: float = 30.0,
+        result_property: str = "ssh_result",
+        continue_on_error: bool = False,
+    ) -> "RouteBuilder":
+        """Выполняет remote-команду через SSH (asyncssh).
+
+        Wave: ``[wave:s35/gap-int-2-ssh-processor]``. Использует
+        :class:`SshCommandProcessor` для выполнения команд на удалённых
+        SSH-серверах из DSL-маршрутов.
+
+        Args:
+            host: Адрес SSH-сервера.
+            command: Команда для выполнения.
+            username: Имя пользователя для SSH (None — используется
+                системный username).
+            password_from: Источник пароля: ``"body"``, ``"properties"``
+                или ``"none"`` (для key-based auth).
+            key_file: Путь к private key-файлу для key-based auth.
+            timeout: Таймаут выполнения команды в секундах (default 30.0).
+            result_property: Имя property для записи результата
+                (``{stdout, stderr, exit_code}``).
+            continue_on_error: Если True, не бросает исключение при
+                ненулевом exit_code.
+
+        Returns:
+            Тот же :class:`RouteBuilder` для продолжения fluent-chain.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_("remote_exec", source="timer:interval=60")
+                .ssh_exec(
+                    "192.168.1.10",
+                    "ls -la /data",
+                    username="robot",
+                    key_file="/secrets/id_rsa",
+                )
+                .build()
+            )
+        """
+        from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            SshCommandProcessor(
+                host=host,
+                command=command,
+                username=username,
+                password_from=password_from,
+                key_file=key_file,
+                timeout=timeout,
+                result_property=result_property,
+                continue_on_error=continue_on_error,
             )
         )

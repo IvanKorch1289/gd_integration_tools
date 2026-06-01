@@ -289,3 +289,76 @@ async def test_all_forward_success_completes_with_full_recording(
 
     warn_logs = [name for name in recorder if name.startswith("WARN::")]
     assert warn_logs == []
+
+
+@pytest.mark.asyncio
+async def test_saga_strict_compensate_raises_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """strict_compensate=True: compensate failure raises instead of warning."""
+    fake_wf, recorder = _make_recorder_temporal(
+        fail_on={"payments.charge", "inventory.release"}
+    )
+    _patch_temporal(monkeypatch, fake_wf)
+
+    decl = SagaDeclaration(
+        forward=[
+            ActivityDeclaration(name="orders.create"),  # succeeds
+            ActivityDeclaration(name="inventory.reserve"),  # succeeds
+            ActivityDeclaration(name="payments.charge"),  # fails
+        ],
+        compensate=[
+            ActivityDeclaration(name="orders.cancel"),
+            ActivityDeclaration(name="inventory.release"),  # fails, raises with strict=True
+            ActivityDeclaration(name="payments.refund"),
+        ],
+        strict_compensate=True,
+    )
+    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {}}
+
+    with pytest.raises(RuntimeError, match="inventory.release"):
+        await compile_saga_step(decl, ctx)
+
+    activity_calls = [name for name in recorder if not name.startswith("WARN::")]
+    # compensate[0] (orders.cancel) does NOT run because strict raises immediately
+    # on compensate[1] failure
+    assert "orders.cancel" not in activity_calls
+    # But compensate[1] (inventory.release) was attempted before raising
+    assert "inventory.release" in activity_calls
+
+
+@pytest.mark.asyncio
+async def test_saga_best_effort_swallows_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """strict_compensate=False (default): compensate failure logs warning, original exc re-raised."""
+    fake_wf, recorder = _make_recorder_temporal(
+        fail_on={"payments.charge", "inventory.release"}
+    )
+    _patch_temporal(monkeypatch, fake_wf)
+
+    decl = SagaDeclaration(
+        forward=[
+            ActivityDeclaration(name="orders.create"),
+            ActivityDeclaration(name="inventory.reserve"),
+            ActivityDeclaration(name="payments.charge"),
+        ],
+        compensate=[
+            ActivityDeclaration(name="orders.cancel"),
+            ActivityDeclaration(name="inventory.release"),  # will fail
+            ActivityDeclaration(name="payments.refund"),
+        ],
+        strict_compensate=False,  # default
+    )
+    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {}}
+
+    with pytest.raises(RuntimeError, match="payments.charge"):
+        await compile_saga_step(decl, ctx)
+
+    # Best-effort: compensate[1] fails but compensate[0] still runs
+    activity_calls = [name for name in recorder if not name.startswith("WARN::")]
+    assert "orders.cancel" in activity_calls
+    assert "inventory.release" in activity_calls
+    # Warning was logged but exception was swallowed
+    warn_logs = [name for name in recorder if name.startswith("WARN::")]
+    assert len(warn_logs) >= 1

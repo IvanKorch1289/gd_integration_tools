@@ -8,7 +8,7 @@ No external API calls — CPU-based, MIT licensed.
 """
 
 from src.backend.services.ai.guardrails.lakera_client import LakeraClient, LakeraResult
-from src.backend.services.ai.guardrails.llm_guard_client import (
+from src.backend.core.ai.guardrails.llm_guard_client import (
     LLMGuardClient,
     LLMGuardResult,
 )

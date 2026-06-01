@@ -1,0 +1,55 @@
+name: zap-api
+
+# Sprint 35 W2 — OWASP ZAP API security gate (API Top 10).
+# Active scan against live API endpoint. R3 gate.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - "src/backend/entrypoints/**"
+      - ".github/workflows/zap.yml"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Target API URL"
+        required: false
+        default: "http://127.0.0.1:8000"
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: zap-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zap-api-scan:
+    name: OWASP ZAP API scan (API Top 10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run ZAP API scan
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: ${{ github.event.inputs.target_url || 'http://127.0.0.1:8000/openapi.json' }}
+          format: openapi
+          docker_name: zaproxy/zap-stable:2025-01-20
+          rules_file_name: .zap/api-rules.yaml
+          cmd_options: "-a"  # active scan
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-api-report
+          path: zap_output.txt
+          retention-days: 14
+          if-no-files-found: ignore

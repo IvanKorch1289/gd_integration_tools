@@ -88,6 +88,23 @@ def test_retry_policy_rejects_bad_max_attempts() -> None:
         RetryPolicy(max_attempts=0)
 
 
+def test_retry_policy_jitter_default_none() -> None:
+    p = RetryPolicy()
+    assert p.jitter is None
+
+
+def test_retry_policy_jitter_value() -> None:
+    p = RetryPolicy(jitter=0.5)
+    assert p.jitter == 0.5
+
+
+def test_retry_policy_jitter_validation() -> None:
+    with pytest.raises(ValidationError):
+        RetryPolicy(jitter=-0.1)
+    with pytest.raises(ValidationError):
+        RetryPolicy(jitter=1.5)
+
+
 # ── SagaDeclaration ──
 
 

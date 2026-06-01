@@ -182,6 +182,7 @@ from src.backend.dsl.engine.processors.rule_engine import (
     Rule,
 )
 from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
+from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
 from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
     PaginateProcessor,
@@ -378,4 +379,5 @@ __all__ = (
     "EvaluateRulesParams",
     "Rule",
     "MLPredictProcessor",
+    "SshCommandProcessor",
 )

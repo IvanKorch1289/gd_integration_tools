@@ -29,6 +29,8 @@ from typing import Any, Callable
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
     RetryPolicy,
     SagaDeclaration,
     SensorDeclaration,
@@ -40,6 +42,8 @@ from src.backend.dsl.workflow.spec import (
 __all__ = (
     "StepCompiler",
     "compile_activity_step",
+    "compile_pause_step",
+    "compile_resume_step",
     "compile_saga_step",
     "compile_sensor_step",
     "compile_signal_wait_step",
@@ -79,6 +83,8 @@ def _build_retry_policy(
         kwargs["maximum_interval"] = timedelta(seconds=policy.maximum_interval_s)
     if policy.non_retryable_errors:
         kwargs["non_retryable_error_types"] = list(policy.non_retryable_errors)
+    if policy.jitter is not None:
+        kwargs["jitter"] = policy.jitter
     return TemporalRetryPolicy(**kwargs)
 
 
@@ -141,6 +147,8 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
             try:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
             except Exception as comp_exc:  # noqa: BLE001 — saga best-effort
+                if decl.strict_compensate:
+                    raise comp_exc
                 workflow.logger.warning(
                     "saga compensation failed for step %d: %s", compensate_idx, comp_exc
                 )
@@ -191,6 +199,39 @@ async def compile_sleep_step(decl: SleepDeclaration, ctx: dict[str, Any]) -> Any
 
     del ctx
     await workflow.sleep(timedelta(seconds=decl.duration_s))
+    return None
+
+
+async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any:
+    """Приостановить workflow через ``workflow.pause()``.
+
+    Args:
+        decl: Декларация pause-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Saves pause timestamp to ``ctx["_outputs"][output_key]`` if output_key is set.
+    """
+    from temporalio import workflow
+
+    workflow.pause()
+    if decl.output_key:
+        from datetime import datetime, timezone
+
+        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(timezone.utc).isoformat()
+    return None
+
+
+async def compile_resume_step(decl: ResumeDeclaration, ctx: dict[str, Any]) -> Any:
+    """Возобновить paused workflow через ``workflow.resume()``.
+
+    Args:
+        decl: Декларация resume-шага.
+        ctx: Рантайм-контекст workflow (зарезервирован).
+    """
+    from temporalio import workflow
+
+    del ctx
+    workflow.resume()
     return None
 
 
@@ -314,6 +355,8 @@ _STEP_DISPATCH: dict[type, StepCompiler] = {
     SagaDeclaration: compile_saga_step,
     SignalWaitDeclaration: compile_signal_wait_step,
     SleepDeclaration: compile_sleep_step,
+    PauseDeclaration: compile_pause_step,
+    ResumeDeclaration: compile_resume_step,
     SensorDeclaration: compile_sensor_step,
     AgentInvokeDeclaration: compile_agent_invoke_step,
 }
