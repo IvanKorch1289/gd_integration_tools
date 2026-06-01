@@ -46,9 +46,6 @@ class RetryPolicy(BaseModel):
     non_retryable_errors: tuple[str, ...] = Field(
         default=(), description="Имена ошибок, при которых retry НЕ выполняется."
     )
-    jitter: float | None = Field(
-        default=None, ge=0.0, le=1.0, description="Jitter: random fraction of interval [0..1]."
-    )
 
 
 class ActivityDeclaration(BaseModel):
@@ -473,57 +470,6 @@ class EscalateDeclaration(BaseModel):
     )
 
 
-class PauseDeclaration(BaseModel):
-    """Pause-шаг: приостановка workflow через Temporal API (S35 GAP-DSL-2).
-
-    Вызывает ``workflow.pause()`` — устанавливает флаг, который
-    предотвращает продолжение выполнения workflow до вызова ``resume()``.
-
-    YAML::
-
-        steps:
-          - pause:
-              output_key: "paused_at"
-
-    Python::
-
-        WorkflowBuilder("credit.flow").pause(output_key="paused_at")
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    type: Literal["pause"] = "pause"
-    output_key: str | None = Field(
-        default=None, description="Имя property для сохранения timestamp паузы."
-    )
-
-
-class ResumeDeclaration(BaseModel):
-    """Resume-шаг: возобновление paused workflow через Temporal API (S35 GAP-DSL-2).
-
-    Вызывает ``workflow.resume()`` — снимает флаг паузы и позволяет
-    workflow продолжить выполнение.
-
-    YAML::
-
-        steps:
-          - resume:
-              checkpoint_id: "wf_checkpoint_001"
-
-    Python::
-
-        WorkflowBuilder("credit.flow").resume(checkpoint_id="wf_checkpoint_001")
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    type: Literal["resume"] = "resume"
-    checkpoint_id: str | None = Field(
-        default=None,
-        description="Опц. checkpoint_id для восстановления состояния из checkpoint.",
-    )
-
-
 WorkflowStep = Annotated[
     ActivityDeclaration
     | SagaDeclaration
@@ -534,9 +480,7 @@ WorkflowStep = Annotated[
     | ReflectDeclaration
     | CheckpointDeclaration
     | GuardrailDeclaration
-    | EscalateDeclaration
-    | PauseDeclaration
-    | ResumeDeclaration,
+    | EscalateDeclaration,
     Field(discriminator="type"),
 ]
 

@@ -243,7 +243,7 @@ def test_workflow_builder_pause_without_output_key() -> None:
 
 def test_workflow_builder_resume() -> None:
     """Test that .resume() adds a ResumeDeclaration step to the workflow."""
-    from src.backend.dsl.workflow.spec import ResumeDeclaration
+    from src.backend.dsl.workflow.spec import PauseDeclaration, ResumeDeclaration
 
     wf = (
         WorkflowBuilder("credit.flow")
