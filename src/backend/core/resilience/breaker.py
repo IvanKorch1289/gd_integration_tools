@@ -62,6 +62,7 @@ class BreakerSpec:
     Дефолты — из ``core.config.constants.consts`` (один источник правды).
     """
 
+    name: str = "default"
     failure_threshold: int = consts.DEFAULT_CB_FAILURE_THRESHOLD
     recovery_timeout: float = consts.DEFAULT_CB_RECOVERY_SECONDS
 
