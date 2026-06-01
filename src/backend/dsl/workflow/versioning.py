@@ -362,7 +362,7 @@ def patched(patch_id: str) -> bool:
         кода), ``False`` если запущена legacy-версия (replay).
     """
     try:
-        from temporalio import workflow as temporal_workflow  
+        from temporalio import workflow as temporal_workflow
     except ImportError:
         return False
 

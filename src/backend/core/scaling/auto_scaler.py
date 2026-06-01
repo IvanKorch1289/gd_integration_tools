@@ -207,7 +207,7 @@ class TemporalWorkerScaler:
         import time
 
         try:
-            depths: dict[str, int] = await self._pool.get_queue_depth()  
+            depths: dict[str, int] = await self._pool.get_queue_depth()
         except Exception as exc:  # noqa: BLE001
             _logger.warning("TemporalWorkerScaler.get_queue_depth failed: %s", exc)
             return {"action": "skip", "reason": str(exc)}

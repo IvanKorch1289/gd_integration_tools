@@ -254,7 +254,7 @@ def ensure_required_baggage() -> None:
         # Если strict=True и baggage неполный — получим MissingBaggageError
     """
     flags = _get_feature_flags()
-    if not flags.tracing_baggage_strict:  
+    if not flags.tracing_baggage_strict:
         # default-OFF: non-strict режим, проверка отключена
         return
 

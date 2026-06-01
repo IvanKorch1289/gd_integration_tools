@@ -123,7 +123,7 @@ class AppriseNotifyProcessor(BaseProcessor):
             channel=self.channel,
             title=self.title,
             body=self.body,
-            body_format=self.body_format,  
+            body_format=self.body_format,
         )
         exchange.set_property(self.result_property, result)
         if not result:

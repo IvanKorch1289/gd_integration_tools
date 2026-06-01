@@ -31,6 +31,7 @@ from src.backend.dsl.engine.processors.ai_banking import (
     KycAmlVerifyProcessor,
     TransactionCategorizerProcessor,
 )
+from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
 from src.backend.dsl.engine.processors.audit import AuditProcessor
 from src.backend.dsl.engine.processors.base import (
     BaseProcessor,
@@ -45,8 +46,8 @@ from src.backend.dsl.engine.processors.business import (
     OutboxProcessor,
     TenantScopeProcessor,
 )
-from src.backend.dsl.engine.processors.cdc_capture import CDCCaptureProcessor
 from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
+from src.backend.dsl.engine.processors.cdc_capture import CDCCaptureProcessor
 from src.backend.dsl.engine.processors.components import (
     DatabaseQueryProcessor,
     FileReadProcessor,
@@ -125,7 +126,6 @@ from src.backend.dsl.engine.processors.external import (
     CDCProcessor,
     MCPToolProcessor,
 )
-from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcessor
 from src.backend.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     BulkheadProcessor,
@@ -135,7 +135,7 @@ from src.backend.dsl.engine.processors.generic import (
     ShadowModeProcessor,
     SseSourceProcessor,
 )
-from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
+from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcessor
 from src.backend.dsl.engine.processors.hitl_approval import HitlApprovalProcessor
 from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
 from src.backend.dsl.engine.processors.integration import (
@@ -186,13 +186,13 @@ from src.backend.dsl.engine.processors.rule_engine import (
     Rule,
 )
 from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
-from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
 from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
     PaginateProcessor,
     ScrapeProcessor,
 )
 from src.backend.dsl.engine.processors.security import AuthValidateProcessor
+from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
 from src.backend.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     CorrelationIdProcessor,

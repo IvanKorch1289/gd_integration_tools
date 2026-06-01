@@ -120,7 +120,7 @@ class VaultTransitCipher:
                 keepalive_expiry=30.0,
             )
             headers = {"X-Vault-Token": self.vault_token} if self.vault_token else {}
-            self._client = make_http_client(  
+            self._client = make_http_client(
                 plugin="core.security.vault_cipher",
                 base_url=self.vault_addr,
                 http2=True,

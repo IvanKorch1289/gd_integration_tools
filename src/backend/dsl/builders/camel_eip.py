@@ -18,4 +18,4 @@ from __future__ import annotations
 class CamelEIPMixin:
     """Поведенческий миксин EIP/streaming/transport для ``RouteBuilder``."""
 
-    __slots__ = ()  
+    __slots__ = ()

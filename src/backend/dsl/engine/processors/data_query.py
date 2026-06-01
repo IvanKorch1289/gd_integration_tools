@@ -68,9 +68,7 @@ class JsonPathProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            from jsonpath_ng.ext import (
-                parse as jp_parse,  
-            )
+            from jsonpath_ng.ext import parse as jp_parse
         except ImportError:
             exchange.fail("jsonpath-ng not installed: pip install 'jsonpath-ng>=1.6'")
             return

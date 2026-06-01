@@ -33,8 +33,8 @@ from typing import Any
 
 import pytest
 
-from testkit.recorder import HARRecorder
 from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend
+from testkit.recorder import HARRecorder
 
 __all__ = ("har_recorder", "har_cassette_path", "memory_metrics", "audit_events")
 

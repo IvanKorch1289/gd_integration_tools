@@ -43,9 +43,9 @@ try:
     _DECODER = msgspec.json.Decoder()
     MSGSPEC_AVAILABLE = True
 except ImportError:  # pragma: no cover — fallback path
-    msgspec = None  
-    _ENCODER = None  
-    _DECODER = None  
+    msgspec = None
+    _ENCODER = None
+    _DECODER = None
     MSGSPEC_AVAILABLE = False
 
 if not MSGSPEC_AVAILABLE:

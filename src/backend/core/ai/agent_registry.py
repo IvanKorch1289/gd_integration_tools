@@ -128,7 +128,7 @@ class AgentRegistry:
                 memory_scope = MemoryScope(
                     read=tuple(raw.get("memory_read", [])),
                     write=tuple(memory_write),
-                    mode=memory_mode,  
+                    mode=memory_mode,
                     write_strategy=str(raw.get("memory_write_strategy", "background")),
                 )
                 handoff_policy = HandoffPolicy(

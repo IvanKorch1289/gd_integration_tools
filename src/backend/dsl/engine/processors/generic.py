@@ -82,7 +82,7 @@ class BulkheadProcessor(BaseProcessor):
 
     def _get_semaphore(self) -> asyncio.Semaphore:
         sem = self._semaphores.get(self.bulkhead_name)
-        if sem is None or sem._value > self.limit:  
+        if sem is None or sem._value > self.limit:
             sem = asyncio.Semaphore(self.limit)
             self._semaphores[self.bulkhead_name] = sem
         return sem

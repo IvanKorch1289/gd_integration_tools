@@ -132,7 +132,7 @@ class BrowserLaunchProcessor(BaseProcessor):
         """
         try:
             pool = _get_pool(context)
-            ctx = await pool.acquire().__aenter__()  
+            ctx = await pool.acquire().__aenter__()
             page = await ctx.new_page()
             exchange.set_property("rpa.page", page)
             exchange.set_property("rpa.context", ctx)

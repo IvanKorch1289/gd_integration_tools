@@ -53,7 +53,7 @@ class IcsCalendarProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            from icalendar import Calendar, Event  
+            from icalendar import Calendar, Event
         except ImportError:
             exchange.fail("icalendar not installed: pip install 'icalendar>=5.0'")
             return

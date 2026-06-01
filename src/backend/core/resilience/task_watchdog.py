@@ -41,7 +41,7 @@ DEFAULT_TICK_INTERVAL: float = 5.0
 class _Registration:
     """Запись о зарегистрированной задаче."""
 
-    task: asyncio.Task  
+    task: asyncio.Task
     deadline_seconds: float
     name: str
     registered_at: float = field(default_factory=time.monotonic)
@@ -65,12 +65,12 @@ class TaskWatchdog:
         self._tick_interval = tick_interval
         self._cancel_on_deadline = cancel_on_deadline
         self._registrations: list[_Registration] = []
-        self._monitor_task: asyncio.Task | None = None  
+        self._monitor_task: asyncio.Task | None = None
         self._stopped: bool = False
 
     def register(
         self,
-        task: asyncio.Task,  
+        task: asyncio.Task,
         deadline_seconds: float,
         name: str = "",
     ) -> None:

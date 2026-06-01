@@ -80,12 +80,12 @@ class NotifyProcessor(BaseProcessor):
 
         gateway = get_gateway()
         result = await gateway.send(
-            channel=self.channel,  
+            channel=self.channel,
             template_key=self.template_key,
             locale=self.locale,
             context=ctx,
             recipient=str(recipient),
-            priority=self.priority,  
+            priority=self.priority,
         )
         exchange.set_property(self.result_property, result)
         if result.status == "failed":

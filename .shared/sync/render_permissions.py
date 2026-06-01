@@ -20,6 +20,7 @@ Output:  .claude/settings.json   (только секция `permissions` пер
 
 Генератор НЕ конвертирует patterns — использует raw-значения из YAML.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,6 +41,7 @@ GENERATED_HEADER = (
 
 
 # === Mini YAML parser ===
+
 
 def parse_simple_yaml(text: str) -> dict:
     result = {"allow": [], "ask": [], "deny": [], "vault": {}}
@@ -85,7 +87,12 @@ def parse_simple_yaml(text: str) -> dict:
             if not m:
                 continue
             pat = m.group(1)
-            current_entry = {"pattern": pat if pat != "null" else None, "kimi": None, "reason": "", "agent": "both"}
+            current_entry = {
+                "pattern": pat if pat != "null" else None,
+                "kimi": None,
+                "reason": "",
+                "agent": "both",
+            }
             result[section].append(current_entry)
             continue
         if current_entry is not None and stripped.startswith("kimi:"):
@@ -102,6 +109,7 @@ def parse_simple_yaml(text: str) -> dict:
 
 
 # === Renderers ===
+
 
 def render_claude(parsed: dict) -> dict:
     perm = {"allow": [], "ask": [], "deny": []}
@@ -147,21 +155,21 @@ def render_kimi(parsed: dict) -> str:
 
 # === File surgery ===
 
+
 def update_claude_file(perm: dict) -> None:
     text = CLAUDE_FILE.read_text()
     obj = json.loads(text)
     obj["permissions"] = perm
-    obj["_generated"] = "from .shared/permissions.yaml (do not edit — run make sync-permissions)"
+    obj["_generated"] = (
+        "from .shared/permissions.yaml (do not edit — run make sync-permissions)"
+    )
     CLAUDE_FILE.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
 
 
 def update_kimi_file(blocks: str) -> None:
     text = KIMI_FILE.read_text()
     new_text = re.sub(
-        r"\[\[permission\]\][^\[]*?(?=\n\[\[|\n# === |\Z)",
-        "",
-        text,
-        flags=re.DOTALL,
+        r"\[\[permission\]\][^\[]*?(?=\n\[\[|\n# === |\Z)", "", text, flags=re.DOTALL
     )
     new_text = new_text.rstrip() + "\n\n" + GENERATED_HEADER + "\n" + blocks
     KIMI_FILE.write_text(new_text)
@@ -169,17 +177,23 @@ def update_kimi_file(blocks: str) -> None:
 
 # === Verify ===
 
+
 def extract_kimi_blocks(text: str) -> list[str]:
     """Возвращает список [[permission]] блоков (нормализованных для сравнения)."""
-    blocks = re.findall(r"\[\[permission\]\][^\[]*?(?=\n\[\[|\n# === |\Z)", text, re.DOTALL)
+    blocks = re.findall(
+        r"\[\[permission\]\][^\[]*?(?=\n\[\[|\n# === |\Z)", text, re.DOTALL
+    )
     return sorted(b.strip() for b in blocks)
 
 
 # === Main ===
 
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--verify", action="store_true", help="drift check (exit 1 при дрейфе)")
+    parser.add_argument(
+        "--verify", action="store_true", help="drift check (exit 1 при дрейфе)"
+    )
     args = parser.parse_args()
 
     parsed = parse_simple_yaml(YAML_FILE.read_text())
@@ -194,7 +208,9 @@ def main() -> int:
             a = sorted(actual_claude.get(section, []))
             e = sorted(perm_claude.get(section, []))
             if a != e:
-                print(f"[DRIFT] Claude permissions.{section}: {len(a)} actual vs {len(e)} expected")
+                print(
+                    f"[DRIFT] Claude permissions.{section}: {len(a)} actual vs {len(e)} expected"
+                )
                 aset, eset = set(a), set(e)
                 for m in list(eset - aset)[:3]:
                     print(f"  + missing: {m}")
@@ -202,12 +218,18 @@ def main() -> int:
                     print(f"  - extra:   {m}")
                 ok = False
         actual_kimi_norm = extract_kimi_blocks(actual_kimi)
-        expected_kimi_norm = sorted(b.strip() for b in kimi_blocks.split("\n\n") if b.strip())
+        expected_kimi_norm = sorted(
+            b.strip() for b in kimi_blocks.split("\n\n") if b.strip()
+        )
         if actual_kimi_norm != expected_kimi_norm:
-            print(f"[DRIFT] Kimi [[permission]] blocks: {len(actual_kimi_norm)} actual vs {len(expected_kimi_norm)} expected")
+            print(
+                f"[DRIFT] Kimi [[permission]] blocks: {len(actual_kimi_norm)} actual vs {len(expected_kimi_norm)} expected"
+            )
             ok = False
         if ok:
-            print("[OK] .claude/settings.json и .kimi-code/config.toml совпадают с .shared/permissions.yaml")
+            print(
+                "[OK] .claude/settings.json и .kimi-code/config.toml совпадают с .shared/permissions.yaml"
+            )
             return 0
         return 1
 

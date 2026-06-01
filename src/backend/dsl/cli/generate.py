@@ -6,7 +6,6 @@ K-ARCH-2: CLI tooling for developer experience.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,7 +20,7 @@ BACKEND_DIR = DSL_DIR.parent
 SRC_DIR = BACKEND_DIR.parent
 sys.path.insert(0, str(SRC_DIR))
 
-from src.backend.dsl.blueprint_loader import discover_blueprints
+from src.backend.dsl.blueprint_loader import discover_blueprints  # noqa: E402
 
 
 @click.group()

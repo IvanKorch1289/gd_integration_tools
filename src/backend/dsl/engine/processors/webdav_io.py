@@ -124,7 +124,7 @@ class WebDavProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  
+                exchange.in_message.body = body
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -134,7 +134,7 @@ class WebDavProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     def _exec_sync(self, src_value: Any) -> Any:
-        from webdav4.client import Client  
+        from webdav4.client import Client
 
         auth = (
             (self._username, self._password)

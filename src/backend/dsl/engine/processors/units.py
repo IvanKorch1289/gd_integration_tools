@@ -58,7 +58,7 @@ class UnitConversionProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            import pint  
+            import pint
         except ImportError:
             exchange.fail("pint not installed: pip install 'pint>=0.24'")
             return

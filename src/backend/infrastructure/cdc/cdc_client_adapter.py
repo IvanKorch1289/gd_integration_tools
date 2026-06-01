@@ -14,11 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
-from src.backend.infrastructure.clients.external.cdc import (
-    CDCClient,
-    CDCEvent as ClientCDCEvent,
-    get_cdc_client,
-)
+from src.backend.infrastructure.clients.external.cdc import CDCClient, get_cdc_client
 
 __all__ = ("CDCClientAdapter",)
 

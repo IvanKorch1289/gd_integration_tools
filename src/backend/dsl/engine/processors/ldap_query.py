@@ -110,7 +110,7 @@ class LdapQueryProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  
+                exchange.in_message.body = body
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -121,11 +121,7 @@ class LdapQueryProcessor(BaseProcessor):
 
     def _search_sync(self) -> list[dict[str, Any]]:
         """Sync ldap3 search в worker thread (для use через ``asyncio.to_thread``)."""
-        from ldap3 import (  
-            ALL_ATTRIBUTES,
-            Connection,
-            Server,
-        )
+        from ldap3 import ALL_ATTRIBUTES, Connection, Server
 
         srv = Server(self._server, use_ssl=self._use_ssl)
         conn = Connection(

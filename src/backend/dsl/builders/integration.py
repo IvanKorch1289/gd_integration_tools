@@ -283,7 +283,7 @@ class IntegrationMixin:
         timeout: float = 30.0,
     ) -> "RouteBuilder":
         """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
-        return self.expose_proxy(  
+        return self.expose_proxy(
             src=src, methods=methods, header_map=header_map
         ).forward_to(
             dst=dst,
@@ -1007,10 +1007,7 @@ class IntegrationMixin:
 
             svc = get_notification_service()
             results = await svc.notify_multi(
-                channels=channels,
-                title=title,
-                body=body,
-                body_format=body_format,  
+                channels=channels, title=title, body=body, body_format=body_format
             )
             exch.set_property(result_property, results)
 
@@ -1811,7 +1808,7 @@ class IntegrationMixin:
         # Создаём source instance для smoke-валидации конструктора;
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
-        builder = cls(  
+        builder = cls(
             route_id=route_id, source=f"webdav:{route_id}", description=description
         )
         return builder  # type: ignore[return-value]
@@ -1982,7 +1979,7 @@ class IntegrationMixin:
                     template=template,
                     context_from=context_from,
                     output_to=output_to,
-                    mode=mode,  
+                    mode=mode,
                 )
             )
         )
@@ -2128,7 +2125,7 @@ class IntegrationMixin:
         command: str,
         *,
         username: str | None = None,
-        password_from: str = "none",
+        password_from: str = "none",  # noqa: S107
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "ssh_result",

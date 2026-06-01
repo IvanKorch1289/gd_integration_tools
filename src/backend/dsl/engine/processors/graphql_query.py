@@ -164,7 +164,7 @@ class GraphQLQueryProcessor(BaseProcessor):
         if self._headers:
             spec["headers"] = self._headers
         if self._auth_token:
-            spec["auth_token"] = "<redacted>"
+            spec["auth_token"] = "<redacted>"  # noqa: S105
         if self._auth_header != "Authorization":
             spec["auth_header"] = self._auth_header
         if self._timeout != 30.0:

@@ -250,7 +250,7 @@ class FlagsmithProvider:
         except ImportError as exc:  # pragma: no cover
             raise ProviderError("migration_helper unavailable") from exc
 
-        self._client = make_http_client(  
+        self._client = make_http_client(
             base_url=self.api_url,
             headers={"X-Environment-Key": self.environment_key},
             timeout=self.request_timeout_seconds,

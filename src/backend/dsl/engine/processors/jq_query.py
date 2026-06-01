@@ -81,7 +81,7 @@ class JqProcessor(BaseProcessor):
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 body = {}
-                exchange.in_message.body = body  
+                exchange.in_message.body = body
             body[field] = value
             return
         if self._target.startswith("properties."):
@@ -103,7 +103,7 @@ class JqProcessor(BaseProcessor):
             pass
 
         try:
-            import jmespath  
+            import jmespath
         except ImportError as exc:
             exchange.fail(f"jq: jmespath not available: {exc}")
             return

@@ -12,8 +12,8 @@ from src.backend.dsl.engine.middleware import (
     TimeoutMiddleware,
 )
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processor_pool import ProcessorPool, get_processor_pool
+from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)

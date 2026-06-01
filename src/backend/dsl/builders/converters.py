@@ -30,7 +30,7 @@ class ConvertersMixin:
     порциями в Stage 2.1 продолжении.
     """
 
-    __slots__ = ()  
+    __slots__ = ()
 
     def hash(self, *, algorithm: str = "sha256") -> RouteBuilder:
         """Hash данных (sha256/md5/sha512)."""
