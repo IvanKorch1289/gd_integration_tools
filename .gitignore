@@ -1,0 +1,180 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Test / type / coverage caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+.benchmarks/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+/logs/
+/*.log
+*.log
+**/logs/
+
+# Runtime / PID files
+.pids
+*.pid
+*.pid.lock
+/.run/
+
+# Wave F.5: LocalFS object storage runtime data
+/dev_storage/
+/var/storage/
+
+# Local DB / temp
+*.sqlite3
+*.db
+tmp/
+temp/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# Sonar / misc
+.scannerwork/
+
+# Other
+.dockerignore
+.tools/
+.cache/
+
+# docs/ — отслеживаются явно; artifacts собираются в docs/_build/
+docs/_build/
+
+# Claude Code — локальные настройки (settings.json — общий, коммитится)
+.claude/settings.local.json
+.claude/sessions/
+.claude/cache/
+.claude/worktrees/
+.claude/projects/
+.claude/memory/
+.claude/CONTEXT.md
+# MCP server конфигурация — может содержать API-ключи (Context7, Perplexity и т.п.)
+.mcp.json
+vault/
+gap-analysis/
+gap-analysis
+vault
+
+# Мастер-план рефакторинга и ADR-ы плана — локальные артефакты,
+# не часть долгоживущей документации репозитория.
+PLAN.md
+docs/adr/ADR-001-layered-architecture.md
+docs/adr/ADR-002-single-di-svcs.md
+docs/adr/ADR-003-repository-pattern.md
+docs/adr/ADR-004-cache-single-layer.md
+docs/adr/ADR-005-dsl-engine.md
+docs/adr/ADR-006-event-bus-faststream.md
+docs/adr/ADR-007-audit-clickhouse.md
+docs/adr/ADR-008-notification-gateway.md
+docs/adr/ADR-009-self-healing.md
+docs/adr/ADR-010-service-boundary.md
+docs/adr/ADR-011-open-closed-plugins.md
+docs/adr/ADR-014-proxy-pass-through.md
+
+# Graphify
+graphify-out
+
+# Editor swap / backup
+*.swp
+*.swo
+*.bak
+*.orig
+*~
+.#*
+\#*\#
+
+# Profiling artifacts (make profile-memray / mprof / pyspy)
+*.prof
+*.memray
+*.mprof
+*.pstats
+prof/
+perf.data*
+speedscope-*.json
+
+# Секреты и приватные ключи
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+!*.pub.pem
+!*.pub.key
+# К1 (V15 S1+S3): SecretBroker — это инфраструктурный код (broker/vault/env
+# backends + rotation), не сами секреты. Реальные секреты живут в Vault.
+!src/backend/infrastructure/secrets/
+!tests/unit/infrastructure/secrets/
+
+# Локальные дампы / бэкапы БД
+*.dump
+*.sql.gz
+*.sqlitedb
+
+# Jupyter / notebooks
+.ipynb_checkpoints/
+.jupyter/
+
+# Локальные tool-каталоги
+.ropeproject/
+.fleet/
+.zed/
+.nvimlog
+.null-ls_*
+
+# Node / frontend билды (если появятся)
+node_modules/
+.next/
+.parcel-cache/
+
+# Streamlit runtime
+.streamlit/secrets.toml
+.streamlit/credentials.toml
+
+# Coverage artifacts
+coverage.xml
+*.cover
+
+# Sprint 8B additions (2026-05-18)
+# Sphinx build output — auto-generated (~200MB)
+docs/build/
+# VCR cassettes — testkit recorded fixtures; .gitkeep остаётся tracked
+testkit/cassettes/*.yaml
+testkit/cassettes/*.json
+# Claude Code runtime artifacts
+.claude/scheduled_tasks.lock
+.claude/QUESTIONS.md
+# Sentry native debug symbols (permission-denied dir)
+.sentry-native/
+.claude/smells/
+docs/autoapi/

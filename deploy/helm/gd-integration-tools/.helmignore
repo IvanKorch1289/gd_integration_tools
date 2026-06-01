@@ -1,0 +1,9 @@
+# Patterns to ignore during Helm package
+.git
+.gitignore
+LICENSE
+README.md
+tests/
+docs/
+.claude/
+*.md

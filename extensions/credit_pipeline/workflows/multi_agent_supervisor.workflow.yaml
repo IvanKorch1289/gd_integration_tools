@@ -1,0 +1,63 @@
+name: multi_agent_supervisor
+version: "1.0"
+description: |
+  Multi-agent supervisor для loan approval (Sprint 12 K4 W1).
+
+  Supervisor LLM (Opus) распределяет работу между 3 specialist agents
+  (risk / compliance / scoring) и консолидирует решение.
+
+  Template tags: ai, multi-agent, supervisor, loan, parallel.
+default_timeout_s: 600
+steps:
+  - type: activity
+    name: collect_loan_inputs
+    args:
+      include_credit_score: true
+      include_employment_history: true
+    timeout_s: 60
+  - type: activity
+    name: supervisor_dispatch
+    args:
+      function: services.ai.multi_agent_supervisor
+      model_id: claude-opus-4-7
+      estimated_tokens: 4000
+      agents:
+        - risk_agent
+        - compliance_agent
+        - scoring_agent
+    timeout_s: 30
+  - type: activity
+    name: risk_agent
+    args:
+      function: services.ai.agent_call
+      model_id: claude-sonnet-4-6
+      estimated_tokens: 3000
+    timeout_s: 60
+  - type: activity
+    name: compliance_agent
+    args:
+      function: services.ai.agent_call
+      model_id: claude-sonnet-4-6
+      estimated_tokens: 3000
+    timeout_s: 60
+  - type: activity
+    name: scoring_agent
+    args:
+      function: services.ai.agent_call
+      model_id: claude-haiku-4-5
+      estimated_tokens: 2000
+    timeout_s: 30
+  - type: activity
+    name: consolidate_results
+    args:
+      function: services.ai.consolidate_multi_agent
+      model_id: claude-opus-4-7
+      estimated_tokens: 5000
+    timeout_s: 60
+  - type: activity
+    name: final_decision
+    args:
+      function: services.ai.final_decision
+      model_id: claude-sonnet-4-6
+      estimated_tokens: 2500
+    timeout_s: 30

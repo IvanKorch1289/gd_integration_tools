@@ -1,0 +1,430 @@
+"""SOAP-сервер: приём и обработка SOAP-запросов через FastAPI.
+
+Принимает XML/SOAP envelope через POST, парсит операцию
+и payload, маршрутизирует через DSL или ActionHandlerRegistry,
+формирует SOAP-ответ. Также предоставляет автогенерацию WSDL.
+
+W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точка входа,
+которая транслирует envelope в :class:`InvocationRequest` и передаёт
+его в :class:`Invoker` (тот же Gateway, что и REST/WS адаптеры).
+"""
+
+import logging
+from typing import TYPE_CHECKING, Any
+from xml.etree import ElementTree as ET
+
+import orjson
+from fastapi import APIRouter, Depends, Request, Response
+
+from src.backend.core.di.dependencies import get_invoker_dep
+from src.backend.core.errors import BaseError
+from src.backend.core.interfaces.invoker import (
+    InvocationMode,
+    InvocationRequest,
+    InvocationStatus,
+)
+from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.service import get_dsl_service
+
+if TYPE_CHECKING:
+    from src.backend.core.interfaces.invoker import Invoker
+
+__all__ = ("soap_router",)
+
+logger = logging.getLogger(__name__)
+
+soap_router = APIRouter(prefix="/soap", tags=["SOAP"])
+
+_SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/"
+_WSDL_NS = "http://schemas.xmlsoap.org/wsdl/"
+_XSD_NS = "http://www.w3.org/2001/XMLSchema"
+_TARGET_NS = "http://gd-integration-tools/soap"
+
+
+def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
+    """Парсит SOAP envelope и извлекает операцию и payload.
+
+    Поддерживает два формата имён операций:
+    - ``domain.method`` (например, ``orders.get``)
+    - ``simple_name`` (например, ``GetOrder``)
+    """
+    try:
+        from defusedxml.ElementTree import fromstring as safe_fromstring
+
+        root = safe_fromstring(xml_body)
+    except ImportError:
+        root = ET.fromstring(xml_body)  # noqa: S314
+
+    body = root.find(f"{{{_SOAP_NS}}}Body")
+    if body is None:
+        raise ValueError("SOAP Body не найден")
+
+    operation_element = next(iter(body), None)
+    if operation_element is None:
+        raise ValueError("SOAP Body пуст")
+
+    tag = operation_element.tag
+    if "}" in tag:
+        operation_name = tag.split("}")[1]
+    else:
+        operation_name = tag
+
+    payload: dict[str, Any] = {}
+    for child in operation_element:
+        child_tag = child.tag.split("}")[1] if "}" in child.tag else child.tag
+        payload[child_tag] = child.text
+
+    return operation_name, payload
+
+
+def _build_soap_response(operation: str, result: Any) -> str:
+    """Формирует SOAP response envelope."""
+    if isinstance(result, dict):
+        result_parts = "".join(
+            f"<{k}>{_xml_escape(v)}</{k}>" for k, v in result.items()
+        )
+    elif isinstance(result, list):
+        result_parts = f"<result>{orjson.dumps(result).decode()}</result>"
+    elif hasattr(result, "model_dump"):
+        data = result.model_dump(mode="json")
+        result_parts = "".join(f"<{k}>{_xml_escape(v)}</{k}>" for k, v in data.items())
+    else:
+        result_parts = f"<result>{_xml_escape(result)}</result>"
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<soap:Envelope xmlns:soap="{_SOAP_NS}">'
+        "<soap:Body>"
+        f"<{operation}Response>"
+        f"{result_parts}"
+        f"</{operation}Response>"
+        "</soap:Body>"
+        "</soap:Envelope>"
+    )
+
+
+def _build_soap_fault(fault_code: str, fault_string: str) -> str:
+    """Формирует SOAP Fault envelope."""
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<soap:Envelope xmlns:soap="{_SOAP_NS}">'
+        "<soap:Body>"
+        "<soap:Fault>"
+        f"<faultcode>{fault_code}</faultcode>"
+        f"<faultstring>{_xml_escape(fault_string)}</faultstring>"
+        "</soap:Fault>"
+        "</soap:Body>"
+        "</soap:Envelope>"
+    )
+
+
+def _xml_escape(value: Any) -> str:
+    """Экранирует XML-спецсимволы."""
+    s = str(value) if value is not None else ""
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
+
+
+async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
+    """Пытается диспетчеризовать через общий `dispatch_action()`.
+
+    IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
+    с `source="soap"`. Унифицирует с REST/gRPC/GraphQL.
+    """
+    from src.backend.entrypoints.base import dispatch_action
+
+    return await dispatch_action(action=operation, payload=payload, source="soap")
+
+
+@soap_router.post(
+    "/",
+    response_class=Response,
+    summary="SOAP endpoint",
+    description="Принимает SOAP envelope и маршрутизирует через DSL или ActionHandlerRegistry.",
+)
+async def handle_soap_request(request: Request) -> Response:
+    """Обработчик входящих SOAP-запросов.
+
+    Стратегия маршрутизации:
+    1. Если операция зарегистрирована как action → dispatch напрямую
+    2. Иначе пробует DSL-маршрут (soap.{operation})
+    """
+    content_type = "text/xml; charset=utf-8"
+
+    try:
+        xml_body = await request.body()
+        operation, payload = _parse_soap_request(xml_body)
+
+        logger.info("SOAP запрос: операция=%s", operation)
+
+        # Стратегия 1: прямой dispatch через ActionHandlerRegistry
+        if action_handler_registry.is_registered(operation):
+            result = await _dispatch_via_action(operation, payload)
+            xml = _build_soap_response(operation, result)
+            return Response(content=xml, media_type=content_type, status_code=200)
+
+        # Стратегия 2: DSL-маршрут
+        dsl = get_dsl_service()
+        route_id = operation if "." in operation else f"soap.{operation}"
+
+        exchange = await dsl.dispatch(
+            route_id=route_id,
+            body=payload,
+            headers={
+                "soap-action": request.headers.get("SOAPAction", ""),
+                "content-type": "text/xml",
+            },
+        )
+
+        if exchange.error:
+            xml = _build_soap_fault("Server", exchange.error)
+            return Response(content=xml, media_type=content_type, status_code=500)
+
+        result = exchange.out_message.body if exchange.out_message else None
+        xml = _build_soap_response(operation, result)
+        return Response(content=xml, media_type=content_type, status_code=200)
+
+    except ValueError as exc:
+        xml = _build_soap_fault("Client", str(exc))
+        return Response(content=xml, media_type=content_type, status_code=400)
+    except KeyError:
+        xml = _build_soap_fault("Client", "Операция не зарегистрирована")
+        return Response(content=xml, media_type=content_type, status_code=404)
+    except BaseError as exc:
+        xml = _build_soap_fault(exc.soap_fault_code, exc.message)
+        return Response(
+            content=xml, media_type=content_type, status_code=exc.status_code
+        )
+    except Exception as exc:
+        logger.exception("SOAP ошибка: %s", exc)
+        xml = _build_soap_fault("Server", str(exc))
+        return Response(content=xml, media_type=content_type, status_code=500)
+
+
+@soap_router.get(
+    "/wsdl",
+    response_class=Response,
+    summary="Автогенерированный WSDL",
+    description="WSDL, сгенерированный из зарегистрированных actions.",
+)
+async def get_wsdl() -> Response:
+    """Генерирует WSDL на основе зарегистрированных actions."""
+    actions = action_handler_registry.list_actions()
+
+    operations_xsd = []
+    port_operations = []
+    binding_operations = []
+
+    for action in actions:
+        safe_name = action.replace(".", "_")
+        operations_xsd.append(
+            f'    <xsd:element name="{safe_name}">'
+            f"      <xsd:complexType><xsd:sequence>"
+            f'        <xsd:element name="payload" type="xsd:string" minOccurs="0"/>'
+            f"      </xsd:sequence></xsd:complexType>"
+            f"    </xsd:element>"
+            f'    <xsd:element name="{safe_name}Response">'
+            f"      <xsd:complexType><xsd:sequence>"
+            f'        <xsd:element name="result" type="xsd:string" minOccurs="0"/>'
+            f"      </xsd:sequence></xsd:complexType>"
+            f"    </xsd:element>"
+        )
+        port_operations.append(
+            f'    <wsdl:operation name="{safe_name}">'
+            f'      <wsdl:input message="tns:{safe_name}Request"/>'
+            f'      <wsdl:output message="tns:{safe_name}Response"/>'
+            f"    </wsdl:operation>"
+        )
+        binding_operations.append(
+            f'    <wsdl:operation name="{safe_name}">'
+            f'      <soap:operation soapAction="{action}"/>'
+            f'      <wsdl:input><soap:body use="literal"/></wsdl:input>'
+            f'      <wsdl:output><soap:body use="literal"/></wsdl:output>'
+            f"    </wsdl:operation>"
+        )
+
+    messages = []
+    for action in actions:
+        safe_name = action.replace(".", "_")
+        messages.append(
+            f'  <wsdl:message name="{safe_name}Request">'
+            f'    <wsdl:part name="parameters" element="tns:{safe_name}"/>'
+            f"  </wsdl:message>"
+            f'  <wsdl:message name="{safe_name}Response">'
+            f'    <wsdl:part name="parameters" element="tns:{safe_name}Response"/>'
+            f"  </wsdl:message>"
+        )
+
+    wsdl = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<wsdl:definitions xmlns:wsdl="{_WSDL_NS}" '
+        f'xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" '
+        f'xmlns:xsd="{_XSD_NS}" '
+        f'xmlns:tns="{_TARGET_NS}" '
+        f'targetNamespace="{_TARGET_NS}">'
+        f'  <wsdl:types><xsd:schema targetNamespace="{_TARGET_NS}">'
+        + "\n".join(operations_xsd)
+        + "  </xsd:schema></wsdl:types>"
+        + "\n".join(messages)
+        + '  <wsdl:portType name="IntegrationPortType">'
+        + "\n".join(port_operations)
+        + "  </wsdl:portType>"
+        + '  <wsdl:binding name="IntegrationBinding" type="tns:IntegrationPortType">'
+        + '    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>'
+        + "\n".join(binding_operations)
+        + "  </wsdl:binding>"
+        + "</wsdl:definitions>"
+    )
+
+    return Response(content=wsdl, media_type="text/xml; charset=utf-8")
+
+
+def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
+    """Парсит SOAP envelope формата ``InvokeRequest`` в :class:`InvocationRequest`.
+
+    Ожидаемая структура (literal-style):
+
+    .. code-block:: xml
+
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <InvokeRequest>
+              <action>orders.get</action>
+              <mode>sync</mode>
+              <reply_channel>api</reply_channel>
+              <payload>{"id": 42}</payload>
+              <metadata>{"email": "user@x"}</metadata>
+            </InvokeRequest>
+          </soap:Body>
+        </soap:Envelope>
+
+    ``payload`` и ``metadata`` принимают JSON-строку (для произвольной
+    вложенности) либо плоские дочерние элементы.
+    """
+    try:
+        from defusedxml.ElementTree import fromstring as safe_fromstring
+
+        root = safe_fromstring(xml_body)
+    except ImportError:
+        root = ET.fromstring(xml_body)  # noqa: S314
+
+    body = root.find(f"{{{_SOAP_NS}}}Body")
+    if body is None:
+        raise ValueError("SOAP Body не найден")
+    request_element = next(iter(body), None)
+    if request_element is None:
+        raise ValueError("SOAP Body пуст")
+
+    fields: dict[str, str] = {}
+    for child in request_element:
+        tag = child.tag.split("}")[1] if "}" in child.tag else child.tag
+        fields[tag] = child.text or ""
+
+    action = fields.get("action") or ""
+    if not action:
+        raise ValueError("InvokeRequest.action обязателен")
+    mode_raw = fields.get("mode") or InvocationMode.SYNC.value
+    try:
+        mode = InvocationMode(mode_raw)
+    except ValueError as exc:
+        raise ValueError(f"Неизвестный mode: {mode_raw!r}") from exc
+
+    reply_channel = fields.get("reply_channel") or None
+
+    payload_raw = fields.get("payload") or ""
+    metadata_raw = fields.get("metadata") or ""
+    return InvocationRequest(
+        action=action,
+        payload=_parse_json_field(payload_raw),
+        mode=mode,
+        reply_channel=reply_channel,
+        metadata=_parse_json_field(metadata_raw),
+    )
+
+
+def _parse_json_field(raw: str) -> dict[str, Any]:
+    """Парсит строковое поле как JSON; пустая строка → пустой dict."""
+    if not raw or not raw.strip():
+        return {}
+    try:
+        decoded = orjson.loads(raw)
+    except orjson.JSONDecodeError as exc:
+        raise ValueError(f"Невалидный JSON в SOAP-поле: {exc}") from exc
+    if not isinstance(decoded, dict):
+        raise ValueError("SOAP-поле должно быть JSON-объектом")
+    return decoded
+
+
+def _build_invoke_response_envelope(
+    invocation_id: str,
+    status_value: str,
+    mode: str,
+    result: Any = None,
+    error: str | None = None,
+) -> str:
+    """Формирует SOAP envelope для :class:`InvocationResponse`."""
+    parts = [
+        f"<invocation_id>{_xml_escape(invocation_id)}</invocation_id>",
+        f"<status>{_xml_escape(status_value)}</status>",
+        f"<mode>{_xml_escape(mode)}</mode>",
+    ]
+    if result is not None:
+        try:
+            result_json = orjson.dumps(result, default=str).decode()
+        except TypeError, ValueError:
+            result_json = str(result)
+        parts.append(f"<result>{_xml_escape(result_json)}</result>")
+    if error:
+        parts.append(f"<error>{_xml_escape(error)}</error>")
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<soap:Envelope xmlns:soap="{_SOAP_NS}">'
+        "<soap:Body>"
+        "<InvokeResponse>" + "".join(parts) + "</InvokeResponse>"
+        "</soap:Body>"
+        "</soap:Envelope>"
+    )
+
+
+@soap_router.post(
+    "/invoke",
+    response_class=Response,
+    summary="SOAP-адаптер для Invoker (W22 этап B)",
+    description=(
+        "Принимает SOAP envelope <InvokeRequest> и пробрасывает в Invoker. "
+        "Для async-режимов возвращает 202 + invocation_id."
+    ),
+)
+async def soap_invoke(
+    request: Request, invoker: "Invoker" = Depends(get_invoker_dep)
+) -> Response:
+    """Единая SOAP-точка входа для всех :class:`InvocationMode` через Invoker."""
+    content_type = "text/xml; charset=utf-8"
+    try:
+        invocation_request = _parse_invoker_envelope(await request.body())
+    except ValueError as exc:
+        xml = _build_soap_fault("Client", str(exc))
+        return Response(content=xml, media_type=content_type, status_code=400)
+
+    response = await invoker.invoke(invocation_request)
+    status_code = (
+        202
+        if response.status is InvocationStatus.ACCEPTED
+        else 500
+        if response.status is InvocationStatus.ERROR
+        else 200
+    )
+    xml = _build_invoke_response_envelope(
+        invocation_id=response.invocation_id,
+        status_value=response.status.value,
+        mode=response.mode.value,
+        result=response.result,
+        error=response.error,
+    )
+    return Response(content=xml, media_type=content_type, status_code=status_code)

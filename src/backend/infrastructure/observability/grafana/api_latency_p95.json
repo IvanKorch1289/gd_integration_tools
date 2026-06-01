@@ -1,0 +1,85 @@
+{
+  "uid": "gd-api-latency-p95",
+  "title": "API Latency p50/p95/p99 + RPS",
+  "tags": ["gd_integration_tools", "K2-S7", "latency"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "endpoint",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_request_duration_seconds_bucket, endpoint)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "p50 latency per endpoint",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"$endpoint\"}[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "p95 latency per endpoint",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"$endpoint\"}[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "p99 latency per endpoint",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"$endpoint\"}[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Requests per second (RPS) per endpoint",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{endpoint=~\"$endpoint\"}[1m])) by (endpoint)",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}}
+    }
+  ]
+}

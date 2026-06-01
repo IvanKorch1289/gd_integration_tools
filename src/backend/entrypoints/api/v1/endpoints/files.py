@@ -1,0 +1,218 @@
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
+
+from src.backend.entrypoints.api.dependencies.auth import require_api_key
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+    CrudSpec,
+)
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
+from src.backend.schemas.filter_schemas.files import FileFilter
+from src.backend.schemas.route_schemas.files import (
+    FileSchemaIn,
+    FileSchemaOut,
+    FileVersionSchemaOut,
+)
+from src.backend.services.io.files import get_file_service
+
+__all__ = ("router", "storage_router")
+
+
+router = APIRouter()
+storage_router = APIRouter()
+
+# Создаем билдеры для двух роутеров
+crud_builder = ActionRouterBuilder(router)
+storage_builder = ActionRouterBuilder(storage_router)
+
+common_dependencies = [Depends(require_api_key), Depends(get_default_rate_limiter())]
+
+
+# --- CRUD для метаданных файлов (router) ---
+crud_builder.add_crud_resource(
+    CrudSpec(
+        name="files",
+        service_getter=get_file_service,
+        schema_in=FileSchemaIn,
+        schema_out=FileSchemaOut,
+        version_schema=FileVersionSchemaOut,
+        filter_class=FileFilter,
+        dependencies=common_dependencies,
+        tags=("Files",),
+        id_param_name="object_id",
+        id_field_name="id",
+        default_order_by="id",
+    )
+)
+
+
+# --- Storage API (storage_router) ---
+# Wave 6.5a: instances инфраструктурных сервисов резолвятся через
+# core.di.providers (lazy importlib), что снимает entrypoints → infra.
+
+
+def get_s3_service() -> Any:
+    """S3-сервис singleton — через DI provider."""
+    from src.backend.core.di.providers import get_s3_service_provider
+
+    return get_s3_service_provider()
+
+
+def get_av_service() -> Any:
+    """Antivirus-сервис singleton — через DI provider."""
+    from src.backend.core.di.providers import get_antivirus_service_provider
+
+    return get_antivirus_service_provider()
+
+
+# Вспомогательный обработчик (wrapper) для загрузки файла,
+# так как ActionSpec по умолчанию вызывает методы сервиса напрямую,
+# а в старом CBV была кастомная логика формирования ответа.
+async def upload_file_handler(
+    request: Request,
+    file: UploadFile = File(...),
+    multipart_field_name: str | None = None,
+    x_api_key: str = Header(...),
+) -> dict[str, Any]:
+    av_service = get_av_service()
+    content = await file.read()
+
+    result = await av_service.scan_and_upload_file(
+        file_bytes=content,
+        filename=file.filename or "uploaded_file",
+        content_type=file.content_type,
+        multipart_field_name=multipart_field_name,
+    )
+
+    return {
+        "uploaded": result["uploaded"],
+        "filename": result["filename"],
+        "key": result["key"],
+        "size": len(content),
+        "headers": {
+            "content-disposition": file.headers.get("content-disposition"),
+            "content-type": file.content_type,
+        },
+        "scan_result": result["scan_result"],
+    }
+
+
+# Поскольку загрузка файла имеет кастомную логику с чтением из UploadFile,
+# проще оставить её как обычный роут FastAPI, а остальные методы вынести в ActionSpec.
+storage_router.add_api_route(
+    path="/upload_file",
+    endpoint=upload_file_handler,
+    methods=["POST"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Проверить прикреплённый файл и сохранить в S3",
+    operation_id="uploadFileStorageUploadFilePostUnique",
+    dependencies=common_dependencies,
+    tags=["Storage"],
+)
+
+
+async def upload_stream_handler(
+    request: Request,
+    x_api_key: str = Header(...),
+    content_type: str | None = Header(default=None, alias="content-type"),
+    x_filename: str | None = Header(default=None, alias="x-filename"),
+) -> dict[str, Any]:
+    """Streaming-аплоад больших файлов (S13 K2 W1).
+
+    Принимает raw body как ``AsyncIterator[bytes]`` (``request.stream()``)
+    и грузит чанками в S3 через ``put_object_multipart``. RAM-bound:
+    1 chunk × 8MB ≈ 8MB peak вместо ``await file.read()``.
+
+    Заголовки:
+
+    * ``content-type`` — MIME-type объекта;
+    * ``x-filename`` — оригинальное имя файла (опционально);
+    * ``x-api-key`` — auth.
+    """
+    s3_service = get_s3_service()
+    s3_client: Any = getattr(s3_service, "_client", None) or s3_service
+    key = (x_filename or "stream-upload").replace("/", "_")
+    etag = await s3_client.put_object_multipart(
+        key=key, stream=request.stream(), content_type=content_type
+    )
+    return {"uploaded": True, "key": key, "etag": etag, "content_type": content_type}
+
+
+storage_router.add_api_route(
+    path="/upload-stream",
+    endpoint=upload_stream_handler,
+    methods=["POST"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Streaming upload больших файлов через S3 multipart (S13 K2 W1)",
+    operation_id="uploadFileStreamS3MultipartUnique",
+    dependencies=common_dependencies,
+    tags=["Storage"],
+)
+
+
+storage_builder.add_actions(
+    [
+        ActionSpec(
+            name="download_file",
+            method="GET",
+            path="/download_file/{file_uuid}",
+            summary="Скачать файл из S3",
+            service_getter=get_s3_service,
+            service_method="download_file",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+            argument_aliases={"file_uuid": "key"},
+        ),
+        ActionSpec(
+            name="delete_file",
+            method="POST",
+            path="/delete_file/",
+            summary="Удалить файл из S3",
+            status_code=status.HTTP_204_NO_CONTENT,
+            service_getter=get_s3_service,
+            service_method="delete_file_object",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+            # Тут в старом эндпоинте file_uuid приходил из Query (поскольку путь без параметра),
+            # так что argument_aliases смапит его в key для S3Service.
+            argument_aliases={"file_uuid": "key"},
+        ),
+        ActionSpec(
+            name="get_download_link_file",
+            method="GET",
+            path="/get_download_link_file/{file_uuid}",
+            summary="Получить ссылку на скачивание файла из S3",
+            service_getter=get_s3_service,
+            service_method="generate_download_url",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+            argument_aliases={"file_uuid": "key"},
+        ),
+        ActionSpec(
+            name="get_file_base64",
+            method="GET",
+            path="/get_file_base64/{file_uuid}",
+            summary="Получить файл в формате base64",
+            service_getter=get_s3_service,
+            service_method="get_file_base64",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+            argument_aliases={"file_uuid": "key"},
+        ),
+        ActionSpec(
+            name="scan_file_in_antivirus",
+            method="POST",
+            path="/scan_file/{file_uuid}",
+            summary="Проверить файл из S3 антивирусом",
+            service_getter=get_av_service,
+            service_method="scan_s3_file",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+            argument_aliases={"file_uuid": "key"},
+        ),
+    ]
+)

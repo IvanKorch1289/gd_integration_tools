@@ -1,0 +1,33 @@
+# V11 plugin manifest — extensions/core_entities/orders
+# Sprint 7 (R-V15-16): миграция CRUD-ресурса Order из ядра в extensions/.
+#
+# Формат: ADR-042 (plugin.toml schema), ADR-044 (capability vocabulary).
+
+name = "core_entities_orders"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.core_entities.orders.plugin.OrdersPlugin"
+tenant_aware = false
+description = "Order CRUD plugin (migrated from src/backend/services/core/orders.py per R-V15-16)"
+# S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
+trust_tier = "A"
+
+# ─── Runtime capabilities (capability-gate) ───────────────────────
+[[capabilities]]
+name = "db.read"
+scope = "orders"
+
+[[capabilities]]
+name = "db.write"
+scope = "orders"
+
+# Order пересекается с OrderKind (FK через order_kind_id) — нужны
+# read-права на orderkinds для validate_order_kind в репозитории.
+[[capabilities]]
+name = "db.read"
+scope = "orderkinds"
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+repositories = ["orders"]
+schemas = ["OrderSchemaIn", "OrderSchemaOut", "OrderVersionSchemaOut"]

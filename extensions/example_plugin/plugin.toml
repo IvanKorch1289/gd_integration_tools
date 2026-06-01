@@ -1,0 +1,27 @@
+# Reference V11 plugin manifest (Wave R1.fin demo).
+# Полное описание формата — docs/adr/ADR-042-plugin-toml-schema.md.
+# Каталог capabilities — docs/adr/ADR-044-capability-vocabulary.md.
+
+name = "example_plugin"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.example_plugin.plugin.ExamplePlugin"
+tenant_aware = false
+description = "Reference V11 plugin (Wave R1.fin demo)"
+# S18 W12 (ADR-NEW-6): internal trusted plugin → Tier-A (no runtime sandbox).
+trust_tier = "A"
+
+# ─── Runtime capabilities (sandbox gate) ──────────────────────────
+[[capabilities]]
+name = "mq.publish"
+scope = "example.events.*"
+
+# ─── DSL call_function whitelist (K-ARCH-5, S17) ──────────────────
+# NOTE: call_function_modules was removed from manifest schema (ADR-042).
+# In strict mode (ENVIRONMENT=production or call_function_whitelist_strict=True),
+# plugins must declare call_function_modules inside each [[capabilities]] block.
+# For now this example plugin uses the non-strict approach.
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+actions = ["example.echo"]

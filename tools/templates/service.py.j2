@@ -1,0 +1,46 @@
+"""{{ class_name }} — сервисный слой для {{ entity }} (codegen Wave 5.1)."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from src.core.interfaces.repositories import RepositoryProtocol
+
+if TYPE_CHECKING:
+    from src.schemas.{{ name }} import (
+        {{ class_name_short }}Create,
+        {{ class_name_short }}Read,
+        {{ class_name_short }}Update,
+    )
+
+__all__ = ("{{ class_name }}",)
+
+
+class {{ class_name }}:
+    """Сервис {{ entity }}: тонкий orchestrator поверх репозитория.
+
+    Args:
+        repository: Имплементация ``RepositoryProtocol`` для {{ entity }}.
+    """
+
+    def __init__(self, repository: RepositoryProtocol) -> None:
+        """Сохраняет ссылку на репозиторий."""
+        self._repo = repository
+
+    {% if crud %}
+    async def create(self, payload: "{{ class_name_short }}Create") -> Any:
+        """Создаёт новый {{ entity_short }}."""
+        return await self._repo.add(payload.model_dump())
+
+    async def get(self, entity_id: Any) -> Any:
+        """Возвращает {{ entity_short }} по ID."""
+        return await self._repo.get(key="id", value=entity_id)
+
+    async def update(self, entity_id: Any, payload: "{{ class_name_short }}Update") -> Any:
+        """Обновляет {{ entity_short }} по ID."""
+        return await self._repo.update(entity_id, payload.model_dump(exclude_unset=True))
+
+    async def delete(self, entity_id: Any) -> None:
+        """Удаляет {{ entity_short }} по ID."""
+        await self._repo.delete(entity_id)
+    {% endif %}

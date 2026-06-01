@@ -1,0 +1,21 @@
+# Allowlist для check_ai_gateway_coverage (Sprint 25 W1 scaffold).
+#
+# Файлы из этого списка ИГНОРИРУЮТСЯ AST-checker'ом — их LLM-вызовы
+# не считаются violations. Используется на период обёртки 3 кодопутей
+# LLM в Wave S25 W3 (adapter wrap).
+#
+# Каждая строка — относительный путь от корня проекта.
+# Строки с `#` — комментарии.
+#
+# После S27 closure (полная миграция через AIGateway) — этот файл
+# должен быть пустым, иначе CI gate `make ai-gateway-coverage --strict` валит.
+
+# Legacy кодопути LLM (до S25 W3 adapter wrap):
+src/backend/services/ai/ai_agent.py
+src/backend/services/ai/ai_graph.py
+src/backend/services/ai/agents_pydantic/base.py
+src/backend/services/ai/ai_providers.py
+src/backend/services/ai/gateway/client.py
+src/backend/services/ai/gateway/budget_facade.py
+src/backend/services/ai/mock_llm_provider.py
+src/backend/services/ai/llm_judge.py

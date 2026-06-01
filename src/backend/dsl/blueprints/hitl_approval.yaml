@@ -1,0 +1,41 @@
+# R2 Blueprint: hitl_approval — human-in-the-loop через HITL service.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: hitl_approval
+version: "1.0.0"
+description: "Process → запрос на одобрение → wait → resume по решению."
+tags: [hitl, workflow]
+
+params:
+  - { name: route_id, type: string, required: true }
+  - { name: approval_topic, type: string, required: true }
+  - { name: timeout_minutes, type: number, required: false }
+
+from:
+  http:
+    method: POST
+    path: /api/v1/${blueprint.route_id}/start
+
+steps:
+  - call_function:
+      ref: extensions.${blueprint.route_id}.prepare:make_context
+      to: body.context
+  - hitl_request:
+      topic: ${blueprint.approval_topic}
+      context: ${body.context}
+      timeout_minutes: ${blueprint.timeout_minutes}
+      to: body.hitl_request_id
+  - hitl_wait:
+      request_id: ${body.hitl_request_id}
+      to: body.decision
+  - choice:
+      when:
+        - condition: "body.decision.approved == true"
+          steps:
+            - call_function:
+                ref: extensions.${blueprint.route_id}.execute:run
+        - condition: "body.decision.approved == false"
+          steps:
+            - audit: { action: blueprint.hitl_approval.rejected }
+            - to: { response: { code: 200, body: { status: rejected } } }
+  - audit: { action: blueprint.hitl_approval.completed }

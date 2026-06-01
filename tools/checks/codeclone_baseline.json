@@ -1,0 +1,5 @@
+{
+  "clone_count": 0,
+  "tool": "jscpd",
+  "note": "Baseline зафиксирован в Sprint 6 К1 wave [s6/k1-codeclone-strict]. Обновляется через --update-baseline после ручной верификации."
+}

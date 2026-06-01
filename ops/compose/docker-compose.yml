@@ -1,0 +1,116 @@
+services:
+  # ─── K-OPS-4 (S17): init-container `alembic upgrade head` ──────────
+  # Запускается раз, до старта app/workflow-worker; читает alembic.ini
+  # из корня репозитория, использует тот же образ что и app.
+  # Использование: `docker compose up` поднимает migration-runner и
+  # ждёт его успешного завершения через depends_on::
+  # service_completed_successfully для app и workflow-worker.
+  migration-runner:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    command: ["alembic", "-c", "alembic.ini", "upgrade", "head"]
+    env_file:
+      - ../../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # «no» — запуск только один раз, без авто-перезапуска.
+    restart: "no"
+
+  app:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../.env
+    environment:
+      APP_SERVER: ${APP_SERVER:-granian}
+      APP_WORKERS: ${APP_WORKERS:-4}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_MODE: ${CLAMAV_MODE:-tcp}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # K-OPS-4: дождаться завершения миграций
+      migration-runner:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  workflow-worker:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    command: ["python", "-m", "src.workflows.worker", "run"]
+    env_file:
+      - ../../.env
+    environment:
+      WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
+      SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-30}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # K-OPS-4: дождаться завершения миграций
+      migration-runner:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    deploy:
+      replicas: ${WORKER_COUNT:-4}
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gd_integration}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "${CLAMAV_PORT:-3310}:3310"
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "false"
+      CLAMD_STARTUP_TIMEOUT: "300"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "echo PING | nc -w 5 127.0.0.1 3310 | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  clamav_db:

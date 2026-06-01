@@ -1,0 +1,130 @@
+# Credit Check Demo — AI Agent DSL PoC (S27 W3/W4)
+#
+# Демонстрирует все 9 AI Agent DSL processors в одном route:
+# 1. ai_memory_recall — проверка history
+# 2. pii_mask — маскирование PII перед AI
+# 3. agent_run — AI analysis через AIGateway
+# 4. agent_branch —路由 по verdicts
+# 5. agent_loop — уточняющие вопросы при неопределённости
+# 6. agent_parallel — параллельные проверки (credit + fraud + compliance)
+# 7. guardrails_apply — safety check на input/output
+# 8. pii_unmask — восстановление PII в ответе
+# 9. ai_memory_store — сохранение результата
+#
+# Использует policy: ai_policies/credit_check_strict.policy.yaml
+
+from:
+  http:
+    method: POST
+    path: /api/v1/credit/check
+
+steps:
+  # 1. Memory recall — проверяем историю заявок клиента
+  - ai_memory_recall:
+      namespace: "credit:${meta.tenant_id}"
+      query: "previous credit applications for this customer"
+      k: 3
+      result_property: "body.previous_applications"
+
+  # 2. PII masking — маскируем персональные данные
+  - pii_mask:
+      source: body
+      target: body.masked
+      scope: banking
+      fields: [full_name, passport, inn, snils]
+      token_map_property: "pii_token_map"
+
+  # 3. Guardrails input — проверка входных данных
+  - guardrails_apply:
+      stage: input
+      on_block: dlq
+      runtime_property: "llama_guard_runtime"
+
+  # 4. Agent parallel — запускаем 3 агента параллельно
+  - agent_parallel:
+      agents:
+        - name: "credit_score_agent"
+          workflow_id: "credit_scoring_v1"
+          context:
+            income: "${body.masked.income}"
+            employment_type: "${body.masked.employment_type}"
+            requested_amount: "${body.masked.requested_amount}"
+          timeout_s: 10
+        - name: "fraud_check_agent"
+          workflow_id: "fraud_detection_v1"
+          context:
+            customer_id: "${body.masked.customer_id}"
+            application_data: "${body.masked}"
+          timeout_s: 8
+        - name: "compliance_agent"
+          workflow_id: "compliance_check_v1"
+          context:
+            applicant: "${body.masked}"
+          timeout_s: 12
+      continue_on_error: true
+
+  # 5. Agent branch —路由 по результату кредитного скоринга
+  - agent_branch:
+      condition: "${agent_results.credit_score_agent.verdict}"
+      branches:
+        APPROVED:
+          - set: { body.decision: "approved" }
+        DENIED:
+          - set: { body.decision: "denied" }
+        REVIEW:
+          # 6. Agent loop — уточняющие вопросы при REVIEW
+          - agent_loop:
+              name: "additional_info_loop"
+              max_iterations: 3
+              stop_condition: "${body.additional_info_complete}"
+              budget:
+                max_tokens: 2000
+                max_cost_usd: 0.10
+              loop_step:
+                - agent_run:
+                    workflow_id: "additional_info_collection_v1"
+                    context:
+                      missing_fields: "${body.missing_fields}"
+                      customer_id: "${body.masked.customer_id}"
+                  result_property: "body.additional_info_result"
+
+  # 7. Skill invoke — вызываем калькулятор ставки
+  - skill_invoke:
+      skill_id: "credit.rate_calculator"
+      params:
+        amount: "${body.masked.requested_amount}"
+        term_months: "${body.masked.term_months}"
+        risk_score: "${agent_results.credit_score_agent.risk_score}"
+      params_property: "body.skill_params"
+      result_property: "body.rate_result"
+
+  # 8. Guardrails output — финальная проверка
+  - guardrails_apply:
+      stage: output
+      on_block: warn
+      runtime_property: "llama_guard_runtime"
+
+  # 9. PII unmask — восстанавливаем PII в ответе
+  - pii_unmask:
+      source: body.decision_response
+      target: body
+      token_map_property: "pii_token_map"
+      strict: true
+
+  # 10. Memory store — сохраняем результат
+  - ai_memory_store:
+      namespace: "credit:${meta.tenant_id}"
+      key: "application:${body.application_id}"
+      value: "${body.decision_response}"
+      ttl_s: 2592000
+
+to:
+  response:
+    code: 200
+    body:
+      application_id: ${body.application_id}
+      decision: ${body.decision}
+      rate: ${body.rate_result.rate}
+      risk_score: ${agent_results.credit_score_agent.risk_score}
+      fraud_flag: ${agent_results.fraud_check_agent.fraud_score}
+      compliance_status: ${agent_results.compliance_agent.status}

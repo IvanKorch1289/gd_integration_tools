@@ -1,0 +1,16 @@
+extends: existence
+message: "Avoid using '%s'."
+ignorecase: true
+
+# Accessibility-unfriendly terms
+raw:
+  - \b[sS]anity\s+[cC]heck\b
+  - \b[sS]anity\s+[tT]est\b
+  - \b[dD]ummy\s+[vV]alue\b
+  - \b[dD]ummy\s+[dD]ata\b
+  - \b[mM]aster\s+[bB]ranch\b
+  - \b[wW]hitelist\b
+  - \b[bB]lacklist\b
+
+# Also extend the built-in spelling rule to accept project terms
+extends: spelling

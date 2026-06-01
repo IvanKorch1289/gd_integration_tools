@@ -1,0 +1,51 @@
+"""Auto-generated V11 plugin entry-point ({{ name }}).
+
+Сгенерирован tools/codegen_plugin.py. Минимальный lifecycle —
+``on_load`` / ``on_register_actions`` / ``on_shutdown`` (см. ADR-042).
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from src.backend.core.interfaces.plugin import (
+    ActionRegistryProtocol,
+    BasePlugin,
+    PluginContext,
+)
+
+__all__ = ("{{ pascal_name }}Plugin",)
+
+logger = logging.getLogger("extensions.{{ name }}")
+
+
+class {{ pascal_name }}Plugin(BasePlugin):
+    """Scaffold-плагин ``{{ name }}``: registers {{ features|length }} feature action(s)."""
+
+    name = "{{ name }}"
+    version = "0.1.0"
+
+    async def on_load(self, ctx: PluginContext) -> None:
+        """Сохраняет :class:`PluginContext` для будущих хуков."""
+        self._ctx = ctx
+        logger.info("{{ name }} loaded")
+
+    async def on_register_actions(self, registry: ActionRegistryProtocol) -> None:
+        """Регистрирует все feature-handlers."""
+{% for feature in features %}
+        registry.register("{{ name }}.{{ feature }}", _{{ feature }}_handler)
+{% endfor %}
+
+    async def on_shutdown(self) -> None:
+        """Логирует факт выключения плагина."""
+        logger.info("{{ name }} shutdown")
+
+
+{% for feature in features %}
+async def _{{ feature }}_handler(payload: Any | None = None, **_: Any) -> Any:
+    """Handler для ``{{ name }}.{{ feature }}`` — echo-payload."""
+    return {"feature": "{{ feature }}", "payload": payload}
+
+
+{% endfor %}

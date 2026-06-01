@@ -1,0 +1,53 @@
+# K-OPS-2 (Sprint 17 W17): Services для app + worker metrics.
+#
+# `gd-app` — ClusterIP для FastAPI app (8000:http + 9090:metrics);
+# `temporal-worker-metrics` — headless для scrape Prometheus.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gd-app
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+  annotations:
+    # ServiceMonitor (Prometheus Operator) — carryover S18.
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP
+  sessionAffinity: None
+---
+# Headless service для Prometheus discovery temporal-worker pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-worker-metrics
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: workflow-worker
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: workflow-worker
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP

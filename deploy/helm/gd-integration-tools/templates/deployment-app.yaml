@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+    app.kubernetes.io/version: {{ .Values.image.tag | quote }}
+    sprint: s30
+    wave: k5-w5-helm
+spec:
+  replicas: {{ .Values.app.replicas }}
+  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gd-integration-tools
+      app.kubernetes.io/component: app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gd-integration-tools
+        app.kubernetes.io/component: app
+        app.kubernetes.io/version: {{ .Values.image.tag | quote }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ .Values.app.serviceAccount.name }}
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        seccompProfile:
+          type: {{ .Values.securityContext.seccompProfileType }}
+      terminationGracePeriodSeconds: {{ .Values.app.terminationGracePeriodSeconds }}
+      containers:
+        - name: app
+          image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: gd-app-config
+            - secretRef:
+                name: gd-app-secrets
+          resources:
+            requests:
+              cpu: {{ .Values.app.resources.requests.cpu }}
+              memory: {{ .Values.app.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.app.resources.limits.cpu }}
+              memory: {{ .Values.app.resources.limits.memory }}
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            failureThreshold: {{ .Values.app.probes.startupFailureThreshold }}
+            periodSeconds: {{ .Values.app.probes.startupPeriodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: {{ .Values.app.probes.readinessInitialDelay }}
+            periodSeconds: {{ .Values.app.probes.readinessPeriodSeconds }}
+            timeoutSeconds: {{ .Values.app.probes.readinessTimeout }}
+            failureThreshold: {{ .Values.app.probes.readinessFailureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: {{ .Values.app.probes.livenessInitialDelay }}
+            periodSeconds: {{ .Values.app.probes.livenessPeriodSeconds }}
+            timeoutSeconds: {{ .Values.app.probes.livenessTimeout }}
+            failureThreshold: {{ .Values.app.probes.livenessFailureThreshold }}
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem }}
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: ai-workspace
+              mountPath: /var/lib/gd_integration_tools/ai_workspaces
+            - name: cache
+              mountPath: /var/cache/gd_integration_tools
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "15"]
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: ai-workspace
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 512Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: gd-integration-tools
+                    app.kubernetes.io/component: app
+                topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.app.serviceAccount.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app

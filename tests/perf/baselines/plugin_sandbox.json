@@ -1,0 +1,8 @@
+{
+  "baseline": {
+    "no_op_ms": null,
+    "cpu_bound_ms": null,
+    "io_simulated_ms": null
+  },
+  "note": "fill via pytest --benchmark-json after dedicated run"
+}

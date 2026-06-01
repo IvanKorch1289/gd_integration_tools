@@ -1,0 +1,157 @@
+name: perf
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/perf/**"
+      - "pyproject.toml"
+      - ".github/workflows/perf.yml"
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  k6-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync --extra dev-light --extra perf
+
+      - name: Start backend (dev_light)
+        run: |
+          APP_PROFILE=dev_light uv run python manage.py serve --host 127.0.0.1 --port 8000 &
+          echo $! > backend.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8000/api/v1/health && break
+            sleep 1
+          done
+
+      - name: k6 smoke profile
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/perf/k6_action_routes.js
+          flags: "--summary-export=summary.json -e BASE_URL=http://127.0.0.1:8000"
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) 2>/dev/null || true
+          fi
+
+      - name: Comment summary on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('summary.json')) {
+              core.warning('summary.json not produced — k6 likely failed earlier');
+              return;
+            }
+            const raw = JSON.parse(fs.readFileSync('summary.json', 'utf8'));
+            const m = raw.metrics || {};
+            const p95 = (m.http_req_duration?.values?.['p(95)'] ?? 0).toFixed(1);
+            const failRate = ((m.http_req_failed?.values?.rate ?? 0) * 100).toFixed(2);
+            const reqs = m.http_reqs?.values?.count ?? 0;
+            const rps = (m.http_reqs?.values?.rate ?? 0).toFixed(1);
+            const body = [
+              '## perf-gate (`k6_action_routes.js`)',
+              '',
+              `* p95: **${p95} ms** (target <200)`,
+              `* error rate: **${failRate}%** (target <1)`,
+              `* RPS: **${rps}** (target >1000)`,
+              `* total requests: ${reqs}`,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Upload k6 artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-summary
+          path: summary.json
+          retention-days: 14
+
+  locust-headless:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync --extra dev-light --extra perf
+
+      - name: Start backend
+        run: |
+          APP_PROFILE=dev_light uv run python manage.py serve --host 127.0.0.1 --port 8000 &
+          echo $! > backend.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8000/api/v1/health && break
+            sleep 1
+          done
+
+      - name: Locust headless run
+        run: |
+          uv run --extra perf locust \
+            -f tests/perf/locust_full_profile.py \
+            --host=http://127.0.0.1:8000 \
+            --users 100 --spawn-rate 10 --run-time 3m \
+            --headless --csv=locust_summary
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) 2>/dev/null || true
+          fi
+
+      - name: Upload locust summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: locust-summary
+          path: locust_summary*
+          retention-days: 14

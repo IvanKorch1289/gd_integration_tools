@@ -1,0 +1,54 @@
+"""Pydantic-схемы для {{ entity }} (codegen Wave 5.1).
+
+Содержит триаду:
+
+* ``{{ class_name_short }}Create``  — input при создании.
+* ``{{ class_name_short }}Update``  — input при обновлении (все поля опциональны).
+* ``{{ class_name_short }}Read``    — output для API-ответов.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+
+__all__ = (
+    "{{ class_name_short }}Create",
+    "{{ class_name_short }}Read",
+    "{{ class_name_short }}Update",
+)
+
+
+class {{ class_name_short }}Create(BaseModel):
+    """Поля для создания {{ entity_short }}."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    {% for field, py_type in fields.items() %}
+    {{ field }}: {{ py_type }}
+    {% endfor %}
+
+
+class {{ class_name_short }}Update(BaseModel):
+    """Все поля опциональны (PATCH-семантика)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    {% for field, py_type in fields.items() %}
+    {{ field }}: {{ py_type }} | None = None
+    {% endfor %}
+
+
+class {{ class_name_short }}Read(BaseModel):
+    """Поля, возвращаемые API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: Any
+    created_at: datetime
+    updated_at: datetime | None = None
+    {% for field, py_type in fields.items() %}
+    {{ field }}: {{ py_type }} | None = None
+    {% endfor %}

@@ -1,0 +1,15 @@
+.PHONY: sbom audit-deps cosign-sign
+
+# Makefile.security — Supply-chain security targets (S6 K1).
+# Requires: python tools/checks/generate_sbom.py,
+#          python tools/checks/run_pip_audit.py,
+#          python tools/checks/cosign_sign_all.py
+
+sbom:
+	python tools/checks/generate_sbom.py
+
+audit-deps:
+	python tools/checks/run_pip_audit.py
+
+cosign-sign:
+	python tools/checks/cosign_sign_all.py

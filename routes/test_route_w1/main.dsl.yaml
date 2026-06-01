@@ -1,0 +1,17 @@
+route_id: test_route_w1
+source:
+  http:
+    method: POST
+    path: /api/v1/CHANGEME
+steps:
+- call_function:
+    ref: extensions.test_route_w1.normalizer:apply_rules
+- http_call:
+    url: https://api.test/sink
+    method: POST
+- audit:
+    action: test_route_w1.processed
+- to:
+    response:
+      code: 200
+      body: ${body}

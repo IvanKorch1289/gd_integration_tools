@@ -1,0 +1,16 @@
+# K-OPS-2 (Sprint 17 W17): namespace для gd-integration-tools.
+#
+# Все ресурсы в namespace `gd-integration` для:
+#   * NetworkPolicy isolation (deny-all + explicit allow);
+#   * ResourceQuota / LimitRange (carryover S18);
+#   * Multi-tenant overlay (carryover S18 K1 Helm chart).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gd-integration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/managed-by: kubectl
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

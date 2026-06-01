@@ -1,0 +1,157 @@
+import asyncio
+from logging.config import fileConfig
+
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.orm import configure_mappers
+
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
+from src.backend.infrastructure.database.migrations.types import load_types
+from src.backend.infrastructure.database.models.base import (  # noqa: F401
+    BaseModel,
+    metadata,
+)
+from src.backend.infrastructure.database.models.files import (  # noqa: F401
+    File,
+    OrderFile,
+)
+from src.backend.infrastructure.database.models.orderkinds import (
+    OrderKind,  # noqa: F401
+)
+from src.backend.infrastructure.database.models.orders import Order  # noqa: F401
+from src.backend.infrastructure.database.models.users import User  # noqa: F401
+
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+configure_mappers()
+
+# add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+
+# target_metadata = BaseModel.metadata
+target_metadata = metadata
+
+config.set_main_option("sqlalchemy.url", settings.database.async_connection_url)
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        **load_types(),
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    Multi-instance safety: uses Redis distributed lock to ensure
+    only ONE instance runs migrations at a time. Other instances
+    wait (up to 5 min) for the lock and skip migration if already applied.
+
+    Для SQLite (W21.2 dev_light) ветка versions/*.py содержит PG-specific
+    код (pg_notify trigger, gen_random_uuid, '{}'::jsonb) и не запускается.
+    Вместо этого таблицы создаются через ``metadata.create_all`` —
+    подходит для одноразового локального стенда.
+    """
+    is_sqlite = settings.database.type.value == "sqlite"
+
+    if is_sqlite:
+        connectable = async_engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+        async with connectable.begin() as connection:
+            await connection.run_sync(target_metadata.create_all)
+        await connectable.dispose()
+        return
+
+    # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
+    try:
+        from src.backend.infrastructure.clients.storage.redis_lock import (
+            distributed_lock,
+        )
+
+        lock_ctx = distributed_lock(
+            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0
+        )
+    except ImportError:
+        import contextlib
+
+        @contextlib.asynccontextmanager
+        async def lock_ctx():  # type: ignore[no-redef]
+            yield True
+
+    async with lock_ctx as acquired:
+        if not acquired:
+            import logging
+
+            logging.getLogger("alembic").warning(
+                "Could not acquire migration lock — another instance is running migrations"
+            )
+            return
+
+        connectable = async_engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+
+        await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+
+    asyncio.run(run_async_migrations())
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

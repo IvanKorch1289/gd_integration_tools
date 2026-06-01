@@ -1,0 +1,18 @@
+[route]
+name = "echo_demo"
+version = "0.1.0"
+description = "Reference route #2 — echo с трансформацией body для validation демо"
+requires_core = ">=15.0,<16.0"
+tenant_aware = false
+
+capabilities = [
+  "net.inbound.http:/api/v1/demo/echo"
+]
+
+[route.slo]
+p95_ms = 30
+p99_ms = 100
+rps_target = 200
+
+[route.feature_flag]
+name = "routes_v11_1a_discovery"

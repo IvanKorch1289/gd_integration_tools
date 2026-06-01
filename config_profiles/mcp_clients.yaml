@@ -1,0 +1,32 @@
+# MCP External Clients Configuration (ADR-0070 §2, S27 W4)
+#
+# Реестр trusted external MCP-серверов. Все запросы проходят через:
+# 1. OutboundHttpClient + WAF (capability net.outbound.<host>:external)
+# 2. Auth provider (jwt / api_key / oauth / none)
+#
+# Usage:
+#   MCPClientRegistry().load_from_yaml("config_profiles/mcp_clients.yaml")
+
+clients: []
+# Example entries (uncomment to use):
+#
+# - name: anthropic-mcp-search
+#   url: https://mcp.anthropic.com/v1/search
+#   auth_provider: jwt
+#   capability_required: net.outbound.mcp.anthropic.com:external
+#   waf_policy: strict
+#   timeout_s: 10.0
+#
+# - name: slack-mcp
+#   url: https://mcp.slack.com/v1/events
+#   auth_provider: api_key
+#   capability_required: net.outbound.mcp.slack.com:external
+#   waf_policy: strict
+#   timeout_s: 5.0
+#
+# - name: github-mcp
+#   url: https://api.github.com/mcp
+#   auth_provider: oauth
+#   capability_required: net.outbound.api.github.com:external
+#   waf_policy: permissive
+#   timeout_s: 15.0

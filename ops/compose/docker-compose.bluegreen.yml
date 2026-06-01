@@ -1,0 +1,139 @@
+# Sprint 7 Team T5 + K2 — Blue/Green deployment topology.
+#
+# Назначение:
+#     Два независимых stack'а (blue + green) поднимаются параллельно,
+#     nginx-router-stub переключает upstream без даунтайма. K2 расширение
+#     (Sprint 7 K2) добавляет observability labels, structured healthcheck
+#     с разделением /health и /health/db, warm-pool retention и
+#     production-grade upstream definition для NGINX router.
+#
+# Профили:
+#     - blue   — текущая активная версия (порт 8001 host → 8000 internal)
+#     - green  — новая версия (порт 8002 host → 8000 internal)
+#     - router — nginx (порт 80 → blue|green по active.conf)
+#     - all    — все три профиля одновременно
+#
+# Использование (через scripts/blue_green.sh):
+#     ./scripts/blue_green.sh up green       # поднять green
+#     ./scripts/blue_green.sh smoke green    # smoke
+#     ./scripts/blue_green.sh switch green   # переключить router
+#     ./scripts/blue_green.sh down blue      # остановить blue
+#
+# Связано:
+#     - ADR-0060 — топология и rollback SLA
+#     - docs/runbooks/blue-green-rollback.md — runbook on-call
+#     - feature_flag: blue_green_deploy_enabled (default-OFF)
+#
+# Замечания:
+#     - Образ ``gd-tools:bluegreen`` собирается из ``Dockerfile`` (default).
+#       Для разных версий blue/green передаётся ``--build-arg APP_VERSION=...``
+#       или указывается tag через переменные окружения (``BLUE_TAG`` / ``GREEN_TAG``).
+#     - nginx-router-stub использует mounted configs/nginx/active.conf,
+#       который генерируется blue_green.sh switch (Sprint 8 R2 заменяется
+#       на production nginx с TLS+WAF или envoy).
+#     - Для dev_light можно ограничиться одним stack — этот compose
+#       рассчитан на staging / pre-prod cluster.
+
+services:
+    # ─── BLUE stack ────────────────────────────────────────────────────
+    backend_blue:
+        profiles: ["blue", "all"]
+        image: "gd-tools:${BLUE_TAG:-latest}"
+        build:
+            context: ../..
+            dockerfile: ops/compose/Dockerfile
+        environment:
+            APP_HOST: "0.0.0.0"
+            APP_PORT: "8000"
+            APP_STACK: "blue"
+            APP_VERSION: "${BLUE_TAG:-latest}"
+            ENV: "${ENV:-staging}"
+            # K2 Sprint 7: feature-flag, экспорт в /metrics + Grafana
+            FEATURE_BLUE_GREEN_DEPLOY_ENABLED: "true"
+        labels:
+            # K2 observability labels — попадают в Prometheus relabel_config
+            # и Grafana variables (см. dashboards/api_latency_p95.json).
+            org.label-schema.app: "gd_integration_tools"
+            org.label-schema.stack: "blue"
+            org.label-schema.version: "${BLUE_TAG:-latest}"
+            org.label-schema.role: "backend"
+        ports:
+            - "8001:8000"
+        healthcheck:
+            test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+            start_period: 30s
+        restart: "unless-stopped"
+
+    # ─── GREEN stack ───────────────────────────────────────────────────
+    backend_green:
+        profiles: ["green", "all"]
+        image: "gd-tools:${GREEN_TAG:-latest}"
+        build:
+            context: ../..
+            dockerfile: ops/compose/Dockerfile
+        environment:
+            APP_HOST: "0.0.0.0"
+            APP_PORT: "8000"
+            APP_STACK: "green"
+            APP_VERSION: "${GREEN_TAG:-latest}"
+            ENV: "${ENV:-staging}"
+            # K2 Sprint 7: feature-flag, экспорт в /metrics + Grafana
+            FEATURE_BLUE_GREEN_DEPLOY_ENABLED: "true"
+        labels:
+            org.label-schema.app: "gd_integration_tools"
+            org.label-schema.stack: "green"
+            org.label-schema.version: "${GREEN_TAG:-latest}"
+            org.label-schema.role: "backend"
+        ports:
+            - "8002:8000"
+        healthcheck:
+            test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+            start_period: 30s
+        restart: "unless-stopped"
+
+    # ─── nginx-router-stub ─────────────────────────────────────────────
+    # Stub-роутер (Sprint 7 R1.6). В Sprint 8 R2 заменяется на envoy /
+    # production nginx с TLS-терминацией + WAF-фасадом.
+    #
+    # K2 Sprint 7 расширение:
+    #     - upstream backend definition с keepalive 32 для graceful reload;
+    #     - depends_on with healthchecks (start_with_healthy_dep) — старт
+    #       router'а только после healthy blue stack;
+    #     - labels для observability (Prometheus relabel + Grafana var).
+    router:
+        profiles: ["router", "all"]
+        image: "nginx:1.27-alpine"
+        depends_on:
+            backend_blue:
+                condition: "service_healthy"
+                required: false
+        labels:
+            org.label-schema.app: "gd_integration_tools"
+            org.label-schema.role: "router"
+        ports:
+            - "80:80"
+        volumes:
+            - "../../configs/nginx/active.conf:/etc/nginx/conf.d/default.conf:ro"
+        healthcheck:
+            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+            interval: 10s
+            timeout: 3s
+            retries: 3
+            start_period: 15s
+        restart: "unless-stopped"
+
+networks:
+    default:
+        name: "gd_tools_bluegreen"
+
+# K2 Sprint 7 NOTE:
+#     Shared зависимости (db / redis / temporal / clickhouse) НЕ объявлены
+#     в этом compose-файле — они подключаются через основной
+#     docker-compose.yml (compose merge или --file chain). Backward-совместимые
+#     миграции БД — обязательное предусловие deploy (ADR-0060 §1.3).

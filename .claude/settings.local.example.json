@@ -1,0 +1,21 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(make run)",
+      "Bash(make run-all)",
+      "Bash(make frontend)",
+      "Bash(make migrate)",
+      "Bash(make rabbit-init)",
+      "Bash(make profile-memray)",
+      "Bash(make profile-memray-flamegraph)",
+      "Bash(make profile-mprof)",
+      "Bash(make profile-pyspy)",
+      "Bash(make docker-build)",
+      "Bash(make docker-run)",
+      "Bash(make docker-stop)"
+    ]
+  }
+}

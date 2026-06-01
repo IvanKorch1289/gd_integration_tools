@@ -1,0 +1,10 @@
+{
+  "timestamp": "20260525T142643Z",
+  "dataset": "banking",
+  "record_count": 5,
+  "skipped": true,
+  "skip_reason": "ragas not installed: No module named 'datasets'",
+  "errors": [],
+  "metrics": [],
+  "blocking": false
+}

@@ -1,0 +1,88 @@
+import re
+
+from fastapi import HTTPException, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.types import ASGIApp
+
+from src.backend.core.config.settings import settings
+
+__all__ = ("APIKeyMiddleware",)
+
+
+class APIKeyMiddleware(BaseHTTPMiddleware):
+    """Middleware для проверки API-ключа в заголовках запросов.
+
+    Обеспечивает:
+    - Валидацию API-ключа для защищенных маршрутов
+    - Исключение определенных маршрутов из проверки
+    - Гибкую настройку через конфигурацию приложения
+    """
+
+    def __init__(self, app: ASGIApp):
+        """
+        Инициализирует middleware.
+
+        Аргументы:
+            app (ASGIApp): ASGI-приложение FastAPI
+        """
+        from re import compile
+
+        from src.backend.dsl.codec.converters import convert_pattern
+
+        super().__init__(app)
+        # Компилируем шаблоны исключений из настроек
+        self.compiled_patterns: list[re.Pattern] = [
+            compile(convert_pattern(pattern))
+            for pattern in settings.secure.routes_without_api_key
+        ]
+
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
+        """Обрабатывает входящий запрос.
+
+        Аргументы:
+            request (Request): Входящий HTTP-запрос
+            call_next (RequestResponseEndpoint): Следующий middleware/обработчик
+
+        Возвращает:
+            Response: HTTP-ответ
+
+        Исключения:
+            HTTPException: 401 если API-ключ отсутствует или неверен
+        """
+        # M-1 (Sprint 16 Wave 5, deduplication): если AuthRequiredMiddleware
+        # уже аутентифицировал запрос — пропускаем повторную валидацию.
+        # AuthRequiredMiddleware (V7 defense-in-depth) пробует все 7 методов
+        # включая API_KEY, поэтому при установленном request.state.auth
+        # вторая проверка избыточна (см. ADR-стек авторизации).
+        if getattr(request.state, "auth", None) is not None:
+            return await call_next(request)
+
+        # Пропускаем проверку для исключенных маршрутов
+        if self._is_excluded_route(request.url.path):
+            return await call_next(request)
+
+        # Проверяем наличие API-ключа
+        if (api_key := request.headers.get("X-API-Key")) is None:
+            raise HTTPException(status_code=401, detail="Требуется API-ключ")
+
+        # Валидируем API-ключ
+        import secrets as _secrets
+
+        if not _secrets.compare_digest(api_key, settings.secure.api_key):
+            raise HTTPException(status_code=401, detail="Неверный API-ключ")
+
+        # Передаем запрос дальше по цепочке middleware
+        return await call_next(request)
+
+    def _is_excluded_route(self, path: str) -> bool:
+        """Проверяет, исключен ли маршрут из проверки API-ключа.
+
+        Аргументы:
+            path (str): Путь запроса
+
+        Возвращает:
+            bool: True если маршрут исключен, иначе False
+        """
+        return any(pattern.match(path) for pattern in self.compiled_patterns)

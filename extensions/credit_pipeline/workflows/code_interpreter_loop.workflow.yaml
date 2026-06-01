@@ -1,0 +1,52 @@
+name: code_interpreter_loop
+version: "1.0"
+description: |
+  Data analysis loop через e2b sandbox (Sprint 12 K4 W1).
+
+  LLM предлагает Python код → e2b sandbox исполняет → eval → если
+  not_done — цикл (через signal + activity).
+
+  Template tags: ai, code-execution, sandbox, loop, e2b.
+default_timeout_s: 1800
+default_retry_policy:
+  initial_interval_s: 1.0
+  backoff_coefficient: 2.0
+  maximum_interval_s: 30.0
+  maximum_attempts: 3
+steps:
+  - type: activity
+    name: receive_dataset
+    args:
+      max_size_mb: 100
+    timeout_s: 60
+  - type: activity
+    name: llm_propose_code
+    args:
+      function: services.ai.llm_code_proposal
+      model_id: claude-opus-4-7
+      estimated_tokens: 4500
+    timeout_s: 90
+  - type: activity
+    name: execute_code_sandboxed
+    args:
+      function: services.ai.e2b_execute
+      sandbox_type: python
+      timeout_s: 60
+    timeout_s: 120
+  - type: activity
+    name: evaluate_results
+    args:
+      function: services.ai.evaluate_output
+      model_id: claude-sonnet-4-6
+      estimated_tokens: 2500
+    timeout_s: 60
+  - type: wait_signal
+    signal_name: continue_loop
+    timeout_s: 600
+  - type: activity
+    name: format_final_report
+    args:
+      function: services.ai.format_report
+      model_id: claude-sonnet-4-6
+      estimated_tokens: 3000
+    timeout_s: 90

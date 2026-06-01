@@ -47,6 +47,8 @@ __all__ = (
     "compile_signal_wait_step",
     "compile_sleep_step",
     "compile_agent_invoke_step",
+    "compile_pause_step",
+    "compile_resume_step",
     "dispatch_step_compile",
 )
 
@@ -313,6 +315,51 @@ async def compile_agent_invoke_step(
         ) from exc
 
 
+async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any:
+    """Приостановить workflow через ``workflow.pause()`` (S35 GAP-DSL-2).
+
+    Устанавливает флаг, который предотвращает продолжение выполнения
+    workflow до вызова ``workflow.resume()``.
+
+    Args:
+        decl: Декларация pause-шага.
+        ctx: Рантайм-контекст workflow (содержит ``_outputs``).
+
+    Returns:
+        None.
+    """
+    from temporalio import workflow
+
+    workflow.pause()
+    if decl.output_key:
+        import datetime
+
+        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ).isoformat()
+    return None
+
+
+async def compile_resume_step(decl: ResumeDeclaration, ctx: dict[str, Any]) -> Any:
+    """Возобновить paused workflow через ``workflow.resume()`` (S35 GAP-DSL-2).
+
+    Снимает флаг паузы и позволяет workflow продолжить выполнение.
+    Опционально восстанавливает состояние из checkpoint.
+
+    Args:
+        decl: Декларация resume-шага.
+        ctx: Рантайм-контекст workflow (не используется, зарезервирован).
+
+    Returns:
+        None.
+    """
+    from temporalio import workflow
+
+    del ctx
+    workflow.resume()
+    return None
+
+
 _STEP_DISPATCH: dict[type, StepCompiler] = {
     ActivityDeclaration: compile_activity_step,
     SagaDeclaration: compile_saga_step,
@@ -320,6 +367,8 @@ _STEP_DISPATCH: dict[type, StepCompiler] = {
     SleepDeclaration: compile_sleep_step,
     SensorDeclaration: compile_sensor_step,
     AgentInvokeDeclaration: compile_agent_invoke_step,
+    PauseDeclaration: compile_pause_step,
+    ResumeDeclaration: compile_resume_step,
 }
 
 

@@ -1,0 +1,839 @@
+[project]
+name = "gd_advanced_tools"
+version = "0.20.0"
+description = "GD Integration Tools — интеграционная шина на Python 3.14"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+authors = [
+    { name = "crazyivan1289", email = "crazyivan1289@gmail.com" }
+]
+dependencies = [
+    "fastapi>=0.116.0",
+    "sqlalchemy>=2.0.41,<3.0.0",
+    "uvicorn[standard]>=0.32.0,<1.0.0",
+    "pydantic[email]>=2.10.3,<3.0.0",
+    "pydantic-settings>=2.6.0,<3.0.0",
+    "alembic>=1.13.3,<2.0.0",
+    "greenlet>=3.1.1,<4.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "fastapi-filter>=2.0.0,<3.0.0",
+    "python-multipart>=0.0.18",
+    "sqladmin>=0.20.1,<1.0.0",
+    "argon2-cffi>=23.1.0,<24.0.0",
+    "aiosmtplib>=3.0.2,<4.0.0",
+    "sqlalchemy-utils>=0.41.2,<1.0.0",
+    "starlette>=1.0.1,<2.0.0",  # S30 W1: PYSEC-2026-161 fix (0.x lacks the fix)
+    "starlette-exporter>=0.23.0,<1.0.0",
+    "fastapi-limiter>=0.1.6,<1.0.0",
+    "asgi-correlation-id>=4.3.0,<5.0.0",
+    "asgi-idempotency-header>=0.2.0,<1.0.0",
+    "openpyxl>=3.1.5,<4.0.0",
+    "sqlalchemy-continuum>=1.5.2,<2.0.0",
+    "zeep>=4.3.1,<5.0.0",
+    "hvac>=2.3.0,<3.0.0",
+    "joserfc>=1.0.0,<2.0.0",
+    "opentelemetry-api>=1.30.0,<2.0.0",
+    "opentelemetry-sdk>=1.30.0,<2.0.0",
+    "opentelemetry-instrumentation-fastapi>=0.51b0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.30.0,<2.0.0",
+    "opentelemetry-instrumentation-aiokafka>=0.51b0",
+    "opentelemetry-instrumentation-aio-pika>=0.51b0",
+    "opentelemetry-instrumentation-pymongo>=0.51b0",
+    "opentelemetry-instrumentation-grpc>=0.51b0",
+    "opentelemetry-instrumentation-asyncpg>=0.51b0",
+    "purgatory>=3.0.0,<4.0.0",
+    "apscheduler>=3.11.0,<4.0.0",
+    "croniter>=2.0.0,<3.0.0",
+    "faststream[kafka]>=0.6.7,<1.0.0",
+    "aiokafka>=0.12.0,<1.0.0",
+    "grpcio>=1.70.0,<2.0.0",
+    "protobuf>=5.29.3,<6.0.0",
+    "aio-pika>=9.5.5,<10.0.0",
+    "aiofiles>=24.1.0,<25.0.0",
+    "fastapi-pagination>=0.12.34,<1.0.0",
+    "tenacity>=9.0.0,<10.0.0",
+    "asyncpg>=0.31.0,<1.0.0",
+    "orjson>=3.11.8,<4.0.0",
+    "diskcache>=5.6.3,<6.0.0",
+    "strawberry-graphql[fastapi]>=0.262.0",
+    "jmespath>=1.0.1,<2.0.0",
+    "beautifulsoup4>=4.12.3,<5.0.0",
+    "lxml>=6.1.0,<7.0.0",  # S29 W2: PYSEC-2026-87 fixed in 6.1.0 — resolve_entities defaults to False
+    "watchfiles>=1.0.0,<2.0.0",
+    "structlog>=24.4.0,<25.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "aiomqtt>=2.0.0,<3.0.0",
+    "aioimaplib>=1.0.0,<2.0.0",
+    "pyyaml>=6.0.2,<7.0.0",
+    "grpc-interceptor>=0.15.4,<1.0.0",
+    "svcs>=25.1.0",
+    "httpx[http2]>=0.28.0,<1.0.0",
+    # K2 S7: unified httpx transport stack (RetryTransport + CacheTransport).
+    # Lazy-import — feature-flagged через httpx_unified_transport (default-OFF).
+    "httpx-retries>=0.4,<1.0",
+    "hishel>=0.0.30,<1.0",
+    "msgpack>=1.1.0,<2.0.0",
+    "cbor2>=5.6.0,<6.0.0",
+    "xmltodict>=0.14.0,<1.0.0",
+    "qdrant-client>=1.12.0,<2.0.0",
+    "granian>=2.0.0",
+    "msgspec>=0.18.0,<1.0.0",
+    "uvloop>=0.21.0,<1.0.0",
+    "cloudevents>=1.10.0,<2.0.0",
+    "fastavro>=1.9.0,<2.0.0",
+    "casbin>=1.36.0,<2.0.0",
+    "polars>=1.20.0,<2.0.0",
+    "pyarrow>=20.0.0,<25.0.0",
+    "duckdb>=1.5.2,<2.0.0",
+    "dask[distributed]>=2026.3.0",
+    "cachetools>=5.3.0,<8.0.0",
+    "motor>=3.5,<4.0",
+    "elasticsearch[async]>=8.0,<9.0",
+    "openapi-pydantic>=0.5.0,<1.0.0",
+    "pypdf>=6.0,<7.0",  # S29 W2: 20 CVEs fixed in 6.0.0-6.10.2
+    "python-docx>=1.1,<2.0",
+    "markitdown>=0.1.5,<1.0.0",
+    "whoosh-reloaded>=2.7.5,<3.0.0",
+    "sentry-sdk[fastapi]>=2.20.0,<3.0.0",
+    "typer>=0.12.0,<1.0.0",
+    "pydash>=8.0,<9.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    # langgraph — multi-agent supervisor (StateGraph + handoff tools),
+    # ReAct agent (create_react_agent), PostgresSaver checkpointer.
+    # Lazy-import: langgraph imported inside functions, not at module level.
+    "langgraph>=0.3.0",
+    "langfuse>=2.0.0",
+    # Wave 1.7 (S1 R-V15-4): изолированный sandbox для AI code-execution.
+    # Lazy-import внутри infrastructure/ai/e2b_sandbox.py; при отсутствии
+    # пакета или E2B_API_KEY используется NoOpSandbox (явный отказ).
+    "e2b-code-interpreter>=1.0.0,<3.0.0",
+    # K4 Sprint 6: AI evaluation framework + prompt optimization.
+    # inspect-ai — UK AI Safety Institute eval framework (suites, scorers).
+    # dspy-ai — Stanford DSPy programming model для LLM pipeline optimization.
+    # Lazy-import внутри services/ai/eval/ и services/ai/dspy/;
+    # отсутствие пакетов не ломает CLI (skip-режим).
+    "inspect-ai>=0.3",
+    "dspy-ai>=2.5",
+]
+security = [
+    "presidio-analyzer>=2.2.0",
+    # K1 S3 W3: supply-chain CI gate scaffold (BLOCKER #4).
+    "cyclonedx-bom>=5.0.0",  # bumped from 4.x to resolve lxml>=6.1.0 conflict (PYSEC-2026-87)
+    # pip-audit — vulnerability scanner поверх PyPI advisory database.
+    # Инструменты используются через tools/checks/generate_sbom.py и
+    # tools/checks/run_pip_audit.py (make sbom / make audit-deps).
+    # S11 carryover: версии синхронизированы с [dev-group] выше — `uv sync
+    # --extra security` теперь даёт ту же версию, что `uv sync` (dev).
+    "pip-audit>=2.7,<3",
+]
+# === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
+# presidio-anonymizer — replace/redact/hash операторы для PII;
+# spacy + ru_core_news_lg — NER для русских ФИО/организаций/локаций;
+# Python 3.14 требует spaCy >= 3.8.13 (thinc/blis wheels).
+# `ru_core_news_lg` weights устанавливается через `python -m spacy download`
+# в Dockerfile / make pii-bootstrap target (~1.5GB).
+# Lazy-import в services/ai/pii/presidio_analyzer.py; default-OFF feature-flag
+# PRESIDIO_PII_ENABLED — graceful fallback на AIDataSanitizer (regex).
+# llm-guard (S35 W1) — self-hosted CPU scanner (MIT), replaces Rebuff/Lakera external APIs.
+# NOTE: pip-only due to tiktoken conflict with pydantic-ai>=1.99.0 (ai-2026).
+# Install separately: pip install llm-guard
+ai-safety = [
+    "presidio-analyzer>=2.2.0",
+    "presidio-anonymizer>=2.2.0",
+    "spacy>=3.8.13",
+]
+# === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
+# python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
+# чтобы dev_light без libxmlsec1 не падал. Lazy-import в SamlBackend.
+auth-saml = [
+    "python3-saml>=1.16.0,<2.0.0",
+]
+mcp = [
+    # ADR-0070 §3 (S27 W4): FastMCP 3.2.4+ required для JWTAuthProvider
+    # (JWTVerifier from fastmcp.server.auth.providers.jwt).
+    "fastmcp>=3.2.4"
+]
+rpa = [
+    # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection
+    # форк playwright). Используется в RPA Universal Stage 1; подключён
+    # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
+    "patchright>=1.40.0,<2.0",
+    "playwright>=1.48.0"
+]
+# K3 Sprint 8: OCR для извлечения текста со скриншотов / PDF.
+# Опционально: тяжёлый paddlepaddle backend; lazy-import в processor.
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): paddlepaddle 2.6.2 не имеет
+# wheels для cp314 (только cp38-cp312); 3.0 — major bump. paddleocr тоже
+# требует paddlepaddle. Extras временно пуст до миграции на paddlepaddle 3.x
+# или замены на pytesseract — pin'ы вернутся когда появятся 3.14-wheels.
+rpa-ocr = [
+    # Wave [wave:s18/w0-goal-driven-sweep-2-ocr]: pytesseract — lightweight
+    # OCR backend (требует Tesseract на хосте; lazy-import в processor).
+    "pytesseract>=0.3.10,<1.0",
+    # "paddleocr>=2.8.0,<4",       # carryover: ждём cp314 wheels paddlepaddle.
+    # "paddlepaddle>=2.6.0,<3",
+]
+# K3 Sprint 8 [wave:s8/k3-rpa-windows-desktop]: pywinauto Win32/UIA для
+# desktop UI automation. Windows-only — устанавливается на windows-worker
+# sidecar; на Linux/macOS sidecar возвращает 503.
+rpa-windows = [
+    "pywinauto>=0.6.8,<1.0",
+    "pillow>=10.0,<13.0",  # S30: upped to <13.0 — Pillow 12.x officially supports Python 3.14
+]
+# Sprint 8 — HTTP/3 + WebTransport opt-in.
+# aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
+# Сервер запускается отдельно от Granian (см. src.backend.entrypoints.http3.server).
+http3 = [
+    "aioquic>=1.1.0,<2.0.0",
+]
+# Sprint 5 — DSL pilot batch: JsonPath / UnitConversion / IcsCalendar.
+# Все три зависимости pure-Python (без C-extensions) и совместимы с Python 3.14.
+# Lazy-import внутри процессоров — установка extra нужна только при реальном использовании.
+dsl-extras = [
+    "jsonpath-ng>=1.6.0,<2.0.0",
+    "pint>=0.24.0,<1.0.0",
+    "icalendar>=5.0.0,<7.0.0",
+]
+rag = [
+    "sentence-transformers>=3.0.0,<6.0.0",
+    "rank-bm25>=0.2.2,<1.0.0",
+    "chromadb>=0.5.0,<2.0.0",
+]
+# Wave F.4 (V10 #11): fastembed несовместим с Python 3.14 — нет
+# onnxruntime wheels. Доступен только как opt-in для legacy-стендов на
+# Python 3.12 / 3.13. Default RAG embedding-провайдер — sentence-transformers
+# (см. services/ai/embedding_providers.py).
+embeddings-fastembed-legacy = [
+    "fastembed>=0.4.0,<1.0.0",
+]
+# К4 MVP (Sprint S5): AI Stack 2026.
+# litellm — unified LLM-gateway, pydantic-ai — typed agents,
+# FlagEmbedding — BGE-M3 + reranker-v2-m3,
+# instructor — structured-output fallback. Default-OFF в settings.
+ai-2026 = [
+    "litellm>=1.0.0,<2.0.0",  # S30: lowered to >=1.0.0 — CVE-2026-42208 fix available from 1.0.0
+    "pydantic-ai>=1.99.0,<2.0.0",  # S31: >=1.99.0 fixes GHSA-cqp8-fcvh-x7r3 (CVE-2026-46678, SSRF via IPv4-mapped IPv6). 1.94.0 was in vulnerable range >=1.56.0,<1.99.0. adapter.py LiteLLMModel shim needs rewrite for 1.x Model ABC — default-OFF until S32 W2.
+    # REMOVED langmem: zero imports, custom memory consolidation (UnifiedMemoryGateway)
+    # is better suited for self-hosted. Long-term memory via LangMem requires managed
+    # cloud — not compatible with self-hosted-first constraint.
+    # NOTE: inscriptis (dep of FlagEmbedding) requires lxml<6.1.0 which conflicts
+    # with core lxml>=6.1.1 (PYSEC-2026-87 fix). Install ai-2026 extra in isolated
+    # ML environments to avoid lxml downgrade. S31: tracking fix in inscriptis upstream.
+    "FlagEmbedding>=1.3.0,<2.0.0",
+    "instructor>=1.7.0,<2.0.0",
+]
+# K4 Sprint 8 [wave:s8/k4-model-registry]: AI Model Registry — MLflow +
+# Hugging Face Hub. Используется через services/ai/model_registry/.
+# mlflow ~150MB (тянет gunicorn, alembic, sqlalchemy-bind); HF Hub лёгкий.
+ai-model-registry = [
+    "mlflow>=3.10.0,<4",  # S30: upped to >=3.10.0 — CVE-2026-2652 auth bypass fix
+                           # NOTE: mlflow 3.x requires starlette<1.0.0 which conflicts with
+                           # core starlette>=1.0.1 (PYSEC-2026-161). Install ai-model-registry
+                           # extra in isolated environments (dedicated MLflow server container).
+    # S31: снят upper bound <1 -> <2 для совместимости с transformers>=5.0.0
+    # (transformers 5.x требует huggingface_hub>=1.3.0).
+    "huggingface_hub>=0.27,<2",
+]
+# K4 Sprint 7: voice STT/TTS extras (Whisper + Coqui TTS).
+# openai-whisper — speech-to-text (multilingual, including ru).
+# TTS (Coqui) — text-to-speech (XTTS v2 multilingual). Опциональный
+# (тяжёлый pin torch + heavy weights). Lazy-import внутри
+# services/ai/voice/. Activate via feature_flag voice_stt_tts_enabled.
+#
+# Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]: эти
+# пакеты на момент 2026-05 не имеют wheels для Python 3.14
+# (torch/torchaudio transitive deps). Помечены environment-marker
+# `python_version < "3.14"` — на 3.14 lazy-import возвращает skip-mode.
+ai-voice = [
+    "openai-whisper>=20240930,<2; python_version < '3.14'",
+    "TTS>=0.22,<1; python_version < '3.14'",
+]
+# Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
+# backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
+# внутри TemporalWorkflowBackend.__init__ — dev-light без SDK.
+workflow = [
+    "temporalio>=1.27.0,<2.0.0",
+]
+dev-light = [
+    "aiosqlite>=0.20.0,<1.0.0",
+]
+sources-cdc = [
+    "psycopg[binary]>=3.1,<4.0.0",
+]
+sources-mq-nats = [
+    "faststream[nats]>=0.6.7,<1.0.0",
+]
+# PLAN V20 (Sprint 16 K1 W4 closure): scaffolding-extras удалены — iot/web3/
+# legacy/banking/enterprise/datalake/temporal/beam не наполнены за 5 спринтов;
+# temporalio уже в base deps. Возврат — через явный wave-tag с реальным scope.
+
+# Sprint 16 NEW extras (V20):
+lsp = [
+    "pygls>=2.0.0",  # S16 K3 W1: LSP server для DSL (route.toml + workflow.yaml)
+]
+circuit-breaker = [
+    "pybreaker>=1.2.0",  # S16 K2 W4: pybreaker заменяет custom CB (state via Redis backend)
+]
+perf = [
+    "locust>=2.43.4,<3.0.0",
+    "pytest-benchmark>=5,<6",
+]
+# К5 (Wave K5/testkit): heavy-зависимости testkit-фикстур (toxiproxy,
+# temporal-env, respx). Без extra fixtures деградируют до pytest.skip,
+# поэтому core-юзеру extra не обязателен.
+testkit = [
+    "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
+    "respx>=0.22,<1",
+    "temporalio>=1.27.0,<2.0.0",
+    # Sprint 10 K5 W6 [wave:s10/backbone]: VCR-style cassette recorder.
+    # vcrpy — запись/replay HTTP-трафика; pure-Python, cp314-совместим.
+    # Lazy-import внутри testkit.cassette. Обёртка @cassette() поверх
+    # существующего testkit/recorder.py (HAR-style → VCR API).
+    "vcrpy>=6.0.0,<7.0.0",
+]
+# К10 Sprint-2 Wave 5: Sphinx scaffold + Diátaxis structure.
+# sphinx / myst-parser / sphinx-copybutton уже в [dev] dependency-group;
+# этот extra позволяет установить только doc-deps без full dev-стека.
+# pydata-sphinx-theme выбрана вместо furo (уже используется в dev).
+docs = [
+    "sphinx>=9.1.0,<10.0.0",
+    "myst-parser>=5.0.0,<6.0.0",
+    "sphinx-copybutton>=0.5,<1",
+    "pydata-sphinx-theme>=0.16.0,<1.0.0",
+    # K1 Sprint 8: multi-version docs build (master + release/* + v* tags).
+    # sphinx-multiversion — стабильная и проверенная утилита; интегрируется
+    # с любым Sphinx-проектом через расширение + 4 smv_* настройки.
+    "sphinx-multiversion>=0.2.4,<1.0.0",
+]
+# K5 Sprint 8 [wave:s8/k5-ru-proofreader]: optional ru-language proofreader.
+# language-tool-python тянет ~500MB JVM + словари; в core не нужен,
+# Streamlit Wiki показывает helpful warning при отсутствии.
+docs-ru = [
+    "language-tool-python>=2.8,<3",
+]
+# Sprint 5 — DSL расширения batch 2: webhook signature / pdf / template / archive.
+# Все зависимости pure-Python (либо имеют готовые wheels) и совместимы с Python 3.14.
+# Lazy-import внутри процессоров; extra нужен только при реальном использовании.
+dsl-extras-2 = [
+    "standardwebhooks>=1.0.0,<2.0.0",
+    "reportlab>=4.0.0,<5.0.0",
+    "pyjq>=2.6.0,<3.0.0",
+]
+# Sprint 5 — DSL расширения batch 3: LDAP / WebDAV / geo conversions.
+# aioldap3 и webdav4 — async клиенты, geopy — синхронный (use в thread executor).
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): aioldap3 удалён из PyPI; ad_directory_client.py
+# имеет lazy-import + fallback на ldap3 → soft-dep не блокирует runtime.
+dsl-extras-3 = [
+    "webdav4>=0.10.0,<1.0.0",
+    "geopy>=2.4.0,<3.0.0",
+    "ldap3>=2.9,<4",
+]
+# Sprint 5 — Workflow Result-monad для безопасного error-handling в processors.
+# rustedpy/result — typed Result[T, E] с методами is_ok/unwrap/map/and_then.
+result-monad = [
+    "result>=0.17.0,<1.0.0",
+]
+# Sprint 5 — Web Search providers: Tavily + Perplexity SDK (optional).
+# httpx-based clients, lazy-import; SearXNG уже доступен через httpx-сырой клиент.
+search-providers = [
+    "tavily-python>=0.5.0,<1.0.0",
+]
+# Sprint 10 K2 W2 [wave:s10/backbone]: Brotli compression middleware.
+# brotli — C-extension с pure-Python fallback; cp314 wheels доступны.
+# Lazy-import внутри BrotliCompressionMiddleware. Activate via
+# feature_flag compression_brotli (default-OFF).
+compression = [
+    "brotli>=1.1.0,<2.0.0",
+]
+# Sprint 5 — DOCX template engine (Word reports с подстановкой контекста).
+# python-docx уже в основных deps; docxtpl расширяет шаблонизацией Jinja2.
+doc-templates = [
+    "docxtpl>=0.18.0,<1.0.0",
+    "xlsxwriter>=3.2.0,<4.0.0",
+]
+# Sprint 5 — К4 RAG memory layer (optional providers).
+# langchain-postgres — AsyncPostgresSaver для LangGraph checkpoints
+# (used by services/ai/agents/langgraph_postgres_saver.py).
+# mem0ai REMOVED: zero imports, custom memory consolidation (UnifiedMemoryGateway)
+# is better suited for self-hosted deployment.
+ai-memory = [
+    # REMOVED mem0ai>=0.1.0,<1.0.0 (unused)
+    "langchain-postgres>=0.0.10,<1.0.0",
+]
+# Sprint 5 — Multimodal RAG (PDF/image OCR и docling parsing).
+# docling — IBM Research document parser (PDF/DOCX → structured Markdown).
+# paddleocr — fallback OCR для scan-PDF; alternative: easyocr (lazy-выбор).
+# K4 W1 (Sprint 8A): pypdfium2 — fast PDF parser с native wheels для py3.14
+# (используется в PDFIngester c graceful fallback на pypdf).
+# Pillow — обязателен для ImageIngester (EXIF + sniff).
+# sentence-transformers уже в core deps (см. строку выше).
+multimodal-rag = [
+    "docling>=2.0.0,<3.0.0",
+    "paddleocr>=2.8.0,<4.0.0",
+    "pypdfium2>=4.30.0,<5.0.0",
+    "Pillow>=10.0.0,<13.0.0",  # S30: upped to <13.0.0 — Pillow 12.x officially supports Python 3.14
+    # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
+    # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
+    # extra включается только при использовании.
+    # S31: upper bound снят <5 -> <6 для закрытия GHSA-69w3-r845-3855.
+    "transformers>=4.45,<6",
+    # Sprint 11 K4 W1: audio resample / mel-spectrogram (Whisper STT).
+    # openai-whisper не входит в multimodal-rag из-за отсутствия py3.14
+    # wheels — установка через `pip install --no-build-isolation
+    # openai-whisper` (sdist) при необходимости. См. ai-voice extra.
+    "librosa>=0.10,<1",
+]
+# Sprint 7 K1 closure — OpenFeature SDK + external Flagsmith provider.
+# openfeature-sdk — официальный CNCF Provider Interface (Python).
+# flagsmith — server-side SDK (lazy-import внутри FlagsmithBackend);
+# REST-fallback реализован напрямую через httpx в flagsmith_client.py
+# и не требует SDK. Default-OFF — extra нужен только для prod-rollout.
+feature_flags = [
+    "openfeature-sdk>=0.7,<1.0",
+    "flagsmith>=3.5,<4.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.20.1,<2.0.0",
+    "py-spy>=0.4.0,<1.0.0",
+    "grpcio-tools>=1.70.0,<2.0.0",
+    "ruff>=0.15.10,<1.0.0",
+    "sphinx>=9.1.0,<10.0.0",
+    "sphinx-autoapi>=3.3.2,<4.0.0",
+    "pydata-sphinx-theme>=0.16.0,<1.0.0",
+    "myst-parser>=5.0.0,<6.0.0",
+    "sphinx-design>=0.6,<1.0",
+    "schemathesis>=4.15.2,<5.0.0",
+    "python-semantic-release>=10.5.3,<11.0.0",
+    "detect-secrets>=1.5.0,<2.0.0",
+    "creosote>=5.2.0,<6.0.0",
+    "vulture>=2.14,<3.0.0",
+    "pydeps>=3.0.1,<4.0.0",
+    "bandit[toml]>=1.7.10,<2.0.0",
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+    "libcst>=1.5.0,<2.0.0",
+    "ruamel-yaml>=0.18.0,<1.0.0",
+    "questionary>=2.0.0,<3.0.0",
+    "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
+    "respx>=0.22,<1",
+    # Wave F.6: docstring pre-push gate + dependency audit (Roadmap V10 #12, #15).
+    "pre-commit>=4.0,<5.0",
+    "deptry>=0.20,<1.0",
+    # К5 (Wave K5/supply-chain): SBOM/audit gates.
+    # cyclonedx-bom>=5.0.0 in [security.extra], shared across extras
+    "pip-audit>=2.7,<3",
+    # К5 (Wave K5/docs): Vale-совместимый prose lint.
+    "proselint>=0.14,<1",
+    "sphinx-copybutton>=0.5,<1",
+    "sphinx-tabs>=3.4,<4",
+    # K3 S6 [wave:s6/k3-dsl-linter-lsp]: LSP-сервер для DSL route.toml + *.dsl.yaml.
+    # pygls — pure-Python LSP, совместим с 3.14; зависимость lsprotocol тянется автоматом.
+    # S16 K1 W4 (gate-w0-ops-reorg-smoke): унификация с [lsp]-extra pygls>=2.0.0.
+    "pygls>=2.0.0",
+    # S35 W4: pip-only (uv lock conflict: hypothesis→pydantic-ai>=1.99.0↔llm-guard tiktoken).
+    # Property-based tests: pip install hypothesis>=6.0.0
+    "hypothesis>=6.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# src/ устанавливается как пакет `src`, чтобы все импорты были `from src.X import Y`.
+# В Docker: COPY src ./src + PYTHONPATH=/app — так же работает `from src.X`.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "testkit*", "tools*"]
+
+# К5 (Wave K5/testkit): pytest-plugin entry-point, чтобы фикстуры
+# testkit подхватывались pytest без явного импорта в conftest.py.
+[project.entry-points."pytest11"]
+testkit = "testkit.pytest_plugin"
+src_testkit = "src.testkit.pytest_plugin"
+
+# S17 ADR-NEW-2: hook-точка для middleware из внешних дистрибутивов.
+# Расширения регистрируют ASGI middleware-классы; MiddlewareRegistry
+# подбирает их через register_from_entry_points(). См.
+# src/backend/entrypoints/middlewares/registry.py.
+[project.entry-points."gd_integration_tools.middleware_hooks"]
+# (пусто — extensions добавят сами через свои dist-метаданные)
+
+[tool.uv]
+package = true
+default-groups = ["dev"]
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): ограничить resolver окружениями
+# linux + macOS — backend проект не таргетит Windows, и win32-резолюшен
+# регулярно падает на пакетах без win32-wheels под Python 3.14
+# (paddlepaddle/aioldap3/pygls split). См. UV hint "limit the environments
+# with tool.uv.environments".
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]
+# Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]:
+# mlflow>=2.18,<3 декларирует pyarrow<20, но pyarrow в core зависит от
+# >=20 (S10 миграция). API mlflow совместим с pyarrow>=20 — override
+# принудительно поднимает constraint для разрешения ai-model-registry +
+# core resolution path. Side-effect для других пакетов отсутствует —
+# pyarrow в проекте уже >=20.
+override-dependencies = [
+    "pyarrow>=20.0.0,<25.0.0",
+    # S31: force lxml to latest to prevent flagembedding→inscriptis→lxml downgrade.
+    # inscriptis (dep of FlagEmbedding) requires lxml<6.1.0; override keeps core safe.
+    # AI-2026 extra: install in isolated ML environments per NOTE above.
+    "lxml>=6.1.1,<7.0.0",
+    # S31: urllib3 1.26.20 entries in lock are PyPy-only markers (platform markers
+    # restrict them to PyPy; CPython 3.14 correctly uses urllib3 2.7.0).
+    # Dependabot scans the whole lock — force 2.7.0 for all platforms to clear
+    # GHSA-38jv, GHSA-2xpw, GHSA-gm62 (CVE-2026-21441, CVE-2025-66471,
+    # CVE-2025-66418, CVE-2025-66419, CVE-2025-4135).
+    "urllib3>=2.7.0,<3.0.0",
+]
+
+[tool.mypy]
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+exclude = ["src/backend/entrypoints/grpc/protobuf/.*"]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disable_error_code = [
+    "no-untyped-def",
+    "override",
+    "arg-type",
+    "assignment",
+    "import-untyped",
+    "union-attr",
+    "var-annotated",
+    "call-arg",
+    "call-overload"
+]
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# Wave D.2: temporalio — optional extra (uv sync --extra workflow);
+# в чистой dev-light инсталляции SDK нет, lazy-импорт внутри backend.
+module = "temporalio.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# S13 K4 W2: vllm — optional extra (uv sync --extra ai-batch); heavy CUDA
+# зависимость, lazy-импорт в VllmBatchClient. Не устанавливается в dev_light.
+module = "vllm.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# S13 K3 W2: webdav4 — optional extra (uv sync --extra sources-webdav);
+# lazy-импорт в WebDAVSource. На dev-light без extras модуля нет.
+module = "webdav4.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Sprint 8: aioquic — optional extra (uv sync --extra http3);
+# в чистой dev-light инсталляции SDK нет, lazy-импорт в entrypoints/http3.
+module = "aioquic.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# К1 (V15 S2): cryptography используется в core/auth/mtls_backend.py
+# для PEM-валидации client cert. dev_light без cryptography продолжает
+# работать — backend переходит в headers-only режим.
+module = "cryptography.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# К1 (V15 S6): python3-saml — optional extra (uv sync --extra auth-saml);
+# в dev_light без xmlsec C-extension SamlBackend остаётся доступен,
+# но :meth:`is_available` возвращает False.
+module = "onelogin.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app.entrypoints.grpc.protobuf.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# S10 K2 mypy budget: Streamlit frontend pages — это presentation layer,
+# stub'ы для streamlit отсутствуют. Pages импортируют streamlit + plotly +
+# pandas + altair + специфичные виджеты, которые не нужно тайпить
+# в основном backend-pipeline. Frontend проверяется отдельно (streamlit
+# runtime-type-check) — здесь только ignore-missing-imports.
+module = [
+    "streamlit",
+    "streamlit.*",
+    "altair",
+    "altair.*",
+    "plotly",
+    "plotly.*",
+    "pandas",
+    "pandas.*",
+    "graphviz",
+    "graphviz.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# S10 K2 mypy budget: optional extras без stub'ов. Все эти модули
+# импортируются lazy внутри try/except или if TYPE_CHECKING-блоков
+# и подключаются как `[project.optional-dependencies]`. В чистой
+# dev_light инсталляции их нет — runtime-fallback покрывается тестами.
+# См. pyproject.toml::[project.optional-dependencies] для каждой группы.
+module = [
+    "boto3",
+    "boto3.*",
+    "asyncer",
+    "pygls.*",
+    "lsprotocol",
+    "lsprotocol.*",
+    "tiktoken",
+    "selectolax.*",
+    "jsonpath_ng.*",
+    "geoip2",
+    "geoip2.*",
+    "brotli",
+    "zstandard",
+    "fastmcp",
+    "fastmcp.*",
+    "pdfplumber",
+    "pytesseract",
+    "PIL",
+    "PIL.*",
+    "neo4j",
+    "influxdb_client",
+    "influxdb_client.*",
+    "pint",
+    "glom",
+    "xxhash",
+    "e2b_code_interpreter",
+    "hdrh",
+    "hdrh.*",
+    "aiomcache",
+    "pybotx",
+    "langfuse",
+    "langfuse.*",
+    "mcp",
+    "mcp.*",
+    "chromadb",
+    "faiss",
+    "playwright",
+    "playwright.*",
+    "aioftp",
+    "httpx_retries",
+    "hishel",
+    "asyncssh",
+    "graypy",
+    "opentelemetry.propagators.*",
+    "opentelemetry.exporter.*",
+    "opentelemetry.instrumentation.*",
+    "keyring",
+    "presidio_analyzer",
+    "presidio_analyzer.*",
+    "nats",
+    "nats.*",
+    "gql",
+    "gql.*",
+    "langchain_core.*",
+    "langchain_community.*",
+    "langgraph",
+    "langgraph.*",
+    "datasets",
+    "ragas",
+    "ragas.*",
+    "sentence_transformers",
+    "fastembed",
+    "rank_bm25",
+    "clickhouse_connect",
+    "clickhouse_connect.*",
+    "aioldap3",
+    "apprise",
+    "toxiproxy",
+    "advanced_alchemy.*",
+    "rapidfuzz",
+    "rapidfuzz.*",
+]
+ignore_missing_imports = true
+
+
+# Wave [wave:s18/w0-goal-driven-sweep-9-mypy-no-untyped-def-core]:
+# core/ — hardened-зона: no-untyped-def обязателен для всех публичных
+# функций. Глобальный disable_error_code не применяется к этим модулям;
+# код-владельцы добавляют аннотации сразу при изменении.
+[[tool.mypy.overrides]]
+module = "src.backend.core.*"
+disable_error_code = [
+    "override",
+    "arg-type",
+    "assignment",
+    "import-untyped",
+    "union-attr",
+    "var-annotated",
+    "call-arg",
+    "call-overload",
+]
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+exclude = [
+    "src/backend/entrypoints/grpc/protobuf/*"
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "S"]
+ignore = [
+    "E501",
+    "S104"
+]
+
+# Wave-6.1 lazy singletons:
+#
+#   * F822 — имена в ``__all__`` создаются через module-level
+#     ``__getattr__`` shim (``lru_cache(maxsize=1)`` + lazy accessor);
+#     Ruff не видит динамическое разрешение.
+#   * E402 — ``from src.backend.core.di import app_state_singleton`` (и
+#     обернутая ``@app_state_singleton`` фабрика) намеренно стоит
+#     ПОСЛЕ определения класса — это разрывает circular import
+#     ``core.di → infrastructure.X`` и сохраняет lazy-init.
+#
+# Файлы ниже — единственный список, где паттерны применены; добавление
+# новой записи требует обновления.
+#
+# Streamlit pages: ``st.set_page_config()`` обязан вызываться **первым**
+# Streamlit-вызовом (требование платформы), поэтому module-level imports
+# после него — конвенция, не баг.
+[tool.ruff.lint.per-file-ignores]
+"src/backend/infrastructure/clients/external/circuit_breakers.py" = ["F822"]
+"src/backend/infrastructure/clients/external/logger.py" = ["F822"]
+"src/backend/infrastructure/clients/messaging/stream.py" = ["F822"]
+"src/backend/infrastructure/clients/storage/redis.py" = ["F822"]
+"src/backend/infrastructure/clients/storage/s3_pool.py" = ["F822"]
+"src/backend/infrastructure/clients/transport/smtp.py" = ["F822"]
+"src/backend/infrastructure/database/database.py" = ["F822"]
+"src/backend/infrastructure/database/session_manager.py" = ["F822"]
+"src/backend/infrastructure/external_apis/logging_service.py" = ["F822"]
+"src/backend/core/resilience/breaker.py" = ["F822"]
+"src/backend/infrastructure/resilience/breaker.py" = ["F822"]
+"src/backend/infrastructure/scheduler/scheduler_manager.py" = ["F822"]
+"src/backend/services/decorators/limiting.py" = ["F822"]
+"src/backend/services/io/external_database.py" = ["F822"]
+# DSPy is optional (lazy import) — F821 intentionally bypasses runtime import check.
+"src/backend/services/ai/dspy/optimizer.py" = ["F821"]
+"src/frontend/streamlit_app/app.py" = ["BLE001", "E402"]
+"src/frontend/streamlit_app/pages/*.py" = ["BLE001", "E402"]
+"src/frontend/streamlit_app/api_client.py" = ["BLE001"]
+# Backend services: BLE001+S110 intentional (resilience, circuit breakers, fail-soft).
+"src/backend/**" = ["BLE001", "S110", "S101", "S112"]
+# Wave-6.1 lazy ``@app_state_singleton`` (E402: import после класса).
+"src/backend/dsl/engine/plugin_registry.py" = ["E402"]
+"src/backend/dsl/engine/tracer.py" = ["E402"]
+"src/backend/entrypoints/mqtt/mqtt_handler.py" = ["E402"]
+"src/backend/infrastructure/application/slo_tracker.py" = ["E402"]
+"src/backend/infrastructure/application/vault_refresher.py" = ["E402"]
+"src/backend/infrastructure/clients/external/express.py" = ["E402"]
+"src/backend/infrastructure/clients/external/langfuse_client.py" = ["E402"]
+"src/backend/infrastructure/clients/messaging/event_bus.py" = ["E402"]
+"src/backend/infrastructure/clients/storage/clickhouse.py" = ["E402"]
+"src/backend/infrastructure/clients/storage/elasticsearch.py" = ["E402"]
+"src/backend/infrastructure/clients/storage/mongodb.py" = ["E402"]
+"src/backend/infrastructure/database/pool_monitor.py" = ["E402"]
+"src/backend/infrastructure/security/api_key_manager.py" = ["E402"]
+# Tests: BLE001 intentional (fail-soft), S101/S105/S106/S311 pytest convention.
+"tests/**/*.py" = ["S101", "S105", "S106", "S311", "BLE001"]
+# testkit импортирует heavy-deps lazy внутри функций — допускается S404/S603.
+"testkit/**/*.py" = ["S101", "F401", "F811", "S106", "S105", "S311", "BLE001"]
+# src/testkit mirrors testkit/ patterns (mock fixtures).
+"src/testkit/**/*.py" = ["S101", "F401", "F811", "S106", "S105", "S311", "BLE001"]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+known-first-party = ["src.backend", "src.frontend"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+
+
+[tool.semantic_release]
+version_toml = [
+    "pyproject.toml:project.version"
+]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = false
+commit_author = "Korch Ivan <cards25kk.bank>"
+
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+# S11 carryover [wave:s10-carryover/test-collection-errors]:
+# `--import-mode=importlib` избегает namespace-collisions между
+# одноимёнными каталогами (tests/cache vs tests/unit/cache,
+# tests/security vs tests/unit/security, tests/unit/api vs
+# tests/integration/api).
+# См. https://docs.pytest.org/en/stable/explanation/pythonpath.html
+addopts = "-ra --strict-markers --import-mode=importlib"
+markers = [
+    "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
+    "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",
+    "slow: slow tests, skipped by default in unit-suite",
+    "requires_toxiproxy: requires toxiproxy container",
+]
+
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+# [wave:s19/k2-w4-coverage-ratchet-75] Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
+# S19 K2 W4 ratchet: 70% → 75%.
+# S34 W4: 75% → 60% как реалистичная промежуточная цель. Достижение 90% требует
+# ~26000 дополнительных covered statements и нереально за один спринт.
+# Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
+# + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
+fail_under = 75
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:"
+]
+
+[tool.vulture]
+# vulture: gate dead-code analyzer (R3.0 финал).
+# Конфиг закрывает три класса false-positive:
+#   1. Protocol/abstract API params — имена сохраняются как часть контракта;
+#   2. CDC scaffold (R2.1) — реальная имплементация в R3.4, до тех пор unreachable
+#      branches ожидаемы; путь исключается до закрытия R3.4.
+#   3. gRPC autogen — сгенерированные protobuf-модули.
+paths = ["src/backend", "src/frontend"]
+min_confidence = 80
+exclude = [
+    "src/backend/entrypoints/grpc/protobuf/auto/",
+    # TODO(R3.4): убрать после реализации CDC backends
+    "src/backend/infrastructure/cdc/",
+]
+ignore_names = [
+    # Protocol/abstract API contract params — намеренно объявлены без использования
+    "expires_in",
+    "escalate",
+    "saga_id",
+    "raw_context",
+    "type_hint",
+    # AI evaluator placeholders (Protocol-сигнатуры будущих evaluator'ов)
+    "hallucination",
+    "relevance",
+    "toxicity",
+    # DSL templates — параметр используется через kwarg call в default registry
+    "target_table",
+]

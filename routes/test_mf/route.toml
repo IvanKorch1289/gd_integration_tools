@@ -1,0 +1,12 @@
+# route.toml (V11): manifest for route 'test_mf' (S33 W1 wizard).
+name = "test_mf"
+version = "0.1.0"
+requires_core = ">=22.0,<23"
+capabilities = ["net.outbound", "db.write", "audit.write", "ai.llm"]
+tenant_aware = true
+feature_flag = { enabled = true, gate = "test_mf_enabled" }
+slo = { p95_ms = 500, timeout_ms = 5000 }
+schedule = "never"
+
+[feature_flags]
+default = ["default"]

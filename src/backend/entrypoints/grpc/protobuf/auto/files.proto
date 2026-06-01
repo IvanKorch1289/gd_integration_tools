@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package files.auto;
+
+import "google/protobuf/any.proto";
+
+// Схема для входящих данных файла.
+message FileSchemaIn {
+  optional google.protobuf.Any object_uuid = 1;  // unsupported <class 'uuid.UUID'>
+}
+
+// Схема для исходящих данных файла.
+message FileSchemaOut {
+  optional google.protobuf.Any object_uuid = 1;  // unsupported <class 'uuid.UUID'>
+  int64 id = 2;
+  optional string name = 3;
+  google.protobuf.Any created_at = 4;  // unsupported <class 'datetime.datetime'>
+  google.protobuf.Any updated_at = 5;  // unsupported <class 'datetime.datetime'>
+}
+
+// Пустое response (action без response_model).
+message EmptyResponse {
+}
+
+// Пустое request (action без request_model).
+message EmptyRequest {
+}
+
+// Авто-сгенерированный сервис для домена 'files' (Wave 1.3 Roadmap V10).
+service FilesAutoService {
+  // Создаёт новый объект ресурса 'files'.
+  rpc Create(FileSchemaIn) returns (FileSchemaOut);
+  // Создаёт несколько объектов ресурса 'files'.
+  rpc CreateMany(FileSchemaIn) returns (EmptyResponse);
+  // Возвращает объект ресурса 'files' по идентификатору.
+  rpc Get(EmptyRequest) returns (FileSchemaOut);
+  // Возвращает список объектов ресурса 'files'.
+  rpc List(EmptyRequest) returns (FileSchemaOut);
+  // Обновляет объект ресурса 'files'.
+  rpc Update(FileSchemaIn) returns (FileSchemaOut);
+}

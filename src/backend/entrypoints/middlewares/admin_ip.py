@@ -1,0 +1,65 @@
+import re
+
+from fastapi import HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+from src.backend.core.config.settings import settings
+
+__all__ = ("IPRestrictionMiddleware",)
+
+
+class IPRestrictionMiddleware(BaseHTTPMiddleware):
+    """Middleware для проверки IP-адреса пользователя для административных роутов."""
+
+    def __init__(self, app: ASGIApp):
+        from re import compile
+
+        from src.backend.dsl.codec.converters import convert_pattern
+
+        super().__init__(app)
+        self.allowed_ips: set[str] = settings.secure.admin_ips
+        self.admin_routes: set[str] = settings.secure.admin_routes
+        self.compiled_patterns: list[re.Pattern] = [
+            compile(convert_pattern(pattern)) for pattern in self.admin_routes
+        ]
+
+    async def dispatch(self, request: Request, call_next):
+        # Проверяем, относится ли запрос к административным роутам
+        if self._is_admin_route(request.url.path):
+            client_ip = request.client.host  # Получаем IP-адрес клиента
+
+            # Проверяем, разрешен ли IP-адрес
+            if not self._is_ip_allowed(client_ip):
+                raise HTTPException(
+                    status_code=403, detail="Доступ запрещен для вашего IP-адреса"
+                )
+
+        # Продолжаем обработку запроса
+        response = await call_next(request)
+        return response
+
+    def _is_admin_route(self, path: str) -> bool:
+        """Проверяет, относится ли путь к административным роутам."""
+        return any(pattern.match(path) for pattern in self.compiled_patterns)
+
+    def _is_ip_allowed(self, client_ip: str) -> bool:
+        """Проверяет, разрешен ли IP-адрес."""
+        from ipaddress import ip_address, ip_network
+
+        try:
+            client_ip_obj = ip_address(client_ip)
+            for allowed_ip in self.allowed_ips:
+                # Если это подсеть (например, 192.168.1.0/24)
+                if "/" in allowed_ip:
+                    network = ip_network(allowed_ip, strict=False)
+                    if client_ip_obj in network:
+                        return True
+                # Если это одиночный IP-адрес
+                else:
+                    if client_ip == allowed_ip:
+                        return True
+            return False
+        except ValueError:
+            # Если IP-адрес некорректен
+            return False

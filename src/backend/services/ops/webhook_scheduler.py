@@ -1,0 +1,168 @@
+"""Webhook Scheduler — планирование отправки webhooks по cron/delay."""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from typing import Any
+
+import orjson
+
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import get_redis_kv_client_provider
+
+__all__ = ("WebhookScheduler", "get_webhook_scheduler")
+
+logger = logging.getLogger(__name__)
+
+_PREFIX = "webhook:scheduled"
+
+
+class WebhookScheduler:
+    """Планирование исходящих webhooks с cron/delay.
+
+    Хранит задачи в Redis, выполняет через APScheduler.
+    """
+
+    def __init__(self) -> None:
+        self._scheduler: Any = None
+
+    async def schedule(
+        self,
+        url: str,
+        payload: dict[str, Any],
+        cron: str | None = None,
+        delay_seconds: int | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> str:
+        """Планирует отправку webhook. Возвращает schedule_id."""
+        schedule_id = str(uuid.uuid4())[:8]
+
+        task = {
+            "id": schedule_id,
+            "url": url,
+            "payload": payload,
+            "headers": headers or {},
+            "cron": cron,
+            "delay_seconds": delay_seconds,
+            "status": "scheduled",
+        }
+
+        client = get_redis_kv_client_provider()
+        key = f"{_PREFIX}:{schedule_id}"
+        await client.set(key, orjson.dumps(task, default=str), ex=86400 * 7)
+
+        logger.info("Webhook scheduled: %s -> %s", schedule_id, url)
+        return schedule_id
+
+    async def cancel(self, schedule_id: str) -> bool:
+        """Отменяет запланированный webhook."""
+        client = get_redis_kv_client_provider()
+        key = f"{_PREFIX}:{schedule_id}"
+        deleted = await client.delete(key)
+        if deleted:
+            logger.info("Webhook cancelled: %s", schedule_id)
+        return bool(deleted)
+
+    async def list_scheduled(self) -> list[dict[str, Any]]:
+        """Возвращает список запланированных webhooks."""
+        client = get_redis_kv_client_provider()
+        keys = []
+        async for key in client.scan_iter(f"{_PREFIX}:*"):
+            keys.append(key)
+
+        tasks = []
+        for key in keys:
+            raw = await client.get(key)
+            if raw:
+                tasks.append(orjson.loads(raw))
+        return tasks
+
+    async def get(self, schedule_id: str) -> dict[str, Any] | None:
+        """Получает информацию о задаче."""
+        client = get_redis_kv_client_provider()
+        key = f"{_PREFIX}:{schedule_id}"
+        raw = await client.get(key)
+        return orjson.loads(raw) if raw else None
+
+    async def execute_webhook(self, schedule_id: str) -> dict[str, Any]:
+        """Выполняет webhook немедленно.
+
+        Security: URL валидируется через _validate_url() для защиты от SSRF
+        (блокирует private IPs, localhost, cloud metadata endpoints).
+        """
+        task = await self.get(schedule_id)
+        if not task:
+            return {"error": "not_found"}
+
+        # SSRF protection — reuse validator from scraping processors
+        from src.backend.dsl.engine.processors.scraping import _validate_url
+
+        try:
+            _validate_url(task["url"])
+        except ValueError as exc:
+            logger.warning("Webhook SSRF blocked: %s — %s", schedule_id, exc)
+            return {
+                "schedule_id": schedule_id,
+                "error": f"URL blocked (SSRF protection): {exc}",
+                "success": False,
+            }
+
+        from src.backend.core.config.features import feature_flags
+        from src.backend.core.net.migration_helper import make_http_client
+        from src.backend.core.resilience.rpa_policy import (
+            RPACallExhausted,
+            get_rpa_policy,
+        )
+
+        async def _do_post() -> Any:
+            async with make_http_client(
+                timeout=30, plugin="webhook_scheduler"
+            ) as client:
+                resp = await client.post(
+                    task["url"], json=task["payload"], headers=task.get("headers", {})
+                )
+            import httpx
+
+            if 500 <= resp.status_code < 600:
+                raise httpx.HTTPStatusError(
+                    f"upstream 5xx: {resp.status_code}",
+                    request=resp.request,
+                    response=resp,
+                )
+            return resp
+
+        policy = (
+            get_rpa_policy()
+            if feature_flags.webhook_resilience_policy_enabled
+            else None
+        )
+        try:
+            if policy is not None:
+                response = await policy.call(
+                    _do_post, transport="webhook", route_id=schedule_id, payload=task
+                )
+            else:
+                response = await _do_post()
+        except RPACallExhausted as exhausted:
+            logger.warning(
+                "Webhook %s exhausted retries: %s", schedule_id, exhausted.last_error
+            )
+            return {
+                "schedule_id": schedule_id,
+                "success": False,
+                "error": "retries_exhausted",
+            }
+
+        result = {
+            "schedule_id": schedule_id,
+            "status_code": response.status_code,
+            "success": response.is_success,
+        }
+        logger.info("Webhook executed: %s -> %d", schedule_id, response.status_code)
+        return result
+
+
+@app_state_singleton("webhook_scheduler", factory=WebhookScheduler)
+def get_webhook_scheduler() -> WebhookScheduler:
+    raise NotImplementedError  # заменяется декоратором

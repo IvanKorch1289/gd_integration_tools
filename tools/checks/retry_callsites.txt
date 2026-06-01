@@ -1,0 +1,42 @@
+# Audit retry-loop callsites (Wave [wave:s18/w0-goal-driven-sweep-6-retry-audit])
+#
+# Источник: grep по паттернам "for ... range(... attempts/retries)",
+# "while attempt < max_retries", "for attempt in range(... max_retries...)"
+# во всех src/backend/{infrastructure,services,core,dsl}/**/*.py.
+#
+# Контракт CLAUDE.md R-V15-8: кастомные retry-циклы должны быть мигрированы
+# на wrapper-ы поверх tenacity (core/resilience/retry.py::with_retry).
+#
+# Аудит-таблица:
+#
+# | # | File:Line | Pattern | Decision | Reasoning |
+# |---|-----------|---------|----------|-----------|
+# | 1 | infrastructure/resilience/reconnection.py:138 | for i in range(1, self.attempts + 1) | LEGIT: оставить | Reconnection с per-attempt backoff + domain-specific connect/disconnect bookkeeping. tenacity не покрывает накопительный state (last_error, connection-id, attempt-timestamps). Состояние используется в supervisor.py для метрик и health-checks. |
+# | 2 | infrastructure/notifications/gateway.py:260 | while attempt < max_retries | LEGIT: оставить | Notification gateway с DLQ при exhaustion. tenacity.before_sleep + retry_state callback'ом можно сделать, но текущий цикл хранит accumulated payload для DLQ-publish — wrap в tenacity потребует переписать DLQ-logic в callback. ROI низкий. |
+# | 3 | infrastructure/messaging/outbox/dispatcher.py:274 | for attempt in range(1, self._max_retries + 1) | LEGIT: оставить | Outbox-pattern per-event dispatcher. attempt-state используется для outbox-DB-update (retry_count в БД), для DLQ-publish при exhaustion, и для metrics-emit per-attempt. tenacity wrap потребовал бы decouple БД-state-update из retry-loop — это уже отдельный refactor. |
+# | 4 | core/resilience/rpa_policy.py:209 | for attempt in range(self.max_attempts) | LEGIT: оставить | RPACallPolicy — domain-specific RPA retry с per-attempt jitter, browser-cookie refresh между attempts, и custom should_retry predicate. Это и есть наш wrapper-аналог tenacity для RPA-домена (см. ADR-NEW-30). |
+# | 5 | dsl/engine/processors/notify_cascade.py:115 | for attempt in range(1, self._retries + 1) | LEGIT: оставить | DSL-процессор notify_cascade — каскад каналов (Email → Telegram → SMS) с per-channel retry. attempt-state используется для cascade-fallback. tenacity на per-channel loop осмысленно, но cascade-orchestration сверху останется кастомным. |
+#
+# Уже корректно используют tenacity:
+# | F | clients/transport/http.py:198 | tenacity.stop_after_attempt(max_retries + 1) | OK |
+# | G | clients/transport/http_httpx.py:342 | tenacity.stop_after_attempt(max_retries + 1) | OK |
+# | H | core/resilience/retry.py | canonical wrapper (with_retry/RetryPolicy) | OK |
+#
+# Native library retry (НЕ кастомный цикл):
+# | L1 | clients/transport/http_httpx.py:113 | urllib3.Retry(total=max_retries) | OK (urllib3 native) |
+# | L2 | clients/storage/elasticsearch.py:29,257 | max_retries=N parameter | OK (ES SDK native) |
+# | L3 | clients/storage/redis.py:499,512 | max_retries parameter | OK (redis-py native) |
+# | L4 | infrastructure/repositories/outbox.py:92 | max_retries=5 (SQL update) | OK (parameter, не loop) |
+#
+# Итог:
+# * 0 unaccounted custom retry-loops в production-path.
+# * 5 кастомных циклов задокументированы и обоснованы как domain-specific
+#   bookkeeping, не подлежащий миграции на tenacity (ROI низкий, state-coupling).
+# * 2 callsite уже на tenacity + 1 canonical wrapper.
+# * 4 native library retry (НЕ retry-loop).
+#
+# Дальнейшие действия:
+# * Если в будущем понадобится refactor любого из items #1-#5 — рассмотреть
+#   tenacity.AsyncRetrying с retry_state callback'ом и decouple state-update.
+# * Этот файл — baseline для CI-gate "retry-callsites must be accounted".
+#   Новый retry-loop без записи в этом файле должен валить make custom-code-audit.

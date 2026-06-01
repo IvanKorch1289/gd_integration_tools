@@ -1,0 +1,23 @@
+# WAF-coverage allowlist (V15 R-V15-5; ADR-0050, ADR-0053, ADR-0061).
+#
+# Файл-пути (относительно корня репозитория) известных :internal
+# callsite'ов прямого httpx.AsyncClient/Client. Каждая запись —
+# легитимное исключение, обоснованное ADR/комментом в коде или
+# baseline-долгом, ожидающим миграции на OutboundHttpClient.
+#
+# Формат:
+#   src/backend/<path>/<file>.py  # owner=<team> | target=<sprint> | reason=<note>
+#
+# Пустые строки и строки начинающиеся с '#' игнорируются. Inline-
+# комментарии после пути обрезаются по первому '#'.
+# `--strict` режим (CI/release-gate) игнорирует этот файл.
+#
+# Sprint 10 закрытие (2026-05-19): 12 S10 файлов мигрированы на
+# OutboundHttpClient и удалены из allowlist. 3 файла без httpx
+# (search_providers/vault_refresher/polling) тоже удалены — они
+# больше не нарушители. Остались 6 S11 baseline-записей.
+#
+# Sprint 11 закрытие (2026-05-20, [wave:s10-carryover/waf-allowlist-tighten]):
+# все 6 S11 baseline-файлов мигрированы на ``make_http_client`` —
+# прямых httpx.AsyncClient(...) callsite'ов больше нет. Allowlist
+# пуст. Любой новый нарушитель → CI fails immediately.

@@ -1,0 +1,34 @@
+# K-OPS-2 (Sprint 17 W17): PodDisruptionBudget для app + worker.
+#
+# Гарантирует minAvailable во время voluntary disruptions
+# (node drain, scaling down). Hard limit во избежание service outage.
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gd-app
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gd-integration-tools
+      app.kubernetes.io/component: app
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: temporal-worker
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: workflow-worker
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gd-integration-tools
+      app.kubernetes.io/component: workflow-worker

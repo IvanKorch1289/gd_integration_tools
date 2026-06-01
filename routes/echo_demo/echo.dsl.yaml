@@ -1,0 +1,19 @@
+from:
+  http:
+    method: POST
+    path: /api/v1/demo/echo
+steps:
+  - validate_request:
+      schema:
+        type: object
+        properties:
+          message: { type: string }
+        required: [message]
+  - transform:
+      set: { body.echoed: "${body.message}", body.length: "${len(body.message)}" }
+to:
+  response:
+    code: 200
+    body:
+      echoed: ${body.echoed}
+      length: ${body.length}

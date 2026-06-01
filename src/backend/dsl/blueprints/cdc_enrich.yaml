@@ -1,0 +1,102 @@
+# R2 Blueprint: cdc_enrich — CDC → enrich → publish (Wave [wave:s5/k3-w6-blueprints]).
+#
+# Универсальный паттерн для подписки на CDC-события из БД, enrich через
+# внешний lookup (HTTP / DB / cache), и публикация результата в Sink
+# (Kafka / RabbitMQ / Redis Streams).
+#
+# Pipeline steps:
+#   1. transform — нормализация CDC-payload (lsn/wal_end/data → канонический dict);
+#   2. proxy/http_call — вызов lookup-сервиса для enrich (orderkind, customer info);
+#   3. transform — мерж основного payload + enrich-результата;
+#   4. validate_response — Pydantic валидация финального события (опц.);
+#   5. publish_event — публикация в Sink (transport выбирается через DI);
+#   6. audit — фиксация в audit-журнал.
+#
+# Шаблон параметризован через ${blueprint.*}. Подключение см. ADR-046.
+
+blueprint: cdc_enrich
+version: "1.0.0"
+description: "CDC event → external enrich lookup → publish to Sink."
+tags: [cdc, enrich, publish, sink]
+
+# ─── Параметры blueprint ──────────────────────────────────────────────
+params:
+  - name: route_id
+    type: string
+    required: true
+    description: "Уникальный ID маршрута"
+  - name: cdc_table
+    type: string
+    required: true
+    description: "Имя таблицы CDC (для slot_name по умолчанию)"
+  - name: cdc_dsn
+    type: string
+    required: true
+    description: "PostgreSQL DSN (с ролью REPLICATION)"
+  - name: enrich_url_setting
+    type: string
+    required: true
+    description: "Путь до URL enrich-провайдера в settings"
+  - name: sink_topic
+    type: string
+    required: true
+    description: "Целевой topic/queue для publish_event"
+  - name: schema
+    type: string
+    required: false
+    description: "Имя Pydantic-модели для validate_response"
+
+# ─── Source: CDC ──────────────────────────────────────────────────────
+from:
+  cdc:
+    table: ${blueprint.cdc_table}
+    dsn: ${blueprint.cdc_dsn}
+    mode: delta
+
+steps:
+  # 1. Нормализация CDC-payload (распаковка поля data / lsn / wal_end)
+  - transform:
+      set:
+        body.cdc_event:
+          lsn: ${body.lsn}
+          wal_end: ${body.wal_end}
+          data: ${body.data}
+
+  # 2. Получить URL enrich из настроек
+  - get_setting:
+      path: ${blueprint.enrich_url_setting}
+      to: body.enrich_url
+
+  # 3. Enrich через внешний HTTP lookup
+  - proxy:
+      src: /internal/enrich
+      dst: ${body.enrich_url}
+      method: POST
+
+  # 4. Мерж enrich-результата с CDC-event
+  - transform:
+      set:
+        body.enriched:
+          cdc_event: ${body.cdc_event}
+          enrichment: ${body.proxy_response}
+
+  # 5. Валидация финального события (опц.)
+  - validate_response:
+      schema: ${blueprint.schema}
+      on_error: dlq
+
+  # 6. Публикация в Sink (Kafka/Rabbit/Redis Streams — выбор по DI)
+  - publish_event:
+      topic: ${blueprint.sink_topic}
+      payload: ${body.enriched}
+
+  # 7. Audit
+  - audit:
+      event: "blueprint.cdc_enrich.${blueprint.route_id}.published"
+
+to:
+  response:
+    code: 200
+    body:
+      published_to: ${blueprint.sink_topic}
+      lsn: ${body.cdc_event.lsn}

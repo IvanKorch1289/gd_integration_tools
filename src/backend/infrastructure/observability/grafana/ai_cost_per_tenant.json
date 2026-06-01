@@ -1,0 +1,123 @@
+{
+  "uid": "gd-ai-cost-per-tenant",
+  "title": "AI Cost per Tenant (LiteLLM + token rate + alerts)",
+  "tags": ["gd_integration_tools", "K2-S7", "ai-cost"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": {"from": "now-24h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(litellm_request_cost_usd, tenant)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Cost last 1h ($)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"unit": "currencyUSD"}},
+      "targets": [
+        {
+          "expr": "sum(increase(litellm_request_cost_usd{tenant=~\"$tenant\"}[1h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Cost last 24h ($)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"unit": "currencyUSD"}},
+      "targets": [
+        {
+          "expr": "sum(increase(litellm_request_cost_usd{tenant=~\"$tenant\"}[24h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Token rate (tok/s)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(rate(litellm_tokens_total{tenant=~\"$tenant\"}[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Tenants over budget",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"steps": [{"color": "green"}, {"color": "orange", "value": 1}, {"color": "red", "value": 3}]}}},
+      "targets": [
+        {
+          "expr": "count(litellm_budget_remaining_usd <= 0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Cost rate per tenant ($/min)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (tenant) (rate(litellm_request_cost_usd{tenant=~\"$tenant\"}[5m]) * 60)",
+          "legendFormat": "{{tenant}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Cost rate per model ($/min)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (model) (rate(litellm_request_cost_usd{tenant=~\"$tenant\"}[5m]) * 60)",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "bargauge",
+      "title": "Top 10 tenants by 24h cost",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+      "fieldConfig": {"defaults": {"unit": "currencyUSD"}},
+      "targets": [
+        {
+          "expr": "topk(10, sum by (tenant) (increase(litellm_request_cost_usd[24h])))",
+          "legendFormat": "{{tenant}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

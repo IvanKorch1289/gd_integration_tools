@@ -1,0 +1,37 @@
+# V11 plugin manifest — extensions/test_plug (S33 W2 wizard)
+name = "test_plug"
+version = "0.1.0"
+requires_core = ">=22.0,<23"
+entry_class = "extensions.test_plug.plugin.TestPlugPlugin"
+tenant_aware = true
+description = "Test plugin"
+trust_tier = "B"
+
+# ─── Runtime capabilities (capability-gate V11.1) ─────────────────
+# Каждую capability нужно декларировать явно.
+# net.outbound scope: GlobScopeMatcher ('*.example.com'); :external требует WAF.
+# db.read/db.write scope: ExactAliasMatcher — имя домена ресурса.
+# mq.publish scope: GlobScopeMatcher ('topic.*').
+
+# Примеры (раскомментируйте и адаптируйте):
+# [[capabilities]]
+# name = "net.outbound"
+# scope = "*.example.com"
+#
+# [[capabilities]]
+# name = "db.read"
+# scope = "my_resource"
+#
+# [[capabilities]]
+# name = "db.write"
+# scope = "my_resource"
+
+# ─── Declarative inventory ───────────────────────────────────────
+# Заполните после добавления actions/repositories/processors/sources/sinks/schemas.
+[provides]
+actions = []
+repositories = []
+processors = []
+sources = []
+sinks = []
+schemas = []

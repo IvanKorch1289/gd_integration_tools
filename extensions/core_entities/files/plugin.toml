@@ -1,0 +1,37 @@
+# V11 plugin manifest — extensions/core_entities/files
+# Sprint 7 (R-V15-16): миграция CRUD-ресурса File из ядра в extensions/.
+#
+# Формат: ADR-042 (plugin.toml schema), ADR-044 (capability vocabulary).
+
+name = "core_entities_files"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.core_entities.files.plugin.FilesPlugin"
+tenant_aware = false
+description = "File CRUD plugin (migrated from src/backend/services/io/files.py per R-V15-16)"
+# S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
+trust_tier = "A"
+
+# ─── Runtime capabilities (capability-gate) ───────────────────────
+# db.read/db.write — ExactAliasMatcher (см. ADR-044): scope = имя ресурса.
+[[capabilities]]
+name = "db.read"
+scope = "files"
+
+[[capabilities]]
+name = "db.write"
+scope = "files"
+
+# fs.read/fs.write — SegmentedGlobMatcher по '/' (path-glob); scope = URI-prefix S3-объектов.
+[[capabilities]]
+name = "fs.read"
+scope = "s3://*"
+
+[[capabilities]]
+name = "fs.write"
+scope = "s3://*"
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+repositories = ["files"]
+schemas = ["FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut"]

@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package orders.auto;
+
+import "google/protobuf/any.proto";
+
+// Схема для входящих данных заказа.
+message OrderSchemaIn {
+  optional int64 pledge_gd_id = 1;
+  optional string pledge_cadastral_number = 2;
+  optional int64 order_kind_id = 3;
+  optional string email_for_answer = 4;
+}
+
+// Схема для исходящих данных заказа.
+message OrderSchemaOut {
+  optional int64 pledge_gd_id = 1;
+  optional string pledge_cadastral_number = 2;
+  optional int64 order_kind_id = 3;
+  optional string email_for_answer = 4;
+  int64 id = 5;
+  optional OrderKindSchemaOut order_kind = 6;
+  bool is_active = 7;
+  bool is_send_to_gd = 8;
+  optional google.protobuf.Any errors = 9;
+  optional google.protobuf.Any response_data = 10;
+  google.protobuf.Any object_uuid = 11;  // unsupported <class 'uuid.UUID'>
+  google.protobuf.Any created_at = 12;  // unsupported <class 'datetime.datetime'>
+  google.protobuf.Any updated_at = 13;  // unsupported <class 'datetime.datetime'>
+  repeated FileSchemaOut files = 14;
+}
+
+// Схема для исходящих данных вида запроса.
+message OrderKindSchemaOut {
+  optional string name = 1;
+  optional string description = 2;
+  optional string skb_uuid = 3;
+  int64 id = 4;
+  google.protobuf.Any created_at = 5;  // unsupported <class 'datetime.datetime'>
+  google.protobuf.Any updated_at = 6;  // unsupported <class 'datetime.datetime'>
+}
+
+// Схема для исходящих данных файла.
+message FileSchemaOut {
+  optional google.protobuf.Any object_uuid = 1;  // unsupported <class 'uuid.UUID'>
+  int64 id = 2;
+  optional string name = 3;
+  google.protobuf.Any created_at = 4;  // unsupported <class 'datetime.datetime'>
+  google.protobuf.Any updated_at = 5;  // unsupported <class 'datetime.datetime'>
+}
+
+// Пустое response (action без response_model).
+message EmptyResponse {
+}
+
+// Пустое request (action без request_model).
+message EmptyRequest {
+}
+
+// Авто-сгенерированный сервис для домена 'orders' (Wave 1.3 Roadmap V10).
+service OrdersAutoService {
+  // Создаёт новый объект ресурса 'orders'.
+  rpc Create(OrderSchemaIn) returns (OrderSchemaOut);
+  // Создаёт несколько объектов ресурса 'orders'.
+  rpc CreateMany(OrderSchemaIn) returns (EmptyResponse);
+  // Возвращает объект ресурса 'orders' по идентификатору.
+  rpc Get(EmptyRequest) returns (OrderSchemaOut);
+  // Возвращает список объектов ресурса 'orders'.
+  rpc List(EmptyRequest) returns (OrderSchemaOut);
+  // Обновляет объект ресурса 'orders'.
+  rpc Update(OrderSchemaIn) returns (OrderSchemaOut);
+}

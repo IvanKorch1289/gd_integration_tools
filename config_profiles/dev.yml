@@ -1,0 +1,156 @@
+# ──────────────────────────────────────────────────────────────────────
+# dev.yml — production-like dev-среда с Docker compose.
+#
+# Полный prod-like стек (PostgreSQL/Redis/Mongo/RabbitMQ/MinIO/Graylog),
+# все enabled-флаги включены. Цель — повторить контракты production
+# на локальной машине. Для лёгкого режима без Docker — dev_light.yml.
+#
+# Накладывается поверх base.yml. Здесь только env-specific параметры:
+# хосты, порты, режимы окружения. Все общие defaults — в base.yml.
+# Все секреты — в .env / Vault (см. .env.example).
+# ──────────────────────────────────────────────────────────────────────
+
+app:
+  environment: "development"
+  debug_mode: true
+  host: "127.0.0.1"
+  port: 8000
+  use_ssl: false
+  opentelemetry_endpoint: "http://otel-collector:4317"
+  telemetry_enabled: true
+  admin_enabled: true
+  monitoring_enabled: true
+
+
+security:
+  admin_ips:
+    - "localhost"
+    - "127.0.0.1"
+  admin_routes:
+    - "/"
+    - "/admin"
+    - "/admin/*"
+    - "/metrics"
+    - "/tech/healthcheck-*"
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+
+
+database:
+  type: "postgresql"
+  host: "127.0.0.1"
+  port: 5432
+  name: "main_db"
+  ssl_mode: "prefer"
+  ca_bundle: null
+  # Sprint 6 K2: dev pool tuning — минимум для разработки.
+  pool_size: 5
+  max_overflow: 5
+  pool_recycle: 1800
+  pool_timeout: 30
+  pool_pre_ping: true
+  pool_use_lifo: true
+
+
+external_databases:
+  ssl_mode: null
+  ca_bundle: null
+  connections:
+    - name: "oracle_1"
+      profile_name: "oracle_1"
+      type: "oracle"
+      host: "10.10.10.11"
+      port: 1521
+      sid: "ORCL"
+      service_name: null
+      async_driver: "oracledb"
+      sync_driver: "oracledb"
+      schema: "REPORTING"
+      enabled: true
+    - name: "pg_1"
+      profile_name: "pg_1"
+      type: "postgresql"
+      host: "10.10.20.21"
+      port: 5432
+      sid: null
+      service_name: null
+      db_name: "analytics"
+      async_driver: "asyncpg"
+      sync_driver: "psycopg2"
+      schema: "public"
+      ssl_mode: "prefer"
+      enabled: true
+
+
+redis:
+  enabled: true
+  host: "10.100.0.13"
+  port: 6379
+  db_cache: 2
+  db_queue: 3
+  db_limits: 4
+  db_tasks: 5
+  use_ssl: false
+  ca_bundle: null
+  socket_keepalive: true
+  main_stream: "events_stream"
+  dlq_stream: "events_dlq"
+
+
+mongo:
+  enabled: true
+  host: "127.0.0.1"
+  port: 27017
+  name: "mongo"
+
+
+queue:
+  enabled: true
+  type: "rabbitmq"
+  host: "127.0.0.1"
+  port: 5672
+  ui_port: 15672
+  use_ssl: false
+  ca_bundle: null
+
+
+mail:
+  host: "localhost"
+  port: 1025
+  sender: "gd_advanced_tools@app.com"
+  use_tls: false
+  validate_certs: false
+  ca_bundle: null
+  template_folder: null
+
+
+log:
+  host: "127.0.0.1"
+  port: 9000
+  use_tls: false
+  ca_bundle: null
+
+
+fs:
+  enabled: true
+  provider: "minio"
+  bucket: "test-bucket"
+  endpoint: "http://127.0.0.1:9090"
+  interface_endpoint: "http://127.0.0.1:9091"
+  use_ssl: false
+  verify: false
+  ca_bundle: null
+
+
+skb:
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
+
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
+
+
+antivirus:
+  base_url: "https://kkdrweb.bank.srv:443"

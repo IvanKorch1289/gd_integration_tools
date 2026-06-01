@@ -1,0 +1,12 @@
+# route.toml (V11): manifest for route 'ml_demo' (S29 W4).
+name = "ml_demo"
+version = "0.1.0"
+requires_core = ">=22.0,<23"
+capabilities = ["ml.predict", "fs.read"]
+tenant_aware = true
+feature_flag = { enabled = false, gate = "ml_demo_enabled" }
+slo = { p95_ms = 1000, timeout_ms = 5000 }
+schedule = "never"
+
+[feature_flags]
+default = ["default"]

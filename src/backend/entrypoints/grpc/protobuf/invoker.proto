@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package invoker;
+
+// Universal Invoker gRPC service (W22 этап B).
+// Дублирует REST/SOAP/WS-точки входа: один rpc Invoke на все
+// шесть InvocationMode (sync / async-api / async-queue / deferred /
+// background / streaming).
+service InvokerService {
+  // Универсальный вход: sync, async-api, async-queue, deferred,
+  // background. Streaming-режим возвращает ACCEPTED, чанки доставляются
+  // через reply_channel (ws/queue/email/express).
+  rpc Invoke(InvokeRequest) returns (InvokeResponse) {}
+}
+
+message InvokeRequest {
+  // Action ID (логическое имя бизнес-команды).
+  string action = 1;
+  // JSON-сериализованный payload (для произвольной вложенности без
+  // протоколо-специфичных схем).
+  string payload_json = 2;
+  // Один из InvocationMode: "sync" | "async-api" | "async-queue" |
+  // "deferred" | "background" | "streaming". По умолчанию sync.
+  string mode = 3;
+  // Имя backend'а из ReplyChannelRegistry (api / ws / email / express /
+  // queue). Опционально.
+  string reply_channel = 4;
+  // Внешний invocation_id; пустая строка → сгенерировать UUID.
+  string invocation_id = 5;
+  // Routing-target (email / chat_id / queue_topic) и др. в JSON.
+  string metadata_json = 6;
+}
+
+message InvokeResponse {
+  string invocation_id = 1;
+  // "ok" / "accepted" / "error".
+  string status = 2;
+  // Эхо mode из request.
+  string mode = 3;
+  // JSON-сериализованный result (для sync). Пусто для async.
+  string result_json = 4;
+  // Текст ошибки, если status=="error". Пусто иначе.
+  string error = 5;
+}

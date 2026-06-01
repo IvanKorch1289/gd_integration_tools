@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package orderkinds;
+
+service OrderKindService {
+  rpc GetOrderKind(GetOrderKindRequest) returns (OrderKindResponse) {}
+  rpc ListOrderKinds(ListOrderKindsRequest) returns (OrderKindListResponse) {}
+  rpc SyncFromSKB(SyncRequest) returns (SyncResponse) {}
+}
+
+message GetOrderKindRequest {
+  int32 order_kind_id = 1;
+}
+
+message ListOrderKindsRequest {}
+
+message OrderKindResponse {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  string skb_uuid = 4;
+  string error = 5;
+}
+
+message OrderKindListResponse {
+  repeated OrderKindResponse items = 1;
+  string error = 2;
+}
+
+message SyncRequest {}
+
+message SyncResponse {
+  bool success = 1;
+  string json_data = 2;
+  string error = 3;
+}

@@ -1,0 +1,19 @@
+# Custom-code allowlist для Sprint 6 К1 [s6/k1-custom-code-audit].
+# Каждая строка — substring для игнорирования в выводе vulture.
+# Пример: "_ParserLazy" игнорирует все findings содержащие _ParserLazy.
+
+# Pydantic field validators — часто помечаются как unused vulture'ом
+field_validator
+model_validator
+
+# Pytest fixtures — часто помечаются как unused vulture'ом
+@pytest.fixture
+
+# Lazy import pre-loading guards — часто помечаются vulture'ом
+_LAZY_
+
+# OTel auto-instrument hooks
+_otel_auto
+
+# DI provider factories
+_provide_

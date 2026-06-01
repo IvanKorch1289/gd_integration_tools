@@ -1,0 +1,1503 @@
+# PII gold-set — Sprint 25 W4 (ADR-0068)
+# Total: 500 docs
+docs:
+  - id: doc-0000
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0001
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0002
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0003
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0004
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0005
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0006
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0007
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0008
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0009
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0010
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0011
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0012
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0013
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0014
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0015
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0016
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0017
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0018
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0019
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0020
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0021
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0022
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0023
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0024
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0025
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0026
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0027
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0028
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0029
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0030
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0031
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0032
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0033
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0034
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0035
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0036
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0037
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0038
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0039
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0040
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0041
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0042
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0043
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0044
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0045
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0046
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0047
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0048
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0049
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0050
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0051
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0052
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0053
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0054
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0055
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0056
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0057
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0058
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0059
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0060
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0061
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0062
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0063
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0064
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0065
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0066
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0067
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0068
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0069
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0070
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0071
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0072
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0073
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0074
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0075
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0076
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0077
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0078
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0079
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0080
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0081
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0082
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0083
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0084
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0085
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0086
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0087
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0088
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0089
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0090
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0091
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0092
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0093
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0094
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0095
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0096
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0097
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0098
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0099
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0100
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0101
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0102
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0103
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0104
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0105
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0106
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0107
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0108
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0109
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0110
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0111
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0112
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0113
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0114
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0115
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0116
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0117
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0118
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0119
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0120
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0121
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0122
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0123
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0124
+    text: "Клиент Иванов И.И. (ИНН 7707083893, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0125
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0126
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0127
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0128
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0129
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0130
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0131
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0132
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0133
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0134
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0135
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0136
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0137
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0138
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0139
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0140
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0141
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0142
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0143
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0144
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0145
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0146
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0147
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0148
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0149
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0150
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0151
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0152
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0153
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0154
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0155
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0156
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0157
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0158
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0159
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0160
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0161
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0162
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0163
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0164
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0165
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0166
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0167
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0168
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0169
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0170
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0171
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0172
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0173
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0174
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0175
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0176
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0177
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0178
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0179
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0180
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0181
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0182
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0183
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0184
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0185
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0186
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0187
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0188
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0189
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0190
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0191
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0192
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0193
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0194
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0195
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0196
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0197
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0198
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0199
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0200
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0201
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0202
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0203
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0204
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0205
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0206
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0207
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0208
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0209
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0210
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0211
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0212
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0213
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0214
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0215
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0216
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0217
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0218
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0219
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0220
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0221
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0222
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0223
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0224
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0225
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0226
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0227
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0228
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0229
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0230
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0231
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0232
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0233
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0234
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0235
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0236
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0237
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0238
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0239
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0240
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0241
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0242
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0243
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0244
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0245
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0246
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0247
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0248
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0249
+    text: "Клиент Иванов И.И. (ИНН 5260270518, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0250
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0251
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0252
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0253
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0254
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0255
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0256
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0257
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0258
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0259
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0260
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0261
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0262
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0263
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0264
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0265
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0266
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0267
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0268
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0269
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0270
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0271
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0272
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0273
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0274
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0275
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0276
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0277
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0278
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0279
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0280
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0281
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0282
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0283
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0284
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0285
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0286
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0287
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0288
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0289
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0290
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0291
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0292
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0293
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0294
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0295
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0296
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0297
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0298
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0299
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0300
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0301
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0302
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0303
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0304
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0305
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0306
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0307
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0308
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0309
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0310
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0311
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0312
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0313
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0314
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0315
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0316
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0317
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0318
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0319
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0320
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0321
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0322
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0323
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0324
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0325
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0326
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0327
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0328
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0329
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0330
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0331
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0332
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0333
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0334
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0335
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0336
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0337
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0338
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0339
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0340
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0341
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0342
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0343
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0344
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0345
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0346
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0347
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0348
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0349
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0350
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0351
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0352
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0353
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0354
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0355
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0356
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0357
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0358
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0359
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0360
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0361
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0362
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0363
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0364
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0365
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0366
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0367
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0368
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0369
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0370
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0371
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0372
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0373
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0374
+    text: "Клиент Иванов И.И. (ИНН 7704211201, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0375
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0376
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0377
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0378
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0379
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0380
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0381
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0382
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0383
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0384
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0385
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0386
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0387
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0388
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0389
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0390
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0391
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0392
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0393
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0394
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0395
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0396
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0397
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0398
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0399
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 112-233-445 95) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0400
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0401
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0402
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0403
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0404
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0405
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0406
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0407
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0408
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0409
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0410
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0411
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0412
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0413
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0414
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0415
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0416
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0417
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0418
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0419
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0420
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0421
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0422
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0423
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0424
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 987-654-321 00) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0425
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0426
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0427
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0428
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0429
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0430
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0431
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0432
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0433
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0434
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0435
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0436
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0437
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0438
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0439
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0440
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0441
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0442
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0443
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0444
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0445
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0446
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0447
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0448
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0449
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 555-666-777 12) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0450
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0451
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0452
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0453
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0454
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0455
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0456
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0457
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0458
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0459
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0460
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0461
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0462
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0463
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0464
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0465
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0466
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0467
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0468
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0469
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0470
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0471
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0472
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0473
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0474
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 111-222-333 44) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0475
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0476
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0477
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0478
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0479
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-999-123-45-67."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0480
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0481
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0482
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0483
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0484
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-495-987-65-43."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0485
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0486
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0487
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0488
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0489
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-812-555-44-33."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0490
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0491
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0492
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0493
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0494
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-916-777-88-99."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0495
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 12345/CR-001 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0496
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 67890/DV-002 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0497
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 11111/CR-003 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0498
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 22222/IP-004 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]
+  - id: doc-0499
+    text: "Клиент Иванов И.И. (ИНН 6671266100, СНИЛС 999-888-777 66) обратился по договору № 33333/DV-005 с тел. +7-903-222-11-00."
+    expected_entities: [CONTRACT, INN, PERSON, PHONE_NUMBER, SNILS]

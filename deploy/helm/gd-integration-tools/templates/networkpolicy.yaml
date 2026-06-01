@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gd-app
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gd-integration-tools
+      app.kubernetes.io/component: app
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 7233
+        - protocol: TCP
+          port: 8200
+        - protocol: TCP
+          port: 4317

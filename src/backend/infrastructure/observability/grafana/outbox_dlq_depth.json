@@ -1,0 +1,96 @@
+{
+  "uid": "gd-outbox-dlq-depth",
+  "title": "Outbox / DLQ depth + replay rate",
+  "tags": ["gd_integration_tools", "K2-S7", "outbox", "dlq"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-3h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Outbox pending",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {"expr": "sum(outbox_pending_total)", "refId": "A"}
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "DLQ total depth",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"steps": [{"color": "green"}, {"color": "orange", "value": 100}, {"color": "red", "value": 1000}]}}},
+      "targets": [
+        {"expr": "sum(dlq_depth)", "refId": "A"}
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Replay rate (msg/min)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {"expr": "sum(rate(dlq_replay_total[1m]) * 60)", "refId": "A"}
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Replay success ratio (1h)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}},
+      "targets": [
+        {
+          "expr": "sum(increase(dlq_replay_success_total[1h])) / clamp_min(sum(increase(dlq_replay_total[1h])), 1)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "DLQ depth per transport",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (transport) (dlq_depth)",
+          "legendFormat": "{{transport}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Outbox throughput",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "rate(outbox_published_total[1m])", "legendFormat": "published", "refId": "A"},
+        {"expr": "rate(outbox_failed_total[1m])", "legendFormat": "failed", "refId": "B"}
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Replay rate per transport",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (transport) (rate(dlq_replay_total[1m]) * 60)",
+          "legendFormat": "{{transport}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

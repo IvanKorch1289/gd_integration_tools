@@ -1,0 +1,62 @@
+# R2 Blueprint: multimodal_ingest — PDF/image/audio → RAG collection.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: multimodal_ingest
+version: "1.0.0"
+description: "Multimodal RAG ingest: markitdown → embedder → Qdrant."
+tags: [ai, rag, multimodal]
+
+params:
+  - { name: collection, type: string, required: true }
+  - { name: tenant_id, type: string, required: false }
+
+from:
+  http:
+    method: POST
+    path: /api/v1/rag/multimodal/upload
+
+steps:
+  - detect_modality:
+      from: body.file
+      to: body.modality
+  - choice:
+      when:
+        - condition: "body.modality in ['pdf', 'docx', 'html']"
+          steps:
+            - markitdown_extract:
+                input: body.file
+                to: body.text
+            - chunk_text:
+                input: body.text
+                chunk_size: 1000
+                to: body.chunks
+        - condition: "body.modality in ['png', 'jpeg', 'webp']"
+          steps:
+            - clip_embed:
+                input: body.file
+                to: body.embedding
+            - blip2_caption:
+                input: body.file
+                to: body.caption
+        - condition: "body.modality == 'audio'"
+          steps:
+            - whisper_transcribe:
+                input: body.file
+                to: body.text
+            - chunk_text:
+                input: body.text
+                chunk_size: 1000
+                to: body.chunks
+  - rag_ingest:
+      collection: "${blueprint.collection}"
+      tenant_id: "${blueprint.tenant_id}"
+      modality: "${body.modality}"
+      content: "${body.chunks}"
+  - audit:
+      action: blueprint.multimodal_ingest.completed
+
+to:
+  response:
+    code: 201
+    body:
+      collection: "${blueprint.collection}"
