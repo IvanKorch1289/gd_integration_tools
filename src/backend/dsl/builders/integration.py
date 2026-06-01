@@ -557,6 +557,45 @@ class IntegrationMixin:
             )
         )
 
+    def directory_scan(
+        self,
+        path: str,
+        pattern: str = "*",
+        *,
+        recursive: bool = False,
+        max_files: int = 1000,
+        sort_by: str = "name",
+        result_property: str = "directory_scan_result",
+    ) -> "RouteBuilder":
+        """Сканирует директорию и возвращает список файлов, подходящих под glob.
+
+        S35 GAP-INT-3: batch file processing.
+
+        Args:
+            path: Директория для сканирования.
+            pattern: glob-паттерн, например ``*.csv`` или ``**/*.json``.
+            recursive: Рекурсивный обход поддиректорий.
+            max_files: Максимальное число возвращаемых файлов.
+            sort_by: Сортировка результатов: ``name`` (default),
+                ``mtime`` (по времени изменения) или ``size``.
+            result_property: Имя property, куда будет записан результат
+                (список dict с ключами ``path``, ``name``, ``size``, ``mtime``).
+        """
+        from src.backend.dsl.engine.processors.fs_directory_scan import (
+            DirectoryScanProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            DirectoryScanProcessor(
+                path=path,
+                pattern=pattern,
+                recursive=recursive,
+                max_files=max_files,
+                sort_by=sort_by,
+                result_property=result_property,
+            )
+        )
+
     # ── HTTP / DB / file / S3 / timer / poll ──
 
     def http_call(
