@@ -125,6 +125,57 @@ class SignalWaitDeclaration(BaseModel):
     )
 
 
+class PauseDeclaration(BaseModel):
+    """Pause-шаг: приостановка workflow через Temporal API (S35 GAP-DSL-2).
+
+    Вызывает ``workflow.pause()`` — устанавливает флаг, который
+    предотвращает продолжение выполнения workflow до вызова ``resume()``.
+
+    YAML::
+
+        steps:
+          - pause:
+              output_key: "paused_at"
+
+    Python::
+
+        WorkflowBuilder("credit.flow").pause(output_key="paused_at")
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["pause"] = "pause"
+    output_key: str | None = Field(
+        default=None, description="Имя property для сохранения timestamp паузы."
+    )
+
+
+class ResumeDeclaration(BaseModel):
+    """Resume-шаг: возобновление paused workflow через Temporal API (S35 GAP-DSL-2).
+
+    Вызывает ``workflow.resume()`` — снимает флаг паузы и позволяет
+    workflow продолжить выполнение с места ``pause()``.
+
+    YAML::
+
+        steps:
+          - resume:
+              checkpoint_id: "my_checkpoint"
+
+    Python::
+
+        WorkflowBuilder("credit.flow").resume(checkpoint_id="my_checkpoint")
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["resume"] = "resume"
+    checkpoint_id: str | None = Field(
+        default=None,
+        description="Опциональный checkpoint_id для восстановления состояния.",
+    )
+
+
 class SleepDeclaration(BaseModel):
     """Durable-sleep (Temporal-friendly, переживает worker-restart).
 
@@ -482,6 +533,8 @@ WorkflowStep = Annotated[
     | SagaDeclaration
     | SignalWaitDeclaration
     | SleepDeclaration
+    | PauseDeclaration
+    | ResumeDeclaration
     | SensorDeclaration
     | AgentInvokeDeclaration
     | ReflectDeclaration

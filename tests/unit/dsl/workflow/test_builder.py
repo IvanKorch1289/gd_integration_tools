@@ -16,6 +16,8 @@ from pydantic import ValidationError
 
 from src.backend.dsl.workflow import (
     ActivityDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
     RetryPolicy,
     SagaBuilder,
     SagaDeclaration,

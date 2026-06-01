@@ -29,6 +29,8 @@ from typing import Any, Callable
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
     RetryPolicy,
     SagaDeclaration,
     SensorDeclaration,
@@ -40,6 +42,8 @@ from src.backend.dsl.workflow.spec import (
 __all__ = (
     "StepCompiler",
     "compile_activity_step",
+    "compile_pause_step",
+    "compile_resume_step",
     "compile_saga_step",
     "compile_sensor_step",
     "compile_signal_wait_step",
@@ -198,6 +202,39 @@ async def compile_sleep_step(decl: SleepDeclaration, ctx: dict[str, Any]) -> Any
     return None
 
 
+async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any:
+    """Приостановить workflow через ``workflow.pause()``.
+
+    Args:
+        decl: Декларация pause-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Saves pause timestamp to ``ctx["_outputs"][output_key]`` if output_key is set.
+    """
+    from temporalio import workflow
+
+    workflow.pause()
+    if decl.output_key:
+        from datetime import datetime, timezone
+
+        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(timezone.utc).isoformat()
+    return None
+
+
+async def compile_resume_step(decl: ResumeDeclaration, ctx: dict[str, Any]) -> Any:
+    """Возобновить paused workflow через ``workflow.resume()``.
+
+    Args:
+        decl: Декларация resume-шага.
+        ctx: Рантайм-контекст workflow (зарезервирован).
+    """
+    from temporalio import workflow
+
+    del ctx
+    workflow.resume()
+    return None
+
+
 async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> Any:
     """Periodic-sensor: выполнять predicate как activity до True или timeout.
 
@@ -318,6 +355,8 @@ _STEP_DISPATCH: dict[type, StepCompiler] = {
     SagaDeclaration: compile_saga_step,
     SignalWaitDeclaration: compile_signal_wait_step,
     SleepDeclaration: compile_sleep_step,
+    PauseDeclaration: compile_pause_step,
+    ResumeDeclaration: compile_resume_step,
     SensorDeclaration: compile_sensor_step,
     AgentInvokeDeclaration: compile_agent_invoke_step,
 }
