@@ -770,10 +770,10 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     proc_jq: bool = Field(
         default=False,
-        title="K3 S5 W1: JqProcessor (pyjq query)",
+        title="K3 S5 W1: JqProcessor (jmespath query)",
         description=(
             "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
-            "Активирует JqProcessor для трансформации JSON через jq DSL."
+            "Активирует JqProcessor для трансформации JSON через JMESPath."
         ),
     )
 

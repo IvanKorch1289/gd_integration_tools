@@ -813,7 +813,7 @@ class EmailComposeProcessor(BaseProcessor):
 
         try:
             email_body = self._body_template.format(**variables)
-        except KeyError, IndexError:
+        except (KeyError, IndexError):
             email_body = self._body_template
 
         try:

@@ -284,7 +284,7 @@ def _extract_cost(response_obj: Any) -> float:
         if value:
             try:
                 return float(value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 return 0.0
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)

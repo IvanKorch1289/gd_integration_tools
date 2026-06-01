@@ -115,7 +115,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     reg = registry or get_schema_registry()
     try:
         from src.backend.dsl.commands.registry import action_handler_registry
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         return 0
 
     count = 0

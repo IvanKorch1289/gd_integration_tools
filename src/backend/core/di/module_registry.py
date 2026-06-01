@@ -161,11 +161,11 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except ImportError, ModuleNotFoundError, ValueError:
+        except (ImportError, ModuleNotFoundError, ValueError):
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg2, faststream и т.п.). Считаем такой случай
-            # «не найден», чтобы оставаться без побочных эффектов.
+            # "не найден", чтобы оставаться без побочных эффектов.
             spec = None
         if spec is None:
             missing[key] = dotted_path

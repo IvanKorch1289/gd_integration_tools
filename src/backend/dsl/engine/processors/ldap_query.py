@@ -1,11 +1,9 @@
-"""DSL-процессор ``ldap_query`` — LDAP search через ldap3 / aioldap3.
+"""DSL-процессор ``ldap_query`` — LDAP search через ldap3.
 
-Wave ``[wave:s5/k3-w3-processor-pack-3]``;
-Wave ``[wave:s18/w0-goal-driven-sweep-1-ldap]`` — порядок fallback инвертирован.
+Wave ``[wave:s5/k3-w3-processor-pack-3]``.
 
-Lazy-import: основной путь ``ldap3`` через ``asyncio.to_thread`` (стабильный wheel
-для Python 3.14, soft-dep `dsl-extras-3`). Резервный путь ``aioldap3`` остаётся для
-сред, где он уже установлен (PyPI-пакет удалён 2026-05-21). Если ни один не
+Lazy-import: ``ldap3`` через ``asyncio.to_thread`` (стабильный wheel
+для Python 3.14, soft-dep `dsl-extras-3`). Если не
 доступен — ``exchange.fail()``.
 
 Контракт DSL::
@@ -175,29 +173,6 @@ class LdapQueryProcessor(BaseProcessor):
             return
         except ImportError:
             pass
-        except Exception as exc:  # noqa: BLE001
-            exchange.fail(f"ldap_query error: {exc}")
-            return
-
-        # Legacy fallback: aioldap3 если каким-то образом ещё установлен.
-        # Пакет удалён с PyPI 2026-05-21, поэтому импорт обычно молча падает.
-        try:
-            from aioldap3 import LDAPClient  # type: ignore[import-not-found]
-
-            client = LDAPClient(self._server, use_ssl=self._use_ssl)
-            await client.bind(self._bind_dn, self._password)
-            try:
-                entries_raw = await client.search(
-                    self._search_base, self._search_filter, attributes=self._attributes
-                )
-                entries = [dict(e) for e in entries_raw]
-            finally:
-                await client.unbind()
-            self._apply_target(exchange, entries)
-            return
-        except ImportError as exc:
-            exchange.fail(f"ldap_query: ldap3/aioldap3 not available: {exc}")
-            return
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"ldap_query error: {exc}")
             return

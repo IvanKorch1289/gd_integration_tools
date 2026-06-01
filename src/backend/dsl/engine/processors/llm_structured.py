@@ -215,7 +215,7 @@ class LLMStructuredProcessor(BaseProcessor):
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             entry = None
 
         if entry is not None:
@@ -413,7 +413,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None
-        except ImportError, AttributeError, TypeError, ValueError:
+        except (ImportError, AttributeError, TypeError, ValueError):
             return None
 
     @staticmethod
@@ -431,7 +431,7 @@ class LLMStructuredProcessor(BaseProcessor):
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
     def _write_result(self, exchange: "Exchange[Any]", result: Any) -> None:

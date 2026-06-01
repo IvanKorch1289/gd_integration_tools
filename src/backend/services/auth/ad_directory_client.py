@@ -114,7 +114,7 @@ class AdSearchEntry:
 class AdDirectoryClient:
     """Async LDAP/AD client.
 
-    Lazy-import ``aioldap3`` / ``ldap3``. Если ни один пакет не доступен,
+    Lazy-import ``ldap3``. Если пакет не доступен,
     :meth:`is_available` возвращает False.
 
     Args:
@@ -135,19 +135,13 @@ class AdDirectoryClient:
         self._connection_factory = connection_factory
 
     def is_available(self) -> bool:
-        """Проверить, что ``ldap3`` или ``aioldap3`` установлен.
+        """Проверить, что ``ldap3`` установлен.
 
         Returns:
-            True если хотя бы один LDAP client доступен; False иначе.
+            True если LDAP client доступен; False иначе.
         """
         try:
             import ldap3  # noqa: F401, PLC0415
-
-            return True
-        except ImportError:
-            pass
-        try:
-            import aioldap3  # noqa: F401, PLC0415
 
             return True
         except ImportError:
@@ -167,7 +161,7 @@ class AdDirectoryClient:
             AdAuthError: при недоступности LDAP-client'а или сервера.
         """
         if not self.is_available():
-            raise AdAuthError("ldap3/aioldap3 не установлены")
+            raise AdAuthError("ldap3 не установлен")
 
         try:
             return await asyncio.to_thread(self._bind_sync, user_dn, password)
@@ -223,7 +217,7 @@ class AdDirectoryClient:
             AdAuthError: при ошибке service-bind или search.
         """
         if not self.is_available():
-            raise AdAuthError("ldap3/aioldap3 не установлены")
+            raise AdAuthError("ldap3 не установлен")
         if any(ch in login for ch in ("(", ")", "*", "\\", "\x00")):
             raise AdAuthError("LDAP-injection attempt: invalid chars in login")
 
@@ -326,7 +320,7 @@ class AdDirectoryClient:
             AdAuthError: при ошибке service-bind или search.
         """
         if not self.is_available():
-            raise AdAuthError("ldap3/aioldap3 не установлены")
+            raise AdAuthError("ldap3 не установлен")
         if any(ch in user_dn for ch in ("(", ")", "*", "\x00")):
             raise AdAuthError("LDAP-injection attempt: invalid chars in user_dn")
 
