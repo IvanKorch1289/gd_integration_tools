@@ -62,9 +62,12 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         * consolidate триггерит long_term.consolidate() если доступен.
     """
 
-    def __init__(self, *, short_term: Any, long_term: Any | None = None) -> None:
+    def __init__(
+        self, *, short_term: Any, long_term: Any | None = None, mem0: Any | None = None
+    ) -> None:
         self._short = short_term
         self._long = long_term
+        self._mem0 = mem0
 
     async def get_messages(
         self, *, tenant_id: str, session_id: str, limit: int = 50
@@ -199,6 +202,32 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             logger.warning("memory_gateway.recall_failed: %s", exc)
             return []
         return [_lang_to_fact(r) for r in (results or [])]
+
+    async def recall_mem0(
+        self, *, tenant_id: str, session_id: str, query: str, top_k: int = 5
+    ) -> list[MemoryFact]:
+        """Дополнительный recall через Mem0 backend (если сконфигурирован).
+
+        Returns:
+            Список MemoryFact из mem0 или [] при отсутствии бэкенда.
+        """
+        if self._mem0 is None:
+            return []
+        namespace = _scope(tenant_id, session_id)
+        try:
+            raw = await self._mem0.recall(namespace, query, k=top_k)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("memory_gateway.recall_mem0_failed: %s", exc)
+            return []
+        return [
+            MemoryFact(
+                content=str(r.get("value", "")),
+                confidence=float(r.get("score", 1.0) or 1.0),
+                source_session_id=session_id,
+                tags=("mem0",),
+            )
+            for r in (raw or [])
+        ]
 
     async def get_scratchpad(self, *, tenant_id: str, session_id: str) -> str | None:
         """Возвращает scratchpad сессии (короткая рабочая область агента)."""
