@@ -148,13 +148,9 @@ STEP_PALETTE: dict[str, dict[str, str]] = {
 
 def _render_step_palette():
     """Render draggable step palette items using HTML/JS."""
-    import json
-
-    palette_json = json.dumps(STEP_PALETTE)
-
-    html = f"""
+    html = """
     <style>
-    .step-palette-item {{
+    .step-palette-item {
         background: #2b3a4a;
         border: 1px solid #4a5a6a;
         border-radius: 6px;
@@ -165,29 +161,29 @@ def _render_step_palette():
         font-size: 13px;
         transition: background 0.2s, transform 0.1s;
         user-select: none;
-    }}
-    .step-palette-item:hover {{
+    }
+    .step-palette-item:hover {
         background: #3a4a5a;
         transform: translateX(4px);
-    }}
-    .step-palette-item:active {{
+    }
+    .step-palette-item:active {
         cursor: grabbing;
-    }}
-    .step-palette-item .title {{
+    }
+    .step-palette-item .title {
         font-weight: 600;
         color: #7dd3fc;
-    }}
-    .step-palette-item .desc {{
+    }
+    .step-palette-item .desc {
         font-size: 11px;
         color: #a0a0a0;
         margin-top: 2px;
-    }}
-    .palette-header {{
+    }
+    .palette-header {
         font-size: 14px;
         font-weight: 600;
         color: #f0f0f0;
         margin-bottom: 8px;
-    }}
+    }
     </style>
     <div class="palette-header">📦 Step Palette (drag to add)</div>
     <div id="palette-container">
@@ -639,7 +635,7 @@ with tab_visual:
                         meta, reordered_steps
                     )
                     _push_history()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001,S110
             pass
         # Clear the query param
         query_params.clear()

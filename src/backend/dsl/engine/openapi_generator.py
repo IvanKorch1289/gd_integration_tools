@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.dsl.adapters.types import ProtocolType
+
 if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline
 
@@ -29,7 +31,6 @@ def generate_openapi(pipeline: Pipeline) -> dict[str, Any]:
         >>> spec["openapi"]
         '3.0.3'
     """
-    from src.backend.dsl.adapters.types import ProtocolType
 
     route_id = pipeline.route_id
     base_url = _extract_base_url(pipeline)

@@ -21,9 +21,12 @@ BACKEND_DIR = DSL_DIR.parent
 SRC_DIR = BACKEND_DIR.parent
 sys.path.insert(0, str(SRC_DIR))
 
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.exchange import (  # noqa: E402
+    Exchange,
+    ExchangeStatus,
+    Message,
+)
+from src.backend.dsl.engine.processors.base import BaseProcessor  # noqa: E402
 
 
 @click.group()
@@ -222,9 +225,9 @@ def explain_processor(processor_class: str, verbose: bool) -> None:
             click.echo(f"Category: {info['category']}")
             click.echo(f"Side Effect: {info['side_effect']}")
             click.echo(f"Compensatable: {info['compensatable']}")
-            click.echo(f"\nDocstring:")
+            click.echo("\nDocstring:")
             click.echo(f"  {info.get('docstring', 'No docstring')}")
-            click.echo(f"\nParameters:")
+            click.echo("\nParameters:")
             for param, ptype in info.get("params", {}).items():
                 click.echo(f"  - {param}: {ptype}")
         else:
