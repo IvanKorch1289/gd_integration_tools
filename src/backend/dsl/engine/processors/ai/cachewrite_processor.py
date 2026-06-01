@@ -1,4 +1,5 @@
 """Auto-generated from ai_processors.py — single processor files."""
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -8,6 +9,7 @@ import orjson
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class CacheWriteProcessor(BaseProcessor):
     """Записывает результат в Redis-кеш после обработки.
@@ -49,5 +51,5 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass

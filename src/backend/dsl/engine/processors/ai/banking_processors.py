@@ -59,26 +59,40 @@ class FraudDetectionResult(BaseModel):
 
     fraud_score: float = Field(..., ge=0.0, le=1.0, description="Вероятность фрода")
     is_suspicious: bool = Field(..., description="Флаг подозрительности")
-    fraud_indicators: list[str] = Field(default_factory=list, description="Найденные индикаторы")
+    fraud_indicators: list[str] = Field(
+        default_factory=list, description="Найденные индикаторы"
+    )
     recommended_action: str = Field(..., description="Рекомендуемое действие")
 
 
 class RiskAssessmentResult(BaseModel):
     """Результат оценки рисков."""
 
-    risk_level: str = Field(..., description="Уровень риска: low / medium / high / critical")
+    risk_level: str = Field(
+        ..., description="Уровень риска: low / medium / high / critical"
+    )
     risk_score: float = Field(..., ge=0.0, le=1.0, description="Численный score риска")
     risk_factors: list[str] = Field(default_factory=list, description="Факторы риска")
-    mitigation_suggestions: list[str] = Field(default_factory=list, description="Рекомендации по снижению")
+    mitigation_suggestions: list[str] = Field(
+        default_factory=list, description="Рекомендации по снижению"
+    )
 
 
 class CustomerSegmentationResult(BaseModel):
     """Результат сегментации клиента."""
 
-    segment: str = Field(..., description="Сегмент: mass / affluent / business / vip / new")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Уверенность в сегментации")
-    characteristics: list[str] = Field(default_factory=list, description="Характеристики сегмента")
-    recommended_products: list[str] = Field(default_factory=list, description="Рекомендованные продукты")
+    segment: str = Field(
+        ..., description="Сегмент: mass / affluent / business / vip / new"
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Уверенность в сегментации"
+    )
+    characteristics: list[str] = Field(
+        default_factory=list, description="Характеристики сегмента"
+    )
+    recommended_products: list[str] = Field(
+        default_factory=list, description="Рекомендованные продукты"
+    )
 
 
 class LoanEligibilityResult(BaseModel):
@@ -88,7 +102,9 @@ class LoanEligibilityResult(BaseModel):
     max_amount: float = Field(..., ge=0.0, description="Максимальная сумма")
     interest_rate: float = Field(..., ge=0.0, description="Процентная ставка")
     term_months: int = Field(..., ge=1, description="Срок в месяцах")
-    decision_reasons: list[str] = Field(default_factory=list, description="Основные причины решения")
+    decision_reasons: list[str] = Field(
+        default_factory=list, description="Основные причины решения"
+    )
     conditions: list[str] = Field(default_factory=list, description="Условия кредита")
 
 
@@ -106,10 +122,7 @@ class _BankingAIProcessor(BaseProcessor):
     compensatable: ClassVar[bool] = False
 
     def __init__(
-        self,
-        model: str = "anthropic/claude-sonnet-4-6",
-        *,
-        name: str | None = None,
+        self, model: str = "anthropic/claude-sonnet-4-6", *, name: str | None = None
     ) -> None:
         super().__init__(name=name or self.__class__.__name__)
         if not model or "/" not in model:
@@ -153,7 +166,9 @@ class _BankingAIProcessor(BaseProcessor):
         exchange.in_message.body = body
 
     @handle_processor_error
-    async def process(self, exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+    async def process(
+        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+    ) -> None:
         # Feature gate
         try:
             from src.backend.core.config.features import feature_flags
@@ -211,12 +226,18 @@ class _BankingAIProcessor(BaseProcessor):
         # Cost tracking
         exchange.set_property("llm.provider", self._provider)
         exchange.set_property("llm.model", self._model)
-        exchange.set_property("banking_action", f"ai.banking.{self.name.lower().replace('processor', '')}")
+        exchange.set_property(
+            "banking_action", f"ai.banking.{self.name.lower().replace('processor', '')}"
+        )
 
         self._write_result(exchange, result)
 
     def to_spec(self) -> dict[str, Any] | None:
-        return {self.__class__.__name__.lower().replace("processor", "_ai"): {"model": self._model}}
+        return {
+            self.__class__.__name__.lower().replace("processor", "_ai"): {
+                "model": self._model
+            }
+        }
 
 
 # ─── CreditScoreProcessor ────────────────────────────────────────────────────

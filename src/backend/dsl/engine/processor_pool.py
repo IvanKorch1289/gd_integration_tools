@@ -60,9 +60,7 @@ class ProcessorPool:
     """
 
     def __init__(
-        self,
-        max_workers: int = 4,
-        thread_pool: ThreadPoolExecutor | None = None,
+        self, max_workers: int = 4, thread_pool: ThreadPoolExecutor | None = None
     ) -> None:
         self._max_workers = max_workers
         self._thread_pool = thread_pool
@@ -90,8 +88,7 @@ class ProcessorPool:
         """Lazily creates/returns the underlying thread pool."""
         if self._thread_pool is None:
             self._own_thread_pool = ThreadPoolExecutor(
-                max_workers=self._max_workers,
-                thread_name_prefix="processor_pool_",
+                max_workers=self._max_workers, thread_name_prefix="processor_pool_"
             )
             return self._own_thread_pool
         return self._thread_pool
@@ -110,8 +107,7 @@ class ProcessorPool:
         try:
             if asyncio.iscoroutinefunction(processor.process):
                 await asyncio.wait_for(
-                    processor.process(exchange, context),
-                    timeout=timeout,
+                    processor.process(exchange, context), timeout=timeout
                 )
             else:
                 loop = asyncio.get_event_loop()
@@ -178,9 +174,7 @@ class ProcessorPool:
         """
         self._metrics.total_submitted += len(processors)
 
-        async def run_with_sem(
-            proc: BaseProcessor,
-        ) -> dict[str, Any]:
+        async def run_with_sem(proc: BaseProcessor) -> dict[str, Any]:
             async with self._semaphore:
                 _, result = await self._execute_one(proc, exchange, context, timeout)
                 self._metrics.total_completed += 1
@@ -195,13 +189,15 @@ class ProcessorPool:
         trace_entries: list[dict[str, Any]] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                trace_entries.append({
-                    "processor": processors[i].name,
-                    "type": type(processors[i]).__name__,
-                    "duration_ms": 0.0,
-                    "status": "error",
-                    "error": str(result),
-                })
+                trace_entries.append(
+                    {
+                        "processor": processors[i].name,
+                        "type": type(processors[i]).__name__,
+                        "duration_ms": 0.0,
+                        "status": "error",
+                        "error": str(result),
+                    }
+                )
                 self._metrics.total_failed += 1
             elif isinstance(result, dict):
                 trace_entries.append(result)

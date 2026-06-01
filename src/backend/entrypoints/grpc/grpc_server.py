@@ -93,7 +93,8 @@ class BaseGRPCServicer:
                 correlation_id = extracted
         if correlation_id:
             try:
-                from src.backend.infrastructure.observability.correlation import (
+                # noqa: PLC0415 — lazy import, только для correlation injection
+                from src.backend.infrastructure.observability.correlation import (  # noqa: PLC0415
                     set_correlation_context,
                 )
 
@@ -315,7 +316,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         if response.result is not None:
             try:
                 result_json = orjson.dumps(response.result, default=str).decode()
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 result_json = str(response.result)
 
         return InvokerInvokeResponse(

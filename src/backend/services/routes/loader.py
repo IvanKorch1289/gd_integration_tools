@@ -429,15 +429,15 @@ class RouteLoader:
         try:
             self._audit(event)
         except Exception:  # noqa: BLE001 — audit best-effort, не ломает loader
-            _logger.exception("RouteLoader audit_callback failed: %s", event.get("event"))
+            _logger.exception(
+                "RouteLoader audit_callback failed: %s", event.get("event")
+            )
 
     # ── permission validation helpers ──────────────────────────────────
 
     PERMISSION_PREFIXES = ("role:", "scope:")
 
-    def _validate_permission_strings(
-        self, permissions: tuple[str, ...]
-    ) -> str | None:
+    def _validate_permission_strings(self, permissions: tuple[str, ...]) -> str | None:
         """Валидирует формат permission-strings.
 
         Каждая permission должна начинаться с ``role:`` или ``scope:``.

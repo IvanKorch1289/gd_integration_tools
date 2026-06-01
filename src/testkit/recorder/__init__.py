@@ -18,12 +18,7 @@ from __future__ import annotations
 # without needing to know about the internal testkit package structure.
 
 # HAR core types
-from testkit.recorder import (
-    HARCassette,
-    HAREntry,
-    HARRecorder,
-    record_session,
-)
+from testkit.recorder import HARCassette, HAREntry, HARRecorder, record_session
 from testkit.recorder.cassette import (
     CassetteMode,
     cassette,
@@ -37,11 +32,7 @@ from testkit.recorder.secrets_mask import (
     mask_request_body,
     mask_response_headers,
 )
-from testkit.replay import (
-    MissingCassetteEntry,
-    build_replay_transport,
-    load_cassette,
-)
+from testkit.replay import MissingCassetteEntry, build_replay_transport, load_cassette
 
 __all__ = (
     # Core HAR types

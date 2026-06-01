@@ -96,8 +96,12 @@ class GraphQLQueryProcessor(BaseProcessor):
         self._timeout = timeout
         self._result_property = result_property
 
-    async def process(self, exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
-        from src.backend.infrastructure.clients.transport.http_httpx import get_httpx_client
+    async def process(
+        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+    ) -> None:
+        from src.backend.infrastructure.clients.transport.http_httpx import (
+            get_httpx_client,
+        )
 
         client = get_httpx_client()
 
@@ -117,22 +121,23 @@ class GraphQLQueryProcessor(BaseProcessor):
 
         try:
             response = await client.request(
-                method="POST",
-                url=self._endpoint,
-                headers=req_headers,
-                json=payload,
+                method="POST", url=self._endpoint, headers=req_headers, json=payload
             )
 
             # Parse response
             if response.status_code >= 400:
                 error_body = response.text
-                exchange.fail(f"GraphQL request failed with status {response.status_code}: {error_body}")
+                exchange.fail(
+                    f"GraphQL request failed with status {response.status_code}: {error_body}"
+                )
                 return
 
             try:
                 result = orjson.loads(response.text)
             except orjson.JSONDecodeError as exc:
-                exchange.fail(f"GraphQL response is not valid JSON: {exc}\nResponse: {response.text[:500]}")
+                exchange.fail(
+                    f"GraphQL response is not valid JSON: {exc}\nResponse: {response.text[:500]}"
+                )
                 return
 
             # Check for GraphQL-level errors
@@ -151,10 +156,7 @@ class GraphQLQueryProcessor(BaseProcessor):
             exchange.fail(f"GraphQL query failed: {exc}")
 
     def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {
-            "endpoint": self._endpoint,
-            "query": self._query,
-        }
+        spec: dict[str, Any] = {"endpoint": self._endpoint, "query": self._query}
         if self._variables:
             spec["variables"] = self._variables
         if self._operation_name:

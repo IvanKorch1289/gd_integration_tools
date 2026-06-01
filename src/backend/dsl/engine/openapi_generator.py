@@ -87,7 +87,9 @@ def _build_paths(pipeline: Pipeline, base_url: str) -> dict[str, Any]:
     return paths
 
 
-def _infer_path_and_method(pipeline: Pipeline, protocol: ProtocolType) -> tuple[str, str]:
+def _infer_path_and_method(
+    pipeline: Pipeline, protocol: ProtocolType
+) -> tuple[str, str]:
     """Infer the API path and HTTP method from pipeline configuration."""
     # Default to /{route_id} with POST for REST
     if protocol == ProtocolType.rest:
@@ -118,9 +120,7 @@ def _build_operation(pipeline: Pipeline) -> dict[str, Any]:
 
     # Add processors as extensions
     if pipeline.processors:
-        operation["x-processors"] = [
-            _processor_to_dict(p) for p in pipeline.processors
-        ]
+        operation["x-processors"] = [_processor_to_dict(p) for p in pipeline.processors]
 
     return operation
 
@@ -130,20 +130,19 @@ def _build_responses(pipeline: Pipeline) -> dict[str, Any]:
     return {
         "200": {
             "description": "Successful response",
-            "content": {
-                "application/json": {
-                    "schema": {"type": "object"}
-                }
-            }
+            "content": {"application/json": {"schema": {"type": "object"}}},
         },
         "500": {
             "description": "Internal server error",
             "content": {
                 "application/json": {
-                    "schema": {"type": "object", "properties": {"error": {"type": "string"}}}
+                    "schema": {
+                        "type": "object",
+                        "properties": {"error": {"type": "string"}},
+                    }
                 }
-            }
-        }
+            },
+        },
     }
 
 
@@ -157,11 +156,14 @@ def _build_request_body(pipeline: Pipeline) -> dict[str, Any]:
                     "type": "object",
                     "properties": {
                         "route_id": {"type": "string", "example": pipeline.route_id},
-                        "body": {"type": "object", "description": "Pipeline input body"}
-                    }
+                        "body": {
+                            "type": "object",
+                            "description": "Pipeline input body",
+                        },
+                    },
                 }
             }
-        }
+        },
     }
 
 
@@ -175,11 +177,8 @@ def _build_components_schemas(pipeline: Pipeline) -> dict[str, Any]:
                 "source": {"type": "string"},
                 "description": {"type": "string"},
                 "protocol": {"type": "string"},
-                "processors": {
-                    "type": "array",
-                    "items": {"type": "object"}
-                }
-            }
+                "processors": {"type": "array", "items": {"type": "object"}},
+            },
         }
     }
 
@@ -190,7 +189,7 @@ def _build_components_schemas(pipeline: Pipeline) -> dict[str, Any]:
             proc_name = next(iter(spec.keys()), proc.name)
             schemas[proc_name] = {
                 "type": "object",
-                "properties": spec.get(proc_name, {})
+                "properties": spec.get(proc_name, {}),
             }
 
     return schemas
@@ -198,13 +197,7 @@ def _build_components_schemas(pipeline: Pipeline) -> dict[str, Any]:
 
 def _build_security_schemes(pipeline: Pipeline) -> dict[str, Any]:
     """Build security schemes (placeholder - extend as needed)."""
-    return {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "in": "header",
-            "name": "X-API-Key"
-        }
-    }
+    return {"ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"}}
 
 
 def _build_tags(pipeline: Pipeline) -> list[dict[str, str]]:
@@ -212,16 +205,15 @@ def _build_tags(pipeline: Pipeline) -> list[dict[str, str]]:
     tags = []
 
     if pipeline.protocol:
-        tags.append({
-            "name": pipeline.protocol.value.upper(),
-            "description": f"Operations via {pipeline.protocol.value} protocol"
-        })
+        tags.append(
+            {
+                "name": pipeline.protocol.value.upper(),
+                "description": f"Operations via {pipeline.protocol.value} protocol",
+            }
+        )
 
     if pipeline.tenant_aware:
-        tags.append({
-            "name": "Tenant",
-            "description": "Tenant-aware operations"
-        })
+        tags.append({"name": "Tenant", "description": "Tenant-aware operations"})
 
     return tags
 

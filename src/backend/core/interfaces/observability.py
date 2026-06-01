@@ -27,6 +27,7 @@ __all__ = (
     "HealthCheckSessionProtocol",
     "CircuitBreakerMetricsRecorder",
     "CorrelationIdProvider",
+    "TemporalMetricsExporter",
 )
 
 
@@ -132,4 +133,25 @@ class CorrelationIdProvider(Protocol):
 
     def __call__(self) -> str | None:
         """Вернуть текущий correlation_id или None."""
+        ...
+
+
+@runtime_checkable
+class TemporalMetricsExporter(Protocol):
+    """Контракт exporter'а Temporal task queue metrics.
+
+    S36 w4: auto_scaler.py использует этот protocol вместо прямого
+    импорта ``infrastructure.observability.prometheus_temporal_exporter``.
+    """
+
+    def set_task_queue_depth(self, task_queue: str, depth: int) -> None:
+        """Установить gauge глубины очереди задач."""
+        ...
+
+    def record_scale_event(self, action: str) -> None:
+        """Записать событие scale-up/down."""
+        ...
+
+    def set_workers_active(self, task_queue: str, count: int) -> None:
+        """Установить gauge активных workers."""
         ...

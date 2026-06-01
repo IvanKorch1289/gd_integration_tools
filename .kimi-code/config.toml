@@ -1,0 +1,385 @@
+# Kimi Code CLI — project-local config for gd_integration_tools
+# Адаптация .claude/settings.json (Claude Code) под Kimi-формат.
+# Источник правды по permission rules: .claude/settings.json
+# Формат pattern:
+#   - Claude Code: ToolName(arg:*)  с двоеточием
+#   - Kimi Code:    ToolName(arg *)  с пробелом (shell-glob)
+# Документация Kimi: https://moonshotai.github.io/kimi-code/en/configuration/config-files.html
+
+# Модель по умолчанию (можно переопределить --model)
+default_model = "kimi-k2-0905-preview"
+
+# Skills: подключаем все 10 skills из .claude/skills/ (project scope)
+# Kimi читает их в дополнение к .kimi-code/skills/
+extra_skill_dirs = [".claude/skills"]
+
+# Не отправлять анонимную телеметрию
+telemetry = false
+
+# Тема TUI
+theme = "dark"
+
+# Thinking mode: авто
+[thinking]
+mode = "auto"
+
+# Параметры loop-control
+[loop_control]
+max_steps_per_turn = 100
+max_retries_per_step = 3
+reserved_context_size = 50000
+
+# Фон
+[background]
+max_running_tasks = 4
+agent_task_timeout_s = 900
+
+# ──────────────────────────────────────────────────────────────────
+# Permission rules
+# Приоритет: deny > ask > allow. Первое совпадение побеждает.
+# scope: user (по умолчанию) — применяется ко всем сессиям.
+# ──────────────────────────────────────────────────────────────────
+
+# === ALLOW: штатные dev-команды (без побочек) ===
+[[permission]]
+decision = "allow"
+pattern = "Read"
+reason = "default read"
+
+[[permission]]
+decision = "allow"
+pattern = "Grep"
+reason = "default grep"
+
+[[permission]]
+decision = "allow"
+pattern = "Glob"
+reason = "default glob"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(graphify *)"
+reason = "graphify CLI"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run ruff *)"
+reason = "linter"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run mypy *)"
+reason = "type-check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run vulture *)"
+reason = "dead code"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run sphinx-build *)"
+reason = "docs"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run sphinx-apidoc *)"
+reason = "docs"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(poetry run detect-secrets *)"
+reason = "secrets scan"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(git diff *)"
+reason = "read-only git"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(git log *)"
+reason = "read-only git"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(git show *)"
+reason = "read-only git"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(git status *)"
+reason = "read-only git"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(find *)"
+reason = "read-only fs"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(ls *)"
+reason = "read-only fs"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(cat *)"
+reason = "read-only fs"
+
+# Make targets — read-only / dev loop
+[[permission]]
+decision = "allow"
+pattern = "Bash(make help)"
+reason = "make help"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make format)"
+reason = "format"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make format-check)"
+reason = "format check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make lint)"
+reason = "lint"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make lint-strict)"
+reason = "lint strict"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make type-check)"
+reason = "type-check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make type-check-strict)"
+reason = "type-check strict"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make vulture-check)"
+reason = "dead code check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make refurb-check)"
+reason = "refurb check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make deps-check)"
+reason = "deps check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make deps-check-strict)"
+reason = "deps check strict"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make secrets-check)"
+reason = "secrets check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make audit)"
+reason = "audit"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make routes)"
+reason = "routes dump"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make actions)"
+reason = "actions dump"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make docs)"
+reason = "docs build"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make docs-rebuild)"
+reason = "docs rebuild"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make status)"
+reason = "status"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make readiness-check)"
+reason = "readiness check"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make progress)"
+reason = "progress"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make phases)"
+reason = "phases"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make current-version)"
+reason = "version"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make next-version)"
+reason = "version"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make profile-memray-stats)"
+reason = "memray profile"
+
+[[permission]]
+decision = "allow"
+pattern = "Bash(make mr-description)"
+reason = "MR description"
+
+# === ASK: требует подтверждения ===
+[[permission]]
+decision = "ask"
+pattern = "Bash(git add *)"
+reason = "staging changes"
+
+[[permission]]
+decision = "ask"
+pattern = "Bash(git commit *)"
+reason = "commit"
+
+[[permission]]
+decision = "ask"
+pattern = "Bash(git tag *)"
+reason = "tag"
+
+[[permission]]
+decision = "ask"
+pattern = "Bash(make commit *)"
+reason = "commit (make target)"
+
+[[permission]]
+decision = "ask"
+pattern = "Bash(make bump *)"
+reason = "version bump"
+
+# === DENY: опасные операции и секреты ===
+[[permission]]
+decision = "deny"
+pattern = "Read(./.env)"
+reason = "secrets"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(./.env.*)"
+reason = "secrets (local/prod)"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(./secrets/**)"
+reason = "secrets dir"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(**/*.pem)"
+reason = "TLS certs/keys"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(**/*.key)"
+reason = "private keys"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(**/*secret*)"
+reason = "secret files"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(**/*token*)"
+reason = "token files"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(~/.ssh/**)"
+reason = "ssh keys"
+
+[[permission]]
+decision = "deny"
+pattern = "Read(~/.aws/**)"
+reason = "aws creds"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(git push *)"
+reason = "explicit push only"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(make push *)"
+reason = "explicit push only"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(make git-sync *)"
+reason = "git sync"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(make ship *)"
+reason = "ship release"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(make ship-release *)"
+reason = "ship release"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(make clean-all *)"
+reason = "destructive clean"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(rm -rf *)"
+reason = "destructive"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(pip install *)"
+reason = "deps via pip forbidden (use uv)"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(poetry add *)"
+reason = "deps locked (Sprint 36)"
+
+[[permission]]
+decision = "deny"
+pattern = "Bash(poetry remove *)"
+reason = "deps locked (Sprint 36)"
+
+# === Hooks ===
+# PreToolUse hook для Bash — пост-проверка через graphify (если есть node).
+# PostToolUse из settings.json пока не переносим: Kimi не имеет стабильной
+# поддержки PostToolUse в config.toml.
+# [[hook]]
+# event = "PreToolUse"
+# matcher = "Bash"
+# command = "node ~/.kimi-code/hooks/check-bash.mjs"
+# timeout = 5

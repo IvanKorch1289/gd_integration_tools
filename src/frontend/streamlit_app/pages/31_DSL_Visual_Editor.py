@@ -141,14 +141,8 @@ STEP_PALETTE: dict[str, dict[str, str]] = {
         "title": "Express Send",
         "desc": "Отправка сообщения в Telegram бот",
     },
-    "express_reply": {
-        "title": "Express Reply",
-        "desc": "Ответ на Telegram сообщение",
-    },
-    "notify": {
-        "title": "Notify",
-        "desc": "Уведомление в канал (email/slack/telegram)",
-    },
+    "express_reply": {"title": "Express Reply", "desc": "Ответ на Telegram сообщение"},
+    "notify": {"title": "Notify", "desc": "Уведомление в канал (email/slack/telegram)"},
 }
 
 
@@ -201,8 +195,8 @@ def _render_step_palette():
     for key, info in STEP_PALETTE.items():
         html += f"""
         <div class="step-palette-item" draggable="true" data-processor="{key}">
-            <div class="title">▶ {info['title']}</div>
-            <div class="desc">{info['desc']}</div>
+            <div class="title">▶ {info["title"]}</div>
+            <div class="desc">{info["desc"]}</div>
         </div>
         """
     html += """
@@ -227,17 +221,19 @@ def _render_step_palette():
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("📦 Step Palette")
-    st.sidebar.markdown(
-        "Drag a processor to the pipeline area below, or click to add:"
-    )
+    st.sidebar.markdown("Drag a processor to the pipeline area below, or click to add:")
     st.components.v1.html(html, height=400, scrolling=True)
 
     # Show clickable buttons as alternative to drag
     selected_palette_proc = st.sidebar.selectbox(
-        "Или выберите процессор:", ["—"] + list(STEP_PALETTE.keys()), key="palette_select"
+        "Или выберите процессор:",
+        ["—"] + list(STEP_PALETTE.keys()),
+        key="palette_select",
     )
     if selected_palette_proc != "—":
-        st.sidebar.info(f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже или добавьте через форму слева.")
+        st.sidebar.info(
+            f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже или добавьте через форму слева."
+        )
         # Auto-select in the visual editor form
         st.session_state.vis_proc_type = selected_palette_proc
 
@@ -440,7 +436,8 @@ def _render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | No
 
     # Handle reorder events via JavaScript interop using a hidden element
     # We use query_params to communicate the new order
-    st.markdown("""
+    st.markdown(
+        """
     <script>
     window.addEventListener('message', function(e) {
         if (e.data && e.data.type === 'reorder-steps') {
@@ -450,7 +447,9 @@ def _render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | No
         }
     });
     </script>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     return None
 
@@ -535,16 +534,10 @@ with st.sidebar:
     st.subheader("↩️ История изменений")
     hist_cols = st.columns([1, 1])
     hist_cols[0].button(
-        "↩️ Undo",
-        use_container_width=True,
-        disabled=not _can_undo(),
-        on_click=_undo,
+        "↩️ Undo", use_container_width=True, disabled=not _can_undo(), on_click=_undo
     )
     hist_cols[1].button(
-        "↪️ Redo",
-        use_container_width=True,
-        disabled=not _can_redo(),
-        on_click=_redo,
+        "↪️ Redo", use_container_width=True, disabled=not _can_redo(), on_click=_redo
     )
     if st.session_state.get("yaml_history"):
         idx = st.session_state.get("yaml_history_index", 0)
@@ -642,7 +635,9 @@ with tab_visual:
             if isinstance(reordered_steps, list):
                 meta, current_steps = _yaml_to_steps(st.session_state.yaml)
                 if len(reordered_steps) == len(current_steps):
-                    st.session_state.yaml = _build_yaml_from_steps(meta, reordered_steps)
+                    st.session_state.yaml = _build_yaml_from_steps(
+                        meta, reordered_steps
+                    )
                     _push_history()
         except Exception:  # noqa: BLE001
             pass

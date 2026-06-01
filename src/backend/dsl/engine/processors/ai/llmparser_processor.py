@@ -1,4 +1,5 @@
 """Auto-generated from ai_processors.py — single processor files."""
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -8,6 +9,7 @@ import orjson
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class LLMParserProcessor(BaseProcessor):
     """Парсит ответ LLM в структурированный формат."""
@@ -31,7 +33,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:

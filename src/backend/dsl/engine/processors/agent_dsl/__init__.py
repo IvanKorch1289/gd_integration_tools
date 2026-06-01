@@ -36,9 +36,7 @@ from __future__ import annotations
 from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
     AgentBranchProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
-    AgentGraphProcessor,
-)
+from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
 from src.backend.dsl.engine.processors.agent_dsl.agent_loop import AgentLoopProcessor
 from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
     AgentParallelProcessor,

@@ -89,7 +89,7 @@ class HttpCallProcessor(BaseProcessor):
         if "{" in url and isinstance(exchange.in_message.body, dict):
             try:
                 url = url.format(**exchange.in_message.body)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 pass
 
         try:

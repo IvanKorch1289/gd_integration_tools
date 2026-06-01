@@ -72,12 +72,7 @@ class Mem0MemoryAdapter:
             raise
 
     async def store(
-        self,
-        namespace: str,
-        key: str,
-        value: Any,
-        *,
-        ttl_s: int | None = None,
+        self, namespace: str, key: str, value: Any, *, ttl_s: int | None = None
     ) -> None:
         """Store a memory record.
 
@@ -138,10 +133,7 @@ class Mem0MemoryAdapter:
                         )
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "Mem0MemoryAdapter.delete(%r, %r) failed: %s",
-                namespace,
-                key,
-                exc,
+                "Mem0MemoryAdapter.delete(%r, %r) failed: %s", namespace, key, exc
             )
             if not self._fail_open:
                 raise

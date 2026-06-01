@@ -34,16 +34,9 @@ from typing import Any
 import pytest
 
 from testkit.recorder import HARRecorder
-from src.backend.infrastructure.observability.memory_metrics import (
-    MemoryMetricsBackend,
-)
+from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend
 
-__all__ = (
-    "har_recorder",
-    "har_cassette_path",
-    "memory_metrics",
-    "audit_events",
-)
+__all__ = ("har_recorder", "har_cassette_path", "memory_metrics", "audit_events")
 
 
 @pytest.fixture

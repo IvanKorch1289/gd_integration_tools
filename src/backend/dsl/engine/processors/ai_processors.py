@@ -59,7 +59,9 @@ class PromptComposerProcessor(BaseProcessor):
             prompt = self._template.format(**variables)
         except KeyError:
             # Extract variable names from template using regex
-            vars_in_template = re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template)
+            vars_in_template = re.findall(
+                r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template
+            )
             # Fill missing template vars with empty string (setdefault keeps real values)
             fill = {**variables}
             for k in vars_in_template:
@@ -222,7 +224,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:
@@ -710,7 +712,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)
@@ -756,7 +758,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
 

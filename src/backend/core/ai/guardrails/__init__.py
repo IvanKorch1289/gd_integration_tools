@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 from src.backend.core.ai.guardrails.llamaguard import GuardResult, LlamaGuardRuntime
-from src.backend.core.ai.guardrails.llm_guard_client import LLMGuardClient, LLMGuardResult
+from src.backend.core.ai.guardrails.llm_guard_client import (
+    LLMGuardClient,
+    LLMGuardResult,
+)
 
 __all__ = ("LlamaGuardRuntime", "GuardResult")

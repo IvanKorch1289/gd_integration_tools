@@ -1,4 +1,5 @@
 """Auto-generated from ai_processors.py — single processor files."""
+
 from __future__ import annotations
 
 from typing import Any, Callable

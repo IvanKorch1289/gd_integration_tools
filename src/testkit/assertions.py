@@ -32,15 +32,14 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.interfaces.audit import AuditRecord
-from src.backend.infrastructure.observability.memory_metrics import (
-    MemoryMetricsBackend,
-)
+from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend
 
 __all__ = ("assert_audit_event", "assert_metric_recorded")
 
 
 class _AssertionError(AssertionError):
     """Raised when an assertion helper fails."""
+
     ...
 
 

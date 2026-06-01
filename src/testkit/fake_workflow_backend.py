@@ -28,9 +28,4 @@ from src.backend.core.workflow import (
 # ``src.testkit.FakeWorkflowBackend`` import path.
 FakeWorkflowBackend = _Impl
 
-__all__ = (
-    "FakeWorkflowBackend",
-    "WorkflowBackend",
-    "WorkflowHandle",
-    "WorkflowResult",
-)
+__all__ = ("FakeWorkflowBackend", "WorkflowBackend", "WorkflowHandle", "WorkflowResult")

@@ -217,7 +217,9 @@ async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any
     if decl.output_key:
         from datetime import datetime, timezone
 
-        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(timezone.utc).isoformat()
+        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(
+            timezone.utc
+        ).isoformat()
     return None
 
 

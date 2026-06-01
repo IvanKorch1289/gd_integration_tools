@@ -47,10 +47,18 @@ class BankAccountRuRecognizer(PatternRecognizer):
 
     def __init__(self) -> None:
         patterns = [
-            Pattern(name="ru_account_20", regex=BankAccountRuRecognizer.ACCOUNT_20_PATTERN, score=0.8),
-            Pattern(name="ru_bik", regex=BankAccountRuRecognizer.BIK_PATTERN, score=0.7),
             Pattern(
-                name="ru_account_formatted", regex=BankAccountRuRecognizer.ACCOUNT_FORMATTED_PATTERN, score=0.85
+                name="ru_account_20",
+                regex=BankAccountRuRecognizer.ACCOUNT_20_PATTERN,
+                score=0.8,
+            ),
+            Pattern(
+                name="ru_bik", regex=BankAccountRuRecognizer.BIK_PATTERN, score=0.7
+            ),
+            Pattern(
+                name="ru_account_formatted",
+                regex=BankAccountRuRecognizer.ACCOUNT_FORMATTED_PATTERN,
+                score=0.85,
             ),
         ]
         super().__init__(

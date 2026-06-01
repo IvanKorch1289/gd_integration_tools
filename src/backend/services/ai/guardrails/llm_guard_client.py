@@ -64,10 +64,7 @@ class LLMGuardClient:
                   Если None — используется DEFAULT_SCANNERS.
     """
 
-    DEFAULT_SCANNERS = (
-        "PromptInjection",
-        "Toxicity",
-    )
+    DEFAULT_SCANNERS = ("PromptInjection", "Toxicity")
     SCANNER_MAP: dict[str, list[str]] = {
         "PromptInjection": ["PromptInjection"],
         "Toxicity": ["Toxicity"],
@@ -159,9 +156,7 @@ class LLMGuardClient:
 
         return results
 
-    async def _run_single_scanner(
-        self, text: str, scanner_name: str
-    ) -> LLMGuardResult:
+    async def _run_single_scanner(self, text: str, scanner_name: str) -> LLMGuardResult:
         """Run a single scanner in thread pool."""
 
         def _sync_scan() -> dict[str, Any]:
@@ -171,7 +166,9 @@ class LLMGuardClient:
                 return {
                     "scanner": scanner_name,
                     "flagged": not result.is_safe,
-                    "score": result.danger_score if hasattr(result, "danger_score") else 0.0,
+                    "score": result.danger_score
+                    if hasattr(result, "danger_score")
+                    else 0.0,
                     "is_safe": result.is_safe,
                     "danger_level": getattr(result, "danger_level", "LOW"),
                     "sanitized": sanitized,
@@ -184,9 +181,7 @@ class LLMGuardClient:
                     return {"scanner": scanner_name, "flagged": False, "score": 0.0}
                 return {"scanner": scanner_name, "flagged": True, "score": 1.0}
             except Exception as exc:  # noqa: BLE001
-                logger.warning(
-                    "LLMGuard: scanner %r failed: %s", scanner_name, exc
-                )
+                logger.warning("LLMGuard: scanner %r failed: %s", scanner_name, exc)
                 if self._fail_open:
                     return {"scanner": scanner_name, "flagged": False, "score": 0.0}
                 return {"scanner": scanner_name, "flagged": True, "score": 1.0}
@@ -230,9 +225,7 @@ class LLMGuardClient:
             raise ImportError(f"Unknown scanner: {scanner_name}")
         return cls()
 
-    def _aggregate_results(
-        self, results: list[dict[str, Any]]
-    ) -> LLMGuardResult:
+    def _aggregate_results(self, results: list[dict[str, Any]]) -> LLMGuardResult:
         """Aggregate scanner results into single LLMGuardResult."""
         flagged_results = [r for r in results if r.get("flagged")]
         if not flagged_results:
@@ -249,8 +242,5 @@ class LLMGuardClient:
         }
 
         return LLMGuardResult(
-            flagged=True,
-            score=max_score,
-            categories=categories,
-            details=details,
+            flagged=True, score=max_score, categories=categories, details=details
         )

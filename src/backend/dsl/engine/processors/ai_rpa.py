@@ -91,8 +91,7 @@ class AIRpaProcessor(BaseProcessor):
         llm_client = self._get_llm_client(context)
         if llm_client is None:
             exchange.fail(
-                "ai_rpa: LLM client не доступен "
-                "(проверьте настройки AI провайдера)"
+                "ai_rpa: LLM client не доступен (проверьте настройки AI провайдера)"
             )
             return
 
@@ -140,7 +139,11 @@ class AIRpaProcessor(BaseProcessor):
 
         for key, value in self._ui_context.items():
             # Поддержка property reference через ${...}
-            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+            if (
+                isinstance(value, str)
+                and value.startswith("${")
+                and value.endswith("}")
+            ):
                 prop_path = value[2:-1]
                 resolved = self._resolve_property(exchange, prop_path)
                 context_parts.append(f"{key}: {resolved}")
@@ -151,7 +154,7 @@ class AIRpaProcessor(BaseProcessor):
             "\nДоступные действия: click, type, screenshot, hover, scroll, wait"
         )
         context_parts.append(
-            "Верни JSON: {\"action\": \"...\", \"params\": {...}, \"reasoning\": \"...\"}"
+            'Верни JSON: {"action": "...", "params": {...}, "reasoning": "..."}'
         )
 
         return "\n".join(context_parts)

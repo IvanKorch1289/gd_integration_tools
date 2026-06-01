@@ -114,9 +114,7 @@ class AIRLMProcessor(BaseProcessor):
         self.prompt_template = prompt_template
         self.result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Execute RLM processing.
 
         Args:
@@ -156,8 +154,7 @@ class AIRLMProcessor(BaseProcessor):
         # Set output message
         if result.answer:
             exchange.out_message = exchange.out_message or type(exchange.out_message)(
-                body=result.answer,
-                headers={},
+                body=result.answer, headers={}
             )
             if hasattr(exchange.out_message, "body"):
                 exchange.out_message.body = result.answer
@@ -180,7 +177,9 @@ class AIRLMProcessor(BaseProcessor):
         # 5. Feed results back to LLM for refinement
         # 6. Repeat until SUBMIT() is called
 
-        result.answer = f"[RLM stub] Processed {result.context_size} tokens for query: {query}"
+        result.answer = (
+            f"[RLM stub] Processed {result.context_size} tokens for query: {query}"
+        )
         result.iterations = min(3, result.context_size // 1000)
         result.calls = result.iterations
         result.tokens_used = result.context_size * 2  # Rough estimate
@@ -193,7 +192,9 @@ class AIRLMProcessor(BaseProcessor):
         result.context_size = len(context.split())
 
         # Stub: direct LLM call
-        result.answer = f"[Direct stub] Processed {result.context_size} tokens for query: {query}"
+        result.answer = (
+            f"[Direct stub] Processed {result.context_size} tokens for query: {query}"
+        )
         result.tokens_used = result.context_size
         result.calls = 1
         result.iterations = 1

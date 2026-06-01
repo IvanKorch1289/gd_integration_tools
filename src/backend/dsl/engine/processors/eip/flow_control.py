@@ -338,8 +338,7 @@ class ForEachProcessor(BaseProcessor):
             if self._copy:
                 # Create a copy of the exchange for this iteration
                 exchange.in_message = Message(
-                    body=item,
-                    headers=dict(exchange.in_message.headers),
+                    body=item, headers=dict(exchange.in_message.headers)
                 )
             else:
                 # Modify in place

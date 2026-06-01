@@ -121,7 +121,7 @@ class MCPToolProcessor(BaseAIProcessor):
             body = exchange.in_message.body
             return body if isinstance(body, dict) else None
         if path.startswith("body."):
-            key = path[len("body."):]
+            key = path[len("body.") :]
             body = exchange.in_message.body
             if not isinstance(body, dict):
                 return None
@@ -132,7 +132,7 @@ class MCPToolProcessor(BaseAIProcessor):
                 cursor = cursor.get(part)
             return cursor if isinstance(cursor, dict) else None
         if path.startswith("property:"):
-            key = path[len("property:"):]
+            key = path[len("property:") :]
             value = exchange.get_property(key)
             return value if isinstance(value, dict) else None
         return None
@@ -142,18 +142,12 @@ class MCPToolProcessor(BaseAIProcessor):
         from fastmcp import Client
 
         async with Client(self.tool_uri) as client:
-            result = await client.call_tool(
-                self.tool_name,
-                arguments=arguments,
-            )
+            result = await client.call_tool(self.tool_name, arguments=arguments)
             return result
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""
-        spec: dict[str, Any] = {
-            "tool_uri": self.tool_uri,
-            "tool_name": self.tool_name,
-        }
+        spec: dict[str, Any] = {"tool_uri": self.tool_uri, "tool_name": self.tool_name}
         if self.arguments_property != "body":
             spec["arguments_property"] = self.arguments_property
         if self.result_property != "mcp_result":

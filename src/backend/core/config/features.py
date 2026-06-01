@@ -1000,7 +1000,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "S19 K4 W1. Owner: K4 AI/RAG. "
             "Активирует POST /api/v1/rag/bulk-ingest endpoint, который принимает "
-            "список {\"content\", \"metadata\"} документов, обрабатывает через embeddings "
+            'список {"content", "metadata"} документов, обрабатывает через embeddings '
             "pipeline и сохраняет в Chroma. Также активирует страницу "
             "85_RAG_Bulk_Upload.py с drag-drop файлом или textarea. "
             "default-OFF до staging-smoke."
@@ -2311,7 +2311,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "K4 Sprint 26 Wave 1 (PLAN.md V22.4 §S26). Owner: K4 AI/Data. "
             "При True `tools/checks/check_hardcoded_prompts.py` валит CI при наличии "
-            "литералов `system_prompt=`, `system_message=`, `system=\"...\"` длиннее "
+            'литералов `system_prompt=`, `system_message=`, `system="..."` длиннее '
             "50 символов в src/backend/ (вне allowlist). При False — warn-only. "
             "default-OFF первый месяц после S26 W1 sweep → ON в S27 closure."
         ),
@@ -2533,7 +2533,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W1: workflow SemVer versioning in route.toml [requires_workflows]",
         description=(
             "K3 Sprint 19 Wave 1 (PLAN.md V22 §S19 W1, Func-rec #1). Owner: K3 DSL/Workflow. "
-            "При True route.toml поддерживает секцию [requires_workflows] = { wf_name = \">=1.0,<2.0\" }. "
+            'При True route.toml поддерживает секцию [requires_workflows] = { wf_name = ">=1.0,<2.0" }. '
             "RouteLoader.load() проверяет совместимость версий workflow при загрузке. "
             "RouteBuilder.invoke_workflow(name, version=...) принимает SemVer-range. "
             "Audit-event workflow.version.mismatch при несовместимости. "
@@ -2546,8 +2546,8 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W2: route composition via include:/extends: с cycle detection",
         description=(
             "K3 Sprint 19 Wave 2 (PLAN.md V22 §S19 W2, Func-rec #2). Owner: K3 DSL. "
-            "При True *.dsl.yaml поддерживает include: [\"./common-steps.yaml\"] (один уровень) "
-            "и extends: \"./base-route.yaml\". YAML-loader разрешает дерево включений "
+            'При True *.dsl.yaml поддерживает include: ["./common-steps.yaml"] (один уровень) '
+            'и extends: "./base-route.yaml". YAML-loader разрешает дерево включений '
             "с cycle detection (RuntimeError при цикле). JSON-Schema каталог обновляется. "
             "default-OFF до DSL linter integration и smoke-test."
         ),
@@ -2558,7 +2558,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K3 S19 W3: AuthorizationGateway route-level requires_permission",
         description=(
             "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, Func-rec #3). Owner: K3 DSL/Security. "
-            "При True route.toml поддерживает [security] requires_permission = [\"role:admin\", \"scope:credit.read\"]. "
+            'При True route.toml поддерживает [security] requires_permission = ["role:admin", "scope:credit.read"]. '
             "AuthorizationGateway (S17 ADR-NEW-1) проверяет permissions перед dispatch на route. "
             "Capability-gate в RouteLoader.load() валидирует синтаксис permission-string. "
             "default-OFF до integration-test с AuthorizationGateway."
@@ -2815,7 +2815,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         title="K5 S19 W4: make new-adr + completions + release-notes + D3.js arch map",
         description=(
             "K5 Sprint 19 Wave 4 (PLAN.md V22 §S19 W16). Owner: K5 DX. "
-            "При True: make new-adr TITLE=\"...\" + manage.py completions install + "
+            'При True: make new-adr TITLE="..." + manage.py completions install + '
             "make release-notes + frontend/streamlit_app/pages/05_Architecture_Map.py (D3.js). "
             "default-OFF до quick-wins review."
         ),

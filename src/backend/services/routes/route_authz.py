@@ -22,9 +22,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.core.security.authorization_gateway import (
-    AuthorizationGateway,
-)
+from src.backend.core.security.authorization_gateway import AuthorizationGateway
 
 __all__ = ("check_route_permission",)
 

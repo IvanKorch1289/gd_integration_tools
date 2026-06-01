@@ -19,6 +19,7 @@ import asyncio
 import logging
 from typing import Any
 
+from src.backend.core.interfaces.observability import TemporalMetricsExporter
 from src.backend.core.scaling.bulkhead_scaler import BulkheadScaler
 from src.backend.core.scaling.local_process_scaler import LocalProcessScaler
 from src.backend.core.utils.task_registry import get_task_registry
@@ -77,7 +78,9 @@ class AutoScaler:
         self._task.cancel()
         try:
             await self._task
-        except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110 — graceful shutdown
+        except asyncio.CancelledError:  # noqa: BLE001 — graceful shutdown
+            pass
+        except Exception:  # noqa: BLE001, S110 — graceful shutdown
             pass
         finally:
             self._task = None
@@ -164,6 +167,40 @@ class TemporalWorkerScaler:
         self._target = target_tasks_per_worker
         self._cooldown = cooldown_seconds
         self._last_scale_at: float = 0.0
+        self._metrics_exporter: TemporalMetricsExporter | None = None
+
+    def _get_metrics_exporter(self) -> TemporalMetricsExporter | None:
+        """Lazy-init TemporalMetricsExporter (core не импортирует infrastructure напрямую)."""
+        if self._metrics_exporter is not None:
+            return self._metrics_exporter
+        try:
+            # noqa: PLC0415 — lazy import в runtime, не на уровне модуля
+            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
+                record_scale_event as _record,
+            )
+            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (  # noqa: PLC0415
+                set_task_queue_depth as _set_depth,
+            )
+            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
+                set_workers_active as _set_active,
+            )
+
+            class _MetricsExporter:
+                """Local adapter, matching TemporalMetricsExporter."""
+
+                def set_task_queue_depth(self, task_queue: str, depth: int) -> None:
+                    _set_depth(task_queue, depth)
+
+                def record_scale_event(self, action: str) -> None:
+                    _record(action)
+
+                def set_workers_active(self, task_queue: str, count: int) -> None:
+                    _set_active(task_queue, count)
+
+            self._metrics_exporter = _MetricsExporter()
+            return self._metrics_exporter
+        except ImportError:
+            return None
 
     async def tick(self) -> dict[str, Any]:
         """Один цикл оценки: queue depth → желаемое число workers."""
@@ -177,11 +214,9 @@ class TemporalWorkerScaler:
 
         depth = int(depths.get(self._task_queue, 0))
 
-        from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-            set_task_queue_depth,
-        )
-
-        set_task_queue_depth(self._task_queue, depth)
+        exporter = self._get_metrics_exporter()
+        if exporter:
+            exporter.set_task_queue_depth(self._task_queue, depth)
 
         current = self._pool_current_workers()
         desired = max(
@@ -201,22 +236,22 @@ class TemporalWorkerScaler:
             }
 
         self._last_scale_at = now
-        from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-            record_scale_event,
-            set_workers_active,
-        )
+        exporter = self._get_metrics_exporter()
 
         if desired > current:
             for _ in range(desired - current):
                 await self._safe_start_worker()
-            record_scale_event("up")
+            if exporter:
+                exporter.record_scale_event("up")
         else:
             for _ in range(current - desired):
                 await self._safe_stop_worker()
-            record_scale_event("down")
+            if exporter:
+                exporter.record_scale_event("down")
 
         new_count = self._pool_current_workers()
-        set_workers_active(self._task_queue, new_count)
+        if exporter:
+            exporter.set_workers_active(self._task_queue, new_count)
         return {
             "action": "up" if desired > current else "down",
             "depth": depth,

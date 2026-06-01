@@ -117,7 +117,7 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

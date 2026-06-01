@@ -50,7 +50,9 @@ __all__ = ("VaultSecretRotator", "get_vault_rotator")
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
 # Хранилище для зарегистрированных path'ов
-_PathCallbackEntry = tuple[str, Callable[[dict[str, Any]], None], Callable[[dict[str, Any]], bool] | None]
+_PathCallbackEntry = tuple[
+    str, Callable[[dict[str, Any]], None], Callable[[dict[str, Any]], bool] | None
+]
 
 
 class VaultSecretRotator:
@@ -121,7 +123,9 @@ class VaultSecretRotator:
         self._entries.append((path, callback, validator))
         self._versions.setdefault(path, None)
         self._old_secrets.setdefault(path, ({}, 0.0))
-        logger.debug("vault_rotator.registered", path=path, has_validator=validator is not None)
+        logger.debug(
+            "vault_rotator.registered", path=path, has_validator=validator is not None
+        )
 
     async def start(self, interval_seconds: float = 300.0) -> None:
         """Запускает фоновую задачу ротации через asyncio.create_task.
@@ -205,9 +209,7 @@ class VaultSecretRotator:
                 if cached_version is None:
                     # Первая инициализация — просто запоминаем версию
                     self._versions[path] = new_version
-                    logger.debug(
-                        "vault_rotator.init", path=path, version=new_version
-                    )
+                    logger.debug("vault_rotator.init", path=path, version=new_version)
                 elif cached_version != new_version:
                     # Новая версия обнаружена
                     new_secret: dict[str, Any] = response["data"]["data"]

@@ -243,12 +243,12 @@ class DSLLinter:
         refs: set[str] = set()
 
         # property:foo или ${property:foo}
-        prop_pattern = r'(?:\$\{)?property:([a-zA-Z_][a-zA-Z0-9_]*)\}?'
+        prop_pattern = r"(?:\$\{)?property:([a-zA-Z_][a-zA-Z0-9_]*)\}?"
         for match in re.finditer(prop_pattern, value):
             refs.add(match.group(1))
 
         # body.field или ${body.field} - извлекаем только body как reference
-        body_pattern = r'(?:\$\{)?body(?:\.([a-zA-Z_][a-zA-Z0-9_]*))?\}?'
+        body_pattern = r"(?:\$\{)?body(?:\.([a-zA-Z_][a-zA-Z0-9_]*))?\}?"
         for match in re.finditer(body_pattern, value):
             refs.add("body")
 

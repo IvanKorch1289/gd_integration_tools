@@ -89,14 +89,11 @@ class DirectoryScanProcessor(BaseProcessor):
         try:
             if self._recursive:
                 matched = glob.glob(
-                    os.path.join(glob_pattern),
-                    root_dir=search_root,
-                    recursive=True,
+                    os.path.join(glob_pattern), root_dir=search_root, recursive=True
                 )
             else:
                 matched = glob.glob(
-                    os.path.join(search_root, glob_pattern),
-                    recursive=False,
+                    os.path.join(search_root, glob_pattern), recursive=False
                 )
         except OSError as exc:
             exchange.fail(f"DirectoryScanProcessor: glob error: {exc}")
@@ -105,13 +102,19 @@ class DirectoryScanProcessor(BaseProcessor):
         # Build result entries with metadata
         entries: list[dict[str, Any]] = []
         for rel_path in matched[: self._max_files]:
-            full = os.path.join(search_root, rel_path) if self._recursive else os.path.join(search_root, rel_path)
+            full = (
+                os.path.join(search_root, rel_path)
+                if self._recursive
+                else os.path.join(search_root, rel_path)
+            )
             try:
                 stat = os.stat(full)
                 entries.append(
                     {
                         "path": full,
-                        "name": os.path.basename(rel_path) if self._recursive else os.path.basename(full),
+                        "name": os.path.basename(rel_path)
+                        if self._recursive
+                        else os.path.basename(full),
                         "size": stat.st_size,
                         "mtime": stat.st_mtime,
                     }

@@ -85,7 +85,9 @@ def with_retry(
                 await budget.record_attempt()
 
             effective_retry = retry_if_exception_type(final_policy.retry_on)
-            effective_retry = effective_retry & retry_if_not_exception_type(RetryBudgetExhausted)
+            effective_retry = effective_retry & retry_if_not_exception_type(
+                RetryBudgetExhausted
+            )
             retrying = AsyncRetrying(
                 stop=stop_after_attempt(final_policy.max_attempts),
                 wait=wait_exponential(

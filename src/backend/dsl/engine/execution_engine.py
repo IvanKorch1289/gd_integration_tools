@@ -166,7 +166,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(
@@ -283,7 +283,11 @@ class ExecutionEngine:
         current_exchange.set_property("_trace", trace_log)
 
         if any(entry.get("status") == "error" for entry in trace_log):
-            errors = [e.get("error", "Unknown") for e in trace_log if e.get("status") == "error"]
+            errors = [
+                e.get("error", "Unknown")
+                for e in trace_log
+                if e.get("status") == "error"
+            ]
             current_exchange.fail("; ".join(errors))
         else:
             current_exchange.status = ExchangeStatus.completed

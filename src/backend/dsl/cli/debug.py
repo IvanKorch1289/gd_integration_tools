@@ -47,7 +47,9 @@ def validate_route(route_file: str, format: str) -> None:
         route = loader.load_file(Path(route_file))
 
         if format == "json":
-            click.echo(json.dumps({"valid": True, "route_id": route.get("id")}, indent=2))
+            click.echo(
+                json.dumps({"valid": True, "route_id": route.get("id")}, indent=2)
+            )
         else:
             click.echo(f"✓ Route '{route.get('id')}' is valid")
             click.echo(f"  Source: {route.get('source', {}).get('type')}")
@@ -66,7 +68,9 @@ def validate_route(route_file: str, format: str) -> None:
 @click.option("--body", "-b", default=None, help="Request body (JSON string)")
 @click.option("--headers", "-h", default=None, help="Request headers (JSON string)")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def dry_run(route_file: str, body: str | None, headers: str | None, verbose: bool) -> None:
+def dry_run(
+    route_file: str, body: str | None, headers: str | None, verbose: bool
+) -> None:
     """Perform a dry run of a route.
 
     ROUTE_FILE: Path to the route YAML file.
@@ -123,12 +127,17 @@ def inspect_exchange(exchange_json: str, verbose: bool) -> None:
             click.echo(f"Properties: {list(exchange.properties.keys())}")
             click.echo(f"Meta: route_id={exchange.meta.route_id}")
         else:
-            click.echo(json.dumps({
-                "status": exchange.status.value,
-                "has_in_message": exchange.in_message is not None,
-                "has_out_message": exchange.out_message is not None,
-                "property_count": len(exchange.properties),
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "status": exchange.status.value,
+                        "has_in_message": exchange.in_message is not None,
+                        "has_out_message": exchange.out_message is not None,
+                        "property_count": len(exchange.properties),
+                    },
+                    indent=2,
+                )
+            )
 
     except Exception as exc:
         click.echo(f"✗ Inspection failed: {exc}", err=True)
@@ -137,7 +146,9 @@ def inspect_exchange(exchange_json: str, verbose: bool) -> None:
 
 @cli.command("trace-pipeline")
 @click.argument("pipeline_file", type=click.Path(exists=True))
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file for trace")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file for trace"
+)
 def trace_pipeline(pipeline_file: str, output: str | None) -> None:
     """Trace pipeline execution steps.
 
@@ -244,12 +255,14 @@ def _trace_pipeline_steps(route: dict[str, Any]) -> dict[str, Any]:
     trace = []
 
     for i, step in enumerate(steps):
-        trace.append({
-            "index": i,
-            "name": step.get("name", f"step_{i}"),
-            "type": step.get("type", "unknown"),
-            "params": step.get("params", {}),
-        })
+        trace.append(
+            {
+                "index": i,
+                "name": step.get("name", f"step_{i}"),
+                "type": step.get("type", "unknown"),
+                "params": step.get("params", {}),
+            }
+        )
 
     return {
         "route_id": route.get("id", "unknown"),
@@ -271,6 +284,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
     for module_name in modules_to_try:
         try:
             import importlib
+
             module = importlib.import_module(module_name)
             if hasattr(module, processor_class):
                 cls = getattr(module, processor_class)
@@ -285,7 +299,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
                     "docstring": cls.__doc__ or "No docstring",
                     "params": _extract_params(cls),
                 }
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             continue
 
     raise ValueError(f"Processor '{processor_class}' not found")
@@ -301,8 +315,12 @@ def _extract_params(cls: type[BaseProcessor]) -> dict[str, str]:
         for name, param in sig.parameters.items():
             if name == "self":
                 continue
-            params[name] = str(param.annotation) if param.annotation != inspect.Parameter.empty else "Any"
-    except (ValueError, TypeError):
+            params[name] = (
+                str(param.annotation)
+                if param.annotation != inspect.Parameter.empty
+                else "Any"
+            )
+    except ValueError, TypeError:
         pass
     return params
 

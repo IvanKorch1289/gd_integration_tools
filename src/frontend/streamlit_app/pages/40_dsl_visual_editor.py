@@ -183,7 +183,8 @@ with col_palette:
 
     palette_category = st.selectbox(
         "Category",
-        options=["all"] + sorted(set("core control_flow routing transformation resilience".split())),
+        options=["all"]
+        + sorted(set("core control_flow routing transformation resilience".split())),
         index=0,
     )
 
@@ -191,7 +192,8 @@ with col_palette:
     if palette_category != "all":
         # Simple filter - in production would use namespace tags
         filtered_processors = {
-            k: v for k, v in VISUAL_PROCESSORS.items()
+            k: v
+            for k, v in VISUAL_PROCESSORS.items()
             if k in ["log", "validate", "transform", "retry"]
         }
 
@@ -208,7 +210,9 @@ with col_palette:
                     st.session_state.canvas_steps.append(
                         {"type": proc_type, "params": {p: "" for p in params}}
                     )
-                    st.session_state.selected_step_index = len(st.session_state.canvas_steps) - 1
+                    st.session_state.selected_step_index = (
+                        len(st.session_state.canvas_steps) - 1
+                    )
                     _sync_yaml()
                     st.rerun()
 
@@ -219,7 +223,9 @@ with col_palette:
         routes = client.list_dsl_routes()
     except Exception:  # noqa: BLE001
         st.caption("Could not load routes list")
-    selected_route = st.selectbox("Open existing", ["—"] + routes, key="route_load_select")
+    selected_route = st.selectbox(
+        "Open existing", ["—"] + routes, key="route_load_select"
+    )
     if selected_route != "—" and st.button("Load", use_container_width=True):
         try:
             detail = client.get_dsl_route(selected_route)
@@ -296,6 +302,7 @@ with col_canvas:
         _ag_grid_available = False
         try:
             from st_aggrid import AgGrid
+
             _ag_grid_available = True
         except ImportError:
             pass
@@ -304,13 +311,17 @@ with col_canvas:
             # AgGrid-based drag-drop reordering
             grid_data = []
             for i, step in enumerate(st.session_state.canvas_steps):
-                params_str = ", ".join(f"{k}={v}" for k, v in step["params"].items() if v)
-                grid_data.append({
-                    "index": i,
-                    "step": step["type"],
-                    "params": params_str,
-                    "icon": PROCESSOR_ICONS.get(step["type"], "🔧"),
-                })
+                params_str = ", ".join(
+                    f"{k}={v}" for k, v in step["params"].items() if v
+                )
+                grid_data.append(
+                    {
+                        "index": i,
+                        "step": step["type"],
+                        "params": params_str,
+                        "icon": PROCESSOR_ICONS.get(step["type"], "🔧"),
+                    }
+                )
 
             grid_options = {
                 "rowSelection": "single",
@@ -347,7 +358,7 @@ with col_canvas:
                     if is_selected:
                         c1.markdown("👉")
                     else:
-                        if c1.button(f"#{i+1}", key=f"sel_{i}", help="Select"):
+                        if c1.button(f"#{i + 1}", key=f"sel_{i}", help="Select"):
                             st.session_state.selected_step_index = i
                             st.rerun()
 
@@ -359,17 +370,28 @@ with col_canvas:
 
                     # Reorder buttons
                     col_up, col_down, col_del = c3, c4, st.columns(2)[1]
-                    if col_up.button("⬆️", key=f"up_{i}", help="Move up", disabled=i == 0):
-                        st.session_state.canvas_steps[i - 1], st.session_state.canvas_steps[i] = (
+                    if col_up.button(
+                        "⬆️", key=f"up_{i}", help="Move up", disabled=i == 0
+                    ):
+                        (
+                            st.session_state.canvas_steps[i - 1],
+                            st.session_state.canvas_steps[i],
+                        ) = (
                             st.session_state.canvas_steps[i],
                             st.session_state.canvas_steps[i - 1],
                         )
                         _sync_yaml()
                         st.rerun()
                     if col_down.button(
-                        "⬇️", key=f"down_{i}", help="Move down", disabled=i == len(st.session_state.canvas_steps) - 1
+                        "⬇️",
+                        key=f"down_{i}",
+                        help="Move down",
+                        disabled=i == len(st.session_state.canvas_steps) - 1,
                     ):
-                        st.session_state.canvas_steps[i + 1], st.session_state.canvas_steps[i] = (
+                        (
+                            st.session_state.canvas_steps[i + 1],
+                            st.session_state.canvas_steps[i],
+                        ) = (
                             st.session_state.canvas_steps[i],
                             st.session_state.canvas_steps[i + 1],
                         )
@@ -379,7 +401,10 @@ with col_canvas:
                         st.session_state.canvas_steps.pop(i)
                         if st.session_state.selected_step_index == i:
                             st.session_state.selected_step_index = None
-                        elif st.session_state.selected_step_index and st.session_state.selected_step_index > i:
+                        elif (
+                            st.session_state.selected_step_index
+                            and st.session_state.selected_step_index > i
+                        ):
                             st.session_state.selected_step_index -= 1
                         _sync_yaml()
                         st.rerun()
@@ -470,7 +495,9 @@ with col_props:
                 st.rerun()
         with c_clr:
             if st.button("Clear Params", use_container_width=True):
-                st.session_state.canvas_steps[idx]["params"] = {p: "" for p in available_params}
+                st.session_state.canvas_steps[idx]["params"] = {
+                    p: "" for p in available_params
+                }
                 _sync_yaml()
                 st.rerun()
 

@@ -45,9 +45,7 @@ def _build_workflow_prompt_fn(wf: WorkflowDescriptor) -> Any:
     """Build an async prompt function that returns workflow catalogue information."""
 
     async def prompt_fn(
-        payload: str = "{}",
-        wait: bool = False,
-        timeout_s: int = 300,
+        payload: str = "{}", wait: bool = False, timeout_s: int = 300
     ) -> str:
         """Return workflow catalogue information (read-only)."""
         return json.dumps(
@@ -221,10 +219,7 @@ class FastMCPserver:
 # ── Tool callback factory ──────────────────────────────────────────────────────
 
 
-def _build_tool_callback(
-    skill: SkillSpec,
-    registry: SkillRegistry,
-) -> Any:
+def _build_tool_callback(skill: SkillSpec, registry: SkillRegistry) -> Any:
     """Build an async tool callback for a given SkillSpec."""
 
     async def tool_callback(arguments: dict[str, Any]) -> str:

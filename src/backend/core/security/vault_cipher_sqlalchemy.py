@@ -67,7 +67,7 @@ def _default_deserializer(raw: bytes) -> Any:
     text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else raw
     try:
         return json.loads(text)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return text
 
 

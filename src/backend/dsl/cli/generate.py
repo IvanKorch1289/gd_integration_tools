@@ -32,10 +32,14 @@ def cli() -> None:
 
 @cli.command("route")
 @click.argument("route_name")
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file path"
+)
 @click.option("--template", "-t", default="default", help="Template name")
 @click.option("--protocol", default="rest", help="Protocol (rest, soap, grpc, etc.)")
-def generate_route(route_name: str, output: str | None, template: str, protocol: str) -> None:
+def generate_route(
+    route_name: str, output: str | None, template: str, protocol: str
+) -> None:
     """Generate a new DSL route.
 
     ROUTE_NAME: Name of the route to generate (e.g., 'customer-api').
@@ -44,7 +48,9 @@ def generate_route(route_name: str, output: str | None, template: str, protocol:
 
     yaml_content = yaml.dump(route_template, default_flow_style=False, sort_keys=False)
 
-    output_path = Path(output) if output else Path(f"routes/{route_name}/{route_name}.dsl.yaml")
+    output_path = (
+        Path(output) if output else Path(f"routes/{route_name}/{route_name}.dsl.yaml")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
@@ -57,7 +63,9 @@ def generate_route(route_name: str, output: str | None, template: str, protocol:
 
 @cli.command("service")
 @click.argument("service_name")
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file path"
+)
 @click.option("--crud", is_flag=True, default=False, help="Generate CRUD operations")
 def generate_service(service_name: str, output: str | None, crud: bool) -> None:
     """Generate a service DSL definition.
@@ -69,7 +77,9 @@ def generate_service(service_name: str, output: str | None, crud: bool) -> None:
     # Convert to TOML-like format for service definitions
     toml_content = _to_toml_style(service_dsl)
 
-    output_path = Path(output) if output else Path(f"services/{service_name}.service.toml")
+    output_path = (
+        Path(output) if output else Path(f"services/{service_name}.service.toml")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
@@ -82,7 +92,9 @@ def generate_service(service_name: str, output: str | None, crud: bool) -> None:
 
 @cli.command("blueprint")
 @click.argument("blueprint_name")
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file path"
+)
 @click.option("--type", "-t", default="rest-to-db", help="Blueprint type")
 def generate_blueprint(blueprint_name: str, output: str | None, type: str) -> None:
     """Generate a blueprint definition.
@@ -110,9 +122,13 @@ def generate_blueprint(blueprint_name: str, output: str | None, type: str) -> No
             "type": type,
         }
 
-    yaml_content = yaml.dump(blueprint_template, default_flow_style=False, sort_keys=False)
+    yaml_content = yaml.dump(
+        blueprint_template, default_flow_style=False, sort_keys=False
+    )
 
-    output_path = Path(output) if output else Path(f"blueprints/{blueprint_name}.blueprint.yaml")
+    output_path = (
+        Path(output) if output else Path(f"blueprints/{blueprint_name}.blueprint.yaml")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
@@ -124,9 +140,15 @@ def generate_blueprint(blueprint_name: str, output: str | None, type: str) -> No
 
 @cli.command("processor")
 @click.argument("processor_name")
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
-@click.option("--type", "-t", default="generic", help="Processor type (generic, ai, rpa, etc.)")
-@click.option("--async", "is_async", is_flag=True, default=False, help="Generate async processor")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file path"
+)
+@click.option(
+    "--type", "-t", default="generic", help="Processor type (generic, ai, rpa, etc.)"
+)
+@click.option(
+    "--async", "is_async", is_flag=True, default=False, help="Generate async processor"
+)
 def generate_processor(
     processor_name: str, output: str | None, type: str, is_async: bool
 ) -> None:
@@ -136,7 +158,9 @@ def generate_processor(
     """
     processor_code = _build_processor_code(processor_name, type, is_async)
 
-    output_path = Path(output) if output else Path(f"processors/{processor_name.lower()}.py")
+    output_path = (
+        Path(output) if output else Path(f"processors/{processor_name.lower()}.py")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
@@ -149,7 +173,9 @@ def generate_processor(
 
 @cli.command("workflow")
 @click.argument("workflow_name")
-@click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
+@click.option(
+    "--output", "-o", type=click.Path(), default=None, help="Output file path"
+)
 @click.option("--steps", "-s", default=3, help="Number of initial steps")
 def generate_workflow(workflow_name: str, output: str | None, steps: int) -> None:
     """Generate a workflow DSL definition.
@@ -158,9 +184,13 @@ def generate_workflow(workflow_name: str, output: str | None, steps: int) -> Non
     """
     workflow_template = _build_workflow_template(workflow_name, steps)
 
-    yaml_content = yaml.dump(workflow_template, default_flow_style=False, sort_keys=False)
+    yaml_content = yaml.dump(
+        workflow_template, default_flow_style=False, sort_keys=False
+    )
 
-    output_path = Path(output) if output else Path(f"workflows/{workflow_name}.workflow.yaml")
+    output_path = (
+        Path(output) if output else Path(f"workflows/{workflow_name}.workflow.yaml")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
@@ -176,10 +206,7 @@ def _build_route_template(name: str, template: str, protocol: str) -> dict[str, 
         "route": {
             "id": name,
             "description": f"Auto-generated route: {name}",
-            "source": {
-                "type": protocol,
-                "path": f"/api/v1/{name.replace('-', '/')}",
-            },
+            "source": {"type": protocol, "path": f"/api/v1/{name.replace('-', '/')}"},
             "steps": [
                 {
                     "name": "log_request",
@@ -192,20 +219,14 @@ def _build_route_template(name: str, template: str, protocol: str) -> dict[str, 
                     "params": {"template": "{{body}}"},
                 },
             ],
-            "sink": {
-                "type": "log",
-            },
+            "sink": {"type": "log"},
         }
     }
 
 
 def _build_service_dsl(name: str, crud: bool) -> dict[str, Any]:
     """Build service DSL definition."""
-    service = {
-        "service": name,
-        "version": "1.0.0",
-        "description": f"Service: {name}",
-    }
+    service = {"service": name, "version": "1.0.0", "description": f"Service: {name}"}
 
     if crud:
         service["endpoints"] = [
@@ -217,7 +238,7 @@ def _build_service_dsl(name: str, crud: bool) -> dict[str, Any]:
         ]
     else:
         service["endpoints"] = [
-            {"method": "GET", "path": f"/{name}", "action": "invoke"},
+            {"method": "GET", "path": f"/{name}", "action": "invoke"}
         ]
 
     return service
@@ -302,11 +323,13 @@ def _build_workflow_template(name: str, steps: int) -> dict[str, Any]:
     """Build workflow template."""
     workflow_steps = []
     for i in range(steps):
-        workflow_steps.append({
-            "name": f"step_{i + 1}",
-            "processor": "log",
-            "params": {"message": f"Step {i + 1} of {name}"},
-        })
+        workflow_steps.append(
+            {
+                "name": f"step_{i + 1}",
+                "processor": "log",
+                "params": {"message": f"Step {i + 1} of {name}"},
+            }
+        )
 
     return {
         "workflow": {
@@ -314,10 +337,7 @@ def _build_workflow_template(name: str, steps: int) -> dict[str, Any]:
             "description": f"Auto-generated workflow: {name}",
             "version": "1.0",
             "steps": workflow_steps,
-            "error_handling": {
-                "strategy": "retry",
-                "max_attempts": 3,
-            },
+            "error_handling": {"strategy": "retry", "max_attempts": 3},
         }
     }
 

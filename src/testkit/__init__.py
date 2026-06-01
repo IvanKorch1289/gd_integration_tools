@@ -41,10 +41,7 @@ Public API summary:
 
 from __future__ import annotations
 
-from src.testkit.assertions import (
-    assert_audit_event,
-    assert_metric_recorded,
-)
+from src.testkit.assertions import assert_audit_event, assert_metric_recorded
 from src.testkit.fake_workflow_backend import FakeWorkflowBackend
 from src.testkit.mock_capability_gateway import MockCapabilityGateway
 from src.testkit.recorder import (

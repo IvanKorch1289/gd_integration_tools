@@ -47,7 +47,10 @@ class RetryPolicy(BaseModel):
         default=(), description="Имена ошибок, при которых retry НЕ выполняется."
     )
     jitter: float | None = Field(
-        default=None, ge=0.0, le=1.0, description="Jitter: random fraction of interval [0..1]."
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Jitter: random fraction of interval [0..1].",
     )
 
 

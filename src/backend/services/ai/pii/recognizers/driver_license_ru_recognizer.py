@@ -45,10 +45,20 @@ class DriverLicenseRuRecognizer(PatternRecognizer):
 
     def __init__(self) -> None:
         patterns = [
-            Pattern(name="ru_driver_license_new", regex=DriverLicenseRuRecognizer.NEW_FORMAT_PATTERN, score=0.8),
-            Pattern(name="ru_driver_license_old", regex=DriverLicenseRuRecognizer.OLD_FORMAT_PATTERN, score=0.85),
             Pattern(
-                name="ru_driver_license_latin", regex=DriverLicenseRuRecognizer.LATIN_FORMAT_PATTERN, score=0.6
+                name="ru_driver_license_new",
+                regex=DriverLicenseRuRecognizer.NEW_FORMAT_PATTERN,
+                score=0.8,
+            ),
+            Pattern(
+                name="ru_driver_license_old",
+                regex=DriverLicenseRuRecognizer.OLD_FORMAT_PATTERN,
+                score=0.85,
+            ),
+            Pattern(
+                name="ru_driver_license_latin",
+                regex=DriverLicenseRuRecognizer.LATIN_FORMAT_PATTERN,
+                score=0.6,
             ),
         ]
         super().__init__(

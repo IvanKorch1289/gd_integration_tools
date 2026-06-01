@@ -75,7 +75,9 @@ def register_region(region: Region) -> None:
     """Register a region. Overwrites any existing region with the same ``code``."""
     _REGION_REGISTRY[region.code] = region
     _REGION_HEALTH[region.code] = region.status
-    logger.info("Region registered", extra={"region": region.code, "url": region.primary_url})
+    logger.info(
+        "Region registered", extra={"region": region.code, "url": region.primary_url}
+    )
 
 
 def get_region(code: str) -> Region | None:
@@ -184,7 +186,10 @@ class RegionRouter:
         # Fallback: first registered region regardless of status
         fallback = regions[0].primary_url
         set_active_region(regions[0].code)
-        logger.warning("No healthy regions found, using fallback", extra={"fallback": regions[0].code})
+        logger.warning(
+            "No healthy regions found, using fallback",
+            extra={"fallback": regions[0].code},
+        )
         return fallback
 
     def _build_candidate_list(self, tenant_ctx: TenantContext | None) -> list[str]:
@@ -206,7 +211,11 @@ class RegionRouter:
     def is_healthy(self, region_code: str) -> bool:
         """True if region is registered and not UNHEALTHY."""
         status = get_region_status(region_code)
-        return status in (RegionStatus.HEALTHY, RegionStatus.DEGRADED, RegionStatus.UNKNOWN)
+        return status in (
+            RegionStatus.HEALTHY,
+            RegionStatus.DEGRADED,
+            RegionStatus.UNKNOWN,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -230,11 +239,7 @@ class RegionHealthChecker:
     alerting (PagerDuty/Slack) via the ``on_status_change`` callback.
     """
 
-    def __init__(
-        self,
-        timeout: float = 5.0,
-        unhealth_threshold: int = 3,
-    ) -> None:
+    def __init__(self, timeout: float = 5.0, unhealth_threshold: int = 3) -> None:
         """
         Parameters
         ----------
@@ -247,7 +252,9 @@ class RegionHealthChecker:
         self._threshold = unhealth_threshold
         self._failure_counts: dict[str, int] = {}
         self._running = False
-        self.on_status_change: Callable[[str, RegionStatus, RegionStatus], None] | None = None
+        self.on_status_change: (
+            Callable[[str, RegionStatus, RegionStatus], None] | None
+        ) = None
 
     async def probe(self, region: Region) -> bool:
         """
@@ -290,7 +297,11 @@ class RegionHealthChecker:
         else:
             count = self._failure_counts.get(code, 0) + 1
             self._failure_counts[code] = count
-            new_status = RegionStatus.UNHEALTHY if count >= self._threshold else RegionStatus.DEGRADED
+            new_status = (
+                RegionStatus.UNHEALTHY
+                if count >= self._threshold
+                else RegionStatus.DEGRADED
+            )
 
         current = get_region_status(code)
         if new_status != current:

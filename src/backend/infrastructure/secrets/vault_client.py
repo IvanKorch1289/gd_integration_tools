@@ -36,11 +36,7 @@ import structlog
 from src.backend.infrastructure.secrets.vault_backend import VaultBackend, VaultConfig
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = (
-    "VaultClient",
-    "VaultClientConfig",
-    "get_vault_client",
-)
+__all__ = ("VaultClient", "VaultClientConfig", "get_vault_client")
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
@@ -189,16 +185,10 @@ class VaultClient:
                 Must return True for activation to proceed. If False, the old
                 secret remains active and the new one is kept for later retry.
         """
-        entry = _SecretEntry(
-            path=path,
-            callback=callback,
-            validator=validator,
-        )
+        entry = _SecretEntry(path=path, callback=callback, validator=validator)
         self._entries[path] = entry
         logger.debug(
-            "vault_client.registered",
-            path=path,
-            has_validator=validator is not None,
+            "vault_client.registered", path=path, has_validator=validator is not None
         )
 
     def get_active_secret(self, path: str) -> dict[str, Any] | None:
@@ -231,8 +221,7 @@ class VaultClient:
 
         self._running = True
         self._rotation_task = get_task_registry().create_task(
-            self._rotation_loop(),
-            name="vault-client-rotation",
+            self._rotation_loop(), name="vault-client-rotation"
         )
         logger.info(
             "vault_client.started",
@@ -276,8 +265,7 @@ class VaultClient:
         for path, entry in list(self._entries.items()):
             try:
                 response = self._client.secrets.kv.v2.read_secret_version(
-                    path=path,
-                    mount_point=self._vault_config.mount_point,
+                    path=path, mount_point=self._vault_config.mount_point
                 )
                 new_version: int = response["data"]["metadata"]["version"]
                 new_data: dict[str, Any] = response["data"]["data"]
@@ -286,11 +274,7 @@ class VaultClient:
                     # First read — just cache the version and data
                     entry.current_version = new_version
                     entry.active_secret_data = new_data
-                    logger.debug(
-                        "vault_client.init",
-                        path=path,
-                        version=new_version,
-                    )
+                    logger.debug("vault_client.init", path=path, version=new_version)
                 elif entry.current_version != new_version:
                     # Version changed — check drift window
                     old_secret_still_valid = (
@@ -356,9 +340,7 @@ class VaultClient:
                         entry.callback(new_data)
                 else:
                     logger.debug(
-                        "vault_client.unchanged",
-                        path=path,
-                        version=new_version,
+                        "vault_client.unchanged", path=path, version=new_version
                     )
 
             except Exception as exc:
@@ -380,8 +362,7 @@ class VaultClient:
         import hvac  # noqa: PLC0415
 
         client = hvac.Client(
-            url=self._vault_config.url,
-            namespace=self._vault_config.namespace,
+            url=self._vault_config.url, namespace=self._vault_config.namespace
         )
 
         if self._vault_config.token:
@@ -407,10 +388,7 @@ class VaultClient:
             except asyncio.CancelledError:
                 break
             except Exception as exc:
-                logger.error(
-                    "vault_client.rotation_loop_error",
-                    error=str(exc),
-                )
+                logger.error("vault_client.rotation_loop_error", error=str(exc))
 
             try:
                 await asyncio.sleep(self._config.rotation_interval_seconds)

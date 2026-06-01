@@ -48,9 +48,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.services.workflows.hitl_service import HitlService
 
-__all__ = (
-    "HitlApprovalProcessor",
-)
+__all__ = ("HitlApprovalProcessor",)
 
 _logger = logging.getLogger("dsl.hitl_approval")
 
@@ -137,7 +135,9 @@ class HitlApprovalProcessor(BaseProcessor):
             workflow_id=workflow_id,
             tenant_id=str(tenant_id),
             signal_name="hitl_approve",
-            initiator=payload_data.get("initiator", "unknown") if isinstance(payload_data, dict) else "unknown",
+            initiator=payload_data.get("initiator", "unknown")
+            if isinstance(payload_data, dict)
+            else "unknown",
             title=self._title,
             payload=payload,
         )
@@ -168,19 +168,27 @@ class HitlApprovalProcessor(BaseProcessor):
                 "signal_id": signal_id,
                 "action": "approved",
                 "decided_by": decision.resolved_by,
-                "decided_at": decision.resolved_at.isoformat() if decision.resolved_at else None,
+                "decided_at": decision.resolved_at.isoformat()
+                if decision.resolved_at
+                else None,
             }
             # body уже содержит результат предыдущих шагов
 
         elif action == "reject":
-            _logger.warning("HITL rejected: signal_id=%s, by=%s", signal_id, decision.resolved_by)
+            _logger.warning(
+                "HITL rejected: signal_id=%s, by=%s", signal_id, decision.resolved_by
+            )
             exchange.fail(
                 f"HITL approval rejected by {decision.resolved_by}: {signal_id}"
             )
             return
 
         elif action == "request_info":
-            _logger.info("HITL requested info: signal_id=%s, by=%s", signal_id, decision.resolved_by)
+            _logger.info(
+                "HITL requested info: signal_id=%s, by=%s",
+                signal_id,
+                decision.resolved_by,
+            )
             # Выполняем request_info_processors для сбора дополнительных данных
             from src.backend.dsl.engine.processors.base import run_sub_processors
 
@@ -196,7 +204,9 @@ class HitlApprovalProcessor(BaseProcessor):
                 workflow_id=workflow_id,
                 tenant_id=str(tenant_id),
                 signal_name="hitl_approve",
-                initiator=payload_data.get("initiator", "unknown") if isinstance(payload_data, dict) else "unknown",
+                initiator=payload_data.get("initiator", "unknown")
+                if isinstance(payload_data, dict)
+                else "unknown",
                 title=self._title,
                 payload=payload,
             )
@@ -254,9 +264,7 @@ class HitlApprovalProcessor(BaseProcessor):
             # JMESPath expressions are not serializable to YAML
             return None
 
-        spec: dict[str, Any] = {
-            "title": self._title,
-        }
+        spec: dict[str, Any] = {"title": self._title}
         if self._description:
             spec["description"] = self._description
         if self._approvers:

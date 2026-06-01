@@ -1,4 +1,5 @@
 """Auto-generated from ai_processors.py — single processor files."""
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -8,6 +9,7 @@ import orjson
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class LLMFallbackProcessor(BaseProcessor):
     """Пробует несколько LLM-провайдеров по цепочке.

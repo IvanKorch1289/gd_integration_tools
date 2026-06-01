@@ -1,4 +1,5 @@
 """Auto-generated from ai_processors.py — single processor files."""
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -8,6 +9,7 @@ import orjson
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class CacheProcessor(BaseProcessor):
     """Redis-кеш для результатов обработки.
@@ -46,7 +48,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)
