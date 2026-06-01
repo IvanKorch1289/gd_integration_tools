@@ -83,3 +83,33 @@ def test_retry_budget_exhausted_has_name() -> None:
     exc = RetryBudgetExhausted("test-budget")
     assert exc.name == "test-budget"
     assert "test-budget" in str(exc)
+
+
+@pytest.mark.asyncio
+async def test_retry_budget_exhausted_not_retried() -> None:
+    """RetryBudgetExhausted не должен вызывать повторные попытки."""
+    from src.backend.core.resilience.retry_budget import RetryBudget
+
+    budget = RetryBudget(name="test-budget", ratio=0.0)
+    policy = RetryPolicy(
+        max_attempts=5,
+        initial_backoff=0.001,
+        backoff_multiplier=1.0,
+        jitter=0.0,
+        budget=budget,
+    )
+
+    counter = {"calls": 0}
+
+    @with_retry(policy)
+    async def flaky() -> str:
+        counter["calls"] += 1
+        raise RuntimeError("fail")
+
+    # Бюджет исчерпан сразу → первая попытка пройдёт,
+    # вторая попытка (retry) блокируется бюджетом до вызова fn.
+    with pytest.raises(RetryBudgetExhausted):
+        await flaky()
+    # Функция вызвана ровно 1 раз: оригинальная попытка.
+    # Retry-attempt отклонён бюджетом, fn не дёргалась повторно.
+    assert counter["calls"] == 1

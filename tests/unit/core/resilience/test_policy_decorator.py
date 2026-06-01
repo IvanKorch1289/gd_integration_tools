@@ -146,3 +146,22 @@ async def test_policy_breaker_open_raises_circuit_open() -> None:
 def test_policy_invalid_breaker_spec_raises_typeerror() -> None:
     with pytest.raises(TypeError, match="circuit_breaker"):
         policy(circuit_breaker=123)  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_policy_breaker_spec_auto_name_from_func() -> None:
+    """BreakerSpec без явного name получает авто-имя от функции."""
+    from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+
+    registry = get_breaker_registry()
+    spec = BreakerSpec(failure_threshold=2, recovery_timeout=1.0)
+
+    @policy(circuit_breaker=spec)
+    async def my_service_func() -> int:
+        return 42
+
+    await my_service_func()
+    # Авто-имя формируется из __module__ + __qualname__ функции.
+    # В pytest __qualname__ вложенной async-функции содержит <locals>.
+    expected_name = f"{my_service_func.__module__}.{my_service_func.__qualname__}"
+    assert registry.get(expected_name) is not None

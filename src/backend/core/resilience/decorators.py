@@ -56,9 +56,17 @@ def policy(
         Декоратор для async-функции. Композиция в порядке
         ``cache(rl(cb(retry(fn))))``.
     """
-    breaker = _resolve_breaker(circuit_breaker)
+
+    # Eager validation of circuit_breaker type to fail fast.
+    if circuit_breaker is not None and not isinstance(
+        circuit_breaker, (str, BreakerSpec, Breaker)
+    ):
+        raise TypeError(
+            f"Unsupported circuit_breaker spec: {type(circuit_breaker).__name__}"
+        )
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+        breaker = _resolve_breaker(circuit_breaker, func=func)
         wrapped: Callable[..., Awaitable[Any]] = func
         if retry is not None:
             wrapped = _wrap_retry(wrapped, retry)
@@ -78,7 +86,10 @@ def policy(
     return decorator
 
 
-def _resolve_breaker(spec: str | BreakerSpec | Breaker | None) -> Breaker | None:
+def _resolve_breaker(
+    spec: str | BreakerSpec | Breaker | None,
+    func: Callable[..., Awaitable[Any]] | None = None,
+) -> Breaker | None:
     if spec is None:
         return None
     if isinstance(spec, Breaker):
@@ -90,7 +101,10 @@ def _resolve_breaker(spec: str | BreakerSpec | Breaker | None) -> Breaker | None
             return registry.get_or_create(spec, None)
         return existing
     if isinstance(spec, BreakerSpec):
-        return registry.get_or_create(spec.name, spec)
+        name = spec.name
+        if name == "default" and func is not None:
+            name = f"{func.__module__}.{func.__qualname__}"
+        return registry.get_or_create(name, spec)
     raise TypeError(f"Unsupported circuit_breaker spec: {type(spec).__name__}")
 
 

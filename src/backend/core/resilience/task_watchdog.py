@@ -125,7 +125,9 @@ class TaskWatchdog:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     async def tick(self) -> None:

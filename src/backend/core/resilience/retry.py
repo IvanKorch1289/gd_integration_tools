@@ -102,10 +102,10 @@ def with_retry(
             try:
                 async for attempt in retrying:
                     attempt_no += 1
-                    if budget is not None and attempt_no > 1:
-                        if not await budget.try_retry():
-                            raise RetryBudgetExhausted(budget.name)
                     with attempt:
+                        if budget is not None and attempt_no > 1:
+                            if not await budget.try_retry():
+                                raise RetryBudgetExhausted(budget.name)
                         result = await func(*args, **kwargs)
                         return result
             except RetryError as exc:

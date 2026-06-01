@@ -397,19 +397,21 @@ class AdaptiveBulkhead:
         Returns:
             True если слот захвачен; False при timeout.
         """
-        acquired = False
         try:
             if timeout is None:
                 await self._semaphore.acquire()
             else:
                 await asyncio.wait_for(self._semaphore.acquire(), timeout=timeout)
-            acquired = True
             self._in_flight += 1
             return True
         except asyncio.TimeoutError:
             return False
         except asyncio.CancelledError:
-            if acquired:
+            # Если CancelledError дошел сюда, семафор мог быть захвачен
+            # внутри wait_for, но _in_flight еще не инкрементирован.
+            # Компенсируем возможную утечку слота, но защищаемся от over-release
+            # (если CancelledError пришел до фактического захвата).
+            if self._semaphore._value < self._current:
                 self._semaphore.release()
             raise
 

@@ -141,3 +141,21 @@ def test_resilience_package_reexports_cache_decorators() -> None:
     assert resilience.cached is cached
     assert resilience.invalidate is invalidate
     assert resilience.multi_cached is multi_cached
+
+
+@pytest.mark.asyncio
+async def test_multi_cached_includes_positional_args_in_key() -> None:
+    """Разные позиционные аргументы дают разные ключи кеша."""
+    calls: list[int] = []
+
+    @multi_cached(ttls={"summary": 60})
+    async def compute(user_id: int) -> dict:
+        calls.append(user_id)
+        return {"summary": f"user_{user_id}"}
+
+    first = await compute(1)
+    second = await compute(2)
+    assert first == {"summary": "user_1"}
+    assert second == {"summary": "user_2"}
+    # Функция должна быть вызвана дважды, т.к. ключи разные.
+    assert calls == [1, 2]

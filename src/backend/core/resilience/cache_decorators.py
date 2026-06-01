@@ -189,10 +189,12 @@ def multi_cached(
 
         def _key_builder(*args: Any, **kwargs: Any) -> str:
             try:
-                kw_part = json.dumps(kwargs, sort_keys=True, default=str)
+                payload = json.dumps(
+                    {"args": args, "kwargs": kwargs}, sort_keys=True, default=str
+                )
             except Exception:
-                kw_part = str(sorted(kwargs.items()))
-            return f"multi:{slots}:{kw_part}"
+                payload = str((args, sorted(kwargs.items())))
+            return f"multi:{slots}:{payload}"
 
         return cached(ttl=min_ttl, key=_key_builder, backend="multi")(func)
 

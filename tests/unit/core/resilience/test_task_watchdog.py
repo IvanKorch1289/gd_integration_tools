@@ -153,3 +153,20 @@ def test_singleton_returns_same_instance() -> None:
     b = get_task_watchdog()
     assert a is b
     assert isinstance(a, TaskWatchdog)
+
+
+@pytest.mark.asyncio
+async def test_stop_reraises_cancelled_error() -> None:
+    """CancelledError при остановке monitor-task должен пробрасываться."""
+    watchdog = TaskWatchdog()
+    # Запускаем monitor-loop (без feature-flag — это no-op, поэтому патчим).
+    with patch(
+        "src.backend.core.config.features.feature_flags.task_watchdog_deadline",
+        new=True,
+    ):
+        await watchdog.start()
+        assert watchdog._monitor_task is not None
+        # Отменяем задачу вручную, чтобы проверить поведение stop().
+        watchdog._monitor_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await watchdog.stop()

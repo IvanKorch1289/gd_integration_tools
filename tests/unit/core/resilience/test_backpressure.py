@@ -211,3 +211,31 @@ async def test_adaptive_bulkhead_timeout() -> None:
     # Второй acquire должен timeout
     result = await bulkhead.acquire(timeout=0.05)
     assert result is False
+
+
+@pytest.mark.asyncio
+async def test_adaptive_bulkhead_cancel_no_leak() -> None:
+    """Отмена задачи во время acquire не приводит к утечке семафора."""
+    import asyncio
+    from src.backend.core.resilience.backpressure import AdaptiveBulkhead
+
+    bulkhead = AdaptiveBulkhead(min_concurrent=1, initial_concurrent=1)
+    # Захватываем единственный слот
+    await bulkhead.acquire()
+    assert bulkhead.in_flight == 1
+
+    async def _cancelled_acquire() -> None:
+        await bulkhead.acquire(timeout=10.0)
+
+    task = asyncio.create_task(_cancelled_acquire())
+    await asyncio.sleep(0)  # Даём задаче начать acquire
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    # Semaphore должен остаться в консистентном состоянии:
+    # in_flight не должен "поплыть" вверх.
+    assert bulkhead.in_flight == 1
+    # release должен корректно освободить слот.
+    bulkhead.release()
+    assert bulkhead.in_flight == 0
