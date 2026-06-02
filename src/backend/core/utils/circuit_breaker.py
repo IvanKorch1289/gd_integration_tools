@@ -1,5 +1,11 @@
 """Circuit Breaker — единый адаптер поверх core.interfaces.CircuitBreaker.
 
+.. deprecated:: S38
+    ``core.utils.circuit_breaker`` устарел. Используйте
+    :class:`src.backend.core.resilience.breaker.CircuitBreaker` (canonical
+    от V22.10.2 wave 1, ADR-005). Этот модуль остаётся как backwards-compat
+    shim и будет удалён в V24+.
+
 Предоставляет совместимый API для http.py и smtp.py
 (async check_state + record_failure/success), делегируя
 state machine в interfaces.CircuitBreaker.
@@ -12,6 +18,19 @@ state machine в interfaces.CircuitBreaker.
 """
 
 from __future__ import annotations
+
+import warnings
+
+# Deprecation: S38 W2 T2.2 — v9 plan P2.3 (CB consolidation)
+# Canonical: src.backend.core.resilience.breaker.CircuitBreaker
+# Removal: V24+
+warnings.warn(
+    "core.utils.circuit_breaker is deprecated since S38; "
+    "use src.backend.core.resilience.breaker.CircuitBreaker instead. "
+    "See .hermes/plans/S38_W2_P23_CB_audit.md for migration guide.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from src.backend.core.interfaces import CircuitBreaker as _CircuitBreakerImpl
 from src.backend.core.interfaces import CircuitBreakerConfig
