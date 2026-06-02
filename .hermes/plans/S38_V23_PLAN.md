@@ -3,8 +3,32 @@
 > **Sprint:** S38 (post-S37 W1)
 > **Период:** TBD (после S37 W1 closure)
 > **Owner:** Ivan (orchestrator) + К2 (resilience) + К3 (DSL)
-> **Источник:** `.shared/context/V9_VS_V22_GAP.md` (v9 plan vs V22.10.2 факт-чек)
-> **Reference v9:** `/tmp/V9_ANALYSIS_PRODUCTION_JUDGMENT.md`
+> **Источник:** v9 FINAL VERDICT (`/tmp/V9_ANALYSIS_PRODUCTION_JUDGMENT.md`)
+> **v9 primary plan:** 15 эпиков, 62 задачи, 26 недель, target 90+/100 production-ready
+> **Этот план (S38):** short-list, фокус на P0 (тесты) + активные пункты
+
+## v9 → S38 маппинг (что актуально после факт-чека)
+
+| v9 Epic | v9 оценка | S38 status | Что делаем |
+|---------|-----------|:----------:|------------|
+| **P0: Тесты 51%→83%** | 6-8 нед | 🔴 **PRIMARY FOCUS** | T-P0.1+ coverage work |
+| **P1: God-объекты** | 4-6 нед | 🟡 T1.3.0+ blocked | features.py split (T1.1 ✅, T1.2 ✅, T1.3.0+ blocked) |
+| **P2: Консолидация 4 concerns** | 3-4 нед | 🟡 частично | Cache ✅ + Logging ✅ (V22.10.2). CB deprecation ✅ (T2.2), RateLimit doc ✅ (T3.2) |
+| **P3: Python 3.14 pydantic-core** | 1-2 нед | ✅ V22 зафиксировал `>=3.13,<3.14` | См. TECH_DEBT `python-version-doc-drift` |
+| **P4: Consul** | 2-3 нед | ❌ отменён | Чужим процессом (consul_config.py exists) |
+| **P5: Docker Compose** | 1-2 нед | ❌ не нужно | V22 на K8s Helm |
+| **P6: CDC завершение** | 3-4 нед | ✅ V22.10.2 wave 5 | cdc_client_adapter.py done |
+| **P7: Groovy DSL P1** | 2-3 нед | ❌ отменён | Чужим процессом (collection.py exists) |
+| **P8: ConvertersMixin 35** | 5-6 нед | 🟡 отложено | S19 deprecation, V24+ removal |
+| **P9: Groovy DSL P2+P3** | 2-3 нед | 🟡 отложено | После P7 |
+| **P10: Отказоустойчивость** | 2-3 нед | ✅ V22.10.2 wave 1 | resilience P0 critical fixes done |
+| **P11: Performance** | 2-3 нед | ✅ V22 perf gates | p95 ≤80ms, RPS ≥1500 |
+| **P12: AI Guardrails** | 2-3 нед | ✅ S27 closure | 9 AI processors, AI_GATEWAY_ENFORCE=true |
+| **P13: RPA + DSL** | 2-3 нед | ✅ V22.10.2 wave 6 | PdfReadProcessor, ArchiveProcessor |
+| **P14: Документация** | 1-2 нед | ✅ S34 | Sphinx, Diátaxis, docstring gate |
+| **P15: Cleanup + Security** | 1-2 нед | 🟡 частично | vulture/deptry baseline (V22.10.2 wave 7) |
+
+**S38 focus = P0 (тесты) + T1.3.0+ (god-объекты features.py).** Остальные — отменены/сделаны/отложены.
 
 ## Цели спринта
 
