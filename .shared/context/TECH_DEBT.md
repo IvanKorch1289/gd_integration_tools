@@ -23,6 +23,44 @@
 
 <!-- append below -->
 
+## [2026-06-02 14:00] ivan (gap analysis) — python-version-doc-drift
+**Status:** open
+**Severity:** low
+**Location:**
+- `pyproject.toml::project.description` ("Python 3.14")
+- `pyproject.toml::project.requires-python` ("\>=3.13,\<3.14")
+- `AGENTS.md:12`, `CLAUDE.md:11,349`, `ARCHITECTURE.md:5,258` ("Python 3.14+")
+- `README.md`, `.claude/rules/{online-research,refactoring,dependency-decision}.md`
+- `.claude/{DECISIONS,KNOWN_ISSUES}.md`, `.claude/agents/system-analyst.md`
+- `src/frontend/streamlit_app/pages/04_Onboarding.py:37`
+- `src/frontend/streamlit_app/pages/05_Architecture_Map.py:86`
+- `src/frontend/static/js/architecture_graph.js:8`
+- `scripts/pip_audit_gate.py:19`
+- `tests/unit/core/ai/policy/test_enforcer.py:296`
+- `vault/session-2026-05-22-1824-summary.md`
+- `vault/session-2026-05-26-S27-P0-AI-Hardening-W345-summary.md`
+- `vault/archive-plan-v21.md`
+
+**Description:** Расхождение между `pyproject.toml::requires-python = ">=3.13,<3.14"`
+(проект исполняется на Python 3.13) и 20+ местами в документации/rules/UI,
+которые говорят "Python 3.14+".
+
+**Impact:** Вводит в заблуждение. Документы могут предполагать совместимость
+с Python 3.14 (wheel, синтаксис, type hints), которой нет в CI/dev_light.
+Низкий риск — все CLI/CI запускаются на 3.13.
+
+**Workaround:** Не предпринимать до принятия решения.
+
+**Plan:** Решение требуется от Ivan. Варианты (см. `.shared/context/V9_VS_V22_GAP.md`):
+- A) `>=3.13,<3.14` → фиксить 20+ файлов документации
+- B) `>=3.14,<3.15` → фиксить pyproject.toml (риск совместимости)
+- C) `>=3.13,<3.15` → расширить window, документы OK
+- D) Оставить как есть (текущее решение)
+
+**Owner:** Ivan. Решение отложено в S39 (после S37 W1 closure).
+**Related:** v9 §Часть II (Python 3.14 compatibility), `.shared/context/V9_VS_V22_GAP.md`,
+`.hermes/plans/S38_V23_PLAN.md` §W0 T0.1
+
 ## Closed (за последние 30 дней)
 
 <!-- append below -->

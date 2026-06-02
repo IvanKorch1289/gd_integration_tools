@@ -1,0 +1,8 @@
+{
+  "noqa_directives_total": 1677,
+  "captured_at": "2026-06-02",
+  "method": "grep -rn '# noqa' src tests --include='*.py' | wc -l",
+  "target_v23": "<500 (ratchet: 1677 -> 1000 -> 500)",
+  "v9_claim": 1502,
+  "delta_from_v9": "+175"
+}
