@@ -27,15 +27,26 @@ JSON-Schema метаданные DSL для экспорта в LSP/OpenAPI/Asyn
     sync, что устраняет потребность в Lock и сохраняет совместимость
     со всеми существующими callsites (populator, exporters, event_bus,
     admin endpoints).
+
+Production Hardening (Schema Registry V2):
+    * JSON-Schema validation on register (opt-in via ``strict_validation``).
+    * Metrics integration via :class:`MetricsRegistry`.
+    * Snapshot persistence (``to_snapshot`` / ``from_snapshot``).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import logging
+from dataclasses import asdict, dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
 
 __all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
+
+logger = logging.getLogger(__name__)
 
 
 class SchemaKind(StrEnum):
@@ -74,14 +85,29 @@ class ServiceSchemaRegistry:
     """Lock-free каталог схем (Sprint 16 К2 W1).
 
     See module docstring для деталей конкурентности и DoD-2.
+
+    Args:
+        strict_validation: Если ``True`` — отклонять невалидные JSON-Schema
+            при :meth:`register` (поднимает ``ValueError``).
+        metrics: Опциональный :class:`MetricsRegistry` для счётчиков
+            операций реестра.
     """
 
-    __slots__ = ("_by_kind",)
+    __slots__ = ("_by_kind", "_strict_validation", "_metrics")
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        strict_validation: bool = False,
+        metrics: MetricsRegistry | None = None,
+    ) -> None:
         self._by_kind: dict[SchemaKind, dict[str, SchemaEntry]] = {
             kind: {} for kind in SchemaKind
         }
+        self._strict_validation = strict_validation
+        self._metrics = metrics
+
+    # ── public CRUD ──────────────────────────────────────────────────
 
     def register(self, entry: SchemaEntry) -> SchemaEntry:
         """Регистрирует новую запись или перезаписывает существующую.
@@ -89,13 +115,42 @@ class ServiceSchemaRegistry:
         Идемпотентно: повторная регистрация обновляет content. Конфликты
         не вызывают исключений — schema_registry это аналитический каталог,
         а не authoritative source (ProcessorRegistry).
+
+        Raises:
+            ValueError: Если ``strict_validation=True`` и схема невалидна.
         """
+        if self._strict_validation:
+            self._validate_entry(entry)
+
         self._by_kind[entry.kind][entry.name] = entry
+
+        if self._metrics is not None:
+            try:
+                self._metrics.counter(
+                    "schema_registry_register_total",
+                    "Total schema registrations",
+                    labels=("kind",),
+                ).labels(kind=entry.kind.value).inc()
+            except Exception:  # pragma: no cover - metrics best-effort
+                pass
+
         return entry
 
     def get(self, kind: SchemaKind, name: str) -> SchemaEntry | None:
         """Возвращает запись по типу и имени; ``None`` если не найдена."""
-        return self._by_kind[kind].get(name)
+        result = self._by_kind[kind].get(name)
+
+        if self._metrics is not None:
+            try:
+                self._metrics.counter(
+                    "schema_registry_get_total",
+                    "Total schema lookups",
+                    labels=("kind", "hit"),
+                ).labels(kind=kind.value, hit="true" if result is not None else "false").inc()
+            except Exception:  # pragma: no cover - metrics best-effort
+                pass
+
+        return result
 
     def list_kind(self, kind: SchemaKind) -> list[SchemaEntry]:
         """Возвращает все записи указанного типа (отсортированы по name).
@@ -105,7 +160,19 @@ class ServiceSchemaRegistry:
         """
         bucket = self._by_kind[kind]
         names = sorted(list(bucket.keys()))
-        return [bucket[n] for n in names if n in bucket]
+        result = [bucket[n] for n in names if n in bucket]
+
+        if self._metrics is not None:
+            try:
+                self._metrics.counter(
+                    "schema_registry_list_total",
+                    "Total schema list queries",
+                    labels=("kind",),
+                ).labels(kind=kind.value).inc()
+            except Exception:  # pragma: no cover - metrics best-effort
+                pass
+
+        return result
 
     def summary(self) -> dict[str, int]:
         """Сводка ``{kind: count}`` для admin/health-инвентаря."""
@@ -122,6 +189,81 @@ class ServiceSchemaRegistry:
             self._by_kind = {k: {} for k in SchemaKind}
         else:
             self._by_kind[kind] = {}
+
+        if self._metrics is not None:
+            try:
+                self._metrics.counter(
+                    "schema_registry_clear_total",
+                    "Total schema registry clears",
+                    labels=("scope",),
+                ).labels(scope="all" if kind is None else kind.value).inc()
+            except Exception:  # pragma: no cover - metrics best-effort
+                pass
+
+    # ── snapshot persistence ─────────────────────────────────────────
+
+    def to_snapshot(self) -> dict[str, Any]:
+        """Сериализует реестр в plain-dict snapshot.
+
+        Returns:
+            Словарь ``{"version": "2.0", "entries": [{...}]}`` для
+            последующего восстановления через :meth:`from_snapshot`.
+        """
+        entries: list[dict[str, Any]] = []
+        for kind in SchemaKind:
+            for entry in self.list_kind(kind):
+                entries.append({
+                    "kind": entry.kind.value,
+                    "name": entry.name,
+                    "spec_schema": entry.spec_schema,
+                    "output_schema": entry.output_schema,
+                    "meta": dict(entry.meta),
+                })
+        return {"version": "2.0", "entries": entries}
+
+    def from_snapshot(self, data: dict[str, Any]) -> None:
+        """Восстанавливает реестр из snapshot (идемпотентно).
+
+        Существующие записи перезаписываются; отсутствующие в snapshot
+        остаются нетронутыми. Для полной очистки вызовите :meth:`clear`
+        перед восстановлением.
+        """
+        if data.get("version") != "2.0":
+            raise ValueError(f"Unsupported snapshot version: {data.get('version')!r}")
+
+        for raw in data.get("entries", []):
+            kind = SchemaKind(raw["kind"])
+            entry = SchemaEntry(
+                kind=kind,
+                name=raw["name"],
+                spec_schema=raw.get("spec_schema"),
+                output_schema=raw.get("output_schema"),
+                meta=raw.get("meta") or {},
+            )
+            self.register(entry)
+
+    # ── private ──────────────────────────────────────────────────────
+
+    def _validate_entry(self, entry: SchemaEntry) -> None:
+        """Проверяет spec_schema / output_schema через jsonschema."""
+        try:
+            from jsonschema import Draft202012Validator
+        except ImportError:
+            logger.warning("jsonschema not available; skipping schema validation")
+            return
+
+        for field_name, schema in (
+            ("spec_schema", entry.spec_schema),
+            ("output_schema", entry.output_schema),
+        ):
+            if schema is None:
+                continue
+            try:
+                Draft202012Validator.check_schema(schema)
+            except Exception as exc:
+                msg = f"Invalid JSON-Schema for {entry.kind.value}/{entry.name} {field_name}: {exc}"
+                logger.warning(msg)
+                raise ValueError(msg) from exc
 
 
 _REGISTRY: ServiceSchemaRegistry = ServiceSchemaRegistry()

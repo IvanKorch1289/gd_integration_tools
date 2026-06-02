@@ -3,7 +3,8 @@
 Покрывают:
     * register / get / list_kind / summary;
     * populate_from_processor_registry / populate_from_routes;
-    * export_jsonschema / export_openapi / export_asyncapi.
+    * export_jsonschema / export_openapi / export_asyncapi;
+    * V2 production hardening: validation, metrics, snapshot.
 """
 
 from __future__ import annotations
@@ -96,9 +97,7 @@ def test_export_openapi(registry: ServiceSchemaRegistry) -> None:
 
 
 def test_export_asyncapi(registry: ServiceSchemaRegistry) -> None:
-    registry.register(
-        SchemaEntry(kind=SchemaKind.ROUTE, name="orders.create")
-    )
+    registry.register(SchemaEntry(kind=SchemaKind.ROUTE, name="orders.create"))
     payload = export_asyncapi(registry)
     assert payload["asyncapi"] == "3.0.0"
     assert "route.orders_create" in payload["channels"]
@@ -136,3 +135,95 @@ def test_populate_from_routes_uses_default_registry() -> None:
     count = populate_from_routes(registry=local)
     assert count >= 0
     assert local.summary()["route"] == count
+
+
+# ── V2 production hardening ────────────────────────────────────────
+
+
+def test_register_with_strict_validation_accepts_valid_schema() -> None:
+    reg = ServiceSchemaRegistry(strict_validation=True)
+    entry = SchemaEntry(
+        kind=SchemaKind.PROCESSOR,
+        name="core:valid",
+        spec_schema={"type": "object", "properties": {"url": {"type": "string"}}},
+    )
+    assert reg.register(entry) is entry
+    assert reg.get(SchemaKind.PROCESSOR, "core:valid") is not None
+
+
+def test_register_with_strict_validation_rejects_invalid_schema() -> None:
+    reg = ServiceSchemaRegistry(strict_validation=True)
+    entry = SchemaEntry(
+        kind=SchemaKind.PROCESSOR,
+        name="core:invalid",
+        spec_schema={"type": "invalid_type"},  # невалидный type
+    )
+    with pytest.raises(ValueError, match="Invalid JSON-Schema"):
+        reg.register(entry)
+
+
+def test_register_without_strict_validation_allows_invalid_schema() -> None:
+    reg = ServiceSchemaRegistry(strict_validation=False)
+    entry = SchemaEntry(
+        kind=SchemaKind.PROCESSOR,
+        name="core:lax",
+        spec_schema={"type": "invalid_type"},
+    )
+    assert reg.register(entry) is entry
+
+
+def test_snapshot_round_trip(registry: ServiceSchemaRegistry) -> None:
+    registry.register(
+        SchemaEntry(
+            kind=SchemaKind.ROUTE,
+            name="orders.create",
+            spec_schema={"type": "object"},
+            meta={"protocol": "http"},
+        )
+    )
+    registry.register(
+        SchemaEntry(
+            kind=SchemaKind.PROCESSOR,
+            name="core:http_call",
+            output_schema={"type": "string"},
+        )
+    )
+
+    snapshot = registry.to_snapshot()
+    assert snapshot["version"] == "2.0"
+    assert len(snapshot["entries"]) == 2
+
+    fresh = ServiceSchemaRegistry()
+    fresh.from_snapshot(snapshot)
+    assert fresh.summary()["route"] == 1
+    assert fresh.summary()["processor"] == 1
+
+    route_entry = fresh.get(SchemaKind.ROUTE, "orders.create")
+    assert route_entry is not None
+    assert route_entry.meta["protocol"] == "http"
+
+
+def test_from_snapshot_wrong_version_raises() -> None:
+    reg = ServiceSchemaRegistry()
+    with pytest.raises(ValueError, match="Unsupported snapshot version"):
+        reg.from_snapshot({"version": "1.0", "entries": []})
+
+
+def test_metrics_counters_are_incremented() -> None:
+    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
+
+    metrics = MetricsRegistry(default_labels=())
+    reg = ServiceSchemaRegistry(metrics=metrics)
+
+    reg.register(SchemaEntry(kind=SchemaKind.ROUTE, name="r1"))
+    reg.get(SchemaKind.ROUTE, "r1")
+    reg.get(SchemaKind.ROUTE, "missing")
+    reg.list_kind(SchemaKind.ROUTE)
+    reg.clear()
+
+    # Проверяем, что метрики зарегистрированы
+    names = metrics.registered_names()
+    assert "schema_registry_register_total" in names["counter"]
+    assert "schema_registry_get_total" in names["counter"]
+    assert "schema_registry_list_total" in names["counter"]
+    assert "schema_registry_clear_total" in names["counter"]
