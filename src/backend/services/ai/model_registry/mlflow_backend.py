@@ -43,9 +43,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         if self._client is not None:
             return self._client
         try:
-            from mlflow.tracking import (
-                MlflowClient,    # noqa: PLC0415
-            )
+            from mlflow.tracking import MlflowClient  # noqa: PLC0415
         except ImportError as exc:
             raise RuntimeError(
                 "mlflow не установлен; добавьте extra ai-model-registry "

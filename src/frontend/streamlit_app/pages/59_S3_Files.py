@@ -57,7 +57,7 @@ if bucket:
     params["bucket"] = bucket
 
 try:
-    items = client._request("GET", "/api/v1/storage/list", params=params)  
+    items = client._request("GET", "/api/v1/storage/list", params=params)
     if not isinstance(items, list):
         items = []
 except Exception as exc:  # noqa: BLE001
@@ -80,7 +80,7 @@ else:
 
         if cols[3].button("Preview", key=f"prev_{idx}_{key}"):
             try:
-                content = client._request(  
+                content = client._request(
                     "GET",
                     "/api/v1/storage/get",
                     params={"key": key, **({"bucket": bucket} if bucket else {})},
@@ -96,7 +96,7 @@ else:
 
         if cols[4].button("Download", key=f"dl_{idx}_{key}"):
             try:
-                resp = client._request(  
+                resp = client._request(
                     "GET",
                     "/api/v1/storage/download",
                     params={"key": key, **({"bucket": bucket} if bucket else {})},

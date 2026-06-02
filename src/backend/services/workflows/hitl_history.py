@@ -44,7 +44,7 @@ class HitlHistoryService:
     async def _get_client(self) -> Any:
         if self._factory is not None:
             return await self._factory()
-        from clickhouse_connect import get_async_client  
+        from clickhouse_connect import get_async_client
 
         from src.backend.core.config import settings
 

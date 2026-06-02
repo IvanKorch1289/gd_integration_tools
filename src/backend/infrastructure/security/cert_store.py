@@ -617,7 +617,7 @@ class CertStore:
                 if isinstance(result, AsyncIterator):  # pragma: no cover
                     continue
                 if hasattr(result, "__await__"):
-                    await result  
+                    await result
             except Exception as exc:  # noqa: BLE001
                 logger.warning("CertStore listener failed: %s", exc)
 

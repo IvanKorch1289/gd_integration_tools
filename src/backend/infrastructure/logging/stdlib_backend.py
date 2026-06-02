@@ -37,7 +37,7 @@ class StdlibLogger(LoggerProtocol):
     def bind(self, **kwargs: Any) -> "StdlibLogger":
         adapter = logging.LoggerAdapter(self._inner, kwargs)
         wrapped = StdlibLogger.__new__(StdlibLogger)
-        wrapped._inner = adapter  
+        wrapped._inner = adapter
         return wrapped
 
 

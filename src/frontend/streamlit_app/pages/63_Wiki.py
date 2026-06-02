@@ -96,9 +96,7 @@ if ctrl_cols[0].button("Перестроить индекс"):
 if ctrl_cols[1].button("Проверить грамматику docs/ (ru)"):
     with st.spinner("Запуск ru-proofreader..."):
         try:
-            from tools.checks.ru_proofread import (  
-                proofread_docs,
-            )
+            from tools.checks.ru_proofread import proofread_docs
 
             issues = proofread_docs(_REPO_ROOT / "docs", limit_files=20)
         except ImportError as exc:

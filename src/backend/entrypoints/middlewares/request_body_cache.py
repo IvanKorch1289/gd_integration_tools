@@ -140,7 +140,7 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
 
         # Starlette Request стор `_receive` как атрибут; переопределяем.
         try:
-            request._receive = _replay_receive  
+            request._receive = _replay_receive
         except Exception:  # pragma: no cover
             # Fallback: Starlette API изменился — ничего страшного, просто
             # downstream вторично прочитают тело.

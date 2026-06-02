@@ -106,7 +106,7 @@ class AdaptiveStrategySelector:
         strategy, confidence = _heuristic_strategy(query)
         if self._llm_classify is not None:
             try:
-                llm_strategy, llm_conf = await self._llm_classify(query)  
+                llm_strategy, llm_conf = await self._llm_classify(query)
                 if llm_strategy in STRATEGIES:
                     strategy, confidence = llm_strategy, float(llm_conf)
             except Exception as exc:  # noqa: BLE001

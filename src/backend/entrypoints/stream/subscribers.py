@@ -15,7 +15,7 @@ stream_client = get_stream_client_provider()
 stream_logger = get_stream_logger_provider()
 
 
-@stream_client.redis_router.subscriber(  
+@stream_client.redis_router.subscriber(
     stream=settings.redis.get_stream_name("dsl-events")
 )
 async def handle_universal_redis_action(
@@ -34,7 +34,7 @@ async def handle_universal_redis_action(
         stream_logger.error(f"Failed to process Redis DSL action: {exc}", exc_info=True)
 
 
-@stream_client.rabbit_router.subscriber(settings.queue.get_queue_name("dsl-actions"))  
+@stream_client.rabbit_router.subscriber(settings.queue.get_queue_name("dsl-actions"))
 async def handle_universal_rabbit_action(body: dict, msg: RabbitMessage) -> None:
     """Универсальный обработчик DSL-команд из RabbitMQ."""
     try:

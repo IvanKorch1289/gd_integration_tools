@@ -39,7 +39,7 @@ with tab_plugins:
     st.subheader("Установленные плагины")
 
     try:
-        plugins = client._request("GET", "/api/v1/admin/plugins")  
+        plugins = client._request("GET", "/api/v1/admin/plugins")
         if not isinstance(plugins, list):
             plugins = []
     except Exception as exc:  # noqa: BLE001
@@ -62,7 +62,7 @@ with tab_plugins:
             label = "Disable" if is_active else "Enable"
             if col_action.button(label, key=f"plugin_toggle_{name}"):
                 try:
-                    client._request(  
+                    client._request(
                         "POST",
                         f"/api/v1/admin/plugins/{name}/toggle",
                         json={"active": not is_active},
@@ -82,7 +82,7 @@ with tab_users:
     st.caption("Полноценное управление пользователями — через `/admin` (sqladmin).")
 
     try:
-        users = client._request("GET", "/api/v1/users/all")  
+        users = client._request("GET", "/api/v1/users/all")
         if not isinstance(users, list):
             users = []
     except Exception as exc:  # noqa: BLE001

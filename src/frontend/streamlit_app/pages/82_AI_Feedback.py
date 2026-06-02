@@ -11,7 +11,7 @@ import streamlit as st
 try:
     from src.frontend.streamlit_app.api_client import APIClient
 except ImportError:  # pragma: no cover
-    APIClient = None  
+    APIClient = None
 
 st.set_page_config(page_title="AI Feedback", page_icon="📝", layout="wide")
 st.title("📝 AI Feedback & DSPy Training")

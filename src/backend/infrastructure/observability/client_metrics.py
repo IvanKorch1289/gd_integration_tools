@@ -111,9 +111,7 @@ def _current_tenant() -> str:
     """Получить tenant_id из ContextVar; `_system` если не задан."""
     try:
         # Поздний импорт, чтобы не создавать цикл.
-        from src.backend.core.tenancy import (
-            current_tenant,  
-        )
+        from src.backend.core.tenancy import current_tenant
 
         tenant = current_tenant()
         if tenant is None:
@@ -277,7 +275,7 @@ class ClientMetricsMixin:
             getattr(self, "pooling", None).max_size
             if getattr(self, "pooling", None)
             else 0
-        )  
+        )
         record_pool_state(
             client=self.name,
             active=active,

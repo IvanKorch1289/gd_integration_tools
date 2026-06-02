@@ -34,7 +34,7 @@ class SagaHistoryRecord:
 async def _get_clickhouse_client(factory: Any | None = None) -> Any:
     if factory is not None:
         return await factory()
-    from clickhouse_connect import get_async_client  
+    from clickhouse_connect import get_async_client
 
     from src.backend.core.config import settings
 

@@ -172,10 +172,7 @@ class WorkflowTemplateRegistry:
         query: str, templates: Sequence[WorkflowTemplate]
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через sentence-transformers BGE-M3."""
-        from sentence_transformers import (  
-            SentenceTransformer,
-            util,
-        )
+        from sentence_transformers import SentenceTransformer, util
 
         model = SentenceTransformer("BAAI/bge-m3")
         q_emb = model.encode([query], convert_to_tensor=True)

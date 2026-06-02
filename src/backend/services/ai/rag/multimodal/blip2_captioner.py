@@ -95,7 +95,7 @@ class BLIP2Captioner:
         from io import BytesIO
 
         try:
-            from PIL import Image  
+            from PIL import Image
         except ImportError as exc:
             raise RuntimeError(
                 "BLIP2 requires Pillow — install [multimodal-rag] extra"

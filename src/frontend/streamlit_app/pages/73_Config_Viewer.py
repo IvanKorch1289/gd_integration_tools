@@ -43,7 +43,7 @@ def mask_secrets(obj: Any, parent_key: str = "") -> Any:
 client = get_api_client()
 
 try:
-    config = client._request("GET", "/api/v1/admin/config")  
+    config = client._request("GET", "/api/v1/admin/config")
 except Exception as exc:  # noqa: BLE001
     config = {}
     st.error(f"Не удалось получить конфиг: {exc}")
@@ -76,7 +76,7 @@ else:
 
 if st.button("Hot-reload config"):
     try:
-        resp = client._request("POST", "/api/v1/admin/config/reload")  
+        resp = client._request("POST", "/api/v1/admin/config/reload")
         st.success(f"Reload: {resp}")
     except Exception as exc:  # noqa: BLE001
         st.error(str(exc))

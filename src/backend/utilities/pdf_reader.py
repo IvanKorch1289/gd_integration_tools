@@ -75,7 +75,7 @@ def _read_pypdf(path: str) -> str:
     Returns:
         Конкатенация текста страниц через ``\\n\\n``.
     """
-    from pypdf import PdfReader  
+    from pypdf import PdfReader
 
     reader = PdfReader(path)
     return _PAGE_SEP.join(page.extract_text() or "" for page in reader.pages)
@@ -85,7 +85,7 @@ def _read_pypdf_bytes(data: bytes) -> str:
     """Fallback: pypdf reader из bytes."""
     import io
 
-    from pypdf import PdfReader  
+    from pypdf import PdfReader
 
     reader = PdfReader(io.BytesIO(data))
     return _PAGE_SEP.join(page.extract_text() or "" for page in reader.pages)

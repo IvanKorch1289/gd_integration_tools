@@ -16,9 +16,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor
-
 from src.backend.dsl.engine.exchange import Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

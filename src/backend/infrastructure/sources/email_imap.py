@@ -81,7 +81,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
             disp = str(part.get("Content-Disposition", ""))
             if ct == "text/plain" and "attachment" not in disp:
                 try:
-                    body = part.get_payload(decode=True).decode(  
+                    body = part.get_payload(decode=True).decode(
                         part.get_content_charset() or "utf-8", errors="replace"
                     )
                 except Exception as _:

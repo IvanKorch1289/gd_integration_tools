@@ -46,7 +46,7 @@ class GraylogHandler:
             return None
 
         try:
-            import graypy  
+            import graypy
         except ImportError:
             _logger.warning(
                 "graypy не установлен — Graylog-обработчик отключён "

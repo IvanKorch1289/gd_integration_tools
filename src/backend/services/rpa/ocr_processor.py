@@ -91,7 +91,7 @@ class PytesseractOCRProcessor:
             Распознанный текст или пустая строка при сбое.
         """
         try:
-            import pytesseract  
+            import pytesseract
         except ImportError as exc:
             _logger.warning("pytesseract not installed: %s", exc)
             return ""

@@ -149,8 +149,7 @@ class AIFeedbackService:
             from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
             await RLMFeedbackProcessor().on_feedback_received(
-                doc_id=str(doc_id),
-                label=rlm_label,  
+                doc_id=str(doc_id), label=rlm_label
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("RLM feedback hook skipped: %s", exc)

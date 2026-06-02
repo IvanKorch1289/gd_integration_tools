@@ -182,10 +182,7 @@ class AdDirectoryClient:
                 if callable(close):
                     close()
 
-        from ldap3 import (    # noqa: PLC0415
-            Connection,
-            Server,
-        )
+        from ldap3 import Connection, Server  # noqa: PLC0415
 
         srv = Server(
             self._config.server_uri,
@@ -247,10 +244,7 @@ class AdDirectoryClient:
                 user_dn=self._config.bind_dn, password=self._config.bind_password
             )
         else:
-            from ldap3 import (    # noqa: PLC0415
-                Connection,
-                Server,
-            )
+            from ldap3 import Connection, Server  # noqa: PLC0415
 
             srv = Server(
                 self._config.server_uri,

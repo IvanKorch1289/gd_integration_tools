@@ -17,7 +17,7 @@ from typing import Any
 import streamlit as st
 
 try:
-    from src.frontend.streamlit_app.utils.api_client import api_get  
+    from src.frontend.streamlit_app.utils.api_client import api_get
 except Exception:  # noqa: BLE001
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:

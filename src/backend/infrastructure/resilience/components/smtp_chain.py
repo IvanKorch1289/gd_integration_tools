@@ -29,7 +29,7 @@ SmtpSendCallable = Callable[[dict[str, Any]], Awaitable[None]]
 
 async def _smtp_send(message: dict[str, Any]) -> None:
     """Primary: SMTP через стандартный mail-client."""
-    from aiosmtplib import SMTP  
+    from aiosmtplib import SMTP
 
     from src.backend.core.config.settings import settings
 

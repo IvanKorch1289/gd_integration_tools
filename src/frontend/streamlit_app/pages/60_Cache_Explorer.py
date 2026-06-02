@@ -23,7 +23,7 @@ pattern = st.text_input(
 )
 
 try:
-    keys = client._request(  
+    keys = client._request(
         "GET", "/api/v1/admin/cache/keys", params={"pattern": pattern, "limit": 200}
     )
     if not isinstance(keys, list):
@@ -37,13 +37,13 @@ st.caption(f"Найдено: {len(keys)}")
 for key in keys[:100]:
     with st.expander(key):
         try:
-            data = client._request("GET", f"/api/v1/admin/cache/{key}")  
+            data = client._request("GET", f"/api/v1/admin/cache/{key}")
             st.json(data)
         except Exception as exc:  # noqa: BLE001
             st.error(str(exc))
         if st.button("Удалить", key=f"del_{key}"):
             try:
-                client._request("DELETE", f"/api/v1/admin/cache/{key}")  
+                client._request("DELETE", f"/api/v1/admin/cache/{key}")
                 st.success("Удалено")
             except Exception as exc:  # noqa: BLE001
                 st.error(str(exc))
@@ -53,7 +53,7 @@ st.subheader("Массовая инвалидация")
 invalidate_pattern = st.text_input("Pattern для инвалидации", value="", key="inv_pat")
 if st.button("Invalidate") and invalidate_pattern:
     try:
-        resp = client._request(  
+        resp = client._request(
             "POST",
             "/api/v1/admin/cache/invalidate",
             params={"pattern": invalidate_pattern},

@@ -213,7 +213,7 @@ class TelegramBotClient:
     async def __aenter__(self) -> TelegramBotClient:
         from src.backend.core.net.migration_helper import make_http_client
 
-        self._http = make_http_client(  
+        self._http = make_http_client(
             plugin="extensions.bots.telegram_bot",
             base_url=f"{self._config.base_url}/bot{self._config.token}",
             timeout=self._config.timeout,
@@ -231,7 +231,7 @@ class TelegramBotClient:
         if self._http is None:
             from src.backend.core.net.migration_helper import make_http_client
 
-            self._http = make_http_client(  
+            self._http = make_http_client(
                 plugin="extensions.bots.telegram_bot",
                 base_url=f"{self._config.base_url}/bot{self._config.token}",
                 timeout=self._config.timeout,

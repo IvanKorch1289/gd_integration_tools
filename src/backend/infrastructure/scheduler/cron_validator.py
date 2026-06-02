@@ -74,7 +74,7 @@ def validate_cron_expression(
         )
 
     try:
-        from croniter import croniter  
+        from croniter import croniter
     except ImportError:
         return CronValidationResult(
             expression=expression,

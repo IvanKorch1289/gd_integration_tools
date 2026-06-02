@@ -78,7 +78,7 @@ class CheckpointInspector:
         # LangGraph PostgresSaver.list(config=None) → AsyncIterator[CheckpointTuple]
         try:
             collected: dict[str, list[Any]] = {}
-            async for ckpt in saver.alist({"configurable": {}}, limit=limit + offset):  
+            async for ckpt in saver.alist({"configurable": {}}, limit=limit + offset):
                 cfg = getattr(ckpt, "config", {})
                 sid = cfg.get("configurable", {}).get("thread_id", "")
                 if not sid:
@@ -109,9 +109,7 @@ class CheckpointInspector:
         if saver is None:
             return None
         try:
-            tuple_ = await saver.aget_tuple(  
-                {"configurable": {"thread_id": session_id}}
-            )
+            tuple_ = await saver.aget_tuple({"configurable": {"thread_id": session_id}})
         except Exception as exc:  # noqa: BLE001
             logger.warning("get_state failed for %s: %s", session_id, exc)
             return None
@@ -141,7 +139,7 @@ class CheckpointInspector:
         if saver is None:
             return False
         try:
-            tuple_ = await saver.aget_tuple(  
+            tuple_ = await saver.aget_tuple(
                 {
                     "configurable": {
                         "thread_id": session_id,

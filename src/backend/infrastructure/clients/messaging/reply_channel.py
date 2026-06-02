@@ -164,7 +164,7 @@ class ReplyChannel:
             self._subscribed = True
             return
         try:
-            subscriber = broker.subscriber(REPLY_CHANNEL_PREFIX + "*")  
+            subscriber = broker.subscriber(REPLY_CHANNEL_PREFIX + "*")
             subscriber(self.deliver)
             self._subscribed = True
         except Exception as exc:  # noqa: BLE001

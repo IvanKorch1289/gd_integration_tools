@@ -75,7 +75,7 @@ class PoolMonitor:
         try:
             from src.backend.infrastructure.database.database import db_initializer
 
-            pool = db_initializer._async_engine.pool  
+            pool = db_initializer._async_engine.pool
 
             checked_in = pool.checkedin()
             checked_out = pool.checkedout()

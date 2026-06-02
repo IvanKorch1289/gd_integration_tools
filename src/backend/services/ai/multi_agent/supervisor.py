@@ -173,7 +173,7 @@ class MultiAgentSupervisor:
     def _is_langgraph_available(self) -> bool:
         """Проверяет наличие ``langgraph`` SDK (extra ``ai``)."""
         try:
-            import langgraph    # noqa: F401
+            import langgraph  # noqa: F401
 
             return True
         except ImportError:
@@ -309,11 +309,7 @@ class MultiAgentSupervisor:
         if self._compiled is not None:
             return self._compiled
         try:
-            from langgraph.graph import (  
-                END,
-                START,
-                StateGraph,
-            )
+            from langgraph.graph import END, START, StateGraph
         except ImportError as exc:
             raise MultiAgentSupervisorUnavailable(
                 "langgraph не установлен — добавьте extra 'ai'"

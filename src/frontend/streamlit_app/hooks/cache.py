@@ -29,7 +29,7 @@ def cached_data(func: F | None = None, *, ttl: int = 300) -> F | Callable[[F], F
     """
 
     def decorator(fn: F) -> F:
-        return st.cache_data(ttl=ttl, show_spinner=False)(fn)  
+        return st.cache_data(ttl=ttl, show_spinner=False)(fn)
 
     if func is None:
         return decorator
@@ -47,6 +47,6 @@ def cached_resource(ttl: int = 3600) -> Callable[[F], F]:
     """
 
     def decorator(fn: F) -> F:
-        return st.cache_resource(ttl=ttl, show_spinner=False)(fn)  
+        return st.cache_resource(ttl=ttl, show_spinner=False)(fn)
 
     return decorator

@@ -66,17 +66,13 @@ def _fetch_audit_tail() -> list[dict]:
     if severity_filter != "all":
         params["severity"] = severity_filter
     try:
-        records = client._request(  
-            "GET", "/api/v1/admin/audit/tail", params=params
-        )
+        records = client._request("GET", "/api/v1/admin/audit/tail", params=params)
         if isinstance(records, list):
             return records
     except Exception:  # noqa: BLE001
         # Fallback на legacy-endpoint /api/v1/admin/audit (Sprint 2)
         try:
-            records = client._request(  
-                "GET", "/api/v1/admin/audit", params=params
-            )
+            records = client._request("GET", "/api/v1/admin/audit", params=params)
             if isinstance(records, list):
                 return records
         except Exception:  # noqa: BLE001

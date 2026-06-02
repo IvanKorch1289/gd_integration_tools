@@ -145,7 +145,7 @@ class CoquiTTSService:
                 "CoquiTTSService отключён (voice_stt_tts_enabled=false)."
             )
         try:
-            from TTS.api import TTS  
+            from TTS.api import TTS
         except ImportError as exc:
             raise VoiceServiceUnavailable(
                 "Пакет 'TTS' не установлен — добавьте extra '[ai-voice]'."

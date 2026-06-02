@@ -56,7 +56,7 @@ class LangFuseCallbackV3:
             return self._lf
         self._inited = True
         try:
-            from langfuse import Langfuse  
+            from langfuse import Langfuse
 
             from src.backend.core.config.ai_2026 import langfuse_settings
 

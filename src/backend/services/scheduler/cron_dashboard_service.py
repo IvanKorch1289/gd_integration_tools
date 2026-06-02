@@ -44,9 +44,7 @@ class CronDashboardService:
         try:
             if self._ch_factory is not None:
                 return await self._ch_factory()
-            from clickhouse_connect import (  
-                get_async_client,
-            )
+            from clickhouse_connect import get_async_client
 
             from src.backend.core.config import settings
 

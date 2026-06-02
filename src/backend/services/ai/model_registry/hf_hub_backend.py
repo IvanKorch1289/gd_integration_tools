@@ -45,9 +45,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         if self._api is not None:
             return self._api
         try:
-            from huggingface_hub import (
-                HfApi,    # noqa: PLC0415
-            )
+            from huggingface_hub import HfApi  # noqa: PLC0415
         except ImportError as exc:
             raise RuntimeError(
                 "huggingface_hub не установлен; добавьте extra "
@@ -134,5 +132,5 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         current = await self.get_model(name, version=version)
         if current is None:
             raise RuntimeError(f"HF Hub: model {name}/{version} не найден")
-        current.stage = new_stage  
+        current.stage = new_stage
         return current

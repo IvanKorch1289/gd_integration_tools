@@ -167,9 +167,7 @@ class LangMemService:
         if not self._qdrant_url:
             return None
         try:
-            from qdrant_client import (
-                AsyncQdrantClient,  
-            )
+            from qdrant_client import AsyncQdrantClient
 
             self._qdrant_client = AsyncQdrantClient(self._qdrant_url)
             logger.info("LangMemService: подключение к Qdrant установлено.")

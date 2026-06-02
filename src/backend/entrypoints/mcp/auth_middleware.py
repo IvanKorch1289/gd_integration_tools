@@ -51,7 +51,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
 
     if "api_key" in methods and headers.get("x-api-key"):
         try:
-            ctx = await _verify_api_key(request)  
+            ctx = await _verify_api_key(request)
             if ctx is not None:
                 return True
         except Exception as exc:  # noqa: BLE001
@@ -61,7 +61,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
         "bearer "
     ):
         try:
-            ctx = await _verify_jwt(request)  
+            ctx = await _verify_jwt(request)
             if ctx is not None:
                 return True
         except Exception as exc:  # noqa: BLE001

@@ -18,7 +18,7 @@ st.header(":arrows_clockwise: Выполняющиеся процессы")
 client = get_api_client()
 
 try:
-    active = client._request("GET", "/api/v1/admin/processes/active")  
+    active = client._request("GET", "/api/v1/admin/processes/active")
 except Exception:
     active = []
 
@@ -40,7 +40,7 @@ else:
 st.divider()
 st.subheader("Статистика за 60 секунд")
 try:
-    stats = client._request("GET", "/api/v1/admin/processes/stats")  
+    stats = client._request("GET", "/api/v1/admin/processes/stats")
     cols = st.columns(4)
     cols[0].metric("Запущено", stats.get("started", 0))
     cols[1].metric("Успешно", stats.get("succeeded", 0))

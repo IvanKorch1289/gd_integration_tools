@@ -119,9 +119,7 @@ def build_chat_model(
         from langchain_litellm import ChatLiteLLM  # type: ignore[import-not-found]
     except ImportError:
         try:
-            from langchain_community.chat_models import (
-                ChatLiteLLM,  
-            )
+            from langchain_community.chat_models import ChatLiteLLM
         except ImportError as exc:
             raise ImportError(
                 "ChatLiteLLM недоступен: установите 'langchain-litellm' "

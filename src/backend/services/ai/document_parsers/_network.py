@@ -42,8 +42,8 @@ def markitdown_network_disabled() -> Iterator[None]:
     silent-skip; markitdown ловит исключения internally и продолжает.
     """
     original = urllib.request.urlopen
-    urllib.request.urlopen = _denied_urlopen  
+    urllib.request.urlopen = _denied_urlopen
     try:
         yield
     finally:
-        urllib.request.urlopen = original  
+        urllib.request.urlopen = original

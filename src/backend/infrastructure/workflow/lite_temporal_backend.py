@@ -41,7 +41,7 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
         return self._env
 
     @classmethod
-    async def connect(  
+    async def connect(
         cls,
         *,
         target: str = "<lite-temporal>",
@@ -72,5 +72,5 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
         except Exception as exc:  # noqa: BLE001 — best-effort shutdown
             _logger.warning("LiteTemporalBackend env shutdown failed: %s", exc)
         finally:
-            self._env = None  
+            self._env = None
             _logger.info("LiteTemporalBackend shut down")

@@ -208,7 +208,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
 try:
     from temporalio import activity as _temporal_activity_mod
 
-    llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)  
+    llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)
 except Exception:  # noqa: BLE001, S110 — temporalio extra может быть отключён
     pass
 

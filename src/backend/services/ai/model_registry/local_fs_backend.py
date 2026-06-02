@@ -234,7 +234,5 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(None, _write_text, manifest_path, content)
         # Re-read to get full record
         return await self.get_model(name, version=version) or ModelRecord(
-            name=name,
-            version=version,
-            stage=new_stage,  
+            name=name, version=version, stage=new_stage
         )

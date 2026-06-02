@@ -115,5 +115,5 @@ class WebhookSignatureMiddleware(BaseHTTPMiddleware):
         async def _receive():
             return {"type": "http.request", "body": body, "more_body": False}
 
-        request._receive = _receive  
+        request._receive = _receive
         return await call_next(request)

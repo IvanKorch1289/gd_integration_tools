@@ -113,7 +113,7 @@ class ClickHouseClient:
         # S11 carryover: WAF-coverage gate. make_http_client при flag-ON
         # уходит в OutboundHttpClient (capability net.outbound.clickhouse:internal);
         # при OFF — обычный httpx.AsyncClient с теми же параметрами.
-        return make_http_client(  
+        return make_http_client(
             plugin="infrastructure.clickhouse",
             base_url=self.base_url,
             timeout=timeout,

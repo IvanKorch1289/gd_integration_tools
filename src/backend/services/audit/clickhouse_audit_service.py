@@ -194,9 +194,7 @@ class ClickHouseAuditService:
             if self._client is not None:
                 return self._client
             # Lazy-импорт тяжёлой зависимости только при включённом flag
-            from clickhouse_connect import (
-                get_async_client,  
-            )
+            from clickhouse_connect import get_async_client
 
             from src.backend.core.config import settings
 
