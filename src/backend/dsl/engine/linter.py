@@ -106,7 +106,7 @@ class DSLLinter:
 
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
-            if type_name in ("DispatchActionProcessor", "EnrichProcessor"):
+            if type_name.endswith("DispatchActionProcessor") or type_name.endswith("EnrichProcessor"):
                 action = getattr(p, "action", None)
                 if action and action not in known_actions:
                     available = ", ".join(sorted(list(known_actions))[:10])

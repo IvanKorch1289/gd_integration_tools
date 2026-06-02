@@ -274,7 +274,7 @@ class TestE002UnknownAction:
                 return ["known.action", "another.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.engine.linter.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
         )
 
         pipeline = Pipeline(route_id="test")
@@ -294,7 +294,7 @@ class TestE002UnknownAction:
                 return ["known.action", "another.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.engine.linter.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
         )
 
         pipeline = Pipeline(route_id="test")
@@ -317,7 +317,7 @@ class TestE002UnknownAction:
                 return ["known.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.engine.linter.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
         )
 
         pipeline = Pipeline(route_id="test")
@@ -337,7 +337,7 @@ class TestE002UnknownAction:
             raise ImportError("Registry not available")
 
         monkeypatch.setattr(
-            "src.backend.dsl.engine.linter.action_handler_registry.list_actions",
+            "src.backend.dsl.commands.registry.action_handler_registry.list_actions",
             raise_import_error,
         )
 
