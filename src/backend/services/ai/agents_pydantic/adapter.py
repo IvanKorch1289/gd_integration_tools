@@ -99,4 +99,3 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
         raise NotImplementedError(
             f"Streaming not yet supported by {self.__class__.__name__}"
         )
-        yield  # pragma: no cover

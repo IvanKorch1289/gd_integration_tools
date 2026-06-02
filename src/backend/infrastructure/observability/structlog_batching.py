@@ -102,7 +102,7 @@ class BatchingStructlogWrapper:
         self._buffer: deque[BatchedLogEvent] = deque(maxlen=max_buffer_size)
         self._inner: Any | None = None
         self._task: asyncio.Task[None] | None = None
-        self._stop_event = asyncio.Event() if False else None  # инит при start
+        self._stop_event: asyncio.Event | None = None  # инит при start
         self._dropped_count = 0
         self._flushed_total = 0
 
