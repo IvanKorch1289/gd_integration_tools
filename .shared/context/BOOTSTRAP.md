@@ -75,9 +75,14 @@ frontend/streamlit_app/  ─►  src/entrypoints/  ─►  src/services/  ─►
 | `make audit` | security + dependency audit |
 
 ### Graphify
-- `graphify query <symbol>` — найти определения/использования символа
-- `graphify path <from> <to>` — путь между сущностями
-- `graphify update .` — обновить индекс (запускается pre-commit hook)
+- `source .shared/context/graphify-aliases.sh` — загружает shell-функции
+- `gq "<question>"` — `graphify query` (BFS traversal, рекомендуемый)
+- `gp "A" "B"` — `graphify path` (shortest path)
+- `gx "X"` — `graphify explain` (plain-language)
+- `gu .` — `graphify update` (re-extract, pre-commit hook)
+- `ge .` — `graphify extract` (headless AST + LLM)
+- `gs` — graphify status (binary, graph.json, contents)
+- `gh-install` / `gh-uninstall` / `gh-status` — git hooks management
 
 ---
 
