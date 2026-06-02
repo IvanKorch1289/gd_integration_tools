@@ -35,7 +35,7 @@ MSG="${MSG:-сессия закрыта}"
 # Update last open entry for AGENT using python (safe UTF-8, atomic)
 TS=$(date +'%Y-%m-%d %H:%M')
 
-python3 <<PYEOF
+TS="$TS" AGENT="$AGENT" MSG="$MSG" CONTEXT="$CONTEXT" DECISIONS="$DECISIONS" FILES="$FILES" NEXT="$NEXT" python3 <<PYEOF
 import os, re, sys
 from pathlib import Path
 

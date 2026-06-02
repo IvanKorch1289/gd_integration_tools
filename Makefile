@@ -1079,19 +1079,11 @@ sync-permissions-verify: ## Фаза 1: проверить что .claude/settin
 verify-permissions: sync-permissions-verify
 
 # === ФАЗА 4: SESSION LOG + VAULT INDEX (реальная логика) ===
+# Валидация AGENT делается внутри bash-скрипта (он сам выдаст ошибку если пусто).
 session-start: ## Фаза 4: append-only запись в vault/SESSIONS.md (AGENT=<claude|kimi>, MSG="...")
-	@if [ -z "$(AGENT)" ]; then \\
-		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\\033[0m\n' >&2; \\
-		printf 'Пример: make session-start AGENT=claude MSG="refactor sync-permissions"\n' >&2; \\
-		exit 2; \\
-	fi
 	@AGENT="$(AGENT)" MSG="$(MSG)" SLUG="$(SLUG)" bash .shared/hooks/session-start.sh
 
 session-close: ## Фаза 4: закрыть последнюю запись для AGENT (AGENT=<claude|kimi>, MSG="...", [CONTEXT=...] [DECISIONS=...] [FILES=...] [NEXT=...])
-	@if [ -z "$(AGENT)" ]; then \\
-		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\\033[0m\n' >&2; \\
-		exit 2; \\
-	fi
 	@AGENT="$(AGENT)" MSG="$(MSG)" CONTEXT="$(CONTEXT)" DECISIONS="$(DECISIONS)" FILES="$(FILES)" NEXT="$(NEXT)" bash .shared/hooks/session-close.sh
 
 vault-index: ## Фаза 4: regenerate vault/INDEX.md (ls + tail)
