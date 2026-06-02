@@ -31,6 +31,11 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
+try:
+    from src.backend.infrastructure.clients.external.cdc import get_cdc_client
+except ImportError:
+    get_cdc_client = None  # type: ignore[assignment,misc]
+
 __all__ = ("CDCCaptureProcessor",)
 
 
@@ -94,7 +99,8 @@ class CDCCaptureProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Подписывается на CDC и записывает события в result_property."""
-        from src.backend.infrastructure.clients.external.cdc import get_cdc_client
+        if get_cdc_client is None:
+            raise ImportError("cdc client not available")
 
         client = get_cdc_client()
         subscription_id = self._subscription_id
@@ -112,7 +118,8 @@ class CDCCaptureProcessor(BaseProcessor):
                 target_action=None,
             )
             self._subscription_id = subscription_id
-            exchange.set_property("cdc_subscription_id", subscription_id)
+
+        exchange.set_property("cdc_subscription_id", subscription_id)
 
         exchange.set_property(
             self._result_property,

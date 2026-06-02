@@ -166,7 +166,7 @@ class AIRLMProcessor(BaseProcessor):
         This is a stub implementation that demonstrates the RLM approach.
         Full implementation would use Deno/Pyodide for sandboxed execution.
         """
-        result = RLMResult()
+        result = RLMResult(iterations=1)
         result.context_size = len(context.split())
 
         # Stub: simulate RLM behavior
@@ -181,7 +181,7 @@ class AIRLMProcessor(BaseProcessor):
         result.answer = (
             f"[RLM stub] Processed {result.context_size} tokens for query: {query}"
         )
-        result.iterations = min(3, result.context_size // 1000)
+        result.iterations = max(1, min(3, result.context_size // 1000))
         result.calls = result.iterations
         result.tokens_used = result.context_size * 2  # Rough estimate
 
