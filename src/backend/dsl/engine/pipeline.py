@@ -157,12 +157,12 @@ class CompiledPipeline:
     """Скомпилированный pipeline — кэшируемый результат компиляции.
 
     Attrs:
-        pipeline: Исходный pipeline.
+        pipeline: Исходный pipeline (исключён из hash/eq — unhashable).
         processor_names: Список имён процессоров в порядке выполнения.
         is_valid: Флаг валидности pipeline.
     """
 
-    pipeline: Pipeline
+    pipeline: Pipeline = field(compare=False, hash=False)
     processor_names: tuple[str, ...]
     is_valid: bool
 

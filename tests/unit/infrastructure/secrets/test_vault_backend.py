@@ -91,18 +91,20 @@ def test_get_serializes_dict_when_no_value_field(fake_client: _FakeClient) -> No
     assert snap.value == '{"foo": "bar", "n": 42}'
 
 
-def test_get_versioned_passes_version(fake_client: _FakeClient) -> None:
+@pytest.mark.asyncio
+async def test_get_versioned_passes_version(fake_client: _FakeClient) -> None:
     backend = VaultBackend(
         config=VaultConfig(url="http://x"), client=fake_client
     )
-    snap = backend.get_versioned("api/key", 7)
+    snap = await backend.get_versioned("api/key", 7)
     # _FakeKVv2 echoes version → проверяем, что параметр пробрасывается.
     assert snap.version == 7
 
 
-def test_get_metadata_returns_data_block(fake_client: _FakeClient) -> None:
+@pytest.mark.asyncio
+async def test_get_metadata_returns_data_block(fake_client: _FakeClient) -> None:
     backend = VaultBackend(
         config=VaultConfig(url="http://x"), client=fake_client
     )
-    meta = backend.get_metadata("db/pg")
+    meta = await backend.get_metadata("db/pg")
     assert meta == {"current_version": 3}

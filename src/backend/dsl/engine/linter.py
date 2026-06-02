@@ -169,7 +169,7 @@ class DSLLinter:
         set_props: dict[str, int] = {}
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
-            if type_name == "SetPropertyProcessor":
+            if type_name.endswith("SetPropertyProcessor"):
                 key = getattr(p, "key", None)
                 if key:
                     set_props[key] = i
@@ -199,7 +199,11 @@ class DSLLinter:
         read_props: set[str] = set()
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
-            patterns = _PROPERTY_READ_PATTERNS.get(type_name, [])
+            patterns: list[str] = []
+            for cls_name, attrs in _PROPERTY_READ_PATTERNS.items():
+                if type_name.endswith(cls_name):
+                    patterns = attrs
+                    break
             for attr_name in patterns:
                 value = getattr(p, attr_name, None)
                 if value is None:
@@ -209,7 +213,7 @@ class DSLLinter:
                 read_props.update(prop_refs)
 
             # Дополнительные проверки для процессоров с динамическим чтением
-            if type_name == "SetPropertyProcessor":
+            if type_name.endswith("SetPropertyProcessor"):
                 # SetPropertyProcessor может читать source_property
                 source = getattr(p, "source_property", None)
                 if source:

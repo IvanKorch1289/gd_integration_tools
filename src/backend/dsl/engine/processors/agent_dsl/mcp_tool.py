@@ -34,6 +34,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 
+try:
+    from fastmcp import Client
+except ImportError:
+    Client = None  # type: ignore[misc,assignment]
+
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
@@ -139,7 +144,8 @@ class MCPToolProcessor(BaseAIProcessor):
 
     async def _call_mcp_tool(self, arguments: dict[str, Any]) -> Any:
         """Выполняет actual MCP tool call через FastMCP Client."""
-        from fastmcp import Client
+        if Client is None:
+            raise ImportError("fastmcp not installed: pip install fastmcp")
 
         async with Client(self.tool_uri) as client:
             result = await client.call_tool(self.tool_name, arguments=arguments)
