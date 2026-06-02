@@ -1052,20 +1052,17 @@ sync-agents: ## Фаза 0 stub: проверить наличие .shared/ + va
 	@printf '\033[33m[INFO] sync-permissions: регенерирует .claude/settings.json + .kimi-code/config.toml.\033[0m\n'
 	@printf '\033[33m[INFO] sync-mcp: пока stub (фаза 2).\033[0m\n'
 
-sync-mcp: ## Фаза 0 stub: проверить .mcp.json и .kimi-code/mcp.json (без правок)
-	@if [ ! -f .mcp.json ]; then \
-		printf '\033[31m[ERROR] .mcp.json не найден.\033[0m\n'; exit 1; \
-	fi
-	@if [ ! -f .kimi-code/mcp.json ]; then \
-		printf '\033[31m[ERROR] .kimi-code/mcp.json не найден.\033[0m\n'; exit 1; \
-	fi
-	@printf '\033[33m[STUB] sync-mcp: реализация в фазе 2.\033[0m\n'
-	@printf '\033[33m[STUB] SECRET-LEAK WARNING: \033[0m'
-	@if grep -qE 'ctx7sk-[a-f0-9-]+' .mcp.json .kimi-code/mcp.json 2>/dev/null; then \
-		printf '\033[31mFOUND hardcoded secrets — use $$CONTEXT7_API_KEY pattern.\033[0m\n'; \
-	else \
-		printf '\033[32mOK\033[0m\n'; \
-	fi
+sync-mcp: ## Фаза 2: пересоздать .mcp.json + .kimi-code/mcp.json как symlinks на .shared/mcp-servers.json
+	@$(INFO) "Recreating MCP symlinks from .shared/mcp-servers.json..."
+	@.venv/bin/python .shared/sync/render_mcp.py
+	@$(SUCCESS) "MCP symlinks recreated. Run 'make sync-mcp-verify' to confirm."
+
+sync-mcp-verify: ## Фаза 2: проверить .shared/mcp-servers.json + symlinks + secret-leak scan (exit 1 при проблемах)
+	@$(INFO) "Verifying MCP configs (symlinks + secrets)..."
+	@.venv/bin/python .shared/sync/render_mcp.py --verify
+	@$(SUCCESS) "MCP verified: symlinks OK, no hardcoded secrets."
+
+verify-mcp: sync-mcp-verify
 
 # === ФАЗА 1: РЕАЛЬНАЯ ЛОГИКА ===
 sync-permissions: ## Фаза 1: регенерировать .claude/settings.json + .kimi-code/config.toml из .shared/permissions.yaml
