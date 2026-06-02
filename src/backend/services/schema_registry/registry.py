@@ -37,12 +37,14 @@ Production Hardening (Schema Registry V2):
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
+    from src.backend.infrastructure.observability.metrics_registry import (
+        MetricsRegistry,
+    )
 
 __all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
 
