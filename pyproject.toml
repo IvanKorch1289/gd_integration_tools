@@ -554,6 +554,47 @@ module = "onelogin.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+# Optional AI/ML deps — not installed in dev_light.
+module = "llm_guard.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "dspy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pydantic_ai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiosqlite"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "torch"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "joblib"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "catboost"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "lightgbm"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "llama_cpp"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "huggingface_hub"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = "app.entrypoints.grpc.protobuf.*"
 ignore_errors = true
 
