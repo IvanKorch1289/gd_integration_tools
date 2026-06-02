@@ -396,7 +396,7 @@ class MulticastRoutesProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет fan-out на зарегистрированные маршруты."""
         from src.backend.dsl.commands.registry import route_registry
-        from src.backend.dsl.engine.execution_engine import DSLExecutionEngine
+        from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
         body = exchange.in_message.body
         headers = dict(exchange.in_message.headers)
@@ -404,7 +404,7 @@ class MulticastRoutesProcessor(BaseProcessor):
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}
 
-        engine = DSLExecutionEngine(route_registry=route_registry)
+        engine = ExecutionEngine(route_registry=route_registry)
 
         async def _run_route(route_id: str) -> tuple[str, Any, str | None]:
             pipeline = route_registry.get_optional(route_id)

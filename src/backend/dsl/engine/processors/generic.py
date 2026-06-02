@@ -121,8 +121,8 @@ class LineageTrackerProcessor(BaseProcessor):
         lineage: list[dict[str, Any]] = exchange.get_property("_lineage", [])
         lineage.append(
             {
-                "route_id": getattr(context.meta, "route_id", None)
-                if context.meta
+                "route_id": getattr(exchange.meta, "route_id", None)
+                if exchange.meta
                 else None,
                 "tag": self.tag,
             }

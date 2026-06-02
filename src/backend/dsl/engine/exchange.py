@@ -67,6 +67,10 @@ class Message(BaseModel, Generic[T]):
         """
         self.headers[key] = value
 
+    def set_body(self, value: T) -> None:
+        """Устанавливает тело сообщения."""
+        self.body = value
+
 
 class ExchangeMeta(BaseModel):
     """

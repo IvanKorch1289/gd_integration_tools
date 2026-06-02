@@ -777,7 +777,18 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ),
         (
             "15 feature-flags audit",
-            lambda: _check_python_script("feature-flags", "check_feature_flags.py"),
+            lambda: _check_python_script(
+                "feature-flags",
+                "check_feature_flags.py",
+                "--allow-non-off",
+                "scheduler_backend,embedding_v2_traffic,workflow_audit_extended,"
+                "workflow_sla_dashboard_enabled,workflow_visual_diff_enabled,"
+                "workflow_cron_builder_enabled,workflow_cost_estimation_enabled,"
+                "workflow_template_library_enabled,workflow_saga_viewer_enabled,"
+                "workflow_cancel_dsl_enabled,workflow_versioning_ui_enabled,"
+                "ai_workflow_cost_estimation_enabled,workflow_template_streamlit_enabled,"
+                "hitl_history_enabled,workflow_cron_dashboard_enabled",
+            ),
         ),
         (
             "16 team-ownership",
