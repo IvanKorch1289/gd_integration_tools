@@ -518,7 +518,7 @@ src/backend/dsl/engine/processors/jq_query.py:93:4 JqProcessor.process
 src/backend/dsl/engine/processors/jsonpath_query.py:100:4 JsonPathProcessor.process
 src/backend/dsl/engine/processors/jsonpath_query.py:141:4 JsonPathProcessor.to_spec
 src/backend/dsl/engine/processors/ldap_query.py:153:4 LdapQueryProcessor.process
-src/backend/dsl/engine/processors/ldap_query.py:176:4 LdapQueryProcessor.to_spec
+src/backend/dsl/engine/processors/ldap_query.py:177:4 LdapQueryProcessor.to_spec
 src/backend/dsl/engine/processors/ml_inference.py:135:4 StreamingLLMProcessor.process
 src/backend/dsl/engine/processors/ml_inference.py:216:4 EmbeddingProcessor.process
 src/backend/dsl/engine/processors/ml_inference.py:322:4 OutboxProcessor.process

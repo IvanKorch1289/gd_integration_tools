@@ -194,6 +194,7 @@ class TestVaultClient:
 
         with patch.object(rotator, "_get_client", return_value=mock_client):
             entry = rotator._entries["secret/data/db/password"]
+            entry.old_secret_data = {"password": "secret-v1"}
             entry.old_secret_timestamp = old_timestamp
 
             await rotator.tick()
