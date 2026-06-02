@@ -52,7 +52,7 @@ class _FakeRouteRegistry:
 
 
 class _FakeEngine:
-    """Имитация ``DSLExecutionEngine`` для тестов: задаваемое поведение по route."""
+    """Имитация ``ExecutionEngine`` для тестов: задаваемое поведение по route."""
 
     def __init__(
         self,
@@ -68,7 +68,7 @@ class _FakeEngine:
         self.raises = raises or {}
 
     def __call__(self, *, route_registry: Any) -> _FakeEngine:  # noqa: ARG002
-        # Имитирует конструктор DSLExecutionEngine(route_registry=...)
+        # Имитирует конструктор ExecutionEngine(route_registry=...)
         return self
 
     async def run_pipeline(
@@ -89,7 +89,7 @@ class _FakeEngine:
 
 @pytest.fixture
 def patched_routing(monkeypatch: pytest.MonkeyPatch):
-    """Подменяет ``route_registry`` и ``DSLExecutionEngine`` в routing-модуле.
+    """Подменяет ``route_registry`` и ``ExecutionEngine`` в routing-модуле.
 
     MulticastRoutesProcessor делает локальные ``from ... import ...``
     внутри ``process()``; патчим целевые модули в ``sys.modules``.
@@ -104,7 +104,7 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
         cmd_registry_mod = sys.modules["src.backend.dsl.commands.registry"]
     monkeypatch.setattr(cmd_registry_mod, "route_registry", fake_registry)
 
-    # Подменяем src.dsl.engine.execution_engine с DSLExecutionEngine.
+    # Подменяем src.dsl.engine.execution_engine с ExecutionEngine.
     fake_engine_holder: dict[str, _FakeEngine] = {}
 
     fake_engine_mod = types.ModuleType("src.backend.dsl.engine.execution_engine")
@@ -112,7 +112,7 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
     def _engine_factory(*, route_registry: Any):  # noqa: ARG001
         return fake_engine_holder["engine"]
 
-    fake_engine_mod.DSLExecutionEngine = _engine_factory  # type: ignore[attr-defined]
+    fake_engine_mod.ExecutionEngine = _engine_factory  # type: ignore[attr-defined]
     monkeypatch.setitem(
         sys.modules, "src.backend.dsl.engine.execution_engine", fake_engine_mod
     )

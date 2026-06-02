@@ -11,6 +11,7 @@ from typing import Any, Awaitable, Callable, ForwardRef, Union
 
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
+from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors.base import BaseProcessor

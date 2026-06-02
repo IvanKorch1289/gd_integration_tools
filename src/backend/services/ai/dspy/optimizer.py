@@ -19,7 +19,10 @@ import logging
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    import dspy
 
 logger = logging.getLogger(__name__)
 

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 __all__ = ("CasbinAdapter",)
 
@@ -19,7 +20,7 @@ class CasbinAdapter:
     def __init__(self, model_path: str, policy_path: str | None = None) -> None:
         self.model_path = model_path
         self.policy_path = policy_path
-        self._enforcer = None  # type: Any
+        self._enforcer: Any = None
 
     def _ensure_enforcer(self):
         if self._enforcer is None:

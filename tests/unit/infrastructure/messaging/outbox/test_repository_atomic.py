@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import pytest
 import pytest_asyncio
+
+pytest.importorskip("aiosqlite")
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
     AsyncSession,

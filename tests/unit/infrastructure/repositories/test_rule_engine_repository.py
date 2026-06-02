@@ -11,6 +11,9 @@ from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
+
+pytest.importorskip("aiosqlite")
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
