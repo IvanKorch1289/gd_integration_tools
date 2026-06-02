@@ -22,9 +22,9 @@ Hot-reload (`rule_engine_hot_reload=True`):
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import yaml
