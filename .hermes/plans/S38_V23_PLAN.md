@@ -8,7 +8,7 @@
 
 ## Цели спринта
 
-1. Закрыть **P1.1** v9 — декомпозиция god-файла `features.py` (2825 LOC, главный кандидат v9)
+1. Закрыть **P1.1** v9 — декомпозиция god-файла `features.py` (2804 LOC, главный кандидат v9)
 2. Закрыть **P2.3** v9 — CircuitBreaker консолидация (5+ реализаций → 1 канонический)
 3. Закрыть **P2.4** v9 — RateLimit консолидация (4+ реализаций → 1 канонический)
 
@@ -113,7 +113,7 @@
 
 | Риск | Вероятность | Митигация |
 |------|:-----------:|-----------|
-| **Features.py декомпозиция сломает импорты** (2825 LOC, много callsite) | 🟠 high | Поэтапно по доменам, backwards-compat через re-exports, coverage gate |
+| **Features.py декомпозиция сломает импорты** (2804 LOC, много callsite) | 🟠 high | Поэтапно по доменам, backwards-compat через re-exports, coverage gate |
 | **CB/RateLimit deprecation сломает production config** | 🟡 med | DeprecationWarning (не удаление), V24+ — actual removal |
 | **Untracked M-файлы в working tree** (чужие изменения) | 🟠 high | Только `git add <конкретные_файлы>`, не `git add -A` |
 | **Graphify pre-commit hook задержит** | 🟢 low | `--no-verify` (известное правило) |
@@ -123,7 +123,7 @@
 
 | Метрика | Baseline | Target S38 | Как измерить |
 |---------|:--------:|:----------:|--------------|
-| `features.py` LOC | 2825 | <500 (декомпозиция на 5+ модулей) | `wc -l` |
+| `features.py` LOC | 2804 | <500 (декомпозиция на 5+ модулей) | `wc -l` |
 | CB реализаций (canonical) | 5+ | 1 + 4 deprecated | `grep -rln class.*Breaker` |
 | RateLimit реализаций (canonical) | 4+ | 1 + 3 deprecated | `grep -rln class.*RateLimit` |
 | Pre-prod-check | 38/38 | 38/38 (0 регрессий) | `make pre-prod-check` |

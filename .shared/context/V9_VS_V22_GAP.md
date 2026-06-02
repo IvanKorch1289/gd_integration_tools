@@ -53,7 +53,7 @@
 
 | v9 Epic | Сделано | Осталось | Приоритет V23 |
 |---------|---------|----------|:-------------:|
-| **P1: God-объекты** | V22.10.2 wave 7: vulture/deptry baseline, ARCHITECTURE.md | **5/5 кандидатов v9 в топе**: features.py 2825, integration.py 2183, providers.py 1234, lifecycle.py 1100, gateway.py 1091. Декомпозиция. | 🟠 **P1.1** |
+| **P1: God-объекты** | V22.10.2 wave 7: vulture/deptry baseline, ARCHITECTURE.md | **5/5 кандидатов v9 в топе**: features.py 2804, integration.py 2183, providers.py 1234, lifecycle.py 1100, gateway.py 1091. Декомпозиция. | 🟠 **P1.1** |
 | **P2.1-2 Cache + Logging** | ✅ V22.10.2 wave 3 (cache) + wave 2 (logging) | — | ✅ done |
 | **P2.3 CB 3→1** | — | **5+ реализаций**: `infrastructure/resilience/client_breaker.py`, `infrastructure/clients/external/circuit_breakers.py`, `infrastructure/clients/transport/{http,http_httpx,smtp}.py` (embedded), `dsl/engine/processors/eip/resilience.py`, `core/resilience/{resilience_profile,decorators}.py`. Выбор канонического. | 🟠 **P2.3** |
 | **P2.4 RateLimit 3→1** | — | **4+ реализации**: `infrastructure/resilience/{unified_rate_limiter,distributed_rl_cluster,rate_limiter}.py`, `services/execution/middlewares/rate_limit_middleware.py`, `core/resilience/{rate_limiter,_pyrate_compat}.py`. | 🟡 **P2.4** |
@@ -89,7 +89,7 @@
 
 ## Список задач V23 (приоритезировано, без выдумок)
 
-### 🔴 P1.1 — God-файл `features.py` (2825 LOC)
+### 🔴 P1.1 — God-файл `features.py` (2804 LOC)
 
 **Файл:** `src/backend/core/config/features.py`
 **Проблема:** Один файл содержит feature-flags для всего проекта (v9 явно указывал).
