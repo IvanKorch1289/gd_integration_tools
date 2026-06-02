@@ -23,6 +23,29 @@
 
 <!-- append below -->
 
+## [2026-06-02 15:30] ivan (gap analysis) — pre-prod-check-coverage-timeout
+**Status:** open
+**Severity:** medium
+**Location:** `tools/checks/pre_prod_check.py` gate 01 → `make coverage-gate` (pytest --cov)
+
+**Description:** `make pre-prod-check` таймаутит на gate 01 (coverage ≥75%).
+`make coverage-gate` запускает pytest с coverage instrumentation, не укладывается
+в 600s (10 мин) timeout. Exit code 2.
+
+**Impact:** Pre-prod-check baseline (38/38) недостижим в текущей среде. S38
+не может использовать pre-prod-check как regression gate для T1.3+ рефакторингов.
+V22.10.2 closeутверждал 38/38, но фактический запуск не подтверждает.
+
+**Workaround:** Использовать `make lint && make type-check && make test` (без coverage)
+как альтернативный gate. Coverage не regression-detector в S38.
+
+**Plan:** Разобраться отдельно (возможно coverage instrumentation медленная, или
+test suite больше чем ожидалось). Не блокер для S38 (альтернативный gate есть).
+
+**Owner:** Ivan. Решение отложено в S39 (или раньше, если будет время).
+**Related:** S38_V23_PLAN.md, V9_VS_V22_GAP.md, TECH_DEBT.md запись
+`python-version-doc-drift`.
+
 ## [2026-06-02 14:00] ivan (gap analysis) — python-version-doc-drift
 **Status:** open
 **Severity:** low
