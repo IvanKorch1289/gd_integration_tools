@@ -1,186 +1,368 @@
-"""Sprint 7 Team T5 — unit-тесты FlagsmithProvider (OpenFeature adapter).
+"""T-P0.1.15: unit-тесты для core/feature_flags/flagsmith_provider.py (FlagsmithProvider).
 
-Покрывает:
-    1. Default-OFF: provider возвращает default, когда openfeature_external=False.
-    2. EvaluationContext dataclass корректно хранит tenant_id + traits.
-    3. resolve_boolean_value возвращает default при отсутствии environment_key.
-    4. resolve_string_value / resolve_integer_value / resolve_object_value — default fallback.
-    5. is_external_provider_enabled() возвращает False при недоступном feature_flags.
-    6. metadata содержит name + version.
-    7. shutdown() безопасен при отсутствии client.
+Coverage: flagsmith_provider.py 53% → 95%+ через тестирование:
+- EvaluationContext, ProviderError
+- is_external_provider_enabled
+- FlagsmithProvider (4× resolve_*, shutdown, _get_client)
 """
 
 from __future__ import annotations
+
+import sys
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.backend.core.feature_flags.flagsmith_provider import (
     EvaluationContext,
     FlagsmithProvider,
+    ProviderError,
     is_external_provider_enabled,
 )
 
 
-@pytest.fixture
-def provider_no_env_key() -> FlagsmithProvider:
-    """Provider без environment_key — всегда вернёт default."""
-    return FlagsmithProvider(environment_key=None)
+class TestEvaluationContext:
+    def test_defaults(self) -> None:
+        ctx = EvaluationContext()
+        assert ctx.tenant_id is None
+        assert ctx.traits == {}
+
+    def test_with_data(self) -> None:
+        ctx = EvaluationContext(tenant_id="t1", traits={"plan": "pro"})
+        assert ctx.tenant_id == "t1"
+        assert ctx.traits == {"plan": "pro"}
+
+    def test_independent_dict(self) -> None:
+        c1 = EvaluationContext()
+        c2 = EvaluationContext()
+        c1.traits["x"] = 1
+        assert "x" not in c2.traits
 
 
-@pytest.fixture
-def provider_with_env_key() -> FlagsmithProvider:
-    """Provider с заглушенным environment_key."""
-    return FlagsmithProvider(environment_key="ser.test-key")
+class TestProviderError:
+    def test_inherits_runtime_error(self) -> None:
+        err = ProviderError("test")
+        assert isinstance(err, RuntimeError)
+        assert "test" in str(err)
 
 
-@pytest.fixture
-def disable_external_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Гарантирует openfeature_external=False для теста."""
-    # Patch feature_flags singleton.
-    from src.backend.core.config import features as features_mod
+class TestIsExternalProviderEnabled:
+    def test_flag_off(self) -> None:
+        mock_flags = MagicMock(spec=[])
+        with patch(
+            "src.backend.core.config.features.feature_flags", mock_flags
+        ):
+            assert is_external_provider_enabled() is False
 
-    class _FlagsStub:
-        openfeature_external = False
+    def test_flag_on(self) -> None:
+        mock_flags = MagicMock()
+        mock_flags.openfeature_external = True
+        with patch(
+            "src.backend.core.config.features.feature_flags", mock_flags
+        ):
+            assert is_external_provider_enabled() is True
 
-    monkeypatch.setattr(features_mod, "feature_flags", _FlagsStub())
+    def test_flag_off_explicitly(self) -> None:
+        mock_flags = MagicMock()
+        mock_flags.openfeature_external = False
+        with patch(
+            "src.backend.core.config.features.feature_flags", mock_flags
+        ):
+            assert is_external_provider_enabled() is False
 
-
-@pytest.fixture
-def enable_external_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Включает openfeature_external=True для теста."""
-    from src.backend.core.config import features as features_mod
-
-    class _FlagsStub:
-        openfeature_external = True
-
-    monkeypatch.setattr(features_mod, "feature_flags", _FlagsStub())
-
-
-@pytest.mark.asyncio
-async def test_resolve_boolean_returns_default_when_disabled(
-    provider_with_env_key: FlagsmithProvider,
-    disable_external_flag: None,
-) -> None:
-    """При openfeature_external=False resolve_boolean возвращает default."""
-    result = await provider_with_env_key.resolve_boolean_value(
-        "my_flag", default=True
-    )
-    assert result is True
-
-    result_false = await provider_with_env_key.resolve_boolean_value(
-        "my_flag", default=False
-    )
-    assert result_false is False
+    def test_exception_returns_false(self) -> None:
+        """Если feature_flags module unavailable — False (default-OFF)."""
+        with patch.dict(sys.modules, {"src.backend.core.config.features": None}):
+            assert is_external_provider_enabled() is False
 
 
-@pytest.mark.asyncio
-async def test_resolve_string_returns_default_when_disabled(
-    provider_with_env_key: FlagsmithProvider,
-    disable_external_flag: None,
-) -> None:
-    """resolve_string возвращает default при disabled flag."""
-    result = await provider_with_env_key.resolve_string_value(
-        "my_str", default="fallback"
-    )
-    assert result == "fallback"
+class TestInit:
+    def test_defaults(self) -> None:
+        p = FlagsmithProvider(environment_key="key")
+        assert p.environment_key == "key"
+        assert p.api_url == "https://edge.api.flagsmith.com/api/v1/"
+        assert p.request_timeout_seconds == 2.0
+        assert p._client is None
+
+    def test_no_key(self) -> None:
+        p = FlagsmithProvider()
+        assert p.environment_key is None
+
+    def test_custom_params(self) -> None:
+        p = FlagsmithProvider(
+            environment_key="k",
+            api_url="https://custom.api/",
+            request_timeout_seconds=5.0,
+        )
+        assert p.api_url == "https://custom.api/"
+        assert p.request_timeout_seconds == 5.0
 
 
-@pytest.mark.asyncio
-async def test_resolve_integer_returns_default_when_disabled(
-    provider_with_env_key: FlagsmithProvider,
-    disable_external_flag: None,
-) -> None:
-    """resolve_integer возвращает default при disabled flag."""
-    result = await provider_with_env_key.resolve_integer_value(
-        "my_int", default=42
-    )
-    assert result == 42
+class TestMetadata:
+    def test_metadata(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        m = p.metadata
+        assert m["name"] == "FlagsmithProvider"
+        assert m["version"] == "1.0.0"
 
 
-@pytest.mark.asyncio
-async def test_resolve_object_returns_default_when_disabled(
-    provider_with_env_key: FlagsmithProvider,
-    disable_external_flag: None,
-) -> None:
-    """resolve_object возвращает default при disabled flag."""
-    default = {"hello": "world"}
-    result = await provider_with_env_key.resolve_object_value(
-        "my_obj", default=default
-    )
-    assert result == default
+class TestResolveBoolean:
+    @pytest.mark.asyncio
+    async def test_disabled_returns_default(self) -> None:
+        """Flag off — default."""
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=False):
+            result = await p.resolve_boolean_value("flag", default=True)
+            assert result is True
+
+    @pytest.mark.asyncio
+    async def test_no_key_returns_default(self) -> None:
+        """No environment_key — _get_client returns None → default."""
+        p = FlagsmithProvider()  # no key
+        with patch.object(p, "_enabled", return_value=True):
+            result = await p.resolve_boolean_value("flag", default=False)
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_provider_error_returns_default(self) -> None:
+        """ProviderError на _get_client → default."""
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(
+                p, "_get_client", side_effect=ProviderError("err")
+            ):
+                with patch(
+                    "src.backend.core.feature_flags.flagsmith_provider._logger"
+                ) as mock_logger:
+                    result = await p.resolve_boolean_value("flag", default=True)
+                    assert result is True
+                    assert mock_logger.warning.called
+
+    @pytest.mark.asyncio
+    async def test_with_client_returns_default(self) -> None:
+        """В текущей реализации всегда default (production-rollout note)."""
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(p, "_get_client", return_value=MagicMock()):
+                result = await p.resolve_boolean_value("flag", default=True)
+                assert result is True
 
 
-@pytest.mark.asyncio
-async def test_resolve_returns_default_without_env_key(
-    provider_no_env_key: FlagsmithProvider,
-    enable_external_flag: None,
-) -> None:
-    """Без environment_key provider всегда возвращает default."""
-    result = await provider_no_env_key.resolve_boolean_value(
-        "x", default=False
-    )
-    assert result is False
+class TestResolveString:
+    @pytest.mark.asyncio
+    async def test_disabled(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=False):
+            result = await p.resolve_string_value("flag", default="d")
+            assert result == "d"
+
+    @pytest.mark.asyncio
+    async def test_no_key(self) -> None:
+        p = FlagsmithProvider()
+        with patch.object(p, "_enabled", return_value=True):
+            result = await p.resolve_string_value("flag", default="d")
+            assert result == "d"
+
+    @pytest.mark.asyncio
+    async def test_provider_error(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(
+                p, "_get_client", side_effect=ProviderError("err")
+            ):
+                result = await p.resolve_string_value("flag", default="d")
+                assert result == "d"
+
+    @pytest.mark.asyncio
+    async def test_with_client(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(p, "_get_client", return_value=MagicMock()):
+                result = await p.resolve_string_value("flag", default="d")
+                assert result == "d"
 
 
-def test_evaluation_context_defaults() -> None:
-    """EvaluationContext без аргументов — tenant_id=None, traits={}."""
-    ctx = EvaluationContext()
-    assert ctx.tenant_id is None
-    assert ctx.traits == {}
+class TestResolveInteger:
+    @pytest.mark.asyncio
+    async def test_disabled(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=False):
+            result = await p.resolve_integer_value("flag", default=42)
+            assert result == 42
+
+    @pytest.mark.asyncio
+    async def test_no_key(self) -> None:
+        p = FlagsmithProvider()
+        with patch.object(p, "_enabled", return_value=True):
+            result = await p.resolve_integer_value("flag", default=42)
+            assert result == 42
+
+    @pytest.mark.asyncio
+    async def test_provider_error(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(
+                p, "_get_client", side_effect=ProviderError("err")
+            ):
+                result = await p.resolve_integer_value("flag", default=42)
+                assert result == 42
+
+    @pytest.mark.asyncio
+    async def test_with_client(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(p, "_get_client", return_value=MagicMock()):
+                result = await p.resolve_integer_value("flag", default=42)
+                assert result == 42
 
 
-def test_evaluation_context_with_tenant() -> None:
-    """EvaluationContext сохраняет tenant_id + traits."""
-    ctx = EvaluationContext(tenant_id="acme", traits={"plan": "enterprise"})
-    assert ctx.tenant_id == "acme"
-    assert ctx.traits["plan"] == "enterprise"
+class TestResolveObject:
+    @pytest.mark.asyncio
+    async def test_disabled(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=False):
+            result = await p.resolve_object_value("flag", default={"x": 1})
+            assert result == {"x": 1}
+
+    @pytest.mark.asyncio
+    async def test_no_key(self) -> None:
+        p = FlagsmithProvider()
+        with patch.object(p, "_enabled", return_value=True):
+            result = await p.resolve_object_value("flag", default={"x": 1})
+            assert result == {"x": 1}
+
+    @pytest.mark.asyncio
+    async def test_provider_error(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(
+                p, "_get_client", side_effect=ProviderError("err")
+            ):
+                result = await p.resolve_object_value(
+                    "flag", default={"x": 1}
+                )
+                assert result == {"x": 1}
+
+    @pytest.mark.asyncio
+    async def test_with_client(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        with patch.object(p, "_enabled", return_value=True):
+            with patch.object(p, "_get_client", return_value=MagicMock()):
+                result = await p.resolve_object_value(
+                    "flag", default={"x": 1}
+                )
+                assert result == {"x": 1}
 
 
-def test_is_external_provider_enabled_default_off(
-    disable_external_flag: None,
-) -> None:
-    """is_external_provider_enabled() возвращает False при disabled flag."""
-    assert is_external_provider_enabled() is False
+class TestShutdown:
+    @pytest.mark.asyncio
+    async def test_no_client(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        await p.shutdown()
+        assert p._client is None
+
+    @pytest.mark.asyncio
+    async def test_sync_close(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        client = MagicMock()
+        client.aclose = MagicMock(return_value=None)
+        client.close = MagicMock(return_value=None)
+        p._client = client
+
+        await p.shutdown()
+        # Один из aclose/close вызван
+        assert client.aclose.called or client.close.called
+        assert p._client is None
+
+    @pytest.mark.asyncio
+    async def test_async_close(self) -> None:
+        """close() возвращает awaitable — await result."""
+        p = FlagsmithProvider(environment_key="k")
+
+        # Async close через aclose, возвращающий корутину
+        async def async_aclose() -> None:
+            return None
+
+        client = MagicMock()
+        client.aclose = async_aclose
+        client.close = None
+        p._client = client
+
+        await p.shutdown()
+        assert p._client is None
+
+    @pytest.mark.asyncio
+    async def test_close_exception_logged(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        client = MagicMock()
+        client.aclose = MagicMock(side_effect=RuntimeError("err"))
+        p._client = client
+
+        with patch(
+            "src.backend.core.feature_flags.flagsmith_provider._logger"
+        ) as mock_logger:
+            await p.shutdown()
+            assert mock_logger.exception.called
+            assert p._client is None
+
+    @pytest.mark.asyncio
+    async def test_no_close_method(self) -> None:
+        """Клиент без aclose/close — skip, no error."""
+        p = FlagsmithProvider(environment_key="k")
+        client = MagicMock(spec=[])  # No aclose, no close
+        p._client = client
+
+        await p.shutdown()
+        assert p._client is None
 
 
-def test_is_external_provider_enabled_on(
-    enable_external_flag: None,
-) -> None:
-    """is_external_provider_enabled() возвращает True при enabled flag."""
-    assert is_external_provider_enabled() is True
+class TestGetClient:
+    def test_no_key_returns_none(self) -> None:
+        p = FlagsmithProvider()
+        assert p._get_client() is None
+
+    def test_lazy_init(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        assert p._client is None
+        mock_http = MagicMock()
+        with patch(
+            "src.backend.core.net.migration_helper.make_http_client",
+            return_value=mock_http,
+        ) as mock_make:
+            client = p._get_client()
+            assert client is mock_http
+            assert mock_make.called
+            assert mock_make.call_args.kwargs["base_url"] == p.api_url
+            assert mock_make.call_args.kwargs["headers"] == {
+                "X-Environment-Key": "k"
+            }
+            assert mock_make.call_args.kwargs["plugin"] == (
+                "core/feature_flags/flagsmith_provider"
+            )
+
+    def test_returns_existing(self) -> None:
+        p = FlagsmithProvider(environment_key="k")
+        existing = MagicMock()
+        p._client = existing
+        # Без patch — make_http_client не должен быть вызван
+        assert p._get_client() is existing
+
+    def test_import_error_raises_provider_error(self) -> None:
+        """Если migration_helper unavailable — ProviderError."""
+        p = FlagsmithProvider(environment_key="k")
+        with patch.dict(sys.modules, {"src.backend.core.net.migration_helper": None}):
+            with pytest.raises(ProviderError, match="migration_helper"):
+                p._get_client()
 
 
-def test_provider_metadata() -> None:
-    """metadata содержит обязательные поля name + version."""
-    provider = FlagsmithProvider()
-    meta = provider.metadata
-    assert meta["name"] == "FlagsmithProvider"
-    assert "version" in meta
+class TestAllExports:
+    def test_all(self) -> None:
+        from src.backend.core.feature_flags import flagsmith_provider as m
 
-
-@pytest.mark.asyncio
-async def test_shutdown_without_client_is_safe() -> None:
-    """shutdown() без созданного client — no-op без исключений."""
-    provider = FlagsmithProvider(environment_key="ser.key")
-    # _client == None изначально.
-    await provider.shutdown()  # не должно бросить
-    assert provider._client is None
-
-
-@pytest.mark.asyncio
-async def test_shutdown_with_client_closes_it(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """shutdown() вызывает aclose() на async-client."""
-    provider = FlagsmithProvider(environment_key="ser.key")
-
-    closed = {"called": False}
-
-    class _FakeAsyncClient:
-        async def aclose(self) -> None:
-            closed["called"] = True
-
-    provider._client = _FakeAsyncClient()
-    await provider.shutdown()
-    assert closed["called"] is True
-    assert provider._client is None
+        assert set(m.__all__) == {
+            "EvaluationContext",
+            "FlagsmithProvider",
+            "ProviderError",
+            "is_external_provider_enabled",
+        }
