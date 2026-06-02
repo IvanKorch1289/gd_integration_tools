@@ -23,6 +23,30 @@
 
 <!-- append below -->
 
+## [2026-06-02 17:45] ivan (gap analysis) — vault-cipher-dead-code
+**Status:** open
+**Severity:** low
+**Location:** `src/backend/core/security/vault_cipher.py` (94 stmts) + `vault_cipher_sqlalchemy.py` (57 stmts)
+
+**Description:** Оба файла имеют 0% coverage. Audit (T-P0.1.12 prep) показал
+что они импортируются ТОЛЬКО друг другом, нет ни одного external usage
+в `src/backend/`. Canonical implementation — `secret_rotation.py` (100% coverage,
+используется в production).
+
+**Impact:** 151 stmts мёртвого кода в core/security. Coverage `core/security`
+занижен на ~14% (1045 строк → 284 miss, из них 151 = dead code).
+
+**Workaround:** Не писать тесты для dead code (бессмысленно). При coverage
+check игнорировать эти 2 файла через `# pragma: no cover` или coverage
+exclude_patterns в pyproject.toml.
+
+**Plan:** Удалить файлы в V23 cleanup (P15) после проверки dynamic imports
+(`grep -r vault_cipher src/ tests/ docs/`). До удаления — добавить
+`pragma: no cover` markers.
+
+**Owner:** Ivan. V23 cleanup task.
+**Related:** T-P0.1.12 (rpa_policy audit, side discovery).
+
 ## [2026-06-02 15:30] ivan (gap analysis) — pre-prod-check-coverage-timeout
 **Status:** open
 **Severity:** medium
