@@ -1078,19 +1078,21 @@ sync-permissions-verify: ## Фаза 1: проверить что .claude/settin
 # Алиас
 verify-permissions: sync-permissions-verify
 
-# === ФАЗА 4: SESSION LOG (БУДУТ) ===
-session-start: ## Фаза 0 stub: append-only запись в vault/SESSIONS.md (реальная логика в фазе 4)
-	@if [ -z "$(AGENT)" ]; then \
-		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\033[0m\n'; \
-		exit 2; \
+# === ФАЗА 4: SESSION LOG + VAULT INDEX (реальная логика) ===
+session-start: ## Фаза 4: append-only запись в vault/SESSIONS.md (AGENT=<claude|kimi>, MSG="...")
+	@if [ -z "$(AGENT)" ]; then \\
+		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\\033[0m\n' >&2; \\
+		printf 'Пример: make session-start AGENT=claude MSG="refactor sync-permissions"\n' >&2; \\
+		exit 2; \\
 	fi
-	@printf '\033[33m[STUB] session-start: реализация в фазе 4.\033[0m\n'
-	@printf '\033[32m[INFO] Будет записано в vault/SESSIONS.md: agent=%s, msg="%s"\033[0m\n' "$(AGENT)" "$(MSG)"
+	@AGENT="$(AGENT)" MSG="$(MSG)" SLUG="$(SLUG)" bash .shared/hooks/session-start.sh
 
-session-close: ## Фаза 0 stub: закрыть запись в vault/SESSIONS.md (реальная логика в фазе 4)
-	@printf '\033[33m[STUB] session-close: реализация в фазе 4.\033[0m\n'
-	@printf '\033[32m[INFO] Будет дописано close-line в vault/SESSIONS.md\033[0m\n'
+session-close: ## Фаза 4: закрыть последнюю запись для AGENT (AGENT=<claude|kimi>, MSG="...", [CONTEXT=...] [DECISIONS=...] [FILES=...] [NEXT=...])
+	@if [ -z "$(AGENT)" ]; then \\
+		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\\033[0m\n' >&2; \\
+		exit 2; \\
+	fi
+	@AGENT="$(AGENT)" MSG="$(MSG)" CONTEXT="$(CONTEXT)" DECISIONS="$(DECISIONS)" FILES="$(FILES)" NEXT="$(NEXT)" bash .shared/hooks/session-close.sh
 
-vault-index: ## Фаза 0 stub: обновить vault/INDEX.md (реальная логика в фазе 4)
-	@printf '\033[33m[STUB] vault-index: реализация в фазе 4.\033[0m\n'
-	@printf '\033[32m[INFO] Будет сгенерирован: ls -t vault/session-*.md | head -10\033[0m\n'
+vault-index: ## Фаза 4: regenerate vault/INDEX.md (ls + tail)
+	@bash .shared/hooks/vault-index.sh
