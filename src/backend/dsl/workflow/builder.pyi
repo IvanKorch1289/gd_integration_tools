@@ -32,7 +32,7 @@ class WorkflowBuilder:
     def checkpoint(
         self,
         checkpoint_id: Union[str, None] = ...,
-        include_steps: tuple[str, Ellipsis] = ...,
+        include_steps: tuple[str, ...] = (...),
         metadata: Union[dict[str, Any], None] = ...,
         output_key: Union[str, None] = ...,
     ) -> Self:

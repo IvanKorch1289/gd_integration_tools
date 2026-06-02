@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import builtins
 import importlib.util
 import inspect
 import logging
@@ -284,10 +285,10 @@ class ToolRegistry:
     def from_service(
         self,
         service_cls: type | Any,
-        methods: list[str] | None = None,
+        methods: builtins.list[str] | None = None,
         prefix: str | None = None,
         policy: dict[str, Any] | None = None,
-    ) -> list[AgentTool]:
+    ) -> builtins.list[AgentTool]:
         """Регистрирует публичные методы сервиса как AI-инструменты.
 
         Принимает класс или экземпляр. Для класса инстанцирует его
@@ -344,7 +345,7 @@ class ToolRegistry:
         )
         return registered
 
-    def from_plugin_file(self, path: str | Path) -> list[AgentTool]:
+    def from_plugin_file(self, path: str | Path) -> builtins.list[AgentTool]:
         """Загружает ``@agent_tool``-функции из плагин-файла.
 
         Импортирует файл по явному пути (без его установки в sys.path),

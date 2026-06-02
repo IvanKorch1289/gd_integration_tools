@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import yaml
@@ -67,7 +68,7 @@ class RuleEngineRegistry:
         repo: "RuleEngineRepository",
         feature_flags: "FeatureFlags",
         *,
-        clock: "callable[[], datetime] | None" = None,
+        clock: "Callable[[], datetime] | None" = None,
     ) -> None:
         self._repo = repo
         self._flags = feature_flags

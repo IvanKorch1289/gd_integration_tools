@@ -22,6 +22,7 @@ Layer-correct placement
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.audit.schema.ai_invocation import (
@@ -46,10 +47,10 @@ __all__ = (
 # services.audit.unified_sink_factory регистрирует имплементацию при импорте.
 # Это позволяет core/ai/gateway вызывать emit без импорта из services/.
 
-_emit_fn: callable | None = None
+_emit_fn: Callable[..., Any] | None = None
 
 
-def register_emit_ai_invocation_event(fn: callable) -> None:
+def register_emit_ai_invocation_event(fn: Callable[..., Any]) -> None:
     """Регистрирует emit-функцию из services/.
 
     Вызывается ``services.audit.unified_sink_factory`` при импорте.

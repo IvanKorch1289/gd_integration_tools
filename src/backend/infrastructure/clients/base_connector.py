@@ -154,7 +154,7 @@ class InfrastructureClient(ABC):
     # -- Helpers -------------------------------------------------------
 
     async def _timed_health(
-        self, probe: "callable[[], Any]", mode: HealthMode
+        self, probe: "Callable[[], Any]", mode: HealthMode
     ) -> HealthResult:
         """Helper для клиентов: оборачивает probe-колбек в timing + exception handling."""
         start = time.perf_counter()
