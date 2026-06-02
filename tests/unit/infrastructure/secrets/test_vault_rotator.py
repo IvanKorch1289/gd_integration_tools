@@ -83,7 +83,7 @@ async def test_rotator_tick_calls_callback_on_version_change(
     received: list[dict[str, Any]] = []
     rotator.register(path, received.append)
 
-    # Первый tick: версия 1, кэш пуст → callback вызывается
+    # Первый tick: версия 1, кэш пуст → инициализация, callback НЕ вызывается
     mock_hvac_client = MagicMock()
     mock_hvac_client.secrets.kv.v2.read_secret_version.return_value = (
         _make_hvac_response(version=1, data={"api_key": "secret-v1"})
@@ -92,17 +92,16 @@ async def test_rotator_tick_calls_callback_on_version_change(
     with patch("hvac.Client", return_value=mock_hvac_client):
         await rotator.tick()
 
-    assert len(received) == 1
-    assert received[0] == {"api_key": "secret-v1"}
+    assert len(received) == 0  # инициализация — без callback
     assert rotator._versions[path] == 1
 
     # Второй tick: версия та же (1) → callback НЕ вызывается
     with patch("hvac.Client", return_value=mock_hvac_client):
         await rotator.tick()
 
-    assert len(received) == 1  # без изменений
+    assert len(received) == 0  # без изменений
 
-    # Третий tick: версия 2 → callback вызывается снова
+    # Третий tick: версия 2 → callback вызывается
     mock_hvac_client.secrets.kv.v2.read_secret_version.return_value = (
         _make_hvac_response(version=2, data={"api_key": "secret-v2"})
     )
@@ -110,8 +109,8 @@ async def test_rotator_tick_calls_callback_on_version_change(
     with patch("hvac.Client", return_value=mock_hvac_client):
         await rotator.tick()
 
-    assert len(received) == 2
-    assert received[1] == {"api_key": "secret-v2"}
+    assert len(received) == 1
+    assert received[0] == {"api_key": "secret-v2"}
     assert rotator._versions[path] == 2
 
 
