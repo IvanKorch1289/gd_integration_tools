@@ -11,9 +11,12 @@
 1. Закрыть **P1.1** v9 — декомпозиция god-файла `features.py` (2825 LOC, главный кандидат v9)
 2. Закрыть **P2.3** v9 — CircuitBreaker консолидация (5+ реализаций → 1 канонический)
 3. Закрыть **P2.4** v9 — RateLimit консолидация (4+ реализаций → 1 канонический)
-4. Начать **P7** v9 — Groovy DSL P1 (4 процессора: Collect, FindAll, GroupBy, OrElse)
 
-**Out of scope S38** (отложено в S39+): P4 Consul, P9 Groovy DSL P2+P3, P8 ConvertersMixin cleanup.
+**Out of scope S38:**
+- ❌ **P4 Consul** — в работе параллельным процессом (см. untracked `src/backend/core/config/consul_config.py`)
+- ❌ **P7 Groovy DSL P1** — в работе параллельным процессом (см. untracked `src/backend/dsl/builders/collection.py`, `dsl/engine/processors/eip/collection.py`)
+- ❌ P9 Groovy DSL P2+P3 — после P7
+- ❌ P8 ConvertersMixin cleanup — S19 deprecation, V24+ removal
 
 ## Правила работы (S38-specific)
 
@@ -92,17 +95,19 @@
 
 **Стоп после W3.** Согласование W4 (Groovy DSL).
 
-### W4-W5 (опционально, в S38 если время) — P7 Groovy DSL P1
+### W4-W5 — ~~P7 Groovy DSL P1~~ ОТМЕНЕНО
 
-| ID | Задача | Трудоёмкость | Зависимости | DoD |
-|----|--------|:------------:|-------------|-----|
-| **T4.1** | `CollectProcessor` — `.collect(field="name")` | 0.5 дня | — | процессор + 4+ теста |
-| **T4.2** | `FindAllProcessor` — `.find_all(condition="age > 18")` | 0.5 дня | T4.1 | процессор + 4+ теста |
-| **T4.3** | `GroupByProcessor` — `.group_by(field="category")` | 0.5 дня | T4.2 | процессор + 4+ теста |
-| **T4.4** | `OrElseProcessor` — `.or_else(default="N/A")` | 0.5 дня | T4.3 | процессор + 4+ теста |
-| **T4.5** | Integration tests + docs | 1 день | T4.4 | E2E тесты + docs/dsl/collect.md etc |
+**Причина отмены:** параллельный процесс уже реализует P7 (см. untracked файлы
+`src/backend/dsl/builders/collection.py`, `src/backend/dsl/engine/processors/eip/collection.py`,
+`tests/unit/dsl/engine/processors/eip/`). Не дублируем работу.
 
-**Стоп после W5 (если делаем).** Согласование S39 planning.
+**Что остаётся в V23+ backlog (не наш scope):**
+- P4 Consul — параллельный процесс
+- P7 Groovy DSL P1 (4 процессора) — параллельный процесс
+- P9 Groovy DSL P2+P3 (9 процессоров) — после P7
+- P8 ConvertersMixin cleanup (removal) — S19 deprecation, V24+ removal
+
+**Стоп после W3.** Согласование S39 planning (если будут новые эпики).
 
 ## Риски и митигации
 
@@ -121,7 +126,6 @@
 | `features.py` LOC | 2825 | <500 (декомпозиция на 5+ модулей) | `wc -l` |
 | CB реализаций (canonical) | 5+ | 1 + 4 deprecated | `grep -rln class.*Breaker` |
 | RateLimit реализаций (canonical) | 4+ | 1 + 3 deprecated | `grep -rln class.*RateLimit` |
-| Groovy DSL процессоров | 300 | 304 (+4) | `find dsl/engine/processors -name '*.py' | wc -l` |
 | Pre-prod-check | 38/38 | 38/38 (0 регрессий) | `make pre-prod-check` |
 | Noqa-директив | 1677 | 1677 или меньше | `grep -rn '# noqa' src tests | wc -l` |
 | Coverage | 83% target | ≥83% (sustain) | `make coverage-gate-strict` |
