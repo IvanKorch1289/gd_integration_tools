@@ -150,7 +150,7 @@ class AIFeedbackService:
 
             await RLMFeedbackProcessor().on_feedback_received(
                 doc_id=str(doc_id),
-                label=rlm_label,  # type: ignore[arg-type]
+                label=rlm_label,  
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("RLM feedback hook skipped: %s", exc)

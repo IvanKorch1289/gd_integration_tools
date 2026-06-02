@@ -321,4 +321,4 @@ class BasePydanticAgent(Generic[ResultT]):
         if self._structured_output:
             return self.result_type.model_validate(data)  # type: ignore[return-value]
         # Если structured_output=False — возвращаем как есть (best-effort).
-        return data  # type: ignore[return-value]
+        return data  

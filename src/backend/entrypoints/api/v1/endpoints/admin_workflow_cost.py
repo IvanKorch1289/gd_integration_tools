@@ -101,7 +101,7 @@ async def get_workflow_cost_history(
     from datetime import datetime, timedelta, timezone
 
     try:
-        from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
+        from clickhouse_connect import get_async_client  
 
         from src.backend.core.config import settings
 

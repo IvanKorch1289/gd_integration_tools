@@ -29,7 +29,7 @@ class InboxDLQWriter:
         self._table = table_name
 
     async def write(self, envelope: DLQEnvelope) -> None:
-        from sqlalchemy import text  # type: ignore[import-untyped]
+        from sqlalchemy import text  
 
         sql = text(
             f"""  # noqa: S608

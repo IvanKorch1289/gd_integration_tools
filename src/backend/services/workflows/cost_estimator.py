@@ -71,7 +71,7 @@ class WorkflowCostEstimator:
     async def _get_client(self) -> Any:
         if self._client_factory is not None:
             return await self._client_factory()
-        from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
+        from clickhouse_connect import get_async_client  
 
         from src.backend.core.config import settings
 

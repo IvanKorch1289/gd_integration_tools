@@ -254,7 +254,7 @@ class RAGService:
             )
         return AugmentResult(
             prompt=prompt,
-            citations=citations,  # type: ignore[arg-type]
+            citations=citations,  
             used_results=len(citations),
             namespace=namespace,
             top_k=top_k,

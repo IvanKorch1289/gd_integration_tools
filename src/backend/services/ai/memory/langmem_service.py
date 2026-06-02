@@ -168,7 +168,7 @@ class LangMemService:
             return None
         try:
             from qdrant_client import (
-                AsyncQdrantClient,  # type: ignore[import-not-found]
+                AsyncQdrantClient,  
             )
 
             self._qdrant_client = AsyncQdrantClient(self._qdrant_url)

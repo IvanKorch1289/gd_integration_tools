@@ -26,13 +26,13 @@ try:
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
-    Model = object  # type: ignore[misc,assignment]
-    ModelMessage = Any  # type: ignore[misc,assignment]
-    ModelResponse = Any  # type: ignore[misc,assignment]
-    TextPart = None  # type: ignore[assignment, misc]
-    ModelSettings = Any  # type: ignore[misc,assignment]
-    ModelRequestParameters = Any  # type: ignore[misc,assignment]
-    StreamedResponse = Any  # type: ignore[misc,assignment]
+    Model = object  
+    ModelMessage = Any  
+    ModelResponse = Any  
+    TextPart = None  
+    ModelSettings = Any  
+    ModelRequestParameters = Any  
+    StreamedResponse = Any  
 
 
 class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
@@ -86,7 +86,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
         if TextPart is not None:
             return ModelResponse(parts=[TextPart(content=content)])
         # Fallback when pydantic_ai not installed (shouldn't reach here in practice)
-        return result  # type: ignore[return-value]
+        return result  
 
     @asynccontextmanager
     async def request_stream(

@@ -71,7 +71,7 @@ def _extract_json_schema(model: type[Any] | None) -> dict[str, Any]:
         logger.debug("Модель %r не имеет .model_json_schema(), schema пропущена", model)
         return {}
     try:
-        return schema_fn()  # type: ignore[no-any-return]
+        return schema_fn()  
     except Exception as _:  # noqa: BLE001
         logger.warning(
             "Не удалось сгенерировать JSON-Schema для %r", model, exc_info=True

@@ -37,7 +37,7 @@ class TokenChunker:
     def _load_encoding(name: str) -> object | None:
         """Возвращает tiktoken encoding или ``None``, если пакет недоступен."""
         try:
-            import tiktoken  # type: ignore[import-not-found]
+            import tiktoken  
         except ImportError:
             logger.info(
                 "tiktoken не установлен — TokenChunker работает в "
@@ -66,7 +66,7 @@ class TokenChunker:
         encoding = self._encoding
         assert encoding is not None  # noqa: S101 — проверено в split()
 
-        tokens = encoding.encode(text)  # type: ignore[union-attr]
+        tokens = encoding.encode(text)  
         if not tokens:
             return []
 
@@ -76,7 +76,7 @@ class TokenChunker:
             window = tokens[start : start + self._size]
             if not window:
                 break
-            chunks.append(encoding.decode(window))  # type: ignore[union-attr]
+            chunks.append(encoding.decode(window))  
             if start + self._size >= len(tokens):
                 break
         return [c for c in chunks if c]

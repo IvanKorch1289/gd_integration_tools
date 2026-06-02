@@ -100,7 +100,7 @@ class RedisClient:
                 kind,
                 [f"{n.host}:{n.port}" for n in startup_nodes],
             )
-            return RedisCluster(  # type: ignore[return-value]
+            return RedisCluster(  
                 startup_nodes=startup_nodes,
                 password=self.settings.password or None,
                 encoding=self.settings.encoding,
@@ -172,7 +172,7 @@ class RedisClient:
                 await self._safe_close(client)
 
             client = self._build_client(kind)
-            await client.ping()  # type: ignore[misc]
+            await client.ping()  
             self._clients[kind] = client
 
             self.logger.info(
@@ -230,7 +230,7 @@ class RedisClient:
     async def check_connection(self, kind: RedisKind) -> bool:
         try:
             client = await self.get_client(kind)
-            return bool(await client.ping())  # type: ignore[misc]
+            return bool(await client.ping())  
         except RedisError:
             return False
 

@@ -66,7 +66,7 @@ client = get_api_client()
 
 if st.button("Preview Next executions", type="primary"):
     try:
-        resp = client._request(  # type: ignore[attr-defined]
+        resp = client._request(  
             "POST",
             "/admin/cron/validate",
             json={

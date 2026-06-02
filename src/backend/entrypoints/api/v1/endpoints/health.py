@@ -175,7 +175,7 @@ async def components_health(mode: str = "fast") -> JSONResponse:
         )
 
         aggregator = get_health_aggregator_provider()
-        report = await aggregator.check_all(mode=mode)  # type: ignore[arg-type]
+        report = await aggregator.check_all(mode=mode)  
 
         # Для deep-режима добавляем подробный per-chain отчёт.
         if mode == "deep":

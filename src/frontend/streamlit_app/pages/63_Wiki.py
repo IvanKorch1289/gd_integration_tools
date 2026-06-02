@@ -96,7 +96,7 @@ if ctrl_cols[0].button("Перестроить индекс"):
 if ctrl_cols[1].button("Проверить грамматику docs/ (ru)"):
     with st.spinner("Запуск ru-proofreader..."):
         try:
-            from tools.checks.ru_proofread import (  # type: ignore[import-not-found]
+            from tools.checks.ru_proofread import (  
                 proofread_docs,
             )
 

@@ -121,7 +121,7 @@ async def run_async_migrations() -> None:
         import contextlib
 
         @contextlib.asynccontextmanager
-        async def lock_ctx():  # type: ignore[no-redef]
+        async def lock_ctx():  
             yield True
 
     async with lock_ctx as acquired:

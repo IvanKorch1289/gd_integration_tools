@@ -44,7 +44,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             return self._client
         try:
             from mlflow.tracking import (
-                MlflowClient,  # type: ignore[import-not-found]  # noqa: PLC0415
+                MlflowClient,    # noqa: PLC0415
             )
         except ImportError as exc:
             raise RuntimeError(

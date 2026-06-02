@@ -76,7 +76,7 @@ class WorkflowAuditInventoryResponse(BaseModel):
 
 async def _get_clickhouse_client() -> Any:
     """Создаёт async ClickHouse-клиент через ``clickhouse_connect``."""
-    from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
+    from clickhouse_connect import get_async_client  
 
     from src.backend.core.config import settings
 

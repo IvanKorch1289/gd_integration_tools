@@ -204,7 +204,7 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
     start = time.monotonic()
     try:
         # Lazy import — не падать если SDK отсутствует.
-        from src.backend.core.config.settings import settings  # type: ignore
+        from src.backend.core.config.settings import settings  
 
         registry_url = getattr(settings.queue, "schema_registry_url", None)
         if not registry_url:
@@ -235,7 +235,7 @@ async def _check_temporal_server() -> ProcessorHealthResult:
     """Проверка доступности Temporal server."""
     start = time.monotonic()
     try:
-        from src.backend.core.config.settings import settings  # type: ignore
+        from src.backend.core.config.settings import settings  
 
         temporal_host = getattr(getattr(settings, "workflow", None), "host", None)
         if not temporal_host:
@@ -264,7 +264,7 @@ async def _check_vault_sealed() -> ProcessorHealthResult:
     """Проверка, что Vault unsealed и доступен."""
     start = time.monotonic()
     try:
-        from src.backend.core.config.settings import settings  # type: ignore
+        from src.backend.core.config.settings import settings  
 
         vault_enabled = getattr(getattr(settings, "vault", None), "enabled", False)
         if not vault_enabled:
@@ -304,7 +304,7 @@ async def _check_redis_cluster() -> ProcessorHealthResult:
     """Проверка доступности Redis cluster (через PING)."""
     start = time.monotonic()
     try:
-        from src.backend.core.config.settings import settings  # type: ignore
+        from src.backend.core.config.settings import settings  
 
         redis_enabled = getattr(getattr(settings, "redis", None), "enabled", False)
         if not redis_enabled:
@@ -344,7 +344,7 @@ async def _check_graylog() -> ProcessorHealthResult:
     """Проверка доступности Graylog (через TCP-ping или HTTP-API)."""
     start = time.monotonic()
     try:
-        from src.backend.core.config.settings import settings  # type: ignore
+        from src.backend.core.config.settings import settings  
 
         log_host = getattr(getattr(settings, "logging", None), "host", "")
         if not log_host:

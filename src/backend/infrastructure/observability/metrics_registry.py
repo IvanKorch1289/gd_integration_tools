@@ -115,7 +115,7 @@ class MetricsRegistry:
             }
             if buckets is not None:
                 kwargs["buckets"] = buckets
-            histogram = Histogram(name, description, **kwargs)  # type: ignore[arg-type]
+            histogram = Histogram(name, description, **kwargs)  
             self._histograms[name] = histogram
             return histogram
 

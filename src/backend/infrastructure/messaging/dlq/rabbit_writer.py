@@ -33,7 +33,7 @@ class RabbitDLQWriter:
         self._queue_prefix = queue_prefix
 
     async def write(self, envelope: DLQEnvelope) -> None:
-        from aio_pika import DeliveryMode, Message  # type: ignore[import-untyped]
+        from aio_pika import DeliveryMode, Message  
 
         routing_key = f"{self._queue_prefix}{envelope.transport}"
         payload = envelope.model_dump_json().encode("utf-8")

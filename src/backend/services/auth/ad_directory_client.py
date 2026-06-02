@@ -182,7 +182,7 @@ class AdDirectoryClient:
                 if callable(close):
                     close()
 
-        from ldap3 import (  # type: ignore[import-not-found]  # noqa: PLC0415
+        from ldap3 import (    # noqa: PLC0415
             Connection,
             Server,
         )
@@ -247,7 +247,7 @@ class AdDirectoryClient:
                 user_dn=self._config.bind_dn, password=self._config.bind_password
             )
         else:
-            from ldap3 import (  # type: ignore[import-not-found]  # noqa: PLC0415
+            from ldap3 import (    # noqa: PLC0415
                 Connection,
                 Server,
             )

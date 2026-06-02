@@ -71,7 +71,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
                     "Memcached-бэкенд требует пакет 'aiomcache'. "
                     "Добавьте его в pyproject.toml и переинициализируйте."
                 ) from exc
-            from src.backend.infrastructure.cache.backends.memcached import (  # type: ignore[import-not-found]
+            from src.backend.infrastructure.cache.backends.memcached import (  
                 MemcachedBackend,
             )
 

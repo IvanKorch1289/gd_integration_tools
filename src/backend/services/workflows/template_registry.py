@@ -172,7 +172,7 @@ class WorkflowTemplateRegistry:
         query: str, templates: Sequence[WorkflowTemplate]
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через sentence-transformers BGE-M3."""
-        from sentence_transformers import (  # type: ignore[import-untyped]
+        from sentence_transformers import (  
             SentenceTransformer,
             util,
         )

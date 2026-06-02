@@ -117,7 +117,7 @@ class LangGraphPostgresSaverWrapper:
             return self._saver
         try:
             from langchain_postgres import (
-                AsyncPostgresSaver,  # type: ignore[import-not-found]
+                AsyncPostgresSaver,  
             )
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(

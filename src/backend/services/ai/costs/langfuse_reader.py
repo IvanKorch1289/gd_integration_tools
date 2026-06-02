@@ -48,7 +48,7 @@ class LangFuseReader:
         if self._client is not None:
             return self._client
         try:
-            from langfuse import Langfuse  # type: ignore[import-not-found]
+            from langfuse import Langfuse  
 
             from src.backend.core.config.ai_2026 import langfuse_settings
 

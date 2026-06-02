@@ -236,5 +236,5 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         return await self.get_model(name, version=version) or ModelRecord(
             name=name,
             version=version,
-            stage=new_stage,  # type: ignore[arg-type]
+            stage=new_stage,  
         )

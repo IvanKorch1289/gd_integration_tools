@@ -1030,3 +1030,70 @@ new-adr: ## Создать новый ADR из шаблона (TITLE="Загол
 
 release-notes: ## Сгенерировать release-notes из wave-tags в git log (FROM=v0.1.0 TO=v0.2.0)
 	$(UV_RUN) python tools/changelog_autogen.py $(if $(FROM),--from $(FROM),) $(if $(TO),--to $(TO),) $(if $(OUTPUT),--output $(OUTPUT),)
+
+
+# ---------------------------------------------------------------------- #
+# V22 Sprint 37 W1 — sync Claude Code ↔ Kimi Code через .shared/         #
+# Фаза 0-1: каркас + permissions sync. Логика MCP в фазе 2.              #
+# ---------------------------------------------------------------------- #
+.PHONY: sync-agents sync-mcp sync-permissions sync-permissions-verify verify-permissions session-start session-close vault-index
+
+##@ Agent sync (Sprint 37 W1 — Claude ↔ Kimi через .shared/)
+
+# === ФАЗА 0: STUB для не-реализованных целей ===
+sync-agents: ## Фаза 0 stub: проверить наличие .shared/ + vault/, ссылки на будущее
+	@if [ ! -d .shared ]; then \
+		printf '\033[31m[ERROR] .shared/ не найден.\033[0m\n'; exit 1; \
+	fi
+	@if [ ! -d vault ]; then \
+		printf '\033[31m[ERROR] vault/ не найден.\033[0m\n'; exit 1; \
+	fi
+	@printf '\033[32m[OK] .shared/ + vault/ на месте.\033[0m\n'
+	@printf '\033[33m[INFO] sync-permissions: регенерирует .claude/settings.json + .kimi-code/config.toml.\033[0m\n'
+	@printf '\033[33m[INFO] sync-mcp: пока stub (фаза 2).\033[0m\n'
+
+sync-mcp: ## Фаза 0 stub: проверить .mcp.json и .kimi-code/mcp.json (без правок)
+	@if [ ! -f .mcp.json ]; then \
+		printf '\033[31m[ERROR] .mcp.json не найден.\033[0m\n'; exit 1; \
+	fi
+	@if [ ! -f .kimi-code/mcp.json ]; then \
+		printf '\033[31m[ERROR] .kimi-code/mcp.json не найден.\033[0m\n'; exit 1; \
+	fi
+	@printf '\033[33m[STUB] sync-mcp: реализация в фазе 2.\033[0m\n'
+	@printf '\033[33m[STUB] SECRET-LEAK WARNING: \033[0m'
+	@if grep -qE 'ctx7sk-[a-f0-9-]+' .mcp.json .kimi-code/mcp.json 2>/dev/null; then \
+		printf '\033[31mFOUND hardcoded secrets — use $$CONTEXT7_API_KEY pattern.\033[0m\n'; \
+	else \
+		printf '\033[32mOK\033[0m\n'; \
+	fi
+
+# === ФАЗА 1: РЕАЛЬНАЯ ЛОГИКА ===
+sync-permissions: ## Фаза 1: регенерировать .claude/settings.json + .kimi-code/config.toml из .shared/permissions.yaml
+	@$(INFO) "Regenerating permissions from .shared/permissions.yaml..."
+	@.venv/bin/python .shared/sync/render_permissions.py
+	@$(SUCCESS) "Permissions regenerated. Run 'make verify-permissions' to confirm."
+
+sync-permissions-verify: ## Фаза 1: проверить что .claude/settings.json + .kimi-code/config.toml не дрейфуют (exit 1 при дрейфе)
+	@$(INFO) "Verifying permissions drift..."
+	@.venv/bin/python .shared/sync/render_permissions.py --verify
+	@$(SUCCESS) "No drift."
+
+# Алиас
+verify-permissions: sync-permissions-verify
+
+# === ФАЗА 4: SESSION LOG (БУДУТ) ===
+session-start: ## Фаза 0 stub: append-only запись в vault/SESSIONS.md (реальная логика в фазе 4)
+	@if [ -z "$(AGENT)" ]; then \
+		printf '\033[31m[ERROR] AGENT=<claude|kimi> обязателен.\033[0m\n'; \
+		exit 2; \
+	fi
+	@printf '\033[33m[STUB] session-start: реализация в фазе 4.\033[0m\n'
+	@printf '\033[32m[INFO] Будет записано в vault/SESSIONS.md: agent=%s, msg="%s"\033[0m\n' "$(AGENT)" "$(MSG)"
+
+session-close: ## Фаза 0 stub: закрыть запись в vault/SESSIONS.md (реальная логика в фазе 4)
+	@printf '\033[33m[STUB] session-close: реализация в фазе 4.\033[0m\n'
+	@printf '\033[32m[INFO] Будет дописано close-line в vault/SESSIONS.md\033[0m\n'
+
+vault-index: ## Фаза 0 stub: обновить vault/INDEX.md (реальная логика в фазе 4)
+	@printf '\033[33m[STUB] vault-index: реализация в фазе 4.\033[0m\n'
+	@printf '\033[32m[INFO] Будет сгенерирован: ls -t vault/session-*.md | head -10\033[0m\n'

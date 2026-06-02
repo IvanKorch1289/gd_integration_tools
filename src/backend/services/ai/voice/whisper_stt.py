@@ -146,7 +146,7 @@ class WhisperSTTService:
                 "WhisperSTTService отключён (voice_stt_tts_enabled=false)."
             )
         try:
-            import whisper  # type: ignore[import-not-found]
+            import whisper  
         except ImportError as exc:
             raise VoiceServiceUnavailable(
                 "Пакет 'openai-whisper' не установлен — добавьте extra '[ai-voice]'."

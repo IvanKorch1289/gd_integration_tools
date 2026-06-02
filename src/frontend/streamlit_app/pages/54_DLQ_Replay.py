@@ -74,7 +74,7 @@ from src.backend.core.messaging import (  # noqa: PLC0415, E402
 )
 
 
-@st.cache_resource  # type: ignore[misc]
+@st.cache_resource  
 def _get_outbox() -> OutboxBackend:
     """Кэшированная in-memory Fake-инстанция Outbox.
 

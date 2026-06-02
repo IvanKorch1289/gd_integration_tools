@@ -34,7 +34,7 @@ stream_client = get_stream_client_provider()
 stream_logger = get_stream_logger_provider()
 
 
-@stream_client.redis_router.subscriber(  # type: ignore
+@stream_client.redis_router.subscriber(  
     stream=settings.redis.get_stream_name("invocations-in")
 )
 async def handle_redis_invocation(
@@ -46,7 +46,7 @@ async def handle_redis_invocation(
     )
 
 
-@stream_client.rabbit_router.subscriber(  # type: ignore
+@stream_client.rabbit_router.subscriber(  
     settings.queue.get_queue_name("invocations-in")
 )
 async def handle_rabbit_invocation(body: dict[str, Any], msg: RabbitMessage) -> None:

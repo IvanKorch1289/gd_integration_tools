@@ -66,7 +66,7 @@ class FeedbackTrainer:
 
             examples = self._dataset_builder.to_dspy_examples(records)
             from dspy.teleprompt import (
-                BootstrapFewShot,  # type: ignore[import-not-found]
+                BootstrapFewShot,  
             )
 
             optimizer = BootstrapFewShot(metric=lambda *_a, **_k: 1.0)

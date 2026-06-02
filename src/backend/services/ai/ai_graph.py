@@ -120,7 +120,7 @@ def build_chat_model(
     except ImportError:
         try:
             from langchain_community.chat_models import (
-                ChatLiteLLM,  # type: ignore[import-not-found]
+                ChatLiteLLM,  
             )
         except ImportError as exc:
             raise ImportError(

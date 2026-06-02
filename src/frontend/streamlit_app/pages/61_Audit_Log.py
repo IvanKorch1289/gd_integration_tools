@@ -42,7 +42,7 @@ if status_filter != "all":
     params["status"] = status_filter
 
 try:
-    records = client._request("GET", "/api/v1/admin/audit", params=params)  # type: ignore[attr-defined]
+    records = client._request("GET", "/api/v1/admin/audit", params=params)  
     if not isinstance(records, list):
         records = []
 except Exception as exc:  # noqa: BLE001

@@ -99,11 +99,11 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
                 request.url.path,
                 exc,
             )
-            response.body_iterator = AsyncChunkIterator([body])  # type: ignore[assignment]
+            response.body_iterator = AsyncChunkIterator([body])  
             return response
 
         response.headers["content-length"] = str(len(masked))
-        response.body_iterator = AsyncChunkIterator([masked])  # type: ignore[assignment]
+        response.body_iterator = AsyncChunkIterator([masked])  
         return response
 
     # ----------------------------------------------------------------- helpers

@@ -247,7 +247,7 @@ def _render_degradation(items: list[dict[str, Any]]) -> None:
     st.dataframe(_rows, use_container_width=True, hide_index=True)
 
 
-@st.fragment(run_every=5)  # type: ignore[misc]
+@st.fragment(run_every=5)  
 def _render_dashboard() -> None:
     """Главный fragment с auto-refresh каждые 5 секунд."""
     _snapshot, _is_live = _fetch_snapshot()

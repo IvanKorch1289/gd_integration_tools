@@ -128,7 +128,7 @@ class PromptRegistry:
         if not store:
             raise KeyError(f"Prompt '{name}' not found in registry")
 
-        resolved_version = version if version is not None else max(store.keys())  # type: ignore[type-var]
+        resolved_version = version if version is not None else max(store.keys())  
         template = store[resolved_version]  # type: ignore[index]
 
         try:

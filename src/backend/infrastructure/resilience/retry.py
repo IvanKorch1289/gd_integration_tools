@@ -107,7 +107,7 @@ def make_async_retry(
     return decorator
 
 
-def _log_before_sleep(fn_name: str):  # type: ignore[return]
+def _log_before_sleep(fn_name: str):  
     """Возвращает tenacity before_sleep callback с логированием попытки.
 
     Args:

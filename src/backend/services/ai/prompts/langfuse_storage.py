@@ -97,7 +97,7 @@ class LangfusePromptStorage:
                 return
 
             # Lazy-import: не загружаем SDK при отключённом флаге
-            from langfuse import Langfuse  # type: ignore[import-untyped]
+            from langfuse import Langfuse  
 
             self._langfuse = Langfuse()
             self._langfuse_available = True

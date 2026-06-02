@@ -32,7 +32,7 @@ SecretResolveCallable = Callable[[str], Awaitable[str | None]]
 
 async def _vault_resolve(ref: str) -> str | None:
     """Primary: Vault KV v2."""
-    from hvac import Client  # type: ignore[import-untyped]
+    from hvac import Client  
 
     if not ref.startswith("vault:"):
         # Поддерживаем простой ref-формат: считаем ref ключом в дефолтном пути.
@@ -60,7 +60,7 @@ async def _env_keyring_resolve(ref: str) -> str | None:
     """Fallback: env-переменная или keyring (если установлен)."""
     if ref.startswith("keyring:"):
         try:
-            import keyring  # type: ignore[import-untyped]
+            import keyring  
         except ImportError:
             return None
         _, service, user = ref.split(":", 2)

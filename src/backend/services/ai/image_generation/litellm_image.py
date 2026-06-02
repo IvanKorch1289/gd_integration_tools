@@ -176,7 +176,7 @@ class LiteLLMImageGenerationService:
             )
 
         try:
-            import litellm  # type: ignore[import-not-found]
+            import litellm  
         except ImportError as exc:
             raise ImageGenerationUnavailable(
                 "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'."

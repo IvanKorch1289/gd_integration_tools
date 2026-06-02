@@ -149,7 +149,7 @@ class S3Client(BaseS3Client):
         try:
             from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
             from aiobotocore.session import (
-                get_session,  # type: ignore[import-not-found]
+                get_session,  
             )
         except ImportError:
             self._session = None

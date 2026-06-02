@@ -29,7 +29,7 @@ def register_feedback_cron(
     Returns:
         ID зарегистрированного job'а (``ai_feedback_dspy_nightly``).
     """
-    from apscheduler.triggers.cron import CronTrigger  # type: ignore[import-not-found]
+    from apscheduler.triggers.cron import CronTrigger  
 
     async def _job() -> None:
         try:

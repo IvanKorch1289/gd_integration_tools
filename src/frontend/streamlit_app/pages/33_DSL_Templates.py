@@ -37,7 +37,7 @@ client = get_api_client()
 def _render_route_blueprints() -> None:
     """Legacy route blueprints из /api/v1/admin/templates."""
     try:
-        templates = client._request("GET", "/api/v1/admin/templates")  # type: ignore[attr-defined]
+        templates = client._request("GET", "/api/v1/admin/templates")  
         if not isinstance(templates, list):
             templates = []
     except Exception as exc:  # noqa: BLE001
@@ -65,7 +65,7 @@ def _render_route_blueprints() -> None:
                 st.code(yaml_content, language="yaml")
             if st.button("Инстанциировать", key=f"inst_{name}"):
                 try:
-                    resp = client._request(  # type: ignore[attr-defined]
+                    resp = client._request(  
                         "POST", f"/api/v1/admin/templates/{name}/instantiate", json={}
                     )
                     st.success(f"Создан route: {resp}")
@@ -76,7 +76,7 @@ def _render_route_blueprints() -> None:
 def _render_workflow_templates() -> None:
     """Sprint 12 K3 W5 + K5 W1 — workflow templates с Mermaid preview."""
     try:
-        from src.backend.dsl.workflow.template_registry_compat import (  # type: ignore[import-not-found]  # noqa: E501
+        from src.backend.dsl.workflow.template_registry_compat import (    # noqa: E501
             get_template_registry,
         )
     except ImportError:

@@ -223,7 +223,7 @@ def _render_connection_pools(pools: list[dict[str, Any]]) -> None:
                 st.line_chart(_trend, height=120)
 
 
-@st.fragment(run_every=5)  # type: ignore[misc]
+@st.fragment(run_every=5)  
 def _render_dashboard() -> None:
     """Главный fragment с auto-refresh каждые 5 секунд."""
     _snapshot, _is_live = _fetch_snapshot()

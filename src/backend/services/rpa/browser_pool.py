@@ -187,7 +187,7 @@ class PlaywrightBrowserPool:
                     "установите: uv sync --extra rpa"
                 )
         try:
-            from playwright import async_api  # type: ignore[import-not-found]
+            from playwright import async_api  
 
             return async_api
         except ImportError as exc:

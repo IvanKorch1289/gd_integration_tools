@@ -29,7 +29,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
       с traceback (только в debug-режиме).
     """
 
-    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+    async def dispatch(self, request: Request, call_next):  
         """Обрабатывает запрос с перехватом исключений.
 
         Args:

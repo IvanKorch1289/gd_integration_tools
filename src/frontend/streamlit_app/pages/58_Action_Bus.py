@@ -67,7 +67,7 @@ from src.frontend.streamlit_app.services.action_bus_client import (  # noqa: PLC
 # ---------------------------------------------------------------------------
 
 
-@st.cache_data(ttl=30)  # type: ignore[misc]
+@st.cache_data(ttl=30)  
 def _cached_list_actions() -> list[dict]:
     """Загружает список actions с кэшем TTL=30s.
 

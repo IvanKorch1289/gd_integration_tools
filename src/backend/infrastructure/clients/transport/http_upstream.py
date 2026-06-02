@@ -135,7 +135,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
 
     async def health(self, mode: str = "fast") -> HealthResult:
         if self._client is None:
-            return HealthResult.failed(error="client not started", mode=mode)  # type: ignore[arg-type]
+            return HealthResult.failed(error="client not started", mode=mode)  
 
         import time
 
@@ -148,13 +148,13 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
                 if resp.status_code < 500:
                     return HealthResult.ok(
                         latency_ms=latency_ms,
-                        mode=mode,  # type: ignore[arg-type]
+                        mode=mode,  
                         status_code=resp.status_code,
                         path=self._health_path,
                     )
                 return HealthResult.degraded(
                     error=f"HTTP {resp.status_code}",
-                    mode=mode,  # type: ignore[arg-type]
+                    mode=mode,  
                     latency_ms=latency_ms,
                     status_code=resp.status_code,
                 )
@@ -162,13 +162,13 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(
                 latency_ms=latency_ms,
-                mode=mode,  # type: ignore[arg-type]
+                mode=mode,  
                 base_url=self._profile.base_url,
             )
         except Exception as exc:  # noqa: BLE001
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}",
-                mode=mode,  # type: ignore[arg-type]
+                mode=mode,  
                 latency_ms=(time.perf_counter() - start) * 1000.0,
             )
 

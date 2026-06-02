@@ -23,7 +23,7 @@ class AuthMethodHeaderMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._header_name = header_name
 
-    async def dispatch(self, request, call_next):  # type: ignore[override]
+    async def dispatch(self, request, call_next):  
         response = await call_next(request)
         ctx = getattr(request.state, "auth", None)
         method = getattr(ctx, "method", None)

@@ -23,7 +23,7 @@ try:
     _HDRH_AVAILABLE = True
 except ImportError:
     _HDRH_AVAILABLE = False
-    _HdrHistogram = None  # type: ignore[assignment,misc]
+    _HdrHistogram = None  
 
 
 @dataclass(slots=True)

@@ -86,7 +86,7 @@ class BGERerankerV2M3:
         if self._model is not None:
             return self._model
         try:
-            from FlagEmbedding import FlagReranker  # type: ignore[import-not-found]
+            from FlagEmbedding import FlagReranker  
         except ImportError as exc:
             raise BGEUnavailable(
                 "FlagEmbedding не установлен — добавьте extra '[ai-2026]'."

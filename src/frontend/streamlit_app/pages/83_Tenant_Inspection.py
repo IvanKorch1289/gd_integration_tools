@@ -35,7 +35,7 @@ _refresh_seconds = st.sidebar.number_input(
 )
 if _refresh_seconds > 0:
     try:
-        from streamlit_autorefresh import st_autorefresh  # type: ignore[import]
+        from streamlit_autorefresh import st_autorefresh  
 
         st_autorefresh(interval=_refresh_seconds * 1000, key="s21_inspect_refresh")
     except ImportError:

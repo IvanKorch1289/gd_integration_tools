@@ -153,7 +153,7 @@ class AIRLMProcessor(BaseProcessor):
 
         # Set output message
         if result.answer:
-            exchange.out_message = exchange.out_message or type(exchange.out_message)(
+            exchange.out_message = exchange.out_message or Message(
                 body=result.answer, headers={}
             )
             if hasattr(exchange.out_message, "body"):

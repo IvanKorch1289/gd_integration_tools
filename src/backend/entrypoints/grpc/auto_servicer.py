@@ -122,7 +122,7 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
     """
     from google.protobuf.json_format import MessageToDict, ParseDict
 
-    async def rpc_impl(  # type: ignore[override]
+    async def rpc_impl(  
         self: Any, request: Any, context: Any
     ) -> Any:
         from src.backend.entrypoints.base import dispatch_action

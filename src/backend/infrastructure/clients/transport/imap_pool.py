@@ -114,7 +114,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
 
     async def health(self, mode: str = "fast") -> HealthResult:
         if not self._started:
-            return HealthResult.failed(error="pool not started", mode=mode)  # type: ignore[arg-type]
+            return HealthResult.failed(error="pool not started", mode=mode)  
 
         import time
 
@@ -124,7 +124,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(
                 latency_ms=latency_ms,
-                mode=mode,  # type: ignore[arg-type]
+                mode=mode,  
                 pool_free=self._pool.qsize(),
                 pool_created=self._created,
             )
@@ -135,14 +135,14 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(
                 latency_ms=latency_ms,
-                mode=mode,  # type: ignore[arg-type]
+                mode=mode,  
                 probe="NOOP",
                 pool_created=self._created,
             )
         except Exception as exc:  # noqa: BLE001
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}",
-                mode=mode,  # type: ignore[arg-type]
+                mode=mode,  
                 latency_ms=(time.perf_counter() - start) * 1000.0,
             )
 
@@ -208,7 +208,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         else:
             conn = aioimaplib.IMAP4(
                 host=self._host, port=self._port, timeout=self._timeout_s
-            )  # type: ignore[assignment]
+            )  
         await conn.wait_hello_from_server()
         password = await _maybe_async(self._password_provider)
         await conn.login(self._username, password)

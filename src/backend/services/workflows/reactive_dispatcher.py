@@ -189,7 +189,7 @@ class ReactiveWorkflowDispatcher:
     def _apply_filter(expression: str, event: dict[str, Any]) -> bool:
         """Применяет filter через simpleeval. На любую ошибку → False."""
         try:
-            from simpleeval import SimpleEval  # type: ignore[import-untyped]
+            from simpleeval import SimpleEval  
 
             evaluator = SimpleEval(names=dict(event))
             return bool(evaluator.eval(expression))
