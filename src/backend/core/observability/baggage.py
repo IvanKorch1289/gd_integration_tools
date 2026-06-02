@@ -47,7 +47,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 if TYPE_CHECKING:
     pass
@@ -223,7 +223,7 @@ async def with_baggage(
         otel_context.detach(token)
 
 
-def _get_feature_flags() -> object:
+def _get_feature_flags() -> Any:
     """Возвращает singleton feature_flags (lazy-import для избежания circular imports).
 
     Returns:
