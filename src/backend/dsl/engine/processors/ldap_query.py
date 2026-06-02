@@ -168,7 +168,8 @@ class LdapQueryProcessor(BaseProcessor):
             self._apply_target(exchange, entries)
             return
         except ImportError:
-            pass
+            exchange.fail("ldap_query: ldap3 not available")
+            return
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"ldap_query error: {exc}")
             return

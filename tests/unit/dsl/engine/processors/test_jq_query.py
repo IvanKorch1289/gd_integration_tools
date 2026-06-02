@@ -25,20 +25,12 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.asyncio
 async def test_fail_when_pyjq_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Эмулируем отсутствие pyjq через ImportError при попытке импорта.
-    proc = JqProcessor(".[]", to="body.r")
+    # JqProcessor использует jmespath (не pyjq). Проверяем ошибку на невалидном выражении.
+    proc = JqProcessor("invalid[", to="body.r")
     exchange = _ex([1, 2, 3])
 
-    # Если pyjq установлен — тест валидирует success path.
-    try:
-        import pyjq  # noqa: F401
-    except ImportError:
-        await proc.process(exchange, AsyncMock())
-        assert exchange.error is not None and "pyjq" in exchange.error
-        return
-
     await proc.process(exchange, AsyncMock())
-    assert exchange.in_message.body["r"] == [1, 2, 3]
+    assert exchange.error is not None and "jq" in exchange.error
 
 
 @pytest.mark.asyncio

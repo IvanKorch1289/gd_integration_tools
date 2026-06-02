@@ -394,6 +394,7 @@ class TestGraphQLQueryProcessor:
             variables={"id": 1},
             operation_name="GetUser",
             auth_header="X-Token",
+            auth_token="secret",
             timeout=45.0,
             result_property="gql",
         )
