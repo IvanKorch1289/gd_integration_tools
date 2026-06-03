@@ -61,6 +61,7 @@ from pydantic_settings import SettingsConfigDict
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.features.ai import AIFlags
 from src.backend.core.config.features.auth import AuthFlags
+from src.backend.core.config.features.dsl import DSLFlags
 from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
 from src.backend.core.config.features.security import SecurityFlags
@@ -76,6 +77,7 @@ class FeatureFlags(
     NetFlags,
     WorkflowFlags,
     AIFlags,
+    DSLFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -93,8 +95,9 @@ class FeatureFlags(
     - NetFlags (K2 — Net & WAF: 3 fields, T1.3.5 → features/net.py)
     - WorkflowFlags (K4 — Workflow: 4 fields, T1.3.6 → features/workflow.py)
     - AIFlags (K6 — AI: 9 fields, T1.3.7 → features/ai.py)
+    - DSLFlags (K5 DSL + K3 sources: 12 fields, T1.3.8 → features/dsl.py)
     - BaseSettingsWithLoader (settings + YAML loader)
-    - (T1.3.8-T1.3.9+ domains будут добавлены как siblings)
+    - (T1.3.9+ domains будут добавлены как siblings)
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -111,153 +114,13 @@ class FeatureFlags(
     # features/workflow.py::WorkflowFlags (T1.3.6). Наследуются через
     # multiple inheritance. См. class FeatureFlags(...).
 
-    # ─── K5 — DSL ──────────────────────────────────────────────────────────
-    frontend_schema_registry_ui: bool = Field(
-        default=False,
-        title="Frontend: Schema Registry UI (6-tab viewer)",
-        description=(
-            "K5 Wave 1. Owner: K5 DSL. ETA: S3-W1. "
-            "Активирует страницу 40_Schema_Registry.py — 6-tab viewer "
-            "(OpenAPI / WSDL / XSD / Protobuf / AsyncAPI / GraphQL SDL) "
-            "с Download / Validate / Diff. "
-            "default-OFF до staging-smoke + интеграции с Schema-registry RAM (R1)."
-        ),
-    )
-
-    frontend_action_bus_ui: bool = Field(
-        default=False,
-        title="K5: Action Bus Streamlit UI (список actions + invoke с JSON-payload)",
-        description=(
-            "K5 Wave 2. Owner: K5 DSL. ETA: S3-W2. "
-            "Активирует страницу 50_Action_Bus.py с invoke registered actions, "
-            "JSON-payload editor, 3 invoke modes (sync/async-fire-and-forget/async-api). "
-            "default-OFF до staging-smoke action-bus-client."
-        ),
-    )
-
-    dsl_processor_registry_strict: bool = Field(
-        default=False,
-        title="DSL: ProcessorRegistry strict mode (отказ при missing schema)",
-        description=(
-            "K5 Wave 3. Owner: K5 DSL. ETA: S2-W3. "
-            "Активирует строгий режим ProcessorRegistry: процессоры без "
-            "reflection-schema не регистрируются. default-OFF до 100% "
-            "покрытия 77 процессоров."
-        ),
-    )
-
-    dsl_route_hot_reload: bool = Field(
-        default=False,
-        title="DSL: hot-reload для routes/<name>/ (<3s)",
-        description=(
-            "K5 Wave 5. Owner: K5 DSL. ETA: S2-W5. "
-            "Активирует watchfiles-based reload routes/<name>/route.toml. "
-            "default-OFF в production; default-ON в dev профиле."
-        ),
-    )
-
-    lsp_server_published: bool = Field(
-        default=False,
-        title="S19 K3 W4: LSP server published (YAML schema completion)",
-        description=(
-            "S19 K3 W4. Owner: K3 DSL. "
-            "Активирует YAML schema completion в LSP server "
-            "(tools/dsl_lsp/schema_completion.py + gd_dsl.yaml schema). "
-            "CompletionList с 22 step-type keywords (proxy, call_function, "
-            "crud_create, и т.д.) + JSON-Schema snippets. "
-            "default-OFF до staging-smoke completion в VSCode/JetBrains."
-        ),
-    )
-
-    admin_marketplace_endpoints: bool = Field(
-        default=False,
-        title="Admin: Action-Bus + Plugin-Marketplace REST endpoints",
-        description=(
-            "K5 Wave 4. Owner: K5 DSL. ETA: S3-W4. "
-            "Активирует /api/v1/admin/actions/* и /api/v1/admin/plugins/* — "
-            "backend endpoints для Streamlit 50_Action_Bus.py + 60_Plugin_Marketplace.py. "
-            "default-OFF до staging-smoke и интеграции с ActionHandlerRegistry + PluginLoader."
-        ),
-    )
-
-    dsl_visual_editor_enabled: bool = Field(
-        default=False,
-        title="Sprint 19 K3 W5: DSL Visual Editor (Drag-Drop Route Builder)",
-        description=(
-            "S19 K3 W5. Owner: K3 DSL. "
-            "Активирует страницу 40_dsl_visual_editor.py — drag-drop route editor "
-            "с three-panel layout (step palette / canvas / properties). "
-            "Export to YAML. default-OFF до staging-smoke."
-        ),
-    )
-
-    # K6 — AI fields (search_provider_searxng, langmem_enabled,
-    # mcp_tools_input_schema_strict, langfuse_v3, rag_cache_l2_semantic,
-    # rag_cache_l3_retrieval, ai_workspace_ttl_cleanup, prompt_registry_langfuse,
-    # multimodal_rag_enabled) — extracted в features/ai.py::AIFlags (T1.3.7).
-    # Наследуются через multiple inheritance. См. class FeatureFlags(...).
-
-    # ─── K3 — Builder source-сахар ────────────────────────────────────────
-    builder_source_sugar: bool = Field(
-        default=False,
-        title="K3: Builder source-сахар (.from_kafka/.from_rabbit/.from_mqtt/...)",
-        description=(
-            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
-            "Активирует 8 classmethod'ов-фабрик SourcesMixin: "
-            "from_cdc / from_kafka / from_rabbit / from_mqtt / "
-            "from_redis_streams / from_filewatcher / from_webhook / from_schedule. "
-            "При False методы работают в режиме совместимости (строковый source DSN). "
-            "default-OFF до интеграции с SourceRegistry и staging-smoke."
-        ),
-    )
-
-    service_toml_loader: bool = Field(
-        default=False,
-        title="K3: service.toml loader + ServiceDSLRegistry",
-        description=(
-            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
-            "Активирует загрузку manifest'ов *.service.toml из extensions/ "
-            "и регистрацию ServiceSpec в ServiceDSLRegistry singleton. "
-            "При False register() — no-op. "
-            "default-OFF до интеграции с auto-registration в plugin-loader."
-        ),
-    )
-
-    # ─── K3 — GraphQL Subscription Source ─────────────────────────────────
-    graphql_subscription_source: bool = Field(
-        default=False,
-        title="K3: GraphQL subscription source (@strawberry.subscription via WebSocket)",
-        description=(
-            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
-            "Активирует GraphQLSubscriptionSource — async-генератор событий "
-            "из GraphQL WebSocket-подписок (протокол graphql-ws, библиотека gql). "
-            "default-OFF до установки 'gql[websockets]' и staging-smoke."
-        ),
-    )
-
-    # ─── K3 — Email IMAP Source ────────────────────────────────────────────
-    email_imap_source: bool = Field(
-        default=False,
-        title="K3: EmailIMAPSource через aioimaplib (IMAP IDLE, stream())",
-        description=(
-            "K3 Wave 5. Owner: K3 Email/IMAP. ETA: S3-W5. "
-            "Активирует EmailIMAPSource — AsyncIterator[EmailMessage] поверх "
-            "IMAP IDLE (aioimaplib). Используется .from_imap() в RouteBuilder. "
-            "default-OFF до установки 'aioimaplib' в S3 cutover и staging-smoke."
-        ),
-    )
-
-    # ─── K3 — Notification DSL ─────────────────────────────────────────────
-    notification_dsl_enabled: bool = Field(
-        default=False,
-        title="K3: Notification DSL через Apprise (.notify / .notify_multi)",
-        description=(
-            "K3 Wave 1. Owner: K3 Notification. ETA: S3-W1. "
-            "Активирует AppriseNotificationService и DSL-процессор notify_apprise. "
-            "100+ backends: Slack/Telegram/Discord/Email/SMS и др. "
-            "default-OFF до установки 'apprise>=1.9.0' в S3 cutover и staging-smoke."
-        ),
-    )
+    # K5 — DSL fields (frontend_schema_registry_ui, frontend_action_bus_ui,
+    # dsl_processor_registry_strict, dsl_route_hot_reload, lsp_server_published,
+    # admin_marketplace_endpoints, dsl_visual_editor_enabled) +
+    # K3 — sources (builder_source_sugar, service_toml_loader,
+    # graphql_subscription_source, email_imap_source, notification_dsl_enabled)
+    # — extracted в features/dsl.py::DSLFlags (T1.3.8). Наследуются через
+    # multiple inheritance. См. class FeatureFlags(...).
 
     # ─── K3 — Resilience & Scaling ─────────────────────────────────────────
     auto_scaler_process_level: bool = Field(
