@@ -59,11 +59,12 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.features.auth import AuthFlags
 
 __all__ = ("FeatureFlags", "feature_flags")
 
 
-class FeatureFlags(BaseSettingsWithLoader):
+class FeatureFlags(AuthFlags, BaseSettingsWithLoader):
     """Реестр runtime feature-flag.
 
     Все flag — default-OFF. Имя поля → переменная окружения с префиксом FEATURE_,
@@ -71,6 +72,11 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
+
+    Composition (S38 P1.1 W1 T1.3.1):
+    - AuthFlags (K1 — Auth: 2 fields, extracted в features/auth.py)
+    - BaseSettingsWithLoader (settings + YAML loader)
+    - (T1.3.2-T1.3.9+ domains будут добавлены как siblings)
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -596,26 +602,9 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    # ─── K1 — Auth ─────────────────────────────────────────────────────────
-    auth_joserfc: bool = Field(
-        default=False,
-        title="Auth: joserfc вместо python-jose (deprecated)",
-        description=(
-            "K1 Wave 1. Owner: K1 Auth. ETA: S2-W1. "
-            "Миграция с python-jose (deprecated) на joserfc. "
-            "default-OFF до полной замены и unit-test coverage."
-        ),
-    )
-
-    auth_mtls_client: bool = Field(
-        default=False,
-        title="Auth: mTLS HttpxClient в infrastructure/clients/",
-        description=(
-            "K1 Wave 3. Owner: K1 Auth. ETA: S2-W3. "
-            "Перенос mTLS handshake из fixture в production HttpxClient. "
-            "default-OFF до integration-test."
-        ),
-    )
+    # K1 — Auth fields (auth_joserfc, auth_mtls_client) — extracted в
+    # features/auth.py::AuthFlags (T1.3.1). Наследуются через multiple
+    # inheritance. См. class FeatureFlags(AuthFlags, BaseSettingsWithLoader).
 
     supply_chain_ci_gate: bool = Field(
         default=False,
