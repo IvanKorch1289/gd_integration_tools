@@ -62,6 +62,7 @@ from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.features.ai import AIFlags
 from src.backend.core.config.features.auth import AuthFlags
 from src.backend.core.config.features.dsl import DSLFlags
+from src.backend.core.config.features.experimental import ExperimentalFlags
 from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
 from src.backend.core.config.features.security import SecurityFlags
@@ -78,6 +79,7 @@ class FeatureFlags(
     WorkflowFlags,
     AIFlags,
     DSLFlags,
+    ExperimentalFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -88,7 +90,7 @@ class FeatureFlags(
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1):
+    Composition (S38 P1.1 W1 — ALL 9 DOMAINS DONE):
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
@@ -96,8 +98,12 @@ class FeatureFlags(
     - WorkflowFlags (K4 — Workflow: 4 fields, T1.3.6 → features/workflow.py)
     - AIFlags (K6 — AI: 9 fields, T1.3.7 → features/ai.py)
     - DSLFlags (K5 DSL + K3 sources: 12 fields, T1.3.8 → features/dsl.py)
+    - ExperimentalFlags (K7 EventBus + Sprint 4/5/7 T5 + K1 Plugin: 7 fields, T1.3.9 → features/experimental.py)
     - BaseSettingsWithLoader (settings + YAML loader)
-    - (T1.3.9+ domains будут добавлены как siblings)
+
+    Total extracted: 40 flags (out of 229 total).
+    Remaining: 189 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + K3 Resilience + etc).
+    T1.3.10+ future domains: resilience.py, k8_storage.py, observability_full.py, etc.
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -184,54 +190,10 @@ class FeatureFlags(
         ),
     )
 
-    # ─── K7 — EventBus ─────────────────────────────────────────────────────
-    eventbus_facade: bool = Field(
-        default=False,
-        title="EventBus: единая абстракция (Kafka/RabbitMQ/NATS)",
-        description=(
-            "K7 Wave 1. Owner: K7 EventBus. ETA: S2-W1. "
-            "Активирует EventBusBackend ABC + 3 backend'а. "
-            "default-OFF до прохождения shared protocol-тестов."
-        ),
-    )
-
-    eventbus_file_watcher: bool = Field(
-        default=False,
-        title="EventBus: FileWatcherSource через watchfiles.awatch",
-        description=(
-            "K7 Wave 4. Owner: K7 EventBus. ETA: S2-W4. "
-            "Активирует регистрацию FileWatcherSource в routes-discovery. "
-            "default-OFF до подключения в reference route."
-        ),
-    )
-
-    # ─── Sprint 4 — Workflow DSL + Capability Gate + LLM activity ─────────
-    activity_capability_gate_enabled: bool = Field(
-        default=False,
-        title="Sprint 4 Wave E: capability-проверка для Temporal activities",
-        description=(
-            "K1 Sprint 4 Wave E. Включает CapabilityGate-проверку до вызова "
-            "Temporal-activity (V15 R-V15-1). При False декоратор "
-            "capability_guarded_activity превращается в NoOp. "
-            "default-OFF до интеграции с PluginLoaderV11 runtime-контекстом."
-        ),
-    )
-
-    ai_workflow_activity_enabled: bool = Field(
-        default=False,
-        title="Sprint 4 Wave C: LLM-activity wrapper для Temporal",
-        description=(
-            "K4 Sprint 4 Wave C. Включает регистрацию llm_activity в Temporal "
-            "Worker через register_llm_activity(). При False регистрация — "
-            "NoOp; activity-функция импортируется, но не подключается. "
-            "default-OFF до staging-теста с реальным LiteLLM gateway."
-        ),
-    )
-
-    # K1 — Secrets & Vault fields (vault_rotation_enabled) — extracted в
-    # features/security.py::SecurityFlags (T1.3.2). Наследуются через
-    # multiple inheritance. См. class FeatureFlags(AuthFlags, SecurityFlags,
-    # BaseSettingsWithLoader).
+    # K7 — EventBus + Sprint 4 + Sprint 7 T5 + K1 Plugin semver +
+    # Sprint 5 K5 Frontend fields — extracted в
+    # features/experimental.py::ExperimentalFlags (T1.3.9). Наследуются
+    # через multiple inheritance. См. class FeatureFlags(...).
 
     # K1 — Tracing + K8 — Audit (см. observability.py comment выше)
 
@@ -281,31 +243,10 @@ class FeatureFlags(
         ),
     )
 
-    # ─── Sprint 7 T5 — External feature-flag provider ─────────────────────
-    openfeature_external: bool = Field(
-        default=False,
-        title="Sprint 7 T5: OpenFeature external provider (Flagsmith)",
-        description=(
-            "Sprint 7 Team T5. Owner: T5 Plugin/Platform. ETA: S7. "
-            "При True FlagsmithProvider начинает резолвить feature-flag из "
-            "external Flagsmith instance (per-tenant scope через "
-            "EvaluationContext). При False — все resolve_* возвращают default, "
-            "приложение использует только локальный feature_flags.<name>. "
-            "default-OFF до развёртывания Flagsmith instance и smoke-теста."
-        ),
-    )
-
-    # ─── K1 — Plugin semver ────────────────────────────────────────────────
-    plugin_semver_strict: bool = Field(
-        default=False,
-        title="K1: Plugin semver strict-режим (requires_core обязан иметь верхний bound)",
-        description=(
-            "K1 Wave 5 (S3-W5). Owner: K1 Plugin/Platform. ETA: S3-W5. "
-            "При True check_plugin_semver() и semver_checker дополнительно проверяют, "
-            "что requires_core содержит явный верхний ограничитель (<X.Y или ~=X.Y). "
-            "default-OFF до завершения аудита всех plugin.toml манифестов."
-        ),
-    )
+    # K1 — Plugin semver (plugin_semver_strict) +
+    # Sprint 7 T5 OpenFeature (openfeature_external) — extracted в
+    # features/experimental.py::ExperimentalFlags (T1.3.9). См. comment
+    # выше в EventBus block.
 
     # K1 — Auth fields (auth_joserfc, auth_mtls_client) — extracted в
     # features/auth.py::AuthFlags (T1.3.1). Наследуются через multiple
@@ -326,16 +267,8 @@ class FeatureFlags(
     # K1 — Tracing & Observability + K8 — Audit fields — extracted в
     # features/observability.py::ObservabilityFlags (T1.3.4).
 
-    frontend_plugin_marketplace: bool = Field(
-        default=False,
-        title="K5: Plugin Marketplace Streamlit UI (таблица плагинов + toggle)",
-        description=(
-            "K5 Wave 3. Owner: K5 DSL. ETA: S3-W3. "
-            "Активирует страницу 60_Plugin_Marketplace.py — список installed plugins, "
-            "фильтр по status (active/all/disabled), manifest-expander, action-toggle. "
-            "default-OFF до staging-smoke + REST /api/v1/admin/plugins/* endpoints."
-        ),
-    )
+    # Sprint 5 K5 Frontend (frontend_plugin_marketplace) — extracted в
+    # features/experimental.py::ExperimentalFlags (T1.3.9).
 
     # ─── K9 — Extensions Migration ─────────────────────────────────────────
     extensions_core_entities: bool = Field(
