@@ -76,7 +76,7 @@ def test_callback_anonymizes_when_flag_on(monkeypatch: pytest.MonkeyPatch) -> No
         assert "[REDACTED]" in result["input"]
         assert "[REDACTED]" in result["output"]["text"]
     finally:
-        providers._overrides.pop("ai_sanitizer", None)
+        providers.ai._overrides.pop("ai_sanitizer", None)
 
 
 def test_anonymize_trace_payload_walks_nested(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -106,7 +106,7 @@ def test_anonymize_trace_payload_walks_nested(monkeypatch: pytest.MonkeyPatch) -
         assert result["tenant"] == "acme"  # короткие строки без цифр не меняются
         assert result["amount"] == 12345  # не строка → не обрабатывается
     finally:
-        providers._overrides.pop("ai_sanitizer", None)
+        providers.ai._overrides.pop("ai_sanitizer", None)
 
 
 def test_anonymize_passthrough_on_none(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -113,7 +113,7 @@ async def test_ingest_masks_pii_when_flag_on(
         assert metadata["pii_masked"] is True
         assert metadata["pii_masker_version"] == "_StubSanitizer"
     finally:
-        providers._overrides.pop("ai_sanitizer", None)
+        providers.ai._overrides.pop("ai_sanitizer", None)
 
 
 @pytest.mark.asyncio
@@ -146,4 +146,4 @@ async def test_ingest_graceful_on_sanitizer_failure(
         assert "pii_mask_error" in metadata
         assert "simulated sanitizer failure" in metadata["pii_mask_error"]
     finally:
-        providers._overrides.pop("ai_sanitizer", None)
+        providers.ai._overrides.pop("ai_sanitizer", None)

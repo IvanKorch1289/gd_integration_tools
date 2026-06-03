@@ -113,7 +113,7 @@ def test_di_provider_uses_legacy_when_flag_off(monkeypatch: pytest.MonkeyPatch) 
         features.feature_flags, "presidio_pii_enabled", False, raising=True
     )
     # Сбросить override от предыдущих тестов
-    providers._overrides.pop("ai_sanitizer", None)
+    providers.ai._overrides.pop("ai_sanitizer", None)
     sanitizer = providers.get_ai_sanitizer_provider()
     assert type(sanitizer).__name__ == "AIDataSanitizer"
 
@@ -128,7 +128,7 @@ def test_di_provider_uses_presidio_adapter_when_flag_on(
     monkeypatch.setattr(
         features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
-    providers._overrides.pop("ai_sanitizer", None)
+    providers.ai._overrides.pop("ai_sanitizer", None)
     sanitizer = providers.get_ai_sanitizer_provider()
     assert type(sanitizer).__name__ == "PresidioSanitizerAdapter"
 

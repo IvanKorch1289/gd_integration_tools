@@ -116,7 +116,7 @@ class TestLangFuseV3Anonymization:
             update_kwargs = fake_span.update.call_args.kwargs
             assert "9998887" not in str(update_kwargs.get("output"))
         finally:
-            providers._overrides.pop("ai_sanitizer", None)
+            providers.ai._overrides.pop("ai_sanitizer", None)
 
     async def test_callback_v3_passthrough_when_sanitize_traces_off(
         self,
@@ -161,7 +161,7 @@ class TestLangFuseV3Anonymization:
             # Passthrough — цифры остались.
             assert "7707083893" in str(captured_input)
         finally:
-            providers._overrides.pop("ai_sanitizer", None)
+            providers.ai._overrides.pop("ai_sanitizer", None)
 
     async def test_callback_v3_passthrough_when_presidio_off(
         self,
@@ -206,4 +206,4 @@ class TestLangFuseV3Anonymization:
             # PRESIDIO_PII_ENABLED=False → anonymize_trace_payload — no-op.
             assert "7707083893" in str(captured_input)
         finally:
-            providers._overrides.pop("ai_sanitizer", None)
+            providers.ai._overrides.pop("ai_sanitizer", None)

@@ -42,7 +42,7 @@ def test_di_provider_returns_presidio_adapter_when_flag_on(
     monkeypatch.setattr(
         features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
-    providers._overrides.pop("ai_sanitizer", None)
+    providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()
 
     sanitizer = providers.get_ai_sanitizer_provider()
@@ -59,7 +59,7 @@ def test_di_provider_returns_legacy_when_flag_off(
     monkeypatch.setattr(
         features.feature_flags, "presidio_pii_enabled", False, raising=True
     )
-    providers._overrides.pop("ai_sanitizer", None)
+    providers.ai._overrides.pop("ai_sanitizer", None)
 
     sanitizer = providers.get_ai_sanitizer_provider()
     assert type(sanitizer).__name__ == "AIDataSanitizer"
@@ -146,7 +146,7 @@ def test_ai_agent_uses_presidio_when_flag_on(
     monkeypatch.setattr(
         features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
-    providers._overrides.pop("ai_sanitizer", None)
+    providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()
 
     # AIAgentService.__init__ вызывает get_ai_sanitizer_provider() (line 47).
