@@ -65,6 +65,7 @@ from src.backend.core.config.features.dsl import DSLFlags
 from src.backend.core.config.features.experimental import ExperimentalFlags
 from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
+from src.backend.core.config.features.resilience import ResilienceFlags
 from src.backend.core.config.features.security import SecurityFlags
 from src.backend.core.config.features.workflow import WorkflowFlags
 
@@ -80,6 +81,7 @@ class FeatureFlags(
     AIFlags,
     DSLFlags,
     ExperimentalFlags,
+    ResilienceFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -90,7 +92,7 @@ class FeatureFlags(
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1 — ALL 9 DOMAINS DONE):
+    Composition (S38 P1.1 W1 — original 9 + 1 extension):
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
@@ -99,11 +101,12 @@ class FeatureFlags(
     - AIFlags (K6 — AI: 9 fields, T1.3.7 → features/ai.py)
     - DSLFlags (K5 DSL + K3 sources: 12 fields, T1.3.8 → features/dsl.py)
     - ExperimentalFlags (K7 EventBus + Sprint 4/5/7 T5 + K1 Plugin: 7 fields, T1.3.9 → features/experimental.py)
+    - ResilienceFlags (K3 Resilience + K8 Storage: 6 fields, T1.3.10 → features/resilience.py)
     - BaseSettingsWithLoader (settings + YAML loader)
 
-    Total extracted: 40 flags (out of 229 total).
-    Remaining: 189 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + K3 Resilience + etc).
-    T1.3.10+ future domains: resilience.py, k8_storage.py, observability_full.py, etc.
+    Total extracted: 46 flags (out of 229 total).
+    Remaining: 183 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + K9 + etc).
+    T1.3.11+ future domains: extensions.py, billing.py, etc.
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -128,67 +131,9 @@ class FeatureFlags(
     # — extracted в features/dsl.py::DSLFlags (T1.3.8). Наследуются через
     # multiple inheritance. См. class FeatureFlags(...).
 
-    # ─── K3 — Resilience & Scaling ─────────────────────────────────────────
-    auto_scaler_process_level: bool = Field(
-        default=False,
-        title="Resilience: Granian dynamic workers (SIGUSR1 → fork)",
-        description=(
-            "K3 Wave 3. Owner: K3 Resilience. ETA: S2-W3. "
-            "Активирует уровень 1 auto-scaler (process-level). "
-            "default-OFF до проверки SIGUSR1 поведения на staging."
-        ),
-    )
-
-    auto_scaler_task_level: bool = Field(
-        default=False,
-        title="Resilience: asyncio Bulkhead HighWatermark/LowWatermark",
-        description=(
-            "K3 Wave 3. Owner: K3 Resilience. ETA: S2-W3. "
-            "Активирует уровень 2 auto-scaler (task-level). "
-            "default-OFF до chaos-теста с back-pressure."
-        ),
-    )
-
-    k8s_hpa_exporter: bool = Field(
-        default=False,
-        title="K2: Prometheus k8s HPA exporter (container-level auto-scaler)",
-        description=(
-            "K2 Wave 4. Owner: K2 Net&WAF. ETA: S3-W4. "
-            "Активирует K8sHPAMetricsExporter — уровень 3 auto-scaler (R-V15-10). "
-            "Экспортирует метрики в Prometheus-text формате через GET /metrics/hpa. "
-            "default-OFF до интеграции с k8s HPA и staging-smoke."
-        ),
-    )
-
-    otel_asyncpg: bool = Field(
-        default=False,
-        title="Resilience: OTel auto-instrumentation для asyncpg",
-        description=(
-            "K3 Wave 1. Owner: K3 Resilience. ETA: S2-W1. "
-            "Активирует opentelemetry-instrumentation-asyncpg. "
-            "default-OFF до перформанс-baseline diff <5%."
-        ),
-    )
-
-    task_watchdog_deadline: bool = Field(
-        default=False,
-        title="Resilience: TaskWatchdog deadline-эскалация для asyncio-задач",
-        description=(
-            "K3 Wave 2. Owner: K3 Resilience. ETA: S2-W2. "
-            "Активирует TaskWatchdog: регистрация задач с deadline_seconds + "
-            "auto-cancel при превышении. default-OFF до chaos-теста с leak-detection."
-        ),
-    )
-
-    pool_health_monitor: bool = Field(
-        default=False,
-        title="Storage: ConnectionPoolHealthMonitor (idle ping + reuse-on-demand)",
-        description=(
-            "K8 Wave 5. Owner: K8 Storage. ETA: S2-W5. "
-            "Активирует фоновый health-monitor для DB/Redis/HTTP/ClickHouse pools. "
-            "default-OFF до интеграции в 4 reference pools."
-        ),
-    )
+    # K3 — Resilience & Scaling + K8 Storage fields — extracted в
+    # features/resilience.py::ResilienceFlags (T1.3.10). Наследуются
+    # через multiple inheritance. См. class FeatureFlags(...).
 
     # K7 — EventBus + Sprint 4 + Sprint 7 T5 + K1 Plugin semver +
     # Sprint 5 K5 Frontend fields — extracted в
