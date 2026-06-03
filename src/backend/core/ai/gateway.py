@@ -64,25 +64,21 @@ Capability
 from __future__ import annotations
 
 import logging
-import time
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.ai.errors import GuardResult
-from src.backend.core.ai.gateway_audit_mixin import _AuditContext
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 from src.backend.core.ai.gateway_pipeline_mixin import PipelineStepsMixin
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
-    from src.backend.core.audit.schema.ai_invocation import AIInvocationEvent
 
 __all__ = ("AIGateway", "AIRequest", "AIResponse")
 
 logger = logging.getLogger(__name__)
 
 
-class AIGateway(PipelineStepsMixin):
+class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
     """Фасад — единая точка входа в AI (ADR-NEW-19).
 
     Использование::
@@ -219,93 +215,7 @@ class AIGateway(PipelineStepsMixin):
             return await self._legacy_invoke(request)
         return await self._enforced_invoke(request)
 
-    async def _enforced_invoke(self, request: AIRequest) -> AIResponse:
-        """Полный 9-step pipeline (impl S25 W1..W5 + S27 W2..W5).
-
-        После каждого шага эмитит событие ``ai.invocation.*`` через
-        :func:`emit_ai_invocation_event` (ADR-0071 §3):
-        ``requested`` → ``policy_resolved`` → ``sanitized`` →
-        ``guarded.input`` → ``guarded.output`` → ``completed|denied|failed``.
-
-        Args:
-            request: AIRequest.
-
-        Returns:
-            AIResponse после прохождения всех 9 шагов.
-        """
-        # Собираем контекст для аудита
-        ctx = _AuditContext(request=request, audit_service=self._audit_service)
-        start_ms = int(time.monotonic() * 1000)
-
-        # Шаг 0: emit REQUESTED
-        await ctx._emit("requested", latency_ms=int(time.monotonic() * 1000) - start_ms)
-
-        # Шаг 1: policy resolution
-        policy = await self._resolve_policy(request)
-        ctx.policy = policy
-        ctx.policy_name = policy.name if policy else "default"
-        await ctx._emit(
-            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
-        )
-
-        # Шаг 2: capability check (throws CapabilityDeniedError на fail)
-        await self._check_capability(request)
-
-        # Шаг 3: input sanitizers
-        sanitized = await self._apply_input_sanitizers(request, policy)
-        ctx.input_sanitized = sanitized
-        ctx.input_pii_detected = getattr(self, "_last_input_pii_detected", False)
-        await ctx._emit(
-            "sanitized",
-            pii_detected=ctx.input_pii_detected,
-            latency_ms=int(time.monotonic() * 1000) - start_ms,
-        )
-
-        # Шаг 4: input guards
-        input_guard_results = await self._apply_input_guards(sanitized, policy)
-        ctx.input_guard_results = input_guard_results
-        if input_guard_results:
-            for gr in input_guard_results:
-                await ctx._emit_guard("guarded.input", gr)
-        else:
-            await ctx._emit(
-                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms
-            )
-
-        # Шаг 5: render prompt
-        rendered = await self._render_prompt(request, policy, sanitized)
-        ctx.rendered = rendered
-
-        # Шаг 6: invoke LLM
-        completion = await self._invoke_llm(rendered, policy, request.stream)
-        ctx.completion = completion
-        ctx.model_used = completion.model_used
-        ctx.tokens_prompt = completion.tokens_prompt
-        ctx.tokens_completion = completion.tokens_completion
-
-        # Шаг 7: output guards
-        output_guard_results = await self._apply_output_guards(completion, policy)
-        ctx.output_guard_results = output_guard_results
-        if output_guard_results:
-            for gr in output_guard_results:
-                await ctx._emit_guard("guarded.output", gr)
-        else:
-            await ctx._emit(
-                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms
-            )
-
-        # Шаг 8: output sanitizers
-        sanitized_output = await self._apply_output_sanitizers(completion, policy)
-
-        # Шаг 9a: audit emit (завершающее событие)
-        ctx.final_response = sanitized_output
-        await ctx._emit_final(start_ms)
-
-        # Шаг 9b: cost track
-        await self._cost_track(request, policy, sanitized_output)
-
-        return sanitized_output
-
+    # `_enforced_invoke` extracted в gateway_orchestrator_mixin.py (T-P1.1c)
     async def _legacy_invoke(self, request: AIRequest) -> AIResponse:
         """Pass-through до S27 closure: caller использует свой prompt напрямую.
 
@@ -322,4 +232,8 @@ class AIGateway(PipelineStepsMixin):
         return AIResponse(content="", model_used="pass-through-scaffold")
 
 
-# ── _AuditContext, _emit_wrapper вынесены в gateway_audit_mixin (T-P1.1a) ────
+# ── Mixins extracted (T-P1.1a/b/c):
+#     _AuditContext, _emit_wrapper          → gateway_audit_mixin.py
+#     _resolve_policy, _check_capability,   → gateway_pipeline_mixin.py
+#     _apply_input_sanitizers, ... _cost_track
+#     _enforced_invoke (9-step orchestrator) → gateway_orchestrator_mixin.py
