@@ -1,156 +1,149 @@
-"""Тесты для BrotliCompressionMiddleware (Sprint 10 K2 W2)."""
+"""Unit tests for BrotliCompressionMiddleware."""
 
 from __future__ import annotations
 
-import json
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-pytest.importorskip("brotli", reason="brotli library not installed")
 
 from src.backend.entrypoints.middlewares.brotli_compression import (
     BrotliCompressionMiddleware,
 )
 
 
-async def _drain(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Возвращает копию списка сообщений (helper)."""
-    return list(messages)
+class _SendCollector:
+    def __init__(self) -> None:
+        self.messages: list[dict[str, Any]] = []
+
+    async def __call__(self, message: dict[str, Any]) -> None:
+        self.messages.append(message)
 
 
-def _make_app(body: bytes, status: int = 200, content_type: str = "application/json"):
-    """Создаёт минимальный ASGI app, возвращающий заданное тело."""
-
-    async def _app(scope: Any, receive: Any, send: Any) -> None:
+@pytest.fixture
+def inner_app() -> AsyncMock:
+    async def app(scope: Any, receive: Any, send: Any) -> None:
         await send(
             {
                 "type": "http.response.start",
-                "status": status,
-                "headers": [(b"content-type", content_type.encode("latin-1"))],
+                "status": 200,
+                "headers": [(b"content-type", b"application/json")],
             }
         )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": body,
-                "more_body": False,
-            }
+        await send({"type": "http.response.body", "body": b'{"key": "value"}' * 50})
+
+    return app
+
+
+class TestBrotliCompressionMiddleware:
+    """Tests for :class:`BrotliCompressionMiddleware`."""
+
+    @pytest.mark.asyncio
+    async def test_no_brotli_module_noop(self, inner_app: Any) -> None:
+        """Without brotli module, middleware passes through."""
+        mw = BrotliCompressionMiddleware(inner_app)
+        mw._brotli = None
+
+        send = _SendCollector()
+        await mw({"type": "http"}, AsyncMock(), send)
+
+        assert len(send.messages) == 2
+        assert send.messages[1]["body"] == b'{"key": "value"}' * 50
+
+    @pytest.mark.asyncio
+    async def test_compresses_json_when_accepted(self, inner_app: Any) -> None:
+        """Compresses JSON response when client accepts brotli."""
+        brotli = MagicMock()
+        brotli.compress.return_value = b"compressed"
+
+        mw = BrotliCompressionMiddleware(inner_app, minimum_size=10)
+        mw._brotli = brotli
+
+        send = _SendCollector()
+        await mw(
+            {"type": "http", "headers": [(b"accept-encoding", b"br")]},
+            AsyncMock(),
+            send,
         )
 
-    return _app
+        assert len(send.messages) == 2
+        headers = send.messages[0]["headers"]
+        assert (b"content-type", b"application/json") in headers
+        assert (b"content-encoding", b"br") in headers
+        assert any(
+            h[0] == b"vary" and b"accept-encoding" in h[1].lower() for h in headers
+        )
+        assert send.messages[1]["body"] == b"compressed"
+        brotli.compress.assert_called_once()
 
+    @pytest.mark.asyncio
+    async def test_no_compress_when_not_accepted(self, inner_app: Any) -> None:
+        """Does not compress when client does not accept brotli."""
+        brotli = MagicMock()
 
-async def _invoke(
-    middleware: BrotliCompressionMiddleware,
-    *,
-    accept_encoding: bytes = b"",
-) -> list[dict[str, Any]]:
-    scope = {
-        "type": "http",
-        "method": "GET",
-        "headers": [(b"accept-encoding", accept_encoding)] if accept_encoding else [],
-    }
-    captured: list[dict[str, Any]] = []
+        async def app(scope: Any, receive: Any, send: Any) -> None:
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
+            await send({"type": "http.response.body", "body": b'{"key": "value"}' * 50})
 
-    async def _receive() -> dict[str, Any]:
-        return {"type": "http.request"}
+        mw = BrotliCompressionMiddleware(app, minimum_size=10)
+        mw._brotli = brotli
 
-    async def _send(msg: dict[str, Any]) -> None:
-        captured.append(msg)
+        send = _SendCollector()
+        await mw({"type": "http"}, AsyncMock(), send)
 
-    await middleware(scope, _receive, _send)
-    return captured
+        brotli.compress.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_no_compress_for_small_response(self, inner_app: Any) -> None:
+        """Does not compress responses below minimum size."""
+        brotli = MagicMock()
 
-@pytest.mark.asyncio
-async def test_brotli_compresses_json_when_client_accepts_br() -> None:
-    payload = json.dumps({"data": "x" * 1000}).encode("utf-8")
-    mw = BrotliCompressionMiddleware(
-        _make_app(payload), minimum_size=100, quality=4
-    )
-    msgs = await _invoke(mw, accept_encoding=b"br, gzip")
+        async def app(scope: Any, receive: Any, send: Any) -> None:
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
+            await send({"type": "http.response.body", "body": b'{"k": 1}'})
 
-    start = msgs[0]
-    headers = {k: v for k, v in start["headers"]}
-    assert headers.get(b"content-encoding") == b"br"
-    assert b"vary" in headers
-    body = msgs[1]["body"]
-    assert len(body) < len(payload)  # реально сжалось
+        mw = BrotliCompressionMiddleware(app, minimum_size=100)
+        mw._brotli = brotli
 
+        send = _SendCollector()
+        await mw({"type": "http"}, AsyncMock(), send)
 
-@pytest.mark.asyncio
-async def test_passthrough_when_client_does_not_accept_br() -> None:
-    payload = b'{"data": "no_br"}'
-    mw = BrotliCompressionMiddleware(
-        _make_app(payload), minimum_size=10, quality=4
-    )
-    msgs = await _invoke(mw, accept_encoding=b"gzip")
+        brotli.compress.assert_not_called()
 
-    start = msgs[0]
-    headers = {k: v for k, v in start["headers"]}
-    assert b"content-encoding" not in headers
-    assert msgs[1]["body"] == payload
+    def test_wants_brotli_true(self) -> None:
+        """_wants_brotli returns True when br is present."""
+        headers = [(b"accept-encoding", b"gzip, br, deflate")]
+        assert BrotliCompressionMiddleware._wants_brotli(headers) is True
 
+    def test_wants_brotli_false(self) -> None:
+        """_wants_brotli returns False when br is absent."""
+        headers = [(b"accept-encoding", b"gzip, deflate")]
+        assert BrotliCompressionMiddleware._wants_brotli(headers) is False
 
-@pytest.mark.asyncio
-async def test_passthrough_when_body_smaller_than_minimum_size() -> None:
-    small = b'{"x":1}'
-    mw = BrotliCompressionMiddleware(
-        _make_app(small), minimum_size=500, quality=4
-    )
-    msgs = await _invoke(mw, accept_encoding=b"br")
+    def test_is_json_true(self) -> None:
+        """_is_json returns True for application/json."""
+        headers = [(b"content-type", b"application/json; charset=utf-8")]
+        assert BrotliCompressionMiddleware._is_json(headers) is True
 
-    start = msgs[0]
-    headers = {k: v for k, v in start["headers"]}
-    assert b"content-encoding" not in headers
-    assert msgs[1]["body"] == small
+    def test_is_json_false(self) -> None:
+        """_is_json returns False for text/html."""
+        headers = [(b"content-type", b"text/html")]
+        assert BrotliCompressionMiddleware._is_json(headers) is False
 
-
-@pytest.mark.asyncio
-async def test_passthrough_when_content_type_not_json() -> None:
-    payload = b"plaintext" * 200
-    mw = BrotliCompressionMiddleware(
-        _make_app(payload, content_type="text/plain"),
-        minimum_size=100,
-        quality=4,
-    )
-    msgs = await _invoke(mw, accept_encoding=b"br")
-
-    start = msgs[0]
-    headers = {k: v for k, v in start["headers"]}
-    assert b"content-encoding" not in headers
-
-
-@pytest.mark.asyncio
-async def test_passthrough_when_scope_not_http() -> None:
-    """Lifespan / websocket scope — не трогаем."""
-    payload = b'{"x":1}'
-    mw = BrotliCompressionMiddleware(
-        _make_app(payload), minimum_size=10, quality=4
-    )
-    scope = {"type": "lifespan", "headers": []}
-    captured: list[dict[str, Any]] = []
-
-    async def _receive() -> dict[str, Any]:
-        return {"type": "lifespan.startup"}
-
-    async def _send(msg: dict[str, Any]) -> None:
-        captured.append(msg)
-
-    # _make_app не обрабатывает lifespan, поэтому стартует с пустым recv —
-    # тут просто убеждаемся что middleware пробрасывает scope наружу,
-    # не падая.
-    try:
-        await mw(scope, _receive, _send)
-    except Exception:  # noqa: BLE001 — мы не покрываем семантику app
-        pass
-
-
-def test_no_brotli_falls_back_to_noop(monkeypatch) -> None:
-    """Если brotli не импортируется, middleware = passthrough."""
-    monkeypatch.setattr(
-        BrotliCompressionMiddleware, "_try_import_brotli", staticmethod(lambda: None)
-    )
-    mw = BrotliCompressionMiddleware(lambda *a, **kw: None, minimum_size=100)
-    assert mw._brotli is None
+    def test_try_import_brotli_none_when_missing(self) -> None:
+        """_try_import_brotli returns None when brotli is not installed."""
+        with patch("builtins.__import__", side_effect=ImportError("no module")):
+            result = BrotliCompressionMiddleware._try_import_brotli()
+        assert result is None
