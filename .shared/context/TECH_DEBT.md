@@ -8,7 +8,40 @@ Tracking для known issues, workarounds, и deferred work, который
 
 ---
 
-## TD-001: `python-version-doc-drift` (low, S39+ decision)
+## TD-005: `sibling-untracked-tests-broken` (medium, S39 W1)
+
+**Файлы:** 19 untracked test files (см. `git status --short | grep ^??`):
+- `tests/unit/dsl/engine/processors/test_audit_clickhouse.py` (4 fail, mock.patch на function-local import)
+- `tests/unit/dsl/engine/test_versioning.py` (3 fail, mock.patch на function-local import)
+- `tests/unit/dsl/engine/processors/test_sink_publish.py` (4 fail — syntax fixed in session 12e3f745 prep, но execution fails)
+- `tests/unit/dsl/engine/processors/test_storage_ext.py` (syntax error fixed 12e3f745, но execution fails)
+- `tests/unit/dsl/engine/processors/test_ml_inference.py` (syntax fixed, 5+ fail)
+- `tests/unit/dsl/engine/processors/test_notify.py` (syntax fixed, fail)
+- `tests/unit/entrypoints/api/v1/endpoints/test_admin_parallelism.py`
+- `tests/unit/entrypoints/api/v1/endpoints/test_admin_resilience_profile.py`
+- `tests/unit/entrypoints/api/v1/endpoints/test_admin_scheduler_dlq.py`
+- `tests/unit/entrypoints/express/test_router.py`
+- `tests/unit/entrypoints/filewatcher/test_watcher_manager.py`
+- `tests/unit/entrypoints/filewatcher/test_watcher_routes.py`
+- `tests/unit/entrypoints/websocket/test_ws_broadcast.py`
+- `tests/unit/infrastructure/audit/test_event_log.py`
+- `tests/unit/infrastructure/sinks/test_http_sink.py` (9 fail)
+- `tests/unit/infrastructure/sinks/test_s3_sink.py` (1 fail)
+- `tests/unit/infrastructure/sinks/test_webhook_sink.py` (7 fail)
+- `tests/unit/infrastructure/sinks/test_email_sink.py`, `test_file_sink.py`, `test_grpc_sink.py`, `test_mq_sink.py`, `test_soap_sink.py`, `test_ws_sink.py` (passing but untracked)
+
+**Проблема:** Sibling subagent'ы создали 19 test files без коммитов. Многие имеют:
+1. Syntax errors (4 файла исправлены в session 12e3f745, но не закоммичены)
+2. mock.patch на function-local imports (test_audit_clickhouse, test_versioning) — patches не срабатывают
+3. Pre-existing test design issues (http_sink, s3_sink, webhook_sink)
+
+**Решение (S39 W1):** Запустить `pytest tests/unit/<file> -v --tb=short` для каждого, починить по одному, или удалить + регенерировать через subagent с правильным TDD.
+
+**Workaround:** Не блокирует S38 closure. Coverage на targeted модули уже добавлен в batch 6/7 (e575e84e + a20cb020).
+
+---
+
+## TD-004: `python-version-doc-drift` (low, S39+ decision)
 
 **Файл:** multiple (20+ files: docs, .rules, AGENTS.md, UI, vault hints)
 
