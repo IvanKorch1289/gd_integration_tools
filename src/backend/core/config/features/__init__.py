@@ -68,6 +68,7 @@ from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
 from src.backend.core.config.features.resilience import ResilienceFlags
 from src.backend.core.config.features.security import SecurityFlags
+from src.backend.core.config.features.sprint5 import Sprint5Flags
 from src.backend.core.config.features.workflow import WorkflowFlags
 
 __all__ = ("FeatureFlags", "feature_flags")
@@ -84,6 +85,7 @@ class FeatureFlags(
     ExperimentalFlags,
     ResilienceFlags,
     BillingFlags,
+    Sprint5Flags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -94,7 +96,7 @@ class FeatureFlags(
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1 — 10 mixins):
+    Composition (S38 P1.1 W1 — 11 mixins):
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
@@ -105,11 +107,12 @@ class FeatureFlags(
     - ExperimentalFlags (K7 EventBus + Sprint 4/5/7 T5 + K1 Plugin: 7 fields, T1.3.9 → features/experimental.py)
     - ResilienceFlags (K3 Resilience + K8 Storage: 6 fields, T1.3.10 → features/resilience.py)
     - BillingFlags (Sprint 7 K1 per-tenant + K9 Extensions: 4 fields, T1.3.11 → features/billing.py)
+    - Sprint5Flags (Sprint 5 K1 Security + K2 DLQ: 4 fields, T1.3.12 → features/sprint5.py)
     - BaseSettingsWithLoader (settings + YAML loader)
 
-    Total extracted: 50 flags (out of 229 total).
-    Remaining: 179 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + etc).
-    T1.3.12+ future domains: workflow_advanced.py, ai_advanced.py, dsl_advanced.py, etc.
+    Total extracted: 54 flags (out of 229 total).
+    Remaining: 175 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + etc).
+    T1.3.13+ future domains: plugins.py, observability_advanced.py, ai_advanced.py, etc.
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -164,26 +167,9 @@ class FeatureFlags(
     # features/auth.py::AuthFlags (T1.3.1). Наследуются через multiple
     # inheritance. См. class FeatureFlags(AuthFlags, BaseSettingsWithLoader).
 
-    supply_chain_ci_gate: bool = Field(
-        default=False,
-        title="K1: Supply-chain CI gate (SBOM + pip-audit + cosign)",
-        description=(
-            "K1 Wave 3. Owner: K1 Auth/Secrets. ETA: S3-W3. "
-            "Активирует обязательные supply-chain проверки в release pipeline: "
-            "CycloneDX SBOM генерация, pip-audit vulnerability scan, "
-            "cosign artifact signing. При False — gates пропускаются (warn-only). "
-            "default-OFF до Sprint 4 release-pipeline интеграции (BLOCKER #4)."
-        ),
-    )
-
-    # K1 — Tracing & Observability + K8 — Audit fields — extracted в
-    # features/observability.py::ObservabilityFlags (T1.3.4).
-
-    # Sprint 5 K5 Frontend (frontend_plugin_marketplace) — extracted в
-    # features/experimental.py::ExperimentalFlags (T1.3.9).
-
-    # K9 — Extensions Migration (extensions_core_entities) — extracted в
-    # features/billing.py::BillingFlags (T1.3.11).
+    # Sprint 5 K1 Security + K2 DLQ fields — extracted в
+    # features/sprint5.py::Sprint5Flags (T1.3.12). Наследуются через
+    # multiple inheritance. См. class FeatureFlags(...).
 
     extensions_credit_workflow: bool = Field(
         default=False,
@@ -209,39 +195,11 @@ class FeatureFlags(
     )
 
     # ─── Sprint 5 — К1 Security ───────────────────────────────────────────
-    dlq_replay_rbac: bool = Field(
-        default=False,
-        title="K1 S5 W4: DLQ replay endpoint @require_role admin + audit-event",
-        description=(
-            "K1 Sprint 5 Wave 4. Owner: K1 Security. ETA: S5-W4. "
-            "Активирует RBAC-проверку для /api/v1/admin/dlq/replay endpoint: "
-            "@require_role('admin') + audit-event + @capability_guarded. "
-            "default-OFF до интеграции с CasbinAuthorizationService и smoke-теста."
-        ),
-    )
+    # dlq_replay_rbac + inbox_audit_pii_mask — extracted в
+    # features/sprint5.py::Sprint5Flags (T1.3.12). См. comment выше.
 
-    inbox_audit_pii_mask: bool = Field(
-        default=False,
-        title="K1 S5 W5: Inbox dedup audit с PII masking через presidio",
-        description=(
-            "K1 Sprint 5 Wave 5. Owner: K1 Security. ETA: S5-W5. "
-            "Активирует PII-маскировку (presidio) для audit-записей Inbox dedup. "
-            "default-OFF до интеграции с PresidioAnalyzer и audit_events."
-        ),
-    )
-
-    # ─── Sprint 5 — К2 Resilience+Perf ────────────────────────────────────
-    dlq_unified_enabled: bool = Field(
-        default=False,
-        title="K2 S5 W2: DLQ transport-agnostic facade + Postgres dlq_events",
-        description=(
-            "K2 Sprint 5 Wave 2. Owner: K2 Resilience. ETA: S5-W2. "
-            "Активирует UnifiedDeadLetterQueue (core/messaging/dlq.py) + "
-            "Postgres-table dlq_events(transport,action,payload,error,...) + "
-            "REST /api/v1/admin/dlq/replay + DSL .dlq(target,max_attempts). "
-            "default-OFF до миграции существующих transport-specific DLQ."
-        ),
-    )
+    # ─── Sprint 5 — К2 Resilience+Perf ─────────────────────────────────────
+    # dlq_unified_enabled — extracted в features/sprint5.py::Sprint5Flags (T1.3.12).
 
     inbox_fail_closed: bool = Field(
         default=False,
