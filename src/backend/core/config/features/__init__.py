@@ -25,6 +25,30 @@
     tools/checks/check_feature_flags.py --strict проверяет, что все
     feature-flag, упомянутые в коде через `feature_flags.<name>`, имеют
     запись в этом модуле и соответствующий audit-комментарий.
+
+Package structure (S38 T1.3.0)
+------------------------------
+Файл мигрирован ``git mv features.py → features/__init__.py`` (2026-06-03,
+T1.3.0). 884 import sites работают без изменений (``from features import X``
+эквивалентно ``from features/__init__.py import X``).
+
+Planned subdomain layout (T1.3.1+, итеративно по 1 домену за PR):
+
+    src/backend/core/config/features/
+    ├── __init__.py     # this file (canonical feature_flags singleton)
+    ├── auth.py         # ~15 flags: K1 security/auth (T1.3.1)
+    ├── security.py     # ~15 flags: PII, secrets, jwt (T1.3.2)
+    ├── resilience.py   # ~35 flags: CB, rate-limit, fallback (T1.3.3)
+    ├── observability.py# ~10 flags: metrics, tracing, audit (T1.3.4)
+    ├── net.py          # ~8 flags: HTTP, retries, timeouts (T1.3.5)
+    ├── workflow.py     # ~10 flags: scheduler, pg_runner (T1.3.6)
+    ├── ai.py           # ~70 flags: gateway, LLM, sanitizer (T1.3.7)
+    ├── dsl.py          # ~70 flags: route builders, processors (T1.3.8)
+    └── experimental.py # ~10 flags: K5 quick-wins (T1.3.9)
+
+Re-export pattern: каждый submodule export свой ``*_flags`` BaseSettings
+subclass; ``__init__.py`` собирает их в единый :class:`FeatureFlags` (pydantic
+multi-inheritance composition) с сохранением public API.
 """
 
 from __future__ import annotations
@@ -2658,29 +2682,6 @@ class FeatureFlags(BaseSettingsWithLoader):
             "При True tools/dsl_lsp/server.py расширяется: YAML schema completion + "
             "diagnostics через DSL Linter. Integration test pygls test-client. "
             "default-OFF до LSP smoke-test."
-        ),
-    )
-
-    dsl_visual_editor_drag_drop: bool = Field(
-        default=False,
-        title="K3 S19 W5: DSL Visual Editor drag-drop + BPMN export (page 31)",
-        description=(
-            "K3 Sprint 19 Wave 5 (PLAN.md V22 §S19 W12). Owner: K3 DSL/Frontend. "
-            "При True frontend/streamlit_app/pages/31_DSL_Visual_Editor.py: "
-            "drag-drop через streamlit-elements + BPMN 2.0 export через lxml + "
-            "undo/redo stack в session_state + step palette с capability descriptions. "
-            "default-OFF до visual editor smoke-test."
-        ),
-    )
-
-    ai_pr_review_enabled: bool = Field(
-        default=False,
-        title="K4 S19 W5: AI PR review GitHub Action workflow",
-        description=(
-            "K4 Sprint 19 Wave 5 (PLAN.md V22 §S19 W13). Owner: K4 AI/DevOps. "
-            "При True .github/workflows/ai-pr-review.yml: layer-policy + security + "
-            "perf-regression + coverage delta. Prompt caching ≥80% hit. Cost ≤$0.10/PR. "
-            "default-OFF до PR review quality calibration."
         ),
     )
 
