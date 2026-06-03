@@ -60,6 +60,7 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.features.auth import AuthFlags
+from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
 from src.backend.core.config.features.security import SecurityFlags
 
@@ -70,6 +71,7 @@ class FeatureFlags(
     AuthFlags,
     SecurityFlags,
     ObservabilityFlags,
+    NetFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -84,8 +86,9 @@ class FeatureFlags(
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
+    - NetFlags (K2 — Net & WAF: 3 fields, T1.3.5 → features/net.py)
     - BaseSettingsWithLoader (settings + YAML loader)
-    - (T1.3.5-T1.3.9+ domains будут добавлены как siblings)
+    - (T1.3.6-T1.3.9+ domains будут добавлены как siblings)
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -93,40 +96,9 @@ class FeatureFlags(
         env_prefix="FEATURE_", extra="forbid", validate_default=True
     )
 
-    # ─── K2 — Net & WAF ────────────────────────────────────────────────────
-    metering_per_host: bool = Field(
-        default=False,
-        title="K2: per-host outbound metering (request_count, error_rate, p50/p95)",
-        description=(
-            "K2 Wave 1. Owner: K2 Net&WAF. ETA: S3-W1. "
-            "Активирует PerHostMeter — rolling-window (1000 obs) метрики "
-            "по каждому host: request_count, error_count, p50/p95 latency_ms. "
-            "default-OFF до staging-smoke и интеграции с OutboundHttpClient."
-        ),
-    )
-
-    connection_reuse_manager: bool = Field(
-        default=False,
-        title="K2: ConnectionReuseManager (idle ping + auto-recycle по lifetime)",
-        description=(
-            "K2 Wave 2. Owner: K2 Resilience. ETA: S3-W2. "
-            "Активирует ConnectionReuseManager: проверку lifetime и idle-ping "
-            "перед возвратом connection из pool. При False acquire() возвращает "
-            "pool-объект без дополнительных проверок (нулевой overhead). "
-            "default-OFF до интеграции в reference pools и staging-smoke."
-        ),
-    )
-
-    waf_outbound_via_facade: bool = Field(
-        default=False,
-        title="WAF: внешние HTTP через OutboundHttpClient",
-        description=(
-            "K2 Wave 3. Owner: K2 Net&WAF. ETA: S2-W2. "
-            "Маршрутизация всех :external HTTP-callsites через WAF-фасад. "
-            "default-OFF до завершения миграции 38 callsites и staging-smoke. "
-            "Переключение default-ON — отдельный PR после ADR-0053 Accepted."
-        ),
-    )
+    # K2 — Net & WAF fields (metering_per_host, connection_reuse_manager,
+    # waf_outbound_via_facade) — extracted в features/net.py::NetFlags (T1.3.5).
+    # Наследуются через multiple inheritance. См. class FeatureFlags(...).
 
     # ─── K4 — Workflow ─────────────────────────────────────────────────────
     workflow_legacy_disabled: bool = Field(
