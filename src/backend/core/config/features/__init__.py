@@ -60,11 +60,18 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.features.auth import AuthFlags
+from src.backend.core.config.features.observability import ObservabilityFlags
+from src.backend.core.config.features.security import SecurityFlags
 
 __all__ = ("FeatureFlags", "feature_flags")
 
 
-class FeatureFlags(AuthFlags, BaseSettingsWithLoader):
+class FeatureFlags(
+    AuthFlags,
+    SecurityFlags,
+    ObservabilityFlags,
+    BaseSettingsWithLoader,
+):
     """Реестр runtime feature-flag.
 
     Все flag — default-OFF. Имя поля → переменная окружения с префиксом FEATURE_,
@@ -73,10 +80,12 @@ class FeatureFlags(AuthFlags, BaseSettingsWithLoader):
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1 T1.3.1):
-    - AuthFlags (K1 — Auth: 2 fields, extracted в features/auth.py)
+    Composition (S38 P1.1 W1):
+    - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
+    - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
+    - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
     - BaseSettingsWithLoader (settings + YAML loader)
-    - (T1.3.2-T1.3.9+ domains будут добавлены как siblings)
+    - (T1.3.5-T1.3.9+ domains будут добавлены как siblings)
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -511,30 +520,18 @@ class FeatureFlags(AuthFlags, BaseSettingsWithLoader):
         ),
     )
 
-    # ─── K1 — Secrets & Vault ──────────────────────────────────────────────
-    vault_rotation_enabled: bool = Field(
-        default=False,
-        title="Secrets: scheduled Vault secret rotation hook (без рестарта)",
-        description=(
-            "K1 Wave 1. Owner: K1 Auth/Secrets. ETA: S3-W1. "
-            "Активирует VaultSecretRotator — фоновую задачу, периодически "
-            "перечитывающую Vault paths и обновляющую in-memory cache. "
-            "default-OFF до integration-test с реальным Vault в staging."
-        ),
-    )
+    # K1 — Secrets & Vault fields (vault_rotation_enabled) — extracted в
+    # features/security.py::SecurityFlags (T1.3.2). Наследуются через
+    # multiple inheritance. См. class FeatureFlags(AuthFlags, SecurityFlags,
+    # BaseSettingsWithLoader).
 
-    # ─── K1 — Tracing & Observability ─────────────────────────────────────
-    tracing_baggage_strict: bool = Field(
-        default=False,
-        title="Tracing: strict-режим проверки OTel baggage (все 4 поля обязательны)",
-        description=(
-            "K1 Wave 2. Owner: K1 Auth/Tracing. ETA: S3-W2. "
-            "При True вызов ensure_required_baggage() возбуждает MissingBaggageError, "
-            "если хотя бы одно из 4 полей (route_name/tenant_id/business_op/correlation_id) "
-            "отсутствует в OTel baggage context. "
-            "default-OFF до покрытия всех entrypoints propagation middleware и staging-smoke."
-        ),
-    )
+    # K1 — Tracing + K8 — Audit (см. observability.py comment выше)
+
+    # K1 — Tracing & Observability fields (tracing_baggage_strict) +
+    # K8 — Audit & ClickHouse fields (audit_clickhouse_enabled) — extracted в
+    # features/observability.py::ObservabilityFlags (T1.3.4). Наследуются
+    # через multiple inheritance. См. class FeatureFlags(AuthFlags,
+    # SecurityFlags, ObservabilityFlags, BaseSettingsWithLoader).
 
     # ─── Sprint 7 K1 — per-tenant billing/quotas ──────────────────────────
     per_tenant_billing_enabled: bool = Field(
@@ -618,17 +615,8 @@ class FeatureFlags(AuthFlags, BaseSettingsWithLoader):
         ),
     )
 
-    # ─── K8 — Audit & ClickHouse ───────────────────────────────────────────
-    audit_clickhouse_enabled: bool = Field(
-        default=False,
-        title="Audit: ClickHouse audit_events trail",
-        description=(
-            "K8 Wave 4. Owner: K8 Audit. ETA: S2-W4. "
-            "Активирует отправку audit-событий в ClickHouse (таблица audit_events). "
-            "При False — ClickHouseAuditService пропускает emit/emit_batch без ошибок. "
-            "default-OFF до запуска ClickHouse instance и smoke-теста в staging."
-        ),
-    )
+    # K1 — Tracing & Observability + K8 — Audit fields — extracted в
+    # features/observability.py::ObservabilityFlags (T1.3.4).
 
     frontend_plugin_marketplace: bool = Field(
         default=False,
