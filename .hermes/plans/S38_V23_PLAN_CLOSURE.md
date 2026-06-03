@@ -24,8 +24,29 @@
 |------|-------:|------:|----:|---------|
 | `core/ai/gateway.py` | 1091 | **239** | **-78%** | T-P1.1a + T-P1.1b + T-P1.1c (3 коммита) |
 | `core/di/providers.py` | 1234 | **6 доменов** (max 309) | **-75% concentrated** | T-P1.2a + T-P1.2b + T-P1.2c (3 коммита) |
-| `core/config/features.py` | 2804 | 2826 (package) | package skeleton | T1.3.0 + T1.4 (1 коммит, pure rename) |
-| `entrypoints/api/generator/actions.py` | 1025 | audited | deferred to V23 W2 | P1.2 audit (1 коммит) |
+| `core/config/features.py` | 2804 | 2306 (package + 11 mixins extracted) | **11 mixins, 54 fields** | T1.3.0 + T1.4 + T1.3.1-T1.3.12 (12 коммитов) |
+| `entrypoints/api/generator/actions.py` | 1025 | audited | deferred to V23 | P1.2 audit (1 коммит) |
+
+### T1.3.x — 12 of 12 domain splits (54 flags extracted)
+
+| PR | File | Fields | Commits |
+|----|------|-------:|---------|
+| T1.3.0 + T1.4 | features/__init__.py (package skeleton) | 0 | 1 (21b32888) |
+| T1.3.1 | features/auth.py | 2 | 1 (03b4f445) |
+| T1.3.2 | features/security.py | 1 | 1 (47330595) |
+| T1.3.4 | features/observability.py | 2 | 1 (fa73b77b) |
+| T1.3.5 | features/net.py | 3 | 1 (81017187) |
+| T1.3.6 | features/workflow.py | 4 | 1 (8788da29) |
+| T1.3.7 | features/ai.py | 9 | 1 (d4c163fc) |
+| T1.3.8 | features/dsl.py | 12 | 1 (69bc0073) |
+| T1.3.9 | features/experimental.py | 7 | 1 (4f4f5a9c) |
+| T1.3.10 | features/resilience.py | 6 | 1 (220e466e) |
+| T1.3.11 | features/billing.py | 4 | 1 (5f256ced) |
+| T1.3.12 | features/sprint5.py | 4 | 1 (9a1d5100) |
+| **Total** | **12 files** | **54 fields** | **12 коммитов** |
+
+__init__.py: 2826 → 2306 LOC (-520, -18%). 175 flags remain (Sprint 5/6/7/8/9/10/11/15/17/21 + etc).
+T1.3.13+ future domains: plugins.py, observability_advanced.py, ai_advanced.py, etc.
 
 ### P0 (тесты) — closed
 
