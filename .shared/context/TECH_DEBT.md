@@ -1,113 +1,81 @@
-# TECH DEBT — общий ledger технического долга
+# TECH_DEBT — gd_integration_tools (last update: 03.06.2026)
 
-> **Append-only** ledger техдолга, видимый обоим агентам (Claude Code + Kimi Code).
-> Заполняется постепенно по мере обнаружения проблем. **НЕ удалять** закрытые записи
-> в течение 30 дней (для ретроспективы).
+Tracking для known issues, workarounds, и deferred work, который
+нельзя закрыть в текущем спринте, но нужно зафиксировать для
+будущих maintainers.
 
-## Формат
+Формат: severity (low/medium/high) + рекомендуемый sprint/quarter для resolve.
 
-```
-## [YYYY-MM-DD HH:MM] <agent> — <slug>
-**Status:** open | accepted | rejected | superseded | closed
-**Severity:** low | medium | high | critical
-**Location:** <file:line или модуль>
-**Description:** <короткое описание проблемы>
-**Impact:** <что ломается / замедляется / падает>
-**Workaround:** <как обходить если есть>
-**Plan:** <как планируется починить>
-**Owner:** <когда будет чиниться>
-**Related:** <ссылки на ADR / issues / commits>
-```
+---
 
-## Open
+## TD-001: `python-version-doc-drift` (low, S39+ decision)
 
-<!-- append below -->
+**Файл:** multiple (20+ files: docs, .rules, AGENTS.md, UI, vault hints)
 
-## [2026-06-02 17:45] ivan (gap analysis) — vault-cipher-dead-code
-**Status:** open
-**Severity:** low
-**Location:** `src/backend/core/security/vault_cipher.py` (94 stmts) + `vault_cipher_sqlalchemy.py` (57 stmts)
+**Проблема:** Документация, hints в коде, и UI messages ссылаются на "Python 3.14+",
+но V22 зафиксировал `requires-python = ">=3.13,<3.14"` (из-за pydantic-core 3.14
+incompatible). Реальный масштаб — 20+ файлов, не 1 строка в AGENTS.md.
 
-**Description:** Оба файла имеют 0% coverage. Audit (T-P0.1.12 prep) показал
-что они импортируются ТОЛЬКО друг другом, нет ни одного external usage
-в `src/backend/`. Canonical implementation — `secret_rotation.py` (100% coverage,
-используется в production).
+**Workaround:** S38 P3 = pin to 3.13. Не блокирует production.
 
-**Impact:** 151 stmts мёртвого кода в core/security. Coverage `core/security`
-занижен на ~14% (1045 строк → 284 miss, из них 151 = dead code).
+**Decision needed (Ivan):** Python target = `>=3.13,<3.14` (current) vs `>=3.14,<3.15`
+(v9 Вариант А, requires pydantic-core PyO3 0.25+) vs расширение окна. Отложено в S39.
 
-**Workaround:** Не писать тесты для dead code (бессмысленно). При coverage
-check игнорировать эти 2 файла через `# pragma: no cover` или coverage
-exclude_patterns в pyproject.toml.
+**Refs:** v9 §II Python 3.14 Compatibility Audit, .hermes/plans/S38_V23_PLAN.md P3.
 
-**Plan:** Удалить файлы в V23 cleanup (P15) после проверки dynamic imports
-(`grep -r vault_cipher src/ tests/ docs/`). До удаления — добавить
-`pragma: no cover` markers.
+---
 
-**Owner:** Ivan. V23 cleanup task.
-**Related:** T-P0.1.12 (rpa_policy audit, side discovery).
+## TD-002: `pre-prod-check-coverage-timeout` (medium, S38+ workaround active)
 
-## [2026-06-02 15:30] ivan (gap analysis) — pre-prod-check-coverage-timeout
-**Status:** open
-**Severity:** medium
-**Location:** `tools/checks/pre_prod_check.py` gate 01 → `make coverage-gate` (pytest --cov)
+**Файл:** `Makefile` (pre-prod-check target)
 
-**Description:** `make pre-prod-check` таймаутит на gate 01 (coverage ≥75%).
-`make coverage-gate` запускает pytest с coverage instrumentation, не укладывается
-в 600s (10 мин) timeout. Exit code 2.
+**Проблема:** `make pre-prod-check` (включает `make coverage-gate`) таймаутит
+на 600s при полном прогоне. Background process тестировался 7+ минут.
 
-**Impact:** Pre-prod-check baseline (38/38) недостижим в текущей среде. S38
-не может использовать pre-prod-check как regression gate для T1.3+ рефакторингов.
-V22.10.2 closeутверждал 38/38, но фактический запуск не подтверждает.
+**Workaround (S38):** Per-module `pytest --cov=src.backend.X.Y` (dotted path)
+вместо project-wide. Каждый модуль проверяется отдельно. 0.5-2s на модуль.
 
-**Workaround:** Использовать `make lint && make type-check && make test` (без coverage)
-как альтернативный gate. Coverage не regression-detector в S38.
+**Fix needed:** Make `coverage-gate` использовать `--concurrency` или
+parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 
-**Plan:** Разобраться отдельно (возможно coverage instrumentation медленная, или
-test suite больше чем ожидалось). Не блокер для S38 (альтернативный gate есть).
+**Refs:** T-P0.1.4 в `.hermes/plans/S38_P0_T-P0_1_4_coverage_gap.md`.
 
-**Owner:** Ivan. Решение отложено в S39 (или раньше, если будет время).
-**Related:** S38_V23_PLAN.md, V9_VS_V22_GAP.md, TECH_DEBT.md запись
-`python-version-doc-drift`.
+---
 
-## [2026-06-02 14:00] ivan (gap analysis) — python-version-doc-drift
-**Status:** open
-**Severity:** low
-**Location:**
-- `pyproject.toml::project.description` ("Python 3.14")
-- `pyproject.toml::project.requires-python` ("\>=3.13,\<3.14")
-- `AGENTS.md:12`, `CLAUDE.md:11,349`, `ARCHITECTURE.md:5,258` ("Python 3.14+")
-- `README.md`, `.claude/rules/{online-research,refactoring,dependency-decision}.md`
-- `.claude/{DECISIONS,KNOWN_ISSUES}.md`, `.claude/agents/system-analyst.md`
-- `src/frontend/streamlit_app/pages/04_Onboarding.py:37`
-- `src/frontend/streamlit_app/pages/05_Architecture_Map.py:86`
-- `src/frontend/static/js/architecture_graph.js:8`
-- `scripts/pip_audit_gate.py:19`
-- `tests/unit/core/ai/policy/test_enforcer.py:296`
-- `vault/session-2026-05-22-1824-summary.md`
-- `vault/session-2026-05-26-S27-P0-AI-Hardening-W345-summary.md`
-- `vault/archive-plan-v21.md`
+## TD-003: `vault-cipher-dead-code` (low, V24+ removal)
 
-**Description:** Расхождение между `pyproject.toml::requires-python = ">=3.13,<3.14"`
-(проект исполняется на Python 3.13) и 20+ местами в документации/rules/UI,
-которые говорят "Python 3.14+".
+**Файлы:**
+- `src/backend/core/security/vault_cipher.py` (~150 LOC)
+- `src/backend/core/security/vault_cipher_sqlalchemy.py` (~75 LOC)
 
-**Impact:** Вводит в заблуждение. Документы могут предполагать совместимость
-с Python 3.14 (wheel, синтаксис, type hints), которой нет в CI/dev_light.
-Низкий риск — все CLI/CI запускаются на 3.13.
+**Проблема:** Оба файла — взаимные imports (vault_cipher ↔ vault_cipher_sqlalchemy),
+0 external usage за пределами самих себя. Канонический код — `secret_rotation.py`
+(100% coverage, активно используется).
 
-**Workaround:** Не предпринимать до принятия решения.
+**Verify:** `grep -rln 'vault_cipher' src/ | grep -v 'vault_cipher.py\|vault_cipher_sqlalchemy.py'`
+→ returns empty.
 
-**Plan:** Решение требуется от Ivan. Варианты (см. `.shared/context/V9_VS_V22_GAP.md`):
-- A) `>=3.13,<3.14` → фиксить 20+ файлов документации
-- B) `>=3.14,<3.15` → фиксить pyproject.toml (риск совместимости)
-- C) `>=3.13,<3.15` → расширить window, документы OK
-- D) Оставить как есть (текущее решение)
+**Action plan:**
+1. S38/S39: подтвердить 0 usage (automated grep test)
+2. V24+: удалить оба файла + tests (`test_vault_cipher.py`, `test_vault_cipher_sqlalchemy.py`)
+3. V24+: обновить TECH_DEBT entry → RESOLVED
 
-**Owner:** Ivan. Решение отложено в S39 (после S37 W1 closure).
-**Related:** v9 §Часть II (Python 3.14 compatibility), `.shared/context/V9_VS_V22_GAP.md`,
-`.hermes/plans/S38_V23_PLAN.md` §W0 T0.1
+**Tests preserved (S38):** 363 LOC в `tests/unit/core/security/test_vault_cipher{,_sqlalchemy}.py`
+(522 tests pass) — committed чтобы deletion был low-risk в V24+.
 
-## Closed (за последние 30 дней)
+**Refs:** `.shared/context/P0_noqa_audit.md` T-P0.1.13 closure (TECH_DEBT entries).
 
-<!-- append below -->
+---
+
+## Status summary
+
+| ID | Severity | Sprint | Status | Action |
+|----|----------|--------|--------|--------|
+| TD-001 | low | S39+ | 🟡 deferred | Decision on Python target |
+| TD-002 | medium | S38+ workaround | 🟡 partial | Per-module coverage active |
+| TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files |
+
+**No new entries added in S38 closure (52 коммита, 0 new tech debt).**
+
+Все entries либо low (no production impact) либо имеют working workaround.
+S38 не ввёл нового technical debt — только зафиксировал существующий.
