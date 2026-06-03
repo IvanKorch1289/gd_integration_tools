@@ -61,6 +61,7 @@ from pydantic_settings import SettingsConfigDict
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.features.ai import AIFlags
 from src.backend.core.config.features.auth import AuthFlags
+from src.backend.core.config.features.billing import BillingFlags
 from src.backend.core.config.features.dsl import DSLFlags
 from src.backend.core.config.features.experimental import ExperimentalFlags
 from src.backend.core.config.features.net import NetFlags
@@ -82,6 +83,7 @@ class FeatureFlags(
     DSLFlags,
     ExperimentalFlags,
     ResilienceFlags,
+    BillingFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -92,7 +94,7 @@ class FeatureFlags(
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1 — original 9 + 1 extension):
+    Composition (S38 P1.1 W1 — 10 mixins):
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
@@ -102,11 +104,12 @@ class FeatureFlags(
     - DSLFlags (K5 DSL + K3 sources: 12 fields, T1.3.8 → features/dsl.py)
     - ExperimentalFlags (K7 EventBus + Sprint 4/5/7 T5 + K1 Plugin: 7 fields, T1.3.9 → features/experimental.py)
     - ResilienceFlags (K3 Resilience + K8 Storage: 6 fields, T1.3.10 → features/resilience.py)
+    - BillingFlags (Sprint 7 K1 per-tenant + K9 Extensions: 4 fields, T1.3.11 → features/billing.py)
     - BaseSettingsWithLoader (settings + YAML loader)
 
-    Total extracted: 46 flags (out of 229 total).
-    Remaining: 183 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + K9 + etc).
-    T1.3.11+ future domains: extensions.py, billing.py, etc.
+    Total extracted: 50 flags (out of 229 total).
+    Remaining: 179 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + etc).
+    T1.3.12+ future domains: workflow_advanced.py, ai_advanced.py, dsl_advanced.py, etc.
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -148,45 +151,9 @@ class FeatureFlags(
     # через multiple inheritance. См. class FeatureFlags(AuthFlags,
     # SecurityFlags, ObservabilityFlags, BaseSettingsWithLoader).
 
-    # ─── Sprint 7 K1 — per-tenant billing/quotas ──────────────────────────
-    per_tenant_billing_enabled: bool = Field(
-        default=False,
-        title="K1 S7: per-tenant billing/quotas (rpm/rpd/tokens/cost_usd)",
-        description=(
-            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
-            "Активирует QuotasService (src/backend/services/billing/) и "
-            "QuotaCheckMiddleware (src/backend/core/auth/quotas.py) — "
-            "проверку per-tenant rpm/rpd/tokens/cost_usd на HTTP-уровне. "
-            "При False сервис превращается в no-op (allowed=True для всех). "
-            "default-OFF до интеграции с TenantContext + Redis backend и smoke."
-        ),
-    )
-
-    supply_chain_finale_strict: bool = Field(
-        default=False,
-        title="K1 S7: supply-chain finale (cosign sign для SBOM+wheels+image)",
-        description=(
-            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
-            "Активирует strict-режим supply-chain-finale в "
-            "tools/checks/check_supply_chain.py — cosign-sign для всех "
-            "release-артефактов (SBOM, dist/*.whl, container image при "
-            "наличии docker buildx). default-OFF до проверки полного pipeline "
-            "и signing keys readiness."
-        ),
-    )
-
-    openfeature_flagsmith_backend: bool = Field(
-        default=False,
-        title="K1 S7: OpenFeature SDK через FlagsmithProvider (external)",
-        description=(
-            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
-            "Активирует миграцию feature-flag backend с InMemoryProvider на "
-            "external Flagsmith через core/feature_flags/openfeature_provider.py. "
-            "Управляется ENV FEATURE_FLAG_BACKEND=flagsmith. При False — "
-            "in-memory provider (поведение совпадает с локальным реестром). "
-            "default-OFF до развёртывания Flagsmith instance в staging."
-        ),
-    )
+    # Sprint 7 K1 per-tenant billing/quotas + K9 — Extensions fields —
+    # extracted в features/billing.py::BillingFlags (T1.3.11). Наследуются
+    # через multiple inheritance. См. class FeatureFlags(...).
 
     # K1 — Plugin semver (plugin_semver_strict) +
     # Sprint 7 T5 OpenFeature (openfeature_external) — extracted в
@@ -215,16 +182,8 @@ class FeatureFlags(
     # Sprint 5 K5 Frontend (frontend_plugin_marketplace) — extracted в
     # features/experimental.py::ExperimentalFlags (T1.3.9).
 
-    # ─── K9 — Extensions Migration ─────────────────────────────────────────
-    extensions_core_entities: bool = Field(
-        default=False,
-        title="Extensions: core_entities (users/orders/orderkinds/files) вынесен",
-        description=(
-            "K9 Wave 3. Owner: K9 Frontend&Ext. ETA: S2-W3. "
-            "При True ядро НЕ регистрирует CRUD из extensions/core_entities/. "
-            "default-OFF до golden-test migration + ядро без импортов."
-        ),
-    )
+    # K9 — Extensions Migration (extensions_core_entities) — extracted в
+    # features/billing.py::BillingFlags (T1.3.11).
 
     extensions_credit_workflow: bool = Field(
         default=False,
