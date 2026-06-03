@@ -66,9 +66,12 @@ from src.backend.core.config.features.dsl import DSLFlags
 from src.backend.core.config.features.experimental import ExperimentalFlags
 from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
+from src.backend.core.config.features.plugins import PluginsFlags
 from src.backend.core.config.features.resilience import ResilienceFlags
 from src.backend.core.config.features.security import SecurityFlags
 from src.backend.core.config.features.sprint5 import Sprint5Flags
+from src.backend.core.config.features.sprint6 import Sprint6Flags
+from src.backend.core.config.features.sprint7 import Sprint7Flags
 from src.backend.core.config.features.workflow import WorkflowFlags
 
 __all__ = ("FeatureFlags", "feature_flags")
@@ -79,6 +82,7 @@ class FeatureFlags(
     SecurityFlags,
     ObservabilityFlags,
     NetFlags,
+    PluginsFlags,
     WorkflowFlags,
     AIFlags,
     DSLFlags,
@@ -86,6 +90,8 @@ class FeatureFlags(
     ResilienceFlags,
     BillingFlags,
     Sprint5Flags,
+    Sprint6Flags,
+    Sprint7Flags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -96,11 +102,12 @@ class FeatureFlags(
     После закрытия Wave и подтверждения staging-smoke owner-команда переводит
     flag в default-ON в отдельном PR с обновлением audit-комментария.
 
-    Composition (S38 P1.1 W1 — 11 mixins):
+    Composition (S38 P1.1 W1 — 13 mixins):
     - AuthFlags (K1 — Auth: 2 fields, T1.3.1 → features/auth.py)
     - SecurityFlags (K1 — Secrets & Vault: 1 field, T1.3.2 → features/security.py)
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
     - NetFlags (K2 — Net & WAF: 3 fields, T1.3.5 → features/net.py)
+    - PluginsFlags (K9 Extensions + T3 S7: 2 fields, T1.3.13 → features/plugins.py)
     - WorkflowFlags (K4 — Workflow: 4 fields, T1.3.6 → features/workflow.py)
     - AIFlags (K6 — AI: 9 fields, T1.3.7 → features/ai.py)
     - DSLFlags (K5 DSL + K3 sources: 12 fields, T1.3.8 → features/dsl.py)
@@ -108,11 +115,14 @@ class FeatureFlags(
     - ResilienceFlags (K3 Resilience + K8 Storage: 6 fields, T1.3.10 → features/resilience.py)
     - BillingFlags (Sprint 7 K1 per-tenant + K9 Extensions: 4 fields, T1.3.11 → features/billing.py)
     - Sprint5Flags (Sprint 5 K1 Security + K2 DLQ: 4 fields, T1.3.12 → features/sprint5.py)
+    - Sprint6Flags (Sprint 6 K1 Security + K2 Resilience+Perf + K3 DSL+Workflow +
+      K4 AI+Quality + K5 Frontend+Chaos: 21 fields, T1.3.14 → features/sprint6.py)
+    - Sprint7Flags (Sprint 7 K4 AI+RAG + K3 DSL+Workflow: 5 fields, T1.3.15 → features/sprint7.py)
     - BaseSettingsWithLoader (settings + YAML loader)
 
-    Total extracted: 54 flags (out of 229 total).
-    Remaining: 175 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/21 + etc).
-    T1.3.13+ future domains: plugins.py, observability_advanced.py, ai_advanced.py, etc.
+    Total extracted: 80 flags (out of 229 total).
+    Remaining: 149 flags в __init__.py (Sprint 5/6/7/8/9/10/11/15/17/18/19/21/26/27 + etc).
+    T1.3.16+ future domains: observability_advanced.py, ai_advanced.py, etc.
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -171,28 +181,9 @@ class FeatureFlags(
     # features/sprint5.py::Sprint5Flags (T1.3.12). Наследуются через
     # multiple inheritance. См. class FeatureFlags(...).
 
-    extensions_credit_workflow: bool = Field(
-        default=False,
-        title="Extensions: credit_workflow первый reference plugin",
-        description=(
-            "K9 Wave 4. Owner: K9 Frontend&Ext. ETA: S2-W4. "
-            "Активирует extensions/credit_workflow/ как первый business plugin. "
-            "default-OFF до запуска reference workflow через Temporal."
-        ),
-    )
-
-    credit_pipeline_v2: bool = Field(
-        default=False,
-        title="T3 S7: credit_pipeline plugin (SKB/НБКИ) — V11 layout",
-        description=(
-            "Sprint 7 Team T3. Owner: T3. Активирует "
-            "extensions/credit_pipeline/* как канонический credit-bus "
-            "(SKB-Техно клиент через BaseExternalAPIClient + WAF) + "
-            "Workflow DSL credit_assessment + DSL routes. "
-            "При False — используется legacy services/integrations/skb.py. "
-            "default-OFF до завершения миграции (Sprint 8 flip ON)."
-        ),
-    )
+    # K9 — Plugins fields (extensions_credit_workflow, credit_pipeline_v2) —
+    # extracted в features/plugins.py::PluginsFlags (T1.3.13). Наследуются
+    # через multiple inheritance. См. class FeatureFlags(...).
 
     # ─── Sprint 5 — К1 Security ───────────────────────────────────────────
     # dlq_replay_rbac + inbox_audit_pii_mask — extracted в
@@ -587,278 +578,14 @@ class FeatureFlags(
         ),
     )
 
-    # ─── Sprint 6 — К1 Security ───────────────────────────────────────────
-    saml_ad_login_enabled: bool = Field(
-        default=False,
-        title="K1 S6: SAML SSO + AD/LDAP directory integration",
-        description=(
-            "K1 Sprint 6 Wave 1. Owner: K1 Security. ETA: S6-W1. "
-            "Активирует SAML SP-initiated SSO через core/auth/saml_backend.py "
-            "+ AD/LDAP-lookups через services/auth/ad_directory_client.py. "
-            "default-OFF до integration-теста с mock-IdP (osixia/openldap) и "
-            "staging IdP конфигурации."
-        ),
-    )
+    # Sprint 6 — К1 Security + К2 Resilience+Perf + К3 DSL+Workflow +
+    # К4 AI+Quality + К5 Frontend+Chaos fields (21 fields) — extracted в
+    # features/sprint6.py::Sprint6Flags (T1.3.14). Наследуются через
+    # multiple inheritance. См. class FeatureFlags(...).
 
-    outbound_metering_strict: bool = Field(
-        default=False,
-        title="K1 S6: PerHostMeter strict mode + quota threshold + alerts",
-        description=(
-            "K1 Sprint 6 Wave 2. Owner: K1 Security. ETA: S6-W2. "
-            "Переключает PerHostMeter (scaffold s3/k2-w1-per-host-metering) "
-            "из warning-only в enforce mode — quota threshold + alerts на "
-            "превышение per-host rate-limit. default-OFF до staging smoke."
-        ),
-    )
-
-    supply_chain_strict_mode: bool = Field(
-        default=False,
-        title="K1 S6: Supply-chain strict CI gate (SBOM+pip-audit ERROR+cosign+bandit-TLS)",
-        description=(
-            "K1 Sprint 6 Wave 3. Owner: K1 Security. ETA: S6-W3. "
-            "Активирует strict-режим supply-chain gate: tools/checks/check_supply_chain.py "
-            "оркестрирует generate_sbom + run_pip_audit ERROR-level + cosign_sign + "
-            "bandit с TLS-rules. Blocking в .github/workflows/release.yml. "
-            "default-OFF до полного аудита transitive deps."
-        ),
-    )
-
-    owasp_zap_gate_enabled: bool = Field(
-        default=False,
-        title="K1 S6: OWASP ZAP baseline scan в CI",
-        description=(
-            "K1 Sprint 6 Wave 4. Owner: K1 Security. ETA: S6-W4. "
-            "Активирует .github/workflows/security.yml OWASP ZAP baseline scan "
-            "против main-endpoints (5-10 reference targets из tests/security/zap_targets.yml). "
-            "Warn-only по решению пользователя — blocking откладывается до Sprint 9."
-        ),
-    )
-
-    custom_code_audit_enabled: bool = Field(
-        default=False,
-        title="K1 S6: vulture min-confidence 80 + manual review wrapper",
-        description=(
-            "K1 Sprint 6 Wave 5. Owner: K1 Security. ETA: S6-W5. "
-            "Активирует make custom-code-audit — tools/checks/check_custom_code.py "
-            "запускает vulture --min-confidence 80 + сопоставляет с allowlist. "
-            "default-OFF до калибровки allowlist (baseline FP ≤5)."
-        ),
-    )
-
-    codeclone_fail_on_new: bool = Field(
-        default=False,
-        title="K1 S6: codeclone gate --fail-on-new-clones (strict)",
-        description=(
-            "K1 Sprint 6 Wave 6. Owner: K1 Security. ETA: S6-W6. "
-            "Переключает codeclone CI gate из warning в blocking режим: "
-            "только новые клоны сравниваются с baseline в tools/checks/codeclone_baseline.json. "
-            "default-OFF до фиксации baseline в master."
-        ),
-    )
-
-    # ─── Sprint 6 — К2 Resilience+Perf ────────────────────────────────────
-    perf_gate_strict: bool = Field(
-        default=False,
-        title="K2 S6: perf-gate strict (p95<200ms / RPS>1000 blocking)",
-        description=(
-            "K2 Sprint 6 Wave 1. Owner: K2 Perf. ETA: S6-W1. "
-            "Переключает perf-gate в blocking режим: p95<200ms / RPS>1000 для "
-            "reference endpoints через k6+locust в docker-compose.perf.yml. "
-            "Warn-only по решению пользователя — blocking откладывается до Sprint 9."
-        ),
-    )
-
-    structlog_batching_enabled: bool = Field(
-        default=False,
-        title="K2 S6: structlog batching wrapper (50-event / 100ms)",
-        description=(
-            "K2 Sprint 6 Wave 4. Owner: K2 Perf. ETA: S6-W4. "
-            "Активирует BatchingStructlogProcessor — 50-event batch / 100ms timeout "
-            "wrapper над structlog pipeline. Ожидаемое улучшение -1..3ms per log. "
-            "default-OFF до benchmark подтверждения."
-        ),
-    )
-
-    processor_health_checks_strict: bool = Field(
-        default=False,
-        title="K2 S6: /health/processors агрегированный матричный endpoint",
-        description=(
-            "K2 Sprint 6 Wave 5. Owner: K2 Ops. ETA: S6-W5. "
-            "Активирует /health/processors endpoint — матрица health-checks "
-            "(Kafka schema-registry, Temporal server, Vault sealed, ClickHouse, "
-            "Redis cluster, NATS, Graylog). Каждый возвращает {ok, reason, latency_ms}."
-        ),
-    )
-
-    backpressure_streaming_enabled: bool = Field(
-        default=False,
-        title="K2 S6: backpressure model для streaming consumers",
-        description=(
-            "K2 Sprint 6 Wave 6. Owner: K2 Perf. ETA: S6-W6. "
-            "Активирует backpressure: FastStream Kafka consumer.pause/resume на HW, "
-            "Redis Streams XREAD count adaptive, AdaptiveBulkhead в DSL-pipeline. "
-            "Защита от OOM при 10× spike. default-OFF до chaos-теста."
-        ),
-    )
-
-    granian_rsgi_mode_enabled: bool = Field(
-        default=False,
-        title="K2 S6: Granian RSGI production mode + uvloop tuning",
-        description=(
-            "K2 Sprint 6 Wave 2. Owner: K2 Perf. ETA: S6-W2. "
-            "Активирует Granian RSGI как production HTTP server (вместо ASGI) "
-            "с uvloop event-loop. ADR-0059. default-OFF до benchmark подтверждения "
-            "-10..30% latency improvement."
-        ),
-    )
-
-    schemathesis_gate_enabled: bool = Field(
-        default=False,
-        title="K2 S6: API fuzz через schemathesis + asyncapi-diff",
-        description=(
-            "K2 Sprint 6 Wave 7. Owner: K2 Quality. ETA: S6-W7. "
-            "Активирует make api-fuzz — schemathesis run на OpenAPI spec + "
-            "asyncapi-diff stage. Warn-only по решению пользователя."
-        ),
-    )
-
-    service_doc_gate_enabled: bool = Field(
-        default=False,
-        title="K2 S6: check_service_docs.py CI gate (description/example required)",
-        description=(
-            "K2 Sprint 6 Wave 8. Owner: K2 Quality. ETA: S6-W8. "
-            "Активирует tools/checks/check_service_docs.py — проверка наличия "
-            "description/docstring/example у каждого @service_dsl. "
-            "Blocking в CI."
-        ),
-    )
-
-    # ─── Sprint 6 — К3 DSL+Workflow ───────────────────────────────────────
-    com_sidecar_enabled: bool = Field(
-        default=False,
-        title="K3 S6: Windows COM sidecar (pywin32 + comtypes + FastAPI)",
-        description=(
-            "K3 Sprint 6 Wave 5. Owner: K3 DSL. ETA: S6-W5. "
-            "Активирует .call_com(worker, method, params) DSL-шаг → REST к "
-            "windows_worker/main.py через services/rpa/com_sidecar_client.py. "
-            "default-OFF на Linux (mock); ON на Windows-worker docker."
-        ),
-    )
-
-    dsl_linter_strict: bool = Field(
-        default=False,
-        title="K3 S6: DSL Linter CLI + LSP plugin-aware (pygls)",
-        description=(
-            "K3 Sprint 6 Wave 4. Owner: K3 DSL. ETA: S6-W4. "
-            "Активирует manage.py dsl lint <path> + LSP server (dsl/cli/lsp_server.py) "
-            "через pygls с plugin-aware schema discovery. "
-            "default-OFF до fixture baseline ≥5 типов ошибок."
-        ),
-    )
-
-    # ─── Sprint 6 — К4 AI+Quality ─────────────────────────────────────────
-    inspect_ai_eval_enabled: bool = Field(
-        default=False,
-        title="K4 S6: Inspect AI nightly eval framework",
-        description=(
-            "K4 Sprint 6 Wave 1. Owner: K4 AI. ETA: S6-W1. "
-            "Активирует manage.py ai-eval nightly + 5-7 reference suites "
-            "(knowledge_qa/instruction_following/hallucination/safety/context_recall). "
-            ".github/workflows/ai-eval-nightly.yml cron-job."
-        ),
-    )
-
-    dspy_eval_pipeline_enabled: bool = Field(
-        default=False,
-        title="K4 S6: DSPy optimizer для critical pipelines",
-        description=(
-            "K4 Sprint 6 Wave 2. Owner: K4 AI. ETA: S6-W2. "
-            "Активирует DSPy optimization для credit.scoring / document.parser / "
-            "rag.query_reranker. Bootstrap from few-shot + DSPyOptimizer.compile(). "
-            "default-OFF до validation lift ≥10% на reference dataset."
-        ),
-    )
-
-    ai_cost_dashboard_strict: bool = Field(
-        default=False,
-        title="K4 S6: AI cost dashboard финал (per-tenant breakdown + alerts)",
-        description=(
-            "K4 Sprint 6 Wave 3. Owner: K4 AI. ETA: S6-W3. "
-            "Активирует services/ai/costs/dashboard.py — агрегация langfuse_reader "
-            "+ alerts + per-tenant breakdown + token rate trends. "
-            "Streamlit 23_AI_Cost_Tracking.py с фильтрами (date/tenant/model/pipeline)."
-        ),
-    )
-
-    # ─── Sprint 6 — К5 Frontend+Chaos ─────────────────────────────────────
-    chaos_tests_blocking: bool = Field(
-        default=False,
-        title="K5 S6: 33 chaos-теста blocking в CI",
-        description=(
-            "K5 Sprint 6 Wave 1. Owner: K5 Chaos. ETA: S6-W1. "
-            "Переключает 33 chaos-теста (testcontainers[toxiproxy], 11 chains × 3 сценария) "
-            "в blocking режим. Warn-only по решению пользователя — blocking откладывается "
-            "до Sprint 9 pre-prod gate."
-        ),
-    )
-
-    resilience_dashboard_enabled: bool = Field(
-        default=False,
-        title="K5 S6: Streamlit Resilience Dashboard (CB+RL+Bulkhead+Degradation)",
-        description=(
-            "K5 Sprint 6 Wave 3. Owner: K5 Frontend. ETA: S6-W3. "
-            "Активирует страницу 13_Resilience_Dashboard.py — матрица CB/RL/Bulkhead/"
-            "Degradation статусов через ResilienceCoordinator.snapshot() API + "
-            "live updates каждые 5 сек."
-        ),
-    )
-
-    pool_monitor_enabled: bool = Field(
-        default=False,
-        title="K5 S6: Streamlit Pool Monitor (worker + connection pools)",
-        description=(
-            "K5 Sprint 6 Wave 4. Owner: K5 Frontend. ETA: S6-W4. "
-            "Активирует страницу 15_Pool_Monitor.py — worker pool + connection pool "
-            "monitor для PG/Redis/HTTP/Kafka через PoolHealthMonitor API + live metrics."
-        ),
-    )
-
-    # ─── Sprint 7 — К4 AI+RAG (multi-agent + voice/image) ─────────────────
-    multi_agent_supervisor_enabled: bool = Field(
-        default=False,
-        title="K4 S7: LangGraph multi-agent supervisor (handoff между специализированными агентами)",
-        description=(
-            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
-            "Активирует MultiAgentSupervisor (services/ai/multi_agent/supervisor.py) — "
-            "LangGraph supervisor pattern + handoff_to(agent_name) tool. "
-            "Reference implementation для credit-pipeline "
-            "(supervisor=credit_orchestrator, agents=[scoring_agent, document_parser_agent, decision_agent]). "
-            "default-OFF до staging-smoke с реальным LLM-провайдером."
-        ),
-    )
-
-    voice_image_gen_enabled: bool = Field(
-        default=False,
-        title="K4 S7: Voice (Whisper STT + Coqui TTS) + Image generation wrappers",
-        description=(
-            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
-            "Активирует WhisperSTTService / CoquiTTSService (services/ai/voice/) + "
-            "LiteLLMImageGenerationService (services/ai/image_generation/litellm_image.py). "
-            "Lazy-import openai-whisper / TTS / litellm.image_generation(). "
-            "default-OFF до установки voice extras и staging-smoke."
-        ),
-    )
-
-    voice_stt_tts_enabled: bool = Field(
-        default=False,
-        title="K4 S7: Whisper STT + Coqui TTS wrappers (voice pipeline)",
-        description=(
-            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
-            "Активирует WhisperSTTService.transcribe() / CoquiTTSService.synthesize() "
-            "поверх openai-whisper и Coqui TTS (extras [ai-voice]). "
-            "Lazy-import тяжёлых SDK; default-OFF до установки extras и staging-smoke."
-        ),
-    )
+    # Sprint 7 — К4 AI+RAG + K3 DSL+Workflow fields — extracted в
+    # features/sprint7.py::Sprint7Flags (T1.3.15). Наследуются через
+    # multiple inheritance. См. class FeatureFlags(...).
 
     rpa_ocr_enabled: bool = Field(
         default=False,
@@ -893,31 +620,6 @@ class FeatureFlags(
             "lifespan; PollCDCBackend и ListenNotifyCDCBackend готовы к "
             "production, DebeziumEventsCDCBackend — scaffold (Sprint R3.4). "
             "Default-OFF до явного staging-smoke."
-        ),
-    )
-
-    # ─── Sprint 7 — K3 DSL+Workflow ────────────────────────────────────────
-    dsl_blueprints_migrate: bool = Field(
-        default=False,
-        title="K3 S7: deprecation-warning для legacy импортов src.backend.dsl.macros",
-        description=(
-            "K3 Sprint 7 (wave:s7/k3-dsl-blueprints-migrate). Owner: K3 DSL/Workflow. "
-            "ETA: S7. Активирует DeprecationWarning при импорте через shim "
-            "'from src.backend.dsl.macros import X' — реальная реализация теперь "
-            "в src.backend.dsl.blueprints.macros. default-OFF (1-2 sprint grace-period). "
-            "После Sprint 9 shim удаляется."
-        ),
-    )
-
-    workflow_versioning_strict: bool = Field(
-        default=False,
-        title="K3 S7: strict workflow versioning + Temporal patched-API integration",
-        description=(
-            "K3 Sprint 7 (wave:s7/k3-workflow-versioning). Owner: K3 DSL/Workflow. "
-            "ETA: S7. Активирует WorkflowVersionRegistry strict-mode: "
-            "несовместимая мажорная версия → ValueError на register; "
-            "интеграция с temporalio.workflow.patched(patch_id) для миграций между "
-            "версиями. default-OFF до интеграции с Temporal cluster и staging-smoke."
         ),
     )
 
