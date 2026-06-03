@@ -59,6 +59,7 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.features.ai import AIFlags
 from src.backend.core.config.features.auth import AuthFlags
 from src.backend.core.config.features.net import NetFlags
 from src.backend.core.config.features.observability import ObservabilityFlags
@@ -74,6 +75,7 @@ class FeatureFlags(
     ObservabilityFlags,
     NetFlags,
     WorkflowFlags,
+    AIFlags,
     BaseSettingsWithLoader,
 ):
     """Реестр runtime feature-flag.
@@ -90,8 +92,9 @@ class FeatureFlags(
     - ObservabilityFlags (K1 Tracing + K8 Audit: 2 fields, T1.3.4 → features/observability.py)
     - NetFlags (K2 — Net & WAF: 3 fields, T1.3.5 → features/net.py)
     - WorkflowFlags (K4 — Workflow: 4 fields, T1.3.6 → features/workflow.py)
+    - AIFlags (K6 — AI: 9 fields, T1.3.7 → features/ai.py)
     - BaseSettingsWithLoader (settings + YAML loader)
-    - (T1.3.7-T1.3.9+ domains будут добавлены как siblings)
+    - (T1.3.8-T1.3.9+ domains будут добавлены как siblings)
     """
 
     yaml_group: ClassVar[str] = "features"
@@ -188,105 +191,11 @@ class FeatureFlags(
         ),
     )
 
-    # ─── K6 — AI ───────────────────────────────────────────────────────────
-    search_provider_searxng: bool = Field(
-        default=False,
-        title="Search: SearXNGProvider в WebSearchService fallback chain",
-        description=(
-            "K4 Wave 4 (PLAN #5). Owner: K4 AI/Data. ETA: S3-W3. "
-            "Активирует SearXNGProvider в fallback chain WebSearchService — "
-            "self-hosted privacy-first meta-search. Требует SEARXNG_BASE_URL env. "
-            "default-OFF до развёртывания SearXNG instance в staging."
-        ),
-    )
-
-    langmem_enabled: bool = Field(
-        default=False,
-        title="AI: LangMem long-term memory (episodic/semantic/procedural)",
-        description=(
-            "K6 Wave 1 (K4 LangMem baseline). Owner: K4 AI/Data. ETA: S3-W1. "
-            "Активирует LangMemService в src/backend/services/ai/memory/. "
-            "При False все вызовы remember_*/recall возвращают пустые результаты "
-            "без записи. default-OFF до staging-smoke с Postgres + Qdrant."
-        ),
-    )
-
-    mcp_tools_input_schema_strict: bool = Field(
-        default=False,
-        title="MCP: строгая валидация input_schema для FastMCP tools",
-        description=(
-            "K6 Wave 2. Owner: K6 AI/RAG. ETA: S3-W2. "
-            "При True — validate_input_schema() поднимает ValidationError "
-            "вместо возврата (False, msg) при несоответствии JSON-Schema. "
-            "default-OFF до полного покрытия Tier 1+2 actions параметрами."
-        ),
-    )
-
-    langfuse_v3: bool = Field(
-        default=False,
-        title="AI: LangFuse 3.x callbacks",
-        description=(
-            "K6 Wave 1. Owner: K6 AI/RAG. ETA: S2-W1. "
-            "Переключение на LangFuse 3.x SDK. default-OFF до полной "
-            "миграции callbacks и smoke на 1 trace + generation."
-        ),
-    )
-
-    rag_cache_l2_semantic: bool = Field(
-        default=False,
-        title="AI: RAG cache L2 (semantic match через embeddings)",
-        description=(
-            "K6 Wave 3. Owner: K6 AI/RAG. ETA: S2-W3. "
-            "Активирует L2 semantic cache layer (L1 LRU уже работает). "
-            "default-OFF до измерения hit-rate ≥30% в staging."
-        ),
-    )
-
-    rag_cache_l3_retrieval: bool = Field(
-        default=False,
-        title="AI: RAG cache L3 (retrieval-graph cache)",
-        description=(
-            "K6 Wave 3. Owner: K6 AI/RAG. ETA: S2-W3. "
-            "Активирует L3 retrieval-graph cache. default-OFF до завершения "
-            "L2 stabilization."
-        ),
-    )
-
-    ai_workspace_ttl_cleanup: bool = Field(
-        default=False,
-        title="AI: TTL cleanup для ${AI_WORKSPACE}/<tenant>/<session>/",
-        description=(
-            "K6 Wave 4. Owner: K6 AI/RAG. ETA: S2-W4. "
-            "Активирует scheduled job (7 days TTL + size quota per tenant) "
-            "для AI workspace в lifespan. default-OFF до audit-event-тестов."
-        ),
-    )
-
-    prompt_registry_langfuse: bool = Field(
-        default=False,
-        title="AI: LangfusePromptStorage как backend для prompt-registry",
-        description=(
-            "K4 Sprint 3 Wave 3. Owner: K4 AI/Data. ETA: S3-W3. "
-            "Активирует LangfusePromptStorage — хранение и версионирование "
-            "промптов через Langfuse SDK (get/save/list). "
-            "При False — используется in-memory fallback (PromptEntry store). "
-            "default-OFF до staging-smoke с Langfuse instance и smoke-теста "
-            "на 1 prompt round-trip."
-        ),
-    )
-
-    multimodal_rag_enabled: bool = Field(
-        default=False,
-        title="AI: MultimodalRAG (text + image + audio embeddings и retrieval)",
-        description=(
-            "K6 Wave 4 (K4 W4 early scaffold). Owner: K4 AI/Data. ETA: S3-W4. "
-            "Активирует MultimodalRAGService: ingestion трёх модальностей "
-            "(text/image/audio) и семантический retrieval с modality filter. "
-            "В scaffold-версии: dummy 384-dim embeddings + in-memory store. "
-            "Production: CLIP (image) + Whisper→text (audio) + BGE-M3 (text). "
-            "default-OFF до ML-deps stabilization и staging-smoke."
-        ),
-    )
+    # K6 — AI fields (search_provider_searxng, langmem_enabled,
+    # mcp_tools_input_schema_strict, langfuse_v3, rag_cache_l2_semantic,
+    # rag_cache_l3_retrieval, ai_workspace_ttl_cleanup, prompt_registry_langfuse,
+    # multimodal_rag_enabled) — extracted в features/ai.py::AIFlags (T1.3.7).
+    # Наследуются через multiple inheritance. См. class FeatureFlags(...).
 
     # ─── K3 — Builder source-сахар ────────────────────────────────────────
     builder_source_sugar: bool = Field(
