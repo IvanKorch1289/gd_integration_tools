@@ -1,0 +1,6 @@
+# _templates — каталог для пользовательских Jinja2-шаблонов Sphinx.
+#
+# Например, custom_class_template.rst для autodoc или page.html для темы.
+# На старте пуст — Sphinx использует встроенные шаблоны темы.
+#
+# S40 W4: auto-generated API reference. Шаблоны не требуются для MVP.

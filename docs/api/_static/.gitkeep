@@ -1,0 +1,7 @@
+# _static — каталог для статических ассетов Sphinx (CSS, JS, изображения).
+#
+# Sphinx ожидает существование этого каталога, если html_static_path = ["_static"].
+# Пустые каталоги не отслеживаются git, поэтому .gitkeep фиксирует структуру.
+#
+# S40 W4: auto-generated API reference. Файлы сюда НЕ добавляем —
+# build-артефакты Sphinx идут в docs/api/_build/ (исключён через .gitignore).

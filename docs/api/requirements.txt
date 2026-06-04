@@ -1,0 +1,14 @@
+# Sphinx + theme for auto-generated API reference (S40 W4).
+#
+# Установить:
+#   pip install -r docs/api/requirements.txt
+#
+# Зависимости жёстко зафиксированы: в проекте sphinx >= 9.1.0 (см. pyproject.toml).
+# sphinx-rtd-theme выбрана явно для этого sub-проекта (основной docs/ использует
+# pydata-sphinx-theme — см. docs/conf.py).
+
+# Core Sphinx (must match [project.optional-dependencies.docs] in pyproject.toml)
+sphinx>=9.1.0,<10.0.0
+
+# ReadTheDocs theme for API reference
+sphinx-rtd-theme>=3.0.0,<4.0.0
