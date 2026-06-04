@@ -858,6 +858,7 @@ markers = [
     "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",
     "slow: slow tests, skipped by default in unit-suite",
     "requires_toxiproxy: requires toxiproxy container",
+    "unit: fast unit tests",
 ]
 
 
