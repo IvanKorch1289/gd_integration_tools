@@ -29,9 +29,7 @@ def _ctx() -> ExecutionContext:
 class _DoubleProcessor(BaseProcessor):
     """Удваивает body как число."""
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         new_body = (body or 0) * 2
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
@@ -40,9 +38,7 @@ class _DoubleProcessor(BaseProcessor):
 
 
 class _PlusOneProcessor(BaseProcessor):
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         new_body = (body or 0) + 1
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
@@ -71,9 +67,7 @@ def _aggregate_sum(parts: list[Exchange[Any]]) -> Exchange[Any]:
 async def test_composed_split_one_sub_processor() -> None:
     """split + 1 sub-processor: каждая часть удваивается, затем сумма."""
     proc = ComposedMessageProcessor(
-        splitter=_split_list,
-        processors=[_DoubleProcessor()],
-        aggregator=_aggregate_sum,
+        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum
     )
     ex = Exchange(in_message=Message(body=[1, 2, 3], headers={}))
     await proc.process(ex, _ctx())
@@ -139,9 +133,7 @@ async def test_composed_splitter_error_marks_exchange_failed() -> None:
         raise RuntimeError("split boom")
 
     proc = ComposedMessageProcessor(
-        splitter=_bad_split,
-        processors=[],
-        aggregator=_aggregate_sum,
+        splitter=_bad_split, processors=[], aggregator=_aggregate_sum
     )
     ex = Exchange(in_message=Message(body=None, headers={}))
     await proc.process(ex, _ctx())
@@ -165,8 +157,6 @@ async def test_composed_splitter_returns_non_list_fails() -> None:
 def test_composed_to_spec_returns_none() -> None:
     """ComposedMessage не сериализуется (callable splitter/aggregator)."""
     proc = ComposedMessageProcessor(
-        splitter=_split_list,
-        processors=[_DoubleProcessor()],
-        aggregator=_aggregate_sum,
+        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum
     )
     assert proc.to_spec() is None

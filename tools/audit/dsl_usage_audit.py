@@ -177,10 +177,7 @@ def _collect_pipeline_stats() -> dict[str, ProcessorStats]:
 
 def _collect_from_routes(stats: dict[str, ProcessorStats]) -> None:
     """Собирает статистику использования процессоров из YAML-маршрутов."""
-    routes_dirs = [
-        ROOT / "routes",
-        ROOT / "extensions",
-    ]
+    routes_dirs = [ROOT / "routes", ROOT / "extensions"]
 
     processor_usage: dict[str, int] = defaultdict(int)
     yaml_files: list[Path] = []
@@ -199,9 +196,7 @@ def _collect_from_routes(stats: dict[str, ProcessorStats]) -> None:
         else:
             # Процессор найден в YAML, но не в коде
             stats[proc_name] = ProcessorStats(
-                processor_name=proc_name,
-                processor_class=proc_name,
-                usage_count=count,
+                processor_name=proc_name, processor_class=proc_name, usage_count=count
             )
 
 
@@ -265,14 +260,14 @@ def _is_processor_spec(value: dict) -> bool:
     return bool(value)
 
 
-def _format_report(stats: dict[str, ProcessorStats], top_n: int = 20, output: str = "text") -> str:
+def _format_report(
+    stats: dict[str, ProcessorStats], top_n: int = 20, output: str = "text"
+) -> str:
     """Форматирует отчет в текстовом или JSON формате."""
     # Сортируем по usage_count descending
-    sorted_stats = sorted(
-        stats.values(),
-        key=lambda s: s.usage_count,
-        reverse=True,
-    )[:top_n]
+    sorted_stats = sorted(stats.values(), key=lambda s: s.usage_count, reverse=True)[
+        :top_n
+    ]
 
     if output == "json":
         import json
@@ -293,7 +288,9 @@ def _format_report(stats: dict[str, ProcessorStats], top_n: int = 20, output: st
     lines.append("=" * 70)
     lines.append(f"Total processors tracked: {len(stats)}")
     lines.append("-" * 70)
-    lines.append(f"{'#':<4} {'Processor':<35} {'Class':<20} {'Usage':>6} {'AvgLat':>8} {'Err%':>6}")
+    lines.append(
+        f"{'#':<4} {'Processor':<35} {'Class':<20} {'Usage':>6} {'AvgLat':>8} {'Err%':>6}"
+    )
     lines.append("-" * 70)
 
     for idx, stat in enumerate(sorted_stats, 1):
@@ -328,9 +325,7 @@ def _build_argparser() -> argparse.ArgumentParser:
         help="Output format (default: text)",
     )
     parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Run even if feature flag is disabled",
+        "--force", action="store_true", help="Run even if feature flag is disabled"
     )
     return parser
 

@@ -47,12 +47,12 @@ def main(argv: list[str] | None = None) -> int:
     """Точка входа CLI."""
     parser = argparse.ArgumentParser(description="Codegen service skeleton (Wave 5.1).")
     parser.add_argument("--name", required=True, help="snake_case имя сервиса (мн.ч.)")
-    parser.add_argument("--domain", required=True, help="core | ai | integrations | ...")
+    parser.add_argument(
+        "--domain", required=True, help="core | ai | integrations | ..."
+    )
     parser.add_argument("--crud", action="store_true", help="включить CRUD-методы")
     parser.add_argument(
-        "--fields",
-        default="{}",
-        help='JSON {"field":"py_type"} для Create/Update схем',
+        "--fields", default="{}", help='JSON {"field":"py_type"} для Create/Update схем'
     )
     parser.add_argument(
         "--model-class",
@@ -75,7 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     eng = CodegenEngine()
     paths = {
         "service": ROOT / "src" / "services" / domain / f"{name}_service.py",
-        "repository": ROOT / "src" / "infrastructure" / "repositories" / f"{name}_repository.py",
+        "repository": ROOT
+        / "src"
+        / "infrastructure"
+        / "repositories"
+        / f"{name}_repository.py",
         "schema": ROOT / "src" / "schemas" / f"{name}.py",
         "action": ROOT / "src" / "dsl" / "commands" / f"{name}_actions.py",
     }

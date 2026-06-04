@@ -96,7 +96,7 @@ class DSPyDatasetBuilder:
         тесты могут работать без [ai] extra.
         """
         try:
-            import dspy  # type: ignore[import-not-found]
+            import dspy
         except ImportError:
             logger.info("dspy-ai not installed — returning dict examples")
             return [

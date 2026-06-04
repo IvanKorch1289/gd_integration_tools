@@ -34,7 +34,7 @@ from __future__ import annotations
 import math
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Final
 
 __all__ = ("HostStats", "PerHostMeter", "get_per_host_meter", "to_prometheus_metrics")
@@ -92,7 +92,7 @@ class _HostBucket:
         self.request_count += 1
         if status_code <= 0 or status_code >= 500:
             self.error_count += 1
-        self.last_request_at = datetime.now(tz=timezone.utc)
+        self.last_request_at = datetime.now(tz=UTC)
 
     def to_stats(self) -> HostStats:
         """Вычислить :class:`HostStats` из накопленных данных.
@@ -231,7 +231,7 @@ def get_per_host_meter() -> PerHostMeter:
     Returns:
         Глобальный экземпляр :class:`PerHostMeter`.
     """
-    global _meter_instance  # noqa: PLW0603
+    global _meter_instance
     if _meter_instance is None:
         from src.backend.core.config.features import feature_flags  # lazy import
 
@@ -244,7 +244,7 @@ def _reset_meter_singleton() -> None:
 
     Не вызывать в production-коде.
     """
-    global _meter_instance  # noqa: PLW0603
+    global _meter_instance
     _meter_instance = None
 
 

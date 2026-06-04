@@ -134,7 +134,7 @@ class SamlBackend:
         ``uv sync --extra auth-saml``.
         """
         try:
-            import onelogin.saml2  # noqa: F401, PLC0415
+            import onelogin.saml2  # noqa: F401
 
             return True
         except ImportError:
@@ -195,7 +195,7 @@ class SamlBackend:
 
         try:
             result = validator()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise SamlError(f"SAMLResponse validation failed: {exc}") from exc
         return result
 

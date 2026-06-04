@@ -15,7 +15,8 @@ Stateless — см. контракт в ``base.py``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import AgentGraphProcessor, MCPToolProcessor
@@ -37,7 +38,7 @@ class AIRPAMixin:
 
     def mcp_tool(
         self, uri: str, tool: str, *, result_property: str = "mcp_result"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Вызов внешнего MCP tool."""
         return self._add(  # type: ignore[attr-defined]
             MCPToolProcessor(
@@ -45,7 +46,7 @@ class AIRPAMixin:
             )
         )
 
-    def agent_graph(self, graph_name: str, tools: list[str]) -> "RouteBuilder":
+    def agent_graph(self, graph_name: str, tools: list[str]) -> RouteBuilder:
         """Запуск LangGraph-агента."""
         return self._add(  # type: ignore[attr-defined]
             AgentGraphProcessor(graph_name=graph_name, tools=tools)
@@ -59,7 +60,7 @@ class AIRPAMixin:
         *,
         selectors: dict[str, str] | None = None,
         output_property: str = "scraped",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Извлечение данных с URL через CSS-селекторы (с SSRF-защитой)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.scraping",
@@ -76,7 +77,7 @@ class AIRPAMixin:
         item_selector: str | None = None,
         max_pages: int = 10,
         start_url: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Multi-page crawling с защитой от циклов и лимитом страниц."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.scraping",
@@ -94,7 +95,7 @@ class AIRPAMixin:
         method: str = "GET",
         path: str = "",
         timeout: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Прозрачный API proxy с request/response трансформацией."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.scraping",
@@ -112,7 +113,7 @@ class AIRPAMixin:
         query_field: str = "question",
         top_k: int = 5,
         namespace: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """RAG vector search: top-K ближайших документов по семантике."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -132,7 +133,7 @@ class AIRPAMixin:
         max_staleness_hours: float | None = None,
         system_prompt: str = "",
         output_property: str = "augment_result",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """RAG query с выбором стратегии retrieval (S11 K3 W3).
 
         ``strategy`` ∈ ``{"dense", "hybrid", "hyde", "multi_query"}`` —
@@ -160,7 +161,7 @@ class AIRPAMixin:
         source_property: str | None = None,
         modal: str = "text",
         output_property: str = "ingest_doc_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """RAG ingest: добавление документа из body/property в vector store (S11 K3 W2).
 
         ``modal`` хранится в metadata для downstream-консьюмеров
@@ -178,7 +179,7 @@ class AIRPAMixin:
 
     def compose_prompt(
         self, template: str, context_property: str = "vector_results"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Построение промпта из шаблона + контекста из properties."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -189,7 +190,7 @@ class AIRPAMixin:
 
     def call_llm(
         self, provider: str | None = None, model: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -198,13 +199,13 @@ class AIRPAMixin:
             model=model,
         )
 
-    def parse_llm_output(self, schema: type | None = None) -> "RouteBuilder":
+    def parse_llm_output(self, schema: type | None = None) -> RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema
         )
 
-    def token_budget(self, max_tokens: int = 4096) -> "RouteBuilder":
+    def token_budget(self, max_tokens: int = 4096) -> RouteBuilder:
         """Ограничение по токенам (tiktoken) — обрезка текста до лимита."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -212,13 +213,13 @@ class AIRPAMixin:
             max_tokens=max_tokens,
         )
 
-    def sanitize_pii(self) -> "RouteBuilder":
+    def sanitize_pii(self) -> RouteBuilder:
         """Маскирование PII (email/phone/СНИЛС/карт) перед LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "SanitizePIIProcessor"
         )
 
-    def restore_pii(self) -> "RouteBuilder":
+    def restore_pii(self) -> RouteBuilder:
         """Восстановление PII в ответе после LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "RestorePIIProcessor"
@@ -233,7 +234,7 @@ class AIRPAMixin:
         negative_k: int = 2,
         min_similarity: float = 0.0,
         inject_as: str = "feedback_examples",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Few-shot примеры из AI Feedback RAG.
 
         Инжектирует ``positive``/``negative`` примеры в properties
@@ -251,7 +252,7 @@ class AIRPAMixin:
             inject_as=inject_as,
         )
 
-    def publish_event(self, channel: str) -> "RouteBuilder":
+    def publish_event(self, channel: str) -> RouteBuilder:
         """Публикация события через EventBus."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -259,7 +260,7 @@ class AIRPAMixin:
             channel=channel,
         )
 
-    def load_memory(self, session_id_header: str = "X-Session-Id") -> "RouteBuilder":
+    def load_memory(self, session_id_header: str = "X-Session-Id") -> RouteBuilder:
         """Загрузка conversation/facts из AgentMemory (Redis)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors",
@@ -267,7 +268,7 @@ class AIRPAMixin:
             session_id_header=session_id_header,
         )
 
-    def save_memory(self) -> "RouteBuilder":
+    def save_memory(self) -> RouteBuilder:
         """Сохранение результата в AgentMemory."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "MemorySaveProcessor"
@@ -275,13 +276,13 @@ class AIRPAMixin:
 
     # ── Web Automation (RPA) ──
 
-    def navigate(self, url: str) -> "RouteBuilder":
+    def navigate(self, url: str) -> RouteBuilder:
         """Открыть URL в браузере (Playwright)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url
         )
 
-    def click(self, url: str, selector: str) -> "RouteBuilder":
+    def click(self, url: str, selector: str) -> RouteBuilder:
         """Клик по CSS-селектору."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web",
@@ -292,7 +293,7 @@ class AIRPAMixin:
 
     def fill_form(
         self, url: str, fields: dict | None = None, submit: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Заполнение формы по полям + опциональный submit."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web",
@@ -304,7 +305,7 @@ class AIRPAMixin:
 
     def extract(
         self, selector: str, url: str | None = None, output_property: str = "extracted"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Извлечение текста по CSS-селектору."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web",
@@ -314,13 +315,13 @@ class AIRPAMixin:
             output_property=output_property,
         )
 
-    def screenshot(self, url: str | None = None) -> "RouteBuilder":
+    def screenshot(self, url: str | None = None) -> RouteBuilder:
         """Скриншот страницы как bytes."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
         )
 
-    def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
+    def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
@@ -330,7 +331,7 @@ class AIRPAMixin:
 
     def call_llm_with_fallback(
         self, providers: list[str], *, model: str = "default"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """LLM с fallback-цепочкой провайдеров."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai",
@@ -341,7 +342,7 @@ class AIRPAMixin:
 
     def cache(
         self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai",
@@ -352,7 +353,7 @@ class AIRPAMixin:
 
     def cache_write(
         self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Redis-кеш: записывает результат после обработки."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai",
@@ -367,7 +368,7 @@ class AIRPAMixin:
         max_length: int = 10000,
         blocked_patterns: list[str] | None = None,
         required_fields: list[str] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai",
@@ -385,7 +386,7 @@ class AIRPAMixin:
         query_field: str = "question",
         threshold: float = 0.5,
         namespace: str = "intents",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Semantic routing — RAG-based intent detection → выбор маршрута."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai",
@@ -399,7 +400,7 @@ class AIRPAMixin:
 
     # ── Document / File RPA ─────────────────────────────────────────────────────
 
-    def pdf_read(self, *, extract_tables: bool = False) -> "RouteBuilder":
+    def pdf_read(self, *, extract_tables: bool = False) -> RouteBuilder:
         """Извлечь текст и таблицы из PDF.
 
         Body: bytes (содержимое PDF) или str (путь к файлу).
@@ -411,7 +412,7 @@ class AIRPAMixin:
             extract_tables=extract_tables,
         )
 
-    def pdf_merge(self) -> "RouteBuilder":
+    def pdf_merge(self) -> RouteBuilder:
         """Объединить несколько PDF в один.
 
         Body: list[bytes] — список PDF-файлов.
@@ -421,7 +422,7 @@ class AIRPAMixin:
             "src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor"
         )
 
-    def word_read(self) -> "RouteBuilder":
+    def word_read(self) -> RouteBuilder:
         """Извлечь текст из .docx файла.
 
         Body: bytes или str (путь).
@@ -431,7 +432,7 @@ class AIRPAMixin:
             "src.backend.dsl.engine.processors.rpa", "WordReadProcessor"
         )
 
-    def word_write(self) -> "RouteBuilder":
+    def word_write(self) -> RouteBuilder:
         """Генерировать .docx документ из текста.
 
         Body: dict с ключами "paragraphs" (list[str]) или "text" (str).
@@ -441,7 +442,7 @@ class AIRPAMixin:
             "src.backend.dsl.engine.processors.rpa", "WordWriteProcessor"
         )
 
-    def excel_read(self, *, sheet_name: str | None = None) -> "RouteBuilder":
+    def excel_read(self, *, sheet_name: str | None = None) -> RouteBuilder:
         """Читать Excel файл в list[dict].
 
         Body: bytes или str (путь).
@@ -455,7 +456,7 @@ class AIRPAMixin:
 
     def file_move(
         self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Копировать или переместить файл.
 
         mode: "copy" (default), "move", "rename".
@@ -468,7 +469,7 @@ class AIRPAMixin:
             mode=mode,
         )
 
-    def archive(self, *, mode: str = "extract", format: str = "zip") -> "RouteBuilder":
+    def archive(self, *, mode: str = "extract", format: str = "zip") -> RouteBuilder:
         """Создать или распаковать архив (ZIP/TAR).
 
         mode: "extract" (default), "create".
@@ -481,7 +482,7 @@ class AIRPAMixin:
             format=format,
         )
 
-    def ocr(self, *, lang: str = "eng+rus") -> "RouteBuilder":
+    def ocr(self, *, lang: str = "eng+rus") -> RouteBuilder:
         """OCR — оптическое распознавание текста из изображений/PDF.
 
         Body: bytes (image/PDF) или str (путь к файлу).
@@ -497,7 +498,7 @@ class AIRPAMixin:
         width: int | None = None,
         height: int | None = None,
         output_format: str = "PNG",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Изменить размер изображения.
 
         width/height: целевые размеры (None = авто).
@@ -513,7 +514,7 @@ class AIRPAMixin:
 
     def regex(
         self, pattern: str, *, action: str = "extract", replacement: str = ""
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Извлечь или заменить текст по регулярному выражению.
 
         action: "extract" (default), "replace", "match", "split", "findall".
@@ -526,7 +527,7 @@ class AIRPAMixin:
             replacement=replacement,
         )
 
-    def render_template(self, template: str) -> "RouteBuilder":
+    def render_template(self, template: str) -> RouteBuilder:
         """Рендеринг Jinja2-шаблона.
 
         Body: dict с переменными контекста.
@@ -538,7 +539,7 @@ class AIRPAMixin:
             template=template,
         )
 
-    def hash(self, *, algorithm: str = "sha256") -> "RouteBuilder":
+    def hash(self, *, algorithm: str = "sha256") -> RouteBuilder:
         """Хеширование тела сообщения.
 
         algorithm: "sha256" (default), "md5", "sha1", "sha512", "blake2b".
@@ -549,7 +550,7 @@ class AIRPAMixin:
             algorithm=algorithm,
         )
 
-    def encrypt(self, key: str) -> "RouteBuilder":
+    def encrypt(self, key: str) -> RouteBuilder:
         """Шифрование тела сообщения (AES-GCM).
 
         key: Base64-encoded AES-ключ (16, 24 или 32 байта).
@@ -558,7 +559,7 @@ class AIRPAMixin:
             "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
         )
 
-    def decrypt(self, key: str) -> "RouteBuilder":
+    def decrypt(self, key: str) -> RouteBuilder:
         """Дешифрование AES-GCM-сообщения.
 
         key: тот же ключ, что использовался для encrypt.
@@ -574,7 +575,7 @@ class AIRPAMixin:
         args: list[str] | None = None,
         allowed_commands: list[str] | None = None,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Выполнить shell-команду.
 
         command: имя команды (не full path).
@@ -590,7 +591,7 @@ class AIRPAMixin:
             timeout_seconds=timeout_seconds,
         )
 
-    def email(self, to: str, subject: str, body_template: str) -> "RouteBuilder":
+    def email(self, to: str, subject: str, body_template: str) -> RouteBuilder:
         """Compose + отправка email через SMTP.
 
         Body: dict с переменными для template или str.
@@ -605,7 +606,7 @@ class AIRPAMixin:
 
     # ── RPA terminal / desktop / mobile ──
 
-    def citrix(self, operation: str, session_id: str) -> "RouteBuilder":
+    def citrix(self, operation: str, session_id: str) -> RouteBuilder:
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
         from src.backend.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
 
@@ -615,7 +616,7 @@ class AIRPAMixin:
 
     def terminal_3270(
         self, host: str, port: int = 23, action: str = "query"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
         from src.backend.dsl.engine.processors.rpa_banking import (
             TerminalEmulator3270Processor,
@@ -627,7 +628,7 @@ class AIRPAMixin:
 
     def appium_mobile(
         self, platform: str, app_package: str, operation: str
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Appium автоматизация мобильных приложений (android/ios)."""
         from src.backend.dsl.engine.processors.rpa_banking import AppiumMobileProcessor
 
@@ -642,7 +643,7 @@ class AIRPAMixin:
         mailbox: str = "INBOX",
         subject_filter: str | None = None,
         extract: str = "body_table",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """IMAP → structured data pipeline."""
         from src.backend.dsl.engine.processors.rpa_banking import EmailDrivenProcessor
 
@@ -652,7 +653,7 @@ class AIRPAMixin:
             )
         )
 
-    def keystroke_replay(self, script_name: str) -> "RouteBuilder":
+    def keystroke_replay(self, script_name: str) -> RouteBuilder:
         """Воспроизведение записанного сценария клавиатуры/мыши."""
         from src.backend.dsl.engine.processors.rpa_banking import (
             KeystrokeReplayProcessor,
@@ -664,7 +665,7 @@ class AIRPAMixin:
 
     # ── Banking AI ──
 
-    def kyc_aml_verify(self, jurisdiction: str = "ru") -> "RouteBuilder":
+    def kyc_aml_verify(self, jurisdiction: str = "ru") -> RouteBuilder:
         """KYC/AML верификация клиента."""
         from src.backend.dsl.engine.processors.ai_banking import KycAmlVerifyProcessor
 
@@ -672,7 +673,7 @@ class AIRPAMixin:
             KycAmlVerifyProcessor(jurisdiction=jurisdiction)
         )
 
-    def antifraud_score(self, model: str = "default") -> "RouteBuilder":
+    def antifraud_score(self, model: str = "default") -> RouteBuilder:
         """LLM-скоринг антифрода (поверх детерминистических правил)."""
         from src.backend.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
 
@@ -680,7 +681,7 @@ class AIRPAMixin:
             AntiFraudScoreProcessor(model=model)
         )
 
-    def credit_scoring_rag(self, product: str = "retail") -> "RouteBuilder":
+    def credit_scoring_rag(self, product: str = "retail") -> RouteBuilder:
         """Кредитный скоринг через RAG."""
         from src.backend.dsl.engine.processors.ai_banking import (
             CreditScoringRagProcessor,
@@ -690,7 +691,7 @@ class AIRPAMixin:
             CreditScoringRagProcessor(product=product)
         )
 
-    def customer_chatbot(self, channel: str = "web") -> "RouteBuilder":
+    def customer_chatbot(self, channel: str = "web") -> RouteBuilder:
         """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
         from src.backend.dsl.engine.processors.ai_banking import (
             CustomerChatbotProcessor,
@@ -700,13 +701,13 @@ class AIRPAMixin:
             CustomerChatbotProcessor(channel=channel)
         )
 
-    def appeal_ai(self) -> "RouteBuilder":
+    def appeal_ai(self) -> RouteBuilder:
         """Автоматическая обработка клиентских обращений."""
         from src.backend.dsl.engine.processors.ai_banking import AppealProcessorAI
 
         return self._add(AppealProcessorAI())  # type: ignore[attr-defined]
 
-    def tx_categorize(self, taxonomy: str = "mcc") -> "RouteBuilder":
+    def tx_categorize(self, taxonomy: str = "mcc") -> RouteBuilder:
         """Категоризация транзакций (MCC + merchant normalization)."""
         from src.backend.dsl.engine.processors.ai_banking import (
             TransactionCategorizerProcessor,
@@ -716,7 +717,7 @@ class AIRPAMixin:
             TransactionCategorizerProcessor(taxonomy=taxonomy)
         )
 
-    def findoc_ocr_llm(self, doc_type: str = "invoice") -> "RouteBuilder":
+    def findoc_ocr_llm(self, doc_type: str = "invoice") -> RouteBuilder:
         """OCR + LLM для финансовых документов."""
         from src.backend.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
 

@@ -44,7 +44,9 @@ def test_single_processor_round_trip(method: str, kwargs: dict) -> None:
     builder = RouteBuilder.from_("rt.single", source="test:rt.single")
     getattr(builder, method)(**kwargs)
     original, rebuilt = _round_trip(builder)
-    assert original == rebuilt, f"Round-trip mismatch for {method}: {original} != {rebuilt}"
+    assert original == rebuilt, (
+        f"Round-trip mismatch for {method}: {original} != {rebuilt}"
+    )
 
 
 def test_multi_processor_pipeline_round_trip() -> None:

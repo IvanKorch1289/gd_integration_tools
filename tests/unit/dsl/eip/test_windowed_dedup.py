@@ -187,9 +187,7 @@ async def test_mode_last_first_passes_subsequent_stops_and_updates_latest(
 # ---------------------------------------------------------------------------
 
 
-async def test_mode_unique_blocks_exact_duplicate(
-    fake_redis: _FakeRedisClient,
-) -> None:
+async def test_mode_unique_blocks_exact_duplicate(fake_redis: _FakeRedisClient) -> None:
     """mode=unique: точный дубль body — stop; иной body — проходит."""
     proc = WindowedDedupProcessor(key_from="id", mode="unique")
 

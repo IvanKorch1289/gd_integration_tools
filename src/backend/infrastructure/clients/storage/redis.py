@@ -1,7 +1,8 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Awaitable, Callable, Literal
+from typing import Any, Literal
 
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -15,7 +16,7 @@ from src.backend.infrastructure.resilience.client_breaker import (
     ClientCircuitBreaker,
 )
 
-__all__ = ("redis_client", "RedisClient", "get_redis_client")
+__all__ = ("RedisClient", "get_redis_client", "redis_client")
 
 
 RedisKind = Literal["cache", "queue", "limits"]
@@ -43,6 +44,7 @@ class RedisClient:
         # reconnect-попыток, пока не пройдёт recovery_timeout. Thresholds —
         # из PoolingProfile defaults (5/30s); в IL2 можно прокинуть из
         # RedisSettings.pooling.
+        _kinds: tuple[RedisKind, ...] = ("cache", "queue", "limits")
         self._breakers: dict[RedisKind, ClientCircuitBreaker] = {
             kind: ClientCircuitBreaker(
                 name=f"redis.{kind}",
@@ -50,7 +52,7 @@ class RedisClient:
                 failure_threshold=5,
                 recovery_timeout=30.0,
             )
-            for kind in ("cache", "queue", "limits")
+            for kind in _kinds
         }
 
     def _base_url(self) -> str:
@@ -85,10 +87,7 @@ class RedisClient:
         # стандартном single-node варианте.
         retry_on_error = self._resolve_retry_on_error()
         if self.settings.cluster_mode:
-            from redis.asyncio.cluster import (  # noqa: PLC0415 — lazy
-                ClusterNode,
-                RedisCluster,
-            )
+            from redis.asyncio.cluster import ClusterNode, RedisCluster
 
             startup_nodes: list[ClusterNode] = []
             for raw in self.settings.cluster_nodes:

@@ -8,9 +8,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.processors.enrichment import (
-    WebhookSignVerifyProcessor,
-)
+from src.backend.dsl.engine.processors.enrichment import WebhookSignVerifyProcessor
 
 
 class _FakeMessage:
@@ -75,9 +73,7 @@ async def test_missing_header_fails() -> None:
 
 @pytest.mark.asyncio
 async def test_on_invalid_dlq_does_not_fail() -> None:
-    proc = WebhookSignVerifyProcessor(
-        secret="x", on_invalid="dlq", header="X-Sig"
-    )
+    proc = WebhookSignVerifyProcessor(secret="x", on_invalid="dlq", header="X-Sig")
     exchange = _FakeExchange(b"body", {"X-Sig": "bad"})
     await proc.process(exchange, None)
     assert exchange.failed is None
@@ -86,9 +82,7 @@ async def test_on_invalid_dlq_does_not_fail() -> None:
 
 @pytest.mark.asyncio
 async def test_on_invalid_warn_continues() -> None:
-    proc = WebhookSignVerifyProcessor(
-        secret="x", on_invalid="warn", header="X-Sig"
-    )
+    proc = WebhookSignVerifyProcessor(secret="x", on_invalid="warn", header="X-Sig")
     exchange = _FakeExchange(b"body", {"X-Sig": "bad"})
     await proc.process(exchange, None)
     assert exchange.failed is None
@@ -103,9 +97,7 @@ async def test_prefix_strip_sha256() -> None:
     body = b'{"k":1}'
     sig = _sign(secret, body)
     proc = WebhookSignVerifyProcessor(secret=secret, prefix="sha256=")
-    exchange = _FakeExchange(
-        body, {"X-Webhook-Signature": f"sha256={sig}"}
-    )
+    exchange = _FakeExchange(body, {"X-Webhook-Signature": f"sha256={sig}"})
     await proc.process(exchange, None)
     assert exchange.properties.get("webhook_signature_verified") is True
 

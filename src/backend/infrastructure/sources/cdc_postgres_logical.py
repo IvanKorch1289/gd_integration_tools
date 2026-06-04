@@ -28,11 +28,11 @@ from typing import Any
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 
 __all__ = (
-    "CdcPostgresLogicalSource",
-    "CdcCursorStore",
     "PG_CDC_CURSORS_DDL",
     "PG_CDC_PUBLICATION_TPL",
     "PG_CDC_SLOT_CREATE_TPL",
+    "CdcCursorStore",
+    "CdcPostgresLogicalSource",
 )
 
 _logger = logging.getLogger("infrastructure.sources.cdc.postgres_logical")
@@ -163,11 +163,11 @@ class CdcPostgresLogicalSource:
                     publication=self.publication, table=self.table
                 )
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("publication create skipped: %s", exc)
         try:
             await conn_executor(PG_CDC_SLOT_CREATE_TPL.format(slot=self.slot_name))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("slot create skipped: %s", exc)
         if self.cursor_store is not None:
             await self.cursor_store.ensure_table()
@@ -183,7 +183,7 @@ class CdcPostgresLogicalSource:
                     self.source_id,
                 )
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         # Lazy-import существующего CDCSource (не дублируем psycopg-логику).
@@ -204,7 +204,7 @@ class CdcPostgresLogicalSource:
                 if lsn:
                     try:
                         await self.cursor_store.set_last_lsn(self.slot_name, lsn)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         _logger.warning(
                             "CdcPostgresLogicalSource cursor write failed: %s", exc
                         )

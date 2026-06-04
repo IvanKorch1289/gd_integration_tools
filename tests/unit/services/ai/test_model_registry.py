@@ -69,9 +69,7 @@ def _install_fake_mlflow(
     monkeypatch.setitem(sys.modules, "mlflow.tracking", fake_tracking)
 
 
-async def test_mlflow_get_model_by_version(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_mlflow_get_model_by_version(monkeypatch: pytest.MonkeyPatch) -> None:
     client = MagicMock()
     client.get_model_version.return_value = _make_mlflow_model_version(
         "rs", "3", "Staging"
@@ -135,9 +133,7 @@ async def test_mlflow_transition_stage(monkeypatch: pytest.MonkeyPatch) -> None:
     assert rec.stage == "Production"
 
 
-async def test_mlflow_missing_module_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_mlflow_missing_module_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     # Force ImportError из ``mlflow.tracking``.
     monkeypatch.setitem(sys.modules, "mlflow", None)
     monkeypatch.setitem(sys.modules, "mlflow.tracking", None)
@@ -150,17 +146,13 @@ async def test_mlflow_missing_module_raises(
 # ── HuggingFaceModelRegistry ─────────────────────────────────────────────
 
 
-def _install_fake_hf(
-    monkeypatch: pytest.MonkeyPatch, api_mock: MagicMock
-) -> None:
+def _install_fake_hf(monkeypatch: pytest.MonkeyPatch, api_mock: MagicMock) -> None:
     fake_hf = types.ModuleType("huggingface_hub")
     fake_hf.HfApi = lambda **kw: api_mock  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf)
 
 
-async def test_hf_get_model_returns_record(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_hf_get_model_returns_record(monkeypatch: pytest.MonkeyPatch) -> None:
     info = MagicMock()
     info.modelId = "openai/gpt-2"
     info.sha = "abc123"

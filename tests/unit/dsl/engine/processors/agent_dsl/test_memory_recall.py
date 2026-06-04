@@ -115,9 +115,7 @@ async def test_tenant_id_placeholder(
 
     ex: Exchange[Any] = Exchange()
     ex.meta.tenant_id = "acme_corp"
-    proc = MemoryRecallProcessor(
-        namespace="${tenant_id}:credit_chat", query="q"
-    )
+    proc = MemoryRecallProcessor(namespace="${tenant_id}:credit_chat", query="q")
     await proc.process(ex, context)
 
     assert backend.calls[0][0] == "acme_corp:credit_chat"

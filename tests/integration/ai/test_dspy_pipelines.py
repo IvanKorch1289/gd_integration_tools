@@ -20,7 +20,9 @@ _FIXTURES = Path(__file__).parent / "fixtures" / "dspy_baseline"
 def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     from src.backend.core.config.features import feature_flags
 
-    monkeypatch.setattr(feature_flags, "dspy_eval_pipeline_enabled", value, raising=False)
+    monkeypatch.setattr(
+        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False
+    )
 
 
 @pytest.mark.asyncio
@@ -33,9 +35,7 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     ],
 )
 async def test_dspy_pipeline_baseline_eval(
-    monkeypatch: pytest.MonkeyPatch,
-    fixture_name: str,
-    pipeline_name: str,
+    monkeypatch: pytest.MonkeyPatch, fixture_name: str, pipeline_name: str
 ) -> None:
     """Baseline+optimized для каждого critical pipeline должен компилироваться."""
     _force_flag(monkeypatch, True)
@@ -59,7 +59,9 @@ async def test_dspy_pipeline_baseline_eval(
 
 
 @pytest.mark.asyncio
-async def test_credit_scoring_lift_above_baseline(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_credit_scoring_lift_above_baseline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Default-bootstrap должен не ухудшать качество credit-scoring."""
     _force_flag(monkeypatch, True)
     baseline = BaselineDataset.load_from_json(_FIXTURES / "credit_scoring.json")

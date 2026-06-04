@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 
@@ -87,7 +87,7 @@ class ListenNotifyCDCBackend(CDCSource):
             "(LISTEN/NOTIFY is live-stream only); "
             "use PollCDCBackend or DebeziumEventsCDCBackend for replay"
         )
-        _ = (start_cursor, end_cursor, datetime.now(timezone.utc))
+        _ = (start_cursor, end_cursor, datetime.now(UTC))
         return
         yield  # pragma: no cover
 

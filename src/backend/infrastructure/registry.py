@@ -52,7 +52,7 @@ class ConnectorSpec:
       reverse-shutdown.
     """
 
-    client: "InfrastructureClient"
+    client: InfrastructureClient
     vault_path: str | None = None
     register_order: int = 0
     _reload_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
@@ -73,7 +73,7 @@ class ConnectorRegistry:
     однократно в startup), но `reload(name)` защищён per-client lock-ом.
     """
 
-    _instance: "ConnectorRegistry | None" = None
+    _instance: ConnectorRegistry | None = None
 
     def __init__(self) -> None:
         self._connectors: dict[str, ConnectorSpec] = {}
@@ -82,7 +82,7 @@ class ConnectorRegistry:
     # -- Singleton -----------------------------------------------------
 
     @classmethod
-    def instance(cls) -> "ConnectorRegistry":
+    def instance(cls) -> ConnectorRegistry:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -95,7 +95,7 @@ class ConnectorRegistry:
     # -- Регистрация ---------------------------------------------------
 
     def register(
-        self, client: "InfrastructureClient", *, vault_path: str | None = None
+        self, client: InfrastructureClient, *, vault_path: str | None = None
     ) -> None:
         """Зарегистрировать клиент в Registry.
 
@@ -119,7 +119,7 @@ class ConnectorRegistry:
 
     # -- Доступ --------------------------------------------------------
 
-    def get(self, name: str) -> "InfrastructureClient":
+    def get(self, name: str) -> InfrastructureClient:
         """Получить клиент по имени. Бросает `ConnectorNotRegisteredError`."""
         spec = self._connectors.get(name)
         if spec is None:
@@ -156,7 +156,7 @@ class ConnectorRegistry:
                 await client.start()
                 started.append(name)
                 _logger.info("connector started", extra={"connector": name})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error(
                     "connector failed to start — rolling back",
                     extra={"connector": name, "error": str(exc)},
@@ -179,20 +179,18 @@ class ConnectorRegistry:
             _logger.info("connector stopping", extra={"connector": name})
             try:
                 await asyncio.wait_for(client.stop(), timeout=timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 _logger.warning(
                     "connector stop timed out",
                     extra={"connector": name, "timeout": timeout},
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error(
                     "connector stop errored",
                     extra={"connector": name, "error": str(exc)},
                 )
 
-    async def health_all(
-        self, mode: "HealthMode" = "fast"
-    ) -> "dict[str, HealthResult]":
+    async def health_all(self, mode: HealthMode = "fast") -> dict[str, HealthResult]:
         """Параллельный health-check всех клиентов.
 
         Используется эндпоинтом `/api/v1/health/components?mode=fast|deep`.

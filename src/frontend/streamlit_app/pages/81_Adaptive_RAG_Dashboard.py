@@ -11,7 +11,7 @@ import streamlit as st
 try:
     from src.frontend.streamlit_app.api_client import APIClient
 except ImportError:  # pragma: no cover
-    APIClient = None
+    APIClient = None  # type: ignore[misc]
 
 st.set_page_config(page_title="Adaptive RAG", page_icon="🧠", layout="wide")
 st.title("🧠 Adaptive RAG Strategy Dashboard")

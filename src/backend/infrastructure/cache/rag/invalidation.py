@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import orjson
 
@@ -44,7 +45,7 @@ class RagInvalidationBus:
                     "queue", lambda conn: conn.publish(self._channel, payload)
                 )
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RagInvalidationBus.publish failed: %s", exc)
             return 0
 
@@ -69,22 +70,20 @@ class RagInvalidationBus:
                     raw = message.get("data")
                     try:
                         data = orjson.loads(raw)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.debug("Invalid invalidate payload, skipped: %s", exc)
                         continue
                     for handler in list(self._handlers):
                         try:
                             await handler(data)
-                        except Exception as exc:  # noqa: BLE001
+                        except Exception as exc:
                             logger.debug("Invalidation handler failed: %s", exc)
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("RagInvalidationBus listener stopped: %s", exc)
 
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             _listen(), name="rag-invalidation-listen"
@@ -99,6 +98,6 @@ class RagInvalidationBus:
             await self._task
         except asyncio.CancelledError:
             pass
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("Listener stop с ошибкой: %s", exc)
         self._task = None

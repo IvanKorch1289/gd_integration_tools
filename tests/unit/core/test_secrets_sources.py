@@ -82,9 +82,7 @@ class TestAwsSecretsManagerSource:
         mock_boto3.client = MagicMock(return_value=mock_client)
         mock_orjson = MagicMock()
         mock_orjson.loads = __import__("json").loads
-        with patch.dict(
-            "sys.modules", {"boto3": mock_boto3, "orjson": mock_orjson}
-        ):
+        with patch.dict("sys.modules", {"boto3": mock_boto3, "orjson": mock_orjson}):
             data = src._load()
         assert data == {"api_key": "abc"}
 
@@ -94,9 +92,7 @@ class TestAwsSecretsManagerSource:
         mock_boto3.client = MagicMock(side_effect=Exception("aws down"))
         mock_orjson = MagicMock()
         mock_orjson.loads = __import__("json").loads
-        with patch.dict(
-            "sys.modules", {"boto3": mock_boto3, "orjson": mock_orjson}
-        ):
+        with patch.dict("sys.modules", {"boto3": mock_boto3, "orjson": mock_orjson}):
             data = src._load()
         assert data == {}
 

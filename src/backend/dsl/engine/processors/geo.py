@@ -93,7 +93,7 @@ class GeoProcessor(BaseProcessor):
         self._target = to
         self._user_agent = user_agent
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -141,16 +141,14 @@ class GeoProcessor(BaseProcessor):
             case _:
                 raise ValueError(f"Unsupported mode {self._mode!r}")
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_geo:
                 exchange.set_property("geo_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         try:
@@ -158,7 +156,7 @@ class GeoProcessor(BaseProcessor):
         except ImportError as exc:
             exchange.fail(f"geo: geopy not available: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"geo error: {exc}")
             return
 

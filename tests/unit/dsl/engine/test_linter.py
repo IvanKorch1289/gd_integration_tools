@@ -63,9 +63,7 @@ class _SkillInvokeProcessor(BaseProcessor):
     """Тестовый SkillInvokeProcessor."""
 
     def __init__(
-        self,
-        skill_id: str = "test.skill",
-        result_property: str = "skill_result",
+        self, skill_id: str = "test.skill", result_property: str = "skill_result"
     ) -> None:
         super().__init__(name=f"skill_invoke:{skill_id}")
         self.skill_id = skill_id
@@ -97,9 +95,7 @@ class _AgentRunProcessor(BaseProcessor):
     """Тестовый AgentRunProcessor."""
 
     def __init__(
-        self,
-        workflow_id: str = "test_workflow",
-        result_property: str = "agent_result",
+        self, workflow_id: str = "test_workflow", result_property: str = "agent_result"
     ) -> None:
         super().__init__(name=f"agent_run:{workflow_id}")
         self.workflow_id = workflow_id
@@ -113,9 +109,7 @@ class _MCPToolProcessor(BaseProcessor):
     """Тестовый MCPToolProcessor."""
 
     def __init__(
-        self,
-        tool_name: str = "test_tool",
-        result_property: str = "mcp_result",
+        self, tool_name: str = "test_tool", result_property: str = "mcp_result"
     ) -> None:
         super().__init__(name=f"mcp_tool:{tool_name}")
         self.tool_name = tool_name
@@ -129,9 +123,7 @@ class _AIRpaProcessor(BaseProcessor):
     """Тестовый AIRpaProcessor."""
 
     def __init__(
-        self,
-        task: str = "click button",
-        action_property: str = "ai_rpa.action",
+        self, task: str = "click button", action_property: str = "ai_rpa.action"
     ) -> None:
         super().__init__(name="ai_rpa_test")
         self.task = task
@@ -163,7 +155,9 @@ class TestW003UnusedProperty:
         pipeline.add_processor(
             _SkillInvokeProcessor(skill_id="test.skill", result_property="skill_result")
         )
-        pipeline.add_processor(_FilterProcessor(source_property="property:skill_result"))
+        pipeline.add_processor(
+            _FilterProcessor(source_property="property:skill_result")
+        )
 
         issues = DSLLinter().lint(pipeline)
         w003_issues = [i for i in issues if i.code == "W003"]
@@ -179,7 +173,9 @@ class TestW003UnusedProperty:
                 result_property="memory_context",
             )
         )
-        pipeline.add_processor(_FilterProcessor(source_property="property:memory_context"))
+        pipeline.add_processor(
+            _FilterProcessor(source_property="property:memory_context")
+        )
 
         issues = DSLLinter().lint(pipeline)
         w003_issues = [i for i in issues if i.code == "W003"]
@@ -193,7 +189,9 @@ class TestW003UnusedProperty:
                 workflow_id="test_workflow", result_property="agent_result"
             )
         )
-        pipeline.add_processor(_FilterProcessor(source_property="property:agent_result"))
+        pipeline.add_processor(
+            _FilterProcessor(source_property="property:agent_result")
+        )
 
         issues = DSLLinter().lint(pipeline)
         w003_issues = [i for i in issues if i.code == "W003"]
@@ -307,9 +305,7 @@ class TestE002UnknownAction:
         assert "unknown.action" in e002_issues[0].message
         assert "known.action" in e002_issues[0].suggestion
 
-    def test_multiple_unknown_actions(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_multiple_unknown_actions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Несколько неизвестных actions — несколько E002."""
 
         class MockRegistry:
@@ -358,10 +354,7 @@ class TestLintIssue:
     def test_lint_issue_creation(self) -> None:
         """LintIssue создается с правильными полями."""
         issue = LintIssue(
-            code="W003",
-            severity="warning",
-            message="Test message",
-            processor_index=5,
+            code="W003", severity="warning", message="Test message", processor_index=5
         )
         assert issue.code == "W003"
         assert issue.severity == "warning"

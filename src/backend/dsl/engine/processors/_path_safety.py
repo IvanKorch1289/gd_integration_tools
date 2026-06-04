@@ -15,7 +15,7 @@ import os
 import tempfile
 from pathlib import Path
 
-__all__ = ("validate_path", "PathTraversalError")
+__all__ = ("PathTraversalError", "validate_path")
 
 
 class PathTraversalError(ValueError):

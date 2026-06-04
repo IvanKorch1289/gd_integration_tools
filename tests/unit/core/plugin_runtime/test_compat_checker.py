@@ -27,10 +27,7 @@ from src.backend.services.plugins.manifest_v11 import (
 
 
 def _make_manifest(
-    name: str,
-    version: str,
-    *,
-    compatibility: PluginCompatibility | None = None,
+    name: str, version: str, *, compatibility: PluginCompatibility | None = None
 ) -> PluginManifestV11:
     return PluginManifestV11(
         name=name,
@@ -55,9 +52,7 @@ def test_check_compatibility_detects_missing_dependency() -> None:
     a = _make_manifest(
         "alpha",
         "1.0.0",
-        compatibility=PluginCompatibility(
-            requires_plugins={"beta": ">=1.0,<2.0"},
-        ),
+        compatibility=PluginCompatibility(requires_plugins={"beta": ">=1.0,<2.0"}),
     )
     violations = check_compatibility([a])
 

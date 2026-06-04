@@ -14,7 +14,10 @@ class TestSearchClient:
                 return {}
 
             async def bulk_index(
-                self, index: str, documents: list[dict[str, object]], id_field: str | None = None
+                self,
+                index: str,
+                documents: list[dict[str, object]],
+                id_field: str | None = None,
             ) -> dict[str, object]:
                 return {}
 
@@ -29,7 +32,10 @@ class TestSearchClient:
                 return []
 
             async def aggregate(
-                self, index: str, aggs: dict[str, object], query: dict[str, object] | None = None
+                self,
+                index: str,
+                aggs: dict[str, object],
+                query: dict[str, object] | None = None,
             ) -> dict[str, object]:
                 return {}
 

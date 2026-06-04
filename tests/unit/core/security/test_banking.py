@@ -97,9 +97,7 @@ class TestAntiFraudEngine:
         assert triggered[0].name == "high_amount"
 
     def test_rule_skipped_on_exception(self) -> None:
-        rule = AntiFraudRule(
-            name="broken", predicate=lambda _tx: (_tx["missing"])
-        )
+        rule = AntiFraudRule(name="broken", predicate=lambda _tx: _tx["missing"])
         engine = AntiFraudEngine([rule])
         assert engine.evaluate({"amount": 100}) == []
 

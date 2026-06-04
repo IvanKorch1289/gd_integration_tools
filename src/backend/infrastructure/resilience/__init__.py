@@ -30,10 +30,10 @@ from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 __all__ = (
     "Bulkhead",
     "BulkheadRegistry",
-    "TimeLimiter",
-    "RetryBudget",
     "RateLimiterPolicy",
     "ResourceRateLimiter",
+    "RetryBudget",
+    "TimeLimiter",
     "build_resilience_health_check",
     "register_resilience_health_checks",
     "resilience_components_report",

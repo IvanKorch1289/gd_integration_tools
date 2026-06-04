@@ -75,7 +75,7 @@ class PytesseractOCRProcessor:
     def is_available(self) -> bool:
         """Проверка доступности pytesseract на момент вызова."""
         try:
-            import pytesseract  # noqa: F401  # type: ignore[import-not-found]
+            import pytesseract  # noqa: F401
         except ImportError:
             return False
         return True
@@ -97,7 +97,7 @@ class PytesseractOCRProcessor:
             return ""
         try:
             return str(pytesseract.image_to_string(str(image_path), lang=lang))
-        except Exception as exc:  # noqa: BLE001  # tesseract error, env error, etc.
+        except Exception as exc:  # tesseract error, env error, etc.
             _logger.warning("pytesseract recognize failed: %s", exc)
             return ""
 
@@ -141,7 +141,7 @@ def from_environment() -> OCRProcessor:
 
         if not feature_flags.rpa_ocr_enabled:
             return NoOpOCRProcessor()
-    except Exception:  # noqa: BLE001  # на ранней инициализации возможны импорт-ошибки
+    except Exception:  # на ранней инициализации возможны импорт-ошибки
         return NoOpOCRProcessor()
 
     candidate = PytesseractOCRProcessor()

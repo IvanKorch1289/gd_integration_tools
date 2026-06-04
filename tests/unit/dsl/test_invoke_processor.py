@@ -66,7 +66,14 @@ class TestInvokeProcessor:
         msg = str(exc_info.value)
         assert "orders.add" in msg
         assert "bogus" in msg
-        for expected in ("sync", "async-api", "async-queue", "background", "deferred", "streaming"):
+        for expected in (
+            "sync",
+            "async-api",
+            "async-queue",
+            "background",
+            "deferred",
+            "streaming",
+        ):
             assert expected in msg, f"missing {expected!r} in error: {msg}"
 
     def test_timeout_passed_to_invocation_request(self) -> None:
@@ -166,9 +173,7 @@ class TestInvokeProcessor:
         )
         invoker = _make_invoker(response)
         proc = InvokeProcessor(
-            action="x.y",
-            payload_factory=lambda exch: {"forced": True},
-            invoker=invoker,
+            action="x.y", payload_factory=lambda exch: {"forced": True}, invoker=invoker
         )
         exchange = _make_exchange(body={"will-be": "ignored"})
         context = MagicMock()
@@ -181,9 +186,7 @@ class TestInvokeProcessor:
     async def test_non_dict_body_becomes_empty_payload(self) -> None:
         """Если body не dict, payload по умолчанию пустой dict."""
         response = InvocationResponse(
-            invocation_id="x",
-            status=InvocationStatus.OK,
-            mode=InvocationMode.SYNC,
+            invocation_id="x", status=InvocationStatus.OK, mode=InvocationMode.SYNC
         )
         invoker = _make_invoker(response)
         proc = InvokeProcessor(action="x.y", invoker=invoker)

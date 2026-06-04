@@ -111,7 +111,7 @@ class _AdminConnectorsFacade:
             raise HTTPException(
                 status_code=404, detail=f"Connector '{name}' not registered"
             ) from None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(
                 status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}"
             ) from exc
@@ -121,7 +121,7 @@ class _AdminConnectorsFacade:
             post_health = await client.health(mode="fast")
             post_status = post_health.status
             post_error = post_health.error
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             post_status = "unknown"
             post_error = str(exc)[:200]
 
@@ -168,7 +168,7 @@ class _AdminConnectorsFacade:
                 reload_status["status"] = "ok"
             except ConnectorNotRegisteredError:
                 reload_status["status"] = "not_registered"
-            except Exception as reload_exc:  # noqa: BLE001
+            except Exception as reload_exc:
                 reload_status["status"] = "failed"
                 reload_status["error"] = str(reload_exc)[:200]
         except ImportError:
@@ -193,7 +193,7 @@ def _resolve_config_store_or_503() -> Any:
         from src.backend.core.di.providers import get_connector_config_store_provider
 
         return get_connector_config_store_provider()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"
         ) from exc

@@ -23,9 +23,7 @@ from src.backend.dsl.engine.processors.entity import (
 )
 from src.backend.dsl.engine.processors.function_call import CallFunctionProcessor
 from src.backend.dsl.engine.processors.get_setting import GetSettingProcessor
-from src.backend.dsl.engine.processors.invoke_workflow import (
-    InvokeWorkflowProcessor,
-)
+from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
 from src.backend.dsl.engine.processors.validate_response import (
     ResponseValidatorProcessor,
 )
@@ -45,9 +43,7 @@ def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
 
 def test_crud_create_alias() -> None:
     """``crud_create`` создаёт ``EntityCreateProcessor`` (alias)."""
-    builder = RouteBuilder.from_("rt.crud.create", source="test").crud_create(
-        "orders"
-    )
+    builder = RouteBuilder.from_("rt.crud.create", source="test").crud_create("orders")
     pipeline = builder.build(validate_actions=False)
     assert len(pipeline.processors) == 1
     assert isinstance(pipeline.processors[0], EntityCreateProcessor)
@@ -62,17 +58,13 @@ def test_crud_read_alias() -> None:
 
 
 def test_crud_update_alias() -> None:
-    builder = RouteBuilder.from_("rt.crud.update", source="test").crud_update(
-        "orders"
-    )
+    builder = RouteBuilder.from_("rt.crud.update", source="test").crud_update("orders")
     pipeline = builder.build(validate_actions=False)
     assert isinstance(pipeline.processors[0], EntityUpdateProcessor)
 
 
 def test_crud_delete_alias() -> None:
-    builder = RouteBuilder.from_("rt.crud.delete", source="test").crud_delete(
-        "orders"
-    )
+    builder = RouteBuilder.from_("rt.crud.delete", source="test").crud_delete("orders")
     pipeline = builder.build(validate_actions=False)
     assert isinstance(pipeline.processors[0], EntityDeleteProcessor)
 

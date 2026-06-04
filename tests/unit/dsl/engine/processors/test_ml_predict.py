@@ -20,6 +20,7 @@ pytestmark = pytest.mark.asyncio
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 def _ex(body: dict | None = None) -> Exchange[Any]:
     """Создаёт Exchange с in_message body."""
     return Exchange(in_message=Message(body=body or {}, headers={}))
@@ -27,21 +28,28 @@ def _ex(body: dict | None = None) -> Exchange[Any]:
 
 # ── Input field extraction ─────────────────────────────────────────────────────
 
+
 class TestInputExtraction:
     def test_extract_simple_path(self) -> None:
-        proc = MLPredictProcessor(model_endpoint="test_model", input_field="body.features")
+        proc = MLPredictProcessor(
+            model_endpoint="test_model", input_field="body.features"
+        )
         exc = _ex({"features": [[1.0, 2.0], [3.0, 4.0]]})
         result = proc._extract_input(exc)
         assert result == [[1.0, 2.0], [3.0, 4.0]]
 
     def test_extract_nested_path(self) -> None:
-        proc = MLPredictProcessor(model_endpoint="test_model", input_field="body.data.matrix")
+        proc = MLPredictProcessor(
+            model_endpoint="test_model", input_field="body.data.matrix"
+        )
         exc = _ex({"data": {"matrix": [[1.0]]}})
         result = proc._extract_input(exc)
         assert result == [[1.0]]
 
     def test_extract_missing_field_returns_none(self) -> None:
-        proc = MLPredictProcessor(model_endpoint="test_model", input_field="body.missing")
+        proc = MLPredictProcessor(
+            model_endpoint="test_model", input_field="body.missing"
+        )
         exc = _ex({"features": [1.0]})
         result = proc._extract_input(exc)
         assert result is None
@@ -64,6 +72,7 @@ class TestInputExtraction:
 
 # ── Artifact URI resolution ─────────────────────────────────────────────────────
 
+
 class TestArtifactResolution:
     async def test_resolve_returns_none_when_model_not_found(self) -> None:
         """_resolve_artifact_uri is async — awaits registry.get_model() directly."""
@@ -81,6 +90,7 @@ class TestArtifactResolution:
 
 
 # ── Processing (fallback behavior) ───────────────────────────────────────────
+
 
 async def test_process_sets_output_property_on_fallback() -> None:
     """When model not found and fallback=True — sets None instead of fail."""
@@ -146,6 +156,7 @@ async def _test_process_fails_when_no_fallback() -> None:
 
 
 # ── Model loading integration ─────────────────────────────────────────────────
+
 
 async def _test_process_loads_model() -> None:
     """Full integration: model found → loaded → inference → result in output_property."""

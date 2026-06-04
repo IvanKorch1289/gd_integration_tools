@@ -152,7 +152,7 @@ class Settings(BaseSettings):
     transport: TransportSettings = transport_settings
 
 
-@lru_cache()
+@lru_cache
 def get_app_settings() -> Settings:
     """Возвращает кэшированный экземпляр (Singleton) настроек приложения."""
     return Settings()

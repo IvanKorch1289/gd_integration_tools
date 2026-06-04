@@ -108,6 +108,7 @@ class TestAIRAGFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 17 mixins в MRO (после T1.3.17 infrastructure + T1.3.18 ai_rag)
         for cls in (

@@ -59,9 +59,7 @@ class _FakeExchange:
 @pytest.mark.asyncio
 async def test_records_feedback_with_static_rating(monkeypatch) -> None:
     fake = _FakeFeedbackService()
-    monkeypatch.setattr(
-        FeedbackProcessor, "_build_service", staticmethod(lambda: fake)
-    )
+    monkeypatch.setattr(FeedbackProcessor, "_build_service", staticmethod(lambda: fake))
     proc = FeedbackProcessor(rating=5)
     exchange = _FakeExchange(body={"x": 1})
     await proc.process(exchange, SimpleNamespace())
@@ -74,9 +72,7 @@ async def test_records_feedback_with_static_rating(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_records_feedback_with_label_triggers_set_feedback(monkeypatch) -> None:
     fake = _FakeFeedbackService()
-    monkeypatch.setattr(
-        FeedbackProcessor, "_build_service", staticmethod(lambda: fake)
-    )
+    monkeypatch.setattr(FeedbackProcessor, "_build_service", staticmethod(lambda: fake))
     proc = FeedbackProcessor(rating="positive", comment="отлично")
     exchange = _FakeExchange(body="response text")
     await proc.process(exchange, SimpleNamespace())
@@ -88,9 +84,7 @@ async def test_records_feedback_with_label_triggers_set_feedback(monkeypatch) ->
 @pytest.mark.asyncio
 async def test_fail_on_missing_rating_via_expression(monkeypatch) -> None:
     fake = _FakeFeedbackService()
-    monkeypatch.setattr(
-        FeedbackProcessor, "_build_service", staticmethod(lambda: fake)
-    )
+    monkeypatch.setattr(FeedbackProcessor, "_build_service", staticmethod(lambda: fake))
     proc = FeedbackProcessor(rating_from="body.missing_rating")
     exchange = _FakeExchange(body={"other": "data"})
     await proc.process(exchange, SimpleNamespace())

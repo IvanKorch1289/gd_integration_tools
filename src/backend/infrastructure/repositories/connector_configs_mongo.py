@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
@@ -24,7 +24,7 @@ _COLLECTION = "connector_configs"
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _doc_to_entry(doc: dict[str, Any]) -> ConnectorConfigEntry:
@@ -47,7 +47,7 @@ class MongoConnectorConfigStore:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index("enabled", name="enabled_idx")
             await collection.create_index([("updated_at", -1)], name="updated_at_desc")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("MongoConnectorConfigStore: ensure_indexes failed: %s", exc)
 
     async def get(self, name: str) -> ConnectorConfigEntry | None:
@@ -91,5 +91,5 @@ class MongoConnectorConfigStore:
 
 
 @app_state_singleton("connector_config_store", factory=MongoConnectorConfigStore)
-def get_connector_config_store() -> MongoConnectorConfigStore:
+def get_connector_config_store() -> MongoConnectorConfigStore:  # type: ignore[empty-body]
     """Singleton ``MongoConnectorConfigStore``."""

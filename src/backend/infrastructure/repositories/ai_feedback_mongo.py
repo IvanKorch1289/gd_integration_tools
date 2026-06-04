@@ -61,7 +61,7 @@ class MongoFeedbackRepository:
             await collection.create_index(
                 "created_at", name="ttl_created_at", expireAfterSeconds=_TTL_SECONDS
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("MongoFeedbackRepository: ensure_indexes failed: %s", exc)
 
     async def save(self, doc: AIFeedbackDoc) -> AIFeedbackDoc:

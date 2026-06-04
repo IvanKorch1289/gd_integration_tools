@@ -63,7 +63,7 @@ def _get_memory_broker():
 async def _memory_publish(stream: str, message: dict[str, Any]) -> None:
     """Fallback 2: in-memory fanout broker (last-resort)."""
     broker = _get_memory_broker()
-    if not broker._connected:  # noqa: SLF001
+    if not broker._connected:
         await broker.connect()
     payload = orjson.dumps(message, default=str)
     await broker.publish(topic=stream, message=payload)

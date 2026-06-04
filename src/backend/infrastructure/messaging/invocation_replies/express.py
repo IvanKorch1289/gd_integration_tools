@@ -24,7 +24,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 
-__all__ = ("ExpressReplyChannel", "ExpressNotifier")
+__all__ = ("ExpressNotifier", "ExpressReplyChannel")
 
 logger = logging.getLogger("messaging.invocation_replies.express")
 
@@ -103,7 +103,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
                     ),
                 },
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception(
                 "ExpressReplyChannel.send failed (invocation_id=%s, chat_id=%s)",
                 response.invocation_id,
@@ -128,7 +128,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
             )
 
             return ExpressAdapter(default_bot=self._default_bot)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
 
@@ -141,6 +141,6 @@ def _format_body(response: InvocationResponse) -> str:
     payload["mode"] = response.mode.value
     try:
         body = json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         body = repr(response)
     return f"```\n{body}\n```"

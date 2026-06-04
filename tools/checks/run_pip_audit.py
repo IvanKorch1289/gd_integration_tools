@@ -84,7 +84,7 @@ def _parse_report(output_path: Path) -> tuple[int, int]:
 def main() -> None:
     """Точка входа CLI: запуск pip-audit и вывод сводки уязвимостей."""
     parser = argparse.ArgumentParser(
-        description="pip-audit scan (warn-only) для supply-chain CI gate (K1 S3 W3).",
+        description="pip-audit scan (warn-only) для supply-chain CI gate (K1 S3 W3)."
     )
     parser.add_argument(
         "--output",

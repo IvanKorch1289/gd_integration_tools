@@ -50,23 +50,21 @@ class TestStartAllSources:
         registry.get = MagicMock(return_value=source)
         invoker = MagicMock()
         spec = _fake_spec("wh-1")
-        await start_all_sources(
-            registry=registry, invoker=invoker, specs=[spec]
-        )
+        await start_all_sources(registry=registry, invoker=invoker, specs=[spec])
         registry.get.assert_called_once_with("wh-1")
         source.start.assert_awaited_once()
         # adapter.handle is passed as callback
         assert callable(source.start.await_args[0][0])
 
-    async def test_missing_source_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_missing_source_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         registry = MagicMock()
         registry.get = MagicMock(side_effect=KeyError("missing"))
         invoker = MagicMock()
         spec = _fake_spec("wh-1")
         with caplog.at_level("WARNING"):
-            await start_all_sources(
-                registry=registry, invoker=invoker, specs=[spec]
-            )
+            await start_all_sources(registry=registry, invoker=invoker, specs=[spec])
         assert "не в реестре" in caplog.text
         registry.get.assert_called_once_with("wh-1")
 
@@ -78,9 +76,7 @@ class TestStartAllSources:
         invoker = MagicMock()
         spec = _fake_spec("wh-1")
         with caplog.at_level("ERROR"):
-            await start_all_sources(
-                registry=registry, invoker=invoker, specs=[spec]
-            )
+            await start_all_sources(registry=registry, invoker=invoker, specs=[spec])
         assert "start failed" in caplog.text
 
     async def test_idempotency_disabled(self) -> None:
@@ -102,9 +98,7 @@ class TestStartAllSources:
         registry.get = MagicMock(return_value=source)
         invoker = MagicMock()
         spec = _fake_spec("wh-1", reply_channel="ch1", mode=InvocationMode.ASYNC_QUEUE)
-        await start_all_sources(
-            registry=registry, invoker=invoker, specs=[spec]
-        )
+        await start_all_sources(registry=registry, invoker=invoker, specs=[spec])
         source.start.assert_awaited_once()
 
 

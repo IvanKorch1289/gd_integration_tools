@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select, update
@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.infrastructure.database.models.outbox import OutboxMessage
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
-__all__ = ("write", "fetch_pending", "mark_sent", "mark_failed", "write_within_session")
+__all__ = ("fetch_pending", "mark_failed", "mark_sent", "write", "write_within_session")
 
 
 async def write_within_session(
@@ -64,7 +64,7 @@ async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
     по ``created_at`` — FIFO. Limit защищает worker от OOM при большом
     backlog'е.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     async with main_session_manager.create_session() as session:
         stmt = (
             select(OutboxMessage)
@@ -79,7 +79,7 @@ async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
 
 async def mark_sent(message_id: int) -> None:
     """Помечает сообщение как успешно опубликованное."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     async with main_session_manager.transaction() as session:
         await session.execute(
             update(OutboxMessage)
@@ -114,4 +114,4 @@ async def mark_failed(
         else:
             # Экспоненциальный backoff: 60с, 120с, 240с, 480с, …
             delay = backoff_seconds * (2 ** (msg.retry_count - 1))
-            msg.next_attempt_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+            msg.next_attempt_at = datetime.now(UTC) + timedelta(seconds=delay)

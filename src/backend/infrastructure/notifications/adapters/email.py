@@ -58,7 +58,7 @@ class EmailAdapter:
             # SMTPClient обычно имеет свой check — используем его или просто
             # проверяем наличие pool-а.
             return bool(smtp)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 

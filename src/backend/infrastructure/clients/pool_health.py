@@ -159,9 +159,7 @@ class PoolHealthMonitor:
             return
 
         self._running = True
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._monitor_loop(), name="pool-health-monitor"
@@ -218,7 +216,7 @@ class PoolHealthMonitor:
                 await self.tick()
             except asyncio.CancelledError:
                 break
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error("PoolHealthMonitor tick error: %s", exc)
 
             try:
@@ -241,7 +239,7 @@ class PoolHealthMonitor:
                 entry.name,
                 now - entry.last_ping_at + (now - entry.last_ping_at),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "Pool ping FAIL: %s — %s (пул помечен, idle-timeout сброшен)",
                 entry.name,
@@ -269,7 +267,7 @@ def _is_flag_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.pool_health_monitor
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return False
 
 

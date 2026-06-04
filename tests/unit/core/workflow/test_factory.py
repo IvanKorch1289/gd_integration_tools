@@ -42,14 +42,18 @@ class TestCreateWorkflowBackend:
         import sys
         import types
 
-        fake_module = types.ModuleType("src.backend.infrastructure.workflow.temporal_backend")
+        fake_module = types.ModuleType(
+            "src.backend.infrastructure.workflow.temporal_backend"
+        )
 
         class _Shim:
             connect = staticmethod(_broken_connect)
 
         fake_module.TemporalWorkflowBackend = _Shim  # type: ignore[attr-defined]
         monkeypatch.setitem(
-            sys.modules, "src.backend.infrastructure.workflow.temporal_backend", fake_module
+            sys.modules,
+            "src.backend.infrastructure.workflow.temporal_backend",
+            fake_module,
         )
 
         backend = await create_workflow_backend(kind="auto", profile="prod")

@@ -67,7 +67,7 @@ class AdminService:
 
             # Global singleton — same pattern as other services
             return AuthorizationGateway(capability_gateway=CapabilityGate())
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AuthorizationGateway unavailable: %s", exc)
             return None
 
@@ -97,7 +97,7 @@ class AdminService:
             decision = await authz.authorize(
                 principal=actor, resource=resource, action=action, context=context
             )
-        except Exception as exc:  # noqa: BLE001 — AuthZ error → deny
+        except Exception as exc:
             emit_admin_action(
                 actor=actor,
                 action=action,

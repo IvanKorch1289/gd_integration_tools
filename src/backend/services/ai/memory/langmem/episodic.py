@@ -7,7 +7,7 @@ Episodic = эпизоды диалога / сессии (role + content + meta +
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -42,7 +42,7 @@ class EpisodicMemory:
                 content=content,
                 tenant=tenant,
                 meta=meta,
-                occurred_at=datetime.now(timezone.utc),
+                occurred_at=datetime.now(UTC),
             )
             session.add(row)
             await session.commit()

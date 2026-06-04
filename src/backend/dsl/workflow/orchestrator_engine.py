@@ -51,7 +51,7 @@ class RoutingResult:
         matched_rule: Индекс matched routing rule (для audit).
     """
 
-    target_agent: "AgentSpec"
+    target_agent: AgentSpec
     target_model: str
     memory_scope: Any = None
     matched_rule: int | None = None
@@ -68,7 +68,7 @@ class OrchestratorEngine:
     :meth:`route` (при ``False`` возвращает ``default_agent``).
     """
 
-    def __init__(self, *, registry: "AgentRegistry") -> None:
+    def __init__(self, *, registry: AgentRegistry) -> None:
         """Инициализация engine.
 
         Args:
@@ -77,7 +77,7 @@ class OrchestratorEngine:
         self._registry = registry
 
     async def route(
-        self, task: dict[str, Any], orchestrator_spec: "OrchestratorSpec"
+        self, task: dict[str, Any], orchestrator_spec: OrchestratorSpec
     ) -> RoutingResult:
         """Маршрутизировать задачу к агенту на основе routing rules.
 

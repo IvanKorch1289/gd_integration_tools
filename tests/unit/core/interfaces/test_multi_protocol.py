@@ -102,7 +102,11 @@ class TestCDCClientProtocol:
     def test_is_runtime_checkable(self) -> None:
         class Impl:
             async def subscribe(
-                self, *, profile: str, tables: list[str], target_action: str | None = None
+                self,
+                *,
+                profile: str,
+                tables: list[str],
+                target_action: str | None = None,
             ) -> str:
                 return ""
 

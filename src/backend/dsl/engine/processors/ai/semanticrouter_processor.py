@@ -43,10 +43,7 @@ class SemanticRouterProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
-        if isinstance(body, dict):
-            query = body.get(self._query_field, "")
-        else:
-            query = str(body)
+        query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
 
         if not query:
             if self._default_route:

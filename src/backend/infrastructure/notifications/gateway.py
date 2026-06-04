@@ -86,7 +86,7 @@ class NotificationGateway:
     Здесь держим простой lazy singleton для удобства работы.
     """
 
-    _instance: "NotificationGateway | None" = None
+    _instance: NotificationGateway | None = None
 
     def __init__(
         self,
@@ -102,7 +102,7 @@ class NotificationGateway:
         self._started = False
 
     @classmethod
-    def instance(cls) -> "NotificationGateway":
+    def instance(cls) -> NotificationGateway:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -180,7 +180,7 @@ class NotificationGateway:
             rendered = self._templates.render(
                 key=template_key, locale=locale, context=context, channel_kind=channel
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SendResult(
                 request_id=request_id,
                 status="failed",
@@ -281,7 +281,7 @@ class NotificationGateway:
                         },
                     )
                     return
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     last_error = f"{type(exc).__name__}: {exc}"
                     _logger.warning(
                         "notification attempt failed",

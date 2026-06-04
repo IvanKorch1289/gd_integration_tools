@@ -174,7 +174,7 @@ class WorkflowBuilder:
         )
         return self
 
-    def gateway_xor(self, *branches: "BranchSpec") -> Self:
+    def gateway_xor(self, *branches: BranchSpec) -> Self:
         """Добавить XOR (exclusive) gateway — выбирает первую активную ветку.
 
         Семантика: из переданных веток выполняется **первая**, чьё
@@ -193,7 +193,7 @@ class WorkflowBuilder:
         self._steps.append(spec)  # type: ignore[arg-type]
         return self
 
-    def gateway_and(self, *branches: "BranchSpec") -> Self:
+    def gateway_and(self, *branches: BranchSpec) -> Self:
         """Добавить AND (parallel) gateway — параллельный fan-out, ждёт всех.
 
         Семантика: все ветки запускаются одновременно; workflow
@@ -212,7 +212,7 @@ class WorkflowBuilder:
         self._steps.append(spec)  # type: ignore[arg-type]
         return self
 
-    def gateway_or(self, *branches: "BranchSpec") -> Self:
+    def gateway_or(self, *branches: BranchSpec) -> Self:
         """Добавить OR (inclusive) gateway — ждёт первую активную ветку.
 
         Семантика: из всех веток с истинным ``condition`` активируются все;
@@ -241,7 +241,7 @@ class WorkflowBuilder:
         output_key: str | None = None,
         max_turns: int = 10,
         timeout_s: float | None = None,
-        memory_scope: "MemoryScope | None" = None,
+        memory_scope: MemoryScope | None = None,
         write_episode: bool = False,
         namespace_template: str | None = None,
         inject_memory: bool = False,
@@ -548,7 +548,7 @@ class SagaBuilder:
         Pydantic-валидация форвард-цепочки делегируется
         :class:`SagaDeclaration` (минимум 1 forward-шаг обязателен).
         """
-        self._parent._steps.append(  # noqa: SLF001 — намеренный delegate-pattern
+        self._parent._steps.append(
             SagaDeclaration(forward=self._forward, compensate=self._compensate)
         )
         return self._parent

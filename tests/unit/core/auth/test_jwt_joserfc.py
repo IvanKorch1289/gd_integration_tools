@@ -85,6 +85,7 @@ def _make_main_token(claims: dict[str, Any]) -> str:
 
 # ─── 1. Smoke import ──────────────────────────────────────────────────────────
 
+
 def test_shim_module_importable() -> None:
     """Модуль jwt_backend_joserfc импортируется без ошибок."""
     assert hasattr(joserfc_shim, "JwtBackend")
@@ -96,13 +97,12 @@ def test_shim_module_importable() -> None:
 
 # ─── 2. encode / decode standalone ──────────────────────────────────────────
 
+
 def test_shim_encode_decode_hs256() -> None:
     """encode → decode через shim: claims совпадают."""
     claims = _base_claims()
     token = _make_shim_token(claims)
-    decoded = joserfc_shim.decode(
-        token, algorithms=["HS256"], secret=HS_SECRET
-    )
+    decoded = joserfc_shim.decode(token, algorithms=["HS256"], secret=HS_SECRET)
     assert decoded["sub"] == "user-joserfc"
     assert decoded["iss"] == ISS
 
@@ -130,14 +130,12 @@ def test_shim_decode_bad_signature_raises() -> None:
 
 # ─── 3. ShimJwtBackend.decode + verify ───────────────────────────────────────
 
+
 @pytest.fixture
 def shim_backend() -> ShimJwtBackend:
     """ShimJwtBackend для HS256."""
     return ShimJwtBackend(
-        algorithms=["HS256"],
-        secret=HS_SECRET,
-        issuer=ISS,
-        audience=AUD,
+        algorithms=["HS256"], secret=HS_SECRET, issuer=ISS, audience=AUD
     )
 
 
@@ -177,14 +175,12 @@ async def test_shim_backend_verify_none_without_header(
 
 # ─── 4. Feature-flag dispatch через jwt_backend.JwtBackend ───────────────────
 
+
 @pytest.fixture
 def main_backend() -> MainJwtBackend:
     """Основной MainJwtBackend для HS256."""
     return MainJwtBackend(
-        algorithms=["HS256"],
-        secret=HS_SECRET,
-        issuer=ISS,
-        audience=AUD,
+        algorithms=["HS256"], secret=HS_SECRET, issuer=ISS, audience=AUD
     )
 
 
@@ -229,6 +225,7 @@ async def test_main_backend_verify_flag_on_delegates_to_shim(
 
 # ─── 5. Cross-decode ──────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_cross_decode_shim_token_via_main_backend(
     main_backend: MainJwtBackend,
@@ -257,6 +254,7 @@ async def test_cross_decode_main_token_via_shim_backend(
 
 
 # ─── 6. Default flag OFF (интеграционная проверка) ────────────────────────────
+
 
 def test_feature_flag_default_off() -> None:
     """feature_flags.auth_joserfc по умолчанию False."""

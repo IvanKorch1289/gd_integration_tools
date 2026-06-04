@@ -32,10 +32,7 @@ import pytest
 from src.backend.core.ai.sandbox import SandboxResult
 from src.backend.core.plugin_runtime.sandbox import PluginSandboxAdapter
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_v11 import (
-    PluginManifestV11,
-    PluginSandbox,
-)
+from src.backend.services.plugins.manifest_v11 import PluginManifestV11, PluginSandbox
 
 _BASELINES = Path(__file__).parent / "baselines"
 _BASELINES.mkdir(parents=True, exist_ok=True)

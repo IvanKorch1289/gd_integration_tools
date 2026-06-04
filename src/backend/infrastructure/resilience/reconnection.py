@@ -33,8 +33,9 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Final, TypeVar
+from typing import Any, Final, TypeVar
 
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
@@ -103,7 +104,7 @@ class ReconnectForever(ReconnectionStrategy):
                         extra={"client": client_name, "attempt": attempt},
                     )
                 return result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 reconnect_attempts_total.labels(
                     client=client_name, outcome="failure"
                 ).inc()
@@ -142,7 +143,7 @@ class ReconnectN(ReconnectionStrategy):
                     client=client_name, outcome="success"
                 ).inc()
                 return result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 last_exc = exc
                 reconnect_attempts_total.labels(
                     client=client_name, outcome="failure"
@@ -215,11 +216,11 @@ def build(
 
 
 __all__ = (
-    "ReconnectionStrategy",
+    "NoReconnect",
     "ReconnectForever",
     "ReconnectN",
-    "NoReconnect",
     "ReconnectionError",
-    "reconnect_attempts_total",
+    "ReconnectionStrategy",
     "build",
+    "reconnect_attempts_total",
 )

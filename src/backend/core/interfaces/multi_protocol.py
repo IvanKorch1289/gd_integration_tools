@@ -12,24 +12,25 @@ stream,streamlit,webhook,websocket}/*``.
 
 from __future__ import annotations
 
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
+from collections.abc import AsyncIterator
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
-    "RateLimiterProtocol",
-    "RedisHashProtocol",
-    "RedisSetProtocol",
-    "RedisCursorProtocol",
-    "RedisPubSubProtocol",
     "CDCClientProtocol",
-    "VaultRefresherProtocol",
+    "ExpressBotClientProtocol",
+    "ExpressMetricsRecorderProtocol",
+    "HealthCheckServiceProtocol",
     "LoggerProtocol",
     "MongoExpressDialogStoreProtocol",
     "MongoExpressSessionStoreProtocol",
-    "ExpressMetricsRecorderProtocol",
-    "StreamClientProtocol",
-    "ExpressBotClientProtocol",
-    "HealthCheckServiceProtocol",
+    "RateLimiterProtocol",
+    "RedisCursorProtocol",
+    "RedisHashProtocol",
+    "RedisPubSubProtocol",
+    "RedisSetProtocol",
     "SLOTrackerProtocol",
+    "StreamClientProtocol",
+    "VaultRefresherProtocol",
 )
 
 

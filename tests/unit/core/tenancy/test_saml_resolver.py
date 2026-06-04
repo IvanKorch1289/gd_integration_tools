@@ -42,9 +42,7 @@ async def test_resolve_with_budget(auth_result: SamlAuthResult) -> None:
     budget = TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=100,
-            hard_limit=200,
-            period=BudgetPeriod.DAILY,
+            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY
         ),
     )
     await budget.reserve(tenant_id="bank-corp", tokens=150)
@@ -58,9 +56,7 @@ async def test_resolve_with_budget(auth_result: SamlAuthResult) -> None:
 
 @pytest.mark.asyncio
 async def test_resolve_missing_tenant_id_raises() -> None:
-    bad = SamlAuthResult(
-        principal="x", attributes={"plan": "free"}, session_index=None
-    )
+    bad = SamlAuthResult(principal="x", attributes={"plan": "free"}, session_index=None)
     handoff = SamlTenantHandoff(budget=None)
     with pytest.raises(ValueError, match="tenant_id"):
         await handoff.resolve(bad)

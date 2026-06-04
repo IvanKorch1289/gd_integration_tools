@@ -10,11 +10,7 @@ import pytest
 
 from src.backend.core.ai.fs_facade import AIFsFacade
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager
-from src.backend.core.svcs_registry import (
-    clear_registry,
-    get_service,
-    has_service,
-)
+from src.backend.core.svcs_registry import clear_registry, get_service, has_service
 
 
 @pytest.fixture(autouse=True)
@@ -32,9 +28,7 @@ def patched_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         ai_config.ai_workspace_settings, "workspace_root", tmp_path / "ai_ws"
     )
-    monkeypatch.setattr(
-        ai_config.ai_workspace_settings, "workspace_ttl_seconds", 0.05
-    )
+    monkeypatch.setattr(ai_config.ai_workspace_settings, "workspace_ttl_seconds", 0.05)
     monkeypatch.setattr(
         ai_config.ai_workspace_settings, "workspace_cleanup_interval_s", 0.05
     )
@@ -42,12 +36,8 @@ def patched_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.mark.asyncio
-async def test_register_ai_safety_creates_singletons(
-    patched_settings,
-) -> None:
-    from src.backend.plugins.composition.ai_safety_setup import (
-        register_ai_safety,
-    )
+async def test_register_ai_safety_creates_singletons(patched_settings) -> None:
+    from src.backend.plugins.composition.ai_safety_setup import register_ai_safety
 
     register_ai_safety()
     assert has_service(AIWorkspaceManager)
@@ -58,9 +48,7 @@ async def test_register_ai_safety_creates_singletons(
 
 
 @pytest.mark.asyncio
-async def test_start_ai_safety_creates_workspace_root(
-    patched_settings,
-) -> None:
+async def test_start_ai_safety_creates_workspace_root(patched_settings) -> None:
     from src.backend.plugins.composition.ai_safety_setup import (
         register_ai_safety,
         start_ai_safety,
@@ -76,9 +64,7 @@ async def test_start_ai_safety_creates_workspace_root(
 
 
 @pytest.mark.asyncio
-async def test_cleanup_loop_removes_expired(
-    patched_settings,
-) -> None:
+async def test_cleanup_loop_removes_expired(patched_settings) -> None:
     """TTL=0.05с: cleanup-loop удаляет workspace через ~два tick'а."""
     from src.backend.plugins.composition.ai_safety_setup import (
         register_ai_safety,
@@ -103,9 +89,7 @@ async def test_cleanup_loop_removes_expired(
 
 
 @pytest.mark.asyncio
-async def test_stop_cancels_cleanup_task(
-    patched_settings,
-) -> None:
+async def test_stop_cancels_cleanup_task(patched_settings) -> None:
     from src.backend.plugins.composition.ai_safety_setup import (
         register_ai_safety,
         start_ai_safety,
@@ -122,15 +106,11 @@ async def test_stop_cancels_cleanup_task(
 
 
 @pytest.mark.asyncio
-async def test_fs_facade_wired_with_capability_check(
-    patched_settings,
-) -> None:
+async def test_fs_facade_wired_with_capability_check(patched_settings) -> None:
     """AIFsFacade должна получить capability_check, если CapabilityGate в svcs."""
     from src.backend.core.security.capabilities.gate import CapabilityGate
     from src.backend.core.svcs_registry import register_factory
-    from src.backend.plugins.composition.ai_safety_setup import (
-        register_ai_safety,
-    )
+    from src.backend.plugins.composition.ai_safety_setup import register_ai_safety
 
     register_factory(CapabilityGate, lambda: CapabilityGate())
     register_ai_safety()

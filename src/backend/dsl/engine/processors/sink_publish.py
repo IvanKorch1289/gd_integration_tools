@@ -439,7 +439,7 @@ class MqttPublishProcessor(BaseProcessor):
                 await client.publish(
                     self._topic, payload=body, qos=self._qos, retain=self._retain
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _store_result(
                 exchange,
                 self._out,

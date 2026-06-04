@@ -22,7 +22,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -70,7 +70,7 @@ class WorkflowEventRow:
     occurred_at: datetime
 
     @classmethod
-    def from_orm(cls, obj: WorkflowEvent) -> "WorkflowEventRow":
+    def from_orm(cls, obj: WorkflowEvent) -> WorkflowEventRow:
         """Создаёт DTO из ORM-объекта."""
         return cls(
             seq=int(obj.id),
@@ -103,7 +103,7 @@ class WorkflowInstanceRow:
     finished_at: datetime | None
 
     @classmethod
-    def from_orm(cls, obj: WorkflowInstance) -> "WorkflowInstanceRow":
+    def from_orm(cls, obj: WorkflowInstance) -> WorkflowInstanceRow:
         """Создаёт DTO из ORM-объекта."""
         return cls(
             id=obj.id,
@@ -150,7 +150,7 @@ class WorkflowState:
     child_workflows: list[str] = field(default_factory=list)
 
     @classmethod
-    def replay(cls, events: list[WorkflowEventRow]) -> "WorkflowState":
+    def replay(cls, events: list[WorkflowEventRow]) -> WorkflowState:
         """Fold событий в текущее состояние.
 
         Если среди событий встречается ``snapshotted``, стартуем с
@@ -202,7 +202,7 @@ class WorkflowState:
         workflow_id: UUID,
         snapshot: dict[str, Any],
         tail_events: list[WorkflowEventRow],
-    ) -> "WorkflowState":
+    ) -> WorkflowState:
         """Rebuild state из snapshot'а + хвоста событий."""
         state = cls._from_snapshot_payload(workflow_id, snapshot)
         for ev in tail_events:
@@ -219,7 +219,7 @@ class WorkflowState:
     @classmethod
     def _from_snapshot_payload(
         cls, workflow_id: UUID, snapshot: dict[str, Any]
-    ) -> "WorkflowState":
+    ) -> WorkflowState:
         """Восстанавливает state из результата :meth:`to_snapshot`."""
         status_raw = snapshot.get("status", WorkflowStatus.pending.value)
         try:
@@ -492,7 +492,7 @@ class WorkflowInstanceStore:
         self, limit: int = 100, tenant_id: str | None = None
     ) -> list[WorkflowInstanceRow]:
         """Инстансы, готовые к обработке worker'ом."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         eligible_statuses = (
             WorkflowStatus.pending,
             WorkflowStatus.running,
@@ -528,7 +528,7 @@ class WorkflowInstanceStore:
     async def try_lock(self, workflow_id: UUID, worker_id: str, ttl_s: int) -> bool:
         """Кооперативная блокировка инстанса за worker'ом."""
         lock_key = _advisory_lock_key(workflow_id)
-        locked_until = datetime.now(timezone.utc) + timedelta(seconds=ttl_s)
+        locked_until = datetime.now(UTC) + timedelta(seconds=ttl_s)
 
         async with self._sm.create_session() as session:
             async with self._sm.transaction(session):
@@ -545,7 +545,7 @@ class WorkflowInstanceStore:
                     .where(
                         or_(
                             WorkflowInstance.locked_until.is_(None),
-                            WorkflowInstance.locked_until < datetime.now(timezone.utc),
+                            WorkflowInstance.locked_until < datetime.now(UTC),
                         )
                     )
                     .values(locked_by=worker_id, locked_until=locked_until)
@@ -585,7 +585,7 @@ class WorkflowInstanceStore:
         if next_attempt_at is not None:
             values["next_attempt_at"] = next_attempt_at
         if status in terminal:
-            values["finished_at"] = datetime.now(timezone.utc)
+            values["finished_at"] = datetime.now(UTC)
 
         async with self._sm.create_session() as session:
             async with self._sm.transaction(session):

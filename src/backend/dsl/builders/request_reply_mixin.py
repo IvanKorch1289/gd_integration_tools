@@ -21,8 +21,8 @@ from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
     "DEFAULT_TIMEOUT_S",
-    "InMemoryTransport",
     "REPLY_CHANNEL_PREFIX",
+    "InMemoryTransport",
     "RequestReplyBackend",
     "RequestReplyMixin",
     "RequestReplyTimeoutError",
@@ -155,10 +155,7 @@ class RequestReplyBackend:
         )
 
     async def wait_for_reply(
-        self,
-        correlation_id: str,
-        *,
-        timeout: float = DEFAULT_TIMEOUT_S,
+        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S
     ) -> Any:
         """Блокирующее ожидание reply для существующего ``correlation_id``."""
         reply_ch = self.reply_channel(correlation_id)
@@ -217,14 +214,12 @@ class RequestReplyMixin:
                 object.__setattr__(self, _BACKEND_ATTR, backend)
         return backend
 
-    def attach_transport(
-        self, transport: RequestReplyTransport
-    ) -> RequestReplyMixin:
+    def attach_transport(self, transport: RequestReplyTransport) -> RequestReplyMixin:
         """Прикрепить transport (EventBus/Redis). Возвращает self для chain."""
         with contextlib.suppress(AttributeError, TypeError):
             object.__setattr__(self, _TRANSPORT_ATTR, transport)
             object.__setattr__(self, _BACKEND_ATTR, None)
-        return self  # type: ignore[return-value]
+        return self
 
     async def request(
         self,
@@ -244,10 +239,7 @@ class RequestReplyMixin:
         await self._request_reply_backend().reply(correlation_id, payload)
 
     async def wait_for_reply(
-        self,
-        correlation_id: str,
-        *,
-        timeout: float = DEFAULT_TIMEOUT_S,
+        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S
     ) -> Any:
         """Блокирующее ожидание reply для ``correlation_id``."""
         return await self._request_reply_backend().wait_for_reply(

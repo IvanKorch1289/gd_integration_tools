@@ -19,10 +19,7 @@ from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxError,
 )
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_v11 import (
-    PluginManifestV11,
-    PluginSandbox,
-)
+from src.backend.services.plugins.manifest_v11 import PluginManifestV11, PluginSandbox
 
 
 class FakeSandbox:
@@ -99,20 +96,14 @@ class TestSandboxAdapter:
     @pytest.mark.asyncio
     async def test_disabled_raises(self) -> None:
         manifest = _make_manifest(sandbox=None)
-        adapter = PluginSandboxAdapter(
-            sandbox=FakeSandbox(),
-            manifest=manifest,
-        )
+        adapter = PluginSandboxAdapter(sandbox=FakeSandbox(), manifest=manifest)
         assert adapter.is_enabled is False
         with pytest.raises(PluginSandboxError, match="not declared"):
             await adapter.run("print('x')")
 
     @pytest.mark.asyncio
     async def test_missing_code_execute_capability(self) -> None:
-        manifest = _make_manifest(
-            sandbox=PluginSandbox(enabled=True),
-            capabilities=(),
-        )
+        manifest = _make_manifest(sandbox=PluginSandbox(enabled=True), capabilities=())
         adapter = PluginSandboxAdapter(sandbox=FakeSandbox(), manifest=manifest)
         with pytest.raises(PluginSandboxError, match="code.execute"):
             await adapter.run("print('x')")
@@ -141,9 +132,7 @@ class TestSandboxAdapter:
             capabilities=(CapabilityRef(name="code.execute"),),
         )
         adapter = PluginSandboxAdapter(
-            sandbox=FakeSandbox(),
-            manifest=manifest,
-            capability_check=fake_check,
+            sandbox=FakeSandbox(), manifest=manifest, capability_check=fake_check
         )
         await adapter.run("print('x')")
         assert observed == [("demo", "code.execute", None)]

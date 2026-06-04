@@ -17,11 +17,7 @@ class _FakeMemoryBackend:
         self._store: dict[tuple[str, str], Any] = {}
 
     async def recall(
-        self,
-        namespace: str,
-        query: str,
-        *,
-        k: int = 5,
+        self, namespace: str, query: str, *, k: int = 5
     ) -> list[dict[str, Any]]:
         self.calls.append(("recall", namespace, query, str(k)))
         items = [
@@ -32,21 +28,12 @@ class _FakeMemoryBackend:
         return items[:k]
 
     async def store(
-        self,
-        namespace: str,
-        key: str,
-        value: Any,
-        *,
-        ttl_s: int | None = None,
+        self, namespace: str, key: str, value: Any, *, ttl_s: int | None = None
     ) -> None:
         self.calls.append(("store", namespace, key, str(ttl_s)))
         self._store[(namespace, key)] = value
 
-    async def delete(
-        self,
-        namespace: str,
-        key: str,
-    ) -> None:
+    async def delete(self, namespace: str, key: str) -> None:
         self.calls.append(("delete", namespace, key))
         self._store.pop((namespace, key), None)
 
@@ -55,11 +42,7 @@ class _IncompleteBackend:
     """Backend без store / delete — не должен пройти isinstance."""
 
     async def recall(
-        self,
-        namespace: str,
-        query: str,
-        *,
-        k: int = 5,
+        self, namespace: str, query: str, *, k: int = 5
     ) -> list[dict[str, Any]]:
         del namespace, query, k
         return []

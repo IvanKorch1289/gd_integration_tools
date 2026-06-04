@@ -28,7 +28,7 @@ class CostTrackingCallback:
             from src.backend.services.ai.metrics import get_agent_metrics_service
 
             self._metrics = get_agent_metrics_service()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("CostTrackingCallback: metrics unavailable: %s", exc)
             self._metrics = False
         return self._metrics
@@ -59,7 +59,7 @@ class CostTrackingCallback:
         if cost_usd > 0:
             try:
                 metrics.record_cost(provider=provider, model=model, cost_usd=cost_usd)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("CostTrackingCallback: record_cost failed: %s", exc)
 
         usage = self._extract_usage(response_obj)
@@ -71,7 +71,7 @@ class CostTrackingCallback:
                     input_tokens=int(usage.get("prompt_tokens", 0) or 0),
                     output_tokens=int(usage.get("completion_tokens", 0) or 0),
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("CostTrackingCallback: record_tokens failed: %s", exc)
 
     @staticmethod
@@ -88,7 +88,7 @@ class CostTrackingCallback:
             if value:
                 try:
                     return float(value)
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     return 0.0
         if isinstance(response_obj, dict):
             return float(response_obj.get("response_cost", 0.0) or 0.0)
@@ -144,7 +144,7 @@ class FallbackTrackingCallback:
                 "LiteLLM provider-failure events (для алертов и fallback observability)",
                 labels=("model", "reason"),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("FallbackTrackingCallback: counter unavailable: %s", exc)
             self._counter = False
         return self._counter
@@ -172,5 +172,5 @@ class FallbackTrackingCallback:
         reason = type(exception).__name__ if exception is not None else "unknown"
         try:
             counter.labels(model=model, reason=reason).inc()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("FallbackTrackingCallback: counter inc failed: %s", exc)

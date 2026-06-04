@@ -170,7 +170,10 @@ def _is_in_type_checking_block(tree: ast.AST, target_lineno: int) -> bool:
                 if node.col_offset <= 0:  # top-level only
                     for child in ast.walk(node):
                         if isinstance(child, (ast.Import, ast.ImportFrom)):
-                            if hasattr(child, "lineno") and child.lineno == target_lineno:
+                            if (
+                                hasattr(child, "lineno")
+                                and child.lineno == target_lineno
+                            ):
                                 return True
     return False
 

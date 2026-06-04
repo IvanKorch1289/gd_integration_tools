@@ -24,8 +24,8 @@ from src.backend.core.tenancy.token_budget import (
 )
 
 __all__ = (
-    "enforce_pre_call",
     "enforce_post_call",
+    "enforce_pre_call",
     "render_429",
     "tenant_from_saml_attributes",
 )

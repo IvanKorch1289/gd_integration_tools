@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def emit_admin_action(
     event: dict[str, Any] = {
         "event": "admin.action",
         "correlation_id": cid,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "actor": actor,
         "action": action,
         "resource": resource,
@@ -61,5 +61,5 @@ def emit_admin_action(
         return
     try:
         _audit_callback(event)
-    except Exception as _:  # noqa: BLE001 — best-effort, never breaks admin ops
+    except Exception as _:
         logger.exception("emit_admin_action failed for %s", event["event"])

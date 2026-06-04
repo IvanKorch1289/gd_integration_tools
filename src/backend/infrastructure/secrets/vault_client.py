@@ -154,7 +154,7 @@ class VaultClient:
         reconnect_base_delay: float | None = None,
         reconnect_max_delay: float | None = None,
         rotation_interval_seconds: float | None = None,
-    ) -> "VaultClient":
+    ) -> VaultClient:
         """Create VaultClient from environment variables and optional overrides.
 
         Vault connection parameters are read from environment:
@@ -384,7 +384,7 @@ class VaultClient:
         Returns:
             Authenticated hvac.Client instance.
         """
-        import hvac  # noqa: PLC0415
+        import hvac
 
         client = hvac.Client(
             url=self._vault_config.url, namespace=self._vault_config.namespace
@@ -439,7 +439,7 @@ def get_vault_client() -> VaultClient:
 
     Creates instance on first call; subsequent calls return the same object.
     """
-    global _vault_client_instance  # noqa: PLW0603
+    global _vault_client_instance
     if _vault_client_instance is None:
         _vault_client_instance = VaultClient.from_env()
     return _vault_client_instance

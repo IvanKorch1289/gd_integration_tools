@@ -52,10 +52,7 @@ class TestCheckExpectations:
     def test_multiple(self) -> None:
         e1 = Expectation(column="a", not_null=True)
         e2 = Expectation(column="b", unique=True)
-        results = check_expectations(
-            [e1, e2],
-            [{"a": 1, "b": 1}, {"a": None, "b": 2}],
-        )
+        results = check_expectations([e1, e2], [{"a": 1, "b": 1}, {"a": None, "b": 2}])
         assert len(results) == 2
         assert results[0].passed is False
         assert results[1].passed is True

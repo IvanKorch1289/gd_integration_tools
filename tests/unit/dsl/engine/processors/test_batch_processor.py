@@ -95,9 +95,7 @@ async def test_group_by_header_isolates_buffers() -> None:
 
 @pytest.mark.asyncio
 async def test_group_by_body_path() -> None:
-    proc = BatchWindowProcessor(
-        window_seconds=60.0, max_size=2, group_by="body.region"
-    )
+    proc = BatchWindowProcessor(window_seconds=60.0, max_size=2, group_by="body.region")
     ctx = AsyncMock()
     e1 = _ex(body={"region": "EU"})
     e2 = _ex(body={"region": "EU"})

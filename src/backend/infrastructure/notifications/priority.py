@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Final, Literal
+from typing import Any, Final, Literal
 
 from src.backend.core.config.pooling import PoolingProfile
 from src.backend.core.utils.task_registry import get_task_registry
@@ -117,7 +118,7 @@ class PriorityRouter:
         for w in self._workers:
             try:
                 await asyncio.wait_for(w, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 w.cancel()
         self._workers.clear()
         self._started = False
@@ -163,7 +164,7 @@ class PriorityRouter:
                 return
             try:
                 await item.callback(item.payload)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error(
                     "notification callback failed",
                     extra={
@@ -194,9 +195,9 @@ class NotificationBacklogError(RuntimeError):
 
 
 __all__ = (
+    "DEFAULT_MARKETING_POOL",
+    "DEFAULT_TX_POOL",
+    "NotificationBacklogError",
     "Priority",
     "PriorityRouter",
-    "DEFAULT_TX_POOL",
-    "DEFAULT_MARKETING_POOL",
-    "NotificationBacklogError",
 )

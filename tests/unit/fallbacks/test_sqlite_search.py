@@ -81,8 +81,6 @@ async def test_sort_top_level_key(tmp_path):
     await search.index_document("scores", {"name": "a", "score": 5}, doc_id="1")
     await search.index_document("scores", {"name": "b", "score": 9}, doc_id="2")
     await search.index_document("scores", {"name": "c", "score": 2}, doc_id="3")
-    results = await search.search(
-        "scores", "", size=10, sort=[{"score": "desc"}]
-    )
+    results = await search.search("scores", "", size=10, sort=[{"score": "desc"}])
     # FTS5 без MATCH-фильтра возвращает все документы.
     assert [d["score"] for d in results] == [9, 5, 2]

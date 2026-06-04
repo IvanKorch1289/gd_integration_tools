@@ -74,9 +74,7 @@ class BaseAIProcessor(BaseProcessor):
 
     # ── Abstract: core-логика наследника ──
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Core-логика процессора (переопределить).
 
         Args:
@@ -93,9 +91,7 @@ class BaseAIProcessor(BaseProcessor):
 
     # ── Template-method: feature_flag + capability + audit + _run ──
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Template-method: проверки → :meth:`_run` → audit-emit.
 
         При выключенном feature_flag — silent no-op (pass-through).
@@ -112,7 +108,7 @@ class BaseAIProcessor(BaseProcessor):
         scope = self._capability_scope(exchange)
         try:
             self._check_capability(scope=scope)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.set_error(f"{self.name}: capability denied ({exc})")
             exchange.stop()
             await self._emit_audit_safe(
@@ -125,7 +121,7 @@ class BaseAIProcessor(BaseProcessor):
 
         try:
             await self._run(exchange, context)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.set_error(f"{self.name} error: {exc}")
             exchange.stop()
             await self._emit_audit_safe(
@@ -137,7 +133,7 @@ class BaseAIProcessor(BaseProcessor):
 
     # ── Helpers (для наследников) ──
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для capability-проверки.
 
         По умолчанию возвращает ``None`` — capability с
@@ -161,7 +157,7 @@ class BaseAIProcessor(BaseProcessor):
 
             value = getattr(feature_flags, self.feature_flag_name, None)
             return bool(value)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug(
                 "%s: feature_flag resolve failed (%s) — default OFF", self.name, exc
             )
@@ -204,23 +200,25 @@ class BaseAIProcessor(BaseProcessor):
     def _resolve_capability_gate() -> Any | None:
         """Lazy-резолв :class:`CapabilityGate` через DI singleton."""
         try:
-            from src.backend.core.security.capabilities.gate import get_capability_gate
+            from src.backend.core.security.capabilities.gate import (  # type: ignore[attr-defined]
+                get_capability_gate,
+            )
 
             return get_capability_gate()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             try:
                 from src.backend.core.di.container import get_container
 
                 container = get_container()
                 if container is not None:
                     return container.resolve_optional("capability_gate")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("CapabilityGate DI resolve failed: %s", exc)
         return None
 
     async def _emit_audit_safe(
         self,
-        exchange: "Exchange[Any]",
+        exchange: Exchange[Any],
         *,
         outcome: str,
         severity: str = "info",
@@ -248,7 +246,7 @@ class BaseAIProcessor(BaseProcessor):
                 route_name=exchange.meta.route_id,
                 details=details,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("%s: audit emit failed (%s) — drop", self.name, exc)
 
     @staticmethod
@@ -260,5 +258,5 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_unified_audit_service()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None

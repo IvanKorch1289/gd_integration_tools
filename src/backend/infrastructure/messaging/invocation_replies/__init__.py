@@ -31,11 +31,11 @@ from src.backend.infrastructure.messaging.invocation_replies.registry import (
 from src.backend.infrastructure.messaging.invocation_replies.ws import WsReplyChannel
 
 __all__ = (
-    "MemoryReplyChannel",
-    "WsReplyChannel",
     "EmailReplyChannel",
     "ExpressReplyChannel",
+    "MemoryReplyChannel",
     "QueueReplyChannel",
     "ReplyChannelRegistry",
+    "WsReplyChannel",
     "get_reply_channel_registry",
 )

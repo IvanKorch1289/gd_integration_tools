@@ -92,9 +92,7 @@ _W11_CORE: list[KindSpec] = [
     KindSpec("get_feedback_examples", "GetFeedbackExamplesProcessor"),
 ]
 
-_SECTIONS: dict[str, list[KindSpec]] = {
-    "core": _W11_CORE,
-}
+_SECTIONS: dict[str, list[KindSpec]] = {"core": _W11_CORE}
 
 
 # ──────────────────── Discovery ────────────────────
@@ -163,19 +161,17 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
 
     found = _iter_processor_class_names(PROCESSORS_DIR)
-    print(f"Discovered {len(found)} processor classes in {PROCESSORS_DIR.relative_to(ROOT)}")
+    print(
+        f"Discovered {len(found)} processor classes in {PROCESSORS_DIR.relative_to(ROOT)}"
+    )
     print()
 
-    sections = (
-        [args.section] if args.section else list(_SECTIONS)
-    )
+    sections = [args.section] if args.section else list(_SECTIONS)
 
     has_missing = False
     for section in sections:
         report = CoverageReport(
-            section=section,
-            expected=list(_SECTIONS[section]),
-            found_processors=found,
+            section=section, expected=list(_SECTIONS[section]), found_processors=found
         )
         print(_format_section(report))
         print()

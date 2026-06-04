@@ -40,7 +40,7 @@ import os
 import random
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -54,7 +54,7 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowState,
 )
 
-__all__ = ("DurableWorkflowRunner", "StepExecutor", "StepResult", "RunnerConfig")
+__all__ = ("DurableWorkflowRunner", "RunnerConfig", "StepExecutor", "StepResult")
 
 
 _logger = logging.getLogger("workflow.runner")
@@ -212,7 +212,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except asyncio.CancelledError, Exception:  # noqa: BLE001
+                except (asyncio.CancelledError, Exception):
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )
@@ -232,7 +232,9 @@ class DurableWorkflowRunner:
             _logger.warning("asyncpg not installed; LISTEN path disabled")
             return
 
-        assert self._listener_dsn is not None  # noqa: S101  # mypy narrowing (проверка осуществлена выше через ImportError-guard)
+        assert (
+            self._listener_dsn is not None
+        )  # mypy narrowing (проверка осуществлена выше через ImportError-guard)
         conn = None
         try:
             conn = await asyncpg.connect(self._listener_dsn)
@@ -244,7 +246,7 @@ class DurableWorkflowRunner:
                 await asyncio.sleep(5.0)
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("LISTEN loop error: %s", exc)
         finally:
             if conn is not None:
@@ -286,7 +288,7 @@ class DurableWorkflowRunner:
                         break
             except asyncio.CancelledError:
                 break
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error("backup poll error: %s", exc)
 
     # -- Dispatcher loop --------------------------------------------
@@ -297,7 +299,7 @@ class DurableWorkflowRunner:
                 workflow_id = await asyncio.wait_for(
                     self._pending_instance_ids.get(), timeout=5.0
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             async with self._active_lock:
                 if workflow_id in self._active_executions:
@@ -312,7 +314,7 @@ class DurableWorkflowRunner:
         async with self._semaphore:
             try:
                 await self._run_step(workflow_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.exception(
                     "unexpected error executing workflow %s: %s", workflow_id, exc
                 )
@@ -404,7 +406,7 @@ class DurableWorkflowRunner:
 
         if result.outcome == StepOutcome.PAUSE:
             next_at = result.next_attempt_at or (
-                datetime.now(timezone.utc)
+                datetime.now(UTC)
                 + timedelta(seconds=self._compute_backoff(state.attempts))
             )
             await self._state_store.update_status(
@@ -423,7 +425,7 @@ class DurableWorkflowRunner:
         _logger.warning(
             "unknown outcome %r for %s; treating as pause", result.outcome, workflow_id
         )
-        next_at = datetime.now(timezone.utc) + timedelta(
+        next_at = datetime.now(UTC) + timedelta(
             seconds=self._compute_backoff(state.attempts)
         )
         await self._state_store.update_status(
@@ -442,4 +444,6 @@ class DurableWorkflowRunner:
         max_delay = self._config.retry_max_delay_s
         raw = min(max_delay, base * (mult ** max(0, attempt)))
         jitter = self._config.retry_jitter
-        return raw * (1 + random.uniform(-jitter, jitter))  # noqa: S311  # retry-jitter, не криптография
+        return raw * (
+            1 + random.uniform(-jitter, jitter)  # noqa: S311  # non-cryptographic use
+        )  # retry-jitter, не криптография

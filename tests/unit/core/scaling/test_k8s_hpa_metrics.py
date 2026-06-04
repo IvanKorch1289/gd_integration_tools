@@ -68,6 +68,7 @@ def test_exporter_serializes_prometheus_format() -> None:
 
 def test_exporter_skips_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     """``get_handler`` возвращает 503, когда feature-flag выключен."""
+
     # Патчим feature_flags так, чтобы k8s_hpa_exporter = False
     class _FakeFlags:
         k8s_hpa_exporter = False
@@ -79,9 +80,7 @@ def test_exporter_skips_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_features_module.feature_flags = _FakeFlags()  # type: ignore[attr-defined]
 
     monkeypatch.setitem(
-        sys.modules,
-        "src.backend.core.config.features",
-        fake_features_module,
+        sys.modules, "src.backend.core.config.features", fake_features_module
     )
 
     exporter = K8sHPAMetricsExporter()

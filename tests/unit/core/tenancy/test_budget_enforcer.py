@@ -24,9 +24,7 @@ def budget() -> TokenBudget:
     return TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=100,
-            hard_limit=200,
-            period=BudgetPeriod.DAILY,
+            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY
         ),
     )
 
@@ -75,9 +73,7 @@ async def test_reset_clears_counter(budget: TokenBudget) -> None:
 
 @pytest.mark.asyncio
 async def test_enforce_pre_call_within(budget: TokenBudget) -> None:
-    snap = await enforce_pre_call(
-        budget=budget, tenant_id="t-pre", estimated_tokens=50
-    )
+    snap = await enforce_pre_call(budget=budget, tenant_id="t-pre", estimated_tokens=50)
     assert snap.used == 50
 
 
@@ -85,10 +81,7 @@ async def test_enforce_pre_call_within(budget: TokenBudget) -> None:
 async def test_enforce_post_call_diff_positive(budget: TokenBudget) -> None:
     await enforce_pre_call(budget=budget, tenant_id="t-post", estimated_tokens=40)
     snap = await enforce_post_call(
-        budget=budget,
-        tenant_id="t-post",
-        estimated_tokens=40,
-        actual_tokens=80,
+        budget=budget, tenant_id="t-post", estimated_tokens=40, actual_tokens=80
     )
     assert snap is not None
     assert snap.used == 80
@@ -98,10 +91,7 @@ async def test_enforce_post_call_diff_positive(budget: TokenBudget) -> None:
 async def test_enforce_post_call_diff_zero_or_negative(budget: TokenBudget) -> None:
     await enforce_pre_call(budget=budget, tenant_id="t-post-2", estimated_tokens=60)
     snap = await enforce_post_call(
-        budget=budget,
-        tenant_id="t-post-2",
-        estimated_tokens=60,
-        actual_tokens=40,
+        budget=budget, tenant_id="t-post-2", estimated_tokens=60, actual_tokens=40
     )
     assert snap is not None
     assert snap.used == 60
@@ -134,10 +124,7 @@ def test_tenant_from_saml_attributes_basic() -> None:
 
 def test_tenant_from_saml_attributes_array_values() -> None:
     ctx = tenant_from_saml_attributes(
-        attributes={
-            "tenant_id": ["bank-corp"],
-            "subscription_plan": ["pro"],
-        }
+        attributes={"tenant_id": ["bank-corp"], "subscription_plan": ["pro"]}
     )
     assert ctx.tenant_id == "bank-corp"
     assert ctx.plan == "pro"

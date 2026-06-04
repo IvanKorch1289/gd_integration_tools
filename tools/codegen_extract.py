@@ -80,13 +80,7 @@ def _extract_methods(
             for p in stmt.params.params
             if p.name.value not in ("self", "cls")
         ]
-        methods.append(
-            {
-                "name": stmt.name.value,
-                "async": is_async,
-                "params": params,
-            }
-        )
+        methods.append({"name": stmt.name.value, "async": is_async, "params": params})
     return methods
 
 

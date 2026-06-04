@@ -76,34 +76,22 @@ def build_substitutions() -> list[tuple[re.Pattern[str], str]]:
     # 2. Backend-пакеты — `from`/`import` formы
     for pkg in BACKEND_PACKAGES:
         subs.append(
-            (
-                re.compile(rf"\bfrom src\.{pkg}(?=[\s.])"),
-                f"from src.backend.{pkg}",
-            )
+            (re.compile(rf"\bfrom src\.{pkg}(?=[\s.])"), f"from src.backend.{pkg}")
         )
         subs.append(
-            (
-                re.compile(rf"\bimport src\.{pkg}(?=[\s.,])"),
-                f"import src.backend.{pkg}",
-            )
+            (re.compile(rf"\bimport src\.{pkg}(?=[\s.,])"), f"import src.backend.{pkg}")
         )
 
     # 3. Backend-пакеты — string-literals (dot, для importlib.import_module)
     for pkg in BACKEND_PACKAGES:
         subs.append(
-            (
-                re.compile(rf"""(['"])src\.{pkg}(?=[\s.:'"])"""),
-                rf"\1src.backend.{pkg}",
-            )
+            (re.compile(rf"""(['"])src\.{pkg}(?=[\s.:'"])"""), rf"\1src.backend.{pkg}")
         )
 
     # 4. Backend-пакеты — path-literals (slash, для путей файлов)
     for pkg in BACKEND_PACKAGES:
         subs.append(
-            (
-                re.compile(rf"""(['"])src/{pkg}(?=[/'"])"""),
-                rf"\1src/backend/{pkg}",
-            )
+            (re.compile(rf"""(['"])src/{pkg}(?=[/'"])"""), rf"\1src/backend/{pkg}")
         )
 
     return subs
@@ -148,10 +136,7 @@ def main() -> int:
         if n > 0:
             changed_files += 1
             total_replacements += n
-    print(
-        f"replaced={total_replacements} files={changed_files} "
-        f"scanned={len(files)}"
-    )
+    print(f"replaced={total_replacements} files={changed_files} scanned={len(files)}")
     return 0
 
 

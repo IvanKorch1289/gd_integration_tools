@@ -50,7 +50,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
         *,
         source_property: str = "body",
         target_property: str | None = None,
-        token_map_property: str = "pii_token_map",  # noqa: S107
+        token_map_property: str = "pii_token_map",  # noqa: S107  # config field name, not a password
         scope: str = "default",
         strict: bool = False,
         name: str | None = None,
@@ -62,13 +62,11 @@ class PIIUnmaskProcessor(BaseAIProcessor):
         self.scope = scope
         self.strict = strict
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         del exchange
         return self.scope
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         token_map = exchange.get_property(self.token_map_property)
         if token_map is None:
@@ -93,14 +91,14 @@ class PIIUnmaskProcessor(BaseAIProcessor):
 
         try:
             unmasked = await tokenizer.unmask(text, token_map)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("%s: unmask failed (%s) — pass-through", self.name, exc)
             return
 
         unmasked_text = self._extract_unmasked_text(unmasked, fallback=text)
         self._write_target(exchange, unmasked_text)
 
-    def _extract_text(self, exchange: "Exchange[Any]") -> str:
+    def _extract_text(self, exchange: Exchange[Any]) -> str:
         """Достать masked-текст по ``source_property`` (dot-path)."""
         parts = self.source_property.split(".")
         head = parts[0]
@@ -135,7 +133,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             else (str(cursor) if cursor is not None else "")
         )
 
-    def _write_target(self, exchange: "Exchange[Any]", text: str) -> None:
+    def _write_target(self, exchange: Exchange[Any], text: str) -> None:
         """Записать восстановленный текст в ``target_property``."""
         parts = self.target_property.split(".")
         head = parts[0]
@@ -172,7 +170,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             container = get_container()
             if container is not None:
                 return container.resolve_optional("pii_tokenizer")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 
@@ -183,7 +181,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             spec["source_property"] = self.source_property
         if self.target_property != self.source_property:
             spec["target_property"] = self.target_property
-        if self.token_map_property != "pii_token_map":  # noqa: S105
+        if self.token_map_property != "pii_token_map":  # noqa: S105  # config field name, not a password
             spec["token_map_property"] = self.token_map_property
         if self.scope != "default":
             spec["scope"] = self.scope

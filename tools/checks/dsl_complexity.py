@@ -188,16 +188,12 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entry-point."""
     parser = argparse.ArgumentParser(description="DSL complexity gate (S10 K3 W2)")
     parser.add_argument("paths", nargs="+", type=Path)
-    parser.add_argument(
-        "--max-cyclomatic", type=int, default=MAX_CYCLOMATIC,
-    )
+    parser.add_argument("--max-cyclomatic", type=int, default=MAX_CYCLOMATIC)
     parser.add_argument("--max-nesting", type=int, default=MAX_NESTING)
     parser.add_argument("--max-steps", type=int, default=MAX_STEPS)
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="exit code 1 если есть violations",
+        "--strict", action="store_true", help="exit code 1 если есть violations"
     )
     args = parser.parse_args(argv)
 
@@ -235,9 +231,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             for v in r.violations:
                 print(f"  - {v}")
-        print(
-            f"\nTotal: {len(reports)} files, {len(bad)} violations"
-        )
+        print(f"\nTotal: {len(reports)} files, {len(bad)} violations")
 
     if args.strict and bad:
         return 1

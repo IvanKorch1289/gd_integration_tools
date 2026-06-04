@@ -69,7 +69,11 @@ def test_invoke_serializes_payload() -> None:
     assert result == {"status": "ok", "result": {"score": 42}}
     # Убеждаемся, что payload передан корректно
     call_kwargs = mock_client.post.call_args
-    body = call_kwargs.kwargs.get("json") or call_kwargs[1].get("json") or call_kwargs[0][1]
+    body = (
+        call_kwargs.kwargs.get("json")
+        or call_kwargs[1].get("json")
+        or call_kwargs[0][1]
+    )
     assert body["action"] == "orders.create"
     assert body["payload"] == {"order_id": 99}
     assert body["mode"] == "sync"

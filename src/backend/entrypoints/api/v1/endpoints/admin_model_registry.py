@@ -38,7 +38,7 @@ async def _composite() -> Any:
         )
 
         backends["mlflow"] = MlflowModelRegistry()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         pass
     try:
         from src.backend.services.ai.model_registry.hf_hub_backend import (
@@ -46,7 +46,7 @@ async def _composite() -> Any:
         )
 
         backends["huggingface"] = HuggingFaceModelRegistry()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         pass
 
     if not backends:

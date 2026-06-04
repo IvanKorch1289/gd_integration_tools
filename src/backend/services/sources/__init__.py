@@ -19,13 +19,13 @@ from src.backend.services.sources.registry import (
 )
 
 __all__ = (
-    "SourceRegistry",
-    "SinkRegistry",
-    "get_source_registry",
-    "get_sink_registry",
-    "SourceToInvokerAdapter",
     "DedupeStore",
     "MemoryDedupeStore",
+    "SinkRegistry",
+    "SourceRegistry",
+    "SourceToInvokerAdapter",
+    "get_sink_registry",
+    "get_source_registry",
     "start_all_sources",
     "stop_all_sources",
 )

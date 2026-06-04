@@ -31,9 +31,7 @@ class _ConcreteAdapter(BaseProtocolAdapter):
     async def create_exchange(self, raw_input: Any) -> Exchange[Any]:
         return Exchange(in_message=Message(body=raw_input))
 
-    async def send_response(
-        self, exchange: Exchange[Any], raw_context: Any
-    ) -> Any:
+    async def send_response(self, exchange: Exchange[Any], raw_context: Any) -> Any:
         if exchange.out_message is not None:
             return exchange.out_message.body
         return None
@@ -86,11 +84,7 @@ class TestEnrichMeta:
         adapter = _ConcreteAdapter()
         exchange: Exchange[Any] = Exchange()
 
-        adapter.enrich_meta(
-            exchange,
-            soap_action="GetUser",
-            grpc_status="OK",
-        )
+        adapter.enrich_meta(exchange, soap_action="GetUser", grpc_status="OK")
         assert exchange.meta.protocol_attrs == {
             "soap_action": "GetUser",
             "grpc_status": "OK",

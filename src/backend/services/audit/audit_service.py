@@ -60,7 +60,7 @@ class AuditService:
     __slots__ = ("_backend",)
 
     def __init__(
-        self, clickhouse_service: "ClickHouseAuditService | None" = None
+        self, clickhouse_service: ClickHouseAuditService | None = None
     ) -> None:
         self._backend = clickhouse_service
 
@@ -134,7 +134,7 @@ class AuditService:
                 route_name=route_name,
             )
             await backend.emit(audit_event)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "audit.unified.emit_failed",
                 extra={
@@ -145,7 +145,7 @@ class AuditService:
                 },
             )
 
-    def _resolve_backend(self) -> "ClickHouseAuditService":
+    def _resolve_backend(self) -> ClickHouseAuditService:
         """Lazy-резолв backend'а — singleton ClickHouseAuditService."""
         if self._backend is None:
             from src.backend.services.audit.clickhouse_audit_service import (
@@ -165,7 +165,7 @@ def _get_correlation_id_safe() -> str | None:
 
         value = get_correlation_id()
         return value or None
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 
@@ -176,7 +176,7 @@ def _get_tenant_id_safe() -> str | None:
 
         ctx = current_tenant()
         return ctx.tenant_id if ctx is not None else None
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 

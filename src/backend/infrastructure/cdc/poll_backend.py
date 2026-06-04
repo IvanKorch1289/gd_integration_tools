@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 
@@ -75,13 +75,13 @@ class PollCDCBackend(CDCSource):
         last_cursor: str = (
             start_cursor.value
             if start_cursor is not None
-            else datetime.now(timezone.utc).isoformat()
+            else datetime.now(UTC).isoformat()
         )
         while not self._stopped.is_set():
             # Реальный запрос к БД — в следующей итерации (Wave R3).
             # Здесь только heartbeat-cursor advance.
             await asyncio.sleep(self._interval_s)
-            new_ts = datetime.now(timezone.utc).isoformat()
+            new_ts = datetime.now(UTC).isoformat()
             if new_ts == last_cursor:
                 continue
             last_cursor = new_ts
@@ -91,7 +91,7 @@ class PollCDCBackend(CDCSource):
                     operation="UPSERT",
                     source=f"poll:{self._profile}",
                     table=tables[0],
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     cursor=CDCCursor(value=last_cursor, backend="poll"),
                 )
 

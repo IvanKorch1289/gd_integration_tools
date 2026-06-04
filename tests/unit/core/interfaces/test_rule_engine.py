@@ -44,17 +44,25 @@ class TestRuleEngineRepository:
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             async def get(
-                self, name: str, *, version: str | None = None, tenant_id: str | None = None
+                self,
+                name: str,
+                *,
+                version: str | None = None,
+                tenant_id: str | None = None,
             ) -> RulesetDoc | None:
                 return None
 
-            async def list_active(self, *, tenant_id: str | None = None) -> list[RulesetDoc]:
+            async def list_active(
+                self, *, tenant_id: str | None = None
+            ) -> list[RulesetDoc]:
                 return []
 
             async def upsert(self, doc: RulesetDoc) -> RulesetDoc:
                 return doc
 
-            async def delete(self, name: str, version: str, *, tenant_id: str | None = None) -> bool:
+            async def delete(
+                self, name: str, version: str, *, tenant_id: str | None = None
+            ) -> bool:
                 return False
 
         assert isinstance(Fake(), RuleEngineRepository)

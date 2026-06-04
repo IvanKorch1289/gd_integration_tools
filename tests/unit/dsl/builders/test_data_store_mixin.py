@@ -247,8 +247,19 @@ class TestRouteBuilderIntegration:
 
     def test_data_store_class_protocol(self) -> None:
         # DataStore class is exported and has the expected public API
-        expected_methods = {"get", "set", "delete", "has", "keys", "values",
-                            "items", "clear", "size", "name", "backend"}
+        expected_methods = {
+            "get",
+            "set",
+            "delete",
+            "has",
+            "keys",
+            "values",
+            "items",
+            "clear",
+            "size",
+            "name",
+            "backend",
+        }
         for m in expected_methods:
             assert hasattr(DataStore, m), f"DataStore missing method: {m}"
 

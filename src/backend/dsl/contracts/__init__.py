@@ -6,8 +6,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 __all__ = ("Expectation", "ExpectationResult", "check_expectations")
 
@@ -43,14 +44,13 @@ class Expectation:
                     failed += 1
                     continue
                 seen.add(v)
-            if compiled is not None and v is not None:
-                if not compiled.search(str(v)):
-                    failed += 1
-                    continue
+            if compiled is not None and v is not None and not compiled.search(str(v)):
+                failed += 1
+                continue
             if self.range is not None and v is not None:
                 try:
                     nv = float(v)
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     failed += 1
                     continue
                 lo, hi = self.range

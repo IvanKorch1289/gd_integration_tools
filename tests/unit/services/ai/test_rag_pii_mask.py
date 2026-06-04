@@ -65,10 +65,7 @@ async def test_ingest_passthrough_when_flag_off(
     rag_mock.ingest = AsyncMock(return_value="doc-1")
     svc = RagIngestService(rag_service=rag_mock)
 
-    await svc.ingest(
-        [("file.txt", "ИНН 7707083893".encode("utf-8"))],
-        collection="ns",
-    )
+    await svc.ingest([("file.txt", "ИНН 7707083893".encode("utf-8"))], collection="ns")
     call = rag_mock.ingest.await_args
     assert call is not None
     text_arg = call.args[0]
@@ -78,9 +75,7 @@ async def test_ingest_passthrough_when_flag_off(
 
 
 @pytest.mark.asyncio
-async def test_ingest_masks_pii_when_flag_on(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) -> None:
     """При pii_mask_on_ingest=True текст маскируется + metadata указывает версию sanitizer."""
     from src.backend.core.config import ai_2026
     from src.backend.core.di import providers
@@ -134,10 +129,7 @@ async def test_ingest_graceful_on_sanitizer_failure(
         rag_mock.ingest = AsyncMock(return_value="doc-1")
         svc = RagIngestService(rag_service=rag_mock)
 
-        await svc.ingest(
-            [("file.txt", b"some text")],
-            collection="ns",
-        )
+        await svc.ingest([("file.txt", b"some text")], collection="ns")
         call = rag_mock.ingest.await_args
         assert call is not None
         metadata = call.kwargs["metadata"]

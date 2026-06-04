@@ -91,7 +91,7 @@ class GetSettingProcessor(BaseProcessor):
             return self.default
         return value
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         """Записывает значение в ``body.<field>`` либо ``properties.<name>``."""
         if self.target.startswith("body."):
             field = self.target[len("body.") :]
@@ -107,9 +107,7 @@ class GetSettingProcessor(BaseProcessor):
             return
         exchange.set_property(self.target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         value = self._read_setting()
         self._apply_target(exchange, value)
 

@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -68,7 +68,7 @@ class MetricsRegistry:
         self,
         *,
         default_labels: tuple[str, ...] = DEFAULT_LABELS,
-        registry: "CollectorRegistry | None" = None,
+        registry: CollectorRegistry | None = None,
     ) -> None:
         self._default_labels = tuple(default_labels)
         self._registry = registry  # None → global
@@ -164,7 +164,7 @@ class MetricsRegistry:
                 result.append(name)
         return tuple(result)
 
-    def _strict_lookup(self, bucket: dict[str, object], name: str, kind: str) -> object:
+    def _strict_lookup(self, bucket: dict[str, Any], name: str, kind: str) -> Any:
         """Strict mode: KeyError если метрика не зарегистрирована."""
         try:
             return bucket[name]
@@ -183,7 +183,7 @@ class MetricsRegistry:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.metrics_registry_strict)
-        except Exception as _:  # noqa: BLE001 — best-effort
+        except Exception as _:
             return False
 
 

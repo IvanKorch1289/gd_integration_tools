@@ -9,6 +9,6 @@ from __future__ import annotations
 
 from asgi_correlation_id import CorrelationIdMiddleware
 
-__all__ = ("CorrelationIdMiddleware", "CORRELATION_HEADER")
+__all__ = ("CORRELATION_HEADER", "CorrelationIdMiddleware")
 
 CORRELATION_HEADER = "X-Correlation-ID"

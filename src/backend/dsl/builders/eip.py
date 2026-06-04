@@ -15,7 +15,8 @@ Stateless — см. контракт в ``base.py``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
@@ -27,17 +28,13 @@ from src.backend.dsl.engine.processors import (
     CDCProcessor,
     ClaimCheckProcessor,
     DynamicRouterProcessor,
-    EnrichProcessor,
     FilterProcessor,
     LoadBalancerProcessor,
-    MulticastProcessor,
     NormalizerProcessor,
-    RecipientListProcessor,
     ResequencerProcessor,
     ScatterGatherProcessor,
     SplitterProcessor,
     TransformProcessor,
-    WireTapProcessor,
 )
 from src.backend.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
@@ -65,33 +62,17 @@ class EIPMixin:
     Контракт см. в ``base.py``.
     """
 
-    __slots__ = ()
+    __slots__ = ("_protocol", "_transport_config")
 
     # ── Core EIPs ──
 
-    def transform(self, expression: str) -> "RouteBuilder":
+    def transform(self, expression: str) -> RouteBuilder:
         """Трансформирует body через JMESPath-выражение."""
         return self._add(TransformProcessor(expression=expression))  # type: ignore[attr-defined]
 
-    def filter(self, predicate: Callable[[Exchange[Any]], bool]) -> "RouteBuilder":
+    def filter(self, predicate: Callable[[Exchange[Any]], bool]) -> RouteBuilder:
         """Фильтрует Exchange — останавливает, если predicate=False."""
         return self._add(FilterProcessor(predicate=predicate))  # type: ignore[attr-defined]
-
-    def enrich(
-        self,
-        action: str,
-        *,
-        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
-        result_property: str = "enrichment",
-    ) -> "RouteBuilder":
-        """Enrich: вызывает action и сохраняет результат в property."""
-        return self._add(  # type: ignore[attr-defined]
-            EnrichProcessor(
-                action=action,
-                payload_factory=payload_factory,
-                result_property=result_property,
-            )
-        )
 
     # ── CDC ──
 
@@ -106,7 +87,7 @@ class EIPMixin:
         timestamp_column: str = "updated_at",
         batch_size: int = 100,
         channel: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Change Data Capture — подписка на изменения в БД.
 
         strategy: polling (любая БД), listen_notify (PostgreSQL), logminer (Oracle).
@@ -126,17 +107,13 @@ class EIPMixin:
 
     # ── Control routing / EIPs ──
 
-    def wire_tap(self, tap_processors: list[BaseProcessor]) -> "RouteBuilder":
-        """Wire Tap: копия Exchange в побочный канал без влияния на основной поток."""
-        return self._add(WireTapProcessor(tap_processors=tap_processors))  # type: ignore[attr-defined]
-
-    def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
+    def translate(self, from_format: str, to_format: str) -> RouteBuilder:
         """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
         return self.convert(from_format=from_format, to_format=to_format)  # type: ignore[attr-defined]
 
     def dynamic_route(
         self, route_expression: Callable[[Exchange[Any]], str]
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
         return self._add(DynamicRouterProcessor(route_expression=route_expression))  # type: ignore[attr-defined]
 
@@ -146,7 +123,7 @@ class EIPMixin:
         *,
         aggregation: str = "merge",
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
         return self._add(  # type: ignore[attr-defined]
             ScatterGatherProcessor(
@@ -156,7 +133,7 @@ class EIPMixin:
             )
         )
 
-    def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
+    def split(self, expression: str, processors: list[BaseProcessor]) -> RouteBuilder:
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         return self._add(  # type: ignore[attr-defined]
             SplitterProcessor(expression=expression, processors=processors)
@@ -168,26 +145,13 @@ class EIPMixin:
         *,
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Aggregator: собирает N Exchange по correlation_key в batch."""
         return self._add(  # type: ignore[attr-defined]
             AggregatorProcessor(
                 correlation_key=correlation_key,
                 batch_size=batch_size,
                 timeout_seconds=timeout_seconds,
-            )
-        )
-
-    def recipient_list(
-        self,
-        recipients_expression: Callable[[Exchange[Any]], list[str]],
-        *,
-        parallel: bool = True,
-    ) -> "RouteBuilder":
-        """Recipient List: динамический fan-out на список маршрутов."""
-        return self._add(  # type: ignore[attr-defined]
-            RecipientListProcessor(
-                recipients_expression=recipients_expression, parallel=parallel
             )
         )
 
@@ -198,7 +162,7 @@ class EIPMixin:
         strategy: str = "round_robin",
         weights: list[float] | None = None,
         sticky_header: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Load Balancer: round_robin/random/weighted/sticky распределение."""
         return self._add(  # type: ignore[attr-defined]
             LoadBalancerProcessor(
@@ -210,18 +174,33 @@ class EIPMixin:
         )
 
     def claim_check_in(
-        self, *, store: str = "redis", ttl_seconds: int = 3600
-    ) -> "RouteBuilder":
-        """Claim Check (store): сохраняет body в Redis, body → {_claim_token: ...}."""
+        self,
+        *,
+        store: str = "redis",
+        ttl_seconds: int = 3600,
+        threshold_bytes: int = 256 * 1024,
+    ) -> RouteBuilder:
+        """Claim Check (store): сохраняет body в Redis/S3, body → {_claim_token: ...}.
+
+        Args:
+            store: "redis" | "s3" | "auto" (auto = S3 если payload >= threshold).
+            ttl_seconds: Время жизни токена.
+            threshold_bytes: Порог в байтах для переключения на S3 (по умолчанию 256 KB).
+        """
         return self._add(  # type: ignore[attr-defined]
-            ClaimCheckProcessor(mode="store", store=store, ttl_seconds=ttl_seconds)
+            ClaimCheckProcessor(
+                mode="store",
+                store=store,
+                ttl_seconds=ttl_seconds,
+                threshold_bytes=threshold_bytes,
+            )
         )
 
-    def claim_check_out(self) -> "RouteBuilder":
+    def claim_check_out(self) -> RouteBuilder:
         """Claim Check (retrieve): восстанавливает body по _claim_token."""
         return self._add(ClaimCheckProcessor(mode="retrieve"))  # type: ignore[attr-defined]
 
-    def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
+    def normalize(self, target_schema: type | None = None) -> RouteBuilder:
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         return self._add(NormalizerProcessor(target_schema=target_schema))  # type: ignore[attr-defined]
 
@@ -232,7 +211,7 @@ class EIPMixin:
         sequence_field: str = "seq",
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Resequencer: восстановление порядка сообщений по sequence_field."""
         return self._add(  # type: ignore[attr-defined]
             ResequencerProcessor(
@@ -243,27 +222,13 @@ class EIPMixin:
             )
         )
 
-    def multicast(
-        self,
-        branches: list[list[BaseProcessor]],
-        *,
-        strategy: str = "all",
-        stop_on_error: bool = False,
-    ) -> "RouteBuilder":
-        """Multicast: fan-out на flat list процессор-групп + aggregation."""
-        return self._add(  # type: ignore[attr-defined]
-            MulticastProcessor(
-                branches=branches, strategy=strategy, stop_on_error=stop_on_error
-            )
-        )
-
     def on_completion(
         self,
         processors: list[BaseProcessor],
         *,
         on_success_only: bool = False,
         on_failure_only: bool = False,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """OnCompletion — запуск callback после окончания pipeline (как finally)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -279,7 +244,7 @@ class EIPMixin:
         key_fn: Callable[[Any], Any] | None = None,
         key_field: str | None = None,
         reverse: bool = False,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Sort — сортировка list body по функции ключа или имени поля."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -291,12 +256,12 @@ class EIPMixin:
 
     # ── Transport config ──
 
-    def protocol(self, proto: ProtocolType) -> "RouteBuilder":
+    def protocol(self, proto: ProtocolType) -> RouteBuilder:
         """Привязывает маршрут к конкретному протоколу (REST/SOAP/gRPC/...)."""
         self._protocol = proto
         return self  # type: ignore[return-value]
 
-    def transport(self, config: TransportConfig) -> "RouteBuilder":
+    def transport(self, config: TransportConfig) -> RouteBuilder:
         """Настройки транспорта (endpoint, timeout, retry_count, options)."""
         self._transport_config = config
         return self  # type: ignore[return-value]
@@ -310,7 +275,7 @@ class EIPMixin:
         key_prefix: str = "dedup",
         window_seconds: int = 60,
         mode: str = "first",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Дедупликация в скользящем окне с Redis-персистентностью.
 
         Args:
@@ -334,7 +299,7 @@ class EIPMixin:
 
     def batch(
         self, *, size: int = 100, timeout_ms: int = 500, group_by: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту (S13 K3 W1).
 
         Args:
@@ -364,7 +329,7 @@ class EIPMixin:
         window_seconds: int = 60,
         dedup_mode: str = "last",
         inject_as: str = "collected_batch",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Накопление и батч-дедупликация сообщений в окне.
 
         Args:
@@ -395,7 +360,7 @@ class EIPMixin:
         strategy: str = "all",
         on_error: str = "continue",
         timeout: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Fan-out на зарегистрированные DSL-маршруты по route_id.
 
         Args:
@@ -432,7 +397,7 @@ class EIPMixin:
         silent_response: bool = False,
         sync: bool = False,
         result_property: str = "express_sync_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить сообщение в Express чат через BotX API."""
         from src.backend.dsl.engine.processors.express import ExpressSendProcessor
 
@@ -460,7 +425,7 @@ class EIPMixin:
         chat_id_from: str = "body.group_chat_id",
         body: str | None = None,
         result_property: str = "express_reply_sync_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Ответить на исходное сообщение Express (reply-thread)."""
         from src.backend.dsl.engine.processors.express import ExpressReplyProcessor
 
@@ -485,7 +450,7 @@ class EIPMixin:
         bubble: list[list[dict[str, Any]]] | None = None,
         keyboard: list[list[dict[str, Any]]] | None = None,
         status: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Редактировать ранее отправленное Express сообщение."""
         from src.backend.dsl.engine.processors.express import ExpressEditProcessor
 
@@ -507,7 +472,7 @@ class EIPMixin:
         *,
         bot: str = "main_bot",
         chat_id_from: str = "body.group_chat_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить/остановить индикатор набора в Express чате."""
         from src.backend.dsl.engine.processors.express import ExpressTypingProcessor
 
@@ -527,7 +492,7 @@ class EIPMixin:
         body: str | None = None,
         body_from: str | None = None,
         result_property: str = "express_file_sync_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
         from src.backend.dsl.engine.processors.express import ExpressSendFileProcessor
 
@@ -553,7 +518,7 @@ class EIPMixin:
         mention_id: str | None = None,
         name_from: str | None = None,
         property_name: str = "express_mentions",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
         from src.backend.dsl.engine.processors.express import ExpressMentionProcessor
 
@@ -573,7 +538,7 @@ class EIPMixin:
         bot: str = "main_bot",
         sync_id_from: str = "properties.express_sync_id",
         result_property: str = "express_event_status",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Запросить статус доставки сообщения по sync_id."""
         from src.backend.dsl.engine.processors.express import ExpressStatusProcessor
 
@@ -598,7 +563,7 @@ class EIPMixin:
         disable_notification: bool = False,
         disable_web_page_preview: bool = False,
         result_property: str = "telegram_message_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить сообщение в Telegram чат через Bot API."""
         from src.backend.dsl.engine.processors.telegram import TelegramSendProcessor
 
@@ -627,7 +592,7 @@ class EIPMixin:
         body: str | None = None,
         parse_mode: str = "HTML",
         result_property: str = "telegram_reply_message_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Ответить на сообщение Telegram (reply_to_message_id)."""
         from src.backend.dsl.engine.processors.telegram import TelegramReplyProcessor
 
@@ -653,7 +618,7 @@ class EIPMixin:
         body_from: str | None = None,
         parse_mode: str = "HTML",
         inline_keyboard: list[list[dict[str, Any]]] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Редактировать ранее отправленное Telegram-сообщение."""
         from src.backend.dsl.engine.processors.telegram import TelegramEditProcessor
 
@@ -675,7 +640,7 @@ class EIPMixin:
         *,
         bot: str = "main_bot",
         chat_id_from: str = "body.chat_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить chat-action (typing / upload_photo / …) в Telegram."""
         from src.backend.dsl.engine.processors.telegram import TelegramTypingProcessor
 
@@ -697,7 +662,7 @@ class EIPMixin:
         parse_mode: str = "HTML",
         disable_notification: bool = False,
         result_property: str = "telegram_file_message_id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Отправить файл (документ) в Telegram чат."""
         from src.backend.dsl.engine.processors.telegram import TelegramSendFileProcessor
 
@@ -725,7 +690,7 @@ class EIPMixin:
         parse_mode: str = "MarkdownV2",
         property_name: str = "telegram_mention",
         append: bool = False,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создать фрагмент-упоминание пользователя для вставки в текст."""
         from src.backend.dsl.engine.processors.telegram import TelegramMentionProcessor
 
@@ -741,7 +706,7 @@ class EIPMixin:
 
     def telegram_status(
         self, *, bot: str = "main_bot", result_property: str = "telegram_bot_profile"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Запросить профиль бота (getMe) — health-check Telegram."""
         from src.backend.dsl.engine.processors.telegram import TelegramStatusProcessor
 
@@ -756,7 +721,7 @@ class EIPMixin:
         splitter: Callable[[Exchange[Any]], Any],
         processors: list[BaseProcessor],
         aggregator: Callable[[list[Exchange[Any]]], Any],
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Composed Message Processor: split → per-part → aggregate."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.composed_message",
@@ -775,7 +740,7 @@ class EIPMixin:
         size: int = 100,
         interval_seconds: float = 10.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming tumbling-окно фиксированного размера.
 
         Если ``watermark_store`` не задан и в ``app.state`` уже
@@ -801,7 +766,7 @@ class EIPMixin:
         window_seconds: float = 10.0,
         step_seconds: float = 2.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming sliding-окно с перекрытием.
 
         ``watermark_store`` подхватывается из ``app.state`` (W14.5),
@@ -824,7 +789,7 @@ class EIPMixin:
         *,
         gap_seconds: float = 30.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming session-окно (закрывается по паузе).
 
         ``watermark_store`` подхватывается из ``app.state`` (W14.5),
@@ -846,7 +811,7 @@ class EIPMixin:
         sink: Callable[[dict[Any, list[Any]]], Any],
         *,
         window_seconds: float = 60.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Группировка по ключу (jmespath) в пределах окна."""
         return self._add(  # type: ignore[attr-defined]
             GroupByKeyProcessor(
@@ -858,7 +823,7 @@ class EIPMixin:
 
     def validate_schema(
         self, subject: str, *, schema_loader: Any = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
         return self._add(  # type: ignore[attr-defined]
             SchemaRegistryValidator(subject=subject, schema_loader=schema_loader)
@@ -870,7 +835,7 @@ class EIPMixin:
         *,
         reply_to_header: str = "reply-to",
         correlation_header: str = "x-correlation-id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Return Address: публикует ответ в очередь из reply-to заголовка."""
         return self._add(  # type: ignore[attr-defined]
             ReplyToProcessor(
@@ -887,7 +852,7 @@ class EIPMixin:
         id_header: str = "x-message-id",
         ttl_seconds: int = 86_400,
         namespace: str = "exactly-once",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Exactly-once: dedup через storage по message-id."""
         return self._add(  # type: ignore[attr-defined]
             ExactlyOnceProcessor(
@@ -898,7 +863,7 @@ class EIPMixin:
             )
         )
 
-    def durable_fanout(self, broker: Any, subscribers: list[str]) -> "RouteBuilder":
+    def durable_fanout(self, broker: Any, subscribers: list[str]) -> RouteBuilder:
         """Durable Subscriber: fan-out к persistent-подписчикам."""
         return self._add(  # type: ignore[attr-defined]
             DurableSubscriberProcessor(broker=broker, subscribers=subscribers)
@@ -906,13 +871,13 @@ class EIPMixin:
 
     def purge_channel(
         self, broker: Any, channel: str, *, dry_run: bool = True
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Очистка очереди/стрима (admin-операция)."""
         return self._add(  # type: ignore[attr-defined]
             ChannelPurgerProcessor(broker=broker, channel=channel, dry_run=dry_run)
         )
 
-    def sample(self, probability: float = 0.1) -> "RouteBuilder":
+    def sample(self, probability: float = 0.1) -> RouteBuilder:
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
         return self._add(SamplingProcessor(probability=probability))  # type: ignore[attr-defined]
 
@@ -920,7 +885,7 @@ class EIPMixin:
 
     def sse_source(
         self, url: str, event_types: list[str] | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Source-процессор для Server-Sent Events."""
         from src.backend.dsl.engine.processors.generic import SseSourceProcessor
 
@@ -928,7 +893,7 @@ class EIPMixin:
             SseSourceProcessor(url=url, event_types=event_types)
         )
 
-    def schema_validate(self, schema: dict[str, Any]) -> "RouteBuilder":
+    def schema_validate(self, schema: dict[str, Any]) -> RouteBuilder:
         """Валидация body по JSON Schema (Draft 2020-12)."""
         from src.backend.dsl.engine.processors.generic import SchemaValidateProcessor
 

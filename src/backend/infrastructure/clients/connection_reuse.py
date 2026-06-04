@@ -47,8 +47,8 @@ from typing import Any
 
 __all__ = (
     "ConnectionMetadata",
-    "PoolRegistration",
     "ConnectionReuseManager",
+    "PoolRegistration",
     "get_connection_reuse_manager",
 )
 
@@ -334,7 +334,7 @@ def _is_flag_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.connection_reuse_manager
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return False
 
 

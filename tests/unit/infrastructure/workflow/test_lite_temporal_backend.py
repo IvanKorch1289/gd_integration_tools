@@ -133,9 +133,7 @@ async def test_shutdown_swallows_env_shutdown_exception(
 
 
 @pytest.mark.asyncio
-async def test_env_property_returns_env(
-    patch_start_local: dict[str, Any],
-) -> None:
+async def test_env_property_returns_env(patch_start_local: dict[str, Any]) -> None:
     backend = await LiteTemporalBackend.connect()
     assert backend.env is patch_start_local["env"]
 

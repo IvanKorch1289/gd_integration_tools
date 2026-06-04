@@ -123,10 +123,7 @@ def test_failing_verifier_does_not_break_middleware(app: FastAPI) -> None:
             return AuthContext(AuthMethod.JWT, "u")
         return None
 
-    _add_middleware(
-        app,
-        verifiers={AuthMethod.API_KEY: crashing, AuthMethod.JWT: good},
-    )
+    _add_middleware(app, verifiers={AuthMethod.API_KEY: crashing, AuthMethod.JWT: good})
     client = TestClient(app)
     response = client.get("/api/v1/protected", headers={"X-Token": "ok"})
     assert response.status_code == 200

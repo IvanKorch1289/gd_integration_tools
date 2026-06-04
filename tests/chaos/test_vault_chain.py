@@ -18,9 +18,7 @@ from tests.chaos._chaos_helpers import (
 def test_vault_latency(toxiproxy_vault: ChaosTarget) -> None:
     """500ms latency на HashiCorp Vault HTTP API."""
     apply_latency(toxiproxy_vault, latency_ms=500)
-    elapsed = measure_latency_ms(
-        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port
-    )
+    elapsed = measure_latency_ms(toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port)
     assert elapsed < 0 or elapsed >= 400
 
 
@@ -37,6 +35,4 @@ def test_vault_data_corruption(toxiproxy_vault: ChaosTarget) -> None:
     apply_random_drop(toxiproxy_vault, toxicity=0.3)
     assert smoke_open_socket(
         toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port, timeout=2.0
-    ) or assert_connection_fails(
-        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port
-    )
+    ) or assert_connection_fails(toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port)

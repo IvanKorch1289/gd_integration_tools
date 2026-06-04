@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-__all__ = ("slugify", "mask", "redact_pii")
+__all__ = ("mask", "redact_pii", "slugify")
 
 
 def slugify(value: str) -> str:
@@ -31,5 +31,4 @@ def redact_pii(text: str) -> str:
     """Минимальный PII redactor: email + телефон + ИНН."""
     text = re.sub(r"[\w\.-]+@[\w\.-]+", "<email>", text)
     text = re.sub(r"\+?\d[\d\s()-]{7,}", "<phone>", text)
-    text = re.sub(r"\b\d{10,12}\b", "<inn>", text)
-    return text
+    return re.sub(r"\b\d{10,12}\b", "<inn>", text)

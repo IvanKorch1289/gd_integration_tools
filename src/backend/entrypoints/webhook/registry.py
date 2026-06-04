@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-__all__ = ("WebhookSubscription", "WebhookRegistry", "webhook_registry")
+__all__ = ("WebhookRegistry", "WebhookSubscription", "webhook_registry")
 
 logger = logging.getLogger(__name__)
 

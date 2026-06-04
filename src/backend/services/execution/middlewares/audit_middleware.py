@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from src.backend.core.interfaces.action_dispatcher import (
     ActionResult,

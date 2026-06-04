@@ -71,6 +71,7 @@ class TestSprints1517FlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         for cls in ("Sprints1517Flags", "Sprints1821Flags", "Sprints2427Flags"):
             assert cls in mro_names, f"{cls} missing в MRO"

@@ -40,9 +40,7 @@ def adapter_with_mock_cluster(monkeypatch: pytest.MonkeyPatch) -> tuple:
 
 
 @pytest.mark.asyncio
-async def test_mget_batch_uses_native_mget(
-    adapter_with_mock_cluster: tuple,
-) -> None:
+async def test_mget_batch_uses_native_mget(adapter_with_mock_cluster: tuple) -> None:
     adapter, fake = adapter_with_mock_cluster
     result = await adapter.mget_batch(["k1", "k2", "k3"])
     fake.mget.assert_awaited_once_with(["k1", "k2", "k3"])

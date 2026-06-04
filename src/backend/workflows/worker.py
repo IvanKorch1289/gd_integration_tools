@@ -108,12 +108,7 @@ class NoOpStepExecutor:
     через ``WORKFLOW_WORKER_EXECUTOR=noop``.
     """
 
-    async def execute_next(
-        self,
-        *,
-        instance: Any,
-        state: Any,  # noqa: ARG002
-    ) -> Any:
+    async def execute_next(self, *, instance: Any, state: Any) -> Any:
         # Импорт отложен чтобы CLI --help не тянул БД/модели.
         from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 
@@ -156,7 +151,7 @@ async def _bootstrap() -> None:
         from src.backend.infrastructure.registry import ConnectorRegistry
 
         await ConnectorRegistry.instance().start_all()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("ConnectorRegistry.start_all failed (продолжаем): %s", exc)
 
 
@@ -166,7 +161,7 @@ async def _shutdown_connectors() -> None:
         from src.backend.infrastructure.registry import ConnectorRegistry
 
         await ConnectorRegistry.instance().stop_all()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("ConnectorRegistry.stop_all failed: %s", exc)
 
 
@@ -186,7 +181,7 @@ async def _readiness_check() -> bool:
         async with main_session_manager.create_session() as session:
             await session.execute(text("SELECT 1"))
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.debug("readiness check failed: %s", exc)
         return False
 
@@ -207,7 +202,7 @@ def _resolve_listener_dsn() -> str | None:
         if url.startswith("postgresql+psycopg://"):
             return "postgresql://" + url[len("postgresql+psycopg://") :]
         return url
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("cannot resolve listener DSN: %s", exc)
         return None
 
@@ -281,11 +276,11 @@ async def _run_worker(
             await asyncio.wait_for(runner.stop(), timeout=grace_seconds)
         except asyncio.TimeoutError:
             _logger.warning("runner.stop() timed out after %ds", grace_seconds)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("runner.stop() error: %s", exc)
         try:
             await probes.stop()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("probes.stop() error: %s", exc)
         await _shutdown_connectors()
         _logger.info("worker shutdown complete")
@@ -374,7 +369,7 @@ def status():
     logging.basicConfig(level=logging.WARNING)
     try:
         asyncio.run(_print_status())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         typer.echo(f"status error: {exc}", err=True)
         raise typer.Exit(1) from exc
 

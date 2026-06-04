@@ -54,9 +54,7 @@ class TestVersionedRoute:
 
     def test_is_deprecated(self) -> None:
         vr = VersionedRoute(
-            base_id="orders",
-            versions={"v1": "orders.v1"},
-            deprecated={"v1"},
+            base_id="orders", versions={"v1": "orders.v1"}, deprecated={"v1"}
         )
         assert vr.is_deprecated("v1") is True
         assert vr.is_deprecated("v2") is False

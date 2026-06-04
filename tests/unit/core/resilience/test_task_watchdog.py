@@ -115,7 +115,6 @@ async def test_tick_keeps_alive_tasks() -> None:
         "src.backend.core.config.features.feature_flags.task_watchdog_deadline",
         new=True,
     ):
-
         # Первая задача — очень короткий deadline (истечёт).
         watchdog.register(task_expire, deadline_seconds=0.001, name="expire")
         # Вторая задача — большой deadline (останется).

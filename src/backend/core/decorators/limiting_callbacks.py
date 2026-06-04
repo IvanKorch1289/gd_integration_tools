@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request, Response, status
 
-__all__ = ("default_identifier", "default_callback")
+__all__ = ("default_callback", "default_identifier")
 
 
 async def default_identifier(request: Request) -> str:

@@ -96,7 +96,7 @@ async def _register_health_checks() -> None:
     aggregator.register("redis", _redis_health)
     aggregator.register("database", _db_health)
     aggregator.register("s3", _s3_health)
-    get_log_manager().application_logger.info(
+    get_log_manager().application_logger.info(  # type: ignore[attr-defined]
         "Health checks registered: redis, database, s3"
     )
 
@@ -153,7 +153,7 @@ async def _init_workflow_audit_sink() -> None:
         set_workflow_audit_sink,
     )
 
-    app_logger = get_log_manager().application_logger
+    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
     try:
         client = get_clickhouse_client()
         migrations_dir = (
@@ -167,7 +167,7 @@ async def _init_workflow_audit_sink() -> None:
         sink = WorkflowAuditSink(writer=writer)
         set_workflow_audit_sink(sink)
         app_logger.info("WorkflowAuditSink инициализирован")
-    except Exception as exc:  # noqa: BLE001 — best-effort startup
+    except Exception as exc:
         app_logger.warning("WorkflowAuditSink init skipped: %s", str(exc)[:200])
 
 
@@ -186,7 +186,7 @@ def _register_default_degradation_features() -> None:
     )
 
     registry = get_graceful_degradation_registry()
-    app_logger = get_log_manager().application_logger
+    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
 
     async def _unsupported_full(*_: Any, **__: Any) -> None:
         # Заглушка — owner feature'а обязан явно зарегистрировать
@@ -257,7 +257,7 @@ async def _warmup_connection_pools() -> None:
     if _redis_enabled():
         try:
             redis_cache_client = await get_redis_client().get_client("cache")
-        except Exception as _:  # noqa: BLE001 — warmup best-effort
+        except Exception as _:
             redis_cache_client = None
 
     clickhouse_client: Any = None
@@ -318,11 +318,7 @@ ending_operations: list[OperationItem] = [
     ("scheduler", lambda: get_scheduler_manager().stop(), None),
     ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
     ("workflow_audit_sink", _close_workflow_audit_sink, _clickhouse_enabled),
-    (
-        "clickhouse_client",
-        lambda: get_clickhouse_client().aclose(),
-        _clickhouse_enabled,
-    ),
+    ("clickhouse_client", lambda: get_clickhouse_client().close(), _clickhouse_enabled),
     ("s3_client", lambda: get_s3_client().close(), _s3_enabled),
     ("db_async_pool_external", lambda: get_external_db_registry().close_all(), None),
     ("db_async_pool_main", lambda: get_db_initializer().close(), None),
@@ -344,7 +340,7 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
     - при первой критической ошибке выполнение прерывается;
     - подробности ошибки логируются в app_logger.
     """
-    app_logger = get_log_manager().application_logger
+    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
     for name, operation, enabled_check in components:
         if enabled_check is not None and not enabled_check():
             app_logger.info(

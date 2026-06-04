@@ -17,8 +17,9 @@ env-based callback (``on_refresh``), теперь поддерживаются:
 import asyncio
 import logging
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from os import getenv
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 
@@ -196,7 +197,7 @@ class VaultSecretRefresher:
                     )
                     await self._notify_path_callbacks(path, secrets_data)
                 self._tracked_paths[path] = current_version
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error(
                     "vault path check failed", extra={"path": path, "error": str(exc)}
                 )
@@ -210,7 +211,7 @@ class VaultSecretRefresher:
                     await cb(path, new_secrets)
                 else:
                     cb(path, new_secrets)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error(
                     "vault rotation callback error",
                     extra={"path": path, "error": str(exc)},
@@ -221,5 +222,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("vault_refresher", VaultSecretRefresher)
-def get_vault_refresher() -> VaultSecretRefresher:
+def get_vault_refresher() -> VaultSecretRefresher:  # type: ignore[empty-body]
     """Возвращает VaultSecretRefresher из app.state или lazy-init fallback."""

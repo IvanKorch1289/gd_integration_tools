@@ -40,8 +40,7 @@ ALLOWLIST_PATH = PROJECT_ROOT / "tools" / "check_docstrings_allowlist.txt"
 
 # Запрещённые "пустые" docstring (case-insensitive).
 _FORBIDDEN_PATTERN = re.compile(
-    r"^\s*(todo|tbd|заглушка|placeholder|stub)\.?\s*$",
-    re.IGNORECASE,
+    r"^\s*(todo|tbd|заглушка|placeholder|stub)\.?\s*$", re.IGNORECASE
 )
 
 
@@ -64,7 +63,9 @@ def _walk_targets(roots: Iterable[Path]) -> list[Path]:
     """Собирает все ``*.py`` из переданных путей (всегда абсолютные)."""
     files: list[Path] = []
     for raw in roots:
-        root = (PROJECT_ROOT / raw).resolve() if not raw.is_absolute() else raw.resolve()
+        root = (
+            (PROJECT_ROOT / raw).resolve() if not raw.is_absolute() else raw.resolve()
+        )
         if root.is_file() and root.suffix == ".py":
             files.append(root)
         elif root.is_dir():
@@ -85,9 +86,7 @@ def _format_path(file: Path) -> str:
         return str(file)
 
 
-def _check_node(
-    file: Path, node: ast.AST, parent: str = ""
-) -> list[str]:
+def _check_node(file: Path, node: ast.AST, parent: str = "") -> list[str]:
     """Проверяет ноду на наличие документированного docstring (recursive)."""
     violations: list[str] = []
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
@@ -96,8 +95,7 @@ def _check_node(
             if _is_forbidden_docstring(doc):
                 qualified = f"{parent}.{node.name}" if parent else node.name
                 violations.append(
-                    f"{_format_path(file)}:{node.lineno}:"
-                    f"{node.col_offset} {qualified}"
+                    f"{_format_path(file)}:{node.lineno}:{node.col_offset} {qualified}"
                 )
         # Углубляемся в тело класса (методы), но не в функции (вложенные функции
         # обычно — приватные хелперы, проверяемые отдельно через _is_public_name).
@@ -168,7 +166,9 @@ def _collect_files_from_args(
         for entry in files_args:
             if entry == "-":
                 raw_files.extend(
-                    line.strip() for line in sys.stdin.read().splitlines() if line.strip()
+                    line.strip()
+                    for line in sys.stdin.read().splitlines()
+                    if line.strip()
                 )
             else:
                 raw_files.append(entry)

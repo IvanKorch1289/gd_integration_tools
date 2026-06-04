@@ -23,8 +23,9 @@ from __future__ import annotations
 
 import functools
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from tenacity import (
     AsyncRetrying,

@@ -31,19 +31,19 @@ from src.backend.infrastructure.cache.validator import (
 )
 
 __all__ = (
-    "cache_config_registry",
+    "DEFAULT_UNSCOPED_PREFIX",
     "CacheBackendProtocol",
     "CacheConfigEntry",
     "CacheConfigRegistry",
     "CacheDuplicationError",
     "CacheInvalidator",
     "CacheLayerValidator",
-    "DEFAULT_UNSCOPED_PREFIX",
     "InMemoryCacheBackend",
+    "KeyDBBackend",
     "MemoryBackend",
     "RedisBackend",
-    "KeyDBBackend",
     "TenantCacheBackend",
+    "cache_config_registry",
     "create_cache_backend",
     "get_cache_invalidator",
     "set_cache_invalidator",

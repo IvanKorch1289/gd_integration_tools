@@ -82,7 +82,9 @@ def test_invalidate_rejects_sync_function() -> None:
 
 
 @pytest.mark.asyncio
-async def test_invalidate_calls_redis_delete_pattern(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_invalidate_calls_redis_delete_pattern(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     captured: list[str] = []
 
     class FakeRedis:
@@ -103,7 +105,9 @@ async def test_invalidate_calls_redis_delete_pattern(monkeypatch: pytest.MonkeyP
 
 
 @pytest.mark.asyncio
-async def test_invalidate_swallows_redis_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_invalidate_swallows_redis_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class FailingRedis:
         async def cache_delete_pattern(self, pattern: str) -> None:
             raise RuntimeError("redis down")

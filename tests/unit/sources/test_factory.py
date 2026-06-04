@@ -12,9 +12,7 @@ from src.backend.infrastructure.sources.factory import build_source
 
 
 def test_spec_validates_known_kind() -> None:
-    spec = SourceSpec(
-        id="x", kind="webhook", action="x.y", config={"path": "/wh"}
-    )
+    spec = SourceSpec(id="x", kind="webhook", action="x.y", config={"path": "/wh"})
     assert spec.kind is SourceKind.WEBHOOK
     assert spec.idempotency is True
 
@@ -49,14 +47,8 @@ def test_specfile_empty() -> None:
                 "request_class": "Req",
             },
         ),
-        (
-            "mq",
-            {"transport": "redis_streams", "topic": "t1"},
-        ),
-        (
-            "cdc",
-            {"dsn": "postgres://x", "slot_name": "s1"},
-        ),
+        ("mq", {"transport": "redis_streams", "topic": "t1"}),
+        ("cdc", {"dsn": "postgres://x", "slot_name": "s1"}),
     ],
 )
 def test_factory_constructs_all_kinds(kind: str, config: dict) -> None:

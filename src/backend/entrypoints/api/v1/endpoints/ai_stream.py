@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import orjson
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -45,7 +46,7 @@ class StreamRequest(BaseModel):
 
 def _sse_event(event: str, data: dict[str, Any]) -> bytes:
     payload = orjson.dumps(data).decode("utf-8")
-    return f"event: {event}\ndata: {payload}\n\n".encode("utf-8")
+    return f"event: {event}\ndata: {payload}\n\n".encode()
 
 
 async def _generate(request: Request, payload: StreamRequest) -> AsyncIterator[bytes]:
@@ -85,7 +86,7 @@ async def _generate(request: Request, payload: StreamRequest) -> AsyncIterator[b
     except asyncio.CancelledError:
         yield _sse_event("error", {"error": "cancelled"})
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("ai/llm/stream error: %s", exc)
         yield _sse_event("error", {"error": str(exc)})
 

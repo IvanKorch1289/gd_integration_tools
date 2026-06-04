@@ -83,7 +83,7 @@ def build_resilience_health_check(
     async def _check(*, mode: str = "fast") -> dict[str, Any]:
         # ``mode`` принимается, но игнорируется: данные coordinator-а
         # предсчитаны (state-machine purgatory), нет смысла различать.
-        from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+        from src.backend.infrastructure.resilience.coordinator import (
             get_resilience_coordinator,
         )
 
@@ -112,7 +112,7 @@ def register_resilience_health_checks(
     ``health_aggregator`` принимается типа Any, чтобы избежать
     циклических импортов модулей ``application/`` ↔ ``resilience/``.
     """
-    from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+    from src.backend.infrastructure.resilience.coordinator import (
         get_resilience_coordinator,
     )
 
@@ -128,7 +128,7 @@ def resilience_components_report(
     coordinator: ResilienceCoordinator | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Снимок состояния всех компонентов (для /components?mode=deep)."""
-    from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401
+    from src.backend.infrastructure.resilience.coordinator import (
         get_resilience_coordinator,
     )
 

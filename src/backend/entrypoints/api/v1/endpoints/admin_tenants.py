@@ -52,7 +52,7 @@ async def _query_audit_safe(
     try:
         log = get_audit_log()
         rows = await log.query(who=who, entity_type=entity_type, limit=limit)
-    except Exception as exc:  # noqa: BLE001 — ClickHouse offline / network
+    except Exception as exc:
         logger.warning("audit-log query failed: %s", exc)
         return None
     return rows

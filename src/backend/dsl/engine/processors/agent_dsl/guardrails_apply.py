@@ -95,9 +95,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         self.on_block = on_block
         self.categories = list(categories) if categories else None
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         text = self._extract_text(exchange)
         if not text:
@@ -112,7 +110,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
 
         try:
             result = await runtime.classify(text, categories=self.categories)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("%s: classify failed (%s) — pass-through", self.name, exc)
             return
 
@@ -154,7 +152,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
             return
         # on_block == "warn" — verdict уже записан, pipeline продолжается.
 
-    def _extract_text(self, exchange: "Exchange[Any]") -> str:
+    def _extract_text(self, exchange: Exchange[Any]) -> str:
         """Достать текст из exchange по ``source_property`` (dot-path)."""
         parts = self.source_property.split(".")
         head = parts[0]
@@ -192,7 +190,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
                 runtime = container.resolve_optional("llama_guard_runtime")
                 if runtime is not None:
                     return runtime
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 

@@ -9,7 +9,7 @@ from typing import Any
 # httpx, что покрывает все non-deprecated клиенты проекта.
 import httpx
 
-__all__ = ("consts", "Constants")
+__all__ = ("Constants", "consts")
 
 
 @dataclass

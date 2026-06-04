@@ -83,7 +83,7 @@ class WorkflowFacade:
                 tenant_id=None,
                 payload={"caller": caller, **(payload or {})},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "workflow_audit.emit_failed",
                 extra={

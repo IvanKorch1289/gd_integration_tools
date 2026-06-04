@@ -10,9 +10,7 @@ import pytest
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.streaming_llm import (
-    TokenStreamLLMProcessor,
-)
+from src.backend.dsl.engine.processors.streaming_llm import TokenStreamLLMProcessor
 from src.backend.dsl.engine.processors.streaming_llm_publishers import SSEPublisher
 
 

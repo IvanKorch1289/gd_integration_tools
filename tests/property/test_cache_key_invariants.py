@@ -21,14 +21,12 @@ import pytest
 st_json_value = st.one_of(
     st.none(),
     st.booleans(),
-    st.integers(min_value=-10**9, max_value=10**9),
+    st.integers(min_value=-(10**9), max_value=10**9),
     st.text(max_size=256),
     st.floats(allow_nan=False, allow_infinity=False),
     st.lists(st.text(max_size=32), max_size=8),
     st.dictionaries(
-        keys=st.text(min_size=1, max_size=16),
-        values=st.text(max_size=32),
-        max_size=4,
+        keys=st.text(min_size=1, max_size=16), values=st.text(max_size=32), max_size=4
     ),
 )
 
@@ -37,10 +35,7 @@ class TestCacheBasicInvariants:
     """Fundamental cache invariants: get-after-set, no phantom writes."""
 
     @settings(max_examples=50, deadline=None)
-    @given(
-        key=st.text(min_size=1, max_size=64),
-        value=st_json_value,
-    )
+    @given(key=st.text(min_size=1, max_size=64), value=st_json_value)
     @pytest.mark.asyncio
     async def test_set_then_get_returns_value(self, key: str, value: object) -> None:
         """Setting a value and immediately getting it should return the same value."""
@@ -60,9 +55,7 @@ class TestCacheBasicInvariants:
         )
 
     @settings(max_examples=30, deadline=None)
-    @given(
-        key=st.text(min_size=1, max_size=64),
-    )
+    @given(key=st.text(min_size=1, max_size=64))
     @pytest.mark.asyncio
     async def test_get_without_set_returns_none(self, key: str) -> None:
         """Getting a key that was never set returns None."""
@@ -80,10 +73,7 @@ class TestCacheBasicInvariants:
         )
 
     @settings(max_examples=20, deadline=None)
-    @given(
-        key=st.text(min_size=1, max_size=64),
-        value=st_json_value,
-    )
+    @given(key=st.text(min_size=1, max_size=64), value=st_json_value)
     @pytest.mark.asyncio
     async def test_delete_then_get_returns_none(self, key: str, value: object) -> None:
         """Deleting a key and getting it should return None."""
@@ -139,12 +129,16 @@ class TestCacheEnvelopeRoundTrip:
         await cache.set(key, json_bytes)
 
         retrieved = await cache.get(key)
-        assert retrieved is not None, f"[CacheJSON] get({key!r}) returned None after set"
+        assert retrieved is not None, (
+            f"[CacheJSON] get({key!r}) returned None after set"
+        )
 
         # Deserialize
         if isinstance(retrieved, bytes):
             retrieved = retrieved.decode("utf-8")
-        roundtripped = json.loads(retrieved) if isinstance(retrieved, str) else retrieved
+        roundtripped = (
+            json.loads(retrieved) if isinstance(retrieved, str) else retrieved
+        )
 
         assert roundtripped == value, (
             f"[CacheJSON RoundTrip] original={value!r} → json_bytes={json_bytes!r} "

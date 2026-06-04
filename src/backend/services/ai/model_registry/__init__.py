@@ -22,9 +22,9 @@ from src.backend.services.ai.model_registry.local_fs_backend import LocalFSModel
 from src.backend.services.ai.model_registry.mlflow_backend import MlflowModelRegistry
 
 __all__ = (
-    "ModelRecord",
-    "ModelRegistryAdapter",
-    "MlflowModelRegistry",
     "HuggingFaceModelRegistry",
     "LocalFSModelRegistry",
+    "MlflowModelRegistry",
+    "ModelRecord",
+    "ModelRegistryAdapter",
 )

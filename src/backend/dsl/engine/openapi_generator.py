@@ -72,10 +72,7 @@ def _build_paths(pipeline: Pipeline, base_url: str) -> dict[str, Any]:
     """Build the paths section of the OpenAPI spec."""
     paths: dict[str, Any] = {}
 
-    if pipeline.protocol is None:
-        protocol = ProtocolType.rest
-    else:
-        protocol = pipeline.protocol
+    protocol = ProtocolType.rest if pipeline.protocol is None else pipeline.protocol
 
     # Determine HTTP method and path from source or protocol
     path, method = _infer_path_and_method(pipeline, protocol)
@@ -95,16 +92,15 @@ def _infer_path_and_method(
     # Default to /{route_id} with POST for REST
     if protocol == ProtocolType.rest:
         return f"/{pipeline.route_id}", "post"
-    elif protocol == ProtocolType.graphql:
+    if protocol == ProtocolType.graphql:
         return f"/{pipeline.route_id}/graphql", "post"
-    elif protocol == ProtocolType.websocket:
+    if protocol == ProtocolType.websocket:
         return f"/{pipeline.route_id}/ws", "ws"
-    elif protocol == ProtocolType.sse:
+    if protocol == ProtocolType.sse:
         return f"/{pipeline.route_id}/stream", "get"
-    elif protocol == ProtocolType.grpc:
+    if protocol == ProtocolType.grpc:
         return f"/{pipeline.route_id}", "post"
-    else:
-        return f"/{pipeline.route_id}", "post"
+    return f"/{pipeline.route_id}", "post"
 
 
 def _build_operation(pipeline: Pipeline) -> dict[str, Any]:

@@ -80,12 +80,7 @@ def test_base_yml_has_pool_pre_ping() -> None:
 
 @pytest.mark.parametrize(
     ("profile", "expected_pool_size", "expected_max_overflow"),
-    [
-        ("dev_light", 3, 2),
-        ("dev", 5, 5),
-        ("staging", 15, 10),
-        ("prod", 30, 20),
-    ],
+    [("dev_light", 3, 2), ("dev", 5, 5), ("staging", 15, 10), ("prod", 30, 20)],
 )
 def test_per_environment_pool_sizing_yaml(
     profile: str, expected_pool_size: int, expected_max_overflow: int

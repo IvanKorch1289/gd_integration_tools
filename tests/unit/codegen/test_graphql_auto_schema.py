@@ -23,9 +23,7 @@ from src.backend.entrypoints.graphql.auto_schema import (
 def _meta(action: str, side_effect: str = "read") -> ActionMetadata:
     """Хелпер — создать ActionMetadata."""
     return ActionMetadata(
-        action=action,
-        side_effect=side_effect,
-        transports=("graphql",),
+        action=action, side_effect=side_effect, transports=("graphql",)
     )
 
 

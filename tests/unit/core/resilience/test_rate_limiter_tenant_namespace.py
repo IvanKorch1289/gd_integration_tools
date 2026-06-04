@@ -67,9 +67,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
 
     fake = _FakeRedis()
     real_module = sys.modules.get("src.backend.infrastructure.clients.storage.redis")
-    fake_module = types.ModuleType(
-        "src.backend.infrastructure.clients.storage.redis"
-    )
+    fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
     fake_module.redis_client = fake  # type: ignore[attr-defined]
     sys.modules["src.backend.infrastructure.clients.storage.redis"] = fake_module
     yield fake
@@ -120,9 +118,7 @@ def test_rate_limit_key_without_tenant_namespace(fake_redis: _FakeRedis) -> None
 def test_rate_limit_key_with_tenant_namespace(fake_redis: _FakeRedis) -> None:
     """``tenant_aware=True`` + контекст — ключ с ``tenant:<id>``."""
     limiter = RedisRateLimiter()
-    policy = RateLimit(
-        limit=100, window_seconds=60, key_prefix="rl", tenant_aware=True
-    )
+    policy = RateLimit(limit=100, window_seconds=60, key_prefix="rl", tenant_aware=True)
     with tenant_scope(TenantContext(tenant_id="acme")):
         asyncio.run(limiter.check("user-1", policy))
     keys = list(fake_redis.store.keys())
@@ -133,9 +129,7 @@ def test_rate_limit_key_with_tenant_namespace(fake_redis: _FakeRedis) -> None:
 def test_rate_limit_isolation_between_tenants(fake_redis: _FakeRedis) -> None:
     """Два тенанта с одинаковым identifier не делят счётчик."""
     limiter = RedisRateLimiter()
-    policy = RateLimit(
-        limit=5, window_seconds=60, key_prefix="rl", tenant_aware=True
-    )
+    policy = RateLimit(limit=5, window_seconds=60, key_prefix="rl", tenant_aware=True)
 
     async def hit_for(tenant: str, times: int) -> None:
         with tenant_scope(TenantContext(tenant_id=tenant)):
@@ -157,9 +151,7 @@ def test_rate_limit_isolation_between_tenants(fake_redis: _FakeRedis) -> None:
 def test_rate_limit_exceeded_per_tenant(fake_redis: _FakeRedis) -> None:
     """``RateLimitExceeded`` бросается per-tenant, не глобально."""
     limiter = RedisRateLimiter()
-    policy = RateLimit(
-        limit=2, window_seconds=60, key_prefix="rl", tenant_aware=True
-    )
+    policy = RateLimit(limit=2, window_seconds=60, key_prefix="rl", tenant_aware=True)
 
     async def scenario() -> None:
         # acme: 2 ok, 3-й бросает
@@ -179,9 +171,7 @@ def test_rate_limit_exceeded_per_tenant(fake_redis: _FakeRedis) -> None:
 def test_fallback_to_default_when_no_context(fake_redis: _FakeRedis) -> None:
     """``tenant_aware=True`` без активного контекста — namespace ``_default_``."""
     limiter = RedisRateLimiter()
-    policy = RateLimit(
-        limit=10, window_seconds=60, key_prefix="rl", tenant_aware=True
-    )
+    policy = RateLimit(limit=10, window_seconds=60, key_prefix="rl", tenant_aware=True)
     asyncio.run(limiter.check("anon-1", policy))
     keys = list(fake_redis.store.keys())
     assert len(keys) == 1

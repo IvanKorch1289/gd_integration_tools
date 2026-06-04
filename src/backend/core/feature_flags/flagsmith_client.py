@@ -98,7 +98,7 @@ class FlagsmithClient:
         client = self._get_client()
         try:
             resp = await client.get("flags/")
-        except Exception as exc:  # noqa: BLE001 — best-effort с fallback
+        except Exception as exc:
             _logger.warning("Flagsmith get_environment_flags failed: %s", exc)
             raise FlagsmithUnavailableError(str(exc)) from exc
         if resp.status_code != 200:
@@ -132,7 +132,7 @@ class FlagsmithClient:
         _ = traits  # traits-aware запрос требует POST; зарезервировано.
         try:
             resp = await client.get("identities/", params=params)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("Flagsmith get_identity_flags failed: %s", exc)
             raise FlagsmithUnavailableError(str(exc)) from exc
         if resp.status_code != 200:
@@ -152,7 +152,7 @@ class FlagsmithClient:
             return
         try:
             await self._client.aclose()
-        except Exception as _:  # noqa: BLE001 — best-effort shutdown
+        except Exception as _:
             _logger.exception("FlagsmithClient close failed")
         self._client = None
 
@@ -170,9 +170,7 @@ class FlagsmithClient:
         """
         if self._client is not None:
             return self._client
-        from src.backend.core.net.migration_helper import (  # noqa: PLC0415
-            make_http_client,
-        )
+        from src.backend.core.net.migration_helper import make_http_client
 
         self._client = make_http_client(
             base_url=self.api_url,
@@ -180,7 +178,7 @@ class FlagsmithClient:
             timeout=self.timeout_seconds,
             plugin="core/feature_flags/flagsmith",
         )
-        return self._client
+        return self._client  # type: ignore[return-value]
 
 
 def _parse_flag(item: dict[str, Any]) -> FlagsmithFlag:

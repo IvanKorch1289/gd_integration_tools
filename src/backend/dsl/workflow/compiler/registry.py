@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Iterable
+from collections.abc import Iterable
 
 from src.backend.dsl.workflow.compiler.emitter import CompiledWorkflow, compile_workflow
 from src.backend.dsl.workflow.spec import WorkflowDeclaration

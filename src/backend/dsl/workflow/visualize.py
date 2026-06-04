@@ -32,6 +32,7 @@ Color-mapping (для diff):
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from typing import Literal
 
@@ -176,7 +177,7 @@ def to_graphviz(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None)
             f'  {node_id} [label="{_escape_dot(label)}", shape={shape}, color={color}];'
         )
 
-    for prev, nxt in zip(node_ids, node_ids[1:]):
+    for prev, nxt in itertools.pairwise(node_ids):
         lines.append(f"  {prev} -> {nxt};")
 
     lines.append("}")
@@ -206,7 +207,7 @@ def to_mermaid(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None) 
         shape = _mermaid_shape(step.type, label)
         lines.append(f"    {node_id}{shape}")
 
-    for prev, nxt in zip(node_ids, node_ids[1:]):
+    for prev, nxt in itertools.pairwise(node_ids):
         lines.append(f"    {prev} --> {nxt}")
 
     classes_used: set[str] = set()

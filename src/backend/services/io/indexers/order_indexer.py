@@ -47,7 +47,7 @@ class OrderIndexer:
     async def ensure_index(self) -> None:
         try:
             await self._search.ensure_index(self._index, mappings=_ORDERS_MAPPINGS)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("OrderIndexer.ensure_index failed: %s", exc)
 
     async def index_one(self, order: Any) -> None:
@@ -55,13 +55,13 @@ class OrderIndexer:
         try:
             doc = self._order_to_doc(order)
             await self._search.index_document(self._index, doc, doc_id=str(doc["id"]))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("OrderIndexer.index_one failed: %s", exc)
 
     async def delete_one(self, order_id: Any) -> None:
         try:
             await self._search.delete_document(self._index, str(order_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("OrderIndexer.delete_one failed: %s", exc)
 
     async def bulk_reindex(self, orders: list[Any]) -> int:
@@ -72,7 +72,7 @@ class OrderIndexer:
             docs = [self._order_to_doc(o) for o in orders]
             result = await self._search.bulk_index(self._index, docs, id_field="id")
             return int(result.get("indexed", 0))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("OrderIndexer.bulk_reindex failed: %s", exc)
             return 0
 
@@ -114,5 +114,5 @@ def _factory() -> OrderIndexer:
 
 
 @app_state_singleton("order_indexer", factory=_factory)
-def get_order_indexer() -> OrderIndexer:
+def get_order_indexer() -> OrderIndexer:  # type: ignore[empty-body]
     """Singleton ``OrderIndexer``."""

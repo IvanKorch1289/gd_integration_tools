@@ -84,7 +84,7 @@ async def run_once(*, batch_size: int = 100) -> dict[str, int]:
             await _publish(msg.topic, msg.payload, msg.headers or {})
             await outbox_repo.mark_sent(msg.id)
             stats["sent"] += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Outbox publish failed (id=%s): %s", msg.id, exc)
             await outbox_repo.mark_failed(msg.id, str(exc))
             stats["failed"] += 1

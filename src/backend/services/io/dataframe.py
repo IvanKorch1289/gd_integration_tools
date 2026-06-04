@@ -15,18 +15,19 @@ Usage::
 
 import io
 import logging
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import polars as pl
 
 __all__ = (
+    "DataFrame",
+    "from_records",
     "read_csv",
     "read_excel",
+    "to_records",
     "write_csv",
     "write_excel",
-    "to_records",
-    "from_records",
-    "DataFrame",
 )
 
 logger = logging.getLogger("services.dataframe")

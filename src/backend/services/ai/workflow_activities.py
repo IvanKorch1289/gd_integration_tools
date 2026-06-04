@@ -97,7 +97,7 @@ def _resolve_gateway() -> Any:
         from src.backend.services.ai.gateway.client import get_litellm_gateway
 
         return get_litellm_gateway()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise RuntimeError(
             "LiteLLMGateway недоступен (lifespan не поднят либо модуль "
             "отсутствует). Sprint 4 Wave C: lazy-resolve provoked."
@@ -137,7 +137,7 @@ async def _execute_llm_call(
             result = heartbeat()
             if hasattr(result, "__await__"):
                 await result
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _logger.exception("Heartbeat callback raised; suppressing")
 
     # Унифицированное извлечение content / usage из response.
@@ -150,7 +150,7 @@ async def _execute_llm_call(
     cost_usd = 0.0
     try:
         cost_usd = float(await gateway.acost_estimate(response))
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         _logger.debug("acost_estimate недоступен; cost=0.0")
 
     structured: dict[str, Any] | None = None
@@ -198,7 +198,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
         from temporalio import activity as temporal_activity
 
         heartbeat = temporal_activity.heartbeat
-    except Exception:  # noqa: BLE001, S110 — lazy temporalio import; offline fallback
+    except Exception:
         pass
 
     return await _execute_llm_call(input_, heartbeat=heartbeat)
@@ -209,7 +209,7 @@ try:
     from temporalio import activity as _temporal_activity_mod
 
     llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)
-except Exception:  # noqa: BLE001, S110 — temporalio extra может быть отключён
+except Exception:
     pass
 
 
@@ -229,7 +229,7 @@ def register_llm_activity(worker: Any) -> bool:
         from src.backend.core.config.features import feature_flags
 
         enabled = bool(feature_flags.ai_workflow_activity_enabled)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         enabled = False
 
     if not enabled:

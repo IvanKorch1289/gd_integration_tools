@@ -36,7 +36,7 @@ def _create_emit_ai_invocation_event() -> None:
             from src.backend.core.config.features import feature_flags
 
             enabled = bool(feature_flags.ai_audit_unified_enabled)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             enabled = False
 
         if enabled:
@@ -53,13 +53,13 @@ def _create_emit_ai_invocation_event() -> None:
                     )
 
                     langfuse = LangFuseCallbackV3()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.debug("LangFuseCallbackV3 init failed: %s", exc)
 
                 _unified_sink = UnifiedAISink(
                     audit_service=audit, langfuse_callback=langfuse, enabled=True
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("UnifiedAISink: init failed: %s", exc)
                 _unified_sink = UnifiedAISink(enabled=False)
         else:
@@ -76,7 +76,7 @@ def _create_emit_ai_invocation_event() -> None:
             registry.create_task(
                 sink.emit_event(event), name=f"audit.emit.{event.event_type.value}"
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("emit_ai_invocation_event: failed to schedule: %s", exc)
 
     # Регистрируем в core/ — после этого core/ai/gateway может вызывать

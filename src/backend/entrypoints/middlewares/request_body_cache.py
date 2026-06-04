@@ -89,7 +89,7 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
 
         try:
             body = await request.body()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("body_cache: failed to read body: %s", exc)
             return await call_next(request)
 
@@ -119,7 +119,7 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
             return None
         try:
             return int(raw)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
     @staticmethod

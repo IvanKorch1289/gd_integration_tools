@@ -15,9 +15,7 @@ from src.backend.infrastructure.clients.storage.clickhouse_query_builder import 
 
 
 def test_simple_select() -> None:
-    sql, params = (
-        ClickHouseQueryBuilder().select("id", "name").from_("users").build()
-    )
+    sql, params = ClickHouseQueryBuilder().select("id", "name").from_("users").build()
     assert sql == "SELECT id, name FROM users"
     assert params == []
 
@@ -113,9 +111,7 @@ def test_final_modifier() -> None:
 
 
 def test_sample_modifier() -> None:
-    sql, _ = (
-        ClickHouseQueryBuilder().select("*").from_("logs").sample(0.1).build()
-    )
+    sql, _ = ClickHouseQueryBuilder().select("*").from_("logs").sample(0.1).build()
     assert "SAMPLE 0.1" in sql
 
 
@@ -140,13 +136,14 @@ def test_with_cte_subquery() -> None:
         .from_("user_counts")
         .build()
     )
-    assert "WITH user_counts AS (SELECT user_id, count(*) AS cnt FROM orders GROUP BY user_id)" in sql
+    assert (
+        "WITH user_counts AS (SELECT user_id, count(*) AS cnt FROM orders GROUP BY user_id)"
+        in sql
+    )
 
 
 def test_alias_from() -> None:
-    sql, _ = (
-        ClickHouseQueryBuilder().select("u.id").from_("users", "u").build()
-    )
+    sql, _ = ClickHouseQueryBuilder().select("u.id").from_("users", "u").build()
     assert "FROM users AS u" in sql
 
 

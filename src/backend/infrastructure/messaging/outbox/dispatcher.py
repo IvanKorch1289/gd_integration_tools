@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.messaging.outbox import (
@@ -89,7 +89,7 @@ class _BackendDLQHandler:
         event.status = OutboxEventStatus.DLQ
         event.error_class = type(reason).__name__
         event.error_message = str(reason)
-        event.updated_at = datetime.now(timezone.utc)
+        event.updated_at = datetime.now(UTC)
         await self._backend.enqueue(event)
 
 
@@ -220,7 +220,7 @@ class OutboxDispatcher:
             return
         try:
             await asyncio.wait_for(task, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _logger.warning(
                 "outbox.dispatcher.stop_timeout", extra={"timeout": timeout}
             )
@@ -236,7 +236,7 @@ class OutboxDispatcher:
                 await self._poll_and_dispatch()
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error(
                     "outbox.dispatcher.iteration_failed", extra={"error": repr(exc)}
                 )
@@ -245,7 +245,7 @@ class OutboxDispatcher:
                 await asyncio.wait_for(
                     self._stopping.wait(), timeout=self._poll_interval
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
     async def _poll_and_dispatch(self) -> None:
@@ -278,7 +278,7 @@ class OutboxDispatcher:
                 await self._deliverer(event)
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 last_exc = exc
                 event.retry_count = attempt
                 event.error_class = type(exc).__name__
@@ -299,11 +299,11 @@ class OutboxDispatcher:
                     await asyncio.wait_for(self._stopping.wait(), timeout=sleep_for)
                     # Пробудились по stop — выходим без повторной попытки.
                     return
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
             else:
                 event.status = OutboxEventStatus.DELIVERED
-                event.updated_at = datetime.now(timezone.utc)
+                event.updated_at = datetime.now(UTC)
                 await self._ack(event)
                 _logger.debug(
                     "outbox.dispatcher.delivered",
@@ -324,7 +324,7 @@ class OutboxDispatcher:
         )
         try:
             await self._dlq.send(event, last_exc)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error(
                 "outbox.dispatcher.dlq_handoff_failed",
                 extra={"event_id": event.event_id, "error": repr(exc)},

@@ -1,5 +1,6 @@
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
-from typing import Any, Awaitable, Callable
+from typing import Any
 from uuid import uuid4
 
 from apscheduler.triggers.cron import CronTrigger
@@ -15,7 +16,7 @@ from src.backend.infrastructure.external_apis.logging_service import stream_logg
 
 breaker_registry = get_breaker_registry()
 
-__all__ = ("stream_client", "StreamClient", "get_stream_client")
+__all__ = ("StreamClient", "get_stream_client", "stream_client")
 
 
 def _safe_repr_message(payload: Any, limit: int = 500) -> str:
@@ -80,7 +81,7 @@ class StreamClient:
 
     def __init__(self) -> None:
         from src.backend.infrastructure.scheduler.scheduler_manager import (
-            scheduler_manager,
+            get_scheduler_manager,
         )
 
         self.stream_app = FastStream(logger=stream_logger)
@@ -89,7 +90,7 @@ class StreamClient:
         # Kafka-настройки: используем те же bootstrap_servers / group_id, что
         # и legacy aiokafka-клиент — для плавной миграции.
         self.kafka_settings = getattr(settings, "kafka", None)
-        self.scheduler = scheduler_manager.scheduler
+        self.scheduler = get_scheduler_manager().scheduler
 
         self.redis_router = None
         self.rabbit_router = None

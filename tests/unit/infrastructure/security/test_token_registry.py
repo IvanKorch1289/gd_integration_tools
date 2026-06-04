@@ -82,12 +82,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes,
-        *,
-        ex: int | None = None,
-        **_: Any,
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
     ) -> bool:
         self._data[key] = value
         self.set_calls.append((key, value, ex))
@@ -224,15 +219,11 @@ async def test_retrieve_miss_returns_none(
 
 @pytest.mark.asyncio
 async def test_retrieve_corrupted_json_returns_none(
-    fake_redis: Any,
-    key_provider: StaticAESGCMKeyProvider,
-    audit_service: AsyncMock,
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
 ) -> None:
     """Невалидный JSON в Redis → None + emit decrypt_failed."""
     registry = _registry(
-        redis_client=fake_redis,
-        key_provider=key_provider,
-        audit_service=audit_service,
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
     )
     await fake_redis.set("pii:token:bad", b"NOT-JSON{}}")
     result = await registry.retrieve("bad")
@@ -262,15 +253,11 @@ async def test_encryption_at_rest_raw_bytes_differ_from_plaintext(
 
 @pytest.mark.asyncio
 async def test_delete_removes_key(
-    fake_redis: Any,
-    key_provider: StaticAESGCMKeyProvider,
-    audit_service: AsyncMock,
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
 ) -> None:
     """delete(key) убирает запись из Redis и эмит audit."""
     registry = _registry(
-        redis_client=fake_redis,
-        key_provider=key_provider,
-        audit_service=audit_service,
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
     )
     encrypted = registry.encrypt_value("x")
     await registry.store("rm-me", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60)
@@ -291,7 +278,9 @@ async def test_cleanup_expired_counts_live_keys(
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
     encrypted = registry.encrypt_value("x")
     for i in range(3):
-        await registry.store(f"key-{i}", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60)
+        await registry.store(
+            f"key-{i}", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60
+        )
 
     count = await registry.cleanup_expired()
     assert count == 3
@@ -299,15 +288,11 @@ async def test_cleanup_expired_counts_live_keys(
 
 @pytest.mark.asyncio
 async def test_store_emits_audit_with_token_count_and_key_version(
-    fake_redis: Any,
-    key_provider: StaticAESGCMKeyProvider,
-    audit_service: AsyncMock,
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
 ) -> None:
     """audit.emit для store содержит token_count + key_version."""
     registry = _registry(
-        redis_client=fake_redis,
-        key_provider=key_provider,
-        audit_service=audit_service,
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
     )
     encrypted = registry.encrypt_value("x")
     token_map = _token_map(tokens={"<X_1>": encrypted, "<X_2>": encrypted})
@@ -370,9 +355,7 @@ def test_env_key_provider_invalid_base64(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_env_key_provider_wrong_length(monkeypatch: pytest.MonkeyPatch) -> None:
     """Decoded ≠ 32 bytes → None (AES-256-GCM требует ровно 32)."""
-    monkeypatch.setenv(
-        "PII_AES_KEY_V1", base64.b64encode(b"too-short").decode("ascii")
-    )
+    monkeypatch.setenv("PII_AES_KEY_V1", base64.b64encode(b"too-short").decode("ascii"))
     provider = EnvAESGCMKeyProvider(current_version=1)
     assert provider.get_key(1) is None
 

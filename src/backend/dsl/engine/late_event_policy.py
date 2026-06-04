@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from src.backend.core.types.watermark import LatePolicy, WatermarkState
 from src.backend.dsl.engine.exchange import Exchange

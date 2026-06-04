@@ -82,8 +82,7 @@ class TestGetFeedbackExamplesProcessor:
         ]
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -97,9 +96,7 @@ class TestGetFeedbackExamplesProcessor:
     async def test_min_similarity_filters(self) -> None:
         """Results below min_similarity are dropped."""
         proc = GetFeedbackExamplesProcessor(
-            query_from="body.query",
-            positive_k=2,
-            min_similarity=0.9,
+            query_from="body.query", positive_k=2, min_similarity=0.9
         )
         exchange = _Exchange()
         exchange.in_message.body = {"query": "x"}
@@ -110,12 +107,11 @@ class TestGetFeedbackExamplesProcessor:
                 "document": "Q: q1\nA: a1",
                 "metadata": {"source": "ai_feedback", "label": "positive"},
                 "score": 0.5,
-            },
+            }
         ]
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -133,8 +129,7 @@ class TestGetFeedbackExamplesProcessor:
         mock_rag.search.return_value = []
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 

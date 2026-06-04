@@ -55,16 +55,14 @@ def test_format_passthrough_when_disabled(monkeypatch: pytest.MonkeyPatch) -> No
             "id": "1",
             "document": "Текст документа",
             "metadata": {"source": "policy_v3.pdf"},
-        },
+        }
     ]
     context = _format_context_with_sources(chunks)
     assert "[источник:" not in context
     assert "Текст документа" in context
 
 
-def test_source_priority_source_over_filename(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_source_priority_source_over_filename(monkeypatch: pytest.MonkeyPatch) -> None:
     """Priority: metadata.source > filename > doc_id > id."""
     from src.backend.core.config import rag
     from src.backend.services.ai.rag_service import _extract_source_id
@@ -104,9 +102,7 @@ def test_source_priority_source_over_filename(
     assert _extract_source_id(chunk) == ""
 
 
-def test_format_skips_chunks_without_document(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_format_skips_chunks_without_document(monkeypatch: pytest.MonkeyPatch) -> None:
     """chunks без document не попадают в context."""
     from src.backend.core.config import rag
     from src.backend.services.ai.rag_service import _format_context_with_sources

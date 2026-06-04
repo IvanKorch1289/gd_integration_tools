@@ -44,7 +44,5 @@ async def test_order_preserved() -> None:
         await asyncio.sleep(sleep)
         return x
 
-    results = await task_group_tolerant(
-        [delay(1, 0.02), delay(2, 0.0), delay(3, 0.01)]
-    )
+    results = await task_group_tolerant([delay(1, 0.02), delay(2, 0.0), delay(3, 0.01)])
     assert results == [1, 2, 3]

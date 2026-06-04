@@ -114,7 +114,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         if secret_bytes.startswith("whsec_"):
             try:
                 secret_bytes_raw = base64.b64decode(secret_bytes[len("whsec_") :])
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 secret_bytes_raw = secret_bytes.encode()
         else:
             secret_bytes_raw = secret_bytes.encode()
@@ -125,12 +125,12 @@ class WebhookSignatureProcessor(BaseProcessor):
         for part in signature_header.split(" "):
             if "," not in part:
                 continue
-            _, sig = part.split(",", 1)
+            _ver, sig = part.split(",", 1)
             if hmac.compare_digest(sig, expected_b64):
                 return True
         return False
 
-    def _handle_failure(self, exchange: "Exchange[Any]", reason: str) -> None:
+    def _handle_failure(self, exchange: Exchange[Any], reason: str) -> None:
         message = f"webhook_signature: {reason}"
         match self._on_error:
             case "fail":
@@ -142,16 +142,14 @@ class WebhookSignatureProcessor(BaseProcessor):
                 exchange.set_property("webhook_signature_status", "warn")
                 exchange.set_property("_signature_error", reason)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_webhook_signature:
                 exchange.set_property("webhook_signature_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         headers = exchange.in_message.headers
@@ -180,7 +178,7 @@ class WebhookSignatureProcessor(BaseProcessor):
                     },
                 )
                 verified = True
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 verified = False
         except ImportError:
             verified = self._verify_manual(

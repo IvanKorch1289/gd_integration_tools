@@ -76,7 +76,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         scoped = _scope(tenant_id, session_id)
         try:
             raw = await self._short.get_conversation(scoped, limit=limit)
-        except Exception as exc:  # noqa: BLE001 — backend unavailable
+        except Exception as exc:
             logger.warning("memory_gateway.get_messages_failed: %s", exc)
             return []
         return [
@@ -111,7 +111,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
                 content=content,
                 metadata={**(dict(metadata) if metadata else {}), "id": message_id},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.save_message_failed: %s", exc)
         return message_id
 
@@ -128,7 +128,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             scoped = _scope(tenant_id, session_id)
             try:
                 fact_dict = await self._short.get_facts(scoped)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("memory_gateway.get_facts_short_failed: %s", exc)
                 return []
             return [
@@ -147,7 +147,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             results = await self._long.recall(
                 tenant_id=tenant_id, query="", top_k=limit
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.get_facts_long_failed: %s", exc)
             return []
         return [_lang_to_fact(r) for r in (results or [])]
@@ -176,7 +176,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
                     tags=list(tags),
                 )
                 return str(fact_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("memory_gateway.save_fact_long_failed: %s", exc)
 
         # Fallback на short_term key-value.
@@ -184,7 +184,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         session_scoped = _scope(tenant_id, source_session_id or "_global")
         try:
             await self._short.set_fact(session_scoped, fact_key, content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.save_fact_short_failed: %s", exc)
         return fact_key
 
@@ -198,7 +198,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             results = await self._long.recall(
                 tenant_id=tenant_id, query=query, top_k=top_k
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.recall_failed: %s", exc)
             return []
         return [_lang_to_fact(r) for r in (results or [])]
@@ -216,7 +216,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         namespace = _scope(tenant_id, session_id)
         try:
             raw = await self._mem0.recall(namespace, query, k=top_k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.recall_mem0_failed: %s", exc)
             return []
         return [
@@ -234,7 +234,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         scoped = _scope(tenant_id, session_id)
         try:
             value = await self._short.get_scratchpad(scoped)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.get_scratchpad_failed: %s", exc)
             return None
         return value if value else None
@@ -246,7 +246,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         scoped = _scope(tenant_id, session_id)
         try:
             await self._short.set_scratchpad(scoped, content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.save_scratchpad_failed: %s", exc)
 
     async def consolidate(self, *, tenant_id: str, session_id: str) -> int:
@@ -260,7 +260,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         scoped = _scope(tenant_id, session_id)
         try:
             count = await self._long.consolidate(session_id=scoped)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("memory_gateway.consolidate_failed: %s", exc)
             return 0
         return int(count or 0)

@@ -37,9 +37,7 @@ def sink(writer_mock: Any) -> WorkflowAuditSink:
 
 
 @pytest.mark.asyncio
-async def test_emit_signal_event(
-    sink: WorkflowAuditSink, writer_mock: Any
-) -> None:
+async def test_emit_signal_event(sink: WorkflowAuditSink, writer_mock: Any) -> None:
     await sink.emit(
         event_type="workflow.signal",
         workflow_id="wf-1",
@@ -57,9 +55,7 @@ async def test_emit_signal_event(
 
 
 @pytest.mark.asyncio
-async def test_emit_cancel_event(
-    sink: WorkflowAuditSink, writer_mock: Any
-) -> None:
+async def test_emit_cancel_event(sink: WorkflowAuditSink, writer_mock: Any) -> None:
     await sink.emit(
         event_type="workflow.cancel",
         workflow_id="wf-cancel",
@@ -112,9 +108,7 @@ async def test_emit_compensation_events(
 
 
 @pytest.mark.asyncio
-async def test_emit_hitl_events(
-    sink: WorkflowAuditSink, writer_mock: Any
-) -> None:
+async def test_emit_hitl_events(sink: WorkflowAuditSink, writer_mock: Any) -> None:
     for ev_type in ("hitl.approved", "hitl.rejected", "hitl.requested_info"):
         await sink.emit(
             event_type=ev_type,
@@ -153,16 +147,8 @@ async def test_emit_batch_preserves_extended_fields(
     sink: WorkflowAuditSink, writer_mock: Any
 ) -> None:
     events = [
-        {
-            "event_type": "workflow.start",
-            "workflow_id": "wf-1",
-            "tenant_id": "t1",
-        },
-        {
-            "event_type": "workflow.cancel",
-            "workflow_id": "wf-1",
-            "tenant_id": "t1",
-        },
+        {"event_type": "workflow.start", "workflow_id": "wf-1", "tenant_id": "t1"},
+        {"event_type": "workflow.cancel", "workflow_id": "wf-1", "tenant_id": "t1"},
     ]
     await sink.emit_batch(events)
     writer_mock.add_many.assert_awaited_once()
@@ -176,10 +162,6 @@ async def test_emit_batch_preserves_extended_fields(
 async def test_emit_handles_empty_payload(
     sink: WorkflowAuditSink, writer_mock: Any
 ) -> None:
-    await sink.emit(
-        event_type="workflow.fail",
-        workflow_id="wf-fail",
-        tenant_id=None,
-    )
+    await sink.emit(event_type="workflow.fail", workflow_id="wf-fail", tenant_id=None)
     row = writer_mock.add.await_args.args[0]
     assert row["payload"] == "{}"

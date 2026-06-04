@@ -1,7 +1,8 @@
 """AI/ML DSL процессоры — LLM, RAG, PII, prompt composition."""
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import orjson
 
@@ -10,21 +11,21 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "PromptComposerProcessor",
-    "LLMCallProcessor",
-    "LLMParserProcessor",
-    "TokenBudgetProcessor",
-    "VectorSearchProcessor",
-    "RagQueryProcessor",
-    "RagPIIRedactionProcessor",
-    "SanitizePIIProcessor",
-    "RestorePIIProcessor",
-    "LLMFallbackProcessor",
     "CacheProcessor",
     "CacheWriteProcessor",
-    "GuardrailsProcessor",
-    "SemanticRouterProcessor",
     "GetFeedbackExamplesProcessor",
+    "GuardrailsProcessor",
+    "LLMCallProcessor",
+    "LLMFallbackProcessor",
+    "LLMParserProcessor",
+    "PromptComposerProcessor",
+    "RagPIIRedactionProcessor",
+    "RagQueryProcessor",
+    "RestorePIIProcessor",
+    "SanitizePIIProcessor",
+    "SemanticRouterProcessor",
+    "TokenBudgetProcessor",
+    "VectorSearchProcessor",
 )
 
 
@@ -224,7 +225,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except orjson.JSONDecodeError, ValueError:
+            except (orjson.JSONDecodeError, ValueError):
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:
@@ -308,10 +309,7 @@ class VectorSearchProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
-        if isinstance(body, dict):
-            query = body.get(self._query_field, "")
-        else:
-            query = str(body)
+        query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
         if not query:
             exchange.set_property(self._output_property, [])
             return
@@ -401,10 +399,7 @@ class RagQueryProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
-        if isinstance(body, dict):
-            query = body.get(self._query_field, "")
-        else:
-            query = str(body)
+        query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
         if not query:
             exchange.set_property(self._output_property, None)
             return
@@ -712,7 +707,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             pass
 
         exchange.set_property("cached", False)
@@ -758,7 +753,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             pass
 
 
@@ -840,7 +835,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/lakera: flagged (score={lakera_result.score:.2f})"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/lakera: provider error: {exc}")
                     return
@@ -860,7 +855,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/rebuff: prompt injection (score={rebuff_result.score:.2f})"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/rebuff: provider error: {exc}")
                     return
@@ -871,7 +866,7 @@ class GuardrailsProcessor(BaseProcessor):
                     get_nemo_guardrails_runtime,
                 )
 
-                runtime = get_nemo_guardrails_runtime()
+                runtime = await get_nemo_guardrails_runtime()
                 if runtime is None:
                     return  # GPU/FF unavailable — skip NeMo silently
                 prompt = exchange.get_property("llm.original_prompt", "")
@@ -881,7 +876,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/nemo: provider error: {exc}")
                     return
@@ -943,10 +938,7 @@ class SemanticRouterProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
-        if isinstance(body, dict):
-            query = body.get(self._query_field, "")
-        else:
-            query = str(body)
+        query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
 
         if not query:
             if self._default_route:

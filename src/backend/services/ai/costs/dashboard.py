@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService
@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 
 __all__ = (
     "AICostDashboard",
-    "DashboardSnapshot",
-    "UsageByModel",
     "CostByTenant",
+    "DashboardSnapshot",
     "TokenRateTrend",
+    "UsageByModel",
 )
 
 
@@ -117,7 +117,7 @@ class AICostDashboard:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.ai_cost_dashboard_strict)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("AICostDashboard: feature_flags недоступны: %s", exc)
             return False
 
@@ -140,7 +140,7 @@ class AICostDashboard:
             top_n: лимит на размер каждой группы.
         """
         snapshot = DashboardSnapshot(
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
             filters={
                 "window_hours": window_hours,
                 "tenant_id": tenant_id,
@@ -173,7 +173,7 @@ class AICostDashboard:
         # alerts — текущие аномалии.
         try:
             snapshot.alerts = await self._alerts.detect_anomalies(window=window)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("AICostDashboard alerts skipped: %s", exc)
             snapshot.alerts = []
 
@@ -187,7 +187,7 @@ class AICostDashboard:
             return await self._reader.fetch_costs(
                 group_by=group_by, window=window, top_n=top_n
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AICostDashboard fetch %s failed: %s", group_by, exc)
             return []
 
@@ -247,7 +247,7 @@ def _build_token_trends(
         return []
     bucket_count = 12
     bucket_seconds = max(1, int(window.total_seconds() / bucket_count))
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     trends: list[TokenRateTrend] = []
     total_prompt = sum(r.prompt_tokens for r in rows_list)
     total_completion = sum(r.completion_tokens for r in rows_list)

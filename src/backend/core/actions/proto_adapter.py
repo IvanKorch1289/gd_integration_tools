@@ -35,8 +35,8 @@ from pydantic import BaseModel
 
 __all__ = (
     "ProtoField",
-    "ProtoMessage",
     "ProtoFile",
+    "ProtoMessage",
     "PydanticToProtoConverter",
     "render_proto_file",
 )
@@ -297,7 +297,7 @@ def _strip_optional(annotation: Any) -> Any:
     if len(args) == 1:
         return args[0]
     # Несколько ненулевых членов — оставляем как Union (попадёт в Any в _convert_annotation).
-    return typing.Union[args]  # noqa: UP007
+    return typing.Union[args]
 
 
 def _is_enum_like(tp: type) -> bool:

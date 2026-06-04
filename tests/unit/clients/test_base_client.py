@@ -86,9 +86,7 @@ def test_url_resolves_endpoint_key(fake_settings: _FakeSettings) -> None:
     assert client._url("items") == "https://api.test/v1/items"
 
 
-def test_url_unknown_endpoint_returns_base(
-    fake_settings: _FakeSettings,
-) -> None:
+def test_url_unknown_endpoint_returns_base(fake_settings: _FakeSettings) -> None:
     """Неизвестный endpoint key → возвращается base_url (без падения)."""
     client = BaseExternalAPIClient(settings=fake_settings, name="t")
     # urljoin с пустой строкой = base_url
@@ -104,9 +102,7 @@ def test_prod_url_takes_precedence_over_base_url() -> None:
     assert client.base_url == "https://prod.test/"
 
 
-def test_headers_include_auth_and_content_type(
-    fake_settings: _FakeSettings,
-) -> None:
+def test_headers_include_auth_and_content_type(fake_settings: _FakeSettings) -> None:
     """По умолчанию формируются Authorization (Bearer) + Content-Type."""
     client = BaseExternalAPIClient(settings=fake_settings, name="t")
     headers = client._headers(use_waf=False)
@@ -120,9 +116,7 @@ def test_headers_custom_auth_scheme() -> None:
     class TokenClient(BaseExternalAPIClient):
         _auth_scheme = "Token"
 
-    client = TokenClient(
-        settings=_FakeSettings(api_key="abc"), name="token_svc"
-    )
+    client = TokenClient(settings=_FakeSettings(api_key="abc"), name="token_svc")
     headers = client._headers(use_waf=False)
     assert headers["Authorization"] == "Token abc"
 
@@ -148,8 +142,7 @@ def test_headers_extra_passthrough(fake_settings: _FakeSettings) -> None:
     """Custom headers через ``extra=`` пробрасываются и могут переопределять."""
     client = BaseExternalAPIClient(settings=fake_settings, name="t")
     headers = client._headers(
-        extra={"X-Trace-Id": "abc-123", "Content-Type": "text/plain"},
-        use_waf=False,
+        extra={"X-Trace-Id": "abc-123", "Content-Type": "text/plain"}, use_waf=False
     )
     assert headers["X-Trace-Id"] == "abc-123"
     assert headers["Content-Type"] == "text/plain"  # extra перезаписал default
@@ -216,9 +209,7 @@ async def test_request_propagates_response_type_and_raise(
     """``response_type`` / ``raise_for_status`` пробрасываются только если заданы."""
     client, make_request = client_with_mock
 
-    await client._request(
-        "GET", "https://api.test/v1/items", response_type="json"
-    )
+    await client._request("GET", "https://api.test/v1/items", response_type="json")
     kwargs1 = make_request.await_args.kwargs
     assert kwargs1.get("response_type") == "json"
 
@@ -251,9 +242,7 @@ def fast_retry(monkeypatch: pytest.MonkeyPatch) -> None:
     """Убирает реальные задержки tenacity (multiplier=0 → wait≈0)."""
     from src.backend.core.config.settings import settings as app_settings
 
-    monkeypatch.setattr(
-        app_settings.http_base_settings, "retry_backoff_factor", 0.0
-    )
+    monkeypatch.setattr(app_settings.http_base_settings, "retry_backoff_factor", 0.0)
 
 
 def _patched_http_client(handler: httpx.MockTransport):
@@ -286,18 +275,14 @@ class _FlakyHandler:
         return httpx.Response(200, json={"ok": True})
 
 
-async def test_http_client_retries_until_success(
-    fast_retry: None,
-) -> None:
+async def test_http_client_retries_until_success(fast_retry: None) -> None:
     """3 попытки: первая и вторая — 503, третья — 200."""
     handler = _FlakyHandler(fail_first_n=2)
     transport = httpx.MockTransport(handler)
     client = _patched_http_client(transport)
 
     try:
-        result = await client.make_request(
-            method="GET", url="http://x.test/path"
-        )
+        result = await client.make_request(method="GET", url="http://x.test/path")
         assert result["status_code"] == 200
         assert result["data"] == {"ok": True}
         assert handler.calls == 3
@@ -305,9 +290,7 @@ async def test_http_client_retries_until_success(
         await client.close()
 
 
-async def test_http_client_exhausts_retries_and_raises(
-    fast_retry: None,
-) -> None:
+async def test_http_client_exhausts_retries_and_raises(fast_retry: None) -> None:
     """max_retries=3 → итого 4 попытки; если все падают — исключение."""
     handler = _FlakyHandler(fail_first_n=99, fail_status=503)
     transport = httpx.MockTransport(handler)
@@ -338,9 +321,7 @@ async def test_http_client_does_not_retry_on_non_retryable_status(
         await client.close()
 
 
-async def test_http_client_circuit_breaker_records_failures(
-    fast_retry: None,
-) -> None:
+async def test_http_client_circuit_breaker_records_failures(fast_retry: None) -> None:
     """После исчерпания retry CB фиксирует failure (failure_count > 0)."""
     handler = _FlakyHandler(fail_first_n=99, fail_status=503)
     transport = httpx.MockTransport(handler)
@@ -354,18 +335,14 @@ async def test_http_client_circuit_breaker_records_failures(
         await client.close()
 
 
-async def test_http_client_circuit_breaker_resets_on_success(
-    fast_retry: None,
-) -> None:
+async def test_http_client_circuit_breaker_resets_on_success(fast_retry: None) -> None:
     """``record_success`` вызывается на 200-ответе — failure_count = 0."""
     handler = _FlakyHandler(fail_first_n=0)
     transport = httpx.MockTransport(handler)
     client = _patched_http_client(transport)
 
     try:
-        result = await client.make_request(
-            method="GET", url="http://x.test/p"
-        )
+        result = await client.make_request(method="GET", url="http://x.test/p")
         assert result["status_code"] == 200
         assert client.circuit_breaker.failure_count == 0
     finally:
@@ -425,9 +402,7 @@ async def test_http_client_passes_custom_headers(fast_retry: None) -> None:
         await client.close()
 
 
-async def test_http_client_auth_token_sets_authorization(
-    fast_retry: None,
-) -> None:
+async def test_http_client_auth_token_sets_authorization(fast_retry: None) -> None:
     """``auth_token=`` транслируется в Authorization: Bearer <token>."""
     captured: dict[str, str] = {}
 

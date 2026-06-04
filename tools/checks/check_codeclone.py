@@ -66,7 +66,15 @@ def run_jscpd(target: Path) -> int:
     Returns:
         количество найденных клонов.
     """
-    cmd = ["jscpd", "--reporters", "json", "--silent", "--format", "python", str(target)]
+    cmd = [
+        "jscpd",
+        "--reporters",
+        "json",
+        "--silent",
+        "--format",
+        "python",
+        str(target),
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
     out_dir = Path("report")
     json_report = out_dir / "jscpd-report.json"

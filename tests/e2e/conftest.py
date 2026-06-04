@@ -25,8 +25,7 @@ async def client():
 
         app = create_app()
         async with httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=app),
-            base_url="http://test",
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as c:
             yield c
     except Exception as exc:

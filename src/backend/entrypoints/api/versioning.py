@@ -20,7 +20,7 @@ from fastapi import APIRouter, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-__all__ = ("APIVersion", "VersionedRouter", "DeprecationMiddleware")
+__all__ = ("APIVersion", "DeprecationMiddleware", "VersionedRouter")
 
 
 @dataclass(slots=True)

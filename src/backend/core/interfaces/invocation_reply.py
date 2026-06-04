@@ -27,7 +27,7 @@ from typing import Protocol, runtime_checkable
 
 from src.backend.core.interfaces.invoker import InvocationResponse
 
-__all__ = ("ReplyChannelKind", "InvocationReplyChannel", "ReplyChannelRegistryProtocol")
+__all__ = ("InvocationReplyChannel", "ReplyChannelKind", "ReplyChannelRegistryProtocol")
 
 
 class ReplyChannelKind(str, Enum):

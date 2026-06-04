@@ -48,11 +48,7 @@ class _CollectingSink(LogSink):
     """
 
     def __init__(
-        self,
-        name: str = "collecting",
-        *,
-        fail: bool = False,
-        healthy: bool = True,
+        self, name: str = "collecting", *, fail: bool = False, healthy: bool = True
     ) -> None:
         self.name = name
         self.is_healthy = healthy
@@ -109,9 +105,7 @@ def test_route_to_sinks_is_noop_before_init() -> None:
     # log-sink-dispatch потоки НЕ должны были появиться
     new_threads = {t.ident for t in threading.enumerate()}
     extra = new_threads - initial_threads
-    extra_named = [
-        t.name for t in threading.enumerate() if t.ident in extra
-    ]
+    extra_named = [t.name for t in threading.enumerate() if t.ident in extra]
     assert "log-sink-dispatch" not in extra_named
 
 

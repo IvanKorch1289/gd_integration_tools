@@ -97,7 +97,7 @@ def test_to_mermaid_with_special_shapes() -> None:
         ],
     )
     mermaid = to_mermaid(wf)
-    assert "{\"" in mermaid  # wait_signal — ромб
+    assert '{"' in mermaid  # wait_signal — ромб
     assert "((" in mermaid  # sleep — круг
 
 
@@ -157,18 +157,12 @@ def test_visualize_round_trip_with_yaml_diff() -> None:
     decl_a = WorkflowDeclaration(
         name="wf",
         version="1.0",
-        steps=[
-            ActivityDeclaration(name="a"),
-            ActivityDeclaration(name="b"),
-        ],
+        steps=[ActivityDeclaration(name="a"), ActivityDeclaration(name="b")],
     )
     decl_b = WorkflowDeclaration(
         name="wf",
         version="2.0",
-        steps=[
-            ActivityDeclaration(name="a"),
-            ActivityDeclaration(name="c"),
-        ],
+        steps=[ActivityDeclaration(name="a"), ActivityDeclaration(name="c")],
     )
     yaml_d = yaml_diff(decl_a, decl_b)
     vis_results, _, _ = compute_step_diff(decl_a, decl_b)

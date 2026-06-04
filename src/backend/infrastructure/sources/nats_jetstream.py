@@ -119,7 +119,7 @@ class NATSJetStreamSource:
             while self._running:
                 try:
                     msgs = await psub.fetch(1, timeout=5.0)
-                except Exception as fetch_exc:  # noqa: BLE001
+                except Exception as fetch_exc:
                     # Timeout или transient-ошибка — продолжаем цикл
                     logger.debug(
                         "NATSJetStreamSource fetch timeout/error (stream=%s): %s",
@@ -175,7 +175,7 @@ class NATSJetStreamSource:
             )
             try:
                 await on_event(event)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error(
                     "NATSJetStreamSource on_event failed (stream=%s): %s",
                     self._stream,
@@ -230,7 +230,7 @@ class NATSJetStreamSource:
                     getattr(ack_floor, "stream_seq", 0) if ack_floor else 0
                 ),
             }
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {
                 "stream": self._stream,
                 "durable": self._durable,
@@ -246,10 +246,10 @@ class NATSJetStreamSource:
         if nc is not None:
             try:
                 await nc.drain()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("NATSJetStreamSource drain error: %s", exc)
             finally:
                 try:
                     await nc.close()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("NATSJetStreamSource close error: %s", exc)

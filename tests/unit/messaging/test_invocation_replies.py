@@ -197,12 +197,7 @@ class _RecordingNotifier:
         self.calls: list[dict[str, Any]] = []
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         self.calls.append(
             {

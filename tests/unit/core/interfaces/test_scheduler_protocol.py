@@ -125,11 +125,7 @@ def test_apscheduler_backend_schedule_cron_delegates() -> None:
 
     manager = _FakeSchedulerManager()
     backend = APSchedulerBackend(manager=manager)
-    job_id = backend.schedule_cron(
-        "weekly",
-        "0 9 * * 1",
-        lambda: None,
-    )
+    job_id = backend.schedule_cron("weekly", "0 9 * * 1", lambda: None)
     assert job_id == "weekly"
     assert manager.cron_calls[0]["name"] == "weekly"
     assert manager.cron_calls[0]["cron_expr"] == "0 9 * * 1"
@@ -146,7 +142,7 @@ def test_apscheduler_backend_cancel_returns_false_on_error() -> None:
     def _raise(_: str) -> None:
         raise LookupError("not found")
 
-    manager.scheduler.remove_job = _raise  # type: ignore[method-assign]
+    manager.scheduler.remove_job = _raise
     backend = APSchedulerBackend(manager=manager)
     assert backend.cancel("absent") is False
 
@@ -188,9 +184,7 @@ def test_temporal_backend_schedule_oneshot_raises() -> None:
     """Stub schedule_oneshot() бросает NotImplementedError."""
     backend = TemporalSchedulerBackend()
     with pytest.raises(NotImplementedError):
-        backend.schedule_oneshot(
-            "x", datetime.now(tz=timezone.utc), lambda: None
-        )
+        backend.schedule_oneshot("x", datetime.now(tz=timezone.utc), lambda: None)
 
 
 def test_feature_flag_default_apscheduler() -> None:

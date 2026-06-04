@@ -12,21 +12,23 @@ Processors added:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 __all__ = (
-    "SwitchProcessor",
-    "MergeProcessor",
     "BatchWindowProcessor",
+    "DebounceProcessor",
     "DeduplicateProcessor",
     "FormatterProcessor",
-    "DebounceProcessor",
+    "MergeProcessor",
+    "SwitchProcessor",
 )
 
 _patterns_logger = logging.getLogger("dsl.patterns")
@@ -105,7 +107,8 @@ class MergeProcessor(BaseProcessor):
         elif self._mode == "zip":
             lists = [v if isinstance(v, list) else [v] for v in values]
             exchange.set_out(
-                body=list(zip(*lists)), headers=dict(exchange.in_message.headers)
+                body=list(zip(*lists, strict=False)),
+                headers=dict(exchange.in_message.headers),
             )
         else:
             exchange.set_out(body=values, headers=dict(exchange.in_message.headers))
@@ -119,7 +122,7 @@ try:  # pragma: no cover - prometheus_client опционален в dev_light
         "Total number of BatchWindow flushes",
         ("reason", "group"),
     )
-except Exception as _:  # noqa: BLE001
+except Exception as _:
     _BATCH_FLUSH_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 
@@ -127,10 +130,8 @@ def _record_batch_flush(reason: str, group: str = "_global") -> None:
     """Записать flush-метрику; no-op если prometheus_client недоступен."""
     if _BATCH_FLUSH_COUNTER is None:
         return
-    try:
+    with contextlib.suppress(Exception):
         _BATCH_FLUSH_COUNTER.labels(reason=reason, group=group).inc()
-    except Exception:  # noqa: BLE001, S110
-        pass
 
 
 class BatchWindowProcessor(BaseProcessor):

@@ -16,7 +16,7 @@ from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
 
-__all__ = ("ScheduledReportsService", "ReportSchedule", "get_reports_service")
+__all__ = ("ReportSchedule", "ScheduledReportsService", "get_reports_service")
 
 logger = logging.getLogger(__name__)
 

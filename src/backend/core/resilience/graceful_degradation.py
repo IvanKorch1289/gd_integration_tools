@@ -288,7 +288,7 @@ _registry_singleton: GracefulDegradationRegistry | None = None
 
 def get_graceful_degradation_registry() -> GracefulDegradationRegistry:
     """Возвращает (создавая при необходимости) глобальный singleton."""
-    global _registry_singleton  # noqa: PLW0603
+    global _registry_singleton
     if _registry_singleton is None:
         _registry_singleton = GracefulDegradationRegistry()
     return _registry_singleton

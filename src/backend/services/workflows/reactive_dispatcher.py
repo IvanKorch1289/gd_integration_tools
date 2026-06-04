@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 __all__ = ("ReactiveTrigger", "ReactiveWorkflowDispatcher")
 
@@ -157,9 +158,7 @@ class ReactiveWorkflowDispatcher:
             except asyncio.CancelledError:
                 pass
 
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         task = get_task_registry().create_task(
             _delayed_start(), name=f"reactive-debounce-{workflow_id}"
@@ -180,7 +179,7 @@ class ReactiveWorkflowDispatcher:
                     namespace=trigger.workflow_namespace,
                     task_queue=trigger.task_queue,
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.error(
                     "Failed to start reactive workflow %s: %s", workflow_id, exc
                 )
@@ -199,7 +198,7 @@ class ReactiveWorkflowDispatcher:
                 "Install via: pip install simpleeval"
             )
             raise RuntimeError(msg) from None
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     async def _check_dedup(self, key: str) -> bool:
@@ -212,5 +211,5 @@ class ReactiveWorkflowDispatcher:
         try:
             result = await self._redis.set(key, "1", nx=True, ex=60)
             return bool(result)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return True

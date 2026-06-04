@@ -268,10 +268,10 @@ class QuotasService:
     def _enabled() -> bool:
         """True, если feature_flag ``per_tenant_billing_enabled`` включён."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "per_tenant_billing_enabled", False))
-        except Exception as _:  # noqa: BLE001 — fallback default-OFF
+        except Exception as _:
             return False
 
     @staticmethod
@@ -298,10 +298,8 @@ class QuotasService:
         отсутствие Redis — активирует in-memory fallback.
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: PLC0415
-                redis_client,
-            )
-        except Exception as _:  # noqa: BLE001 — fail-open для unit-тестов / dev_light
+            from src.backend.infrastructure.clients.storage.redis import redis_client
+        except Exception as _:
             return None
         candidate = getattr(redis_client, "_raw_client", None) or redis_client
         if not all(
@@ -328,7 +326,7 @@ class QuotasService:
             value = await raw.incrby(key, units)
             await raw.expire(key, period_seconds)
             return float(value)
-        except Exception as exc:  # noqa: BLE001 — fail-open
+        except Exception as exc:
             _logger.warning("Redis quota incr failed (fail-open): %s", exc)
             return float(units)
 
@@ -346,6 +344,6 @@ class QuotasService:
             if value is None:
                 return 0.0
             return float(value)
-        except Exception as exc:  # noqa: BLE001 — fail-open
+        except Exception as exc:
             _logger.warning("Redis quota read failed (fail-open): %s", exc)
             return 0.0

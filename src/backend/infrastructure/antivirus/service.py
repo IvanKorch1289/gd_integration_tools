@@ -29,8 +29,8 @@ from src.backend.infrastructure.external_apis.s3 import (
 
 __all__ = (
     "AntivirusService",
-    "VirusDetectedError",
     "UnknownAntivirusVerdictError",
+    "VirusDetectedError",
     "get_antivirus_service",
     "get_antivirus_service_dependency",
 )
@@ -228,7 +228,7 @@ class AntivirusService:
 
 
 @asynccontextmanager
-async def get_antivirus_service() -> AsyncGenerator[AntivirusService, None]:
+async def get_antivirus_service() -> AsyncGenerator[AntivirusService]:
     service = AntivirusService(
         http_client=get_http_client_dependency(), s3_service=get_s3_service_dependency()
     )

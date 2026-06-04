@@ -29,7 +29,8 @@ recipient = ``chat_id`` (числовой ID или ``@channelname``).
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
@@ -126,13 +127,13 @@ class TelegramAdapter:
         if self._bot_token_provider is not None:
             try:
                 return bool(self._bot_token_provider())
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 return False
         try:
             from src.backend.core.config.telegram import telegram_bot_settings
 
             return bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def _build_config(self) -> Any:
@@ -189,4 +190,4 @@ def _html_escape(text: str) -> str:
 
 
 # Compile-time проверка соответствия протоколу.
-assert isinstance(TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel)  # noqa: S101
+assert isinstance(TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel)

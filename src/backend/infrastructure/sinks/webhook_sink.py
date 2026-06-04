@@ -104,7 +104,7 @@ class WebhookSink(Sink):
                 )
             else:
                 response = await _do_post()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # RPACallExhausted уже отправил DLQ; legacy path — просто SinkResult.
             err_name = type(exc).__name__
             return SinkResult(
@@ -138,6 +138,6 @@ class WebhookSink(Sink):
                 timeout=httpx.Timeout(self.timeout)
             ) as client:
                 response = await client.request("HEAD", self.url)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         return response.status_code < 500

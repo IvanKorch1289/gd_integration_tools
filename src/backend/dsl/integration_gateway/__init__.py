@@ -12,10 +12,11 @@ Route Versioning.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any
 
-__all__ = ("MessagingGateway", "ChannelInterceptor", "VersionedRoute")
+__all__ = ("ChannelInterceptor", "MessagingGateway", "VersionedRoute")
 
 
 @dataclass(slots=True)

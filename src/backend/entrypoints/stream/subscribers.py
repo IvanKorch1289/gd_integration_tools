@@ -1,5 +1,5 @@
 from faststream.rabbit.fastapi import RabbitMessage
-from faststream.redis.fastapi import Redis, RedisMessage
+from faststream.redis.fastapi import Redis, RedisChannelMessage
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import (
@@ -9,7 +9,7 @@ from src.backend.core.di.providers import (
 from src.backend.entrypoints.api.generator.registry import action_handler_registry
 from src.backend.schemas.invocation import ActionCommandSchema
 
-__all__ = ("handle_universal_redis_action", "handle_universal_rabbit_action")
+__all__ = ("handle_universal_rabbit_action", "handle_universal_redis_action")
 
 stream_client = get_stream_client_provider()
 stream_logger = get_stream_logger_provider()
@@ -19,7 +19,7 @@ stream_logger = get_stream_logger_provider()
     stream=settings.redis.get_stream_name("dsl-events")
 )
 async def handle_universal_redis_action(
-    body: dict, msg: RedisMessage, redis: Redis
+    body: dict, msg: RedisChannelMessage, redis: Redis
 ) -> None:
     """Универсальный обработчик DSL-команд из Redis."""
     try:

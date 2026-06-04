@@ -96,9 +96,7 @@ class AgentParallelProcessor(BaseAIProcessor):
         self.timeout_s = timeout_s
         self.continue_on_error = continue_on_error
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         results: dict[str, Any] = {}
 
         async def _invoke_one(spec: dict[str, Any]) -> tuple[str, Any]:
@@ -106,13 +104,13 @@ class AgentParallelProcessor(BaseAIProcessor):
             agent_kwargs = {k: v for k, v in spec.items() if k != "key"}
             try:
                 proc = AgentRunProcessor(**agent_kwargs)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 return key, {"error": f"init failed: {exc}"}
 
             sub = exchange.clone()
             try:
                 await proc.process(sub, context)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if not self.continue_on_error:
                     raise
                 return key, {"error": str(exc)}
@@ -138,7 +136,7 @@ class AgentParallelProcessor(BaseAIProcessor):
                 await asyncio.wait_for(_gather(), timeout=self.timeout_s)
             else:
                 await _gather()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _logger.warning(
                 "%s: timeout_s=%.2f exceeded — partial results stored",
                 self.name,

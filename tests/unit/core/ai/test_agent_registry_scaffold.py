@@ -45,9 +45,7 @@ def test_full_agent_spec() -> None:
         write_strategy="background",
     )
     handoff = HandoffPolicy(
-        max_handoffs=3,
-        allow_revisit=True,
-        escalation_on_max_handoffs="senior_advisor",
+        max_handoffs=3, allow_revisit=True, escalation_on_max_handoffs="senior_advisor"
     )
     spec = AgentSpec(
         id="credit_advisor",
@@ -134,7 +132,7 @@ def test_agent_registry_from_toml_loads_agents(tmp_path: Path) -> None:
     plugin_toml.write_text(
         '[[agent]]\nid="credit_advisor"\nversion="1.0.0"\nmodel="minimax:m2"\n'
         'memory_mode="scoped"\nmemory_write=["episodic"]\n'
-        'handoff_max=3\n',
+        "handoff_max=3\n",
         encoding="utf-8",
     )
     specs = registry.from_toml_manifest(plugin_toml)
@@ -163,8 +161,7 @@ def test_agent_registry_from_toml_missing_required_field(tmp_path: Path) -> None
     registry = AgentRegistry()
     plugin_toml = tmp_path / "plugin.toml"
     plugin_toml.write_text(
-        '[[agent]]\nid="incomplete"\nversion="1.0.0"\n',
-        encoding="utf-8",
+        '[[agent]]\nid="incomplete"\nversion="1.0.0"\n', encoding="utf-8"
     )
     with pytest.raises(ValueError, match="missing required field: 'model'"):
         registry.from_toml_manifest(plugin_toml)

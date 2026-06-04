@@ -66,7 +66,10 @@ def _generate(output_dir: Path, fmt: str) -> None:
         case "all":
             formats = [("JSON", "sbom.cdx.json"), ("XML", "sbom.cdx.xml")]
         case _:
-            print(f"[ERROR] Неизвестный формат: '{fmt}'. Допустимы: json, xml, all", file=sys.stderr)
+            print(
+                f"[ERROR] Неизвестный формат: '{fmt}'. Допустимы: json, xml, all",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     for of_flag, filename in formats:
@@ -75,7 +78,10 @@ def _generate(output_dir: Path, fmt: str) -> None:
         print(f"[INFO] Генерация SBOM ({of_flag}): {output_path}")
         result = subprocess.run(cmd, capture_output=True, text=True)  # noqa: S603
         if result.returncode != 0:
-            print(f"[ERROR] {_TOOL} завершился с кодом {result.returncode}:", file=sys.stderr)
+            print(
+                f"[ERROR] {_TOOL} завершился с кодом {result.returncode}:",
+                file=sys.stderr,
+            )
             if result.stderr:
                 print(result.stderr, file=sys.stderr)
             sys.exit(result.returncode)
@@ -85,7 +91,7 @@ def _generate(output_dir: Path, fmt: str) -> None:
 def main() -> None:
     """Точка входа CLI: разбор аргументов и запуск генерации SBOM."""
     parser = argparse.ArgumentParser(
-        description="Генерация CycloneDX SBOM для supply-chain CI gate (K1 S3 W3).",
+        description="Генерация CycloneDX SBOM для supply-chain CI gate (K1 S3 W3)."
     )
     parser.add_argument(
         "--output-dir",

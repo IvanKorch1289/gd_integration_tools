@@ -137,13 +137,7 @@ class TestRenderProtoFile:
 
         proto = ProtoFile(
             package="orders.auto",
-            messages=[
-                ProtoMessage(
-                    name="Empty",
-                    fields=[],
-                    comment="empty",
-                )
-            ],
+            messages=[ProtoMessage(name="Empty", fields=[], comment="empty")],
             services=[
                 ProtoService(
                     name="OrdersAutoService",

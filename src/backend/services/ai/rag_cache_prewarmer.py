@@ -36,7 +36,7 @@ try:  # pragma: no cover
         ("tenant",),
         buckets=(0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0),
     )
-except Exception:  # noqa: BLE001, S110
+except Exception:
     _PREWARM_COUNTER = None  # type: ignore[assignment,unused-ignore]
     _PREWARM_DURATION = None  # type: ignore[assignment,unused-ignore]
 
@@ -48,7 +48,7 @@ class RagCachePrewarmer:
         self,
         *,
         rag_service: Any,
-        stats_collector: "RagQueryStatsCollector",
+        stats_collector: RagQueryStatsCollector,
         top_n: int = 100,
         throttle_ms: int = 100,
     ) -> None:
@@ -70,26 +70,26 @@ class RagCachePrewarmer:
                     # Если RAG-сервис не поддерживает fill_cache — fallback на обычный query.
                     try:
                         await self._rag.query(query, tenant_id=tenant_id)
-                    except Exception:  # noqa: BLE001, S112
+                    except Exception:
                         continue
-                except Exception as exc:  # noqa: BLE001, S110
+                except Exception as exc:
                     logger.debug("rag_prewarm.query_failed: %s", exc)
                     continue
                 loaded += 1
                 await asyncio.sleep(self._throttle)
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             logger.exception("rag_prewarm.tenant_failed tenant=%s", tenant_id)
 
         duration = time.monotonic() - start
         if _PREWARM_COUNTER is not None:
             try:
                 _PREWARM_COUNTER.labels(tenant=tenant_id).inc(loaded)
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
         if _PREWARM_DURATION is not None:
             try:
                 _PREWARM_DURATION.labels(tenant=tenant_id).observe(duration)
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
         logger.info(
             "rag_prewarm.tenant_done",

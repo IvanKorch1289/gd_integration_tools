@@ -24,7 +24,7 @@ from typing import Any
 
 from src.backend.core.security.pii_masker import PIIMasker, default_masker
 
-__all__ = ("mask_retrieval_documents", "mask_augment_result")
+__all__ = ("mask_augment_result", "mask_retrieval_documents")
 
 
 def _mask_string(text: str, masker: PIIMasker | None) -> str:

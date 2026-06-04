@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Protocol, runtime_checkable
 
-__all__ = ("ImportSourceKind", "ImportSource", "ImportGateway")
+__all__ = ("ImportGateway", "ImportSource", "ImportSourceKind")
 
 
 class ImportSourceKind(str, Enum):
@@ -69,7 +69,7 @@ class ImportGateway(Protocol):
 
     kind: ImportSourceKind
 
-    async def import_spec(self, source: ImportSource) -> "ConnectorSpec":
+    async def import_spec(self, source: ImportSource) -> ConnectorSpec:
         """Распарсить spec и вернуть нормализованный ``ConnectorSpec``.
 
         Args:
@@ -87,4 +87,4 @@ class ImportGateway(Protocol):
 
 # Прямой forward-ref на ConnectorSpec — модель в core/models/, импорт
 # отложенный, чтобы избежать циклов при сериализации Protocol-сигнатур.
-from src.backend.core.models.connector_spec import ConnectorSpec  # noqa: E402,F401
+from src.backend.core.models.connector_spec import ConnectorSpec  # noqa: E402

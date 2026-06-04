@@ -83,9 +83,7 @@ class AgentBranchProcessor(BaseAIProcessor):
         self.branches = {k: list(v) for k, v in branches.items()}
         self.default = list(default) if default else None
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         verdict = self._extract_verdict(exchange)
         verdict_str = "" if verdict is None else str(verdict)
 
@@ -107,7 +105,7 @@ class AgentBranchProcessor(BaseAIProcessor):
 
         await run_sub_processors(target, exchange, context)
 
-    def _extract_verdict(self, exchange: "Exchange[Any]") -> Any:
+    def _extract_verdict(self, exchange: Exchange[Any]) -> Any:
         """Достать verdict по dot-path из exchange.properties.
 
         Поддерживает ``properties["a"]["b"]["c"]`` через

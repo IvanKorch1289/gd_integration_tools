@@ -21,10 +21,7 @@ mod = _load_module()
 
 
 def test_diff_identical_pipelines_returns_empty_changes() -> None:
-    pipe = {
-        "route_id": "x",
-        "steps": [{"call_function": {"ref": "m:f"}}],
-    }
+    pipe = {"route_id": "x", "steps": [{"call_function": {"ref": "m:f"}}]}
     diff = mod._diff_pipelines(pipe, pipe)
     assert diff["added"] == []
     assert diff["removed"] == []

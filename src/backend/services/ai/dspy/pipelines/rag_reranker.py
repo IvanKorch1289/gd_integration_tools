@@ -157,7 +157,7 @@ class _RagRerankerPipeline:
             return len(doc_tokens & query_tokens) / max(len(query_tokens), 1)
 
         ranked = sorted(candidates, key=_score, reverse=True)
-        return json.dumps([d.get("id") for d in ranked], ensure_ascii=False)
+        return json.dumps([d.get("id") for d in ranked], ensure_ascii=False)  # type: ignore
 
     def metric(self, example: dict[str, Any], output: str) -> float:
         """NDCG@k где k = min(len(predicted), len(expected_ranking))."""

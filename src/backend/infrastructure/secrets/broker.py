@@ -145,7 +145,7 @@ class SecretBrokerImpl:
         for callback in self.list_subscribers(snapshot.name):
             try:
                 callback(snapshot)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning(
                     "secret_broker.subscriber_failed name=%s err=%s", snapshot.name, exc
                 )

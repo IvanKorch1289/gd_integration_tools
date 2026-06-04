@@ -69,7 +69,7 @@ def test_to_mermaid_signal_wait_diamond() -> None:
         ],
     )
     mermaid = to_mermaid(wf)
-    assert "{\"" in mermaid
+    assert '{"' in mermaid
 
 
 def test_to_mermaid_mix_shapes() -> None:
@@ -90,10 +90,7 @@ def test_to_mermaid_mix_shapes() -> None:
 def test_to_mermaid_with_color_map_for_diff() -> None:
     wf = WorkflowDeclaration(
         name="diff_wf",
-        steps=[
-            ActivityDeclaration(name="kept"),
-            ActivityDeclaration(name="changed"),
-        ],
+        steps=[ActivityDeclaration(name="kept"), ActivityDeclaration(name="changed")],
     )
     color_map = {"activity:changed": "modified"}
     mermaid = to_mermaid(wf, color_map=color_map)

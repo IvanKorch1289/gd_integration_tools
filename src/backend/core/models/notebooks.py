@@ -6,7 +6,7 @@ Pydantic-модели Notebook и NotebookVersion — хранилище-агн�
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -17,7 +17,7 @@ __all__ = ("Notebook", "NotebookVersion")
 
 def _utc_now() -> datetime:
     """Текущий момент в UTC (tz-aware)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class NotebookVersion(BaseModel):

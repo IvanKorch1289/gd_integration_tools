@@ -36,7 +36,9 @@ _MIN_DESCRIPTION_LEN = 20
 _EXAMPLE_MARKERS = ("Example::", "Examples::", "Пример::", "Примеры::")
 
 
-def _has_service_dsl_decorator(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+def _has_service_dsl_decorator(
+    node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+) -> bool:
     """Возвращает True если у определения есть декоратор @service_dsl.
 
     Args:
@@ -127,7 +129,11 @@ def check_target(target: Path) -> int:
         issues = _check_docstring(docstring)
         if issues:
             violations += 1
-            rel = path.relative_to(target.parent) if target.parent in path.parents else path
+            rel = (
+                path.relative_to(target.parent)
+                if target.parent in path.parents
+                else path
+            )
             name = node.name
             print(f"[FAIL] {rel}::{name}")
             for issue in issues:

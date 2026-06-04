@@ -24,7 +24,7 @@ __all__ = ("build_clamav_scanner_if_enabled",)
 _logger = logging.getLogger("infrastructure.antivirus.setup")
 
 
-def build_clamav_scanner_if_enabled() -> "ClamAVPayloadScanner | None":
+def build_clamav_scanner_if_enabled() -> ClamAVPayloadScanner | None:
     """Возвращает :class:`ClamAVPayloadScanner` если включён feature-flag
     ``WAF_CLAMAV_ENABLED``; иначе ``None``.
 

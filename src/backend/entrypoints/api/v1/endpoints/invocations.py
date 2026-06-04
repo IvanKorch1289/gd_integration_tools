@@ -46,7 +46,7 @@ router = APIRouter(tags=["Invocations"])
 async def post_invocation(
     request_body: InvocationRequestSchema,
     response: Response,
-    invoker: "Invoker" = Depends(get_invoker_dep),
+    invoker: Invoker = Depends(get_invoker_dep),
 ) -> InvocationResponseSchema:
     """Универсальный вход для всех режимов :class:`InvocationMode`.
 
@@ -76,7 +76,7 @@ async def post_invocation(
 
 async def get_invocation(
     invocation_id: str,
-    registry: "ReplyChannelRegistryProtocol" = Depends(get_reply_registry),
+    registry: ReplyChannelRegistryProtocol = Depends(get_reply_registry),
 ) -> InvocationResponseSchema:
     """Polling-результата через ``api`` reply-канал.
 

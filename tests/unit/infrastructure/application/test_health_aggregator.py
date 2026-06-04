@@ -28,6 +28,7 @@ def _reset_singleton() -> Iterator[None]:
 class TestRegistration:
     def test_register_unregister_list(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -66,6 +67,7 @@ class TestSupportsModeKwarg:
 class TestSafeCheck:
     async def test_success_with_mode(self) -> None:
         ha = HealthAggregator()
+
         async def check(*, mode: str) -> dict[str, Any]:
             return {"status": "ok", "mode": mode}
 
@@ -77,6 +79,7 @@ class TestSafeCheck:
 
     async def test_success_without_mode(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -88,6 +91,7 @@ class TestSafeCheck:
 
     async def test_timeout(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> dict[str, Any]:
             await asyncio.sleep(10)
             return {"status": "ok"}
@@ -99,6 +103,7 @@ class TestSafeCheck:
 
     async def test_exception(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> dict[str, Any]:
             raise RuntimeError("boom")
 
@@ -109,6 +114,7 @@ class TestSafeCheck:
 
     async def test_invalid_result_type(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> str:
             return "not a dict"
 
@@ -128,9 +134,7 @@ class TestCollectRegistryComponents:
     async def test_empty_registry(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             inst.names.return_value = []
             mock_cls.instance.return_value = inst
@@ -141,9 +145,7 @@ class TestCollectRegistryComponents:
 
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             inst.names.return_value = ["redis"]
             inst.health_all = AsyncMock(
@@ -161,9 +163,7 @@ class TestCollectRegistryComponents:
     async def test_registry_health_all_exception(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             inst.names.return_value = ["redis"]
             inst.health_all = AsyncMock(side_effect=RuntimeError("down"))
@@ -182,6 +182,7 @@ class TestCheckAll:
 
     async def test_legacy_only(self) -> None:
         ha = HealthAggregator()
+
         async def ok_check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -192,6 +193,7 @@ class TestCheckAll:
 
     async def test_mixed_status_down(self) -> None:
         ha = HealthAggregator()
+
         async def ok_check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -205,6 +207,7 @@ class TestCheckAll:
 
     async def test_mixed_status_degraded(self) -> None:
         ha = HealthAggregator()
+
         async def ok_check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -219,21 +222,18 @@ class TestCheckAll:
     async def test_registry_override_legacy(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
+
         async def legacy_check() -> dict[str, Any]:
             return {"status": "ok", "custom": True}
 
         ha.register("redis", legacy_check)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             inst.names.return_value = ["redis"]
             from src.backend.infrastructure.clients.base_connector import HealthResult
 
             inst.health_all = AsyncMock(
-                return_value={
-                    "redis": HealthResult.ok(latency_ms=1.0, mode="fast")
-                }
+                return_value={"redis": HealthResult.ok(latency_ms=1.0, mode="fast")}
             )
             mock_cls.instance.return_value = inst
             result = await ha.check_all(mode="fast")
@@ -243,6 +243,7 @@ class TestCheckAll:
     async def test_publish_transition(self) -> None:
         ha = HealthAggregator()
         ha._last_overall = "ok"
+
         async def bad() -> dict[str, Any]:
             return {"status": "error", "error": "x"}
 
@@ -257,6 +258,7 @@ class TestCheckAll:
 class TestCheckSingle:
     async def test_legacy_found(self) -> None:
         ha = HealthAggregator()
+
         async def check() -> dict[str, Any]:
             return {"status": "ok"}
 
@@ -273,9 +275,7 @@ class TestCheckSingle:
     async def test_registry_found(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             client = MagicMock()
             from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -292,9 +292,7 @@ class TestCheckSingle:
     async def test_registry_not_found(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             inst.get = MagicMock(side_effect=Exception("not found"))
             mock_cls.instance.return_value = inst
@@ -305,9 +303,7 @@ class TestCheckSingle:
     async def test_registry_health_error(self) -> None:
         ha = HealthAggregator()
         ha.include_registry(True)
-        with patch(
-            "src.backend.infrastructure.registry.ConnectorRegistry"
-        ) as mock_cls:
+        with patch("src.backend.infrastructure.registry.ConnectorRegistry") as mock_cls:
             inst = MagicMock()
             client = MagicMock()
             client.health = AsyncMock(side_effect=RuntimeError("boom"))

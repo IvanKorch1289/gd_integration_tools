@@ -63,12 +63,14 @@ class TestCrossDomainReference:
     def test_blacklist_helper_signature(self) -> None:
         # _build_jwt_blacklist_or_none accepts no args, returns Any | None
         import inspect
+
         sig = inspect.signature(auth._build_jwt_blacklist_or_none)
         assert len(sig.parameters) == 0
         # No exception means callable
 
     def test_jwks_helper_signature(self) -> None:
         import inspect
+
         sig = inspect.signature(auth._build_jwks_cache_or_none)
         assert len(sig.parameters) == 0
 

@@ -101,7 +101,11 @@ def test_toggle_plugin_serializes_request() -> None:
 
     assert result is True, "При HTTP 200 должен вернуть True"
     call_kwargs = mock_client.post.call_args
-    body = call_kwargs.kwargs.get("json") or call_kwargs[1].get("json") or call_kwargs[0][1]
+    body = (
+        call_kwargs.kwargs.get("json")
+        or call_kwargs[1].get("json")
+        or call_kwargs[0][1]
+    )
     assert body["name"] == "notification_hub", "Поле name должно передаваться корректно"
     assert body["active"] is False, "Поле active должно соответствовать аргументу"
 

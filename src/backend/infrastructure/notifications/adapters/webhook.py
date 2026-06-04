@@ -20,7 +20,8 @@ import hashlib
 import hmac
 import ipaddress
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from urllib.parse import urlparse
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
@@ -92,7 +93,7 @@ class WebhookAdapter:
 
             upstream_registry.get(self._upstream_name)
             return True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
@@ -104,7 +105,7 @@ def _url_is_safe(url: str, allow_internal: bool) -> bool:
     """
     try:
         parsed = urlparse(url)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return False
     if parsed.scheme not in ("http", "https"):
         return False
@@ -138,7 +139,9 @@ def _json_encode(payload: dict[str, Any]) -> bytes:
 
 
 # Явный Protocol check (опционально).
-assert isinstance(WebhookAdapter(), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
+assert isinstance(
+    WebhookAdapter(), NotificationChannel
+)  # Protocol-conformance check на import
 
 
 __all__ = ("WebhookAdapter",)

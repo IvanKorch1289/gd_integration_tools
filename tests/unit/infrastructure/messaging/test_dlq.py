@@ -6,11 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.backend.infrastructure.messaging.dlq import (
-    DLQEnvelope,
-    DLQReason,
-    DLQWriter,
-)
+from src.backend.infrastructure.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
 
 
 def test_envelope_minimal_creation() -> None:

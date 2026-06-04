@@ -21,7 +21,7 @@ from pathlib import Path
 
 from src.backend.core.interfaces.storage import ObjectStorage
 
-__all__ = ("get_object_storage", "get_local_fs_storage")
+__all__ = ("get_local_fs_storage", "get_object_storage")
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def get_local_fs_storage() -> ObjectStorage:
 
         configured = getattr(settings.storage, "local_storage_path", None)
         base_path = Path(configured) if configured else Path("var/storage")
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         base_path = Path("var/storage")
     return LocalFSStorage(base_path=base_path)
 
@@ -59,7 +59,7 @@ def get_object_storage() -> ObjectStorage:
         from src.backend.core.config.settings import settings
 
         provider = (getattr(settings.storage, "provider", "local") or "local").lower()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         provider = "local"
 
     if provider == "local":

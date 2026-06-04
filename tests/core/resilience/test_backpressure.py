@@ -22,9 +22,7 @@ class TestAdaptiveBulkhead:
         from src.backend.core.resilience.backpressure import AdaptiveBulkhead
 
         bulkhead = AdaptiveBulkhead(
-            min_concurrent=1,
-            max_concurrent=1,
-            initial_concurrent=1,
+            min_concurrent=1, max_concurrent=1, initial_concurrent=1
         )
 
         # Take the only slot
@@ -56,9 +54,7 @@ class TestAdaptiveBulkhead:
         from src.backend.core.resilience.backpressure import AdaptiveBulkhead
 
         bulkhead = AdaptiveBulkhead(
-            min_concurrent=2,
-            max_concurrent=10,
-            initial_concurrent=5,
+            min_concurrent=2, max_concurrent=10, initial_concurrent=5
         )
 
         assert bulkhead._in_flight == 0

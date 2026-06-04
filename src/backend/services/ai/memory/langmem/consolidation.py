@@ -137,7 +137,7 @@ class ConsolidationEngine:
                         },
                     )
                     report.facts_persisted += 1
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     report.errors.append(str(exc))
                     logger.debug("ConsolidationEngine persist failed: %s", exc)
         return report
@@ -150,7 +150,7 @@ class ConsolidationEngine:
             return []
         try:
             episodes = await recall(kind="episodic", limit=limit)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Episodic recall failed: %s", exc)
             return []
         if since is None:
@@ -169,7 +169,7 @@ class ConsolidationEngine:
             response = await gateway.acompletion(
                 messages=[{"role": "user", "content": prompt}]
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LLM consolidate call failed: %s", exc)
             return []
         text = _extract_text(response)
@@ -211,7 +211,7 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         return []
     try:
         data = orjson.loads(text)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return []
     facts: list[ExtractedFact] = []
     if not isinstance(data, list):
@@ -222,7 +222,7 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         body = entry.get("fact") or entry.get("text") or ""
         try:
             confidence = float(entry.get("confidence", 0.0))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             confidence = 0.0
         if body:
             facts.append(ExtractedFact(text=str(body), confidence=confidence))

@@ -17,8 +17,8 @@
 import asyncio
 import logging
 import secrets
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Awaitable, Callable
 
 from src.backend.core.config.constants import consts
 
@@ -77,7 +77,7 @@ class Supervisor:
             except asyncio.CancelledError:
                 logger.info("Supervisor[%s] cancelled — graceful exit", self.name)
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 delay = self._backoff.delay_for(attempt)
                 attempt += 1
                 logger.warning(

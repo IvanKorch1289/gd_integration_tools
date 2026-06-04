@@ -1,5 +1,8 @@
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
+from pydantic import BaseModel
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -8,13 +11,13 @@ from src.backend.dsl.registry import processor
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
+    "DispatchActionProcessor",
+    "EnrichProcessor",
+    "FilterProcessor",
+    "LogProcessor",
     "SetHeaderProcessor",
     "SetPropertyProcessor",
-    "DispatchActionProcessor",
     "TransformProcessor",
-    "FilterProcessor",
-    "EnrichProcessor",
-    "LogProcessor",
     "ValidateProcessor",
 )
 
@@ -235,7 +238,7 @@ class ValidateProcessor(BaseProcessor):
     сохраняется в property "validated_payload".
     """
 
-    def __init__(self, model: type, *, name: str | None = None) -> None:
+    def __init__(self, model: type[BaseModel], *, name: str | None = None) -> None:
         super().__init__(name=name or f"validate:{model.__name__}")
         self._model = model
 

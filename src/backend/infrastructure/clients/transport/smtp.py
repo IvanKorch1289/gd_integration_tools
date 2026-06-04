@@ -1,16 +1,18 @@
 import asyncio
+import builtins
 from abc import ABC, abstractmethod
 from asyncio import TimeoutError
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from src.backend.core.config.settings import MailSettings, settings
 from src.backend.core.utils.circuit_breaker import get_circuit_breaker
 
-__all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient", "get_smtp_client")
+__all__ = ("BaseSmtpClient", "SmtpClient", "get_smtp_client", "smtp_client")
 
 
 class BaseSmtpClient(ABC):
@@ -25,7 +27,7 @@ class BaseSmtpClient(ABC):
         """Закрывает пул соединений."""
 
     @abstractmethod
-    async def get_connection(self) -> AsyncGenerator[Any, None]:
+    async def get_connection(self) -> AsyncGenerator[Any]:
         """Контекстный менеджер для получения соединения."""
 
     @abstractmethod
@@ -111,7 +113,7 @@ class SmtpClient(BaseSmtpClient):
                 await connection.quit()
             except SMTPException as exc:
                 self.logger.warning(
-                    f"Ошибка при закрытии соединения: {str(exc)}", exc_info=True
+                    f"Ошибка при закрытии соединения: {exc!s}", exc_info=True
                 )
         self.logger.info("Пул SMTP-соединений закрыт")
 
@@ -142,20 +144,20 @@ class SmtpClient(BaseSmtpClient):
                 if self.settings.username and self.settings.password:
                     await smtp.login(self.settings.username, self.settings.password)
                 return smtp
-        except TimeoutError as exc:
+        except builtins.TimeoutError as exc:
             self.logger.error(
-                f"Превышено время ожидания соединения: {str(exc)}", exc_info=True
+                f"Превышено время ожидания соединения: {exc!s}", exc_info=True
             )
-            raise TimeoutError("Тайм-аут SMTP-соединения") from exc
+            raise builtins.TimeoutError("Тайм-аут SMTP-соединения") from exc
         except SMTPAuthenticationError as exc:
-            self.logger.error(f"Ошибка аутентификации: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка аутентификации: {exc!s}", exc_info=True)
             raise ConnectionError("Ошибка аутентификации SMTP") from exc
         except SMTPException as exc:
-            self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка соединения: {exc!s}", exc_info=True)
             raise ConnectionError("Ошибка SMTP-соединения") from exc
 
     @asynccontextmanager
-    async def get_connection(self) -> AsyncGenerator[SMTP, None]:
+    async def get_connection(self) -> AsyncGenerator[SMTP]:
         """
         Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
 
@@ -248,14 +250,14 @@ class SmtpClient(BaseSmtpClient):
                 if not temporary and self._connection_pool.qsize() < self._pool_size:
                     self._connection_pool.put_nowait(connection)
                     return
-        except SMTPException, OSError:
+        except (SMTPException, OSError):
             self.logger.warning(
                 "Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True
             )
 
         try:
             await connection.quit()
-        except SMTPException, OSError:
+        except (SMTPException, OSError):
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:
@@ -270,6 +272,38 @@ class SmtpClient(BaseSmtpClient):
             "circuit_state": self._circuit_breaker.state,
             "active_connections": self._connection_pool.qsize(),
         }
+
+    async def send_email(
+        self,
+        *,
+        recipient: str,
+        subject: str,
+        body: str,
+        from_address: str,
+        html: bool = False,
+    ) -> None:
+        """Отправить email через SMTP-pool.
+
+        Args:
+            recipient: Адрес получателя.
+            subject: Тема письма.
+            body: Содержимое письма.
+            from_address: Адрес отправителя.
+            html: Если True, body интерпретируется как HTML.
+        """
+        from email.message import EmailMessage
+
+        message = EmailMessage()
+        message["From"] = from_address
+        message["To"] = recipient
+        message["Subject"] = subject
+        if html:
+            message.set_content(body, subtype="html")
+        else:
+            message.set_content(body)
+
+        async with self.get_connection() as smtp:
+            await smtp.send_message(message)
 
     async def test_connection(self) -> bool:
         """
@@ -296,7 +330,7 @@ class SmtpClient(BaseSmtpClient):
 
             return all(resp.code == 250 for resp in recipient_responses.values())
         except Exception as exc:
-            self.logger.error(f"Тест соединения не удался: {str(exc)}", exc_info=True)
+            self.logger.error(f"Тест соединения не удался: {exc!s}", exc_info=True)
             return False
 
 

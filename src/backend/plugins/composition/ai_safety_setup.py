@@ -60,7 +60,7 @@ def _build_fs_facade() -> AIFsFacade:
         if has_service(CapabilityGate):
             gate = get_service(CapabilityGate)
             capability_check = getattr(gate, "check", None)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         capability_check = None
     return AIFsFacade(
         workspace_manager=workspace_manager,
@@ -97,7 +97,7 @@ def register_e2b_sandbox() -> None:
             )
             return NoOpSandbox()
         try:
-            import e2b_code_interpreter  # noqa: F401, PLC0415
+            import e2b_code_interpreter  # noqa: F401
         except ImportError:
             _logger.warning(
                 "e2b-code-interpreter не установлен (опц. extra [ai]); "
@@ -113,7 +113,7 @@ def register_e2b_sandbox() -> None:
             if has_service(CapabilityGate):
                 gate = get_service(CapabilityGate)
                 capability_check = getattr(gate, "check", None)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             capability_check = None
 
         fs_facade = get_service(AIFsFacade) if has_service(AIFsFacade) else None
@@ -133,7 +133,7 @@ async def start_ai_safety(app: "FastAPI" | None = None) -> None:
         from src.backend.core.utils.task_registry import get_task_registry
 
         task_factory = get_task_registry().create_task
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         task_factory = None
     await manager.start_cleanup_loop(task_factory=task_factory)
     _logger.info(
@@ -150,7 +150,7 @@ async def stop_ai_safety(app: "FastAPI" | None = None) -> None:
         return
     try:
         manager = get_service(AIWorkspaceManager)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return
     await manager.shutdown()
     _logger.info("AI safety stopped")

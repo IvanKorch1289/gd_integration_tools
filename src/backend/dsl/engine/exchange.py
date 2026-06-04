@@ -1,19 +1,19 @@
 import uuid
 from datetime import UTC, datetime
-from enum import Enum
-from typing import Any, Generic, TypeVar
+from enum import StrEnum
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
 from src.backend.core.types.data_kind import DataKind
 from src.backend.dsl.adapters.types import ProtocolType
 
-__all__ = ("ExchangeStatus", "Message", "ExchangeMeta", "Exchange")
+__all__ = ("Exchange", "ExchangeMeta", "ExchangeStatus", "Message")
 
 T = TypeVar("T")
 
 
-class ExchangeStatus(str, Enum):
+class ExchangeStatus(StrEnum):
     """
     Статус выполнения Exchange внутри DSL-маршрута.
     """
@@ -24,7 +24,7 @@ class ExchangeStatus(str, Enum):
     failed = "failed"
 
 
-class Message(BaseModel, Generic[T]):
+class Message[T](BaseModel):
     """
     Универсальное сообщение DSL.
 
@@ -97,7 +97,7 @@ class ExchangeMeta(BaseModel):
     tenant_id: str | None = None
 
 
-class Exchange(BaseModel, Generic[T]):
+class Exchange[T](BaseModel):
     """
     Контейнер, который движется по DSL-маршруту.
 

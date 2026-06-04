@@ -118,9 +118,7 @@ async def test_ttl_expiry_recreates_session() -> None:
 async def test_max_sessions_evicts_oldest_idle() -> None:
     """При достижении max_sessions выбрасывается самый старый idle session."""
     pool = DesktopRPASessionPool(
-        base_url="http://worker:9001",
-        ttl_seconds=3600.0,
-        max_sessions=2,
+        base_url="http://worker:9001", ttl_seconds=3600.0, max_sessions=2
     )
     async with pool.acquire("app_a") as _ca:
         pass

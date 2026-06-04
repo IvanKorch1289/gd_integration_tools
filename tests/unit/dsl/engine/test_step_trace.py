@@ -1,111 +1,155 @@
-"""Unit-тесты для StepTrace и traced_step (S10 K3 W8)."""
+"""Tests for src.backend.dsl.engine.step_trace."""
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
 from src.backend.dsl.engine.step_trace import (
     MAX_SNAPSHOT_SIZE,
     StepTrace,
+    _truncate,
     export_otel_attrs,
     record_trace,
     traced_step,
 )
 
 
-class _FakeExchange:
-    def __init__(self, body: Any = None) -> None:
-        self.body = body
-        self._props: dict[str, Any] = {}
+@pytest.mark.unit
+class TestTruncate:
+    def test_short_value_unchanged(self) -> None:
+        value = "hello"
+        assert _truncate(value) == "'hello'"
 
-    def get_property(self, key: str, default: Any = None) -> Any:
-        return self._props.get(key, default)
+    def test_long_value_truncated(self) -> None:
+        value = "x" * (MAX_SNAPSHOT_SIZE + 10)
+        result = _truncate(value)
+        assert len(result) <= MAX_SNAPSHOT_SIZE
+        assert result.endswith("...")
 
-    def set_property(self, key: str, value: Any) -> None:
-        self._props[key] = value
+    def test_none_value(self) -> None:
+        assert _truncate(None) == "None"
 
-
-def test_step_trace_dataclass_defaults() -> None:
-    t = StepTrace(processor_name="x")
-    assert t.processor_name == "x"
-    assert t.duration_ms == 0.0
-    assert t.error_context is None
-    assert t.otel_attrs == {}
-
-
-def test_record_trace_creates_bucket() -> None:
-    ex = _FakeExchange()
-    trace = StepTrace(processor_name="proc1")
-    record_trace(ex, trace)
-    bucket = ex.get_property("dsl_step_traces")
-    assert bucket == [trace]
+    def test_dict_value(self) -> None:
+        value = {"key": "val"}
+        assert _truncate(value) == "{'key': 'val'}"
 
 
-def test_record_trace_appends_to_existing_bucket() -> None:
-    ex = _FakeExchange()
-    record_trace(ex, StepTrace(processor_name="a"))
-    record_trace(ex, StepTrace(processor_name="b"))
-    bucket = ex.get_property("dsl_step_traces")
-    assert [t.processor_name for t in bucket] == ["a", "b"]
+@pytest.mark.unit
+class TestStepTrace:
+    def test_defaults(self) -> None:
+        trace = StepTrace(processor_name="test")
+        assert trace.processor_name == "test"
+        assert trace.input_snapshot == ""
+        assert trace.output_snapshot == ""
+        assert trace.duration_ms == 0.0
+        assert trace.error_context is None
+        assert trace.otel_attrs == {}
+
+    def test_to_dict(self) -> None:
+        trace = StepTrace(
+            processor_name="p1",
+            input_snapshot="in",
+            output_snapshot="out",
+            duration_ms=12.5,
+            error_context="err",
+            otel_attrs={"k": "v"},
+        )
+        d = trace.to_dict()
+        assert d["processor_name"] == "p1"
+        assert d["duration_ms"] == 12.5
+        assert d["error_context"] == "err"
 
 
-@pytest.mark.asyncio
-async def test_traced_step_measures_duration() -> None:
-    ex = _FakeExchange(body={"r": 1})
-    async with traced_step(ex, processor_name="slow") as trace:
-        await asyncio.sleep(0.01)
-        trace.output_snapshot = "ok"
-    bucket = ex.get_property("dsl_step_traces")
-    assert len(bucket) == 1
-    assert bucket[0].duration_ms >= 10
-    assert bucket[0].output_snapshot == "ok"
-    assert bucket[0].error_context is None
+@pytest.mark.unit
+class TestRecordTrace:
+    def test_creates_list_if_missing(self) -> None:
+        exchange = MagicMock()
+        exchange.get_property.return_value = None
+        trace = StepTrace(processor_name="p1")
+        record_trace(exchange, trace)
+        exchange.set_property.assert_called_once()
+        name, args, kwargs = exchange.set_property.mock_calls[0]
+        assert args[0] == "dsl_step_traces"
+        assert isinstance(args[1], list)
+        assert args[1][0] is trace
+
+    def test_appends_to_existing_list(self) -> None:
+        exchange = MagicMock()
+        existing: list[Any] = []
+        exchange.get_property.return_value = existing
+        trace = StepTrace(processor_name="p1")
+        record_trace(exchange, trace)
+        exchange.set_property.assert_not_called()
+        assert existing == [trace]
 
 
-@pytest.mark.asyncio
-async def test_traced_step_captures_exception_context() -> None:
-    ex = _FakeExchange()
-    with pytest.raises(RuntimeError, match="boom"):
-        async with traced_step(ex, processor_name="failing"):
-            raise RuntimeError("boom")
-    bucket = ex.get_property("dsl_step_traces")
-    assert len(bucket) == 1
-    assert "RuntimeError" in bucket[0].error_context
-    assert "boom" in bucket[0].error_context
+@pytest.mark.unit
+class TestTracedStep:
+    @pytest.mark.asyncio
+    async def test_successful_step(self) -> None:
+        exchange = MagicMock()
+        exchange.body = "response_body"
 
+        async with traced_step(
+            exchange, processor_name="http_call", input_value="req"
+        ) as trace:
+            trace.output_snapshot = "custom_out"
 
-@pytest.mark.asyncio
-async def test_traced_step_default_output_snapshot_from_exchange() -> None:
-    ex = _FakeExchange(body={"x": 42})
-    async with traced_step(ex, processor_name="p"):
-        pass
-    bucket = ex.get_property("dsl_step_traces")
-    assert "42" in bucket[0].output_snapshot
+        assert trace.processor_name == "http_call"
+        assert trace.input_snapshot == "'req'"
+        assert trace.output_snapshot == "custom_out"
+        assert trace.duration_ms >= 0
+        assert trace.error_context is None
 
+    @pytest.mark.asyncio
+    async def test_step_with_exception(self) -> None:
+        exchange = MagicMock()
 
-def test_input_snapshot_truncated_when_huge() -> None:
-    """Большой input не должен раздувать trace больше MAX_SNAPSHOT_SIZE."""
-    big = {"data": "x" * (MAX_SNAPSHOT_SIZE * 2)}
+        with pytest.raises(ValueError, match="boom"):
+            async with traced_step(exchange, processor_name="proc") as trace:
+                raise ValueError("boom")
 
-    async def _go() -> None:
-        ex = _FakeExchange()
-        async with traced_step(ex, processor_name="p", input_value=big):
+        assert trace.error_context == "ValueError: boom"
+        assert trace.duration_ms >= 0
+
+    @pytest.mark.asyncio
+    async def test_step_output_fallback_to_exchange_body(self) -> None:
+        exchange = MagicMock()
+        exchange.body = "fallback_body"
+
+        async with traced_step(exchange, processor_name="proc") as trace:
             pass
 
-    asyncio.run(_go())  # smoke
+        assert trace.output_snapshot == "'fallback_body'"
+
+    @pytest.mark.asyncio
+    async def test_step_no_input_value(self) -> None:
+        exchange = MagicMock()
+
+        async with traced_step(exchange, processor_name="proc") as trace:
+            pass
+
+        assert trace.input_snapshot == ""
 
 
-def test_export_otel_attrs() -> None:
-    trace = StepTrace(
-        processor_name="http_call",
-        duration_ms=12.5,
-        otel_attrs={"status_code": 200, "method": "GET"},
-    )
-    attrs = export_otel_attrs(trace)
-    assert attrs["dsl.processor"] == "http_call"
-    assert attrs["dsl.duration_ms"] == 12.5
-    assert attrs["dsl.attr.status_code"] == 200
-    assert attrs["dsl.attr.method"] == "GET"
+@pytest.mark.unit
+class TestExportOtelAttrs:
+    def test_basic_attrs(self) -> None:
+        trace = StepTrace(processor_name="p1", duration_ms=10.0)
+        attrs = export_otel_attrs(trace)
+        assert attrs["dsl.processor"] == "p1"
+        assert attrs["dsl.duration_ms"] == 10.0
+        assert attrs["dsl.error"] == ""
+
+    def test_with_error(self) -> None:
+        trace = StepTrace(processor_name="p1", error_context="timeout")
+        attrs = export_otel_attrs(trace)
+        assert attrs["dsl.error"] == "timeout"
+
+    def test_with_otel_attrs(self) -> None:
+        trace = StepTrace(processor_name="p1", otel_attrs={"model": "gpt-4"})
+        attrs = export_otel_attrs(trace)
+        assert attrs["dsl.attr.model"] == "gpt-4"

@@ -34,7 +34,7 @@ from typing import Any, TypedDict
 
 from src.backend.services.ai.rag.hybrid_retriever import rrf_merge
 
-__all__ = ("MultiQueryResult", "MultiQueryRetriever", "MultiQueryConfig")
+__all__ = ("MultiQueryConfig", "MultiQueryResult", "MultiQueryRetriever")
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class MultiQueryRetriever:
             reformulations = await self._generate_reformulations(
                 query, self._config.num_reformulations
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("multi_query.generate_reformulations_failed: %s", exc)
             return []
 
@@ -154,7 +154,7 @@ class MultiQueryRetriever:
         # Шаг 2: embedding всех запросов.
         try:
             all_embeddings = await self._embed_fn(all_queries)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("multi_query.embed_failed: %s", exc)
             return []
 
@@ -180,7 +180,7 @@ class MultiQueryRetriever:
                         if cid:
                             chunks_by_id.setdefault(cid, doc)
                     return label, chunk_ids
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("multi_query.search_failed for %s: %s", label, exc)
                     return label, []
 
@@ -201,7 +201,7 @@ class MultiQueryRetriever:
                         if cid:
                             chunks_by_id.setdefault(cid, doc)
                     ranked_lists.append((label, chunk_ids))
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("multi_query.search_failed for %s: %s", label, exc)
 
         if not ranked_lists:
@@ -213,14 +213,16 @@ class MultiQueryRetriever:
         # Шаг 5: маппинг в MultiQueryResult.
         final_results: list[MultiQueryResult] = []
         for chunk_id, rrf_score, sources in merged[:top_k]:
-            doc = chunks_by_id.get(chunk_id)
-            if doc is None:
+            chunk_doc: dict[str, Any] | None = chunks_by_id.get(chunk_id)
+            if chunk_doc is None:
                 continue
             final_results.append(
                 MultiQueryResult(
                     chunk_id=chunk_id,
-                    document=str(doc.get("document") or doc.get("text") or ""),
-                    metadata=dict(doc.get("metadata") or {}),
+                    document=str(
+                        chunk_doc.get("document") or chunk_doc.get("text") or ""
+                    ),
+                    metadata=dict(chunk_doc.get("metadata") or {}),
                     score=rrf_score,
                     sources=list(sources),
                 )

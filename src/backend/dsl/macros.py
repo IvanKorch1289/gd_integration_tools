@@ -62,7 +62,7 @@ def _emit_deprecation_once() -> None:
                 DeprecationWarning,
                 stacklevel=3,
             )
-    except Exception:  # noqa: BLE001, S110
+    except Exception:
         # Bootstrap-окружение без settings — молча игнорируем.
         # Deprecation-warning не критичен, чтобы из-за него падал импорт.
         pass

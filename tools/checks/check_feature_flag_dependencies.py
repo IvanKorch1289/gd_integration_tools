@@ -45,9 +45,7 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
 
     # WARNING dict keys
     warning_match = re.findall(
-        r'_FEATURE_FLAG_DEPENDENCIES\s*=\s*\{[^}]*"([^"]+)":',
-        validator_py,
-        re.DOTALL,
+        r'_FEATURE_FLAG_DEPENDENCIES\s*=\s*\{[^}]*"([^"]+)":', validator_py, re.DOTALL
     )
     for key in warning_match:
         warning_deps.add(key.strip())
@@ -67,8 +65,7 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
 def _check_no_dep_required_comments(features_py: str) -> set[str]:
     """Находит strict flags с комментарием # no dependency required."""
     pattern = re.compile(
-        r'^\s*(\w*_strict\w*)\s*:\s*[^#]*#.*no dependency required',
-        re.MULTILINE,
+        r"^\s*(\w*_strict\w*)\s*:\s*[^#]*#.*no dependency required", re.MULTILINE
     )
     return {m.group(1) for m in pattern.finditer(features_py)}
 
@@ -93,7 +90,9 @@ def run_check(strict_mode: bool = False) -> int:
     undeclared = [name for name in strict_flags if name not in all_declared]
 
     if not undeclared:
-        print("[OK] Все *_strict flags объявлены в dependencies или have no-dep comment.")
+        print(
+            "[OK] Все *_strict flags объявлены в dependencies или have no-dep comment."
+        )
         return 0
 
     print(f"[FAIL] {len(undeclared)} *_strict flag(s) без declared dependency:")
@@ -118,9 +117,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Check feature flag dependencies")
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Blocking gate (exit 1 на нарушения)",
+        "--strict", action="store_true", help="Blocking gate (exit 1 на нарушения)"
     )
     args = parser.parse_args()
 

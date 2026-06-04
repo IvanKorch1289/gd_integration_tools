@@ -42,7 +42,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0
             )
-        except OSError, asyncio.TimeoutError:
+        except (TimeoutError, OSError):
             return False
         try:
             writer.write(b"zPING\0")
@@ -53,7 +53,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except Exception:  # noqa: BLE001, S110 — closing socket, error не критичен
+            except Exception:
                 pass
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
@@ -62,7 +62,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=self._timeout
             )
-        except (OSError, asyncio.TimeoutError) as exc:
+        except (TimeoutError, OSError) as exc:
             raise ConnectionError(
                 f"ClamAV TCP {self._host}:{self._port} недоступен: {exc}"
             ) from exc
@@ -80,7 +80,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except Exception:  # noqa: BLE001, S110 — closing socket, error не критичен
+            except Exception:
                 pass
 
         latency_ms = (time.monotonic() - start) * 1000

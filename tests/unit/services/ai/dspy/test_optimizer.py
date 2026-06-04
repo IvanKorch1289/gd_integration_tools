@@ -29,7 +29,9 @@ class _StubPipeline:
 def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     from src.backend.core.config.features import feature_flags
 
-    monkeypatch.setattr(feature_flags, "dspy_eval_pipeline_enabled", value, raising=False)
+    monkeypatch.setattr(
+        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False
+    )
 
 
 @pytest.mark.asyncio
@@ -111,14 +113,16 @@ def test_credit_scoring_pipeline_metric() -> None:
         credit_scoring_pipeline,
     )
 
-    output = credit_scoring_pipeline.forward(
-        {"income_rub": 80000, "credit_score": 750}
-    )
+    output = credit_scoring_pipeline.forward({"income_rub": 80000, "credit_score": 750})
     parsed = json.loads(output)
     assert parsed["decision"] in {"approve", "review", "reject"}
     # Метрика exact-match для baseline forward.
     score = credit_scoring_pipeline.metric(
-        {"income_rub": 80000, "credit_score": 750, "expected": {"decision": "approve", "score": 750}},
+        {
+            "income_rub": 80000,
+            "credit_score": 750,
+            "expected": {"decision": "approve", "score": 750},
+        },
         output,
     )
     assert 0.0 <= score <= 1.0

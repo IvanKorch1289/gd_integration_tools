@@ -63,7 +63,7 @@ class Mem0MemoryAdapter:
         try:
             results = client.search(query=query, user_id=namespace, top_k=k)
             return self._normalize_results(results)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "Mem0MemoryAdapter.recall(%r, %r) failed: %s", namespace, query, exc
             )
@@ -95,7 +95,7 @@ class Mem0MemoryAdapter:
                 user_id=namespace,
                 metadata=metadata,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "Mem0MemoryAdapter.store(%r, %r) failed: %s", namespace, key, exc
             )
@@ -125,13 +125,13 @@ class Mem0MemoryAdapter:
                 if mem_id and record_key == key:
                     try:
                         client.delete(memory_id=mem_id)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.debug(
                             "Mem0MemoryAdapter.delete memory_id=%s failed: %s",
                             mem_id,
                             exc,
                         )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "Mem0MemoryAdapter.delete(%r, %r) failed: %s", namespace, key, exc
             )
@@ -171,7 +171,7 @@ class Mem0MemoryAdapter:
 
         try:
             return Memory()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Mem0MemoryAdapter: Memory() init failed: %s", exc)
             return None
 
@@ -185,7 +185,7 @@ class Mem0MemoryAdapter:
         else:
             try:
                 text_value = json.dumps(value, ensure_ascii=False, default=str)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 text_value = str(value)
 
         return f"[{key}] {text_value}"

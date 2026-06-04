@@ -40,7 +40,7 @@ class HealthAlertSubscriber:
             broker.subscriber(self.CHANNEL)(self._handle)
             self._started = True
             logger.info("HealthAlertSubscriber subscribed to %s", self.CHANNEL)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("HealthAlertSubscriber.start failed: %s", exc)
 
     async def _handle(self, payload: dict[str, Any]) -> None:
@@ -65,7 +65,7 @@ class HealthAlertSubscriber:
                 recipient="ops",
                 priority="tx",
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Health alert dispatch failed: %s", exc)
 
 

@@ -65,7 +65,7 @@ class ClamAVPayloadScanner:
 
     __slots__ = ("_backend", "_fail_open")
 
-    def __init__(self, backend: "AntivirusBackend", *, fail_open: bool = True) -> None:
+    def __init__(self, backend: AntivirusBackend, *, fail_open: bool = True) -> None:
         self._backend = backend
         self._fail_open = fail_open
 
@@ -88,7 +88,7 @@ class ClamAVPayloadScanner:
             if self._fail_open:
                 return None
             return "clamav unavailable"
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error(
                 "clamav.scan.error",
                 extra={"backend": self._backend.name, "error": repr(exc)},

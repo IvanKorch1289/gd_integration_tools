@@ -16,12 +16,12 @@ from pydantic import BaseModel
 from src.backend.core.errors import BaseError
 
 __all__ = (
-    "OrderEvent",
-    "PipelineEvent",
-    "FlagEvent",
-    "RouteEvent",
     "EventBus",
     "EventSchemaValidationError",
+    "FlagEvent",
+    "OrderEvent",
+    "PipelineEvent",
+    "RouteEvent",
     "get_event_bus",
 )
 
@@ -198,7 +198,7 @@ class EventBus:
         try:
             decorator = self._broker.subscriber(channel)
             decorator(handler)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("EventBus.subscribe failed for %s: %s", channel, exc)
             return None
         return handler
@@ -236,5 +236,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("event_bus", EventBus)
-def get_event_bus() -> EventBus:
+def get_event_bus() -> EventBus:  # type: ignore[empty-body]
     """Возвращает singleton EventBus."""

@@ -128,7 +128,9 @@ class TestDeprecationMiddleware:
     @pytest.mark.anyio
     async def test_ignores_other_paths(self) -> None:
         app = FastAPI()
-        mw = DeprecationMiddleware(app, {"v1": APIVersion(version="v1", deprecated=True)})
+        mw = DeprecationMiddleware(
+            app, {"v1": APIVersion(version="v1", deprecated=True)}
+        )
 
         async def call_next(request: Request) -> Response:
             return Response("OK")

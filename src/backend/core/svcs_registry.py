@@ -26,17 +26,18 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Any, Callable, Hashable, TypeVar
+from collections.abc import Callable, Hashable
+from typing import Any, TypeVar
 
 import svcs
 
 __all__ = (
-    "registry",
-    "register_factory",
+    "clear_registry",
     "get_service",
     "has_service",
     "list_services",
-    "clear_registry",
+    "register_factory",
+    "registry",
 )
 
 logger = logging.getLogger("core.svcs_registry")

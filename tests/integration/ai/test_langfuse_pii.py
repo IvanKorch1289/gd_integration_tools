@@ -29,7 +29,9 @@ class _StubSanitizer:
 
         cleaned = re.sub(r"\d{3,}", "[REDACTED]", text)
         replacements = {"[REDACTED]": "***"} if cleaned != text else {}
-        return _StubSanitizationResult(sanitized_text=cleaned, replacements=replacements)
+        return _StubSanitizationResult(
+            sanitized_text=cleaned, replacements=replacements
+        )
 
 
 def test_callback_is_no_op_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -55,7 +55,7 @@ class RagQueryStatsCollector:
                 await self._redis.hset(f"{self._prefix}:query:{tenant_id}", h, query)
                 await self._redis.expire(f"{self._prefix}:query:{tenant_id}", self._ttl)
                 return
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 logger.debug("RagQueryStatsCollector: Redis fail, in-memory fallback")
         # Fallback. ``Counter`` здесь — ``collections.Counter`` (счётчик
         # ключей), не ``prometheus_client.Counter`` — violation-check
@@ -88,7 +88,7 @@ class RagQueryStatsCollector:
                         normalized.append((raw_q, int(score)))
                 if normalized:
                     return normalized
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
         # Fallback in-memory. ``Counter`` здесь — ``collections.Counter``.
         tenant_counter = self._memory.get(tenant_id, Counter())

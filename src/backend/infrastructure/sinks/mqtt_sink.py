@@ -118,7 +118,7 @@ class MqttSink(Sink):
                 await client.publish(
                     self.topic, payload=body, qos=self.qos, retain=self.retain
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -150,5 +150,5 @@ class MqttSink(Sink):
                 timeout=self.timeout,
             ):
                 return True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False

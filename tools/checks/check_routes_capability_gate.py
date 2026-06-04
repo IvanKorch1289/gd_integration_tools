@@ -42,9 +42,7 @@ def validate() -> list[str]:
 
     # 1) declare(...) присутствует.
     if not re.search(r"self\._gate\.declare\(", src):
-        errors.append(
-            f"{LOADER_PATH}: отсутствует вызов self._gate.declare(...)"
-        )
+        errors.append(f"{LOADER_PATH}: отсутствует вызов self._gate.declare(...)")
 
     # 2) audit-event 'route.capabilities.allocated' эмитится.
     if "route.capabilities.allocated" not in src:
@@ -73,9 +71,7 @@ def validate_strict() -> list[str]:
         return errors
     src = FEATURES_PATH.read_text(encoding="utf-8")
     if f"{STRICT_FLAG}:" not in src:
-        errors.append(
-            f"{FEATURES_PATH}: feature-flag '{STRICT_FLAG}' не найден"
-        )
+        errors.append(f"{FEATURES_PATH}: feature-flag '{STRICT_FLAG}' не найден")
     return errors
 
 

@@ -7,7 +7,7 @@ from typing import Any
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("Pipeline", "PipelineCompiler", "CompiledPipeline")
+__all__ = ("CompiledPipeline", "Pipeline", "PipelineCompiler")
 
 
 @dataclass(slots=True)
@@ -47,7 +47,7 @@ class Pipeline:
     feature_flag: str | None = None
     tenant_aware: bool = False
 
-    def add_processor(self, processor: BaseProcessor) -> "Pipeline":
+    def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """
         Добавляет процессор в конец маршрута.
 
@@ -60,7 +60,7 @@ class Pipeline:
         self.processors.append(processor)
         return self
 
-    def extend(self, processors: list[BaseProcessor]) -> "Pipeline":
+    def extend(self, processors: list[BaseProcessor]) -> Pipeline:
         """
         Добавляет несколько процессоров.
 

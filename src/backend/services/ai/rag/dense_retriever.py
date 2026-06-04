@@ -91,7 +91,7 @@ class DenseRetriever:
 
         try:
             embeddings = await self._embed_fn([query])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("dense_retriever.embed_failed: %s", exc)
             return []
 
@@ -101,7 +101,7 @@ class DenseRetriever:
 
         try:
             results = await self._search_vectors([embeddings[0]], top_k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("dense_retriever.search_failed: %s", exc)
             return []
 

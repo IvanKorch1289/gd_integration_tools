@@ -28,7 +28,12 @@ def _record(answer: str = "ответ", gt: str | None = None) -> RAGASRecord:
 
 def test_default_thresholds_present() -> None:
     """Все 4 метрики должны иметь дефолтные пороги."""
-    expected = {"faithfulness", "answer_relevancy", "context_precision", "context_recall"}
+    expected = {
+        "faithfulness",
+        "answer_relevancy",
+        "context_precision",
+        "context_recall",
+    }
     assert expected.issubset(DEFAULT_THRESHOLDS.keys())
     assert DEFAULT_THRESHOLDS["faithfulness"] == 0.8
 
@@ -65,7 +70,9 @@ async def test_ragas_missing_dependency_graceful() -> None:
 
 
 @pytest.mark.asyncio
-async def test_evaluate_sync_skips_on_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_evaluate_sync_skips_on_import_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Если ragas import падает — sync путь возвращает skipped."""
     import sys
 
@@ -80,7 +87,9 @@ async def test_evaluate_sync_skips_on_import_error(monkeypatch: pytest.MonkeyPat
 
 
 @pytest.mark.asyncio
-async def test_evaluate_returns_metrics_on_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_evaluate_returns_metrics_on_mock(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Если ragas мок дёт значения — собираются RAGASMetric с правильным passed."""
 
     class _FakeDataset:
@@ -98,7 +107,9 @@ async def test_evaluate_returns_metrics_on_mock(monkeypatch: pytest.MonkeyPatch)
         "context_recall": 0.95,
     }
 
-    def _fake_evaluate(_ds: Any, *, metrics: list[Any], **_kwargs: Any) -> dict[str, float]:
+    def _fake_evaluate(
+        _ds: Any, *, metrics: list[Any], **_kwargs: Any
+    ) -> dict[str, float]:
         del metrics
         return raw_result
 

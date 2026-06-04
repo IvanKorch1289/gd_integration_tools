@@ -30,7 +30,7 @@ from uuid import uuid4
 
 import orjson
 
-__all__ = ("WebhookRelay", "RelayRule", "DLQEntry", "get_webhook_relay")
+__all__ = ("DLQEntry", "RelayRule", "WebhookRelay", "get_webhook_relay")
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ async def _redis_raw() -> Any:
         from src.backend.core.di.providers import get_redis_kv_client_provider
 
         return get_redis_kv_client_provider()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Redis недоступен для DLQ: %s", exc)
         return None
 
@@ -147,7 +147,7 @@ class WebhookRelay:
             return jmespath.search(expression, payload)
         except ImportError:
             return payload
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"error": str(exc)}
 
     def _transform(
@@ -159,7 +159,7 @@ class WebhookRelay:
 
                 if not jmespath.search(rule.condition, payload):
                     return None
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.debug(
                     "jmespath condition raised; rule applied as match-all",
                     exc_info=True,
@@ -215,7 +215,7 @@ class WebhookRelay:
 
         try:
             return await _attempt()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             last_error = str(exc)
 
         entry = DLQEntry(
@@ -238,7 +238,7 @@ class WebhookRelay:
                 # LTRIM ограничивает длину — защита от неограниченного роста.
                 await raw.ltrim(_DLQ_KEY, 0, _DLQ_MAX_LEN - 1)
                 return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("DLQ Redis push failed: %s, fallback to memory", exc)
         self._memory_dlq.append(entry)
 
@@ -249,7 +249,7 @@ class WebhookRelay:
             return list(self._memory_dlq)
         try:
             items = await raw.lrange(_DLQ_KEY, 0, -1)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("DLQ Redis read failed: %s, fallback to memory", exc)
             return list(self._memory_dlq)
 
@@ -258,7 +258,7 @@ class WebhookRelay:
             try:
                 data = orjson.loads(item)
                 entries.append(DLQEntry(**data))
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.debug("DLQ entry parse failed; skipped", exc_info=True)
                 continue
         return entries
@@ -279,12 +279,12 @@ class WebhookRelay:
                     if data.get("id") == entry_id:
                         await raw.lrem(_DLQ_KEY, 1, item)
                         return
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     logger.debug(
                         "DLQ entry parse failed during remove; skipped", exc_info=True
                     )
                     continue
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("DLQ Redis remove failed: %s", exc)
 
     async def dlq_list(self, limit: int = 50) -> dict[str, Any]:

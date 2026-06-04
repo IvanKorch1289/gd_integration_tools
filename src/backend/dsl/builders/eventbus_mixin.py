@@ -44,11 +44,11 @@ class EventBusPublishProcessor:
         registry в lifespan + correlation_id propagation в headers).
         """
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return
 
         payload = (
@@ -91,11 +91,11 @@ class EventBusSubscribeProcessor:
     async def process(self, exchange: Any, context: Any) -> None:
         """Записать subscription декларацию в metadata."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return
 
         subscriptions = list(exchange.properties.get("_eventbus_subscribed") or [])
@@ -124,7 +124,7 @@ class EventBusMixin:
 
     def to_eventbus(
         self, topic: str, *, payload_ref: str = "body", name: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Publish текущий exchange в EventBus topic (V22 NEW).
 
         Args:
@@ -139,7 +139,7 @@ class EventBusMixin:
 
     def from_eventbus(
         self, topic_pattern: str, *, ack_mode: str = "auto", name: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW).
 
         Args:

@@ -82,7 +82,7 @@ class WebhookChunkedPublisher(_BasePublisher):
                     client.post(url, content=orjson.dumps(payload)),
                     timeout=self._timeout,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("WebhookChunkedPublisher: send failed: %s", exc)
 
     async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:

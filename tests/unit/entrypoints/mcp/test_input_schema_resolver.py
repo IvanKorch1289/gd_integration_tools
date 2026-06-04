@@ -105,7 +105,9 @@ def test_validate_accepts_valid_payload() -> None:
         "total": 1250.50,
     }
 
-    ok, error = validate_input_schema(resolved.input_schema, valid_payload, strict=False)
+    ok, error = validate_input_schema(
+        resolved.input_schema, valid_payload, strict=False
+    )
 
     assert ok is True
     assert error is None
@@ -125,12 +127,11 @@ def test_validate_rejects_invalid_payload() -> None:
     resolved = resolve_input_schema(spec)
 
     # Пропускаем обязательное поле order_id
-    invalid_payload: dict[str, Any] = {
-        "items": ["item_a"],
-        "total": 99.99,
-    }
+    invalid_payload: dict[str, Any] = {"items": ["item_a"], "total": 99.99}
 
-    ok, error = validate_input_schema(resolved.input_schema, invalid_payload, strict=False)
+    ok, error = validate_input_schema(
+        resolved.input_schema, invalid_payload, strict=False
+    )
 
     assert ok is False
     assert error is not None

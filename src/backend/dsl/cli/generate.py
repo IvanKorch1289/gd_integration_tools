@@ -250,11 +250,11 @@ def _to_toml_style(data: dict[str, Any]) -> str:
         if isinstance(value, dict):
             lines.append(f"[{key}]")
             for k, v in value.items():
-                lines.append(f"{k} = {repr(v)}")
+                lines.append(f"{k} = {v!r}")
         elif isinstance(value, list):
-            lines.append(f"{key} = {repr(value)}")
+            lines.append(f"{key} = {value!r}")
         else:
-            lines.append(f"{key} = {repr(value)}")
+            lines.append(f"{key} = {value!r}")
     return "\n".join(lines)
 
 

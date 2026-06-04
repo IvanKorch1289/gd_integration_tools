@@ -33,7 +33,10 @@ def test_single_allow_rule_matches() -> None:
     )
     policy = CapabilityPolicy([rule])
     decision = policy.evaluate(
-        tenant="t1", principal="p1", capability="net.outbound", scope="net.outbound:host.internal:internal"
+        tenant="t1",
+        principal="p1",
+        capability="net.outbound",
+        scope="net.outbound:host.internal:internal",
     )
     assert decision.effect == "allow"
     assert decision.rule is rule
@@ -42,16 +45,10 @@ def test_single_allow_rule_matches() -> None:
 def test_deny_beats_allow_same_priority() -> None:
     """При равных priority deny > allow (tie-break)."""
     allow_rule = CapabilityRule(
-        effect="allow",
-        capability="net.outbound",
-        scope_glob="*",
-        priority=100,
+        effect="allow", capability="net.outbound", scope_glob="*", priority=100
     )
     deny_rule = CapabilityRule(
-        effect="deny",
-        capability="net.outbound",
-        scope_glob="*",
-        priority=100,
+        effect="deny", capability="net.outbound", scope_glob="*", priority=100
     )
     policy = CapabilityPolicy([allow_rule, deny_rule])
     decision = policy.evaluate(
@@ -64,16 +61,10 @@ def test_deny_beats_allow_same_priority() -> None:
 def test_higher_priority_wins() -> None:
     """Higher priority пере wins lower priority независимо от effect."""
     high_allow = CapabilityRule(
-        effect="allow",
-        capability="net.outbound",
-        scope_glob="*",
-        priority=200,
+        effect="allow", capability="net.outbound", scope_glob="*", priority=200
     )
     low_deny = CapabilityRule(
-        effect="deny",
-        capability="net.outbound",
-        scope_glob="*",
-        priority=50,
+        effect="deny", capability="net.outbound", scope_glob="*", priority=50
     )
     policy = CapabilityPolicy([low_deny, high_allow])
     decision = policy.evaluate(
@@ -150,10 +141,7 @@ def test_scope_glob_matching() -> None:
 def test_capability_filter() -> None:
     """Правила для другой capability не сматчатся."""
     rule = CapabilityRule(
-        effect="allow",
-        capability="net.outbound",
-        scope_glob="*",
-        priority=100,
+        effect="allow", capability="net.outbound", scope_glob="*", priority=100
     )
     policy = CapabilityPolicy([rule])
     decision = policy.evaluate(
@@ -172,11 +160,7 @@ def test_policy_decision_is_dataclass() -> None:
 
 def test_rules_property_exposes_sorted_order() -> None:
     """``rules`` свойство возвращает правила в evaluation order."""
-    r_low = CapabilityRule(
-        effect="allow", capability="x.y", priority=10
-    )
-    r_high = CapabilityRule(
-        effect="deny", capability="x.y", priority=100
-    )
+    r_low = CapabilityRule(effect="allow", capability="x.y", priority=10)
+    r_high = CapabilityRule(effect="deny", capability="x.y", priority=100)
     policy = CapabilityPolicy([r_low, r_high])
     assert policy.rules == (r_high, r_low)

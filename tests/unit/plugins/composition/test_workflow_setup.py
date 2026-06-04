@@ -54,6 +54,17 @@ def test_bootstrap_defaults_registers_two_sagas_when_enabled(
         raising=False,
     )
 
+    print(f"DEBUG: workflow_setup.settings id = {id(workflow_setup.settings)}")
+    print(
+        f"DEBUG: global settings id = {id(__import__('src.backend.core.config.settings', fromlist=['settings']).settings)}"
+    )
+    print(
+        f"DEBUG: workflow_setup.settings.workflow.bootstrap_defaults_enabled = {workflow_setup.settings.workflow.bootstrap_defaults_enabled}"
+    )
+    print(
+        f"DEBUG: global settings.workflow.bootstrap_defaults_enabled = {__import__('src.backend.core.config.settings', fromlist=['settings']).settings.workflow.bootstrap_defaults_enabled}"
+    )
+
     compiled = workflow_setup._bootstrap_default_declarations()
 
     assert len(compiled) == 2

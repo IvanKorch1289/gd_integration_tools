@@ -20,11 +20,15 @@ class TestIncludeExtends:
             tmppath = Path(tmpdir)
 
             # Create files that reference each other (cycle)
-            (tmppath / "a.yaml").write_text('route_id: a\nextends: ./b.yaml\n')
-            (tmppath / "b.yaml").write_text('route_id: b\nextends: ./a.yaml\n')
+            (tmppath / "a.yaml").write_text("route_id: a\nextends: ./b.yaml\n")
+            (tmppath / "b.yaml").write_text("route_id: b\nextends: ./a.yaml\n")
 
-            with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+            with patch(
+                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                return_value=True,
+            ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
+
                 with pytest.raises(RuntimeError) as exc_info:
                     load_pipeline_from_file(tmppath / "a.yaml")
                 assert "Cycle detected" in str(exc_info.value)
@@ -35,11 +39,15 @@ class TestIncludeExtends:
             tmppath = Path(tmpdir)
 
             # Create files that reference each other (cycle)
-            (tmppath / "a.yaml").write_text('route_id: a\ninclude:\n  - ./b.yaml\n')
-            (tmppath / "b.yaml").write_text('route_id: b\ninclude:\n  - ./a.yaml\n')
+            (tmppath / "a.yaml").write_text("route_id: a\ninclude:\n  - ./b.yaml\n")
+            (tmppath / "b.yaml").write_text("route_id: b\ninclude:\n  - ./a.yaml\n")
 
-            with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+            with patch(
+                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                return_value=True,
+            ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
+
                 with pytest.raises(RuntimeError) as exc_info:
                     load_pipeline_from_file(tmppath / "a.yaml")
                 assert "Cycle detected" in str(exc_info.value)
@@ -54,7 +62,10 @@ extends: ./also_nonexistent.yaml
 steps:
   - audit: {action: test}
 """
-        with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=False):
+        with patch(
+            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            return_value=False,
+        ):
             pipeline = load_pipeline_from_yaml(yaml_str)
             assert pipeline.route_id == "test.route"
             assert len(list(pipeline.processors)) == 1
@@ -81,8 +92,12 @@ steps:
   - call_function: {ref: extensions.main:handler}
 """)
 
-            with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+            with patch(
+                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                return_value=True,
+            ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
+
                 pipeline = load_pipeline_from_file(tmppath / "main.yaml")
                 assert pipeline.route_id == "main.route"
                 # Should have 3 steps: 2 from shared + 1 from main
@@ -113,8 +128,12 @@ steps:
   - call_function: {ref: extensions.foo:bar}
 """)
 
-            with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+            with patch(
+                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                return_value=True,
+            ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
+
                 pipeline = load_pipeline_from_file(tmppath / "child.yaml")
                 # Child route_id should be used
                 assert pipeline.route_id == "child.route"
@@ -133,8 +152,12 @@ route_id: self.route
 extends: ./self.yaml
 """)
 
-            with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+            with patch(
+                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                return_value=True,
+            ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
+
                 with pytest.raises(RuntimeError) as exc_info:
                     load_pipeline_from_file(tmppath / "self.yaml")
                 assert "Cycle detected" in str(exc_info.value)
@@ -148,7 +171,10 @@ include:
 steps:
   - audit: {action: test}
 """
-        with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+        with patch(
+            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            return_value=True,
+        ):
             with pytest.raises(FileNotFoundError) as exc_info:
                 load_pipeline_from_yaml(yaml_str)
             assert "Included YAML file not found" in str(exc_info.value)
@@ -161,7 +187,10 @@ extends: ./nonexistent.yaml
 steps:
   - audit: {action: test}
 """
-        with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
+        with patch(
+            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            return_value=True,
+        ):
             with pytest.raises(FileNotFoundError) as exc_info:
                 load_pipeline_from_yaml(yaml_str)
             assert "Extended YAML file not found" in str(exc_info.value)

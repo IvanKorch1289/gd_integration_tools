@@ -87,7 +87,7 @@ class AgentMemoryService:
                 unique=True,
                 name="session_fact_unique",
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AgentMemory: ensure_indexes failed: %s", exc)
 
     async def get_conversation(

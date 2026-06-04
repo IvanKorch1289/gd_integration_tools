@@ -67,17 +67,13 @@ async def test_get_missing_returns_none(
     assert await backend.get("missing") is None
 
 
-async def test_set_without_ttl(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_set_without_ttl(backend: RedisBackend, client: AsyncMock) -> None:
     """``set`` без ttl вызывает ``client.set(key, value)`` без ``ex``."""
     await backend.set("k", b"v")
     client.set.assert_awaited_once_with("k", b"v")
 
 
-async def test_set_with_ttl(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_set_with_ttl(backend: RedisBackend, client: AsyncMock) -> None:
     """``set`` с ttl вызывает ``client.set(key, value, ex=ttl)``."""
     await backend.set("k", b"v", ttl=60)
     client.set.assert_awaited_once_with("k", b"v", ex=60)
@@ -91,17 +87,13 @@ async def test_set_with_zero_ttl_treated_as_value(
     client.set.assert_awaited_once_with("k", b"v", ex=0)
 
 
-async def test_delete_single_key(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_delete_single_key(backend: RedisBackend, client: AsyncMock) -> None:
     """``delete`` для одного ключа делегирует в ``client.delete``."""
     await backend.delete("a")
     client.delete.assert_awaited_once_with("a")
 
 
-async def test_delete_multiple_keys(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_delete_multiple_keys(backend: RedisBackend, client: AsyncMock) -> None:
     """``delete`` для нескольких ключей передаёт все аргументы за один вызов."""
     await backend.delete("a", "b", "c")
     client.delete.assert_awaited_once_with("a", "b", "c")
@@ -123,9 +115,7 @@ async def test_delete_pattern_uses_scan_iter(
     await backend.delete_pattern("user:*")
     client.scan_iter.assert_called_once_with(match="user:*", count=200)
     assert client.delete.await_count == 3
-    client.delete.assert_has_awaits(
-        [call(b"a"), call(b"b"), call(b"c")]
-    )
+    client.delete.assert_has_awaits([call(b"a"), call(b"b"), call(b"c")])
 
 
 async def test_delete_pattern_empty_iterator(
@@ -137,18 +127,14 @@ async def test_delete_pattern_empty_iterator(
     client.delete.assert_not_called()
 
 
-async def test_exists_true(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_exists_true(backend: RedisBackend, client: AsyncMock) -> None:
     """``exists`` возвращает True если client.exists != 0."""
     client.exists.return_value = 1
     assert await backend.exists("k") is True
     client.exists.assert_awaited_once_with("k")
 
 
-async def test_exists_false(
-    backend: RedisBackend, client: AsyncMock
-) -> None:
+async def test_exists_false(backend: RedisBackend, client: AsyncMock) -> None:
     """``exists`` возвращает False если client.exists == 0."""
     client.exists.return_value = 0
     assert await backend.exists("k") is False
@@ -228,4 +214,3 @@ async def test_delete_by_pattern_returns_count(
 
     assert removed == 2
     assert client.delete.await_count == 2
-

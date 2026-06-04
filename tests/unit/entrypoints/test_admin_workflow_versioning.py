@@ -13,9 +13,7 @@ from src.backend.dsl.workflow.versioning import (
     WorkflowVersionRegistry,
     get_global_registry,
 )
-from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import (
-    router,
-)
+from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import router
 
 
 @pytest.fixture

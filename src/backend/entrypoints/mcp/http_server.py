@@ -34,7 +34,7 @@ def _resolve_http_app(mcp: Any) -> Any:
             continue
         try:
             asgi = candidate() if callable(candidate) else candidate
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("FastMCP.%s() failed: %s", attr, exc)
             continue
         if asgi is not None:

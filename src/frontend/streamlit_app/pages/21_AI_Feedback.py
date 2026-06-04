@@ -1,14 +1,11 @@
-"""AI Feedback — страница разметки ответов AI-агентов.
+"""AI Feedback — страница разметки ответов AI-агентов + DSPy training.
 
-Предоставляет оператору интерфейс для работы с AIFeedbackService:
-
-  * вкладка "На проверку" — список pending ответов с кнопками
-    ✅ positive / ❌ negative / ⏭ skip и комментарием;
-  * вкладка "Размеченные" — фильтры по метке, агенту, статусу в RAG;
-  * кнопка "Перевести в RAG" — ручной запуск FeedbackIndexer;
-  * статистика вверху страницы (pending / positive / negative / indexed).
-
-Зависимости: FastAPI-backend должен быть запущен (см. ``manage.py run``).
+Вкладки:
+* На проверку
+* Размеченные
+* Индексация в RAG
+* DSPy Training
+* Labeled Counts
 """
 
 from __future__ import annotations
@@ -24,7 +21,6 @@ client = get_api_client()
 
 
 def _render_stats() -> None:
-    """Рисует верхнюю полосу статистики разметки."""
     try:
         stats = client.get_feedback_stats()
     except Exception as exc:
@@ -39,7 +35,6 @@ def _render_stats() -> None:
 
 
 def _render_pending_tab() -> None:
-    """Вкладка «На проверку» — список pending-ответов с кнопками разметки."""
     agent_filter = st.text_input(
         "Фильтр по agent_id (опционально)", key="pending_agent"
     )
@@ -80,14 +75,6 @@ def _render_pending_tab() -> None:
 
 
 def _label(doc_id: str, label: str, comment: str, operator: str) -> None:
-    """Отправляет разметку и перезагружает страницу.
-
-    Args:
-        doc_id: Идентификатор документа.
-        label: ``positive`` / ``negative`` / ``skip``.
-        comment: Комментарий оператора.
-        operator: Идентификатор оператора.
-    """
     try:
         client.label_feedback(
             doc_id, label=label, comment=comment or None, operator_id=operator or None
@@ -99,7 +86,6 @@ def _label(doc_id: str, label: str, comment: str, operator: str) -> None:
 
 
 def _render_labeled_tab() -> None:
-    """Вкладка «Размеченные» — фильтры и таблица."""
     c1, c2, c3 = st.columns(3)
     label = c1.selectbox(
         "Метка", ["", "positive", "negative", "skip"], index=0, key="labeled_label"
@@ -141,7 +127,6 @@ def _render_labeled_tab() -> None:
 
 
 def _render_index_tab() -> None:
-    """Вкладка «Индексация» — ручной запуск FeedbackIndexer."""
     st.markdown(
         "Перевод размеченных ответов в RAG-индекс. "
         "`skip`-метки пропускаются; `positive` и `negative` попадают в индекс "
@@ -160,13 +145,58 @@ def _render_index_tab() -> None:
                 st.error(f"Ошибка индексации: {exc}")
 
 
+def _render_dspy_tab() -> None:
+    st.markdown(
+        "Просмотр labeled feedback и DSPy training runs. "
+        "Активируется feature-flag `dspy_feedback_loop`."
+    )
+    try:
+        data = client.get("/admin/feedback/training-runs?limit=10")
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка: {exc}")
+        data = {"runs": [], "count": 0}
+    runs = data.get("runs", []) if isinstance(data, dict) else []
+    if not runs:
+        st.info(
+            "Нет завершённых runs. Cron `ai_feedback_dspy_nightly` запускается в 03:00 при включённом feature-flag."
+        )
+    else:
+        for r in runs:
+            with st.expander(f"Run {r.get('id')} — {r.get('completed_at')}"):
+                st.json(r)
+
+
+def _render_counts_tab() -> None:
+    tenant = st.text_input("Tenant ID (опционально)", key="counts_tenant")
+    try:
+        data = client.get(
+            f"/admin/feedback/labeled-count{('?tenant_id=' + tenant) if tenant else ''}"
+        )
+        count = data.get("count", 0) if isinstance(data, dict) else 0
+        st.metric("Labeled feedback", count)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка: {exc}")
+
+
 _render_stats()
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["На проверку", "Размеченные", "Индексация в RAG"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    [
+        "На проверку",
+        "Размеченные",
+        "Индексация в RAG",
+        "DSPy Training",
+        "Labeled Counts",
+    ]
+)
 with tab1:
     _render_pending_tab()
 with tab2:
     _render_labeled_tab()
 with tab3:
     _render_index_tab()
+with tab4:
+    _render_dspy_tab()
+with tab5:
+    _render_counts_tab()

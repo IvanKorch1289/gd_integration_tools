@@ -59,10 +59,7 @@ def test_build_cache_transport_custom_status_codes() -> None:
     if not is_hishel_available():
         pytest.skip("hishel не установлен в окружении")
     inner = httpx.AsyncHTTPTransport()
-    result = build_cache_transport(
-        inner,
-        cacheable_status_codes=(200, 304),
-    )
+    result = build_cache_transport(inner, cacheable_status_codes=(200, 304))
     assert result is not None
 
 

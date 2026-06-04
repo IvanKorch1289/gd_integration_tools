@@ -38,7 +38,9 @@ class _CreateResp(BaseModel):
     id: int
 
 
-def _make_meta(action: str, *, side_effect: str = "read", input_model=None, output_model=None):
+def _make_meta(
+    action: str, *, side_effect: str = "read", input_model=None, output_model=None
+):
     """Создать ActionMetadata-stub без обращения к реестру."""
     from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
@@ -61,7 +63,10 @@ class TestGroupByService:
         groups = codegen._group_by_service(metas)
         assert {g.service for g in groups} == {"orders", "users"}
         orders_group = next(g for g in groups if g.service == "orders")
-        assert {m.action for m in orders_group.actions} == {"orders.list", "orders.create"}
+        assert {m.action for m in orders_group.actions} == {
+            "orders.list",
+            "orders.create",
+        }
 
     def test_action_without_dot_goes_to_misc(self):
         metas = [_make_meta("standalone")]
@@ -92,9 +97,7 @@ class TestBuildProtoFileForGroup:
         group = codegen._ServiceGroup(
             service="orders",
             actions=[
-                _make_meta(
-                    "orders.list", input_model=_ListReq, output_model=_ListResp
-                ),
+                _make_meta("orders.list", input_model=_ListReq, output_model=_ListResp),
                 _make_meta(
                     "orders.create", input_model=_CreateReq, output_model=_CreateResp
                 ),
@@ -141,8 +144,9 @@ class TestRunCodegenDryRun:
             _make_meta("orders.list", input_model=_ListReq, output_model=_ListResp),
         )
 
-        with patch.object(codegen, "_bootstrap_registry"), patch.object(
-            codegen, "_filter_grpc_actions", return_value=metas
+        with (
+            patch.object(codegen, "_bootstrap_registry"),
+            patch.object(codegen, "_filter_grpc_actions", return_value=metas),
         ):
             written = codegen.run_codegen(dry_run=True)
 
@@ -152,8 +156,9 @@ class TestRunCodegenDryRun:
         assert "orders.list" in out
 
     def test_no_grpc_actions(self, capsys):
-        with patch.object(codegen, "_bootstrap_registry"), patch.object(
-            codegen, "_filter_grpc_actions", return_value=()
+        with (
+            patch.object(codegen, "_bootstrap_registry"),
+            patch.object(codegen, "_filter_grpc_actions", return_value=()),
         ):
             written = codegen.run_codegen(dry_run=False)
         assert written == 0

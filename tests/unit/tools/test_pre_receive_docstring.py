@@ -122,10 +122,7 @@ def sandbox(tmp_path: Path) -> Iterator[dict[str, Path]]:
 
 
 def _run_hook(
-    workdir: Path,
-    stdin_payload: str,
-    *,
-    cwd: Path | None = None,
+    workdir: Path, stdin_payload: str, *, cwd: Path | None = None
 ) -> subprocess.CompletedProcess[str]:
     """Запускает pre-receive hook с переданным STDIN.
 
@@ -153,21 +150,13 @@ def _make_bare_repo(tmp_path: Path) -> Path:
     bare = tmp_path / "remote.git"
     bare.mkdir()
     subprocess.run(
-        ["git", "init", "--bare"],
-        cwd=str(bare),
-        capture_output=True,
-        check=True,
+        ["git", "init", "--bare"], cwd=str(bare), capture_output=True, check=True
     )
     return bare
 
 
 def _push_and_run_hook(
-    *,
-    workdir: Path,
-    bare: Path,
-    refspec: str,
-    expected_old: str,
-    expected_new: str,
+    *, workdir: Path, bare: Path, refspec: str, expected_old: str, expected_new: str
 ) -> subprocess.CompletedProcess[str]:
     """Эмулирует pre-receive: формирует payload вручную и вызывает hook.
 
@@ -214,10 +203,7 @@ def test_hook_exists_and_executable() -> None:
 def test_hook_passes_bash_syntax() -> None:
     """``bash -n`` (no-op syntax check) не падает."""
     proc = subprocess.run(
-        ["bash", "-n", str(HOOK_PATH)],
-        capture_output=True,
-        text=True,
-        check=False,
+        ["bash", "-n", str(HOOK_PATH)], capture_output=True, text=True, check=False
     )
     assert proc.returncode == 0, proc.stderr
 
@@ -342,10 +328,7 @@ def test_push_outside_scope_skips_check(sandbox: dict[str, Path]) -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
     # Ожидаем сообщение про "вне scope" или "Нет защищённых .py-файлов".
     combined = proc.stdout + proc.stderr
-    assert (
-        "вне scope" in combined
-        or "Нет защищённых" in combined
-    ), combined
+    assert "вне scope" in combined or "Нет защищённых" in combined, combined
 
 
 def test_push_new_branch_zero_rev(sandbox: dict[str, Path]) -> None:

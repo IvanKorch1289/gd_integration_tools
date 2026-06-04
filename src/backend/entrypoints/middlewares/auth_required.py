@@ -18,8 +18,8 @@ EXPRESS_JWT). Альтернатива fragile regex-bypass в :class:`APIKeyMid
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import PurePosixPath
-from typing import Iterable
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -28,7 +28,7 @@ from starlette.types import ASGIApp
 
 from src.backend.core.auth import AuthContext, AuthMethod
 
-__all__ = ("AuthRequiredMiddleware", "DEFAULT_PUBLIC_PATH_PREFIXES", "is_path_public")
+__all__ = ("DEFAULT_PUBLIC_PATH_PREFIXES", "AuthRequiredMiddleware", "is_path_public")
 
 
 DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (

@@ -39,10 +39,7 @@ async def test_estimate_with_empty_history_returns_defaults() -> None:
         return client_mock
 
     estimator = WorkflowCostEstimator(clickhouse_client_factory=factory)
-    result = await estimator.estimate(
-        workflow_id="wf-unknown",
-        input_size_bytes=2048,
-    )
+    result = await estimator.estimate(workflow_id="wf-unknown", input_size_bytes=2048)
     assert result.sample_size == 0
     assert result.p50_duration_ms == 0.0
     assert result.estimated_storage_bytes == 2048
@@ -59,10 +56,7 @@ async def test_estimate_with_rich_history() -> None:
         return client_mock
 
     estimator = WorkflowCostEstimator(clickhouse_client_factory=factory)
-    result = await estimator.estimate(
-        workflow_id="wf-known",
-        input_size_bytes=512,
-    )
+    result = await estimator.estimate(workflow_id="wf-known", input_size_bytes=512)
     assert result.sample_size == 150
     assert result.p50_duration_ms == 1000.0
     assert result.p95_duration_ms == 2500.0

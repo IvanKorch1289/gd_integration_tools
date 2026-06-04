@@ -110,7 +110,7 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
         if scheduler is not None and scheduler.get_job(entry.job_id) is not None:
             scheduler.reschedule_job(entry.job_id)
             reschedule_attempted = True
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         reschedule_attempted = False
 
     return {**entry.to_dict(), "reschedule_attempted": reschedule_attempted}

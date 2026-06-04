@@ -13,9 +13,10 @@ from __future__ import annotations
 import hashlib
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-__all__ = ("AdaptiveStrategySelector", "StrategyDecision", "STRATEGIES")
+__all__ = ("STRATEGIES", "AdaptiveStrategySelector", "StrategyDecision")
 
 logger = logging.getLogger("services.ai.rag.strategy_selector")
 
@@ -79,12 +80,14 @@ class AdaptiveStrategySelector:
     """
 
     def __init__(
-        self, cache_size: int = 512, llm_classify: object | None = None
+        self,
+        cache_size: int = 512,
+        llm_classify: Callable[[str], Awaitable[tuple[str, float]]] | None = None,
     ) -> None:
         self._cache_size = cache_size
         self._cache: dict[str, tuple[str, float]] = {}
         self._llm_classify = llm_classify
-        self._stats: dict[str, int] = {s: 0 for s in STRATEGIES}
+        self._stats: dict[str, int] = dict.fromkeys(STRATEGIES, 0)
 
     def _cache_key(self, query: str) -> str:
         return hashlib.sha256(query.encode("utf-8")).hexdigest()[:16]
@@ -109,7 +112,7 @@ class AdaptiveStrategySelector:
                 llm_strategy, llm_conf = await self._llm_classify(query)
                 if llm_strategy in STRATEGIES:
                     strategy, confidence = llm_strategy, float(llm_conf)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("strategy LLM classifier failed: %s", exc)
 
         # LRU eviction.

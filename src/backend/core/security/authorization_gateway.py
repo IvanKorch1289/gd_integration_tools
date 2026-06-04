@@ -178,7 +178,7 @@ class AuthorizationGateway:
             reasons.append(
                 AuthorizationReason(source="capability_gateway", outcome="allow")
             )
-        except Exception as exc:  # noqa: BLE001 — собираем reason
+        except Exception as exc:
             reason = AuthorizationReason(
                 source="capability_gateway",
                 outcome="deny",
@@ -196,7 +196,7 @@ class AuthorizationGateway:
         for policy in self._policies:
             try:
                 reason = await policy(principal, resource, action, ctx)
-            except Exception as exc:  # noqa: BLE001 — policy error → deny
+            except Exception as exc:
                 reason = AuthorizationReason(
                     source=getattr(policy, "__name__", "policy"),
                     outcome="deny",
@@ -270,7 +270,7 @@ class AuthorizationGateway:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.authz_gateway_enabled)
-        except Exception as _:  # noqa: BLE001 — best-effort
+        except Exception as _:
             return False
 
     def _emit_audit(self, decision: AuthorizationDecision) -> None:
@@ -292,7 +292,7 @@ class AuthorizationGateway:
                     ],
                 }
             )
-        except Exception as _:  # noqa: BLE001 — audit best-effort
+        except Exception as _:
             _logger.exception("AuthorizationGateway audit_callback failed")
 
     # ------------------------------------------------------------------ steps
@@ -336,7 +336,7 @@ class AuthorizationGateway:
                 allowed = casbin_enforcer.enforce(
                     principal, resource, action, tenant_id=tenant_id
                 )
-            except Exception as exc:  # noqa: BLE001 — fail-closed
+            except Exception as exc:
                 return AuthorizationReason(
                     source="casbin",
                     outcome="deny",
@@ -393,9 +393,7 @@ class AuthorizationGateway:
             principal: str, resource: str, action: str, ctx: dict[str, Any]
         ) -> AuthorizationReason:
             try:
-                from src.backend.core.config.features import (  # noqa: PLC0415
-                    feature_flags,
-                )
+                from src.backend.core.config.features import feature_flags
 
                 if not feature_flags.opa_runtime_query_enabled:
                     return AuthorizationReason(
@@ -403,7 +401,7 @@ class AuthorizationGateway:
                         outcome="allow",
                         detail="opa_runtime_query_enabled=False",
                     )
-            except Exception as _:  # noqa: BLE001 — feature-flag недоступен → deny
+            except Exception as _:
                 return AuthorizationReason(
                     source="opa", outcome="deny", detail="feature_flag_unavailable"
                 )
@@ -417,7 +415,7 @@ class AuthorizationGateway:
             }
             try:
                 decision = await opa_client.query(policy_name, input_doc)
-            except Exception as exc:  # noqa: BLE001 — fail-closed
+            except Exception as exc:
                 return AuthorizationReason(
                     source="opa", outcome="deny", detail=f"{type(exc).__name__}: {exc}"
                 )
@@ -484,9 +482,7 @@ class AuthorizationGateway:
 
             # Feature flag check
             try:
-                from src.backend.core.config.features import (  # noqa: PLC0415
-                    feature_flags,
-                )
+                from src.backend.core.config.features import feature_flags
 
                 if not feature_flags.route_authz_requires_permission:
                     return AuthorizationReason(
@@ -494,7 +490,7 @@ class AuthorizationGateway:
                         outcome="allow",
                         detail="route_authz_requires_permission=False",
                     )
-            except Exception as _:  # noqa: BLE001 — feature-flag недоступен → deny
+            except Exception as _:
                 return AuthorizationReason(
                     source="permission",
                     outcome="deny",

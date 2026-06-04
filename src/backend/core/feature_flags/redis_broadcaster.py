@@ -31,7 +31,7 @@ import logging
 import os
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import orjson
@@ -49,9 +49,9 @@ if TYPE_CHECKING:
 __all__ = (
     "BROADCAST_CHANNEL",
     "RedisFeatureFlagBroadcaster",
+    "deserialize_change",
     "maybe_start_broadcaster",
     "serialize_change",
-    "deserialize_change",
 )
 
 _logger = logging.getLogger("core.feature_flags.redis_broadcaster")
@@ -63,7 +63,7 @@ BROADCAST_CHANNEL = "feature-flags:toggle"
 _PROCESS_REPLICA_ID = uuid.uuid4().hex[:16]
 
 
-def serialize_change(change: "FeatureFlagChange") -> bytes:
+def serialize_change(change: FeatureFlagChange) -> bytes:
     """Сериализовать ``FeatureFlagChange`` для Redis publish.
 
     Args:
@@ -118,8 +118,8 @@ class RedisFeatureFlagBroadcaster:
     def __init__(
         self,
         *,
-        redis_client: "AsyncRedis",
-        overrides: "RuntimeFeatureFlagOverrides",
+        redis_client: AsyncRedis,
+        overrides: RuntimeFeatureFlagOverrides,
         channel: str = BROADCAST_CHANNEL,
     ) -> None:
         self._redis = redis_client
@@ -140,7 +140,7 @@ class RedisFeatureFlagBroadcaster:
         """UUID текущего процесса (для отладки и echo-detection)."""
         return _PROCESS_REPLICA_ID
 
-    async def publish(self, change: "FeatureFlagChange") -> bool:
+    async def publish(self, change: FeatureFlagChange) -> bool:
         """Опубликовать одно изменение в Redis pub/sub channel.
 
         Returns:
@@ -150,7 +150,7 @@ class RedisFeatureFlagBroadcaster:
             await self._redis.publish(self._channel, serialize_change(change))
             self._state.publish_total += 1
             return True
-        except Exception as exc:  # noqa: BLE001 — best-effort broadcast
+        except Exception as exc:
             self._state.publish_errors_total += 1
             _logger.warning(
                 "feature_flag.broadcast.publish_failed: %s",
@@ -160,7 +160,7 @@ class RedisFeatureFlagBroadcaster:
             return False
 
     async def start(
-        self, *, task_factory: "Callable[..., asyncio.Task[Any]] | None" = None
+        self, *, task_factory: Callable[..., asyncio.Task[Any]] | None = None
     ) -> None:
         """Запустить subscriber loop через TaskRegistry.
 
@@ -192,7 +192,7 @@ class RedisFeatureFlagBroadcaster:
             try:
                 await self._pubsub.unsubscribe(self._channel)
                 await self._pubsub.aclose()
-            except Exception as exc:  # noqa: BLE001 — shutdown best-effort
+            except Exception as exc:
                 _logger.debug("feature_flag.broadcast.unsubscribe_error: %s", exc)
             self._pubsub = None
         if self._task is not None:
@@ -201,7 +201,7 @@ class RedisFeatureFlagBroadcaster:
                 await self._task
             except asyncio.CancelledError:
                 pass
-            except Exception as exc:  # noqa: BLE001 — shutdown best-effort
+            except Exception as exc:
                 _logger.debug("feature_flag.broadcast.subscriber.stop_error: %s", exc)
             self._task = None
         _logger.info("feature_flag.broadcast.subscriber.stopped")
@@ -219,7 +219,7 @@ class RedisFeatureFlagBroadcaster:
                 self._apply_message(message.get("data"))
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — listener best-effort
+        except Exception as exc:
             _logger.warning("feature_flag.broadcast.subscriber.listen_error: %s", exc)
 
     def _apply_message(self, raw: Any) -> None:
@@ -260,7 +260,7 @@ class RedisFeatureFlagBroadcaster:
 
 
 async def maybe_start_broadcaster(
-    *, redis_client: "AsyncRedis | None", overrides: "RuntimeFeatureFlagOverrides"
+    *, redis_client: AsyncRedis | None, overrides: RuntimeFeatureFlagOverrides
 ) -> RedisFeatureFlagBroadcaster | None:
     """Запустить broadcaster, если feature-flag ``tenant_feature_flag_ui=True``.
 
@@ -291,7 +291,7 @@ async def maybe_start_broadcaster(
     )
     try:
         await broadcaster.start()
-    except Exception as exc:  # noqa: BLE001 — startup never fails
+    except Exception as exc:
         _logger.warning(
             "feature_flag.broadcast.start_failed: %s",
             exc,
@@ -303,7 +303,7 @@ async def maybe_start_broadcaster(
 
 def _now_utc() -> datetime:
     """Wrapper для тестов (timestamp override)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # Чтобы unit-тесты могли подменить replica_id (тест cross-replica scenario).

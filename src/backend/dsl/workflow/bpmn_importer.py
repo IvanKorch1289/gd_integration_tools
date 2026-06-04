@@ -124,7 +124,7 @@ def import_bpmn(
         _ensure_feature_enabled()
 
     try:
-        root = ET.fromstring(xml_text)  # noqa: S314 — BPMN-импорт untrusted
+        root = ET.fromstring(xml_text)  # noqa: S314  # internal controlled XML parsing
     except ET.ParseError as exc:
         raise BpmnImportError(f"Невалидный BPMN XML: {exc}") from exc
 

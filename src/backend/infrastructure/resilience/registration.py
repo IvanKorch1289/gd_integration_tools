@@ -254,7 +254,7 @@ def register_all_components(
         try:
             registrar(coordinator, settings)
             registered += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "Resilience: wiring компонента '%s' пропущен (%s: %s)",
                 component,

@@ -48,7 +48,7 @@ class SoapSink(Sink):
         """Вызывает SOAP-операцию через ``asyncio.to_thread`` (zeep — sync)."""
         try:
             client = await asyncio.to_thread(self._get_client)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -61,7 +61,7 @@ class SoapSink(Sink):
 
         try:
             result = await asyncio.to_thread(self._invoke_sync, client, kwargs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -100,7 +100,7 @@ class SoapSink(Sink):
         """Health: успешная загрузка WSDL."""
         try:
             client = await asyncio.to_thread(self._get_client)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         return client is not None
 

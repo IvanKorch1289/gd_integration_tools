@@ -135,8 +135,9 @@ names = [p["name"] for p in filtered]
 selected_name = st.selectbox("Плагин", options=names, index=0)
 
 selected = next((p for p in filtered if p["name"] == selected_name), None)
-if not selected:
+if selected is None:
     st.stop()
+assert selected is not None  # noqa: S101
 
 col_meta, col_lists = st.columns([1, 2])
 

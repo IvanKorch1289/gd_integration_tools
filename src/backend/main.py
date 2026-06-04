@@ -24,7 +24,7 @@ def _mount_mcp_http() -> None:
     """Wave D.4: монтирует FastMCP HTTP transport если ``MCP_HTTP_ENABLED=true``."""
     try:
         from src.backend.core.config.ai_2026 import mcp_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return
     if not mcp_settings.http_enabled:
         return
@@ -32,7 +32,7 @@ def _mount_mcp_http() -> None:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
         app.mount(mcp_settings.bind_path, create_mcp_http_app())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         import logging
 
         logging.getLogger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)

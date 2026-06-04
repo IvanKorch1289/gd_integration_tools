@@ -739,6 +739,11 @@ coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate 
 	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 75 --strict
 	@$(SUCCESS) "Coverage gate strict (75%) passed"
 
+coverage-gate-fast: ## Fast coverage gate (skip pytest, reuse existing coverage.xml)
+	@$(INFO) "Running coverage gate (fast, reuse coverage.xml)..."
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50
+	@$(SUCCESS) "Coverage gate (fast) passed"
+
 pre-prod-check: ## S36 w4: 30+ gate pre-prod-check (BLOCKING, ratchet-aware)
 	@$(INFO) "Running pre-prod-check (30+ gates)..."
 	$(UV_RUN) python tools/checks/pre_prod_check.py

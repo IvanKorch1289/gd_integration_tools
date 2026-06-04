@@ -69,7 +69,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from src.backend.infrastructure.workflow.executor import (
     DurableWorkflowProcessor,
@@ -104,19 +105,19 @@ class WorkflowBuilder:
 
     # -- Metadata ----------------------------------------------------
 
-    def description(self, text: str) -> "WorkflowBuilder":
+    def description(self, text: str) -> WorkflowBuilder:
         """Человеко-читаемое описание (попадает в MCP tool doc + admin UI)."""
         self._description = text
         return self
 
-    def max_attempts(self, n: int) -> "WorkflowBuilder":
+    def max_attempts(self, n: int) -> WorkflowBuilder:
         """Общий retry-budget workflow'а (runner compensates при превышении)."""
         if n < 1:
             raise ValueError("max_attempts must be >= 1")
         self._max_attempts = n
         return self
 
-    def default_timeout_s(self, seconds: float) -> "WorkflowBuilder":
+    def default_timeout_s(self, seconds: float) -> WorkflowBuilder:
         """Default timeout per step (sequential processors)."""
         if seconds <= 0:
             raise ValueError("default_timeout_s must be > 0")
@@ -127,7 +128,7 @@ class WorkflowBuilder:
 
     def step(
         self, name: str, *, processors: list[Callable[..., Awaitable[Any]]]
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """Sequential-шаг: цепочка async-процессоров.
 
         Каждый processor принимает dict (current exchange snapshot),
@@ -146,7 +147,7 @@ class WorkflowBuilder:
         when: Callable[..., bool] | str,
         then: list[WorkflowStep],
         else_: list[WorkflowStep] | None = None,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """if/else-шаг.
 
         ``when`` — callable(state) → bool, либо JMESPath-строка по
@@ -171,7 +172,7 @@ class WorkflowBuilder:
         while_: Callable[..., bool] | str,
         body: list[WorkflowStep],
         max_iter: int = 100,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """While-loop-шаг.
 
         ``while_`` — predicate ПРОДОЛЖАТЬ (True → следующая итерация).
@@ -199,7 +200,7 @@ class WorkflowBuilder:
         body: list[WorkflowStep],
         parallel: bool = False,
         max_concurrent: int = 5,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """Map-шаг: body выполняется для каждого item коллекции.
 
         ``collection`` — JMESPath по exchange_snapshot, возвращающий list.
@@ -228,7 +229,7 @@ class WorkflowBuilder:
         input_map: dict[str, str] | None = None,
         output_map: dict[str, str] | None = None,
         wait: bool = True,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """Sub-workflow (composition).
 
         ``wait=True`` — parent PAUSE до ``sub_completed`` event от child.
@@ -256,7 +257,7 @@ class WorkflowBuilder:
         *,
         name: str | None = None,
         input_map: dict[str, str] | None = None,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """Fire-and-forget child workflow. Shortcut для ``sub_workflow(wait=False)``."""
         return self.sub_workflow(
             workflow_name=workflow_name,
@@ -271,7 +272,7 @@ class WorkflowBuilder:
         name: str = "wait",
         duration_s: float | None = None,
         until_expr: str | None = None,
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """Durable pause.
 
         ``duration_s`` — pause на N секунд (абсолютное время).
@@ -289,7 +290,7 @@ class WorkflowBuilder:
         )
         return self
 
-    def compensate_with(self, steps: list[WorkflowStep]) -> "WorkflowBuilder":
+    def compensate_with(self, steps: list[WorkflowStep]) -> WorkflowBuilder:
         """Регистрирует compensators — выполняются runner'ом при FAILED.
 
         Compensators выполняются в reverse-order (LIFO) как saga pattern.
@@ -300,7 +301,7 @@ class WorkflowBuilder:
 
     def human_approval(
         self, *, name: str, approvers_group: str, timeout_s: float = 3600.0
-    ) -> "WorkflowBuilder":
+    ) -> WorkflowBuilder:
         """HITL (Human In The Loop) approval.
 
         Реально — durable pause до внешнего event ``resumed`` с решением

@@ -65,9 +65,7 @@ def xlsx_template(tmp_path: Path) -> Path:
 async def test_render_docx_substitutes_placeholders(docx_template: Path) -> None:
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(docx_template),
-            context_from=None,
-            output_to="docx_path",
+            template=str(docx_template), context_from=None, output_to="docx_path"
         )
     )
     exchange = _make_exchange(body={"name": "Иван", "amount": 1500})
@@ -83,9 +81,7 @@ async def test_render_docx_substitutes_placeholders(docx_template: Path) -> None
     texts = [p.text for p in rendered.paragraphs]
     assert "Здравствуйте, Иван!" in texts
     assert "Сумма: 1500 руб." in texts
-    cell_texts = [
-        c.text for row in rendered.tables[0].rows for c in row.cells
-    ]
+    cell_texts = [c.text for row in rendered.tables[0].rows for c in row.cells]
     assert "Поле: Иван" in cell_texts
     assert "Значение: 1500" in cell_texts
 
@@ -124,12 +120,7 @@ async def test_render_xlsx_append_table_mode() -> None:
         )
     )
     exchange = _make_exchange(
-        body={
-            "rows": [
-                {"id": 1, "name": "A"},
-                {"id": 2, "name": "B"},
-            ]
-        }
+        body={"rows": [{"id": 1, "name": "A"}, {"id": 2, "name": "B"}]}
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -149,9 +140,7 @@ async def test_render_docx_output_path_via_dotted(docx_template: Path) -> None:
     """``output_to`` поддерживает dotted-path внутри dict."""
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(docx_template),
-            context_from="payload",
-            output_to="result.path",
+            template=str(docx_template), context_from="payload", output_to="result.path"
         )
     )
     exchange = _make_exchange(body={"payload": {"name": "X", "amount": 0}})

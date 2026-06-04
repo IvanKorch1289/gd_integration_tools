@@ -81,6 +81,7 @@ class TestInfrastructureFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 18 mixins в MRO (was 15, +3 from this batch)
         for cls in ("Sprint5DSLFlags", "InfrastructureFlags", "AIRAGFlags"):

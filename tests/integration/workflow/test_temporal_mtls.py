@@ -16,9 +16,7 @@ from src.backend.infrastructure.secrets.vault_pki import (
     CertificateBundle,
     VaultPkiClient,
 )
-from src.backend.infrastructure.workflow.temporal_client import (
-    TemporalClientFactory,
-)
+from src.backend.infrastructure.workflow.temporal_client import TemporalClientFactory
 
 
 @pytest.fixture
@@ -28,9 +26,7 @@ def fake_vault_response() -> dict:
             "certificate": "-----BEGIN CERTIFICATE-----\nFAKE_CERT\n-----END CERTIFICATE-----",
             "private_key": "-----BEGIN RSA PRIVATE KEY-----\nFAKE_KEY\n-----END RSA PRIVATE KEY-----",
             "issuing_ca": "-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----",
-            "ca_chain": [
-                "-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----"
-            ],
+            "ca_chain": ["-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----"],
             "expiration": int(
                 (datetime.now(timezone.utc) + timedelta(hours=24)).timestamp()
             ),
@@ -79,10 +75,7 @@ def test_vault_pki_invalidate_forces_renew(fake_vault_response: dict) -> None:
 
 
 def test_temporal_client_factory_falls_back_when_vault_unavailable() -> None:
-    factory = TemporalClientFactory(
-        target_host="temporal:7233",
-        pki_backend="vault",
-    )
+    factory = TemporalClientFactory(target_host="temporal:7233", pki_backend="vault")
     import asyncio
 
     async def _run() -> dict | None:

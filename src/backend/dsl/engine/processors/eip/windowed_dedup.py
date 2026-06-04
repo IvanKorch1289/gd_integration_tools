@@ -39,7 +39,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("WindowedDedupProcessor", "WindowedCollectProcessor")
+__all__ = ("WindowedCollectProcessor", "WindowedDedupProcessor")
 
 _logger = logging.getLogger("dsl.eip.windowed")
 
@@ -60,7 +60,7 @@ def _serialize(body: Any) -> str:
     """Канонический JSON для in-memory dedup-key (через codecs.json helper)."""
     try:
         return canonical_json_bytes(body).decode("utf-8")
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return str(body)
 
 
@@ -326,7 +326,7 @@ class WindowedCollectProcessor(BaseProcessor):
             try:
                 text = raw.decode() if isinstance(raw, bytes) else raw
                 items.append(_json_loads(text))
-            except Exception:  # noqa: BLE001, S112
+            except Exception:
                 continue
 
         return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)
@@ -364,7 +364,7 @@ class WindowedCollectProcessor(BaseProcessor):
                 try:
                     text = raw.decode() if isinstance(raw, bytes) else raw
                     items.append(_json_loads(text))
-                except Exception:  # noqa: BLE001, S112
+                except Exception:
                     continue
             return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)
         except Exception as exc:

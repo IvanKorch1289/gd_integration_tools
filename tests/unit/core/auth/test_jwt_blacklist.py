@@ -37,9 +37,7 @@ class _FakeRedis:
             return None
         return value
 
-    async def set(
-        self, key: str, value: Any, *, ex: int | None = None
-    ) -> None:
+    async def set(self, key: str, value: Any, *, ex: int | None = None) -> None:
         expires = time.time() + ex if ex is not None else None
         if isinstance(value, str):
             value = value.encode()
@@ -60,9 +58,7 @@ class TestRevokeBeforeTime:
         raw = await redis.get("blacklist:jwt:revoke_before")
         assert raw == b"1700000000"
 
-    async def test_subsequent_call_with_higher_threshold_overwrites(
-        self,
-    ) -> None:
+    async def test_subsequent_call_with_higher_threshold_overwrites(self) -> None:
         redis = _FakeRedis()
         blacklist = RedisJwtBlacklist(redis)
         await blacklist.revoke_before_time(1700_000_000)

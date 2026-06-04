@@ -85,7 +85,7 @@ class AgentRegistry:
 
     # ── Loaders ────────────────────────────────────────────────────
 
-    def from_toml_manifest(self, plugin_toml: "Path") -> list[AgentSpec]:
+    def from_toml_manifest(self, plugin_toml: Path) -> list[AgentSpec]:
         """Загрузить ``[[agent]]`` секции из ``plugin.toml`` V11.2.
 
         Args:
@@ -179,7 +179,7 @@ class AgentRegistry:
 
     # ── Registration ───────────────────────────────────────────────
 
-    def register(self, spec: "AgentSpec") -> None:
+    def register(self, spec: AgentSpec) -> None:
         """Зарегистрировать агента напрямую (для тестов/dynamic agents).
 
         Args:
@@ -190,7 +190,7 @@ class AgentRegistry:
 
     # ── Lookup ─────────────────────────────────────────────────────
 
-    def get_agent(self, agent_id: str) -> "AgentSpec":
+    def get_agent(self, agent_id: str) -> AgentSpec:
         """Получить агента по ``agent_id``.
 
         Args:
@@ -207,7 +207,7 @@ class AgentRegistry:
             raise KeyError(f"AgentRegistry.get_agent: agent_id={agent_id!r} not found")
         return agent
 
-    def list_agents(self) -> list["AgentSpec"]:
+    def list_agents(self) -> list[AgentSpec]:
         """Список всех зарегистрированных агентов.
 
         Returns:
@@ -217,7 +217,7 @@ class AgentRegistry:
 
     # ── Hot-reload ─────────────────────────────────────────────────
 
-    async def hot_reload(self, plugin_toml: "Path") -> None:
+    async def hot_reload(self, plugin_toml: Path) -> None:
         """Перечитать ``plugin.toml`` манифесты через watchfiles.
 
         Используется как callback из ``watchfiles.awatch`` (Wave B) при

@@ -16,13 +16,14 @@ from __future__ import annotations
 import logging
 import statistics
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from enum import Enum
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
 
-__all__ = ("DataQualityMonitor", "DQRule", "DQCheckResult", "get_dq_monitor")
+__all__ = ("DQCheckResult", "DQRule", "DataQualityMonitor", "get_dq_monitor")
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class DQViolation:
 
 @dataclass(slots=True)
 class DQCheckResult:
-    violations: list[DQViolation] = field(default_factory=list)
+    violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0
 
@@ -61,7 +62,7 @@ class DQRule:
     name: str
     field: str
     check: str  # "not_null", "type", "range", "unique", "regex"
-    params: dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = dataclass_field(default_factory=dict)
     severity: DQSeverity = DQSeverity.WARNING
     enabled: bool = True
 
@@ -154,7 +155,7 @@ class DataQualityMonitor:
                 drift[k] = "missing_field"
 
         self._inferred_schemas[dataset] = {
-            k: v[0] if len(v) == 1 else str(v) for k, v in schema.items()
+            k: list(v)[0] if len(v) == 1 else str(v) for k, v in schema.items()
         }
         return {
             "schema": self._inferred_schemas[dataset],

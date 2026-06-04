@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.engine.processors.base import CallableProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, CallableProcessor
 from src.backend.dsl.engine.processors.control_flow import (
     ChoiceBranch,
     ChoiceProcessor,
@@ -27,9 +27,11 @@ from src.backend.dsl.engine.processors.control_flow import (
     SagaStep,
     TryCatchProcessor,
 )
-from src.backend.dsl.engine.processors.eip.flow_control import ThrottlerProcessor
+from src.backend.dsl.engine.processors.eip.flow_control import (
+    ForEachProcessor,
+    ThrottlerProcessor,
+)
 from src.backend.dsl.engine.processors.eip.resilience import CircuitBreakerProcessor
-from src.backend.dsl.engine.processors.eip.flow_control import ForEachProcessor
 
 
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
@@ -39,6 +41,19 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 def _proc(fn: Callable[..., Any]) -> CallableProcessor:
     """Оборачивает async fn в CallableProcessor."""
     return CallableProcessor(fn)
+
+
+class _DummySpecProcessor(BaseProcessor):
+    """Процессор с поддержкой to_spec для тестов сериализации."""
+
+    def __init__(self, name: str | None = None) -> None:
+        super().__init__(name=name or "dummy_spec")
+
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
+        pass
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"dummy": {"name": self.name}}
 
 
 # =============================================================================
@@ -59,8 +74,7 @@ async def test_try_catch_success() -> None:
         call_log.append("catch")
 
     proc = TryCatchProcessor(
-        try_processors=[_proc(try_step)],
-        catch_processors=[_proc(catch_step)],
+        try_processors=[_proc(try_step)], catch_processors=[_proc(catch_step)]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -84,8 +98,7 @@ async def test_try_catch_exception_caught() -> None:
         call_log.append("catch")
 
     proc = TryCatchProcessor(
-        try_processors=[_proc(failing_try)],
-        catch_processors=[_proc(catch_step)],
+        try_processors=[_proc(failing_try)], catch_processors=[_proc(catch_step)]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -140,13 +153,11 @@ async def test_try_catch_finally_always_runs() -> None:
 @pytest.mark.asyncio
 async def test_try_catch_exchange_status_recovered() -> None:
     """После catch (по exception) status = processing, error cleared, caught_error set."""
+
     async def failing_try(ex: Exchange[Any], ctx: Any) -> None:
         raise RuntimeError("boom")
 
-    proc = TryCatchProcessor(
-        try_processors=[_proc(failing_try)],
-        catch_processors=[],
-    )
+    proc = TryCatchProcessor(try_processors=[_proc(failing_try)], catch_processors=[])
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
 
@@ -172,8 +183,7 @@ async def test_try_catch_with_failed_exchange_not_exception() -> None:
         call_log.append("catch")
 
     proc = TryCatchProcessor(
-        try_processors=[_proc(fail_exchange)],
-        catch_processors=[_proc(catch_step)],
+        try_processors=[_proc(fail_exchange)], catch_processors=[_proc(catch_step)]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -192,6 +202,7 @@ async def test_try_catch_with_failed_exchange_not_exception() -> None:
 @pytest.mark.asyncio
 async def test_parallel_all_strategy_collects_results() -> None:
     """2 ветки, strategy='all', results в parallel_results."""
+
     async def branch_a(ex: Exchange[Any], ctx: Any) -> None:
         ex.out_message = Message(body={"branch": "a", "value": 1})
 
@@ -199,11 +210,7 @@ async def test_parallel_all_strategy_collects_results() -> None:
         ex.out_message = Message(body={"branch": "b", "value": 2})
 
     proc = ParallelProcessor(
-        branches={
-            "a": [_proc(branch_a)],
-            "b": [_proc(branch_b)],
-        },
-        strategy="all",
+        branches={"a": [_proc(branch_a)], "b": [_proc(branch_b)]}, strategy="all"
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "x"})
@@ -231,10 +238,7 @@ async def test_parallel_first_strategy_returns_first() -> None:
         ex.out_message = Message(body={"branch": "fast"})
 
     proc = ParallelProcessor(
-        branches={
-            "slow": [_proc(slow_branch)],
-            "fast": [_proc(fast_branch)],
-        },
+        branches={"slow": [_proc(slow_branch)], "fast": [_proc(fast_branch)]},
         strategy="first",
     )
     ctx = AsyncMock()
@@ -250,6 +254,7 @@ async def test_parallel_first_strategy_returns_first() -> None:
 @pytest.mark.asyncio
 async def test_parallel_errors_collected() -> None:
     """Branch error → parallel_errors."""
+
     async def ok_branch(ex: Exchange[Any], ctx: Any) -> None:
         ex.out_message = Message(body={"ok": True})
 
@@ -257,11 +262,7 @@ async def test_parallel_errors_collected() -> None:
         raise RuntimeError("branch failed")
 
     proc = ParallelProcessor(
-        branches={
-            "ok": [_proc(ok_branch)],
-            "err": [_proc(err_branch)],
-        },
-        strategy="all",
+        branches={"ok": [_proc(ok_branch)], "err": [_proc(err_branch)]}, strategy="all"
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "x"})
@@ -289,10 +290,7 @@ async def test_parallel_first_cancels_pending() -> None:
         ex.out_message = Message(body={"branch": "fast"})
 
     proc = ParallelProcessor(
-        branches={
-            "slow": [_proc(slow_branch)],
-            "fast": [_proc(fast_branch)],
-        },
+        branches={"slow": [_proc(slow_branch)], "fast": [_proc(fast_branch)]},
         strategy="first",
     )
     ctx = AsyncMock()
@@ -318,11 +316,7 @@ async def test_parallel_body_copied_to_each_branch() -> None:
         branch_bodies["b"] = ex.in_message.body
 
     proc = ParallelProcessor(
-        branches={
-            "a": [_proc(capture_a)],
-            "b": [_proc(capture_b)],
-        },
-        strategy="all",
+        branches={"a": [_proc(capture_a)], "b": [_proc(capture_b)]}, strategy="all"
     )
     ctx = AsyncMock()
     e = _ex(body={"shared": "data", "unique": "input"})
@@ -354,7 +348,7 @@ async def test_choice_first_matching_branch() -> None:
         when=[
             ChoiceBranch(expr="status == 'a'", processors=[_proc(step_a)]),
             ChoiceBranch(expr="status == 'b'", processors=[_proc(step_b)]),
-        ],
+        ]
     )
     ctx = AsyncMock()
     e = _ex(body={"status": "a"})
@@ -376,9 +370,7 @@ async def test_choice_otherwise_when_no_match() -> None:
         call_log.append("otherwise")
 
     proc = ChoiceProcessor(
-        when=[
-            ChoiceBranch(expr="status == 'wrong'", processors=[_proc(when_step)]),
-        ],
+        when=[ChoiceBranch(expr="status == 'wrong'", processors=[_proc(when_step)])],
         otherwise=[_proc(otherwise_step)],
     )
     ctx = AsyncMock()
@@ -398,9 +390,7 @@ async def test_choice_jmespath_expr_matching() -> None:
         call_log.append("matched")
 
     proc = ChoiceProcessor(
-        when=[
-            ChoiceBranch(expr="data.items[0].active", processors=[_proc(step_match)]),
-        ],
+        when=[ChoiceBranch(expr="data.items[0].active", processors=[_proc(step_match)])]
     )
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [{"active": True}, {"active": False}]}})
@@ -413,14 +403,13 @@ async def test_choice_jmespath_expr_matching() -> None:
 @pytest.mark.asyncio
 async def test_choice_no_match_no_otherwise() -> None:
     """No match + no otherwise → exchange unchanged."""
+
     async def when_step(ex: Exchange[Any], ctx: Any) -> None:
         ex.out_message = Message(body={"modified": True})
 
     # expr ищет несуществующий ключ → None (falsy)
     proc = ChoiceProcessor(
-        when=[
-            ChoiceBranch(expr="nonexistent", processors=[_proc(when_step)]),
-        ],
+        when=[ChoiceBranch(expr="nonexistent", processors=[_proc(when_step)])],
         otherwise=None,
     )
     ctx = AsyncMock()
@@ -447,9 +436,7 @@ async def test_for_each_iterates_over_items() -> None:
         ex.out_message = Message(body={"processed": ex.in_message.body})
 
     proc = ForEachProcessor(
-        items_path="data.items",
-        processors=[_proc(process_item)],
-        copy_exchange=True,
+        items_path="data.items", processors=[_proc(process_item)], copy_exchange=True
     )
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3]}})
@@ -468,13 +455,11 @@ async def test_for_each_iterates_over_items() -> None:
 @pytest.mark.asyncio
 async def test_for_each_empty_list() -> None:
     """ForEach with empty list → no iterations, empty results."""
+
     async def process_item(ex: Exchange[Any], ctx: Any) -> None:
         pass
 
-    proc = ForEachProcessor(
-        items_path="data.items",
-        processors=[_proc(process_item)],
-    )
+    proc = ForEachProcessor(items_path="data.items", processors=[_proc(process_item)])
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": []}})
 
@@ -493,9 +478,7 @@ async def test_for_each_max_iterations() -> None:
         call_log.append(ex.in_message.body)
 
     proc = ForEachProcessor(
-        items_path="data.items",
-        processors=[_proc(process_item)],
-        max_iterations=2,
+        items_path="data.items", processors=[_proc(process_item)], max_iterations=2
     )
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3, 4, 5]}})
@@ -523,9 +506,7 @@ async def test_retry_success_first_attempt() -> None:
         ex.out_message = Message(body={"status": "ok"})
 
     proc = RetryProcessor(
-        processors=[_proc(succeed_once)],
-        max_attempts=3,
-        delay_seconds=0.01,
+        processors=[_proc(succeed_once)], max_attempts=3, delay_seconds=0.01
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -639,10 +620,7 @@ async def test_saga_all_steps_succeed() -> None:
         ex.out_message = Message(body={"step2": "done"})
 
     proc = SagaProcessor(
-        steps=[
-            SagaStep(forward=_proc(step1)),
-            SagaStep(forward=_proc(step2)),
-        ],
+        steps=[SagaStep(forward=_proc(step1)), SagaStep(forward=_proc(step2))]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -675,7 +653,7 @@ async def test_saga_compensation_on_failure() -> None:
         steps=[
             SagaStep(forward=_proc(step1), compensate=_proc(compensate1)),
             SagaStep(forward=_proc(step2)),
-        ],
+        ]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -703,7 +681,7 @@ async def test_saga_no_compensate_step() -> None:
         steps=[
             SagaStep(forward=_proc(step1)),  # no compensation
             SagaStep(forward=_proc(step2)),
-        ],
+        ]
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -725,14 +703,19 @@ async def test_pipeline_ref_stores_result() -> None:
     # Mock the SubPipelineExecutor
     from unittest.mock import patch
 
-    async def dummy_route(body: Any, headers: dict[str, Any], ctx: Any) -> tuple[Any, str | None]:
+    async def dummy_route(
+        body: Any, headers: dict[str, Any], ctx: Any
+    ) -> tuple[Any, str | None]:
         return {"sub_result": body["value"] * 2}, None
 
     proc = PipelineRefProcessor(route_id="test_route", result_property="my_result")
     ctx = AsyncMock()
     e = _ex(body={"value": 5})
 
-    with patch("src.backend.dsl.engine.processors.base.SubPipelineExecutor.execute_route", new_callable=AsyncMock) as mock_exec:
+    with patch(
+        "src.backend.dsl.engine.processors.base.SubPipelineExecutor.execute_route",
+        new_callable=AsyncMock,
+    ) as mock_exec:
         mock_exec.return_value = ({"sub_result": 10}, None)
         await proc.process(e, ctx)
 
@@ -748,7 +731,10 @@ async def test_pipeline_ref_forwards_error() -> None:
     ctx = AsyncMock()
     e = _ex(body={"value": 5})
 
-    with patch("src.backend.dsl.engine.processors.base.SubPipelineExecutor.execute_route", new_callable=AsyncMock) as mock_exec:
+    with patch(
+        "src.backend.dsl.engine.processors.base.SubPipelineExecutor.execute_route",
+        new_callable=AsyncMock,
+    ) as mock_exec:
         mock_exec.return_value = (None, "sub-pipeline failed")
         await proc.process(e, ctx)
 
@@ -811,11 +797,12 @@ async def test_throttler_enforces_rate_after_burst() -> None:
 @pytest.mark.asyncio
 async def test_circuit_breaker_success() -> None:
     """CircuitBreaker allows successful calls through."""
-    from unittest.mock import patch, MagicMock, AsyncMock
+    from unittest.mock import AsyncMock, MagicMock, patch
 
     class DummyGuard:
         async def __aenter__(self):
             return self
+
         async def __aexit__(self, *args):
             pass
 
@@ -823,9 +810,7 @@ async def test_circuit_breaker_success() -> None:
         ex.out_message = Message(body={"status": "ok"})
 
     proc = CircuitBreakerProcessor(
-        processors=[_proc(process)],
-        failure_threshold=5,
-        recovery_timeout=30.0,
+        processors=[_proc(process)], failure_threshold=5, recovery_timeout=30.0
     )
     ctx = AsyncMock()
     e = _ex(body={"input": "test"})
@@ -836,7 +821,9 @@ async def test_circuit_breaker_success() -> None:
     mock_breaker.guard = MagicMock(return_value=DummyGuard())
 
     # Patch where get_breaker_registry is imported from (inside process method)
-    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_registry:
+    with patch(
+        "src.backend.core.resilience.breaker.get_breaker_registry"
+    ) as mock_registry:
         mock_registry.return_value.get_or_create.return_value = mock_breaker
         await proc.process(e, ctx)
 
@@ -847,7 +834,8 @@ async def test_circuit_breaker_success() -> None:
 @pytest.mark.asyncio
 async def test_circuit_breaker_open_calls_fallback() -> None:
     """CircuitBreaker OPEN → fallback processors executed."""
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock, patch
+
     from src.backend.core.resilience.breaker import CircuitOpen
 
     call_log: list[str] = []
@@ -858,6 +846,7 @@ async def test_circuit_breaker_open_calls_fallback() -> None:
     class OpenBreakerGuard:
         async def __aenter__(self):
             raise CircuitOpen("breaker is open")
+
         async def __aexit__(self, *args):
             pass
 
@@ -873,9 +862,167 @@ async def test_circuit_breaker_open_calls_fallback() -> None:
     mock_breaker.state = "open"
     mock_breaker.guard = MagicMock(return_value=OpenBreakerGuard())
 
-    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_registry:
+    with patch(
+        "src.backend.core.resilience.breaker.get_breaker_registry"
+    ) as mock_registry:
         mock_registry.return_value.get_or_create.return_value = mock_breaker
         await proc.process(e, ctx)
 
     assert call_log == ["fallback"]
     assert e.properties.get("cb_state") == "open_fallback"
+
+
+# =============================================================================
+# ChoiceBranch validation
+# =============================================================================
+
+
+def test_choice_branch_requires_exactly_one_condition() -> None:
+    """ChoiceBranch требует ровно одно из predicate / expr."""
+    with pytest.raises(ValueError, match="ровно одно"):
+        ChoiceBranch(processors=[], predicate=None, expr=None)
+
+    with pytest.raises(ValueError, match="ровно одно"):
+        ChoiceBranch(processors=[], predicate=lambda ex: True, expr="status == 'ok'")
+
+
+def test_choice_branch_predicate_matches() -> None:
+    """predicate-ветка матчит через callable."""
+    branch = ChoiceBranch(
+        processors=[], predicate=lambda ex: ex.in_message.body.get("ok") is True
+    )
+    e = _ex(body={"ok": True})
+    assert branch.matches(e) is True
+
+    e2 = _ex(body={"ok": False})
+    assert branch.matches(e2) is False
+
+
+# =============================================================================
+# _normalize_choice_branches
+# =============================================================================
+
+
+def test_normalize_choice_branches_tuple() -> None:
+    """Legacy tuple (predicate, processors) → ChoiceBranch."""
+    from src.backend.dsl.engine.processors.control_flow import (
+        _normalize_choice_branches,
+    )
+
+    def _pred(ex: Exchange[Any]) -> bool:
+        return True
+
+    pred = _pred
+    procs = [CallableProcessor(lambda e, c: None)]
+    result = _normalize_choice_branches([(pred, procs)])
+    assert len(result) == 1
+    assert result[0].predicate is pred
+    # _normalize_choice_branches делает list(processors) → копия списка
+    assert result[0].processors == procs
+
+
+def test_normalize_choice_branches_invalid() -> None:
+    """Invalid item → ValueError."""
+    from src.backend.dsl.engine.processors.control_flow import (
+        _normalize_choice_branches,
+    )
+
+    with pytest.raises(ValueError, match="Invalid choice-branch"):
+        _normalize_choice_branches(["bad_item"])
+
+
+# =============================================================================
+# to_spec round-trip serialization
+# =============================================================================
+
+
+def test_choice_to_spec_with_expr() -> None:
+    """ChoiceProcessor с JMESPath-ветками сериализуется."""
+    proc = ChoiceProcessor(
+        when=[
+            ChoiceBranch(
+                expr="status == 'ok'", processors=[_DummySpecProcessor("when_p")]
+            )
+        ],
+        otherwise=[_DummySpecProcessor("otherwise_p")],
+    )
+    spec = proc.to_spec()
+    assert spec is not None
+    assert "choice" in spec
+    assert spec["choice"]["when"][0]["expr"] == "status == 'ok'"
+
+
+def test_choice_to_spec_with_predicate_returns_none() -> None:
+    """ChoiceProcessor с callable-predicate → None (не сериализуется)."""
+    proc = ChoiceProcessor(
+        when=[
+            ChoiceBranch(
+                predicate=lambda ex: True,
+                processors=[CallableProcessor(lambda e, c: None)],
+            )
+        ]
+    )
+    assert proc.to_spec() is None
+
+
+def test_try_catch_to_spec() -> None:
+    """TryCatchProcessor сериализуется корректно."""
+    proc = TryCatchProcessor(
+        try_processors=[_DummySpecProcessor("try_p")],
+        catch_processors=[_DummySpecProcessor("catch_p")],
+        finally_processors=[_DummySpecProcessor("finally_p")],
+    )
+    spec = proc.to_spec()
+    assert spec is not None
+    assert "do_try" in spec
+    assert "try_processors" in spec["do_try"]
+    assert "catch_processors" in spec["do_try"]
+    assert "finally_processors" in spec["do_try"]
+
+
+def test_retry_to_spec() -> None:
+    """RetryProcessor сериализуется корректно."""
+    proc = RetryProcessor(
+        processors=[_DummySpecProcessor("retry_p")],
+        max_attempts=5,
+        delay_seconds=2.0,
+        backoff="exponential",
+        jitter_seconds=0.5,
+    )
+    spec = proc.to_spec()
+    assert spec is not None
+    assert "retry" in spec
+    assert spec["retry"]["max_attempts"] == 5
+    assert spec["retry"]["jitter_seconds"] == 0.5
+
+
+def test_parallel_to_spec() -> None:
+    """ParallelProcessor сериализуется корректно."""
+    proc = ParallelProcessor(
+        branches={"a": [_DummySpecProcessor("a_p")], "b": [_DummySpecProcessor("b_p")]},
+        strategy="all",
+    )
+    spec = proc.to_spec()
+    assert spec is not None
+    assert "parallel" in spec
+    assert spec["parallel"]["strategy"] == "all"
+    assert "a" in spec["parallel"]["branches"]
+
+
+def test_saga_to_spec() -> None:
+    """SagaProcessor сериализуется корректно."""
+    fwd = _DummySpecProcessor("fwd_p")
+    comp = _DummySpecProcessor("comp_p")
+    proc = SagaProcessor(steps=[SagaStep(forward=fwd, compensate=comp)])
+    spec = proc.to_spec()
+    assert spec is not None
+    assert "saga" in spec
+    assert len(spec["saga"]["steps"]) == 1
+    assert "forward" in spec["saga"]["steps"][0]
+    assert "compensate" in spec["saga"]["steps"][0]
+
+
+def test_pipeline_ref_to_spec() -> None:
+    """PipelineRefProcessor не поддерживает сериализацию → None."""
+    proc = PipelineRefProcessor(route_id="my_route")
+    assert proc.to_spec() is None

@@ -9,25 +9,11 @@ import pytest
 from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.base import RouteBuilder
 
-W1_METHODS = (
-    "agent_run",
-    "ai_invoke",
-    "agent_branch",
-    "agent_loop",
-    "agent_parallel",
-)
+W1_METHODS = ("agent_run", "ai_invoke", "agent_branch", "agent_loop", "agent_parallel")
 
-W2_METHODS = (
-    "guardrails_apply",
-    "pii_mask",
-    "pii_unmask",
-)
+W2_METHODS = ("guardrails_apply", "pii_mask", "pii_unmask")
 
-W3_METHODS = (
-    "skill_invoke",
-    "ai_memory_recall",
-    "ai_memory_store",
-)
+W3_METHODS = ("skill_invoke", "ai_memory_recall", "ai_memory_store")
 
 
 def test_mixin_provides_all_11_methods() -> None:
@@ -58,12 +44,10 @@ def test_chained_pipeline_all_11_methods() -> None:
         RouteBuilder.from_("ai_demo", source="internal:test")
         .agent_run(workflow_id="step1", prompt_inline="p1")
         .agent_branch(
-            source_property="agent_result.content",
-            branches={"approve": []},
-            default=[],
+            source_property="agent_result.content", branches={"approve": []}, default=[]
         )
         .agent_loop(
-            processors=[],  # пустые processors через _add fails; чтобы пройти init validation:
+            processors=[]  # пустые processors через _add fails; чтобы пройти init validation:
         )
         if False
         else RouteBuilder.from_("ai_demo", source="internal:test")
@@ -106,11 +90,7 @@ def test_chained_pipeline_all_11_methods() -> None:
         ),
         (
             "agent_parallel",
-            {
-                "agents": [
-                    {"key": "a", "workflow_id": "x", "prompt_inline": "p"}
-                ]
-            },
+            {"agents": [{"key": "a", "workflow_id": "x", "prompt_inline": "p"}]},
             "AgentParallelProcessor",
         ),
         (
@@ -118,16 +98,8 @@ def test_chained_pipeline_all_11_methods() -> None:
             {"stage": "input", "on_block": "warn"},
             "GuardrailsApplyProcessor",
         ),
-        (
-            "pii_mask",
-            {"scope": "banking"},
-            "PIIMaskProcessor",
-        ),
-        (
-            "pii_unmask",
-            {"strict": False},
-            "PIIUnmaskProcessor",
-        ),
+        ("pii_mask", {"scope": "banking"}, "PIIMaskProcessor"),
+        ("pii_unmask", {"strict": False}, "PIIUnmaskProcessor"),
         (
             "skill_invoke",
             {"skill_id": "credit.score.calculate"},
@@ -199,16 +171,12 @@ def test_yaml_round_trip_all_processors_have_to_spec() -> None:
     instances = [
         (AgentRunProcessor(workflow_id="x", prompt_inline="y"), "agent_run"),
         (
-            AgentBranchProcessor(
-                source_property="x.y", branches={"a": []}, default=[]
-            ),
+            AgentBranchProcessor(source_property="x.y", branches={"a": []}, default=[]),
             "agent_branch",
         ),
         (
             AgentLoopProcessor(
-                processors=[
-                    AgentRunProcessor(workflow_id="x", prompt_inline="y")
-                ]
+                processors=[AgentRunProcessor(workflow_id="x", prompt_inline="y")]
             ),
             "agent_loop",
         ),
@@ -229,9 +197,7 @@ def test_yaml_round_trip_all_processors_have_to_spec() -> None:
     for proc, expected_key in instances:
         spec = proc.to_spec()
         assert spec is not None, f"{type(proc).__name__}.to_spec() returned None"
-        assert isinstance(spec, dict), (
-            f"{type(proc).__name__}.to_spec() not a dict"
-        )
+        assert isinstance(spec, dict), f"{type(proc).__name__}.to_spec() not a dict"
         assert expected_key in spec, (
             f"{type(proc).__name__}: spec missing key {expected_key!r}, got {list(spec)}"
         )

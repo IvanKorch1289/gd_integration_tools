@@ -43,7 +43,7 @@ class AgentDSLMixin:
         result_property: str = "agent_result",
         timeout_s: float = 300.0,
         max_retries: int = 3,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Вызов :class:`AIGateway.invoke` по ``workflow_id`` (S27 W1).
 
         Args:
@@ -95,7 +95,7 @@ class AgentDSLMixin:
         policy_ref: str | None = None,
         context_property: str | None = "body",
         result_property: str = "agent_result",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Алиас :meth:`agent_run` — для семантически нагруженных мест
         (``.ai_invoke(workflow_id="doc_summarize")`` читается естественнее
         чем ``.agent_run(...)`` когда подразумевается одиночный LLM-вызов).
@@ -113,9 +113,9 @@ class AgentDSLMixin:
         self,
         *,
         source_property: str,
-        branches: dict[str, "list[BaseProcessor]"],
-        default: "list[BaseProcessor] | None" = None,
-    ) -> "RouteBuilder":
+        branches: dict[str, list[BaseProcessor]],
+        default: list[BaseProcessor] | None = None,
+    ) -> RouteBuilder:
         """Verdict-based routing по ``agent_result`` (S27 W1).
 
         Args:
@@ -149,12 +149,12 @@ class AgentDSLMixin:
     def agent_loop(
         self,
         *,
-        processors: "list[BaseProcessor]",
+        processors: list[BaseProcessor],
         max_iterations: int = 5,
         stop_condition_property: str | None = None,
         budget_cost_usd: float | None = None,
         budget_tokens: int | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Циклическое выполнение вложенного pipeline (S27 W1).
 
         Args:
@@ -194,7 +194,7 @@ class AgentDSLMixin:
         result_property: str = "agent_parallel_results",
         timeout_s: float | None = None,
         continue_on_error: bool = True,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Параллельный fan-out агентов через :class:`asyncio.TaskGroup` (S27 W1).
 
         Args:
@@ -235,7 +235,7 @@ class AgentDSLMixin:
         source_property: str | None = None,
         on_block: str = "warn",
         categories: list[str] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Content safety через Llama Guard 3 (S27 W2).
 
         Args:
@@ -269,7 +269,7 @@ class AgentDSLMixin:
         source_property: str = "body",
         target_property: str | None = None,
         language: str = "ru",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Reversible PII tokenization через PIITokenizer (S27 W2, ADR-NEW-21).
 
         Args:
@@ -300,10 +300,10 @@ class AgentDSLMixin:
         *,
         source_property: str = "body",
         target_property: str | None = None,
-        token_map_property: str = "pii_token_map",  # noqa: S107
+        token_map_property: str = "pii_token_map",  # noqa: S107  # config field name, not a password
         scope: str = "default",
         strict: bool = False,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Восстановить PII по ``token_map`` от ``pii_mask`` (S27 W2).
 
         Args:
@@ -343,7 +343,7 @@ class AgentDSLMixin:
         tool_actions: list[str] | None = None,
         max_handoffs: int = 5,
         result_property: str = "agent_graph_result",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """LangGraph execution as DSL step (S28 W4).
 
         Two modes:
@@ -414,7 +414,7 @@ class AgentDSLMixin:
         skill_id: str,
         params_property: str | None = "body",
         result_property: str = "skill_result",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Вызов AI skill через :class:`SkillRegistry.invoke` (S27 W3, ADR-NEW-22).
 
         Args:
@@ -446,7 +446,7 @@ class AgentDSLMixin:
         query_property: str | None = None,
         k: int = 5,
         result_property: str = "memory_recall",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """RAG-style retrieval из :class:`MemoryProtocol` (S27 W3, ADR-NEW-18).
 
         Args:
@@ -487,7 +487,7 @@ class AgentDSLMixin:
         key_property: str | None = None,
         value_property: str = "agent_result",
         ttl_s: int | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Запись в :class:`MemoryProtocol` (S27 W3, ADR-NEW-18).
 
         Args:
@@ -531,7 +531,7 @@ class AgentDSLMixin:
         model: str = "gpt-4o",
         temperature: float = 0.1,
         to: str = "property:rpa.ai_decision",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """AI-driven RPA action selection via LLM (S28 W5, wave:s8/k3-rpa-ai-decide).
 
         Анализирует задачу (natural language) и UI-контекст (screenshot/dom_snapshot)
@@ -576,7 +576,7 @@ class AgentDSLMixin:
         timeout_seconds: float = 3600.0,
         result_property: str = "hitl.decision",
         priority: str = "normal",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Human-In-The-Loop approval с timeout и multi-approver support (S28 W5).
 
         Приостанавливает текущий pipeline, создаёт запрос на approval
@@ -599,11 +599,11 @@ class AgentDSLMixin:
             )
         """
         from src.backend.dsl.engine.processors.hitl_approval import (
-            HITLApprovalProcessor,
+            HitlApprovalProcessor,
         )
 
         return self._add(  # type: ignore[attr-defined]
-            HITLApprovalProcessor(
+            HitlApprovalProcessor(
                 task=task,
                 approvers=approvers,
                 timeout_seconds=timeout_seconds,
@@ -622,7 +622,7 @@ class AgentDSLMixin:
         arguments_property: str = "body",
         result_property: str = "mcp_result",
         timeout_s: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Вызов MCP tool через FastMCP Client (S27 W3, S28 W5).
 
         Подключается к MCP-серверу по ``tool_uri`` и вызывает

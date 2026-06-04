@@ -87,7 +87,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/lakera: flagged (score={lakera_result.score:.2f})"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/lakera: provider error: {exc}")
                     return
@@ -107,7 +107,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/rebuff: prompt injection (score={rebuff_result.score:.2f})"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/rebuff: provider error: {exc}")
                     return
@@ -118,7 +118,7 @@ class GuardrailsProcessor(BaseProcessor):
                     get_nemo_guardrails_runtime,
                 )
 
-                runtime = get_nemo_guardrails_runtime()
+                runtime = await get_nemo_guardrails_runtime()
                 if runtime is None:
                     return  # GPU/FF unavailable — skip NeMo silently
                 prompt = exchange.get_property("llm.original_prompt", "")
@@ -128,7 +128,7 @@ class GuardrailsProcessor(BaseProcessor):
                         f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}"
                     )
                     return
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/nemo: provider error: {exc}")
                     return

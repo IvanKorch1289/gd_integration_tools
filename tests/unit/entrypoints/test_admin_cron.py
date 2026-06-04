@@ -43,7 +43,7 @@ def scheduler_mock() -> Any:
             "next_run_time": "2026-05-20T12:00:00+00:00",
             "trigger": "cron[0 12 * * *]",
             "paused": False,
-        },
+        }
     ]
     manager.schedule_cron.return_value = "job-new"
     manager.pause_job.return_value = True
@@ -70,11 +70,7 @@ def test_validate_cron_returns_preview(client_app: TestClient) -> None:
 def test_validate_invalid_cron(client_app: TestClient) -> None:
     response = client_app.post(
         "/admin/cron/validate",
-        json={
-            "expression": "invalid garbage",
-            "timezone": "UTC",
-            "preview_count": 1,
-        },
+        json={"expression": "invalid garbage", "timezone": "UTC", "preview_count": 1},
     )
     assert response.status_code == 200
     body = response.json()

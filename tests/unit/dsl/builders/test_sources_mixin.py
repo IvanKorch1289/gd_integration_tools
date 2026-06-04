@@ -18,6 +18,7 @@ from src.backend.dsl.builders.sources_mixin import SourcesMixin
 
 # ─── Вспомогательный RouteBuilder-stub ────────────────────────────────────────
 
+
 class _FakeRouteBuilder(SourcesMixin):
     """Минимальный stub RouteBuilder для тестирования SourcesMixin.
 
@@ -33,6 +34,7 @@ class _FakeRouteBuilder(SourcesMixin):
 
 # ─── test_from_kafka_returns_route_builder ────────────────────────────────────
 
+
 def test_from_kafka_returns_route_builder() -> None:
     """from_kafka создаёт RouteBuilder с source=kafka:<topic>."""
     mock_mq_module = MagicMock()
@@ -40,8 +42,7 @@ def test_from_kafka_returns_route_builder() -> None:
     mock_mq_module.MQSource.return_value = mock_mq_source
 
     with patch.dict(
-        "sys.modules",
-        {"src.backend.infrastructure.sources.mq": mock_mq_module},
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
     ):
         builder = _FakeRouteBuilder.from_kafka(
             "payments.stream",
@@ -62,6 +63,7 @@ def test_from_kafka_returns_route_builder() -> None:
 
 # ─── test_from_rabbit_returns_route_builder ───────────────────────────────────
 
+
 def test_from_rabbit_returns_route_builder() -> None:
     """from_rabbit создаёт RouteBuilder с source=rabbitmq:<queue>."""
     mock_mq_module = MagicMock()
@@ -69,8 +71,7 @@ def test_from_rabbit_returns_route_builder() -> None:
     mock_mq_module.MQSource.return_value = mock_mq_source
 
     with patch.dict(
-        "sys.modules",
-        {"src.backend.infrastructure.sources.mq": mock_mq_module},
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
     ):
         builder = _FakeRouteBuilder.from_rabbit(
             "notifications.consumer",
@@ -88,14 +89,14 @@ def test_from_rabbit_returns_route_builder() -> None:
 
 # ─── test_from_redis_streams_returns_route_builder ───────────────────────────
 
+
 def test_from_redis_streams_returns_route_builder() -> None:
     """from_redis_streams создаёт RouteBuilder с source=redis_streams:<stream>."""
     mock_mq_module = MagicMock()
     mock_mq_module.MQSource.return_value = MagicMock()
 
     with patch.dict(
-        "sys.modules",
-        {"src.backend.infrastructure.sources.mq": mock_mq_module},
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
     ):
         builder = _FakeRouteBuilder.from_redis_streams(
             "audit.trail",
@@ -115,6 +116,7 @@ def test_from_redis_streams_returns_route_builder() -> None:
 
 # ─── test_from_filewatcher_returns_route_builder ──────────────────────────────
 
+
 def test_from_filewatcher_returns_route_builder() -> None:
     """from_filewatcher создаёт RouteBuilder с source=filewatcher:<path>."""
     mock_fw_module = MagicMock()
@@ -126,9 +128,7 @@ def test_from_filewatcher_returns_route_builder() -> None:
         {"src.backend.infrastructure.sources.file_watcher": mock_fw_module},
     ):
         builder = _FakeRouteBuilder.from_filewatcher(
-            "config.hotreload",
-            path="/etc/app/config",
-            recursive=False,
+            "config.hotreload", path="/etc/app/config", recursive=False
         )
 
     assert isinstance(builder, _FakeRouteBuilder)
@@ -142,6 +142,7 @@ def test_from_filewatcher_returns_route_builder() -> None:
 
 # ─── test_from_webhook_returns_route_builder ──────────────────────────────────
 
+
 def test_from_webhook_returns_route_builder() -> None:
     """from_webhook создаёт RouteBuilder с source=webhook:<path>."""
     mock_wh_module = MagicMock()
@@ -149,13 +150,10 @@ def test_from_webhook_returns_route_builder() -> None:
     mock_wh_module.WebhookSource.return_value = mock_wh_source
 
     with patch.dict(
-        "sys.modules",
-        {"src.backend.infrastructure.sources.webhook": mock_wh_module},
+        "sys.modules", {"src.backend.infrastructure.sources.webhook": mock_wh_module}
     ):
         builder = _FakeRouteBuilder.from_webhook(
-            "github.push",
-            path="/webhooks/github",
-            hmac_secret="test-secret",
+            "github.push", path="/webhooks/github", hmac_secret="test-secret"
         )
 
     assert isinstance(builder, _FakeRouteBuilder)
@@ -169,12 +167,10 @@ def test_from_webhook_returns_route_builder() -> None:
 
 # ─── test_from_schedule_returns_route_builder ─────────────────────────────────
 
+
 def test_from_schedule_returns_route_builder() -> None:
     """from_schedule создаёт RouteBuilder с source=schedule:<cron_expr>."""
-    builder = _FakeRouteBuilder.from_schedule(
-        "reports.daily",
-        cron_expr="0 9 * * 1-5",
-    )
+    builder = _FakeRouteBuilder.from_schedule("reports.daily", cron_expr="0 9 * * 1-5")
 
     assert isinstance(builder, _FakeRouteBuilder)
     assert builder.route_id == "reports.daily"

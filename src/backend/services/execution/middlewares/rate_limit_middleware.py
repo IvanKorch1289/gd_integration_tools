@@ -19,7 +19,8 @@ infrastructure при импорте).
 from __future__ import annotations
 
 import importlib
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from src.backend.core.interfaces.action_dispatcher import (
     ActionError,

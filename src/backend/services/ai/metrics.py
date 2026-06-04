@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from src.backend.core.di import app_state_singleton
 
@@ -238,5 +239,5 @@ class AgentMetricsService:
 
 
 @app_state_singleton("agent_metrics_service", factory=AgentMetricsService)
-def get_agent_metrics_service() -> AgentMetricsService:
+def get_agent_metrics_service() -> AgentMetricsService:  # type: ignore[empty-body]
     """Возвращает singleton ``AgentMetricsService`` из ``app.state``."""

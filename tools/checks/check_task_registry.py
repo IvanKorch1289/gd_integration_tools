@@ -200,9 +200,8 @@ def main(argv: list[str] | None = None) -> int:
     """CLI: обойти ``--root`` и вывести нарушения; exit 1 при наличии."""
     parser = argparse.ArgumentParser(
         description=(
-            "CI-gate: запрет orphan asyncio.create_task / ensure_future "
-            "(R-V15-11)"
-        ),
+            "CI-gate: запрет orphan asyncio.create_task / ensure_future (R-V15-11)"
+        )
     )
     parser.add_argument(
         "--root",

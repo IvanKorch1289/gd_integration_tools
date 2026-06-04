@@ -91,7 +91,7 @@ class CDCSource:
         try:
             from psycopg import AsyncConnection  # type: ignore[import-not-found]
             from psycopg.replication import (  # type: ignore[import-not-found]
-                LogicalReplicationConnection,
+                LogicalReplicationConnection,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
             )
         except ImportError as exc:
             raise RuntimeError(

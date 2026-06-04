@@ -52,7 +52,7 @@ class _FallbackStats:
 class RouteStats:
     """Статистика маршрута. Использует HdrHistogram если доступен."""
 
-    __slots__ = ("_hdr", "_fallback", "total_count", "error_count")
+    __slots__ = ("_fallback", "_hdr", "error_count", "total_count")
 
     def __init__(self) -> None:
         # HdrHistogram: 1..60000 ms, precision 2 digits (O(1) percentile queries)
@@ -116,7 +116,7 @@ class SLOTracker:
             record_pipeline_execution(
                 route_id=route_id, status="error" if is_error else "success"
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
     def get_report(self) -> dict[str, Any]:
@@ -140,5 +140,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("slo_tracker", SLOTracker)
-def get_slo_tracker() -> SLOTracker:
+def get_slo_tracker() -> SLOTracker:  # type: ignore[empty-body]
     """Возвращает SLOTracker из app.state или lazy-init fallback."""

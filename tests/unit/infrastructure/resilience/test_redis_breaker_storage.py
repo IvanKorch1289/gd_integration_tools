@@ -41,12 +41,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes | str,
-        *,
-        ex: int | None = None,
-        **_: Any,
+        self, key: str, value: bytes | str, *, ex: int | None = None, **_: Any
     ) -> bool:
         if self.fail_next_set:
             self.fail_next_set = False
@@ -132,9 +127,7 @@ async def test_save_swallows_redis_error() -> None:
     redis = _DictRedis()
     redis.fail_next_set = True
     storage = RedisBreakerStateStorage(redis)
-    state = BreakerState(
-        name="t", state="open", fail_counter=1, last_failure_at_iso=""
-    )
+    state = BreakerState(name="t", state="open", fail_counter=1, last_failure_at_iso="")
     await storage.save(state)  # не должно бросать
     assert redis.set_calls == []  # mock не записал из-за исключения
 

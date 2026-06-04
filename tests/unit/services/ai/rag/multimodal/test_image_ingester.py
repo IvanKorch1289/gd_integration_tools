@@ -70,7 +70,9 @@ async def test_image_ingester_reads_from_path(tmp_path) -> None:  # type: ignore
 
 
 @pytest.mark.asyncio
-async def test_image_ingester_handles_pillow_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_image_ingester_handles_pillow_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """При ImportError на PIL — metadata содержит warning, ChunkDoc создан."""
     # Удаляем кэшированные модули PIL и подменяем импорт.
     for mod_name in list(sys.modules):
@@ -79,9 +81,7 @@ async def test_image_ingester_handles_pillow_missing(monkeypatch: pytest.MonkeyP
 
     real_import = __import__
 
-    def _fake_import(
-        name: str, globals=None, locals=None, fromlist=(), level=0
-    ):  # type: ignore[no-untyped-def]
+    def _fake_import(name: str, globals=None, locals=None, fromlist=(), level=0):  # type: ignore[no-untyped-def]
         if name == "PIL" or name.startswith("PIL"):
             raise ImportError("PIL отключён для теста")
         return real_import(name, globals, locals, fromlist, level)

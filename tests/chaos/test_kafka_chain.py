@@ -25,7 +25,9 @@ def test_kafka_latency(toxiproxy_kafka: ChaosTarget) -> None:
 def test_kafka_disconnect(toxiproxy_kafka: ChaosTarget) -> None:
     """disconnect: Kafka недоступен."""
     apply_disconnect(toxiproxy_kafka)
-    assert assert_connection_fails(toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port)
+    assert assert_connection_fails(
+        toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port
+    )
 
 
 def test_kafka_data_corruption(toxiproxy_kafka: ChaosTarget) -> None:

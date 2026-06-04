@@ -35,14 +35,18 @@ def _make_s3_client() -> Any:
 class TestClaimCheckInit:
     def test_init_store(self) -> None:
         p = ClaimCheckProcessor(
-            s3_bucket="test-bucket", direction="store", s3_client=lambda: _make_s3_client()
+            s3_bucket="test-bucket",
+            direction="store",
+            s3_client=lambda: _make_s3_client(),
         )
         assert p._direction == "store"
         assert p._s3_bucket == "test-bucket"
 
     def test_init_retrieve(self) -> None:
         p = ClaimCheckProcessor(
-            s3_bucket="test-bucket", direction="retrieve", s3_client=lambda: _make_s3_client()
+            s3_bucket="test-bucket",
+            direction="retrieve",
+            s3_client=lambda: _make_s3_client(),
         )
         assert p._direction == "retrieve"
 
@@ -64,7 +68,9 @@ class TestClaimCheckInit:
 
     def test_init_with_prefix(self) -> None:
         p = ClaimCheckProcessor(
-            s3_bucket="b", s3_key_prefix="myapp/claims/", s3_client=lambda: _make_s3_client()
+            s3_bucket="b",
+            s3_key_prefix="myapp/claims/",
+            s3_client=lambda: _make_s3_client(),
         )
         assert p._s3_key_prefix == "myapp/claims/"
 
@@ -114,7 +120,9 @@ class TestClaimCheckStore:
     async def test_store_threshold_configurable(self) -> None:
         s3 = _make_s3_client()
         p = ClaimCheckProcessor(
-            s3_bucket="b", threshold_bytes=100, s3_client=lambda: s3  # 100 bytes threshold
+            s3_bucket="b",
+            threshold_bytes=100,
+            s3_client=lambda: s3,  # 100 bytes threshold
         )
         # 200 bytes > 100 → stored
         ex = _make_exchange(b"x" * 200)

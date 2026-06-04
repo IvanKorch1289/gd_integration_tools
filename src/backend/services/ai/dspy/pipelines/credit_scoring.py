@@ -19,9 +19,7 @@ class _CreditScoringPipeline:
         """Базовая эвристика без оптимизации (используется как baseline)."""
         income = float(example.get("income_rub") or 0)
         score_input = int(example.get("credit_score") or 0)
-        if score_input >= 700 and income >= 60000:
-            decision = "approve"
-        elif score_input >= 600:
+        if (score_input >= 700 and income >= 60000) or score_input >= 600:
             decision = "approve"
         elif score_input >= 500:
             decision = "review"
@@ -35,13 +33,13 @@ class _CreditScoringPipeline:
         """Возвращает 1.0 если decision совпадает, partial для score-mismatch."""
         try:
             parsed = json.loads(output)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return 0.0
         expected = example.get("expected")
         if isinstance(expected, str):
             try:
                 expected_dict = json.loads(expected)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 expected_dict = {}
         elif isinstance(expected, dict):
             expected_dict = expected

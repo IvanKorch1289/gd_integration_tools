@@ -123,11 +123,15 @@ name = "{cap_name}"
         if cap_scope:
             block += f'scope = "{cap_scope}"\n'
         caps_blocks.append(block)
-    caps_toml = "".join(caps_blocks) if caps_blocks else """
+    caps_toml = (
+        "".join(caps_blocks)
+        if caps_blocks
+        else """
 # [[capabilities]]
 # name = "mq.publish"
 # scope = "{name}.events.*"
 """.replace("{name}", name)
+    )
 
     # plugin.toml (V11 manifest)
     (plugin_root / "plugin.toml").write_text(
@@ -209,12 +213,10 @@ class {class_name}(BasePlugin):
 
     # __init__.py
     (plugin_root / "__init__.py").write_text(
-        f'"""Plugin {name} (V11 in-tree)."""\n',
-        encoding="utf-8",
+        f'"""Plugin {name} (V11 in-tree)."""\n', encoding="utf-8"
     )
     (plugin_root / "functions" / "__init__.py").write_text(
-        f'"""Бизнес-функции плагина {name} для call_function()."""\n',
-        encoding="utf-8",
+        f'"""Бизнес-функции плагина {name} для call_function()."""\n', encoding="utf-8"
     )
     (plugin_root / "tests" / "__init__.py").write_text("", encoding="utf-8")
 
@@ -321,9 +323,7 @@ class PluginCodegen:
                 if with_frontend is not None
                 else self._default_with_frontend
             ),
-            overwrite=(
-                overwrite if overwrite is not None else self._default_overwrite
-            ),
+            overwrite=(overwrite if overwrite is not None else self._default_overwrite),
         )
 
     def list_existing(self) -> list[str]:

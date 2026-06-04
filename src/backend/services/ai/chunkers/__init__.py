@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Literal, Protocol, runtime_checkable
 
-__all__ = ("Chunker", "ChunkStrategy", "get_chunker")
+__all__ = ("ChunkStrategy", "Chunker", "get_chunker")
 
 ChunkStrategy = Literal["token", "recursive"]
 

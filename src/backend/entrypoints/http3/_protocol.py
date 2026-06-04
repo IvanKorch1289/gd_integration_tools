@@ -124,9 +124,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         )
         self._handlers[stream_id] = handler
 
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         registry = get_task_registry()
         if stream_ended:
@@ -148,9 +146,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         handler = self._handlers.get(stream_id)
         if handler is None:
             return
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         registry = get_task_registry()
         push_task = registry.create_task(

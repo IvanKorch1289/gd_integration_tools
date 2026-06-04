@@ -49,9 +49,7 @@ def test_three_examples_present() -> None:
         "multi_agent_supervisor",
         "code_interpreter_loop",
     }
-    assert expected.issubset(names), (
-        f"Ожидаются S12 example yaml; найдены: {names}"
-    )
+    assert expected.issubset(names), f"Ожидаются S12 example yaml; найдены: {names}"
 
 
 def test_readme_exists() -> None:

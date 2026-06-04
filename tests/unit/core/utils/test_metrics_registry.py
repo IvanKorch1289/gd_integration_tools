@@ -40,9 +40,7 @@ class TestInit:
         assert reg.default_labels == DEFAULT_LABELS
 
     def test_custom_labels(self, custom_registry: CollectorRegistry) -> None:
-        reg = MetricsRegistry(
-            default_labels=("a", "b"), registry=custom_registry
-        )
+        reg = MetricsRegistry(default_labels=("a", "b"), registry=custom_registry)
         assert reg.default_labels == ("a", "b")
 
     def test_empty_labels(self, custom_registry: CollectorRegistry) -> None:
@@ -51,9 +49,7 @@ class TestInit:
 
     def test_labels_stored_as_tuple(self, custom_registry: CollectorRegistry) -> None:
         # Передаём list — должно стать tuple
-        reg = MetricsRegistry(
-            default_labels=("x", "y"), registry=custom_registry
-        )
+        reg = MetricsRegistry(default_labels=("x", "y"), registry=custom_registry)
         assert isinstance(reg.default_labels, tuple)
         assert reg.default_labels == ("x", "y")
 
@@ -85,12 +81,8 @@ class TestCounter:
         assert "route_id" in c._labelnames
         assert "status" in c._labelnames
 
-    def test_dedup_extra_labels(
-        self, custom_registry: CollectorRegistry
-    ) -> None:
-        reg = MetricsRegistry(
-            default_labels=("tenant_id",), registry=custom_registry
-        )
+    def test_dedup_extra_labels(self, custom_registry: CollectorRegistry) -> None:
+        reg = MetricsRegistry(default_labels=("tenant_id",), registry=custom_registry)
         # "tenant_id" повторяется — не должно дублироваться
         c = reg.counter("req_total", "Requests", labels=("tenant_id", "status"))
         # Counter._labelnames хранит в порядке объявления
@@ -148,9 +140,7 @@ class TestGetCounter:
         c = fresh_metrics.get_counter("c1")
         assert isinstance(c, Counter)
 
-    def test_get_unknown_raises_keyerror(
-        self, fresh_metrics: MetricsRegistry
-    ) -> None:
+    def test_get_unknown_raises_keyerror(self, fresh_metrics: MetricsRegistry) -> None:
         # feature flag off → KeyError propagate (default behavior)
         with pytest.raises(KeyError):
             fresh_metrics.get_counter("nonexistent")
@@ -244,4 +234,8 @@ class TestAllExports:
     def test_all(self) -> None:
         from src.backend.core.utils import metrics_registry as m
 
-        assert set(m.__all__) == {"DEFAULT_LABELS", "MetricsRegistry", "metrics_registry"}
+        assert set(m.__all__) == {
+            "DEFAULT_LABELS",
+            "MetricsRegistry",
+            "metrics_registry",
+        }

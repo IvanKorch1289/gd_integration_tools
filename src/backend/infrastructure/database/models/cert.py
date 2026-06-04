@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.models.base import Base
 
-__all__ = ("CertRecord", "CertHistory")
+__all__ = ("CertHistory", "CertRecord")
 
 
 # Модели наследуют ``Base`` (а не ``BaseModel``), потому что реальная

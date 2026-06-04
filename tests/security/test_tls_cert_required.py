@@ -102,11 +102,7 @@ def test_email_imap_uses_safe_default_context() -> None:
 
 
 @pytest.mark.parametrize(
-    "ssl_module_attr",
-    [
-        "create_default_context",
-        "PROTOCOL_TLS_CLIENT",
-    ],
+    "ssl_module_attr", ["create_default_context", "PROTOCOL_TLS_CLIENT"]
 )
 def test_ssl_module_has_safe_defaults(ssl_module_attr: str) -> None:
     """Smoke-test: stdlib ``ssl`` модуль содержит safe-default API."""

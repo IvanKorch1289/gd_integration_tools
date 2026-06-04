@@ -83,7 +83,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
         super().__init__(name=f"upstream:{profile.name}", pooling=profile.pooling)
         self._profile = profile
         self._health_path = health_path
-        self._client: "httpx.AsyncClient | None" = None
+        self._client: httpx.AsyncClient | None = None
         self._breaker = ClientCircuitBreaker.from_profile(
             name=self.name, profile=self.pooling, host=profile.base_url
         )
@@ -163,7 +163,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
             return HealthResult.ok(
                 latency_ms=latency_ms, mode=mode, base_url=self._profile.base_url
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}",
                 mode=mode,
@@ -173,7 +173,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
     # -- API -----------------------------------------------------------
 
     @property
-    def client(self) -> "httpx.AsyncClient":
+    def client(self) -> httpx.AsyncClient:
         """Получить httpx-клиент. Требует, чтобы start() уже вызывался."""
         if self._client is None:
             raise RuntimeError(
@@ -185,7 +185,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
     def profile(self) -> UpstreamProfile:
         return self._profile
 
-    async def request(self, method: str, url: str, **kwargs: Any) -> "httpx.Response":
+    async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Выполнить запрос с CB + метриками.
 
         Отличие от прямого `client.request()` в том, что:
@@ -196,9 +196,8 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
         if self._client is None:
             raise RuntimeError("upstream client not started")
         try:
-            async with self._breaker.guard():
-                async with self.track(method.upper()):
-                    return await self._client.request(method, url, **kwargs)
+            async with self._breaker.guard(), self.track(method.upper()):
+                return await self._client.request(method, url, **kwargs)
         except CircuitOpen:
             _logger.warning(
                 "upstream circuit open",
@@ -216,13 +215,13 @@ class UpstreamRegistry:
     что даёт единую admin API / health aggregation.
     """
 
-    _instance: "UpstreamRegistry | None" = None
+    _instance: UpstreamRegistry | None = None
 
     def __init__(self) -> None:
         self._upstreams: dict[str, HttpUpstreamClient] = {}
 
     @classmethod
-    def instance(cls) -> "UpstreamRegistry":
+    def instance(cls) -> UpstreamRegistry:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -274,9 +273,9 @@ upstream_registry: Final = UpstreamRegistry.instance()
 
 
 __all__ = (
+    "HttpUpstreamClient",
     "UpstreamProfile",
     "UpstreamRegistry",
-    "HttpUpstreamClient",
     "upstream",
     "upstream_registry",
 )

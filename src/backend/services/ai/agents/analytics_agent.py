@@ -43,7 +43,7 @@ class AnalyticsAgent:
         if _PLUGIN_FILE.is_file():
             try:
                 self._registry.from_plugin_file(_PLUGIN_FILE)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("AnalyticsAgent: tools load failed: %s", exc)
         self._loaded = True
 
@@ -91,7 +91,7 @@ class AnalyticsAgent:
             try:
                 result = await target.callable(**(payload or {}))
                 return {"success": True, "tool": target.id, "result": result}
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("AnalyticsAgent: tool %s failed: %s", target.id, exc)
                 return {"success": False, "tool": target.id, "error": str(exc)}
 
@@ -106,5 +106,5 @@ class AnalyticsAgent:
 
 
 @app_state_singleton("analytics_agent", factory=AnalyticsAgent)
-def get_analytics_agent() -> AnalyticsAgent:
+def get_analytics_agent() -> AnalyticsAgent:  # type: ignore[empty-body]
     """Singleton AnalyticsAgent (через app.state)."""

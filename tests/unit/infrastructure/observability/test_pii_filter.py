@@ -66,11 +66,7 @@ def test_redact_no_pii_returns_string_unchanged() -> None:
 
 def test_mask_pii_processor_signature() -> None:
     """``mask_pii`` имеет structlog-protocol signature и возвращает копию."""
-    event = {
-        "event": "user.login",
-        "email": "alice@example.com",
-        "code": 200,
-    }
+    event = {"event": "user.login", "email": "alice@example.com", "code": 200}
     result = mask_pii(None, "info", event)
     assert result["email"] == "<email>"
     assert result["code"] == 200

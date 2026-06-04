@@ -95,11 +95,11 @@ def _get_process() -> Any | None:
     if _cached_process is not None:
         return _cached_process
     try:
-        import psutil  # noqa: PLC0415
+        import psutil
 
         _cached_process = psutil.Process()
         return _cached_process
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         _psutil_unavailable = True
         return None
 
@@ -127,14 +127,14 @@ def _read_resource_snapshot(
             cpu_times = process.cpu_times()
             cpu_seconds = float(cpu_times.user + cpu_times.system)
         return _ResourceSnapshot(rss_bytes=rss_bytes, cpu_seconds=cpu_seconds)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 
 @contextmanager
 def _with_resource_limits(
     plugin: str, max_memory_mb: int, max_cpu_seconds: int
-) -> "Iterator[None]":
+) -> Iterator[None]:
     """Контекстный менеджер: фиксирует snapshot до/после, проверяет дельты.
 
     Используется в дополнение к ``CodeSandbox.run(timeout_s=...)`` — e2b
@@ -185,9 +185,9 @@ class PluginSandboxAdapter:
     def __init__(
         self,
         *,
-        sandbox: "CodeSandbox",
-        manifest: "PluginManifestV11",
-        capability_check: "Callable[[str, str, str | None], None] | None" = None,
+        sandbox: CodeSandbox,
+        manifest: PluginManifestV11,
+        capability_check: Callable[[str, str, str | None], None] | None = None,
     ) -> None:
         self._sandbox = sandbox
         self._manifest = manifest
@@ -202,9 +202,9 @@ class PluginSandboxAdapter:
         self,
         code: str,
         *,
-        files: "Mapping[str, bytes] | None" = None,
-        workspace: "WorkspaceHandle | None" = None,
-    ) -> "SandboxResult":
+        files: Mapping[str, bytes] | None = None,
+        workspace: WorkspaceHandle | None = None,
+    ) -> SandboxResult:
         """Запустить ``code`` в декларативно настроенном sandbox.
 
         Args:

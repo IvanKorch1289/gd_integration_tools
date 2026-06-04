@@ -37,9 +37,7 @@ async def test_chat_different_input_gives_different_id() -> None:
 async def test_chat_with_tools_returns_tool_use_block() -> None:
     p = MockLLMProvider(tool_arguments={"q": "moscow"})
     tools = [{"name": "weather", "description": "get weather"}]
-    resp = await p.chat(
-        [{"role": "user", "content": "погода?"}], tools=tools
-    )
+    resp = await p.chat([{"role": "user", "content": "погода?"}], tools=tools)
     assert resp["content"][0]["type"] == "tool_use"
     assert resp["content"][0]["name"] == "weather"
     assert resp["content"][0]["input"] == {"q": "moscow"}

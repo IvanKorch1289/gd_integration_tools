@@ -70,10 +70,10 @@ def is_external_provider_enabled() -> bool:
         True, если ``openfeature_external=True`` в реестре flag'ов.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         return bool(getattr(feature_flags, "openfeature_external", False))
-    except Exception as _:  # noqa: BLE001 — fallback на default-OFF в любых ошибках
+    except Exception as _:
         _logger.debug("feature_flags недоступны, default-OFF")
         return False
 
@@ -218,7 +218,7 @@ class FlagsmithProvider:
                 # close() может быть sync или async.
                 if hasattr(result, "__await__"):
                     await result
-            except Exception as _:  # noqa: BLE001 — best-effort shutdown
+            except Exception as _:
                 _logger.exception("Flagsmith client shutdown failed")
         self._client = None
 
@@ -244,9 +244,7 @@ class FlagsmithProvider:
             return self._client
 
         try:
-            from src.backend.core.net.migration_helper import (  # noqa: PLC0415
-                make_http_client,
-            )
+            from src.backend.core.net.migration_helper import make_http_client
         except ImportError as exc:  # pragma: no cover
             raise ProviderError("migration_helper unavailable") from exc
 

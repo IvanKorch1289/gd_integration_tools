@@ -18,12 +18,20 @@ Audit-context: импортируется из :mod:`gateway_audit_mixin` (T-P1.
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from src.backend.core.ai.gateway_audit_mixin import _AuditContext
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
+if TYPE_CHECKING:
+    from src.backend.core.ai.gateway_pipeline_mixin import (
+        PipelineStepsMixin as _PipelineStepsMixin,
+    )
+else:
+    _PipelineStepsMixin = object
 
-class EnforcedInvokeMixin:
+
+class EnforcedInvokeMixin(_PipelineStepsMixin):
     """9-step pipeline orchestrator (ADR-NEW-19, S25 W1..W5 + S27 W2..W5).
 
     Mixin (без ``__init__``) — relies on facade для state injection

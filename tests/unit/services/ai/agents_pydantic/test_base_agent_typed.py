@@ -31,7 +31,9 @@ def test_agent_accepts_kwarg_result_type() -> None:
 
 
 @pytest.mark.asyncio
-async def test_agent_run_raises_when_pydantic_ai_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_agent_run_raises_when_pydantic_ai_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setitem(sys.modules, "pydantic_ai", None)
     agent = BasePydanticAgent(result_type=_Result, gateway=MagicMock())
     with pytest.raises(PydanticAIUnavailable):
@@ -39,7 +41,9 @@ async def test_agent_run_raises_when_pydantic_ai_missing(monkeypatch: pytest.Mon
 
 
 @pytest.mark.asyncio
-async def test_agent_run_uses_mocked_pydantic_ai(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_agent_run_uses_mocked_pydantic_ai(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_agent_instance = MagicMock()
     fake_agent_instance.run = AsyncMock(
         return_value=SimpleNamespace(data=_Result(text="ok", n=2))

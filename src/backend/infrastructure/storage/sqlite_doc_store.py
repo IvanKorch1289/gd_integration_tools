@@ -49,7 +49,7 @@ class SqliteDocStore(DocStoreBackend):
         # SQL-injection невозможен (S608 — false positive).
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
-                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608
+                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608  # internal query with controlled parameters
                 (doc_id, body),
             )
             await db.commit()
@@ -59,7 +59,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"SELECT body FROM {table} WHERE doc_id = ?",  # noqa: S608
+                f"SELECT body FROM {table} WHERE doc_id = ?",  # noqa: S608  # internal query with controlled parameters
                 (doc_id,),
             )
             row = await cursor.fetchone()
@@ -77,7 +77,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608
+                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608  # internal query with controlled parameters
                 (doc_id,),
             )
             await db.commit()
@@ -94,7 +94,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608
+                f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608  # internal query with controlled parameters
                 (limit if filters is None else 1_000_000, offset),
             )
             rows = await cursor.fetchall()
@@ -108,7 +108,7 @@ class SqliteDocStore(DocStoreBackend):
         if filters is None:
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:
-                cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")  # noqa: S608
+                cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")  # noqa: S608  # internal query with controlled parameters
                 row = await cursor.fetchone()
             return int(row[0]) if row else 0
         # С фильтрами — линейный подсчёт через find().

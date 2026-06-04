@@ -33,7 +33,9 @@ class TestHandoffPolicy:
         assert hp.escalation_on_max_handoffs is None
 
     def test_custom(self) -> None:
-        hp = HandoffPolicy(max_handoffs=3, allow_revisit=True, escalation_on_max_handoffs="admin")
+        hp = HandoffPolicy(
+            max_handoffs=3, allow_revisit=True, escalation_on_max_handoffs="admin"
+        )
         assert hp.max_handoffs == 3
         assert hp.allow_revisit is True
         assert hp.escalation_on_max_handoffs == "admin"

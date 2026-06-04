@@ -19,6 +19,7 @@ from src.backend.services.ai.prompts.langfuse_storage import LangfusePromptStora
 
 # ─── Вспомогательная фабрика ────────────────────────────────────────────────
 
+
 def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
     """Создаёт свежий экземпляр LangfusePromptStorage с нужным флагом.
 
@@ -45,6 +46,7 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
 
 # ─── Тест 1 ─────────────────────────────────────────────────────────────────
 
+
 def test_storage_uses_inmemory_when_flag_off() -> None:
     """При prompt_registry_langfuse=False хранилище работает в in-memory режиме.
 
@@ -52,11 +54,14 @@ def test_storage_uses_inmemory_when_flag_off() -> None:
     """
     storage = _make_storage(langfuse_flag=False)
 
-    assert storage._langfuse is None, "Langfuse не должен инициализироваться при флаге OFF"
+    assert storage._langfuse is None, (
+        "Langfuse не должен инициализироваться при флаге OFF"
+    )
     assert storage._langfuse_available is False, "_langfuse_available должен быть False"
 
 
 # ─── Тест 2 ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_storage_get_prompt_fallback_inmemory() -> None:
@@ -70,7 +75,9 @@ async def test_storage_get_prompt_fallback_inmemory() -> None:
     storage = _make_storage(langfuse_flag=False)
 
     # Вручную кладём промпт в in-memory
-    entry = PromptEntry(name="test_prompt", version="1", content="Hello {name}!", metadata={})
+    entry = PromptEntry(
+        name="test_prompt", version="1", content="Hello {name}!", metadata={}
+    )
     storage._store["test_prompt"] = {"1": entry}
 
     result = await storage.get_prompt("test_prompt")
@@ -82,6 +89,7 @@ async def test_storage_get_prompt_fallback_inmemory() -> None:
 
 
 # ─── Тест 3 ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_storage_save_prompt_inmemory() -> None:
@@ -107,6 +115,7 @@ async def test_storage_save_prompt_inmemory() -> None:
 
 # ─── Тест 4 ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_storage_list_prompts() -> None:
     """list_prompts возвращает имена всех сохранённых промптов.
@@ -126,6 +135,7 @@ async def test_storage_list_prompts() -> None:
 
 
 # ─── Тест 5 ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
@@ -149,15 +159,21 @@ async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
 
     with (
         patch.object(mod.feature_flags, "prompt_registry_langfuse", True),
-        patch.dict("sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)}),
+        patch.dict(
+            "sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)}
+        ),
     ):
         storage = mod.LangfusePromptStorage()
         # При включённом флаге и доступном SDK — Langfuse должен быть инициализирован
-        assert storage._langfuse_available is True, "_langfuse_available должен быть True при флаге ON"
+        assert storage._langfuse_available is True, (
+            "_langfuse_available должен быть True при флаге ON"
+        )
         assert storage._langfuse is not None
 
         result = await storage.get_prompt("mocked_prompt")
 
     assert result["content"] == "Mocked content"
     assert result["version"] == "lf-v1"
-    mock_langfuse_instance.get_prompt.assert_called_once_with("mocked_prompt", version=None)
+    mock_langfuse_instance.get_prompt.assert_called_once_with(
+        "mocked_prompt", version=None
+    )

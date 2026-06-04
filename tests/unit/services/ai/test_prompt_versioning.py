@@ -52,9 +52,7 @@ async def test_rollback_to_previous(service: PromptVersionService) -> None:
 
 
 @pytest.mark.asyncio
-async def test_rollback_returns_none_if_only_one(
-    service: PromptVersionService,
-) -> None:
+async def test_rollback_returns_none_if_only_one(service: PromptVersionService) -> None:
     await service.create_version(name="a", body="b1")
     rolled = await service.rollback("a")
     assert rolled is None
@@ -73,9 +71,7 @@ async def test_compare_computes_diffs(service: PromptVersionService) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_version_raises(
-    service: PromptVersionService,
-) -> None:
+async def test_create_duplicate_version_raises(service: PromptVersionService) -> None:
     store = InMemoryPromptVersionStore()
     from src.backend.services.ai.prompt_versioning import PromptVersion
 

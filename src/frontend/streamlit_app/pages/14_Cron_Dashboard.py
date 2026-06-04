@@ -24,7 +24,7 @@ st.caption(
 
 
 try:
-    import streamlit_autorefresh  # type: ignore[import-not-found]
+    import streamlit_autorefresh
 
     streamlit_autorefresh.st_autorefresh(interval=30000, key="cron_refresh")
 except ImportError:

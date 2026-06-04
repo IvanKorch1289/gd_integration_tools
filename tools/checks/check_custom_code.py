@@ -59,11 +59,7 @@ def run_vulture(target: Path) -> list[str]:
     Returns:
         список строк-findings от vulture.
     """
-    cmd = [
-        "vulture",
-        str(target),
-        f"--min-confidence={_MIN_CONFIDENCE}",
-    ]
+    cmd = ["vulture", str(target), f"--min-confidence={_MIN_CONFIDENCE}"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
     if result.returncode > 3:
         print(f"[ERROR] vulture exit code {result.returncode}", file=sys.stderr)
@@ -84,11 +80,7 @@ def filter_findings(findings: list[str], allowlist: set[str]) -> list[str]:
     """
     if not allowlist:
         return findings
-    return [
-        f
-        for f in findings
-        if not any(allowed in f for allowed in allowlist)
-    ]
+    return [f for f in findings if not any(allowed in f for allowed in allowlist)]
 
 
 def main() -> int:

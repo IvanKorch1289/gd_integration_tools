@@ -48,7 +48,7 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
         namespace: str = "default",
         default_task_queue: str = "default",
         api_key: str | None = None,
-    ) -> "LiteTemporalBackend":
+    ) -> LiteTemporalBackend:
         """Поднять in-process env; ``target`` / ``api_key`` игнорируются."""
         try:
             from temporalio.testing import WorkflowEnvironment
@@ -69,7 +69,7 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
             return
         try:
             await self._env.shutdown()
-        except Exception as exc:  # noqa: BLE001 — best-effort shutdown
+        except Exception as exc:
             _logger.warning("LiteTemporalBackend env shutdown failed: %s", exc)
         finally:
             self._env = None

@@ -11,7 +11,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 from uuid import uuid4
 
 from src.backend.core.interfaces.action_dispatcher import DispatchContext

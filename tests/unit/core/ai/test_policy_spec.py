@@ -32,10 +32,7 @@ class TestModelRouterSpec:
 
     def test_full(self) -> None:
         spec = ModelRouterSpec(
-            primary="p",
-            fallback=["f1", "f2"],
-            timeout_s=10.0,
-            retry_attempts=5,
+            primary="p", fallback=["f1", "f2"], timeout_s=10.0, retry_attempts=5
         )
         assert spec.fallback == ["f1", "f2"]
         assert spec.timeout_s == 10.0

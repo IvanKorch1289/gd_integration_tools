@@ -30,7 +30,7 @@ try:  # pragma: no cover
         "Number of DLQ records deleted by cleanup job",
         ("dlq_class",),
     )
-except Exception as _:  # noqa: BLE001
+except Exception as _:
     _CLEANUP_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 
@@ -61,7 +61,7 @@ class DLQCleanupJob:
         self,
         *,
         ch_client: Any,
-        registry: "DLQPolicyRegistry",
+        registry: DLQPolicyRegistry,
         table_name: str = "dlq_events",
         clock: Any = None,
     ) -> None:
@@ -77,7 +77,7 @@ class DLQCleanupJob:
         for policy in self._registry.list_all():
             cutoff = now - timedelta(days=policy.retention_days)
             # table_name контролируется конструктором (не user input); параметры — через %s.
-            sql = f"DELETE FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608
+            sql = f"DELETE FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608  # internal query with controlled parameters
             try:
                 await self._client.execute(
                     sql, params=[policy.class_name, cutoff.isoformat()]
@@ -91,9 +91,9 @@ class DLQCleanupJob:
                         _CLEANUP_COUNTER.labels(dlq_class=policy.class_name).inc(
                             deleted
                         )
-                    except Exception:  # noqa: BLE001, S110
+                    except Exception:
                         pass
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 msg = f"cleanup_failed class={policy.class_name}: {exc!r}"
                 stats.errors.append(msg)
                 logger.exception(msg)
@@ -106,7 +106,7 @@ class DLQCleanupJob:
         COUNT перед DELETE для approximate stats. На production может
         быть заменено на ``OPTIMIZE TABLE ... FINAL DEDUPLICATE`` метрику.
         """
-        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608
+        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608  # internal query with controlled parameters
         try:
             rows = await self._client.execute(
                 sql, params=[class_name, cutoff.isoformat()]
@@ -115,6 +115,6 @@ class DLQCleanupJob:
                 return int(rows[0].get("count()", 0))
             if rows and isinstance(rows[0], (list, tuple)):
                 return int(rows[0][0])
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
         return 0

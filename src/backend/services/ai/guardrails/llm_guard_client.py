@@ -101,7 +101,7 @@ class LLMGuardClient:
             scanner_names = self._resolve_scanner_names()
             results = await self._run_scanners(text, scanner_names)
             return self._aggregate_results(results)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("LLMGuardClient.scan failed: %s", exc)
             if self._fail_open:
                 return LLMGuardResult()
@@ -180,7 +180,7 @@ class LLMGuardClient:
                 if self._fail_open:
                     return {"scanner": scanner_name, "flagged": False, "score": 0.0}
                 return {"scanner": scanner_name, "flagged": True, "score": 1.0}
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("LLMGuard: scanner %r failed: %s", scanner_name, exc)
                 if self._fail_open:
                     return {"scanner": scanner_name, "flagged": False, "score": 0.0}

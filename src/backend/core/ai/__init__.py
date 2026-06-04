@@ -43,9 +43,9 @@ __all__ = (
     "AIRequest",
     "AIResponse",
     "AIWorkspaceManager",
-    "WorkspaceHandle",
     "GuardResult",
     "GuardrailViolationError",
+    "WorkspaceHandle",
     "WorkspaceQuotaExceededError",
     "WorkspaceTTLExpiredError",
 )

@@ -6,7 +6,7 @@ Pydantic-модели для in-memory и MongoDB-репозиториев.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,7 +15,7 @@ __all__ = ("ExpressDialog", "ExpressMessage", "ExpressSession")
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class ExpressMessage(BaseModel):

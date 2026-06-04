@@ -103,7 +103,7 @@ class InvokeAsyncProcessor(BaseProcessor):
                     self._action,
                     result.error.message if result.error else "?",
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "invoke_async exception: action=%s, exc=%s", self._action, exc
             )

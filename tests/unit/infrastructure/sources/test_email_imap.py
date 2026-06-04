@@ -93,14 +93,13 @@ async def test_email_imap_filter_subject_mock() -> None:
 def test_email_imap_filter_from() -> None:
     """from_filter применяет case-insensitive substring-поиск по from-адресу."""
     src = EmailIMAPSource(
-        host="imap.example.com",
-        port=993,
-        user="u",
-        password="p",
-        from_filter="BILLING",
+        host="imap.example.com", port=993, user="u", password="p", from_filter="BILLING"
     )
 
-    assert src._matches({"subject": "x", "from": "Billing Dept <billing@acme.com>"}) is True
+    assert (
+        src._matches({"subject": "x", "from": "Billing Dept <billing@acme.com>"})
+        is True
+    )
     assert src._matches({"subject": "x", "from": "billing@acme.com"}) is True
     assert src._matches({"subject": "x", "from": "noreply@other.io"}) is False
     assert src._matches({"subject": "x", "from": ""}) is False

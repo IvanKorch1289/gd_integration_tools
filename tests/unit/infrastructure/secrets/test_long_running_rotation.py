@@ -94,9 +94,7 @@ def test_rotation_refresh_after_interval() -> None:
 def test_invalidate_clears_cache() -> None:
     """invalidate() сбрасывает кеш — следующий fetch принудительно идёт в backend."""
     backend = _FakeBackend(iter(["v1", "v2"]))
-    rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=600.0
-    )
+    rotator = LongRunningSecretRotator(backend, "secret/db", refresh_interval_s=600.0)
 
     async def _run() -> tuple[Any, Any]:
         a = await rotator.fetch_with_rotation()

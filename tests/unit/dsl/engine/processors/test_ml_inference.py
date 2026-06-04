@@ -84,8 +84,9 @@ class TestOnnxInferenceProcess:
                 raise ImportError("no onnx")
             return real_import(name, *args, **kwargs)
 
-        with patch.dict(sys.modules, {"onnxruntime": None}), patch(
-            "builtins.__import__", _fake_import
+        with (
+            patch.dict(sys.modules, {"onnxruntime": None}),
+            patch("builtins.__import__", _fake_import),
         ):
             await proc.process(exchange, _Context())
 
@@ -100,8 +101,9 @@ class TestOnnxInferenceProcess:
         fake_ort = MagicMock()
         fake_ort.InferenceSession.side_effect = RuntimeError("corrupted model")
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             await proc.process(exchange, _Context())
 
@@ -122,8 +124,9 @@ class TestOnnxInferenceProcess:
         fake_ort = MagicMock()
         fake_ort.InferenceSession.return_value = mock_session
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             await proc.process(exchange, _Context())
 
@@ -145,8 +148,9 @@ class TestOnnxInferenceProcess:
         fake_ort = MagicMock()
         fake_ort.InferenceSession.return_value = mock_session
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             await proc.process(exchange, _Context())
 
@@ -167,8 +171,9 @@ class TestOnnxInferenceProcess:
         fake_ort = MagicMock()
         fake_ort.InferenceSession.return_value = mock_session
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             await proc.process(exchange, _Context())
 
@@ -187,8 +192,9 @@ class TestOnnxInferenceProcess:
         fake_ort = MagicMock()
         fake_ort.InferenceSession.return_value = mock_session
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             # загружаем модель
             await proc.process(exchange, _Context())
@@ -211,8 +217,9 @@ class TestOnnxInferenceProcess:
         fake_ort2 = MagicMock()
         fake_ort2.InferenceSession.return_value = mock_session2
 
-        with patch.dict(sys.modules, {"onnxruntime": fake_ort2}), patch(
-            "numpy.array", return_value=MagicMock()
+        with (
+            patch.dict(sys.modules, {"onnxruntime": fake_ort2}),
+            patch("numpy.array", return_value=MagicMock()),
         ):
             await proc2.process(exchange2, _Context())
 
@@ -255,12 +262,15 @@ class TestStreamingLLMProcess:
         mock_agent.chat.return_value = "response text"
         del mock_agent.chat_stream
 
-        with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
-        ), patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client",
-            AsyncMock(),
+        with (
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
+            patch(
+                "src.backend.infrastructure.clients.storage.redis.redis_client",
+                AsyncMock(),
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -281,12 +291,15 @@ class TestStreamingLLMProcess:
 
         mock_redis = AsyncMock()
 
-        with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
-        ), patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client",
-            mock_redis,
+        with (
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
+            patch(
+                "src.backend.infrastructure.clients.storage.redis.redis_client",
+                mock_redis,
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -306,12 +319,15 @@ class TestStreamingLLMProcess:
 
         mock_redis = AsyncMock()
 
-        with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
-        ), patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client",
-            mock_redis,
+        with (
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
+            patch(
+                "src.backend.infrastructure.clients.storage.redis.redis_client",
+                mock_redis,
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -328,16 +344,22 @@ class TestStreamingLLMProcess:
         mock_agent.chat.return_value = "ok"
         del mock_agent.chat_stream
 
-        with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
-        ), patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client",
-            AsyncMock(),
+        with (
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
+            patch(
+                "src.backend.infrastructure.clients.storage.redis.redis_client",
+                AsyncMock(),
+            ),
         ):
             await proc.process(exchange, _Context())
 
-        assert mock_agent.chat.call_args.kwargs["messages"][0]["content"] == "custom prompt"
+        assert (
+            mock_agent.chat.call_args.kwargs["messages"][0]["content"]
+            == "custom prompt"
+        )
 
     async def test_exception_fails_exchange(self) -> None:
         proc = StreamingLLMProcessor()
@@ -381,8 +403,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.return_value = MagicMock(tolist=lambda: [0.1, 0.2])
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -396,8 +417,7 @@ class TestEmbeddingProcess:
         del mock_rag._embed
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -416,10 +436,10 @@ class TestEmbeddingProcess:
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.post.return_value = mock_resp
 
-        with patch(
-            "src.backend.core.net.OutboundHttpClient",
-            return_value=mock_client,
-        ), patch.dict("os.environ", {"OPENAI_API_KEY": "sk-123"}):
+        with (
+            patch("src.backend.core.net.OutboundHttpClient", return_value=mock_client),
+            patch.dict("os.environ", {"OPENAI_API_KEY": "sk-123"}),
+        ):
             await proc.process(exchange, _Context())
 
         assert exchange.properties["embedding"] == [0.3, 0.4]
@@ -447,10 +467,10 @@ class TestEmbeddingProcess:
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.post.return_value = mock_resp
 
-        with patch(
-            "src.backend.core.net.OutboundHttpClient",
-            return_value=mock_client,
-        ), patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}):
+        with (
+            patch("src.backend.core.net.OutboundHttpClient", return_value=mock_client),
+            patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}),
+        ):
             await proc.process(exchange, _Context())
 
         assert exchange.properties["embedding"] == [0.5, 0.6]
@@ -465,8 +485,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.return_value = MagicMock(tolist=lambda: [0.1])
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -480,8 +499,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.side_effect = RuntimeError("boom")
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service",
-            return_value=mock_rag,
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
         ):
             await proc.process(exchange, _Context())
 
@@ -514,8 +532,11 @@ class TestOutboxProcess:
                 raise ImportError("no db")
             return real_import(name, *args, **kwargs)
 
-        with patch.dict(sys.modules, {"src.backend.infrastructure.database.database": None}), patch(
-            "builtins.__import__", _fake_import
+        with (
+            patch.dict(
+                sys.modules, {"src.backend.infrastructure.database.database": None}
+            ),
+            patch("builtins.__import__", _fake_import),
         ):
             await proc.process(exchange, _Context())
 
@@ -535,8 +556,7 @@ class TestOutboxProcess:
         mock_db.get_async_engine.return_value = mock_engine
 
         with patch(
-            "src.backend.infrastructure.database.database.db_initializer",
-            mock_db,
+            "src.backend.infrastructure.database.database.db_initializer", mock_db
         ):
             await proc.process(exchange, _Context())
 
@@ -559,8 +579,7 @@ class TestOutboxProcess:
         mock_db.get_async_engine.return_value = mock_engine
 
         with patch(
-            "src.backend.infrastructure.database.database.db_initializer",
-            mock_db,
+            "src.backend.infrastructure.database.database.db_initializer", mock_db
         ):
             await proc.process(exchange, _Context())
 
@@ -584,8 +603,7 @@ class TestOutboxProcess:
         mock_db.get_async_engine.return_value = mock_engine
 
         with patch(
-            "src.backend.infrastructure.database.database.db_initializer",
-            mock_db,
+            "src.backend.infrastructure.database.database.db_initializer", mock_db
         ):
             await proc.process(exchange, _Context())
 

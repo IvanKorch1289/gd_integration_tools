@@ -68,14 +68,12 @@ class SkillInvokeProcessor(BaseAIProcessor):
         self.params_property = params_property
         self.result_property = result_property
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``skill.invoke`` = ``skill_id``."""
         del exchange
         return self.skill_id
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         registry = self._resolve_registry()
         if registry is None:
@@ -102,7 +100,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
 
         exchange.set_property(self.result_property, result)
 
-    def _extract_params(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _extract_params(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Достать params для skill'а через dot-path."""
         if self.params_property is None:
             return {}
@@ -131,7 +129,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
             container = get_container()
             if container is not None:
                 return container.resolve_optional("skill_registry")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 

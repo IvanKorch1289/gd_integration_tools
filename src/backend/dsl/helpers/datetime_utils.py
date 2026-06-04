@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-__all__ = ("now", "add_days", "to_iso8601")
+__all__ = ("add_days", "now", "to_iso8601")
 
 
 def now(tz: str | None = None) -> datetime:
     if tz is None:
-        return datetime.now(tz=timezone.utc)
+        return datetime.now(tz=UTC)
     from zoneinfo import ZoneInfo
 
     return datetime.now(tz=ZoneInfo(tz))

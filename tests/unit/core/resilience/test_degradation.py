@@ -49,17 +49,19 @@ class TestModeAtLeast:
 
     def test_maintenance_vs_cache_only(self) -> None:
         assert (
-            mode_at_least(DegradationMode.MAINTENANCE, DegradationMode.CACHE_ONLY) is True
+            mode_at_least(DegradationMode.MAINTENANCE, DegradationMode.CACHE_ONLY)
+            is True
         )
 
     def test_legacy_alias_same_level(self) -> None:
         """DEGRADED == READ_ONLY strictness (both 1)."""
-        assert mode_at_least(
-            DegradationMode.DEGRADED, DegradationMode.READ_ONLY
-        ) is True
-        assert mode_at_least(
-            DegradationMode.EMERGENCY, DegradationMode.ESSENTIAL_ONLY
-        ) is True
+        assert (
+            mode_at_least(DegradationMode.DEGRADED, DegradationMode.READ_ONLY) is True
+        )
+        assert (
+            mode_at_least(DegradationMode.EMERGENCY, DegradationMode.ESSENTIAL_ONLY)
+            is True
+        )
 
 
 class TestDataclasses:
@@ -149,9 +151,7 @@ class TestSetMode:
         store.persist.side_effect = RuntimeError("store-down")
         m.attach_store(store)
 
-        with patch(
-            "src.backend.core.resilience.degradation.logger"
-        ) as mock_logger:
+        with patch("src.backend.core.resilience.degradation.logger") as mock_logger:
             # Should not raise
             await m.set_mode(DegradationMode.READ_ONLY)
             assert mock_logger.exception.called
@@ -241,9 +241,7 @@ class TestReportFailure:
     def test_degrade_logged(self) -> None:
         m = DegradationManager()
         m.register("db")
-        with patch(
-            "src.backend.core.resilience.degradation.logger"
-        ) as mock_logger:
+        with patch("src.backend.core.resilience.degradation.logger") as mock_logger:
             for _ in range(3):
                 m.report_failure("db")
             assert mock_logger.warning.called
@@ -278,9 +276,7 @@ class TestReportSuccess:
         m.register("db")
         for _ in range(3):
             m.report_failure("db")
-        with patch(
-            "src.backend.core.resilience.degradation.logger"
-        ) as mock_logger:
+        with patch("src.backend.core.resilience.degradation.logger") as mock_logger:
             m.report_success("db")
             assert mock_logger.info.called
 

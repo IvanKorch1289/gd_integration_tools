@@ -37,7 +37,7 @@ from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 try:
     from fastmcp import Client
 except ImportError:
-    Client = None  # type: ignore[misc,assignment]
+    Client = None
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -88,14 +88,12 @@ class MCPToolProcessor(BaseAIProcessor):
         self.result_property = result_property
         self.timeout_s = timeout_s
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``mcp.call`` = tool_name ( resource-level )."""
         del exchange
         return self.tool_name
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
 
         arguments = self._extract_arguments(exchange)
@@ -108,14 +106,14 @@ class MCPToolProcessor(BaseAIProcessor):
 
         try:
             result = await self._call_mcp_tool(arguments)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"{self.name}: MCP call failed: {exc}")
             return
 
         exchange.set_property(self.result_property, result)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
-    def _extract_arguments(self, exchange: "Exchange[Any]") -> dict[str, Any] | None:
+    def _extract_arguments(self, exchange: Exchange[Any]) -> dict[str, Any] | None:
         """Достать arguments для tool call через dot-path.
 
         Returns:
@@ -148,8 +146,7 @@ class MCPToolProcessor(BaseAIProcessor):
             raise ImportError("fastmcp not installed: pip install fastmcp")
 
         async with Client(self.tool_uri) as client:
-            result = await client.call_tool(self.tool_name, arguments=arguments)
-            return result
+            return await client.call_tool(self.tool_name, arguments=arguments)
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

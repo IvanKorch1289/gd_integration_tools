@@ -33,6 +33,7 @@ class TestWorkflowBuilder:
 
     def test_step_appends(self, builder: WorkflowBuilder) -> None:
         """step appends a sequential step."""
+
         async def proc(data: dict[str, Any]) -> dict[str, Any]:
             return data
 
@@ -69,7 +70,9 @@ class TestWorkflowBuilder:
         builder.sub_workflow("child", name="sub")
         assert builder.step_count() == 1
 
-    def test_trigger_workflow_is_fire_and_forget(self, builder: WorkflowBuilder) -> None:
+    def test_trigger_workflow_is_fire_and_forget(
+        self, builder: WorkflowBuilder
+    ) -> None:
         """trigger_workflow sets wait=False."""
         builder.trigger_workflow("child")
         assert builder.step_count() == 1
@@ -104,6 +107,7 @@ class TestWorkflowBuilder:
 
     def test_build_duplicate_names_raises(self, builder: WorkflowBuilder) -> None:
         """build raises when step names duplicate."""
+
         async def proc(data: dict[str, Any]) -> dict[str, Any]:
             return data
 
@@ -113,6 +117,7 @@ class TestWorkflowBuilder:
 
     def test_build_returns_processor(self, builder: WorkflowBuilder) -> None:
         """build returns a DurableWorkflowProcessor."""
+
         async def proc(data: dict[str, Any]) -> dict[str, Any]:
             return data
 

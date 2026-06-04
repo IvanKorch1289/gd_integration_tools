@@ -65,7 +65,7 @@ class S3Sink(Sink):
             await storage_client.upload_file(
                 data, self.key, content_type=self.content_type
             )
-        except Exception as exc:  # noqa: BLE001 — мап в SinkResult.
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -89,8 +89,8 @@ class S3Sink(Sink):
         проверкой импорта клиента — как в большинстве Sink-классов.
         """
         try:
-            from src.backend.infrastructure.clients.storage.s3_pool import (  # noqa: F401
-                storage_client,
+            from src.backend.infrastructure.clients.storage.s3_pool import (
+                storage_client,  # noqa: F401
             )
         except ImportError:
             return False

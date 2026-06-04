@@ -86,9 +86,7 @@ async def test_remember_procedure_with_steps() -> None:
         "Вернуть результат",
     ]
     entry = await svc.remember_procedure(
-        agent_id="agent-003",
-        name="answer_query",
-        steps=steps,
+        agent_id="agent-003", name="answer_query", steps=steps
     )
     assert isinstance(entry, MemoryEntry)
     assert entry.kind == "procedural"
@@ -103,14 +101,10 @@ async def test_recall_filters_by_kind() -> None:
     svc = _make_svc()
     # Добавляем один episodic и один procedural
     await svc.remember_episode(
-        agent_id="agent-004",
-        content="Пользователь нажал кнопку",
-        metadata={},
+        agent_id="agent-004", content="Пользователь нажал кнопку", metadata={}
     )
     await svc.remember_procedure(
-        agent_id="agent-004",
-        name="click_handler",
-        steps=["detect", "process"],
+        agent_id="agent-004", name="click_handler", steps=["detect", "process"]
     )
     # recall episodic
     episodic = await svc.recall(agent_id="agent-004", kind="episodic")
@@ -129,9 +123,7 @@ async def test_recall_returns_top_k() -> None:
     # Добавляем 5 эпизодов для одного агента
     for i in range(5):
         await svc.remember_episode(
-            agent_id="agent-005",
-            content=f"Эпизод #{i}",
-            metadata={"index": i},
+            agent_id="agent-005", content=f"Эпизод #{i}", metadata={"index": i}
         )
     # Запрашиваем top_k=3
     result = await svc.recall(agent_id="agent-005", kind="episodic", top_k=3)

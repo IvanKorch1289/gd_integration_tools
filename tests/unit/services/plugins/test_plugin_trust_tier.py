@@ -74,13 +74,9 @@ class TestExistingPluginsAreTierA:
             pytest.skip("credit_pipeline manifest not present")
         assert tier == "A"
 
-    @pytest.mark.parametrize(
-        "entity", ["files", "orderkinds", "users", "orders"]
-    )
+    @pytest.mark.parametrize("entity", ["files", "orderkinds", "users", "orders"])
     def test_core_entities_are_tier_a(self, entity: str) -> None:
-        tier = _read_trust_tier(
-            Path(f"extensions/core_entities/{entity}/plugin.toml")
-        )
+        tier = _read_trust_tier(Path(f"extensions/core_entities/{entity}/plugin.toml"))
         if tier is None:
             pytest.skip(f"core_entities/{entity} manifest not present")
         assert tier == "A"

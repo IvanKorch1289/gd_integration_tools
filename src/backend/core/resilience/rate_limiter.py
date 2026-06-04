@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     )
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in (
             "RateLimit",

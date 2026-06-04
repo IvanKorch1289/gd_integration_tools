@@ -61,7 +61,9 @@ def test_empty_metadata_returns_empty() -> None:
 
 def test_metadata_with_correlation_id_tuple_list() -> None:
     """Legacy grpc.aio metadata API: list[tuple[str, str]]."""
-    ctx = _MockContext(metadata=[("authorization", "Bearer x"), ("x-correlation-id", "cid-tuple")])
+    ctx = _MockContext(
+        metadata=[("authorization", "Bearer x"), ("x-correlation-id", "cid-tuple")]
+    )
     assert _extract_correlation_id_from_grpc_context(ctx) == "cid-tuple"
 
 

@@ -50,9 +50,7 @@ async def test_consume_request_default_off_returns_allowed(
 
 
 @pytest.mark.asyncio
-async def test_consume_request_denies_when_rpm_exceeded(
-    enable_billing: None,
-) -> None:
+async def test_consume_request_denies_when_rpm_exceeded(enable_billing: None) -> None:
     """consume_request отказывает при превышении rpm."""
     service = QuotasService(default_window=QuotaWindow(max_rpm=2))
     r1 = await service.consume_request("acme")
@@ -65,13 +63,9 @@ async def test_consume_request_denies_when_rpm_exceeded(
 
 
 @pytest.mark.asyncio
-async def test_consume_request_denies_when_rpd_exceeded(
-    enable_billing: None,
-) -> None:
+async def test_consume_request_denies_when_rpd_exceeded(enable_billing: None) -> None:
     """consume_request отказывает при превышении rpd."""
-    service = QuotasService(
-        default_window=QuotaWindow(max_rpm=100, max_rpd=1),
-    )
+    service = QuotasService(default_window=QuotaWindow(max_rpm=100, max_rpd=1))
     r1 = await service.consume_request("acme")
     r2 = await service.consume_request("acme")
     assert r1.allowed is True
@@ -84,9 +78,7 @@ async def test_check_tokens_denies_when_request_exceeds_limit(
     enable_billing: None,
 ) -> None:
     """check_tokens отказывает при tokens > max_tokens_per_request."""
-    service = QuotasService(
-        default_window=QuotaWindow(max_tokens_per_request=1000),
-    )
+    service = QuotasService(default_window=QuotaWindow(max_tokens_per_request=1000))
     ok = await service.check_tokens("acme", 500)
     fail = await service.check_tokens("acme", 1500)
     assert ok.allowed is True
@@ -95,13 +87,9 @@ async def test_check_tokens_denies_when_request_exceeds_limit(
 
 
 @pytest.mark.asyncio
-async def test_consume_cost_denies_when_budget_exceeded(
-    enable_billing: None,
-) -> None:
+async def test_consume_cost_denies_when_budget_exceeded(enable_billing: None) -> None:
     """consume_cost отказывает при превышении дневного USD-бюджета."""
-    service = QuotasService(
-        default_window=QuotaWindow(cost_budget_usd=1.0),
-    )
+    service = QuotasService(default_window=QuotaWindow(cost_budget_usd=1.0))
     r1 = await service.consume_cost("acme", 0.5)
     r2 = await service.consume_cost("acme", 0.4)
     r3 = await service.consume_cost("acme", 0.2)
@@ -115,20 +103,17 @@ def test_window_for_returns_per_tenant_override() -> None:
     """window_for возвращает override для известного tenant_id."""
     custom = QuotaWindow(max_rpm=999, max_rpd=99, cost_budget_usd=10.0)
     service = QuotasService(
-        default_window=QuotaWindow(max_rpm=10),
-        per_tenant_windows={"vip": custom},
+        default_window=QuotaWindow(max_rpm=10), per_tenant_windows={"vip": custom}
     )
     assert service.window_for("vip") == custom
     assert service.window_for("regular").max_rpm == 10
 
 
 @pytest.mark.asyncio
-async def test_usage_snapshot_reflects_counters(
-    enable_billing: None,
-) -> None:
+async def test_usage_snapshot_reflects_counters(enable_billing: None) -> None:
     """usage_snapshot возвращает накопленные значения rpm/rpd/cost."""
     service = QuotasService(
-        default_window=QuotaWindow(max_rpm=100, max_rpd=100, cost_budget_usd=10.0),
+        default_window=QuotaWindow(max_rpm=100, max_rpd=100, cost_budget_usd=10.0)
     )
     await service.consume_request("acme")
     await service.consume_request("acme")

@@ -188,12 +188,8 @@ async def test_scan_file_s3_failure_falls_back_to_data_property(
     fake_s3.get_object_bytes = AsyncMock(side_effect=RuntimeError("s3 timeout"))
     _patch_s3(monkeypatch, fake_s3)
 
-    proc = ScanFileProcessor(
-        s3_key_from="properties.key", data_property="file_data"
-    )
-    exchange = _make_exchange(
-        properties={"key": "k1", "file_data": b"fallback-bytes"}
-    )
+    proc = ScanFileProcessor(s3_key_from="properties.key", data_property="file_data")
+    exchange = _make_exchange(properties={"key": "k1", "file_data": b"fallback-bytes"})
     await proc.process(exchange, MagicMock())
 
     fake_backend.scan_bytes.assert_awaited_once_with(b"fallback-bytes")
@@ -231,10 +227,7 @@ async def test_scan_file_no_payload_fails_exchange(
     ],
 )
 async def test_scan_file_on_threat_behaviour(
-    monkeypatch: pytest.MonkeyPatch,
-    clean: bool,
-    on_threat: str,
-    should_fail: bool,
+    monkeypatch: pytest.MonkeyPatch, clean: bool, on_threat: str, should_fail: bool
 ) -> None:
     """Матрица: clean × on_threat → exchange.failed?"""
     fake_backend = MagicMock()
@@ -266,17 +259,14 @@ async def test_scan_file_on_threat_behaviour(
 
 
 async def test_scan_file_threat_warn_logs_does_not_fail(
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """``on_threat=warn`` — пишет warning в лог, не валит exchange."""
     import logging
 
     fake_backend = MagicMock()
     fake_backend.scan_bytes = AsyncMock(
-        return_value=_make_av_result(
-            clean=False, signature="EICAR", backend="clamav"
-        )
+        return_value=_make_av_result(clean=False, signature="EICAR", backend="clamav")
     )
     _patch_factory(monkeypatch, fake_backend)
     _patch_metrics_noop(monkeypatch)
@@ -335,9 +325,7 @@ async def test_scan_file_backend_unavailable_warn_mode_does_not_fail(
 def test_scan_file_to_spec_data_property_only() -> None:
     """Round-trip ``to_spec()`` для ``data_property``."""
     proc = ScanFileProcessor(
-        data_property="upload_bytes",
-        on_threat="warn",
-        result_property="av_result",
+        data_property="upload_bytes", on_threat="warn", result_property="av_result"
     )
     spec = proc.to_spec()
 

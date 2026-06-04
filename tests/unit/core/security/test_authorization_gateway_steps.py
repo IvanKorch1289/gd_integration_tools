@@ -55,11 +55,7 @@ class _FakeCasbin:
         self.calls: list[tuple[str, str, str, str | None]] = []
 
     def enforce(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        tenant_id: str | None = None,
+        self, user_id: str, resource: str, action: str, tenant_id: str | None = None
     ) -> bool:
         self.calls.append((user_id, resource, action, tenant_id))
         if self._raises is not None:
@@ -137,9 +133,7 @@ class TestOPAStep:
     async def test_opa_flag_off_returns_noop_allow(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "opa_runtime_query_enabled", False
-        )
+        monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", False)
         opa = _FakeOPA(allow=False)  # не должен быть вызван
         step = AuthorizationGateway.opa_step(opa, "authz/default")
         reason = await step("p1", "orders", "read", {})
@@ -147,12 +141,8 @@ class TestOPAStep:
         assert reason.detail == "opa_runtime_query_enabled=False"
         assert opa.calls == []  # OPA не запрашивался
 
-    async def test_opa_flag_on_allow(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "opa_runtime_query_enabled", True
-        )
+    async def test_opa_flag_on_allow(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         opa = _FakeOPA(allow=True)
         step = AuthorizationGateway.opa_step(opa, "authz/default")
         reason = await step(
@@ -172,9 +162,7 @@ class TestOPAStep:
     async def test_opa_flag_on_deny_with_reasons(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "opa_runtime_query_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         opa = _FakeOPA(allow=False, reasons=["role_missing", "tenant_mismatch"])
         step = AuthorizationGateway.opa_step(opa, "authz/default")
         reason = await step("p1", "orders", "write", {})
@@ -184,9 +172,7 @@ class TestOPAStep:
     async def test_opa_query_exception_is_fail_closed(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "opa_runtime_query_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         opa = _FakeOPA(allow=True, raises=ConnectionError("opa unreachable"))
         step = AuthorizationGateway.opa_step(opa, "authz/default")
         reason = await step("p1", "orders", "read", {})

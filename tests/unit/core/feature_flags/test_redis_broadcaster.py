@@ -34,10 +34,7 @@ from src.backend.core.feature_flags.runtime_overrides import (
 
 
 def _make_change(
-    *,
-    flag: str = "test_flag",
-    tenant_id: str | None = None,
-    new_value: Any = True,
+    *, flag: str = "test_flag", tenant_id: str | None = None, new_value: Any = True
 ) -> FeatureFlagChange:
     return FeatureFlagChange(
         flag=flag,
@@ -118,9 +115,7 @@ class TestPublish:
     async def test_publish_success_increments_counter(self) -> None:
         overrides = RuntimeFeatureFlagOverrides()
         redis = _FakeRedis()
-        bcast = RedisFeatureFlagBroadcaster(
-            redis_client=redis, overrides=overrides
-        )
+        bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
         ok = await bcast.publish(_make_change())
         assert ok is True
         assert bcast.state.publish_total == 1
@@ -133,9 +128,7 @@ class TestPublish:
         overrides = RuntimeFeatureFlagOverrides()
         redis = _FakeRedis()
         redis.fail_publish = True
-        bcast = RedisFeatureFlagBroadcaster(
-            redis_client=redis, overrides=overrides
-        )
+        bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
         ok = await bcast.publish(_make_change())
         assert ok is False
         assert bcast.state.publish_total == 0
@@ -153,9 +146,7 @@ class TestSubscriber:
         try:
             overrides = RuntimeFeatureFlagOverrides()
             redis = _FakeRedis()
-            bcast = RedisFeatureFlagBroadcaster(
-                redis_client=redis, overrides=overrides
-            )
+            bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             # Pre-fill messages в Fake pubsub до start().
             await bcast.start(
                 task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
@@ -172,9 +163,7 @@ class TestSubscriber:
                 _make_change(flag="remote_flag", new_value="from-remote")
             )
             mod._PROCESS_REPLICA_ID = "local-replica"
-            pubsub.messages.append(
-                {"type": "message", "data": foreign_payload}
-            )
+            pubsub.messages.append({"type": "message", "data": foreign_payload})
             # Дать subscriber-loop'у итерацию.
             await asyncio.sleep(0.05)
             assert bcast.state.received_total >= 1
@@ -192,9 +181,7 @@ class TestSubscriber:
         try:
             overrides = RuntimeFeatureFlagOverrides()
             redis = _FakeRedis()
-            bcast = RedisFeatureFlagBroadcaster(
-                redis_client=redis, overrides=overrides
-            )
+            bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
                 task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
             )
@@ -220,9 +207,7 @@ class TestSubscriber:
         try:
             overrides = RuntimeFeatureFlagOverrides()
             redis = _FakeRedis()
-            bcast = RedisFeatureFlagBroadcaster(
-                redis_client=redis, overrides=overrides
-            )
+            bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
                 task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
             )
@@ -245,9 +230,7 @@ class TestSubscriber:
             overrides.set("flag_to_clear", True, tenant_id=None, actor="setup")
             assert overrides.has_override("flag_to_clear")
             redis = _FakeRedis()
-            bcast = RedisFeatureFlagBroadcaster(
-                redis_client=redis, overrides=overrides
-            )
+            bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
                 task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
             )
@@ -302,7 +285,5 @@ class TestMaybeStart:
 
         monkeypatch.setattr(features.feature_flags, "tenant_feature_flag_ui", True)
         overrides = RuntimeFeatureFlagOverrides()
-        result = await maybe_start_broadcaster(
-            redis_client=None, overrides=overrides
-        )
+        result = await maybe_start_broadcaster(redis_client=None, overrides=overrides)
         assert result is None

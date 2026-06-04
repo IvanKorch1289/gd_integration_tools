@@ -1,14 +1,14 @@
 from enum import Enum
-from typing import Any, Type
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = (
-    "ExternalDBObjectTypeChoices",
-    "ExternalDBParameterModeChoices",
-    "ExternalDBParameterMeta",
-    "ExternalDBObjectMeta",
     "ExternalDBObjectChoices",
+    "ExternalDBObjectMeta",
+    "ExternalDBObjectTypeChoices",
+    "ExternalDBParameterMeta",
+    "ExternalDBParameterModeChoices",
 )
 
 
@@ -154,13 +154,13 @@ class ExternalDBObjectMeta(BaseModel):
         examples=["view", "function", "procedure", "query"],
     )
 
-    request_schema: Type[BaseModel] | None = Field(
+    request_schema: type[BaseModel] | None = Field(
         default=None,
         title="Схема запроса",
         description="Pydantic-схема для входной валидации payload/body",
     )
 
-    response_schema: Type[BaseModel] | None = Field(
+    response_schema: type[BaseModel] | None = Field(
         default=None,
         title="Схема ответа",
         description="Pydantic-схема для валидации результата",

@@ -84,10 +84,7 @@ def test_register_all_components_graceful_on_wiring_failure() -> None:
 
     from src.backend.infrastructure.resilience import registration as reg_module
 
-    with patch.dict(
-        reg_module._REGISTRARS,
-        {"clickhouse": _raising_registrar},
-    ):
+    with patch.dict(reg_module._REGISTRARS, {"clickhouse": _raising_registrar}):
         # Не должно бросать — registration должен поглотить exception.
         register_all_components(coord, settings)
 
@@ -141,12 +138,8 @@ def test_register_from_settings_uses_fallback_policy() -> None:
     """register_from_settings берёт chain и mode из settings.fallbacks."""
     coord = ResilienceCoordinator()
     settings = ResilienceSettings(
-        fallbacks={
-            "test_svc": FallbackPolicy(chain=["bk1", "bk2"], mode="auto"),
-        },
-        breakers={
-            "test_svc": BreakerProfile(threshold=3, ttl=15.0),
-        },
+        fallbacks={"test_svc": FallbackPolicy(chain=["bk1", "bk2"], mode="auto")},
+        breakers={"test_svc": BreakerProfile(threshold=3, ttl=15.0)},
     )
 
     async def primary() -> str:
@@ -174,7 +167,7 @@ async def test_register_from_settings_forced_mode_skips_primary() -> None:
     """mode='forced' пропускает primary даже если он есть (dev_light паттерн)."""
     coord = ResilienceCoordinator()
     settings = ResilienceSettings(
-        fallbacks={"svc": FallbackPolicy(chain=["fb"], mode="forced")},
+        fallbacks={"svc": FallbackPolicy(chain=["fb"], mode="forced")}
     )
 
     primary_called = False
@@ -188,10 +181,7 @@ async def test_register_from_settings_forced_mode_skips_primary() -> None:
         return "fallback"
 
     coord.register_from_settings(
-        component="svc",
-        primary=primary,
-        fallbacks={"fb": fb},
-        settings=settings,
+        component="svc", primary=primary, fallbacks={"fb": fb}, settings=settings
     )
     result = await coord.call("svc")
     assert result == "fallback"

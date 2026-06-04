@@ -41,6 +41,7 @@ def stub_settings() -> SimpleNamespace:
 @pytest.fixture()
 def http_response_factory() -> Any:
     """Фабрика возвращающая успешный ответ make_request."""
+
     async def _do_request(**_: Any) -> dict[str, Any]:
         return {"ok": True}
 
@@ -63,9 +64,7 @@ async def test_record_latency_after_successful_request(
 
 
 @pytest.mark.asyncio
-async def test_record_latency_on_exception(
-    stub_settings: SimpleNamespace,
-) -> None:
+async def test_record_latency_on_exception(stub_settings: SimpleNamespace) -> None:
     """Даже при исключении HTTP-вызова latency пишется в policy."""
     client = BaseExternalAPIClient(settings=stub_settings)
     client.client = MagicMock()
@@ -90,9 +89,7 @@ async def test_timeouts_fallback_until_min_samples(
 
 
 @pytest.mark.asyncio
-async def test_timeouts_use_policy_after_warmup(
-    stub_settings: SimpleNamespace,
-) -> None:
+async def test_timeouts_use_policy_after_warmup(stub_settings: SimpleNamespace) -> None:
     """После 10 сэмплов p99 latency определяет total_timeout."""
     policy = get_adaptive_timeout_policy()
     # 10 одинаковых сэмплов по 4000 мс → p99 = 4.0s × multiplier 1.5 = 6.0s.

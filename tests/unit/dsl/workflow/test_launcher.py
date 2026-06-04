@@ -99,9 +99,7 @@ class TestWorkflowLauncher:
         launcher = WorkflowLauncher()
         with pytest.raises(WorkflowResolutionError) as exc_info:
             launcher.resolve_best_match(
-                "wf_a",
-                ">=5.0.0,<6.0.0",
-                available_versions=["1.0.0", "2.0.0"],
+                "wf_a", ">=5.0.0,<6.0.0", available_versions=["1.0.0", "2.0.0"]
             )
         assert "No version of workflow" in str(exc_info.value)
 

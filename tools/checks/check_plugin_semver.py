@@ -30,9 +30,7 @@ from pathlib import Path
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 # Паттерн для SemVer: X.Y.Z с опциональным pre-release суффиксом.
-_SEMVER_RE = re.compile(
-    r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$"
-)
+_SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$")
 
 _OK = "[OK]"
 _WARN = "[WARN]"
@@ -49,9 +47,7 @@ def _validate_version(version: str) -> str | None:
         Строка с описанием ошибки или None, если версия валидна.
     """
     if not _SEMVER_RE.match(version):
-        return (
-            f"version '{version}' не соответствует SemVer X.Y.Z(-pre)?"
-        )
+        return f"version '{version}' не соответствует SemVer X.Y.Z(-pre)?"
     return None
 
 

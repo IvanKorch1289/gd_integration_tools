@@ -23,7 +23,9 @@ from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 class _GuardResult:
     """Stand-in для GuardResult dataclass."""
 
-    def __init__(self, guard_name: str, verdict: str, categories: list[str] | None = None) -> None:
+    def __init__(
+        self, guard_name: str, verdict: str, categories: list[str] | None = None
+    ) -> None:
         self.guard_name = guard_name
         self.verdict = verdict
         self.categories = categories or []
@@ -38,7 +40,9 @@ class _StubGateway(EnforcedInvokeMixin):
         self._check_capability = AsyncMock(return_value=None)
         self._apply_input_sanitizers = AsyncMock(return_value="sanitized_text")
         # GuardResult-like (needs guard_name + verdict string attrs)
-        self._input_guard = _GuardResult(guard_name="prompt_injection", verdict="blocked")
+        self._input_guard = _GuardResult(
+            guard_name="prompt_injection", verdict="blocked"
+        )
         self._apply_input_guards = AsyncMock(return_value=[self._input_guard])
         self._render_prompt = AsyncMock(return_value="rendered")
         self._invoke_llm = AsyncMock(
@@ -87,20 +91,30 @@ class TestEnforcedInvokeSequence:
             async def record(*_args: Any, **_kwargs: Any) -> Any:
                 call_order.append(name)
                 if name == "_invoke_llm":
-                    return MagicMock(content="x", model_used="m", tokens_prompt=1, tokens_completion=1)
+                    return MagicMock(
+                        content="x",
+                        model_used="m",
+                        tokens_prompt=1,
+                        tokens_completion=1,
+                    )
                 if name == "_apply_output_sanitizers":
                     return AIResponse(content="x", model_used="m")
                 return None
+
             return record
 
         gw._resolve_policy.side_effect = make_recorder("_resolve_policy")
         gw._check_capability.side_effect = make_recorder("_check_capability")
-        gw._apply_input_sanitizers.side_effect = make_recorder("_apply_input_sanitizers")
+        gw._apply_input_sanitizers.side_effect = make_recorder(
+            "_apply_input_sanitizers"
+        )
         gw._apply_input_guards.side_effect = make_recorder("_apply_input_guards")
         gw._render_prompt.side_effect = make_recorder("_render_prompt")
         gw._invoke_llm.side_effect = make_recorder("_invoke_llm")
         gw._apply_output_guards.side_effect = make_recorder("_apply_output_guards")
-        gw._apply_output_sanitizers.side_effect = make_recorder("_apply_output_sanitizers")
+        gw._apply_output_sanitizers.side_effect = make_recorder(
+            "_apply_output_sanitizers"
+        )
         gw._cost_track.side_effect = make_recorder("_cost_track")
 
         await gw._enforced_invoke(request)
@@ -149,7 +163,9 @@ class TestEnforcedInvokePolicy:
         gw._invoke_llm.assert_awaited_with("rendered", policy, request.stream)
         gw._apply_output_guards.assert_awaited()
         gw._apply_output_sanitizers.assert_awaited()
-        gw._cost_track.assert_awaited_with(request, policy, gw._apply_output_sanitizers.return_value)
+        gw._cost_track.assert_awaited_with(
+            request, policy, gw._apply_output_sanitizers.return_value
+        )
 
     async def test_policy_name_default_when_none(self) -> None:
         gw = _StubGateway()
@@ -180,6 +196,7 @@ class TestEnforcedInvokePiiFlag:
         # Should default to False (getattr with default)
         result = await gw._enforced_invoke(request)
         assert result is not None
+
 
 class TestEnforcedInvokeCapabilityError:
     async def test_capability_error_propagates(self) -> None:
@@ -218,7 +235,9 @@ class TestEnforcedInvokeGuardBranches:
 
     async def test_output_guards_with_results(self) -> None:
         gw = _StubGateway()
-        gw._apply_output_guards.return_value = [_GuardResult(guard_name="og1", verdict="safe")]
+        gw._apply_output_guards.return_value = [
+            _GuardResult(guard_name="og1", verdict="safe")
+        ]
         request = AIRequest(workflow_id="wf1", tenant_id="t1", correlation_id="c1")
 
         result = await gw._enforced_invoke(request)

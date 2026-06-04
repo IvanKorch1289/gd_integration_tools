@@ -15,16 +15,16 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
+    "InMemorySlaAlertDispatcher",
     "SlaAlertDispatcher",
     "SlaBreachLevel",
     "SlaBreachRecord",
     "SlaTracker",
-    "InMemorySlaAlertDispatcher",
     "evaluate_sla",
 )
 
@@ -57,7 +57,7 @@ class SlaBreachRecord:
     soft_limit: float
     hard_limit: float
     breach_action: str = "alert"
-    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -130,7 +130,7 @@ _sla_counter: Any | None = None
 
 
 def _emit_sla_metric(
-    *, workflow_id: str, tenant_id: str | None, level: "SlaBreachLevel"
+    *, workflow_id: str, tenant_id: str | None, level: SlaBreachLevel
 ) -> None:
     """Increment ``workflow_sla_compliance_total{...,level=...}`` counter.
 
@@ -149,7 +149,7 @@ def _emit_sla_metric(
                 "SLA evaluations per workflow (level=none/soft/hard)",
                 labels=("workflow_id", "tenant_id", "level"),
             )
-        except ImportError, ValueError:
+        except (ImportError, ValueError):
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:
@@ -157,7 +157,7 @@ def _emit_sla_metric(
             _sla_counter.labels(
                 workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
             ).inc()
-        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+        except Exception as exc:
             _logger.debug(
                 "sla.counter_inc_failed: %s",
                 exc,
@@ -227,9 +227,7 @@ class SlaTracker:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(self._run(), name="sla-tracker")
 
@@ -248,7 +246,7 @@ class SlaTracker:
             except asyncio.CancelledError:
                 # Ожидаемое исключение после cancel() — логировать не нужно.
                 pass
-            except Exception as exc:  # noqa: BLE001 — shutdown best-effort
+            except Exception as exc:
                 _logger.debug("sla.tracker_stop_error: %s", exc)
             self._task = None
 
@@ -256,7 +254,7 @@ class SlaTracker:
         while not self._stop.is_set():
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=self._check_interval)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
             await self._check_once()
 
@@ -300,7 +298,7 @@ class SlaTracker:
             ):
                 try:
                     await self._on_hard_breach(entry.workflow_id)
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     _logger.exception(
                         "sla.on_hard_breach.callback_failed",
                         extra={"workflow_id": entry.workflow_id},

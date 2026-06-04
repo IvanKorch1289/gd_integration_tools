@@ -89,7 +89,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         self._context_from = context_from
         self._autoescape = autoescape
 
-    def _collect_context(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _collect_context(self, exchange: Exchange[Any]) -> dict[str, Any]:
         body = exchange.in_message.body
         body_dict = dict(body) if isinstance(body, dict) else {"body": body}
         props = dict(exchange.properties)
@@ -105,7 +105,7 @@ class HtmlTemplateProcessor(BaseProcessor):
             case _:
                 return body_dict
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: str) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: str) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -120,16 +120,14 @@ class HtmlTemplateProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_html_template:
                 exchange.set_property("html_template_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             # feature flags недоступны — продолжаем работу (для unit-тестов)
             pass
 
@@ -143,7 +141,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         try:
             tmpl = env.from_string(self._template_source)
             rendered = tmpl.render(**self._collect_context(exchange))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"html_template render error: {exc}")
             return
 

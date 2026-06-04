@@ -132,7 +132,7 @@ class PresidioSanitizerAdapter:
                 len(list(self._build_custom_recognizers())),
             )
             return True
-        except Exception as exc:  # noqa: BLE001 — graceful fallback на любой init-error
+        except Exception as exc:
             logger.warning(
                 "Presidio init failed (%s), fallback на AIDataSanitizer", exc
             )
@@ -272,7 +272,7 @@ class PresidioSanitizerAdapter:
             return self._legacy.sanitize_text(text)
         try:
             analyzer_results = analyzer.analyze(text=text, language=language)
-        except Exception as exc:  # noqa: BLE001 — fallback на legacy
+        except Exception as exc:
             logger.warning(
                 "Presidio analyze failed (%s), fallback на legacy regex", exc
             )
@@ -339,5 +339,5 @@ def _record_presidio_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception as _:  # noqa: BLE001 — metric не должен ломать sanitize pipeline
+    except Exception as _:
         logger.debug("presidio_fallback metric emit failed", exc_info=True)

@@ -66,7 +66,7 @@ class FanoutDLQWriter:
         try:
             await writer.write(envelope)
             return True, None
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             logger.warning(
                 "dlq.fanout.writer_failed",
                 extra={

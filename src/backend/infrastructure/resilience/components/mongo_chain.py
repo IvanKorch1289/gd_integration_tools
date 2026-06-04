@@ -33,7 +33,7 @@ async def _mongo_find_one(
     from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
 
     client = get_mongo_client()
-    db = client.get_database()  # имя берётся из connection settings
+    db = client.db  # имя берётся из connection settings
     coll = db[collection]
     return await coll.find_one(query)
 

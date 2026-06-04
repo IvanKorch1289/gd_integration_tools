@@ -53,22 +53,16 @@ class TestIdempotentRegistration:
 class TestDefaultLabels:
     """D11: tenant_id/route_id/component/env обязательны по умолчанию."""
 
-    def test_default_labels_attached(
-        self, isolated_registry: MetricsRegistry
-    ) -> None:
+    def test_default_labels_attached(self, isolated_registry: MetricsRegistry) -> None:
         counter = isolated_registry.counter("http_requests_total", "HTTP")
         # prometheus_client хранит labelnames в ._labelnames
         labels = counter._labelnames  # noqa: SLF001
         for name in DEFAULT_LABELS:
             assert name in labels
 
-    def test_extra_labels_merged(
-        self, isolated_registry: MetricsRegistry
-    ) -> None:
+    def test_extra_labels_merged(self, isolated_registry: MetricsRegistry) -> None:
         counter = isolated_registry.counter(
-            "http_requests_total",
-            "HTTP",
-            labels=("status", "method"),
+            "http_requests_total", "HTTP", labels=("status", "method")
         )
         labels = counter._labelnames  # noqa: SLF001
         assert "status" in labels
@@ -96,9 +90,7 @@ class TestHistogramBuckets:
 
     def test_custom_buckets(self, isolated_registry: MetricsRegistry) -> None:
         h = isolated_registry.histogram(
-            "latency_seconds_2",
-            "Latency",
-            buckets=(0.1, 0.5, 1.0, 5.0),
+            "latency_seconds_2", "Latency", buckets=(0.1, 0.5, 1.0, 5.0)
         )
         # buckets применены — проверяем через _buckets internal
         assert tuple(h._upper_bounds) == (0.1, 0.5, 1.0, 5.0, float("inf"))  # noqa: SLF001
@@ -108,27 +100,21 @@ class TestStrictMode:
     """feature_flag metrics_registry_strict: get_* без регистрации → KeyError."""
 
     def test_strict_get_counter_raises(
-        self,
-        isolated_registry: MetricsRegistry,
-        monkeypatch: pytest.MonkeyPatch,
+        self, isolated_registry: MetricsRegistry, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(feature_flags, "metrics_registry_strict", True)
         with pytest.raises(KeyError, match="strict"):
             isolated_registry.get_counter("not_registered")
 
     def test_strict_get_after_register_returns(
-        self,
-        isolated_registry: MetricsRegistry,
-        monkeypatch: pytest.MonkeyPatch,
+        self, isolated_registry: MetricsRegistry, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(feature_flags, "metrics_registry_strict", True)
         c = isolated_registry.counter("x_total", "X")
         assert isolated_registry.get_counter("x_total") is c
 
     def test_non_strict_default_raises_keyerror(
-        self,
-        isolated_registry: MetricsRegistry,
-        monkeypatch: pytest.MonkeyPatch,
+        self, isolated_registry: MetricsRegistry, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(feature_flags, "metrics_registry_strict", False)
         with pytest.raises(KeyError):

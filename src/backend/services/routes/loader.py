@@ -419,7 +419,7 @@ class RouteLoader:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.routes_capability_gate_strict)
-        except Exception as _:  # noqa: BLE001 — feature-flag доступ best-effort
+        except Exception as _:
             return False
 
     def _emit_audit(self, event: dict[str, Any]) -> None:
@@ -428,7 +428,7 @@ class RouteLoader:
             return
         try:
             self._audit(event)
-        except Exception:  # noqa: BLE001 — audit best-effort, не ломает loader
+        except Exception:
             _logger.exception(
                 "RouteLoader audit_callback failed: %s", event.get("event")
             )

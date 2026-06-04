@@ -125,7 +125,7 @@ def _scrub_pii(event: dict[str, Any], hint: Any) -> dict[str, Any] | None:
         if os.environ.get("PII_PRESIDIO_ENABLED", "").lower() == "true":
             _scrub_with_presidio(event)
 
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Sentry PII scrub failed: %s", exc)
 
     return event
@@ -146,8 +146,8 @@ def _scrub_with_presidio(event: dict[str, Any]) -> None:
         message = event.get("message")
         if isinstance(message, str) and len(message) >= 3:
             try:
-                event["message"] = sanitizer.sanitize_text(message)
-            except Exception:  # noqa: BLE001, S110
+                event["message"] = sanitizer.sanitize(message)
+            except Exception:
                 pass
     except ImportError:
         return

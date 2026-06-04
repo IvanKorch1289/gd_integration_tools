@@ -192,29 +192,25 @@ class BasePlugin(ABC):
     name: str = ""
     version: str = "0.0.0"
 
-    async def on_load(self, ctx: PluginContext) -> None:  # noqa: B027 — намеренно пустой default
+    async def on_load(self, ctx: PluginContext) -> None:
         """Вызывается единожды при загрузке плагина.
 
         Default: no-op. Плагин может закэшировать `ctx`, читать `config`,
         инициализировать соединения и т.д.
         """
 
-    async def on_register_actions(  # noqa: B027
-        self, registry: ActionRegistryProtocol
-    ) -> None:
+    async def on_register_actions(self, registry: ActionRegistryProtocol) -> None:
         """Регистрация HTTP/CLI/RPC actions через `registry.register(...)`."""
 
-    async def on_register_repositories(  # noqa: B027
+    async def on_register_repositories(
         self, registry: RepositoryRegistryProtocol
     ) -> None:
         """Регистрация repository-hooks и override-методов."""
 
-    async def on_register_processors(  # noqa: B027
-        self, registry: ProcessorRegistryProtocol
-    ) -> None:
+    async def on_register_processors(self, registry: ProcessorRegistryProtocol) -> None:
         """Регистрация кастомных DSL-процессоров (`BaseProcessor`-наследников)."""
 
-    async def on_shutdown(self) -> None:  # noqa: B027
+    async def on_shutdown(self) -> None:
         """Graceful shutdown: закрытие соединений, отмена тасков и т.д."""
 
     def info(self) -> PluginInfo:

@@ -65,8 +65,11 @@ class BrowserCookieStore:
 
     def _make_key(self, tenant_id: str, user_id: str, domain: str) -> str:
         """Строит Redis-ключ для конкретной browser session."""
+
         # Нормализуем чтобы избежать collision через empty parts
-        safe = lambda v: str(v or "_")  # noqa: E731
+        def safe(v: Any) -> str:
+            return str(v or "_")
+
         return f"{self._prefix}{safe(tenant_id)}:{safe(user_id)}:{safe(domain)}"
 
     async def save_cookies(
@@ -91,7 +94,7 @@ class BrowserCookieStore:
         payload = json.dumps(cookies, ensure_ascii=False)
         try:
             await self._redis.set(key, payload, ex=self._ttl)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("BrowserCookieStore.save_cookies failed: %s", exc)
 
     async def restore_cookies(
@@ -101,7 +104,7 @@ class BrowserCookieStore:
         key = self._make_key(tenant_id, user_id, domain)
         try:
             raw = await self._redis.get(key)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("BrowserCookieStore.restore_cookies failed: %s", exc)
             return []
         if raw is None:
@@ -110,7 +113,7 @@ class BrowserCookieStore:
             raw = raw.decode("utf-8")
         try:
             return json.loads(raw)
-        except TypeError, json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             _logger.warning("BrowserCookieStore.restore: malformed JSON key=%s", key)
             return []
 
@@ -119,5 +122,5 @@ class BrowserCookieStore:
         key = self._make_key(tenant_id, user_id, domain)
         try:
             await self._redis.delete(key)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("BrowserCookieStore.clear failed: %s", exc)

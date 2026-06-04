@@ -89,10 +89,7 @@ def test_expired_timestamp_returns_401(app: FastAPI) -> None:
     response = client.post(
         WEBHOOK_PATH,
         content=body,
-        headers={
-            "X-Webhook-Signature": signature,
-            "X-Webhook-Timestamp": str(old_ts),
-        },
+        headers={"X-Webhook-Signature": signature, "X-Webhook-Timestamp": str(old_ts)},
     )
     assert response.status_code == 401
 
@@ -137,9 +134,7 @@ def test_protected_prefix_without_secret_passes_through() -> None:
         return {"ok": True}
 
     app.add_middleware(
-        WebhookSignatureMiddleware,
-        path_prefixes=("/webhooks/",),
-        secrets_by_prefix={},
+        WebhookSignatureMiddleware, path_prefixes=("/webhooks/",), secrets_by_prefix={}
     )
     client = TestClient(app)
     response = client.post("/webhooks/unconfigured", json={"x": 1})
@@ -170,9 +165,6 @@ def test_most_specific_prefix_wins() -> None:
     response = client.post(
         "/webhooks/stripe/payment",
         content=body,
-        headers={
-            "X-Webhook-Signature": sig,
-            "X-Webhook-Timestamp": str(ts),
-        },
+        headers={"X-Webhook-Signature": sig, "X-Webhook-Timestamp": str(ts)},
     )
     assert response.status_code == 200

@@ -151,7 +151,7 @@ class CapabilityGate:
 
         # Mypy: declared.scope is not None потому что validate_ref
         # отвергает scope=None при scope_required=True.
-        assert declared.scope is not None  # noqa: S101 — invariant
+        assert declared.scope is not None
         if not definition.matcher.match(requested_scope, declared.scope):
             self._emit_audit(
                 plugin, capability, requested_scope, declared.scope, "denied"

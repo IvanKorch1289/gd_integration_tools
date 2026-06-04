@@ -13,10 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.net.waf import (
-    WafPolicy,
-    build_default_policy,
-)
+from src.backend.core.net.waf import WafPolicy, build_default_policy
 
 
 def test_evaluate_allows_unknown_host_in_permissive_mode() -> None:
@@ -48,10 +45,7 @@ def test_evaluate_blocks_deny_listed_host() -> None:
 
 def test_evaluate_strict_mode_blocks_unknown_host() -> None:
     """strict + non-empty allow_hosts → fail-closed для чужого хоста."""
-    policy = WafPolicy(
-        allow_hosts=frozenset({"trusted.example.com"}),
-        strict=True,
-    )
+    policy = WafPolicy(allow_hosts=frozenset({"trusted.example.com"}), strict=True)
     decision = policy.evaluate("https://other.example.com/path")
     assert decision.allowed is False
     assert "allow_hosts" in decision.reason
@@ -59,10 +53,7 @@ def test_evaluate_strict_mode_blocks_unknown_host() -> None:
 
 def test_evaluate_strict_mode_allows_listed_host() -> None:
     """strict + host в allow_hosts → granted."""
-    policy = WafPolicy(
-        allow_hosts=frozenset({"trusted.example.com"}),
-        strict=True,
-    )
+    policy = WafPolicy(allow_hosts=frozenset({"trusted.example.com"}), strict=True)
     decision = policy.evaluate("https://trusted.example.com/x")
     assert decision.allowed is True
 

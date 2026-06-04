@@ -37,10 +37,7 @@ async def test_ingest_includes_embedding_provenance(
     rag_mock.ingest = AsyncMock(return_value="doc-1")
     svc = RagIngestService(rag_service=rag_mock)
 
-    await svc.ingest(
-        [("file.txt", b"content")],
-        collection="ns",
-    )
+    await svc.ingest([("file.txt", b"content")], collection="ns")
     call = rag_mock.ingest.await_args
     assert call is not None
     metadata = call.kwargs["metadata"]
@@ -68,9 +65,7 @@ def test_filter_passes_chunks_with_matching_model(
     assert len(filtered) == 2
 
 
-def test_filter_drops_mismatch_in_strict_mode(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_filter_drops_mismatch_in_strict_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     """strict_mode=True + mismatch → chunk отфильтрован."""
     from src.backend.core.config import rag
     from src.backend.services.ai.rag_service import _filter_by_embedding_version
@@ -78,9 +73,7 @@ def test_filter_drops_mismatch_in_strict_mode(
     monkeypatch.setattr(
         rag.rag_settings, "embedding_model", "BAAI/bge-m3", raising=True
     )
-    monkeypatch.setattr(
-        rag.rag_settings, "embedding_strict_mode", True, raising=True
-    )
+    monkeypatch.setattr(rag.rag_settings, "embedding_strict_mode", True, raising=True)
     chunks: list[dict[str, Any]] = [
         {"id": "1", "metadata": {"embedding_model": "BAAI/bge-m3"}},
         {"id": "2", "metadata": {"embedding_model": "old-model-v1"}},
@@ -90,9 +83,7 @@ def test_filter_drops_mismatch_in_strict_mode(
     assert filtered[0]["id"] == "1"
 
 
-def test_filter_keeps_mismatch_in_warn_mode(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_filter_keeps_mismatch_in_warn_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     """strict_mode=False + mismatch → chunk проходит + counter inc (warn-only)."""
     from src.backend.core.config import rag
     from src.backend.services.ai.rag_service import _filter_by_embedding_version
@@ -100,11 +91,9 @@ def test_filter_keeps_mismatch_in_warn_mode(
     monkeypatch.setattr(
         rag.rag_settings, "embedding_model", "BAAI/bge-m3", raising=True
     )
-    monkeypatch.setattr(
-        rag.rag_settings, "embedding_strict_mode", False, raising=True
-    )
+    monkeypatch.setattr(rag.rag_settings, "embedding_strict_mode", False, raising=True)
     chunks: list[dict[str, Any]] = [
-        {"id": "1", "metadata": {"embedding_model": "old-model-v1"}},
+        {"id": "1", "metadata": {"embedding_model": "old-model-v1"}}
     ]
     filtered = _filter_by_embedding_version(chunks)
     assert len(filtered) == 1
@@ -120,9 +109,7 @@ def test_filter_passes_legacy_chunks_without_embedding_model(
     monkeypatch.setattr(
         rag.rag_settings, "embedding_model", "BAAI/bge-m3", raising=True
     )
-    monkeypatch.setattr(
-        rag.rag_settings, "embedding_strict_mode", True, raising=True
-    )
+    monkeypatch.setattr(rag.rag_settings, "embedding_strict_mode", True, raising=True)
     chunks: list[dict[str, Any]] = [
         {"id": "1", "metadata": {}},  # legacy без provenance
         {"id": "2", "metadata": {"embedding_model": "BAAI/bge-m3"}},

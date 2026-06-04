@@ -143,7 +143,7 @@ st.caption(
 
 dlq_entries: list[dict] = []
 try:
-    raw = client._get("/admin/scheduler/dlq", params={"limit": 10})
+    raw = client.get("/admin/scheduler/dlq", params={"limit": 10})
     if isinstance(raw, list):
         dlq_entries = raw
 except Exception:  # noqa: BLE001

@@ -1,11 +1,12 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from aiosmtplib import SMTPException
 
 from src.backend.infrastructure.clients.transport.smtp import SmtpClient, smtp_client
 
-__all__ = ("get_mail_service", "MailService")
+__all__ = ("MailService", "get_mail_service")
 
 
 class MailService:
@@ -134,7 +135,7 @@ class MailService:
             raise FileNotFoundError(f"Шаблон не найден: {template_name}")
 
         try:
-            async with open(template_path, mode="r", encoding="utf-8") as f:
+            async with open(template_path, encoding="utf-8") as f:
                 content = await f.read()
 
             if template_context:
@@ -142,11 +143,11 @@ class MailService:
 
             await self.send_email(to_emails, subject, content)
         except Exception as exc:
-            raise RuntimeError(f"Ошибка при обработке шаблона: {str(exc)}") from exc
+            raise RuntimeError(f"Ошибка при обработке шаблона: {exc!s}") from exc
 
 
 @asynccontextmanager
-async def get_mail_service() -> AsyncGenerator[MailService, None]:
+async def get_mail_service() -> AsyncGenerator[MailService]:
     """
     Фабрика для создания экземпляра MailService с изолированными зависимостями.
 

@@ -26,7 +26,10 @@ class TestInit:
 class TestMakeKey:
     def test_normal(self) -> None:
         store = BrowserCookieStore(_fake_redis())
-        assert store._make_key("t1", "u1", "example.com") == "browser:session:t1:u1:example.com"
+        assert (
+            store._make_key("t1", "u1", "example.com")
+            == "browser:session:t1:u1:example.com"
+        )
 
     def test_empty_parts(self) -> None:
         store = BrowserCookieStore(_fake_redis())
@@ -38,7 +41,9 @@ class TestSaveAndRestore:
         redis = _fake_redis()
         store = BrowserCookieStore(redis)
         cookies = [{"name": "sid", "value": "abc"}]
-        await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=cookies)
+        await store.save_cookies(
+            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
+        )
         redis.set.assert_awaited_once()
 
         redis.get = AsyncMock(return_value='[{"name": "sid", "value": "abc"}]')
@@ -69,7 +74,9 @@ class TestSaveAndRestore:
         redis.get = AsyncMock(return_value="not-json")
         store = BrowserCookieStore(redis)
         with caplog.at_level("WARNING"):
-            result = await store.restore_cookies(tenant_id="t1", user_id="u1", domain="d1")
+            result = await store.restore_cookies(
+                tenant_id="t1", user_id="u1", domain="d1"
+            )
         assert result == []
         assert "malformed" in caplog.text
 
@@ -78,7 +85,9 @@ class TestSaveAndRestore:
         redis.get = AsyncMock(side_effect=ConnectionError("down"))
         store = BrowserCookieStore(redis)
         with caplog.at_level("WARNING"):
-            result = await store.restore_cookies(tenant_id="t1", user_id="u1", domain="d1")
+            result = await store.restore_cookies(
+                tenant_id="t1", user_id="u1", domain="d1"
+            )
         assert result == []
         assert "failed" in caplog.text
 
@@ -87,7 +96,9 @@ class TestSaveAndRestore:
         redis.set = AsyncMock(side_effect=ConnectionError("down"))
         store = BrowserCookieStore(redis)
         with caplog.at_level("WARNING"):
-            await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}])
+            await store.save_cookies(
+                tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}]
+            )
         assert "failed" in caplog.text
 
     async def test_clear(self) -> None:

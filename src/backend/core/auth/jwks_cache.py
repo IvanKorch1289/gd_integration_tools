@@ -15,7 +15,7 @@ import logging
 import time
 from typing import Any, Protocol
 
-__all__ = ("JwksCache", "JwksFetchError", "HttpJwksFetcher")
+__all__ = ("HttpJwksFetcher", "JwksCache", "JwksFetchError")
 
 _logger = logging.getLogger(__name__)
 

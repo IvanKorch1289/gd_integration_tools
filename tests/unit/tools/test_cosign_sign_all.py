@@ -21,7 +21,9 @@ import pytest
 
 def _load_module():
     """Подгрузить tools/checks/cosign_sign_all.py через importlib."""
-    path = Path(__file__).resolve().parents[3] / "tools" / "checks" / "cosign_sign_all.py"
+    path = (
+        Path(__file__).resolve().parents[3] / "tools" / "checks" / "cosign_sign_all.py"
+    )
     spec = importlib.util.spec_from_file_location("_cosign_sign_all_test", path)
     if spec is None or spec.loader is None:
         raise ImportError("Не удалось загрузить cosign_sign_all.py")

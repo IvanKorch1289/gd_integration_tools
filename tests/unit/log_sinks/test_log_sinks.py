@@ -120,7 +120,9 @@ def test_graylog_udp_sends_payload(monkeypatch: pytest.MonkeyPatch) -> None:
         breaker_spec=BreakerSpec(failure_threshold=5, recovery_timeout=10.0),
     )
     # Тестируем _send_udp напрямую (write() использует async drain loop).
-    sink._send_udp(b'\x1e\x89\x03{"version":"1.1","host":"test","short_message":"ping"}')
+    sink._send_udp(
+        b'\x1e\x89\x03{"version":"1.1","host":"test","short_message":"ping"}'
+    )
     assert captured["addr"] == ("127.0.0.1", 12201)
     assert isinstance(captured["payload"], bytes)
 

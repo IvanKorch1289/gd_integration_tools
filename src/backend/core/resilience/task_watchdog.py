@@ -80,7 +80,7 @@ class TaskWatchdog:
         """
         # Lazy-import feature_flags, чтобы избежать циклических зависимостей
         # при загрузке пакета.
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.task_watchdog_deadline:
             return
@@ -96,16 +96,14 @@ class TaskWatchdog:
         No-op если feature-flag ``task_watchdog_deadline`` выключен.
         Повторный вызов идемпотентен — второй монитор не запускается.
         """
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.task_watchdog_deadline:
             return
         if self._monitor_task is not None and not self._monitor_task.done():
             return
         self._stopped = False
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._monitor_task = get_task_registry().create_task(
             self._monitor_loop(), name="task-watchdog-monitor"
@@ -124,7 +122,7 @@ class TaskWatchdog:
                 await task
             except asyncio.CancelledError:
                 raise
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
 
     async def tick(self) -> None:
@@ -134,7 +132,7 @@ class TaskWatchdog:
         Если elapsed > deadline — логирует warning и опционально cancels.
         Завершённые задачи автоматически убираются из списка.
         """
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.task_watchdog_deadline:
             return
@@ -172,7 +170,7 @@ class TaskWatchdog:
                 await asyncio.sleep(self._tick_interval)
                 try:
                     await self.tick()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning(
                         "task_watchdog.tick_error", extra={"error": repr(exc)}
                     )
@@ -191,7 +189,7 @@ def get_task_watchdog() -> TaskWatchdog:
     Returns:
         Глобальный :class:`TaskWatchdog`.
     """
-    global _watchdog  # noqa: PLW0603
+    global _watchdog
     if _watchdog is None:
         _watchdog = TaskWatchdog()
     return _watchdog
@@ -199,5 +197,5 @@ def get_task_watchdog() -> TaskWatchdog:
 
 def _reset_task_watchdog() -> None:
     """Сбросить singleton (только для unit-тестов)."""
-    global _watchdog  # noqa: PLW0603
+    global _watchdog
     _watchdog = None

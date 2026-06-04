@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.backend.core.di import app_state_singleton
 from src.backend.services.ai.feedback.models import AIFeedbackDoc
@@ -30,7 +30,7 @@ logger = logging.getLogger("services.ai.feedback.indexer")
 
 def _utc_now() -> datetime:
     """Возвращает текущий момент в UTC (aware)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(slots=True)
@@ -178,5 +178,5 @@ class FeedbackIndexer:
 
 
 @app_state_singleton("ai_feedback_indexer", factory=FeedbackIndexer)
-def get_feedback_indexer() -> FeedbackIndexer:
+def get_feedback_indexer() -> FeedbackIndexer:  # type: ignore[empty-body]
     """Возвращает singleton ``FeedbackIndexer``."""

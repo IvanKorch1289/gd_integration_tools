@@ -8,9 +8,7 @@ from pathlib import Path
 
 
 def _load_doctor():
-    path = (
-        Path(__file__).resolve().parents[3] / "tools" / "checks" / "doctor.py"
-    )
+    path = Path(__file__).resolve().parents[3] / "tools" / "checks" / "doctor.py"
     spec = importlib.util.spec_from_file_location("_doctor_test", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

@@ -143,11 +143,11 @@ def _is_internal_exempt(rel_path: str) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="WAF coverage check (V15 S1).")
-    parser.add_argument("--root", default=str(ROOT_DEFAULT), help="Каталог сканирования")
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Игнорировать allowlist (CI/release-gate)",
+        "--root", default=str(ROOT_DEFAULT), help="Каталог сканирования"
+    )
+    parser.add_argument(
+        "--strict", action="store_true", help="Игнорировать allowlist (CI/release-gate)"
     )
     args = parser.parse_args(argv)
 

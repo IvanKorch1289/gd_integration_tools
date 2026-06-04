@@ -23,8 +23,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
-from typing import Any, AsyncIterator
+from typing import Any
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.di.dependencies import get_reply_registry_singleton
@@ -48,7 +49,7 @@ from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.services.execution.action_dispatcher import get_action_dispatcher
 
-__all__ = ("Invoker", "InvocationMode", "get_invoker")
+__all__ = ("InvocationMode", "Invoker", "get_invoker")
 
 logger = logging.getLogger("services.execution.invoker")
 
@@ -151,7 +152,7 @@ class Invoker(InvokerProtocol):
                 mode=request.mode,
                 metadata=dict(request.metadata),
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "Invoker SYNC timeout: action=%s id=%s after %ss",
                 request.action,
@@ -276,7 +277,7 @@ class Invoker(InvokerProtocol):
             from src.backend.core.di.providers import get_scheduler_manager_provider
 
             scheduler_manager = get_scheduler_manager_provider()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception("DEFERRED: APScheduler недоступен")
             return InvocationResponse(
                 invocation_id=request.invocation_id,
@@ -298,7 +299,7 @@ class Invoker(InvokerProtocol):
                 executor="async",
                 jobstore=jobstore,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # SQLAlchemy недоступен (dev_light без sync engine) или
             # request не picklable — fallback на memory-jobstore.
             if jobstore != "backup":
@@ -418,7 +419,7 @@ class Invoker(InvokerProtocol):
         """Выполняет Temporal-activity wrapper и публикует результат."""
         try:
             response = await activity()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception(
                 "Temporal-activity invoke failed (invocation_id=%s)",
                 request.invocation_id,
@@ -433,7 +434,7 @@ class Invoker(InvokerProtocol):
         if channel is not None:
             try:
                 await channel.send(response)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.exception(
                     "Temporal-activity: ReplyChannel.send failed (id=%s)",
                     request.invocation_id,
@@ -472,7 +473,7 @@ class Invoker(InvokerProtocol):
             return
         try:
             await channel.send(response)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception("ReplyChannel.send failed (id=%s)", request.invocation_id)
 
     async def _run_silent(self, request: InvocationRequest) -> None:
@@ -481,7 +482,7 @@ class Invoker(InvokerProtocol):
                 action=request.action, payload=request.payload
             )
             await self._dispatch(command, self._build_context(request))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception(
                 "BACKGROUND task failed: action=%s id=%s",
                 request.action,
@@ -513,7 +514,7 @@ class Invoker(InvokerProtocol):
                 )
             )
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception(
                 "STREAMING dispatch failed: action=%s id=%s",
                 request.action,
@@ -558,10 +559,8 @@ class Invoker(InvokerProtocol):
 
 def _is_async_iterator(obj: Any) -> bool:
     """True если ``obj`` поддерживает ``async for`` (AsyncIterable/Iterator)."""
-    return (
-        hasattr(obj, "__aiter__")
-        and isinstance(obj, AsyncIterator)
-        or hasattr(obj, "__aiter__")
+    return (hasattr(obj, "__aiter__") and isinstance(obj, AsyncIterator)) or hasattr(
+        obj, "__aiter__"
     )
 
 
@@ -648,7 +647,7 @@ async def _run_deferred_job(request: InvocationRequest) -> None:
         return
     try:
         await channel.send(response)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.exception(
             "DEFERRED: ReplyChannel.send failed (invocation_id=%s)",
             request.invocation_id,

@@ -84,10 +84,7 @@ class TestIntegrationSplitAudit:
     def test_group_b_is_data_themed(self) -> None:
         """Group B = data/AI/ML/documents/utility."""
         doc_b = (IntegrationGroupB.__doc__ or "").lower()
-        assert any(
-            kw in doc_b
-            for kw in ("data", "ai", "ml", "documents", "utility")
-        )
+        assert any(kw in doc_b for kw in ("data", "ai", "ml", "documents", "utility"))
 
     def test_groups_have_different_themes(self) -> None:
         """Group A != Group B (orthogonal split)."""

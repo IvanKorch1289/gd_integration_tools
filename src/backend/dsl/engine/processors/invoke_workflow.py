@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.workflow.backend import WorkflowBackend
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -155,9 +156,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             # Fallback to original name if resolution fails
             return self.workflow_name
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Стартует workflow и пишет результат/handle в ``exchange``."""
         if self.args is not None:
             payload = dict(self.args)
@@ -193,7 +192,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
                     backend.await_completion(handle=handle),
                     timeout=self.reply_timeout_seconds,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 exchange.set_property(
                     self.result_property,
                     {

@@ -27,10 +27,10 @@ from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
     "EntityCreateProcessor",
-    "EntityGetProcessor",
-    "EntityUpdateProcessor",
     "EntityDeleteProcessor",
+    "EntityGetProcessor",
     "EntityListProcessor",
+    "EntityUpdateProcessor",
 )
 
 _logger = logging.getLogger("dsl.entity")

@@ -45,7 +45,12 @@ async def test_run_processes_clusters_above_threshold() -> None:
     langmem.recall = AsyncMock(
         return_value=[
             {"tenant": "t1", "session_id": "s1", "role": "user", "content": "Hi"},
-            {"tenant": "t1", "session_id": "s1", "role": "assistant", "content": "Hello"},
+            {
+                "tenant": "t1",
+                "session_id": "s1",
+                "role": "assistant",
+                "content": "Hello",
+            },
             {"tenant": "t1", "session_id": "s1", "role": "user", "content": "Bye"},
         ]
     )
@@ -55,11 +60,7 @@ async def test_run_processes_clusters_above_threshold() -> None:
     gateway.acompletion = AsyncMock(
         return_value={
             "choices": [
-                {
-                    "message": {
-                        "content": '[{"fact":"User said hi","confidence":0.9}]',
-                    }
-                }
+                {"message": {"content": '[{"fact":"User said hi","confidence":0.9}]'}}
             ]
         }
     )
@@ -78,7 +79,7 @@ async def test_run_skips_small_clusters() -> None:
     langmem = type("L", (), {})()
     langmem.recall = AsyncMock(
         return_value=[
-            {"tenant": "t1", "session_id": "s1", "role": "user", "content": "Hi"},
+            {"tenant": "t1", "session_id": "s1", "role": "user", "content": "Hi"}
         ]
     )
     langmem.add_semantic = AsyncMock(return_value="pid")

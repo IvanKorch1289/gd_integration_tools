@@ -59,16 +59,16 @@ from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
 )
 
 __all__: tuple[str, ...] = (
-    "AgentRunProcessor",
     "AgentBranchProcessor",
+    "AgentGraphProcessor",
     "AgentLoopProcessor",
     "AgentParallelProcessor",
-    "AgentGraphProcessor",
+    "AgentRunProcessor",
     "GuardrailsApplyProcessor",
+    "MCPToolProcessor",
+    "MemoryRecallProcessor",
+    "MemoryStoreProcessor",
     "PIIMaskProcessor",
     "PIIUnmaskProcessor",
     "SkillInvokeProcessor",
-    "MemoryRecallProcessor",
-    "MemoryStoreProcessor",
-    "MCPToolProcessor",
 )

@@ -223,7 +223,7 @@ class AIWorkspaceManager:
                     await asyncio.sleep(self._cleanup_interval)
                     try:
                         await self.cleanup_expired()
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         _logger.warning("ai_workspace.cleanup_error: %s", exc)
             except asyncio.CancelledError:
                 raise
@@ -245,7 +245,7 @@ class AIWorkspaceManager:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except (asyncio.CancelledError, Exception):
                 pass
 
     def _emit_audit(self, event: dict[str, object]) -> None:
@@ -253,7 +253,7 @@ class AIWorkspaceManager:
             return
         try:
             self._audit(event)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("ai_workspace audit emission failed: %s", exc)
 
 

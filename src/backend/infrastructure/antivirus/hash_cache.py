@@ -42,14 +42,14 @@ class AntivirusHashCache:
     async def get(self, payload: bytes) -> AntivirusScanResult | None:
         try:
             raw = await self._client.get(self._key(payload))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("hash_cache: get failed %s", exc)
             return None
         if not raw:
             return None
         try:
             data = orjson.loads(raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("hash_cache: corrupt entry %s", exc)
             return None
         return AntivirusScanResult(
@@ -68,5 +68,5 @@ class AntivirusHashCache:
                 orjson.dumps({"clean": result.clean, "signature": result.signature}),
                 ex=ttl or self._ttl,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("hash_cache: put failed %s", exc)

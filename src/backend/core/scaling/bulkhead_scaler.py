@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     # Lazy import: Bulkhead и BulkheadRegistry используются только для типов.
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     )
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):
             from src.backend.infrastructure.resilience import bulkhead
@@ -49,10 +49,10 @@ def _utilization(bulkhead: Bulkhead) -> float:
     Returns:
         Float [0.0..1.0]; 0.0 если bulkhead ещё не активирован.
     """
-    sem = bulkhead._sem  # noqa: SLF001 — read-only utility, нет публичного API
+    sem = bulkhead._sem
     if sem is None:
         return 0.0
-    remaining = sem._value  # noqa: SLF001 — asyncio internal
+    remaining = sem._value
     in_use = bulkhead.max_concurrent - remaining
     return max(0.0, min(1.0, in_use / max(1, bulkhead.max_concurrent)))
 
@@ -64,7 +64,7 @@ def _resize(bulkhead: Bulkhead, new_max: int) -> None:
     лимит по новому семафору.
     """
     bulkhead.max_concurrent = new_max
-    bulkhead._sem = asyncio.Semaphore(new_max)  # noqa: SLF001
+    bulkhead._sem = asyncio.Semaphore(new_max)
 
 
 class BulkheadScaler:

@@ -10,7 +10,9 @@ import pytest
 from src.backend.services.ai.gateway.callbacks import CostTrackingCallback
 
 
-def _make_response(cost: float, prompt_tokens: int, completion_tokens: int) -> SimpleNamespace:
+def _make_response(
+    cost: float, prompt_tokens: int, completion_tokens: int
+) -> SimpleNamespace:
     return SimpleNamespace(
         response_cost=cost,
         usage=SimpleNamespace(
@@ -23,10 +25,7 @@ def test_callback_records_cost_and_tokens(monkeypatch: pytest.MonkeyPatch) -> No
     metrics = MagicMock()
     cb = CostTrackingCallback()
     cb._metrics = metrics
-    cb(
-        {"model": "openai/gpt-4o-mini"},
-        _make_response(0.0125, 100, 50),
-    )
+    cb({"model": "openai/gpt-4o-mini"}, _make_response(0.0125, 100, 50))
     metrics.record_cost.assert_called_once_with(
         provider="openai", model="openai/gpt-4o-mini", cost_usd=0.0125
     )

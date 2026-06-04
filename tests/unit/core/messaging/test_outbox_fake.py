@@ -96,7 +96,9 @@ async def test_list_dlq_filters_by_transport_action_error_tenant(
         await outbox.enqueue(e)
 
     result_http = await outbox.list_dlq(transport="http")
-    result_kafka_http = await outbox.list_dlq(transport="kafka", error_class="HTTPError")
+    result_kafka_http = await outbox.list_dlq(
+        transport="kafka", error_class="HTTPError"
+    )
     result_t2 = await outbox.list_dlq(tenant_id="t2")
 
     assert {e.event_id for e in result_http} == {event_a.event_id, event_c.event_id}
@@ -135,7 +137,7 @@ async def test_replay_transitions_dlq_to_pending(
     affected = await outbox.replay([http_dlq_event.event_id])
 
     assert affected == 1
-    refreshed = (await outbox.list_dlq())  # уже не в DLQ
+    refreshed = await outbox.list_dlq()  # уже не в DLQ
     assert len(refreshed) == 0
 
 

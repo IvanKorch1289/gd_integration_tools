@@ -48,8 +48,7 @@ def test_init_validates_branches_or_default() -> None:
 
 @pytest.mark.asyncio
 async def test_branch_match_dispatches_to_correct_branch(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -74,8 +73,7 @@ async def test_branch_match_dispatches_to_correct_branch(
 
 @pytest.mark.asyncio
 async def test_branch_fallback_default(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -97,8 +95,7 @@ async def test_branch_fallback_default(
 
 @pytest.mark.asyncio
 async def test_branch_skip_when_no_match_no_default(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -119,8 +116,7 @@ async def test_branch_skip_when_no_match_no_default(
 
 @pytest.mark.asyncio
 async def test_branch_nested_dot_path(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     """Глубокий dot-path: ``agent_result.structured.verdict``."""
     from src.backend.core.config.features import feature_flags
@@ -128,10 +124,7 @@ async def test_branch_nested_dot_path(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
 
     ex: Exchange[Any] = Exchange()
-    ex.set_property(
-        "agent_result",
-        {"structured": {"verdict": "reject", "score": 0.2}},
-    )
+    ex.set_property("agent_result", {"structured": {"verdict": "reject", "score": 0.2}})
 
     proc = AgentBranchProcessor(
         source_property="agent_result.structured.verdict",
@@ -146,8 +139,7 @@ async def test_branch_nested_dot_path(
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 

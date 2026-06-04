@@ -20,10 +20,11 @@ API:
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, AsyncIterator, Final
+from typing import Any, Final
 
 from purgatory import AsyncCircuitBreakerFactory
 from purgatory.domain.messages.base import Event
@@ -185,7 +186,7 @@ class BreakerRegistry:
 
 
 @lru_cache(maxsize=1)
-def get_breaker_registry() -> "BreakerRegistry":
+def get_breaker_registry() -> BreakerRegistry:
     """Lazy singleton глобального ``BreakerRegistry``."""
     return BreakerRegistry()
 

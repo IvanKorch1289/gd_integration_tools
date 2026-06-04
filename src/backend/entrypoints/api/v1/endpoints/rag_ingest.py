@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
@@ -115,7 +115,7 @@ async def bulk_rag_ingest(request: BulkIngestRequest) -> dict[str, Any]:
         "doc_ids": [],
         "errors": [],
         "collection": request.collection,
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
     }
 
     for doc in request.documents:
@@ -124,7 +124,7 @@ async def bulk_rag_ingest(request: BulkIngestRequest) -> dict[str, Any]:
                 doc.content, metadata=doc.metadata, namespace=request.collection
             )
             payload["doc_ids"].append(doc_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             payload["errors"].append(
                 {"content_preview": doc.content[:100], "error": str(exc)}
             )
@@ -133,6 +133,6 @@ async def bulk_rag_ingest(request: BulkIngestRequest) -> dict[str, Any]:
     payload["status"] = (
         "completed" if not payload["errors"] else "completed_with_errors"
     )
-    payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+    payload["finished_at"] = datetime.now(UTC).isoformat()
 
     return payload

@@ -67,7 +67,7 @@ class NATSJetStreamSink(Sink):
             nc = await nats.connect(self.nats_url)
             js = nc.jetstream()
             ack = await js.publish(subject, data, headers=headers or None)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -75,11 +75,11 @@ class NATSJetStreamSink(Sink):
             if nc is not None:
                 try:
                     await nc.drain()
-                except Exception as _drain_exc:  # noqa: BLE001
+                except Exception as _drain_exc:
                     logger.debug("NATSJetStreamSink drain error: %s", _drain_exc)
                 try:
                     await nc.close()
-                except Exception as _close_exc:  # noqa: BLE001
+                except Exception as _close_exc:
                     logger.debug("NATSJetStreamSink close error: %s", _close_exc)
 
         return SinkResult(
@@ -129,11 +129,11 @@ class NATSJetStreamSink(Sink):
         try:
             nc = await nats.connect(self.nats_url)
             return True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         finally:
             if nc is not None:
                 try:
                     await nc.close()
-                except Exception as _hc_exc:  # noqa: BLE001
+                except Exception as _hc_exc:
                     logger.debug("NATSJetStreamSink health close error: %s", _hc_exc)

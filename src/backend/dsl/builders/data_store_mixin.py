@@ -16,7 +16,7 @@ __all__ = ("DataStore", "DataStoreMixin")
 class DataStore:
     """n8n-style in-memory KV with TTL + thread-safety (stdlib only)."""
 
-    __slots__ = ("_name", "_backend", "_data", "_lock")
+    __slots__ = ("_backend", "_data", "_lock", "_name")
 
     def __init__(self, name: str, backend: str = "memory") -> None:
         self._name, self._backend = name, backend
@@ -49,11 +49,7 @@ class DataStore:
 
     def set(self, key: str, value: Any, ttl_seconds: int | None = None) -> None:
         with self._lock:
-            exp = (
-                time.monotonic() + ttl_seconds
-                if ttl_seconds is not None
-                else None
-            )
+            exp = time.monotonic() + ttl_seconds if ttl_seconds is not None else None
             self._data[key] = (value, exp)
 
     def delete(self, key: str) -> bool:
@@ -103,10 +99,10 @@ class DataStoreMixin:
 
     def data_store(self, name: str = "default", backend: str = "memory") -> DataStore:
         """Get-or-create named :class:`DataStore` (lazy, per-builder scope)."""
-        stores: dict[str, DataStore] = getattr(self, "_data_stores", None)  # type: ignore[attr-defined]
+        stores: dict[str, DataStore] = getattr(self, "_data_stores", None)
         if stores is None:
             stores = {}
-            object.__setattr__(self, "_data_stores", stores)  # type: ignore[attr-defined]
+            object.__setattr__(self, "_data_stores", stores)
         ds = stores.get(name)
         if ds is None:
             ds = DataStore(name=name, backend=backend)

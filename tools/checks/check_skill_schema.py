@@ -122,7 +122,9 @@ def main() -> int:
 
     if all_errors:
         unique_files = len({p for p, _ in all_errors})
-        print(f"\n[skill-schema] {unique_files} plugin.toml с ошибками, {len(all_errors)} total")
+        print(
+            f"\n[skill-schema] {unique_files} plugin.toml с ошибками, {len(all_errors)} total"
+        )
         return 1
 
     print(f"\n[skill-schema] все {len(toml_files)} plugin.toml валидны")

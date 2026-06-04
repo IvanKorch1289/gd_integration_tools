@@ -60,7 +60,7 @@ def register_emit_ai_invocation_event(fn: Callable[..., Any]) -> None:
     _emit_fn = fn
 
 
-def emit_ai_invocation_event(event: "AIInvocationEvent") -> None:
+def emit_ai_invocation_event(event: AIInvocationEvent) -> None:
     """Emit ai.invocation.* события.
 
     До регистрации (early bootstrap) — no-op.
@@ -133,14 +133,14 @@ class UnifiedAISink:
             from src.backend.core.security.pii_tokenizer import PIITokenizer
 
             pii_mask = PIITokenizer()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pii_mask = None
 
         error_msg = event.error_message
         if pii_mask is not None and error_msg:
             try:
                 error_msg = pii_mask.mask_irreversible(error_msg)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 pass
 
         details: dict[str, Any] = {
@@ -170,7 +170,7 @@ class UnifiedAISink:
                 route_name=event.workflow_id,
                 details=details,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("UnifiedAISink: ClickHouse write failed: %s", exc)
 
     async def _emit_langfuse(self, event: AIInvocationEvent) -> None:
@@ -193,7 +193,7 @@ class UnifiedAISink:
 
             if hasattr(self._langfuse, "flush"):
                 self._langfuse.flush(generation_id, trace_event)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("UnifiedAISink: Langfuse write failed: %s", exc)
 
 

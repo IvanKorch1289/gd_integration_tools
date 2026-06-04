@@ -34,12 +34,7 @@ def rotator() -> VaultSecretRotator:
 
 def _make_hvac_response(version: int, data: dict[str, Any]) -> dict[str, Any]:
     """Формирует фиктивный ответ hvac KV v2 read_secret_version."""
-    return {
-        "data": {
-            "metadata": {"version": version},
-            "data": data,
-        }
-    }
+    return {"data": {"metadata": {"version": version}, "data": data}}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -51,7 +46,7 @@ def _make_hvac_response(version: int, data: dict[str, Any]) -> dict[str, Any]:
 async def test_rotator_skips_when_flag_off(rotator: VaultSecretRotator) -> None:
     """Ротатор не запускает фоновую задачу при vault_rotation_enabled=False."""
     with patch(
-        "src.backend.infrastructure.secrets.vault_rotator.feature_flags",
+        "src.backend.infrastructure.secrets.vault_rotator.feature_flags"
     ) as mock_flags:
         mock_flags.vault_rotation_enabled = False
 

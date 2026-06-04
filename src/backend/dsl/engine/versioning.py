@@ -20,7 +20,7 @@ from sqlalchemy import desc, select
 from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
-__all__ = ("PipelineVersionManager", "PipelineSnapshot", "get_pipeline_version_manager")
+__all__ = ("PipelineSnapshot", "PipelineVersionManager", "get_pipeline_version_manager")
 
 logger = logging.getLogger("dsl.versioning")
 
@@ -206,5 +206,5 @@ from src.backend.core.di import app_state_singleton  # noqa: E402
 
 
 @app_state_singleton("pipeline_version_manager", PipelineVersionManager)
-def get_pipeline_version_manager() -> PipelineVersionManager:
+def get_pipeline_version_manager() -> PipelineVersionManager:  # type: ignore[empty-body]
     """Возвращает PipelineVersionManager из app.state или lazy-init fallback."""

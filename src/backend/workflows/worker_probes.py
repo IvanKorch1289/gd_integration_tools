@@ -71,7 +71,7 @@ class WorkerProbesServer:
         runner: Any,
         worker_id: str,
         port: int = 9100,
-        host: str = "0.0.0.0",  # noqa: S104 — K8s probes на 0.0.0.0 норма
+        host: str = "0.0.0.0",
         readiness_check: ReadinessFn | None = None,
     ) -> None:
         self._runner = runner
@@ -123,7 +123,7 @@ class WorkerProbesServer:
                 await asyncio.wait_for(self._serve_task, timeout=5)
             except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
                 _logger.warning("probes server stop timeout/cancel: %s", exc)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning("probes server stop error: %s", exc)
         _logger.info("probes server stopped")
 
@@ -148,7 +148,7 @@ class WorkerProbesServer:
         if self._readiness_check is not None:
             try:
                 ok = await self._readiness_check()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning("readiness check error: %s", exc)
                 return JSONResponse(
                     {"status": "not_ready", "reason": f"check_error: {exc}"},
@@ -168,7 +168,7 @@ class WorkerProbesServer:
             qsize = queue.qsize() if queue is not None else 0
             WORKER_ACTIVE_EXECUTIONS.labels(worker_id=self._worker_id).set(active)
             WORKER_QUEUE_DEPTH.labels(worker_id=self._worker_id).set(qsize)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("failed to refresh worker gauges: %s", exc)
         data = generate_latest(REGISTRY)
         return Response(content=data, media_type=CONTENT_TYPE_LATEST)

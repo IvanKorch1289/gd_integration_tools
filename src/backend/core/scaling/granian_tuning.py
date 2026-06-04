@@ -141,7 +141,7 @@ class GranianTuning(BaseSettingsWithLoader):
         Если ``blocking_threads='auto'`` — использует ``resolved_workers * 4``.
         """
         if self.blocking_threads == "auto":
-            return self.resolved_workers * 4
+            return self.resolved_workers * 4  # type: ignore[operator]
         return int(self.blocking_threads)
 
     @computed_field(description="Фактический interface с учётом feature-flag")
@@ -159,7 +159,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
             if not feature_flags.granian_rsgi_mode_enabled:
                 return "asgi"
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return "asgi"
         return self.interface
 
@@ -183,10 +183,10 @@ class GranianTuning(BaseSettingsWithLoader):
         Returns:
             Список аргументов для ``subprocess.run``.
         """
-        cmd = [
+        cmd: list[str] = [
             granian_cmd,
             "--interface",
-            self.resolved_interface,
+            self.resolved_interface,  # type: ignore[list-item]
             "--host",
             host,
             "--port",

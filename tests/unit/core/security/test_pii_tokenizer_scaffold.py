@@ -49,10 +49,7 @@ def test_pii_policy_irreversible_variant() -> None:
 def test_encrypted_value_dataclass_frozen() -> None:
     """EncryptedValue frozen+slots."""
     ev = EncryptedValue(
-        ciphertext=b"\x00\x01\x02",
-        nonce=b"n" * 12,
-        tag=b"t" * 16,
-        key_version=1,
+        ciphertext=b"\x00\x01\x02", nonce=b"n" * 12, tag=b"t" * 16, key_version=1
     )
     assert ev.key_version == 1
     with pytest.raises(AttributeError):

@@ -35,16 +35,16 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = (
-    "AvroEncodeProcessor",
     "AvroDecodeProcessor",
-    "ProtobufEncodeProcessor",
-    "ProtobufDecodeProcessor",
-    "TomlEncodeProcessor",
-    "TomlDecodeProcessor",
-    "MarkdownToHtmlProcessor",
+    "AvroEncodeProcessor",
     "HtmlToMarkdownProcessor",
-    "JsonLinesEncodeProcessor",
     "JsonLinesDecodeProcessor",
+    "JsonLinesEncodeProcessor",
+    "MarkdownToHtmlProcessor",
+    "ProtobufDecodeProcessor",
+    "ProtobufEncodeProcessor",
+    "TomlDecodeProcessor",
+    "TomlEncodeProcessor",
 )
 
 _logger = logging.getLogger("dsl.format_converters")

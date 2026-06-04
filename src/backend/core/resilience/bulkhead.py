@@ -28,7 +28,7 @@ class Bulkhead:
         try:
             await asyncio.wait_for(sem.acquire(), timeout=timeout)
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
 
     def release(self, service: str) -> None:

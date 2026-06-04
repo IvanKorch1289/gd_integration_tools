@@ -24,7 +24,11 @@ class _FakeStore:
 
     def __init__(self, *, query_result: list[dict[str, Any]] | None = None) -> None:
         self.query_result = query_result or [
-            {"document": "ctx-1", "score": 0.9, "metadata": {"doc_id": "d1", "chunk_idx": 0}}
+            {
+                "document": "ctx-1",
+                "score": 0.9,
+                "metadata": {"doc_id": "d1", "chunk_idx": 0},
+            }
         ]
         self.upsert = AsyncMock()
         self.delete = AsyncMock()
@@ -44,9 +48,7 @@ class _FakeEmbedder:
 
 
 def _make_cache(
-    *,
-    l1_answer: Any = None,
-    l3_chunks: list[dict[str, Any]] | None = None,
+    *, l1_answer: Any = None, l3_chunks: list[dict[str, Any]] | None = None
 ) -> Any:
     cache = type("C", (), {})()
     cache.lookup_answer = AsyncMock(

@@ -73,10 +73,7 @@ async def test_publish_diagnostics_calls_linter(
 
 def test_completion_tables_non_empty() -> None:
     """ROUTE_COMPLETIONS + STEP_COMPLETIONS заполнены и без дублей."""
-    from tools.dsl_lsp.schema_completion import (
-        ROUTE_COMPLETIONS,
-        STEP_COMPLETIONS,
-    )
+    from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
 
     assert len(ROUTE_COMPLETIONS) >= 8
     assert len(STEP_COMPLETIONS) >= 15
@@ -96,10 +93,7 @@ def test_completion_tables_non_empty() -> None:
 
 def test_completion_details_non_empty() -> None:
     """Detail-строка для каждого ключа содержит описание (>= 8 символов)."""
-    from tools.dsl_lsp.schema_completion import (
-        ROUTE_COMPLETIONS,
-        STEP_COMPLETIONS,
-    )
+    from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
 
     for key, detail, *_ in (*ROUTE_COMPLETIONS, *STEP_COMPLETIONS):
         assert isinstance(detail, str)

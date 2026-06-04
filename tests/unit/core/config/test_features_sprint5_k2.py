@@ -58,8 +58,13 @@ class TestSprint5K2FlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # Sprint5K2Flags must be in MRO (T1.3.22)
         assert "Sprint5K2Flags" in mro_names, "Sprint5K2Flags missing в MRO"
         # Sanity: должна стоять между Sprint5Flags и Sprint5DSLFlags
-        assert mro_names.index("Sprint5Flags") < mro_names.index("Sprint5K2Flags") < mro_names.index("Sprint5DSLFlags")
+        assert (
+            mro_names.index("Sprint5Flags")
+            < mro_names.index("Sprint5K2Flags")
+            < mro_names.index("Sprint5DSLFlags")
+        )

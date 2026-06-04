@@ -78,9 +78,7 @@ async def test_adapter_calls_gateway_when_flag_on(
 
 
 @pytest.mark.asyncio
-async def test_adapter_stream_flag_propagated(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_adapter_stream_flag_propagated(monkeypatch: pytest.MonkeyPatch) -> None:
     """``stream=True`` пробрасывается в AIRequest."""
     from src.backend.core.config import features as features_module
 
@@ -119,9 +117,7 @@ async def test_adapter_default_gateway_construction(
         constructed.append(instance)
         return instance
 
-    monkeypatch.setattr(
-        "src.backend.services.ai.gateway_adapter.AIGateway", _capture
-    )
+    monkeypatch.setattr("src.backend.services.ai.gateway_adapter.AIGateway", _capture)
     response = AIResponse(content="default-gw")
 
     # Подменяем invoke для всех новых instance'ов

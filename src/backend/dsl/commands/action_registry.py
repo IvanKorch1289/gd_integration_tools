@@ -23,8 +23,9 @@ Backward compatibility:
 """
 
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -34,7 +35,7 @@ from src.backend.core.interfaces.action_dispatcher import (
 )
 from src.backend.schemas.invocation import ActionCommandSchema
 
-__all__ = ("ActionHandlerSpec", "ActionHandlerRegistry", "action_handler_registry")
+__all__ = ("ActionHandlerRegistry", "ActionHandlerSpec", "action_handler_registry")
 
 
 @dataclass(slots=True)

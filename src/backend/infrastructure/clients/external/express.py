@@ -243,5 +243,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("express_client", _create_express_client)
-def get_express_client() -> ExpressClient:
+def get_express_client() -> ExpressClient:  # type: ignore[empty-body]
     """Возвращает ExpressClient из app.state или lazy-init fallback."""

@@ -103,7 +103,7 @@ class LruMemoryCache:
     @property
     def max_size(self) -> int:
         """Максимальный размер кэша (read-only)."""
-        return self._cache.maxsize
+        return int(self._cache.maxsize) if self._cache.maxsize is not None else 0
 
     @property
     def ttl_seconds(self) -> float:

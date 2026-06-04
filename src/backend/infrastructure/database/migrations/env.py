@@ -1,5 +1,6 @@
 import asyncio
 from logging.config import fileConfig
+from typing import Any
 
 from alembic import context
 from sqlalchemy import pool
@@ -114,15 +115,17 @@ async def run_async_migrations() -> None:
             distributed_lock,
         )
 
-        lock_ctx = distributed_lock(
+        lock_ctx: Any = distributed_lock(
             "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0
         )
     except ImportError:
         import contextlib
 
         @contextlib.asynccontextmanager
-        async def lock_ctx():
+        async def _lock_ctx():
             yield True
+
+        lock_ctx = _lock_ctx()
 
     async with lock_ctx as acquired:
         if not acquired:

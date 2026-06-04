@@ -80,9 +80,7 @@ class DesktopRpaProcessor(BaseProcessor):
         self._params.setdefault("app", app)
         self._to = to
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет action через DesktopRpaClient из ExecutionContext."""
         client: DesktopRpaClient | None = getattr(context, "desktop_rpa_client", None)
         if client is None:
@@ -100,13 +98,13 @@ class DesktopRpaProcessor(BaseProcessor):
             payload = dict(self._params)
             payload["app"] = self._app
             result = await client.execute(self._action, payload)
-        except Exception as exc:  # noqa: BLE001 — DSL-граница
+        except Exception as exc:
             exchange.fail(f"desktop_rpa({self._action!r}) failed: {exc}")
             return
 
         self._write(exchange, result)
 
-    def _write(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _write(self, exchange: Exchange[Any], value: Any) -> None:
         target = self._to
         if target.startswith("property:"):
             exchange.set_property(target[len("property:") :], value)

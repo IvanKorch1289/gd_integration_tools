@@ -19,7 +19,7 @@ Reset-окно по умолчанию — ``daily`` (UTC midnight), но нас
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 __all__ = (
@@ -179,7 +179,7 @@ class TokenBudget:
         return self._configs.get(tenant_id, self._default)
 
     def _key(self, tenant_id: str, period: str) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         bucket = {
             BudgetPeriod.HOURLY: now.strftime("%Y%m%d-%H"),
             BudgetPeriod.DAILY: now.strftime("%Y%m%d"),

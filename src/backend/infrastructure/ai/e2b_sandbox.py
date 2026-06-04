@@ -46,7 +46,7 @@ class E2BSandbox(CodeSandbox):
         api_key: str,
         capability_check: CapabilityChecker | None = None,
         plugin: str = "ai-agent",
-        fs_facade: "AIFsFacade | None" = None,
+        fs_facade: AIFsFacade | None = None,
     ) -> None:
         self._api_key = api_key
         self._capability_check = capability_check
@@ -59,15 +59,15 @@ class E2BSandbox(CodeSandbox):
         *,
         timeout_s: float = 30.0,
         files: Mapping[str, bytes] | None = None,
-        workspace: "WorkspaceHandle | None" = None,
+        workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
         if self._capability_check is not None:
             scope = workspace.session_id if workspace is not None else None
             self._capability_check(self._plugin, "code.execute", scope)
 
         try:
-            from e2b_code_interpreter import Sandbox as _E2BSandbox  # noqa: PLC0415
-        except ImportError as exc:  # noqa: BLE001
+            from e2b_code_interpreter import Sandbox as _E2BSandbox
+        except ImportError as exc:
             raise RuntimeError(
                 "e2b-code-interpreter не установлен; добавьте "
                 "пакет в [ai] extra или используйте NoOpSandbox."
@@ -89,7 +89,7 @@ class E2BSandbox(CodeSandbox):
                 for relative, content in artifacts.items():
                     try:
                         self._fs_facade.create_new(workspace, relative, content)
-                    except Exception as art_exc:  # noqa: BLE001
+                    except Exception as art_exc:
                         _logger.warning(
                             "E2B artifact write failed: %s — %s", relative, art_exc
                         )
@@ -100,7 +100,7 @@ class E2BSandbox(CodeSandbox):
         finally:
             try:
                 sandbox.kill()
-            except Exception as kill_exc:  # noqa: BLE001
+            except Exception as kill_exc:
                 _logger.debug("E2B sandbox kill error: %s", kill_exc)
 
     @staticmethod
@@ -113,7 +113,7 @@ class E2BSandbox(CodeSandbox):
         artifacts: dict[str, bytes] = {}
         try:
             entries = sandbox.files.list("/home/user")
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return artifacts
         for entry in entries or ():
             try:
@@ -124,6 +124,6 @@ class E2BSandbox(CodeSandbox):
                 artifacts[str(path)] = (
                     content.encode() if isinstance(content, str) else bytes(content)
                 )
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 continue
         return artifacts

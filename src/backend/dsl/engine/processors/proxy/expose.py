@@ -76,11 +76,7 @@ class ExposeProxyProcessor(BaseProcessor):
     def spec(self) -> ProxyInboundSpec:
         return self._spec
 
-    async def process(
-        self,
-        exchange: Exchange[Any],
-        context: ExecutionContext,  # noqa: ARG002
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         # Нормализуем headers согласно политике — последующий forward_to
         # получает уже очищенный набор.
         headers = exchange.in_message.headers or {}

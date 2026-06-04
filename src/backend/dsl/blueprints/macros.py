@@ -15,7 +15,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.exchange import Exchange
@@ -28,14 +29,14 @@ from src.backend.dsl.engine.processors import (
 )
 
 __all__ = (
-    "etl_pipeline",
-    "webhook_relay",
     "ai_qa_pipeline",
-    "safe_action",
     "crud_with_audit",
-    "scrape_and_store",
+    "etl_pipeline",
     "format_bridge",
     "polling_etl",
+    "safe_action",
+    "scrape_and_store",
+    "webhook_relay",
 )
 
 
@@ -404,7 +405,7 @@ def format_bridge(
             description=description or f"Bridge: {from_format}→{to_format}",
         )
         .normalize()
-        .convert(from_format, to_format)
+        .translate(from_format, to_format)
         .dispatch_action(target_action)
         .build()
     )

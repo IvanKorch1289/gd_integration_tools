@@ -18,9 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.services.workflows.template_registry import (
-    WorkflowTemplateRegistry,
-)
+from src.backend.services.workflows.template_registry import WorkflowTemplateRegistry
 
 
 def test_load_all_returns_10_templates() -> None:
@@ -84,9 +82,7 @@ def test_search_semantic_relevant_for_kyc_aml() -> None:
 
 
 def test_singleton_get_template_registry() -> None:
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     r1 = get_template_registry()
     r2 = get_template_registry()

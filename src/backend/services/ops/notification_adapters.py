@@ -16,9 +16,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = (
-    "NotificationMessage",
     "EmailNotificationAdapter",
     "ExpressNotificationAdapter",
+    "NotificationMessage",
     "TelegramNotificationAdapter",
     "WebhookNotificationAdapter",
 )
@@ -63,7 +63,7 @@ class EmailNotificationAdapter:
                     content_type=content_type,
                 )
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Email send failed: %s", exc)
             return False
 
@@ -72,7 +72,7 @@ class EmailNotificationAdapter:
             from src.backend.core.di.providers import get_smtp_client_provider
 
             return await get_smtp_client_provider().test_connection()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
@@ -92,7 +92,7 @@ class ExpressNotificationAdapter:
             for rcpt in message.recipients:
                 await client.send_message(chat_id=rcpt, text=message.body)
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Express send failed: %s", exc)
             return False
 
@@ -102,7 +102,7 @@ class ExpressNotificationAdapter:
 
             client = get_express_client_provider()
             return await client.ping() if hasattr(client, "ping") else True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
@@ -146,7 +146,7 @@ class TelegramNotificationAdapter:
                     resp = await client.post(url, json=payload)
                     resp.raise_for_status()
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Telegram send failed: %s", exc)
             return False
 
@@ -161,7 +161,7 @@ class TelegramNotificationAdapter:
                     f"https://api.telegram.org/bot{self._token}/getMe"
                 )
                 return resp.is_success
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
@@ -190,7 +190,7 @@ class WebhookNotificationAdapter:
                     resp = await client.post(url, json=payload)
                     resp.raise_for_status()
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Webhook send failed: %s", exc)
             return False
 

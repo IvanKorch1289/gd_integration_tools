@@ -39,7 +39,10 @@ def test_cli_help_command() -> None:
     """CLI responds to --help."""
     result = _run_cli("--help")
     assert result.returncode == 0, f"Help failed: {result.stderr}"
-    assert "gd-cli" in result.stdout.lower() or "gd_integration_tools" in result.stdout.lower()
+    assert (
+        "gd-cli" in result.stdout.lower()
+        or "gd_integration_tools" in result.stdout.lower()
+    )
 
 
 def test_cli_route_subcommand_exists() -> None:
@@ -79,7 +82,11 @@ def test_cli_route_list_command() -> None:
         "total": 2,
         "routes": [
             {"route_id": "credit_check", "enabled": True, "feature_flag": "ff_credit"},
-            {"route_id": "order_process", "enabled": False, "feature_flag": "ff_orders"},
+            {
+                "route_id": "order_process",
+                "enabled": False,
+                "feature_flag": "ff_orders",
+            },
         ],
     }
 
@@ -136,7 +143,9 @@ def test_cli_route_start_command() -> None:
     """route start calls POST /api/v1/admin/routes/toggle with enable=true."""
     import tools.cli
 
-    with patch.object(tools.cli, "_post", return_value={"status": "success"}) as mock_post:
+    with patch.object(
+        tools.cli, "_post", return_value={"status": "success"}
+    ) as mock_post:
         tools.cli.route_start("credit_check")
         mock_post.assert_called_once()
         call_args = mock_post.call_args
@@ -149,7 +158,9 @@ def test_cli_cache_flush_command() -> None:
     """cache flush calls DELETE /api/v1/admin/cache/invalidate."""
     import tools.cli
 
-    with patch.object(tools.cli, "_delete", return_value={"status": "flushed"}) as mock_delete:
+    with patch.object(
+        tools.cli, "_delete", return_value={"status": "flushed"}
+    ) as mock_delete:
         tools.cli.cache_flush()
         mock_delete.assert_called_once_with("/cache/invalidate")
 
@@ -158,7 +169,12 @@ def test_cli_agent_list_tools_command() -> None:
     """agent list-tools calls GET /api/v1/admin/actions."""
     mock_response = {
         "actions": [
-            {"name": "get_order", "namespace": "orders", "description": "Get order by ID", "tier": "core"},
+            {
+                "name": "get_order",
+                "namespace": "orders",
+                "description": "Get order by ID",
+                "tier": "core",
+            }
         ]
     }
 

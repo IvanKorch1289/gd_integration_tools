@@ -105,36 +105,21 @@ def test_processors_without_to_spec_are_dropped_silently() -> None:
 
 def test_yaml_load_unknown_processor_raises() -> None:
     """Whitelist: неизвестное имя процессора → ValueError."""
-    yaml_text = (
-        "route_id: bad\n"
-        "source: internal:b\n"
-        "processors:\n"
-        "  - __class__: {}\n"
-    )
+    yaml_text = "route_id: bad\nsource: internal:b\nprocessors:\n  - __class__: {}\n"
     with pytest.raises(ValueError, match="Unknown or forbidden processor"):
         load_pipeline_from_yaml(yaml_text)
 
 
 def test_yaml_load_dunder_blocked() -> None:
     """Whitelist: dunder-имена запрещены (anti-RCE)."""
-    yaml_text = (
-        "route_id: bad\n"
-        "source: internal:b\n"
-        "processors:\n"
-        "  - __init__: {}\n"
-    )
+    yaml_text = "route_id: bad\nsource: internal:b\nprocessors:\n  - __init__: {}\n"
     with pytest.raises(ValueError, match="Unknown or forbidden processor"):
         load_pipeline_from_yaml(yaml_text)
 
 
 def test_yaml_load_private_blocked() -> None:
     """Whitelist: приватные имена (с префиксом ``_``) запрещены."""
-    yaml_text = (
-        "route_id: bad\n"
-        "source: internal:b\n"
-        "processors:\n"
-        "  - _add: {}\n"
-    )
+    yaml_text = "route_id: bad\nsource: internal:b\nprocessors:\n  - _add: {}\n"
     with pytest.raises(ValueError, match="Unknown or forbidden processor"):
         load_pipeline_from_yaml(yaml_text)
 

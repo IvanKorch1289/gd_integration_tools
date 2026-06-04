@@ -21,22 +21,22 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "PdfReadProcessor",
-    "PdfMergeProcessor",
-    "WordReadProcessor",
-    "WordWriteProcessor",
+    "ArchiveProcessor",
+    "DecryptProcessor",
+    "EmailComposeProcessor",
+    "EncryptProcessor",
     "ExcelReadProcessor",
     "FileMoveProcessor",
-    "ArchiveProcessor",
+    "HashProcessor",
     "ImageOcrProcessor",
     "ImageResizeProcessor",
+    "PdfMergeProcessor",
+    "PdfReadProcessor",
     "RegexProcessor",
-    "TemplateRenderProcessor",
-    "HashProcessor",
-    "EncryptProcessor",
-    "DecryptProcessor",
     "ShellExecProcessor",
-    "EmailComposeProcessor",
+    "TemplateRenderProcessor",
+    "WordReadProcessor",
+    "WordWriteProcessor",
 )
 
 _rpa_logger = logging.getLogger("dsl.rpa")
@@ -67,7 +67,7 @@ class PdfReadProcessor(BaseProcessor):
         body = exchange.in_message.body
         try:
             text = read_pdf(body)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"pdf_read failed: {exc}")
             return
 
@@ -259,7 +259,7 @@ class ExcelReadProcessor(BaseProcessor):
             return
 
         headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
-        data = [dict(zip(headers, row)) for row in rows[1:]]
+        data = [dict(zip(headers, row, strict=False)) for row in rows[1:]]
         exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -770,7 +770,7 @@ class ShellExecProcessor(BaseProcessor):
             )
             if proc.returncode != 0:
                 exchange.set_property("shell_error", True)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             exchange.fail(f"Shell command timed out after {self._timeout}s")
         except (FileNotFoundError, PermissionError) as exc:
             exchange.fail(f"Shell exec failed: {exc}")
@@ -805,7 +805,7 @@ class EmailComposeProcessor(BaseProcessor):
 
         try:
             email_body = self._body_template.format(**variables)
-        except KeyError, IndexError:
+        except (KeyError, IndexError):
             email_body = self._body_template
 
         try:

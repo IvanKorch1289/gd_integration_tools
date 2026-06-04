@@ -101,7 +101,7 @@ def _get_registry() -> Any:
         )
 
         return ActionHandlerRegistry.get_instance()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 
@@ -171,7 +171,7 @@ async def list_actions() -> list[ActionSummary]:
             )
             for spec in specs
         ]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Ошибка чтения реестра actions: %s — возврат mock", exc)
         return _mock_actions()
 

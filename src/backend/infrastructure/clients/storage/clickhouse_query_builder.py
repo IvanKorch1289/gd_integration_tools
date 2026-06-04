@@ -25,7 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ("Condition", "ClickHouseQueryBuilder")
+__all__ = ("ClickHouseQueryBuilder", "Condition")
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,35 +36,35 @@ class Condition:
     params: tuple[Any, ...] = ()
 
     @classmethod
-    def eq(cls, column: str, value: Any) -> "Condition":
+    def eq(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} = %s", (value,))
 
     @classmethod
-    def neq(cls, column: str, value: Any) -> "Condition":
+    def neq(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} != %s", (value,))
 
     @classmethod
-    def gt(cls, column: str, value: Any) -> "Condition":
+    def gt(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} > %s", (value,))
 
     @classmethod
-    def gte(cls, column: str, value: Any) -> "Condition":
+    def gte(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} >= %s", (value,))
 
     @classmethod
-    def lt(cls, column: str, value: Any) -> "Condition":
+    def lt(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} < %s", (value,))
 
     @classmethod
-    def lte(cls, column: str, value: Any) -> "Condition":
+    def lte(cls, column: str, value: Any) -> Condition:
         return cls(f"{column} <= %s", (value,))
 
     @classmethod
-    def like(cls, column: str, pattern: str) -> "Condition":
+    def like(cls, column: str, pattern: str) -> Condition:
         return cls(f"{column} LIKE %s", (pattern,))
 
     @classmethod
-    def raw(cls, expression: str, *params: Any) -> "Condition":
+    def raw(cls, expression: str, *params: Any) -> Condition:
         return cls(expression, tuple(params))
 
 
@@ -76,9 +76,7 @@ class ClickHouseQueryBuilder:
     _distinct: bool = False
     _from: str | None = None
     _from_alias: str | None = None
-    _ctes: list[tuple[str, "ClickHouseQueryBuilder | str"]] = field(
-        default_factory=list
-    )
+    _ctes: list[tuple[str, ClickHouseQueryBuilder | str]] = field(default_factory=list)
     _wheres: list[Condition] = field(default_factory=list)
     _group_by: list[str] = field(default_factory=list)
     _havings: list[Condition] = field(default_factory=list)
@@ -88,28 +86,28 @@ class ClickHouseQueryBuilder:
     _final: bool = False
     _sample: float | None = None
 
-    def select(self, *cols: str, distinct: bool = False) -> "ClickHouseQueryBuilder":
+    def select(self, *cols: str, distinct: bool = False) -> ClickHouseQueryBuilder:
         self._select.extend(cols)
         if distinct:
             self._distinct = True
         return self
 
-    def from_(self, table: str, alias: str | None = None) -> "ClickHouseQueryBuilder":
+    def from_(self, table: str, alias: str | None = None) -> ClickHouseQueryBuilder:
         self._from = table
         self._from_alias = alias
         return self
 
     def with_cte(
-        self, name: str, query: "ClickHouseQueryBuilder | str"
-    ) -> "ClickHouseQueryBuilder":
+        self, name: str, query: ClickHouseQueryBuilder | str
+    ) -> ClickHouseQueryBuilder:
         self._ctes.append((name, query))
         return self
 
-    def where(self, *conditions: Condition) -> "ClickHouseQueryBuilder":
+    def where(self, *conditions: Condition) -> ClickHouseQueryBuilder:
         self._wheres.extend(conditions)
         return self
 
-    def where_in(self, col: str, values: list[Any]) -> "ClickHouseQueryBuilder":
+    def where_in(self, col: str, values: list[Any]) -> ClickHouseQueryBuilder:
         if not values:
             # WHERE col IN () — заведомо false; используем 1=0.
             self._wheres.append(Condition("1=0", ()))
@@ -118,15 +116,15 @@ class ClickHouseQueryBuilder:
         self._wheres.append(Condition(f"{col} IN ({placeholders})", tuple(values)))
         return self
 
-    def where_between(self, col: str, start: Any, end: Any) -> "ClickHouseQueryBuilder":
+    def where_between(self, col: str, start: Any, end: Any) -> ClickHouseQueryBuilder:
         self._wheres.append(Condition(f"{col} BETWEEN %s AND %s", (start, end)))
         return self
 
-    def group_by(self, *cols: str) -> "ClickHouseQueryBuilder":
+    def group_by(self, *cols: str) -> ClickHouseQueryBuilder:
         self._group_by.extend(cols)
         return self
 
-    def having(self, *conditions: Condition | str) -> "ClickHouseQueryBuilder":
+    def having(self, *conditions: Condition | str) -> ClickHouseQueryBuilder:
         for c in conditions:
             if isinstance(c, str):
                 self._havings.append(Condition(c, ()))
@@ -134,22 +132,22 @@ class ClickHouseQueryBuilder:
                 self._havings.append(c)
         return self
 
-    def order_by(self, *cols: str, desc: bool = False) -> "ClickHouseQueryBuilder":
+    def order_by(self, *cols: str, desc: bool = False) -> ClickHouseQueryBuilder:
         for c in cols:
             self._order_by.append((c, desc))
         return self
 
-    def limit(self, n: int, offset: int = 0) -> "ClickHouseQueryBuilder":
+    def limit(self, n: int, offset: int = 0) -> ClickHouseQueryBuilder:
         self._limit = n
         self._offset = offset
         return self
 
-    def final(self, materialize_views: bool = True) -> "ClickHouseQueryBuilder":
+    def final(self, materialize_views: bool = True) -> ClickHouseQueryBuilder:
         """ClickHouse-специфичный FINAL модификатор."""
         self._final = materialize_views
         return self
 
-    def sample(self, rate: float) -> "ClickHouseQueryBuilder":
+    def sample(self, rate: float) -> ClickHouseQueryBuilder:
         """SAMPLE-модификатор для ускорения approximate-запросов."""
         if not 0.0 < rate <= 1.0:
             raise ValueError("sample rate must be in (0.0, 1.0]")

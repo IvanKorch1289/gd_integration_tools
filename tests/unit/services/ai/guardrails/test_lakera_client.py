@@ -12,7 +12,14 @@ from src.backend.services.ai.guardrails.lakera_client import LakeraClient, Laker
 @pytest.fixture(autouse=True)
 def _clear_proxy_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Убрать ALL_PROXY/HTTPS_PROXY на время тестов — иначе httpx требует socksio."""
-    for name in ("ALL_PROXY", "HTTP_PROXY", "HTTPS_PROXY", "all_proxy", "http_proxy", "https_proxy"):
+    for name in (
+        "ALL_PROXY",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "all_proxy",
+        "http_proxy",
+        "https_proxy",
+    ):
         monkeypatch.delenv(name, raising=False)
 
 

@@ -12,10 +12,7 @@ import pytest
 from src.backend.core.scaling.auto_scaler import AutoScaler
 from src.backend.core.scaling.bulkhead_scaler import BulkheadScaler, _utilization
 from src.backend.core.scaling.local_process_scaler import LocalProcessScaler
-from src.backend.infrastructure.resilience.bulkhead import (
-    Bulkhead,
-    BulkheadRegistry,
-)
+from src.backend.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
 
 
 # ── BulkheadScaler ──
@@ -141,11 +138,7 @@ def test_auto_scaler_none_components_skipped() -> None:
     """tick_once с None-компонентами не падает."""
     scaler = AutoScaler()
     result = asyncio.run(scaler.tick_once())
-    assert result == {
-        "bulkhead": {},
-        "process_workers": None,
-        "hpa_exported": False,
-    }
+    assert result == {"bulkhead": {}, "process_workers": None, "hpa_exported": False}
 
 
 def test_auto_scaler_start_stop_lifecycle() -> None:

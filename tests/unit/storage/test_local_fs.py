@@ -59,9 +59,7 @@ async def test_delete_missing_key_is_noop(storage: LocalFSStorage) -> None:
     assert await storage.exists("never-was-here.bin") is False
 
 
-async def test_list_keys_returns_relative_sorted_paths(
-    storage: LocalFSStorage,
-) -> None:
+async def test_list_keys_returns_relative_sorted_paths(storage: LocalFSStorage) -> None:
     """После нескольких uploads ``list_keys`` возвращает относительные пути."""
     await storage.upload("a.bin", b"1")
     await storage.upload("dir/b.bin", b"2")
@@ -81,9 +79,7 @@ async def test_list_keys_with_prefix(storage: LocalFSStorage) -> None:
     assert keys == ["dir/b.bin", "dir/sub/c.bin"]
 
 
-async def test_list_keys_missing_prefix_returns_empty(
-    storage: LocalFSStorage,
-) -> None:
+async def test_list_keys_missing_prefix_returns_empty(storage: LocalFSStorage) -> None:
     """Несуществующий префикс возвращает пустой список без ошибки."""
     assert await storage.list_keys("no-such-prefix") == []
 
@@ -100,9 +96,7 @@ async def test_presigned_url_returns_file_uri(
     assert url == expected
 
 
-async def test_unsafe_key_path_traversal_rejected(
-    storage: LocalFSStorage,
-) -> None:
+async def test_unsafe_key_path_traversal_rejected(storage: LocalFSStorage) -> None:
     """Ключ с ``..`` отвергается как path-traversal."""
     with pytest.raises(ValueError):
         await storage.upload("../escape.bin", b"x")

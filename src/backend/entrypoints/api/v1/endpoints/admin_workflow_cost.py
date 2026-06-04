@@ -8,6 +8,7 @@ Endpoints (mount /api/v1/admin/workflow-cost):
 
 from __future__ import annotations
 
+from datetime import UTC
 from decimal import Decimal
 from typing import Any
 
@@ -98,7 +99,7 @@ async def get_workflow_cost_history(
     workflow_id: str, period_days: int = Query(7, ge=1, le=90)
 ) -> dict[str, Any]:
     """Историческая стоимость workflow за период (для page 15 trend)."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     try:
         from clickhouse_connect import get_async_client
@@ -121,13 +122,13 @@ async def get_workflow_cost_history(
             else "default"
         )
         client = await get_async_client(host=host, port=port, database=database)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ClickHouse unavailable: {exc}",
         ) from exc
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=period_days)
+    cutoff = datetime.now(UTC) - timedelta(days=period_days)
     try:
         result = await client.query(
             "SELECT toDate(created_at) AS day, "
@@ -140,7 +141,7 @@ async def get_workflow_cost_history(
             "GROUP BY day ORDER BY day",
             parameters={"workflow_id": workflow_id, "cutoff": cutoff},
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ClickHouse query failed: {exc}",

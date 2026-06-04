@@ -15,7 +15,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
@@ -80,11 +81,13 @@ class SlackAdapter:
     async def health(self) -> bool:
         try:
             return bool(self._webhook_url_provider())
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
-assert isinstance(SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
+assert isinstance(
+    SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel
+)  # Protocol-conformance check на import
 
 
 __all__ = ("SlackAdapter",)

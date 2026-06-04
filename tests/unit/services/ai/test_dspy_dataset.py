@@ -21,8 +21,20 @@ from src.backend.services.ai.feedback.dspy_dataset_builder import (
 async def test_dataset_builder_filters_only_positive() -> None:
     """only_positive=True отбирает label='positive'."""
     items = [
-        {"prompt": "q1", "expected_answer": "a1", "label": "positive", "id": 1, "tenant_id": "t"},
-        {"prompt": "q2", "expected_answer": "a2", "label": "negative", "id": 2, "tenant_id": "t"},
+        {
+            "prompt": "q1",
+            "expected_answer": "a1",
+            "label": "positive",
+            "id": 1,
+            "tenant_id": "t",
+        },
+        {
+            "prompt": "q2",
+            "expected_answer": "a2",
+            "label": "negative",
+            "id": 2,
+            "tenant_id": "t",
+        },
     ]
     service = AsyncMock()
     service.list_labeled = AsyncMock(return_value=items)
@@ -41,7 +53,13 @@ async def test_dataset_builder_skips_empty_prompts() -> None:
     items = [
         {"prompt": "", "expected_answer": "a", "label": "positive"},
         {"prompt": "q", "expected_answer": "", "label": "positive"},
-        {"prompt": "good", "expected_answer": "yes", "label": "positive", "id": 9, "tenant_id": "t"},
+        {
+            "prompt": "good",
+            "expected_answer": "yes",
+            "label": "positive",
+            "id": 9,
+            "tenant_id": "t",
+        },
     ]
     service = AsyncMock()
     service.list_labeled = AsyncMock(return_value=items)
@@ -70,7 +88,13 @@ async def test_feedback_trainer_noop_when_no_dspy() -> None:
     service = AsyncMock()
     service.list_labeled = AsyncMock(
         return_value=[
-            {"prompt": "p", "expected_answer": "c", "label": "positive", "id": 1, "tenant_id": "t"}
+            {
+                "prompt": "p",
+                "expected_answer": "c",
+                "label": "positive",
+                "id": 1,
+                "tenant_id": "t",
+            }
         ]
     )
     storage = AsyncMock()

@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -114,7 +115,7 @@ def _build_workflow_tool(
         timeout_s: int = 300,
         _workflow_name: str = descriptor.name,
         _route_id: str = route_id,
-        _input_schema: type["BaseModel"] | None = input_schema,
+        _input_schema: type[BaseModel] | None = input_schema,
     ) -> str:
         """MCP tool-handler для запуска workflow'а.
 
@@ -125,7 +126,7 @@ def _build_workflow_tool(
         """
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps(
                 {"error": "invalid JSON payload", "raw": payload}
             ).decode()
@@ -134,7 +135,7 @@ def _build_workflow_tool(
             try:
                 validated = _input_schema.model_validate(parsed_payload)
                 parsed_payload = validated.model_dump(mode="json")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 return orjson.dumps(
                     {"error": f"payload validation failed: {exc}"}
                 ).decode()
@@ -148,7 +149,7 @@ def _build_workflow_tool(
                 timeout_s=timeout_s,
             )
             return orjson.dumps(result, default=str).decode()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.exception("workflow tool %s failed: %s", tool_name, exc)
             return orjson.dumps({"error": str(exc)}).decode()
 
@@ -168,7 +169,7 @@ async def _trigger_and_maybe_wait(
     отдельным процессом (см. `mcp_server.py`), импорты ленивые.
     """
     import asyncio
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from src.backend.core.di.providers import (
         get_workflow_state_store_provider,
@@ -216,7 +217,7 @@ async def _trigger_and_maybe_wait(
         WorkflowStatus.failed,
         WorkflowStatus.cancelled,
     }
-    deadline = datetime.now(timezone.utc).timestamp() + timeout_s
+    deadline = datetime.now(UTC).timestamp() + timeout_s
     poll_interval_s = 2.0
 
     while True:
@@ -242,7 +243,7 @@ async def _trigger_and_maybe_wait(
                     row.finished_at.isoformat() if row.finished_at else None
                 ),
             }
-        if datetime.now(timezone.utc).timestamp() >= deadline:
+        if datetime.now(UTC).timestamp() >= deadline:
             return {
                 "workflow_id": str(instance_id),
                 "status": row.status.value,
@@ -302,7 +303,7 @@ def _register_catalog_tools(mcp: Any) -> None:
 
         try:
             uid = UUID(instance_id)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return orjson.dumps({"error": f"invalid UUID: {instance_id!r}"}).decode()
 
         WorkflowInstanceStore = get_workflow_state_store_provider()

@@ -4,7 +4,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
-__all__ = ("MCPToolProcessor", "AgentGraphProcessor", "CDCProcessor")
+__all__ = ("AgentGraphProcessor", "CDCProcessor", "MCPToolProcessor")
 
 
 class MCPToolProcessor(BaseProcessor):

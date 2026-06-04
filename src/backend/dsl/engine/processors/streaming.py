@@ -26,7 +26,7 @@ import logging
 import random
 import uuid
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.clock import RealClock
 from src.backend.core.interfaces.clock import Clock
@@ -39,18 +39,18 @@ from src.backend.dsl.engine.late_event_policy import apply_late_policy
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "MessageExpirationProcessor",
-    "CorrelationIdProcessor",
-    "TumblingWindowProcessor",
-    "SlidingWindowProcessor",
-    "SessionWindowProcessor",
-    "GroupByKeyProcessor",
-    "SchemaRegistryValidator",
-    "ReplyToProcessor",
-    "ExactlyOnceProcessor",
-    "DurableSubscriberProcessor",
     "ChannelPurgerProcessor",
+    "CorrelationIdProcessor",
+    "DurableSubscriberProcessor",
+    "ExactlyOnceProcessor",
+    "GroupByKeyProcessor",
+    "MessageExpirationProcessor",
+    "ReplyToProcessor",
     "SamplingProcessor",
+    "SchemaRegistryValidator",
+    "SessionWindowProcessor",
+    "SlidingWindowProcessor",
+    "TumblingWindowProcessor",
 )
 
 logger = logging.getLogger("dsl.streaming")
@@ -97,7 +97,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return
 
         if age <= self._ttl:
@@ -245,7 +245,7 @@ class _BaseWindow(BaseProcessor):
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
             event_time = float(event_time_raw) if event_time_raw is not None else None
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             event_time = None
         if event_time is None:
             return False
@@ -521,7 +521,7 @@ class SchemaRegistryValidator(BaseProcessor):
     Схема загружается по ``subject`` и кешируется.
     """
 
-    _cache: dict[str, Any] = {}
+    _cache: ClassVar[dict[str, Any]] = {}
 
     def __init__(
         self, *, subject: str, schema_loader: Any = None, name: str | None = None
@@ -731,7 +731,7 @@ class SamplingProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         # random.random() < p — эквивалентно Bernoulli trial (sampling, не крипто).
-        if random.random() >= self._p:  # noqa: S311
+        if random.random() >= self._p:  # noqa: S311  # non-cryptographic use
             exchange.properties["_sampled_out"] = True
             # Помечаем как завершённое без ошибки, но downstream должен фильтровать.
             exchange.properties["_skip_downstream"] = True

@@ -115,9 +115,7 @@ async def test_maxsize_evicts_oldest() -> None:
     await backend.set("b", b"2")
     await backend.set("c", b"3")  # должен вытеснить "a" (LRU/TTL-стратегия)
     # Должно остаться 2 элемента, "a" — вытеснен.
-    keys_present = [
-        await backend.exists(k) for k in ("a", "b", "c")
-    ]
+    keys_present = [await backend.exists(k) for k in ("a", "b", "c")]
     assert sum(keys_present) == 2
 
 

@@ -24,7 +24,11 @@ class _StubReader(LangFuseReader):
         self._rows = rows_by_group
 
     async def fetch_costs(
-        self, *, window: timedelta = timedelta(hours=24), group_by: str = "route", top_n: int = 10
+        self,
+        *,
+        window: timedelta = timedelta(hours=24),
+        group_by: str = "route",
+        top_n: int = 10,
     ) -> list[CostRow]:
         return list(self._rows.get(group_by, []))
 
@@ -36,7 +40,9 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_dashboard_disabled_returns_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_dashboard_disabled_returns_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _force_flag(monkeypatch, False)
     dashboard = AICostDashboard()
     snap = await dashboard.snapshot()
@@ -51,12 +57,36 @@ async def test_dashboard_snapshot_aggregates(monkeypatch: pytest.MonkeyPatch) ->
     _force_flag(monkeypatch, True)
     rows_by_group = {
         "provider": [
-            CostRow(key="openai", requests=100, prompt_tokens=10000, completion_tokens=5000, total_cost_usd=0.55),
-            CostRow(key="anthropic", requests=50, prompt_tokens=8000, completion_tokens=4000, total_cost_usd=0.42),
+            CostRow(
+                key="openai",
+                requests=100,
+                prompt_tokens=10000,
+                completion_tokens=5000,
+                total_cost_usd=0.55,
+            ),
+            CostRow(
+                key="anthropic",
+                requests=50,
+                prompt_tokens=8000,
+                completion_tokens=4000,
+                total_cost_usd=0.42,
+            ),
         ],
         "tenant": [
-            CostRow(key="t1", requests=120, prompt_tokens=18000, completion_tokens=9000, total_cost_usd=0.85),
-            CostRow(key="t2", requests=30, prompt_tokens=2000, completion_tokens=1000, total_cost_usd=0.12),
+            CostRow(
+                key="t1",
+                requests=120,
+                prompt_tokens=18000,
+                completion_tokens=9000,
+                total_cost_usd=0.85,
+            ),
+            CostRow(
+                key="t2",
+                requests=30,
+                prompt_tokens=2000,
+                completion_tokens=1000,
+                total_cost_usd=0.12,
+            ),
         ],
     }
     dashboard = AICostDashboard(reader=_StubReader(rows_by_group))
@@ -107,7 +137,11 @@ async def test_dashboard_filters_model(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_usage_by_model_to_dict() -> None:
     row = UsageByModel(
-        model="gpt-4", requests=10, prompt_tokens=100, completion_tokens=50, total_cost_usd=0.5
+        model="gpt-4",
+        requests=10,
+        prompt_tokens=100,
+        completion_tokens=50,
+        total_cost_usd=0.5,
     )
     d = row.to_dict()
     assert d["model"] == "gpt-4"
@@ -120,7 +154,9 @@ def test_cost_by_tenant_share_default() -> None:
 
 
 @pytest.mark.asyncio
-async def test_dashboard_handles_reader_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_dashboard_handles_reader_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _force_flag(monkeypatch, True)
 
     class _BrokenReader(LangFuseReader):

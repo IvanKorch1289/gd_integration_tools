@@ -82,7 +82,7 @@ class TenantFeatureFlagResolver:
         # → Flagsmith.resolve_boolean_value("new_ui", False, ctx=acme)
     """
 
-    __slots__ = ("provider", "_local_features")
+    __slots__ = ("_local_features", "provider")
 
     def __init__(
         self,
@@ -117,7 +117,7 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_boolean_value(flag_key, default, ctx)
-            except Exception as _:  # noqa: BLE001 — fallback на local при любых ошибках
+            except Exception as _:
                 _logger.exception(
                     "External provider failed для %s, fallback на local", flag_key
                 )
@@ -138,7 +138,7 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_string_value(flag_key, default, ctx)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 _logger.exception(
                     "External provider failed для %s, fallback default", flag_key
                 )
@@ -155,19 +155,17 @@ class TenantFeatureFlagResolver:
     def _external_enabled(self) -> bool:
         """Проверяет глобальный flag ``openfeature_external``."""
         try:
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 is_external_provider_enabled,
             )
 
             return is_external_provider_enabled()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def _build_eval_context(self) -> EvaluationContext:
         """Собирает EvaluationContext из current TenantContext."""
-        from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
-            EvaluationContext,
-        )
+        from src.backend.core.feature_flags.flagsmith_provider import EvaluationContext
 
         ctx = current_tenant()
         if ctx is None:
@@ -180,15 +178,13 @@ class TenantFeatureFlagResolver:
         """Читает flag из локального ``feature_flags`` (default-safe)."""
         try:
             if self._local_features is None:
-                from src.backend.core.config.features import (  # noqa: PLC0415
-                    feature_flags,
-                )
+                from src.backend.core.config.features import feature_flags
 
                 self._local_features = feature_flags
             value = getattr(self._local_features, flag_key, None)
             if value is None:
                 return default
             return bool(value)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _logger.debug("Local feature_flags lookup failed для %s", flag_key)
             return default

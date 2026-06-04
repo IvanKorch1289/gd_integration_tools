@@ -74,10 +74,7 @@ async def test_send_dict_serializes_via_orjson(fake_aiomqtt: types.ModuleType) -
 @pytest.mark.asyncio
 async def test_send_bytes_passthrough(fake_aiomqtt: types.ModuleType) -> None:
     sink = MqttSink(
-        sink_id="m2",
-        broker_host="broker.local",
-        topic="gd/raw",
-        retain=True,
+        sink_id="m2", broker_host="broker.local", topic="gd/raw", retain=True
     )
     await sink.send(b"raw-bytes")
     _, payload, _, retain = _FakeMqttClient.last_publish  # type: ignore[misc]
@@ -105,9 +102,7 @@ async def test_send_returns_ok_false_when_aiomqtt_missing(
 
 
 @pytest.mark.asyncio
-async def test_send_handles_publish_exception(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_module = types.ModuleType("aiomqtt")
 
     class _BoomClient:
@@ -174,3 +169,37 @@ def test_tls_context_enabled_when_flag_true() -> None:
     ctx = sink._build_tls_context()
     assert ctx is not None
     assert ctx.check_hostname is True
+
+
+@pytest.mark.asyncio
+async def test_health_returns_false_on_connect_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_module = types.ModuleType("aiomqtt")
+
+    class _BoomClient:
+        def __init__(self, **_: Any) -> None: ...
+        async def __aenter__(self) -> Any:
+            raise ConnectionRefusedError("nope")
+
+        async def __aexit__(self, *_: Any) -> None:
+            return None
+
+    fake_module.Client = _BoomClient  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiomqtt", fake_module)
+    sink = MqttSink(sink_id="m10", broker_host="h", topic="t/x")
+    assert await sink.health() is False
+
+
+def test_tls_context_mtls() -> None:
+    sink = MqttSink(
+        sink_id="m11",
+        broker_host="h",
+        topic="t",
+        tls_enabled=True,
+        client_cert_path="/tmp/cert.pem",
+        client_key_path="/tmp/key.pem",
+    )
+    # load_cert_chain will raise because files don't exist; that's fine for this unit test
+    with pytest.raises(FileNotFoundError):
+        sink._build_tls_context()

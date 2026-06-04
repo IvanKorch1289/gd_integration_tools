@@ -9,17 +9,17 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from threading import Lock
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "OnnxInferenceProcessor",
-    "StreamingLLMProcessor",
     "EmbeddingProcessor",
+    "OnnxInferenceProcessor",
     "OutboxProcessor",
+    "StreamingLLMProcessor",
 )
 
 logger = logging.getLogger("dsl.ml_inference")
@@ -39,7 +39,7 @@ class OnnxInferenceProcessor(BaseProcessor):
     # числе разных моделей. Потокобезопасен через Lock (модели могут загружаться
     # параллельно из разных pipeline'ов).
     _MAX_MODELS: int = 8
-    _model_cache: OrderedDict[str, Any] = OrderedDict()
+    _model_cache: ClassVar[OrderedDict[str, Any]] = OrderedDict()
     _cache_lock: Lock = Lock()
 
     def __init__(
@@ -343,7 +343,7 @@ class OutboxProcessor(BaseProcessor):
                     text(f"""
                         INSERT INTO {self._table} (id, topic, payload)
                         VALUES (:id, :topic, CAST(:payload AS JSONB))
-                    """),  # noqa: S608  # self._table провалидирован через .isalnum() в __init__
+                    """),  # self._table провалидирован через .isalnum() в __init__  # noqa: S608  # internal query with controlled parameters
                     {"id": msg_id, "topic": self._topic, "payload": payload_json},
                 )
                 await conn.commit()

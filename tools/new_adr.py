@@ -67,8 +67,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scaffold a new ADR")
     parser.add_argument("title", help="ADR title (e.g., 'My new feature')")
     parser.add_argument(
-        "--adr-number", type=int, default=None,
-        help="ADR number (default: auto-increment from existing)"
+        "--adr-number",
+        type=int,
+        default=None,
+        help="ADR number (default: auto-increment from existing)",
     )
     args = parser.parse_args()
     sys.exit(main(args.title, args.adr_number))

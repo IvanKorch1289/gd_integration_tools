@@ -16,10 +16,7 @@ import pytest
 
 from src.backend.core.resilience.breaker import BreakerSpec, CircuitOpen
 from src.backend.core.resilience.decorators import policy
-from src.backend.core.resilience.rate_limiter import (
-    RateLimit,
-    RateLimitExceeded,
-)
+from src.backend.core.resilience.rate_limiter import RateLimit, RateLimitExceeded
 from src.backend.core.resilience.retry import RetryPolicy
 
 
@@ -48,7 +45,9 @@ async def test_policy_with_retry_repeats_on_exception() -> None:
 
 
 @pytest.mark.asyncio
-async def test_policy_with_cache_short_circuits(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_policy_with_cache_short_circuits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[int] = []
 
     @policy(cache={"ttl": 60, "key": "test:cache:{args[0]}", "backend": "memory"})
@@ -127,8 +126,7 @@ async def test_policy_breaker_open_raises_circuit_open() -> None:
 
     registry = get_breaker_registry()
     breaker = registry.get_or_create(
-        "test_open_breaker",
-        BreakerSpec(failure_threshold=1, recovery_timeout=60.0),
+        "test_open_breaker", BreakerSpec(failure_threshold=1, recovery_timeout=60.0)
     )
 
     @policy(circuit_breaker=breaker)

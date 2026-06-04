@@ -41,9 +41,7 @@ class TestStrictWhitelistEmpty:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.delenv("ENVIRONMENT", raising=False)
-        monkeypatch.setattr(
-            feature_flags, "call_function_whitelist_strict", True
-        )
+        monkeypatch.setattr(feature_flags, "call_function_whitelist_strict", True)
         with pytest.raises(PermissionError, match="empty whitelist"):
             CallFunctionProcessor._validate_module_whitelist("anything.fn", _ctx())
 
@@ -51,9 +49,7 @@ class TestStrictWhitelistEmpty:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.delenv("ENVIRONMENT", raising=False)
-        monkeypatch.setattr(
-            feature_flags, "call_function_whitelist_strict", False
-        )
+        monkeypatch.setattr(feature_flags, "call_function_whitelist_strict", False)
         # noop — без exception
         CallFunctionProcessor._validate_module_whitelist("anything.fn", _ctx())
 
@@ -89,9 +85,7 @@ class TestStrictBypassedByWhitelist:
     ) -> None:
         monkeypatch.setenv("ENVIRONMENT", "production")
         ctx = _ctx(call_function_modules=["extensions.x.functions"])
-        CallFunctionProcessor._validate_module_whitelist(
-            "extensions.x.functions", ctx
-        )
+        CallFunctionProcessor._validate_module_whitelist("extensions.x.functions", ctx)
 
     def test_production_with_whitelist_denies_other(
         self, monkeypatch: pytest.MonkeyPatch
@@ -121,6 +115,4 @@ class TestCapabilityCheck:
 
         ctx = _ctx(capability_gate=_FakeGate(), plugin="example_plugin")
         CallFunctionProcessor._check_capability("extensions.x.fns", ctx)
-        assert calls == [
-            ("example_plugin", "function.call.extensions.x.fns", None)
-        ]
+        assert calls == [("example_plugin", "function.call.extensions.x.fns", None)]

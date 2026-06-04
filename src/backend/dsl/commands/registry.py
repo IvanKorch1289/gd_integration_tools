@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = (
-    "RouteRegistry",
-    "route_registry",
     "ActionHandlerRegistry",
     "ActionHandlerSpec",
+    "RouteRegistry",
     "action_handler_registry",
+    "route_registry",
 )
 
 
@@ -179,7 +179,7 @@ class RouteRegistry:
         """
         return self._routes.pop(route_id, None) is not None
 
-    def snapshot_state(self) -> dict[str, "Pipeline"]:
+    def snapshot_state(self) -> dict[str, Pipeline]:
         """Возвращает копию текущего внутреннего состояния (W25.1).
 
         Используется ``DSLYamlWatcher`` для atomic reload: при ошибке
@@ -191,7 +191,7 @@ class RouteRegistry:
         """
         return dict(self._routes)
 
-    def restore_state(self, snapshot: dict[str, "Pipeline"]) -> None:
+    def restore_state(self, snapshot: dict[str, Pipeline]) -> None:
         """Заменяет текущее состояние снимком (W25.1).
 
         Args:

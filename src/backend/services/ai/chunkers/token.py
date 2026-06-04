@@ -10,6 +10,7 @@ encoding'а (по умолчанию ``cl100k_base``, совпадающий с 
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 __all__ = ("TokenChunker",)
 
@@ -34,7 +35,7 @@ class TokenChunker:
         self._encoding = self._load_encoding(encoding_name)
 
     @staticmethod
-    def _load_encoding(name: str) -> object | None:
+    def _load_encoding(name: str) -> Any | None:
         """Возвращает tiktoken encoding или ``None``, если пакет недоступен."""
         try:
             import tiktoken
@@ -46,7 +47,7 @@ class TokenChunker:
             return None
         try:
             return tiktoken.get_encoding(name)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "tiktoken.get_encoding(%r) failed: %s — fallback на character-based",
                 name,
@@ -64,7 +65,7 @@ class TokenChunker:
 
     def _token_split(self, text: str) -> list[str]:
         encoding = self._encoding
-        assert encoding is not None  # noqa: S101 — проверено в split()
+        assert encoding is not None
 
         tokens = encoding.encode(text)
         if not tokens:

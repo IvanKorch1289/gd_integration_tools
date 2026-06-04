@@ -126,8 +126,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: _make_stub("api_key_manager"),
     )
     monkeypatch.setattr(
-        "src.backend.dsl.engine.tracer.ExecutionTracer",
-        lambda: _make_stub("tracer"),
+        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer")
     )
     monkeypatch.setattr(
         "src.backend.dsl.engine.plugin_registry.ProcessorPluginRegistry",
@@ -168,8 +167,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
 
     # Invoker — конструктор без аргументов.
     monkeypatch.setattr(
-        "src.backend.services.execution.invoker.Invoker",
-        lambda: _make_stub("invoker"),
+        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker")
     )
 
     # WatermarkStore через factory.
@@ -187,8 +185,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
 
 
 def test_register_app_state_sets_app_ref(
-    fresh_app: FastAPI,
-    stub_constructors: dict[str, MagicMock],
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
 ) -> None:
     """``register_app_state`` вызывает ``set_app_ref`` с переданным app."""
     from src.backend.core.di.app_state import get_app_ref
@@ -198,8 +195,7 @@ def test_register_app_state_sets_app_ref(
 
 
 def test_register_app_state_writes_every_singleton_to_state(
-    fresh_app: FastAPI,
-    stub_constructors: dict[str, MagicMock],
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
 ) -> None:
     """После ``register_app_state`` все ожидаемые атрибуты присутствуют в state."""
     di.register_app_state(fresh_app)
@@ -223,8 +219,7 @@ def test_register_app_state_writes_every_singleton_to_state(
 
 
 def test_register_app_state_uses_stub_instances(
-    fresh_app: FastAPI,
-    stub_constructors: dict[str, MagicMock],
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
 ) -> None:
     """State хранит *именно* те MagicMock'и, что вернули подменённые конструкторы."""
     di.register_app_state(fresh_app)
@@ -256,8 +251,7 @@ def test_register_app_state_mqtt_fallback_when_settings_raise(
         return fallback_settings
 
     monkeypatch.setattr(
-        "src.backend.entrypoints.mqtt.mqtt_handler.MqttSettings",
-        _explode_then_fallback,
+        "src.backend.entrypoints.mqtt.mqtt_handler.MqttSettings", _explode_then_fallback
     )
 
     # Должно завершиться без исключения: внутри есть try/except.
@@ -480,8 +474,7 @@ def test_depends_functions_work_via_fastapi_endpoint(
 
 
 def test_register_app_state_idempotent_after_reset(
-    fresh_app: FastAPI,
-    stub_constructors: dict[str, MagicMock],
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
 ) -> None:
     """``register_app_state`` можно вызвать повторно после ``reset_app_state``."""
     from src.backend.core.di.app_state import reset_app_state
@@ -493,7 +486,9 @@ def test_register_app_state_idempotent_after_reset(
     assert fresh_app.state.mqtt_handler is stub_constructors["mqtt_handler"]
 
 
-def test_register_app_state_simple_namespace_state(stub_constructors: dict[str, MagicMock]) -> None:
+def test_register_app_state_simple_namespace_state(
+    stub_constructors: dict[str, MagicMock],
+) -> None:
     """Функция принимает любой объект с атрибутом ``state`` (duck-typed app)."""
     fake_app = SimpleNamespace(state=SimpleNamespace())  # type: ignore[arg-type]
     # Подменяем все конструкторы, чтобы избежать сетевых подключений.

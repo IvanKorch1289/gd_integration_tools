@@ -24,4 +24,4 @@ from src.backend.services.ai.dspy.optimizer import (
     DSPyOptimizer,
 )
 
-__all__ = ("DSPyOptimizer", "CompileReport", "BaselineDataset")
+__all__ = ("BaselineDataset", "CompileReport", "DSPyOptimizer")

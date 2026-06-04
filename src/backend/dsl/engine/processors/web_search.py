@@ -103,7 +103,7 @@ class WebSearchProcessor(BaseProcessor):
         self._target = to
         self._deep_research = deep_research
 
-    def _resolve_query(self, exchange: "Exchange[Any]") -> str | None:
+    def _resolve_query(self, exchange: Exchange[Any]) -> str | None:
         if self._query:
             return self._query
         if not self._query_source:
@@ -122,7 +122,7 @@ class WebSearchProcessor(BaseProcessor):
             value = None
         return str(value) if value is not None else None
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -137,16 +137,14 @@ class WebSearchProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.web_search_enabled:
                 exchange.set_property("web_search_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         query = self._resolve_query(exchange)
@@ -167,7 +165,7 @@ class WebSearchProcessor(BaseProcessor):
                 result = await service.query(
                     query, max_results=self._max_results, provider=provider
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"web_search error: {exc}")
             return
 

@@ -25,7 +25,9 @@ from src.backend.services.plugins.loader_v11 import PluginLoaderV11
 
 
 class _FakeActions:
-    def register(self, action_id: str, handler: Any, *, spec: Any | None = None) -> None:
+    def register(
+        self, action_id: str, handler: Any, *, spec: Any | None = None
+    ) -> None:
         return None
 
 
@@ -42,9 +44,7 @@ class _FakeProcessors:
         return None
 
 
-def _write_plugin(
-    extensions_dir: Path, *, name: str, with_pages: bool = True
-) -> Path:
+def _write_plugin(extensions_dir: Path, *, name: str, with_pages: bool = True) -> Path:
     plugin_dir = extensions_dir / name
     plugin_dir.mkdir()
     (plugin_dir / "__init__.py").write_text("", encoding="utf-8")
@@ -142,9 +142,7 @@ async def test_pages_unmounted_on_shutdown(
 
 
 @pytest.mark.asyncio
-async def test_no_pages_dir_when_streamlit_arg_none(
-    isolated_extensions: Path,
-) -> None:
+async def test_no_pages_dir_when_streamlit_arg_none(isolated_extensions: Path) -> None:
     """Без streamlit_pages_dir функционал не активируется."""
     _write_plugin(isolated_extensions, name="page_plugin_skip")
     loader = _build_loader(isolated_extensions, streamlit_pages_dir=None)

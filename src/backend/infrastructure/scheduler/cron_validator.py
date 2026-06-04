@@ -14,9 +14,9 @@ Public API:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Sequence
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 __all__ = ("CronValidationError", "CronValidationResult", "validate_cron_expression")
@@ -127,7 +127,7 @@ def list_supported_timezones() -> Sequence[str]:
         from zoneinfo import available_timezones
 
         return sorted(available_timezones())
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return (
             "UTC",
             "Europe/Moscow",

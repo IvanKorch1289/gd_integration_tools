@@ -176,10 +176,6 @@ class TestFakeBackendBehavior:
 
     async def test_unknown_handle_raises(self) -> None:
         backend = FakeWorkflowBackend()
-        ghost = WorkflowHandle(
-            workflow_id="wf-x", run_id="missing", namespace="t"
-        )
+        ghost = WorkflowHandle(workflow_id="wf-x", run_id="missing", namespace="t")
         with pytest.raises(KeyError):
-            await backend.signal_workflow(
-                handle=ghost, signal_name="s", payload={}
-            )
+            await backend.signal_workflow(handle=ghost, signal_name="s", payload={})

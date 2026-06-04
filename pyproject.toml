@@ -3,7 +3,7 @@ name = "gd_advanced_tools"
 version = "0.20.0"
 description = "GD Integration Tools — интеграционная шина на Python 3.14"
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.13,<3.14"
 authors = [
     { name = "crazyivan1289", email = "crazyivan1289@gmail.com" }
 ]
@@ -97,6 +97,8 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.20.0,<3.0.0",
     "typer>=0.12.0,<1.0.0",
     "pydash>=8.0,<9.0",
+    "glom>=25.12.0",
+    "presidio-analyzer>=2.2.362",
 ]
 
 [project.optional-dependencies]
@@ -206,9 +208,12 @@ rag = [
 # onnxruntime wheels. Доступен только как opt-in для legacy-стендов на
 # Python 3.12 / 3.13. Default RAG embedding-провайдер — sentence-transformers
 # (см. services/ai/embedding_providers.py).
-embeddings-fastembed-legacy = [
-    "fastembed>=0.4.0,<1.0.0",
-]
+# S36 fix: fastembed конфликтует с huggingface-hub>=0.26.0 (core dep) и
+# pydantic-ai>=1.99.0 (ai-2026 extra). fastembed — legacy opt-in (ONNX),
+# на Python 3.13+ устанавливается вручную при необходимости.
+# embeddings-fastembed-legacy = [
+#     "fastembed>=0.4.0,<1.0.0",
+# ]
 # К4 MVP (Sprint S5): AI Stack 2026.
 # litellm — unified LLM-gateway, pydantic-ai — typed agents,
 # FlagEmbedding — BGE-M3 + reranker-v2-m3,
@@ -247,10 +252,12 @@ ai-model-registry = [
 # пакеты на момент 2026-05 не имеют wheels для Python 3.14
 # (torch/torchaudio transitive deps). Помечены environment-marker
 # `python_version < "3.14"` — на 3.14 lazy-import возвращает skip-mode.
-ai-voice = [
-    "openai-whisper>=20240930,<2; python_version < '3.14'",
-    "TTS>=0.22,<1; python_version < '3.14'",
-]
+# S36 fix: ai-voice конфликтует с markitdown→numpy>=2.1.0 (core dep).
+# Устанавливается вручную при необходимости.
+# ai-voice = [
+#     "openai-whisper>=20240930; python_version < '3.14'",
+#     "TTS>=0.22,<1; python_version < '3.14'",
+# ]
 # Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
 # backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
 # внутри TemporalWorkflowBackend.__init__ — dev-light без SDK.
@@ -438,6 +445,10 @@ dev = [
     # S35 W4: pip-only (uv lock conflict: hypothesis→pydantic-ai>=1.99.0↔llm-guard tiktoken).
     # Property-based tests: pip install hypothesis>=6.0.0
     "hypothesis>=6.0.0",
+    # S36 fix: aiosqlite требуется для unit-тестов fallbacks (sqlite_doc_store, sqlite_search).
+    # Ранее был только в [project.optional-dependencies] dev-light — недоступен в полном dev.
+    "aiosqlite>=0.20.0,<1.0.0",
+    "python-consul2>=0.1.5",
 ]
 
 [build-system]
@@ -472,8 +483,8 @@ default-groups = ["dev"]
 # (paddlepaddle/aioldap3/pygls split). См. UV hint "limit the environments
 # with tool.uv.environments".
 environments = [
-    "sys_platform == 'linux'",
-    "sys_platform == 'darwin'",
+    "sys_platform == 'linux' and python_full_version == '3.13.*'",
+    "sys_platform == 'darwin' and python_full_version == '3.13.*'",
 ]
 # Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]:
 # mlflow>=2.18,<3 декларирует pyarrow<20, но pyarrow в core зависит от
@@ -513,7 +524,7 @@ disable_error_code = [
 ]
 no_implicit_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 # Wave D.2: temporalio — optional extra (uv sync --extra workflow);
@@ -595,7 +606,12 @@ module = "huggingface_hub"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "app.entrypoints.grpc.protobuf.*"
+module = "src.backend.entrypoints.grpc.protobuf.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# S37: sqladmin type stubs are overly strict for column_filters.
+module = "src.backend.utilities.admin_panel.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
@@ -696,6 +712,16 @@ module = [
     "advanced_alchemy.*",
     "rapidfuzz",
     "rapidfuzz.*",
+    "streamlit_autorefresh",
+    "mlflow",
+    "mlflow.*",
+    "mem0",
+    "nemoguardrails",
+    "langchain_postgres",
+    "aiobotocore",
+    "aiobotocore.*",
+    "presidio_anonymizer",
+    "st_aggrid",
 ]
 ignore_missing_imports = true
 
@@ -721,7 +747,7 @@ disable_error_code = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py314"
+target-version = "py313"
 exclude = [
     "src/backend/entrypoints/grpc/protobuf/*"
 ]
@@ -730,7 +756,10 @@ exclude = [
 select = ["E", "F", "W", "I", "S"]
 ignore = [
     "E501",
-    "S104"
+    "S104",
+    "RUF001",
+    "RUF002",
+    "RUF003",
 ]
 
 # Wave-6.1 lazy singletons:

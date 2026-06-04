@@ -24,10 +24,7 @@ from src.backend.services.plugins.manifest_v11 import (
 
 
 def _make_manifest(
-    name: str,
-    version: str,
-    *,
-    compatibility: PluginCompatibility | None = None,
+    name: str, version: str, *, compatibility: PluginCompatibility | None = None
 ) -> PluginManifestV11:
     """Фабрика минимального манифеста для тестов."""
     return PluginManifestV11(
@@ -110,9 +107,7 @@ class TestCoreIncompatible:
         a = _make_manifest(
             "alpha",
             "1.0.0",
-            compatibility=PluginCompatibility(
-                incompatible_core_versions=">=0.5,<0.6"
-            ),
+            compatibility=PluginCompatibility(incompatible_core_versions=">=0.5,<0.6"),
         )
 
         violations = check_compatibility([a], core_version="0.5.3")
@@ -126,9 +121,7 @@ class TestCoreIncompatible:
         a = _make_manifest(
             "alpha",
             "1.0.0",
-            compatibility=PluginCompatibility(
-                incompatible_core_versions=">=0.5,<0.6"
-            ),
+            compatibility=PluginCompatibility(incompatible_core_versions=">=0.5,<0.6"),
         )
 
         violations = check_compatibility([a], core_version="0.4.9")
@@ -143,9 +136,7 @@ class TestRequiresPlugins:
         a = _make_manifest(
             "alpha",
             "1.0.0",
-            compatibility=PluginCompatibility(
-                requires_plugins={"beta": ">=1.0,<2.0"}
-            ),
+            compatibility=PluginCompatibility(requires_plugins={"beta": ">=1.0,<2.0"}),
         )
 
         violations = check_compatibility([a])
@@ -157,9 +148,7 @@ class TestRequiresPlugins:
         a = _make_manifest(
             "alpha",
             "1.0.0",
-            compatibility=PluginCompatibility(
-                requires_plugins={"beta": ">=2.0,<3.0"}
-            ),
+            compatibility=PluginCompatibility(requires_plugins={"beta": ">=2.0,<3.0"}),
         )
         b = _make_manifest("beta", "1.0.0")
 
@@ -172,9 +161,7 @@ class TestRequiresPlugins:
         a = _make_manifest(
             "alpha",
             "1.0.0",
-            compatibility=PluginCompatibility(
-                requires_plugins={"beta": ">=1.0,<2.0"}
-            ),
+            compatibility=PluginCompatibility(requires_plugins={"beta": ">=1.0,<2.0"}),
         )
         b = _make_manifest("beta", "1.5.0")
 

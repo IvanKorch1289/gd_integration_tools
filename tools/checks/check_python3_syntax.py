@@ -116,13 +116,34 @@ def check_file(path: Path) -> list[Violation]:
         source = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return []
+    source_lines = source.splitlines()
+    violations: list[Violation] = []
+
     try:
         tree = ast.parse(source, filename=str(path))
     except SyntaxError:
-        return []
+        # Python 3.13+ превращает ``except A, B:`` в SyntaxError.
+        # Fallback: нормализуем backslash-переносы и ищем паттерн через regex.
+        normalized = _BACKSLASH_NEWLINE_RE.sub(" ", source)
+        for i, line in enumerate(normalized.splitlines(), start=1):
+            if re.search(
+                r"except\s+[A-Za-z_][A-Za-z0-9_.]*\s*,\s*[A-Za-z_][A-Za-z0-9_.]*\s*:",
+                line,
+            ):
+                violations.append(
+                    Violation(
+                        file=str(path),
+                        line=i,
+                        rule=RULE_EXCEPT_TUPLE_NO_PAREN,
+                        message=(
+                            "except A, B: без скобок (Python-2 стиль); "
+                            "оберните в кортеж: except (A, B):. Авто-фикс: "
+                            "python -m tools.codemods.fix_except_clause <path>"
+                        ),
+                    )
+                )
+        return violations
 
-    source_lines = source.splitlines()
-    violations: list[Violation] = []
     for node in ast.walk(tree):
         if not isinstance(node, ast.ExceptHandler):
             continue
@@ -157,7 +178,7 @@ def iter_python_files(root: Path) -> Iterator[Path]:
 def main(argv: list[str] | None = None) -> int:
     """CLI: обойти ``--root`` и вывести нарушения; exit 1 если найдены."""
     parser = argparse.ArgumentParser(
-        description="AST-gate: запрет except A, B: без скобок (PLAN V22 §S17 DoD #2)",
+        description="AST-gate: запрет except A, B: без скобок (PLAN V22 §S17 DoD #2)"
     )
     parser.add_argument(
         "--root",
@@ -183,10 +204,7 @@ def main(argv: list[str] | None = None) -> int:
         for v in all_violations:
             print(f"{v.file}:{v.line}: [{v.rule}] {v.message}")
         if all_violations:
-            print(
-                f"\n{len(all_violations)} violation(s) found.",
-                file=sys.stderr,
-            )
+            print(f"\n{len(all_violations)} violation(s) found.", file=sys.stderr)
         else:
             print("OK: no Python-2 style except clauses.")
 

@@ -16,10 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.services.wiki.whoosh_index import (
-    _DEFAULT_DOCS_DIR,
-    WhooshIndex,
-)
+from src.backend.services.wiki.whoosh_index import _DEFAULT_DOCS_DIR, WhooshIndex
 
 
 @pytest.mark.parametrize(
@@ -81,6 +78,4 @@ def test_yaml_files_are_indexed() -> None:
 
     # rule-engine-example.yaml должен найтись (создан в commit
     # [wave:s8/k3-rule-engine-finale-tests-docs]).
-    assert any(h.path.endswith(".yaml") for h in dsl_hits), (
-        "DSL .yaml не индексируется"
-    )
+    assert any(h.path.endswith(".yaml") for h in dsl_hits), "DSL .yaml не индексируется"

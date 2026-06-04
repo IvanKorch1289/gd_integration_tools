@@ -7,11 +7,14 @@
 * :meth:`bulk_register` — пересборка списка;
 * :meth:`unregister` / :meth:`clear`.
 """
+
 from __future__ import annotations
 
 import pytest  # noqa: S101
 
-pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
+pytest.importorskip(
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+)
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.registry import WorkflowCompilerRegistry
@@ -40,7 +43,9 @@ def test_get_or_compile_recompiles_when_declaration_changed() -> None:
     decl_v1 = _decl()
     a = reg.get_or_compile(decl_v1)
     # Меняем декларацию: тот же name, но другие шаги.
-    decl_v2 = WorkflowBuilder(decl_v1.name).activity("foo.bar").activity("foo.baz").build()  # type: ignore[attr-defined]
+    decl_v2 = (
+        WorkflowBuilder(decl_v1.name).activity("foo.bar").activity("foo.baz").build()
+    )  # type: ignore[attr-defined]
     b = reg.get_or_compile(decl_v2)
     assert a is not b
 

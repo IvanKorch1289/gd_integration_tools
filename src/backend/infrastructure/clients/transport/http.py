@@ -505,7 +505,7 @@ class HttpClient(BaseHttpClient):
 
 
 @asynccontextmanager
-async def get_http_client() -> AsyncGenerator[HttpClient, None]:
+async def get_http_client() -> AsyncGenerator[HttpClient]:
     client = HttpClient()
     yield client
 

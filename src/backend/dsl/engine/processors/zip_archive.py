@@ -87,7 +87,7 @@ class ZipArchiveProcessor(BaseProcessor):
         self._target = to
         self._compression = compression
 
-    def _resolve_source(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_source(self, exchange: Exchange[Any]) -> Any:
         body = exchange.in_message.body
         if self._source == "body":
             return body
@@ -99,7 +99,7 @@ class ZipArchiveProcessor(BaseProcessor):
             return exchange.properties.get(field)
         return None
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -132,16 +132,14 @@ class ZipArchiveProcessor(BaseProcessor):
                 result[info.filename] = zf.read(info.filename)
         return result
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_zip_archive:
                 exchange.set_property("zip_archive_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         src_value = self._resolve_source(exchange)
@@ -162,7 +160,7 @@ class ZipArchiveProcessor(BaseProcessor):
         except zipfile.BadZipFile as exc:
             exchange.fail(f"zip_archive: bad zip — {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"zip_archive error: {exc}")
             return
 

@@ -124,14 +124,14 @@ class ProcessorHealthService:
                     check(), timeout=self._timeout_per_check_s
                 )
                 return result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return ProcessorHealthResult(
                     processor_name=name,
                     ok=False,
                     reason=f"timeout ({self._timeout_per_check_s}s)",
                     latency_ms=(time.monotonic() - start) * 1000,
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 return ProcessorHealthResult(
                     processor_name=name,
                     ok=False,
@@ -222,7 +222,7 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
             reason="best-effort: settings configured",
             latency_ms=(time.monotonic() - start) * 1000,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return ProcessorHealthResult(
             processor_name="kafka_schema_registry",
             ok=False,
@@ -251,7 +251,7 @@ async def _check_temporal_server() -> ProcessorHealthResult:
             reason="best-effort: settings configured",
             latency_ms=(time.monotonic() - start) * 1000,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return ProcessorHealthResult(
             processor_name="temporal_server",
             ok=False,
@@ -280,7 +280,7 @@ async def _check_vault_sealed() -> ProcessorHealthResult:
             reason="best-effort: vault.enabled=true",
             latency_ms=(time.monotonic() - start) * 1000,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return ProcessorHealthResult(
             processor_name="vault",
             ok=False,
@@ -320,7 +320,7 @@ async def _check_redis_cluster() -> ProcessorHealthResult:
             reason="best-effort: redis.enabled=true",
             latency_ms=(time.monotonic() - start) * 1000,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return ProcessorHealthResult(
             processor_name="redis_cluster",
             ok=False,
@@ -360,7 +360,7 @@ async def _check_graylog() -> ProcessorHealthResult:
             reason="best-effort: LOG_HOST configured",
             latency_ms=(time.monotonic() - start) * 1000,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return ProcessorHealthResult(
             processor_name="graylog",
             ok=False,
@@ -375,7 +375,7 @@ def _is_strict_mode() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.processor_health_checks_strict
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return False
 
 

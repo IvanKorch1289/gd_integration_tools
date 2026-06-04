@@ -14,10 +14,10 @@ from src.backend.infrastructure.eventing.schema_registry import SchemaRegistry
 
 __all__ = (
     "CloudEvent",
-    "envelope",
-    "parse_envelope",
-    "SchemaRegistry",
+    "Inbox",
     "OutboxEvent",
     "OutboxPublisher",
-    "Inbox",
+    "SchemaRegistry",
+    "envelope",
+    "parse_envelope",
 )

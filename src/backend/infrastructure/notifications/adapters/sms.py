@@ -24,7 +24,8 @@ Scaffolding-реализация: URL и payload-форматы помечены
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Final, Literal
+from collections.abc import Callable
+from typing import Any, Final, Literal
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
@@ -117,13 +118,16 @@ class SMSAdapter:
         # TODO: подтвердить endpoint и формат МегаФон.
         if self._provider == "megafon":
             headers = {"Authorization": creds}
-            payload = {
+            megafon_payload: dict[str, Any] = {
                 "destination": recipient,
                 "sender": self._sender_id,
                 "text": body,
             }
             response = await client.request(
-                "POST", PROVIDER_ENDPOINTS["megafon"], json=payload, headers=headers
+                "POST",
+                PROVIDER_ENDPOINTS["megafon"],
+                json=megafon_payload,
+                headers=headers,
             )
             if response.status_code >= 400:
                 raise RuntimeError(f"MegaFon send failed: {response.status_code}")
@@ -135,11 +139,13 @@ class SMSAdapter:
         try:
             creds = self._credentials_provider()
             return bool(creds)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
-assert isinstance(SMSAdapter(credentials_provider=lambda: ""), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
+assert isinstance(
+    SMSAdapter(credentials_provider=lambda: ""), NotificationChannel
+)  # Protocol-conformance check на import
 
 
 __all__ = ("SMSAdapter", "SMSProvider")

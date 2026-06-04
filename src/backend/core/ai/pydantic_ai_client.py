@@ -147,7 +147,7 @@ class PydanticAIClient:
                 "PydanticAIClient retry counter",
                 labels=("model", "attempt"),
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     # ── public API ─────────────────────────────────────────────────────────
@@ -156,7 +156,7 @@ class PydanticAIClient:
         self,
         prompt: str,
         *,
-        output_type: type["BaseModel"] | None = None,
+        output_type: type[BaseModel] | None = None,
         deps: LLMDependencies | None = None,
         stream: bool = False,
     ) -> LLMResult:
@@ -342,7 +342,7 @@ class PydanticAIClient:
             counter = getattr(self._metrics_registry, name, None)
             if counter is not None and hasattr(counter, "labels"):
                 counter.labels(**labels).inc()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _emit_histogram(self, name: str, value: int, labels: dict[str, str]) -> None:
@@ -353,5 +353,5 @@ class PydanticAIClient:
             histogram = getattr(self._metrics_registry, name, None)
             if histogram is not None and hasattr(histogram, "labels"):
                 histogram.labels(**labels).observe(value)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass

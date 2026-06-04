@@ -12,9 +12,9 @@ from src.backend.core.config.external_apis.skb import SKBAPISettings, skb_api_se
 
 __all__ = (
     "AntivirusAPISettings",
-    "antivirus_api_settings",
     "DadataAPISettings",
-    "dadata_api_settings",
     "SKBAPISettings",
+    "antivirus_api_settings",
+    "dadata_api_settings",
     "skb_api_settings",
 )

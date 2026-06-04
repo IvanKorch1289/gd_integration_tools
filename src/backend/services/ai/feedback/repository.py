@@ -13,7 +13,7 @@ Singleton-accessor ``get_feedback_repository()`` использует
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.di import app_state_singleton
@@ -32,7 +32,7 @@ def _utc_now() -> datetime:
     Returns:
         Текущее UTC-время.
     """
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @runtime_checkable
@@ -241,7 +241,7 @@ class InMemoryFeedbackRepository:
 
     async def ensure_indexes(self) -> None:
         """In-memory не требует индексов; метод нужен для совместимости с Mongo."""
-        return None
+        return
 
 
 def _default_repository_factory() -> FeedbackRepository:
@@ -256,7 +256,7 @@ def _default_repository_factory() -> FeedbackRepository:
 
 
 @app_state_singleton("ai_feedback_repository", factory=_default_repository_factory)
-def get_feedback_repository() -> FeedbackRepository:
+def get_feedback_repository() -> FeedbackRepository:  # type: ignore[empty-body]
     """Возвращает singleton ``FeedbackRepository``.
 
     По умолчанию — ``MongoFeedbackRepository`` (Wave 9.2, регистрируется

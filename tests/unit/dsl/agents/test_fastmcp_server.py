@@ -17,10 +17,11 @@ class TestFastMCPserver:
 
     def test_fastmcp_server_exports_tools(self) -> None:
         """FastMCPserver is instantiated without error and registers tools."""
-        with patch(
-            "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
-        ) as mock_registry_cls, patch(
-            "src.backend.dsl.agents.fastmcp_server.workflow_registry"
+        with (
+            patch(
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+            ) as mock_registry_cls,
+            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []
@@ -39,11 +40,14 @@ class TestFastMCPserver:
         mock_wf.tags = {"production"}
         mock_wf.input_schema = None
 
-        with patch(
-            "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
-        ) as mock_registry_cls, patch(
-            "src.backend.dsl.agents.fastmcp_server.workflow_registry"
-        ) as mock_wf_registry:
+        with (
+            patch(
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+            ) as mock_registry_cls,
+            patch(
+                "src.backend.dsl.agents.fastmcp_server.workflow_registry"
+            ) as mock_wf_registry,
+        ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []
             mock_registry_cls.return_value = mock_registry
@@ -57,10 +61,11 @@ class TestFastMCPserver:
 
     def test_fastmcp_server_lifecycle_start_stop(self) -> None:
         """FastMCPserver start/stop are no-ops (lifecycle managed by ASGI host)."""
-        with patch(
-            "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
-        ) as mock_registry_cls, patch(
-            "src.backend.dsl.agents.fastmcp_server.workflow_registry"
+        with (
+            patch(
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+            ) as mock_registry_cls,
+            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []
@@ -70,15 +75,17 @@ class TestFastMCPserver:
 
             # start/stop should not raise (no-arg async methods)
             import asyncio
+
             asyncio.get_event_loop().run_until_complete(server.start())
             asyncio.get_event_loop().run_until_complete(server.stop())
 
     def test_asgi_app_returns_fastmcp_app(self) -> None:
         """asgi_app property returns the MCP ASGI application."""
-        with patch(
-            "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
-        ) as mock_registry_cls, patch(
-            "src.backend.dsl.agents.fastmcp_server.workflow_registry"
+        with (
+            patch(
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+            ) as mock_registry_cls,
+            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []

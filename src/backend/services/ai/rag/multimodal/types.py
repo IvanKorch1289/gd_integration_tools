@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 ChunkKind = Literal["text", "image", "audio"]
@@ -40,7 +40,7 @@ class ChunkDoc:
     metadata: dict[str, Any] = field(default_factory=dict)
     embedding: list[float] | None = None
     embedding_kind: str | None = None
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(slots=True)

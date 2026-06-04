@@ -10,11 +10,11 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 @overload
-def cached_data(ttl: int = 300) -> Callable[[F], F]: ...
+def cached_data(func: F) -> F: ...
 
 
 @overload
-def cached_data(*, ttl: int) -> Callable[[F], F]: ...
+def cached_data(func: None = None, *, ttl: int = 300) -> Callable[[F], F]: ...
 
 
 def cached_data(func: F | None = None, *, ttl: int = 300) -> F | Callable[[F], F]:

@@ -24,9 +24,7 @@ import pytest
 class TestS18ManifestSmoke:
     """Базовая проверка existence reference routes (schema variation — carryover)."""
 
-    @pytest.mark.parametrize(
-        "route_dir", ["health_proxy_demo", "echo_demo"]
-    )
+    @pytest.mark.parametrize("route_dir", ["health_proxy_demo", "echo_demo"])
     def test_reference_route_exists(self, route_dir: str) -> None:
         path = Path(f"routes/{route_dir}/route.toml")
         assert path.is_file(), f"Reference route {route_dir} отсутствует"

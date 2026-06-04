@@ -22,7 +22,7 @@ from src.backend.core.tenancy import current_tenant
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.core.interfaces.cache import CacheBackend
 
-__all__ = ("TenantNamespacedCache", "build_tenant_key", "DEFAULT_TENANT_PREFIX")
+__all__ = ("DEFAULT_TENANT_PREFIX", "TenantNamespacedCache", "build_tenant_key")
 
 
 DEFAULT_TENANT_PREFIX = "default"
@@ -54,7 +54,7 @@ class TenantNamespacedCache:
     данные чужого tenant.
     """
 
-    def __init__(self, inner: "CacheBackend", *, tenant_id: str | None = None) -> None:
+    def __init__(self, inner: CacheBackend, *, tenant_id: str | None = None) -> None:
         """Параметры:
 
         :param inner: оборачиваемый backend.

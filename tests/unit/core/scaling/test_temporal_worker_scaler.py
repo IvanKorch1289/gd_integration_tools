@@ -71,10 +71,7 @@ async def test_cooldown_blocks_consecutive_scales() -> None:
     queue_depths = [{"default": 50}, {"default": 100}]
     pool.get_queue_depth = AsyncMock(side_effect=queue_depths)
     scaler = TemporalWorkerScaler(
-        worker_pool=pool,
-        min_workers=2,
-        max_workers=20,
-        cooldown_seconds=10,
+        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=10
     )
     r1 = await scaler.tick()
     r2 = await scaler.tick()

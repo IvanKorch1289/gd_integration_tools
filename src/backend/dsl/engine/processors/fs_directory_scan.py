@@ -85,7 +85,7 @@ class DirectoryScanProcessor(BaseProcessor):
             else:
                 glob_pattern = "**/" + glob_pattern
 
-        search_root = resolved if not self._recursive else resolved
+        search_root = resolved
         try:
             if self._recursive:
                 matched = glob.glob(
@@ -102,11 +102,7 @@ class DirectoryScanProcessor(BaseProcessor):
         # Build result entries with metadata
         entries: list[dict[str, Any]] = []
         for rel_path in matched[: self._max_files]:
-            full = (
-                os.path.join(search_root, rel_path)
-                if self._recursive
-                else os.path.join(search_root, rel_path)
-            )
+            full = os.path.join(search_root, rel_path)
             try:
                 stat = os.stat(full)
                 entries.append(

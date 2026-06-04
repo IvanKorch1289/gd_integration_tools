@@ -125,6 +125,6 @@ async def get_running_count(workflow_id: str) -> RunningCountResponse:
         backend = await create_workflow_backend(kind="auto")
         if hasattr(backend, "count_running_per_version"):
             counts = await backend.count_running_per_version(workflow_id=workflow_id)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         counts = {}
     return RunningCountResponse(workflow_id=workflow_id, counts=counts)

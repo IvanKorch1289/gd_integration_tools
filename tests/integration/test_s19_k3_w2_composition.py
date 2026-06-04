@@ -26,7 +26,12 @@ class TestS19CompositionSmoke:
 
     def test_composition_demo_route_files_exist(self) -> None:
         """All composition demo route files exist on disk."""
-        for name in ["route.toml", "main.dsl.yaml", "shared_steps.yaml", "base_transforms.yaml"]:
+        for name in [
+            "route.toml",
+            "main.dsl.yaml",
+            "shared_steps.yaml",
+            "base_transforms.yaml",
+        ]:
             path = Path(f"routes/composition_demo/{name}")
             assert path.is_file(), f"routes/composition_demo/{name} missing"
 

@@ -66,7 +66,9 @@ def test_overwrite_protects_existing(isolated_extensions: Path) -> None:
     )
     cg.scaffold(name="test_one", features=["a"], capabilities=[], with_frontend=False)
     with pytest.raises(FileExistsError):
-        cg.scaffold(name="test_one", features=["a"], capabilities=[], with_frontend=False)
+        cg.scaffold(
+            name="test_one", features=["a"], capabilities=[], with_frontend=False
+        )
 
 
 def test_overwrite_allows_rewrite(isolated_extensions: Path) -> None:
@@ -79,7 +81,9 @@ def test_overwrite_allows_rewrite(isolated_extensions: Path) -> None:
     assert (isolated_extensions / "test_two" / "plugin.toml").is_file()
 
 
-def test_cli_main(isolated_extensions: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_cli_main(
+    isolated_extensions: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """CLI main возвращает 0 и пишет Created plugin."""
     rc = codegen_plugin.main(
         [

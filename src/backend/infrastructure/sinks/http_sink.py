@@ -55,7 +55,7 @@ class HttpSink(Sink):
                     content=payload if isinstance(payload, (bytes, str)) else None,
                     headers=self.headers,
                 )
-        except Exception as exc:  # noqa: BLE001 — мап в SinkResult.
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -86,7 +86,7 @@ class HttpSink(Sink):
                 # имеет shortcut'а ``head``, request совместим со всеми
                 # методами + поддерживает WAF-проверку.
                 response = await client.request("HEAD", self.url)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         # 4xx считаем как «адрес отвечает» (метод не разрешён, и т.п.).
         return response.status_code < 500

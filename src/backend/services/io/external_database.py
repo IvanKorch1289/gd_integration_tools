@@ -20,7 +20,7 @@ from src.backend.core.enums.external_db import (
 )
 from src.backend.core.errors import DatabaseError
 
-__all__ = ("external_db_service", "ExternalDatabaseService", "get_external_db_service")
+__all__ = ("ExternalDatabaseService", "external_db_service", "get_external_db_service")
 
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
@@ -327,7 +327,7 @@ class ExternalDatabaseService:
         Выполняет SELECT * FROM разрешённого view.
         """
         safe_name = self._validate_identifier(meta.qualified_name, context="view")
-        sql = f"SELECT * FROM {safe_name}"  # noqa: S608  # safe_name провалидирован _validate_identifier (regex)
+        sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # noqa: S608  # internal query with controlled parameters
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
 
@@ -347,21 +347,21 @@ class ExternalDatabaseService:
 
         if db_type == DatabaseTypeChoices.postgresql:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
         if db_type == DatabaseTypeChoices.oracle:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 

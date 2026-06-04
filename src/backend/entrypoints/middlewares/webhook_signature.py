@@ -16,7 +16,7 @@ Wave [s2/k1-4-webhook-sig]: консолидирует верификацию п
 from __future__ import annotations
 
 import logging
-from typing import Mapping
+from collections.abc import Mapping
 
 from fastapi import Request
 from fastapi.responses import JSONResponse

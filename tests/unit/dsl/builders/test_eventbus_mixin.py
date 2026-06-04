@@ -37,16 +37,12 @@ class TestToEventBus:
         b = builder.to_eventbus("orders.created")
         spec = b._processors[-1].to_spec()
         assert spec == {
-            "eventbus_publish": {
-                "topic": "orders.created",
-                "payload_ref": "body",
-            }
+            "eventbus_publish": {"topic": "orders.created", "payload_ref": "body"}
         }
 
     def test_chainable(self, builder: RouteBuilder) -> None:
-        b = (
-            builder.to_eventbus("orders.created")
-            .to_eventbus("audit.event", payload_ref="property:audit_payload")
+        b = builder.to_eventbus("orders.created").to_eventbus(
+            "audit.event", payload_ref="property:audit_payload"
         )
         assert len(b._processors) == 2
 
@@ -67,8 +63,5 @@ class TestFromEventBus:
         b = builder.from_eventbus("orders.>")
         spec = b._processors[-1].to_spec()
         assert spec == {
-            "eventbus_subscribe": {
-                "topic_pattern": "orders.>",
-                "ack_mode": "auto",
-            }
+            "eventbus_subscribe": {"topic_pattern": "orders.>", "ack_mode": "auto"}
         }

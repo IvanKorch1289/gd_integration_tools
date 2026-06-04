@@ -22,7 +22,11 @@ from src.backend.dsl.workflow.gateways import (
 
 def _make_branch(name: str, condition: str | None = None) -> BranchSpec:
     """Вспомогательный конструктор ветки с минимальными шагами."""
-    return BranchSpec(name=name, condition=condition, steps=[{"type": "activity", "name": f"do_{name}"}])
+    return BranchSpec(
+        name=name,
+        condition=condition,
+        steps=[{"type": "activity", "name": f"do_{name}"}],
+    )
 
 
 class TestGatewayXorCompilesToExclusiveBranching:
@@ -98,7 +102,10 @@ class TestBranchSpecWithCondition:
 
     def test_branch_spec_with_condition(self) -> None:
         """BranchSpec с явным условием сохраняет condition и steps без изменений."""
-        steps = [{"type": "activity", "name": "fetch_score"}, {"type": "sleep", "duration_s": 2.0}]
+        steps = [
+            {"type": "activity", "name": "fetch_score"},
+            {"type": "sleep", "duration_s": 2.0},
+        ]
         branch = BranchSpec(name="premium", condition="tier == 'premium'", steps=steps)
 
         assert branch.name == "premium"
@@ -118,10 +125,7 @@ class TestProcessGatewayDispatchesByKind:
         ],
     )
     def test_process_gateway_dispatches_by_kind(
-        self,
-        kind: str,
-        expected_strategy: str,
-        expected_join: str | None,
+        self, kind: str, expected_strategy: str, expected_join: str | None
     ) -> None:
         """process_gateway возвращает корректный IR-dict для каждого kind."""
         spec = GatewaySpec(

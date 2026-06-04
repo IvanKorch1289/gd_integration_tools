@@ -27,9 +27,10 @@ import email
 import email.policy
 import logging
 import ssl
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 __all__ = ("EmailIMAPSource", "EmailMessage")
 

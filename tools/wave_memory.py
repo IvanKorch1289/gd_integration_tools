@@ -23,11 +23,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Путь к auto-memory: ~/.claude/projects/<slug>/memory/
 HOME = Path.home()
-PROJECT_SLUG = (
-    "-" + str(PROJECT_ROOT.resolve())
-    .lstrip("/")
-    .replace("/", "-")
-    .replace("_", "-")
+PROJECT_SLUG = "-" + str(PROJECT_ROOT.resolve()).lstrip("/").replace("/", "-").replace(
+    "_", "-"
 )
 MEMORY_DIR = HOME / ".claude" / "projects" / PROJECT_SLUG / "memory"
 MEMORY_INDEX = MEMORY_DIR / "MEMORY.md"
@@ -46,9 +43,7 @@ def _slugify(name: str) -> str:
 def _build_skeleton(name: str, mem_type: str, title: str | None) -> str:
     """Шаблон с frontmatter — имя/описание/тип + 3 секции под заполнение."""
     title = title or name.replace("_", " ").capitalize()
-    description = (
-        "TODO: одно предложение, специфичное и полезное для будущих сессий"
-    )
+    description = "TODO: одно предложение, специфичное и полезное для будущих сессий"
     if mem_type == "feedback":
         body = (
             "**Правило**: TODO — кратко, как делать.\n\n"
@@ -108,9 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Человекочитаемый заголовок (по умолчанию из --name).",
     )
     parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Перезаписать существующий файл.",
+        "--force", action="store_true", help="Перезаписать существующий файл."
     )
     args = parser.parse_args(argv)
 

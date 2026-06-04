@@ -76,9 +76,7 @@ def test_body_mask_json_recursive() -> None:
 def test_body_mask_form_urlencoded() -> None:
     """form-urlencoded body — маскируются только секретные поля."""
     body = "username=alice&password=secret&csrf=tok123"
-    result = mask_request_body(
-        body, content_type="application/x-www-form-urlencoded"
-    )
+    result = mask_request_body(body, content_type="application/x-www-form-urlencoded")
     assert result is not None
     # Гарантируем, что секрет заменён, а username сохранён.
     assert "password=%3Cmasked%3E" in result or f"password={MASKED_VALUE}" in result

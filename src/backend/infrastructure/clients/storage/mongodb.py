@@ -117,7 +117,7 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 
@@ -125,7 +125,7 @@ def _create_mongo_client() -> MongoDBClient:
     from src.backend.core.config.settings import settings
 
     return MongoDBClient(
-        connection_url=settings.mongo.connection_url, database=settings.mongo.database
+        connection_url=settings.mongo.connection_string, database=settings.mongo.name
     )
 
 
@@ -133,5 +133,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("mongo_client", _create_mongo_client)
-def get_mongo_client() -> MongoDBClient:
+def get_mongo_client() -> MongoDBClient:  # type: ignore[empty-body]
     """Возвращает MongoDBClient из app.state или lazy-init fallback."""

@@ -86,8 +86,20 @@ class TestSchedulerDLQStore:
 
     def test_add_and_list(self) -> None:
         store = SchedulerDLQStore(capacity=3)
-        e1 = SchedulerDLQEntry(job_id="a", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
-        e2 = SchedulerDLQEntry(job_id="b", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
+        e1 = SchedulerDLQEntry(
+            job_id="a",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
+        e2 = SchedulerDLQEntry(
+            job_id="b",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
         store.add(e1)
         store.add(e2)
         assert store.size() == 2
@@ -97,9 +109,27 @@ class TestSchedulerDLQStore:
 
     def test_capacity_eviction(self) -> None:
         store = SchedulerDLQStore(capacity=2)
-        e1 = SchedulerDLQEntry(job_id="a", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
-        e2 = SchedulerDLQEntry(job_id="b", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
-        e3 = SchedulerDLQEntry(job_id="c", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
+        e1 = SchedulerDLQEntry(
+            job_id="a",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
+        e2 = SchedulerDLQEntry(
+            job_id="b",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
+        e3 = SchedulerDLQEntry(
+            job_id="c",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
         store.add(e1)
         store.add(e2)
         store.add(e3)
@@ -111,12 +141,26 @@ class TestSchedulerDLQStore:
     def test_list_limit(self) -> None:
         store = SchedulerDLQStore(capacity=5)
         for i in range(3):
-            store.add(SchedulerDLQEntry(job_id=str(i), exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc)))
+            store.add(
+                SchedulerDLQEntry(
+                    job_id=str(i),
+                    exception="e",
+                    traceback_text="t",
+                    scheduled_at=None,
+                    failed_at=datetime.now(timezone.utc),
+                )
+            )
         assert len(store.list(limit=2)) == 2
 
     def test_get_and_delete(self) -> None:
         store = SchedulerDLQStore()
-        e = SchedulerDLQEntry(job_id="a", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
+        e = SchedulerDLQEntry(
+            job_id="a",
+            exception="e",
+            traceback_text="t",
+            scheduled_at=None,
+            failed_at=datetime.now(timezone.utc),
+        )
         store.add(e)
         assert store.get(e.id) is e
         assert store.delete(e.id) is True
@@ -130,7 +174,13 @@ class TestSchedulerDLQStore:
         def worker() -> None:
             try:
                 for _ in range(50):
-                    e = SchedulerDLQEntry(job_id="x", exception="e", traceback_text="t", scheduled_at=None, failed_at=datetime.now(timezone.utc))
+                    e = SchedulerDLQEntry(
+                        job_id="x",
+                        exception="e",
+                        traceback_text="t",
+                        scheduled_at=None,
+                        failed_at=datetime.now(timezone.utc),
+                    )
                     store.add(e)
                     store.list(limit=10)
                     store.size()
@@ -176,8 +226,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 store = SchedulerDLQStore()
                 result = attach_scheduler_dlq(scheduler, store=store)
@@ -191,8 +240,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
@@ -213,8 +261,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
@@ -238,8 +285,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 with patch(
                     "src.backend.core.utils.task_registry.get_task_registry"
@@ -264,8 +310,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 store = SchedulerDLQStore()
                 with caplog.at_level("WARNING"):
@@ -280,20 +325,23 @@ class TestAttachSchedulerDLQ:
         handler(event)
         assert "no running loop" in caplog.text
 
-    def test_listener_exception_in_handler(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_listener_exception_in_handler(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         scheduler = MagicMock()
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR",
-                create=True,
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
         handler = scheduler.add_listener.call_args[0][0]
         event = MagicMock()
         # Force getattr to blow up
-        type(event).job_id = property(lambda self: (_ for _ in ()).throw(RuntimeError("kaboom")))
+        type(event).job_id = property(
+            lambda self: (_ for _ in ()).throw(RuntimeError("kaboom"))
+        )
         with caplog.at_level("ERROR"):
             handler(event)
         assert "DLQ listener failed" in caplog.text

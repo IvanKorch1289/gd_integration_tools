@@ -16,6 +16,7 @@ from src.backend.services.ai.ml.model_loader import MLModelLoader
 
 # ── Type detection (no heavy libs required) ──────────────────────────────────
 
+
 class TestTypeDetection:
     def test_detect_by_extension_pt(self) -> None:
         loader = MLModelLoader()
@@ -57,6 +58,7 @@ class TestTypeDetection:
 
 # ── Load errors ────────────────────────────────────────────────────────────────
 
+
 class TestLoadErrors:
     def test_load_nonexistent_file_raises(self) -> None:
         loader = MLModelLoader()
@@ -90,6 +92,7 @@ class TestLoadErrors:
 
 # ── LRU cache behavior ────────────────────────────────────────────────────────
 
+
 class TestLRUCache:
     def test_unload_removes_matching_prefix_keys(self) -> None:
         loader = MLModelLoader(max_models=8)
@@ -112,6 +115,7 @@ class TestLRUCache:
 
 
 # ── Full async load/unload cycle (joblib) ─────────────────────────────────────
+
 
 class TestAsyncLoadCycle:
     async def test_load_returns_model_object_joblib(self) -> None:

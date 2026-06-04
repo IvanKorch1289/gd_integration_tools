@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
@@ -67,7 +67,7 @@ class HitlPendingSignal:
     initiator: str
     title: str
     payload: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     resolved_at: datetime | None = None
     resolved_action: str | None = None
     resolved_by: str | None = None
@@ -146,7 +146,7 @@ class InMemoryHitlSignalStore:
                     f"HITL signal {signal_id!r} already resolved by "
                     f"{signal.resolved_by!r} as {signal.resolved_action!r}"
                 )
-            signal.resolved_at = datetime.now(timezone.utc)
+            signal.resolved_at = datetime.now(UTC)
             signal.resolved_action = action
             signal.resolved_by = resolved_by
             return signal
@@ -265,7 +265,7 @@ class HitlService:
                         "comment": (payload or {}).get("comment"),
                     },
                 )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         return resolved

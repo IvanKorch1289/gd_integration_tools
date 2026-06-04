@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.infrastructure.secrets.broker import (
-    SecretBrokerImpl,
-    SecretValue,
-)
+from src.backend.infrastructure.secrets.broker import SecretBrokerImpl, SecretValue
 
 
 class _FakeBackend:

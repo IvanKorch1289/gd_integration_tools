@@ -86,9 +86,7 @@ async def test_store_load_history_limit() -> None:
     mgr = DegradationManager()
     mgr.attach_store(store)
     for i in range(5):
-        await mgr.set_mode(
-            DegradationMode.CACHE_ONLY, actor=f"a-{i}", reason=f"r-{i}"
-        )
+        await mgr.set_mode(DegradationMode.CACHE_ONLY, actor=f"a-{i}", reason=f"r-{i}")
     history = await store.load_history(3)
     assert len(history) == 3
 

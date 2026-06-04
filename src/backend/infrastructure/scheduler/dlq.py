@@ -33,7 +33,7 @@ import threading
 import traceback
 import uuid
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
@@ -43,8 +43,8 @@ if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 __all__ = (
-    "SchedulerDLQStore",
     "SchedulerDLQEntry",
+    "SchedulerDLQStore",
     "attach_scheduler_dlq",
     "get_scheduler_dlq_store",
     "set_scheduler_dlq_store",
@@ -61,13 +61,13 @@ class SchedulerDLQEntry:
     """
 
     __slots__ = (
+        "exception",
+        "failed_at",
         "id",
         "job_id",
-        "exception",
-        "traceback_text",
-        "scheduled_at",
-        "failed_at",
         "retry_count",
+        "scheduled_at",
+        "traceback_text",
     )
 
     def __init__(
@@ -166,7 +166,7 @@ def set_scheduler_dlq_store(store: SchedulerDLQStore | None) -> None:
 
 
 def attach_scheduler_dlq(
-    scheduler: "AsyncIOScheduler",
+    scheduler: AsyncIOScheduler,
     *,
     writer: DLQWriter | None = None,
     store: SchedulerDLQStore | None = None,
@@ -211,7 +211,7 @@ def attach_scheduler_dlq(
                 exception=repr(exc) if exc is not None else "Unknown",
                 traceback_text=tb_text,
                 scheduled_at=getattr(event, "scheduled_run_time", None),
-                failed_at=datetime.now(timezone.utc),
+                failed_at=datetime.now(UTC),
             )
             store.add(entry)
 
@@ -249,7 +249,7 @@ def attach_scheduler_dlq(
                         name="scheduler-dlq-write",
                         deadline_seconds=10.0,
                     )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _logger.exception("scheduler DLQ listener failed")
 
     scheduler.add_listener(_on_job_error, EVENT_JOB_ERROR)

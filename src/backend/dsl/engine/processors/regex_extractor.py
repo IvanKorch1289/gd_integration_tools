@@ -106,7 +106,7 @@ class RegexExtractorProcessor(BaseProcessor):
         self._mode = mode
         self._flags = flags
 
-    def _resolve_source(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_source(self, exchange: Exchange[Any]) -> str:
         body = exchange.in_message.body
         if self._source == "body":
             return body if isinstance(body, str) else str(body)
@@ -120,7 +120,7 @@ class RegexExtractorProcessor(BaseProcessor):
             return value if isinstance(value, str) else str(value or "")
         return ""
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -135,16 +135,14 @@ class RegexExtractorProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_regex_extractor:
                 exchange.set_property("regex_extractor_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         text = self._resolve_source(exchange)

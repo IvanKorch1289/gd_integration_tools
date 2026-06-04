@@ -75,7 +75,7 @@ class LangFuseCallbackV3:
         except ImportError:
             logger.debug("LangFuse v3 пакет недоступен — установите 'langfuse>=3'")
             return None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LangFuse v3 client init skipped: %s", exc)
             return None
 
@@ -131,7 +131,7 @@ class LangFuseCallbackV3:
                     usage=_to_langfuse_usage(_extract_usage(response_obj)),
                     metadata=span_metadata,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LangFuseCallbackV3 emit failed: %s", exc)
 
 
@@ -151,7 +151,7 @@ def _maybe_anonymize_v3(
     """
     try:
         from src.backend.core.config.ai_2026 import langfuse_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return input_messages, output_text, span_metadata
     if not langfuse_settings.sanitize_traces:
         return input_messages, output_text, span_metadata
@@ -284,7 +284,7 @@ def _extract_cost(response_obj: Any) -> float:
         if value:
             try:
                 return float(value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 return 0.0
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)

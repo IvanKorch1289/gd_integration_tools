@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class LLMStreamingService:
             stream = await gateway.acompletion(
                 messages=messages, model=model, stream=True, **kwargs
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if _is_bad_request(exc):
                 logger.warning(
                     "Stream not supported, falling back to non-stream: %s", exc
@@ -134,7 +135,7 @@ class LLMStreamingService:
             if aclose is not None:
                 try:
                     await aclose()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.debug("astream aclose failed: %s", exc)
             raise
 

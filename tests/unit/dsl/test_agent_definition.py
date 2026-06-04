@@ -70,10 +70,7 @@ def test_loads_example_yaml_from_task() -> None:
     assert agent.policy == "credit_check_strict"
 
     assert agent.model.primary == "openai/gpt-4o-mini"
-    assert agent.model.fallback == [
-        "anthropic/claude-sonnet-4-6",
-        "local/llama-3-8b",
-    ]
+    assert agent.model.fallback == ["anthropic/claude-sonnet-4-6", "local/llama-3-8b"]
     assert agent.model.timeout_s == 30.0
     assert agent.model.retry_attempts == 2
 
@@ -208,7 +205,10 @@ def test_extra_fields_rejected() -> None:
     )
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml(yaml_text)
-    assert "unknown_field" in exc_info.value.reason.lower() or "extra" in exc_info.value.reason.lower()
+    assert (
+        "unknown_field" in exc_info.value.reason.lower()
+        or "extra" in exc_info.value.reason.lower()
+    )
 
 
 def test_supervisor_only_for_langgraph() -> None:
@@ -264,10 +264,7 @@ def test_stop_condition_parsed() -> None:
     )
     agent = load_agent_yaml(yaml_text)
     assert agent.stop_condition == StopConditionSpec(
-        max_steps=15,
-        max_tool_calls=50,
-        max_cost_usd=1.25,
-        max_wall_time_s=60.0,
+        max_steps=15, max_tool_calls=50, max_cost_usd=1.25, max_wall_time_s=60.0
     )
 
 
@@ -318,7 +315,10 @@ def test_load_agent_yaml_file_missing_path(tmp_path: Path) -> None:
     missing = tmp_path / "missing.agent.yaml"
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml_file(missing)
-    assert "read error" in exc_info.value.reason.lower() or "no such file" in exc_info.value.reason.lower()
+    assert (
+        "read error" in exc_info.value.reason.lower()
+        or "no such file" in exc_info.value.reason.lower()
+    )
 
 
 def test_load_agents_from_directory_returns_sorted(tmp_path: Path) -> None:

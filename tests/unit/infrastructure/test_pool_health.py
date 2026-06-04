@@ -113,10 +113,7 @@ async def test_monitor_handles_ping_exception() -> None:
         raise ConnectionError("redis unreachable")
 
     monitor.register_pool(
-        name="broken_pool",
-        pool=object(),
-        ping_callable=_failing_ping,
-        idle_timeout=0.0,
+        name="broken_pool", pool=object(), ping_callable=_failing_ping, idle_timeout=0.0
     )
 
     import time

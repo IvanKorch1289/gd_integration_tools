@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from glom import glom
 
 __all__ = (
-    "glom_transform",
-    "flatten_dict",
-    "pick_fields",
-    "drop_fields",
-    "rename_fields",
-    "hash_field",
     "coalesce_fields",
+    "drop_fields",
+    "flatten_dict",
+    "glom_transform",
+    "hash_field",
+    "pick_fields",
+    "rename_fields",
 )
 
 

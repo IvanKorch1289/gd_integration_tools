@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("HitlHistoryRecord", "HitlHistoryService")
@@ -79,15 +79,14 @@ class HitlHistoryService:
         import json
         from datetime import datetime as _dt
         from datetime import timedelta as _td
-        from datetime import timezone as _tz
 
         limit = max(1, min(limit, 1000))
-        to_dt = to_dt or _dt.now(_tz.utc)
+        to_dt = to_dt or _dt.now(UTC)
         from_dt = from_dt or (to_dt - _td(days=30))
 
         try:
             client = await self._get_client()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("CH unavailable: %s", exc)
             return []
 
@@ -112,8 +111,8 @@ class HitlHistoryService:
             conditions.append("actor = %(operator)s")
             params["operator"] = operator
 
-        sql = (  # noqa: S608
-            "SELECT workflow_id, tenant_id, event_type, actor, payload, "  # noqa: S608
+        sql = (
+            "SELECT workflow_id, tenant_id, event_type, actor, payload, "  # noqa: S608  # internal query with controlled parameters
             "  created_at, duration_ms "
             f"FROM workflow_audit WHERE {' AND '.join(conditions)} "
             "ORDER BY created_at DESC LIMIT %(limit)s"
@@ -121,7 +120,7 @@ class HitlHistoryService:
 
         try:
             result = await client.query(sql, parameters=params)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("CH query failed: %s", exc)
             return []
 
@@ -129,7 +128,7 @@ class HitlHistoryService:
         for row in getattr(result, "result_rows", []):
             try:
                 payload = json.loads(row[4]) if row[4] else {}
-            except TypeError, json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 payload = {}
             event_type = row[2]
             action_str = event_type.removeprefix("hitl.")

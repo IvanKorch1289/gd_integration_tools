@@ -6,10 +6,7 @@ from __future__ import annotations
 import pytest
 
 from src.backend.services.ai.decorators import AIServiceSpec, ai_service
-from src.backend.services.ai.registry import (
-    AIPluginRegistry,
-    get_ai_plugin_registry,
-)
+from src.backend.services.ai.registry import AIPluginRegistry, get_ai_plugin_registry
 
 
 @pytest.fixture()

@@ -12,7 +12,9 @@ from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourc
 from src.backend.core.models.connector_spec import AuthSchemeKind
 from src.backend.infrastructure.import_gateway.openapi import OpenAPIImportGateway
 
-FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "openapi"
+FIXTURES = (
+    Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "openapi"
+)
 
 
 @pytest.mark.asyncio

@@ -73,7 +73,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         base = workspace_path or os.environ.get(
             # S108: AI_WORKSPACE intentionally uses temp dir as dev fallback (V15 R-V15-4)
             "AI_WORKSPACE",
-            "/tmp/ai_workspace",  # noqa: S108
+            "/tmp/ai_workspace",  # noqa: S108  # local dev backend
         )
         self._root = Path(base).expanduser().resolve() / models_subdir
 
@@ -107,7 +107,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
                 None, lambda: path.read_text(encoding="utf-8")
             )
             return json.loads(content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("Failed to read manifest %s: %s", path, exc)
             return None
 
@@ -126,7 +126,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
                 ],
             )
             return dirs
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("Failed to list model dirs in %s: %s", self._root, exc)
             return []
 
@@ -163,7 +163,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
                     extra={"backend": "local_fs", "model_dir": str(model_dir)},
                 )
                 records.append(record)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning("Malformed manifest in %s: %s", model_dir, exc)
         return records
 

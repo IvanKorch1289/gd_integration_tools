@@ -5,12 +5,15 @@
 ``temporalio`` подменяем через ``monkeypatch.setitem(sys.modules, ...)``
 чтобы не запускать реальный workflow runtime.
 """
+
 # ruff: noqa: S101
 from __future__ import annotations
 
 import pytest  # noqa: S101
 
-pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
+pytest.importorskip(
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+)
 
 import sys
 from datetime import timedelta
@@ -39,21 +42,30 @@ from src.backend.dsl.workflow.spec import (
 
 
 def _make_fake_temporal(
-    *,
-    execute_activity_return: Any = None,
-    wait_condition_blocks: bool = False,
+    *, execute_activity_return: Any = None, wait_condition_blocks: bool = False
 ) -> tuple[SimpleNamespace, list[Any]]:
     """Сконструировать fake-модуль ``temporalio.workflow`` с записью вызовов."""
     recorder: list[Any] = []
 
-    async def fake_execute_activity(name: str, payload: Any = None, **kwargs: Any) -> Any:
-        recorder.append({"kind": "execute_activity", "name": name, "payload": payload, "kwargs": kwargs})
+    async def fake_execute_activity(
+        name: str, payload: Any = None, **kwargs: Any
+    ) -> Any:
+        recorder.append(
+            {
+                "kind": "execute_activity",
+                "name": name,
+                "payload": payload,
+                "kwargs": kwargs,
+            }
+        )
         return execute_activity_return
 
     async def fake_sleep(duration: timedelta) -> None:
         recorder.append({"kind": "sleep", "duration": duration})
 
-    async def fake_wait_condition(predicate: Any, timeout: timedelta | None = None) -> None:
+    async def fake_wait_condition(
+        predicate: Any, timeout: timedelta | None = None
+    ) -> None:
         recorder.append({"kind": "wait_condition", "timeout": timeout})
         if wait_condition_blocks and not predicate():
             raise TimeoutError("wait_condition_blocks=True simulates timeout")
@@ -62,7 +74,9 @@ def _make_fake_temporal(
         execute_activity=fake_execute_activity,
         sleep=fake_sleep,
         wait_condition=fake_wait_condition,
-        logger=SimpleNamespace(warning=lambda *a, **kw: recorder.append({"kind": "log_warn", "args": a})),
+        logger=SimpleNamespace(
+            warning=lambda *a, **kw: recorder.append({"kind": "log_warn", "args": a})
+        ),
     )
     return fake_workflow_module, recorder
 
@@ -118,11 +132,13 @@ async def test_activity_step_uses_explicit_timeout(
 
 
 @pytest.mark.asyncio
-async def test_activity_step_writes_output_key(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_activity_step_writes_output_key(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_wf, recorder = _make_fake_temporal(execute_activity_return={"id": 42})
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -137,7 +153,9 @@ async def test_activity_step_applies_retry_policy(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
     _, recorder = temporal_mock
-    policy = RetryPolicy(max_attempts=5, initial_interval_s=2.0, backoff_coefficient=3.0)
+    policy = RetryPolicy(
+        max_attempts=5, initial_interval_s=2.0, backoff_coefficient=3.0
+    )
     decl = ActivityDeclaration(name="x", retry_policy=policy)
     ctx = {"_default_timeout_s": 60.0, "_input": {}}
     await compile_activity_step(decl, ctx)
@@ -225,7 +243,11 @@ async def test_sensor_step_returns_truthy_first_iteration(
 ) -> None:
     """Sensor возвращает truthy на 1й итерации → конец."""
     fake_wf, recorder = _make_fake_temporal(execute_activity_return=True)
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -238,16 +260,20 @@ async def test_sensor_step_returns_truthy_first_iteration(
 
 
 @pytest.mark.asyncio
-async def test_sensor_step_timeout_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_sensor_step_timeout_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sensor падает в TimeoutError если predicate не truthy + истёк timeout."""
     fake_wf, recorder = _make_fake_temporal(execute_activity_return=False)
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
-    decl = SensorDeclaration(predicate="src.x:check", poll_interval_s=1.0, timeout_s=2.0)
+    decl = SensorDeclaration(
+        predicate="src.x:check", poll_interval_s=1.0, timeout_s=2.0
+    )
     ctx = {"_default_timeout_s": 30.0}
     with pytest.raises(TimeoutError):
         await compile_sensor_step(decl, ctx)
@@ -336,7 +362,11 @@ async def test_agent_invoke_step_stateless_basic(
     from types import SimpleNamespace
 
     fake_wf, recorder = _make_fake_temporal()
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -348,13 +378,20 @@ async def test_agent_invoke_step_stateless_basic(
         async def invoke(self, request, timeout=None):
             return MockAIResponse()
 
-    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway()
+    )
 
-    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        compile_agent_invoke_step,
+    )
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 
     decl = AgentInvokeDeclaration(agent_id="credit_advisor", durable=False)
-    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {"user_input": "approve my loan"}}
+    ctx: dict[str, Any] = {
+        "_default_timeout_s": 60.0,
+        "_input": {"user_input": "approve my loan"},
+    }
     result = await compile_agent_invoke_step(decl, ctx)
     assert result.content == "Credit approved"
 
@@ -367,7 +404,11 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
     from types import SimpleNamespace
 
     fake_wf, recorder = _make_fake_temporal()
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -378,14 +419,18 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
         async def invoke(self, request, timeout=None):
             return MockAIResponse()
 
-    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway()
+    )
     # Make LangGraph checkpointer return None (unavailable)
     monkeypatch.setattr(
         "src.backend.services.ai.agents.langgraph_postgres_saver.get_langgraph_postgres_saver",
         lambda: None,
     )
 
-    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        compile_agent_invoke_step,
+    )
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 
     decl = AgentInvokeDeclaration(agent_id="credit_advisor", durable=True)
@@ -395,14 +440,16 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
 
 
 @pytest.mark.asyncio
-async def test_agent_invoke_writes_output_key(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_agent_invoke_writes_output_key(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test agent_invoke writes result to ctx._outputs."""
     from types import SimpleNamespace
 
     fake_wf, recorder = _make_fake_temporal()
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -413,13 +460,21 @@ async def test_agent_invoke_writes_output_key(
         async def invoke(self, request, timeout=None):
             return MockAIResponse()
 
-    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway()
+    )
 
-    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        compile_agent_invoke_step,
+    )
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 
     decl = AgentInvokeDeclaration(agent_id="credit_advisor", output_key="agent_result")
-    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {"query": "hello"}, "_outputs": {}}
+    ctx: dict[str, Any] = {
+        "_default_timeout_s": 60.0,
+        "_input": {"query": "hello"},
+        "_outputs": {},
+    }
     await compile_agent_invoke_step(decl, ctx)
     assert "agent_result" in ctx["_outputs"]
 
@@ -432,7 +487,11 @@ async def test_agent_invoke_resolves_dot_path_input(
     from types import SimpleNamespace
 
     fake_wf, recorder = _make_fake_temporal()
-    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(
+        sys.modules,
+        "temporalio",
+        SimpleNamespace(workflow=fake_wf, common=_make_fake_common()),
+    )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
@@ -447,15 +506,17 @@ async def test_agent_invoke_resolves_dot_path_input(
             captured_request = request
             return MockAIResponse()
 
-    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway()
+    )
 
-    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        compile_agent_invoke_step,
+    )
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 
     decl = AgentInvokeDeclaration(
-        agent_id="credit_advisor",
-        input_context="${body.user_query}",
-        durable=False,
+        agent_id="credit_advisor", input_context="${body.user_query}", durable=False
     )
     ctx: dict[str, Any] = {
         "_default_timeout_s": 60.0,

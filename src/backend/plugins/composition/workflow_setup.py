@@ -23,8 +23,8 @@ import logging
 from typing import Any, Iterable
 
 from src.backend.core.config.settings import settings
-from src.backend.dsl.workflow.builder import WorkflowDeclaration
 from src.backend.dsl.workflow.compiler import CompiledWorkflow, WorkflowCompilerRegistry
+from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 __all__ = (
     "register_workflow_declarations",

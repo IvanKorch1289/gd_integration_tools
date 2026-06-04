@@ -91,9 +91,9 @@ class ExpressAdapter:
             from src.backend.core.config.express import express_settings
 
             return bool(express_settings.enabled and express_settings.bot_id)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
 # Compile-time проверка соответствия протоколу.
-assert isinstance(ExpressAdapter(), NotificationChannel)  # noqa: S101
+assert isinstance(ExpressAdapter(), NotificationChannel)

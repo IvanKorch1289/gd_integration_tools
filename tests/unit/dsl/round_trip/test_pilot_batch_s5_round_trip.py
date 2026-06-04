@@ -31,36 +31,15 @@ def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
     [
         ("webhook_verify", {"secret": "K"}),
         ("webhook_verify", {"secret": "K", "header": "X-Sig", "algorithm": "sha512"}),
-        (
-            "webhook_verify",
-            {"secret": "K", "prefix": "v1", "on_mismatch": "warn"},
-        ),
+        ("webhook_verify", {"secret": "K", "prefix": "v1", "on_mismatch": "warn"}),
         ("jsonpath", {"expression": "$.user.email"}),
         ("jsonpath", {"expression": "$.x", "single": True, "to_property": "x"}),
-        (
-            "jsonpath",
-            {
-                "expression": "$.status",
-                "mode": "update",
-                "value": "approved",
-            },
-        ),
-        (
-            "jsonpath",
-            {
-                "expression": "$.b",
-                "mode": "exists",
-                "stop_on_missing": True,
-            },
-        ),
+        ("jsonpath", {"expression": "$.status", "mode": "update", "value": "approved"}),
+        ("jsonpath", {"expression": "$.b", "mode": "exists", "stop_on_missing": True}),
         ("convert_units", {"to_unit": "mile", "from_unit": "km"}),
         (
             "convert_units",
-            {
-                "to_unit": "fahrenheit",
-                "precision": 2,
-                "to_property": "temp_f",
-            },
+            {"to_unit": "fahrenheit", "precision": 2, "to_property": "temp_f"},
         ),
         ("parse_ics", {}),
         ("parse_ics", {"mode": "build", "prodid": "-//demo//RU"}),

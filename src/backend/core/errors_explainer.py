@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-__all__ = ("ErrorExplainer", "ExplainedError", "explain_error", "error_explainer")
+__all__ = ("ErrorExplainer", "ExplainedError", "error_explainer", "explain_error")
 
 
 @dataclass(slots=True)

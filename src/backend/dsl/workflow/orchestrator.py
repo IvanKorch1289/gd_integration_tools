@@ -59,7 +59,7 @@ class RoutingRule(BaseModel):
     use_model: str | None = Field(
         default=None, description="Переопределение модели (``provider:model``)."
     )
-    memory_scope: "MemoryScopeSpec | None" = Field(
+    memory_scope: MemoryScopeSpec | None = Field(
         default=None, description="Переопределение memory scope для этого правила."
     )
 

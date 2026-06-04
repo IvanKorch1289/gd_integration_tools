@@ -70,7 +70,7 @@ class MemcachedBackend(CacheBackend):
         for key in keys:
             await self._client.delete(self._to_bytes(key))
 
-    async def delete_pattern(self, pattern: str) -> None:  # noqa: ARG002
+    async def delete_pattern(self, pattern: str) -> None:
         _logger.warning(
             "memcached: delete_pattern не поддерживается (нет KEYS/SCAN), no-op"
         )

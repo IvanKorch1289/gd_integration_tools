@@ -142,7 +142,7 @@ class PoolingProfile(BaseModel):
     }
 
     @model_validator(mode="after")
-    def _validate_sizes(self) -> "PoolingProfile":
+    def _validate_sizes(self) -> PoolingProfile:
         if self.min_size > self.max_size:
             raise ValueError(
                 f"PoolingProfile: min_size ({self.min_size}) > max_size ({self.max_size})"
@@ -154,7 +154,7 @@ class PoolingProfile(BaseModel):
         return self
 
     @classmethod
-    def named(cls, profile_name: str) -> "PoolingProfile":
+    def named(cls, profile_name: str) -> PoolingProfile:
         """Вернуть один из стандартных профилей по имени.
 
         Поддерживаемые имена: ``conservative`` | ``default`` |
@@ -169,8 +169,8 @@ class PoolingProfile(BaseModel):
         return cls.model_validate(preset)
 
     def merged_with(
-        self, override: "PoolingProfile | dict[str, object]"
-    ) -> "PoolingProfile":
+        self, override: PoolingProfile | dict[str, object]
+    ) -> PoolingProfile:
         """Создать новый профиль, переопределяя только явно заданные поля."""
         if isinstance(override, PoolingProfile):
             override_dict = override.model_dump(exclude_unset=True)
@@ -186,4 +186,4 @@ class PoolingProfile(BaseModel):
 DEFAULT_POOLING_PROFILE: Final = PoolingProfile()
 
 
-__all__ = ("PoolingProfile", "DEFAULT_POOLING_PROFILE")
+__all__ = ("DEFAULT_POOLING_PROFILE", "PoolingProfile")

@@ -1,7 +1,8 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
@@ -33,19 +34,19 @@ async def _emit_saga_audit(
             tenant_id=None,
             payload={"caller": "dsl.saga", **payload},
         )
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         pass
 
 
 __all__ = (
     "ChoiceBranch",
     "ChoiceProcessor",
-    "TryCatchProcessor",
-    "RetryProcessor",
-    "PipelineRefProcessor",
     "ParallelProcessor",
-    "SagaStep",
+    "PipelineRefProcessor",
+    "RetryProcessor",
     "SagaProcessor",
+    "SagaStep",
+    "TryCatchProcessor",
 )
 
 
@@ -346,7 +347,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except RetryError, _RetryAbort:
+        except (RetryError, _RetryAbort):
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
@@ -489,7 +490,7 @@ class ParallelProcessor(BaseProcessor):
                     errors[name] = error
         else:
             for coro_result in await asyncio.gather(*tasks, return_exceptions=True):
-                if isinstance(coro_result, Exception):
+                if isinstance(coro_result, BaseException):
                     errors["_exception"] = str(coro_result)
                 else:
                     name, result, error = coro_result

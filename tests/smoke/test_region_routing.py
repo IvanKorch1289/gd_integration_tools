@@ -87,8 +87,12 @@ def test_region_router_defaults_to_registered_region() -> None:
 
 def test_region_router_skips_unhealthy() -> None:
     """RegionRouter.route_url() skips UNHEALTHY regions."""
-    healthy = Region(code="skh", primary_url="https://skh.example.com", status=RegionStatus.HEALTHY)
-    unhealthy = Region(code="sku", primary_url="https://sku.example.com", status=RegionStatus.UNHEALTHY)
+    healthy = Region(
+        code="skh", primary_url="https://skh.example.com", status=RegionStatus.HEALTHY
+    )
+    unhealthy = Region(
+        code="sku", primary_url="https://sku.example.com", status=RegionStatus.UNHEALTHY
+    )
     register_region(healthy)
     register_region(unhealthy)
 
@@ -113,8 +117,14 @@ def test_region_router_uses_tenant_region_preference() -> None:
 
 def test_region_router_fallback_when_tenant_region_unhealthy() -> None:
     """When tenant preferred region is UNHEALTHY, falls back to default."""
-    healthy = Region(code="fbrh", primary_url="https://fbrh.example.com", status=RegionStatus.HEALTHY)
-    unhealthy = Region(code="fbru", primary_url="https://fbru.example.com", status=RegionStatus.UNHEALTHY)
+    healthy = Region(
+        code="fbrh", primary_url="https://fbrh.example.com", status=RegionStatus.HEALTHY
+    )
+    unhealthy = Region(
+        code="fbru",
+        primary_url="https://fbru.example.com",
+        status=RegionStatus.UNHEALTHY,
+    )
     register_region(healthy)
     register_region(unhealthy)
 

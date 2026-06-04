@@ -3,7 +3,7 @@ from typing import Any
 
 from src.backend.infrastructure.database.models.base import BaseModel, mapper_registry
 
-__all__ = ("get_user_models", "get_model_enum")
+__all__ = ("get_model_enum", "get_user_models")
 
 
 def get_user_models() -> dict[str, BaseModel]:

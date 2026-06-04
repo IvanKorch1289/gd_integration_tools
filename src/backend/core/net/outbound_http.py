@@ -24,7 +24,7 @@ import httpx
 
 from src.backend.core.net.waf import WafBypassError, WafDecision, WafPolicy
 
-__all__ = ("AuditCallback", "CORRELATION_ID_HEADER", "OutboundHttpClient")
+__all__ = ("CORRELATION_ID_HEADER", "AuditCallback", "OutboundHttpClient")
 
 # Sprint 17 K3 W3 (D12) — стандартный header для cross-service correlation.
 # Значение берётся из ``correlation_id_var`` ContextVar; явный header

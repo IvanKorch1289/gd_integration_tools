@@ -17,7 +17,8 @@ DI: ``s3_client`` — callable-провайдер, возвращающий об
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Callable, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import orjson
 
@@ -84,15 +85,13 @@ class ClaimCheckProcessor(BaseProcessor):
         self._payload_field = payload_field
 
     @handle_processor_error
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if self._direction == "store":
             await self._do_store(exchange)
         else:
             await self._do_retrieve(exchange)
 
-    async def _do_store(self, exchange: "Exchange[Any]") -> None:
+    async def _do_store(self, exchange: Exchange[Any]) -> None:
         body = exchange.in_message.body
         body_bytes = _coerce_bytes(body)
         if len(body_bytes) < self._threshold:
@@ -103,16 +102,13 @@ class ClaimCheckProcessor(BaseProcessor):
         await s3.put_object(
             key=claim_key,
             body=body_bytes,
-            metadata={
-                "bucket": self._s3_bucket,
-                "size": str(len(body_bytes)),
-            },
+            metadata={"bucket": self._s3_bucket, "size": str(len(body_bytes))},
         )
         exchange.set_property(self._claim_field, claim_key)
         exchange.set_property("claim_size", len(body_bytes))
         exchange.set_property("claim_bucket", self._s3_bucket)
 
-    async def _do_retrieve(self, exchange: "Exchange[Any]") -> None:
+    async def _do_retrieve(self, exchange: Exchange[Any]) -> None:
         ticket = exchange.get_property(self._claim_field)
         if not ticket:
             return  # pass-through: ticket не задан

@@ -39,26 +39,26 @@ __all__ = (
     # From ai_processors.py
     "CacheProcessor",
     "CacheWriteProcessor",
+    # Banking AI processors
+    "CreditScoreProcessor",
+    "CustomerSegmentationProcessor",
+    "FraudDetectionProcessor",
     "GetFeedbackExamplesProcessor",
     "GuardrailsProcessor",
     "LLMCallProcessor",
     "LLMFallbackProcessor",
     "LLMParserProcessor",
+    "LoanEligibilityProcessor",
     "PromptComposerProcessor",
     "RagIngestProcessor",
     "RagPIIRedactionProcessor",
     "RagQueryProcessor",
+    # From reranker.py
+    "RerankerProcessor",
     "RestorePIIProcessor",
+    "RiskAssessmentProcessor",
     "SanitizePIIProcessor",
     "SemanticRouterProcessor",
     "TokenBudgetProcessor",
     "VectorSearchProcessor",
-    # From reranker.py
-    "RerankerProcessor",
-    # Banking AI processors
-    "CreditScoreProcessor",
-    "CustomerSegmentationProcessor",
-    "FraudDetectionProcessor",
-    "LoanEligibilityProcessor",
-    "RiskAssessmentProcessor",
 )

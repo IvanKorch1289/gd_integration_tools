@@ -120,7 +120,9 @@ async def test_resolver_tenant_specific_priority(tmp_path: Path) -> None:
     global_dir = tmp_path / "ai_policies"
     overrides_dir = tmp_path / "extensions" / "credit" / "ai_policies"
     _write_policy(global_dir, "credit_check_strict.policy.yaml", GLOBAL_POLICY_YAML)
-    _write_policy(overrides_dir, "credit_check_premium.policy.yaml", OVERRIDE_POLICY_YAML)
+    _write_policy(
+        overrides_dir, "credit_check_premium.policy.yaml", OVERRIDE_POLICY_YAML
+    )
 
     resolver = PolicyResolver(roots=[overrides_dir, global_dir])
     premium_policy = await resolver.resolve("credit_check", "premium_acme")

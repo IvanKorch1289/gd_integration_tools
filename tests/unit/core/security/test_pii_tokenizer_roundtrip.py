@@ -125,12 +125,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes,
-        *,
-        ex: int | None = None,
-        **_: Any,
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
     ) -> bool:
         del ex
         self._data[key] = value
@@ -146,10 +141,7 @@ class _DictRedis:
 def token_registry(
     fake_redis: Any, key_provider: StaticAESGCMKeyProvider
 ) -> RedisTokenRegistry:
-    return RedisTokenRegistry(
-        redis_client=fake_redis,
-        key_provider=key_provider,
-    )
+    return RedisTokenRegistry(redis_client=fake_redis, key_provider=key_provider)
 
 
 @pytest.fixture
@@ -193,15 +185,17 @@ def policy_ru_strict() -> PIIPolicy:
 
 @pytest.mark.asyncio
 async def test_roundtrip_500_docs_exact_match(
-    tokenizer: PIITokenizer,
-    gold_set: list[GoldSetDoc],
-    policy_ru_strict: PIIPolicy,
+    tokenizer: PIITokenizer, gold_set: list[GoldSetDoc], policy_ru_strict: PIIPolicy
 ) -> None:
     """mask_reversible → unmask = original (500/500 docs)."""
     fail_ids: list[str] = []
     for doc in gold_set:
-        masked, token_map = await tokenizer.mask_reversible(doc["text"], policy_ru_strict)
-        assert masked != doc["text"], f"{doc['id']}: masked == original (PII не детектирован)"
+        masked, token_map = await tokenizer.mask_reversible(
+            doc["text"], policy_ru_strict
+        )
+        assert masked != doc["text"], (
+            f"{doc['id']}: masked == original (PII не детектирован)"
+        )
         assert token_map.tokens, f"{doc['id']}: TokenMap пуст"
 
         unmasked = await tokenizer.unmask(masked, token_map)
@@ -215,9 +209,7 @@ async def test_roundtrip_500_docs_exact_match(
 
 @pytest.mark.asyncio
 async def test_roundtrip_detects_all_expected_entities(
-    tokenizer: PIITokenizer,
-    gold_set: list[GoldSetDoc],
-    policy_ru_strict: PIIPolicy,
+    tokenizer: PIITokenizer, gold_set: list[GoldSetDoc], policy_ru_strict: PIIPolicy
 ) -> None:
     """Все expected_entities из gold-set присутствуют в TokenMap."""
     fail_ids: list[str] = []
@@ -248,7 +240,9 @@ async def test_mask_reversible_returns_unique_placeholders(
     )
     _, token_map = await tokenizer.mask_reversible(text, policy_ru_strict)
     placeholders = list(token_map.tokens.keys())
-    assert len(placeholders) == len(set(placeholders)), "placeholders должны быть unique"
+    assert len(placeholders) == len(set(placeholders)), (
+        "placeholders должны быть unique"
+    )
     # 2 PERSON + 2 INN + 2 PHONE + 2 CONTRACT = 8 entities:
     assert len(placeholders) == 8
 
@@ -267,15 +261,14 @@ async def test_mask_reversible_placeholders_use_angle_brackets(
 
 @pytest.mark.asyncio
 async def test_mask_reversible_emits_audit_with_entity_types(
-    tokenizer: PIITokenizer,
-    audit_service: AsyncMock,
-    policy_ru_strict: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_ru_strict: PIIPolicy
 ) -> None:
     """audit.emit для mask содержит entity_types + token_count + scope."""
     text = "Иванов И.И., ИНН 7707083893, тел. +7-999-123-45-67."
     await tokenizer.mask_reversible(text, policy_ru_strict)
     mask_calls = [
-        c.kwargs for c in audit_service.emit.call_args_list
+        c.kwargs
+        for c in audit_service.emit.call_args_list
         if c.kwargs.get("event") == "ai.pii.tokenize.mask"
     ]
     assert mask_calls
@@ -304,16 +297,15 @@ async def test_mask_reversible_empty_text_short_circuits(
 
 @pytest.mark.asyncio
 async def test_unmask_emits_audit_with_tokens_restored(
-    tokenizer: PIITokenizer,
-    audit_service: AsyncMock,
-    policy_ru_strict: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_ru_strict: PIIPolicy
 ) -> None:
     """audit.emit для unmask содержит tokens_restored."""
     text = "Иванов И.И. подал заявку."
     masked, token_map = await tokenizer.mask_reversible(text, policy_ru_strict)
     await tokenizer.unmask(masked, token_map)
     unmask_calls = [
-        c.kwargs for c in audit_service.emit.call_args_list
+        c.kwargs
+        for c in audit_service.emit.call_args_list
         if c.kwargs.get("event") == "ai.pii.tokenize.unmask"
     ]
     assert unmask_calls
@@ -325,8 +317,7 @@ async def test_unmask_emits_audit_with_tokens_restored(
 
 @pytest.mark.asyncio
 async def test_unmask_partial_failure_keeps_placeholder_and_emits_failure(
-    tokenizer: PIITokenizer,
-    audit_service: AsyncMock,
+    tokenizer: PIITokenizer, audit_service: AsyncMock
 ) -> None:
     """Если decrypt fail для одного placeholder — он остаётся, audit=failure."""
     bad_value = EncryptedValue(
@@ -341,7 +332,8 @@ async def test_unmask_partial_failure_keeps_placeholder_and_emits_failure(
     result = await tokenizer.unmask("Привет, <PERSON_xxxx>!", token_map)
     assert "<PERSON_xxxx>" in result  # decrypt failed → placeholder остался
     unmask_calls = [
-        c.kwargs for c in audit_service.emit.call_args_list
+        c.kwargs
+        for c in audit_service.emit.call_args_list
         if c.kwargs.get("event") == "ai.pii.tokenize.unmask"
     ]
     assert unmask_calls
@@ -370,14 +362,13 @@ async def test_mask_irreversible_generic_placeholders(
 
 @pytest.mark.asyncio
 async def test_mask_irreversible_emits_audit_with_reversible_false(
-    tokenizer: PIITokenizer,
-    audit_service: AsyncMock,
-    policy_ru_strict: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_ru_strict: PIIPolicy
 ) -> None:
     """audit.emit для mask_irreversible имеет ``reversible: False``."""
     await tokenizer.mask_irreversible("Иванов И.И.", policy_ru_strict)
     mask_calls = [
-        c.kwargs for c in audit_service.emit.call_args_list
+        c.kwargs
+        for c in audit_service.emit.call_args_list
         if c.kwargs.get("event") == "ai.pii.tokenize.mask"
     ]
     assert mask_calls

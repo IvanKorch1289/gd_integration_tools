@@ -1,5 +1,6 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from fastapi.responses import StreamingResponse
 
@@ -177,7 +178,7 @@ class S3Service:
 
 
 @asynccontextmanager
-async def get_s3_service() -> AsyncGenerator[S3Service, None]:
+async def get_s3_service() -> AsyncGenerator[S3Service]:
     s3_service = S3Service(client=s3_client)
     try:
         yield s3_service

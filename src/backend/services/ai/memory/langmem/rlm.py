@@ -94,7 +94,7 @@ class RLMFeedbackProcessor:
 
         try:
             payload = await _fetch_payload(client, langmem._collection, doc_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RLM fetch payload failed: %s", exc)
             payload = {}
 
@@ -112,7 +112,7 @@ class RLMFeedbackProcessor:
 
         try:
             await _set_payload(client, langmem._collection, doc_id, payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RLM set payload failed: %s", exc)
 
         reindex_hinted = penalty >= self._reindex_threshold

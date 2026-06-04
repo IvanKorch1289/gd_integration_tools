@@ -19,7 +19,7 @@ Warn-лог при ``on_block="warn"``.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest, AIResponse
@@ -52,8 +52,8 @@ class AIPolicyEnforcer:
         pii_tokenizer: object | None = None,
         nemo_runtime: object | None = None,
         llama_guard_runtime: object | None = None,
-        llm_guard_client: object | None = None,
-        dlq_writer: "DLQWriter | None" = None,
+        llm_guard_client: Any | None = None,
+        dlq_writer: DLQWriter | None = None,
     ) -> None:
         self._pii_tokenizer = pii_tokenizer
         self._nemo_runtime = nemo_runtime
@@ -63,9 +63,7 @@ class AIPolicyEnforcer:
 
     # ── Input guards ───────────────────────────────────────────────────────────
 
-    async def guard_input(
-        self, prompt: str, policy: "AIPolicySpec"
-    ) -> list[GuardResult]:
+    async def guard_input(self, prompt: str, policy: AIPolicySpec) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
         Поддерживаетые guard'ы:
@@ -87,9 +85,7 @@ class AIPolicyEnforcer:
                 results.append(result)
         return results
 
-    async def _guard_input_one(
-        self, prompt: str, ref: "GuardRef"
-    ) -> GuardResult | None:
+    async def _guard_input_one(self, prompt: str, ref: GuardRef) -> GuardResult | None:
         """Apply single input guard ref.
 
         Returns GuardResult with verdict 'passed' if no block,
@@ -121,7 +117,7 @@ class AIPolicyEnforcer:
         return None
 
     async def _guard_input_rebuff(
-        self, prompt: str, ref: "GuardRef", on_block: str
+        self, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Rebuff input guard check."""
         try:
@@ -146,7 +142,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
         except GuardrailViolationError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AIPolicyEnforcer: Rebuff check failed: %s", exc)
             if on_block == "fail":
                 raise GuardrailViolationError(
@@ -158,7 +154,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
 
     async def _guard_input_lakera(
-        self, prompt: str, ref: "GuardRef", on_block: str
+        self, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Lakera input guard check."""
         try:
@@ -185,7 +181,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
         except GuardrailViolationError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AIPolicyEnforcer: Lakera check failed: %s", exc)
             if on_block == "fail":
                 raise GuardrailViolationError(
@@ -197,7 +193,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
 
     async def _guard_input_llm_guard(
-        self, prompt: str, ref: "GuardRef", on_block: str
+        self, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """LLM Guard self-hosted input guard check (S35 W1)."""
         if self._llm_guard_client is None:
@@ -223,7 +219,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
         except GuardrailViolationError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AIPolicyEnforcer: LLM Guard check failed: %s", exc)
             if on_block == "fail":
                 raise GuardrailViolationError(
@@ -247,9 +243,7 @@ class AIPolicyEnforcer:
             )
         if on_block == "dlq":
             # DLQ publish асинхронно, не блокируем
-            from src.backend.core.utils.task_registry import (
-                get_task_registry,  # noqa: PLC0415
-            )
+            from src.backend.core.utils.task_registry import get_task_registry
 
             get_task_registry().create_task(
                 self._publish_dlq(guard_name, flagged, content),
@@ -302,13 +296,13 @@ class AIPolicyEnforcer:
                 reason=DLQReason.UNEXPECTED,
             )
             await writer.write(envelope)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("AIPolicyEnforcer: DLQ publish failed: %s", exc)
 
     # ── Output guards ──────────────────────────────────────────────────────────
 
     async def guard_output(
-        self, response: "AIResponse", policy: "AIPolicySpec"
+        self, response: AIResponse, policy: AIPolicySpec
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.output_guards` к ``response.content``.
 
@@ -330,7 +324,7 @@ class AIPolicyEnforcer:
         return results
 
     async def _guard_output_one(
-        self, response: "AIResponse", ref: "GuardRef"
+        self, response: AIResponse, ref: GuardRef
     ) -> GuardResult | None:
         """Apply single output guard ref."""
         name = ref.name.lower()
@@ -357,7 +351,7 @@ class AIPolicyEnforcer:
 
         try:
             result = await classify(response.content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("AIPolicyEnforcer: LlamaGuard classify failed: %s", exc)
             if on_block == "fail":
                 raise GuardrailViolationError(
@@ -384,7 +378,7 @@ class AIPolicyEnforcer:
 
     # ── Sanitizers (stub, S25 W4 + S26 W2) ────────────────────────────────────
 
-    async def sanitize_input(self, request: "AIRequest", policy: "AIPolicySpec") -> str:
+    async def sanitize_input(self, request: AIRequest, policy: AIPolicySpec) -> str:
         """Применить :attr:`AIPolicySpec.input_sanitizers` (PIITokenizer).
 
         Использует ``self._pii_tokenizer``, который является экземпляром
@@ -413,15 +407,15 @@ class AIPolicyEnforcer:
 
         try:
             result = await tokenizer(prompt, language=language)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("sanitize_input failed: %s", exc)
             return prompt
 
         return getattr(result, "sanitized_text", prompt)
 
     async def sanitize_output(
-        self, response: "AIResponse", policy: "AIPolicySpec"
-    ) -> "AIResponse":
+        self, response: AIResponse, policy: AIPolicySpec
+    ) -> AIResponse:
         """Применить :attr:`AIPolicySpec.output_sanitizers` (PII redaction).
 
         Использует ``self._pii_tokenizer`` для маскировки PII в LLM-ответе.
@@ -444,7 +438,7 @@ class AIPolicyEnforcer:
 
         try:
             result = await tokenizer(response.content, language=language)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("sanitize_output failed: %s", exc)
             return response
 
@@ -463,5 +457,5 @@ class AIPolicyEnforcer:
             cost_usd=response.cost_usd,
             model_used=response.model_used,
             pii_detected=pii_detected,
-            guardrails_verdict=getattr(response, "guardrails_verdict") or {},
+            guardrails_verdict=response.guardrails_verdict or {},
         )

@@ -16,10 +16,10 @@ from typing import Any
 import orjson
 
 __all__ = (
+    "DEFAULT_TIMESTAMP_WINDOW",
+    "InvalidSignatureError",
     "sign_payload",
     "verify_signature",
-    "InvalidSignatureError",
-    "DEFAULT_TIMESTAMP_WINDOW",
 )
 
 DEFAULT_TIMESTAMP_WINDOW = 300  # 5 минут

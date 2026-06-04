@@ -30,7 +30,9 @@ class TestMCPNamespace:
 
         assert ANALYTICS_NAMESPACE.name == "analytics"
         assert ANALYTICS_NAMESPACE.action_prefixes == ("analytics.", "metrics.")
-        assert ANALYTICS_NAMESPACE.capabilities_required == ("mcp.gateway.invoke.analytics",)
+        assert ANALYTICS_NAMESPACE.capabilities_required == (
+            "mcp.gateway.invoke.analytics",
+        )
 
         assert SYSTEM_NAMESPACE.name == "system"
         assert "system." in SYSTEM_NAMESPACE.action_prefixes
@@ -178,7 +180,9 @@ class TestMCPClientRegistry:
         not_found = registry.get("missing")
         assert not_found is None
 
-    def test_registry_load_from_yaml_empty(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_registry_load_from_yaml_empty(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
         """load_from_yaml with empty clients list."""
         from src.backend.infrastructure.clients.external.mcp_registry import (
             MCPClientRegistry,

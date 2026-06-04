@@ -103,7 +103,7 @@ def _get_plugin_registry() -> Any:
         from src.backend.core.plugin_runtime.loader import PluginLoader  # lazy import
 
         return PluginLoader.get_instance()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.warning("PluginLoader недоступен — используется mock")
         return None
 
@@ -186,7 +186,7 @@ async def list_plugins() -> list[PluginSummary]:
             )
             for p in plugins
         ]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Ошибка чтения реестра плагинов: %s — возврат mock", exc)
         return _mock_plugins()
 
@@ -335,17 +335,15 @@ def _get_version_service() -> Any | None:
     Lazy-import чтобы не тянуть infrastructure при сборке schema.
     """
     try:
-        from src.backend.main import app as fastapi_app  # noqa: PLC0415
+        from src.backend.main import app as fastapi_app
 
         loader = getattr(fastapi_app.state, "plugin_loader_v11", None)
         if loader is None:
             return None
-        from src.backend.services.plugins.versioning import (  # noqa: PLC0415
-            PluginVersionService,
-        )
+        from src.backend.services.plugins.versioning import PluginVersionService
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 
@@ -382,7 +380,7 @@ async def diff_plugin_versions(
         )
     try:
         result = service.diff(name, from_version=from_version, to_version=to_version)
-    except Exception as exc:  # noqa: BLE001 — PluginVersionError + IO
+    except Exception as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     return PluginDiffResponse(**result)
 
@@ -431,7 +429,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     if not extensions_dir.is_dir():
         return PluginDependencyGraph()
 
-    from src.backend.services.plugins.manifest_v11 import (  # noqa: PLC0415
+    from src.backend.services.plugins.manifest_v11 import (
         PluginManifestError,
         load_plugin_manifest,
     )
@@ -501,10 +499,10 @@ async def scaffold_plugin_endpoint(
             ],
         )
     try:
-        from tools.codegen_plugin import scaffold_plugin  # noqa: PLC0415
+        from tools.codegen_plugin import scaffold_plugin
 
         plugin_root = scaffold_plugin(body.name)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     return PluginScaffoldResponse(
         name=body.name,

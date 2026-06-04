@@ -37,8 +37,8 @@ import time
 from typing import Any
 
 __all__ = (
-    "L3RetrievalGraphCache",
     "RAG_CACHE_INVALIDATE_CHANNEL",
+    "L3RetrievalGraphCache",
     "SemanticCache",
     "get_l3_retrieval_cache",
     "get_semantic_cache",
@@ -281,7 +281,7 @@ class L3RetrievalGraphCache:
             return bool(
                 getattr(feature_flags, "rag_cache_l3_retrieval_invalidation", False)
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     @staticmethod
@@ -381,14 +381,14 @@ class L3RetrievalGraphCache:
             from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         payload = orjson.dumps({"namespace": namespace, "doc_id": doc_id})
         try:
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.publish(RAG_CACHE_INVALIDATE_CHANNEL, payload)
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 invalidate publish failed: %s", exc)
             return False
 
@@ -402,9 +402,7 @@ class L3RetrievalGraphCache:
             return
         if not self._is_enabled():
             return
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._invalidation_task = get_task_registry().create_task(
             self._listen_loop(), name="l3-rag-cache-invalidate"
@@ -432,7 +430,7 @@ class L3RetrievalGraphCache:
                 return
             pubsub = factory() if callable(factory) else factory
             await pubsub.subscribe(RAG_CACHE_INVALIDATE_CHANNEL)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 listener startup failed: %s", exc)
             return
         try:
@@ -441,13 +439,13 @@ class L3RetrievalGraphCache:
                     continue
                 try:
                     payload = orjson.loads(message.get("data") or b"{}")
-                except Exception as _:  # noqa: BLE001, S112
+                except Exception as _:
                     continue
                 ns = payload.get("namespace") or "*"
                 self.invalidate_namespace(ns)
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 listener loop error: %s", exc)
 
 

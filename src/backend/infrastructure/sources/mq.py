@@ -88,7 +88,7 @@ class MQSource:
             if self._broker is None:
                 return
             try:
-                await self._broker.close()
+                await self._broker.stop()
             finally:
                 self._broker = None
         logger.info("MQSource stopped: id=%s", self.source_id)

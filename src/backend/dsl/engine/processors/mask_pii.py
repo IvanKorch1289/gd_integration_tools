@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 
-__all__ = ("MaskPiiProcessor", "ALLOWED_TARGETS")
+__all__ = ("ALLOWED_TARGETS", "MaskPiiProcessor")
 
 
 # Допустимые цели маскировки. Расширяется только через явное согласование —
@@ -135,9 +135,7 @@ class MaskPiiProcessor(BaseProcessor):
 
     # ── Public processor entry point ──
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет маскировку к указанным targets."""
         for target in self._targets:
             match target:
@@ -152,7 +150,7 @@ class MaskPiiProcessor(BaseProcessor):
 
     # ── Target-specific maskers ──
 
-    def _mask_body(self, exchange: "Exchange[Any]") -> None:
+    def _mask_body(self, exchange: Exchange[Any]) -> None:
         body = exchange.in_message.body
         if body is None:
             return
@@ -171,14 +169,14 @@ class MaskPiiProcessor(BaseProcessor):
             exchange.in_message.body = self._masker.mask_text(body)
         # bytes / прочие — не трогаем (передаём как есть)
 
-    def _mask_headers(self, exchange: "Exchange[Any]") -> None:
+    def _mask_headers(self, exchange: Exchange[Any]) -> None:
         headers = exchange.in_message.headers
         if not headers:
             return
         masked = self._masker.mask_dict(headers, self._fields)
         exchange.in_message.headers = masked
 
-    def _mask_request_attr(self, exchange: "Exchange[Any]", *, attr: str) -> None:
+    def _mask_request_attr(self, exchange: Exchange[Any], *, attr: str) -> None:
         """Маскирует ``request.query_params`` / ``request.path_params``.
 
         request обычно хранится в ``exchange.properties['request']`` либо в
@@ -200,7 +198,7 @@ class MaskPiiProcessor(BaseProcessor):
             # пишем в properties для downstream-консумеров.
             try:
                 setattr(request, attr, masked)
-            except AttributeError, TypeError:
+            except (AttributeError, TypeError):
                 exchange.set_property(f"masked_{attr}", masked)
 
     # ── Serialization ──

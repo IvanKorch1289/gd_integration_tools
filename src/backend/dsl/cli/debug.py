@@ -44,7 +44,9 @@ def validate_route(route_file: str, format: str) -> None:
     ROUTE_FILE: Path to the route YAML file.
     """
     try:
-        from src.backend.dsl.yaml_loader import YamlRouteLoader
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
+            YamlRouteLoader,
+        )
 
         loader = YamlRouteLoader()
         route = loader.load_file(Path(route_file))
@@ -79,8 +81,12 @@ def dry_run(
     ROUTE_FILE: Path to the route YAML file.
     """
     try:
-        from src.backend.dsl.engine.dry_run import DryRunner
-        from src.backend.dsl.yaml_loader import YamlRouteLoader
+        from src.backend.dsl.engine.dry_run import (  # type: ignore[attr-defined]
+            DryRunner,
+        )
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
+            YamlRouteLoader,
+        )
 
         loader = YamlRouteLoader()
         route = loader.load_file(Path(route_file))
@@ -158,7 +164,9 @@ def trace_pipeline(pipeline_file: str, output: str | None) -> None:
     PIPELINE_FILE: Path to pipeline JSON/YAML definition.
     """
     try:
-        from src.backend.dsl.yaml_loader import YamlRouteLoader
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
+            YamlRouteLoader,
+        )
 
         loader = YamlRouteLoader()
         route = loader.load_file(Path(pipeline_file))
@@ -189,7 +197,7 @@ def lint_route(route_file: str, verbose: bool) -> None:
         from src.backend.dsl.engine.linter import DSLLinter
 
         linter = DSLLinter()
-        issues = linter.lint_file(Path(route_file))
+        issues = linter.lint_file(Path(route_file))  # type: ignore[attr-defined]
 
         if not issues:
             click.echo(f"✓ No issues found in {route_file}")
@@ -241,7 +249,7 @@ def explain_processor(processor_class: str, verbose: bool) -> None:
 def _reconstruct_exchange(data: dict[str, Any]) -> Exchange[Any]:
     """Reconstruct an Exchange object from serialized data."""
     in_msg = None
-    if "in_message" in data and data["in_message"]:
+    if data.get("in_message"):
         in_msg = Message(
             body=data["in_message"].get("body"),
             headers=data["in_message"].get("headers", {}),
@@ -302,7 +310,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
                     "docstring": cls.__doc__ or "No docstring",
                     "params": _extract_params(cls),
                 }
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             continue
 
     raise ValueError(f"Processor '{processor_class}' not found")
@@ -323,7 +331,7 @@ def _extract_params(cls: type[BaseProcessor]) -> dict[str, str]:
                 if param.annotation != inspect.Parameter.empty
                 else "Any"
             )
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         pass
     return params
 

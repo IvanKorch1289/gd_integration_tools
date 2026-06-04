@@ -32,7 +32,7 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
-__all__ = ("HyDEResult", "HyDERetriever", "HyDEConfig")
+__all__ = ("HyDEConfig", "HyDEResult", "HyDERetriever")
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class HyDERetriever:
                 max_tokens=self._config.max_tokens,
                 temperature=self._config.temperature,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("hyde_retriever.generate_failed: %s", exc)
             return []
 
@@ -153,7 +153,7 @@ class HyDERetriever:
         # Шаг 2: embedding гипотетического документа.
         try:
             embeddings = await self._embed_fn([hypothetical_doc])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("hyde_retriever.embed_failed: %s", exc)
             return []
 
@@ -164,7 +164,7 @@ class HyDERetriever:
         # Шаг 3: vector search.
         try:
             results = await self._search_vectors([embeddings[0]], top_k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("hyde_retriever.search_failed: %s", exc)
             return []
 

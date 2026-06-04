@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from faststream.specification import Specification
 
-__all__ = ("build_asyncapi_spec", "build_asyncapi_yaml", "build_asyncapi_json")
+__all__ = ("build_asyncapi_json", "build_asyncapi_spec", "build_asyncapi_yaml")
 
 
 _DEFAULT_TITLE = "gd_integration_tools"
@@ -50,7 +50,7 @@ def _collect_brokers() -> list[tuple[str, Any]]:
         )
 
         client = get_stream_client()
-    except Exception as _:  # noqa: BLE001 — намеренно широкий guard для endpoint resilience
+    except Exception as _:
         return []
 
     pairs: list[tuple[str, Any]] = []

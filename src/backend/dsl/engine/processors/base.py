@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, ClassVar
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import Exchange
@@ -11,9 +12,9 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
 
 __all__ = (
-    "ProcessorCallable",
     "BaseProcessor",
     "CallableProcessor",
+    "ProcessorCallable",
     "SubPipelineExecutor",
     "run_sub_processors",
 )

@@ -17,8 +17,12 @@ class TestSensor:
         pred = AsyncMock(return_value=False)
         sensor = Sensor(name="s1", predicate=pred, interval_seconds=0.01, route_id="r1")
         registry = MagicMock()
-        registry.create_task = MagicMock(return_value=asyncio.create_task(asyncio.sleep(0)))
-        with patch("src.backend.dsl.orchestration.get_task_registry", return_value=registry):
+        registry.create_task = MagicMock(
+            return_value=asyncio.create_task(asyncio.sleep(0))
+        )
+        with patch(
+            "src.backend.dsl.orchestration.get_task_registry", return_value=registry
+        ):
             await sensor.start()
         assert sensor._task is not None
         await sensor.stop()

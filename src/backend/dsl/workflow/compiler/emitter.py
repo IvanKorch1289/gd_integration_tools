@@ -88,7 +88,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
 
     workflow_class_name = _safe_class_name(decl.name)
 
-    async def _run(self: Any, input: dict[str, Any]) -> dict[str, Any]:  # noqa: A002
+    async def _run(self: Any, input: dict[str, Any]) -> dict[str, Any]:
         """Тело workflow: последовательное выполнение всех шагов."""
         ctx: dict[str, Any] = {
             "_input": input or {},
@@ -114,9 +114,9 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
     _run.__name__ = "run"
 
     def _make_init() -> Any:
-        def __init__(self: Any) -> None:  # noqa: N807 — dunder name
-            self._signals: dict[str, Any] = {}
-            self._outputs: dict[str, Any] = {}
+        def __init__(self: Any) -> None:
+            self._signals = {}
+            self._outputs = {}
 
         __init__.__qualname__ = f"{workflow_class_name}.__init__"
         return __init__

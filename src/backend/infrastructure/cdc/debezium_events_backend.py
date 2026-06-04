@@ -25,7 +25,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCOperation, CDCSource
@@ -64,9 +64,9 @@ def parse_debezium_event(
         return None
     ts_ms = raw.get("ts_ms")
     if isinstance(ts_ms, int):
-        ts = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+        ts = datetime.fromtimestamp(ts_ms / 1000, tz=UTC)
     else:
-        ts = datetime.now(timezone.utc)
+        ts = datetime.now(UTC)
     return CDCEvent(
         operation=_DEBEZIUM_OP_MAP[op],
         source=f"debezium:{source_meta.get('db', '?')}",

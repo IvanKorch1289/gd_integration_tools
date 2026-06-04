@@ -37,7 +37,9 @@ SOURCE_CHOICES = ("http", "cron", "kafka", "webhook", "file_watch", "cdc")
 SINK_CHOICES = ("http", "kafka", "db", "file", "dlq", "log")
 
 
-def _ask(prompt: str, *, default: str | None = None, choices: tuple[str, ...] | None = None) -> str:
+def _ask(
+    prompt: str, *, default: str | None = None, choices: tuple[str, ...] | None = None
+) -> str:
     """Простой prompt; интерактивный, если TTY, иначе берём default."""
     label = prompt
     if choices:
@@ -101,19 +103,10 @@ def _sink_step(sink: str) -> dict[str, Any]:
 def build_dsl_yaml(*, source: str, sink: str, ai: bool, retry: bool, name: str) -> str:
     """Собирает основной YAML-маршрут."""
     steps: list[Any] = [
-        {"call_function": {"ref": f"extensions.{name}.normalizer:apply_rules"}},
+        {"call_function": {"ref": f"extensions.{name}.normalizer:apply_rules"}}
     ]
     if retry:
-        steps.append(
-            {
-                "policy": {
-                    "retry": {
-                        "attempts": 3,
-                        "backoff": "exponential",
-                    }
-                }
-            }
-        )
+        steps.append({"policy": {"retry": {"attempts": 3, "backoff": "exponential"}}})
     if ai:
         steps.append(
             {
@@ -207,9 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     name = args.name or _ask("Имя route (snake_case)", default=None)
-    source = args.source or _ask(
-        "Source", choices=SOURCE_CHOICES, default="http"
-    )
+    source = args.source or _ask("Source", choices=SOURCE_CHOICES, default="http")
     sink = args.sink or _ask("Sink", choices=SINK_CHOICES, default="http")
     ai = args.ai or _yes_no("Добавить AI step?", default=False)
     retry = args.retry or _yes_no("Добавить retry policy?", default=False)

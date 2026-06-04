@@ -99,7 +99,7 @@ class PdfTemplateProcessor(BaseProcessor):
         self._font_size = font_size
         self._context_from = context_from
 
-    def _collect_context(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _collect_context(self, exchange: Exchange[Any]) -> dict[str, Any]:
         body = exchange.in_message.body
         body_dict = dict(body) if isinstance(body, dict) else {"body": body}
         props = dict(exchange.properties)
@@ -115,7 +115,7 @@ class PdfTemplateProcessor(BaseProcessor):
             case _:
                 return body_dict
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: bytes) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: bytes) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -130,16 +130,14 @@ class PdfTemplateProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_pdf_template:
                 exchange.set_property("pdf_template_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         # Lazy-import reportlab + jinja2
@@ -161,7 +159,7 @@ class PdfTemplateProcessor(BaseProcessor):
             text = env.from_string(self._template_source).render(
                 **self._collect_context(exchange)
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"pdf_template render error: {exc}")
             return
 
@@ -186,7 +184,7 @@ class PdfTemplateProcessor(BaseProcessor):
                 y -= line_h
             c.showPage()
             c.save()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"pdf_template canvas error: {exc}")
             return
 

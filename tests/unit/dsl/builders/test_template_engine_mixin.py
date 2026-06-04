@@ -77,7 +77,9 @@ class TestTemplateEngine:
         result = builder.template_render_str("Привет {{ name }} 🚀", {"name": "Мир"})
         assert result == "Привет Мир 🚀"
 
-    def test_render_template_missing_var_returns_empty(self, builder: RouteBuilder) -> None:
+    def test_render_template_missing_var_returns_empty(
+        self, builder: RouteBuilder
+    ) -> None:
         # Jinja by default returns empty for undefined
         result = builder.template_render_str("{{ undefined_var }}")
         assert result == ""

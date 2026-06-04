@@ -52,7 +52,7 @@ class LogIndexer:
         """Создаёт индекс с маппингом (idempotent)."""
         try:
             await self._search.ensure_index(self._index, mappings=_AUDIT_MAPPINGS)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("LogIndexer.ensure_index failed: %s", exc)
 
     async def index_batch(self, events: list[Any]) -> None:
@@ -62,7 +62,7 @@ class LogIndexer:
         try:
             docs = [self._event_to_doc(e) for e in events]
             await self._search.bulk_index(self._index, docs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("LogIndexer.index_batch failed: %s", exc)
 
     @staticmethod
@@ -74,7 +74,7 @@ class LogIndexer:
             "entity_type": getattr(event, "entity_type", ""),
             "entity_id": getattr(event, "entity_id", ""),
             "action": getattr(event, "action", ""),
-            "when": getattr(event, "when").isoformat()
+            "when": event.when.isoformat()
             if getattr(event, "when", None) is not None
             else None,
             "before_data": getattr(event, "before", None) or {},
@@ -92,5 +92,5 @@ def _factory() -> LogIndexer:
 
 
 @app_state_singleton("log_indexer", factory=_factory)
-def get_log_indexer() -> LogIndexer:
+def get_log_indexer() -> LogIndexer:  # type: ignore[empty-body]
     """Singleton ``LogIndexer``."""

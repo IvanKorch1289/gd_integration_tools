@@ -26,9 +26,10 @@ import importlib.util
 import inspect
 import logging
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from src.backend.core.di import app_state_singleton
 
@@ -402,5 +403,5 @@ class ToolRegistry:
 
 
 @app_state_singleton("ai_tool_registry", factory=ToolRegistry)
-def get_tool_registry() -> ToolRegistry:
+def get_tool_registry() -> ToolRegistry:  # type: ignore[empty-body]
     """Возвращает singleton ``ToolRegistry``."""

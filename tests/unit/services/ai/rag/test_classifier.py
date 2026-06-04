@@ -109,7 +109,11 @@ async def test_classify_cache_hit() -> None:
 async def test_classify_batch_preserves_order() -> None:
     """classify_batch возвращает результаты в том же порядке."""
     classifier = QueryClassifier(llm_classify=_oracle_llm)
-    queries = ["активные пользователи", "почему транзакции откатываются", "trace_id 12345"]
+    queries = [
+        "активные пользователи",
+        "почему транзакции откатываются",
+        "trace_id 12345",
+    ]
     results = await classifier.classify_batch(queries)
     assert len(results) == 3
     strategies = [r.strategy for r in results]

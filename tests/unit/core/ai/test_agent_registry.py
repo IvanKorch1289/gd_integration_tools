@@ -39,7 +39,7 @@ class TestFromTOMLManifest:
     def test_success(self, tmp_path) -> None:
         toml = tmp_path / "plugin.toml"
         toml.write_text(
-            '''
+            """
 [[agent]]
 id = "credit_advisor"
 version = "1.0.0"
@@ -56,7 +56,7 @@ max_turns = 15
 timeout_s = 90.0
 tenant_aware = false
 feature_flag = "F1"
-''',
+""",
             encoding="utf-8",
         )
         reg = AgentRegistry()
@@ -83,10 +83,10 @@ feature_flag = "F1"
     def test_missing_required_field(self, tmp_path) -> None:
         toml = tmp_path / "plugin.toml"
         toml.write_text(
-            '''
+            """
 [[agent]]
 id = "a1"
-''',
+""",
             encoding="utf-8",
         )
         reg = AgentRegistry()
@@ -108,7 +108,7 @@ id = "a1"
     def test_retry_policy(self, tmp_path) -> None:
         toml = tmp_path / "plugin.toml"
         toml.write_text(
-            '''
+            """
 [[agent]]
 id = "a1"
 version = "1"
@@ -116,7 +116,7 @@ model = "m"
 retry_max_attempts = 5
 retry_initial_interval_s = 2.0
 retry_backoff_coefficient = 3.0
-''',
+""",
             encoding="utf-8",
         )
         reg = AgentRegistry()

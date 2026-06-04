@@ -37,8 +37,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("docs/reference/schemas/processors"),
         help=(
-            "Директория для записи схем "
-            "(default: docs/reference/schemas/processors)"
+            "Директория для записи схем (default: docs/reference/schemas/processors)"
         ),
     )
     parser.add_argument(
@@ -65,10 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(levelname)s %(name)s: %(message)s",
-    )
+    logging.basicConfig(level=log_level, format="%(levelname)s %(name)s: %(message)s")
 
     # Отложенный импорт — чтобы CLI-синтаксис не падал без зависимостей
     try:

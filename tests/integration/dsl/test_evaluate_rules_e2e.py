@@ -22,9 +22,7 @@ from src.backend.dsl.engine.processors.rule_engine import (
 )
 
 
-_EXAMPLE_YAML = (
-    Path(__file__).parents[3] / "docs" / "dsl" / "rule-engine-example.yaml"
-)
+_EXAMPLE_YAML = Path(__file__).parents[3] / "docs" / "dsl" / "rule-engine-example.yaml"
 
 
 def _load_example_rules() -> tuple[list[Rule], str]:
@@ -39,11 +37,7 @@ def _load_example_rules() -> tuple[list[Rule], str]:
     rules: list[Rule] = []
     for entry in raw["rules"]:
         rules.append(
-            Rule(
-                name=entry["id"],
-                expr=entry["condition"],
-                decision=entry["action"],
-            )
+            Rule(name=entry["id"], expr=entry["condition"], decision=entry["action"])
         )
     return rules, raw.get("default_action", "approve")
 

@@ -20,9 +20,7 @@ class TestAuditContext:
 
     @pytest.fixture
     def request_obj(self) -> AIRequest:
-        return AIRequest(
-            workflow_id="wf1", tenant_id="t1", correlation_id="c1"
-        )
+        return AIRequest(workflow_id="wf1", tenant_id="t1", correlation_id="c1")
 
     @pytest.mark.asyncio
     async def test_emit_uses_audit_service(self, request_obj: AIRequest) -> None:
@@ -70,10 +68,7 @@ class TestAuditContext:
     async def test_emit_final_blocked(self, request_obj: AIRequest) -> None:
         """_emit_final with blocked output emits DENIED."""
         audit = AsyncMock()
-        resp = AIResponse(
-            content="blocked",
-            guardrails_verdict={"output": "blocked"},
-        )
+        resp = AIResponse(content="blocked", guardrails_verdict={"output": "blocked"})
         ctx = _AuditContext(
             request=request_obj, audit_service=audit, final_response=resp
         )

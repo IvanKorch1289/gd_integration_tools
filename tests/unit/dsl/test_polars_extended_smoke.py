@@ -46,9 +46,7 @@ def test_polars_aggregate_constructs() -> None:
 
 def test_polars_pivot_constructs() -> None:
     """PolarsPivotProcessor: index/columns/values + дефолтный agg=sum."""
-    proc = PolarsPivotProcessor(
-        index="month", columns="region", values="amount"
-    )
+    proc = PolarsPivotProcessor(index="month", columns="region", values="amount")
     assert proc.name == "polars_pivot"
 
 

@@ -30,12 +30,12 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "TenantScopeProcessor",
+    "ComplianceLabelProcessor",
     "CostTrackerProcessor",
+    "DataMaskingProcessor",
     "HumanApprovalProcessor",
     "OutboxProcessor",
-    "DataMaskingProcessor",
-    "ComplianceLabelProcessor",
+    "TenantScopeProcessor",
 )
 
 logger = logging.getLogger("dsl.business")
@@ -71,7 +71,7 @@ class TenantScopeProcessor(BaseProcessor):
                 import jmespath
 
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 tenant_id = None
         if tenant_id is None:
             if self._required:
@@ -175,7 +175,7 @@ class HumanApprovalProcessor(BaseProcessor):
                 result = self._notifier(payload)
                 if asyncio.iscoroutine(result):
                     await result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Approval notify failed: %s", exc)
 
         decision = await self._store.wait(request_id, timeout=self._timeout)
@@ -229,7 +229,7 @@ class OutboxProcessor(BaseProcessor):
 
         try:
             await writer(topic=self._topic, payload=payload, headers=headers)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"Outbox write failed: {exc}")
 
     def to_spec(self) -> dict[str, Any] | None:

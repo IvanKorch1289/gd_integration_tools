@@ -61,9 +61,7 @@ async def test_resolve_approve_with_facade_calls_signal() -> None:
                 }
             )
 
-    svc = HitlService(
-        store=InMemoryHitlSignalStore(), workflow_facade=_FakeFacade()
-    )
+    svc = HitlService(store=InMemoryHitlSignalStore(), workflow_facade=_FakeFacade())
     await svc.register_pending(_signal("s-1"))
     resolved = await svc.resolve(
         signal_id="s-1",
@@ -82,22 +80,16 @@ async def test_resolve_invalid_action_raises() -> None:
     svc = HitlService(store=InMemoryHitlSignalStore())
     await svc.register_pending(_signal("s-1"))
     with pytest.raises(ValueError, match="Invalid action"):
-        await svc.resolve(
-            signal_id="s-1", action="bogus", resolved_by="op"
-        )
+        await svc.resolve(signal_id="s-1", action="bogus", resolved_by="op")
 
 
 @pytest.mark.asyncio
 async def test_double_resolve_raises() -> None:
     svc = HitlService(store=InMemoryHitlSignalStore())
     await svc.register_pending(_signal("s-1"))
-    await svc.resolve(
-        signal_id="s-1", action=HitlAction.APPROVE, resolved_by="op-1"
-    )
+    await svc.resolve(signal_id="s-1", action=HitlAction.APPROVE, resolved_by="op-1")
     with pytest.raises(ValueError, match="already resolved"):
-        await svc.resolve(
-            signal_id="s-1", action=HitlAction.REJECT, resolved_by="op-2"
-        )
+        await svc.resolve(signal_id="s-1", action=HitlAction.REJECT, resolved_by="op-2")
 
 
 @pytest.mark.asyncio

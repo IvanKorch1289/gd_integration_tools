@@ -230,9 +230,7 @@ def test_build_waf_policy_from_settings_zero_payload_means_none() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_register_waf_policy_registers_factory_once(
-    clean_registry: Any,
-) -> None:
+def test_register_waf_policy_registers_factory_once(clean_registry: Any) -> None:
     """``register_waf_policy`` добавляет ``WafPolicy`` в registry."""
     from src.backend.core.net.waf import WafPolicy
 
@@ -255,9 +253,7 @@ def test_register_waf_policy_is_idempotent(clean_registry: Any) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_register_outbound_http_client_registers_factory(
-    clean_registry: Any,
-) -> None:
+def test_register_outbound_http_client_registers_factory(clean_registry: Any) -> None:
     """``register_outbound_http_client`` добавляет ``OutboundHttpClient`` в registry."""
     from src.backend.core.net.outbound_http import OutboundHttpClient
 
@@ -265,9 +261,7 @@ def test_register_outbound_http_client_registers_factory(
     assert clean_registry.has_service(OutboundHttpClient)
 
 
-def test_register_outbound_http_client_is_idempotent(
-    clean_registry: Any,
-) -> None:
+def test_register_outbound_http_client_is_idempotent(clean_registry: Any) -> None:
     """Повторный вызов ``register_outbound_http_client`` не пересоздаёт factory."""
     from src.backend.core.net.outbound_http import OutboundHttpClient
 
@@ -296,9 +290,7 @@ def test_register_outbound_http_client_default_plugin_is_core(
 
 
 @pytest.mark.skip(reason="real network call - too slow for unit test")
-def test_register_outbound_http_client_with_custom_plugin(
-    clean_registry: Any,
-) -> None:
+def test_register_outbound_http_client_with_custom_plugin(clean_registry: Any) -> None:
     """Параметр ``plugin=...`` пробрасывается в ``OutboundHttpClient.plugin``."""
     from src.backend.core.net.outbound_http import OutboundHttpClient
 

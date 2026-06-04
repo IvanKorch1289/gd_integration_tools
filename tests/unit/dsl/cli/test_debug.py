@@ -127,10 +127,7 @@ class TestDebugCommandValidation:
         assert names == ["first", "second", "third"]
 
     def test_trace_pipeline_step_index(self) -> None:
-        route = {
-            "id": "indexed",
-            "steps": [{"name": "a"}, {"name": "b"}],
-        }
+        route = {"id": "indexed", "steps": [{"name": "a"}, {"name": "b"}]}
         result = _trace_pipeline_steps(route)
 
         assert result["trace"][0]["index"] == 0

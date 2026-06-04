@@ -79,10 +79,7 @@ class TestExplainedErrorDataclass:
 
     def test_default_values(self) -> None:
         error = ExplainedError(
-            title="Test",
-            what_happened="What happened",
-            why="Why",
-            how_to_fix=[],
+            title="Test", what_happened="What happened", why="Why", how_to_fix=[]
         )
         assert error.original == ""
         assert error.docs_url == ""
@@ -117,4 +114,5 @@ class TestErrorExplainerFallback:
 
 class CustomError(Exception):
     """Custom exception for testing."""
+
     pass

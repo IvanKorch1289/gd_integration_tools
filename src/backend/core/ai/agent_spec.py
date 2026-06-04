@@ -39,7 +39,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-__all__ = ("MemoryScope", "HandoffPolicy", "AgentSpec")
+__all__ = ("AgentSpec", "HandoffPolicy", "MemoryScope")
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,11 +163,11 @@ class AgentSpec:
     memory: MemoryScope = field(default_factory=MemoryScope)
     handoff: HandoffPolicy = field(default_factory=HandoffPolicy)
     policy_ref: str | None = None
-    retry_policy: "RetryPolicy | None" = None
+    retry_policy: RetryPolicy | None = None
     max_turns: int = 10
     timeout_s: float = 60.0
     tenant_aware: bool = True
     feature_flag: str | None = None
 
 
-from src.backend.dsl.workflow.spec import RetryPolicy  # noqa: F401, E402
+from src.backend.dsl.workflow.spec import RetryPolicy  # noqa: E402

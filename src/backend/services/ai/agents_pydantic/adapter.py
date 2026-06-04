@@ -9,7 +9,8 @@ adapter ``pydantic_ai_litellm``.
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ except ImportError:
     StreamedResponse = Any
 
 
-class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
+class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
     """Минимальный adapter: forward chat-completion к LiteLLM-шлюзу.
 
     Реализует ``pydantic_ai.models.Model`` ABC (pydantic-ai 0.5.x)

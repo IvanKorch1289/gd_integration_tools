@@ -12,7 +12,7 @@ class AsyncChunkIterator:
         self.chunks = chunks
         self.index = 0
 
-    def __aiter__(self) -> "AsyncChunkIterator":
+    def __aiter__(self) -> AsyncChunkIterator:
         return self
 
     async def __anext__(self) -> bytes:

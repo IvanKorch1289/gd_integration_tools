@@ -39,16 +39,9 @@ class _FakeRedis:
         return self.store.get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes | str,
-        *,
-        ex: int | None = None,
-        nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
-        self.calls.append(
-            ("set", {"key": key, "value": value, "ex": ex, "nx": nx}),
-        )
+        self.calls.append(("set", {"key": key, "value": value, "ex": ex, "nx": nx}))
         if nx and key in self.store:
             return None
         self.store[key] = value if isinstance(value, bytes) else value.encode()
@@ -145,9 +138,7 @@ async def test_clear_idempotency_key_removes_pending_block(
 
 
 @pytest.mark.asyncio
-async def test_concurrent_pending_only_one_wins(
-    backend: RedisNxBackend,
-) -> None:
+async def test_concurrent_pending_only_one_wins(backend: RedisNxBackend) -> None:
     """V5: SET NX гарантирует, что только один из конкурентных запросов
     получит право обработать запрос; остальные → existing=True (→ 409).
     """
@@ -178,9 +169,7 @@ def test_build_idempotency_backend_fallback_when_di_broken(
 
     from idempotency_header_middleware.backends.memory import MemoryBackend
 
-    monkeypatch.setitem(
-        sys.modules, "src.backend.core.di.providers", _RaisingModule()
-    )
+    monkeypatch.setitem(sys.modules, "src.backend.core.di.providers", _RaisingModule())
     backend = build_idempotency_backend()
     assert isinstance(backend, MemoryBackend)
 

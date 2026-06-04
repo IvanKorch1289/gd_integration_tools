@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps
-from typing import Any, Awaitable, Callable, Literal, Mapping
+from typing import Any, Literal
 
 from src.backend.core.utils.cache_keys import build_cache_key
 
@@ -160,7 +161,7 @@ def invalidate(
                 )
 
                 await redis_client.cache_delete_pattern(key_pattern)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 # Best-effort инвалидация; ошибки кеша не должны рушить
                 # mutating-операцию.
                 _logger.debug(

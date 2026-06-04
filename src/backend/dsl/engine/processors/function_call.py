@@ -97,13 +97,11 @@ class CallFunctionProcessor(BaseProcessor):
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.call_function_whitelist_strict)
-        except Exception as _:  # noqa: BLE001 — feature-flag доступ best-effort
+        except Exception as _:
             return False
 
     @staticmethod
-    def _validate_module_whitelist(
-        module_name: str, context: "ExecutionContext"
-    ) -> None:
+    def _validate_module_whitelist(module_name: str, context: ExecutionContext) -> None:
         """V21 + K-ARCH-5 (S17): проверяет module в whitelist.
 
         Whitelist:
@@ -133,7 +131,7 @@ class CallFunctionProcessor(BaseProcessor):
                 )
                 if global_wl:
                     whitelist |= set(global_wl)
-            except Exception:  # noqa: BLE001, S110 — settings best-effort
+            except Exception:
                 pass
 
         if not whitelist:
@@ -159,7 +157,7 @@ class CallFunctionProcessor(BaseProcessor):
         )
 
     @staticmethod
-    def _check_capability(module_name: str, context: "ExecutionContext") -> None:
+    def _check_capability(module_name: str, context: ExecutionContext) -> None:
         """K-ARCH-5 (S17): CapabilityGate.check(``function.call.<module>``).
 
         Если gate доступен через ``context.capability_gate`` (или
@@ -183,7 +181,7 @@ class CallFunctionProcessor(BaseProcessor):
         except AttributeError:
             return
 
-    def _resolve_payload(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_payload(self, exchange: Exchange[Any]) -> Any:
         """Извлекает payload из exchange по ``payload_from``."""
         if self.payload_from == "body":
             return exchange.in_message.body
@@ -196,9 +194,7 @@ class CallFunctionProcessor(BaseProcessor):
             return exchange.get_property(field)
         return exchange.in_message.body
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Импортирует ``module``, вызывает ``fn(payload)``, пишет результат."""
         self._validate_module_whitelist(self.module_name, context)
         self._check_capability(self.module_name, context)

@@ -137,7 +137,7 @@ class MtlsBackend:
         if pem and self._parser is not None:
             try:
                 parsed = self._parser(pem.encode("utf-8"))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise MtlsVerificationError(reason=f"PEM parse failed: {exc}") from exc
 
             now = self._now()
@@ -186,8 +186,8 @@ def default_cryptography_parser() -> CertParser:
             ловить и оставаться в headers-only режиме.
     """
     try:
-        from cryptography import x509  # noqa: PLC0415
-        from cryptography.hazmat.primitives import hashes  # noqa: PLC0415
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes
     except ImportError as exc:  # pragma: no cover — opt-in
         raise RuntimeError(
             "cryptography package not installed; mTLS PEM-validation disabled"
@@ -211,7 +211,7 @@ def default_cryptography_parser() -> CertParser:
     def _attr(name: Any, oid: Any) -> str | None:
         try:
             attrs = name.get_attributes_for_oid(oid)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
         if not attrs:
             return None

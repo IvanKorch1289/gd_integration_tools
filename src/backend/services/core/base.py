@@ -15,7 +15,7 @@ from src.backend.schemas.base import BaseSchema, PaginatedResult
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("create_service_class", "BaseService", "get_service_for_model")
+__all__ = ("BaseService", "create_service_class", "get_service_for_model")
 
 
 def _is_orm_model(instance: Any) -> bool:

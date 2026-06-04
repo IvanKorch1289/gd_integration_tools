@@ -165,9 +165,7 @@ def test_register_with_strict_validation_rejects_invalid_schema() -> None:
 def test_register_without_strict_validation_allows_invalid_schema() -> None:
     reg = ServiceSchemaRegistry(strict_validation=False)
     entry = SchemaEntry(
-        kind=SchemaKind.PROCESSOR,
-        name="core:lax",
-        spec_schema={"type": "invalid_type"},
+        kind=SchemaKind.PROCESSOR, name="core:lax", spec_schema={"type": "invalid_type"}
     )
     assert reg.register(entry) is entry
 

@@ -124,7 +124,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             case _:
                 return f"CALL {full_name}({binds})"
 
-    def _collect_params(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _collect_params(self, exchange: Exchange[Any]) -> dict[str, Any]:
         match self._params_from:
             case "body":
                 body = exchange.in_message.body
@@ -139,16 +139,14 @@ class DbCallProcedureProcessor(BaseProcessor):
                 return {}
 
     @handle_processor_error
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.db_call_procedure_enabled:
                 exchange.set_property("db_call_procedure_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         from sqlalchemy import text
@@ -164,7 +162,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             try:
                 rows = result.mappings().all()
                 payload: Any = [dict(r) for r in rows]
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 payload = None
             await session.commit()
 

@@ -56,7 +56,9 @@ def check_collisions(pages_dir: Path) -> int:
             continue
         by_prefix[match.group(1)].append(entry.name)
 
-    collisions = {prefix: names for prefix, names in by_prefix.items() if len(names) > 1}
+    collisions = {
+        prefix: names for prefix, names in by_prefix.items() if len(names) > 1
+    }
     if collisions:
         print(f"FOUND {len(collisions)} COLLISIONS in {pages_dir}:")
         for prefix, names in sorted(collisions.items()):

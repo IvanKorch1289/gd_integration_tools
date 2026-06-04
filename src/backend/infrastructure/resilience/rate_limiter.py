@@ -24,7 +24,7 @@ from src.backend.infrastructure.resilience.unified_rate_limiter import (
     get_rate_limiter,
 )
 
-__all__ = ("RateLimiterPolicy", "ResourceRateLimiter", "RateLimitExceeded")
+__all__ = ("RateLimitExceeded", "RateLimiterPolicy", "ResourceRateLimiter")
 
 
 @dataclass(slots=True)

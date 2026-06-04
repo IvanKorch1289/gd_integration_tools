@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 if __name__ == "__main__":
     raise SystemExit("Import-only module")
 
-__all__ = ("MCPClientSpec", "MCPClientRegistry", "mcp_client_registry")
+__all__ = ("MCPClientRegistry", "MCPClientSpec", "mcp_client_registry")
 
 logger = logging.getLogger(__name__)
 

@@ -10,12 +10,12 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("LangFuseReader", "CostRow")
+__all__ = ("CostRow", "LangFuseReader")
 
 
 @dataclass(slots=True)
@@ -60,7 +60,7 @@ class LangFuseReader:
                 secret_key=langfuse_settings.secret_key or None,
             )
             return self._client
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LangFuseReader client init skipped: %s", exc)
             return None
 
@@ -83,9 +83,9 @@ class LangFuseReader:
             return []
         try:
             traces = client.fetch_traces(
-                from_timestamp=(datetime.now(timezone.utc) - window).isoformat()
+                from_timestamp=(datetime.now(UTC) - window).isoformat()
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("LangFuse fetch_traces failed: %s", exc)
             return []
 

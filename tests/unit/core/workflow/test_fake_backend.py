@@ -53,9 +53,7 @@ class TestFakeBackendConstruction:
         assert backend._instances == {}  # noqa: SLF001
 
     def test_custom_default_result(self) -> None:
-        custom = WorkflowResult(
-            status="failed", output={"reason": "test-fixture"}
-        )
+        custom = WorkflowResult(status="failed", output={"reason": "test-fixture"})
         backend = FakeWorkflowBackend(default_result=custom)
         assert backend._default_result is custom  # noqa: SLF001
 
@@ -133,9 +131,7 @@ class TestSignalAndQuery:
         # мутировать состояние backend'а в обход signal_workflow.
         backend = FakeWorkflowBackend()
         handle = await _start(backend)
-        await backend.signal_workflow(
-            handle=handle, signal_name="x", payload={}
-        )
+        await backend.signal_workflow(handle=handle, signal_name="x", payload={})
         snapshot = backend.signals_for(handle)
         snapshot.append(("injected", {"hack": True}))
         # Второй вызов возвращает оригинальный список без инъекции.
@@ -145,13 +141,11 @@ class TestSignalAndQuery:
         backend = FakeWorkflowBackend(query_handlers={"status": {"phase": "ok"}})
         handle = await _start(backend)
         # Найденный query возвращает свой dict.
-        assert await backend.query_workflow(
-            handle=handle, query_name="status"
-        ) == {"phase": "ok"}
+        assert await backend.query_workflow(handle=handle, query_name="status") == {
+            "phase": "ok"
+        }
         # Несуществующий query — пустой dict, не KeyError.
-        assert await backend.query_workflow(
-            handle=handle, query_name="missing"
-        ) == {}
+        assert await backend.query_workflow(handle=handle, query_name="missing") == {}
 
     async def test_query_args_are_accepted_but_unused(self) -> None:
         # В fake backend ``args`` не интерпретируются — контракт зарезервирован
@@ -159,9 +153,7 @@ class TestSignalAndQuery:
         backend = FakeWorkflowBackend(query_handlers={"echo": {"v": 1}})
         handle = await _start(backend)
         result = await backend.query_workflow(
-            handle=handle,
-            query_name="echo",
-            args={"ignored": True},
+            handle=handle, query_name="echo", args={"ignored": True}
         )
         assert result == {"v": 1}
 
@@ -195,9 +187,7 @@ class TestCancelAndAwait:
         assert result.status == "cancelled"
 
     async def test_await_returns_default_when_not_finished(self) -> None:
-        custom = WorkflowResult(
-            status="completed", output={"source": "default"}
-        )
+        custom = WorkflowResult(status="completed", output={"source": "default"})
         backend = FakeWorkflowBackend(default_result=custom)
         handle = await _start(backend)
         result = await backend.await_completion(
@@ -208,13 +198,9 @@ class TestCancelAndAwait:
         assert result.output == {"source": "default"}
 
     async def test_await_returns_set_result_over_default(self) -> None:
-        backend = FakeWorkflowBackend(
-            default_result=WorkflowResult(status="completed")
-        )
+        backend = FakeWorkflowBackend(default_result=WorkflowResult(status="completed"))
         handle = await _start(backend)
-        backend.set_result(
-            handle, WorkflowResult(status="failed", output={"k": "v"})
-        )
+        backend.set_result(handle, WorkflowResult(status="failed", output={"k": "v"}))
         result = await backend.await_completion(handle=handle)
         assert result.status == "failed"
         assert result.output == {"k": "v"}
@@ -226,17 +212,12 @@ class TestReplay:
 
     async def test_replay_empty_history(self) -> None:
         backend = FakeWorkflowBackend()
-        result = await backend.replay(workflow_name="wf", history=b"")
-        assert result is None
+        await backend.replay(workflow_name="wf", history=b"")
 
     async def test_replay_with_arbitrary_bytes(self) -> None:
         backend = FakeWorkflowBackend()
         # Любой bytes принимается, fake не моделирует replay-семантику.
-        result = await backend.replay(
-            workflow_name="credit_score",
-            history=b"\x00\x01\x02\xff",
-        )
-        assert result is None
+        await backend.replay(workflow_name="credit_score", history=b"\x00\x01\x02\xff")
 
     async def test_replay_does_not_affect_instances(self) -> None:
         backend = FakeWorkflowBackend()
@@ -280,9 +261,7 @@ class TestRequire:
         ghost = WorkflowHandle(workflow_id="x", run_id="nope", namespace="t")
 
         with pytest.raises(KeyError):
-            await backend.signal_workflow(
-                handle=ghost, signal_name="s", payload={}
-            )
+            await backend.signal_workflow(handle=ghost, signal_name="s", payload={})
         with pytest.raises(KeyError):
             await backend.query_workflow(handle=ghost, query_name="q")
         with pytest.raises(KeyError):

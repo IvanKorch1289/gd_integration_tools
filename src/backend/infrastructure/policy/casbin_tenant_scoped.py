@@ -79,7 +79,7 @@ class TenantScopedCasbin:
     """
 
     def __init__(
-        self, base_adapter: "CasbinAdapter", *, default_tenant_id: str | None = None
+        self, base_adapter: CasbinAdapter, *, default_tenant_id: str | None = None
     ) -> None:
         self._base = base_adapter
         self._default_tenant_id = default_tenant_id
@@ -119,12 +119,12 @@ class TenantScopedCasbin:
             )
             return False
 
-        enforcer = self._base._ensure_enforcer()  # noqa: SLF001 — интеграция
+        enforcer = self._base._ensure_enforcer()
         if enforcer is None:
             return False
         try:
             return bool(enforcer.enforce(user_id, resource, action, tenant))
-        except Exception as exc:  # noqa: BLE001 — любая ошибка casbin → deny
+        except Exception as exc:
             logger.error(
                 "TenantScopedCasbin enforce fail (user=%s, resource=%s, "
                 "action=%s, tenant=%s): %s",
@@ -142,12 +142,12 @@ class TenantScopedCasbin:
         self, user_id: str, resource: str, action: str, tenant_id: str
     ) -> bool:
         """Добавить 4-арг policy ``(user, resource, action, tenant)``."""
-        enforcer = self._base._ensure_enforcer()  # noqa: SLF001
+        enforcer = self._base._ensure_enforcer()
         if enforcer is None:
             return False
         try:
             return bool(enforcer.add_policy(user_id, resource, action, tenant_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("TenantScopedCasbin add_policy fail: %s", exc)
             return False
 
@@ -155,12 +155,12 @@ class TenantScopedCasbin:
         self, user_id: str, resource: str, action: str, tenant_id: str
     ) -> bool:
         """Удалить ранее добавленную 4-арг policy."""
-        enforcer = self._base._ensure_enforcer()  # noqa: SLF001
+        enforcer = self._base._ensure_enforcer()
         if enforcer is None:
             return False
         try:
             return bool(enforcer.remove_policy(user_id, resource, action, tenant_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("TenantScopedCasbin remove_policy fail: %s", exc)
             return False
 
@@ -172,11 +172,11 @@ class TenantScopedCasbin:
         Для per-tenant ролей используйте 3-арг grouping policy через
         ``enforcer.add_named_grouping_policy("g", [user, role, tenant])``.
         """
-        enforcer = self._base._ensure_enforcer()  # noqa: SLF001
+        enforcer = self._base._ensure_enforcer()
         if enforcer is None:
             return False
         try:
             return bool(enforcer.add_role_for_user(user_id, role))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("TenantScopedCasbin add_role fail: %s", exc)
             return False

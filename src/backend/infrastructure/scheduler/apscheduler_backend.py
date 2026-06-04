@@ -80,7 +80,7 @@ class APSchedulerBackend:
         """
         from apscheduler.triggers.date import DateTrigger
 
-        from src.backend.core.config import settings
+        from src.backend.core.config.settings import settings
 
         trigger = DateTrigger(run_date=run_at)
         job = self._manager.scheduler.add_job(
@@ -99,7 +99,7 @@ class APSchedulerBackend:
         try:
             self._manager.scheduler.remove_job(job_id)
             return True
-        except Exception:  # noqa: BLE001  # APScheduler JobLookupError + др.
+        except Exception:  # APScheduler JobLookupError + др.
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:

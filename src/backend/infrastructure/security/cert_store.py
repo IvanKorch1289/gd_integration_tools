@@ -32,9 +32,10 @@ import asyncio
 import hashlib
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncIterator, Awaitable, Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 
@@ -43,9 +44,9 @@ from src.backend.infrastructure.database.models.cert import CertHistory, CertRec
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = (
-    "CertStore",
-    "CertEntry",
     "CertBackend",
+    "CertEntry",
+    "CertStore",
     "MemoryCertBackend",
     "MongoCertBackend",
     "PostgresCertBackend",
@@ -233,7 +234,7 @@ class PostgresCertBackend(CertBackend):
                 service_id=r.service_id,
                 pem=r.pem,
                 fingerprint=_fingerprint(r.pem),
-                expires_at=datetime.now(tz=timezone.utc),  # история без expires
+                expires_at=datetime.now(tz=UTC),  # история без expires
                 description=None,
                 version=r.version,
             )
@@ -305,7 +306,7 @@ class VaultCertBackend(CertBackend):
                 client.secrets.kv.v2.read_secret_version,
                 path=f"{self._base}/{service_id}",
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Vault read failed for %s: %s", service_id, exc)
             return None
         secret = (data or {}).get("data", {}).get("data") or {}
@@ -474,7 +475,7 @@ class MongoCertBackend(CertBackend):
                 "version": version,
                 "pem": pem,
                 "uploaded_by": uploaded_by,
-                "created_at": datetime.now(tz=timezone.utc),
+                "created_at": datetime.now(tz=UTC),
             }
         )
         return CertEntry(
@@ -496,7 +497,7 @@ class MongoCertBackend(CertBackend):
                     service_id=doc["service_id"],
                     pem=doc["pem"],
                     fingerprint=_fingerprint(doc["pem"]),
-                    expires_at=doc.get("created_at", datetime.now(tz=timezone.utc)),
+                    expires_at=doc.get("created_at", datetime.now(tz=UTC)),
                     description=None,
                     version=int(doc["version"]),
                 )
@@ -539,7 +540,7 @@ class CertStore:
         self._listeners: list[Callable[[str], Awaitable[None] | None]] = []
 
     @classmethod
-    def from_settings(cls, settings: CertStoreSettings) -> "CertStore":
+    def from_settings(cls, settings: CertStoreSettings) -> CertStore:
         backend: CertBackend
         match settings.backend:
             case "vault":
@@ -595,7 +596,7 @@ class CertStore:
         return await self._backend.history(service_id)
 
     async def get_expiring_soon(self) -> list[CertEntry]:
-        deadline = datetime.now(tz=timezone.utc) + timedelta(
+        deadline = datetime.now(tz=UTC) + timedelta(
             days=self._settings.expire_warn_days
         )
         return await self._backend.list_expiring(deadline)
@@ -616,9 +617,9 @@ class CertStore:
                 result = listener(service_id)
                 if isinstance(result, AsyncIterator):  # pragma: no cover
                     continue
-                if hasattr(result, "__await__"):
+                if result is not None and hasattr(result, "__await__"):
                     await result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("CertStore listener failed: %s", exc)
 
 

@@ -35,10 +35,7 @@ def _iter_md_files(root: Path, limit: int | None = None) -> Iterable[Path]:
 
 
 def proofread_docs(
-    root: Path,
-    *,
-    limit_files: int | None = None,
-    language: str = "ru-RU",
+    root: Path, *, limit_files: int | None = None, language: str = "ru-RU"
 ) -> list[str]:
     """Проверяет ``*.md`` файлы под ``root`` через LanguageTool.
 
@@ -89,9 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Russian-language proofreader для docs/*.md."
     )
     parser.add_argument("root", type=Path, help="Корневой каталог (обычно docs/)")
-    parser.add_argument(
-        "--limit", type=int, default=None, help="Опц. лимит файлов"
-    )
+    parser.add_argument("--limit", type=int, default=None, help="Опц. лимит файлов")
     parser.add_argument(
         "--language", default="ru-RU", help="Код LanguageTool (default ru-RU)"
     )

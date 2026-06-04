@@ -11,10 +11,7 @@ from pathlib import Path
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.rpa import (
-    ArchiveProcessor,
-    PdfReadProcessor,
-)
+from src.backend.dsl.engine.processors.rpa import ArchiveProcessor, PdfReadProcessor
 
 
 @pytest.mark.asyncio

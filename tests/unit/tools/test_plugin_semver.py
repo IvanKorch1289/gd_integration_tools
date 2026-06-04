@@ -76,7 +76,9 @@ def test_missing_version_field(tmp_path: Path) -> None:
     result: SemverCheckResult = check_plugin_semver(toml_file)
 
     assert result.valid is False
-    assert "version" in result.error, f"Ошибка должна упоминать 'version', получено: {result.error}"
+    assert "version" in result.error, (
+        f"Ошибка должна упоминать 'version', получено: {result.error}"
+    )
 
 
 def test_invalid_semver_format(tmp_path: Path) -> None:
@@ -112,9 +114,9 @@ def test_invalid_requires_core(tmp_path: Path) -> None:
     result: SemverCheckResult = check_plugin_semver(toml_file)
 
     assert result.valid is False
-    assert "requires_core" in result.error.lower() or "specifier" in result.error.lower(), (
-        f"Ошибка должна упоминать requires_core или specifier: {result.error}"
-    )
+    assert (
+        "requires_core" in result.error.lower() or "specifier" in result.error.lower()
+    ), f"Ошибка должна упоминать requires_core или specifier: {result.error}"
 
 
 def test_is_compatible_ranges() -> None:

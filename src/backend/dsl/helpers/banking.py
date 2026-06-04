@@ -7,18 +7,18 @@ FX rate wrappers.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Iterable
 
 __all__ = (
-    "validate_inn",
-    "validate_kpp",
-    "validate_bic",
-    "validate_iban",
-    "validate_swift",
     "business_day",
     "money",
+    "validate_bic",
+    "validate_iban",
+    "validate_inn",
+    "validate_kpp",
+    "validate_swift",
 )
 
 _INN10 = re.compile(r"^\d{10}$")

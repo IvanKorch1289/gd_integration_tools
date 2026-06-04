@@ -73,7 +73,7 @@ class EmailSink(Sink):
                 use_tls=self.use_tls,
                 start_tls=self.start_tls,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -136,6 +136,6 @@ class EmailSink(Sink):
         try:
             await client.connect()
             await client.quit()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         return True

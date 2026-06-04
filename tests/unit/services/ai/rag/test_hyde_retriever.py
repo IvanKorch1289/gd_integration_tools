@@ -31,9 +31,7 @@ async def test_retrieve_returns_hyde_results() -> None:
     )
     embed_mock = AsyncMock(return_value=[[0.1, 0.2, 0.3]])
     search_mock = AsyncMock(
-        return_value=[
-            {"id": "doc1", "document": "реальный документ", "metadata": {}},
-        ]
+        return_value=[{"id": "doc1", "document": "реальный документ", "metadata": {}}]
     )
     retriever = HyDERetriever(
         embed_fn=embed_mock,
@@ -225,7 +223,7 @@ async def test_retrieve_uses_default_config() -> None:
         search_vectors=search_mock,
         generate_hypothetical=generate_mock,
     )
-    #Defaults: max_tokens=256, temperature=0.1
+    # Defaults: max_tokens=256, temperature=0.1
     await retriever.retrieve(query="запрос", top_k=5)
     # Проверяем что generate был вызван с defaults
     generate_mock.assert_called_once()

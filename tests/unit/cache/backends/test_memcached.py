@@ -51,9 +51,7 @@ async def test_set_with_ttl(backend: MemcachedBackend) -> None:
     backend._client.set.assert_awaited_once_with(b"k", b"v", exptime=60)
 
 
-async def test_set_without_ttl_uses_default(
-    backend: MemcachedBackend,
-) -> None:
+async def test_set_without_ttl_uses_default(backend: MemcachedBackend) -> None:
     """``set`` без ttl использует ``default_ttl`` из конструктора."""
     await backend.set("k", b"v")
     backend._client.set.assert_awaited_once_with(b"k", b"v", exptime=300)

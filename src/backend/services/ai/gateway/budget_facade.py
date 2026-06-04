@@ -26,7 +26,7 @@ from src.backend.services.ai.usage_meter import (
     extract_usage,
 )
 
-__all__ = ("LiteLLMBudgetFacade", "BudgetEnforcementError")
+__all__ = ("BudgetEnforcementError", "LiteLLMBudgetFacade")
 
 logger = logging.getLogger(__name__)
 

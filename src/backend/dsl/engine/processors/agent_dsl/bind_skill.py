@@ -79,9 +79,7 @@ class BindSkillProcessor(BaseAIProcessor):
         self._target_agent = target_agent
         self._output_key = output_key
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполнить привязку skill pack.
 
         Lookup skill pack через SkillRegistry, затем привязывает

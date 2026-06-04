@@ -27,8 +27,9 @@ References:
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 __all__ = (
     "WorkflowVersion",
@@ -144,7 +145,7 @@ class WorkflowVersionRegistry:
                 strict = bool(
                     getattr(feature_flags, "workflow_versioning_strict", False)
                 )
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 strict = False
 
             if strict:
@@ -368,7 +369,7 @@ def patched(patch_id: str) -> bool:
 
     try:
         return bool(temporal_workflow.patched(patch_id))
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         # Вызов вне workflow-контекста — Temporal бросает RuntimeError.
         # Для dryrun / unit-тестов возвращаем False (legacy ветка).
         return False

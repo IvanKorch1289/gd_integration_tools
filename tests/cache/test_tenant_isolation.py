@@ -126,9 +126,7 @@ async def test_delete_multiple_keys(backend: TenantCacheBackend) -> None:
         assert await backend.get("k3") is None
 
 
-async def test_feature_flag_off_passes_through(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_feature_flag_off_passes_through(monkeypatch: pytest.MonkeyPatch) -> None:
     """При выключенном feature-flag — wrapper делегирует напрямую."""
     from src.backend.core.config import features as features_module
 
@@ -156,8 +154,7 @@ async def test_custom_tenant_provider() -> None:
         return TenantContext(tenant_id=holder["tenant_id"])
 
     backend = TenantCacheBackend(
-        MemoryBackend(maxsize=8, default_ttl=60),
-        tenant_provider=_provider,
+        MemoryBackend(maxsize=8, default_ttl=60), tenant_provider=_provider
     )
     await backend.set("k", b"v-x")
     holder["tenant_id"] = "bank_y"

@@ -1,7 +1,8 @@
 import inspect
 import os
+from collections.abc import Awaitable, Callable, Sequence
 from inspect import Parameter, Signature
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any
 
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
@@ -40,7 +41,7 @@ from src.backend.schemas.invocation import (
     InvokeMode,
 )
 
-__all__ = ("ActionSpec", "CrudSpec", "ActionRouterBuilder")
+__all__ = ("ActionRouterBuilder", "ActionSpec", "CrudSpec")
 
 
 def _resolve_action_bus_service():
@@ -801,7 +802,7 @@ class ActionRouterBuilder:
             await service.delete(
                 key=spec.id_field_name, value=kwargs[spec.id_param_name]
             )
-            return None
+            return
 
         endpoint.__name__ = f"{spec.name}_delete"
         endpoint.__doc__ = f"Удаляет объект ресурса '{spec.name}'."

@@ -30,7 +30,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING
 
 from src.backend.core.utils.task_registry import get_task_registry
 
@@ -85,7 +86,7 @@ class OutboxListener:
         self._drain = drain_handler
         self._channel = channel
         self._backup_interval = backup_poll_interval_s
-        self._conn: "asyncpg.Connection | None" = None
+        self._conn: asyncpg.Connection | None = None
         self._backup_task: asyncio.Task[None] | None = None
         self._started = False
         # Throttling: агрегируем burst of NOTIFY за короткое окно,
@@ -124,14 +125,14 @@ class OutboxListener:
             self._backup_task.cancel()
             try:
                 await self._backup_task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):
                 logger.debug("backup task cancellation raised", exc_info=True)
             self._backup_task = None
         if self._debounce_task is not None:
             self._debounce_task.cancel()
             try:
                 await self._debounce_task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):
                 logger.debug("debounce task cancellation raised", exc_info=True)
             self._debounce_task = None
         if self._conn is not None:
@@ -145,7 +146,7 @@ class OutboxListener:
     # -- Private handlers ----------------------------------------------
 
     def _on_notify(
-        self, connection: "asyncpg.Connection", _pid: int, channel: str, payload: str
+        self, connection: asyncpg.Connection, _pid: int, channel: str, payload: str
     ) -> None:
         """asyncpg-callback. Вызывается sync, поэтому только enqueue."""
         if payload:
@@ -167,7 +168,7 @@ class OutboxListener:
             return
         try:
             await self._drain(event_ids=ids)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("outbox drain (push) failed: %s", exc)
 
     async def _backup_loop(self) -> None:
@@ -178,8 +179,8 @@ class OutboxListener:
                 await self._drain(event_ids=None)
             except asyncio.CancelledError:
                 break
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error("outbox drain (backup) failed: %s", exc)
 
 
-__all__ = ("OutboxListener", "CHANNEL", "BACKUP_POLL_INTERVAL_S")
+__all__ = ("BACKUP_POLL_INTERVAL_S", "CHANNEL", "OutboxListener")

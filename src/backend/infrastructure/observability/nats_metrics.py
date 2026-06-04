@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "record_consumer_info",
-    "consumer_pending",
     "consumer_delivered",
     "consumer_info_errors",
+    "consumer_pending",
+    "record_consumer_info",
 )
 
 try:  # pragma: no cover
@@ -45,7 +45,7 @@ try:  # pragma: no cover
         "Total errors fetching NATS consumer_info",
         labels=("stream", "consumer"),
     )
-except Exception:  # noqa: BLE001, S110
+except Exception:
     consumer_pending = None  # type: ignore[assignment,unused-ignore]
     consumer_delivered = None  # type: ignore[assignment,unused-ignore]
     consumer_ack_lag = None  # type: ignore[assignment,unused-ignore]
@@ -61,12 +61,12 @@ def record_consumer_info(info: dict[str, Any]) -> None:
         if consumer_info_errors is not None:
             try:
                 consumer_info_errors.labels(stream=stream, consumer=consumer).inc()
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
         return
     pending = info.get("pending_messages", 0)
     if consumer_pending is not None:
         try:
             consumer_pending.labels(stream=stream, consumer=consumer).set(pending)
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass

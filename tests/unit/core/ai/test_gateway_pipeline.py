@@ -160,8 +160,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
         workflow_pattern="credit_check*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini",
-            fallback=["anthropic/claude-sonnet-4-6"],
+            primary="openai/gpt-4o-mini", fallback=["anthropic/claude-sonnet-4-6"]
         ),
         required=False,
     )
@@ -208,11 +207,7 @@ async def test_pipeline_strict_policy_raises_when_missing(
     gateway = AIGateway(policy_resolver=_Resolver())
     with pytest.raises(PolicyNotResolvedError):
         await gateway.invoke(
-            AIRequest(
-                workflow_id="unknown",
-                tenant_id="t-1",
-                correlation_id="req-1",
-            )
+            AIRequest(workflow_id="unknown", tenant_id="t-1", correlation_id="req-1")
         )
 
 
@@ -242,9 +237,7 @@ async def test_input_guards_skipped_when_no_enforcer(
 
 
 @pytest.mark.asyncio
-async def test_pii_not_detected_when_sanitizer_returns_clean(
-    enforced: None,
-) -> None:
+async def test_pii_not_detected_when_sanitizer_returns_clean(enforced: None) -> None:
     """Без PII в ответе ``pii_detected = False``."""
     sanitizer = _FakeSanitizer()
     llm = _FakeLiteLLMGateway(content="Простой ответ")

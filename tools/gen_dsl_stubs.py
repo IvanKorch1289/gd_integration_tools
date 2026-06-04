@@ -49,8 +49,16 @@ _TEMPLATE_NAME = "dsl_stub.pyi.j2"
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 _DEFAULT_TARGETS = (
-    ("src.backend.dsl.builders.base", "RouteBuilder", _PROJECT_ROOT / "src/backend/dsl/builders/base.pyi"),
-    ("src.backend.dsl.workflow.builder", "WorkflowBuilder", _PROJECT_ROOT / "src/backend/dsl/workflow/builder.pyi"),
+    (
+        "src.backend.dsl.builders.base",
+        "RouteBuilder",
+        _PROJECT_ROOT / "src/backend/dsl/builders/base.pyi",
+    ),
+    (
+        "src.backend.dsl.workflow.builder",
+        "WorkflowBuilder",
+        _PROJECT_ROOT / "src/backend/dsl/workflow/builder.pyi",
+    ),
 )
 
 _logger = logging.getLogger("tools.gen_dsl_stubs")
@@ -63,12 +71,31 @@ _fq_to_short: dict[str, str] = {}
 
 
 # Types that are always available from `typing` and don't need explicit import
-_TYPING_REEXPORTS: frozenset[str] = frozenset({
-    "Any", "Callable", "Optional", "Union", "List", "Dict", "Set", "Tuple",
-    "Type", "Iterable", "Iterator", "Sequence", "Mapping", "MutableMapping",
-    "Awaitable", "Coroutine", "ContextManager", "AsyncIterator", "AsyncIterable",
-    "AsyncContextManager", "AsyncGenerator",
-})
+_TYPING_REEXPORTS: frozenset[str] = frozenset(
+    {
+        "Any",
+        "Callable",
+        "Optional",
+        "Union",
+        "List",
+        "Dict",
+        "Set",
+        "Tuple",
+        "Type",
+        "Iterable",
+        "Iterator",
+        "Sequence",
+        "Mapping",
+        "MutableMapping",
+        "Awaitable",
+        "Coroutine",
+        "ContextManager",
+        "AsyncIterator",
+        "AsyncIterable",
+        "AsyncContextManager",
+        "AsyncGenerator",
+    }
+)
 
 
 # -------------------------------------------------------------------
@@ -141,7 +168,9 @@ def _get_module_namespace(module_name: str) -> dict[str, Any]:
                                 imp = imp.strip().split(" as ")[0].strip()
                                 if imp and imp.isidentifier():
                                     try:
-                                        ns[imp] = importlib.import_module(from_module).__dict__[imp]
+                                        ns[imp] = importlib.import_module(
+                                            from_module
+                                        ).__dict__[imp]
                                     except (KeyError, ImportError):
                                         pass
                         i += 1
@@ -176,11 +205,11 @@ def _shorten_annotation(annotation_str: str) -> str:
     # Module path: a.b.c (lowercase segments)
     # Class name: starts with uppercase, may have [generic] suffix
     def replace_fq_generic(m: re.Match) -> str:
-        module_prefix = m.group(1)          # e.g. 'src.backend.dsl.engine.exchange'
-        rest = m.group(2)                  # e.g. 'Exchange[Any]' or 'BaseProcessor'
+        module_prefix = m.group(1)  # e.g. 'src.backend.dsl.engine.exchange'
+        rest = m.group(2)  # e.g. 'Exchange[Any]' or 'BaseProcessor'
         # Strip any generic suffix to get the bare class name
         class_name = re.sub(r"\[.*\]$", "", rest)
-        generic_suffix = rest[len(class_name):]  # '' or '[...]'
+        generic_suffix = rest[len(class_name) :]  # '' or '[...]'
         short = _fq_to_short.get(f"{module_prefix}.{class_name}", class_name)
         return f"{short}{generic_suffix}"
 
@@ -252,7 +281,9 @@ def _format_type_str(annotation: Any) -> str:
     return result
 
 
-def _resolve_annotation(annotation: Any, module_ns: dict[str, Any] | None = None) -> str:
+def _resolve_annotation(
+    annotation: Any, module_ns: dict[str, Any] | None = None
+) -> str:
     """Безопасный перевод annotation в строку (для шаблона).
 
     Best-effort: пытаемся зарезолвить ForwardRef и строковые аннотации
@@ -474,12 +505,17 @@ def _extract_fq_names_from_annotation(ann: Any) -> set[str]:
         # Add the bare origin type (e.g. 'list', 'dict', 'Union')
         origin_module = getattr(origin, "__module__", None)
         origin_qualname = getattr(origin, "__qualname__", None)
-        if (origin_module and origin_qualname and origin_qualname not in _TYPING_REEXPORTS
-                and origin_module not in ("builtins", "typing", "collections.abc", "collections")):
+        if (
+            origin_module
+            and origin_qualname
+            and origin_qualname not in _TYPING_REEXPORTS
+            and origin_module
+            not in ("builtins", "typing", "collections.abc", "collections")
+        ):
             names.add(f"{origin_module}.{origin_qualname}")
 
         # Recurse into generic arguments
-        for arg in (args if isinstance(args, (list, tuple)) else [args]):
+        for arg in args if isinstance(args, (list, tuple)) else [args]:
             names.update(_extract_fq_names_from_annotation(arg))
         return names
 
@@ -517,14 +553,18 @@ def _fq_names_from_string(s: str) -> set[str]:
     """
     names: set[str] = set()
     # Match 'src.a.b.ClassName' or 'src.a.b.ClassName[anything]'
-    for m in re.finditer(r"([a-z][a-zA-Z0-9_]*(?:\.[a-z][a-zA-Z0-9_]*)*)\.([A-Z][a-zA-Z0-9_]*)", s):
+    for m in re.finditer(
+        r"([a-z][a-zA-Z0-9_]*(?:\.[a-z][a-zA-Z0-9_]*)*)\.([A-Z][a-zA-Z0-9_]*)", s
+    ):
         module, class_name = m.group(1), m.group(2)
         if module not in ("builtins", "typing", "collections.abc", "collections"):
             names.add(f"{module}.{class_name}")
 
     # Capture bare class names (uppercase identifier, not in typing/builtins)
     # These typically appear in raw annotations when get_type_hints fails.
-    for m in re.finditer(r"(?<![a-zA-Z0-9_.])[A-Z][a-zA-Z0-9_]{2,}(?![a-zA-Z0-9_.\[])", s):
+    for m in re.finditer(
+        r"(?<![a-zA-Z0-9_.])[A-Z][a-zA-Z0-9_]{2,}(?![a-zA-Z0-9_.\[])", s
+    ):
         bare = m.group(0)
         if bare not in _TYPING_REEXPORTS:
             names.add(f"__same_module__:{bare}")
@@ -605,7 +645,9 @@ def _collect_all_imports(
                 deduped.append(f"from {fq.rsplit('.', 1)[0]} import {short}")
 
         if same_module_filtered:
-            deduped.append(f"from {module_name} import {', '.join(sorted(set(same_module_filtered)))}")
+            deduped.append(
+                f"from {module_name} import {', '.join(sorted(set(same_module_filtered)))}"
+            )
 
     return deduped
 
@@ -695,7 +737,9 @@ def main(argv: list[str] | None = None) -> int:
     for module_name, class_name, output_path in _DEFAULT_TARGETS:
         content = generate_stub(module_name, class_name, output_path)
         if args.check:
-            existing = output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
+            existing = (
+                output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
+            )
             if existing != content:
                 drift_detected = True
                 _logger.warning("Stub drift detected: %s", output_path)

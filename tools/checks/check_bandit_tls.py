@@ -31,9 +31,7 @@ _TLS_RULES = ("B501", "B502", "B503", "B504", "B505", "B506", "B507")
 def _check_bandit_available() -> None:
     """Проверяет наличие ``bandit`` в окружении (via python -m)."""
     result = subprocess.run(
-        [sys.executable, "-m", "bandit", "--version"],
-        capture_output=True,
-        check=False,
+        [sys.executable, "-m", "bandit", "--version"], capture_output=True, check=False
     )
     if result.returncode != 0:
         print(
@@ -76,7 +74,9 @@ def run_bandit_tls(target: Path) -> int:
     try:
         report = json.loads(result.stdout)
     except json.JSONDecodeError:
-        print(f"[ERROR] bandit JSON parse failed:\n{result.stdout[:500]}", file=sys.stderr)
+        print(
+            f"[ERROR] bandit JSON parse failed:\n{result.stdout[:500]}", file=sys.stderr
+        )
         return -1
 
     high_severity = [
@@ -105,7 +105,10 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(description="bandit с TLS-specific rules")
     parser.add_argument(
-        "--target", type=Path, default=Path("src/backend"), help="Путь к коду для анализа"
+        "--target",
+        type=Path,
+        default=Path("src/backend"),
+        help="Путь к коду для анализа",
     )
     args = parser.parse_args()
     _check_bandit_available()

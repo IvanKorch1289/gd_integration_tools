@@ -168,6 +168,7 @@ async def test_dod9_restart_scenario_fail_max_5() -> None:
 
     assert adapter.state == "open"
     assert adapter.failure_count == 5
+
     # Дополнительный вызов отвергается — circuit действительно открыт.
     async def upstream() -> str:
         return "should_not_run"
@@ -239,10 +240,7 @@ def _make_fake_pybreaker(monkeypatch: pytest.MonkeyPatch) -> object:
             return self._fail_counter
 
         async def call_async(
-            self,
-            fn: Callable[..., Awaitable[object]],
-            *args: object,
-            **kwargs: object,
+            self, fn: Callable[..., Awaitable[object]], *args: object, **kwargs: object
         ) -> object:
             if self._current_state == "open":
                 raise _FakeCircuitBreakerError(f"circuit {self.name} is open")

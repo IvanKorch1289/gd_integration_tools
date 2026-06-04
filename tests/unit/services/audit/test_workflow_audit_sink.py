@@ -144,11 +144,7 @@ async def test_flush_delegates_to_writer() -> None:
     """flush() прокидывает вызов в writer.flush_now()."""
     writer = _StubBulkWriter()
     sink = WorkflowAuditSink(writer=writer)
-    await sink.emit(
-        event_type="workflow.fail",
-        workflow_id="wf-4",
-        tenant_id=None,
-    )
+    await sink.emit(event_type="workflow.fail", workflow_id="wf-4", tenant_id=None)
     flushed = await sink.flush()
     assert writer.flush_called == 1
     assert flushed == 1

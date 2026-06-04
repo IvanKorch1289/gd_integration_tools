@@ -44,8 +44,11 @@ def _start_backend(port: int) -> subprocess.Popen[bytes]:
     env.setdefault("APP_PROFILE", "dev_light")
     env["APP_PORT"] = str(port)
     cmd = [sys.executable, "-m", "src.backend.main"]
-    _logger.info("starting backend on port=%s with PLUGIN_DEV_ALLOWLIST=%s",
-                 port, env.get("PLUGIN_DEV_ALLOWLIST"))
+    _logger.info(
+        "starting backend on port=%s with PLUGIN_DEV_ALLOWLIST=%s",
+        port,
+        env.get("PLUGIN_DEV_ALLOWLIST"),
+    )
     return subprocess.Popen(  # noqa: S603
         cmd, env=env, cwd=str(_PROJECT_ROOT)
     )
@@ -63,8 +66,11 @@ async def _watch_loop(plugin: str, plugin_dir: Path) -> None:
         return
     _logger.info("watching %s for changes…", plugin_dir)
     async for changes in awatch(plugin_dir):
-        _logger.info("plugin %s changed: %s; trigger hot-swap manually via REST.",
-                     plugin, changes)
+        _logger.info(
+            "plugin %s changed: %s; trigger hot-swap manually via REST.",
+            plugin,
+            changes,
+        )
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -120,8 +120,7 @@ async def test_no_deadlock_under_parallel_load(
 
     tool = _make_action_tool("test.parallel")
     results = await asyncio.wait_for(
-        asyncio.gather(*[tool.ainvoke({"i": i}) for i in range(20)]),
-        timeout=10.0,
+        asyncio.gather(*[tool.ainvoke({"i": i}) for i in range(20)]), timeout=10.0
     )
     assert len(results) == 20
     assert counter["n"] == 20

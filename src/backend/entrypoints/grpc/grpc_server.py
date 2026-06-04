@@ -29,7 +29,7 @@ from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
 from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (
+from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore[attr-defined]
     OrderDetailResponse,
     OrderResponse,
 )
@@ -93,8 +93,7 @@ class BaseGRPCServicer:
                 correlation_id = extracted
         if correlation_id:
             try:
-                # noqa: PLC0415 — lazy import, только для correlation injection
-                from src.backend.infrastructure.observability.correlation import (  # noqa: PLC0415
+                from src.backend.infrastructure.observability.correlation import (
                     set_correlation_context,
                 )
 
@@ -243,7 +242,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         self.logger = grpc_logger
         self.logger.info("InvokerGRPCServicer инициализирован")
 
-    async def Invoke(self, request, context):  # noqa: N802 — proto-name
+    async def Invoke(self, request, context):
         from src.backend.core.interfaces.invoker import (
             InvocationMode,
             InvocationRequest,
@@ -302,7 +301,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         invoker = get_invoker()
         try:
             response = await invoker.invoke(invocation_request)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             cid = uuid.uuid4().hex[:12]
             self.logger.exception("Invoke ошибка [ref=%s]", cid)
             return InvokerInvokeResponse(
@@ -316,7 +315,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         if response.result is not None:
             try:
                 result_json = orjson.dumps(response.result, default=str).decode()
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 result_json = str(response.result)
 
         return InvokerInvokeResponse(

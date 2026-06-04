@@ -87,7 +87,7 @@ class HybridRetriever:
             self._corpus = list(new_corpus or [])
             self._bm25 = None  # force rebuild on next _ensure_bm25()
             self._bm25_unavailable = not self._corpus
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("hybrid_retriever.corpus_loader_failed: %s", exc)
 
     def _ensure_bm25(self) -> Any:
@@ -115,7 +115,7 @@ class HybridRetriever:
             tokenized = [_tokenize(doc.get("text") or "") for doc in self._corpus]
             self._bm25 = BM25Okapi(tokenized)
             return self._bm25
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("BM25Okapi init failed (%s), dense-only", exc)
             _record_hybrid_fallback(reason="bm25_init_error")
             self._bm25_unavailable = True
@@ -140,7 +140,7 @@ class HybridRetriever:
         except TypeError:
             # Backward-compat для search(query, top_k) сигнатуры без kw-args.
             dense_raw = await self._dense_search(query, top_k * 2)
-        except Exception as exc:  # noqa: BLE001 — vector store down
+        except Exception as exc:
             logger.warning("hybrid_retriever.dense_failed: %s", exc)
             _record_hybrid_fallback(reason="dense_error")
             dense_raw = []
@@ -154,7 +154,7 @@ class HybridRetriever:
                 query_tokens = _tokenize(query)
                 scored = bm25.get_top_n(query_tokens, self._corpus, n=top_k * 2)
                 bm25_chunks = list(scored)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("hybrid_retriever.bm25_runtime_failed: %s", exc)
                 _record_hybrid_fallback(reason="bm25_runtime_error")
 
@@ -256,5 +256,5 @@ def _record_hybrid_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.debug("rag_hybrid_fallback metric emit failed", exc_info=True)

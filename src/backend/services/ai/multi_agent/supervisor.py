@@ -167,7 +167,7 @@ class MultiAgentSupervisor:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "multi_agent_supervisor_enabled", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def _is_langgraph_available(self) -> bool:
@@ -240,7 +240,7 @@ class MultiAgentSupervisor:
         for spec in self._agents.values():
             try:
                 output = await spec.call(merged_payload)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning(
                     "MultiAgentSupervisor[%s]: agent %s failed: %s",
                     self._name,
@@ -269,7 +269,7 @@ class MultiAgentSupervisor:
         )
         try:
             graph = self._compile_graph()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise MultiAgentSupervisorUnavailable(
                 f"Не удалось скомпилировать LangGraph: {exc}"
             ) from exc
@@ -282,7 +282,7 @@ class MultiAgentSupervisor:
         }
         try:
             response = await graph.ainvoke(invoke_payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise MultiAgentSupervisorUnavailable(
                 f"LangGraph ainvoke failed: {exc}"
             ) from exc

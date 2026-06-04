@@ -32,7 +32,9 @@ def temp_dir(tmp_path: Path) -> Path:
 def test_create_watcher_success(temp_dir: Path) -> None:
     """POST / creates a watcher and returns its spec."""
     app = _make_app()
-    spec = WatcherSpec(directory=str(temp_dir), pattern="*.csv", route_id="r1", poll_interval=2.0)
+    spec = WatcherSpec(
+        directory=str(temp_dir), pattern="*.csv", route_id="r1", poll_interval=2.0
+    )
 
     with patch.object(mod.watcher_manager, "add", return_value=spec):
         client = TestClient(app)
@@ -60,16 +62,14 @@ def test_create_watcher_bad_directory() -> None:
     app = _make_app()
 
     with patch.object(
-        mod.watcher_manager, "add", side_effect=ValueError("Директория не найдена: /nope")
+        mod.watcher_manager,
+        "add",
+        side_effect=ValueError("Директория не найдена: /nope"),
     ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(
             "/api/v1/watchers/",
-            json={
-                "directory": "/nope",
-                "pattern": "*",
-                "route_id": "r1",
-            },
+            json={"directory": "/nope", "pattern": "*", "route_id": "r1"},
         )
 
     assert resp.status_code == 400
@@ -124,9 +124,7 @@ def test_list_watchers() -> None:
         }
     ]
 
-    with patch.object(
-        mod.watcher_manager, "list_watchers", return_value=mock_watchers
-    ):
+    with patch.object(mod.watcher_manager, "list_watchers", return_value=mock_watchers):
         client = TestClient(app)
         resp = client.get("/api/v1/watchers/")
 

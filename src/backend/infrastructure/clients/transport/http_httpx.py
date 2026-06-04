@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import httpx
 from tenacity import (
@@ -116,7 +117,7 @@ def build_unified_transport(
             )
             base = RetryTransport(transport=base, retry=retry_obj)
             logger.debug("httpx_retries RetryTransport активирован")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("httpx_retries init failed: %s", exc)
 
     if enable_cache and is_hishel_available():
@@ -174,7 +175,7 @@ class HttpxClient:
                             max_retries=self._http_settings.max_retries,
                             backoff_factor=self._http_settings.retry_backoff_factor,
                         )
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.warning(
                             "unified transport build failed, fallback: %s", exc
                         )
@@ -194,7 +195,7 @@ class HttpxClient:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "httpx_unified_transport", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def _build_cert_tuple(self) -> tuple[str, str] | tuple[str, str, str] | None:
@@ -223,13 +224,13 @@ class HttpxClient:
         try:
             from src.backend.core.svcs_registry import get_service, has_service
             from src.backend.infrastructure.security.cert_store import CertStore
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return
         if not has_service(CertStore):
             return
         try:
             cert_store = get_service(CertStore)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return
         # CertStore API имеет несколько форм (project-зависимо):
         # — `on_rotation(path, callback)` (план);
@@ -241,14 +242,14 @@ class HttpxClient:
                 on_rotation(str(cert_path), self._on_cert_rotated)
                 self._cert_subscribed = True
                 return
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 pass
         register_listener = getattr(cert_store, "register_listener", None)
         if callable(register_listener):
             try:
                 register_listener(self._on_cert_rotated)
                 self._cert_subscribed = True
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 return
 
     def _on_cert_rotated(self, *_args: Any, **_kwargs: Any) -> None:
@@ -354,7 +355,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except RetryError, CircuitOpen, httpx.HTTPError:
+        except (RetryError, CircuitOpen, httpx.HTTPError):
             raise
 
 

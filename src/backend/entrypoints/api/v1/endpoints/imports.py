@@ -257,24 +257,24 @@ async def _import_bulk_objects(
     if dry_run:
         return {"parsed": len(rows), "sample": rows[:3], "dry_run": True}
 
-    from src.backend.dsl.engine.execution_engine import get_execution_engine
+    from src.backend.dsl.engine.execution_engine import ExecutionEngine
     from src.backend.dsl.engine.pipeline_registry import get_pipeline_registry
 
     pipeline = get_pipeline_registry().get(route_id)
     if pipeline is None:
         raise HTTPException(404, f"Pipeline '{route_id}' не найден")
 
-    engine = get_execution_engine()
+    engine = ExecutionEngine()
     ok = 0
     failed: list[dict[str, Any]] = []
     for idx, row in enumerate(rows):
         try:
             exchange = await engine.execute(pipeline, body=row)
-            if exchange.is_failed:
+            if exchange.status.value == "failed":
                 failed.append({"row": idx, "error": str(exchange.error)})
             else:
                 ok += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             failed.append({"row": idx, "error": str(exc)})
 
     return {

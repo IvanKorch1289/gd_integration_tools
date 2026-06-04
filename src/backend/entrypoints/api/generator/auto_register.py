@@ -38,7 +38,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from fastapi import APIRouter, FastAPI, Request
 
@@ -118,7 +119,7 @@ def _build_auto_endpoint(
         else:
             try:
                 body = await request.json()
-            except ValueError, RuntimeError:
+            except (ValueError, RuntimeError):
                 # Тело отсутствует или не валидный JSON — допустимо для
                 # action'а без payload_model; падать не нужно.
                 body = None

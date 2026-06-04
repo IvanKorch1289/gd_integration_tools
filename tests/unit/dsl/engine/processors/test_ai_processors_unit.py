@@ -23,6 +23,7 @@ from src.backend.dsl.engine.processors.ai import (
 # Stubs (same pattern as test_rag_pii_redaction.py)
 # --------------------------------------------------------------------------- #
 
+
 class _Message:
     """Minimal Message stub matching the Message interface used by processors."""
 
@@ -59,6 +60,7 @@ class _Context:
 # PromptComposerProcessor
 # --------------------------------------------------------------------------- #
 
+
 class TestPromptComposerProcessor:
     """Tests for PromptComposerProcessor (lines 30-69)."""
 
@@ -67,7 +69,9 @@ class TestPromptComposerProcessor:
         """Template is formatted with body dict + context data."""
         exchange = _Exchange()
         exchange.in_message.body = {"name": "Alice", "query": "hello"}
-        exchange.set_property("vector_results", [{"document": "ctx1"}, {"document": "ctx2"}])
+        exchange.set_property(
+            "vector_results", [{"document": "ctx1"}, {"document": "ctx2"}]
+        )
 
         processor = PromptComposerProcessor(
             template="User: {name} asks: {query}\nContext:\n{context}",
@@ -88,9 +92,7 @@ class TestPromptComposerProcessor:
         exchange = _Exchange()
         exchange.in_message.body = "plain text query"
 
-        processor = PromptComposerProcessor(
-            template="Input: {input}",
-        )
+        processor = PromptComposerProcessor(template="Input: {input}")
         await processor.process(exchange, _Context())
 
         assert "plain text query" in exchange.properties["_composed_prompt"]
@@ -103,8 +105,7 @@ class TestPromptComposerProcessor:
         exchange.set_property("vector_results", ["item1", "item2", "item3"])
 
         processor = PromptComposerProcessor(
-            template="Q: {q}\nDocs:\n{context}",
-            context_property="vector_results",
+            template="Q: {q}\nDocs:\n{context}", context_property="vector_results"
         )
         await processor.process(exchange, _Context())
 
@@ -122,7 +123,7 @@ class TestPromptComposerProcessor:
         exchange.set_property("vector_results", "")
 
         processor = PromptComposerProcessor(
-            template="Known: {known} Missing: {notexist}",
+            template="Known: {known} Missing: {notexist}"
         )
         # The fix: missing keys are filled with empty strings, not KeyError
         await processor.process(exchange, _Context())
@@ -131,22 +132,18 @@ class TestPromptComposerProcessor:
     def test_to_spec_includes_template(self) -> None:
         """to_spec returns compose_prompt dict with template."""
         processor = PromptComposerProcessor(
-            template="Hello {name}",
-            context_property="ctx",
-            output_property="out",
+            template="Hello {name}", context_property="ctx", output_property="out"
         )
         spec = processor.to_spec()
         assert spec == {
-            "compose_prompt": {
-                "template": "Hello {name}",
-                "context_property": "ctx",
-            }
+            "compose_prompt": {"template": "Hello {name}", "context_property": "ctx"}
         }
 
 
 # --------------------------------------------------------------------------- #
 # TokenBudgetProcessor
 # --------------------------------------------------------------------------- #
+
 
 class TestTokenBudgetProcessor:
     """Tests for TokenBudgetProcessor (lines 237-282)."""
@@ -233,6 +230,7 @@ class TestTokenBudgetProcessor:
 # CacheProcessor
 # --------------------------------------------------------------------------- #
 
+
 class TestCacheProcessor:
     """Tests for CacheProcessor (lines 671-711)."""
 
@@ -317,6 +315,7 @@ class TestCacheProcessor:
 # --------------------------------------------------------------------------- #
 # CacheWriteProcessor
 # --------------------------------------------------------------------------- #
+
 
 class TestCacheWriteProcessor:
     """Tests for CacheWriteProcessor (lines 714-755)."""
@@ -407,6 +406,7 @@ class TestCacheWriteProcessor:
 # LLMParserProcessor
 # --------------------------------------------------------------------------- #
 
+
 class TestLLMParserProcessor:
     """Tests for LLMParserProcessor (lines 198-234).
 
@@ -453,6 +453,7 @@ class TestLLMParserProcessor:
 # RestorePIIProcessor
 # --------------------------------------------------------------------------- #
 
+
 class TestRestorePIIProcessor:
     """Tests for RestorePIIProcessor (lines 597-614)."""
 
@@ -460,7 +461,10 @@ class TestRestorePIIProcessor:
     async def test_restores_pii_placeholders(self) -> None:
         """Placeholders in body are replaced with original PII values."""
         exchange = _Exchange()
-        exchange.set_property("_pii_mapping", {"[EMAIL_1]": "alice@example.com", "[PHONE_1]": "+7 999 123-45-67"})
+        exchange.set_property(
+            "_pii_mapping",
+            {"[EMAIL_1]": "alice@example.com", "[PHONE_1]": "+7 999 123-45-67"},
+        )
         exchange.set_property("_pii_original", "original text")
         exchange.in_message.body = "Contact: [EMAIL_1] or [PHONE_1]"
 

@@ -12,11 +12,11 @@ if TYPE_CHECKING:
     from src.backend.core.messaging.dlq_policy import DLQPolicy, DLQPolicyRegistry
     from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
-__all__ = ("resolve_policy_for", "resolve_class_for_envelope")
+__all__ = ("resolve_class_for_envelope", "resolve_policy_for")
 
 
 def resolve_class_for_envelope(
-    envelope: "DLQEnvelope",
+    envelope: DLQEnvelope,
     *,
     route_manifest: Any | None = None,
     dispatch_action_category: str | None = None,
@@ -45,12 +45,12 @@ def resolve_class_for_envelope(
 
 
 def resolve_policy_for(
-    envelope: "DLQEnvelope",
+    envelope: DLQEnvelope,
     *,
-    registry: "DLQPolicyRegistry",
+    registry: DLQPolicyRegistry,
     route_manifest: Any | None = None,
     dispatch_action_category: str | None = None,
-) -> "DLQPolicy":
+) -> DLQPolicy:
     """Возвращает :class:`DLQPolicy` для envelope."""
     class_name = resolve_class_for_envelope(
         envelope,

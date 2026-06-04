@@ -26,13 +26,14 @@ from __future__ import annotations
 
 import base64
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import HTTPException, Request
 
 from src.backend.core.auth import AuthContext, AuthMethod
 
-__all__ = ("AuthMethod", "AuthContext", "require_auth", "set_default_auth")
+__all__ = ("AuthContext", "AuthMethod", "require_auth", "set_default_auth")
 
 logger = logging.getLogger(__name__)
 

@@ -88,12 +88,12 @@ class SshCommandProcessor(BaseProcessor):
 
     def _resolve_password(self, exchange: Exchange[Any]) -> str | None:
         """Извлекает пароль из exchange по ``password_from``."""
-        if self._password_from == "body":  # noqa: S105
+        if self._password_from == "body":  # noqa: S105  # config field name, not a password
             body = exchange.in_message.body
             if isinstance(body, dict):
                 return body.get("password")
             return None
-        if self._password_from == "properties":  # noqa: S105
+        if self._password_from == "properties":  # noqa: S105  # config field name, not a password
             return exchange.properties.get("password")
         return None  # "none" — key auth или без пароля
 

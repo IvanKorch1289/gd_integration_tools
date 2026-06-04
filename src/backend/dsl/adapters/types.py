@@ -5,13 +5,13 @@
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 __all__ = ("ProtocolType", "TransportConfig")
 
 
-class ProtocolType(str, Enum):
+class ProtocolType(StrEnum):
     """Поддерживаемые протоколы интеграционной шины.
 
     Каждый протокол соответствует адаптеру в ``src/dsl/adapters/``,

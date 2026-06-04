@@ -57,9 +57,7 @@ async def test_happy_path_static_key(
 
     ex: Exchange[Any] = Exchange()
     ex.set_property("agent_result", {"content": "stored value"})
-    proc = MemoryStoreProcessor(
-        namespace="acme:chat", key="static_key", ttl_s=3600
-    )
+    proc = MemoryStoreProcessor(namespace="acme:chat", key="static_key", ttl_s=3600)
     await proc.process(ex, context)
 
     assert len(backend.calls) == 1
@@ -105,13 +103,9 @@ async def test_dynamic_key_from_body(
         MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
     )
 
-    ex: Exchange[Any] = Exchange(
-        in_message=Message(body={"user_id": "user_42"})
-    )
+    ex: Exchange[Any] = Exchange(in_message=Message(body={"user_id": "user_42"}))
     ex.set_property("agent_result", {"content": "v"})
-    proc = MemoryStoreProcessor(
-        namespace="acme:chat", key_property="body.user_id"
-    )
+    proc = MemoryStoreProcessor(namespace="acme:chat", key_property="body.user_id")
     await proc.process(ex, context)
 
     assert backend.calls[0][1] == "user_42"
@@ -130,9 +124,7 @@ async def test_custom_value_property(
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body={"foo": "bar"}))
-    proc = MemoryStoreProcessor(
-        namespace="ns", key="k", value_property="body.foo"
-    )
+    proc = MemoryStoreProcessor(namespace="ns", key="k", value_property="body.foo")
     await proc.process(ex, context)
 
     assert backend.calls[0][2] == "bar"

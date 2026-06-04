@@ -74,33 +74,25 @@ async def test_get_delegates_to_client(
     client.get.assert_awaited_once_with("k")
 
 
-async def test_set_with_ttl(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_set_with_ttl(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``set`` с ttl передаёт ``ex=ttl`` в client (унаследовано)."""
     await backend.set("k", b"v", ttl=120)
     client.set.assert_awaited_once_with("k", b"v", ex=120)
 
 
-async def test_set_without_ttl(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_set_without_ttl(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``set`` без ttl не передаёт ``ex``."""
     await backend.set("k", b"v")
     client.set.assert_awaited_once_with("k", b"v")
 
 
-async def test_delete_multiple(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_delete_multiple(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``delete`` нескольких ключей — один вызов client.delete."""
     await backend.delete("a", "b")
     client.delete.assert_awaited_once_with("a", "b")
 
 
-async def test_delete_no_keys(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_delete_no_keys(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``delete`` без ключей — без вызова client."""
     await backend.delete()
     client.delete.assert_not_called()
@@ -116,17 +108,13 @@ async def test_delete_pattern_via_scan_iter(
     assert client.delete.await_count == 2
 
 
-async def test_exists_true(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_exists_true(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``exists`` возвращает True для непустого результата."""
     client.exists.return_value = 1
     assert await backend.exists("k") is True
 
 
-async def test_exists_false(
-    backend: KeyDBBackend, client: AsyncMock
-) -> None:
+async def test_exists_false(backend: KeyDBBackend, client: AsyncMock) -> None:
     """``exists`` возвращает False для нулевого результата."""
     client.exists.return_value = 0
     assert await backend.exists("k") is False

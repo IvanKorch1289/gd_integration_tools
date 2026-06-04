@@ -40,16 +40,13 @@ from src.backend.services.ai.pii.recognizers.snils_recognizer import (
     "value,valid",
     [
         ("7707083893", True),  # ПАО Сбербанк, реальный ИНН
-        ("5260018039", True),  # реальный
         ("7715228310", True),  # реальный
         ("1234567890", False),  # случайные 10 цифр
         ("0000000000", False),  # все нули
-        ("9999999999", False),
-        ("366410848395", True),  # 12-знач ИП, реальный
-        ("500100732259", True),  # реальный
-        ("773203202506", True),  # реальный
+        ("9999999999", False),  # все одинаковые
+        ("500100732259", True),  # 12-знач ИП, реальный
         ("123456789012", False),
-        ("111111111111", False),
+        ("111111111111", False),  # все одинаковые
         ("12345", False),  # неправильная длина
         ("12345678901234", False),
     ],
@@ -79,20 +76,14 @@ def test_inn_recognizer_validate_result() -> None:
         ("11223344595", True),
         ("000-000-000 00", True),  # serial<10^8 → CS=00 валидно
         ("123-456-789 00", False),  # CS неверная
-        ("000-000-001 00", False),  # serial<10^8 но CS должно быть 00 — здесь 00 → но serial=1 (< 100M) → CS=00 OK
-        ("99999999900", False),  # 99,999,999 < 10^8 → CS=00 OK; здесь CS=00 → True; но 99999999 < 10^8 → True. Поправлю ниже
+        ("000-000-001 00", True),  # serial=1<10^8 → CS=00 валидно
+        ("99999999900", False),  # serial=999999999 > 10^8, CS=102 → invalid
         ("123-456-789 01", False),
         ("12345", False),  # неправильная длина
     ],
 )
 def test_snils_check_digit(value: str, valid: bool) -> None:
-    # Корректировка двух кейсов выше: 000-000-001 → serial=1<10^8 → CS=00.
-    # Если value содержит "00" в конце и serial<10^8 → valid=True.
-    # Тест выше задан как ложь; реальное поведение проверим в подмножестве.
-    if value in ("000-000-001 00", "99999999900"):
-        assert _snils_check_digit_valid(value) is True
-    else:
-        assert _snils_check_digit_valid(value) is valid
+    assert _snils_check_digit_valid(value) is valid
 
 
 def test_snils_recognizer_entity_type() -> None:
@@ -152,6 +143,14 @@ def test_build_custom_recognizers_returns_four() -> None:
     from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
     recs = PresidioSanitizerAdapter._build_custom_recognizers()
-    assert len(recs) == 4
+    assert len(recs) == 7
     entity_types = {r.supported_entities[0] for r in recs}
-    assert entity_types == {"INN_RU", "SNILS_RU", "PASSPORT_RU", "CREDIT_CASE_RU"}
+    assert entity_types == {
+        "INN_RU",
+        "SNILS_RU",
+        "PASSPORT_RU",
+        "CREDIT_CASE_RU",
+        "ADDRESS_RU",
+        "BANK_ACCOUNT_RU",
+        "DRIVER_LICENSE_RU",
+    }

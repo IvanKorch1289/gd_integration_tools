@@ -17,9 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.backend.infrastructure.antivirus.setup import (
-    build_clamav_scanner_if_enabled,
-)
+from src.backend.infrastructure.antivirus.setup import build_clamav_scanner_if_enabled
 
 
 def _make_waf_settings_stub(**overrides: object) -> object:
@@ -75,17 +73,13 @@ async def test_built_scanner_works_in_evaluate_async() -> None:
     """End-to-end: WafPolicy с подключённым scanner вызывает его в evaluate_async."""
     from src.backend.core.net.waf import WafPolicy
 
-    settings_stub = _make_waf_settings_stub(
-        clamav_enabled=True, clamav_fail_open=True
-    )
+    settings_stub = _make_waf_settings_stub(clamav_enabled=True, clamav_fail_open=True)
     with patch("src.backend.core.config.waf.waf_settings", settings_stub):
         scanner = build_clamav_scanner_if_enabled()
 
     policy = WafPolicy(async_payload_scanner=scanner)
     # ClamAV в test-env недоступен — fail_open=True даст clean (None) ответ.
-    decision = await policy.evaluate_async(
-        "https://api.example.com/x", payload=b"any"
-    )
+    decision = await policy.evaluate_async("https://api.example.com/x", payload=b"any")
     assert decision.allowed is True
 
 

@@ -29,9 +29,7 @@ class _CapturingApp:
         self.captured_scope: dict[str, Any] | None = None
         self.captured_ctx: RequestContext | None = None
 
-    async def __call__(
-        self, scope: dict[str, Any], receive: Any, send: Any
-    ) -> None:
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         self.captured_scope = scope
         self.captured_ctx = RequestContext.current()
 
@@ -67,9 +65,7 @@ class TestRequestContextMiddleware:
     async def test_correlation_from_header(self) -> None:
         app = _CapturingApp()
         mw = RequestContextMiddleware(app)
-        scope = _scope(
-            headers=[(b"x-correlation-id", b"abc-corr-42")],
-        )
+        scope = _scope(headers=[(b"x-correlation-id", b"abc-corr-42")])
         await mw(scope, _noop_receive, _noop_send)
         assert app.captured_ctx is not None
         assert app.captured_ctx.correlation_id == "abc-corr-42"
@@ -85,9 +81,7 @@ class TestRequestContextMiddleware:
     async def test_tenant_id_from_header(self) -> None:
         app = _CapturingApp()
         mw = RequestContextMiddleware(app)
-        scope = _scope(
-            headers=[(b"x-tenant-id", b"tenant-007")],
-        )
+        scope = _scope(headers=[(b"x-tenant-id", b"tenant-007")])
         await mw(scope, _noop_receive, _noop_send)
         assert app.captured_ctx is not None
         assert app.captured_ctx.tenant_id == "tenant-007"
@@ -95,9 +89,7 @@ class TestRequestContextMiddleware:
     async def test_request_id_from_header(self) -> None:
         app = _CapturingApp()
         mw = RequestContextMiddleware(app)
-        scope = _scope(
-            headers=[(b"x-request-id", b"req-12345")],
-        )
+        scope = _scope(headers=[(b"x-request-id", b"req-12345")])
         await mw(scope, _noop_receive, _noop_send)
         assert app.captured_ctx is not None
         assert app.captured_ctx.request_id == "req-12345"

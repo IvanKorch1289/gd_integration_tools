@@ -45,12 +45,7 @@ async def test_get_state_uses_aget_tuple() -> None:
     fake_saver = MagicMock()
     fake_saver.aget_tuple = AsyncMock(
         return_value=SimpleNamespace(
-            config={
-                "configurable": {
-                    "thread_id": "s1",
-                    "checkpoint_id": "ckpt-42",
-                }
-            },
+            config={"configurable": {"thread_id": "s1", "checkpoint_id": "ckpt-42"}},
             checkpoint={"ts": "2026-05-20T10:00:00Z", "data": {"x": 1}},
             metadata={"author": "test"},
         )

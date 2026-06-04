@@ -26,10 +26,14 @@ async def test_gateway_raises_when_disabled() -> None:
 
 
 @pytest.mark.asyncio
-async def test_gateway_acompletion_calls_litellm(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_gateway_acompletion_calls_litellm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Подменяем litellm в sys.modules, проверяем вызов acompletion."""
     fake_litellm = SimpleNamespace(
-        acompletion=AsyncMock(return_value={"choices": [{"message": {"content": "ok"}}]}),
+        acompletion=AsyncMock(
+            return_value={"choices": [{"message": {"content": "ok"}}]}
+        ),
         success_callback=[],
     )
     monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
@@ -49,8 +53,7 @@ async def test_gateway_aembedding_returns_vectors(
 ) -> None:
     fake_response = {"data": [{"embedding": [0.1, 0.2, 0.3]}]}
     fake_litellm = SimpleNamespace(
-        aembedding=AsyncMock(return_value=fake_response),
-        success_callback=[],
+        aembedding=AsyncMock(return_value=fake_response), success_callback=[]
     )
     monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
 

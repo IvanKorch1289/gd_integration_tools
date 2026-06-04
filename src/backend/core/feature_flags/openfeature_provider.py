@@ -229,9 +229,7 @@ class FlagsmithBackend:
         """Lazy-init underlying FlagsmithProvider."""
         if self._provider is not None:
             return self._provider
-        from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
-            FlagsmithProvider,
-        )
+        from src.backend.core.feature_flags.flagsmith_provider import FlagsmithProvider
 
         self._provider = FlagsmithProvider(
             environment_key=self.environment_key,
@@ -249,13 +247,13 @@ class FlagsmithBackend:
         """Boolean: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
             ctx = _coerce_ctx(evaluation_context, _ProviderCtx)
             value = await provider.resolve_boolean_value(flag_key, default, ctx)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("FlagsmithBackend boolean fallback: %s", exc)
             return await self.fallback.resolve_boolean_value(
                 flag_key, default, evaluation_context
@@ -277,13 +275,13 @@ class FlagsmithBackend:
         """String: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
             ctx = _coerce_ctx(evaluation_context, _ProviderCtx)
             value = await provider.resolve_string_value(flag_key, default, ctx)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("FlagsmithBackend string fallback: %s", exc)
             return await self.fallback.resolve_string_value(
                 flag_key, default, evaluation_context
@@ -303,13 +301,13 @@ class FlagsmithBackend:
         """Integer: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
             ctx = _coerce_ctx(evaluation_context, _ProviderCtx)
             value = await provider.resolve_integer_value(flag_key, default, ctx)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("FlagsmithBackend integer fallback: %s", exc)
             return await self.fallback.resolve_integer_value(
                 flag_key, default, evaluation_context
@@ -329,13 +327,13 @@ class FlagsmithBackend:
         """Object: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: PLC0415
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
             ctx = _coerce_ctx(evaluation_context, _ProviderCtx)
             value = await provider.resolve_object_value(flag_key, default, ctx)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("FlagsmithBackend object fallback: %s", exc)
             return await self.fallback.resolve_object_value(
                 flag_key, default, evaluation_context
@@ -354,7 +352,7 @@ class FlagsmithBackend:
         if shutdown is not None:
             try:
                 await shutdown()
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 _logger.exception("FlagsmithBackend shutdown failed")
         self._provider = None
 
@@ -385,10 +383,10 @@ def _read_local_flag(flag_key: str, default: bool) -> bool:
         Значение flag или default.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         return bool(getattr(feature_flags, flag_key, default))
-    except Exception as _:  # noqa: BLE001 — graceful fallback в любых ошибках
+    except Exception as _:
         _logger.debug("local feature_flags недоступен, default=%s", default)
         return default
 

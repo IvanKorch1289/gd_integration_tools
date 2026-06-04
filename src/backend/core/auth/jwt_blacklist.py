@@ -25,7 +25,7 @@ import logging
 import time
 from typing import Any, Protocol
 
-__all__ = ("RedisJwtBlacklist", "JwtBlacklistProtocol")
+__all__ = ("JwtBlacklistProtocol", "RedisJwtBlacklist")
 
 _logger = logging.getLogger(__name__)
 

@@ -1,7 +1,8 @@
 import asyncio
 import logging
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
@@ -12,13 +13,13 @@ _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
 __all__ = (
-    "WireTapProcessor",
-    "ThrottlerProcessor",
-    "DelayProcessor",
     "AggregatorProcessor",
-    "LoopProcessor",
+    "DelayProcessor",
     "ForEachProcessor",
+    "LoopProcessor",
     "OnCompletionProcessor",
+    "ThrottlerProcessor",
+    "WireTapProcessor",
 )
 
 

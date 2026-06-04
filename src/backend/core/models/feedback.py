@@ -8,7 +8,7 @@ infrastructure-репозиторием.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -22,7 +22,7 @@ FeedbackLabel = Literal["positive", "negative", "skip"]
 
 def _utc_now() -> datetime:
     """Возвращает текущее UTC-время с явным tz-aware таймзоны."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class AIFeedbackDoc(BaseModel):

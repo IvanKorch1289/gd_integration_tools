@@ -21,9 +21,12 @@ from src.backend.schemas.invocation import ActionCommandSchema
 @pytest.fixture(autouse=True, scope="module")
 def _register_admin_actions() -> None:
     """Регистрирует все actions через setup (вызывается register_action_handlers)."""
+    from src.backend.dsl.commands.action_registry import action_handler_registry
     from src.backend.dsl.commands.setup import register_action_handlers
 
     register_action_handlers()
+    yield
+    action_handler_registry.clear()
 
 
 @pytest.fixture
@@ -50,7 +53,9 @@ class TestAdminCacheDslActions:
 
     async def test_invalidate_cache_by_pattern_registered(self) -> None:
         """admin.invalidate_cache_by_pattern зарегистрирован в реестре."""
-        assert action_handler_registry.is_registered("admin.invalidate_cache_by_pattern")
+        assert action_handler_registry.is_registered(
+            "admin.invalidate_cache_by_pattern"
+        )
 
     async def test_invalidate_cache_by_tag_registered(self) -> None:
         """admin.invalidate_cache_by_tag зарегистрирован в реестре."""
@@ -61,9 +66,7 @@ class TestAdminCacheDslActions:
         assert action_handler_registry.is_registered("admin.invalidate_table")
 
     async def test_invalidate_cache_by_pattern_dispatches(
-        self,
-        mock_invalidator_provider: MagicMock,
-        mock_invalidator: MagicMock,
+        self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
     ) -> None:
         """dispatch(admin.invalidate_cache_by_pattern) вызывает invalidate_pattern."""
         with patch(
@@ -80,9 +83,7 @@ class TestAdminCacheDslActions:
         mock_invalidator.invalidate_pattern.assert_called_once_with("entity:orders:*")
 
     async def test_invalidate_cache_by_tag_dispatches(
-        self,
-        mock_invalidator_provider: MagicMock,
-        mock_invalidator: MagicMock,
+        self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
     ) -> None:
         """dispatch(admin.invalidate_cache_by_tag) вызывает invalidate_tags."""
         with patch(
@@ -102,9 +103,7 @@ class TestAdminCacheDslActions:
         )
 
     async def test_invalidate_table_dispatches(
-        self,
-        mock_invalidator_provider: MagicMock,
-        mock_invalidator: MagicMock,
+        self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
     ) -> None:
         """dispatch(admin.invalidate_table) формирует тег table:<name>."""
         with patch(
@@ -112,8 +111,7 @@ class TestAdminCacheDslActions:
             mock_invalidator_provider,
         ):
             command = ActionCommandSchema(
-                action="admin.invalidate_table",
-                payload={"table": "orders"},
+                action="admin.invalidate_table", payload={"table": "orders"}
             )
             result = await action_handler_registry.dispatch(command)
 
@@ -123,9 +121,7 @@ class TestAdminCacheDslActions:
         mock_invalidator.invalidate_tags.assert_called_once_with("table:orders")
 
     async def test_invalidate_cache_by_pattern_returns_zero_on_no_match(
-        self,
-        mock_invalidator_provider: MagicMock,
-        mock_invalidator: MagicMock,
+        self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
     ) -> None:
         """Паттерн без совпадений возвращает removed=0."""
         mock_invalidator.invalidate_pattern = AsyncMock(return_value=0)

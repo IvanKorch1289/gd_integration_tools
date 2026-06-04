@@ -32,7 +32,7 @@ class HttpAntivirusBackend(AntivirusBackend):
             return True  # сервис не объявляет ping — считаем доступным
         try:
             return bool(await check())
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
@@ -46,7 +46,7 @@ class HttpAntivirusBackend(AntivirusBackend):
             )
         try:
             verdict = await scan_fn(payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise ConnectionError(f"HTTP AV unreachable: {exc}") from exc
         latency_ms = (time.monotonic() - start) * 1000
         clean = bool(verdict.get("clean", False))

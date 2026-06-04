@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("StrawberryTypeRegistry", "pydantic_to_strawberry", "global_registry")
+__all__ = ("StrawberryTypeRegistry", "global_registry", "pydantic_to_strawberry")
 
 
 class StrawberryTypeRegistry:
@@ -54,7 +54,7 @@ class StrawberryTypeRegistry:
 
         try:
             strawberry_type = self._convert(model)
-        except Exception as exc:  # noqa: BLE001 — Strawberry строг к типам
+        except Exception as exc:
             self._fallbacks.append(f"{model.__name__}: {exc}")
             logger.warning(
                 "strawberry-pydantic fallback для %s: %s — используем JSON-stub",

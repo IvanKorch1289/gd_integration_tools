@@ -30,12 +30,7 @@ class _RecordingApp:
         self.called = False
         self.scope: dict[str, Any] | None = None
 
-    async def __call__(
-        self,
-        scope: dict[str, Any],
-        receive: Any,
-        send: Any,
-    ) -> None:
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         self.called = True
         self.scope = scope
 
@@ -66,14 +61,10 @@ async def test_feature_disabled_passes_through() -> None:
             return True, 99, 0
 
     middleware = GlobalRateLimitMiddleware(
-        inner,
-        checker=_Recording(),
-        feature_enabled=lambda: False,
+        inner, checker=_Recording(), feature_enabled=lambda: False
     )
     send = _RecordingSend()
-    await middleware(
-        {"type": "http", "client": ("127.0.0.1", 0)}, _empty_receive, send
-    )
+    await middleware({"type": "http", "client": ("127.0.0.1", 0)}, _empty_receive, send)
     assert inner.called is True
     assert checker_calls == []
 
@@ -83,13 +74,10 @@ async def test_allowed_passes_through() -> None:
     """allowed=True → next app вызывается."""
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner,
-        checker=FakeRateLimitChecker(max_per_window=10),
+        inner, checker=FakeRateLimitChecker(max_per_window=10)
     )
     send = _RecordingSend()
-    await middleware(
-        {"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send
-    )
+    await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)
     assert inner.called is True
 
 
@@ -128,9 +116,7 @@ async def test_non_http_scope_pass_through() -> None:
     """Не-HTTP scope (lifespan/websocket) → pass-through."""
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner,
-        checker=FakeRateLimitChecker(),
-        feature_enabled=lambda: True,
+        inner, checker=FakeRateLimitChecker(), feature_enabled=lambda: True
     )
     send = _RecordingSend()
     await middleware({"type": "lifespan"}, _empty_receive, send)
@@ -150,9 +136,7 @@ async def test_checker_failure_falls_through() -> None:
         inner, checker=_BrokenChecker(), feature_enabled=lambda: True
     )
     send = _RecordingSend()
-    await middleware(
-        {"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send
-    )
+    await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)
     # Не SPoF: запрос проходит дальше.
     assert inner.called is True
 
@@ -196,7 +180,5 @@ async def test_identifier_fn_custom() -> None:
         feature_enabled=lambda: True,
     )
     send = _RecordingSend()
-    await middleware(
-        {"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send
-    )
+    await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)
     assert captured == ["tenant-X"]

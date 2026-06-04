@@ -72,7 +72,12 @@ def test_script_returns_one_on_bad_fixture(tmp_path: Path) -> None:
 def test_script_runs_against_real_codebase() -> None:
     """Smoke: скрипт запускается на src/backend/services без crash."""
     result = subprocess.run(
-        [sys.executable, str(_SCRIPT), "--target", str(_ROOT / "src" / "backend" / "services")],
+        [
+            sys.executable,
+            str(_SCRIPT),
+            "--target",
+            str(_ROOT / "src" / "backend" / "services"),
+        ],
         capture_output=True,
         text=True,
         check=False,

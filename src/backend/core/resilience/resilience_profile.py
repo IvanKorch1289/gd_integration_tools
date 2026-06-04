@@ -83,7 +83,7 @@ class ResilienceProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "ResilienceProfile":
+    def from_dict(cls, payload: dict[str, Any]) -> ResilienceProfile:
         """Восстанавливает профиль из JSONB."""
         retry_raw = payload.get("retry", {})
         cb_raw = payload.get("circuit_breaker", {})

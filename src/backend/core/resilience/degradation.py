@@ -15,10 +15,11 @@ from __future__ import annotations
 import logging
 import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 __all__ = (
     "ComponentState",
@@ -141,7 +142,7 @@ class DegradationManager:
         if self._store is not None:
             try:
                 await self._store.persist(mode, transition)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.exception("degradation.store_persist_failed")
         return transition
 

@@ -136,10 +136,7 @@ class TestRouteManifestV11:
     def test_requires_workflows_default_empty(self) -> None:
         """requires_workflows defaults to empty dict."""
         m = RouteManifestV11(
-            name="x",
-            version="1.0.0",
-            requires_core=">=0.1",
-            pipelines=("p.dsl.yaml",),
+            name="x", version="1.0.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",)
         )
         assert m.requires_workflows == {}
 
@@ -152,7 +149,10 @@ class TestRouteManifestV11:
             requires_workflows={"credit_flow": ">=1.0,<2.0", "approval": ">=0.5"},
             pipelines=("p.dsl.yaml",),
         )
-        assert m.requires_workflows == {"credit_flow": ">=1.0,<2.0", "approval": ">=0.5"}
+        assert m.requires_workflows == {
+            "credit_flow": ">=1.0,<2.0",
+            "approval": ">=0.5",
+        }
 
     def test_invalid_requires_workflows_spec(self) -> None:
         """Invalid SemVer spec in requires_workflows raises ValidationError."""

@@ -86,7 +86,9 @@ def main() -> int:
     for num, slug, title, status in rows:
         filename = f"ADR-{num}-{slug}.md"
         marker = " *(collision)*" if num in collisions else ""
-        lines.append(f"| {num}{marker} | {title} | {status} | [{filename}]({filename}) |")
+        lines.append(
+            f"| {num}{marker} | {title} | {status} | [{filename}]({filename}) |"
+        )
     lines.append("")
     lines.append(
         "_Сгенерировано `tools/build_adr_index.py`. "

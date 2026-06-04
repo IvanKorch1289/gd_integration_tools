@@ -277,10 +277,7 @@ class _ViolationVisitor(ast.NodeVisitor):
             self._add(
                 lineno,
                 RULE_THREADING_LOCK,
-                (
-                    f"{chain}() — в async-коде используйте asyncio.Lock "
-                    "(V22 §5)"
-                ),
+                (f"{chain}() — в async-коде используйте asyncio.Lock (V22 §5)"),
             )
 
         if chain in {"pickle.loads", "pickle.load", "marshal.loads", "marshal.load"}:
@@ -370,7 +367,16 @@ def check_file(path: Path) -> list[Violation]:
 
 
 _SKIP_DIRS: frozenset[str] = frozenset(
-    {"__pycache__", ".venv", "venv", ".git", "build", "dist", ".mypy_cache", ".ruff_cache"}
+    {
+        "__pycache__",
+        ".venv",
+        "venv",
+        ".git",
+        "build",
+        "dist",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
 )
 
 
@@ -389,7 +395,7 @@ def iter_python_files(root: Path) -> Iterator[Path]:
 def main(argv: list[str] | None = None) -> int:
     """CLI: обойти ``--root`` и вывести нарушения; exit 1 если найдены."""
     parser = argparse.ArgumentParser(
-        description="AST-aware проверка запрещённых паттернов PLAN.md V22 §5",
+        description="AST-aware проверка запрещённых паттернов PLAN.md V22 §5"
     )
     parser.add_argument(
         "--root",
@@ -415,10 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         for v in all_violations:
             print(f"{v.file}:{v.line}: [{v.rule}] {v.message}")
         if all_violations:
-            print(
-                f"\n{len(all_violations)} violation(s) found.",
-                file=sys.stderr,
-            )
+            print(f"\n{len(all_violations)} violation(s) found.", file=sys.stderr)
         else:
             print("OK: no violations.")
 

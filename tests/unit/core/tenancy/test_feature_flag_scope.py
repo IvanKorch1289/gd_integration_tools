@@ -43,10 +43,7 @@ class _FakeProvider:
         self.last_eval_context: Any = None
 
     async def resolve_boolean_value(
-        self,
-        flag_key: str,
-        default: bool,
-        evaluation_context: Any | None = None,
+        self, flag_key: str, default: bool, evaluation_context: Any | None = None
     ) -> bool:
         self.last_eval_context = evaluation_context
         if self.raise_on_resolve:
@@ -54,10 +51,7 @@ class _FakeProvider:
         return self.boolean_return
 
     async def resolve_string_value(
-        self,
-        flag_key: str,
-        default: str,
-        evaluation_context: Any | None = None,
+        self, flag_key: str, default: str, evaluation_context: Any | None = None
     ) -> str:
         self.last_eval_context = evaluation_context
         if self.raise_on_resolve:
@@ -116,9 +110,7 @@ async def test_resolver_with_external_disabled_uses_local(
     """openfeature_external=False → provider не вызывается, читается local."""
     local = _LocalFeaturesStub(my_flag=True)
     provider = _FakeProvider(boolean_return=False)
-    resolver = TenantFeatureFlagResolver(
-        provider=provider, local_features=local
-    )
+    resolver = TenantFeatureFlagResolver(provider=provider, local_features=local)
     result = await resolver.is_enabled("my_flag", default=False)
     # Local говорит True, provider не должен вызваться.
     assert result is True
@@ -132,9 +124,7 @@ async def test_resolver_with_external_enabled_uses_provider(
     """openfeature_external=True → провайдер опрашивается."""
     local = _LocalFeaturesStub(my_flag=False)  # local говорит False
     provider = _FakeProvider(boolean_return=True)
-    resolver = TenantFeatureFlagResolver(
-        provider=provider, local_features=local
-    )
+    resolver = TenantFeatureFlagResolver(provider=provider, local_features=local)
     result = await resolver.is_enabled("my_flag", default=False)
     # Provider говорит True — это и должно вернуться.
     assert result is True
@@ -167,9 +157,7 @@ async def test_resolver_falls_back_to_local_on_provider_failure(
     """Падение provider не пробрасывается — fallback на local."""
     local = _LocalFeaturesStub(my_flag=True)
     provider = _FakeProvider(raise_on_resolve=RuntimeError("network fail"))
-    resolver = TenantFeatureFlagResolver(
-        provider=provider, local_features=local
-    )
+    resolver = TenantFeatureFlagResolver(provider=provider, local_features=local)
     result = await resolver.is_enabled("my_flag", default=False)
     assert result is True
 

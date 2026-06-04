@@ -39,7 +39,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-__all__ = ("LintIssue", "DSLLinter", "lint_path", "main")
+__all__ = ("DSLLinter", "LintIssue", "lint_path", "main")
 
 
 # Маппинг processor → требуемые capabilities (subset ADR-044).
@@ -155,7 +155,7 @@ class DSLLinter:
         # Если рядом лежит route.toml — также его учитываем.
         sibling_toml = yaml_path.parent / "route.toml"
         if sibling_toml.is_file():
-            extra, _ = self._lint_route_toml(sibling_toml)
+            _extra, _ = self._lint_route_toml(sibling_toml)
             declared_caps = declared_caps.union(self._declared_from_toml(sibling_toml))
 
         return self._lint_dsl_yaml(yaml_path, declared_caps)
@@ -218,7 +218,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except OSError, ValueError:
+            except (OSError, ValueError):
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]

@@ -25,8 +25,7 @@ def _reset_registry(monkeypatch: pytest.MonkeyPatch) -> None:
     """Изолирует test от глобального singleton."""
     fresh = GracefulDegradationRegistry()
     monkeypatch.setattr(
-        "src.backend.core.resilience.graceful_degradation._registry_singleton",
-        fresh,
+        "src.backend.core.resilience.graceful_degradation._registry_singleton", fresh
     )
 
 
@@ -43,9 +42,7 @@ async def test_snapshot_endpoint_returns_registered_features() -> None:
 
     registry.register(
         DegradationFeature(
-            name="ai.llm_call",
-            full_handler=_full,
-            degraded_handler=_degraded,
+            name="ai.llm_call", full_handler=_full, degraded_handler=_degraded
         )
     )
 
@@ -124,8 +121,7 @@ def test_setup_infra_bootstrap_registers_default_features(
 
     fresh = GracefulDegradationRegistry()
     monkeypatch.setattr(
-        "src.backend.core.resilience.graceful_degradation._registry_singleton",
-        fresh,
+        "src.backend.core.resilience.graceful_degradation._registry_singleton", fresh
     )
 
     setup_infra._register_default_degradation_features()

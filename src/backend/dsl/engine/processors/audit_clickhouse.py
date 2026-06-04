@@ -29,7 +29,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
@@ -148,9 +148,7 @@ class AuditClickhouseProcessor(BaseProcessor):
         self._user_id_from = user_id_from
         self._route_name_from = route_name_from
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Формирует и отправляет AuditEvent в ClickHouse.
 
         Извлекает tenant_id, user_id, route_name из exchange-properties
@@ -185,7 +183,7 @@ class AuditClickhouseProcessor(BaseProcessor):
 
         event = AuditEvent(
             event_id=str(uuid.uuid4()),
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             event_type=self._event_type,
             tenant_id=tenant_id,
             user_id=user_id,

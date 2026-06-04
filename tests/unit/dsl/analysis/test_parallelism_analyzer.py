@@ -44,12 +44,7 @@ def test_diamond_dependency() -> None:
         {"type": "get_setting", "id": "a", "to": "body.x"},
         {"type": "transform", "id": "b1", "input": "${body.x}", "to": "body.y1"},
         {"type": "transform", "id": "b2", "input": "${body.x}", "to": "body.y2"},
-        {
-            "type": "merge",
-            "id": "c",
-            "from1": "${body.y1}",
-            "from2": "${body.y2}",
-        },
+        {"type": "merge", "id": "c", "from1": "${body.y1}", "from2": "${body.y2}"},
     ]
     report = ParallelismAnalyzer().analyze(steps)
     # Уровни: [a], [b1, b2], [c].
@@ -58,10 +53,7 @@ def test_diamond_dependency() -> None:
 
 
 def test_hint_for_parallel_group() -> None:
-    steps = [
-        {"type": "crud_create", "id": "a"},
-        {"type": "crud_create", "id": "b"},
-    ]
+    steps = [{"type": "crud_create", "id": "a"}, {"type": "crud_create", "id": "b"}]
     report = ParallelismAnalyzer().analyze(steps)
     hint_rules = {h.rule for h in report.suggested_optimizations}
     assert "LR-PAR-001" in hint_rules

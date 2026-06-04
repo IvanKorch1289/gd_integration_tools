@@ -33,11 +33,10 @@ def test_validates_constructor() -> None:
 @pytest.mark.asyncio
 async def test_fails_when_no_lib(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
+
     monkeypatch.setitem(sys.modules, "webdav4", None)
     monkeypatch.setitem(sys.modules, "webdav4.client", None)
-    proc = WebDavProcessor(
-        url="https://dav.test", mode="list", remote_path="/folder"
-    )
+    proc = WebDavProcessor(url="https://dav.test", mode="list", remote_path="/folder")
     ex = _ex()
     await proc.process(ex, AsyncMock())
     assert ex.error is not None and "webdav4" in ex.error.lower()
@@ -46,9 +45,7 @@ async def test_fails_when_no_lib(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_skipped_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "proc_webdav", False)
-    proc = WebDavProcessor(
-        url="https://dav.test", mode="list", remote_path="/folder"
-    )
+    proc = WebDavProcessor(url="https://dav.test", mode="list", remote_path="/folder")
     ex = _ex()
     await proc.process(ex, AsyncMock())
     assert ex.properties.get("webdav_status") == "skipped"

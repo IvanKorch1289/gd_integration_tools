@@ -89,9 +89,7 @@ def _install_fake_nats(monkeypatch: pytest.MonkeyPatch, msgs: list[MagicMock]) -
 async def test_source_emits_messages(monkeypatch: pytest.MonkeyPatch) -> None:
     """NATSJetStreamSource.stream() эмитирует NATSMessage для каждого msg."""
     fake_msg = _make_fake_nats_msg(
-        subject="orders.created",
-        data=b'{"order_id": 42}',
-        headers={"X-Source": "api"},
+        subject="orders.created", data=b'{"order_id": 42}', headers={"X-Source": "api"}
     )
     _install_fake_nats(monkeypatch, [fake_msg])
 
@@ -117,8 +115,7 @@ async def test_source_emits_messages(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_source_durable_consumer_resumes(monkeypatch: pytest.MonkeyPatch) -> None:
     """NATSJetStreamSource передаёт durable имя в pull_subscribe и метаданные."""
     fake_msg = _make_fake_nats_msg(
-        subject="payments.processed",
-        data=b'{"amount": 100}',
+        subject="payments.processed", data=b'{"amount": 100}'
     )
     _install_fake_nats(monkeypatch, [fake_msg])
 
@@ -150,9 +147,7 @@ async def test_source_import_error_raises(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setitem(sys.modules, "nats", None)  # type: ignore[arg-type]
 
     src = NATSJetStreamSource(
-        subject="test.subject",
-        stream="TEST",
-        durable="test-durable",
+        subject="test.subject", stream="TEST", durable="test-durable"
     )
 
     with pytest.raises(ImportError, match="nats-py"):

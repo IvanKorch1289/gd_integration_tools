@@ -70,7 +70,7 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
         )
         if session_id and session_id != "unknown":
             await get_express_session_store_provider().ping(session_id)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.debug("Express incoming log skipped: %s", exc)
 
 
@@ -122,7 +122,7 @@ async def receive_command(request: Request) -> JSONResponse:
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
         recorder(bot_name, command_name)
-    except Exception:  # noqa: BLE001, S110
+    except Exception:
         pass
 
     # Wave 9.2.4: лог входящего сообщения в ExpressDialogStore.
@@ -158,7 +158,7 @@ async def receive_callback(request: Request) -> JSONResponse:
             from src.backend.core.di.providers import get_express_session_store_provider
 
             await get_express_session_store_provider().ping(sync_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("Express callback session ping skipped: %s", exc)
 
     response = await _dispatch_to_route("express.callback", None, payload, sync_id)

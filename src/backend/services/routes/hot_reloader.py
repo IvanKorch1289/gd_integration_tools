@@ -27,7 +27,7 @@ from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 
-__all__ = ("RouteHotReloader", "ReloadEvent")
+__all__ = ("ReloadEvent", "RouteHotReloader")
 
 _logger = logging.getLogger("services.routes.hot_reloader")
 
@@ -42,7 +42,7 @@ class ReloadEvent:
         error: текст ошибки если success=False.
     """
 
-    __slots__ = ("route_name", "change_kind", "success", "error")
+    __slots__ = ("change_kind", "error", "route_name", "success")
 
     def __init__(
         self,
@@ -100,9 +100,7 @@ class RouteHotReloader:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._run(), name="route-hot-reloader"
@@ -116,7 +114,7 @@ class RouteHotReloader:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):
                 pass
             self._task = None
         _logger.info("hot_reloader.stopped")
@@ -168,7 +166,7 @@ class RouteHotReloader:
             if self._on_event is not None:
                 try:
                     self._on_event(event)
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     _logger.exception("hot_reloader.on_event_callback_raised")
 
     async def _do_reload(self, route_name: str) -> ReloadEvent:
@@ -181,7 +179,7 @@ class RouteHotReloader:
                 return ReloadEvent(
                     route_name=route_name, change_kind="removed", success=True
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.exception(
                     "hot_reloader.unload_failed", extra={"route_name": route_name}
                 )
@@ -201,7 +199,7 @@ class RouteHotReloader:
             return ReloadEvent(
                 route_name=route_name, change_kind="modified", success=True
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.exception(
                 "hot_reloader.reload_failed", extra={"route_name": route_name}
             )

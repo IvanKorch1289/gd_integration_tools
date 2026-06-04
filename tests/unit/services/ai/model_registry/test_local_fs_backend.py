@@ -18,6 +18,7 @@ pytestmark = pytest.mark.asyncio
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 def _write_manifest(root: Path, name: str, version: str = "v1", **kwargs) -> Path:
     """Создаёт каталог модели с manifest.json по пути ``root/models/<name>/``."""
     models_root = root / "models"
@@ -40,6 +41,7 @@ def _write_manifest(root: Path, name: str, version: str = "v1", **kwargs) -> Pat
 
 
 # ── Model discovery ───────────────────────────────────────────────────────────
+
 
 async def test_list_models_returns_empty_when_no_models() -> None:
     with TemporaryDirectory() as tmpdir:
@@ -74,7 +76,9 @@ async def test_list_models_skips_malformed_manifest() -> None:
     with TemporaryDirectory() as tmpdir:
         bad_dir = Path(tmpdir) / "models" / "bad_manifest"
         bad_dir.mkdir(parents=True)
-        (bad_dir / ".model_manifest.json").write_text("{invalid json}", encoding="utf-8")
+        (bad_dir / ".model_manifest.json").write_text(
+            "{invalid json}", encoding="utf-8"
+        )
         _write_manifest(Path(tmpdir), "good_model", "v1")
         registry = LocalFSModelRegistry(workspace_path=tmpdir)
 
@@ -84,6 +88,7 @@ async def test_list_models_skips_malformed_manifest() -> None:
 
 
 # ── get_model ─────────────────────────────────────────────────────────────────
+
 
 async def test_get_model_finds_by_name() -> None:
     with TemporaryDirectory() as tmpdir:
@@ -126,6 +131,7 @@ async def test_get_model_returns_none_when_not_found() -> None:
 
 # ── register_model ─────────────────────────────────────────────────────────────
 
+
 async def test_register_model_creates_dir_and_manifest() -> None:
     with TemporaryDirectory() as tmpdir:
         registry = LocalFSModelRegistry(workspace_path=tmpdir)
@@ -152,6 +158,7 @@ async def test_register_model_creates_dir_and_manifest() -> None:
 
 
 # ── transition_stage ───────────────────────────────────────────────────────────
+
 
 async def test_transition_stage_updates_manifest() -> None:
     with TemporaryDirectory() as tmpdir:

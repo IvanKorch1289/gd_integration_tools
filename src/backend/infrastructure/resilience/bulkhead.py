@@ -18,17 +18,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, AsyncIterator
+from typing import Any
 
 __all__ = (
+    "BULKHEAD_DEFAULTS",
     "Bulkhead",
     "BulkheadDefaults",
     "BulkheadExhausted",
     "BulkheadRegistry",
-    "BULKHEAD_DEFAULTS",
     "get_bulkhead_registry",
     "get_default_bulkhead",
 )
@@ -66,7 +67,7 @@ class Bulkhead:
         sem = self._ensure_sem()
         try:
             await asyncio.wait_for(sem.acquire(), timeout=self.wait_timeout)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             logger.warning(
                 "Bulkhead '%s' exhausted (waited %.1fs, max=%d)",
                 self.name,

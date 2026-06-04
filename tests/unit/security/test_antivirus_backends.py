@@ -77,9 +77,7 @@ async def test_http_backend_clean_verdict() -> None:
 
 async def test_http_backend_threat_verdict_with_signature() -> None:
     """``signature`` извлекается из ответа сервиса."""
-    service = _FakeHttpService(
-        verdict={"clean": False, "signature": "Eicar-Test"}
-    )
+    service = _FakeHttpService(verdict={"clean": False, "signature": "Eicar-Test"})
     backend = HttpAntivirusBackend(service)
 
     result = await backend.scan_bytes(b"X")
@@ -154,9 +152,7 @@ def test_parse_clamav_clean_response() -> None:
 def test_parse_clamav_threat_response() -> None:
     """``stream: <SIG> FOUND`` -> threat-вердикт с сигнатурой."""
     result = _parse_clamav_response(
-        b"stream: Win.Test.EICAR_HDB-1 FOUND\0",
-        backend="clamav_tcp",
-        latency_ms=2.0,
+        b"stream: Win.Test.EICAR_HDB-1 FOUND\0", backend="clamav_tcp", latency_ms=2.0
     )
     assert result.clean is False
     assert result.signature == "Win.Test.EICAR_HDB-1"
@@ -166,9 +162,7 @@ def test_parse_clamav_threat_response() -> None:
 def test_parse_clamav_unexpected_response_raises() -> None:
     """Неожиданный ответ ClamAV -> ``RuntimeError``."""
     with pytest.raises(RuntimeError):
-        _parse_clamav_response(
-            b"weird payload", backend="clamav_unix", latency_ms=1.0
-        )
+        _parse_clamav_response(b"weird payload", backend="clamav_unix", latency_ms=1.0)
 
 
 # ── ClamAV unix/TCP scan_bytes via stream mocks ────────────────────────────
@@ -235,8 +229,7 @@ async def test_clamav_unix_scan_bytes_clean(
 
 
 async def test_clamav_unix_scan_bytes_threat(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Any,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """``scan_bytes`` поверх unix socket: FOUND-ответ -> threat + signature."""
     reader = _FakeReader(b"stream: Eicar-Signature FOUND\0")
@@ -255,8 +248,7 @@ async def test_clamav_unix_scan_bytes_threat(
 
 
 async def test_clamav_unix_scan_raises_connection_error_when_socket_unavailable(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Any,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """Если ``open_unix_connection`` падает — поднимается ``ConnectionError``."""
 
@@ -270,17 +262,13 @@ async def test_clamav_unix_scan_raises_connection_error_when_socket_unavailable(
         await backend.scan_bytes(b"x")
 
 
-async def test_clamav_unix_is_available_false_when_no_socket(
-    tmp_path: Any,
-) -> None:
+async def test_clamav_unix_is_available_false_when_no_socket(tmp_path: Any) -> None:
     """``is_available`` -> ``False``, если файла сокета нет."""
     backend = ClamAVUnixBackend(socket_path=str(tmp_path / "no.sock"))
     assert await backend.is_available() is False
 
 
-async def test_clamav_tcp_scan_bytes_clean(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_clamav_tcp_scan_bytes_clean(monkeypatch: pytest.MonkeyPatch) -> None:
     """``scan_bytes`` поверх TCP: OK-ответ -> clean."""
     reader = _FakeReader(b"stream: OK\0")
     writer = _FakeWriter()
@@ -296,9 +284,7 @@ async def test_clamav_tcp_scan_bytes_clean(
     assert result.backend == "clamav_tcp"
 
 
-async def test_clamav_tcp_is_available_pong(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_clamav_tcp_is_available_pong(monkeypatch: pytest.MonkeyPatch) -> None:
     """``is_available`` -> ``True``, если ClamAV отвечает ``PONG``."""
     reader = _FakeReader(b"PONG\0")
     writer = _FakeWriter()

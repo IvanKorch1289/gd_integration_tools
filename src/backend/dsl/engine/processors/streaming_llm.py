@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -155,7 +156,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
             if aclose is not None:
                 try:
                     await aclose()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.debug("aclose() при отмене стрима: %s", exc)
             raise
         exchange.set_property("llm.streamed_text", "".join(accumulated))

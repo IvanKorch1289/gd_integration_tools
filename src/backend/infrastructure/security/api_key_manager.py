@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ("APIKeyManager", "APIKeyInfo", "get_api_key_manager")
+__all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
 
 logger = logging.getLogger("security.api_keys")
 
@@ -286,5 +286,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("api_key_manager", APIKeyManager)
-def get_api_key_manager() -> APIKeyManager:
+def get_api_key_manager() -> APIKeyManager:  # type: ignore[empty-body]
     """Возвращает APIKeyManager из app.state или lazy-init fallback."""

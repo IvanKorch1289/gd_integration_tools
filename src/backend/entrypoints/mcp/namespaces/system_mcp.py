@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 SYSTEM_PREFIXES = ("system.", "tech.", "health.", "admin.")
 
 
-def register_system_tools(mcp: "FastMCP") -> None:
+def register_system_tools(mcp: FastMCP) -> None:
     """Регистрирует system.*, tech.*, health.*, admin.* actions как MCP tools.
 
     Args:
@@ -35,7 +35,7 @@ def register_system_tools(mcp: "FastMCP") -> None:
         _register_system_tool(mcp, action_name)
 
 
-def _register_system_tool(mcp: "FastMCP", action_name: str) -> None:
+def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
     """Регистрирует один system/action как MCP tool."""
     import inspect
 
@@ -55,7 +55,7 @@ def _register_system_tool(mcp: "FastMCP", action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -73,7 +73,7 @@ def _register_system_tool(mcp: "FastMCP", action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(

@@ -32,8 +32,8 @@ warnings.warn(
     stacklevel=2,
 )
 
-from src.backend.core.interfaces import CircuitBreaker as _CircuitBreakerImpl
-from src.backend.core.interfaces import CircuitBreakerConfig
+from src.backend.core.interfaces import CircuitBreaker as _CircuitBreakerImpl  # noqa: E402,I001
+from src.backend.core.interfaces import CircuitBreakerConfig  # noqa: E402
 
 __all__ = ("CircuitBreaker", "get_circuit_breaker")
 

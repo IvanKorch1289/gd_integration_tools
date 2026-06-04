@@ -21,12 +21,12 @@ if TYPE_CHECKING:
     pass
 
 __all__ = (
-    "SLOTrackerProtocol",
+    "CircuitBreakerMetricsRecorder",
+    "CorrelationIdProvider",
     "HealthAggregatorProtocol",
     "HealthCheckProtocol",
     "HealthCheckSessionProtocol",
-    "CircuitBreakerMetricsRecorder",
-    "CorrelationIdProvider",
+    "SLOTrackerProtocol",
     "TemporalMetricsExporter",
 )
 

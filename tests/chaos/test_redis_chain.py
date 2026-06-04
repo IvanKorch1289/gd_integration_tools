@@ -25,7 +25,9 @@ def test_redis_latency(toxiproxy_redis: ChaosTarget) -> None:
 def test_redis_disconnect(toxiproxy_redis: ChaosTarget) -> None:
     """disconnect: Redis недоступен."""
     apply_disconnect(toxiproxy_redis)
-    assert assert_connection_fails(toxiproxy_redis.proxy_host, toxiproxy_redis.proxy_port)
+    assert assert_connection_fails(
+        toxiproxy_redis.proxy_host, toxiproxy_redis.proxy_port
+    )
 
 
 def test_redis_data_corruption(toxiproxy_redis: ChaosTarget) -> None:

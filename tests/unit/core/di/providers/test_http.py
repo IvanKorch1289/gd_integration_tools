@@ -66,7 +66,10 @@ class TestExpressBotClientFactory:
 class TestExpressBotxMessageClass:
     def test_get_only(self) -> None:
         # No set_ function — verify import
-        from src.backend.core.di.providers.http import get_express_botx_message_class_provider
+        from src.backend.core.di.providers.http import (
+            get_express_botx_message_class_provider,
+        )
+
         assert callable(get_express_botx_message_class_provider)
 
 

@@ -198,21 +198,10 @@ def main(argv: list[str] | None = None) -> int:
         description="Validate workflow code for Temporal-determinism (ADR-045)."
     )
     parser.add_argument(
-        "paths",
-        nargs="+",
-        type=Path,
-        help="Files or directories to scan",
+        "paths", nargs="+", type=Path, help="Files or directories to scan"
     )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Emit JSON report",
-    )
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Exit 1 if any findings",
-    )
+    parser.add_argument("--json", action="store_true", help="Emit JSON report")
+    parser.add_argument("--strict", action="store_true", help="Exit 1 if any findings")
     args = parser.parse_args(argv)
 
     findings = scan_paths(args.paths)

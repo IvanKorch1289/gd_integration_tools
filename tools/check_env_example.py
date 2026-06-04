@@ -56,7 +56,8 @@ def _extract_env_prefixes_from_file(path: Path) -> list[tuple[str, list[str]]]:
         for item in node.body:
             if isinstance(item, ast.Assign):
                 if any(
-                    isinstance(t, ast.Name) and t.id == "model_config" for t in item.targets
+                    isinstance(t, ast.Name) and t.id == "model_config"
+                    for t in item.targets
                 ):
                     env_prefix = _extract_env_prefix(item.value)
             elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):

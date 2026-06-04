@@ -118,10 +118,7 @@ class TestStartAsyncioFallback:
         h.register_healer("db", lambda: True)
 
         # Patch apscheduler import to fail
-        with patch.dict(
-            "sys.modules",
-            {"apscheduler.schedulers.asyncio": None},
-        ):
+        with patch.dict("sys.modules", {"apscheduler.schedulers.asyncio": None}):
             with patch(
                 "src.backend.core.resilience.self_healer.get_task_registry"
             ) as mock_registry:
@@ -241,9 +238,7 @@ class TestRunHealers:
             "src.backend.core.resilience.self_healer.degradation_manager"
         ) as mock_dm:
             mock_dm.is_available.return_value = False
-            with patch(
-                "src.backend.core.resilience.self_healer.logger"
-            ) as mock_logger:
+            with patch("src.backend.core.resilience.self_healer.logger") as mock_logger:
                 await h._run_healers()
                 # Не propagate, log debug
                 assert mock_logger.debug.called

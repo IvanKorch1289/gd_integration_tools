@@ -20,10 +20,7 @@ from pathlib import Path
 
 
 def restore_pg_from_sqlite(
-    *,
-    pg_engine: object,
-    sqlite_path: Path,
-    truncate_first: bool = True,
+    *, pg_engine: object, sqlite_path: Path, truncate_first: bool = True
 ) -> dict[str, int]:
     """Restore PG tables из SQLite snapshot.
 
@@ -89,10 +86,7 @@ def restore_pg_from_sqlite(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Restore PG ← SQLite snapshot.")
     parser.add_argument(
-        "--input",
-        type=Path,
-        required=True,
-        help="путь к SQLite snapshot файлу",
+        "--input", type=Path, required=True, help="путь к SQLite snapshot файлу"
     )
     parser.add_argument(
         "--confirm",
@@ -108,8 +102,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.confirm:
         print(
-            "DRY RUN: pass --confirm to actually restore. "
-            "This will TRUNCATE tables.",
+            "DRY RUN: pass --confirm to actually restore. This will TRUNCATE tables.",
             file=sys.stderr,
         )
         return 1

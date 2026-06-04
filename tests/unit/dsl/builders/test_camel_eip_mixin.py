@@ -129,6 +129,4 @@ class TestModuleImportSideEffects:
 
         importlib.reload(camel_eip_mod)
         after = set(registry._by_fqn)
-        assert before == after, (
-            "Reloading camel_eip не должно менять ProcessorRegistry"
-        )
+        assert before == after, "Reloading camel_eip не должно менять ProcessorRegistry"

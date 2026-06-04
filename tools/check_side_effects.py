@@ -92,9 +92,7 @@ def main() -> int:
         for line in issues:
             print(f"[side-effect] {line}")
         return 1
-    print(
-        f"[side-effect] OK: проверено модулей в {PROCESSORS_DIR.relative_to(ROOT)}"
-    )
+    print(f"[side-effect] OK: проверено модулей в {PROCESSORS_DIR.relative_to(ROOT)}")
     return 0
 
 

@@ -83,9 +83,7 @@ async def test_service_search_returns_sorted_results() -> None:
 
     # Добавляем 3 image-чанка.
     for _ in range(3):
-        await svc.ingest_document(
-            _png_bytes(), collection="default", mime="image/png"
-        )
+        await svc.ingest_document(_png_bytes(), collection="default", mime="image/png")
 
     results = await svc.search("query string", collection="default", top_k=2)
 
@@ -105,9 +103,7 @@ async def test_service_delete_collection() -> None:
     svc = _make_service()
 
     for _ in range(2):
-        await svc.ingest_document(
-            _png_bytes(), collection="temp", mime="image/png"
-        )
+        await svc.ingest_document(_png_bytes(), collection="temp", mime="image/png")
 
     deleted = svc.delete_collection("temp")
     assert deleted == 2
@@ -143,9 +139,7 @@ async def test_service_rejects_unsupported_mime() -> None:
     """audio/wav (и любой не PDF/image) → ValueError."""
     svc = _make_service()
     with pytest.raises(ValueError, match="не поддерживается"):
-        await svc.ingest_document(
-            b"RIFF....WAVE", collection="x", mime="audio/wav"
-        )
+        await svc.ingest_document(b"RIFF....WAVE", collection="x", mime="audio/wav")
 
 
 # ─── Тест 7: set_embedder подменяет dummy на custom ──────────────────────────
@@ -162,9 +156,7 @@ async def test_service_set_embedder_overrides_dummy() -> None:
     fake_embedder.embedding_kind = "fake-custom"
     svc.set_embedder(fake_embedder)
 
-    result = await svc.ingest_document(
-        _png_bytes(), collection="c", mime="image/png"
-    )
+    result = await svc.ingest_document(_png_bytes(), collection="c", mime="image/png")
 
     assert result.chunks[0].embedding == custom_vec
     assert result.chunks[0].embedding_kind == "fake-custom"

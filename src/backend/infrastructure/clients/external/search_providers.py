@@ -237,13 +237,13 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         pass
 
     # SearXNG registration через env var (без отдельного Settings класса).
     # Включается только если SEARXNG_BASE_URL задан И feature-flag активен.
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         searxng_url = os.getenv("SEARXNG_BASE_URL", "").strip()
         if searxng_url and getattr(feature_flags, "search_provider_searxng", False):
@@ -252,7 +252,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(
                 SearXNGProvider(base_url=searxng_url, engines=engines)
             )
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         pass
 
     return _web_search

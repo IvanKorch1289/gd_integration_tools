@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = ("SinkKind", "SinkResult", "Sink")
+__all__ = ("Sink", "SinkKind", "SinkResult")
 
 
 class SinkKind(str, Enum):

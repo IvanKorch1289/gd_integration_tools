@@ -104,7 +104,7 @@ class WebDavProcessor(BaseProcessor):
         self._source = source
         self._target = to
 
-    def _resolve_source(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_source(self, exchange: Exchange[Any]) -> Any:
         body = exchange.in_message.body
         if self._source == "body":
             return body
@@ -118,7 +118,7 @@ class WebDavProcessor(BaseProcessor):
             return exchange.properties.get(self._source[len("properties.") :])
         return None
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -164,16 +164,14 @@ class WebDavProcessor(BaseProcessor):
             case _:
                 raise ValueError(f"Unsupported mode {self._mode!r}")
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_webdav:
                 exchange.set_property("webdav_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         src_value = self._resolve_source(exchange) if self._mode == "upload" else None
@@ -182,7 +180,7 @@ class WebDavProcessor(BaseProcessor):
         except ImportError as exc:
             exchange.fail(f"webdav_io: webdav4 not available: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"webdav_io error: {exc}")
             return
 

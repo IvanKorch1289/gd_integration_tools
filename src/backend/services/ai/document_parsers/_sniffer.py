@@ -8,7 +8,7 @@ PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON + текстовые форматы (MD/TXT).
 
 from __future__ import annotations
 
-__all__ = ("sniff_mime", "_EXT_TO_MIME")
+__all__ = ("_EXT_TO_MIME", "sniff_mime")
 
 
 _EXT_TO_MIME: dict[str, str] = {

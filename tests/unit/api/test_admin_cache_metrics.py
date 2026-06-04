@@ -8,6 +8,7 @@ that are not available in the test environment.
 The endpoint function `_get_cache_stats` itself is pure and does not
 require Redis — it aggregates metrics from in-memory counters.
 """
+
 from __future__ import annotations
 
 import pytest

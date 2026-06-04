@@ -33,15 +33,15 @@ if TYPE_CHECKING:
     from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool
 
 __all__ = (
-    "BrowserLaunchProcessor",
-    "NavigateProcessor",
-    "ClickProcessor",
-    "FillProcessor",
-    "ExtractProcessor",
-    "WaitForProcessor",
-    "ScreenshotProcessor",
-    "PdfProcessor",
     "RPA_BROWSER_PROCESSORS",
+    "BrowserLaunchProcessor",
+    "ClickProcessor",
+    "ExtractProcessor",
+    "FillProcessor",
+    "NavigateProcessor",
+    "PdfProcessor",
+    "ScreenshotProcessor",
+    "WaitForProcessor",
 )
 
 _logger = logging.getLogger(__name__)
@@ -57,11 +57,11 @@ def _extract_domain(url: str) -> str:
 
         parsed = urlparse(url)
         return parsed.netloc or ""
-    except Exception:  # noqa: BLE001
+    except Exception:
         return ""
 
 
-def _get_pool(context: "ExecutionContext") -> "PlaywrightBrowserPool":
+def _get_pool(context: ExecutionContext) -> PlaywrightBrowserPool:
     """Получает pool из ExecutionContext (DI-инъекция через app_state).
 
     В тестах pool инжектится через monkeypatch в context.app_state или
@@ -80,7 +80,7 @@ def _get_pool(context: "ExecutionContext") -> "PlaywrightBrowserPool":
     return pool
 
 
-def _get_or_create_page(exchange: "Exchange[Any]") -> Any:
+def _get_or_create_page(exchange: Exchange[Any]) -> Any:
     """Возвращает текущую page из exchange.properties или создаст None.
 
     NavigateProcessor / ClickProcessor / etc ожидают page уже созданную
@@ -122,9 +122,7 @@ class BrowserLaunchProcessor(BaseProcessor):
         self._url = url
         self._cookie_store = cookie_store
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Получает context из pool, открывает page, опц. переходит на URL.
 
         При ``browser_cookies_redis_persist=True`` и ``cookie_store``:
@@ -143,7 +141,7 @@ class BrowserLaunchProcessor(BaseProcessor):
 
             if self._url:
                 await page.goto(self._url)
-        except Exception as exc:  # noqa: BLE001 — DSL-граница
+        except Exception as exc:
             exchange.fail(f"browser_launch failed: {exc}")
 
 
@@ -162,9 +160,7 @@ class NavigateProcessor(BaseProcessor):
         super().__init__(name=name or self.name)
         self._url = url
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             ctx = exchange.properties.get("rpa.context")
@@ -207,7 +203,7 @@ class NavigateProcessor(BaseProcessor):
                         domain=domain,
                         cookies=current_cookies,
                     )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_navigate failed: {exc}")
 
 
@@ -224,13 +220,11 @@ class ClickProcessor(BaseProcessor):
         self._selector = selector
         self._timeout_ms = int(timeout * 1000)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             await page.click(self._selector, timeout=self._timeout_ms)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_click({self._selector!r}) failed: {exc}")
 
 
@@ -245,13 +239,11 @@ class FillProcessor(BaseProcessor):
         self._selector = selector
         self._value = value
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             await page.fill(self._selector, self._value)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_fill({self._selector!r}) failed: {exc}")
 
 
@@ -281,9 +273,7 @@ class ExtractProcessor(BaseProcessor):
         self._attribute = attribute
         self._to = to
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             element = await page.query_selector(self._selector)
@@ -295,10 +285,10 @@ class ExtractProcessor(BaseProcessor):
             else:
                 value = await element.inner_text()
             self._write(exchange, value)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_extract({self._selector!r}) failed: {exc}")
 
-    def _write(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _write(self, exchange: Exchange[Any], value: Any) -> None:
         target = self._to
         if target.startswith("property:"):
             exchange.set_property(target[len("property:") :], value)
@@ -349,16 +339,14 @@ class WaitForProcessor(BaseProcessor):
         self._state = state
         self._timeout_ms = int(timeout * 1000)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             if self._selector is not None:
                 await page.wait_for_selector(self._selector, timeout=self._timeout_ms)
             else:
                 await page.wait_for_load_state(self._state, timeout=self._timeout_ms)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_wait_for failed: {exc}")
 
 
@@ -385,9 +373,7 @@ class ScreenshotProcessor(BaseProcessor):
         self._full_page = full_page
         self._to = to
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {"full_page": self._full_page}
@@ -406,7 +392,7 @@ class ScreenshotProcessor(BaseProcessor):
                 )
                 body[key] = data
                 exchange.in_message.body = body
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_screenshot failed: {exc}")
 
 
@@ -431,9 +417,7 @@ class PdfProcessor(BaseProcessor):
         self._landscape = landscape
         self._to = to
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {
@@ -446,7 +430,7 @@ class PdfProcessor(BaseProcessor):
             target = self._to
             if target.startswith("property:"):
                 exchange.set_property(target[len("property:") :], data)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rpa_pdf failed: {exc}")
 
 

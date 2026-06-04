@@ -20,7 +20,7 @@ __all__ = ("run_from_settings",)
 
 def _ensure_aioquic_installed() -> None:
     try:
-        import aioquic  # noqa: F401, PLC0415
+        import aioquic  # noqa: F401
     except ImportError as exc:  # pragma: no cover — env-dependent
         raise RuntimeError(
             "HTTP/3 server требует extra ``http3``: "
@@ -35,7 +35,7 @@ def run_from_settings() -> None:
     проверки настроек — это позволяет вернуть человекочитаемый
     ``RuntimeError`` без полной инициализации DI/lifespan.
     """
-    from src.backend.core.config.settings import settings  # noqa: PLC0415
+    from src.backend.core.config.settings import settings
 
     app_settings = settings.app
     if not app_settings.http3_enabled:
@@ -56,8 +56,8 @@ def run_from_settings() -> None:
         idle_timeout=app_settings.http3_idle_timeout,
     )
 
-    from src.backend.entrypoints.http3.server import serve_http3  # noqa: PLC0415
-    from src.backend.plugins.composition.app_factory import create_app  # noqa: PLC0415
+    from src.backend.entrypoints.http3.server import serve_http3
+    from src.backend.plugins.composition.app_factory import create_app
 
     app = create_app()
     logger.info(

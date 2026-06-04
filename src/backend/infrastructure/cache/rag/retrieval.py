@@ -50,7 +50,7 @@ class L3RetrievalCache:
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._key(query, namespace=namespace))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 cache get failed: %s", exc)
             record_miss("l3")
             return None
@@ -61,7 +61,7 @@ class L3RetrievalCache:
         try:
             data = orjson.loads(raw)
             return data if isinstance(data, list) else None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 cache decode failed: %s", exc)
             return None
 
@@ -73,14 +73,14 @@ class L3RetrievalCache:
             await client.cache_set(
                 self._key(query, namespace=namespace), orjson.dumps(chunks), self._ttl
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 cache set failed: %s", exc)
 
     async def invalidate(self, query: str, *, namespace: str | None = None) -> None:
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, namespace=namespace))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 cache invalidate failed: %s", exc)
 
     async def flush(self) -> int:
@@ -95,6 +95,6 @@ class L3RetrievalCache:
                 return deleted
 
             return int(await client.execute("cache", _scan_and_unlink))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L3 cache flush failed: %s", exc)
             return 0

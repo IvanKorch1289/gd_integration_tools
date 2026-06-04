@@ -87,7 +87,7 @@ def _validate_cron_expression(expression: str) -> str:
         )
 
     # Lazy import — croniter project dep, но держим import границу узкой.
-    from croniter import croniter  # type: ignore[import-not-found]
+    from croniter import croniter
 
     # second_at_beginning=True для 6-полевого формата (sec min hour dom mon dow).
     try:
@@ -180,10 +180,10 @@ class DeferredExecutionMixin:
         if seconds < 0:
             raise ValueError(f"defer_for: seconds must be >= 0, got {seconds}")
 
-        self._set_deferred(  # type: ignore[attr-defined]
+        self._set_deferred(
             {"type": "delay", "seconds": seconds, "scheduled_at": time.time()}
         )
-        return self
+        return self  # type: ignore
 
     def schedule(self, *, cron: str, timezone_name: str = "UTC") -> RouteBuilder:
         """Defer execution по cron-расписанию (Airflow-style ``schedule_interval``).
@@ -204,7 +204,7 @@ class DeferredExecutionMixin:
             ValueError: невалидное cron-выражение.
         """
         expression = _validate_cron_expression(cron)
-        self._set_deferred(  # type: ignore[attr-defined]
+        self._set_deferred(
             {
                 "type": "cron",
                 "expression": expression,
@@ -212,7 +212,7 @@ class DeferredExecutionMixin:
                 "scheduled_at": time.time(),
             }
         )
-        return self
+        return self  # type: ignore
 
     def defer_until(self, timestamp: TimestampLike) -> RouteBuilder:
         """Defer execution до указанного момента (Airflow-style ``sla``).
@@ -231,10 +231,10 @@ class DeferredExecutionMixin:
             ValueError: ``str`` не парсится как ISO-8601.
         """
         ts = _coerce_timestamp(timestamp)
-        self._set_deferred(  # type: ignore[attr-defined]
+        self._set_deferred(
             {"type": "until", "timestamp": ts, "scheduled_at": time.time()}
         )
-        return self
+        return self  # type: ignore
 
     def defer_if(self, condition: DeferCondition) -> RouteBuilder:
         """Conditional defer — выполнить defer только если ``condition(exchange)`` truthy.
@@ -253,10 +253,10 @@ class DeferredExecutionMixin:
             raise TypeError(
                 f"defer_if: condition must be callable, got {type(condition).__name__}"
             )
-        self._set_deferred(  # type: ignore[attr-defined]
+        self._set_deferred(
             {"type": "conditional", "condition": condition, "scheduled_at": time.time()}
         )
-        return self
+        return self  # type: ignore
 
     def cancel_deferred(self) -> RouteBuilder:
         """Отменить pending deferral (clear ``_deferred`` slot).
@@ -270,7 +270,7 @@ class DeferredExecutionMixin:
         existing = getattr(self, "_deferred", None)
         if existing is not None:
             object.__setattr__(self, "_deferred", {})
-        return self
+        return self  # type: ignore
 
     # ── Internal helpers ──
 

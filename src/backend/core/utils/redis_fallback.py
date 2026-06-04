@@ -25,7 +25,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from cachetools import TTLCache
 
-__all__ = ("FallbackCache", "RedisLike", "RedisErrorCategory")
+__all__ = ("FallbackCache", "RedisErrorCategory", "RedisLike")
 
 _logger = logging.getLogger("core.utils.redis_fallback")
 

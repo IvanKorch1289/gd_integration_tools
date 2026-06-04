@@ -35,9 +35,7 @@ class _FakeLoader:
 @pytest.mark.asyncio
 async def test_reloader_disabled_does_not_start() -> None:
     reloader = RouteHotReloader(
-        loader=_FakeLoader(),
-        routes_root=Path("/tmp"),
-        enabled=False,
+        loader=_FakeLoader(), routes_root=Path("/tmp"), enabled=False
     )
     await reloader.start()
     assert reloader._task is None
@@ -144,13 +142,9 @@ async def test_per_route_lock_serializes(tmp_path: Path) -> None:
 
     loader = _SlowLoader()
     reloader = RouteHotReloader(
-        loader=loader,
-        routes_root=routes_root,
-        enabled=True,
-        debounce_seconds=0.0,
+        loader=loader, routes_root=routes_root, enabled=True, debounce_seconds=0.0
     )
     await asyncio.gather(
-        reloader._reload_one("concurrent"),
-        reloader._reload_one("concurrent"),
+        reloader._reload_one("concurrent"), reloader._reload_one("concurrent")
     )
     assert loader.max_concurrent == 1  # serialized through per-route lock

@@ -82,12 +82,8 @@ class TestConfigHotReloader:
     async def test_start_disabled_in_prod(self) -> None:
         rel = ConfigHotReloader()
         with (
-            patch(
-                "src.backend.core.config.profile.get_active_profile"
-            ) as prof,
-            patch(
-                "src.backend.core.config.features.feature_flags"
-            ) as ff,
+            patch("src.backend.core.config.profile.get_active_profile") as prof,
+            patch("src.backend.core.config.features.feature_flags") as ff,
         ):
             prof.return_value.value = "prod"
             ff.prod_hot_reload_disable = True
@@ -105,12 +101,8 @@ class TestConfigHotReloader:
                 "src.backend.core.config.hot_reload.get_task_registry",
                 return_value=registry,
             ),
-            patch(
-                "src.backend.core.config.profile.get_active_profile"
-            ) as prof,
-            patch(
-                "src.backend.core.config.features.feature_flags"
-            ) as ff,
+            patch("src.backend.core.config.profile.get_active_profile") as prof,
+            patch("src.backend.core.config.features.feature_flags") as ff,
             patch("pathlib.Path.exists", return_value=True),
         ):
             prof.return_value.value = "dev"
@@ -131,12 +123,10 @@ class TestConfigHotReloader:
     async def test_watch_loop_no_watchfiles(self) -> None:
         rel = ConfigHotReloader()
         rel.watch("/home/user/test")
-        with patch(
-            "src.backend.core.config.profile.get_active_profile"
-        ) as prof, patch(
-            "src.backend.core.config.features.feature_flags"
-        ) as ff, patch(
-            "pathlib.Path.exists", return_value=True
+        with (
+            patch("src.backend.core.config.profile.get_active_profile") as prof,
+            patch("src.backend.core.config.features.feature_flags") as ff,
+            patch("pathlib.Path.exists", return_value=True),
         ):
             prof.return_value.value = "dev"
             ff.prod_hot_reload_disable = False

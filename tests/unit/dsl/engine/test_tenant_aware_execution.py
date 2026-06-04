@@ -27,9 +27,7 @@ from src.backend.dsl.engine.pipeline import Pipeline
 def _empty_pipeline(*, tenant_aware: bool = False) -> Pipeline:
     """Минимальный pipeline без процессоров (для проверки gate)."""
     return Pipeline(
-        route_id="r_tenant_test",
-        source="internal:test",
-        tenant_aware=tenant_aware,
+        route_id="r_tenant_test", source="internal:test", tenant_aware=tenant_aware
     )
 
 

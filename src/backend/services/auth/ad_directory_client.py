@@ -141,7 +141,7 @@ class AdDirectoryClient:
             True если LDAP client доступен; False иначе.
         """
         try:
-            import ldap3  # noqa: F401, PLC0415
+            import ldap3  # noqa: F401
 
             return True
         except ImportError:
@@ -167,7 +167,7 @@ class AdDirectoryClient:
             return await asyncio.to_thread(self._bind_sync, user_dn, password)
         except AdAuthError:
             raise
-        except Exception as exc:  # noqa: BLE001 — ldap3 raises diverse exceptions
+        except Exception as exc:
             _logger.warning("AD bind failure: %s", exc)
             return False
 
@@ -182,7 +182,7 @@ class AdDirectoryClient:
                 if callable(close):
                     close()
 
-        from ldap3 import Connection, Server  # noqa: PLC0415
+        from ldap3 import Connection, Server
 
         srv = Server(
             self._config.server_uri,
@@ -232,7 +232,7 @@ class AdDirectoryClient:
             return await asyncio.to_thread(self._search_sync, search_filter, attrs)
         except AdAuthError:
             raise
-        except Exception as exc:  # noqa: BLE001 — ldap3 broad
+        except Exception as exc:
             raise AdAuthError(f"AD search failure: {exc}") from exc
 
     def _search_sync(
@@ -244,7 +244,7 @@ class AdDirectoryClient:
                 user_dn=self._config.bind_dn, password=self._config.bind_password
             )
         else:
-            from ldap3 import Connection, Server  # noqa: PLC0415
+            from ldap3 import Connection, Server
 
             srv = Server(
                 self._config.server_uri,
@@ -326,7 +326,7 @@ class AdDirectoryClient:
             )
         except AdAuthError:
             raise
-        except Exception as exc:  # noqa: BLE001 — ldap3 broad
+        except Exception as exc:
             raise AdAuthError(f"AD group lookup failure: {exc}") from exc
 
         return entry.groups if entry else ()

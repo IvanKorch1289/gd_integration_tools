@@ -12,9 +12,7 @@ dsl/ и services/ зависят от абстракции, а implementation в
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
-
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeAlias, runtime_checkable
 
 if TYPE_CHECKING:
     pass

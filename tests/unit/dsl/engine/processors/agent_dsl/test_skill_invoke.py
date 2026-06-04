@@ -141,9 +141,7 @@ async def test_params_extraction_from_dot_path(
     ex: Exchange[Any] = Exchange(
         in_message=Message(body={"params": {"key": "val"}, "other": "x"})
     )
-    proc = SkillInvokeProcessor(
-        skill_id="x.y.z", params_property="body.params"
-    )
+    proc = SkillInvokeProcessor(skill_id="x.y.z", params_property="body.params")
     await proc.process(ex, context)
 
     assert registry.calls[0][1] == {"key": "val"}

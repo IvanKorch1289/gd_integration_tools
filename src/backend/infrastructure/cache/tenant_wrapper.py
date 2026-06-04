@@ -25,13 +25,13 @@ Feature-flag:
 from __future__ import annotations
 
 import fnmatch
-from typing import Callable
+from collections.abc import Callable
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.tenancy import TenantContext, current_tenant
 
-__all__ = ("TenantCacheBackend", "DEFAULT_UNSCOPED_PREFIX")
+__all__ = ("DEFAULT_UNSCOPED_PREFIX", "TenantCacheBackend")
 
 
 DEFAULT_UNSCOPED_PREFIX = "tenant:_unscoped_:"

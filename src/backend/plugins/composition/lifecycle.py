@@ -35,7 +35,7 @@ async def _register_protocol_providers() -> None:
         register_provider("llm", "claude", ClaudeProvider())
         register_provider("llm", "gemini", GeminiProvider())
         register_provider("llm", "ollama", OllamaProvider())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("LLM providers registration skipped: %s", exc)
 
     # Exporters — каждый формат как отдельный Protocol-instance в категории.
@@ -55,7 +55,7 @@ async def _register_protocol_providers() -> None:
         register_provider("exporter", "pdf", PdfExporter())
         register_provider("exporter", "json", JsonExporter())
         register_provider("exporter", "parquet", ParquetExporter())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("Exporter registration skipped: %s", exc)
 
     # Agent memory (MongoDB-backed, Wave 0.10).
@@ -65,7 +65,7 @@ async def _register_protocol_providers() -> None:
         memory_service = get_agent_memory_service()
         await memory_service.ensure_indexes()
         register_provider("memory", "mongo", memory_service)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("Memory backend registration skipped: %s", exc)
 
     # Wave 9: ensure_indexes для остальных Mongo-коллекций.
@@ -73,7 +73,7 @@ async def _register_protocol_providers() -> None:
         from src.backend.services.notebooks import get_notebook_service
 
         await get_notebook_service().ensure_indexes()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("Notebooks ensure_indexes skipped: %s", exc)
 
     try:
@@ -83,7 +83,7 @@ async def _register_protocol_providers() -> None:
         ensure = getattr(repo, "ensure_indexes", None)
         if ensure is not None:
             await ensure()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("ai_feedback ensure_indexes skipped: %s", exc)
 
     try:
@@ -92,7 +92,7 @@ async def _register_protocol_providers() -> None:
         )
 
         await get_connector_config_store().ensure_indexes()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("connector_configs ensure_indexes skipped: %s", exc)
 
     try:
@@ -105,7 +105,7 @@ async def _register_protocol_providers() -> None:
 
         await get_express_dialog_store().ensure_indexes()
         await get_express_session_store().ensure_indexes()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("express stores ensure_indexes skipped: %s", exc)
 
     # Wave 9.3: индексы Elasticsearch для logs/orders.
@@ -114,7 +114,7 @@ async def _register_protocol_providers() -> None:
 
         await get_log_indexer().ensure_index()
         await get_order_indexer().ensure_index()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("ES indexers ensure_index skipped: %s", exc)
 
     # Wave 8.3: ensure 4 индексов для facets/aggregations API
@@ -127,7 +127,7 @@ async def _register_protocol_providers() -> None:
         await get_elasticsearch_client().ensure_indices(
             ["audit_logs", "orders", "documents", "rag_chunks"]
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("ES ensure_indices (4 facets) skipped: %s", exc)
 
     # Notification channels — каждый канал отдельно через адаптер.
@@ -150,7 +150,7 @@ async def _register_protocol_providers() -> None:
         # gateway — единый фасад для services/ops/notify_actions и
         # services/health/alert_subscriber (см. W6.3).
         register_provider("notifier", "gateway", get_gateway())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("Notifier registration skipped: %s", exc)
 
     # EventBus — для services/health/alert_subscriber и др. подписчиков.
@@ -158,7 +158,7 @@ async def _register_protocol_providers() -> None:
         from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         register_provider("event_bus", "default", get_event_bus())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("EventBus registration skipped: %s", exc)
 
     # Prompt store (in-memory fallback, при наличии LangFuse — он приоритетен).
@@ -166,7 +166,7 @@ async def _register_protocol_providers() -> None:
         from src.backend.services.ai.prompt_registry import get_prompt_registry
 
         register_provider("prompt_store", "default", get_prompt_registry())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("Prompt store registration skipped: %s", exc)
 
     # К4 MVP (Sprint S5): AI Stack 2026 single-hook регистрация.
@@ -176,7 +176,7 @@ async def _register_protocol_providers() -> None:
         )
 
         await register_ai_2026_providers()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("AI 2026 providers registration skipped: %s", exc)
 
     from src.backend.core.providers_registry import list_providers
@@ -197,7 +197,7 @@ def _register_storage_singletons(app: FastAPI) -> None:
         )
 
         app.state.ai_feedback_repository = MongoFeedbackRepository()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("MongoFeedbackRepository registration skipped: %s", exc)
 
     try:
@@ -207,7 +207,7 @@ def _register_storage_singletons(app: FastAPI) -> None:
         from src.backend.services.notebooks.service import NotebookService
 
         app.state.notebook_service = NotebookService(MongoNotebookRepository())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("MongoNotebookRepository registration skipped: %s", exc)
 
     try:
@@ -218,7 +218,7 @@ def _register_storage_singletons(app: FastAPI) -> None:
 
         cache = getattr(app.state, "three_tier_rag_cache", None)
         app.state.rag_service = RAGService(store=get_vector_store(), cache=cache)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("RAGService registration skipped: %s", exc)
 
     try:
@@ -228,7 +228,7 @@ def _register_storage_singletons(app: FastAPI) -> None:
         from src.backend.services.io.search import SearchService
 
         app.state.search_service = SearchService(client=get_elasticsearch_client())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.debug("SearchService registration skipped: %s", exc)
 
 
@@ -283,14 +283,14 @@ def _bootstrap_snapshot_job(app: FastAPI) -> None:
         if app_settings.snapshot.run_on_startup:
             try:
                 run_snapshot_now()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 app_logger.warning(
                     "Initial PG → SQLite snapshot failed (продолжаем с stale-файлом): %s",
                     exc,
                 )
 
         register_snapshot_job(scheduler_manager.scheduler)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("Snapshot job bootstrap skipped: %s", exc)
 
 
@@ -321,7 +321,7 @@ def _bootstrap_resilience_coordinator(app: FastAPI) -> None:
         register_all_components(coordinator, app_settings.resilience)
         register_resilience_health_checks(get_health_aggregator(), coordinator)
         app.state.resilience_coordinator = coordinator
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("ResilienceCoordinator bootstrap skipped: %s", exc)
 
 
@@ -368,7 +368,7 @@ async def _bootstrap_v11_plugin_loader(app: FastAPI) -> None:
         app_logger.info(
             "V11 PluginLoader: %d плагин(ов) загружено", len(loader.successful)
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("V11 PluginLoader bootstrap skipped: %s", exc)
 
 
@@ -440,7 +440,7 @@ async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
         await loader.discover_and_load()
         app.state.route_loader_v11 = loader
         app_logger.info("V11 RouteLoader: %d маршрут(ов) активно", len(loader.enabled))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("V11 RouteLoader bootstrap skipped: %s", exc)
 
 
@@ -451,21 +451,21 @@ async def _shutdown_v11_loaders(app: FastAPI) -> None:
         watcher_task.cancel()
         try:
             await watcher_task
-        except BaseException as cancel_exc:  # noqa: BLE001 — cancellation/await
+        except BaseException as cancel_exc:
             app_logger.debug("V11 hot-reload task cancelled: %s", cancel_exc)
 
     route_loader = getattr(app.state, "route_loader_v11", None)
     if route_loader is not None:
         try:
             await route_loader.unload_all()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             app_logger.warning("V11 RouteLoader shutdown error: %s", exc)
 
     plugin_loader = getattr(app.state, "plugin_loader_v11", None)
     if plugin_loader is not None:
         try:
             await plugin_loader.shutdown_all()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             app_logger.warning("V11 PluginLoader shutdown error: %s", exc)
 
 
@@ -516,7 +516,7 @@ async def _start_v11_hot_reload(app: FastAPI) -> None:
         async for changes in awatch(*watch_dirs, debounce=debounce_ms):
             try:
                 await _handle_v11_changes(app, changes)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 app_logger.warning("V11 hot-reload handler error: %s", exc)
 
     task = get_task_registry().create_task(_watch_loop(), name="v11-hot-reload")
@@ -581,7 +581,7 @@ async def _start_dsl_yaml_watcher(app: FastAPI) -> None:
         )
         await watcher.start()
         app.state.dsl_yaml_watcher = watcher
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("DSLYamlWatcher startup skipped: %s", exc)
 
 
@@ -592,7 +592,7 @@ async def _stop_dsl_yaml_watcher(app: FastAPI) -> None:
         return
     try:
         await watcher.stop()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("DSLYamlWatcher shutdown error: %s", exc)
 
 
@@ -638,7 +638,7 @@ async def lifespan(app: FastAPI):
                 endpoint=otel_endpoint,
                 environment=otel_env,
             )
-        except Exception as otel_exc:  # noqa: BLE001
+        except Exception as otel_exc:
             app_logger.warning(
                 "OTel baseline configure skipped: %s "
                 "(приложение продолжит без базового TracerProvider)",
@@ -676,7 +676,7 @@ async def lifespan(app: FastAPI):
                 environment=metrics_env,
                 insecure=metrics_insecure,
             )
-        except Exception as metrics_exc:  # noqa: BLE001
+        except Exception as metrics_exc:
             app_logger.warning(
                 "OTel metrics configure skipped: %s "
                 "(приложение продолжит без OTLP metrics-канала)",
@@ -722,7 +722,7 @@ async def lifespan(app: FastAPI):
                 "Конфигурация production не прошла валидацию: %s", cfg_exc
             )
             raise
-        except Exception as cfg_exc:  # noqa: BLE001
+        except Exception as cfg_exc:
             app_logger.warning(
                 "ConfigValidator skipped: %s "
                 "(приложение продолжит без cross-settings проверки)",
@@ -736,7 +736,7 @@ async def lifespan(app: FastAPI):
             from src.backend.infrastructure.observability.sentry_init import init_sentry
 
             init_sentry()
-        except Exception as sentry_exc:  # noqa: BLE001
+        except Exception as sentry_exc:
             app_logger.warning(
                 "Sentry init skipped: %s (приложение продолжит без error tracking)",
                 sentry_exc,
@@ -751,7 +751,7 @@ async def lifespan(app: FastAPI):
             from src.backend.infrastructure.logging import init_log_sinks
 
             init_log_sinks()
-        except Exception as log_exc:  # noqa: BLE001
+        except Exception as log_exc:
             app_logger.warning(
                 "LogSink router init skipped: %s (приложение продолжит на stdlib-логах)",
                 log_exc,
@@ -805,7 +805,7 @@ async def lifespan(app: FastAPI):
                         "RedisClusterAdapter зарегистрирован: nodes=%d",
                         len(parsed_nodes),
                     )
-            except Exception as rc_exc:  # noqa: BLE001
+            except Exception as rc_exc:
                 app_logger.warning(
                     "RedisClusterAdapter bootstrap skipped: %s "
                     "(приложение продолжит без cluster-режима)",
@@ -821,7 +821,7 @@ async def lifespan(app: FastAPI):
             from src.backend.plugins.composition.ai_safety_setup import start_ai_safety
 
             await start_ai_safety(app)
-        except Exception as ai_safety_exc:  # noqa: BLE001
+        except Exception as ai_safety_exc:
             app_logger.warning(
                 "AI safety bootstrap skipped: %s "
                 "(приложение продолжит без AI workspace cleanup-loop)",
@@ -858,16 +858,16 @@ async def lifespan(app: FastAPI):
                     if (entry / "plugin.yaml").is_file():
                         try:
                             await loader.load_from_path(entry)
-                        except Exception as plugin_exc:  # noqa: BLE001
+                        except Exception as plugin_exc:
                             app_logger.warning(
                                 "In-tree plugin %s skipped: %s", entry.name, plugin_exc
                             )
             try:
                 await loader.discover_and_load()
-            except Exception as ep_exc:  # noqa: BLE001
+            except Exception as ep_exc:
                 app_logger.warning("entry_points plugin discovery skipped: %s", ep_exc)
             app.state.plugin_loader = loader
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             app_logger.warning("Plugin loader bootstrap skipped: %s", exc)
 
         # R1.fin (V11): bootstrap PluginLoaderV11 + RouteLoader под feature-flag.
@@ -880,7 +880,7 @@ async def lifespan(app: FastAPI):
             from src.backend.workflows.outbox_worker import start_outbox_worker
 
             start_outbox_worker(interval_seconds=5, batch_size=100)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Outbox-worker не критичен для базовой работоспособности
             # (например, dev_light без RabbitMQ) — startup продолжается.
             app_logger.warning("Outbox worker registration skipped: %s", exc)
@@ -894,7 +894,7 @@ async def lifespan(app: FastAPI):
             )
 
             await start_workflow_runtime(app)
-        except Exception as wf_exc:  # noqa: BLE001
+        except Exception as wf_exc:
             app_logger.warning("Workflow runtime startup skipped: %s", wf_exc)
 
         # Wave S1/DSL Foundation (Step 6): заполняем ServiceSchemaRegistry
@@ -918,7 +918,7 @@ async def lifespan(app: FastAPI):
             app_logger.info(
                 "ServiceSchemaRegistry заполнен: %s", schema_registry.summary()
             )
-        except Exception as sr_exc:  # noqa: BLE001
+        except Exception as sr_exc:
             app_logger.warning("ServiceSchemaRegistry bootstrap skipped: %s", sr_exc)
 
         # Sprint 17 K5 W1 (D9): запуск Redis pub/sub broadcaster для
@@ -946,7 +946,7 @@ async def lifespan(app: FastAPI):
                     "FeatureFlagBroadcaster registered: replica_id=%s",
                     broadcaster.replica_id,
                 )
-        except Exception as bcast_exc:  # noqa: BLE001
+        except Exception as bcast_exc:
             app_logger.warning(
                 "FeatureFlagBroadcaster bootstrap skipped: %s "
                 "(приложение продолжит без multi-replica propagation)",
@@ -988,12 +988,12 @@ async def lifespan(app: FastAPI):
         # чтобы worker'ы успели завершить свои workflow до закрытия DSL.
         try:
             from src.backend.plugins.composition.workflow_setup import (
-                start_workflow_runtime,  # noqa: F401 — импорт для shutdown check
+                start_workflow_runtime,
             )
             from src.backend.workflows.outbox_worker import stop_outbox_worker
 
             await stop_outbox_worker()
-        except Exception as wf_stop_exc:  # noqa: BLE001
+        except Exception as wf_stop_exc:
             app_logger.warning("Workflow runtime shutdown error: %s", wf_stop_exc)
 
         await _stop_dsl_yaml_watcher(app)
@@ -1004,7 +1004,7 @@ async def lifespan(app: FastAPI):
             from src.backend.plugins.composition.ai_safety_setup import stop_ai_safety
 
             await stop_ai_safety(app)
-        except Exception as ai_safety_stop_exc:  # noqa: BLE001
+        except Exception as ai_safety_stop_exc:
             app_logger.warning("AI safety shutdown error: %s", ai_safety_stop_exc)
 
         # R1.fin (V11): shutdown V11-loader'ов в обратном порядке
@@ -1018,7 +1018,7 @@ async def lifespan(app: FastAPI):
         if plugin_loader is not None:
             try:
                 await plugin_loader.shutdown_all()
-            except Exception as plugin_exc:  # noqa: BLE001
+            except Exception as plugin_exc:
                 app_logger.warning("Plugin shutdown error: %s", plugin_exc)
 
         try:
@@ -1039,7 +1039,7 @@ async def lifespan(app: FastAPI):
             from src.backend.infrastructure.logging import shutdown_log_sinks
 
             await shutdown_log_sinks()
-        except Exception as sink_exc:  # noqa: BLE001
+        except Exception as sink_exc:
             app_logger.warning("LogSink shutdown error: %s", sink_exc)
 
         # Sprint 1 V16 Step 3.4: pyrate_limiter Leaker shutdown-hook.
@@ -1055,7 +1055,7 @@ async def lifespan(app: FastAPI):
             )
 
             await shutdown_pyrate_leaker(get_default_limiter())
-        except Exception as leaker_exc:  # noqa: BLE001
+        except Exception as leaker_exc:
             app_logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
 
         # Sprint 16 K2 W3 (L3-P0-1): graceful shutdown OTel MeterProvider.
@@ -1068,7 +1068,7 @@ async def lifespan(app: FastAPI):
             )
 
             shutdown_otel_metrics()
-        except Exception as metrics_stop_exc:  # noqa: BLE001
+        except Exception as metrics_stop_exc:
             app_logger.warning("OTel metrics shutdown skipped: %s", metrics_stop_exc)
 
         # Sprint 3 К2 W1: graceful close RedisClusterAdapter если регистрировался.
@@ -1076,7 +1076,7 @@ async def lifespan(app: FastAPI):
         if cluster_adapter is not None:
             try:
                 await cluster_adapter.close()
-            except Exception as rc_close_exc:  # noqa: BLE001
+            except Exception as rc_close_exc:
                 app_logger.warning("RedisClusterAdapter close error: %s", rc_close_exc)
 
         # Sprint 17 K5 W1 (D9): graceful stop FeatureFlagBroadcaster
@@ -1086,7 +1086,7 @@ async def lifespan(app: FastAPI):
         if bcast is not None:
             try:
                 await bcast.stop()
-            except Exception as bcast_stop_exc:  # noqa: BLE001
+            except Exception as bcast_stop_exc:
                 app_logger.warning(
                     "FeatureFlagBroadcaster shutdown error: %s", bcast_stop_exc
                 )
@@ -1096,5 +1096,5 @@ async def lifespan(app: FastAPI):
         # задачи, которые ещё могли логировать остановку, успели завершиться.
         try:
             await task_registry.shutdown_all(timeout=10)
-        except Exception as tr_exc:  # noqa: BLE001
+        except Exception as tr_exc:
             app_logger.warning("TaskRegistry shutdown error: %s", tr_exc)

@@ -12,7 +12,9 @@ from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourc
 from src.backend.core.models.connector_spec import AuthSchemeKind
 from src.backend.infrastructure.import_gateway.postman import PostmanImportGateway
 
-FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "postman"
+FIXTURES = (
+    Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "postman"
+)
 
 
 @pytest.mark.asyncio
@@ -62,9 +64,7 @@ async def test_postman_bearer_auth_extracts_secret_ref() -> None:
 
 @pytest.mark.asyncio
 async def test_postman_invalid_json_raises_import_error() -> None:
-    src = ImportSource(
-        kind=ImportSourceKind.POSTMAN, content=b"not-json", prefix="x"
-    )
+    src = ImportSource(kind=ImportSourceKind.POSTMAN, content=b"not-json", prefix="x")
     with pytest.raises(ImportError):
         await PostmanImportGateway().import_spec(src)
 

@@ -47,9 +47,9 @@ from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = (
-    "load_pipeline_from_yaml",
-    "load_pipeline_from_file",
     "load_all_from_directory",
+    "load_pipeline_from_file",
+    "load_pipeline_from_yaml",
 )
 
 logger = logging.getLogger("dsl.yaml_loader")
@@ -366,11 +366,12 @@ def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
         Список собранных :class:`BaseProcessor`.
     """
     sub_builder = RouteBuilder.from_(
-        f"{parent.route_id}.__sub__", source=parent.source or ""
+        f"{parent.route_id}.__sub__",  # type: ignore[attr-defined]
+        source=parent.source or "",  # type: ignore[attr-defined]
     )
     for s in specs:
         _apply_processor(sub_builder, s)
-    return list(sub_builder._processors)
+    return list(sub_builder._processors)  # type: ignore[attr-defined]
 
 
 def _apply_processor(builder: RouteBuilder, spec: Any) -> None:

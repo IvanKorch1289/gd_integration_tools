@@ -21,14 +21,15 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = ("CDCClient", "CDCSubscription", "CDCEvent", "get_cdc_client")
+__all__ = ("CDCClient", "CDCEvent", "CDCSubscription", "get_cdc_client")
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except ImportError, ValueError, Exception:
+        except (ImportError, ValueError, Exception):
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
@@ -121,7 +122,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except ImportError, Exception:
+        except (ImportError, Exception):
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 
@@ -151,12 +152,12 @@ class _PollingStrategy(_CDCStrategy):
         while sub.active:
             for table in sub.tables:
                 key = f"{sub.profile}:{table}"
-                last = await self._get_cursor(key, datetime.now(timezone.utc))
+                last = await self._get_cursor(key, datetime.now(UTC))
 
                 try:
                     async with engine.connect() as conn:
                         query = text(
-                            f"SELECT * FROM {table} "  # noqa: S608  # table/timestamp_column — DSL/config параметры подписки, не runtime user input
+                            f"SELECT * FROM {table} "  # table/timestamp_column — DSL/config параметры подписки, не runtime user input  # noqa: S608  # internal query with controlled parameters
                             f"WHERE {sub.timestamp_column} > :last "
                             f"ORDER BY {sub.timestamp_column} "
                             f"LIMIT :limit"
@@ -179,7 +180,7 @@ class _PollingStrategy(_CDCStrategy):
                                 timestamp=(
                                     ts_val.isoformat()
                                     if isinstance(ts_val, datetime)
-                                    else datetime.now(timezone.utc).isoformat()
+                                    else datetime.now(UTC).isoformat()
                                 ),
                                 profile=sub.profile,
                                 new=row,
@@ -264,7 +265,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
             while sub.active:
                 try:
                     payload = await asyncio.wait_for(queue.get(), timeout=1.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
 
                 try:
@@ -273,7 +274,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
                         operation=str(data.get("operation", "UNKNOWN")).upper(),
                         table=str(data.get("table", "")),
                         timestamp=data.get("timestamp")
-                        or datetime.now(timezone.utc).isoformat(),
+                        or datetime.now(UTC).isoformat(),
                         profile=sub.profile,
                         new=data.get("new"),
                         old=data.get("old"),
@@ -338,7 +339,7 @@ class _LogMinerStrategy(_CDCStrategy):
                           AND OPERATION IN ('INSERT', 'UPDATE', 'DELETE')
                         ORDER BY SCN
                         FETCH FIRST :limit ROWS ONLY
-                    """)  # noqa: S608  # table_list собран из sub.tables (DSL config), upper-cased
+                    """)  # table_list собран из sub.tables (DSL config), upper-cased  # noqa: S608  # internal query with controlled parameters
                     result = await conn.execute(
                         query, {"last_scn": last_scn, "limit": sub.batch_size}
                     )
@@ -357,7 +358,7 @@ class _LogMinerStrategy(_CDCStrategy):
                         timestamp=(
                             ts.isoformat()
                             if isinstance(ts, datetime)
-                            else datetime.now(timezone.utc).isoformat()
+                            else datetime.now(UTC).isoformat()
                         ),
                         profile=sub.profile,
                         new={"_sql_redo": sql_redo, "_scn": scn},
@@ -474,7 +475,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)

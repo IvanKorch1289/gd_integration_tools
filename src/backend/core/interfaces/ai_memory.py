@@ -36,7 +36,8 @@ multi-tenant изоляцию и явное scoping (например, ``"acme:c
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = ("MemoryProtocol", "MemoryRecord")
 

@@ -31,9 +31,7 @@ class DummyProcessor(BaseProcessor):
         super().__init__(name=name)
         self.processed: list[Exchange[Any]] = []
 
-    async def process(
-        self, exchange: Exchange[Any], context: Any
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
         self.processed.append(exchange)
         exchange.set_property("processed", True)
 
@@ -185,10 +183,7 @@ async def test_run_sub_processors_stops_on_stopped_exchange() -> None:
 
 
 def test_collect_route_results_all_success() -> None:
-    raw = [
-        ("route1", {"result": "data1"}, None),
-        ("route2", {"result": "data2"}, None),
-    ]
+    raw = [("route1", {"result": "data1"}, None), ("route2", {"result": "data2"}, None)]
     results, errors = collect_route_results(raw)
     assert results == {"route1": {"result": "data1"}, "route2": {"result": "data2"}}
     assert errors == {}
@@ -205,20 +200,14 @@ def test_collect_route_results_with_errors() -> None:
 
 
 def test_collect_route_results_with_exception() -> None:
-    raw = [
-        ("route1", {"result": "data1"}, None),
-        Exception("Connection failed"),
-    ]
+    raw = [("route1", {"result": "data1"}, None), Exception("Connection failed")]
     results, errors = collect_route_results(raw)
     assert results == {"route1": {"result": "data1"}}
     assert errors == {"_exception": "Connection failed"}
 
 
 def test_collect_route_results_all_errors() -> None:
-    raw = [
-        ("route1", None, "Error 1"),
-        ("route2", None, "Error 2"),
-    ]
+    raw = [("route1", None, "Error 1"), ("route2", None, "Error 2")]
     results, errors = collect_route_results(raw)
     assert results == {}
     assert errors == {"route1": "Error 1", "route2": "Error 2"}
@@ -240,9 +229,7 @@ class CustomSideEffectProcessor(BaseProcessor):
     def __init__(self, name: str | None = None) -> None:
         super().__init__(name=name)
 
-    async def process(
-        self, exchange: Exchange[Any], context: Any
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
         pass
 
 
@@ -264,9 +251,7 @@ def test_to_spec_can_be_overridden() -> None:
         def __init__(self, name: str | None = None) -> None:
             super().__init__(name=name)
 
-        async def process(
-            self, exchange: Exchange[Any], context: Any
-        ) -> None:
+        async def process(self, exchange: Exchange[Any], context: Any) -> None:
             pass
 
         def to_spec(self) -> dict[str, Any]:
@@ -283,9 +268,7 @@ def test_stateful_side_effect() -> None:
         def __init__(self, name: str | None = None) -> None:
             super().__init__(name=name)
 
-        async def process(
-            self, exchange: Exchange[Any], context: Any
-        ) -> None:
+        async def process(self, exchange: Exchange[Any], context: Any) -> None:
             pass
 
     proc = StatefulProcessor()

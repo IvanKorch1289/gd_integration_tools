@@ -33,11 +33,11 @@ from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 __all__ = (
+    "AdaptiveBulkhead",
+    "AdaptiveStreamReader",
     "BackpressureState",
     "ConsumerControlProtocol",
     "StreamingBackpressureController",
-    "AdaptiveStreamReader",
-    "AdaptiveBulkhead",
     "get_streaming_controller",
 )
 
@@ -181,7 +181,7 @@ class StreamingBackpressureController:
                 "Backpressure: PAUSE (utilization=%.2f >= %.2f)", util, self._high
             )
             return True
-        elif util <= self._low and self._state.is_paused:
+        if util <= self._low and self._state.is_paused:
             await self._resume_all()
             self._state.is_paused = False
             self._state.last_state_change_at = time.monotonic()
@@ -197,9 +197,7 @@ class StreamingBackpressureController:
             logger.warning("StreamingBackpressureController: уже запущен")
             return
         self._stop_event = asyncio.Event()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._loop(), name="streaming-backpressure-loop"
@@ -212,7 +210,7 @@ class StreamingBackpressureController:
         if self._task is not None:
             try:
                 await asyncio.wait_for(self._task, timeout=2.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._task.cancel()
         if self._state.is_paused:
             await self._resume_all()
@@ -223,7 +221,7 @@ class StreamingBackpressureController:
         for name, consumer in self._consumers.items():
             try:
                 await consumer.pause()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Backpressure pause '%s' failed: %s", name, exc)
 
     async def _resume_all(self) -> None:
@@ -231,7 +229,7 @@ class StreamingBackpressureController:
         for name, consumer in self._consumers.items():
             try:
                 await consumer.resume()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Backpressure resume '%s' failed: %s", name, exc)
 
     async def _loop(self) -> None:
@@ -243,7 +241,7 @@ class StreamingBackpressureController:
                 await asyncio.wait_for(
                     self._stop_event.wait(), timeout=self._check_interval_s
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 await self.evaluate()
 
     @staticmethod
@@ -253,7 +251,7 @@ class StreamingBackpressureController:
             from src.backend.core.config.features import feature_flags
 
             return feature_flags.backpressure_streaming_enabled
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 
@@ -404,7 +402,7 @@ class AdaptiveBulkhead:
                 await asyncio.wait_for(self._semaphore.acquire(), timeout=timeout)
             self._in_flight += 1
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
         except asyncio.CancelledError:
             # Если CancelledError дошел сюда, семафор мог быть захвачен

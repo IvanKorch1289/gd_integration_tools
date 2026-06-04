@@ -46,9 +46,7 @@ async def test_search_with_mocked_service() -> None:
 
 @pytest.mark.asyncio
 async def test_query_from_body_source() -> None:
-    proc = WebSearchProcessor(
-        engine="auto", query_source="body.q", to="body.r"
-    )
+    proc = WebSearchProcessor(engine="auto", query_source="body.q", to="body.r")
     ex = _ex({"q": "search me"})
 
     fake_service = AsyncMock()
@@ -60,7 +58,9 @@ async def test_query_from_body_source() -> None:
     ):
         await proc.process(ex, AsyncMock())
 
-    fake_service.query.assert_called_once_with("search me", max_results=10, provider=None)
+    fake_service.query.assert_called_once_with(
+        "search me", max_results=10, provider=None
+    )
 
 
 @pytest.mark.asyncio

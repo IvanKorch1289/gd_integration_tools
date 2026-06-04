@@ -51,9 +51,9 @@ class OPAClient:
         self.timeout = timeout
         self._max_connections = max_connections
         self._max_keepalive = max_keepalive_connections
-        self._client: "httpx.AsyncClient | None" = None
+        self._client: httpx.AsyncClient | None = None
 
-    def _ensure_client(self) -> "httpx.AsyncClient":
+    def _ensure_client(self) -> httpx.AsyncClient:
         """Lazy-init singleton клиента через make_http_client (WAF фасад).
 
         S11 carryover: при ``waf_outbound_via_facade`` запрос идёт через
@@ -81,7 +81,7 @@ class OPAClient:
                 self._max_connections,
                 self._max_keepalive,
             )
-        return self._client
+        return self._client  # type: ignore[return-value]
 
     async def close(self) -> None:
         """Graceful shutdown (вызывается из ConnectorRegistry.stop_all)."""
@@ -112,7 +112,7 @@ class OPAClient:
             allow = bool(result.get("allow", False))
             reasons = result.get("reasons", []) or []
             return PolicyDecision(allow=allow, reasons=list(reasons))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Fail-closed: при ошибке сети → deny.
             logger.error("OPA connection failed (deny-by-default): %s", exc)
             return PolicyDecision(allow=False, reasons=["opa_unavailable"])

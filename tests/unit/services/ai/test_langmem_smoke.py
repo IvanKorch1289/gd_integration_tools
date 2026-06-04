@@ -8,10 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.services.ai.langmem_service import (
-    LangMemDisabled,
-    LangMemService,
-)
+from src.backend.services.ai.langmem_service import LangMemDisabled, LangMemService
 
 
 def test_langmem_disabled_by_default() -> None:

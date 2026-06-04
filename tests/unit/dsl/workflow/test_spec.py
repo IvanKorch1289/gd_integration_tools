@@ -159,8 +159,7 @@ def test_sensor_with_custom_interval() -> None:
 
 def test_workflow_minimal() -> None:
     wf = WorkflowDeclaration(
-        name="credit.assess",
-        steps=[ActivityDeclaration(name="credit.score")],
+        name="credit.assess", steps=[ActivityDeclaration(name="credit.score")]
     )
     assert wf.name == "credit.assess"
     assert len(wf.steps) == 1
@@ -197,8 +196,7 @@ def test_workflow_round_trip() -> None:
         steps=[
             ActivityDeclaration(name="ai.retrieve", output_key="docs"),
             ActivityDeclaration(
-                name="ai.generate",
-                retry_policy=RetryPolicy(max_attempts=2),
+                name="ai.generate", retry_policy=RetryPolicy(max_attempts=2)
             ),
         ],
         default_timeout_s=120.0,

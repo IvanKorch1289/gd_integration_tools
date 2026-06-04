@@ -38,10 +38,10 @@ from src.backend.services.dsl_portal.builder_facade import (
 
 __all__ = (
     "Pipeline",
-    "load_pipeline_from_yaml",
-    "list_route_ids",
-    "get_route_pipeline",
     "execute_route",
+    "get_route_pipeline",
     "list_audit_records",
     "list_recent_trace_events",
+    "list_route_ids",
+    "load_pipeline_from_yaml",
 )

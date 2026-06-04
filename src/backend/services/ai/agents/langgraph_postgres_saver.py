@@ -78,7 +78,7 @@ class LangGraphPostgresSaverWrapper:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "langgraph_postgres_checkpoint", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def _resolve_dsn(self) -> str:
@@ -93,7 +93,7 @@ class LangGraphPostgresSaverWrapper:
                 dsn = getattr(db, "dsn", None) or getattr(db, "url", None)
                 if dsn:
                     return str(dsn)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
         raise LangGraphPostgresSaverUnavailable(
             "DSN для AsyncPostgresSaver не передан и не найден в settings.database"
@@ -129,7 +129,7 @@ class LangGraphPostgresSaverWrapper:
             # храним сам объект до явного close.
             ctx = AsyncPostgresSaver.from_conn_string(dsn)
             saver = await ctx.__aenter__()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise LangGraphPostgresSaverUnavailable(
                 f"Не удалось инициализировать AsyncPostgresSaver: {exc}"
             ) from exc
@@ -139,7 +139,7 @@ class LangGraphPostgresSaverWrapper:
             setup = getattr(saver, "setup", None)
             if setup is not None:
                 await setup()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("AsyncPostgresSaver.setup() failed: %s", exc)
 
         self._saver = saver
@@ -155,7 +155,7 @@ class LangGraphPostgresSaverWrapper:
                 result = close()
                 if hasattr(result, "__await__"):
                     await result
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("AsyncPostgresSaver.close() error: %s", exc)
         finally:
             self._saver = None

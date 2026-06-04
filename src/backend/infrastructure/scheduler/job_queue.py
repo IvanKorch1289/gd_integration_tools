@@ -6,8 +6,9 @@
 """
 
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
-from typing import Any, Awaitable, Callable
+from typing import Any
 from uuid import uuid4
 
 from src.backend.core.config.settings import settings
@@ -129,7 +130,7 @@ class JobQueue:
             scheduler.remove_job(job_id)
             logger.info("Задача %s отменена", job_id)
             return True
-        except KeyError, ValueError:
+        except (KeyError, ValueError):
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:

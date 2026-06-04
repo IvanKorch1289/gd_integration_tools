@@ -94,7 +94,7 @@ class PoolMonitor:
                 "total_connections": total,
                 "utilization_pct": round(utilization, 1),
             }
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             return None
 
     def get_current_stats(self) -> dict[str, Any]:
@@ -112,7 +112,7 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("pool_monitor", PoolMonitor)
-def get_pool_monitor() -> PoolMonitor:
+def get_pool_monitor() -> PoolMonitor:  # type: ignore[empty-body]
     """Возвращает PoolMonitor из app.state или lazy-init fallback."""
 
 
@@ -143,5 +143,5 @@ def _register_db_pool_in_unified_monitor() -> None:
             ping_callable=_ping_db,
             idle_timeout=60.0,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Spike DB pool registration пропущена: %s", exc)

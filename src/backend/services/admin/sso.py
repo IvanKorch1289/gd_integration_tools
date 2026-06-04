@@ -21,10 +21,10 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 __all__ = (
-    "SamlSSOClient",
-    "OidcSSOClient",
     "AdminSSOConfig",
+    "OidcSSOClient",
     "SSOUserInfo",
+    "SamlSSOClient",
     "require_sso_auth",
 )
 

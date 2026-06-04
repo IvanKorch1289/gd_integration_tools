@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-__all__ = ("AuthSchemeKind", "AuthSpec", "EndpointSpec", "SecretRef", "ConnectorSpec")
+__all__ = ("AuthSchemeKind", "AuthSpec", "ConnectorSpec", "EndpointSpec", "SecretRef")
 
 
 class AuthSchemeKind(str, Enum):

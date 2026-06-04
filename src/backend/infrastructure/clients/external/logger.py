@@ -5,7 +5,7 @@ from typing import Any
 
 from src.backend.core.config.settings import LogStorageSettings, settings
 
-__all__ = ("graylog_handler", "GraylogHandler", "get_graylog_handler")
+__all__ = ("GraylogHandler", "get_graylog_handler", "graylog_handler")
 
 _logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class GraylogHandler:
             self.handler = handler
             return handler
         except Exception as exc:
-            raise ConnectionError(f"Ошибка подключения к Graylog: {str(exc)}") from exc
+            raise ConnectionError(f"Ошибка подключения к Graylog: {exc!s}") from exc
 
     def close(self) -> None:
         """Закрывает ресурсы соединения с Graylog."""
@@ -93,7 +93,7 @@ class GraylogHandler:
             return True
         except OSError as exc:
             raise ConnectionError(
-                f"Ошибка проверки соединения с Graylog: {str(exc)}"
+                f"Ошибка проверки соединения с Graylog: {exc!s}"
             ) from exc
 
 

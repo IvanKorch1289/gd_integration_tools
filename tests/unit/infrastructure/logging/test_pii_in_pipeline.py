@@ -26,11 +26,7 @@ def configured_structlog() -> Any:
         return ""
 
     structlog.configure(
-        processors=[
-            structlog.processors.add_log_level,
-            mask_pii,
-            _capture,
-        ],
+        processors=[structlog.processors.add_log_level, mask_pii, _capture],
         wrapper_class=structlog.BoundLogger,
         cache_logger_on_first_use=False,
     )

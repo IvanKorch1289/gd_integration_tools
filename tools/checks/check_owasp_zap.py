@@ -111,7 +111,9 @@ def run_zap_baseline(base_url: str, target_path: str, output_dir: Path) -> int:
         for alert in site.get("alerts", []):
             if alert.get("riskcode") == "3":  # High severity
                 high_count += 1
-    print(f"[INFO] {full_url}: {high_count} HIGH-severity findings, report={json_report}")
+    print(
+        f"[INFO] {full_url}: {high_count} HIGH-severity findings, report={json_report}"
+    )
     return high_count
 
 
@@ -156,7 +158,9 @@ def main() -> int:
     for target in targets:
         total_high += run_zap_baseline(args.base_url, target, args.output_dir)
 
-    print(f"\n=== ZAP summary: {len(targets)} endpoints, {total_high} HIGH findings ===")
+    print(
+        f"\n=== ZAP summary: {len(targets)} endpoints, {total_high} HIGH findings ==="
+    )
     if args.strict and total_high > 0:
         return 1
     return 0  # warn-only до Sprint 9

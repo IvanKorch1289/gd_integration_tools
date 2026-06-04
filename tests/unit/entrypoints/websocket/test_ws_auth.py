@@ -28,7 +28,9 @@ class TestWSAuthenticator:
             await authenticator.authenticate(None)
 
     @pytest.mark.asyncio
-    async def test_valid_token_returns_session(self, authenticator: WSAuthenticator) -> None:
+    async def test_valid_token_returns_session(
+        self, authenticator: WSAuthenticator
+    ) -> None:
         """authenticate returns WSSession for valid token."""
         mock_mgr = AsyncMock()
         mock_mgr.validate.return_value = {
@@ -95,7 +97,9 @@ class TestWSAuthenticator:
         assert groups == set()
 
     @pytest.mark.asyncio
-    async def test_load_groups_redis_error(self, authenticator: WSAuthenticator) -> None:
+    async def test_load_groups_redis_error(
+        self, authenticator: WSAuthenticator
+    ) -> None:
         """_load_groups returns empty set on redis error."""
         with patch(
             "src.backend.core.di.providers.get_redis_kv_client_provider",
@@ -106,7 +110,9 @@ class TestWSAuthenticator:
 
     def test_can_access_group_admin(self, authenticator: WSAuthenticator) -> None:
         """Admin can access any group."""
-        session = WSSession(client_id="c", api_key_hash="h", allowed_groups=set(), is_admin=True)
+        session = WSSession(
+            client_id="c", api_key_hash="h", allowed_groups=set(), is_admin=True
+        )
         assert authenticator.can_access_group(session, "any") is True
 
     def test_can_access_group_member(self, authenticator: WSAuthenticator) -> None:

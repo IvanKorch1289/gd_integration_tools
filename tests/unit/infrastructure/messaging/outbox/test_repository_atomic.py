@@ -15,11 +15,7 @@ import pytest_asyncio
 pytest.importorskip("aiosqlite")
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.backend.infrastructure.database.models.base import mapper_registry
 from src.backend.infrastructure.database.models.outbox import OutboxMessage
@@ -73,10 +69,7 @@ async def test_enqueue_rollback_drops_record(
     with pytest.raises(DummyBusinessFailure):
         async with session_factory() as session, session.begin():
             repo = OutboxRepository(session)
-            await repo.enqueue(
-                topic="orders.created",
-                payload={"order_id": 99},
-            )
+            await repo.enqueue(topic="orders.created", payload={"order_id": 99})
             # Имитируем падение процесса между enqueue и commit.
             raise DummyBusinessFailure("simulated crash before commit")
 

@@ -65,7 +65,7 @@ class InvocationOptionsSchema(_CoreBaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_schedule(self) -> "InvocationOptionsSchema":
+    def validate_schedule(self) -> InvocationOptionsSchema:
         """Проверяет корректность параметров расписания."""
         if self.delay_seconds is not None and self.cron is not None:
             raise ValueError("Нельзя одновременно использовать delay_seconds и cron")

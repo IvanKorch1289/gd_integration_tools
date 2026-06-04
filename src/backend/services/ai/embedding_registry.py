@@ -9,7 +9,7 @@ Sprint 1 рефакторит ``services/ai/embedding_providers.py`` целик�
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from src.backend.services.ai.embedding_providers import EmbeddingProvider
 

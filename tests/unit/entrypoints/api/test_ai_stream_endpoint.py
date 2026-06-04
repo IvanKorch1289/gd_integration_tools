@@ -55,11 +55,7 @@ async def test_sse_generates_events_when_enabled() -> None:
 
         from src.backend.entrypoints.api.v1.endpoints import ai_stream
 
-        with patch.object(
-            ai_stream,
-            "_generate",
-            wraps=ai_stream._generate,
-        ):
+        with patch.object(ai_stream, "_generate", wraps=ai_stream._generate):
             with patch(
                 "src.backend.services.ai.streaming_service.get_llm_streaming_service",
                 return_value=_FakeService(),

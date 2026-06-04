@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
@@ -85,7 +85,7 @@ class CDCClientAdapter(CDCSource):
             while not self._stopped:
                 try:
                     event = await asyncio.wait_for(self._queue.get(), timeout=1.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
                 yield event
         finally:
@@ -131,9 +131,9 @@ def _client_event_to_source(event_dict: dict[str, Any]) -> CDCEvent:
         try:
             timestamp = datetime.fromisoformat(ts)
         except ValueError:
-            timestamp = datetime.now(timezone.utc)
+            timestamp = datetime.now(UTC)
     else:
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
     return CDCEvent(
         operation=event_dict.get("operation", "UPSERT"),
         source=f"cdc_client:{event_dict.get('profile', '?')}",

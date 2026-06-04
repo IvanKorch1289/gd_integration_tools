@@ -1,26 +1,8 @@
-"""Streamlit-страница для просмотра workflow step-логов из ClickHouse.
+"""Streamlit-страница для просмотра workflow step-логов + live audit tail.
 
-Назначение:
-    Visual viewer для workflow_step_log таблицы ClickHouse — фильтрация
-    по workflow/tenant/date/status, табличный вывод, waterfall-диаграмма
-    распределения duration по step_name, drill-down по конкретному
-    workflow_id.
-
-Контракт:
-    * GET /api/v1/admin/workflow/step-logs (К3 Sprint 5 Wave 11) —
-      листинг с фильтрами;
-    * GET /api/v1/admin/workflow/step-logs/{workflow_id} — drill-down.
-
-Поведение при отсутствии backend:
-    Если К3 W11 endpoint ещё НЕ зарегистрирован, ``APIClient.list_step_logs``
-    возвращает stub-данные (с пометкой ``__stub__=True``). Страница рисует
-    предупреждение «K3 W11 endpoint не готов».
-
-Feature flag:
-    ``feature_flag.frontend_workflow_logs_page`` (default-OFF). При False —
-    страница показывает баннер и завершает рендер через ``st.stop()``.
-
-Sprint 5 K5 W1 — Frontend.
+Вкладки:
+* Step Logs — ClickHouse workflow_step_log.
+* Live Audit Tail — read-only tail audit_events.
 """
 
 from __future__ import annotations
@@ -42,114 +24,202 @@ if not feature_flags.frontend_workflow_logs_page:
     )
     st.stop()
 
-st.title(":clipboard: Workflow Step Logs")
+st.title(":clipboard: Workflow Logs")
 st.caption(
     "Визуализация записей workflow_step_log (ClickHouse) — фильтр по "
-    "workflow/tenant/date/status, waterfall по длительностям, drill-down."
+    "workflow/tenant/date/status, waterfall по длительностям, drill-down. "
+    "Live audit tail — автообновление каждые ~2 сек."
 )
 
-# ---------------------------------------------------------------------------
-# Sidebar — фильтры
-# ---------------------------------------------------------------------------
-with st.sidebar:
-    st.header("Фильтры")
+api = get_api_client()
+
+tab_step, tab_live = st.tabs(["Step Logs", "Live Audit Tail"])
+
+with tab_step:
+    st.subheader("Фильтры Step Logs")
     workflow_name = st.text_input(
         "Workflow name",
         placeholder="credit_assessment",
         help="Substring match по имени workflow.",
+        key="step_workflow",
     )
     tenant_id = st.text_input(
-        "Tenant ID", placeholder="all tenants", help="Если пусто — все tenant'ы."
+        "Tenant ID",
+        placeholder="all tenants",
+        help="Если пусто — все tenant'ы.",
+        key="step_tenant",
     )
     date_from = st.date_input(
-        "Date from", value=datetime.utcnow().date() - timedelta(days=1)
+        "Date from", value=datetime.utcnow().date() - timedelta(days=1), key="step_from"
     )
-    date_to = st.date_input("Date to", value=datetime.utcnow().date())
+    date_to = st.date_input("Date to", value=datetime.utcnow().date(), key="step_to")
     status_filter = st.multiselect(
-        "Status", options=["ok", "fail", "retry", "timeout"], default=["ok", "fail"]
+        "Status",
+        options=["ok", "fail", "retry", "timeout"],
+        default=["ok", "fail"],
+        key="step_status",
     )
-    limit = st.number_input("Limit", min_value=10, max_value=1000, value=100, step=10)
-
-# ---------------------------------------------------------------------------
-# Main view — fetch + 3 tabs
-# ---------------------------------------------------------------------------
-api = get_api_client()
-
-with st.spinner("Загрузка step-логов..."):
-    rows = api.list_step_logs(
-        workflow_name=workflow_name or None,
-        tenant_id=tenant_id or None,
-        date_from=str(date_from),
-        date_to=str(date_to),
-        status=status_filter or None,
-        limit=int(limit),
+    limit = st.number_input(
+        "Limit", min_value=10, max_value=1000, value=100, step=10, key="step_limit"
     )
 
-if rows and any(r.get("__stub__") for r in rows):
-    st.info(
-        ":information_source: К3 W11 endpoint /api/v1/admin/workflow/step-logs "
-        "ещё не зарегистрирован — показываются stub-данные."
-    )
-
-if not rows:
-    st.info("Нет данных по выбранным фильтрам.")
-    st.stop()
-
-df = pd.DataFrame(rows)
-
-tab_table, tab_chart, tab_detail = st.tabs(
-    [":bar_chart: Таблица", ":chart_with_upwards_trend: Waterfall", ":mag: Drill-down"]
-)
-
-with tab_table:
-    columns = [
-        c
-        for c in (
-            "workflow_id",
-            "workflow_name",
-            "step_name",
-            "status",
-            "duration_ms",
-            "tenant_id",
-            "ts",
+    with st.spinner("Загрузка step-логов..."):
+        rows = api.list_step_logs(
+            workflow_name=workflow_name or None,
+            tenant_id=tenant_id or None,
+            date_from=str(date_from),
+            date_to=str(date_to),
+            status=status_filter or None,
+            limit=int(limit),
         )
-        if c in df.columns
-    ]
-    st.dataframe(
-        df[columns] if columns else df, use_container_width=True, hide_index=True
+
+    if rows and any(r.get("__stub__") for r in rows):
+        st.info(
+            ":information_source: К3 W11 endpoint /api/v1/admin/workflow/step-logs "
+            "ещё не зарегистрирован — показываются stub-данные."
+        )
+
+    if not rows:
+        st.info("Нет данных по выбранным фильтрам.")
+    else:
+        df = pd.DataFrame(rows)
+
+        tab_table, tab_chart, tab_detail = st.tabs(
+            [
+                ":bar_chart: Таблица",
+                ":chart_with_upwards_trend: Waterfall",
+                ":mag: Drill-down",
+            ]
+        )
+
+        with tab_table:
+            columns = [
+                c
+                for c in (
+                    "workflow_id",
+                    "workflow_name",
+                    "step_name",
+                    "status",
+                    "duration_ms",
+                    "tenant_id",
+                    "ts",
+                )
+                if c in df.columns
+            ]
+            st.dataframe(
+                df[columns] if columns else df,
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(f"Всего записей: {len(df)}")
+
+        with tab_chart:
+            if (
+                "duration_ms" in df.columns
+                and "step_name" in df.columns
+                and not df.empty
+            ):
+                chart_df = (
+                    df.groupby("step_name")["duration_ms"]
+                    .sum()
+                    .sort_values(ascending=False)
+                    .head(20)
+                )
+                st.subheader("Top-20 step_name по суммарной длительности (ms)")
+                st.bar_chart(chart_df)
+            else:
+                st.info("Нет колонок duration_ms / step_name для построения chart.")
+
+        with tab_detail:
+            if "workflow_id" in df.columns:
+                ids = df["workflow_id"].dropna().astype(str).unique().tolist()
+            else:
+                ids = []
+
+            if not ids:
+                st.info("Нет workflow_id в текущей выборке для drill-down.")
+            else:
+                selected_workflow = st.selectbox(
+                    "Workflow ID",
+                    options=ids,
+                    help="Выберите workflow для подробного просмотра steps.",
+                )
+                if selected_workflow:
+                    with st.spinner(f"Загрузка деталей {selected_workflow}..."):
+                        detail = api.get_step_detail(selected_workflow)
+                    if detail.get("__stub__"):
+                        st.info(":information_source: Drill-down — stub-данные.")
+                    st.json(detail)
+
+with tab_live:
+    st.header(":memo: Workflow Live Logs (read-only)")
+    st.caption(
+        "Стрим audit-событий из ClickHouse (`audit_events` table). Обновление "
+        "каждые ~2 секунды. Только чтение — workflow-engine не вызывается."
     )
-    st.caption(f"Всего записей: {len(df)}")
 
-with tab_chart:
-    if "duration_ms" in df.columns and "step_name" in df.columns and not df.empty:
-        chart_df = (
-            df.groupby("step_name")["duration_ms"]
-            .sum()
-            .sort_values(ascending=False)
-            .head(20)
-        )
-        st.subheader("Top-20 step_name по суммарной длительности (ms)")
-        st.bar_chart(chart_df)
-    else:
-        st.info("Нет колонок duration_ms / step_name для построения chart.")
+    st.subheader("Фильтры tail")
+    workflow_filter = st.text_input(
+        "workflow_id / route_name substring",
+        value="",
+        help="Фильтр по имени workflow или route. Пусто — все события.",
+        key="live_workflow",
+    )
+    severity_filter = st.selectbox(
+        "Severity",
+        options=["all", "info", "warning", "error"],
+        index=0,
+        key="live_severity",
+    )
+    tail_size = st.number_input(
+        "Tail size",
+        min_value=10,
+        max_value=500,
+        value=100,
+        step=10,
+        help="Число последних событий для отображения.",
+        key="live_size",
+    )
+    autorefresh = st.toggle("Auto refresh (~2s)", value=True, key="live_refresh")
 
-with tab_detail:
-    if "workflow_id" in df.columns:
-        ids = df["workflow_id"].dropna().astype(str).unique().tolist()
-    else:
-        ids = []
+    def _fetch_audit_tail() -> list[dict]:
+        params: dict[str, object] = {"limit": int(tail_size)}
+        if workflow_filter:
+            params["route"] = workflow_filter
+        if severity_filter != "all":
+            params["severity"] = severity_filter
+        try:
+            records = api._request("GET", "/api/v1/admin/audit/tail", params=params)
+            if isinstance(records, list):
+                return records
+        except Exception:  # noqa: BLE001
+            try:
+                records = api._request("GET", "/api/v1/admin/audit", params=params)
+                if isinstance(records, list):
+                    return records
+            except Exception:  # noqa: BLE001
+                return []
+        return []
 
-    if not ids:
-        st.info("Нет workflow_id в текущей выборке для drill-down.")
+    @st.fragment(run_every=2)
+    def _render_tail() -> None:
+        records = _fetch_audit_tail()
+        st.caption(f"Получено событий: {len(records)}")
+        if not records:
+            st.info(
+                "Нет событий. Возможные причины: feature_flag "
+                "`audit_clickhouse_enabled=False`, ClickHouse недоступен, "
+                "либо tail пуст."
+            )
+            return
+        st.dataframe(records, use_container_width=True, height=600, hide_index=True)
+
+    if autorefresh:
+        _render_tail()
     else:
-        selected_workflow = st.selectbox(
-            "Workflow ID",
-            options=ids,
-            help="Выберите workflow для подробного просмотра steps.",
-        )
-        if selected_workflow:
-            with st.spinner(f"Загрузка деталей {selected_workflow}..."):
-                detail = api.get_step_detail(selected_workflow)
-            if detail.get("__stub__"):
-                st.info(":information_source: Drill-down — stub-данные.")
-            st.json(detail)
+        if st.button("Обновить tail", type="primary"):
+            _render_tail()
+        else:
+            st.info(
+                "Auto refresh отключён. Нажмите «Обновить tail» для разовой загрузки."
+            )

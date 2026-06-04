@@ -6,7 +6,7 @@
 gRPC, SOAP, WebSocket, SSE, RabbitMQ, Redis и т.д.).
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 

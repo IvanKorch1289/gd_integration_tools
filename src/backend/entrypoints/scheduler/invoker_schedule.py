@@ -37,8 +37,9 @@ Job-id формируется из ``f"scheduled_invocation_{action}"``; пов�
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 __all__ = (
     "ScheduleSpec",
@@ -175,7 +176,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
             envelope = await dispatcher.dispatch(
                 spec.action, dict(spec.payload), context
             )
-        except Exception as _:  # noqa: BLE001 — лог и выходим, повторим на следующий tick.
+        except Exception as _:
             logger.exception(
                 "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
             )
@@ -203,7 +204,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
     invoker = get_invoker()
     try:
         await invoker.invoke(request)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.exception(
             "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
         )

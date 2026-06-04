@@ -47,9 +47,7 @@ def test_init_rejects_model_without_provider() -> None:
     """``model`` без ``/`` → ValueError на этапе __init__."""
     with pytest.raises(ValueError, match="provider"):
         LLMStructuredProcessor(
-            model="claudeonly",
-            output_schema=_SampleSchema,
-            prompt="x",
+            model="claudeonly", output_schema=_SampleSchema, prompt="x"
         )
 
 
@@ -82,9 +80,7 @@ def test_init_rejects_negative_cost_budget() -> None:
 async def test_schema_none_fails_exchange() -> None:
     """``output_schema=None`` → exchange.fail на schema_error."""
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6",
-        output_schema=None,
-        prompt="x",
+        model="anthropic/claude-sonnet-4-6", output_schema=None, prompt="x"
     )
     exchange = _make_exchange(body={})
 
@@ -120,9 +116,7 @@ async def test_missing_instructor_fails_with_helpful_message(
     monkeypatch.setitem(sys.modules, "instructor", None)
     monkeypatch.setitem(sys.modules, "litellm", None)
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6",
-        output_schema=_SampleSchema,
-        prompt="x",
+        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x"
     )
     exchange = _make_exchange(body={})
 
@@ -159,10 +153,7 @@ def stub_instructor_and_litellm(
     monkeypatch.setitem(sys.modules, "instructor", instructor_module)
     monkeypatch.setitem(sys.modules, "litellm", litellm_module)
 
-    yield {
-        "client_create": create_mock,
-        "completion_cost": completion_cost_mock,
-    }
+    yield {"client_create": create_mock, "completion_cost": completion_cost_mock}
 
 
 @pytest.mark.asyncio
@@ -197,9 +188,7 @@ async def test_happy_path_records_provider(
     )
 
     proc = LLMStructuredProcessor(
-        model="openai/gpt-4o",
-        output_schema=_SampleSchema,
-        prompt="x",
+        model="openai/gpt-4o", output_schema=_SampleSchema, prompt="x"
     )
     exchange = _make_exchange(body={})
 
@@ -219,9 +208,7 @@ async def test_call_failure_marks_exchange_failed(
     )
 
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6",
-        output_schema=_SampleSchema,
-        prompt="x",
+        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x"
     )
     exchange = _make_exchange(body={})
 

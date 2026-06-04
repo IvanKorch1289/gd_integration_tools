@@ -46,7 +46,7 @@ async def _maybe_publish(request: Request, change: FeatureFlagChange) -> None:
         return
     try:
         await bcast.publish(change)
-    except Exception as exc:  # noqa: BLE001 — broadcast best-effort
+    except Exception as exc:
         _logger.warning(
             "feature_flag.broadcast.publish_skipped: %s",
             exc,

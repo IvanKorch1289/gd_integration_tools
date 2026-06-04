@@ -38,7 +38,7 @@ async def parallelism_report(name: str) -> dict[str, Any]:
             steps = getattr(route, "steps", []) or []
         except HTTPException:
             raise
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             steps = []
 
     report = ParallelismAnalyzer().analyze(steps)

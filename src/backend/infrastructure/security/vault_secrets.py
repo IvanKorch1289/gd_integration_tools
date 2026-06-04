@@ -27,9 +27,9 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.interfaces.secrets import SecretsBackend
 
 if TYPE_CHECKING:
-    import hvac  # noqa: F401
+    import hvac
 
-__all__ = ("VaultSecretsBackend", "VaultBackendConfig")
+__all__ = ("VaultBackendConfig", "VaultSecretsBackend")
 
 _logger = logging.getLogger("infrastructure.security.vault_secrets")
 
@@ -90,7 +90,7 @@ class VaultSecretsBackend(SecretsBackend):
         """Строит hvac.Client lazy: import + auth на первом обращении."""
         if self._client_factory is not None:
             return self._client_factory()
-        import hvac  # noqa: PLC0415
+        import hvac
 
         return hvac.Client(url=self._addr, token=self._token)
 
@@ -131,12 +131,12 @@ class VaultSecretsBackend(SecretsBackend):
         client = self._get_client()
         try:
             return self._do_read(client, path, field)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 try:
                     return self._do_read(client, path, field)
-                except Exception as second_exc:  # noqa: BLE001
+                except Exception as second_exc:
                     _logger.error(
                         "Vault read failed after re-auth: %s/%s: %s",
                         self._mount,
@@ -165,7 +165,7 @@ class VaultSecretsBackend(SecretsBackend):
     def _is_auth_error(exc: BaseException) -> bool:
         """Распознать ошибки аутентификации hvac (Forbidden / InvalidRequest)."""
         try:
-            import hvac.exceptions as hv_exc  # noqa: PLC0415
+            import hvac.exceptions as hv_exc
         except ImportError:
             return False
         return isinstance(exc, (hv_exc.Forbidden, hv_exc.InvalidRequest))
@@ -192,7 +192,7 @@ class VaultSecretsBackend(SecretsBackend):
             client.secrets.kv.v2.create_or_update_secret(
                 path=path, secret=secret, mount_point=self._mount
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 client.secrets.kv.v2.create_or_update_secret(
@@ -217,7 +217,7 @@ class VaultSecretsBackend(SecretsBackend):
                 path=path, mount_point=self._mount
             )
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 try:
@@ -225,7 +225,7 @@ class VaultSecretsBackend(SecretsBackend):
                         path=path, mount_point=self._mount
                     )
                     return True
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     return False
             return False
 
@@ -243,14 +243,14 @@ class VaultSecretsBackend(SecretsBackend):
             response = client.secrets.kv.v2.list_secrets(
                 path=base, mount_point=self._mount
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 try:
                     response = client.secrets.kv.v2.list_secrets(
                         path=base, mount_point=self._mount
                     )
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     return []
             else:
                 return []
@@ -262,6 +262,6 @@ class VaultSecretsBackend(SecretsBackend):
         try:
             client = self._get_client()
             return bool(await asyncio.to_thread(client.is_authenticated))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("Vault health_check failed: %s", exc)
             return False

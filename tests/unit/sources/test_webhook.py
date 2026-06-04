@@ -36,7 +36,9 @@ async def test_invalid_hmac_raises() -> None:
     src = WebhookSource("wh2", path="/in", hmac_secret="topsecret")
     await src.start(lambda ev: _noop())
     with pytest.raises(WebhookVerificationError):
-        await src.verify_and_dispatch(b"body", {"X-Signature": "deadbeef"}, payload=None)
+        await src.verify_and_dispatch(
+            b"body", {"X-Signature": "deadbeef"}, payload=None
+        )
 
 
 @pytest.mark.asyncio
@@ -58,10 +60,7 @@ async def test_valid_hmac_passes() -> None:
 @pytest.mark.asyncio
 async def test_timestamp_window_drift_rejected() -> None:
     src = WebhookSource(
-        "wh4",
-        path="/in",
-        timestamp_header="X-Ts",
-        timestamp_window_seconds=10,
+        "wh4", path="/in", timestamp_header="X-Ts", timestamp_window_seconds=10
     )
     await src.start(lambda ev: _noop())
     too_old = str(time.time() - 1_000)
@@ -77,10 +76,7 @@ async def test_timestamp_within_window_ok() -> None:
         captured.append(ev)
 
     src = WebhookSource(
-        "wh5",
-        path="/in",
-        timestamp_header="X-Ts",
-        timestamp_window_seconds=60,
+        "wh5", path="/in", timestamp_header="X-Ts", timestamp_window_seconds=60
     )
     await src.start(cb)
     await src.verify_and_dispatch(b"x", {"X-Ts": str(time.time())}, payload=None)

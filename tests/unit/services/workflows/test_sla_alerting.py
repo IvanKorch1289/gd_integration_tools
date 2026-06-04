@@ -61,9 +61,7 @@ def test_breach_record_to_dict_shape() -> None:
 def test_sla_policy_breach_action_validation() -> None:
     with pytest.raises(ValueError):
         SlaPolicy(
-            soft_limit_seconds=10,
-            hard_limit_seconds=20,
-            breach_action="invalid_action",
+            soft_limit_seconds=10, hard_limit_seconds=20, breach_action="invalid_action"
         )
 
 
@@ -109,10 +107,7 @@ async def test_tracker_emits_hard_breach_and_callback() -> None:
 async def test_tracker_skips_duplicate_alert_same_level() -> None:
     dispatcher = InMemorySlaAlertDispatcher()
     tracker = SlaTracker(dispatcher=dispatcher)
-    sla = SlaPolicy(
-        soft_limit_seconds=0.01,
-        hard_limit_seconds=10.0,
-    )
+    sla = SlaPolicy(soft_limit_seconds=0.01, hard_limit_seconds=10.0)
     await tracker.track(workflow_id="wf-d", sla=sla)
     await asyncio.sleep(0.05)
     await tracker._check_once()

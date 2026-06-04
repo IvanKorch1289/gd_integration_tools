@@ -8,8 +8,8 @@ from src.backend.core.config.external_databases.registry import (
 )
 
 __all__ = (
-    "ExternalDatabaseItemSettings",
     "ExternalDatabaseConnectionSettings",
+    "ExternalDatabaseItemSettings",
     "ExternalDatabasesSettings",
     "external_databases_settings",
 )

@@ -35,7 +35,7 @@ ASGIApp = Callable[
     Awaitable[None],
 ]
 
-__all__ = ("serve_http3", "build_quic_configuration")
+__all__ = ("build_quic_configuration", "serve_http3")
 
 
 def build_quic_configuration(config: Http3ServerConfig) -> Any:
@@ -44,7 +44,7 @@ def build_quic_configuration(config: Http3ServerConfig) -> Any:
     Вынесено отдельно для возможности unit-тестирования без сетевого
     запуска (см. ``tests/unit/entrypoints/http3``).
     """
-    from aioquic.quic.configuration import QuicConfiguration  # noqa: PLC0415
+    from aioquic.quic.configuration import QuicConfiguration
 
     quic_config = QuicConfiguration(
         is_client=False,
@@ -67,14 +67,12 @@ async def serve_http3(
         stop_event: внешнее событие отмены; если ``None`` — сервер
             работает до ``CancelledError``.
     """
-    from aioquic.asyncio import serve  # noqa: PLC0415
+    from aioquic.asyncio import serve
 
     quic_config = build_quic_configuration(config)
 
     def _protocol_factory(*proto_args: Any, **proto_kwargs: Any) -> Any:
-        from src.backend.entrypoints.http3._protocol import (  # noqa: PLC0415
-            AsgiHttp3Protocol,
-        )
+        from src.backend.entrypoints.http3._protocol import AsgiHttp3Protocol
 
         return AsgiHttp3Protocol(
             *proto_args, asgi_app=app, server_config=config, **proto_kwargs

@@ -22,6 +22,7 @@ from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
 @dataclass
 class FakeRebuffResult:
     """Fake RebuffResult для unit-тестов."""
+
     injected: bool = True
     score: float = 0.9
     metadata: dict = None
@@ -60,6 +61,7 @@ def mock_rebuff_client() -> MagicMock:
     client.detect = AsyncMock(return_value=FakeRebuffResult())
     return client
 
+
 @pytest.fixture
 def mock_lakera_client() -> MagicMock:
     """Lakera client that returns flagged=True."""
@@ -67,9 +69,7 @@ def mock_lakera_client() -> MagicMock:
     from src.backend.services.ai.guardrails.lakera_client import LakeraResult
 
     result = LakeraResult(
-        flagged=True,
-        score=0.95,
-        categories=[{"category": "prompt_injection"}],
+        flagged=True, score=0.95, categories=[{"category": "prompt_injection"}]
     )
     client.screen = AsyncMock(return_value=result)
     return client
@@ -113,6 +113,7 @@ def make_guard_ref(name: str, on_block: str = "fail") -> MagicMock:
 
 
 # ── guard_output tests ───────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_guard_output_llama_safe_no_error(mock_llama_runtime: MagicMock) -> None:
@@ -201,7 +202,9 @@ async def test_guard_output_no_runtime_no_op() -> None:
 
 
 @pytest.mark.asyncio
-async def test_guard_output_empty_content_skipped(mock_llama_runtime: MagicMock) -> None:
+async def test_guard_output_empty_content_skipped(
+    mock_llama_runtime: MagicMock,
+) -> None:
     """Пустой content пропускает guards без вызова runtime."""
     enforcer = AIPolicyEnforcer(llama_guard_runtime=mock_llama_runtime)
 
@@ -250,6 +253,7 @@ async def test_guard_output_unknown_guard_warns(mock_llama_runtime: MagicMock) -
 
 
 # ── guard_input tests ────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_guard_input_rebuff_blocked(mock_rebuff_client: MagicMock) -> None:
@@ -333,7 +337,9 @@ async def test_guard_input_llm_guard_blocked(mock_llm_guard_client: MagicMock) -
 
 
 @pytest.mark.asyncio
-async def test_guard_input_llm_guard_safe(mock_llm_guard_client_safe: MagicMock) -> None:
+async def test_guard_input_llm_guard_safe(
+    mock_llm_guard_client_safe: MagicMock,
+) -> None:
     """LLM Guard safe input не поднимает исключений."""
     enforcer = AIPolicyEnforcer(llm_guard_client=mock_llm_guard_client_safe)
 
@@ -401,6 +407,7 @@ async def test_guard_input_llm_guard_fail_on_error(
 
 
 # ── GuardrailViolationError tests ───────────────────────────────────────────
+
 
 def test_guardrail_violation_error_attrs() -> None:
     """GuardrailViolationError хранит правильные атрибуты."""

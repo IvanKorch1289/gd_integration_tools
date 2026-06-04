@@ -63,9 +63,7 @@ async def pg_session_manager(monkeypatch):
 
     try:
         sync_url = pg.get_connection_url()
-        async_url = sync_url.replace(
-            "postgresql+psycopg2://", "postgresql+asyncpg://"
-        )
+        async_url = sync_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
         engine = create_async_engine(async_url, future=True)
 
         from src.backend.infrastructure.database.models.base import BaseModel
@@ -125,9 +123,7 @@ async def test_postgres_history_two_versions(pg_session_manager) -> None:
     expires = datetime.now(tz=timezone.utc) + timedelta(days=180)
 
     await backend.save("svc.beta", _TEST_PEM, expires, uploaded_by="user-a")
-    await backend.save(
-        "svc.beta", _TEST_PEM + "EXTRA\n", expires, uploaded_by="user-b"
-    )
+    await backend.save("svc.beta", _TEST_PEM + "EXTRA\n", expires, uploaded_by="user-b")
 
     entries = await backend.history("svc.beta")
     assert len(entries) == 2

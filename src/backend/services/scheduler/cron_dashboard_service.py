@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 
-__all__ = ("ScheduledWorkflowSummary", "CronDashboardService")
+__all__ = ("CronDashboardService", "ScheduledWorkflowSummary")
 
 _logger = logging.getLogger("services.scheduler.dashboard")
 
@@ -64,7 +65,7 @@ class CronDashboardService:
                 else "default"
             )
             return await get_async_client(host=host, port=port, database=database)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
     async def list_scheduled(self) -> list[ScheduledWorkflowSummary]:
@@ -106,13 +107,13 @@ class CronDashboardService:
 
     async def get_success_rate(self, job_id: str, *, period_days: int = 7) -> float:
         """Возвращает success rate (%) за период из workflow_audit."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         client = await self._get_ch_client()
         if client is None:
             return 0.0
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=period_days)
+        cutoff = datetime.now(UTC) - timedelta(days=period_days)
         try:
             result = await client.query(
                 "SELECT countIf(event_type='workflow.complete') * 100.0 / "
@@ -125,7 +126,7 @@ class CronDashboardService:
             row = (
                 result.result_rows[0] if getattr(result, "result_rows", None) else None
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("CH success_rate failed: %s", exc)
             return 0.0
 

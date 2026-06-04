@@ -219,23 +219,38 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Генератор заготовок ресурса (Clean Architecture + DSL)."
     )
-    parser.add_argument("resource", help="Имя ресурса в snake_case, например order_kinds")
-    parser.add_argument("--force", action="store_true", help="Перезаписать существующие файлы.")
+    parser.add_argument(
+        "resource", help="Имя ресурса в snake_case, например order_kinds"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Перезаписать существующие файлы."
+    )
     args = parser.parse_args()
 
     resource = args.resource.strip().lower()
 
     if not resource.isidentifier():
-        print(f"❌ Ошибка: '{resource}' не является валидным именем для Python (используй snake_case).", file=sys.stderr)
+        print(
+            f"❌ Ошибка: '{resource}' не является валидным именем для Python (используй snake_case).",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     class_name = snake_to_camel(resource.rstrip("s"))
 
     files = {
-        ROOT / "app" / "schemas" / "route_schemas" / f"{resource}.py": render_schema(resource, class_name),
-        ROOT / "app" / "repositories" / f"{resource}.py": render_repository(resource, class_name),
-        ROOT / "app" / "services" / "route_services" / f"{resource}.py": render_service(resource, class_name),
-        ROOT / "app" / "api" / "v1" / "endpoints" / f"{resource}.py": render_router(resource, class_name),
+        ROOT / "app" / "schemas" / "route_schemas" / f"{resource}.py": render_schema(
+            resource, class_name
+        ),
+        ROOT / "app" / "repositories" / f"{resource}.py": render_repository(
+            resource, class_name
+        ),
+        ROOT / "app" / "services" / "route_services" / f"{resource}.py": render_service(
+            resource, class_name
+        ),
+        ROOT / "app" / "api" / "v1" / "endpoints" / f"{resource}.py": render_router(
+            resource, class_name
+        ),
         ROOT / "app" / "models" / f"{resource}.py": render_model(resource, class_name),
     }
 

@@ -57,19 +57,19 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
     impl = String(36)
     cache_ok = True
 
-    def load_dialect_impl(self, dialect: Any) -> Any:  # noqa: ANN401
+    def load_dialect_impl(self, dialect: Any) -> Any:
         if dialect.name == "postgresql":
             return dialect.type_descriptor(postgresql.UUID(as_uuid=True))
         return dialect.type_descriptor(String(36))
 
-    def process_bind_param(self, value: Any, dialect: Any) -> Any:  # noqa: ANN401
+    def process_bind_param(self, value: Any, dialect: Any) -> Any:
         if value is None:
             return None
         if dialect.name == "postgresql":
             return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
         return str(value) if isinstance(value, uuid.UUID) else str(value)
 
-    def process_result_value(self, value: Any, dialect: Any) -> Any:  # noqa: ANN401
+    def process_result_value(self, value: Any, dialect: Any) -> Any:
         if value is None:
             return None
         if isinstance(value, uuid.UUID):

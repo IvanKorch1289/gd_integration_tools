@@ -55,7 +55,7 @@ def render_mermaid(route: dict) -> str:
     for idx, step in enumerate(steps):
         label = _step_label(step, idx)
         node_id = f"s{idx}_{_slug(label)}"
-        lines.append(f"  {node_id}[\"{label}\"]")
+        lines.append(f'  {node_id}["{label}"]')
         lines.append(f"  {prev} --> {node_id}")
         prev = node_id
 
@@ -73,8 +73,7 @@ def render_bpmn(route: dict) -> str:
     route_id = route.get("route_id", "route")
     elements: list[str] = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<bpmn:definitions xmlns:bpmn='
-        '"http://www.omg.org/spec/BPMN/20100524/MODEL">',
+        '<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">',
         f'  <bpmn:process id="{route_id}" isExecutable="true">',
         '    <bpmn:startEvent id="StartEvent_1" '
         f'name="Source: {route.get("source", "?")}" />',
@@ -84,9 +83,7 @@ def render_bpmn(route: dict) -> str:
     for idx, step in enumerate(steps):
         node_id = f"Task_{idx}"
         label = _step_label(step, idx)
-        elements.append(
-            f'    <bpmn:task id="{node_id}" name="{label}" />'
-        )
+        elements.append(f'    <bpmn:task id="{node_id}" name="{label}" />')
         elements.append(
             f'    <bpmn:sequenceFlow id="Flow_{idx}" '
             f'sourceRef="{prev}" targetRef="{node_id}" />'
@@ -98,8 +95,8 @@ def render_bpmn(route: dict) -> str:
         f'    <bpmn:sequenceFlow id="FlowEnd" sourceRef="{prev}" '
         f'targetRef="EndEvent_1" />'
     )
-    elements.append('  </bpmn:process>')
-    elements.append('</bpmn:definitions>')
+    elements.append("  </bpmn:process>")
+    elements.append("</bpmn:definitions>")
     return "\n".join(elements) + "\n"
 
 
@@ -119,18 +116,14 @@ def render(route: dict, fmt: Format = "mermaid") -> str:
         return render_bpmn(route)
     if fmt == "svg":
         return render_svg(route)
-    raise ValueError(
-        f"Unknown format {fmt!r}; ожидается mermaid/bpmn/svg"
-    )
+    raise ValueError(f"Unknown format {fmt!r}; ожидается mermaid/bpmn/svg")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="DSL route flow renderer")
     parser.add_argument("route_path", type=Path)
     parser.add_argument(
-        "--format",
-        choices=("mermaid", "bpmn", "svg"),
-        default="mermaid",
+        "--format", choices=("mermaid", "bpmn", "svg"), default="mermaid"
     )
     parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)

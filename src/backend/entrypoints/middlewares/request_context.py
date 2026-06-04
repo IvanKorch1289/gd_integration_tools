@@ -57,7 +57,7 @@ def _otel_ids() -> tuple[str | None, str | None]:
             return None, None
         # OTel id формат — int → hex без префикса
         return f"{ctx.trace_id:032x}", f"{ctx.span_id:016x}"
-    except Exception as _:  # noqa: BLE001 — OTel optional
+    except Exception as _:
         return None, None
 
 

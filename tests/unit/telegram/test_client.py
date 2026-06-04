@@ -44,9 +44,7 @@ def bot_config() -> TelegramBotConfig:
     )
 
 
-def _make_client(
-    config: TelegramBotConfig, handler: Any
-) -> TelegramBotClient:
+def _make_client(config: TelegramBotConfig, handler: Any) -> TelegramBotClient:
     """Создаёт TelegramBotClient с подменённым transport."""
     client = TelegramBotClient(config)
     transport = (
@@ -95,7 +93,7 @@ class TestModels:
     def test_mention_html(self) -> None:
         """HTML mention возвращает ``<a href=...>name</a>``."""
         m = TelegramMention(user_id=7, display_name="Alice", parse_mode="HTML")
-        assert "<a href=\"tg://user?id=7\">Alice</a>" == m.to_inline()
+        assert '<a href="tg://user?id=7">Alice</a>' == m.to_inline()
 
     def test_message_payload_minimal(self) -> None:
         """Минимальный payload содержит только chat_id+text+parse_mode."""
@@ -115,11 +113,7 @@ class TestModels:
 
     def test_message_payload_reply_keyboard_when_no_inline(self) -> None:
         """Reply keyboard добавляется только когда нет inline."""
-        msg = TelegramMessage(
-            chat_id="c1",
-            text="x",
-            reply_keyboard=[["Yes", "No"]],
-        )
+        msg = TelegramMessage(chat_id="c1", text="x", reply_keyboard=[["Yes", "No"]])
         markup = msg.to_payload()["reply_markup"]
         assert markup["keyboard"] == [[{"text": "Yes"}, {"text": "No"}]]
         assert markup["resize_keyboard"] is True
@@ -190,13 +184,13 @@ class TestSendMessage:
         with pytest.raises(httpx.HTTPStatusError, match="chat not found"):
             await client.send_message(TelegramMessage(chat_id="x", text="y"))
 
-    async def test_send_message_http_error(
-        self, bot_config: TelegramBotConfig
-    ) -> None:
+    async def test_send_message_http_error(self, bot_config: TelegramBotConfig) -> None:
         """HTTP 4xx → ``HTTPStatusError``."""
 
         def handler(request: httpx.Request) -> httpx.Response:
-            return httpx.Response(401, json={"ok": False, "description": "unauthorized"})
+            return httpx.Response(
+                401, json={"ok": False, "description": "unauthorized"}
+            )
 
         client = _make_client(bot_config, handler)
         with pytest.raises(httpx.HTTPStatusError):
@@ -291,9 +285,7 @@ class TestExtra:
         await client.send_chat_action("c1", "typing")
         assert captured["json"] == {"chat_id": "c1", "action": "typing"}
 
-    async def test_send_document_multipart(
-        self, bot_config: TelegramBotConfig
-    ) -> None:
+    async def test_send_document_multipart(self, bot_config: TelegramBotConfig) -> None:
         """sendDocument отправляет multipart с файлом."""
         captured: dict[str, Any] = {}
 
@@ -301,9 +293,7 @@ class TestExtra:
             captured["path"] = request.url.path
             captured["content_type"] = request.headers.get("content-type", "")
             captured["body"] = request.content
-            return httpx.Response(
-                200, json={"ok": True, "result": {"message_id": 333}}
-            )
+            return httpx.Response(200, json={"ok": True, "result": {"message_id": 333}})
 
         client = _make_client(bot_config, handler)
         msg_id = await client.send_document(

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column, registry
 from sqlalchemy_continuum import make_versioned
 from sqlalchemy_continuum.plugins import ActivityPlugin, PropertyModTrackerPlugin
 
-__all__ = ("BaseModel", "nullable_str", "mapper_registry")
+__all__ = ("BaseModel", "mapper_registry", "nullable_str")
 
 # Аннотация для необязательных строковых полей
 nullable_str = Annotated[str, mapped_column(nullable=False)]

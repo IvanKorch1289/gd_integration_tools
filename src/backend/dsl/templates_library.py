@@ -22,17 +22,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import DispatchActionProcessor, LogProcessor
 
-__all__ = ("templates", "list_templates", "TemplateInfo")
+__all__ = ("TemplateInfo", "list_templates", "templates")
 
 
 class TemplateInfo:
-    __slots__ = ("name", "description", "parameters", "builder")
+    __slots__ = ("builder", "description", "name", "parameters")
 
     def __init__(
         self,
@@ -180,7 +181,7 @@ def _scheduled_export(
             route_id, source=f"cron:{cron}", description="Scheduled export"
         )
         .dispatch_action(source_action)
-        .export(format=format, title="Weekly Report")
+        .export(format=format, title="Weekly Report")  # type: ignore[attr-defined]
     )
     if email:
         builder = builder.set_header("to", email).dispatch_action("tech.send_email")
@@ -201,7 +202,7 @@ def _http_api_bridge(
     )
     builder = builder.http_call(source_url, method=method, timeout=30.0)
     if convert_from != convert_to:
-        builder = builder.convert(convert_from, convert_to)
+        builder = builder.convert(convert_from, convert_to)  # type: ignore[attr-defined]
     return builder.normalize().dispatch_action(target_action).build()
 
 
@@ -246,7 +247,7 @@ def _data_quality_pipeline(
             route_id, source="internal:dq", description="Data Quality pipeline"
         )
         .poll(source_action)
-        .dq_check(rules=dq_rules, fail_on_violation=False)
+        .dq_check(rules=dq_rules, fail_on_violation=False)  # type: ignore[attr-defined]
         .on_completion(
             processors=[DispatchActionProcessor(action=on_violation_action)],
             on_failure_only=True,

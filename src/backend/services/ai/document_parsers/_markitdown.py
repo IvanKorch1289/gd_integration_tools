@@ -94,7 +94,7 @@ class MarkitdownEngine:
             ) from exc
         try:
             self._md = MarkItDown(enable_plugins=False)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise MarkitdownUnavailableError(f"markitdown init failed: {exc}") from exc
         return self._md
 

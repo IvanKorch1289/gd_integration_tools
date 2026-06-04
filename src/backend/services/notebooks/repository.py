@@ -7,16 +7,16 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 from src.backend.services.notebooks.models import Notebook, NotebookVersion
 
-__all__ = ("NotebookRepository", "InMemoryNotebookRepository")
+__all__ = ("InMemoryNotebookRepository", "NotebookRepository")
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @runtime_checkable
@@ -149,4 +149,4 @@ class InMemoryNotebookRepository:
 
     async def ensure_indexes(self) -> None:
         """In-memory не требует индексов; метод нужен для совместимости."""
-        return None
+        return

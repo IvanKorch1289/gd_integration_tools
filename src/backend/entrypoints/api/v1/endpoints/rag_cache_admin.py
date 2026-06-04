@@ -10,14 +10,14 @@
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
 from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 
-__all__ = ("router", "record_invalidation_event")
+__all__ = ("record_invalidation_event", "router")
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ _EVENTS_RING: deque[dict[str, Any]] = deque(maxlen=200)
 
 def record_invalidation_event(event: dict[str, Any]) -> None:
     """Записывает invalidate-событие в кольцевой буфер (для admin UI)."""
-    _EVENTS_RING.append({"ts": datetime.now(timezone.utc).isoformat(), **event})
+    _EVENTS_RING.append({"ts": datetime.now(UTC).isoformat(), **event})
 
 
 def _get_three_tier_cache() -> Any:

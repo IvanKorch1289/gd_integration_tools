@@ -20,7 +20,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-__all__ = ("StepResult", "DryRunResult", "dry_run_route")
+__all__ = ("DryRunResult", "StepResult", "dry_run_route")
 
 
 @dataclass(slots=True)
@@ -84,10 +84,7 @@ def _step_label(step: Any, idx: int) -> str:
 
 def _step_duration_ms(label: str, rng: random.Random) -> float:
     """Возвращает оценочное время шага по профилю."""
-    if label in _LATENCY_PROFILE:
-        lo, hi = _LATENCY_PROFILE[label]
-    else:
-        lo, hi = (1.0, 10.0)
+    lo, hi = _LATENCY_PROFILE.get(label, (1.0, 10.0))
     return rng.uniform(lo, hi)
 
 
@@ -112,7 +109,7 @@ def dry_run_route(
     Returns:
         DryRunResult со списком StepResult и total_ms.
     """
-    rng = random.Random(seed)  # noqa: S311
+    rng = random.Random(seed)  # noqa: S311  # non-cryptographic use
     steps_src = route.get("steps") or route.get("processors") or []
     result = DryRunResult(route_id=route.get("route_id"))
 

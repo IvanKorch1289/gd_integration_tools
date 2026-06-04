@@ -41,8 +41,7 @@ class CollectionMixin:
     # --- 1. collect ---
     @staticmethod
     def collect(
-        items: Iterable[dict[str, Any]] | Iterable[Any],
-        field: str | None = None,
+        items: Iterable[dict[str, Any]] | Iterable[Any], field: str | None = None
     ) -> list[Any]:
         """Groovy: ``.collect { it.field }`` — извлечь field из каждого dict.
 
@@ -116,8 +115,7 @@ class CollectionMixin:
         if field is not None:
             for item in items:
                 if (isinstance(item, dict) and item.get(field) == value) or (
-                    not isinstance(item, dict)
-                    and getattr(item, field, None) == value
+                    not isinstance(item, dict) and getattr(item, field, None) == value
                 ):
                     return item
             return None
@@ -126,8 +124,7 @@ class CollectionMixin:
     # --- 4. group_by ---
     @staticmethod
     def group_by(
-        items: Iterable[dict[str, Any]] | Iterable[Any],
-        field: str,
+        items: Iterable[dict[str, Any]] | Iterable[Any], field: str
     ) -> dict[Any, list[Any]]:
         """Groovy: ``.groupBy { it.field }`` — группировка по field.
 
@@ -175,10 +172,7 @@ class CollectionMixin:
 
     # --- 6. each ---
     @staticmethod
-    def each(
-        items: Iterable[Any],
-        action: Callable[[Any], Any],
-    ) -> list[Any]:
+    def each(items: Iterable[Any], action: Callable[[Any], Any]) -> list[Any]:
         """Groovy: ``.each { action }`` — side-effect iter.
 
         Returns:
@@ -191,10 +185,7 @@ class CollectionMixin:
 
     # --- 7. flatten ---
     @staticmethod
-    def flatten(
-        items: Iterable[Any],
-        levels: int = 1,
-    ) -> list[Any]:
+    def flatten(items: Iterable[Any], levels: int = 1) -> list[Any]:
         """Groovy: ``.flatten()`` — flatten nested.
 
         Args:
@@ -220,10 +211,7 @@ class CollectionMixin:
 
     # --- 8. unique ---
     @staticmethod
-    def unique(
-        items: Iterable[Any],
-        field: str | None = None,
-    ) -> list[Any]:
+    def unique(items: Iterable[Any], field: str | None = None) -> list[Any]:
         """Groovy: ``.unique { it.field }`` — дедупликация.
 
         Args:
@@ -263,10 +251,7 @@ class CollectionMixin:
 
     # --- 9. plus ---
     @staticmethod
-    def plus(
-        items: Iterable[Any],
-        other: Iterable[Any],
-    ) -> list[Any]:
+    def plus(items: Iterable[Any], other: Iterable[Any]) -> list[Any]:
         """Groovy: ``.plus(other)`` — объединение.
 
         Returns:

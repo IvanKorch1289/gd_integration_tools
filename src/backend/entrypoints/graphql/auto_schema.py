@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = (
     "AutoSchemaResult",
-    "build_auto_strawberry_schema",
     "auto_register_strawberry_schema",
+    "build_auto_strawberry_schema",
 )
 
 
@@ -48,7 +48,7 @@ class AutoSchemaResult:
         skipped: Список (action, причина) — пропущенные actions.
     """
 
-    __slots__ = ("schema", "query_count", "mutation_count", "skipped")
+    __slots__ = ("mutation_count", "query_count", "schema", "skipped")
 
     def __init__(
         self,
@@ -88,14 +88,16 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
                 source="graphql",
             )
         except KeyError:
-            return {
-                "action": action_id,
-                "success": False,
-                "error": f"Action {action_id!r} не зарегистрирован",
-            }
-        except Exception as exc:  # noqa: BLE001 — маппим в envelope
+            return JSON(
+                {
+                    "action": action_id,
+                    "success": False,
+                    "error": f"Action {action_id!r} не зарегистрирован",
+                }
+            )
+        except Exception as exc:
             logger.exception("auto-schema action %r упал", action_id)
-            return {"action": action_id, "success": False, "error": str(exc)}
+            return JSON({"action": action_id, "success": False, "error": str(exc)})
 
         if hasattr(data, "model_dump"):
             payload_out = data.model_dump(mode="json")
@@ -103,7 +105,7 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
             payload_out = data
         else:
             payload_out = data
-        return {"action": action_id, "success": True, "data": payload_out}
+        return JSON({"action": action_id, "success": True, "data": payload_out})
 
     # Принудительно прописываем аннотации — Strawberry резолвит через
     # get_type_hints, и для closure-функций с from __future__-нет-аннотаций
@@ -171,7 +173,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
                     resolver=resolver, description=description
                 )
                 mutation_count += 1
-        except Exception as exc:  # noqa: BLE001 — не валим сборку из-за одного action
+        except Exception as exc:
             skipped.append((meta.action, str(exc)))
             logger.warning("auto-schema: action %r пропущен (%s)", meta.action, exc)
 
@@ -239,6 +241,6 @@ def auto_register_strawberry_schema(
             result.query_count,
             result.mutation_count,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("auto_register_strawberry_schema упал: %s", exc)
     return result

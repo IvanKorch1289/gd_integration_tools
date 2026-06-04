@@ -42,7 +42,9 @@ def _make_cache(
 
 @pytest.mark.asyncio
 async def test_lookup_l1_hit_skips_l2() -> None:
-    cache = _make_cache(l1_value="cached", l2_enabled=True, l2_value="should-not-be-used")
+    cache = _make_cache(
+        l1_value="cached", l2_enabled=True, l2_value="should-not-be-used"
+    )
     value, tier = await cache.lookup_answer("q")
     assert (value, tier) == ("cached", "l1")
     cache._l2.get.assert_not_called()

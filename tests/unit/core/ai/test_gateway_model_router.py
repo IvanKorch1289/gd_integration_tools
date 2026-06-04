@@ -18,11 +18,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.backend.core.ai import AIGateway, AIRequest, AIResponse
-from src.backend.core.ai.policy.spec import (
-    AIPolicySpec,
-    AuditSpec,
-    ModelRouterSpec,
-)
+from src.backend.core.ai.policy.spec import AIPolicySpec, AuditSpec, ModelRouterSpec
 
 
 def _make_policy(

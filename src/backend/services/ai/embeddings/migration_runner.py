@@ -63,7 +63,7 @@ class EmbeddingMigrationRunner:
             texts = [str(it.get("content") or "") for it in batch]
             try:
                 vectors = await self._embedder.embed(texts)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("embed batch %d failed: %s", batch_start, exc)
                 self.progress.failed += len(batch)
                 continue
@@ -80,7 +80,7 @@ class EmbeddingMigrationRunner:
                         },
                     )
                     self.progress.indexed += 1
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("upsert failed: %s", exc)
                     self.progress.failed += 1
 

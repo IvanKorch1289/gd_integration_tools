@@ -17,8 +17,9 @@ Topic/queue и backend-name берутся из ``response.metadata``:
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import asdict
-from typing import Any, Awaitable, Callable, Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
@@ -26,7 +27,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse
 
-__all__ = ("QueueReplyChannel", "QueueBackend", "QueuePublisher")
+__all__ = ("QueueBackend", "QueuePublisher", "QueueReplyChannel")
 
 logger = logging.getLogger("messaging.invocation_replies.queue")
 
@@ -97,7 +98,7 @@ class QueueReplyChannel(InvocationReplyChannel):
         message = _response_to_dict(response)
         try:
             await publisher(topic, message)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception(
                 "QueueReplyChannel.send failed (invocation_id=%s, topic=%s)",
                 response.invocation_id,
@@ -126,7 +127,7 @@ class QueueReplyChannel(InvocationReplyChannel):
             )
 
             client = get_stream_client()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
         publisher_fn: Callable[..., Awaitable[Any]] | None

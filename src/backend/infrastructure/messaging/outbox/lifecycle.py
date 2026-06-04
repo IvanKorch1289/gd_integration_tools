@@ -93,10 +93,10 @@ async def start_outbox_dispatcher(
             "outbox.lifecycle.missing_dependencies", extra={"missing": missing}
         )
         return
-    assert backend is not None  # noqa: S101 — narrow для mypy после проверки выше
-    assert pending_source is not None  # noqa: S101
-    assert ack is not None  # noqa: S101
-    assert deliverer is not None  # noqa: S101
+    assert backend is not None
+    assert pending_source is not None
+    assert ack is not None
+    assert deliverer is not None
     dispatcher = OutboxDispatcher(
         backend=backend,
         pending_source=pending_source,

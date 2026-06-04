@@ -75,10 +75,7 @@ class TestLLMFallbackProcessor:
         proc = LLMFallbackProcessor(providers=["p1", "p2"])
 
         mock_agent = AsyncMock()
-        mock_agent.chat.side_effect = [
-            RuntimeError("down"),
-            {"content": "ok2"},
-        ]
+        mock_agent.chat.side_effect = [RuntimeError("down"), {"content": "ok2"}]
 
         with patch(
             "src.backend.services.ai.ai_agent.get_ai_agent_service",

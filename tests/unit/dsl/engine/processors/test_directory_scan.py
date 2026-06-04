@@ -81,7 +81,9 @@ async def test_directory_scan_respects_max_files() -> None:
     """Setting max_files limits the returned list."""
     tmp, created = _tmpdir([f"file_{i}.txt" for i in range(10)])
     try:
-        proc = DirectoryScanProcessor(path=tmp, pattern="*.txt", recursive=False, max_files=3)
+        proc = DirectoryScanProcessor(
+            path=tmp, pattern="*.txt", recursive=False, max_files=3
+        )
         ctx = AsyncMock()
         e = _ex()
         await proc.process(e, ctx)
@@ -120,10 +122,12 @@ async def test_directory_scan_sort_by_mtime() -> None:
         # Ensure different mtimes: touch old first, new second
         old_path = os.path.join(tmp, "old.txt")
         new_path = os.path.join(tmp, "new.txt")
-        os.utime(old_path, (0.0, 0.0))   # very old
+        os.utime(old_path, (0.0, 0.0))  # very old
         os.utime(new_path, (1e9, 1e9))  # recent
 
-        proc = DirectoryScanProcessor(path=tmp, pattern="*.txt", recursive=False, sort_by="mtime")
+        proc = DirectoryScanProcessor(
+            path=tmp, pattern="*.txt", recursive=False, sort_by="mtime"
+        )
         ctx = AsyncMock()
         e = _ex()
         await proc.process(e, ctx)
@@ -149,7 +153,9 @@ async def test_directory_scan_sort_by_size() -> None:
         with open(big_path, "w") as f:
             f.write("x" * 200)
 
-        proc = DirectoryScanProcessor(path=tmp, pattern="*.txt", recursive=False, sort_by="size")
+        proc = DirectoryScanProcessor(
+            path=tmp, pattern="*.txt", recursive=False, sort_by="size"
+        )
         ctx = AsyncMock()
         e = _ex()
         await proc.process(e, ctx)

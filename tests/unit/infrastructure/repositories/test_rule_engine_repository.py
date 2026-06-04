@@ -14,11 +14,7 @@ import pytest_asyncio
 
 pytest.importorskip("aiosqlite")
 
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.backend.core.interfaces.rule_engine import RulesetDoc
 from src.backend.infrastructure.database.models.rule_engine import (
@@ -60,9 +56,7 @@ async def test_upsert_creates_new_record(session: AsyncSession) -> None:
 async def test_upsert_updates_existing_record(session: AsyncSession) -> None:
     """Повторный upsert по ``(name, version, tenant)`` обновляет yaml_body."""
     repo = SQLRuleEngineRepository(session)
-    await repo.upsert(
-        RulesetDoc(name="credit_scoring", version="1", yaml_body="v1")
-    )
+    await repo.upsert(RulesetDoc(name="credit_scoring", version="1", yaml_body="v1"))
     await session.commit()
 
     updated = await repo.upsert(

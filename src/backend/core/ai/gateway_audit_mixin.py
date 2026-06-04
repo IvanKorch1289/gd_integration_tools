@@ -48,7 +48,7 @@ class _AuditContext:
     """
 
     request: AIRequest
-    policy: "AIPolicySpec | None" = None
+    policy: AIPolicySpec | None = None
     policy_name: str = "default"
     input_sanitized: str = ""
     input_pii_detected: bool = False
@@ -164,7 +164,7 @@ class _AuditContext:
         await _emit_wrapper(event, self.audit_service)
 
 
-async def _emit_wrapper(event: "AIInvocationEvent", audit_service: Any = None) -> None:
+async def _emit_wrapper(event: AIInvocationEvent, audit_service: Any = None) -> None:
     """Обертка для emit — использует переданный audit_service если есть.
 
     Для backward-compat с тестами: принимает audit_service и вызывает его emit().

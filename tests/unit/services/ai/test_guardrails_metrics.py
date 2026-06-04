@@ -25,9 +25,7 @@ async def test_record_allow() -> None:
 async def test_record_block_with_reason() -> None:
     svc = GuardrailsMetricsService()
     await svc.record(
-        tenant_id="t-1",
-        verdict=GuardrailVerdict.BLOCK,
-        reason=GuardrailReason.PII,
+        tenant_id="t-1", verdict=GuardrailVerdict.BLOCK, reason=GuardrailReason.PII
     )
     snap = await svc.snapshot("t-1")
     assert snap.block == 1
@@ -86,9 +84,7 @@ async def test_block_rate_zero_when_no_total() -> None:
 async def test_redact_verdict_increments_redact() -> None:
     svc = GuardrailsMetricsService()
     await svc.record(
-        tenant_id="t-1",
-        verdict=GuardrailVerdict.REDACT,
-        reason=GuardrailReason.PII,
+        tenant_id="t-1", verdict=GuardrailVerdict.REDACT, reason=GuardrailReason.PII
     )
     snap = await svc.snapshot("t-1")
     assert snap.redact == 1

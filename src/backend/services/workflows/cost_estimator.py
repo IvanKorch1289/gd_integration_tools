@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import UTC
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
@@ -103,13 +104,13 @@ class WorkflowCostEstimator:
         """Возвращает :class:`CostEstimate` на основе historical ClickHouse
         данных за последние ``sample_period_days``.
         """
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=sample_period_days)
+        cutoff = datetime.now(UTC) - timedelta(days=sample_period_days)
 
         try:
             client = await self._get_client()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "WorkflowCostEstimator: CH unavailable (%s), returning defaults", exc
             )
@@ -139,7 +140,7 @@ class WorkflowCostEstimator:
             row = (
                 result.result_rows[0] if getattr(result, "result_rows", None) else None
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("CH query failed: %s", exc)
             row = None
 
@@ -170,7 +171,7 @@ class WorkflowCostEstimator:
             decl = getattr(wf_version, "declaration", None) if wf_version else None
             if decl is not None:
                 llm_breakdown = self._estimate_llm_cost(decl, sample_size=sample_size)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             llm_breakdown = None
 
         estimated_cost_usd = llm_breakdown.total_usd if llm_breakdown else Decimal("0")

@@ -41,9 +41,7 @@ class BaselineUser(HttpUser):
     def healthcheck(self) -> None:
         """Smoke /api/v1/health — измеряет накладные расходы middleware-стека."""
         with self.client.get(
-            "/api/v1/health",
-            name="health",
-            catch_response=True,
+            "/api/v1/health", name="health", catch_response=True
         ) as resp:
             if resp.status_code != 200:
                 resp.failure(f"unexpected status {resp.status_code}")

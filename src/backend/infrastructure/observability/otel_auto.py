@@ -43,7 +43,7 @@ def instrument_asyncpg_if_enabled() -> bool:
         True если AsyncPGInstrumentor().instrument() был вызван в этом запуске,
         False если flag OFF или пакет недоступен.
     """
-    global _ASYNCPG_INSTRUMENTED  # noqa: PLW0603
+    global _ASYNCPG_INSTRUMENTED
     if _ASYNCPG_INSTRUMENTED:
         logger.debug(
             "OTel asyncpg instrumentor уже активирован, пропуск повторного вызова"
@@ -56,7 +56,7 @@ def instrument_asyncpg_if_enabled() -> bool:
         if not feature_flags.otel_asyncpg:
             logger.debug("feature_flag.otel_asyncpg=False — asyncpg OTel пропущен")
             return False
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Не удалось прочитать feature_flags: %s", exc)
         return False
 

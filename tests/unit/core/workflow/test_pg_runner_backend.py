@@ -19,9 +19,7 @@ from src.backend.infrastructure.database.models.workflow_instance import Workflo
 from src.backend.infrastructure.workflow.pg_runner_backend import (
     PgRunnerWorkflowBackend,
 )
-from src.backend.infrastructure.workflow.pg_runner_internals import (
-    WorkflowInstanceRow,
-)
+from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowInstanceRow
 
 
 class _FakeEventStore:

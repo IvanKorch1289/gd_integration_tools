@@ -30,6 +30,21 @@ class APIClient:
                 return response.json()
             return response.text
 
+    def get(self, path: str, **kwargs: Any) -> Any:
+        return self._request("GET", path, **kwargs)
+
+    def post(self, path: str, **kwargs: Any) -> Any:
+        return self._request("POST", path, **kwargs)
+
+    def put(self, path: str, **kwargs: Any) -> Any:
+        return self._request("PUT", path, **kwargs)
+
+    def patch(self, path: str, **kwargs: Any) -> Any:
+        return self._request("PATCH", path, **kwargs)
+
+    def delete(self, path: str, **kwargs: Any) -> Any:
+        return self._request("DELETE", path, **kwargs)
+
     def get_metrics(self) -> dict[str, Any]:
         return self._request("GET", "/api/v1/admin/metrics")
 

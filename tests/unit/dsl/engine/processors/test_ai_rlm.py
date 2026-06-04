@@ -209,10 +209,7 @@ class TestEstimateTokens:
 
 class TestToSpec:
     def test_to_spec_returns_dict(self) -> None:
-        proc = AIRLMProcessor(
-            model="test/model",
-            config=RLMConfig(max_iterations=5),
-        )
+        proc = AIRLMProcessor(model="test/model", config=RLMConfig(max_iterations=5))
 
         spec = proc.to_spec()
 
@@ -239,7 +236,7 @@ class TestToSpec:
 @pytest.mark.asyncio
 async def test_process_with_custom_prompt_template() -> None:
     proc = AIRLMProcessor(
-        prompt_template="Context: {context}\nQuestion: {query}\nAnswer:",
+        prompt_template="Context: {context}\nQuestion: {query}\nAnswer:"
     )
     exc = _make_exchange({"context": "test ctx", "query": "test?"})
     ctx = MagicMock()

@@ -109,9 +109,7 @@ class TestRegisterFromEntryPoints:
             assert group == "gd_integration_tools.middleware_hooks"
             return (_FakeEP(),)
 
-        monkeypatch.setattr(
-            "importlib.metadata.entry_points", fake_entry_points
-        )
+        monkeypatch.setattr("importlib.metadata.entry_points", fake_entry_points)
         registry = MiddlewareRegistry()
         registry.register_from_entry_points()
         specs = registry.specs()

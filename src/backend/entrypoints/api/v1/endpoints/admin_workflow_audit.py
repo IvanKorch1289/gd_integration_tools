@@ -18,7 +18,7 @@ RBAC-middleware (admin role).
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -113,13 +113,13 @@ async def get_audit_inventory(
     """
     try:
         client = await _get_clickhouse_client()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ClickHouse unavailable: {exc}",
         ) from exc
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+    cutoff = datetime.now(UTC) - timedelta(hours=window_hours)
     try:
         result = await client.query(
             "SELECT event_type, count() AS cnt FROM workflow_audit "
@@ -127,7 +127,7 @@ async def get_audit_inventory(
             "GROUP BY event_type ORDER BY cnt DESC",
             parameters={"cutoff": cutoff},
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ClickHouse query failed: {exc}",
@@ -171,7 +171,7 @@ async def get_audit_events(
             ),
         )
 
-    to_dt = to or datetime.now(timezone.utc)
+    to_dt = to or datetime.now(UTC)
     from_dt = from_ or (to_dt - timedelta(days=7))
 
     conditions = ["created_at >= %(from_)s", "created_at <= %(to)s"]
@@ -186,8 +186,8 @@ async def get_audit_events(
         conditions.append("event_type = %(event_type)s")
         params["event_type"] = event_type
 
-    sql = (  # noqa: S608
-        "SELECT event_id, event_type, workflow_id, tenant_id, payload, "  # noqa: S608
+    sql = (
+        "SELECT event_id, event_type, workflow_id, tenant_id, payload, "  # noqa: S608  # internal query with controlled parameters
         "trace_id, created_at, actor, duration_ms, parent_workflow_id "
         f"FROM workflow_audit WHERE {' AND '.join(conditions)} "
         "ORDER BY created_at DESC LIMIT %(limit)s"
@@ -196,7 +196,7 @@ async def get_audit_events(
     try:
         client = await _get_clickhouse_client()
         result = await client.query(sql, parameters=params)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ClickHouse unavailable: {exc}",

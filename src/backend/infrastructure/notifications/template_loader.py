@@ -34,7 +34,7 @@ from src.backend.infrastructure.notifications.templates import (
     get_template_registry,
 )
 
-__all__ = ("DEFAULT_TEMPLATES_DIR", "load_templates_from_dir", "load_template_file")
+__all__ = ("DEFAULT_TEMPLATES_DIR", "load_template_file", "load_templates_from_dir")
 
 _logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ def load_templates_from_dir(
         try:
             key = load_template_file(path, registry=reg)
             loaded.append(key)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("template skip %s: %s", path, exc)
     _logger.info(
         "templates loaded from disk", extra={"dir": str(base), "count": len(loaded)}

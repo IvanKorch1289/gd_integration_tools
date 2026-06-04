@@ -1,7 +1,9 @@
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import orjson
+from pydantic import BaseModel
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
@@ -11,11 +13,11 @@ _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
 __all__ = (
-    "MessageTranslatorProcessor",
-    "SplitterProcessor",
     "ClaimCheckProcessor",
+    "MessageTranslatorProcessor",
     "NormalizerProcessor",
     "SortProcessor",
+    "SplitterProcessor",
 )
 
 
@@ -116,7 +118,7 @@ class MessageTranslatorProcessor(BaseProcessor):
                 return []
             headers = [h.strip() for h in lines[0].split(",")]
             return [
-                dict(zip(headers, [v.strip() for v in line.split(",")]))
+                dict(zip(headers, [v.strip() for v in line.split(",")], strict=False))
                 for line in lines[1:]
             ]
 
@@ -174,8 +176,11 @@ class SplitterProcessor(BaseProcessor):
 class ClaimCheckProcessor(BaseProcessor):
     """Camel Claim Check EIP — store payload, pass token through pipeline.
 
-    mode="store": saves body to Redis, replaces with claim token.
-    mode="retrieve": loads body from Redis using the token.
+    mode="store": saves body to Redis/S3, replaces with claim token.
+    mode="retrieve": loads body from Redis/S3 using the token.
+
+    S3-backend активируется при ``store="s3"`` или когда размер
+    payload превышает ``threshold_bytes`` (по умолчанию 256 KB).
     """
 
     def __init__(
@@ -184,30 +189,49 @@ class ClaimCheckProcessor(BaseProcessor):
         mode: str = "store",
         store: str = "redis",
         ttl_seconds: int = 3600,
+        threshold_bytes: int = 256 * 1024,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"claim_check:{mode}")
         self._mode = mode
         self._store = store
         self._ttl = ttl_seconds
+        self._threshold = threshold_bytes
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import uuid
 
         if self._mode == "store":
-            token = f"claim:{uuid.uuid4()}"
             body_bytes = orjson.dumps(exchange.in_message.body, default=str)
-            try:
-                from src.backend.infrastructure.clients.storage.redis import (
-                    redis_client,
-                )
+            use_s3 = self._store == "s3" or len(body_bytes) >= self._threshold
 
-                await redis_client.set_if_not_exists(
-                    key=token, value=body_bytes.decode(), ttl=self._ttl
-                )
-            except (ConnectionError, TimeoutError, OSError) as exc:
-                _camel_logger.warning("Claim check store failed: %s", exc)
-                return
+            if use_s3:
+                token = f"s3claim:{uuid.uuid4()}"
+                try:
+                    from src.backend.infrastructure.clients.storage.s3_pool import (
+                        get_s3_client,
+                    )
+
+                    s3 = get_s3_client()
+                    await s3.put_object(
+                        key=token, body=body_bytes, metadata={"ttl": str(self._ttl)}
+                    )
+                except Exception as exc:
+                    _camel_logger.warning("Claim check S3 store failed: %s", exc)
+                    return
+            else:
+                token = f"claim:{uuid.uuid4()}"
+                try:
+                    from src.backend.infrastructure.clients.storage.redis import (
+                        redis_client,
+                    )
+
+                    await redis_client.set_if_not_exists(
+                        key=token, value=body_bytes.decode(), ttl=self._ttl
+                    )
+                except (ConnectionError, TimeoutError, OSError) as exc:
+                    _camel_logger.warning("Claim check Redis store failed: %s", exc)
+                    return
 
             exchange.set_property("_claim_token", token)
             exchange.set_out(
@@ -226,19 +250,33 @@ class ClaimCheckProcessor(BaseProcessor):
                 return
 
             try:
-                from src.backend.infrastructure.clients.storage.redis import (
-                    redis_client,
-                )
+                if isinstance(token, str) and token.startswith("s3claim:"):
+                    from src.backend.infrastructure.clients.storage.s3_pool import (
+                        get_s3_client,
+                    )
 
-                raw = await redis_client.get(token)
-                if raw is None:
-                    exchange.fail(f"Claim token expired or not found: {token}")
-                    return
-                restored = orjson.loads(raw)
+                    s3 = get_s3_client()
+                    raw_bytes = await s3.get_object_bytes(token)
+                    if raw_bytes is None:
+                        exchange.fail(f"Claim token not found in S3: {token}")
+                        return
+                    restored = orjson.loads(raw_bytes)
+                else:
+                    from src.backend.infrastructure.clients.storage.redis import (
+                        redis_client,
+                    )
+
+                    raw = await redis_client.get(token)
+                    if raw is None:
+                        exchange.fail(f"Claim token expired or not found: {token}")
+                        return
+                    restored = orjson.loads(raw)
                 exchange.set_out(
                     body=restored, headers=dict(exchange.in_message.headers)
                 )
             except (ConnectionError, TimeoutError, OSError) as exc:
+                exchange.fail(f"Claim check retrieve failed: {exc}")
+            except Exception as exc:
                 exchange.fail(f"Claim check retrieve failed: {exc}")
 
 
@@ -250,7 +288,7 @@ class NormalizerProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, target_schema: type | None = None, *, name: str | None = None
+        self, target_schema: type[BaseModel] | None = None, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or "normalizer")
         self._schema = target_schema
@@ -296,7 +334,7 @@ class NormalizerProcessor(BaseProcessor):
         if len(lines) >= 2 and "," in lines[0]:
             headers = [h.strip() for h in lines[0].split(",")]
             return [
-                dict(zip(headers, [v.strip() for v in line.split(",")]))
+                dict(zip(headers, [v.strip() for v in line.split(",")], strict=False))
                 for line in lines[1:]
                 if line.strip()
             ]

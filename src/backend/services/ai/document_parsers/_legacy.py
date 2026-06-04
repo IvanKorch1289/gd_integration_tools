@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import io
 
-__all__ = ("_parse_pdf", "_parse_docx", "_parse_text")
+__all__ = ("_parse_docx", "_parse_pdf", "_parse_text")
 
 
 def _parse_pdf(content: bytes) -> tuple[str, list[str]]:
@@ -21,7 +21,7 @@ def _parse_pdf(content: bytes) -> tuple[str, list[str]]:
     for idx, page in enumerate(reader.pages):
         try:
             pages.append(page.extract_text() or "")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             warnings.append(f"page {idx}: {exc}")
     return "\n\n".join(p for p in pages if p), warnings
 

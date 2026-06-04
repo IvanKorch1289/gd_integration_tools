@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ("UsageStats", "extract_usage", "estimate_tokens")
+__all__ = ("UsageStats", "estimate_tokens", "extract_usage")
 
 
 @dataclass(frozen=True, slots=True)

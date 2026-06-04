@@ -209,7 +209,7 @@ class ResilienceCoordinator:
                     "Breaker OPEN for '%s' — переключаемся на fallback chain", comp.name
                 )
                 self._mark_failure(comp)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning(
                     "Primary call failed for '%s' (%s) — пробуем fallback chain",
                     comp.name,
@@ -229,7 +229,7 @@ class ResilienceCoordinator:
                 result = await backend(*args, **kwargs)
                 self._mark_success(comp, backend_name)
                 return result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 last_exc = exc
                 logger.warning(
                     "Fallback backend '%s' (component '%s') упал: %s",

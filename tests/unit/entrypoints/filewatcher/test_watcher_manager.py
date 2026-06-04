@@ -43,7 +43,13 @@ def test_watcher_spec_defaults() -> None:
 
 def test_watcher_spec_custom_values() -> None:
     """WatcherSpec accepts custom values."""
-    spec = WatcherSpec(directory="/tmp", pattern="*.csv", route_id="r1", poll_interval=1.0, active=False)
+    spec = WatcherSpec(
+        directory="/tmp",
+        pattern="*.csv",
+        route_id="r1",
+        poll_interval=1.0,
+        active=False,
+    )
     assert spec.directory == "/tmp"
     assert spec.pattern == "*.csv"
     assert spec.route_id == "r1"
@@ -139,7 +145,9 @@ def test_list_watchers_empty(manager: WatcherManager) -> None:
 
 
 @pytest.mark.asyncio
-async def test_stop_all_clears_watchers(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_stop_all_clears_watchers(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """stop_all stops all watchers and clears state."""
     spec1 = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
     spec2 = WatcherSpec(directory=str(temp_dir), pattern="*.log", route_id="r2")
@@ -165,7 +173,9 @@ async def test_stop_all_clears_watchers(temp_dir: Path, manager: WatcherManager)
 
 
 @pytest.mark.asyncio
-async def test_watch_loop_dispatches_matching_file(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_watch_loop_dispatches_matching_file(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """_watch_loop dispatches when file matches pattern."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*.txt", route_id="r1")
     manager._watchers[spec.id] = spec
@@ -174,12 +184,15 @@ async def test_watch_loop_dispatches_matching_file(temp_dir: Path, manager: Watc
 
     mock_dsl = AsyncMock()
 
-    with patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
-        return_value=mock_dsl,
-    ), patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
-        return_value=async_generator_yielding((1, str(temp_dir / "test.txt"))),
+    with (
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
+            return_value=mock_dsl,
+        ),
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
+            return_value=async_generator_yielding((1, str(temp_dir / "test.txt"))),
+        ),
     ):
         await manager._watch_loop(spec.id, stop_event)
 
@@ -190,7 +203,9 @@ async def test_watch_loop_dispatches_matching_file(temp_dir: Path, manager: Watc
 
 
 @pytest.mark.asyncio
-async def test_watch_loop_skips_deleted(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_watch_loop_skips_deleted(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """_watch_loop skips deleted files."""
     from watchfiles import Change
 
@@ -200,12 +215,17 @@ async def test_watch_loop_skips_deleted(temp_dir: Path, manager: WatcherManager)
 
     mock_dsl = AsyncMock()
 
-    with patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
-        return_value=mock_dsl,
-    ), patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
-        return_value=async_generator_yielding((Change.deleted, str(temp_dir / "gone.txt"))),
+    with (
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
+            return_value=mock_dsl,
+        ),
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
+            return_value=async_generator_yielding(
+                (Change.deleted, str(temp_dir / "gone.txt"))
+            ),
+        ),
     ):
         await manager._watch_loop(spec.id, stop_event)
 
@@ -213,7 +233,9 @@ async def test_watch_loop_skips_deleted(temp_dir: Path, manager: WatcherManager)
 
 
 @pytest.mark.asyncio
-async def test_watch_loop_skips_non_matching_pattern(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_watch_loop_skips_non_matching_pattern(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """_watch_loop skips files not matching pattern."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*.csv", route_id="r1")
     manager._watchers[spec.id] = spec
@@ -221,12 +243,15 @@ async def test_watch_loop_skips_non_matching_pattern(temp_dir: Path, manager: Wa
 
     mock_dsl = AsyncMock()
 
-    with patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
-        return_value=mock_dsl,
-    ), patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
-        return_value=async_generator_yielding((1, str(temp_dir / "test.txt"))),
+    with (
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
+            return_value=mock_dsl,
+        ),
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
+            return_value=async_generator_yielding((1, str(temp_dir / "test.txt"))),
+        ),
     ):
         await manager._watch_loop(spec.id, stop_event)
 
@@ -234,7 +259,9 @@ async def test_watch_loop_skips_non_matching_pattern(temp_dir: Path, manager: Wa
 
 
 @pytest.mark.asyncio
-async def test_watch_loop_exits_when_spec_removed(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_watch_loop_exits_when_spec_removed(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """_watch_loop exits when spec is removed mid-flight."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
     manager._watchers[spec.id] = spec
@@ -255,7 +282,9 @@ async def test_watch_loop_exits_when_spec_removed(temp_dir: Path, manager: Watch
 
 
 @pytest.mark.asyncio
-async def test_watch_loop_exits_when_inactive(temp_dir: Path, manager: WatcherManager) -> None:
+async def test_watch_loop_exits_when_inactive(
+    temp_dir: Path, manager: WatcherManager
+) -> None:
     """_watch_loop exits when spec becomes inactive."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
     manager._watchers[spec.id] = spec
@@ -295,16 +324,21 @@ async def test_dispatch_calls_dsl_service(manager: WatcherManager) -> None:
 
 
 @pytest.mark.asyncio
-async def test_dispatch_logs_exception(caplog: pytest.LogCaptureFixture, manager: WatcherManager) -> None:
+async def test_dispatch_logs_exception(
+    caplog: pytest.LogCaptureFixture, manager: WatcherManager
+) -> None:
     """_dispatch logs exception on DSL service failure."""
     spec = WatcherSpec(directory="/tmp", pattern="*", route_id="r1")
     mock_dsl = AsyncMock()
     mock_dsl.dispatch.side_effect = RuntimeError("dsl error")
 
-    with patch(
-        "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
-        return_value=mock_dsl,
-    ), caplog.at_level("ERROR"):
+    with (
+        patch(
+            "src.backend.entrypoints.filewatcher.watcher_manager.get_dsl_service",
+            return_value=mock_dsl,
+        ),
+        caplog.at_level("ERROR"),
+    ):
         await manager._dispatch(spec, "w1", "/tmp/file.txt", "file.txt")
 
     assert "ошибка обработки" in caplog.text

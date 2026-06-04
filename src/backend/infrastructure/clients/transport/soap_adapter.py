@@ -62,7 +62,7 @@ class ZeepSoapAdapter:
             # zeep: итератор по операциям первого сервиса и порта
             service = next(iter(self._client.wsdl.services.values()))
             port = next(iter(service.ports.values()))
-            return sorted(port.binding._operations.keys())  # noqa: SLF001
-        except Exception as exc:  # noqa: BLE001
+            return sorted(port.binding._operations.keys())
+        except Exception as exc:
             logger.debug("Не удалось извлечь список методов: %s", exc)
             return []

@@ -28,10 +28,7 @@ from src.backend.services.ai.rag.multi_query_retriever import (
 async def test_retrieve_returns_multi_query_results() -> None:
     """Успешный retrieve возвращает MultiQueryResult."""
     generate_mock = AsyncMock(
-        return_value=[
-            "альтернативный запрос 1",
-            "альтернативный запрос 2",
-        ]
+        return_value=["альтернативный запрос 1", "альтернативный запрос 2"]
     )
     embed_mock = AsyncMock(return_value=[[0.1], [0.2], [0.3]])
     search_mock = AsyncMock(
@@ -108,7 +105,9 @@ async def test_original_query_included_in_search() -> None:
         # Возвращаем уникальный embedding для каждого текста
         return [[float(i)] for i in range(len(texts))]
 
-    async def capture_search(embeddings: list[list[float]], top_k: int) -> list[dict[str, Any]]:
+    async def capture_search(
+        embeddings: list[list[float]], top_k: int
+    ) -> list[dict[str, Any]]:
         all_embeds.extend(embeddings)
         return []
 
@@ -212,7 +211,9 @@ async def test_retrieve_sequential_mode() -> None:
         call_order.append(f"embed-{len(texts)}")
         return [[0.1] for _ in texts]
 
-    async def track_search(embeddings: list[list[float]], top_k: int) -> list[dict[str, Any]]:
+    async def track_search(
+        embeddings: list[list[float]], top_k: int
+    ) -> list[dict[str, Any]]:
         call_order.append(f"search-{len(embeddings)}")
         return []
 
@@ -234,10 +235,13 @@ async def test_retrieve_sequential_mode() -> None:
 @pytest.mark.asyncio
 async def test_retrieve_parallel_mode() -> None:
     """Parallel mode (parallel=True) работает корректно."""
+
     async def dummy_embed(texts: list[str]) -> list[list[float]]:
         return [[0.1] for _ in texts]
 
-    async def dummy_search(embeddings: list[list[float]], top_k: int) -> list[dict[str, Any]]:
+    async def dummy_search(
+        embeddings: list[list[float]], top_k: int
+    ) -> list[dict[str, Any]]:
         return []
 
     generate_mock = AsyncMock(return_value=["реформ1"])
@@ -286,4 +290,6 @@ async def test_retrieve_sources_include_original_and_reform() -> None:
     # sources должен содержать 'original'
     doc1_result = next((r for r in results if r["chunk_id"] == "doc1"), None)
     if doc1_result:
-        assert "original" in doc1_result["sources"] or "reform_0" in doc1_result["sources"]
+        assert (
+            "original" in doc1_result["sources"] or "reform_0" in doc1_result["sources"]
+        )

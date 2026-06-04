@@ -39,7 +39,7 @@ class EndpointMeta:
     path: str
 
     @classmethod
-    def from_spec(cls, spec: EndpointSpec) -> "EndpointMeta":
+    def from_spec(cls, spec: EndpointSpec) -> EndpointMeta:
         """Сжать ``EndpointSpec`` до минимального dispatch-снимка."""
         return cls(operation_id=spec.operation_id, method=spec.method, path=spec.path)
 

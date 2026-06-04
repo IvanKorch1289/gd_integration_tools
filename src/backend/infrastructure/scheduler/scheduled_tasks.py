@@ -22,7 +22,7 @@ async def check_all_services():
 
         if not result.get("is_all_services_active"):
             from src.backend.infrastructure.clients.messaging.stream import (
-                stream_client,
+                get_stream_client,
             )
 
             data = {
@@ -31,15 +31,13 @@ async def check_all_services():
                 "message": "Обнаружены неактивные сервисы. Пожалуйста, проверьте сервисы и повторите попытку позже.",
             }
 
-            await stream_client.publish_to_redis(
+            await get_stream_client().publish_to_redis(
                 message=EmailSchema.model_validate(data),
                 stream=settings.redis.get_stream_name("email"),
             )
         scheduler_logger.info(f"Проверка состояния завершена. Результат: {result}")
     except Exception as exc:
-        scheduler_logger.error(
-            f"Ошибка при проверке состояния: {str(exc)}", exc_info=True
-        )
+        scheduler_logger.error(f"Ошибка при проверке состояния: {exc!s}", exc_info=True)
 
 
 async def consolidate_idle_sessions():
@@ -57,7 +55,7 @@ async def consolidate_idle_sessions():
         svc = get_langmem_service()
         report = await svc.consolidate()
         scheduler_logger.info("LangMem consolidation finished: %s", report)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         scheduler_logger.error(
             "LangMem consolidation failed: %s", str(exc), exc_info=True
         )

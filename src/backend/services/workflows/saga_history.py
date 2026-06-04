@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
-__all__ = ("SagaHistoryRecord", "get_saga_history", "aggregate_saga_stats")
+__all__ = ("SagaHistoryRecord", "aggregate_saga_stats", "get_saga_history")
 
 _logger = logging.getLogger("services.workflows.saga_history")
 
@@ -66,7 +66,7 @@ async def get_saga_history(
 
     try:
         client = await _get_clickhouse_client(client_factory)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("CH unavailable: %s", exc)
         return []
 
@@ -83,7 +83,7 @@ async def get_saga_history(
         result = await client.query(
             sql, parameters={"workflow_id": workflow_id, "limit": limit}
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("CH query failed: %s", exc)
         return []
 
@@ -91,7 +91,7 @@ async def get_saga_history(
     for row in getattr(result, "result_rows", []):
         try:
             payload = json.loads(row[4]) if row[4] else {}
-        except TypeError, json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             payload = {}
         records.append(
             SagaHistoryRecord(
@@ -117,14 +117,13 @@ async def aggregate_saga_stats(
     """Aggregated stats для page 19 (общая сводка)."""
     from datetime import datetime as _dt
     from datetime import timedelta as _td
-    from datetime import timezone as _tz
 
-    to_dt = to_dt or _dt.now(_tz.utc)
+    to_dt = to_dt or _dt.now(UTC)
     from_dt = from_dt or (to_dt - _td(days=7))
 
     try:
         client = await _get_clickhouse_client(client_factory)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("CH unavailable: %s", exc)
         return {"total_sagas": 0, "succeeded": 0, "failed": 0, "avg_duration_ms": 0.0}
 
@@ -139,8 +138,8 @@ async def aggregate_saga_stats(
         conditions.append("tenant_id = %(tenant_id)s")
         params["tenant_id"] = tenant_id
 
-    sql = (  # noqa: S608
-        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "  # noqa: S608
+    sql = (
+        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "  # noqa: S608  # internal query with controlled parameters
         "  countIf(event_type='workflow.compensation_fail') AS failed, "
         "  avg(duration_ms) AS avg_dur "
         f"FROM workflow_audit WHERE {' AND '.join(conditions)}"
@@ -149,7 +148,7 @@ async def aggregate_saga_stats(
     try:
         result = await client.query(sql, parameters=params)
         row = result.result_rows[0] if getattr(result, "result_rows", None) else None
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("CH query failed: %s", exc)
         row = None
 

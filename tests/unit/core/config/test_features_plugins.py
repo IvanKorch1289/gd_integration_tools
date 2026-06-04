@@ -14,10 +14,7 @@ class TestPluginsFlagsClass:
 
     def test_plugins_flags_instantiates(self) -> None:
         flags = PluginsFlags()
-        for f in (
-            "extensions_credit_workflow",
-            "credit_pipeline_v2",
-        ):
+        for f in ("extensions_credit_workflow", "credit_pipeline_v2"):
             assert getattr(flags, f) is False, f"{f} default не False"
 
     def test_plugins_env_vars(self) -> None:
@@ -40,18 +37,26 @@ class TestPluginsFlagsClass:
 
 class TestPluginsFlagsComposition:
     def test_feature_flags_inherits_plugins_fields(self) -> None:
-        for f in (
-            "extensions_credit_workflow",
-            "credit_pipeline_v2",
-        ):
+        for f in ("extensions_credit_workflow", "credit_pipeline_v2"):
             assert hasattr(feature_flags, f), f"feature_flags missing {f}"
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 12 mixins в MRO (T1.3.13)
-        for cls in ("AuthFlags", "SecurityFlags", "ObservabilityFlags",
-                    "NetFlags", "PluginsFlags", "WorkflowFlags", "AIFlags",
-                    "DSLFlags", "ExperimentalFlags", "ResilienceFlags",
-                    "BillingFlags", "Sprint5Flags"):
+        for cls in (
+            "AuthFlags",
+            "SecurityFlags",
+            "ObservabilityFlags",
+            "NetFlags",
+            "PluginsFlags",
+            "WorkflowFlags",
+            "AIFlags",
+            "DSLFlags",
+            "ExperimentalFlags",
+            "ResilienceFlags",
+            "BillingFlags",
+            "Sprint5Flags",
+        ):
             assert cls in mro_names, f"{cls} missing в MRO"

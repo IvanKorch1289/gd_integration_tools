@@ -16,4 +16,4 @@ from src.backend.entrypoints.middlewares.global_ratelimit import (
 # Public alias following gateway naming convention
 RateLimitGateway = RateLimitChecker
 
-__all__ = ("RateLimitGateway", "RateLimitChecker", "RateLimitConfig")
+__all__ = ("RateLimitChecker", "RateLimitConfig", "RateLimitGateway")

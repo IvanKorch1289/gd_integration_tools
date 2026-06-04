@@ -462,7 +462,7 @@ class Subscription:
     )
     async def route_trace(
         self, route_id: str, info: Info
-    ) -> AsyncGenerator[TraceEventType, None]:
+    ) -> AsyncGenerator[TraceEventType]:
         from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
@@ -478,7 +478,7 @@ class Subscription:
             )
 
     @strawberry.subscription(description="Все trace-события (для dashboard).")
-    async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType, None]:
+    async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType]:
         from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
@@ -496,7 +496,7 @@ class Subscription:
     @strawberry.subscription(
         description="Системные события (health check каждые 30 сек)."
     )
-    async def system_health(self, info: Info) -> AsyncGenerator[SystemEventType, None]:
+    async def system_health(self, info: Info) -> AsyncGenerator[SystemEventType]:
         import asyncio
         from datetime import UTC, datetime
 

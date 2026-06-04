@@ -57,7 +57,7 @@ class WsSink(Sink):
                 close_timeout=self.timeout,
             ) as ws:
                 await ws.send(text)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -78,5 +78,5 @@ class WsSink(Sink):
                 close_timeout=self.timeout,
             ):
                 return True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False

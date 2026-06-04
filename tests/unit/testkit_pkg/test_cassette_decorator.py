@@ -9,11 +9,7 @@ import pytest
 
 from testkit.recorder import cassette
 from testkit.recorder._har import HARCassette, HAREntry
-from testkit.recorder.cassette import (
-    _ReplayTransport,
-    load_cassette,
-    save_cassette,
-)
+from testkit.recorder.cassette import _ReplayTransport, load_cassette, save_cassette
 
 
 def test_save_then_load_roundtrip(tmp_path: Path) -> None:
@@ -105,7 +101,9 @@ async def test_decorator_replay_mode_raises_when_no_file(tmp_path: Path) -> None
 
 
 @pytest.mark.asyncio
-async def test_decorator_records_then_loadable_yaml(tmp_path: Path, monkeypatch) -> None:
+async def test_decorator_records_then_loadable_yaml(
+    tmp_path: Path, monkeypatch
+) -> None:
     """Mock httpx.AsyncHTTPTransport чтобы не выходить в реальную сеть."""
 
     class _StubTransport(httpx.AsyncBaseTransport):

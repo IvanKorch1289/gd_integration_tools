@@ -23,13 +23,14 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-__all__ = ("GraphQLSubscriptionSource", "GraphQLEvent")
+__all__ = ("GraphQLEvent", "GraphQLSubscriptionSource")
 
 
 @dataclass

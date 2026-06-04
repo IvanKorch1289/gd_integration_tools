@@ -17,10 +17,15 @@ class TestRetryBudget:
         without retry delay.
         """
         from src.backend.core.resilience.retry import with_retry, RetryPolicy
-        from src.backend.core.resilience.retry_budget import RetryBudget, RetryBudgetExhausted
+        from src.backend.core.resilience.retry_budget import (
+            RetryBudget,
+            RetryBudgetExhausted,
+        )
 
         # Exhaust the budget so try_retry returns False
-        budget = RetryBudget(name="test_budget", ratio=0.0)  # ratio=0 means no retries allowed
+        budget = RetryBudget(
+            name="test_budget", ratio=0.0
+        )  # ratio=0 means no retries allowed
 
         call_count = 0
 

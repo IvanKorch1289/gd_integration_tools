@@ -14,6 +14,7 @@ from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcesso
 # Stubs
 # --------------------------------------------------------------------------- #
 
+
 class _Message:
     """Minimal Message stub matching the Message interface used by processors."""
 
@@ -54,6 +55,7 @@ class _Context:
 # GraphQLQueryProcessor
 # --------------------------------------------------------------------------- #
 
+
 class TestGraphQLQueryProcessor:
     """Tests for GraphQLQueryProcessor."""
 
@@ -83,8 +85,7 @@ class TestGraphQLQueryProcessor:
     def test_init_defaults(self) -> None:
         """Optional parameters have correct defaults."""
         processor = GraphQLQueryProcessor(
-            endpoint="https://api.example.com/graphql",
-            query="{ users { id } }",
+            endpoint="https://api.example.com/graphql", query="{ users { id } }"
         )
         assert processor._variables == {}
         assert processor._operation_name is None
@@ -146,8 +147,12 @@ class TestGraphQLQueryProcessor:
             )
             await processor.process(exchange, _Context())
 
-        assert exchange.properties["graphql_data"] == {"data": {"products": [{"id": 1}, {"id": 2}]}}
-        assert exchange.out_message.body == {"data": {"products": [{"id": 1}, {"id": 2}]}}
+        assert exchange.properties["graphql_data"] == {
+            "data": {"products": [{"id": 1}, {"id": 2}]}
+        }
+        assert exchange.out_message.body == {
+            "data": {"products": [{"id": 1}, {"id": 2}]}
+        }
 
     @pytest.mark.asyncio
     async def test_graphql_errors_set_exchange_error(self) -> None:
@@ -191,8 +196,7 @@ class TestGraphQLQueryProcessor:
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql",
-                query="{ users { id } }",
+                endpoint="https://api.example.com/graphql", query="{ users { id } }"
             )
             await processor.process(exchange, _Context())
 
@@ -216,8 +220,7 @@ class TestGraphQLQueryProcessor:
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql",
-                query="{ users { id } }",
+                endpoint="https://api.example.com/graphql", query="{ users { id } }"
             )
             await processor.process(exchange, _Context())
 
@@ -233,12 +236,13 @@ class TestGraphQLQueryProcessor:
             "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
         ) as mock_get_client:
             mock_client = MagicMock()
-            mock_client.request = AsyncMock(side_effect=ConnectionError("network failure"))
+            mock_client.request = AsyncMock(
+                side_effect=ConnectionError("network failure")
+            )
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql",
-                query="{ users { id } }",
+                endpoint="https://api.example.com/graphql", query="{ users { id } }"
             )
             await processor.process(exchange, _Context())
 
@@ -353,7 +357,9 @@ class TestGraphQLQueryProcessor:
 
             call_kwargs = mock_client.request.call_args.kwargs
             payload = call_kwargs["json"]
-            assert payload["query"] == "query GetUser($id: ID!) { user(id: $id) { name } }"
+            assert (
+                payload["query"] == "query GetUser($id: ID!) { user(id: $id) { name } }"
+            )
             assert payload["variables"] == {"id": 42}
             assert payload["operationName"] == "GetUser"
 
@@ -414,8 +420,7 @@ class TestGraphQLQueryProcessor:
     def test_to_spec_omits_optional_defaults(self) -> None:
         """to_spec omits parameters that are at default values."""
         processor = GraphQLQueryProcessor(
-            endpoint="https://api.example.com/graphql",
-            query="{ users { id } }",
+            endpoint="https://api.example.com/graphql", query="{ users { id } }"
         )
         spec = processor.to_spec()
         gql_spec = spec["graphql_query"]

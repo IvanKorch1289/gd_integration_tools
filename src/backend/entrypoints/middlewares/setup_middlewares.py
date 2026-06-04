@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ("build_default_registry", "setup_middlewares")
 
 
-def build_default_registry() -> "MiddlewareRegistry":
+def build_default_registry() -> MiddlewareRegistry:
     """Сконструировать ``MiddlewareRegistry`` с предзаполненными built-in.
 
     Order распределён по 4 слоям:
@@ -184,7 +184,7 @@ def build_default_registry() -> "MiddlewareRegistry":
     return registry
 
 
-def setup_middlewares(app: "FastAPI") -> None:
+def setup_middlewares(app: FastAPI) -> None:
     """Инициализирует и настраивает цепочку middleware для FastAPI.
 
     Делегирует регистрацию :class:`MiddlewareRegistry` (S17 ADR-NEW-2).

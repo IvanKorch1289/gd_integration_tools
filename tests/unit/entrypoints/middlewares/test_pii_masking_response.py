@@ -31,10 +31,7 @@ from src.backend.entrypoints.middlewares.pii_masking_response import (
 def _build_app(*, path_patterns: list[str] | None = None) -> FastAPI:
     """FastAPI с PIIMaskingResponseMiddleware и тестовыми endpoints."""
     app = FastAPI()
-    app.add_middleware(
-        PIIMaskingResponseMiddleware,
-        path_patterns=path_patterns,
-    )
+    app.add_middleware(PIIMaskingResponseMiddleware, path_patterns=path_patterns)
 
     @app.get("/api/users/me")
     async def users_me() -> dict:
@@ -71,12 +68,8 @@ def _build_app(*, path_patterns: list[str] | None = None) -> FastAPI:
 class TestFeatureFlagDisabled:
     """default-OFF: middleware прозрачен, тело не модифицируется."""
 
-    def test_pass_through_when_disabled(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", False
-        )
+    def test_pass_through_when_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", False)
         app = _build_app()
         client = TestClient(app)
         resp = client.get("/api/users/me")
@@ -92,9 +85,7 @@ class TestFeatureFlagEnabled:
     def test_masks_email_and_phone_on_matching_path(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=[r"^/api/users(/.*)?$"])
         client = TestClient(app)
         resp = client.get("/api/users/me")
@@ -106,12 +97,8 @@ class TestFeatureFlagEnabled:
         assert body["name"] == "Alice"
         assert body["age"] == 30
 
-    def test_skips_non_matching_path(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+    def test_skips_non_matching_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=[r"^/api/users(/.*)?$"])
         client = TestClient(app)
         resp = client.get("/api/healthz")
@@ -123,9 +110,7 @@ class TestFeatureFlagEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """path_patterns=None / [] → middleware применяется ко всем JSON-путям."""
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=None)
         client = TestClient(app)
         # /api/users
@@ -138,9 +123,7 @@ class TestFeatureFlagEnabled:
     def test_non_json_content_type_is_skipped(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=None)
         client = TestClient(app)
         resp = client.get("/api/text")
@@ -152,9 +135,7 @@ class TestFeatureFlagEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """JSON array на top-level — все элементы рекурсивно маскируются."""
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=None)
         client = TestClient(app)
         resp = client.get("/api/items")
@@ -170,9 +151,7 @@ class TestDoDIntegration:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """E2E: configurable path → no PII leakage в response body."""
-        monkeypatch.setattr(
-            feature_flags, "pii_response_middleware_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         # Только /api/users/* подпадает; /api/items не подпадает.
         app = _build_app(path_patterns=[r"^/api/users(/.*)?$"])
         client = TestClient(app)

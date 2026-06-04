@@ -45,7 +45,7 @@ try:  # pragma: no cover - prometheus_client optional
     _POOL_RECONNECTS = _PromCounter(
         "pool_reconnects_total", "Pool reconnect events", ("pool",)
     )
-except Exception as _:  # noqa: BLE001
+except Exception as _:
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
     _WARMUP_FAILURES = None  # type: ignore[assignment,unused-ignore]
     _POOL_RECONNECTS = None  # type: ignore[assignment,unused-ignore]
@@ -55,12 +55,12 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
     if _WARMUP_DURATION is not None:
         try:
             _WARMUP_DURATION.labels(pool=pool).observe(duration_ms)
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
     if not success and _WARMUP_FAILURES is not None:
         try:
             _WARMUP_FAILURES.labels(pool=pool).inc()
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
 
 
@@ -68,7 +68,7 @@ def _record_reconnect(pool: str) -> None:
     if _POOL_RECONNECTS is not None:
         try:
             _POOL_RECONNECTS.labels(pool=pool).inc()
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
 
 
@@ -126,9 +126,7 @@ class PoolWarmup:
         result = WarmupResult()
         tasks: dict[str, asyncio.Task[None]] = {}
 
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         registry = get_task_registry()
         if self._pg is not None:
@@ -154,7 +152,7 @@ class PoolWarmup:
                 asyncio.gather(*tasks.values(), return_exceptions=True),
                 timeout=self._timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "pool_warmup.timeout",
                 extra={"timeout_seconds": self._timeout, "min": self._min},
@@ -246,7 +244,7 @@ class PoolWarmup:
             )
             result.warmed_pools.append("httpx")
             _record_warmup("httpx", (time.monotonic() - start) * 1000, success=True)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             result.failed_pools["httpx"] = type(exc).__name__
             _record_warmup("httpx", (time.monotonic() - start) * 1000, success=False)
             logger.warning(
@@ -284,7 +282,7 @@ class PoolWarmup:
             )
             result.warmed_pools.append("graylog")
             _record_warmup("graylog", (time.monotonic() - start) * 1000, success=True)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             result.failed_pools["graylog"] = type(exc).__name__
             _record_warmup("graylog", (time.monotonic() - start) * 1000, success=False)
             logger.warning(
@@ -315,7 +313,7 @@ class PoolReconnectMonitor:
         self._pools = pools
         self._on_reconnect = on_reconnect
         self._interval = interval_seconds
-        self._last_state: dict[str, bool] = {name: True for name in pools}
+        self._last_state: dict[str, bool] = dict.fromkeys(pools, True)
         self._task: asyncio.Task[None] | None = None
         self._stop_event = asyncio.Event()
 
@@ -323,9 +321,7 @@ class PoolReconnectMonitor:
         if self._task is not None and not self._task.done():
             return
         self._stop_event.clear()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._loop(), name="pool_reconnect_monitor"
@@ -337,7 +333,7 @@ class PoolReconnectMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except (asyncio.CancelledError, Exception):
                 pass
             self._task = None
 
@@ -345,14 +341,14 @@ class PoolReconnectMonitor:
         while not self._stop_event.is_set():
             try:
                 await asyncio.wait_for(self._stop_event.wait(), timeout=self._interval)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
             if self._stop_event.is_set():
                 return
             for name, healthcheck in self._pools.items():
                 try:
                     healthy = await healthcheck()
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     healthy = False
                 previously_healthy = self._last_state.get(name, True)
                 if not healthy and previously_healthy:
@@ -369,5 +365,5 @@ class PoolReconnectMonitor:
                     if self._on_reconnect is not None:
                         try:
                             await self._on_reconnect(name)
-                        except Exception as _:  # noqa: BLE001
+                        except Exception as _:
                             logger.exception("pool_reconnect_monitor.callback_failed")

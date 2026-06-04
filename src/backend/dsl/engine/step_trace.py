@@ -34,7 +34,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-__all__ = ("StepTrace", "record_trace", "traced_step", "MAX_SNAPSHOT_SIZE")
+__all__ = ("MAX_SNAPSHOT_SIZE", "StepTrace", "record_trace", "traced_step")
 
 MAX_SNAPSHOT_SIZE = 1024  # символов; больше — обрезаем
 

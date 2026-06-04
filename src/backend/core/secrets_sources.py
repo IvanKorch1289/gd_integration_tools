@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-__all__ = ("VaultSettingsSource", "AwsSecretsManagerSource")
+__all__ = ("AwsSecretsManagerSource", "VaultSettingsSource")
 
 logger = logging.getLogger("core.secrets")
 

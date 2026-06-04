@@ -127,7 +127,7 @@ class HtmlToJson(ConversionStrategy):
             from selectolax.parser import HTMLParser
 
             tree = HTMLParser(data)
-            result = {
+            return {
                 "title": tree.css_first("title").text()
                 if tree.css_first("title")
                 else "",
@@ -139,7 +139,6 @@ class HtmlToJson(ConversionStrategy):
                 ],
                 "tables": self._extract_tables(tree),
             }
-            return result
         except ImportError:
             return {"raw_text": data[:10000]}
 
@@ -211,7 +210,7 @@ class CsvToDict(ConversionStrategy):
                 return []
             headers = [h.strip() for h in lines[0].split(",")]
             return [
-                dict(zip(headers, [v.strip() for v in line.split(",")]))
+                dict(zip(headers, [v.strip() for v in line.split(",")], strict=False))
                 for line in lines[1:]
             ]
 

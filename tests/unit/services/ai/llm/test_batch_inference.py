@@ -108,9 +108,7 @@ async def test_vllm_completions_uses_provided_engine() -> None:
     fake_vllm.SamplingParams = _SP
     sys.modules["vllm"] = fake_vllm
     try:
-        results = await vllm.batch_completions(
-            ["q1", "q2"], model="m", max_tokens=10
-        )
+        results = await vllm.batch_completions(["q1", "q2"], model="m", max_tokens=10)
         assert results == ["vllm-gen", "vllm-gen"]
     finally:
         sys.modules.pop("vllm", None)

@@ -16,7 +16,8 @@ Capability ``mcp.tool.call`` проверяется здесь на уровне
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
     for k, v in raw_headers:
         try:
             headers[k.decode("latin1").lower()] = v.decode("latin1")
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             continue
 
     request = _DummyHeadersRequest(headers)
@@ -54,7 +55,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
             ctx = await _verify_api_key(request)
             if ctx is not None:
                 return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("MCP api_key verify failed: %s", exc)
 
     if "jwt" in methods and headers.get("authorization", "").lower().startswith(
@@ -64,7 +65,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
             ctx = await _verify_jwt(request)
             if ctx is not None:
                 return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("MCP jwt verify failed: %s", exc)
     return False
 

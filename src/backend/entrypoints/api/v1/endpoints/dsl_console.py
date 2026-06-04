@@ -109,7 +109,7 @@ class _DSLConsoleFacade:
                 trace=trace,
             )
 
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return InlineDSLResponse(status="error", error=str(exc))
 
 

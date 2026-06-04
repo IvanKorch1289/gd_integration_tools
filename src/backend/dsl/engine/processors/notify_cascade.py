@@ -137,7 +137,7 @@ class NotifyCascadeProcessor(BaseProcessor):
                     )
                     if attempt < self._retries:
                         await asyncio.sleep(self._retry_delay)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     last_exc = exc
                     _logger.warning(
                         "notify_cascade %s unexpected exc: %s", adapter.channel, exc

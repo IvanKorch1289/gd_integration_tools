@@ -25,9 +25,7 @@ def _patch_flag(value: bool):
 @pytest.mark.asyncio
 async def test_no_action_when_flag_off() -> None:
     """При flag-OFF evaluate() возвращает False (no-op)."""
-    from src.backend.core.resilience.backpressure import (
-        StreamingBackpressureController,
-    )
+    from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
     controller = StreamingBackpressureController()
     controller.update_queue_size(950, queue_limit=1000)  # 95% utilization
@@ -42,13 +40,9 @@ async def test_no_action_when_flag_off() -> None:
 @pytest.mark.asyncio
 async def test_pause_at_high_watermark() -> None:
     """При utilization >= high_watermark — pause всех consumer'ов."""
-    from src.backend.core.resilience.backpressure import (
-        StreamingBackpressureController,
-    )
+    from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
-    controller = StreamingBackpressureController(
-        high_watermark=0.85, low_watermark=0.5
-    )
+    controller = StreamingBackpressureController(high_watermark=0.85, low_watermark=0.5)
     consumer = AsyncMock()
     controller.register_consumer("kafka_1", consumer)
     controller.update_queue_size(900, queue_limit=1000)  # 90%
@@ -64,13 +58,9 @@ async def test_pause_at_high_watermark() -> None:
 @pytest.mark.asyncio
 async def test_resume_at_low_watermark() -> None:
     """При utilization <= low_watermark — resume."""
-    from src.backend.core.resilience.backpressure import (
-        StreamingBackpressureController,
-    )
+    from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
-    controller = StreamingBackpressureController(
-        high_watermark=0.85, low_watermark=0.5
-    )
+    controller = StreamingBackpressureController(high_watermark=0.85, low_watermark=0.5)
     consumer = AsyncMock()
     controller.register_consumer("kafka_1", consumer)
 
@@ -93,13 +83,9 @@ async def test_resume_at_low_watermark() -> None:
 @pytest.mark.asyncio
 async def test_no_flapping_between_watermarks() -> None:
     """При utilization между watermark'ами — no state change."""
-    from src.backend.core.resilience.backpressure import (
-        StreamingBackpressureController,
-    )
+    from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
-    controller = StreamingBackpressureController(
-        high_watermark=0.85, low_watermark=0.5
-    )
+    controller = StreamingBackpressureController(high_watermark=0.85, low_watermark=0.5)
     consumer = AsyncMock()
     controller.register_consumer("k", consumer)
     controller.update_queue_size(700, queue_limit=1000)  # 70%

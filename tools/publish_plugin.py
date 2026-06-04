@@ -87,14 +87,7 @@ def _bundle_plugin(cfg: PublishConfig) -> Path:
     pyproject = cfg.plugin_dir / "pyproject.toml"
 
     if pyproject.is_file() and _ensure_tool("uv"):
-        cmd = [
-            "uv",
-            "build",
-            "--package",
-            cfg.plugin,
-            "--out-dir",
-            str(cfg.dist_dir),
-        ]
+        cmd = ["uv", "build", "--package", cfg.plugin, "--out-dir", str(cfg.dist_dir)]
         if cfg.dry_run:
             _logger.info("dry-run uv build: %s", " ".join(cmd))
         else:
@@ -110,9 +103,7 @@ def _bundle_plugin(cfg: PublishConfig) -> Path:
         _logger.info("dry-run zip bundle would create: %s", bundle)
         return bundle
     shutil.make_archive(
-        base_name=str(bundle.with_suffix("")),
-        format="zip",
-        root_dir=cfg.plugin_dir,
+        base_name=str(bundle.with_suffix("")), format="zip", root_dir=cfg.plugin_dir
     )
     return bundle
 
@@ -244,7 +235,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Publish plugin: bundle → SBOM → cosign → upload (S14 W3)."
     )
-    parser.add_argument("--plugin", required=True, help="Имя плагина (extensions/<name>)")
+    parser.add_argument(
+        "--plugin", required=True, help="Имя плагина (extensions/<name>)"
+    )
     parser.add_argument("--version", required=True, help="SemVer плагина")
     parser.add_argument(
         "--plugins-dir",

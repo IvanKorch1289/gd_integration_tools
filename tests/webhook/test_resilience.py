@@ -15,10 +15,7 @@ from unittest.mock import patch
 import pytest
 
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
-from src.backend.core.resilience.rpa_policy import (
-    RPACallPolicy,
-    set_rpa_policy,
-)
+from src.backend.core.resilience.rpa_policy import RPACallPolicy, set_rpa_policy
 
 pytestmark = pytest.mark.asyncio
 
@@ -75,11 +72,7 @@ async def test_webhook_5xx_burst_triggers_dlq(dlq: _InMemoryDLQ) -> None:
     )
     set_rpa_policy(policy)
 
-    sink = WebhookSink(
-        sink_id="test",
-        url="https://example.com/hook",
-        event="evt",
-    )
+    sink = WebhookSink(sink_id="test", url="https://example.com/hook", event="evt")
 
     # Mock OutboundHttpClient — всегда возвращает 503
     class _FakeResp:
@@ -98,10 +91,7 @@ async def test_webhook_5xx_burst_triggers_dlq(dlq: _InMemoryDLQ) -> None:
         async def post(self, url: str, content: bytes, headers: dict) -> _FakeResp:
             return _FakeResp(503)
 
-    with patch(
-        "src.backend.core.net.OutboundHttpClient",
-        return_value=_FakeClient(),
-    ):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=_FakeClient()):
         result = await sink.send({"x": 1})
 
     assert result.ok is False
@@ -140,10 +130,7 @@ async def test_webhook_2xx_success_no_dlq(dlq: _InMemoryDLQ) -> None:
         async def post(self, url: str, content: bytes, headers: dict) -> _FakeResp:
             return _FakeResp()
 
-    with patch(
-        "src.backend.core.net.OutboundHttpClient",
-        return_value=_FakeClient(),
-    ):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=_FakeClient()):
         result = await sink.send({"x": 1})
 
     assert result.ok is True
@@ -186,10 +173,7 @@ async def test_webhook_breaker_open_skip(dlq: _InMemoryDLQ) -> None:
             call_count["n"] += 1
             return _FakeResp()
 
-    with patch(
-        "src.backend.core.net.OutboundHttpClient",
-        return_value=_FakeClient(),
-    ):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=_FakeClient()):
         result = await sink.send({"x": 1})
 
     assert result.ok is False
@@ -211,10 +195,7 @@ async def test_webhook_feature_flag_off_no_retry(
     )
 
     policy = RPACallPolicy(
-        name="not_used",
-        max_attempts=3,
-        backoff_initial_seconds=0.001,
-        dlq_writer=dlq,
+        name="not_used", max_attempts=3, backoff_initial_seconds=0.001, dlq_writer=dlq
     )
     set_rpa_policy(policy)
 
@@ -238,10 +219,7 @@ async def test_webhook_feature_flag_off_no_retry(
             call_count["n"] += 1
             return _FakeResp()
 
-    with patch(
-        "src.backend.core.net.OutboundHttpClient",
-        return_value=_FakeClient(),
-    ):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=_FakeClient()):
         result = await sink.send({"x": 1})
 
     # При OFF — без retry; 503 поднимается в _do_post через HTTPStatusError

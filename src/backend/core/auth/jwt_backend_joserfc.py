@@ -30,7 +30,7 @@ from joserfc.jwk import ECKey, OctKey, RSAKey
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
 
-__all__ = ("JwtBackend", "JwtVerificationError", "JwtClaims", "encode", "decode")
+__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "decode", "encode")
 
 _logger = logging.getLogger(__name__)
 

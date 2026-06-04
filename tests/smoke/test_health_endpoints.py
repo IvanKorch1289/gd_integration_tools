@@ -157,7 +157,9 @@ def test_components_fast_mode_returns_200() -> None:
         client = TestClient(app)
         response = client.get("/health/components?mode=fast")
 
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.json()}"
+        assert response.status_code == 200, (
+            f"Expected 200, got {response.status_code}: {response.json()}"
+        )
         data = response.json()
         assert "status" in data
     finally:
@@ -170,7 +172,9 @@ def test_components_deep_mode_includes_resilience_chains() -> None:
     app = FastAPI()
 
     mock_aggregator = MagicMock(spec=["check_all"])
-    mock_aggregator.check_all = AsyncMock(return_value={"status": "ok", "components": {}})
+    mock_aggregator.check_all = AsyncMock(
+        return_value={"status": "ok", "components": {}}
+    )
 
     mock_resilience_report = MagicMock(return_value={"chains": []})
 
@@ -181,13 +185,17 @@ def test_components_deep_mode_includes_resilience_chains() -> None:
 
     try:
         di_providers.get_health_aggregator_provider = lambda: mock_aggregator
-        di_providers.get_resilience_components_report_provider = lambda: mock_resilience_report
+        di_providers.get_resilience_components_report_provider = lambda: (
+            mock_resilience_report
+        )
 
         app.include_router(health_router, prefix="/health")
         client = TestClient(app)
         response = client.get("/health/components?mode=deep")
 
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.json()}"
+        assert response.status_code == 200, (
+            f"Expected 200, got {response.status_code}: {response.json()}"
+        )
         data = response.json()
         assert "resilience_chains" in data
     finally:

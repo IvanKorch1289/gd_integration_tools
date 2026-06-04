@@ -9,9 +9,7 @@ import pytest
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.streaming_llm import (
-    TokenStreamLLMProcessor,
-)
+from src.backend.dsl.engine.processors.streaming_llm import TokenStreamLLMProcessor
 from src.backend.dsl.engine.processors.streaming_llm_publishers import SSEPublisher
 
 
@@ -46,9 +44,7 @@ async def test_three_chunks_streamed_to_sse_publisher() -> None:
     ]
     gw = _gateway_with_chunks(chunks)
     proc = TokenStreamLLMProcessor(
-        output_mode="sse",
-        publisher=SSEPublisher(),
-        gateway=gw,
+        output_mode="sse", publisher=SSEPublisher(), gateway=gw
     )
     exchange = Exchange(properties={"_composed_prompt": "say hi"})
     await proc.process(exchange, ExecutionContext())

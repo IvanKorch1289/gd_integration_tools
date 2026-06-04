@@ -27,9 +27,7 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_extract_all_matches() -> None:
     pytest.importorskip("jsonpath_ng")
     proc = JsonPathProcessor("$.users[*].name", to="body.names", mode="all")
-    exchange = _ex(
-        {"users": [{"name": "Alice"}, {"name": "Bob"}]}
-    )
+    exchange = _ex({"users": [{"name": "Alice"}, {"name": "Bob"}]})
 
     await proc.process(exchange, AsyncMock())
 
@@ -39,9 +37,7 @@ async def test_extract_all_matches() -> None:
 @pytest.mark.asyncio
 async def test_extract_first_with_default() -> None:
     pytest.importorskip("jsonpath_ng")
-    proc = JsonPathProcessor(
-        "$.missing", to="body.x", mode="first", default="fallback"
-    )
+    proc = JsonPathProcessor("$.missing", to="body.x", mode="first", default="fallback")
     exchange = _ex({"users": [{"name": "Alice"}]})
 
     await proc.process(exchange, AsyncMock())

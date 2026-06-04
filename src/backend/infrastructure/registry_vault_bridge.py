@@ -37,7 +37,7 @@ _logger = logging.getLogger(__name__)
 
 
 def wire_vault_rotations(
-    *, registry: "ConnectorRegistry", refresher: "VaultSecretRefresher"
+    *, registry: ConnectorRegistry, refresher: VaultSecretRefresher
 ) -> int:
     """Подписать `registry.reload(name)` на ротацию vault_path каждого клиента.
 
@@ -63,7 +63,7 @@ def wire_vault_rotations(
     return wired
 
 
-def _build_reload_callback(*, registry: "ConnectorRegistry", client_name: str):
+def _build_reload_callback(*, registry: ConnectorRegistry, client_name: str):
     """Сформировать async-callback для конкретного клиента.
 
     Callback делает `registry.reload(name)` и логирует с явной привязкой
@@ -86,7 +86,7 @@ def _build_reload_callback(*, registry: "ConnectorRegistry", client_name: str):
                 "connector reloaded after vault rotation",
                 extra={"connector": client_name, "duration_ms": duration_ms},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error(
                 "connector reload after vault rotation failed",
                 extra={

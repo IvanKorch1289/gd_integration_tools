@@ -38,9 +38,7 @@ async def test_stream_filter_passes_through_when_no_pii() -> None:
 async def test_stream_filter_buffers_short_input() -> None:
     """Маленький буфер должен накапливаться и не падать."""
     chunks: list[str] = []
-    async for chunk in stream_filter(
-        _stream("x"), PiiStreamPolicy(window_chars=4096)
-    ):
+    async for chunk in stream_filter(_stream("x"), PiiStreamPolicy(window_chars=4096)):
         chunks.append(chunk)
     # Малая chunk-длина < window — может не выдать ничего пока stream не закроется.
     result = "".join(chunks)

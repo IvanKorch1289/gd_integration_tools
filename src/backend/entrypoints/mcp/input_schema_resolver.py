@@ -72,7 +72,7 @@ def _extract_json_schema(model: type[Any] | None) -> dict[str, Any]:
         return {}
     try:
         return schema_fn()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.warning(
             "Не удалось сгенерировать JSON-Schema для %r", model, exc_info=True
         )
@@ -174,7 +174,7 @@ def validate_input_schema(
             from src.backend.core.config.features import feature_flags
 
             strict = feature_flags.mcp_tools_input_schema_strict
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             strict = False
 
     # Lazy-import jsonschema

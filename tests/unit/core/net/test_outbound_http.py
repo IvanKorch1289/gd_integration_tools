@@ -32,9 +32,7 @@ def _make_client(
 ) -> OutboundHttpClient:
     """Тестовая фабрика; подменяет transport напрямую."""
     client = OutboundHttpClient(
-        policy=policy,
-        capability_check=capability_check,
-        audit=audit,
+        policy=policy, capability_check=capability_check, audit=audit
     )
     # Подменяем нижележащий httpx.AsyncClient на MockTransport-вариант.
     client._client._transport = transport  # type: ignore[attr-defined]
@@ -66,9 +64,7 @@ async def test_request_blocked_by_waf_raises_bypass_error(
 
 
 @pytest.mark.asyncio
-async def test_request_invokes_capability_check(
-    transport: httpx.MockTransport,
-) -> None:
+async def test_request_invokes_capability_check(transport: httpx.MockTransport) -> None:
     """capability_check вызывается с (plugin, 'net.outbound', host)."""
     seen: list[tuple[str, str, str | None]] = []
 
@@ -98,9 +94,7 @@ async def test_capability_denied_propagates(transport: httpx.MockTransport) -> N
 
 
 @pytest.mark.asyncio
-async def test_audit_callback_receives_decision(
-    transport: httpx.MockTransport,
-) -> None:
+async def test_audit_callback_receives_decision(transport: httpx.MockTransport) -> None:
     """audit вызывается ровно один раз на ``request``."""
     events: list[dict[str, object]] = []
 

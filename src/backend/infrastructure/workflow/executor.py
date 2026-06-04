@@ -35,9 +35,10 @@ step'е. Старые уже-состоявшиеся events неизменны.
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Awaitable, Callable, Literal
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal
 
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.workflow.pg_runner_internals import (
@@ -51,11 +52,11 @@ from src.backend.infrastructure.workflow.runner import (
 )
 
 __all__ = (
-    "WorkflowStep",
-    "WorkflowSpec",
-    "DurableWorkflowProcessor",
     "DSLStepExecutor",
+    "DurableWorkflowProcessor",
     "SpecLoader",
+    "WorkflowSpec",
+    "WorkflowStep",
 )
 
 _logger = logging.getLogger("workflow.executor")
@@ -105,10 +106,10 @@ class WorkflowStep:
     processors: tuple[Callable[..., Awaitable[Any]], ...] = ()
     # branch
     predicate: Callable[[WorkflowState], bool] | str | None = None
-    then_steps: tuple["WorkflowStep", ...] = ()
-    else_steps: tuple["WorkflowStep", ...] = ()
+    then_steps: tuple[WorkflowStep, ...] = ()
+    else_steps: tuple[WorkflowStep, ...] = ()
     # loop
-    body_steps: tuple["WorkflowStep", ...] = ()
+    body_steps: tuple[WorkflowStep, ...] = ()
     max_iter: int = 100
     # for_each
     collection_expr: str | None = None
@@ -277,7 +278,7 @@ class DSLStepExecutor(StepExecutor):
                     )
                 ],
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.exception("step execution failed")
             return StepResult(
                 outcome=StepOutcome.PAUSE,  # retry via runner backoff
@@ -467,11 +468,11 @@ class DSLStepExecutor(StepExecutor):
         * ``until_expr`` — callable evaluating на state (для HITL / event).
         """
         if step.duration_s is not None:
-            next_at = datetime.now(timezone.utc) + timedelta(seconds=step.duration_s)
+            next_at = datetime.now(UTC) + timedelta(seconds=step.duration_s)
         else:
             # until_expr — не evaluated здесь; runner просто будет re-call
             # execute_next при каждом pg_notify / backup poll.
-            next_at = datetime.now(timezone.utc) + timedelta(seconds=60)
+            next_at = datetime.now(UTC) + timedelta(seconds=60)
         return StepResult(
             outcome=StepOutcome.PAUSE,
             next_attempt_at=next_at,
@@ -506,7 +507,7 @@ class DSLStepExecutor(StepExecutor):
             import jmespath
 
             return jmespath.search(expr, state.exchange_snapshot)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "jmespath eval failed", extra={"expr": expr, "error": str(exc)}
             )

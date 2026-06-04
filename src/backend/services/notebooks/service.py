@@ -110,7 +110,7 @@ def _trigger_rag_index(notebook: Notebook) -> None:
         from src.backend.services.notebooks.indexer import get_notebook_indexer
 
         get_notebook_indexer().index_one_fire_and_forget(notebook)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("RAG-индексация notebook'а не запущена: %s", exc)
 
 
@@ -124,7 +124,7 @@ def _trigger_rag_delete(notebook_id: str) -> None:
             get_notebook_indexer().delete_one(notebook_id),
             name=f"notebook-indexer:delete:{notebook_id}",
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("RAG-удаление notebook'а %s не запущено: %s", notebook_id, exc)
 
 
@@ -140,5 +140,5 @@ def _default_service_factory() -> NotebookService:
 
 
 @app_state_singleton("notebook_service", factory=_default_service_factory)
-def get_notebook_service() -> NotebookService:
+def get_notebook_service() -> NotebookService:  # type: ignore[empty-body]
     """Singleton ``NotebookService``. Backend подменяется через app.state."""

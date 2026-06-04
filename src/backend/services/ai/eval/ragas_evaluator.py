@@ -40,11 +40,11 @@ if TYPE_CHECKING:
     pass
 
 __all__ = (
-    "RAGASRecord",
-    "RAGASMetric",
-    "RAGASReport",
-    "RAGASEvaluator",
     "DEFAULT_THRESHOLDS",
+    "RAGASEvaluator",
+    "RAGASMetric",
+    "RAGASRecord",
+    "RAGASReport",
 )
 
 logger = logging.getLogger("services.ai.eval.ragas")
@@ -222,13 +222,9 @@ class RAGASEvaluator:
     def _evaluate_sync(self, records: list[RAGASRecord]) -> RAGASReport:
         """Синхронный путь evaluation (ragas API — sync)."""
         try:
-            from datasets import Dataset  # noqa: PLC0415
-            from ragas import evaluate  # noqa: PLC0415
-            from ragas.metrics import (  # noqa: PLC0415
-                answer_relevancy,
-                context_precision,
-                faithfulness,
-            )
+            from datasets import Dataset
+            from ragas import evaluate
+            from ragas.metrics import answer_relevancy, context_precision, faithfulness
         except ImportError as exc:
             logger.warning("ragas/datasets not installed: %s", exc)
             return RAGASReport(
@@ -247,7 +243,7 @@ class RAGASEvaluator:
 
         if has_ground_truth:
             try:
-                from ragas.metrics import context_recall  # noqa: PLC0415
+                from ragas.metrics import context_recall
 
                 metrics_list.append(context_recall)
                 metric_names.append("context_recall")
@@ -271,7 +267,7 @@ class RAGASEvaluator:
             if self._embeddings is not None:
                 kwargs["embeddings"] = self._embeddings
             raw = evaluate(ds, metrics=metrics_list, **kwargs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ragas.evaluate failed: %s", exc)
             return RAGASReport(
                 skipped=True,

@@ -4,8 +4,10 @@ These processors provide direct I/O capabilities within DSL pipelines,
 equivalent to Apache Camel's Component model.
 """
 
+import contextlib
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import orjson
 
@@ -15,14 +17,14 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
 __all__ = (
-    "HttpCallProcessor",
     "DatabaseQueryProcessor",
     "FileReadProcessor",
     "FileWriteProcessor",
+    "HttpCallProcessor",
+    "PollingConsumerProcessor",
     "S3ReadProcessor",
     "S3WriteProcessor",
     "TimerProcessor",
-    "PollingConsumerProcessor",
 )
 
 _comp_logger = logging.getLogger("dsl.components")
@@ -87,10 +89,8 @@ class HttpCallProcessor(BaseProcessor):
 
         url = self._url
         if "{" in url and isinstance(exchange.in_message.body, dict):
-            try:
+            with contextlib.suppress(KeyError, IndexError):
                 url = url.format(**exchange.in_message.body)
-            except KeyError, IndexError:
-                pass
 
         try:
             result = await client.make_request(
@@ -228,7 +228,7 @@ class FileReadProcessor(BaseProcessor):
                 async with aiofiles.open(path, "rb") as f:
                     data = await f.read()
             else:
-                async with aiofiles.open(path, "r", encoding=self._encoding) as f:
+                async with aiofiles.open(path, encoding=self._encoding) as f:
                     data = await f.read()
 
             exchange.set_out(body=data, headers=dict(exchange.in_message.headers))

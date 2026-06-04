@@ -32,10 +32,14 @@ class TestRepositoryProtocol:
             async def get_all_versions(self, *args: object, **kwargs: object) -> object:
                 return None
 
-            async def get_latest_version(self, *args: object, **kwargs: object) -> object:
+            async def get_latest_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
-            async def restore_to_version(self, *args: object, **kwargs: object) -> object:
+            async def restore_to_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
         assert isinstance(Fake(), RepositoryProtocol)
@@ -68,10 +72,14 @@ class TestSpecializedProtocols:
             async def get_all_versions(self, *args: object, **kwargs: object) -> object:
                 return None
 
-            async def get_latest_version(self, *args: object, **kwargs: object) -> object:
+            async def get_latest_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
-            async def restore_to_version(self, *args: object, **kwargs: object) -> object:
+            async def restore_to_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
         assert isinstance(Fake(), OrderRepositoryProtocol)
@@ -97,10 +105,14 @@ class TestSpecializedProtocols:
             async def get_all_versions(self, *args: object, **kwargs: object) -> object:
                 return None
 
-            async def get_latest_version(self, *args: object, **kwargs: object) -> object:
+            async def get_latest_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
-            async def restore_to_version(self, *args: object, **kwargs: object) -> object:
+            async def restore_to_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
             async def add_link(self, *args: object, **kwargs: object) -> object:
@@ -128,10 +140,14 @@ class TestSpecializedProtocols:
             async def get_all_versions(self, *args: object, **kwargs: object) -> object:
                 return None
 
-            async def get_latest_version(self, *args: object, **kwargs: object) -> object:
+            async def get_latest_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
-            async def restore_to_version(self, *args: object, **kwargs: object) -> object:
+            async def restore_to_version(
+                self, *args: object, **kwargs: object
+            ) -> object:
                 return None
 
             async def get_by_username(self, *args: object, **kwargs: object) -> object:

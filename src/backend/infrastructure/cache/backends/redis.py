@@ -64,7 +64,7 @@ class RedisBackend(CacheBackend):
 
     async def bind_key_to_tag(self, tag: str, key: str) -> None:
         """Привязывает cache key к тегу (SET SADD __cache_tag:{tag} {key})."""
-        await self._client.sadd(self._tag_index_key(tag), key)
+        await self._client.sadd(self._tag_index_key(tag), key)  # type: ignore[misc]
 
     async def delete_by_tag(self, tag: str) -> int:
         """
@@ -83,7 +83,7 @@ class RedisBackend(CacheBackend):
         """
         index_key = self._tag_index_key(tag)
         # SMEMBERS + pipeline DEL
-        keys = await self._client.smembers(index_key)
+        keys = await self._client.smembers(index_key)  # type: ignore[misc]
         if not keys:
             return 0
         # Декодируем bytes-ключи из SET в str

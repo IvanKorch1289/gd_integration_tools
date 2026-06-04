@@ -18,7 +18,8 @@ Middleware-цепочка строится при каждом ``dispatch`` из
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from src.backend.core.interfaces.action_dispatcher import (
     ActionDispatcher,
@@ -207,7 +208,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
                     recoverable=False,
                 ),
             )
-        except Exception as exc:  # noqa: BLE001 — маппим в envelope.
+        except Exception as exc:
             return ActionResult(
                 success=False,
                 error=ActionError(

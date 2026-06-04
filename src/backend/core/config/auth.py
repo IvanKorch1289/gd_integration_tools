@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.backend.core.config.express import ExpressSettings
     from src.backend.core.config.security import SecureSettings
 
-__all__ = ("JwtConfig", "ExpressJwtConfig", "AuthConfig", "build_auth_config")
+__all__ = ("AuthConfig", "ExpressJwtConfig", "JwtConfig", "build_auth_config")
 
 
 class JwtConfig(BaseModel):
@@ -66,13 +66,9 @@ def build_auth_config(
         Агрегированная конфигурация авторизации.
     """
     if secure is None:
-        from src.backend.core.config.security import (
-            secure_settings as secure,  # noqa: PLW0127
-        )
+        from src.backend.core.config.security import secure_settings as secure
     if express is None:
-        from src.backend.core.config.express import (
-            express_settings as express,  # noqa: PLW0127
-        )
+        from src.backend.core.config.express import express_settings as express
 
     secret = secure.secret_key
     secret_value = (

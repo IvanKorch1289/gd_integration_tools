@@ -114,7 +114,8 @@ class TestEncrypt:
         result = await cipher.encrypt(b"hello")
         assert result == "vault:v1:abc"
         mock_client.post.assert_awaited_once_with(
-            "/v1/transit/encrypt/k", json={"plaintext": base64.b64encode(b"hello").decode("ascii")}
+            "/v1/transit/encrypt/k",
+            json={"plaintext": base64.b64encode(b"hello").decode("ascii")},
         )
 
     async def test_success_str(self) -> None:
@@ -267,9 +268,7 @@ class TestRotate:
             version = await cipher.rotate()
         assert version == 7
         assert "rotated" in caplog.text
-        mock_client.post.assert_awaited_once_with(
-            "/v1/transit/keys/k/rotate", json={}
-        )
+        mock_client.post.assert_awaited_once_with("/v1/transit/keys/k/rotate", json={})
         mock_client.get.assert_awaited_once_with("/v1/transit/keys/k")
 
     async def test_network_error_on_rotate(self) -> None:

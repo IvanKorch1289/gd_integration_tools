@@ -8,6 +8,7 @@ Provides web scraping capabilities within DSL routes:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import Any
 
@@ -15,7 +16,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("ScrapeProcessor", "PaginateProcessor", "ApiProxyProcessor")
+__all__ = ("ApiProxyProcessor", "PaginateProcessor", "ScrapeProcessor")
 
 _scrape_logger = logging.getLogger("dsl.scraping")
 
@@ -81,9 +82,13 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     import random
 
     headers = {
-        "User-Agent": random.choice(_USER_AGENTS),  # noqa: S311  # stealth header rotation, не криптография
+        "User-Agent": random.choice(  # noqa: S311  # non-cryptographic use
+            _USER_AGENTS
+        ),  # stealth header rotation, не криптография
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": random.choice(_ACCEPT_LANGUAGES),  # noqa: S311  # stealth header rotation, не криптография
+        "Accept-Language": random.choice(  # noqa: S311  # non-cryptographic use
+            _ACCEPT_LANGUAGES
+        ),  # stealth header rotation, не криптография
         "Accept-Encoding": "gzip, deflate, br",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
@@ -98,7 +103,9 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     import asyncio
     import random
 
-    await asyncio.sleep(min_s + random.random() * (max_s - min_s))  # noqa: S311  # rate-limit jitter, не криптография
+    await asyncio.sleep(
+        min_s + random.random() * (max_s - min_s)  # noqa: S311  # non-cryptographic use
+    )  # rate-limit jitter, не криптография
 
 
 class ScrapeProcessor(BaseProcessor):
@@ -125,6 +132,7 @@ class ScrapeProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Scrape HTML and extract structured data via CSS selectors."""
         url = self._url
         if self._url_property:
             url = exchange.properties.get(self._url_property, url)
@@ -211,6 +219,7 @@ class PaginateProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Crawl multiple pages and collect items."""
         from src.backend.infrastructure.clients.transport.http import HttpClient
 
         url = self._start_url
@@ -336,14 +345,13 @@ class ApiProxyProcessor(BaseProcessor):
         self._timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Forward exchange to external API with optional transformation."""
         from src.backend.infrastructure.clients.transport.http import HttpClient
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):
-            try:
+            with contextlib.suppress(KeyError, IndexError):
                 path = path.format(**exchange.in_message.body)
-            except KeyError, IndexError:
-                pass
 
         url = f"{self._base_url}{path}"
 

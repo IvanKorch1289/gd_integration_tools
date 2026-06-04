@@ -19,11 +19,11 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = (
-    "ProcessorMiddleware",
-    "TimeoutMiddleware",
     "ErrorNormalizerMiddleware",
     "MetricsMiddleware",
     "MiddlewareChain",
+    "ProcessorMiddleware",
+    "TimeoutMiddleware",
 )
 
 logger = logging.getLogger(__name__)
@@ -179,10 +179,8 @@ class MiddlewareChain:
                 )
             else:
                 await processor.process(exchange, context)
-        except asyncio.TimeoutError:
-            error = asyncio.TimeoutError(
-                f"Processor '{name}' timed out after {timeout}s"
-            )
+        except TimeoutError:
+            error = TimeoutError(f"Processor '{name}' timed out after {timeout}s")
             raise
         except Exception as exc:
             error = exc

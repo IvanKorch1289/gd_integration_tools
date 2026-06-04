@@ -29,9 +29,7 @@ class DummyProcessor(BaseProcessor):
         super().__init__(name="dummy")
         self.calls = 0
 
-    async def process(
-        self, exchange: Exchange[Any], context: Any
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
         self.calls += 1
         # Double the body value
         if isinstance(exchange.in_message.body, int):
@@ -70,9 +68,7 @@ class TestComposedMessageProcessorProcess:
             ]
 
         def aggregator(parts: list[Exchange[Any]]) -> Exchange[Any]:
-            total = sum(
-                p.out_message.body or p.in_message.body for p in parts
-            )
+            total = sum(p.out_message.body or p.in_message.body for p in parts)
             return Exchange(in_message=Message(body=total))
 
         proc = ComposedMessageProcessor(splitter, [DummyProcessor()], aggregator)
@@ -138,9 +134,7 @@ class TestComposedMessageProcessorProcess:
             return [1, 2, 3]
 
         def aggregator(parts: list[Exchange[Any]]) -> Exchange[Any]:
-            total = sum(
-                p.out_message.body or p.in_message.body for p in parts
-            )
+            total = sum(p.out_message.body or p.in_message.body for p in parts)
             return Exchange(in_message=Message(body=total))
 
         proc = ComposedMessageProcessor(splitter, [DummyProcessor()], aggregator)

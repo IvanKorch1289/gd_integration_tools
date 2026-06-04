@@ -1,53 +1,86 @@
-"""Тесты build_cache_key (Wave 3)."""
-
-# ruff: noqa: S101
+"""Tests for src.backend.core.utils.cache_keys."""
 
 from __future__ import annotations
+
+import pytest
 
 from src.backend.core.utils.cache_keys import build_cache_key
 
 
-def test_cache_key_stable_for_different_kwarg_order() -> None:
-    """Разный порядок kwargs даёт одинаковый ключ."""
+@pytest.mark.unit
+class TestBuildCacheKey:
+    """Tests for build_cache_key utility."""
 
-    async def dummy(a: int, b: str) -> str:
-        return f"{a}-{b}"
+    @pytest.mark.asyncio
+    async def test_basic_key_generation(self) -> None:
+        async def sample_func(a: int, b: str) -> str:
+            return f"{a}-{b}"
 
-    key1 = build_cache_key(dummy, (1,), {"b": "x", "a": 2})
-    key2 = build_cache_key(dummy, (1,), {"a": 2, "b": "x"})
-    assert key1 == key2
+        key1 = build_cache_key(sample_func, (1,), {"b": "test"})
+        key2 = build_cache_key(sample_func, (1,), {"b": "test"})
+        assert key1 == key2
+        assert key1.startswith("cache:")
 
+    @pytest.mark.unit
+    def test_different_args_produce_different_keys(self) -> None:
+        async def sample_func(a: int, b: str) -> str:
+            return f"{a}-{b}"
 
-def test_cache_key_different_for_different_args() -> None:
-    """Разные аргументы дают разные ключи."""
+        key1 = build_cache_key(sample_func, (1,), {"b": "test"})
+        key2 = build_cache_key(sample_func, (2,), {"b": "test"})
+        assert key1 != key2
 
-    async def dummy(a: int) -> int:
-        return a
+    @pytest.mark.unit
+    def test_different_kwargs_produce_different_keys(self) -> None:
+        async def sample_func(a: int, b: str) -> str:
+            return f"{a}-{b}"
 
-    key1 = build_cache_key(dummy, (1,), {})
-    key2 = build_cache_key(dummy, (2,), {})
-    assert key1 != key2
+        key1 = build_cache_key(sample_func, (1,), {"b": "test"})
+        key2 = build_cache_key(sample_func, (1,), {"b": "other"})
+        assert key1 != key2
 
+    @pytest.mark.unit
+    def test_custom_prefix(self) -> None:
+        async def sample_func() -> None:
+            pass
 
-def test_cache_key_includes_module_and_name() -> None:
-    """Ключ включает module и name функции."""
+        key = build_cache_key(sample_func, (), {}, prefix="custom")
+        assert key.startswith("custom:")
 
-    async def dummy() -> None:
-        pass
+    @pytest.mark.unit
+    def test_exclude_self_removes_first_arg(self) -> None:
+        async def sample_func(self_ref: object, a: int) -> int:
+            return a
 
-    key = build_cache_key(dummy, (), {})
-    assert key.startswith("cache:")
-    assert len(key) == 70  # "cache:" (6) + sha256 hex (64)
+        key_with_self = build_cache_key(
+            sample_func, ("self", 1), {}, exclude_self=False
+        )
+        key_without_self = build_cache_key(
+            sample_func, ("self", 1), {}, exclude_self=True
+        )
+        assert key_with_self != key_without_self
 
+        # Verify exclude_self=True matches call without first arg
+        key_no_first = build_cache_key(sample_func, (1,), {}, exclude_self=False)
+        assert key_without_self == key_no_first
 
-def test_cache_key_exclude_self() -> None:
-    """exclude_self убирает первый аргумент из ключа."""
+    @pytest.mark.unit
+    def test_kwargs_order_independence(self) -> None:
+        async def sample_func(a: int, b: str, c: float) -> None:
+            pass
 
-    class Foo:
-        async def method(self, x: int) -> int:
-            return x
+        key1 = build_cache_key(sample_func, (), {"a": 1, "b": "x", "c": 1.0})
+        key2 = build_cache_key(sample_func, (), {"c": 1.0, "a": 1, "b": "x"})
+        assert key1 == key2
 
-    foo = Foo()
-    key_with = build_cache_key(foo.method, (foo, 1), {}, exclude_self=False)
-    key_without = build_cache_key(foo.method, (foo, 1), {}, exclude_self=True)
-    assert key_with != key_without
+    @pytest.mark.unit
+    def test_different_functions_different_keys(self) -> None:
+        async def func_a() -> None:
+            pass
+
+        async def func_b() -> None:
+            pass
+
+        key1 = build_cache_key(func_a, (), {})
+        key2 = build_cache_key(func_b, (), {})
+        assert key1 != key2

@@ -43,9 +43,7 @@ async def test_distance_moscow_spb() -> None:
 @pytest.mark.asyncio
 async def test_skipped_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "proc_geo", False)
-    proc = GeoProcessor(
-        mode="distance", point_a=(0, 0), point_b=(1, 1), to="body.x"
-    )
+    proc = GeoProcessor(mode="distance", point_a=(0, 0), point_b=(1, 1), to="body.x")
     ex = _ex()
     await proc.process(ex, AsyncMock())
     assert ex.properties.get("geo_status") == "skipped"

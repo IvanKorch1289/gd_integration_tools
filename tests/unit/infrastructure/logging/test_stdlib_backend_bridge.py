@@ -38,7 +38,9 @@ def test_stdlib_logger_supports_exc_info(backend: StdlibLoggingBackend) -> None:
         logger.error("Ошибка: %s", "msg", exc_info=True)
 
 
-def test_get_logger_uses_legacy_manager_for_known_names(backend: StdlibLoggingBackend) -> None:
+def test_get_logger_uses_legacy_manager_for_known_names(
+    backend: StdlibLoggingBackend,
+) -> None:
     """Для известных имён get_logger должен вернуть logger из LoggerManager."""
     logger = backend.get_logger("database")
     # inner должен быть тем же объектом, что и legacy db_logger.

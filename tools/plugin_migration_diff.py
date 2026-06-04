@@ -45,11 +45,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
-__all__ = (
-    "MigrationDiff",
-    "MigrationDiffer",
-    "render_guide",
-)
+__all__ = ("MigrationDiff", "MigrationDiffer", "render_guide")
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 _TEMPLATE_NAME = "plugin_migration_guide.md.j2"
@@ -71,10 +67,7 @@ class MigrationDiffer:
     """Алгоритм сравнения двух ``plugin.toml``-структур."""
 
     def diff(
-        self,
-        plugin: str,
-        old_toml: Mapping[str, Any],
-        new_toml: Mapping[str, Any],
+        self, plugin: str, old_toml: Mapping[str, Any], new_toml: Mapping[str, Any]
     ) -> MigrationDiff:
         """Главный entry-point.
 
@@ -108,8 +101,12 @@ class MigrationDiffer:
     def _diff_capabilities(
         old_toml: Mapping[str, Any], new_toml: Mapping[str, Any]
     ) -> dict[str, Any]:
-        old_caps = {(c.get("name"), c.get("scope")) for c in old_toml.get("capabilities", [])}
-        new_caps = {(c.get("name"), c.get("scope")) for c in new_toml.get("capabilities", [])}
+        old_caps = {
+            (c.get("name"), c.get("scope")) for c in old_toml.get("capabilities", [])
+        }
+        new_caps = {
+            (c.get("name"), c.get("scope")) for c in new_toml.get("capabilities", [])
+        }
         old_names = {n for n, _ in old_caps}
         new_names = {n for n, _ in new_caps}
         added_names = new_names - old_names
@@ -124,8 +121,10 @@ class MigrationDiffer:
                 scope_changed.append(
                     {
                         "name": name,
-                        "old_scope": ",".join(sorted(s or "" for s in old_scopes)) or None,
-                        "new_scope": ",".join(sorted(s or "" for s in new_scopes)) or None,
+                        "old_scope": ",".join(sorted(s or "" for s in old_scopes))
+                        or None,
+                        "new_scope": ",".join(sorted(s or "" for s in new_scopes))
+                        or None,
                     }
                 )
 
@@ -143,7 +142,14 @@ class MigrationDiffer:
         removed: dict[str, list[str]] = {}
         old = old_toml.get("provides", {}) or {}
         new = new_toml.get("provides", {}) or {}
-        for kind in ("actions", "processors", "repositories", "sources", "sinks", "schemas"):
+        for kind in (
+            "actions",
+            "processors",
+            "repositories",
+            "sources",
+            "sinks",
+            "schemas",
+        ):
             old_set = set(old.get(kind, ()) or ())
             new_set = set(new.get(kind, ()) or ())
             added_kind = sorted(new_set - old_set)
@@ -171,14 +177,23 @@ class MigrationDiffer:
             # Эвристика: если новый spec включает старый (по строке) → расширение.
             widening = str(old_set).count(",") > str(new_set).count(",")
             narrowing = not widening
-        return {"old": old_spec, "new": new_spec, "widening": widening, "narrowing": narrowing}
+        return {
+            "old": old_spec,
+            "new": new_spec,
+            "widening": widening,
+            "narrowing": narrowing,
+        }
 
     @staticmethod
     def _diff_requires_plugins(
         old_toml: Mapping[str, Any], new_toml: Mapping[str, Any]
     ) -> dict[str, Any]:
-        old_section = (old_toml.get("compatibility") or {}).get("requires_plugins", {}) or {}
-        new_section = (new_toml.get("compatibility") or {}).get("requires_plugins", {}) or {}
+        old_section = (old_toml.get("compatibility") or {}).get(
+            "requires_plugins", {}
+        ) or {}
+        new_section = (new_toml.get("compatibility") or {}).get(
+            "requires_plugins", {}
+        ) or {}
         added: dict[str, str] = {}
         removed: dict[str, str] = {}
         changed: dict[str, dict[str, str]] = {}
@@ -200,7 +215,9 @@ class MigrationDiffer:
             "capabilities_removed": len(caps["removed"]),
             "capabilities_changed": len(caps["scope_changed"]),
             "provides_added": sum(len(v) for v in payload["provides_added"].values()),
-            "provides_removed": sum(len(v) for v in payload["provides_removed"].values()),
+            "provides_removed": sum(
+                len(v) for v in payload["provides_removed"].values()
+            ),
             "requires_added": len(payload["requires_plugins"]["added"]),
             "requires_removed": len(payload["requires_plugins"]["removed"]),
             "requires_changed": len(payload["requires_plugins"]["changed"]),
@@ -293,14 +310,21 @@ def main(argv: list[str] | None = None) -> int:
         "--to-toml", type=Path, default=None, help="Путь к новой версии plugin.toml"
     )
     parser.add_argument(
-        "--from-ref", default=None, help="git revision со старой версией (extensions/<plugin>/plugin.toml)"
+        "--from-ref",
+        default=None,
+        help="git revision со старой версией (extensions/<plugin>/plugin.toml)",
     )
     parser.add_argument("--to-ref", default=None, help="git revision с новой версией")
     parser.add_argument(
-        "--out-file", type=Path, default=None, help="Куда писать markdown (default — stdout)."
+        "--out-file",
+        type=Path,
+        default=None,
+        help="Куда писать markdown (default — stdout).",
     )
     parser.add_argument(
-        "--json", action="store_true", help="Печатать структурированный JSON вместо markdown."
+        "--json",
+        action="store_true",
+        help="Печатать структурированный JSON вместо markdown.",
     )
     args = parser.parse_args(argv)
 

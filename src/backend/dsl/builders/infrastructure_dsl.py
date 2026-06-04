@@ -64,9 +64,7 @@ class _InfraOp(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         return {self.op_name: dict(self.params)}
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Stub: real wiring в lifespan через DI-фасады. Records intent only."""
         exchange.set_property(f"{self.op_name}_pending", dict(self.params))
 

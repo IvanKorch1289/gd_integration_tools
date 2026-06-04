@@ -8,4 +8,4 @@
 from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
 from src.backend.infrastructure.policy.opa import OPAClient, PolicyDecision
 
-__all__ = ("OPAClient", "PolicyDecision", "CasbinAdapter")
+__all__ = ("CasbinAdapter", "OPAClient", "PolicyDecision")

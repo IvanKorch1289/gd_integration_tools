@@ -61,7 +61,7 @@ GOLD_SET_TEMPLATES: list[str] = [
     "ИП {fullname} имеет ИНН {inn12} и СНИЛС {snils}.",
     "По договору №{caseno}/К сумма выплаты составила сумма_рублей.",
     "Email клиента: {email}, телефон: +7 999 {phone_suffix}.",
-    "Юридическое лицо ООО \"Ромашка\", ИНН {inn10}, КПП XXXXXXXXX.",
+    'Юридическое лицо ООО "Ромашка", ИНН {inn10}, КПП XXXXXXXXX.',
     "Заёмщик {fullname} (паспорт {pass_series} {pass_number}) подал заявление.",
     "Сумма по ссудному счёту по кредитному делу №{caseno} составила N руб.",
     "{fullname} проживает в Москве по адресу ул. Тверская, д. 1.",
@@ -74,7 +74,7 @@ GOLD_SET_TEMPLATES: list[str] = [
     "В рамках программы ипотеки клиент {fullname} оформил договор {caseno}.",
     "ИНН {inn10} зарегистрирован на {fullname}, СНИЛС {snils}.",
     "По автокредиту КД №{caseno} начислены проценты.",
-    "Запрос от ООО \"Альфа\" (ИНН {inn10}) обработан.",
+    'Запрос от ООО "Альфа" (ИНН {inn10}) обработан.',
     "Паспорт {pass_series} {pass_number}, владелец — {fullname}.",
     "Договор №КД-{caseno}-2024 на сумму N руб. оформлен.",
     "{fullname}, e-mail: {email}, обратился с заявлением.",
@@ -194,7 +194,9 @@ def _expected_from_filled(text: str) -> list[tuple[str, str]]:
         expected.append(("PASSPORT_RU", f"{m.group(1)} {m.group(2)}"))
     # Кредитное дело
     for case in VALID_CASENO:
-        if case in text and ("КД" in text or "кредит" in text.lower() or "договор" in text.lower()):
+        if case in text and (
+            "КД" in text or "кредит" in text.lower() or "договор" in text.lower()
+        ):
             expected.append(("CREDIT_CASE_RU", case))
             break
     return expected
@@ -219,9 +221,7 @@ def _run_presidio_on_docs(docs: Sequence[GoldDoc]) -> list[set[tuple[str, str]]]
 
     adapter = get_presidio_sanitizer_adapter()
     if not adapter.available:
-        logger.warning(
-            "Presidio engine недоступен — выполните `make pii-bootstrap`"
-        )
+        logger.warning("Presidio engine недоступен — выполните `make pii-bootstrap`")
         return [set() for _ in docs]
 
     per_doc: list[set[tuple[str, str]]] = []
@@ -263,12 +263,16 @@ def _precision_recall(
 
     precision = total_true_positive / total_found if total_found else 0.0
     recall = total_true_positive / total_expected if total_expected else 0.0
-    return precision, recall, {
-        "total_expected": total_expected,
-        "total_found": total_found,
-        "true_positive": total_true_positive,
-        "per_entity": breakdown,
-    }
+    return (
+        precision,
+        recall,
+        {
+            "total_expected": total_expected,
+            "total_found": total_found,
+            "true_positive": total_true_positive,
+            "per_entity": breakdown,
+        },
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -283,7 +287,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     docs = _build_gold_set(mode=args.mode, seed=args.seed)
-    logger.info("PII audit — mode=%s, docs=%d, threshold=%.2f", args.mode, len(docs), args.threshold)
+    logger.info(
+        "PII audit — mode=%s, docs=%d, threshold=%.2f",
+        args.mode,
+        len(docs),
+        args.threshold,
+    )
 
     found_per_doc = _run_presidio_on_docs(docs)
     precision, recall, stats = _precision_recall(docs, found_per_doc)
@@ -298,14 +307,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     if args.report is not None:
         args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        args.report.write_text(
+            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         logger.info("report → %s", args.report)
 
     logger.info("precision=%.3f recall=%.3f", precision, recall)
     if precision < args.threshold or recall < args.threshold:
         logger.error(
             "PII audit FAILED: precision=%.3f recall=%.3f (threshold=%.2f)",
-            precision, recall, args.threshold,
+            precision,
+            recall,
+            args.threshold,
         )
         return 1
     logger.info("PII audit OK")

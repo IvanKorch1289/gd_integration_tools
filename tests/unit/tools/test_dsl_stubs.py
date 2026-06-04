@@ -52,9 +52,7 @@ def test_render_stub_contains_class_and_methods() -> None:
 
 def test_generate_stub_for_route_builder() -> None:
     content = gds.generate_stub(
-        "src.backend.dsl.builders.base",
-        "RouteBuilder",
-        Path("/tmp/route_builder.pyi"),
+        "src.backend.dsl.builders.base", "RouteBuilder", Path("/tmp/route_builder.pyi")
     )
     assert "class RouteBuilder:" in content
     # Поле public-методов содержит как минимум один метод с глаголом-действием.

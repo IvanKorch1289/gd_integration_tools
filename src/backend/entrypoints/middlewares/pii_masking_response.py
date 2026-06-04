@@ -92,18 +92,20 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
         body = await self._capture_body(response)
         try:
             masked = self._mask_json_bytes(body)
-        except Exception as exc:  # noqa: BLE001 — masking best-effort
+        except Exception as exc:
             _logger.warning(
                 "PIIMaskingResponseMiddleware: ошибка маскировки %s, payload "
                 "пропущен без изменений: %s",
                 request.url.path,
                 exc,
             )
-            response.body_iterator = AsyncChunkIterator([body])
+            body_iter: Any = response
+            body_iter.body_iterator = AsyncChunkIterator([body])
             return response
 
         response.headers["content-length"] = str(len(masked))
-        response.body_iterator = AsyncChunkIterator([masked])
+        body_iter = response
+        body_iter.body_iterator = AsyncChunkIterator([masked])
         return response
 
     # ----------------------------------------------------------------- helpers
@@ -112,12 +114,12 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
     def _is_enabled() -> bool:
         """Lazy-проверка feature-flag ``pii_response_middleware_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False)
             )
-        except Exception as _:  # noqa: BLE001 — best-effort
+        except Exception as _:
             return False
 
     def _path_matches(self, path: str) -> bool:
@@ -129,7 +131,7 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
     @staticmethod
     def _mask_json_bytes(raw: bytes) -> bytes:
         """Парсит JSON, применяет :meth:`PIIMasker.mask_dict`, сериализует обратно."""
-        import orjson  # noqa: PLC0415 — heavy import lazy
+        import orjson
 
         text = raw.decode("utf-8")
         data: Any = orjson.loads(text)

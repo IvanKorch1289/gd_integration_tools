@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
     from src.backend.infrastructure.clients.external.express_bot import ExpressBotClient
 
-__all__ = ("resolve_value", "get_express_client", "log_outgoing_message")
+__all__ = ("get_express_client", "log_outgoing_message", "resolve_value")
 
 
 async def log_outgoing_message(
@@ -52,7 +52,7 @@ async def log_outgoing_message(
             bubble=bubble,
             keyboard=keyboard,
         )
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         # Best-effort логирование; ошибки Mongo не критичны.
         return
 

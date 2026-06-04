@@ -37,7 +37,9 @@ class _CounterProcessor(BaseProcessor):
                 "cost_usd": self.cost_per_iter,
                 "tokens_prompt": self.tokens_per_iter // 2,
                 "tokens_completion": self.tokens_per_iter // 2,
-                "structured": {"done": self.stop_after is not None and n >= self.stop_after},
+                "structured": {
+                    "done": self.stop_after is not None and n >= self.stop_after
+                },
             },
         )
 
@@ -59,17 +61,14 @@ def test_init_validates_max_iterations_positive() -> None:
 
 @pytest.mark.asyncio
 async def test_loop_stops_by_max_iterations(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
 
     ex: Exchange[Any] = Exchange()
-    proc = AgentLoopProcessor(
-        processors=[_CounterProcessor()], max_iterations=3
-    )
+    proc = AgentLoopProcessor(processors=[_CounterProcessor()], max_iterations=3)
     await proc.process(ex, context)
 
     assert ex.get_property("counter") == 3
@@ -79,8 +78,7 @@ async def test_loop_stops_by_max_iterations(
 
 @pytest.mark.asyncio
 async def test_loop_stops_by_condition(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -101,8 +99,7 @@ async def test_loop_stops_by_condition(
 
 @pytest.mark.asyncio
 async def test_loop_stops_by_cost_budget(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -122,8 +119,7 @@ async def test_loop_stops_by_cost_budget(
 
 @pytest.mark.asyncio
 async def test_loop_stops_by_tokens_budget(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -143,8 +139,7 @@ async def test_loop_stops_by_tokens_budget(
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 

@@ -63,10 +63,7 @@ class TestDataclasses:
     def test_rpa_call_context_with_data(self) -> None:
         payload = {"key": "value"}
         ctx = RPACallContext(
-            transport="webhook",
-            tenant_id="t1",
-            route_id="r1",
-            payload=payload,
+            transport="webhook", tenant_id="t1", route_id="r1", payload=payload
         )
         assert ctx.payload == {"key": "value"}
 
@@ -171,9 +168,7 @@ class TestCallEnabled:
         return RPACallPolicy("test", max_attempts=3)
 
     @pytest.mark.asyncio
-    async def test_breaker_open_raises(
-        self, enabled_policy: RPACallPolicy
-    ) -> None:
+    async def test_breaker_open_raises(self, enabled_policy: RPACallPolicy) -> None:
         breaker = _BreakerLike(is_open=lambda: True)
         p = RPACallPolicy("test", breaker=breaker)
 
@@ -181,6 +176,7 @@ class TestCallEnabled:
             "src.backend.core.resilience.rpa_policy.feature_flags"
         ) as mock_flags:
             mock_flags.rpa_resilience_wrapper_enabled = True
+
             async def factory() -> str:
                 return "should-not-reach"
 
@@ -188,9 +184,7 @@ class TestCallEnabled:
                 await p.call(factory, transport="cdc")
 
     @pytest.mark.asyncio
-    async def test_success_no_retry(
-        self, enabled_policy: RPACallPolicy
-    ) -> None:
+    async def test_success_no_retry(self, enabled_policy: RPACallPolicy) -> None:
         calls = 0
 
         async def factory() -> str:
@@ -207,9 +201,7 @@ class TestCallEnabled:
             assert calls == 1
 
     @pytest.mark.asyncio
-    async def test_retry_then_success(
-        self, enabled_policy: RPACallPolicy
-    ) -> None:
+    async def test_retry_then_success(self, enabled_policy: RPACallPolicy) -> None:
         calls = 0
 
         async def factory() -> str:
@@ -250,13 +242,9 @@ class TestCallEnabled:
             "src.backend.core.resilience.rpa_policy.feature_flags"
         ) as mock_flags:
             mock_flags.rpa_resilience_wrapper_enabled = True
-            with patch(
-                "src.backend.core.resilience.rpa_policy.asyncio.sleep"
-            ):
+            with patch("src.backend.core.resilience.rpa_policy.asyncio.sleep"):
                 with pytest.raises(RPACallExhausted):
-                    await p.call(
-                        factory, transport="cdc", payload={"x": 1}
-                    )
+                    await p.call(factory, transport="cdc", payload={"x": 1})
                 assert calls == 2
                 # DLQ write called once
                 assert writer.write.call_count == 1
@@ -278,8 +266,10 @@ class TestCallEnabled:
 
         writer = AsyncMock()
         p = RPACallPolicy(
-            "test", max_attempts=5, dlq_writer=writer,
-            retryable_exceptions=(ConnectionError,)
+            "test",
+            max_attempts=5,
+            dlq_writer=writer,
+            retryable_exceptions=(ConnectionError,),
         )
 
         with patch(
@@ -422,10 +412,7 @@ class TestSendToDlq:
         writer = AsyncMock()
         p = RPACallPolicy("test", dlq_writer=writer)
         ctx = RPACallContext(
-            transport="webhook",
-            tenant_id="t1",
-            route_id="r1",
-            payload={"key": "val"},
+            transport="webhook", tenant_id="t1", route_id="r1", payload={"key": "val"}
         )
         ctx.last_error = ValueError("oops")
         ctx.attempts = 3

@@ -15,9 +15,7 @@ class TestAIRequest:
 
     def test_minimal_construction(self) -> None:
         """Only required fields are workflow_id, tenant_id, correlation_id."""
-        req = AIRequest(
-            workflow_id="wf1", tenant_id="t1", correlation_id="c1"
-        )
+        req = AIRequest(workflow_id="wf1", tenant_id="t1", correlation_id="c1")
         assert req.workflow_id == "wf1"
         assert req.tenant_id == "t1"
         assert req.correlation_id == "c1"
@@ -89,5 +87,3 @@ class TestAIResponse:
         resp = AIResponse(content="x")
         with pytest.raises(AttributeError):
             resp.content = "y"  # type: ignore[misc]
-
-

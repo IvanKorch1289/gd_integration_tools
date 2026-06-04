@@ -42,7 +42,7 @@ async def register_ai_2026_providers() -> None:
                 app.state.local_fs_model_registry = model_registry
             register_provider("llm_gateway", "litellm", gateway)
             register_provider("model_registry", "local_fs", model_registry)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LiteLLMGateway registration skipped: %s", exc)
 
     try:
@@ -61,7 +61,7 @@ async def register_ai_2026_providers() -> None:
                 )
 
                 l2_qdrant = get_vector_store()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("L2 qdrant client injection skipped: %s", exc)
             try:
                 from src.backend.services.ai.embedding_providers import (
@@ -69,7 +69,7 @@ async def register_ai_2026_providers() -> None:
                 )
 
                 l2_embedder = get_embedding_provider()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("L2 embedder injection skipped: %s", exc)
 
         bus = RagInvalidationBus(channel=rag_cache_settings.invalidation_channel)
@@ -93,7 +93,7 @@ async def register_ai_2026_providers() -> None:
             app.state.three_tier_rag_cache = cache
             app.state.rag_invalidation_bus = bus
         register_provider("rag_cache", "three_tier", cache)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("ThreeTierRagCache registration skipped: %s", exc)
 
     if bge_settings.enabled:
@@ -124,7 +124,7 @@ async def register_ai_2026_providers() -> None:
                     use_fp16=bge_settings.use_fp16,
                 ),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("BGE registration skipped: %s", exc)
 
     if langmem_settings.enabled:
@@ -135,7 +135,7 @@ async def register_ai_2026_providers() -> None:
             if app is not None:
                 app.state.langmem_service = service
             register_provider("memory", "langmem", service)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LangMemService registration skipped: %s", exc)
 
     # ─── PII Tokenizer (Wave S25 W4, ADR-0068) ───
@@ -158,7 +158,7 @@ async def register_ai_2026_providers() -> None:
                 while True:
                     try:
                         await tokenizer.cleanup_expired(ttl_s=3600)
-                    except Exception as cleanup_exc:  # noqa: BLE001
+                    except Exception as cleanup_exc:
                         logger.debug(
                             "pii_tokenizer cleanup tick failed: %s", cleanup_exc
                         )
@@ -169,9 +169,9 @@ async def register_ai_2026_providers() -> None:
                 task_registry.create_task(
                     _pii_tokenizer_cleanup_loop(), name="pii-tokenizer-cleanup"
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("pii_tokenizer cleanup loop registration skipped: %s", exc)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("PIITokenizer registration skipped: %s", exc)
 
     try:
@@ -188,9 +188,9 @@ async def register_ai_2026_providers() -> None:
             register_class = getattr(preg, "register_class", None)
             if register_class is not None:
                 register_class("token_stream_llm", TokenStreamLLMProcessor)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("TokenStreamLLM processor registration skipped: %s", exc)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("TokenStreamLLM import skipped: %s", exc)
 
     logger.info("AI 2026 providers registered (default-disabled flags respected)")

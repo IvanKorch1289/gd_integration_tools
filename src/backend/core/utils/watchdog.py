@@ -37,7 +37,7 @@ class Watchdog:
         """Выполняет ``coro`` с deadline-cancel'ом."""
         try:
             return await asyncio.wait_for(coro, timeout=self.deadline_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _logger.warning(
                 "watchdog.deadline_exceeded",
                 extra={
@@ -57,5 +57,5 @@ class Watchdog:
             sentry_sdk.capture_message(
                 f"Watchdog deadline exceeded: {self.name}", level="warning"
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return

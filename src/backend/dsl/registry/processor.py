@@ -176,7 +176,8 @@ class ProcessorRegistry:
                 return self._by_fqn[preferred_fqn]
 
             candidates = sorted(
-                spec for fqn, spec in self._by_fqn.items() if spec.name == name
+                (spec for fqn, spec in self._by_fqn.items() if spec.name == name),
+                key=lambda s: s.fqn,
             )
             if not candidates:
                 raise ProcessorNotFoundError(

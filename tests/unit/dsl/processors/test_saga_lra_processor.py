@@ -108,9 +108,7 @@ class TestSagaLRAInit:
         assert p.name == "custom-saga"
 
     def test_init_default_name_includes_step_count(self) -> None:
-        p = SagaLRAProcessor(
-            steps=[{"name": "a", "action": lambda e, c: None}]
-        )
+        p = SagaLRAProcessor(steps=[{"name": "a", "action": lambda e, c: None}])
         assert "1 steps" in p.name
 
     def test_init_invalid_timeout_raises(self) -> None:
@@ -154,10 +152,7 @@ class TestSagaLRAInit:
 
     def test_init_default_step_names_assigned(self) -> None:
         p = SagaLRAProcessor(
-            steps=[
-                {"action": lambda e, c: None},
-                {"action": lambda e, c: None},
-            ]
+            steps=[{"action": lambda e, c: None}, {"action": lambda e, c: None}]
         )
         assert p._steps[0]["name"] == "step_0"
         assert p._steps[1]["name"] == "step_1"
@@ -194,10 +189,7 @@ class TestSagaLRAHappyPath:
         a1 = _identity_async("a1")
         a2 = _identity_async("a2")
         p = SagaLRAProcessor(
-            steps=[
-                {"name": "a1", "action": a1},
-                {"name": "a2", "action": a2},
-            ]
+            steps=[{"name": "a1", "action": a1}, {"name": "a2", "action": a2}]
         )
         ex = _make_exchange()
         await p.process(ex, _make_context())
@@ -228,10 +220,7 @@ class TestSagaLRAHappyPath:
             transitions.append((old, new))
 
         a1 = _identity("a1")
-        p = SagaLRAProcessor(
-            steps=[{"name": "a1", "action": a1}],
-            on_state_change=_cb,
-        )
+        p = SagaLRAProcessor(steps=[{"name": "a1", "action": a1}], on_state_change=_cb)
         ex = _make_exchange()
         await p.process(ex, _make_context())
         # Should see: (None/empty -> running), (running -> completed)
@@ -270,8 +259,9 @@ class TestSagaLRAFailure:
         assert ex.get_property("saga_state") == STATE_COMPENSATED
         assert ex.get_property("saga_failed_step") == "a2"
         assert ex.get_property("saga_completed_steps") == ["a1"]
-        assert ex.get_property("saga_compensations_run") == ["c1"] or \
-            ex.get_property("saga_compensations_run") == ["a1"]
+        assert ex.get_property("saga_compensations_run") == ["c1"] or ex.get_property(
+            "saga_compensations_run"
+        ) == ["a1"]
 
     async def test_compensations_run_in_reverse_order(self) -> None:
         order: list[str] = []
@@ -281,19 +271,33 @@ class TestSagaLRAFailure:
         def make_action(n: str):
             def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
                 order.append(n)
+
             return _f
 
         def make_comp(n: str):
             def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
                 order.append(f"comp_{n}")
+
             return _f
 
         # a2 succeeds, a3 fails. Expect compensations: comp_a2, comp_a1.
         p = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": make_action("a1"), "compensation": make_comp("a1")},
-                {"name": "a2", "action": make_action("a2"), "compensation": make_comp("a2")},
-                {"name": "a3", "action": make_action("a3-fail"), "compensation": make_comp("a3")},
+                {
+                    "name": "a1",
+                    "action": make_action("a1"),
+                    "compensation": make_comp("a1"),
+                },
+                {
+                    "name": "a2",
+                    "action": make_action("a2"),
+                    "compensation": make_comp("a2"),
+                },
+                {
+                    "name": "a3",
+                    "action": make_action("a3-fail"),
+                    "compensation": make_comp("a3"),
+                },
             ]
         )
 
@@ -347,11 +351,7 @@ class TestSagaLRAFailure:
         a1 = _identity("a1")
         c1 = _identity("c1")
         c1_calls = c1.calls  # type: ignore[attr-defined]
-        p = SagaLRAProcessor(
-            steps=[
-                {"name": "a1", "action": a1, "compensation": c1},
-            ]
-        )
+        p = SagaLRAProcessor(steps=[{"name": "a1", "action": a1, "compensation": c1}])
         ex = _make_exchange()
         # Single-step saga, no failure → c1 not invoked.
         await p.process(ex, _make_context())
@@ -375,7 +375,7 @@ class TestSagaLRAFailure:
                     "name": "only",
                     "action": lambda e, c: (_ for _ in ()).throw(RuntimeError("boom")),
                     "compensation": lambda e, c: None,
-                },
+                }
             ]
         )
         ex = _make_exchange()
@@ -392,6 +392,7 @@ class TestSagaLRAFailure:
         def make_comp_fails():
             def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
                 raise RuntimeError("comp-boom")
+
             return _f
 
         p = SagaLRAProcessor(
@@ -403,9 +404,11 @@ class TestSagaLRAFailure:
                 },
                 {
                     "name": "a2",
-                    "action": lambda e, c: (_ for _ in ()).throw(RuntimeError("step-boom")),
+                    "action": lambda e, c: (_ for _ in ()).throw(
+                        RuntimeError("step-boom")
+                    ),
                 },
-            ],
+            ]
         )
         ex = _make_exchange()
         with pytest.raises(SagaCompensationError) as excinfo:
@@ -430,12 +433,18 @@ class TestSagaLRAFailure:
 
         p = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": lambda e, c: None, "compensation": comp_fails_a1},
+                {
+                    "name": "a1",
+                    "action": lambda e, c: None,
+                    "compensation": comp_fails_a1,
+                },
                 {"name": "a2", "action": lambda e, c: None, "compensation": comp_a2},
                 {"name": "a3", "action": lambda e, c: None, "compensation": comp_a3},
                 {
                     "name": "a4",
-                    "action": lambda e, c: (_ for _ in ()).throw(RuntimeError("step-boom")),
+                    "action": lambda e, c: (_ for _ in ()).throw(
+                        RuntimeError("step-boom")
+                    ),
                 },
             ],
             fail_fast=True,
@@ -472,7 +481,11 @@ class TestSagaLRAEdgeCases:
 
         p = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": lambda e, c: None, "compensation": lambda e, c: None},
+                {
+                    "name": "a1",
+                    "action": lambda e, c: None,
+                    "compensation": lambda e, c: None,
+                },
                 {"name": "a2", "action": fail_step, "compensation": lambda e, c: None},
             ]
         )
@@ -487,7 +500,7 @@ class TestSagaLRAEdgeCases:
 
         p = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": slow_action, "compensation": lambda e, c: None},
+                {"name": "a1", "action": slow_action, "compensation": lambda e, c: None}
             ],
             per_step_timeout_seconds=0.05,
         )
@@ -507,15 +520,8 @@ class TestSagaLRAEdgeCases:
 
         p = SagaLRAProcessor(
             steps=[
-                {
-                    "name": "a1",
-                    "action": slow_action,
-                    "compensation": comp,
-                },
-                {
-                    "name": "a2",
-                    "action": slow_action,
-                },
+                {"name": "a1", "action": slow_action, "compensation": comp},
+                {"name": "a2", "action": slow_action},
             ],
             timeout_seconds=0.15,  # less than 2 * 0.2
             per_step_timeout_seconds=None,
@@ -582,17 +588,12 @@ class TestSagaLRAConcurrency:
     async def test_concurrent_sagas_no_state_collision(self) -> None:
         a1 = _identity("a1")
         a1_b = _identity("a1_b")
-        p1 = SagaLRAProcessor(
-            steps=[{"name": "a1", "action": a1}],
-        )
-        p2 = SagaLRAProcessor(
-            steps=[{"name": "a1", "action": a1_b}],
-        )
+        p1 = SagaLRAProcessor(steps=[{"name": "a1", "action": a1}])
+        p2 = SagaLRAProcessor(steps=[{"name": "a1", "action": a1_b}])
         ex1 = _make_exchange()
         ex2 = _make_exchange()
         await asyncio.gather(
-            p1.process(ex1, _make_context()),
-            p2.process(ex2, _make_context()),
+            p1.process(ex1, _make_context()), p2.process(ex2, _make_context())
         )
         assert ex1.get_property("saga_state") == STATE_COMPLETED
         assert ex2.get_property("saga_state") == STATE_COMPLETED
@@ -606,22 +607,32 @@ class TestSagaLRAConcurrency:
         def make_comp(tag: str):
             def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
                 comp_calls.append(f"comp_{tag}")
+
             return _f
 
         def make_fail():
             def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
                 raise RuntimeError("boom")
+
             return _f
 
         p1 = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": lambda e, c: None, "compensation": make_comp("a")},
+                {
+                    "name": "a1",
+                    "action": lambda e, c: None,
+                    "compensation": make_comp("a"),
+                },
                 {"name": "a2", "action": make_fail()},
             ]
         )
         p2 = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": lambda e, c: None, "compensation": make_comp("b")},
+                {
+                    "name": "a1",
+                    "action": lambda e, c: None,
+                    "compensation": make_comp("b"),
+                },
                 {"name": "a2", "action": make_fail()},
             ]
         )
@@ -644,9 +655,13 @@ class TestSagaLRAToSpec:
     def test_to_spec_returns_dict(self) -> None:
         p = SagaLRAProcessor(
             steps=[
-                {"name": "a1", "action": lambda e, c: None, "compensation": lambda e, c: None},
+                {
+                    "name": "a1",
+                    "action": lambda e, c: None,
+                    "compensation": lambda e, c: None,
+                },
                 {"name": "a2", "action": lambda e, c: None},
-            ],
+            ]
         )
         spec = p.to_spec()
         assert spec is not None
@@ -684,9 +699,7 @@ class TestSagaLRAErrors:
         original = RuntimeError("step-boom")
         comp_exc = RuntimeError("comp-boom")
         err = SagaCompensationError(
-            "failed",
-            original_error=original,
-            compensation_errors=[("a1", comp_exc)],
+            "failed", original_error=original, compensation_errors=[("a1", comp_exc)]
         )
         assert err.original_error is original
         assert err.compensation_errors == [("a1", comp_exc)]

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -27,7 +27,7 @@ _TTL_SECONDS = 3600
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _doc_to_session(doc: dict[str, Any]) -> ExpressSession:
@@ -53,7 +53,7 @@ class MongoExpressSessionStore:
                 name="ttl_last_activity",
                 expireAfterSeconds=_TTL_SECONDS,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("MongoExpressSessionStore: ensure_indexes failed: %s", exc)
 
     async def create(
@@ -100,5 +100,5 @@ class MongoExpressSessionStore:
 
 
 @app_state_singleton("express_session_store", factory=MongoExpressSessionStore)
-def get_express_session_store() -> MongoExpressSessionStore:
+def get_express_session_store() -> MongoExpressSessionStore:  # type: ignore[empty-body]
     """Singleton ``MongoExpressSessionStore``."""

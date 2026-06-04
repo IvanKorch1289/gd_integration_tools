@@ -30,7 +30,9 @@ _sink_path = (
     _pl.Path(__file__).parent.parent.parent.parent.parent
     / "src/backend/infrastructure/sinks/nats_jetstream.py"
 )
-_spec = _ilu.spec_from_file_location("src.backend.infrastructure.sinks.nats_jetstream", _sink_path)
+_spec = _ilu.spec_from_file_location(
+    "src.backend.infrastructure.sinks.nats_jetstream", _sink_path
+)
 _mod = _ilu.module_from_spec(_spec)
 sys.modules.setdefault("src.backend.infrastructure.sinks.nats_jetstream", _mod)
 _spec.loader.exec_module(_mod)
@@ -119,7 +121,9 @@ async def test_sink_passes_headers(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     headers = {"X-Tenant": "bank1", "X-Source": "payment-api"}
 
-    result = await sink.publish("payments.processed", b'{"amount": 500}', headers=headers)
+    result = await sink.publish(
+        "payments.processed", b'{"amount": 500}', headers=headers
+    )
 
     assert result.ok is True
     # Проверяем что headers были переданы в js.publish()
@@ -150,8 +154,7 @@ async def test_sink_send_serializes_dict(monkeypatch: pytest.MonkeyPatch) -> Non
     _install_fake_nats(monkeypatch)
 
     sink = NATSJetStreamSink(
-        sink_id="events.nats_js",
-        default_subject="events.dispatched",
+        sink_id="events.nats_js", default_subject="events.dispatched"
     )
 
     result = await sink.send({"event": "order_created", "id": 7})
@@ -163,3 +166,81 @@ def test_sink_kind_is_nats_js() -> None:
     """NATSJetStreamSink.kind равен SinkKind.NATS_JS."""
     sink = NATSJetStreamSink(sink_id="s1")
     assert sink.kind == SinkKind.NATS_JS
+
+
+@pytest.mark.asyncio
+async def test_sink_send_without_default_subject_returns_error() -> None:
+    """send() без default_subject возвращает SinkResult(ok=False)."""
+    sink = NATSJetStreamSink(sink_id="s2")
+    result = await sink.send({"x": 1})
+    assert result.ok is False
+    assert "default_subject" in result.details["error"]
+
+
+@pytest.mark.asyncio
+async def test_sink_send_bytes_passthrough(monkeypatch: pytest.MonkeyPatch) -> None:
+    """send() с bytes не сериализует."""
+    nc = _install_fake_nats(monkeypatch)
+    sink = NATSJetStreamSink(sink_id="s3", default_subject="subj")
+    result = await sink.send(b"\x01\x02")
+    assert result.ok is True
+    js = nc.jetstream()
+    call_args = js.publish.call_args
+    assert call_args[0][1] == b"\x01\x02"
+
+
+@pytest.mark.asyncio
+async def test_sink_send_str_encodes_utf8(monkeypatch: pytest.MonkeyPatch) -> None:
+    """send() со строкой кодирует UTF-8."""
+    nc = _install_fake_nats(monkeypatch)
+    sink = NATSJetStreamSink(sink_id="s4", default_subject="subj")
+    result = await sink.send("hello")
+    assert result.ok is True
+    js = nc.jetstream()
+    call_args = js.publish.call_args
+    assert call_args[0][1] == b"hello"
+
+
+@pytest.mark.asyncio
+async def test_sink_publish_exception_returns_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """publish() при исключении возвращает SinkResult(ok=False)."""
+    _install_fake_nats(monkeypatch, raise_on_publish=RuntimeError("jetstream down"))
+    sink = NATSJetStreamSink(sink_id="s5", default_subject="subj")
+    result = await sink.send({"x": 1})
+    assert result.ok is False
+    assert "jetstream down" in result.details["error"]
+
+
+@pytest.mark.asyncio
+async def test_sink_health_false_when_nats_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """health возвращает False при отсутствии nats-py."""
+    monkeypatch.setitem(sys.modules, "nats", None)  # type: ignore[arg-type]
+    sink = NATSJetStreamSink(sink_id="s6")
+    assert await sink.health() is False
+
+
+@pytest.mark.asyncio
+async def test_sink_health_false_on_connect_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """health возвращает False при ошибке подключения."""
+    fake_nats = types.ModuleType("nats")
+    fake_nats.connect = AsyncMock(side_effect=OSError("nope"))
+    monkeypatch.setitem(sys.modules, "nats", fake_nats)
+    sink = NATSJetStreamSink(sink_id="s7")
+    assert await sink.health() is False
+
+
+@pytest.mark.asyncio
+async def test_sink_drain_exception_handled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Исключение в drain/close не прокидывается наружу."""
+    nc = _install_fake_nats(monkeypatch)
+    nc.drain = AsyncMock(side_effect=RuntimeError("drain fail"))
+    nc.close = AsyncMock(side_effect=RuntimeError("close fail"))
+    sink = NATSJetStreamSink(sink_id="s8", default_subject="subj")
+    result = await sink.publish("subj", b"data")
+    assert result.ok is True

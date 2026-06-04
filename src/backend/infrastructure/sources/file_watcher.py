@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
 from watchfiles import Change
 
@@ -141,7 +141,7 @@ class FileWatcherSource:
         Raises:
             asyncio.CancelledError: При отмене задачи (propagates наружу).
         """
-        from watchfiles import awatch as _awatch  # noqa: PLC0415
+        from watchfiles import awatch as _awatch
 
         _change_map: dict[Change, Literal["added", "modified", "deleted"]] = {
             Change.added: "added",

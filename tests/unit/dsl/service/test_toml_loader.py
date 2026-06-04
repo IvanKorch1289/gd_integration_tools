@@ -8,10 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.dsl.service.registry import (
-    ServiceDSLRegistry,
-    get_service_registry,
-)
+from src.backend.dsl.service.registry import ServiceDSLRegistry, get_service_registry
 from src.backend.dsl.service.toml_loader import (
     ServiceSpec,
     load_service_toml,

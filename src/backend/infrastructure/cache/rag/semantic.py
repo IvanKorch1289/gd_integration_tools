@@ -45,7 +45,7 @@ class L2SemanticRagCache:
             )
 
             self._client = get_vector_store()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("Qdrant client init failed: %s", exc)
             self._client = False
         return self._client
@@ -59,7 +59,7 @@ class L2SemanticRagCache:
             )
 
             self._embedder = get_embedding_provider()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L2 embedder lazy-init failed: %s", exc)
             self._embedder = False
         return self._embedder
@@ -70,7 +70,7 @@ class L2SemanticRagCache:
             return []
         try:
             result = await embedder.embed([text])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L2 embedder failed: %s", exc)
             return []
         return list(result[0]) if result else []
@@ -93,7 +93,7 @@ class L2SemanticRagCache:
             hits = await search(
                 collection=self._collection, vector=vector, limit=1, tenant=tenant
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L2 search failed: %s", exc)
             record_miss("l2")
             return None
@@ -111,7 +111,7 @@ class L2SemanticRagCache:
         if isinstance(raw, str):
             try:
                 return orjson.loads(raw)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 return raw
         return raw
 
@@ -140,7 +140,7 @@ class L2SemanticRagCache:
                     {"id": str(uuid.uuid4()), "vector": vector, "payload": payload}
                 ],
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L2 upsert failed: %s", exc)
 
     async def flush(self) -> int:
@@ -154,6 +154,6 @@ class L2SemanticRagCache:
         try:
             await recreate(collection=self._collection, vector_size=self._vector_size)
             return 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L2 flush failed: %s", exc)
             return 0

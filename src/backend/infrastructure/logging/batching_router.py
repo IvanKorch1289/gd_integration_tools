@@ -112,7 +112,7 @@ class BatchingSinkRouter:
                     for record in batch:
                         try:
                             await self._inner.dispatch(record)
-                        except Exception as _:  # noqa: BLE001 — изолируем sink-сбои
+                        except Exception as _:
                             _INTERNAL_LOG.exception("inner dispatch failed")
                 if self._closed and self._queue.empty():
                     return
@@ -125,7 +125,7 @@ class BatchingSinkRouter:
             first = await asyncio.wait_for(
                 self._queue.get(), timeout=self._flush_interval
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return []
         batch: list[dict[str, Any]] = [first]
         while len(batch) < self._batch_size:
@@ -141,7 +141,7 @@ class BatchingSinkRouter:
         if self._worker_task is not None:
             try:
                 await asyncio.wait_for(self._worker_task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._worker_task.cancel()
                 try:
                     await self._worker_task

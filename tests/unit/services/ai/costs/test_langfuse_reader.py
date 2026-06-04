@@ -57,7 +57,10 @@ async def test_reader_groups_by_route() -> None:
 @pytest.mark.asyncio
 async def test_reader_groups_by_provider() -> None:
     client = _FakeLfClient(
-        [_trace(provider="openai/x", cost=0.01), _trace(provider="anthropic/y", cost=0.02)]
+        [
+            _trace(provider="openai/x", cost=0.01),
+            _trace(provider="anthropic/y", cost=0.02),
+        ]
     )
     reader = LangFuseReader(client=client)
     rows = await reader.fetch_costs(group_by="provider", top_n=10)

@@ -17,13 +17,13 @@ import structlog
 
 __all__ = (
     "correlation_id_var",
-    "request_id_var",
-    "tenant_id_var",
-    "set_correlation_context",
     "get_correlation_id",
     "get_request_id",
     "get_tenant_id",
     "new_correlation_id",
+    "request_id_var",
+    "set_correlation_context",
+    "tenant_id_var",
 )
 
 correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="")

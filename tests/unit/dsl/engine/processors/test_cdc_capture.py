@@ -57,10 +57,7 @@ class TestCDCCaptureProcessorInit:
 
     def test_default_values(self) -> None:
         """Processor initializes with correct default values."""
-        processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-        )
+        processor = CDCCaptureProcessor(profile="oracle_prod", tables=["orders"])
         assert processor._profile == "oracle_prod"
         assert processor._tables == ["orders"]
         assert processor._strategy == "polling"
@@ -98,33 +95,23 @@ class TestCDCCaptureProcessorInit:
         """Processor raises ValueError for invalid strategy."""
         with pytest.raises(ValueError, match="strategy must be one of"):
             CDCCaptureProcessor(
-                profile="oracle_prod",
-                tables=["orders"],
-                strategy="invalid_strategy",
+                profile="oracle_prod", tables=["orders"], strategy="invalid_strategy"
             )
 
     def test_rejects_empty_tables(self) -> None:
         """Processor raises ValueError when tables list is empty."""
         with pytest.raises(ValueError, match="tables cannot be empty"):
-            CDCCaptureProcessor(
-                profile="oracle_prod",
-                tables=[],
-            )
+            CDCCaptureProcessor(profile="oracle_prod", tables=[])
 
     def test_name_auto_generated(self) -> None:
         """Processor auto-generates name from profile and strategy."""
-        processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-        )
+        processor = CDCCaptureProcessor(profile="oracle_prod", tables=["orders"])
         assert processor.name == "cdc_capture:oracle_prod:polling"
 
     def test_name_custom(self) -> None:
         """Processor accepts custom name."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-            name="my_custom_name",
+            profile="oracle_prod", tables=["orders"], name="my_custom_name"
         )
         assert processor.name == "my_custom_name"
 
@@ -139,10 +126,7 @@ class TestCDCCaptureProcessorToSpec:
 
     def test_to_spec_default(self) -> None:
         """to_spec returns correct spec with default values."""
-        processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-        )
+        processor = CDCCaptureProcessor(profile="oracle_prod", tables=["orders"])
         spec = processor.to_spec()
         assert spec == {
             "cdc_capture": {
@@ -189,9 +173,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_subscribes_on_first_call(self) -> None:
         """Processor creates CDC subscription on first process call."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-            strategy="polling",
+            profile="oracle_prod", tables=["orders"], strategy="polling"
         )
 
         mock_client = MagicMock()
@@ -222,9 +204,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_does_not_resubscribe(self) -> None:
         """Processor does not create new subscription on subsequent calls."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-            strategy="polling",
+            profile="oracle_prod", tables=["orders"], strategy="polling"
         )
         processor._subscription_id = "existing_sub_456"
 
@@ -273,9 +253,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_sets_out_message(self) -> None:
         """Processor sets out_message with status info."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-            strategy="polling",
+            profile="oracle_prod", tables=["orders"], strategy="polling"
         )
 
         mock_client = MagicMock()

@@ -16,7 +16,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-__all__ = ("RulesetDoc", "RuleEngineRepository")
+__all__ = ("RuleEngineRepository", "RulesetDoc")
 
 
 class RulesetDoc(BaseModel):

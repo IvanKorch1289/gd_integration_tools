@@ -14,4 +14,4 @@ from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
-__all__ = ("MemoryBackend", "RedisBackend", "KeyDBBackend")
+__all__ = ("KeyDBBackend", "MemoryBackend", "RedisBackend")

@@ -62,6 +62,7 @@ class TestFeatureFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # AuthFlags должен быть в MRO
         assert "AuthFlags" in mro_names
@@ -74,6 +75,7 @@ class TestAuthFlagsBackwardsCompat:
 
     def test_singleton_unchanged(self) -> None:
         from src.backend.core.config.features import feature_flags as ff
+
         assert ff is feature_flags  # same singleton
 
     def test_field_default_values(self) -> None:

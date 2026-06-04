@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -53,8 +53,8 @@ def compute_freshness(
     if ingested_at is None:
         return FreshnessLabel.EXPIRED
     if ingested_at.tzinfo is None:
-        ingested_at = ingested_at.replace(tzinfo=timezone.utc)
-    current = now or datetime.now(timezone.utc)
+        ingested_at = ingested_at.replace(tzinfo=UTC)
+    current = now or datetime.now(UTC)
     age_hours = (current - ingested_at).total_seconds() / 3600.0
     if age_hours < soft_hours:
         return FreshnessLabel.FRESH
@@ -154,9 +154,7 @@ def build_augment_result(
         distribution[label.value] += 1
 
         if max_staleness_hours is not None and ingested_dt is not None:
-            age_hours = (
-                datetime.now(timezone.utc) - ingested_dt
-            ).total_seconds() / 3600.0
+            age_hours = (datetime.now(UTC) - ingested_dt).total_seconds() / 3600.0
             if age_hours > max_staleness_hours:
                 skipped += 1
                 continue

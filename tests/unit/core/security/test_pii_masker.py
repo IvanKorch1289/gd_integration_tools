@@ -86,11 +86,7 @@ def test_mask_text_iban() -> None:
 def test_mask_dict_nested_recurses_all_strings() -> None:
     masker = PIIMasker()
     data = {
-        "user": {
-            "email": "user@example.com",
-            "phone": "+7 999 1234567",
-            "age": 30,
-        },
+        "user": {"email": "user@example.com", "phone": "+7 999 1234567", "age": 30},
         "comment": "обычный текст без PII",
     }
     masked = masker.mask_dict(data)
@@ -108,7 +104,7 @@ def test_mask_dict_list_of_dicts() -> None:
         "users": [
             {"email": "a@x.io", "name": "Анна"},
             {"email": "b@y.io", "name": "Борис"},
-        ],
+        ]
     }
     masked = masker.mask_dict(data)
     assert masked["users"][0]["email"] == "***"
@@ -187,10 +183,7 @@ def test_empty_text_passthrough() -> None:
     assert masker.mask_text("") == ""
 
 
-@pytest.mark.parametrize(
-    "value",
-    [42, 3.14, True, None],
-)
+@pytest.mark.parametrize("value", [42, 3.14, True, None])
 def test_mask_dict_non_string_scalars_unchanged(value: object) -> None:
     masker = PIIMasker()
     data = {"v": value}

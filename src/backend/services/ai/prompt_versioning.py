@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
@@ -51,7 +51,7 @@ class PromptVersion:
     parameters: dict[str, Any] = field(default_factory=dict)
     is_active: bool = False
     metrics: dict[str, float] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     created_by: str | None = None
 
     def to_dict(self) -> dict[str, Any]:

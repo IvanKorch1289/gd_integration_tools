@@ -34,7 +34,7 @@ import logging
 import time
 from typing import Any
 
-__all__ = ("ClickHouseBulkWriter", "BulkWriterStats")
+__all__ = ("BulkWriterStats", "ClickHouseBulkWriter")
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +97,7 @@ class ClickHouseBulkWriter:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._run(), name=f"chbulk-{self._table}"
@@ -126,7 +124,7 @@ class ClickHouseBulkWriter:
         if self._task is not None:
             try:
                 await asyncio.wait_for(self._task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._task.cancel()
                 with _suppress_cancel():
                     await self._task
@@ -137,7 +135,7 @@ class ClickHouseBulkWriter:
         while not self._stop.is_set():
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=self._flush_interval)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass  # timer triggered → flush
             await self._drain_and_insert()
 
@@ -166,7 +164,7 @@ class ClickHouseBulkWriter:
             if self._on_failure is not None:
                 try:
                     await self._on_failure(batch, exc)
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     logger.exception("clickhouse_bulk.on_failure_callback_raised")
             return 0
 

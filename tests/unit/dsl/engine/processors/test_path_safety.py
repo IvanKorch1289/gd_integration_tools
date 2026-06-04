@@ -49,7 +49,9 @@ class TestValidatePath:
         with pytest.raises(PathTraversalError, match="outside allowed"):
             validate_path("/etc/passwd")
 
-    def test_custom_allowed_prefix_via_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_custom_allowed_prefix_via_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("DSL_ALLOWED_PATHS", "/custom/path")
         result = validate_path("/custom/path/file.txt")
         assert result.endswith("custom/path/file.txt")

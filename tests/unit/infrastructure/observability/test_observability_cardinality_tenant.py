@@ -39,21 +39,13 @@ class TestTenantIdInDefaultLabels:
         """MetricsRegistry.counter форсирует tenant_id label при использовании."""
         # Изолированный registry чтобы не конфликтовать с глобальным.
         reg = MetricsRegistry(registry=CollectorRegistry())
-        counter = reg.counter(
-            "test_requests_total",
-            "Test counter",
-            labels=("status",),
-        )
+        counter = reg.counter("test_requests_total", "Test counter", labels=("status",))
         # .labels() без tenant_id → ошибка cardinality (PartialFnLabels).
         with pytest.raises(ValueError):
             counter.labels(status="200")
         # С полным набором — OK.
         counter.labels(
-            tenant_id="acme",
-            route_id="r1",
-            component="api",
-            env="test",
-            status="200",
+            tenant_id="acme", route_id="r1", component="api", env="test", status="200"
         ).inc()
 
 

@@ -27,9 +27,7 @@ def _reset_context() -> Any:
 
 
 def _build_context(
-    *,
-    deny: tuple[str, ...] = (),
-    audit: Any = None,
+    *, deny: tuple[str, ...] = (), audit: Any = None
 ) -> CapabilityContext:
     """Сконструировать тестовый CapabilityContext с mock-gate.
 
@@ -48,10 +46,7 @@ def _build_context(
 
     gate.check.side_effect = _check
     return CapabilityContext(
-        plugin_name="test-plugin",
-        gate=gate,
-        scope=None,
-        audit=audit,
+        plugin_name="test-plugin", gate=gate, scope=None, audit=audit
     )
 
 
@@ -106,9 +101,7 @@ def test_audit_event_emitted_on_deny(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(CapabilityDeniedError):
         asyncio.run(my_activity())
 
-    assert any(
-        ev.get("event") == "activity.capability.denied" for ev in audit_events
-    )
+    assert any(ev.get("event") == "activity.capability.denied" for ev in audit_events)
 
 
 def test_disabled_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:

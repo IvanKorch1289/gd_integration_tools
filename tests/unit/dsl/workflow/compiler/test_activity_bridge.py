@@ -8,11 +8,14 @@
 * :meth:`ActivityBridge.decorate` — идемпотентен (повторный вызов не дублирует
   декораторы).
 """
+
 from __future__ import annotations
 
 import pytest  # noqa: S101
 
-pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
+pytest.importorskip(
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+)
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.activity_bridge import (
@@ -57,10 +60,7 @@ def test_activity_bridge_creates_new_wrapper_per_action_id() -> None:
 def test_collect_activities_skips_duplicates_across_workflows() -> None:
     bridge = ActivityBridge()
     decl1 = (
-        WorkflowBuilder("wf.a")
-        .activity("foo.shared")
-        .activity("foo.unique_a")
-        .build()
+        WorkflowBuilder("wf.a").activity("foo.shared").activity("foo.unique_a").build()
     )
     decl2 = (
         WorkflowBuilder("wf.b")

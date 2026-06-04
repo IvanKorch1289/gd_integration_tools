@@ -37,10 +37,7 @@ class TestTenantAwareIdentifier:
         assert tenant_aware_identifier(scope) == "tenant:acme"
 
     def test_user_id_fallback(self) -> None:
-        scope = {
-            "headers": [(b"x-user-id", b"alice")],
-            "client": ("1.2.3.4", 0),
-        }
+        scope = {"headers": [(b"x-user-id", b"alice")], "client": ("1.2.3.4", 0)}
         assert tenant_aware_identifier(scope) == "user:alice"
 
     def test_ip_fallback(self) -> None:
@@ -70,9 +67,7 @@ class _FakeRedis:
 class TestRedisRateLimitChecker:
     async def test_allow_within_limit(self) -> None:
         redis = _FakeRedis()
-        checker = RedisRateLimitChecker(
-            redis, max_per_window=3, window_seconds=60.0
-        )
+        checker = RedisRateLimitChecker(redis, max_per_window=3, window_seconds=60.0)
         allowed, remaining, retry_after = await checker.check("user:1")
         assert allowed is True
         assert remaining == 2  # 3 - 1
@@ -81,9 +76,7 @@ class TestRedisRateLimitChecker:
 
     async def test_deny_when_exhausted(self) -> None:
         redis = _FakeRedis()
-        checker = RedisRateLimitChecker(
-            redis, max_per_window=2, window_seconds=60.0
-        )
+        checker = RedisRateLimitChecker(redis, max_per_window=2, window_seconds=60.0)
         await checker.check("user:1")
         await checker.check("user:1")
         allowed, remaining, retry_after = await checker.check("user:1")
@@ -94,9 +87,7 @@ class TestRedisRateLimitChecker:
     async def test_redis_failure_is_fail_open(self) -> None:
         """Защитный fallback: ошибка Redis → pass-through (не SPoF)."""
         redis = _FakeRedis(fail=True)
-        checker = RedisRateLimitChecker(
-            redis, max_per_window=2, window_seconds=60.0
-        )
+        checker = RedisRateLimitChecker(redis, max_per_window=2, window_seconds=60.0)
         allowed, remaining, retry_after = await checker.check("user:1")
         assert allowed is True
         assert retry_after == 0
@@ -140,9 +131,7 @@ class TestPerRouteOverride:
     """advisor pt 3 pattern: longest-prefix-match среди route_checkers."""
 
     async def test_route_specific_checker_used(self) -> None:
-        global_ck = FakeRateLimitChecker(
-            max_per_window=100, window_seconds=60.0
-        )
+        global_ck = FakeRateLimitChecker(max_per_window=100, window_seconds=60.0)
         # heavy_ck — лимит 1 запрос/окно (быстро исчерпается).
         heavy_ck = FakeRateLimitChecker(max_per_window=1, window_seconds=60.0)
         app = _RecordingApp()
@@ -163,9 +152,7 @@ class TestPerRouteOverride:
 
     async def test_global_fallback_on_path_miss(self) -> None:
         global_ck = FakeRateLimitChecker(max_per_window=1, window_seconds=60.0)
-        heavy_ck = FakeRateLimitChecker(
-            max_per_window=100, window_seconds=60.0
-        )
+        heavy_ck = FakeRateLimitChecker(max_per_window=100, window_seconds=60.0)
         app = _RecordingApp()
         mw = GlobalRateLimitMiddleware(
             app,
@@ -192,10 +179,7 @@ class TestPerRouteOverride:
             app,
             checker=global_ck,
             feature_enabled=lambda: True,
-            route_checkers={
-                "/api": broad_ck,
-                "/api/v1/heavy": specific_ck,
-            },
+            route_checkers={"/api": broad_ck, "/api/v1/heavy": specific_ck},
         )
         # /api/v1/heavy/x должен match'нуть specific (longest prefix).
         await mw(_scope("/api/v1/heavy/x"), _empty_receive, _CollectingSend())
@@ -212,9 +196,7 @@ class TestFeatureFlagDefaultOff:
     async def test_pass_through_when_flag_off(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(
-            feature_flags, "multi_tenant_rate_limit_enabled", False
-        )
+        monkeypatch.setattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
         # feature_enabled=None → читает flag через default
         global_ck = FakeRateLimitChecker(max_per_window=1, window_seconds=60.0)
         app = _RecordingApp()

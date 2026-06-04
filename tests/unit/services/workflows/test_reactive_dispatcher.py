@@ -40,8 +40,7 @@ def bus_mock() -> Any:
 @pytest.mark.asyncio
 async def test_register_and_subscribe(facade_mock: Any, bus_mock: Any) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
         workflow_id="wf-1",
@@ -56,14 +55,11 @@ async def test_event_triggers_workflow_no_debounce(
     facade_mock: Any, bus_mock: Any
 ) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
         workflow_id="wf-1",
-        trigger=ReactiveTrigger(
-            channel="events.orders.created", debounce_seconds=0
-        ),
+        trigger=ReactiveTrigger(channel="events.orders.created", debounce_seconds=0),
     )
     await dispatcher.start()
     handler = bus_mock._handlers["events.orders.created"][0]
@@ -77,14 +73,11 @@ async def test_debounce_collapses_multiple_events(
     facade_mock: Any, bus_mock: Any
 ) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
         workflow_id="wf-debounce",
-        trigger=ReactiveTrigger(
-            channel="events.orders.created", debounce_seconds=1
-        ),
+        trigger=ReactiveTrigger(channel="events.orders.created", debounce_seconds=1),
     )
     await dispatcher.start()
     handler = bus_mock._handlers["events.orders.created"][0]
@@ -100,8 +93,7 @@ async def test_debounce_collapses_multiple_events(
 @pytest.mark.asyncio
 async def test_filter_blocks_event(facade_mock: Any, bus_mock: Any) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
         workflow_id="wf-filter",
@@ -131,16 +123,12 @@ async def test_dedup_via_redis(facade_mock: Any, bus_mock: Any) -> None:
 
     redis.set = AsyncMock(side_effect=fake_set)
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
-        redis_client=redis,
+        workflow_facade=facade_mock, event_bus=bus_mock, redis_client=redis
     )
     dispatcher.register_trigger(
         workflow_id="wf-dedup",
         trigger=ReactiveTrigger(
-            channel="events.orders.created",
-            dedup_key="order_id",
-            debounce_seconds=0,
+            channel="events.orders.created", dedup_key="order_id", debounce_seconds=0
         ),
     )
     await dispatcher.start()
@@ -153,20 +141,15 @@ async def test_dedup_via_redis(facade_mock: Any, bus_mock: Any) -> None:
 
 
 @pytest.mark.asyncio
-async def test_multiple_triggers_same_channel(
-    facade_mock: Any, bus_mock: Any
-) -> None:
+async def test_multiple_triggers_same_channel(facade_mock: Any, bus_mock: Any) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
-        "wf-a",
-        ReactiveTrigger(channel="events.shared", debounce_seconds=0),
+        "wf-a", ReactiveTrigger(channel="events.shared", debounce_seconds=0)
     )
     dispatcher.register_trigger(
-        "wf-b",
-        ReactiveTrigger(channel="events.shared", debounce_seconds=0),
+        "wf-b", ReactiveTrigger(channel="events.shared", debounce_seconds=0)
     )
     await dispatcher.start()
     handler = bus_mock._handlers["events.shared"][0]
@@ -180,12 +163,10 @@ async def test_graceful_shutdown_cancels_pending(
     facade_mock: Any, bus_mock: Any
 ) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
-        "wf-slow",
-        ReactiveTrigger(channel="events.x", debounce_seconds=5),
+        "wf-slow", ReactiveTrigger(channel="events.x", debounce_seconds=5)
     )
     await dispatcher.start()
     handler = bus_mock._handlers["events.x"][0]
@@ -197,19 +178,14 @@ async def test_graceful_shutdown_cancels_pending(
 
 
 @pytest.mark.asyncio
-async def test_invalid_filter_blocks_event(
-    facade_mock: Any, bus_mock: Any
-) -> None:
+async def test_invalid_filter_blocks_event(facade_mock: Any, bus_mock: Any) -> None:
     dispatcher = ReactiveWorkflowDispatcher(
-        workflow_facade=facade_mock,
-        event_bus=bus_mock,
+        workflow_facade=facade_mock, event_bus=bus_mock
     )
     dispatcher.register_trigger(
         "wf-invalid",
         ReactiveTrigger(
-            channel="events.x",
-            filter_expr="this.is.not.valid",
-            debounce_seconds=0,
+            channel="events.x", filter_expr="this.is.not.valid", debounce_seconds=0
         ),
     )
     await dispatcher.start()

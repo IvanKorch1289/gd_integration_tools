@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.services.ai.agents_pydantic.base import BasePydanticAgent
 
-__all__ = ("EchoResult", "EchoAgent")
+__all__ = ("EchoAgent", "EchoResult")
 
 
 class EchoResult(BaseModel):

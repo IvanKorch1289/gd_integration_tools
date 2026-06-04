@@ -41,7 +41,7 @@ def register_feedback_cron(
                 result.prompt_version,
                 result.elapsed_seconds,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception("ai_feedback_dspy_nightly job failed: %s", exc)
 
     job_id = "ai_feedback_dspy_nightly"

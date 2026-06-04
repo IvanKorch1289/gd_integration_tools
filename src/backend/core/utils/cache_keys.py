@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 
 def build_cache_key(

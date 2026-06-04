@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Sequence, Type
+from collections.abc import Sequence
+from typing import Any
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Params
@@ -100,8 +101,8 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
         def __init__(
             self,
-            model: Type[ConcreteTable],  # type: ignore
-            main_class: Type[AbstractRepository],
+            model: type[ConcreteTable],  # type: ignore
+            main_class: type[AbstractRepository],
             load_joined_models: bool = False,
         ):
             self.model = model
@@ -161,12 +162,11 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
                         result.scalars().unique().all()
                     )
                     return objects if objects else []
-                else:
-                    # Возвращаем один объект
-                    obj: ConcreteTable | None = result.scalars().first()  # type: ignore
-                    return obj if obj else {}
+                # Возвращаем один объект
+                obj: ConcreteTable | None = result.scalars().first()  # type: ignore
+                return obj if obj else {}
 
-            elif self.load_joined_models:
+            if self.load_joined_models:
                 # Если объект не в сессии, добавляем его
                 if query_or_object not in session:
                     session.add(query_or_object)
@@ -239,7 +239,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             return result.scalars().all()
 
     def __init__(
-        self, model: Type[ConcreteTable] = None, load_joined_models: bool = False
+        self, model: type[ConcreteTable] = None, load_joined_models: bool = False
     ):
         self.model = model
         self.load_joined_models = load_joined_models
@@ -471,8 +471,8 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
 
 async def get_repository_for_model(
-    model: Type[BaseModel],
-) -> Type[SQLAlchemyRepository]:
+    model: type[BaseModel],
+) -> type[SQLAlchemyRepository]:
     """
     Возвращает класс репозитория для указанной модели.
 
@@ -488,6 +488,4 @@ async def get_repository_for_model(
         )
         return getattr(repository_module, repository_name)  # Получаем класс репозитория
     except (ImportError, AttributeError) as exc:
-        raise ValueError(
-            f"Репозиторий для модели {model.__name__} не найден: {str(exc)}"
-        )
+        raise ValueError(f"Репозиторий для модели {model.__name__} не найден: {exc!s}")

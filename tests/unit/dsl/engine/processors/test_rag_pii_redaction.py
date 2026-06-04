@@ -54,7 +54,9 @@ def test_mask_augment_result_covers_documents_and_citations() -> None:
 
 
 @pytest.mark.asyncio
-async def test_processor_passthrough_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_processor_passthrough_when_flag_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """При ``rag_pii_retrieval_mask=False`` payload остаётся без изменений."""
     from src.backend.core.config import features as features_module
 

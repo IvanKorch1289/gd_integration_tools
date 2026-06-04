@@ -206,7 +206,7 @@ class MiddlewareRegistry:
         for ep in eps:
             try:
                 target = ep.load()
-            except Exception as exc:  # noqa: BLE001 - external code
+            except Exception as exc:
                 raise ValueError(
                     f"entry_point '{group}:{ep.name}' load failed: {exc}"
                 ) from exc

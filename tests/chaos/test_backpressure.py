@@ -79,9 +79,7 @@ async def test_streaming_controller_pauses_consumers() -> None:
     """
     from unittest.mock import AsyncMock, patch
 
-    from src.backend.core.resilience.backpressure import (
-        StreamingBackpressureController,
-    )
+    from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
     controller = StreamingBackpressureController(
         high_watermark=0.85, low_watermark=0.5, check_interval_s=0.1
@@ -127,7 +125,5 @@ async def test_adaptive_stream_reader_reduces_count_at_spike() -> None:
         counts.append(new_count)
 
     # При росте utilization batch должен снижаться к концу
-    assert counts[-1] < counts[0], (
-        f"AdaptiveReader не снизил batch при spike: {counts}"
-    )
+    assert counts[-1] < counts[0], f"AdaptiveReader не снизил batch при spike: {counts}"
     assert counts[-1] >= 1  # не ниже min_count

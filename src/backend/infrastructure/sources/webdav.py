@@ -17,8 +17,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 from src.backend.infrastructure.sources.file_watcher import FileEvent
 
@@ -90,7 +90,7 @@ class WebDAVSource:
             self._processed_files = {
                 line.strip() for line in content.splitlines() if line.strip()
             }
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             # Marker не существует — first run.
             self._processed_files = set()
 
@@ -105,14 +105,14 @@ class WebDAVSource:
             client.upload_fileobj(
                 buf, self._config.processed_marker_path, overwrite=True
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception("WebDAVSource._save_marker failed")
 
     def _list_remote_files(self, client) -> list[str]:
         try:
             items = client.ls(self._config.watch_path, detail=False)
             return [str(p) for p in items]
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception("WebDAVSource._list_remote_files failed")
             return []
 

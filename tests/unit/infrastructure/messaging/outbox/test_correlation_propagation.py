@@ -31,22 +31,16 @@ def _session() -> MagicMock:
 @pytest.fixture(autouse=True)
 def _reset_correlation_var() -> object:
     """Изолировать correlation_id_var между тестами."""
-    from src.backend.infrastructure.observability.correlation import (
-        correlation_id_var,
-    )
+    from src.backend.infrastructure.observability.correlation import correlation_id_var
 
     token = correlation_id_var.set("")
     yield
     correlation_id_var.reset(token)
 
 
-async def test_enqueue_injects_correlation_id_from_context(
-    _session: MagicMock,
-) -> None:
+async def test_enqueue_injects_correlation_id_from_context(_session: MagicMock) -> None:
     """Если RequestContext имеет correlation_id, он попадает в headers."""
-    from src.backend.infrastructure.observability.correlation import (
-        correlation_id_var,
-    )
+    from src.backend.infrastructure.observability.correlation import correlation_id_var
 
     correlation_id_var.set("test-correlation-abc123")
 
@@ -56,21 +50,15 @@ async def test_enqueue_injects_correlation_id_from_context(
     assert msg.headers["correlation_id"] == "test-correlation-abc123"
 
 
-async def test_enqueue_explicit_header_overrides_context(
-    _session: MagicMock,
-) -> None:
+async def test_enqueue_explicit_header_overrides_context(_session: MagicMock) -> None:
     """Явный correlation_id в headers побеждает значение из RequestContext."""
-    from src.backend.infrastructure.observability.correlation import (
-        correlation_id_var,
-    )
+    from src.backend.infrastructure.observability.correlation import correlation_id_var
 
     correlation_id_var.set("from-context")
 
     repo = OutboxRepository(_session)
     msg = await repo.enqueue(
-        topic="orders.created",
-        payload={},
-        headers={"correlation_id": "explicit-cid"},
+        topic="orders.created", payload={}, headers={"correlation_id": "explicit-cid"}
     )
 
     assert msg.headers["correlation_id"] == "explicit-cid"
@@ -88,9 +76,7 @@ async def test_enqueue_without_context_yields_no_correlation_id(
 
 async def test_enqueue_preserves_other_headers(_session: MagicMock) -> None:
     """Прочие headers (tenant_id, custom) сохраняются вместе с cid."""
-    from src.backend.infrastructure.observability.correlation import (
-        correlation_id_var,
-    )
+    from src.backend.infrastructure.observability.correlation import correlation_id_var
 
     correlation_id_var.set("test-cid")
 

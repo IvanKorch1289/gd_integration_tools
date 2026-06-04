@@ -43,10 +43,7 @@ def builder() -> RouteBuilder:
 
 def _make_exchange(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange:
     """Construct an Exchange with the given body for processor tests."""
-    return Exchange(
-        in_message=Message(body=body, headers=headers or {}),
-        properties={},
-    )
+    return Exchange(in_message=Message(body=body, headers=headers or {}), properties={})
 
 
 def _run(coro: Any) -> Any:
@@ -114,7 +111,9 @@ class TestEnrich:
             _run(b._processors[-1].process(ex, context=MagicMock()))
         assert ex.properties["remote"] == {"id": 7, "name": "alice"}
 
-    def test_enrich_http_non_json_falls_back_to_raw(self, builder: RouteBuilder) -> None:
+    def test_enrich_http_non_json_falls_back_to_raw(
+        self, builder: RouteBuilder
+    ) -> None:
         b = builder.content_enrich(
             strategy="http", field="raw_body", source="https://api.test/text"
         )
@@ -229,13 +228,17 @@ class TestRecipientList:
         _run(b._processors[-1].process(ex, context=MagicMock()))
         assert ex.properties["_recipients"] == []
 
-    def test_recipient_list_callable_returning_none(self, builder: RouteBuilder) -> None:
+    def test_recipient_list_callable_returning_none(
+        self, builder: RouteBuilder
+    ) -> None:
         b = builder.recipient_list(lambda _exch: None)
         ex = _make_exchange(body={})
         _run(b._processors[-1].process(ex, context=MagicMock()))
         assert ex.properties["_recipients"] == []
 
-    def test_recipient_list_callable_returning_empty(self, builder: RouteBuilder) -> None:
+    def test_recipient_list_callable_returning_empty(
+        self, builder: RouteBuilder
+    ) -> None:
         b = builder.recipient_list(lambda _exch: [])
         ex = _make_exchange(body={})
         _run(b._processors[-1].process(ex, context=MagicMock()))
@@ -289,14 +292,18 @@ class TestEdgeCases:
         assert _resolve("v=${exchange.present}", ex) == "v=1"
 
     def test_enrich_field_name_defaults(self, builder: RouteBuilder) -> None:
-        b = builder.content_enrich(strategy="static", field="enrichment", value={"x": 1})
+        b = builder.content_enrich(
+            strategy="static", field="enrichment", value={"x": 1}
+        )
         last = b._processors[-1]
         assert last.field == "enrichment"
         assert last.strategy == "static"
 
     def test_processor_to_spec_is_none_or_dict(self, builder: RouteBuilder) -> None:
         """BaseProcessor.to_spec default returns None — processors don't override."""
-        p = builder.content_enrich(strategy="static", field="x", value={1: 2})._processors[-1]
+        p = builder.content_enrich(
+            strategy="static", field="x", value={1: 2}
+        )._processors[-1]
         # Default BaseProcessor.to_spec returns None; we don't require spec round-trip.
         assert p.to_spec() is None
 

@@ -23,7 +23,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 
-__all__ = ("EmailReplyChannel", "EmailNotifier")
+__all__ = ("EmailNotifier", "EmailReplyChannel")
 
 logger = logging.getLogger("messaging.invocation_replies.email")
 
@@ -106,7 +106,7 @@ class EmailReplyChannel(InvocationReplyChannel):
                 body=body,
                 metadata={"invocation_id": response.invocation_id},
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             logger.exception(
                 "EmailReplyChannel.send failed (invocation_id=%s, recipient=%s)",
                 response.invocation_id,
@@ -139,7 +139,7 @@ class EmailReplyChannel(InvocationReplyChannel):
             if not from_address:
                 return None
             return EmailAdapter(from_address=str(from_address))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
 
@@ -154,5 +154,5 @@ def _format_body(response: InvocationResponse) -> str:
         head = f"Status: {response.status.value.upper()}\n\n"
     try:
         return head + json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return head + repr(response)

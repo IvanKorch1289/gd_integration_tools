@@ -24,7 +24,6 @@ class TestSanitizationResult:
 
     def test_restore(self) -> None:
         res = SanitizationResult(
-            sanitized_text="Hello <NAME>",
-            replacements={"<NAME>": "World"},
+            sanitized_text="Hello <NAME>", replacements={"<NAME>": "World"}
         )
         assert res.restore("Hello <NAME>") == "Hello World"

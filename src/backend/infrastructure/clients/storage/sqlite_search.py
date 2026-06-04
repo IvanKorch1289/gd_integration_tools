@@ -54,12 +54,9 @@ class SqliteFTS5Search:
         body = json.dumps(document, ensure_ascii=False, default=str)
         # Имя таблицы валидируется в _ensure_index регуляркой — S608 false positive.
         async with aiosqlite.connect(self._path) as db:
+            await db.execute(f"DELETE FROM {table} WHERE doc_id = ?", (doc_id,))  # noqa: S608  # internal query with controlled parameters
             await db.execute(
-                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608
-                (doc_id,),
-            )
-            await db.execute(
-                f"INSERT INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608
+                f"INSERT INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608  # internal query with controlled parameters
                 (doc_id, body),
             )
             await db.commit()
@@ -84,7 +81,7 @@ class SqliteFTS5Search:
         table = await self._ensure_index(index)
         match = self._build_match(query)
         # Имя таблицы валидируется в _ensure_index — S608 false positive.
-        sql = f"SELECT doc_id, body FROM {table}"  # noqa: S608
+        sql = f"SELECT doc_id, body FROM {table}"  # noqa: S608  # internal query with controlled parameters
         params: list[Any] = []
         if match:
             sql += f" WHERE {table} MATCH ?"
@@ -105,7 +102,7 @@ class SqliteFTS5Search:
     ) -> dict[str, Any]:
         table = await self._ensure_index(index)
         match = self._build_match(query) if query else ""
-        sql = f"SELECT COUNT(*) FROM {table}"  # noqa: S608
+        sql = f"SELECT COUNT(*) FROM {table}"  # noqa: S608  # internal query with controlled parameters
         params: list[Any] = []
         if match:
             sql += f" WHERE {table} MATCH ?"
@@ -137,7 +134,7 @@ class SqliteFTS5Search:
         table = await self._ensure_index(index)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608
+                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608  # internal query with controlled parameters
                 (doc_id,),
             )
             await db.commit()

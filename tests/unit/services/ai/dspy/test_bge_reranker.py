@@ -107,9 +107,7 @@ def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> N
 
     captured: list[str] = []
     monkeypatch.setattr(
-        mod,
-        "_record_reranker_fallback",
-        lambda *, reason: captured.append(reason),
+        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason)
     )
 
     # Эмулируем отсутствие FlagEmbedding через builtins.__import__.
@@ -153,9 +151,7 @@ def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        mod,
-        "_record_reranker_fallback",
-        lambda *, reason: captured.append(reason),
+        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason)
     )
 
     class _FailingReranker:

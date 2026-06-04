@@ -9,11 +9,14 @@
 * Применённый ``@workflow.defn`` обнаруживается через
   ``__temporal_workflow_definition``.
 """
+
 from __future__ import annotations
 
 import pytest  # noqa: S101
 
-pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
+pytest.importorskip(
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+)
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.emitter import (
@@ -93,11 +96,7 @@ def test_signal_names_deduplicated() -> None:
 
 
 def test_signal_handler_attached_as_attribute() -> None:
-    decl = (
-        WorkflowBuilder("hitl.attr")
-        .wait_for_signal("manager_approve")
-        .build()
-    )
+    decl = WorkflowBuilder("hitl.attr").wait_for_signal("manager_approve").build()
     compiled = compile_workflow(decl)
     # _signal_attr_name заменяет '.' и '-' на '_' и префиксует _on_signal_.
     handler = getattr(compiled.cls, "_on_signal_manager_approve", None)

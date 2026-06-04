@@ -22,37 +22,44 @@ st_execution_context: st.SearchStrategy[object] = st.none()
 
 # Arbitrary keyword-argument dicts (for processors that accept kwargs)
 st_kwargs: st.SearchStrategy[dict[str, object]] = st.dictionaries(
-    keys=st.text(min_size=1, max_size=32, alphabet=st.characters(min_codepoint=97, max_codepoint=122)),
+    keys=st.text(
+        min_size=1,
+        max_size=32,
+        alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+    ),
     values=st.one_of(st.none(), st.booleans(), st.integers(), st.text(max_size=64)),
     max_size=8,
 )
 
 # Processor name (one of the known processors)
-st_processor_name: st.SearchStrategy[str] = st.sampled_from([
-    "PromptComposerProcessor",
-    "LLMCallProcessor",
-    "TokenBudgetProcessor",
-    "VectorSearchProcessor",
-    "RagQueryProcessor",
-    "SanitizePIIProcessor",
-    "CacheProcessor",
-    "GuardrailsProcessor",
-    "SemanticRouterProcessor",
-])
+st_processor_name: st.SearchStrategy[str] = st.sampled_from(
+    [
+        "PromptComposerProcessor",
+        "LLMCallProcessor",
+        "TokenBudgetProcessor",
+        "VectorSearchProcessor",
+        "RagQueryProcessor",
+        "SanitizePIIProcessor",
+        "CacheProcessor",
+        "GuardrailsProcessor",
+        "SemanticRouterProcessor",
+    ]
+)
 
 
 # ── Tests ───────────────────────────────────────────────────────────────────
+
 
 class TestProcessorIdempotency:
     """Property: applying a stateless processor twice should not change state beyond first application."""
 
     @settings(max_examples=50, deadline=None)
     @given(
-        processor_name=st_processor_name,
-        context=st_execution_context,
-        kwargs=st_kwargs,
+        processor_name=st_processor_name, context=st_execution_context, kwargs=st_kwargs
     )
-    def test_processor_twice_same_as_once(self, processor_name: str, context: object, kwargs: dict) -> None:
+    def test_processor_twice_same_as_once(
+        self, processor_name: str, context: object, kwargs: dict
+    ) -> None:
         """Applying any processor twice should yield same result as applying once."""
         # Import here to avoid import errors at collection time for processors
         # that may have optional dependencies
@@ -86,14 +93,19 @@ class TestProcessorIdempotency:
         # and that properties set by first call are not "reset"
         try:
             from src.backend.dsl.engine.exchange import Exchange
+
             exc = Exchange()
             result1 = processor.process(exc, context)
 
             # Check no exception on second call (idempotency guard)
             result2 = processor.process(exc, context)
             # Result should be consistent
-            assert result1 is None or isinstance(result1, (dict, bool, str, int, type(None)))
-            assert result2 is None or isinstance(result2, (dict, bool, str, int, type(None)))
+            assert result1 is None or isinstance(
+                result1, (dict, bool, str, int, type(None))
+            )
+            assert result2 is None or isinstance(
+                result2, (dict, bool, str, int, type(None))
+            )
         except Exception as exc:
             # Some processors require specific exchange setup
             pytest.skip(f"Processor requires specific setup: {exc}")
@@ -104,11 +116,9 @@ class TestProcessorDeterminism:
 
     @settings(max_examples=30, deadline=None)
     @given(
-        processor_name=st.sampled_from([
-            "TokenBudgetProcessor",
-            "VectorSearchProcessor",
-            "PromptComposerProcessor",
-        ]),
+        processor_name=st.sampled_from(
+            ["TokenBudgetProcessor", "VectorSearchProcessor", "PromptComposerProcessor"]
+        ),
         context=st_execution_context,
     )
     def test_same_processor_same_context_same_result(
@@ -153,12 +163,15 @@ class TestExchangeRoundTrip:
         data=st.dictionaries(
             keys=st.text(min_size=1, max_size=32),
             values=st.one_of(
-                st.none(), st.booleans(), st.integers(min_value=-10**9, max_value=10**9),
-                st.text(max_size=128), st.lists(st.text(max_size=32), max_size=8),
+                st.none(),
+                st.booleans(),
+                st.integers(min_value=-(10**9), max_value=10**9),
+                st.text(max_size=128),
+                st.lists(st.text(max_size=32), max_size=8),
                 st.floats(allow_nan=False, allow_infinity=False),
             ),
             max_size=16,
-        ),
+        )
     )
     def test_exchange_payload_clone_roundtrip(self, data: dict) -> None:
         """Cloning exchange payload preserves all values (no silent data loss)."""

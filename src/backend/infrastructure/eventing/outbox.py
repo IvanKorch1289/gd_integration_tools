@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -42,7 +42,7 @@ class OutboxEvent:
     event_type: str = ""
     payload: dict[str, Any] = field(default_factory=dict)
     headers: dict[str, str] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     published_at: datetime | None = None
     attempts: int = 0
 
@@ -99,8 +99,8 @@ class OutboxPublisher:
                     headers=dict(event.headers),
                 )
                 published.append(event.id)
-                event.published_at = datetime.now(timezone.utc)
-            except Exception as exc:  # noqa: BLE001
+                event.published_at = datetime.now(UTC)
+            except Exception as exc:
                 event.attempts += 1
                 logger.warning(
                     "Outbox publish failed [attempts=%d]: %s %s",

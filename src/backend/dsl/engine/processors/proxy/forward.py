@@ -202,11 +202,7 @@ class ForwardToProcessor(BaseProcessor):
     # -- Queue-to-queue ----------------------------------------------
 
     async def _forward_queue(
-        self,
-        protocol: str,
-        body: Any,
-        headers: dict[str, str],
-        exchange: Exchange[Any],  # noqa: ARG002
+        self, protocol: str, body: Any, headers: dict[str, str], exchange: Exchange[Any]
     ) -> None:
         from src.backend.infrastructure.clients.messaging.stream import (
             get_stream_client,

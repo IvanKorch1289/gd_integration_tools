@@ -69,7 +69,7 @@ class AdminAuditMiddleware(BaseHTTPMiddleware):
         else:
             try:
                 body_bytes = await request.body()
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
 
         response = await call_next(request)

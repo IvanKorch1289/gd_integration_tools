@@ -35,9 +35,10 @@ import hashlib
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any
 
 __all__ = (
     "PG_CLICKHOUSE_WORKFLOW_STEP_LOG_DDL",
@@ -116,7 +117,7 @@ def schema_hash(payload: Any) -> str:
         import orjson
 
         data = orjson.dumps(payload, default=str)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.debug("orjson unavailable, using str(): %s", exc)
         data = str(payload).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
@@ -155,15 +156,13 @@ class StepAuditMiddleware:
             if not feature_flags.workflow_step_log_enabled:
                 _logger.info("StepAuditMiddleware: feature-flag OFF, no-op mode")
                 return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("StepAuditMiddleware: feature flag check failed: %s", exc)
 
         if self._flusher_task is not None:
             return
         self._stop_event.clear()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._flusher_task = get_task_registry().create_task(
             self._flusher_loop(), name="step-audit-flusher"
@@ -175,7 +174,7 @@ class StepAuditMiddleware:
         if self._flusher_task is not None:
             try:
                 await asyncio.wait_for(self._flusher_task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._flusher_task.cancel()
             self._flusher_task = None
         await self.flush()
@@ -197,7 +196,7 @@ class StepAuditMiddleware:
                 await insert("workflow_step_log", rows)
             elif insert:
                 insert("workflow_step_log", rows)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("StepAuditMiddleware flush failed: %s", exc)
 
     @asynccontextmanager
@@ -260,9 +259,7 @@ class StepAuditMiddleware:
                 self._buffer.append(event)
                 if len(self._buffer) >= self._batch_size:
                     # Trigger immediate flush in background
-                    from src.backend.core.utils.task_registry import (  # noqa: PLC0415
-                        get_task_registry,
-                    )
+                    from src.backend.core.utils.task_registry import get_task_registry
 
                     get_task_registry().create_task(
                         self.flush(), name="step-audit-immediate-flush"
@@ -290,7 +287,7 @@ class StepAuditMiddleware:
                 span.set_attribute("workflow.step.status", status)
         except ImportError:
             pass
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("StepAuditMiddleware: feature flag check failed: %s", exc)
 
     async def _flusher_loop(self) -> None:
@@ -299,6 +296,6 @@ class StepAuditMiddleware:
                 await asyncio.wait_for(
                     self._stop_event.wait(), timeout=self._flush_interval_s
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
             await self.flush()

@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
-__all__ = ("SourceKind", "SourceEvent", "EventCallback", "Source")
+__all__ = ("EventCallback", "Source", "SourceEvent", "SourceKind")
 
 
 class SourceKind(str, Enum):

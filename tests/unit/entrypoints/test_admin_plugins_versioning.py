@@ -70,8 +70,7 @@ def test_rollback_returns_503_when_service_missing() -> None:
     ):
         client = TestClient(app)
         r = client.post(
-            "/api/v1/admin/plugins/demo/rollback",
-            json={"to_version": "1.0.0"},
+            "/api/v1/admin/plugins/demo/rollback", json={"to_version": "1.0.0"}
         )
         assert r.status_code == 503
 
@@ -96,11 +95,7 @@ def test_scaffold_dry_run_returns_plan() -> None:
         client = TestClient(app)
         r = client.post(
             "/api/v1/admin/plugins/scaffold",
-            json={
-                "name": "my_plugin",
-                "capabilities": ["db.read"],
-                "dry_run": True,
-            },
+            json={"name": "my_plugin", "capabilities": ["db.read"], "dry_run": True},
         )
         assert r.status_code == 200
         body = r.json()
@@ -135,8 +130,7 @@ def test_dependency_graph_with_real_extension(tmp_path, monkeypatch) -> None:
         assert any(n["id"] == "demo" for n in body["nodes"])
         # requires_plugins даёт ребро demo→other.
         assert any(
-            e["source"] == "demo" and e["target"] == "other"
-            for e in body["edges"]
+            e["source"] == "demo" and e["target"] == "other" for e in body["edges"]
         )
 
 

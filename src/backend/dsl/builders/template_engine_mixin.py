@@ -12,8 +12,9 @@ Lazy jinja2 import; stdlib ``pathlib``; str/Path supported.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from jinja2 import Environment
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 __all__ = ("TemplateEngineMixin",)
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 Context = dict[str, Any]
 
 
@@ -36,9 +37,9 @@ class TemplateEngineMixin:
 
     __slots__ = ()
 
-    def _get_env(self: "RouteBuilder") -> "Environment":
+    def _get_env(self: RouteBuilder) -> Environment:  # type: ignore
         """Lazy init + cache ``jinja2.Environment`` per builder."""
-        env: "Environment | None" = getattr(self, "_jinja_env", None)
+        env: Environment | None = getattr(self, "_jinja_env", None)
         if env is None:
             from jinja2 import Environment
 
@@ -46,15 +47,15 @@ class TemplateEngineMixin:
             object.__setattr__(self, "_jinja_env", env)
         return env
 
-    def register_filter(
-        self: "RouteBuilder", name: str, fn: Callable[..., Any]
-    ) -> "RouteBuilder":
+    def register_filter(  # type: ignore
+        self: RouteBuilder, name: str, fn: Callable[..., Any]
+    ) -> RouteBuilder:
         """Register custom Jinja2 filter (chainable)."""
-        self._get_env().filters[name] = fn
+        self._get_env().filters[name] = fn  # type: ignore
         return self
 
-    def template_render_str(
-        self: "RouteBuilder", template_str: str, context: Context | None = None
+    def template_render_str(  # type: ignore
+        self: RouteBuilder, template_str: str, context: Context | None = None
     ) -> str:
         """Render Jinja2 template из строки. Returns rendered string.
 
@@ -66,23 +67,23 @@ class TemplateEngineMixin:
         """
         if context is None:
             context = {}
-        return self._get_env().from_string(template_str).render(**context)
+        return self._get_env().from_string(template_str).render(**context)  # type: ignore
 
-    def render_file(
-        self: "RouteBuilder",
-        template_path: PathLike,
-        context: Context | None = None,
+    def render_file(  # type: ignore
+        self: RouteBuilder, template_path: PathLike, context: Context | None = None
     ) -> str:
         """Render Jinja2 template из файла (str | Path)."""
         if context is None:
             context = {}
         path = Path(template_path)
-        return self._get_env().from_string(
-            path.read_text(encoding="utf-8")
-        ).render(**context)
+        return (
+            self._get_env()  # type: ignore
+            .from_string(path.read_text(encoding="utf-8"))
+            .render(**context)
+        )
 
-    def render_email(
-        self: "RouteBuilder",
+    def render_email(  # type: ignore
+        self: RouteBuilder,
         subject_template: str,
         body_template: str,
         context: Context | None = None,
@@ -90,20 +91,20 @@ class TemplateEngineMixin:
         """Render email subject + body. Returns ``(subject, body)`` tuple."""
         if context is None:
             context = {}
-        env = self._get_env()
+        env = self._get_env()  # type: ignore
         return (
             env.from_string(subject_template).render(**context),
             env.from_string(body_template).render(**context),
         )
 
-    def render_document(
-        self: "RouteBuilder",
+    def render_document(  # type: ignore
+        self: RouteBuilder,
         template_path: PathLike,
         output_path: PathLike,
         context: Context | None = None,
     ) -> int:
         """Render template file → output file. Returns bytes written."""
-        rendered = self.render_file(template_path, context)
+        rendered = self.render_file(template_path, context)  # type: ignore
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         return out.write_text(rendered, encoding="utf-8")

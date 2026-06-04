@@ -119,7 +119,7 @@ async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
             callable_ref=callable_ref,
             timezone=request.timezone,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ошибка регистрации: {exc}"
         ) from exc
@@ -144,7 +144,7 @@ async def delete_cron_job(job_id: str) -> None:
     manager = get_scheduler_manager()
     try:
         manager.scheduler.remove_job(job_id)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Job {job_id!r} not found: {exc}",

@@ -128,7 +128,7 @@ class BatchingStructlogWrapper:
             from src.backend.core.config.features import feature_flags
 
             return feature_flags.structlog_batching_enabled
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     # ------------------------------------------------------------------
@@ -204,7 +204,7 @@ class BatchingStructlogWrapper:
             return
         try:
             method(event, **kwargs)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _INTERNAL_LOG.warning("structlog_batching: emit error", exc_info=True)
 
     # ------------------------------------------------------------------
@@ -220,9 +220,7 @@ class BatchingStructlogWrapper:
             _INTERNAL_LOG.warning("structlog_batching: уже запущен")
             return
         self._stop_event = asyncio.Event()
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._flush_loop(), name="structlog-batching-flush"
@@ -235,7 +233,7 @@ class BatchingStructlogWrapper:
         if self._task is not None:
             try:
                 await asyncio.wait_for(self._task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._task.cancel()
         # Final drain
         await self._flush_batch()
@@ -248,7 +246,7 @@ class BatchingStructlogWrapper:
         while not self._stop_event.is_set():
             try:
                 await asyncio.wait_for(self._stop_event.wait(), timeout=interval)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # interval истёк — нормальный flush
                 await self._flush_batch()
 

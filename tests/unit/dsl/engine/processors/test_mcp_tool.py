@@ -28,8 +28,7 @@ class TestMCPToolProcessorInit:
     def test_default_values(self) -> None:
         """Проверка default значений."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp",
-            tool_name="db.query",
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
         )
         assert proc.tool_uri == "http://localhost:8000/mcp"
         assert proc.tool_name == "db.query"
@@ -141,8 +140,7 @@ class TestMCPToolProcessorToSpec:
     def test_default_spec(self) -> None:
         """to_spec с default значениями."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp",
-            tool_name="db.query",
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
         )
         spec = proc.to_spec()
         assert spec == {
@@ -204,8 +202,7 @@ class TestMCPToolProcessorRun:
         mock_client_class.return_value = mock_client
 
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp",
-            tool_name="db.query",
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
         )
         exchange = _make_exchange(body={"sql": "SELECT 1"})
         context = MagicMock()
@@ -230,8 +227,7 @@ class TestMCPToolProcessorRun:
         mock_client_class.return_value = mock_client
 
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp",
-            tool_name="db.query",
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
         )
         exchange = _make_exchange(body={"sql": "SELECT 1"})
         context = MagicMock()
@@ -248,8 +244,7 @@ class TestMCPToolProcessorCapabilityScope:
     def test_capability_scope_returns_tool_name(self) -> None:
         """Scope для mcp.call = tool_name."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000",
-            tool_name="database.query",
+            tool_uri="http://localhost:8000", tool_name="database.query"
         )
         exchange = _make_exchange(body={})
         scope = proc._capability_scope(exchange)

@@ -20,14 +20,8 @@ def _basic_workflow() -> WorkflowDeclaration:
         name="credit_assessment",
         version="1.2",
         steps=[
-            ActivityDeclaration(
-                name="fetch_credit_score",
-                timeout_s=30,
-            ),
-            SignalWaitDeclaration(
-                signal_name="manager.decision",
-                timeout_s=600,
-            ),
+            ActivityDeclaration(name="fetch_credit_score", timeout_s=30),
+            SignalWaitDeclaration(signal_name="manager.decision", timeout_s=600),
             SleepDeclaration(duration_s=2.0),
             ActivityDeclaration(name="emit_decision", timeout_s=15),
         ],

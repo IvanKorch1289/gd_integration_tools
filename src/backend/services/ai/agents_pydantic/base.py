@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = (
     "AgentRetryConfig",
-    "ModelSpec",
     "BasePydanticAgent",
+    "ModelSpec",
     "PydanticAIUnavailable",
     "ResultT",
 )
@@ -163,7 +163,7 @@ class BasePydanticAgent(Generic[ResultT]):
     def _build_agent(self, model_name: str | None, system_prompt: str | None) -> Any:
         """Создаёт ``pydantic_ai.Agent`` с указанной моделью/prompt."""
         try:
-            from pydantic_ai import Agent  # type: ignore[import-not-found]
+            from pydantic_ai import Agent
         except ImportError as exc:
             raise PydanticAIUnavailable(
                 "pydantic-ai не установлен — добавьте extra '[ai-2026]'."

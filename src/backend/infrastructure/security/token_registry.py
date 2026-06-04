@@ -40,14 +40,11 @@ import logging
 import os
 from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import orjson
 
 from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
-
-if TYPE_CHECKING:
-    from src.backend.services.audit.audit_service import AuditService
 
 __all__ = (
     "AESGCMKeyProvider",
@@ -149,7 +146,7 @@ class EnvAESGCMKeyProvider:
             return None
         try:
             decoded = base64.b64decode(raw)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             _logger.warning(
                 "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name
             )
@@ -180,7 +177,7 @@ class RedisTokenRegistry:
         результат ``ct||tag`` splittится: ``ciphertext = ct[:-16]``,
         ``tag = ct[-16:]``.
 
-    Audit-events (через :class:`AuditService`):
+    Audit-events (через AuditService):
         ``ai.pii.tokenize.store`` / ``.retrieve`` / ``.delete`` (outcome=success);
         ``ai.pii.tokenize.decrypt_failed`` (outcome=failure) — при tag-mismatch
         или unavailable key version.
@@ -191,7 +188,7 @@ class RedisTokenRegistry:
         *,
         redis_client: Any,
         key_provider: AESGCMKeyProvider,
-        audit_service: "AuditService | None" = None,
+        audit_service: Any = None,
         key_prefix: str = "pii:token",
     ) -> None:
         self._redis = redis_client
@@ -290,7 +287,7 @@ class RedisTokenRegistry:
             return None
         try:
             token_map = self._deserialize(raw)
-        except Exception as exc:  # noqa: BLE001 — graceful: corrupted Redis value
+        except Exception as exc:
             _logger.warning(
                 "TokenMap deserialization failed for %s: %r", redis_key, exc
             )
@@ -408,5 +405,5 @@ class RedisTokenRegistry:
                 resource="pii_token_map",
                 details=details,
             )
-        except Exception as exc:  # noqa: BLE001 — audit не должен ломать pipeline
+        except Exception as exc:
             _logger.debug("audit emit failed for %s: %r", event, exc)

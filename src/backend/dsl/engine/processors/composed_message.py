@@ -24,7 +24,8 @@ Camel pattern: входное сообщение разбивается ``splitt
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, ClassVar
+from collections.abc import Awaitable, Callable
+from typing import Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
@@ -85,7 +86,7 @@ class ComposedMessageProcessor(BaseProcessor):
         """Разбивает входящий ``exchange`` через splitter, прогоняет каждую часть через sub-processors и собирает aggregator'ом."""
         try:
             parts = await _maybe_await(self._splitter(exchange))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.set_error(f"composed_message split failed: {exc}")
             exchange.fail(f"composed_message split failed: {exc}")
             return
@@ -116,7 +117,7 @@ class ComposedMessageProcessor(BaseProcessor):
 
         try:
             aggregated = await _maybe_await(self._aggregator(processed))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.set_error(f"composed_message aggregate failed: {exc}")
             exchange.fail(f"composed_message aggregate failed: {exc}")
             return

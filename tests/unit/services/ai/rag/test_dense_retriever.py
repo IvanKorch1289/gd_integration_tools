@@ -16,10 +16,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.services.ai.rag.dense_retriever import (
-    DenseResult,
-    DenseRetriever,
-)
+from src.backend.services.ai.rag.dense_retriever import DenseResult, DenseRetriever
 
 
 @pytest.mark.asyncio
@@ -92,7 +89,9 @@ async def test_retrieve_correct_args_passed() -> None:
         captured_embed.extend(texts)
         return [[0.1]]
 
-    async def capture_search(embeddings: list[list[float]], top_k: int) -> list[dict[str, Any]]:
+    async def capture_search(
+        embeddings: list[list[float]], top_k: int
+    ) -> list[dict[str, Any]]:
         captured_top_k.append(top_k)
         return []
 
@@ -137,9 +136,7 @@ async def test_retrieve_handles_metadata_id() -> None:
     """Chunk ID из metadata.id если нет id."""
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[
-            {"document": "текст", "metadata": {"id": "meta_id_123"}},
-        ]
+        return_value=[{"document": "текст", "metadata": {"id": "meta_id_123"}}]
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 
@@ -167,9 +164,7 @@ async def test_retrieve_text_field_instead_of_document() -> None:
     """Результат может содержать 'text' вместо 'document'."""
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[
-            {"id": "doc1", "text": "текст из поля text", "metadata": {}},
-        ]
+        return_value=[{"id": "doc1", "text": "текст из поля text", "metadata": {}}]
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 

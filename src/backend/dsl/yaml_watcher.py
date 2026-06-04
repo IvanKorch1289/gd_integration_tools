@@ -21,6 +21,7 @@ ADR-041 ``fs-watcher-unification``).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -67,7 +68,7 @@ class DSLYamlWatcher:
     def __init__(
         self,
         routes_dir: str | Path,
-        route_registry: "RouteRegistry",
+        route_registry: RouteRegistry,
         loader: PipelineLoader | None = None,
         *,
         debounce_ms: int = 500,
@@ -112,12 +113,10 @@ class DSLYamlWatcher:
         if self._task is not None and not self._task.done():
             try:
                 await asyncio.wait_for(self._task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await self._task
-                except asyncio.CancelledError:
-                    pass
             except asyncio.CancelledError:
                 pass
         self._task = None
@@ -157,7 +156,7 @@ class DSLYamlWatcher:
                 pipeline = self._loader(path)
                 self._registry.register(pipeline)
                 loaded[path] = pipeline.route_id
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error(
                     "DSLYamlWatcher: initial load failed for %s: %s", path, exc
                 )
@@ -183,7 +182,7 @@ class DSLYamlWatcher:
                 await asyncio.to_thread(self._sync_reload_all)
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("DSLYamlWatcher consume_loop crashed: %s", exc, exc_info=True)
             raise
 

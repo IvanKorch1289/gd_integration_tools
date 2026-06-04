@@ -96,9 +96,7 @@ class GraphQLQueryProcessor(BaseProcessor):
         self._timeout = timeout
         self._result_property = result_property
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from src.backend.infrastructure.clients.transport.http_httpx import (
             get_httpx_client,
         )
@@ -164,7 +162,7 @@ class GraphQLQueryProcessor(BaseProcessor):
         if self._headers:
             spec["headers"] = self._headers
         if self._auth_token:
-            spec["auth_token"] = "<redacted>"  # noqa: S105
+            spec["auth_token"] = "<redacted>"  # noqa: S105  # config field name, not a password
         if self._auth_header != "Authorization":
             spec["auth_header"] = self._auth_header
         if self._timeout != 30.0:

@@ -62,7 +62,8 @@ class FakeBotClient:
         self.send_typing = AsyncMock(return_value=None)
         self.stop_typing = AsyncMock(return_value=None)
         self.upload_file = AsyncMock(
-            return_value=upload_result or {"result": {"file_id": "f1", "file_url": "/u/f1"}}
+            return_value=upload_result
+            or {"result": {"file_id": "f1", "file_url": "/u/f1"}}
         )
         self.get_event_status = AsyncMock(
             return_value=status_result
@@ -150,9 +151,7 @@ class TestExpressSendProcessor:
         assert payload["bubble"] == [[{"command": "/y", "label": "Yes"}]]
 
     async def test_send_static_body_async(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Статический body отправляется через ``send_message``."""
         _install_client(monkeypatch, "send", fake_client)
@@ -168,9 +167,7 @@ class TestExpressSendProcessor:
         assert exchange.get_property("express_sync_id") == "sync-1"
 
     async def test_send_dynamic_body_from_property(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """``body_from`` извлекается из ``properties``."""
         _install_client(monkeypatch, "send", fake_client)
@@ -186,9 +183,7 @@ class TestExpressSendProcessor:
         assert msg_arg.body == "dynamic"
 
     async def test_send_missing_chat_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Если chat_id не извлекается — exchange.fail."""
         _install_client(monkeypatch, "send", fake_client)
@@ -203,9 +198,7 @@ class TestExpressSendProcessor:
         fake_client.send_message.assert_not_awaited()
 
     async def test_send_handles_client_exception(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Исключение клиента → пишется ``*_error`` property."""
         _install_client(monkeypatch, "send", fake_client)
@@ -218,9 +211,7 @@ class TestExpressSendProcessor:
         assert exchange.get_property("express_sync_id_error") == "boom"
 
     async def test_send_with_buttons(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Bubble и keyboard сериализуются в BotxButton."""
         _install_client(monkeypatch, "send", fake_client)
@@ -257,18 +248,13 @@ class TestExpressReplyProcessor:
         assert spec["express_reply"]["body"] == "re"
 
     async def test_reply_sends_with_source_sync_id(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Reply вызывает ``client.reply`` с source_sync_id."""
         _install_client(monkeypatch, "reply", fake_client)
-        proc = ExpressReplyProcessor(
-            body="re", chat_id_from="body.chat_id"
-        )
+        proc = ExpressReplyProcessor(body="re", chat_id_from="body.chat_id")
         exchange = _make_exchange(
-            body={"chat_id": "c1"},
-            headers={"X-Express-Sync-Id": "src-7"},
+            body={"chat_id": "c1"}, headers={"X-Express-Sync-Id": "src-7"}
         )
 
         await proc.process(exchange, _make_context())
@@ -280,9 +266,7 @@ class TestExpressReplyProcessor:
         assert exchange.get_property("express_reply_sync_id") == "reply-1"
 
     async def test_reply_missing_source_sync_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Без source_sync_id — exchange.fail."""
         _install_client(monkeypatch, "reply", fake_client)
@@ -295,9 +279,7 @@ class TestExpressReplyProcessor:
         assert "source_sync_id" in (exchange.error or "")
 
     async def test_reply_missing_chat_id_or_text_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Если chat_id извлечён но текст пуст — exchange.fail."""
         _install_client(monkeypatch, "reply", fake_client)
@@ -305,8 +287,7 @@ class TestExpressReplyProcessor:
             body_from="properties.missing", chat_id_from="body.chat_id"
         )
         exchange = _make_exchange(
-            body={"chat_id": "c1"},
-            headers={"X-Express-Sync-Id": "src-7"},
+            body={"chat_id": "c1"}, headers={"X-Express-Sync-Id": "src-7"}
         )
 
         await proc.process(exchange, _make_context())
@@ -325,9 +306,7 @@ class TestExpressEditProcessor:
         assert "express_edit" in spec
 
     async def test_edit_calls_edit_message(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """``edit_message`` вызывается с переданными полями."""
         _install_client(monkeypatch, "edit", fake_client)
@@ -344,9 +323,7 @@ class TestExpressEditProcessor:
         assert args.kwargs["bubble"] == []
 
     async def test_edit_skips_when_no_fields(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Если ничего не передано — edit пропускается."""
         _install_client(monkeypatch, "edit", fake_client)
@@ -359,9 +336,7 @@ class TestExpressEditProcessor:
         fake_client.edit_message.assert_not_awaited()
 
     async def test_edit_missing_sync_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Без sync_id — exchange.fail."""
         _install_client(monkeypatch, "edit", fake_client)
@@ -373,9 +348,7 @@ class TestExpressEditProcessor:
         assert exchange.status == ExchangeStatus.failed
 
     async def test_edit_handles_exception(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Исключение → пишется express_edit_error."""
         _install_client(monkeypatch, "edit", fake_client)
@@ -405,9 +378,7 @@ class TestExpressTypingProcessor:
         assert spec["express_typing"]["action"] == "stop"
 
     async def test_typing_start(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """action=start → send_typing."""
         _install_client(monkeypatch, "typing", fake_client)
@@ -420,9 +391,7 @@ class TestExpressTypingProcessor:
         fake_client.stop_typing.assert_not_awaited()
 
     async def test_typing_stop(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """action=stop → stop_typing."""
         _install_client(monkeypatch, "typing", fake_client)
@@ -435,9 +404,7 @@ class TestExpressTypingProcessor:
         fake_client.send_typing.assert_not_awaited()
 
     async def test_typing_no_chat_id_silent_skip(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Без chat_id — тихий skip (не fail)."""
         _install_client(monkeypatch, "typing", fake_client)
@@ -475,9 +442,7 @@ class TestExpressSendFileProcessor:
         assert spec["express_send_file"]["file_name"] == "a.txt"
 
     async def test_send_from_property_bytes(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Файл из exchange-property → upload + send."""
         _install_client(monkeypatch, "send_file", fake_client)
@@ -503,9 +468,7 @@ class TestExpressSendFileProcessor:
         assert exchange.get_property("express_file_sync_id") == "sync-1"
 
     async def test_send_from_property_str(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Строка в property конвертируется в bytes (utf-8)."""
         _install_client(monkeypatch, "send_file", fake_client)
@@ -523,9 +486,7 @@ class TestExpressSendFileProcessor:
         assert upload_kwargs["file_data"] == b"abc"
 
     async def test_send_from_s3(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Файл из S3 — приоритетный источник.
 
@@ -544,7 +505,9 @@ class TestExpressSendFileProcessor:
         )
         fake_module.s3_client = fake_s3  # type: ignore[attr-defined]
         monkeypatch.setitem(
-            sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module
+            sys.modules,
+            "src.backend.infrastructure.clients.storage.s3_pool",
+            fake_module,
         )
 
         proc = ExpressSendFileProcessor(
@@ -560,16 +523,11 @@ class TestExpressSendFileProcessor:
         assert fake_client.upload_file.await_args.kwargs["file_data"] == b"S3-DATA"
 
     async def test_send_no_chat_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Без chat_id — exchange.fail."""
         _install_client(monkeypatch, "send_file", fake_client)
-        proc = ExpressSendFileProcessor(
-            file_data_property="payload",
-            file_name="a.bin",
-        )
+        proc = ExpressSendFileProcessor(file_data_property="payload", file_name="a.bin")
         exchange = _make_exchange(body={})
 
         await proc.process(exchange, _make_context())
@@ -577,16 +535,12 @@ class TestExpressSendFileProcessor:
         assert exchange.status == ExchangeStatus.failed
 
     async def test_send_no_file_data_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Если данных файла нет — exchange.fail."""
         _install_client(monkeypatch, "send_file", fake_client)
         proc = ExpressSendFileProcessor(
-            chat_id_from="body.chat_id",
-            file_data_property="missing",
-            file_name="a.bin",
+            chat_id_from="body.chat_id", file_data_property="missing", file_name="a.bin"
         )
         exchange = _make_exchange(body={"chat_id": "c1"})
 
@@ -640,9 +594,7 @@ class TestExpressMentionProcessor:
 
     async def test_mention_chat_uses_group_chat_id(self) -> None:
         """chat mention заполняет group_chat_id, не user_huid."""
-        proc = ExpressMentionProcessor(
-            mention_type="chat", target_from="body.chat_id"
-        )
+        proc = ExpressMentionProcessor(mention_type="chat", target_from="body.chat_id")
         exchange = _make_exchange(body={"chat_id": "c-99"})
 
         await proc.process(exchange, _make_context())
@@ -664,9 +616,7 @@ class TestExpressMentionProcessor:
 
     async def test_mention_appends_to_existing_list(self) -> None:
         """Повторный вызов добавляет mention в существующий список."""
-        proc = ExpressMentionProcessor(
-            mention_type="user", target_from="body.huid"
-        )
+        proc = ExpressMentionProcessor(mention_type="user", target_from="body.huid")
         exchange = _make_exchange(body={"huid": "u1"})
 
         await proc.process(exchange, _make_context())
@@ -678,9 +628,7 @@ class TestExpressMentionProcessor:
     async def test_mention_uses_provided_id(self) -> None:
         """Если ``mention_id`` задан — он используется (не uuid4)."""
         proc = ExpressMentionProcessor(
-            mention_type="user",
-            target_from="body.huid",
-            mention_id="fixed-id",
+            mention_type="user", target_from="body.huid", mention_id="fixed-id"
         )
         exchange = _make_exchange(body={"huid": "u1"})
 
@@ -691,9 +639,7 @@ class TestExpressMentionProcessor:
 
     async def test_mention_empty_target_skips(self) -> None:
         """Пустой target для user — silently skipped."""
-        proc = ExpressMentionProcessor(
-            mention_type="user", target_from="body.huid"
-        )
+        proc = ExpressMentionProcessor(mention_type="user", target_from="body.huid")
         exchange = _make_exchange(body={})
 
         await proc.process(exchange, _make_context())
@@ -713,9 +659,7 @@ class TestExpressStatusProcessor:
         assert "express_status" in spec
 
     async def test_status_writes_payload(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """``get_event_status`` → payload в property."""
         _install_client(monkeypatch, "status", fake_client)
@@ -730,8 +674,7 @@ class TestExpressStatusProcessor:
         assert payload == {"group_chat_id": "c1", "sent_to": ["u1"]}
 
     async def test_status_unwraps_result_key(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Если ответ {result: X} — записывается X (не весь wrapper)."""
         client = FakeBotClient(status_result={"result": {"sent_to": ["u9"]}})
@@ -745,9 +688,7 @@ class TestExpressStatusProcessor:
         assert exchange.get_property("express_event_status") == {"sent_to": ["u9"]}
 
     async def test_status_missing_sync_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Без sync_id — exchange.fail."""
         _install_client(monkeypatch, "status", fake_client)
@@ -759,9 +700,7 @@ class TestExpressStatusProcessor:
         assert exchange.status == ExchangeStatus.failed
 
     async def test_status_handles_exception(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeBotClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeBotClient
     ) -> None:
         """Исключение клиента → пишется *_error property."""
         _install_client(monkeypatch, "status", fake_client)

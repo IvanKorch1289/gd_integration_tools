@@ -54,7 +54,9 @@ class _FakeLoader:
         discover_raises: Exception | None = None,
     ) -> None:
         self._entries_before = entries_before or []
-        self._entries_after = entries_after if entries_after is not None else entries_before or []
+        self._entries_after = (
+            entries_after if entries_after is not None else entries_before or []
+        )
         self._loaded_dict: dict[str, _FakeEntry] = {
             e.name: e for e in self._entries_before
         }
@@ -102,10 +104,7 @@ async def test_hot_swap_calls_shutdown_and_discover() -> None:
     """Успешный hot_swap вызывает shutdown_all + discover_and_load."""
     entry_before = _FakeEntry(name="example_plugin", version="1.0.0")
     entry_after = _FakeEntry(name="example_plugin", version="1.0.1")
-    loader = _FakeLoader(
-        entries_before=[entry_before],
-        entries_after=[entry_after],
-    )
+    loader = _FakeLoader(entries_before=[entry_before], entries_after=[entry_after])
     result = await hot_swap("example_plugin", loader)  # type: ignore[arg-type]
     assert loader.shutdown_calls == 1
     assert loader.discover_calls == 1
@@ -117,10 +116,7 @@ async def test_hot_swap_returns_versions() -> None:
     """HotSwapResult содержит old_version + new_version."""
     entry_before = _FakeEntry(name="p", version="1.0.0")
     entry_after = _FakeEntry(name="p", version="2.0.0")
-    loader = _FakeLoader(
-        entries_before=[entry_before],
-        entries_after=[entry_after],
-    )
+    loader = _FakeLoader(entries_before=[entry_before], entries_after=[entry_after])
     result = await hot_swap("p", loader)  # type: ignore[arg-type]
     assert result.old_version == "1.0.0"
     assert result.new_version == "2.0.0"
@@ -149,10 +145,7 @@ async def test_hot_swap_failed_if_capability_denied() -> None:
         status="failed",
         reason="capability_error: mq.publish.* not allocated",
     )
-    loader = _FakeLoader(
-        entries_before=[entry_before],
-        entries_after=[entry_after],
-    )
+    loader = _FakeLoader(entries_before=[entry_before], entries_after=[entry_after])
     result = await hot_swap("p", loader)  # type: ignore[arg-type]
     assert result.status == "failed"
     assert result.reason and "capability_error" in result.reason
@@ -163,8 +156,7 @@ async def test_hot_swap_wraps_shutdown_failure() -> None:
     """Падение shutdown_all оборачивается в HotSwapError."""
     entry_before = _FakeEntry(name="p", version="1.0.0")
     loader = _FakeLoader(
-        entries_before=[entry_before],
-        shutdown_raises=RuntimeError("boom"),
+        entries_before=[entry_before], shutdown_raises=RuntimeError("boom")
     )
     with pytest.raises(HotSwapError) as excinfo:
         await hot_swap("p", loader)  # type: ignore[arg-type]
@@ -176,8 +168,7 @@ async def test_hot_swap_wraps_discover_failure() -> None:
     """Падение discover_and_load оборачивается в HotSwapError."""
     entry_before = _FakeEntry(name="p", version="1.0.0")
     loader = _FakeLoader(
-        entries_before=[entry_before],
-        discover_raises=RuntimeError("scan failed"),
+        entries_before=[entry_before], discover_raises=RuntimeError("scan failed")
     )
     with pytest.raises(HotSwapError) as excinfo:
         await hot_swap("p", loader)  # type: ignore[arg-type]
@@ -220,10 +211,7 @@ async def test_hot_swap_reloads_module() -> None:
 
     entry_before = _FakeEntry(name="p", version="1.0.0", instance=instance)
     entry_after = _FakeEntry(name="p", version="1.0.1")
-    loader = _FakeLoader(
-        entries_before=[entry_before],
-        entries_after=[entry_after],
-    )
+    loader = _FakeLoader(entries_before=[entry_before], entries_after=[entry_after])
 
     try:
         result = await hot_swap("p", loader)  # type: ignore[arg-type]

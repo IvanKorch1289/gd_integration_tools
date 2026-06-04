@@ -52,12 +52,7 @@ class _Finding:
     __slots__ = ("file", "line", "method", "path", "function")
 
     def __init__(
-        self,
-        file: Path,
-        line: int,
-        method: str,
-        path: str,
-        function: str,
+        self, file: Path, line: int, method: str, path: str, function: str
     ) -> None:
         self.file = file
         self.line = line
@@ -132,9 +127,7 @@ def _scan_file(file: Path, prefixes: tuple[str, ...]) -> list[_Finding]:
         return []
     findings: list[_Finding] = []
     for node in ast.walk(tree):
-        if not isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef)
-        ):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         for dec in node.decorator_list:
             match = _is_router_decorator(dec)
@@ -149,8 +142,13 @@ def _scan_file(file: Path, prefixes: tuple[str, ...]) -> list[_Finding]:
             if _has_auth_dependency(dec):
                 continue
             findings.append(
-                _Finding(file=file, line=dec.lineno, method=method, path=path,
-                         function=node.name)
+                _Finding(
+                    file=file,
+                    line=dec.lineno,
+                    method=method,
+                    path=path,
+                    function=node.name,
+                )
             )
     return findings
 

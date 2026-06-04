@@ -18,7 +18,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.invoker import (
     InvocationMode,
@@ -60,7 +61,7 @@ class InvokeProcessor(BaseProcessor):
         action: str,
         *,
         mode: str | InvocationMode = InvocationMode.SYNC,
-        payload_factory: Callable[["Exchange[Any]"], dict[str, Any]] | None = None,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
         reply_channel: str | None = None,
         result_property: str = "invoke_result",
         invocation_id_property: str = "invocation_id",
@@ -127,9 +128,7 @@ class InvokeProcessor(BaseProcessor):
 
         return get_invoker()
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Вызывает action через ``Invoker`` и записывает результат/ошибку в ``exchange``."""
         if self.payload_factory is not None:
             payload = self.payload_factory(exchange)

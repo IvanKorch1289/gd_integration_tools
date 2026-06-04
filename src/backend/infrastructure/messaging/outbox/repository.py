@@ -31,7 +31,7 @@ Wave: ``[wave:s16/k2-w2-outbox-tx-atomic]`` — DoD-4 Sprint 16.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -115,7 +115,7 @@ class OutboxRepository:
             headers=merged_headers,
             status="pending",
             retry_count=0,
-            next_attempt_at=next_attempt_at or datetime.now(timezone.utc),
+            next_attempt_at=next_attempt_at or datetime.now(UTC),
         )
         self._session.add(message)
         # Flush, чтобы получить PK без commit'а — caller имеет возможность

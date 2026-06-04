@@ -53,9 +53,7 @@ async def test_read_routes_to_replica() -> None:
     """read-mode идёт на replica при её наличии."""
     primary = _FakeSessionMaker("primary")
     replica = _FakeSessionMaker("replica")
-    sm = SmartSessionManager(
-        primary_sessionmaker=primary, replica_sessionmaker=replica
-    )
+    sm = SmartSessionManager(primary_sessionmaker=primary, replica_sessionmaker=replica)
 
     async with sm.acquire(mode="read") as session:
         assert isinstance(session, _FakeSession)
@@ -69,9 +67,7 @@ async def test_write_routes_to_primary() -> None:
     """write-mode игнорирует replica и идёт на primary."""
     primary = _FakeSessionMaker("primary")
     replica = _FakeSessionMaker("replica")
-    sm = SmartSessionManager(
-        primary_sessionmaker=primary, replica_sessionmaker=replica
-    )
+    sm = SmartSessionManager(primary_sessionmaker=primary, replica_sessionmaker=replica)
 
     async with sm.acquire(mode="write") as session:
         assert session.label == "primary"
@@ -83,9 +79,7 @@ async def test_write_routes_to_primary() -> None:
 async def test_no_replica_falls_back_to_primary() -> None:
     """При replica_sessionmaker=None все mode идут на primary."""
     primary = _FakeSessionMaker("primary")
-    sm = SmartSessionManager(
-        primary_sessionmaker=primary, replica_sessionmaker=None
-    )
+    sm = SmartSessionManager(primary_sessionmaker=primary, replica_sessionmaker=None)
 
     async with sm.acquire(mode="read") as session:
         assert session.label == "primary"
@@ -125,9 +119,7 @@ async def test_breaker_recovers_on_success() -> None:
     primary = _FakeSessionMaker("primary")
     replica = _FakeSessionMaker("replica")
     sm = SmartSessionManager(
-        primary_sessionmaker=primary,
-        replica_sessionmaker=replica,
-        failure_threshold=3,
+        primary_sessionmaker=primary, replica_sessionmaker=replica, failure_threshold=3
     )
     # 1 ошибка — счётчик 1, breaker всё ещё closed.
     with pytest.raises(RuntimeError):

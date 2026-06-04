@@ -20,7 +20,7 @@ Endpoints (под /api/v1/admin):
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -305,7 +305,7 @@ class _AdminWorkflowsFacade:
         await store.update_status(
             workflow_id=instance_id,
             status=new_status,
-            next_attempt_at=datetime.now(timezone.utc),
+            next_attempt_at=datetime.now(UTC),
         )
         _logger.info(
             "retry triggered: workflow_id=%s prev_status=%s",
@@ -343,7 +343,7 @@ class _AdminWorkflowsFacade:
         await store.update_status(
             workflow_id=instance_id,
             status=WorkflowStatus.cancelling,
-            next_attempt_at=datetime.now(timezone.utc),
+            next_attempt_at=datetime.now(UTC),
             error=(f"cancelled: {reason}" if reason else None),
         )
         _logger.info("cancel requested: workflow_id=%s reason=%s", instance_id, reason)
@@ -373,7 +373,7 @@ class _AdminWorkflowsFacade:
         await store.update_status(
             workflow_id=instance_id,
             status=WorkflowStatus.pending,
-            next_attempt_at=datetime.now(timezone.utc),
+            next_attempt_at=datetime.now(UTC),
         )
         _logger.info("resume triggered: workflow_id=%s", instance_id)
         return {
@@ -407,7 +407,7 @@ class _AdminWorkflowsFacade:
             try:
                 validated = descriptor.input_schema.model_validate(payload)
                 payload = validated.model_dump(mode="json")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(
                     status_code=422, detail=f"Payload validation failed: {exc}"
                 ) from exc
@@ -512,7 +512,7 @@ async def _wait_for_terminal(
         WorkflowStatus.failed,
         WorkflowStatus.cancelled,
     }
-    deadline = datetime.now(timezone.utc).timestamp() + timeout_s
+    deadline = datetime.now(UTC).timestamp() + timeout_s
 
     while True:
         row = await store.get(instance_id)
@@ -522,7 +522,7 @@ async def _wait_for_terminal(
             )
         if row.status in terminal:
             return row
-        if datetime.now(timezone.utc).timestamp() >= deadline:
+        if datetime.now(UTC).timestamp() >= deadline:
             return row
         await asyncio.sleep(poll_interval_s)
 
@@ -537,7 +537,7 @@ def input_schema_json(schema: Any) -> dict[str, Any] | None:
         return None
     try:
         return TypeAdapter(schema).json_schema()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 

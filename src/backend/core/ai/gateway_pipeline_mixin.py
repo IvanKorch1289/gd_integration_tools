@@ -51,9 +51,17 @@ class PipelineStepsMixin:
     - ``self._policy_enforcer`` — :class:`AIPolicyEnforcer` (или None)
     """
 
+    _policy_resolver: Any | None
+    _capability_gate: Any | None
+    _policy_enforcer: Any | None
+    _audit_service: Any | None
+    _cost_tracker: Any | None
+    _sanitizer: Any | None
+    _llm_gateway: Any | None
+
     # ── 9-step pipeline methods ──────────────────────────────────────────
 
-    async def _resolve_policy(self, request: "AIRequest") -> "AIPolicySpec | None":
+    async def _resolve_policy(self, request: AIRequest) -> AIPolicySpec | None:
         """Шаг 1: PolicyResolver → AIPolicySpec.
 
         Args:
@@ -85,7 +93,7 @@ class PipelineStepsMixin:
                 raise PolicyNotResolvedError(request.workflow_id, request.tenant_id)
         return policy
 
-    async def _check_capability(self, request: "AIRequest") -> None:
+    async def _check_capability(self, request: AIRequest) -> None:
         """Шаг 2: CapabilityGate intercept.
 
         Args:
@@ -113,7 +121,7 @@ class PipelineStepsMixin:
             )
 
     async def _apply_input_sanitizers(
-        self, request: "AIRequest", policy: "AIPolicySpec | None"
+        self, request: AIRequest, policy: AIPolicySpec | None
     ) -> str:
         """Шаг 3: input sanitizers (PII через Presidio / PIITokenizer).
 
@@ -154,7 +162,7 @@ class PipelineStepsMixin:
         return getattr(result, "sanitized_text", prompt)
 
     async def _apply_input_guards(
-        self, sanitized: str, policy: "AIPolicySpec | None"
+        self, sanitized: str, policy: AIPolicySpec | None
     ) -> list[GuardResult]:
         """Шаг 4: input guards (NeMo Colang + Rebuff/Lakera).
 
@@ -185,7 +193,7 @@ class PipelineStepsMixin:
             return []
 
     async def _render_prompt(
-        self, request: "AIRequest", policy: "AIPolicySpec | None", sanitized: str
+        self, request: AIRequest, policy: AIPolicySpec | None, sanitized: str
     ) -> str:
         """Шаг 5: PromptRenderer (Langfuse + tiktoken trim) + context strategy.
 
@@ -261,8 +269,8 @@ class PipelineStepsMixin:
         )
 
     async def _invoke_llm(
-        self, rendered: str, policy: "AIPolicySpec | None", stream: bool
-    ) -> "AIResponse":
+        self, rendered: str, policy: AIPolicySpec | None, stream: bool
+    ) -> AIResponse:
         """Шаг 6: PydanticAI unified client (S32 W1) или LiteLLMGateway fallback.
 
         При наличии ``policy.model_router`` использует :class:`PydanticAIClient`
@@ -336,7 +344,7 @@ class PipelineStepsMixin:
         )
 
     async def _apply_output_guards(
-        self, response: "AIResponse", policy: "AIPolicySpec | None"
+        self, response: AIResponse, policy: AIPolicySpec | None
     ) -> list[GuardResult]:
         """Шаг 7: output guards (Llama Guard 3).
 
@@ -367,8 +375,8 @@ class PipelineStepsMixin:
             return []
 
     async def _apply_output_sanitizers(
-        self, response: "AIResponse", policy: "AIPolicySpec | None"
-    ) -> "AIResponse":
+        self, response: AIResponse, policy: AIPolicySpec | None
+    ) -> AIResponse:
         """Шаг 8: output sanitizers (Presidio + JSONSchema через Outlines).
 
         Применяет PII-маскировку к ``response.content`` через
@@ -416,7 +424,7 @@ class PipelineStepsMixin:
         )
 
     async def _audit_emit(
-        self, request: "AIRequest", policy: "AIPolicySpec | None", response: "AIResponse"
+        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse
     ) -> None:
         """Шаг 9a: Audit emit через Unified :class:`AuditService`.
 
@@ -473,7 +481,7 @@ class PipelineStepsMixin:
             logger.warning("AIGateway: audit emit failed: %s", exc)
 
     async def _cost_track(
-        self, request: "AIRequest", policy: "AIPolicySpec | None", response: "AIResponse"
+        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse
     ) -> None:
         """Шаг 9b: Cost-tracker (Langfuse v3 OTel + Prometheus).
 
@@ -537,7 +545,7 @@ class PipelineStepsMixin:
         return self._llm_gateway
 
     @staticmethod
-    def _language_from_policy(policy: "AIPolicySpec | None", *, default: str) -> str:
+    def _language_from_policy(policy: AIPolicySpec | None, *, default: str) -> str:
         """Извлекает язык из первого input_sanitizer (``presidio:ru`` → ``ru``)."""
         if policy is None or not policy.input_sanitizers:
             return default

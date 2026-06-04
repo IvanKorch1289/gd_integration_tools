@@ -11,12 +11,15 @@
 ``temporalio`` подменяем через ``monkeypatch.setitem(sys.modules, ...)``
 чтобы не запускать реальный workflow runtime.
 """
+
 # ruff: noqa: S101
 from __future__ import annotations
 
 import pytest  # noqa: S101
 
-pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
+pytest.importorskip(
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+)
 
 import sys
 from datetime import timedelta
@@ -30,8 +33,7 @@ from src.backend.dsl.workflow.spec import ActivityDeclaration, SagaDeclaration
 
 
 def _make_recorder_temporal(
-    *,
-    fail_on: set[str] | None = None,
+    *, fail_on: set[str] | None = None
 ) -> tuple[SimpleNamespace, list[str]]:
     """Сконструировать fake ``temporalio.workflow`` с записью execute_activity.
 
@@ -73,14 +75,10 @@ def _make_fake_common() -> SimpleNamespace:
     return SimpleNamespace(RetryPolicy=FakeRetryPolicy)
 
 
-def _patch_temporal(
-    monkeypatch: pytest.MonkeyPatch, fake_wf: SimpleNamespace
-) -> None:
+def _patch_temporal(monkeypatch: pytest.MonkeyPatch, fake_wf: SimpleNamespace) -> None:
     fake_common = _make_fake_common()
     monkeypatch.setitem(
-        sys.modules,
-        "temporalio",
-        SimpleNamespace(workflow=fake_wf, common=fake_common),
+        sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=fake_common)
     )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", fake_common)
@@ -109,11 +107,7 @@ async def test_all_forward_success_no_compensate(
     ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {}}
     await compile_saga_step(decl, ctx)
 
-    assert recorder == [
-        "orders.create",
-        "inventory.reserve",
-        "payments.charge",
-    ]
+    assert recorder == ["orders.create", "inventory.reserve", "payments.charge"]
 
 
 @pytest.mark.asyncio
@@ -309,7 +303,9 @@ async def test_saga_strict_compensate_raises_on_failure(
         ],
         compensate=[
             ActivityDeclaration(name="orders.cancel"),
-            ActivityDeclaration(name="inventory.release"),  # fails, raises with strict=True
+            ActivityDeclaration(
+                name="inventory.release"
+            ),  # fails, raises with strict=True
             ActivityDeclaration(name="payments.refund"),
         ],
         strict_compensate=True,

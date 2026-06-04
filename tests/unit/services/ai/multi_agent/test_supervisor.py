@@ -33,8 +33,7 @@ async def test_supervisor_disabled_returns_stub(
         feature_flags, "multi_agent_supervisor_enabled", False, raising=False
     )
     sup = MultiAgentSupervisor(
-        name="test_supervisor",
-        agents=[AgentSpec(name="a1", description="agent 1")],
+        name="test_supervisor", agents=[AgentSpec(name="a1", description="agent 1")]
     )
     result = await sup.run(prompt="hello")
     assert result["supervisor"] == "test_supervisor"
@@ -83,7 +82,11 @@ async def test_credit_pipeline_supervisor_smoke(
     monkeypatch.setitem(sys.modules, "langgraph", None)
     sup = get_credit_pipeline_supervisor(enabled=True)
     assert sup.name == "credit_orchestrator"
-    assert sup.agent_names == ("scoring_agent", "document_parser_agent", "decision_agent")
+    assert sup.agent_names == (
+        "scoring_agent",
+        "document_parser_agent",
+        "decision_agent",
+    )
 
     result = await sup.run(prompt="Оцени заявку", payload={"client_id": 12345})
     assert result["agents_invoked"] == [
@@ -102,10 +105,7 @@ async def test_supervisor_validation_errors() -> None:
     with pytest.raises(ValueError, match="хотя бы одного"):
         MultiAgentSupervisor(name="empty", agents=[])
 
-    dupe = [
-        AgentSpec(name="a", description="x"),
-        AgentSpec(name="a", description="y"),
-    ]
+    dupe = [AgentSpec(name="a", description="x"), AgentSpec(name="a", description="y")]
     with pytest.raises(ValueError, match="Дубликат"):
         MultiAgentSupervisor(name="dupe", agents=dupe)
 

@@ -48,8 +48,7 @@ def validate() -> list[str]:
 
     if len(teams) != EXPECTED_TEAMS:
         errors.append(
-            f"Ожидалось {EXPECTED_TEAMS} команд, найдено {len(teams)}: "
-            f"{sorted(teams)}"
+            f"Ожидалось {EXPECTED_TEAMS} команд, найдено {len(teams)}: {sorted(teams)}"
         )
 
     for team_id, team_data in teams.items():
@@ -67,9 +66,7 @@ def validate() -> list[str]:
     for blocker_id, blocker_data in blockers.items():
         for field in REQUIRED_BLOCKER_FIELDS:
             if field not in blocker_data:
-                errors.append(
-                    f"blockers.{blocker_id}: отсутствует поле '{field}'"
-                )
+                errors.append(f"blockers.{blocker_id}: отсутствует поле '{field}'")
         owner = blocker_data.get("owner_team")
         if owner and owner not in valid_team_ids:
             errors.append(

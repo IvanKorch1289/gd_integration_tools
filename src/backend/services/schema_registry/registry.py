@@ -42,9 +42,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.observability.metrics_registry import (
-        MetricsRegistry,
-    )
+    from src.backend.core.utils.metrics_registry import MetricsRegistry
 
 __all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
 
@@ -95,13 +93,10 @@ class ServiceSchemaRegistry:
             операций реестра.
     """
 
-    __slots__ = ("_by_kind", "_strict_validation", "_metrics")
+    __slots__ = ("_by_kind", "_metrics", "_strict_validation")
 
     def __init__(
-        self,
-        *,
-        strict_validation: bool = False,
-        metrics: MetricsRegistry | None = None,
+        self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None
     ) -> None:
         self._by_kind: dict[SchemaKind, dict[str, SchemaEntry]] = {
             kind: {} for kind in SchemaKind
@@ -148,7 +143,9 @@ class ServiceSchemaRegistry:
                     "schema_registry_get_total",
                     "Total schema lookups",
                     labels=("kind", "hit"),
-                ).labels(kind=kind.value, hit="true" if result is not None else "false").inc()
+                ).labels(
+                    kind=kind.value, hit="true" if result is not None else "false"
+                ).inc()
             except Exception:  # pragma: no cover - metrics best-effort
                 pass
 
@@ -214,13 +211,15 @@ class ServiceSchemaRegistry:
         entries: list[dict[str, Any]] = []
         for kind in SchemaKind:
             for entry in self.list_kind(kind):
-                entries.append({
-                    "kind": entry.kind.value,
-                    "name": entry.name,
-                    "spec_schema": entry.spec_schema,
-                    "output_schema": entry.output_schema,
-                    "meta": dict(entry.meta),
-                })
+                entries.append(
+                    {
+                        "kind": entry.kind.value,
+                        "name": entry.name,
+                        "spec_schema": entry.spec_schema,
+                        "output_schema": entry.output_schema,
+                        "meta": dict(entry.meta),
+                    }
+                )
         return {"version": "2.0", "entries": entries}
 
     def from_snapshot(self, data: dict[str, Any]) -> None:

@@ -77,7 +77,7 @@ async def readiness_probe(request: Request) -> JSONResponse:
         from src.backend.core.di.providers import get_resilience_coordinator_provider
 
         statuses = get_resilience_coordinator_provider().status()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return JSONResponse(
             status_code=503,
             content={"status": "health_check_failed", "error": str(exc)[:200]},
@@ -187,7 +187,7 @@ async def components_health(mode: str = "fast") -> JSONResponse:
         return JSONResponse(
             status_code=status_code, content=report, headers=_no_store_headers()
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return JSONResponse(
             status_code=503,
             content={"status": "error", "error": str(exc)[:200]},

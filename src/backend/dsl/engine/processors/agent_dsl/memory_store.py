@@ -72,16 +72,14 @@ class MemoryStoreProcessor(BaseAIProcessor):
         self.value_property = value_property
         self.ttl_s = ttl_s
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``ai.memory.write`` = после ``":"`` в namespace."""
         del exchange
         if ":" in self.namespace:
             return self.namespace.split(":", 1)[1]
         return self.namespace
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         backend = self._resolve_backend()
         if backend is None:
@@ -109,16 +107,16 @@ class MemoryStoreProcessor(BaseAIProcessor):
 
         try:
             await backend.store(namespace, resolved_key, value, ttl_s=self.ttl_s)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("%s: store failed (%s) — drop", self.name, exc)
 
-    def _resolve_namespace(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_namespace(self, exchange: Exchange[Any]) -> str:
         if "${tenant_id}" not in self.namespace:
             return self.namespace
         tenant = exchange.meta.tenant_id or "unknown"
         return self.namespace.replace("${tenant_id}", tenant)
 
-    def _resolve_key(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_key(self, exchange: Exchange[Any]) -> str:
         if self.key_property is None:
             return self.key or ""
 
@@ -156,7 +154,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
             )
         return str(cursor) if cursor else ""
 
-    def _resolve_value(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_value(self, exchange: Exchange[Any]) -> Any:
         parts = self.value_property.split(".")
         head = parts[0]
         if head == "body":
@@ -191,7 +189,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
             container = get_container()
             if container is not None:
                 return container.resolve_optional("memory_backend")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 

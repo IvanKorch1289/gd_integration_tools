@@ -83,13 +83,11 @@ class PIIMaskProcessor(BaseAIProcessor):
         self.target_property = target_property or source_property
         self.language = language
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         del exchange
         return self.scope
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         text = self._extract_text(exchange)
         if not text:
@@ -106,7 +104,7 @@ class PIIMaskProcessor(BaseAIProcessor):
 
         try:
             result = await tokenizer.mask_reversible(text, language=self.language)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "%s: mask_reversible failed (%s) — pass-through", self.name, exc
             )
@@ -121,7 +119,7 @@ class PIIMaskProcessor(BaseAIProcessor):
         exchange.set_property("pii_token_map", token_map)
         exchange.set_property("pii_detected", pii_detected)
 
-    def _extract_text(self, exchange: "Exchange[Any]") -> str:
+    def _extract_text(self, exchange: Exchange[Any]) -> str:
         """Достать текст по ``source_property``."""
         parts = self.source_property.split(".")
         head = parts[0]
@@ -156,7 +154,7 @@ class PIIMaskProcessor(BaseAIProcessor):
             else (str(cursor) if cursor is not None else "")
         )
 
-    def _write_target(self, exchange: "Exchange[Any]", masked_text: str) -> None:
+    def _write_target(self, exchange: Exchange[Any], masked_text: str) -> None:
         """Записать masked-текст в ``target_property``."""
         parts = self.target_property.split(".")
         head = parts[0]
@@ -223,7 +221,7 @@ class PIIMaskProcessor(BaseAIProcessor):
             container = get_container()
             if container is not None:
                 return container.resolve_optional("pii_tokenizer")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 

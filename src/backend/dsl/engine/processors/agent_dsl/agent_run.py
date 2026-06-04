@@ -112,14 +112,12 @@ class AgentRunProcessor(BaseAIProcessor):
         self.timeout_s = timeout_s
         self.max_retries = max_retries
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``ai.invoke`` = ``workflow_id`` (см. ADR-NEW-19)."""
         del exchange
         return self.workflow_id
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         from src.backend.core.ai.gateway import AIRequest
 
@@ -147,7 +145,7 @@ class AgentRunProcessor(BaseAIProcessor):
                 response = await asyncio.wait_for(
                     gateway.invoke(request), timeout=self.timeout_s
                 )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             exchange.set_error(
                 f"{self.name}: timeout ({self.timeout_s}s) при вызове AIGateway.invoke"
             )
@@ -178,7 +176,7 @@ class AgentRunProcessor(BaseAIProcessor):
             },
         )
 
-    async def _invoke_with_retry(self, gateway: Any, request: "AIRequest") -> Any:
+    async def _invoke_with_retry(self, gateway: Any, request: AIRequest) -> Any:
         """Retry-обёртка над gateway.invoke с exponential backoff.
 
         Retry на transient exceptions (GatewayUnavailable, network errors,
@@ -202,8 +200,9 @@ class AgentRunProcessor(BaseAIProcessor):
         async for attempt in retry:
             with attempt:
                 return await _call()
+        return None
 
-    def _extract_context(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _extract_context(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Достать context для template из exchange.
 
         Поддерживает простые пути: ``"body"`` → ``exchange.in_message.body``;
@@ -232,17 +231,19 @@ class AgentRunProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв :class:`AIGateway` через DI singleton."""
         try:
-            from src.backend.services.ai.gateway_adapter import get_ai_gateway
+            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
+                get_ai_gateway,
+            )
 
             return get_ai_gateway()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             try:
                 from src.backend.core.di.container import get_container
 
                 container = get_container()
                 if container is not None:
                     return container.resolve_optional("ai_gateway")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("AgentRunProcessor: DI container resolve failed: %s", exc)
         return None
 

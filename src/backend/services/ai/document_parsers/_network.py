@@ -27,7 +27,7 @@ class _NetworkDeniedError(RuntimeError):
     """markitdown попытался сделать outbound-запрос с network_mode='off'."""
 
 
-def _denied_urlopen(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+def _denied_urlopen(*args, **kwargs):
     raise _NetworkDeniedError(
         "markitdown network access is disabled (settings.MARKITDOWN_NETWORK_MODE='off')"
     )

@@ -24,8 +24,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncIterator, Final, Literal
+from typing import TYPE_CHECKING, AsyncContextManager, Final, Literal
 
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
@@ -118,7 +119,7 @@ def _current_tenant() -> str:
             return "_system"
         # Может быть object или str — берём tenant_id.
         return getattr(tenant, "tenant_id", None) or str(tenant) or "_system"
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return "_system"
 
 
@@ -209,7 +210,7 @@ async def track_operation(
             tenant=tenant,
         )
         raise exc
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         record_request(
             client=client,
             operation=operation,
@@ -265,7 +266,7 @@ class ClientMetricsMixin:
 
     def track(
         self, operation: str, *, tenant: str | None = None
-    ) -> "AsyncIterator[None]":
+    ) -> AsyncContextManager[None]:
         """Shortcut для `track_operation(client=self.name, ...)`."""
         return track_operation(client=self.name, operation=operation, tenant=tenant)
 
@@ -290,6 +291,8 @@ class ClientMetricsMixin:
 
 
 __all__ = (
+    "CIRCUIT_OPEN_EXCEPTIONS",
+    "TIMEOUT_EXCEPTIONS",
     "CircuitState",
     "ClientMetricsMixin",
     "DegradationLabel",
@@ -305,6 +308,4 @@ __all__ = (
     "request_duration_seconds",
     "requests_total",
     "track_operation",
-    "TIMEOUT_EXCEPTIONS",
-    "CIRCUIT_OPEN_EXCEPTIONS",
 )

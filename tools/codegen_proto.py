@@ -127,15 +127,11 @@ def _build_proto_file_for_group(group: _ServiceGroup) -> _ProtoBuildResult:
 
     for meta in group.actions:
         if meta.input_model is None and meta.output_model is None:
-            skipped.append(
-                f"{meta.action}: ни input_model, ни output_model — пропуск"
-            )
+            skipped.append(f"{meta.action}: ни input_model, ни output_model — пропуск")
             continue
 
         request_name = _ensure_message(converter, meta.input_model, suffix="Request")
-        response_name = _ensure_message(
-            converter, meta.output_model, suffix="Response"
-        )
+        response_name = _ensure_message(converter, meta.output_model, suffix="Response")
         rpcs.append(
             ProtoServiceRpc(
                 name=_verb_to_rpc_name(meta.action),
@@ -259,11 +255,7 @@ def _compile_proto(proto_path: Path) -> tuple[Path, Path]:
     return pb2, pb2_grpc
 
 
-def run_codegen(
-    *,
-    dry_run: bool = False,
-    compile_proto: bool = True,
-) -> int:
+def run_codegen(*, dry_run: bool = False, compile_proto: bool = True) -> int:
     """Главная функция CLI.
 
     Args:
@@ -332,9 +324,7 @@ def _build_argparser() -> argparse.ArgumentParser:
         action="store_true",
         help="Удалить ранее сгенерированные .proto/_pb2 в auto/ перед запуском.",
     )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose logging."
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging.")
     return parser
 
 

@@ -82,7 +82,7 @@ class JsonPathProcessor(BaseProcessor):
         self._mode = mode
         self._default = default
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -97,16 +97,14 @@ class JsonPathProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_jsonpath:
                 exchange.set_property("jsonpath_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         try:
@@ -122,7 +120,7 @@ class JsonPathProcessor(BaseProcessor):
         try:
             expr = _parse(self._expr_source)
             matches = [m.value for m in expr.find(body)]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"jsonpath evaluation error: {exc}")
             return
 

@@ -22,9 +22,7 @@ class _FakeKVv2:
         self.fail_once_with: BaseException | None = None
         self.calls: list[tuple[str, str, dict[str, Any] | None]] = []
 
-    def read_secret_version(
-        self, *, path: str, mount_point: str
-    ) -> dict[str, Any]:
+    def read_secret_version(self, *, path: str, mount_point: str) -> dict[str, Any]:
         self.calls.append(("read", path, None))
         self._maybe_raise()
         if path not in self._store:
@@ -110,16 +108,12 @@ async def test_get_secret_value_field(
 
 
 @pytest.mark.asyncio
-async def test_get_secret_specific_field(
-    backend: VaultSecretsBackend,
-) -> None:
+async def test_get_secret_specific_field(backend: VaultSecretsBackend) -> None:
     assert await backend.get_secret("app/db#user") == "app"
 
 
 @pytest.mark.asyncio
-async def test_get_secret_missing_returns_none(
-    backend: VaultSecretsBackend,
-) -> None:
+async def test_get_secret_missing_returns_none(backend: VaultSecretsBackend) -> None:
     assert await backend.get_secret("does/not/exist") is None
 
 
@@ -133,9 +127,7 @@ async def test_get_secret_uses_cache(
 
 
 @pytest.mark.asyncio
-async def test_get_secret_cache_ttl_expires(
-    fake_client: _FakeClient,
-) -> None:
+async def test_get_secret_cache_ttl_expires(fake_client: _FakeClient) -> None:
     backend = VaultSecretsBackend(
         addr="http://vault:8200",
         token="t",
@@ -181,9 +173,7 @@ async def test_health_check_ok(backend: VaultSecretsBackend) -> None:
 async def test_health_check_failure(fake_client: _FakeClient) -> None:
     fake_client.authenticated = False
     backend = VaultSecretsBackend(
-        addr="http://vault:8200",
-        token="t",
-        client_factory=lambda: fake_client,
+        addr="http://vault:8200", token="t", client_factory=lambda: fake_client
     )
     assert await backend.health_check() is False
 

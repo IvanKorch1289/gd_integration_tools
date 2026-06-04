@@ -25,7 +25,9 @@ class TestSchemaEntry:
 class TestServiceSchemaRegistry:
     def test_register_and_get(self) -> None:
         reg = ServiceSchemaRegistry()
-        entry = SchemaEntry(kind=SchemaKind.ROUTE, name="r1", spec_schema={"type": "object"})
+        entry = SchemaEntry(
+            kind=SchemaKind.ROUTE, name="r1", spec_schema={"type": "object"}
+        )
         reg.register(entry)
         assert reg.get(SchemaKind.ROUTE, "r1") is entry
 
@@ -81,7 +83,10 @@ class TestServiceSchemaRegistry:
         reg = ServiceSchemaRegistry()
         reg.register(
             SchemaEntry(
-                kind=SchemaKind.ROUTE, name="r1", spec_schema={"type": "object"}, meta={"v": 1}
+                kind=SchemaKind.ROUTE,
+                name="r1",
+                spec_schema={"type": "object"},
+                meta={"v": 1},
             )
         )
         snap = reg.to_snapshot()
@@ -119,9 +124,7 @@ class TestServiceSchemaRegistry:
         pytest.importorskip("jsonschema")
         reg = ServiceSchemaRegistry(strict_validation=True)
         entry = SchemaEntry(
-            kind=SchemaKind.ROUTE,
-            name="r1",
-            spec_schema={"type": "object"},
+            kind=SchemaKind.ROUTE, name="r1", spec_schema={"type": "object"}
         )
         reg.register(entry)
         assert reg.get(SchemaKind.ROUTE, "r1") is entry
@@ -130,9 +133,7 @@ class TestServiceSchemaRegistry:
         pytest.importorskip("jsonschema")
         reg = ServiceSchemaRegistry(strict_validation=True)
         entry = SchemaEntry(
-            kind=SchemaKind.ROUTE,
-            name="r1",
-            spec_schema={"type": "invalid_type_xyz"},
+            kind=SchemaKind.ROUTE, name="r1", spec_schema={"type": "invalid_type_xyz"}
         )
         with pytest.raises(ValueError, match="Invalid JSON-Schema"):
             reg.register(entry)

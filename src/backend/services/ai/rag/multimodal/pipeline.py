@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-__all__ = ("CrossModalQueryResult", "MultimodalPipeline", "ModalKind")
+__all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
 
 logger = logging.getLogger("services.ai.rag.multimodal.pipeline")
 

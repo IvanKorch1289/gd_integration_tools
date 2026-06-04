@@ -26,14 +26,18 @@ class TestManagedAsyncClient:
         return _FakeClient(name="test")
 
     @pytest.mark.asyncio
-    async def test_ensure_connected_creates_connection(self, client: _FakeClient) -> None:
+    async def test_ensure_connected_creates_connection(
+        self, client: _FakeClient
+    ) -> None:
         """ensure_connected creates connection on first call."""
         conn = await client.ensure_connected()
         assert conn == "conn"
         assert client.is_connected is True
 
     @pytest.mark.asyncio
-    async def test_ensure_connected_reuses_connection(self, client: _FakeClient) -> None:
+    async def test_ensure_connected_reuses_connection(
+        self, client: _FakeClient
+    ) -> None:
         """ensure_connected reuses existing connection."""
         await client.ensure_connected()
         conn2 = await client.ensure_connected()
@@ -94,7 +98,9 @@ class TestManagedAsyncClient:
         mock_conn.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_ensure_connected_raises_when_closed(self, client: _FakeClient) -> None:
+    async def test_ensure_connected_raises_when_closed(
+        self, client: _FakeClient
+    ) -> None:
         """ensure_connected raises when client is closed."""
         await client.close()
         with pytest.raises(RuntimeError, match="is closed"):

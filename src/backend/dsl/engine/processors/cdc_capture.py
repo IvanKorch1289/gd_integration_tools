@@ -34,7 +34,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 try:
     from src.backend.infrastructure.clients.external.cdc import get_cdc_client
 except ImportError:
-    get_cdc_client = None  # type: ignore[assignment,misc]
+    get_cdc_client = None
 
 __all__ = ("CDCCaptureProcessor",)
 

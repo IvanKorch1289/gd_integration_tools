@@ -162,5 +162,4 @@ class WsdlImportGateway:
         )
 
 
-# ruff: noqa: F401
 _BUFFER = io.BytesIO  # placeholder для type-check; не используется

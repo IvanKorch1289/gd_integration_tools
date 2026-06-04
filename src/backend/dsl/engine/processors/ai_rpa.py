@@ -83,9 +83,7 @@ class AIRpaProcessor(BaseProcessor):
         self._temperature = temperature
         self._to = to
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Анализирует задачу + UI-контекст через LLM, записывает action."""
         # Получаем LLM client из контекста
         llm_client = self._get_llm_client(context)
@@ -105,7 +103,7 @@ class AIRpaProcessor(BaseProcessor):
                 temperature=self._temperature,
             )
             action = self._parse_llm_response(response)
-        except Exception as exc:  # noqa: BLE001 — DSL-граница
+        except Exception as exc:
             exchange.fail(f"ai_rpa: LLM call failed: {exc}")
             return
 
@@ -113,7 +111,7 @@ class AIRpaProcessor(BaseProcessor):
         exchange.set_property(self._action_property, action)
         self._write(exchange, action)
 
-    def _get_llm_client(self, context: "ExecutionContext"):  # noqa: ANN001
+    def _get_llm_client(self, context: ExecutionContext):
         """Извлекает LLM client из контекста выполнения."""
         # Сначала пробуем direct attribute
         client = getattr(context, "llm_client", None)
@@ -133,7 +131,7 @@ class AIRpaProcessor(BaseProcessor):
 
         return None
 
-    def _build_prompt(self, exchange: "Exchange[Any]") -> str:
+    def _build_prompt(self, exchange: Exchange[Any]) -> str:
         """Строит промпт для LLM с задачей и UI-контекстом."""
         context_parts = [f"Задача: {self._task}"]
 
@@ -159,7 +157,7 @@ class AIRpaProcessor(BaseProcessor):
 
         return "\n".join(context_parts)
 
-    def _resolve_property(self, exchange: "Exchange[Any]", path: str) -> str:
+    def _resolve_property(self, exchange: Exchange[Any], path: str) -> str:
         """Разрешает property reference в значение."""
         if path.startswith("property:"):
             key = path[len("property:") :]
@@ -210,7 +208,7 @@ class AIRpaProcessor(BaseProcessor):
             "raw_response": content,
         }
 
-    def _write(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _write(self, exchange: Exchange[Any], value: Any) -> None:
         """Записывает результат в указанный target."""
         target = self._to
         if target.startswith("property:"):

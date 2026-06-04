@@ -20,6 +20,7 @@ History:
 - workflow.py  (30 funcs) — actions, scheduler, workflow state, resilience, loggers
 """
 
+from src.backend.core.di.module_registry import resolve_module  # noqa: F401
 from src.backend.core.di.providers import (  # noqa: F401
     ai,
     auth,

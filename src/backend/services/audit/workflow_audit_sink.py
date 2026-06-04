@@ -45,14 +45,14 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 __all__ = (
     "WorkflowAuditSink",
     "get_workflow_audit_sink",
-    "set_workflow_audit_sink",
     "reset_workflow_audit_sink",
+    "set_workflow_audit_sink",
 )
 
 _logger = logging.getLogger("services.audit.workflow")
@@ -149,9 +149,7 @@ class WorkflowAuditSink:
             "tenant_id": tenant_id,
             "payload": json.dumps(payload or {}, ensure_ascii=False),
             "trace_id": trace_id,
-            "created_at": (created_at or datetime.now(timezone.utc)).astimezone(
-                timezone.utc
-            ),
+            "created_at": (created_at or datetime.now(UTC)).astimezone(UTC),
             "actor": actor,
             "duration_ms": duration_ms,
             "parent_workflow_id": parent_workflow_id,
@@ -178,7 +176,7 @@ class WorkflowAuditSink:
         if not events:
             return
         rows = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for raw in events:
             rows.append(
                 {
@@ -188,9 +186,7 @@ class WorkflowAuditSink:
                     "tenant_id": raw.get("tenant_id"),
                     "payload": json.dumps(raw.get("payload") or {}, ensure_ascii=False),
                     "trace_id": raw.get("trace_id"),
-                    "created_at": (raw.get("created_at") or now).astimezone(
-                        timezone.utc
-                    ),
+                    "created_at": (raw.get("created_at") or now).astimezone(UTC),
                 }
             )
         await self._writer.add_many(rows)

@@ -232,7 +232,7 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             self._log_vault_unreachable(str(exc) or type(exc).__name__)
             return {}
         except Exception as exc:
-            raise RuntimeError(f"Vault error: {str(exc)}") from exc
+            raise RuntimeError(f"Vault error: {exc!s}") from exc
 
     @staticmethod
     def _log_vault_unreachable(detail: str) -> None:

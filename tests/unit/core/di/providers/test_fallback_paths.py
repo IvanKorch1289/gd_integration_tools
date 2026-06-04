@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from src.backend.core.di.providers import (
-    ai,
-    auth,
-    cache,
-    db,
-    http,
-    workflow,
-)
+from src.backend.core.di.providers import ai, auth, cache, db, http, workflow
 
 
 def _patch_resolve_module(target_module: str) -> tuple[MagicMock, dict[str, MagicMock]]:
@@ -41,7 +34,9 @@ class TestCacheFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_cache_invalidator = MagicMock(return_value="fallback_invalidator")
-        with patch("src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+        ):
             result = cache.get_cache_invalidator_provider()
         assert result == "fallback_invalidator"
 
@@ -51,7 +46,9 @@ class TestCacheFallbackPaths:
         mock_redis = MagicMock()
         mock_redis.client = "kv_client"
         mock_mod.redis_client = mock_redis
-        with patch("src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+        ):
             result = cache.get_redis_kv_client_provider()
         assert result == "kv_client"
 
@@ -59,7 +56,9 @@ class TestCacheFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.redis_client = "admin_storage_redis"
-        with patch("src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+        ):
             result = cache.get_admin_cache_storage_provider()
         assert result == "admin_storage_redis"
 
@@ -72,7 +71,9 @@ class TestDbFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_clickhouse_client = MagicMock(return_value="clickhouse_inst")
-        with patch("src.backend.core.di.providers.db.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+        ):
             result = db.get_clickhouse_client_provider()
         assert result == "clickhouse_inst"
 
@@ -80,7 +81,9 @@ class TestDbFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_mongo_client = "mongo_factory"
-        with patch("src.backend.core.di.providers.db.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+        ):
             result = db.get_mongo_client_provider()
         assert result == "mongo_factory"
 
@@ -88,7 +91,9 @@ class TestDbFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.ConnectorRegistry.instance = MagicMock(return_value="registry_inst")
-        with patch("src.backend.core.di.providers.db.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+        ):
             result = db.get_connector_registry_provider()
         assert result == "registry_inst"
 
@@ -101,7 +106,9 @@ class TestHttpFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_http_client_dependency = MagicMock(return_value="http_client_inst")
-        with patch("src.backend.core.di.providers.http.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+        ):
             result = http.get_http_client_provider()
         assert result == "http_client_inst"
 
@@ -109,7 +116,9 @@ class TestHttpFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.smtp_client = "smtp_inst"
-        with patch("src.backend.core.di.providers.http.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+        ):
             result = http.get_smtp_client_provider()
         assert result == "smtp_inst"
 
@@ -117,7 +126,9 @@ class TestHttpFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_browser_client = MagicMock(return_value="browser_inst")
-        with patch("src.backend.core.di.providers.http.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+        ):
             result = http.get_browser_client_provider()
         assert result == "browser_inst"
 
@@ -125,7 +136,9 @@ class TestHttpFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.RedisHash = "RedisHash_class"
-        with patch("src.backend.core.di.providers.http.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+        ):
             result = http.get_redis_hash_factory_provider()
         assert result == "RedisHash_class"
 
@@ -138,7 +151,9 @@ class TestAiFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_model_enum = "model_enum_func"
-        with patch("src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+        ):
             result = ai.get_model_enum_provider()
         assert result == "model_enum_func"
 
@@ -146,7 +161,9 @@ class TestAiFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.VaultSecretRefresher.get = MagicMock(return_value="vault_inst")
-        with patch("src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+        ):
             result = ai.get_vault_refresher_provider()
         assert result == "vault_inst"
 
@@ -154,7 +171,9 @@ class TestAiFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_antivirus_service_dependency = MagicMock(return_value="av_inst")
-        with patch("src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+        ):
             result = ai.get_antivirus_service_provider()
         assert result == "av_inst"
 
@@ -167,21 +186,32 @@ class TestAuthFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_api_key_manager = MagicMock(return_value="apikey_inst")
-        with patch("src.backend.core.di.providers.auth.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.auth.resolve_module", return_value=mock_mod
+        ):
             result = auth.get_api_key_manager_provider()
         assert result == "apikey_inst"
 
     def test_build_jwks_cache_returns_none_when_no_url(self) -> None:
         from src.backend.core.config.security import secure_settings
+
         with patch.object(secure_settings, "jwks_url", None, create=True):
             result = auth._build_jwks_cache_or_none()
         assert result is None
 
     def test_build_jwks_cache_returns_instance_when_url_set(self) -> None:
         from src.backend.core.config.security import secure_settings
-        with patch.object(secure_settings, "jwks_url", "https://idp.example.com/.well-known/jwks.json", create=True), \
-             patch.object(secure_settings, "jwks_cache_ttl", 300, create=True), \
-             patch("src.backend.core.auth.jwks_cache.JwksCache") as mock_jwks:
+
+        with (
+            patch.object(
+                secure_settings,
+                "jwks_url",
+                "https://idp.example.com/.well-known/jwks.json",
+                create=True,
+            ),
+            patch.object(secure_settings, "jwks_cache_ttl", 300, create=True),
+            patch("src.backend.core.auth.jwks_cache.JwksCache") as mock_jwks,
+        ):
             mock_jwks.return_value = "jwks_cache_inst"
             result = auth._build_jwks_cache_or_none()
         assert result == "jwks_cache_inst"
@@ -195,7 +225,10 @@ class TestWorkflowFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.scheduler_manager = "scheduler_inst"
-        with patch("src.backend.core.di.providers.workflow.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.workflow.resolve_module",
+            return_value=mock_mod,
+        ):
             result = workflow.get_scheduler_manager_provider()
         assert result == "scheduler_inst"
 
@@ -203,7 +236,10 @@ class TestWorkflowFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.WorkflowEventStore = "WorkflowEventStore_class"
-        with patch("src.backend.core.di.providers.workflow.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.workflow.resolve_module",
+            return_value=mock_mod,
+        ):
             result = workflow.get_workflow_event_store_provider()
         assert result == "WorkflowEventStore_class"
 
@@ -211,7 +247,10 @@ class TestWorkflowFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_resilience_coordinator = MagicMock(return_value="coordinator_inst")
-        with patch("src.backend.core.di.providers.workflow.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.workflow.resolve_module",
+            return_value=mock_mod,
+        ):
             result = workflow.get_resilience_coordinator_provider()
         assert result == "coordinator_inst"
 
@@ -219,7 +258,10 @@ class TestWorkflowFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.get_rate_limiter = MagicMock(return_value="rate_limiter_inst")
-        with patch("src.backend.core.di.providers.workflow.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.workflow.resolve_module",
+            return_value=mock_mod,
+        ):
             result = workflow.get_rate_limiter_provider()
         assert result == "rate_limiter_inst"
 
@@ -227,6 +269,9 @@ class TestWorkflowFallbackPaths:
         self._clear_overrides()
         mock_mod = MagicMock()
         mock_mod.app_logger = "app_logger_inst"
-        with patch("src.backend.core.di.providers.workflow.resolve_module", return_value=mock_mod):
+        with patch(
+            "src.backend.core.di.providers.workflow.resolve_module",
+            return_value=mock_mod,
+        ):
             result = workflow.get_app_logger_provider()
         assert result == "app_logger_inst"

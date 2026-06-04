@@ -6,7 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 
-__all__ = ("QuotaTracker", "QuotaExceeded")
+__all__ = ("QuotaExceeded", "QuotaTracker")
 
 logger = logging.getLogger("api_mgmt.quotas")
 

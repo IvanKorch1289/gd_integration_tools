@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
+from typing import Any
 
 __all__ = ("DistributedRedisRateLimiter", "TokenBucketResult")
 
@@ -58,7 +59,7 @@ end
 redis.call('HMSET', key, 'tokens', tokens, 'last_ms', now_ms)
 redis.call('EXPIRE', key, 3600)
 return {allowed, tokens, retry_after_ms}
-"""  # noqa: S105
+"""  # noqa: S105  # config field name, not a password
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,7 +104,7 @@ class DistributedRedisRateLimiter:
         """SCRIPT LOAD lua-скрипта с кешированием sha1."""
         if self._script_sha is not None:
             return self._script_sha
-        client = getattr(self._adapter, "client", self._adapter)
+        client: Any = getattr(self._adapter, "client", self._adapter)
         sha = await client.script_load(_TOKEN_BUCKET_LUA)
         self._script_sha = sha if isinstance(sha, str) else sha.decode("ascii")
         return self._script_sha
@@ -121,10 +122,10 @@ class DistributedRedisRateLimiter:
         try:
             sha = await self._ensure_script()
             client = getattr(self._adapter, "client", self._adapter)
-            raw = await client.evalsha(
+            raw = await client.evalsha(  # type: ignore[attr-defined]
                 sha, 1, key, self._capacity, self._refill, tokens, now_ms
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "DistributedRedisRateLimiter fail-open for tenant=%s: %s",
                 tenant_id,
@@ -144,6 +145,6 @@ class DistributedRedisRateLimiter:
         """Полный сброс bucket'а tenant'а (admin-операция)."""
         client = getattr(self._adapter, "client", self._adapter)
         try:
-            await client.delete(self._key(tenant_id))
-        except Exception as exc:  # noqa: BLE001
+            await client.delete(self._key(tenant_id))  # type: ignore[attr-defined]
+        except Exception as exc:
             logger.warning("rl reset failed for tenant=%s: %s", tenant_id, exc)

@@ -76,24 +76,27 @@ async def populated_table(
 
     async with pg_session_factory() as session:
         # Setup: создаём временную таблицу с RLS-политикой
-        await session.execute(text(f"""
+        await session.execute(
+            text(f"""
             CREATE TABLE {table} (
                 id SERIAL PRIMARY KEY,
                 tenant_id TEXT NOT NULL,
                 payload TEXT
             )
-        """))
+        """)
+        )
         await session.execute(text(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY"))
         await session.execute(text(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY"))
-        await session.execute(text(f"""
+        await session.execute(
+            text(f"""
             CREATE POLICY p_{table} ON {table}
                 USING (tenant_id = current_setting('app.tenant_id', true))
                 WITH CHECK (tenant_id = current_setting('app.tenant_id', true))
-        """))
+        """)
+        )
         # Bypass RLS для seed через admin SET app.tenant_id
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :t, false)"),
-            {"t": tenant_a},
+            text("SELECT set_config('app.tenant_id', :t, false)"), {"t": tenant_a}
         )
         await session.execute(
             text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'A1')"),
@@ -104,8 +107,7 @@ async def populated_table(
             {"t": tenant_a},
         )
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :t, false)"),
-            {"t": tenant_b},
+            text("SELECT set_config('app.tenant_id', :t, false)"), {"t": tenant_b}
         )
         await session.execute(
             text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'B1')"),
@@ -134,17 +136,14 @@ async def test_rls_blocks_explicit_other_tenant_select(
     tenant_a, tenant_b, table = populated_table
     async with pg_session_factory() as session:
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :t, true)"),
-            {"t": tenant_a},
+            text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a}
         )
         result = await session.execute(
             text(f"SELECT payload FROM {table} WHERE tenant_id = :other"),
             {"other": tenant_b},
         )
         rows = result.scalars().all()
-        assert rows == [], (
-            f"RLS должен блокировать чужой tenant_id, получено: {rows}"
-        )
+        assert rows == [], f"RLS должен блокировать чужой tenant_id, получено: {rows}"
 
 
 @requires_postgres
@@ -156,8 +155,7 @@ async def test_rls_filters_cross_bu_select_without_where(
     tenant_a, _tenant_b, table = populated_table
     async with pg_session_factory() as session:
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :t, true)"),
-            {"t": tenant_a},
+            text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a}
         )
         result = await session.execute(text(f"SELECT payload FROM {table}"))
         rows = sorted(result.scalars().all())
@@ -175,8 +173,7 @@ async def test_rls_handles_union_bypass_attempt(
     tenant_a, _tenant_b, table = populated_table
     async with pg_session_factory() as session:
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :t, true)"),
-            {"t": tenant_a},
+            text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a}
         )
         result = await session.execute(
             text(

@@ -105,8 +105,18 @@ class TestJWT:
         client = ExpressBotClient(bot_config)
         t1 = client._generate_token()  # noqa: SLF001
         t2 = client._generate_token()  # noqa: SLF001
-        p1 = jwt.decode(t1, bot_config.secret_key, algorithms=["HS256"], audience=bot_config.botx_host)
-        p2 = jwt.decode(t2, bot_config.secret_key, algorithms=["HS256"], audience=bot_config.botx_host)
+        p1 = jwt.decode(
+            t1,
+            bot_config.secret_key,
+            algorithms=["HS256"],
+            audience=bot_config.botx_host,
+        )
+        p2 = jwt.decode(
+            t2,
+            bot_config.secret_key,
+            algorithms=["HS256"],
+            audience=bot_config.botx_host,
+        )
         assert p1["jti"] != p2["jti"]
 
     def test_auth_headers_bearer_prefix(self, bot_config: BotConfig) -> None:
@@ -177,7 +187,11 @@ class TestSendMessage:
             body="hi @{mention:m1}",
             bubble=[[BotxButton(command="/y", label="Yes")]],
             keyboard=[[BotxButton(command="/n", label="No")]],
-            mentions=[BotxMention(mention_type="user", mention_id="m1", user_huid="u1", name="Alice")],
+            mentions=[
+                BotxMention(
+                    mention_type="user", mention_id="m1", user_huid="u1", name="Alice"
+                )
+            ],
         )
         await client.send_message(msg)
         notif = captured["json"]["notification"]
@@ -186,7 +200,9 @@ class TestSendMessage:
         assert notif["mentions"][0]["mention_type"] == "user"
         assert notif["mentions"][0]["mention_data"]["user_huid"] == "u1"
 
-    async def test_send_message_raises_on_http_error(self, bot_config: BotConfig) -> None:
+    async def test_send_message_raises_on_http_error(
+        self, bot_config: BotConfig
+    ) -> None:
         """HTTP 4xx → ``HTTPStatusError``."""
 
         def handler(request: httpx.Request) -> httpx.Response:
@@ -231,11 +247,7 @@ class TestReplyEditDelete:
 
         client = _make_client(bot_config, handler)
         await client.edit_message(
-            "sid-1",
-            body="updated",
-            bubble=[],
-            status="ok",
-            ignored="should-not-appear",
+            "sid-1", body="updated", bubble=[], status="ok", ignored="should-not-appear"
         )
         body = captured["json"]
         assert captured["path"] == "/api/v3/botx/events/edit_event"
@@ -302,8 +314,7 @@ class TestTypingAndStatus:
             captured["path"] = request.url.path
             captured["query"] = dict(request.url.params)
             return httpx.Response(
-                200,
-                json={"result": {"group_chat_id": "c1", "sent_to": ["u1"]}},
+                200, json={"result": {"group_chat_id": "c1", "sent_to": ["u1"]}}
             )
 
         client = _make_client(bot_config, handler)
@@ -330,8 +341,7 @@ class TestUploadFile:
             captured["content_type"] = request.headers.get("content-type", "")
             captured["body"] = request.content
             return httpx.Response(
-                200,
-                json={"result": {"file_id": "f1", "file_url": "/files/f1"}},
+                200, json={"result": {"file_id": "f1", "file_url": "/files/f1"}}
             )
 
         client = _make_client(bot_config, handler)

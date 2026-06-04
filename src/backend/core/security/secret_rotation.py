@@ -30,15 +30,15 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 __all__ = (
-    "SecretRotator",
-    "RotationResult",
-    "RotationAuditEvent",
     "AuditableRotator",
     "FakeRotator",
+    "RotationAuditEvent",
+    "RotationResult",
+    "SecretRotator",
 )
 
 _logger = logging.getLogger("core.security.secret_rotation")
@@ -229,14 +229,14 @@ class AuditableRotator:
             secret_path=secret_path,
             rotation_id=rotation_id,
             correlation_id=correlation_id,
-            rotated_at=datetime.now(timezone.utc),
+            rotated_at=datetime.now(UTC),
             actor=actor,
             outcome=outcome,
             error_class=error_class,
         )
         try:
             await self._audit_sink(event)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error(
                 "secret rotation audit-sink failed path=%s rotation_id=%s error=%s",
                 secret_path,
@@ -273,6 +273,6 @@ class FakeRotator:
         return RotationResult(
             secret_path=secret_path,
             rotation_id=uuid.uuid4().hex,
-            rotated_at=datetime.now(timezone.utc),
+            rotated_at=datetime.now(UTC),
             new_version=version,
         )

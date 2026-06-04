@@ -10,8 +10,6 @@ Tests:
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.auth.admin_role_resolver import (
     AdminRoleMapping,
     resolve_jwt_admin_roles,
@@ -70,8 +68,7 @@ class TestResolveSamlAdminRoles:
             }
         )
         result = resolve_saml_admin_roles(
-            groups=["admins", "ops", "unknown"],
-            mapping=mapping,
+            groups=["admins", "ops", "unknown"], mapping=mapping
         )
         assert AdminRole.SUPER_ADMIN in result
         assert AdminRole.OPERATOR in result
@@ -82,9 +79,7 @@ class TestResolveSamlAdminRoles:
         assert result == frozenset()
 
     def test_unmatched_groups(self) -> None:
-        mapping = AdminRoleMapping(
-            saml_group_to_role={"admins": AdminRole.SUPER_ADMIN}
-        )
+        mapping = AdminRoleMapping(saml_group_to_role={"admins": AdminRole.SUPER_ADMIN})
         result = resolve_saml_admin_roles(groups=["random"], mapping=mapping)
         assert result == frozenset()
 
@@ -94,9 +89,7 @@ class TestResolveMtlsAdminRoles:
         mapping = AdminRoleMapping(
             mtls_cn_to_role={"admin.example.com": AdminRole.SUPER_ADMIN}
         )
-        result = resolve_mtls_admin_roles(
-            cn="admin.example.com", mapping=mapping
-        )
+        result = resolve_mtls_admin_roles(cn="admin.example.com", mapping=mapping)
         assert result == frozenset({AdminRole.SUPER_ADMIN})
 
     def test_unmatched_cn(self) -> None:

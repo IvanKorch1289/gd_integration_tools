@@ -317,7 +317,7 @@ def shutdown_otel_metrics(timeout_millis: int = 30000) -> None:
     try:
         _meter_provider_ref.shutdown(timeout_millis=timeout_millis)
         logger.info("OTel MeterProvider остановлен корректно")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Ошибка shutdown OTel MeterProvider (ignored): %s", exc)
     finally:
         _meter_provider_ref = None

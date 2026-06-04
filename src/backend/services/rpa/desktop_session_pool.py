@@ -134,7 +134,7 @@ class DesktopRPASessionPool:
                 )
                 try:
                     await session.client.aclose()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.debug(
                         "desktop_rpa_pool: aclose failed for %s: %s", app_name, exc
                     )
@@ -150,7 +150,7 @@ class DesktopRPASessionPool:
                 if oldest_app is not None and oldest is not None:
                     try:
                         await oldest.client.aclose()
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         _logger.debug(
                             "desktop_rpa_pool: oldest session aclose failed: %s", exc
                         )
@@ -187,7 +187,7 @@ class DesktopRPASessionPool:
             )
             try:
                 await session.client.aclose()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
             async with self._lock:
                 self._sessions.pop(app_name, None)
@@ -205,7 +205,7 @@ class DesktopRPASessionPool:
         if session is not None:
             try:
                 await session.client.aclose()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
 
     async def stats(self) -> DesktopRPASessionStats:
@@ -237,7 +237,7 @@ class DesktopRPASessionPool:
         for s in sessions:
             try:
                 await s.client.aclose()
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 _logger.debug("desktop_rpa_pool: error closing %s", s.app_name)
 
 

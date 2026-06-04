@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 import orjson
 from pydantic import BaseModel, Field
@@ -28,18 +28,20 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "KycAmlVerifyProcessor",
     "AntiFraudScoreProcessor",
-    "CreditScoringRagProcessor",
-    "DocumentClassifierProcessor",
-    "FrancotypingProcessor",
-    "CustomerChatbotProcessor",
     "AppealProcessorAI",
-    "TransactionCategorizerProcessor",
+    "CreditScoringRagProcessor",
+    "CustomerChatbotProcessor",
+    "DocumentClassifierProcessor",
     "FinDocOcrLlmProcessor",
+    "FrancotypingProcessor",
+    "KycAmlVerifyProcessor",
+    "TransactionCategorizerProcessor",
 )
 
 _logger = logging.getLogger("dsl.engine.processors.ai_banking")
+
+_T = TypeVar("_T", bound=BaseModel)
 
 # ─── Pydantic models for structured output ─────────────────────────────────────
 
@@ -168,11 +170,11 @@ class _BankingAIProcessor(BaseProcessor):
     async def _call_llm(
         self,
         prompt: str,
-        output_model: type[BaseModel],
+        output_model: type[_T],
         exchange: Exchange[Any],
         context: ExecutionContext,
         model: str | None = None,
-    ) -> BaseModel | None:
+    ) -> _T | None:
         """Execute LLM call with structured output.
 
         Returns:
@@ -237,9 +239,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         return None
 
-    def _parse_fallback(
-        self, raw: dict[str, Any], output_model: type[BaseModel]
-    ) -> BaseModel | None:
+    def _parse_fallback(self, raw: dict[str, Any], output_model: type[_T]) -> _T | None:
         """Fallback parsing when structured output fails."""
         text = raw.get("text", "") if isinstance(raw, dict) else str(raw)
         # Try to find JSON in text

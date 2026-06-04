@@ -63,11 +63,11 @@ class DoctorReport:
 
 
 def check_python_version(report: DoctorReport) -> None:
-    """Python ≥ 3.14."""
+    """Python ≥ 3.13."""
     info = sys.version_info
-    ok = info >= (3, 14)
+    ok = info >= (3, 13)
     detail = f"{info.major}.{info.minor}.{info.micro}"
-    report.add("python-version", ok, f"требуется ≥3.14, текущая {detail}")
+    report.add("python-version", ok, f"требуется ≥3.13, текущая {detail}")
 
 
 def check_uv_available(report: DoctorReport) -> None:
@@ -141,9 +141,7 @@ def check_taskiq_zero(report: DoctorReport) -> None:
         if "import taskiq" in text or "from taskiq" in text:
             matches += 1
     report.add(
-        "taskiq-imports",
-        matches == 0,
-        f"{matches} taskiq import(s) (должно быть 0)",
+        "taskiq-imports", matches == 0, f"{matches} taskiq import(s) (должно быть 0)"
     )
 
 
@@ -169,7 +167,9 @@ def check_layer_boundaries(report: DoctorReport) -> None:
     """Layer boundaries violations = 0."""
     layers_check = ROOT / "tools" / "check_layers.py"
     if not layers_check.is_file():
-        report.add("layer-boundaries", True, "SKIPPED (tools/check_layers.py отсутствует)")
+        report.add(
+            "layer-boundaries", True, "SKIPPED (tools/check_layers.py отсутствует)"
+        )
         return
     ok, last = _run_tool([sys.executable, str(layers_check)])
     report.add("layer-boundaries", ok, last)
@@ -213,9 +213,7 @@ def _format_report(report: DoctorReport) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="make doctor (S10 K5 W1)")
     parser.add_argument(
-        "--quick",
-        action="store_true",
-        help="пропустить network healthcheck (для CI)",
+        "--quick", action="store_true", help="пропустить network healthcheck (для CI)"
     )
     args = parser.parse_args(argv)
 

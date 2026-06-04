@@ -77,7 +77,7 @@ class CapabilityContext:
         audit: Опц. дополнительный audit-callback для событий guard'а.
     """
 
-    __slots__ = ("plugin_name", "gate", "scope", "audit")
+    __slots__ = ("audit", "gate", "plugin_name", "scope")
 
     def __init__(
         self,
@@ -112,7 +112,7 @@ def set_active_capability_context(context: CapabilityContext | None) -> None:
     Args:
         context: Новый :class:`CapabilityContext` или ``None`` для сброса.
     """
-    global _active_context  # noqa: PLW0603 — глобальный runtime-контекст
+    global _active_context
     _active_context = context
 
 
@@ -127,7 +127,7 @@ def _is_gate_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(feature_flags.activity_capability_gate_enabled)
-    except Exception as _:  # noqa: BLE001 — fallback на NoOp при ошибке загрузки
+    except Exception as _:
         _logger.warning("Не удалось прочитать feature_flags; capability-gate NoOp")
         return False
 
@@ -138,7 +138,7 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         return
     try:
         context.audit(event)
-    except Exception as _:  # noqa: BLE001 — audit не должен валить activity
+    except Exception as _:
         _logger.exception("Audit callback raised; suppressing")
 
 

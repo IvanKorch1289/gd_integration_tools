@@ -119,8 +119,7 @@ async def test_find_model_by_capabilities_registry_returns_matching() -> None:
     mock_registry.list_models = AsyncMock(return_value=[rec1, rec2])
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities(function_calling=True)
     assert result == "openai/gpt-4o-mini"
@@ -128,41 +127,29 @@ async def test_find_model_by_capabilities_registry_returns_matching() -> None:
 
 async def test_find_model_by_capabilities_vision_filter() -> None:
     rec1 = _make_record(
-        name="gpt-4o-mini",
-        supports_vision=False,
-        tags={"provider": "openai"},
+        name="gpt-4o-mini", supports_vision=False, tags={"provider": "openai"}
     )
     rec2 = _make_record(
-        name="claude-sonnet",
-        supports_vision=True,
-        tags={"provider": "anthropic"},
+        name="claude-sonnet", supports_vision=True, tags={"provider": "anthropic"}
     )
     mock_registry = MagicMock(spec=ModelRegistryAdapter)
     mock_registry.list_models = AsyncMock(return_value=[rec1, rec2])
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities(vision=True)
     assert result == "anthropic/claude-sonnet"
 
 
 async def test_find_model_by_capabilities_provider_filter() -> None:
-    rec1 = _make_record(
-        name="gpt-4o",
-        tags={"provider": "openai"},
-    )
-    rec2 = _make_record(
-        name="claude-sonnet",
-        tags={"provider": "anthropic"},
-    )
+    rec1 = _make_record(name="gpt-4o", tags={"provider": "openai"})
+    rec2 = _make_record(name="claude-sonnet", tags={"provider": "anthropic"})
     mock_registry = MagicMock(spec=ModelRegistryAdapter)
     mock_registry.list_models = AsyncMock(return_value=[rec1, rec2])
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities(preferred_provider="anthropic")
     assert result == "anthropic/claude-sonnet"
@@ -170,16 +157,13 @@ async def test_find_model_by_capabilities_provider_filter() -> None:
 
 async def test_find_model_by_capabilities_no_match_returns_default() -> None:
     rec = _make_record(
-        name="gpt-4o-mini",
-        supports_vision=False,
-        tags={"provider": "openai"},
+        name="gpt-4o-mini", supports_vision=False, tags={"provider": "openai"}
     )
     mock_registry = MagicMock(spec=ModelRegistryAdapter)
     mock_registry.list_models = AsyncMock(return_value=[rec])
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities(vision=True)
     assert result == gw._default_model
@@ -190,8 +174,7 @@ async def test_find_model_by_capabilities_registry_error_returns_default() -> No
     mock_registry.list_models = AsyncMock(side_effect=RuntimeError("network"))
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities(vision=True)
     assert result == gw._default_model
@@ -202,8 +185,7 @@ async def test_find_model_by_capabilities_empty_registry_returns_default() -> No
     mock_registry.list_models = AsyncMock(return_value=[])
 
     gw = LiteLLMGateway(
-        default_model="openai/gpt-4o-mini",
-        model_registry=mock_registry,
+        default_model="openai/gpt-4o-mini", model_registry=mock_registry
     )
     result = await gw.find_model_by_capabilities()
     assert result == gw._default_model

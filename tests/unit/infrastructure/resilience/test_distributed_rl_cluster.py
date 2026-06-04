@@ -26,12 +26,7 @@ class _FakeRedisClient:
         self.scripts[sha] = script
         return sha
 
-    async def evalsha(
-        self,
-        sha: str,
-        numkeys: int,
-        *args: Any,
-    ) -> list[int | float]:
+    async def evalsha(self, sha: str, numkeys: int, *args: Any) -> list[int | float]:
         self.last_eval_args = [sha, numkeys, *args]
         return list(self.next_result)
 

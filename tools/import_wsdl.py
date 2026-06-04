@@ -52,8 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--connector", required=True)
     parser.add_argument("--write", action="store_true")
     parser.add_argument(
-        "--output-dir",
-        default=str(ROOT / "src" / "dsl" / "commands" / "imported"),
+        "--output-dir", default=str(ROOT / "src" / "dsl" / "commands" / "imported")
     )
     args = parser.parse_args(argv)
 

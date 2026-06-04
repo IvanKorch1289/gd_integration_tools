@@ -14,10 +14,16 @@ from src.backend.services.ai.model_registry.composite import CompositeModelRegis
 def _make_adapter(models: list[ModelRecord]) -> AsyncMock:
     adapter = AsyncMock()
     adapter.list_models = AsyncMock(return_value=models)
-    adapter.get_model = AsyncMock(side_effect=lambda name, version=None, stage=None: next(
-        (m for m in models if m.name == name and (version is None or m.version == version)),
-        None,
-    ))
+    adapter.get_model = AsyncMock(
+        side_effect=lambda name, version=None, stage=None: next(
+            (
+                m
+                for m in models
+                if m.name == name and (version is None or m.version == version)
+            ),
+            None,
+        )
+    )
     adapter.register_model = AsyncMock(side_effect=lambda r: r)
     adapter.transition_stage = AsyncMock(side_effect=lambda n, v, s: models[0])
     return adapter
@@ -53,10 +59,7 @@ async def test_get_model_searches_all_backends_when_no_filter() -> None:
     """Без backend-filter поиск идёт по всем."""
     only_hf = [ModelRecord(name="bge-m3", version="2.0")]
     registry = CompositeModelRegistry(
-        {
-            "mlflow": _make_adapter([]),
-            "huggingface": _make_adapter(only_hf),
-        }
+        {"mlflow": _make_adapter([]), "huggingface": _make_adapter(only_hf)}
     )
     found = await registry.get_model("bge-m3")
     assert found is not None

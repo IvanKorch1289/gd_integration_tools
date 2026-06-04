@@ -39,9 +39,9 @@ from src.backend.services.ai.rag.strategy_selector import (
 )
 
 __all__ = (
-    "QueryClassifier",
-    "ClassifierResult",
     "AccuracyBenchmarkResult",
+    "ClassifierResult",
+    "QueryClassifier",
     "benchmark_accuracy",
 )
 
@@ -191,7 +191,7 @@ async def benchmark_accuracy(
     for query, expected in dataset:
         try:
             predicted, _ = await llm_classify(query)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("LLM benchmark error для %r: %s", query, exc)
             continue
         if predicted in STRATEGIES and predicted == expected:

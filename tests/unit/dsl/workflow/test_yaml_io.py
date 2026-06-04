@@ -38,8 +38,7 @@ from extensions.credit_pipeline.workflows.payments_saga import (
 def _enable_round_trip() -> "patch[bool]":
     """Контекст-менеджер для активации feature_flags.workflow_yaml_round_trip."""
     return patch(
-        "src.backend.core.config.features.feature_flags.workflow_yaml_round_trip",
-        True,
+        "src.backend.core.config.features.feature_flags.workflow_yaml_round_trip", True
     )
 
 
@@ -98,12 +97,7 @@ def test_diff_added_steps() -> None:
 
 def test_diff_removed_steps() -> None:
     """``diff()`` корректно фиксирует удалённые шаги из decl_a."""
-    a = (
-        WorkflowBuilder("flow")
-        .activity("step.one")
-        .activity("step.two")
-        .build()
-    )
+    a = WorkflowBuilder("flow").activity("step.one").activity("step.two").build()
     b = WorkflowBuilder("flow").activity("step.one").build()
     result = diff(a, b)
     assert result.removed_steps == ("activity:step.two",)

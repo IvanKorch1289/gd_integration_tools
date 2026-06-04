@@ -17,4 +17,4 @@ Commands:
 from src.backend.dsl.cli.lint import lint_file
 from src.backend.dsl.cli.linter import DSLLinter, LintIssue, lint_path
 
-__all__ = ("lint_file", "DSLLinter", "LintIssue", "lint_path")
+__all__ = ("DSLLinter", "LintIssue", "lint_file", "lint_path")

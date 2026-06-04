@@ -175,7 +175,7 @@ class HybridRAGSearch:
                 return sorted(
                     candidates, key=lambda x: x.get("rerank_score", 0), reverse=True
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("BGE FlagReranker rerank failed: %s", exc)
 
         # Fallback: token-overlap

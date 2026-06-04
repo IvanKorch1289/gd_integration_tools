@@ -9,10 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.ai.policy.resolver import (
-    PolicyNotResolvedError,
-    PolicyResolver,
-)
+from src.backend.core.ai.policy.resolver import PolicyNotResolvedError, PolicyResolver
 
 
 @pytest.mark.asyncio

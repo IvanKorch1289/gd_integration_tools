@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import builtins
 import difflib
 import logging
 from pathlib import Path
@@ -107,7 +108,7 @@ class YAMLStore:
             return True
         return False
 
-    def list(self) -> list[str]:
+    def list(self) -> builtins.list[str]:
         """Возвращает список route_id всех сохранённых маршрутов.
 
         Returns:
@@ -140,7 +141,7 @@ class YAMLStore:
             )
         )
 
-    def load_all(self) -> list[Pipeline]:
+    def load_all(self) -> builtins.list[Pipeline]:
         """Загружает все маршруты из хранилища.
 
         Returns:

@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import yaml
@@ -50,7 +50,7 @@ class RulesetCacheEntry:
     version: str
     tenant_id: str | None
     parsed: dict[str, Any]
-    loaded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    loaded_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class RuleEngineRegistry:
@@ -65,14 +65,14 @@ class RuleEngineRegistry:
 
     def __init__(
         self,
-        repo: "RuleEngineRepository",
-        feature_flags: "FeatureFlags",
+        repo: RuleEngineRepository,
+        feature_flags: FeatureFlags,
         *,
-        clock: "Callable[[], datetime] | None" = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._repo = repo
         self._flags = feature_flags
-        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._clock = clock or (lambda: datetime.now(UTC))
         # Ключ кэша: ``f"{name}|{tenant_id or '-'}"``.
         self._cache: dict[str, RulesetCacheEntry] = {}
 

@@ -99,10 +99,7 @@ def test_attach_dlq_feature_flag_off_returns_none(
     from src.backend.core.config import features as features_module
 
     monkeypatch.setattr(
-        features_module.feature_flags,
-        "scheduler_dlq_enabled",
-        False,
-        raising=False,
+        features_module.feature_flags, "scheduler_dlq_enabled", False, raising=False
     )
 
     class _FakeScheduler:
@@ -120,10 +117,7 @@ def test_attach_dlq_feature_flag_on_creates_store(
     from src.backend.core.config import features as features_module
 
     monkeypatch.setattr(
-        features_module.feature_flags,
-        "scheduler_dlq_enabled",
-        True,
-        raising=False,
+        features_module.feature_flags, "scheduler_dlq_enabled", True, raising=False
     )
 
     listeners: list = []
@@ -144,10 +138,7 @@ def test_listener_writes_entry_to_store(monkeypatch: pytest.MonkeyPatch) -> None
     from src.backend.core.config import features as features_module
 
     monkeypatch.setattr(
-        features_module.feature_flags,
-        "scheduler_dlq_enabled",
-        True,
-        raising=False,
+        features_module.feature_flags, "scheduler_dlq_enabled", True, raising=False
     )
 
     captured: list = []

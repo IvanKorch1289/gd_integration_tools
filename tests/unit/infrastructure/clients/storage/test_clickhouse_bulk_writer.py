@@ -28,10 +28,7 @@ class _FakeClient:
 async def test_writer_flushes_by_timer() -> None:
     client = _FakeClient()
     writer = ClickHouseBulkWriter(
-        client=client,
-        table="audit",
-        max_buffer_size=1000,
-        flush_interval_seconds=0.05,
+        client=client, table="audit", max_buffer_size=1000, flush_interval_seconds=0.05
     )
     await writer.start()
     await writer.add({"id": 1})
@@ -90,10 +87,7 @@ async def test_writer_handles_flush_failure_via_callback() -> None:
 async def test_writer_aclose_drains_buffer() -> None:
     client = _FakeClient()
     writer = ClickHouseBulkWriter(
-        client=client,
-        table="audit",
-        max_buffer_size=1000,
-        flush_interval_seconds=10.0,
+        client=client, table="audit", max_buffer_size=1000, flush_interval_seconds=10.0
     )
     await writer.start()
     for i in range(50):
@@ -107,10 +101,7 @@ async def test_writer_aclose_drains_buffer() -> None:
 async def test_writer_add_many() -> None:
     client = _FakeClient()
     writer = ClickHouseBulkWriter(
-        client=client,
-        table="audit",
-        max_buffer_size=10,
-        flush_interval_seconds=10.0,
+        client=client, table="audit", max_buffer_size=10, flush_interval_seconds=10.0
     )
     await writer.start()
     await writer.add_many([{"id": i} for i in range(5)])
@@ -123,10 +114,7 @@ async def test_writer_add_many() -> None:
 async def test_writer_start_idempotent() -> None:
     client = _FakeClient()
     writer = ClickHouseBulkWriter(
-        client=client,
-        table="audit",
-        max_buffer_size=1000,
-        flush_interval_seconds=10.0,
+        client=client, table="audit", max_buffer_size=1000, flush_interval_seconds=10.0
     )
     await writer.start()
     await writer.start()  # second call — no-op

@@ -28,7 +28,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Protocol
 
-__all__ = ("S3ClientProtocol", "CacheClientProtocol", "S3CacheAdapter")
+__all__ = ("CacheClientProtocol", "S3CacheAdapter", "S3ClientProtocol")
 
 logger = logging.getLogger("storage.s3_cache")
 

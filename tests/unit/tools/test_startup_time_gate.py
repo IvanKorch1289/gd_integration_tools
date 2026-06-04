@@ -12,12 +12,7 @@ import pytest
 
 def _load_module():
     """Подгрузить tools/checks/startup_time.py через importlib."""
-    path = (
-        Path(__file__).resolve().parents[3]
-        / "tools"
-        / "checks"
-        / "startup_time.py"
-    )
+    path = Path(__file__).resolve().parents[3] / "tools" / "checks" / "startup_time.py"
     spec = importlib.util.spec_from_file_location("_startup_time_test", path)
     if spec is None or spec.loader is None:
         raise ImportError("Не удалось загрузить startup_time.py")

@@ -51,9 +51,7 @@ def _reset_sink() -> None:
 @pytest.mark.asyncio
 async def test_cancel_by_literal_id(backend_mock: Any) -> None:
     proc = CancelWorkflowProcessor(
-        "wf-abc-123",
-        reason="ttl_expired",
-        backend=backend_mock,
+        "wf-abc-123", reason="ttl_expired", backend=backend_mock
     )
     exchange = _ex()
     await proc.process(exchange, _ctx())
@@ -71,10 +69,7 @@ async def test_cancel_by_literal_id(backend_mock: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_cancel_by_body_ref(backend_mock: Any) -> None:
-    proc = CancelWorkflowProcessor(
-        "${body.invocation_id}",
-        backend=backend_mock,
-    )
+    proc = CancelWorkflowProcessor("${body.invocation_id}", backend=backend_mock)
     exchange = _ex(body={"invocation_id": "wf-xyz-999"})
     await proc.process(exchange, _ctx())
 
@@ -92,9 +87,7 @@ async def test_cancel_emits_audit_event(backend_mock: Any) -> None:
     wam.set_workflow_audit_sink(sink)
 
     proc = CancelWorkflowProcessor(
-        "wf-cancel-1",
-        reason="user_action",
-        backend=backend_mock,
+        "wf-cancel-1", reason="user_action", backend=backend_mock
     )
     await proc.process(_ex(), _ctx())
 
@@ -122,19 +115,15 @@ async def test_cancel_audit_failure_is_swallowed(backend_mock: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_cancel_empty_ref_raises(backend_mock: Any) -> None:
-    proc = CancelWorkflowProcessor(
-        "${body.missing}",
-        backend=backend_mock,
-    )
+    proc = CancelWorkflowProcessor("${body.missing}", backend=backend_mock)
     exchange = _ex(body={})
     with pytest.raises(ValueError, match="workflow_id"):
         # Ref остаётся литеральной строкой "${body.missing}" если ключа нет —
         # но процессор всё равно должен попытаться его cancel'ить.
         # Чтобы проверить ValueError, используем явно пустой spec.
-        await CancelWorkflowProcessor(
-            "",
-            backend=backend_mock,
-        ).process(exchange, _ctx())
+        await CancelWorkflowProcessor("", backend=backend_mock).process(
+            exchange, _ctx()
+        )
 
 
 def test_to_spec_round_trip() -> None:

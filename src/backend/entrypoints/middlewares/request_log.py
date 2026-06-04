@@ -60,7 +60,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception as exc:
-            self.logger.error(f"Ошибка обработки запроса: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка обработки запроса: {exc!s}", exc_info=True)
             raise
 
         # Логирование тела ответа (если включено)
@@ -95,7 +95,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
             else:
                 body = await request.body()
             if len(body) > self.max_body_size:
-                return "<тело запроса слишком велико для логирования>".encode("utf-8")
+                return "<тело запроса слишком велико для логирования>".encode()
 
             self.logger.debug(f"Тело запроса: {body.decode('utf-8')}")
             return body
@@ -128,7 +128,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
                     body = gzip_file.read()
             except Exception as exc:
                 self.logger.error(
-                    f"Ошибка распаковки gzip-ответа: {str(exc)}", exc_info=True
+                    f"Ошибка распаковки gzip-ответа: {exc!s}", exc_info=True
                 )
                 return
 
@@ -144,7 +144,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
                 self.logger.warning("Тело ответа не является валидным текстом UTF-8")
             except Exception as exc:
                 self.logger.error(
-                    f"Ошибка декодирования тела ответа: {str(exc)}", exc_info=True
+                    f"Ошибка декодирования тела ответа: {exc!s}", exc_info=True
                 )
         else:
             # Логирование бинарных данных (например, файлов)

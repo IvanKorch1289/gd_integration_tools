@@ -55,7 +55,9 @@ class StageResult:
     message: str
 
 
-def _run_stage(name: str, cmd: list[str], *, allow_codes: tuple[int, ...] = (0,)) -> StageResult:
+def _run_stage(
+    name: str, cmd: list[str], *, allow_codes: tuple[int, ...] = (0,)
+) -> StageResult:
     """Запускает одну стадию pipeline.
 
     Args:
@@ -70,7 +72,9 @@ def _run_stage(name: str, cmd: list[str], *, allow_codes: tuple[int, ...] = (0,)
     try:
         result = subprocess.run(cmd, check=False, cwd=str(_PROJECT_ROOT))  # noqa: S603
     except FileNotFoundError as exc:
-        return StageResult(name=name, exit_code=2, skipped=False, message=f"tool missing: {exc}")
+        return StageResult(
+            name=name, exit_code=2, skipped=False, message=f"tool missing: {exc}"
+        )
     ok = result.returncode in allow_codes
     return StageResult(
         name=name,
@@ -123,16 +127,12 @@ def run_cosign() -> StageResult:
     key = os.environ.get("KEY")
     if not artifact or not key:
         return StageResult(
-            "cosign",
-            0,
-            True,
-            "skipped (ARTIFACT/KEY not set — non-release stage)",
+            "cosign", 0, True, "skipped (ARTIFACT/KEY not set — non-release stage)"
         )
     if shutil.which("cosign") is None:
         return StageResult("cosign", 2, True, "cosign not installed in PATH")
     return _run_stage(
-        "cosign",
-        [sys.executable, str(script), "--artifact", artifact, "--key", key],
+        "cosign", [sys.executable, str(script), "--artifact", artifact, "--key", key]
     )
 
 
@@ -150,10 +150,7 @@ def run_cosign_all_artifacts() -> StageResult:
     key = os.environ.get("KEY")
     if not key:
         return StageResult(
-            "cosign-all",
-            0,
-            True,
-            "skipped (KEY not set — non-release stage)",
+            "cosign-all", 0, True, "skipped (KEY not set — non-release stage)"
         )
     if shutil.which("cosign") is None:
         return StageResult("cosign-all", 2, True, "cosign not installed in PATH")
@@ -176,9 +173,7 @@ def main() -> int:
     parser.add_argument(
         "--skip-pip-audit", action="store_true", help="Skip pip-audit (ускорение dev)"
     )
-    parser.add_argument(
-        "--skip-bandit", action="store_true", help="Skip bandit-TLS"
-    )
+    parser.add_argument("--skip-bandit", action="store_true", help="Skip bandit-TLS")
     parser.add_argument(
         "--all-artifacts",
         action="store_true",
@@ -209,7 +204,9 @@ def main() -> int:
             blocking_failures += 1
 
     if blocking_failures > 0:
-        print(f"\n[FAIL] supply-chain gate: {blocking_failures} blocking stage(s) failed")
+        print(
+            f"\n[FAIL] supply-chain gate: {blocking_failures} blocking stage(s) failed"
+        )
         return 1
     print("\n[OK] supply-chain gate: all blocking stages passed")
     return 0

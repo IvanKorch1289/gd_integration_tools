@@ -16,7 +16,9 @@ from src.backend.core.interfaces.observability import (
 class TestSLOTrackerProtocol:
     def test_is_runtime_checkable(self) -> None:
         class Fake:
-            def record(self, route_id: str, latency_ms: float, is_error: bool = False) -> None:
+            def record(
+                self, route_id: str, latency_ms: float, is_error: bool = False
+            ) -> None:
                 pass
 
             def get_report(self) -> dict[str, object]:
@@ -43,7 +45,9 @@ class TestHealthAggregatorProtocol:
             async def check_all(self, *, mode: str = "fast") -> dict[str, object]:
                 return {}
 
-            async def check_single(self, name: str, *, mode: str = "fast") -> dict[str, object]:
+            async def check_single(
+                self, name: str, *, mode: str = "fast"
+            ) -> dict[str, object]:
                 return {}
 
         assert isinstance(Fake(), HealthAggregatorProtocol)

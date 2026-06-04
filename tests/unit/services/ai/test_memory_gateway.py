@@ -46,7 +46,9 @@ def _make_long_mock() -> AsyncMock:
 @pytest.mark.asyncio
 async def test_tenant_id_required() -> None:
     """Все методы поднимают ValueError при пустом tenant_id."""
-    gw = UnifiedMemoryGateway(short_term=_make_short_mock(), long_term=_make_long_mock())
+    gw = UnifiedMemoryGateway(
+        short_term=_make_short_mock(), long_term=_make_long_mock()
+    )
     with pytest.raises(ValueError, match="tenant_id обязателен"):
         await gw.get_messages(tenant_id="", session_id="s1")
     with pytest.raises(ValueError, match="tenant_id обязателен"):

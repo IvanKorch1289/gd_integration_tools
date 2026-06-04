@@ -1,8 +1,9 @@
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from functools import wraps
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
@@ -216,7 +217,7 @@ class CachingDecorator:
                 await asyncio.wait_for(
                     lock.acquire(), timeout=self._lock_manager.acquire_timeout
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.logger.warning(
                     "Таймаут захвата lock для key=%s, выполняю функцию напрямую", key
                 )
@@ -263,7 +264,7 @@ class CachingDecorator:
         try:
             await redis_client.cache_set(key, json_dumps(value), self.expire)
             self._mark_redis_success()
-        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
+        except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
             self._mark_redis_failure()
         except Exception as exc:
             redis_client.logger.warning(

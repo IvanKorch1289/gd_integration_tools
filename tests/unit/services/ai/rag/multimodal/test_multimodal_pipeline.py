@@ -20,9 +20,7 @@ async def test_pipeline_ingest_text_appends_chunk() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="text",
-        payload="hello multimodal world",
-        collection="kb",
+        modal="text", payload="hello multimodal world", collection="kb"
     )
 
     assert chunk_id
@@ -38,9 +36,7 @@ async def test_pipeline_ingest_image_calls_captioner() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="image",
-        payload=b"FAKE_IMAGE_BYTES",
-        collection="kb",
+        modal="image", payload=b"FAKE_IMAGE_BYTES", collection="kb"
     )
 
     service.caption_image.assert_awaited_once()
@@ -57,9 +53,7 @@ async def test_pipeline_ingest_audio_calls_whisper() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="audio",
-        payload=b"FAKE_WAV",
-        collection="kb",
+        modal="audio", payload=b"FAKE_WAV", collection="kb"
     )
     service.transcribe_audio.assert_awaited_once()
     assert service._collections["kb"][chunk_id]["content"] == "привет как дела"

@@ -60,10 +60,10 @@ class PrometheusMiddleware:
     with starlette>=1.0.
     """
 
-    def __init__(self, app: "ASGIApp") -> None:
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope: "Scope", receive: "Receive", send: "Send") -> None:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
@@ -93,7 +93,7 @@ class PrometheusMiddleware:
             _request_latency.labels(method=method, path=path).observe(duration)
 
     @staticmethod
-    def _normalize_path(scope: "Scope") -> str:
+    def _normalize_path(scope: Scope) -> str:
         """Return a templated path, excluding /metrics."""
         path = scope.get("path", "/")
         if path == "/metrics":
@@ -101,7 +101,7 @@ class PrometheusMiddleware:
         return path or "/"
 
 
-async def metrics_endpoint(scope: "Scope", receive: "Receive", send: "Send") -> None:
+async def metrics_endpoint(scope: Scope, receive: Receive, send: Send) -> None:
     """ASGI handler for GET /metrics — returns Prometheus text format."""
     await send(
         {
@@ -113,7 +113,7 @@ async def metrics_endpoint(scope: "Scope", receive: "Receive", send: "Send") -> 
     await send({"type": "http.response.body", "body": generate_latest()})
 
 
-def setup_monitoring(app: "ASGIApp") -> None:
+def setup_monitoring(app: ASGIApp) -> None:
     """
     Настраивает Prometheus metrics для FastAPI.
 
@@ -121,10 +121,13 @@ def setup_monitoring(app: "ASGIApp") -> None:
     Собирает: request count, latency histogram, in-progress gauge.
     Эндпоинт /metrics доступен для Prometheus scrape.
     """
+    from typing import Any
+
     from starlette.routing import Route
 
     # Add ASGI middleware
-    app.add_middleware(PrometheusMiddleware)
+    app_any: Any = app
+    app_any.add_middleware(PrometheusMiddleware)
 
     # Mount /metrics route (ASGI-level, not FastAPI route)
-    app.routes.append(Route("/metrics", metrics_endpoint, methods=["GET"]))
+    app_any.routes.append(Route("/metrics", metrics_endpoint, methods=["GET"]))

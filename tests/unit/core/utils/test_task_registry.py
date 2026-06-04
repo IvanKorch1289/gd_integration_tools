@@ -69,7 +69,9 @@ class TestCreateTask:
     async def test_create_with_deadline(self) -> None:
         reg = TaskRegistry()
         # Mock Watchdog чтобы избежать реальной deadline-логики
-        with patch("src.backend.core.utils.task_registry.Watchdog") as mock_watchdog_cls:
+        with patch(
+            "src.backend.core.utils.task_registry.Watchdog"
+        ) as mock_watchdog_cls:
             mock_watchdog = MagicMock()
             mock_watchdog.wrap = lambda coro: coro
             mock_watchdog_cls.return_value = mock_watchdog
@@ -173,9 +175,7 @@ class TestOnDone:
         async def failing() -> None:
             raise ValueError("test-failure")
 
-        with patch(
-            "src.backend.core.utils.task_registry._logger"
-        ) as mock_logger:
+        with patch("src.backend.core.utils.task_registry._logger") as mock_logger:
             task = reg.create_task(failing(), name="failing-task")
             try:
                 await task
@@ -192,9 +192,7 @@ class TestOnDone:
         async def long_running() -> None:
             await asyncio.sleep(10)
 
-        with patch(
-            "src.backend.core.utils.task_registry._logger"
-        ) as mock_logger:
+        with patch("src.backend.core.utils.task_registry._logger") as mock_logger:
             task = reg.create_task(long_running(), name="cancel-test")
             task.cancel()
             try:
@@ -204,8 +202,7 @@ class TestOnDone:
             await asyncio.sleep(0)
             # CancelledError не логируется
             warning_calls = [
-                c for c in mock_logger.warning.call_args_list
-                if "task_failed" in str(c)
+                c for c in mock_logger.warning.call_args_list if "task_failed" in str(c)
             ]
             assert len(warning_calls) == 0
 

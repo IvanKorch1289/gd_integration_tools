@@ -94,7 +94,7 @@ class PluginVersionService:
     обычный каталог (deploy через wheel).
     """
 
-    def __init__(self, *, loader: "PluginLoaderProtocol", extensions_dir: Path) -> None:
+    def __init__(self, *, loader: PluginLoaderProtocol, extensions_dir: Path) -> None:
         self._loader = loader
         self._extensions_dir = extensions_dir
 
@@ -193,10 +193,7 @@ class PluginVersionService:
                 reason=f"symlink_switch_failed: {exc}",
             )
 
-        from src.backend.core.plugin_runtime.hot_swap import (  # noqa: PLC0415
-            HotSwapError,
-            hot_swap,
-        )
+        from src.backend.core.plugin_runtime.hot_swap import HotSwapError, hot_swap
 
         try:
             hot_swap_result: HotSwapResult = await hot_swap(plugin, self._loader)
@@ -245,7 +242,7 @@ class PluginVersionService:
         try:
             data = _load_toml(manifest)
             return str(data.get("version")) if data.get("version") else None
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
     def _archive_current(

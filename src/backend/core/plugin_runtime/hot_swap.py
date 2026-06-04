@@ -66,7 +66,7 @@ class HotSwapError(RuntimeError):
 class HotSwapResult:
     """Результат hot-swap одного плагина (минимальный pure-data объект)."""
 
-    __slots__ = ("plugin_name", "old_version", "new_version", "status", "reason")
+    __slots__ = ("new_version", "old_version", "plugin_name", "reason", "status")
 
     def __init__(
         self,
@@ -146,7 +146,7 @@ def _reload_module(module_name: str) -> bool:
     if module_name in sys.modules:
         try:
             importlib.reload(sys.modules[module_name])
-        except Exception as exc:  # noqa: BLE001 — логируем без падения вызывающего
+        except Exception as exc:
             _logger.warning("Module %s reload failed: %s", module_name, exc)
             return False
         return True
@@ -157,7 +157,7 @@ async def hot_swap(
     plugin_name: str,
     loader: PluginLoaderProtocol,
     *,
-    extensions_dir: Path | None = None,  # noqa: ARG001 — резерв под per-plugin reload через scan
+    extensions_dir: Path | None = None,
 ) -> HotSwapResult:
     """Hot-swap (reload без рестарта) одного in-tree плагина.
 
@@ -211,7 +211,7 @@ async def hot_swap(
     # Graceful shutdown текущей версии (если есть что shutdown-ить).
     try:
         await loader.shutdown_all()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.exception("shutdown_all() during hot_swap raised")
         raise HotSwapError(plugin_name, "shutdown_all_failed", cause=exc) from exc
 
@@ -235,7 +235,7 @@ async def hot_swap(
 
     try:
         await loader.discover_and_load()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.exception("discover_and_load() during hot_swap raised")
         raise HotSwapError(plugin_name, "discover_and_load_failed", cause=exc) from exc
 

@@ -68,7 +68,7 @@ class DLQPolicyRegistry:
     def list_all(self) -> list[DLQPolicy]:
         return list(self._policies.values())
 
-    def resolve_for_envelope(self, envelope: "DLQEnvelope") -> DLQPolicy:
+    def resolve_for_envelope(self, envelope: DLQEnvelope) -> DLQPolicy:
         """Возвращает policy на основе ``envelope.dlq_class``."""
         return self.get_or_default(envelope.dlq_class)
 

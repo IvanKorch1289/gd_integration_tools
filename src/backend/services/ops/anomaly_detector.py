@@ -18,7 +18,7 @@ from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
 
-__all__ = ("AnomalyDetector", "Anomaly", "get_anomaly_detector")
+__all__ = ("Anomaly", "AnomalyDetector", "get_anomaly_detector")
 
 logger = logging.getLogger(__name__)
 

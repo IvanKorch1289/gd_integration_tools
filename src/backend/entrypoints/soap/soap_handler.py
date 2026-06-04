@@ -53,7 +53,7 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
 
         root = safe_fromstring(xml_body)
     except ImportError:
-        root = ET.fromstring(xml_body)  # noqa: S314
+        root = ET.fromstring(xml_body)  # noqa: S314  # internal controlled XML parsing
 
     body = root.find(f"{{{_SOAP_NS}}}Body")
     if body is None:
@@ -311,7 +311,7 @@ def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
 
         root = safe_fromstring(xml_body)
     except ImportError:
-        root = ET.fromstring(xml_body)  # noqa: S314
+        root = ET.fromstring(xml_body)  # noqa: S314  # internal controlled XML parsing
 
     body = root.find(f"{{{_SOAP_NS}}}Body")
     if body is None:
@@ -376,7 +376,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:

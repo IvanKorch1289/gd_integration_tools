@@ -46,18 +46,19 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
 __all__ = (
     "MissingBaggageError",
-    "set_baggage",
-    "get_baggage",
-    "with_baggage",
     "ensure_required_baggage",
+    "get_baggage",
+    "set_baggage",
+    "with_baggage",
 )
 
 # Ключи обязательных baggage-полей (K1 W2)

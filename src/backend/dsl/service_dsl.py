@@ -11,21 +11,23 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import inspect
 import logging
 import pkgutil
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Sequence
+from typing import Any
 
 from pydantic import BaseModel
 
 __all__ = (
-    "service_dsl",
-    "register_action",
-    "scan_and_register_actions",
     "ServiceDSLRegistry",
     "ServiceMeta",
+    "register_action",
+    "scan_and_register_actions",
+    "service_dsl",
 )
 
 logger = logging.getLogger(__name__)
@@ -126,10 +128,8 @@ def service_dsl(
         def getter():
             if _instance[0] is None:
                 _instance[0] = cls.__new__(cls)
-                try:
+                with contextlib.suppress(TypeError):
                     original_init(_instance[0])
-                except TypeError:
-                    pass
             return _instance[0]
 
         meta = ServiceMeta(
@@ -213,13 +213,11 @@ def scan_and_register_actions(package_paths: Sequence[str] | None = None) -> int
             try:
                 pkg = importlib.import_module(pkg_path)
                 if hasattr(pkg, "__path__"):
-                    for importer, modname, ispkg in pkgutil.walk_packages(
+                    for _importer, modname, _ispkg in pkgutil.walk_packages(
                         pkg.__path__, prefix=pkg.__name__ + "."
                     ):
-                        try:
+                        with contextlib.suppress(ImportError):
                             importlib.import_module(modname)
-                        except ImportError:
-                            pass
             except ImportError:
                 logger.warning("Cannot import package %s for action scan", pkg_path)
 

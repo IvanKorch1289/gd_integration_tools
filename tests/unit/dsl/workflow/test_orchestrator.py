@@ -36,10 +36,7 @@ def test_orchestrator_spec_full() -> None:
                 use_agent="score_agent",
                 use_model="minimax:m2.5",
             ),
-            RoutingRule(
-                when="body.type == 'approval'",
-                use_agent="approval_agent",
-            ),
+            RoutingRule(when="body.type == 'approval'", use_agent="approval_agent"),
         ],
         default_agent="generalist",
         fallback_agent="fallback_agent",
@@ -73,10 +70,7 @@ async def test_orchestrator_engine_route_first_rule_matches(
         ],
         default_agent="default_agent",
     )
-    result = await engine.route(
-        task={"type": "score"},
-        orchestrator_spec=spec,
-    )
+    result = await engine.route(task={"type": "score"}, orchestrator_spec=spec)
     assert result.target_agent.id == "score_agent"
     assert result.matched_rule == 0
 
@@ -95,10 +89,7 @@ async def test_orchestrator_engine_route_second_rule_matches(
             RoutingRule(when="type == 'approval'", use_agent="approval_agent"),
         ],
     )
-    result = await engine.route(
-        task={"type": "approval"},
-        orchestrator_spec=spec,
-    )
+    result = await engine.route(task={"type": "approval"}, orchestrator_spec=spec)
     assert result.target_agent.id == "approval_agent"
     assert result.matched_rule == 1
 
@@ -112,15 +103,10 @@ async def test_orchestrator_engine_route_no_match_uses_default(
     engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
-        routing=[
-            RoutingRule(when="type == 'score'", use_agent="score_agent"),
-        ],
+        routing=[RoutingRule(when="type == 'score'", use_agent="score_agent")],
         default_agent="default_agent",
     )
-    result = await engine.route(
-        task={"type": "unknown"},
-        orchestrator_spec=spec,
-    )
+    result = await engine.route(task={"type": "unknown"}, orchestrator_spec=spec)
     assert result.target_agent.id == "default_agent"
     assert result.matched_rule is None
 
@@ -134,9 +120,7 @@ async def test_orchestrator_engine_route_raises_on_no_default(
     engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
-        routing=[
-            RoutingRule(when="type == 'score'", use_agent="score_agent"),
-        ],
+        routing=[RoutingRule(when="type == 'score'", use_agent="score_agent")],
     )
     with pytest.raises(ValueError, match="no routing rule matched"):
         await engine.route(task={"type": "unknown"}, orchestrator_spec=spec)
@@ -156,13 +140,10 @@ async def test_orchestrator_engine_rule_model_override(
                 when="type == 'score'",
                 use_agent="score_agent",
                 use_model="openai:gpt-4o",
-            ),
+            )
         ],
     )
-    result = await engine.route(
-        task={"type": "score"},
-        orchestrator_spec=spec,
-    )
+    result = await engine.route(task={"type": "score"}, orchestrator_spec=spec)
     assert result.target_model == "openai:gpt-4o"
 
 
@@ -173,9 +154,7 @@ async def test_orchestrator_engine_rule_model_override(
 def agent_registry() -> AgentRegistry:
     """Создать AgentRegistry с двумя агентами для тестов."""
     registry = AgentRegistry()
-    registry.register(
-        AgentSpec(id="score_agent", version="1.0.0", model="minimax:m2")
-    )
+    registry.register(AgentSpec(id="score_agent", version="1.0.0", model="minimax:m2"))
     registry.register(
         AgentSpec(id="approval_agent", version="1.0.0", model="minimax:m2")
     )

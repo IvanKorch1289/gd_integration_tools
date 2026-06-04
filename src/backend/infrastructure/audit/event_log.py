@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces import AsyncBatcher
@@ -33,7 +33,7 @@ class AuditEvent:
     entity_type: str
     entity_id: str
     action: str
-    when: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    when: datetime = field(default_factory=lambda: datetime.now(UTC))
     before: dict[str, Any] | None = None
     after: dict[str, Any] | None = None
     correlation_id: str = ""
@@ -103,7 +103,7 @@ class AuditEventLog:
         try:
             log_indexer_mod = importlib.import_module(_LOG_INDEXER_MOD)
             await log_indexer_mod.get_log_indexer().index_batch(events)
-        except Exception as es_exc:  # noqa: BLE001
+        except Exception as es_exc:
             logger.warning("LogIndexer.index_batch failed: %s", es_exc)
 
     async def query(
@@ -136,7 +136,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             safe_limit = 100
 
         conditions = []
@@ -148,9 +148,7 @@ class AuditEventLog:
             conditions.append(f"who = '{_escape(who)}'")
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-        sql = (
-            f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # noqa: S608  # _safe_table allowlisted, _escape санирует string-литералы, safe_limit — int
-        )
+        sql = f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # _safe_table allowlisted, _escape санирует string-литералы, safe_limit — int  # noqa: S608  # internal query with controlled parameters
         return await client.query(sql)
 
 

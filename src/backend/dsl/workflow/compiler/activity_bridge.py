@@ -23,7 +23,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from src.backend.core.security.activity_capability_guard import (
     capability_guarded_activity,

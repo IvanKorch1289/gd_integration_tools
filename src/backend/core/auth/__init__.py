@@ -56,7 +56,7 @@ class AuthMethod(str, Enum):
 class AuthContext:
     """Контекст авторизованного запроса."""
 
-    __slots__ = ("method", "principal", "metadata")
+    __slots__ = ("metadata", "method", "principal")
 
     def __init__(
         self, method: AuthMethod, principal: str, metadata: dict[str, Any] | None = None

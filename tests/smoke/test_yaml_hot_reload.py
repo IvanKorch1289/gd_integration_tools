@@ -49,10 +49,7 @@ async def test_yaml_hot_reload_lifecycle(tmp_path: Path) -> None:
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path,
-        route_registry=registry,
-        loader=loader,
-        debounce_ms=80,
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
     )
 
     await watcher.start()

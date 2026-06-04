@@ -23,25 +23,25 @@ from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 __all__ = (
     "Pipeline",
-    "load_pipeline_from_yaml",
-    "list_route_ids",
-    "get_route_pipeline",
     "execute_route",
+    "get_route_pipeline",
     "list_audit_records",
     "list_recent_trace_events",
+    "list_route_ids",
+    "load_pipeline_from_yaml",
 )
 
 
 def list_route_ids() -> list[str]:
     """Возвращает список идентификаторов зарегистрированных DSL-маршрутов."""
-    return list(route_registry._routes.keys())  # noqa: SLF001 — фасад
+    return list(route_registry._routes.keys())
 
 
 def get_route_pipeline(route_id: str) -> Pipeline | None:
     """Возвращает Pipeline по ``route_id`` или ``None``."""
     try:
         return route_registry.get(route_id)
-    except Exception as _:  # noqa: BLE001 — UI устойчив к отсутствию маршрутов
+    except Exception as _:
         return None
 
 

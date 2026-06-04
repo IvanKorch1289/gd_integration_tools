@@ -11,7 +11,7 @@ from typing import Any
 
 from src.backend.core.messaging.outbox import OutboxBackend, OutboxEvent
 
-__all__ = ("OutboxQueueAdapter", "AsyncioQueueAdapter")
+__all__ = ("AsyncioQueueAdapter", "OutboxQueueAdapter")
 
 
 class OutboxQueueAdapter:

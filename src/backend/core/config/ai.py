@@ -18,21 +18,21 @@ from pydantic_settings import SettingsConfigDict
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = (
-    "PerplexitySettings",
-    "HuggingFaceSettings",
-    "OpenWebUISettings",
-    "OpenRouterSettings",
-    "NimSettings",
-    "OpenAISettings",
     "AIProvidersSettings",
     "AIWorkspaceSettings",
+    "HuggingFaceSettings",
     "MarkitdownSettings",
+    "NimSettings",
+    "OpenAISettings",
+    "OpenRouterSettings",
+    "OpenWebUISettings",
+    "PerplexitySettings",
     "ai_providers_settings",
     "ai_workspace_settings",
     "markitdown_settings",
-    "openrouter_settings",
     "nim_settings",
     "openai_settings",
+    "openrouter_settings",
 )
 
 

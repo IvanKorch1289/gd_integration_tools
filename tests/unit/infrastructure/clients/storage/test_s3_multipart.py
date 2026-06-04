@@ -106,7 +106,11 @@ async def test_multipart_upload_single_part_buffer(s3_client_with_fake) -> None:
 async def test_multipart_upload_splits_to_5mb_parts(s3_client_with_fake) -> None:
     client, fake = s3_client_with_fake
     # 13MB поток → 2 части по 5MB + 1 часть 3MB = 3 parts
-    chunks = [b"a" * (4 * 1024 * 1024), b"b" * (4 * 1024 * 1024), b"c" * (5 * 1024 * 1024)]
+    chunks = [
+        b"a" * (4 * 1024 * 1024),
+        b"b" * (4 * 1024 * 1024),
+        b"c" * (5 * 1024 * 1024),
+    ]
     etag = await client.put_object_multipart(
         key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024
     )

@@ -99,10 +99,7 @@ def test_list_overrides_snapshot() -> None:
 
     snapshot = overrides.list_overrides()
     assert snapshot["global"] == {"flag_a": True}
-    assert snapshot["per_tenant"] == {
-        "t1": {"flag_b": "v1"},
-        "t2": {"flag_a": False},
-    }
+    assert snapshot["per_tenant"] == {"t1": {"flag_b": "v1"}, "t2": {"flag_a": False}}
 
 
 def test_singleton_returns_same_instance() -> None:

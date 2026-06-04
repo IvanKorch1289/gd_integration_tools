@@ -41,7 +41,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
     for subject, model_cls in items:
         try:
             schema = model_cls.model_json_schema()
-        except Exception:  # noqa: BLE001, S112
+        except Exception:
             continue
         registry.register(
             SchemaEntry(

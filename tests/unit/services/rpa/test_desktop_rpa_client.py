@@ -20,9 +20,7 @@ class TestInit:
         assert client._timeout == 30.0
 
     def test_custom(self) -> None:
-        client = DesktopRpaClient(
-            "http://worker:9001", api_key="k", timeout=5.0
-        )
+        client = DesktopRpaClient("http://worker:9001", api_key="k", timeout=5.0)
         assert client._api_key == "k"
         assert client._timeout == 5.0
 
@@ -38,8 +36,9 @@ class TestExecute:
         mock_http.post = AsyncMock(return_value=mock_resp)
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(__aenter__=AsyncMock(return_value=mock_http),
-                                   __aexit__=AsyncMock()),
+            return_value=MagicMock(
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+            ),
         ):
             result = await client.execute("click", {"x": 1})
         assert result == {"ok": True}
@@ -76,8 +75,9 @@ class TestExecute:
         mock_http.post = AsyncMock(return_value=mock_resp)
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(__aenter__=AsyncMock(return_value=mock_http),
-                                   __aexit__=AsyncMock()),
+            return_value=MagicMock(
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+            ),
         ):
             with pytest.raises(DesktopRpaError, match="503"):
                 await client.execute("click", {})
@@ -91,8 +91,9 @@ class TestExecute:
         mock_http.post = AsyncMock(return_value=mock_resp)
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(__aenter__=AsyncMock(return_value=mock_http),
-                                   __aexit__=AsyncMock()),
+            return_value=MagicMock(
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+            ),
         ):
             with pytest.raises(DesktopRpaError, match="400"):
                 await client.execute("click", {})
@@ -106,8 +107,9 @@ class TestExecute:
         mock_http.post = AsyncMock(return_value=mock_resp)
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(__aenter__=AsyncMock(return_value=mock_http),
-                                   __aexit__=AsyncMock()),
+            return_value=MagicMock(
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+            ),
         ):
             await client.execute("type", {"text": "hi"})
         assert mock_http.post.await_args[1]["headers"] == {}

@@ -7,11 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.services.ai.rag_service import (
-    AugmentResult,
-    RAGCitation,
-    RAGService,
-)
+from src.backend.services.ai.rag_service import AugmentResult, RAGCitation, RAGService
 
 
 def _make_store(hits: list[dict[str, Any]]) -> Any:
@@ -97,9 +93,7 @@ async def test_augment_no_hits_returns_empty_citations() -> None:
     rag = RAGService(store=_make_store([]), embedder=_make_embedder())
 
     result = await rag.augment_prompt_with_citations(
-        query="вопрос без контекста",
-        system_prompt="Ты помощник.",
-        top_k=5,
+        query="вопрос без контекста", system_prompt="Ты помощник.", top_k=5
     )
     assert result.citations == []
     assert "Контекст из базы знаний" not in result.prompt
@@ -114,7 +108,7 @@ async def test_augment_fallback_doc_id_when_source_missing() -> None:
             "id": "X_chunk_0",
             "document": "raw content",
             "metadata": {"doc_id": "X", "chunk_idx": 0, "namespace": "default"},
-        },
+        }
     ]
     rag = RAGService(store=_make_store(hits), embedder=_make_embedder())
 
@@ -135,7 +129,7 @@ async def test_augment_prompt_str_form_backwards_compat() -> None:
             "document": "context piece",
             "metadata": {"doc_id": "d", "chunk_idx": 0, "namespace": "ns"},
             "distance": 0.5,
-        },
+        }
     ]
     rag = RAGService(store=_make_store(hits), embedder=_make_embedder())
 

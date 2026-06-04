@@ -9,7 +9,7 @@ http.
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
@@ -69,6 +69,6 @@ def create_antivirus_backend() -> AntivirusBackend:
         from src.backend.infrastructure.antivirus.service import get_antivirus_service
 
         backends.append(HttpAntivirusBackend(service=get_antivirus_service()))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("HTTP AV backend skipped: %s", exc)
     return ChainedAntivirusBackend(backends)

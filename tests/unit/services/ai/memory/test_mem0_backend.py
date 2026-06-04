@@ -27,7 +27,7 @@ class TestMem0MemoryAdapterRecall:
                     "memory_id": "mem-1",
                     "created_at": "2026-01-01T00:00:00Z",
                     "metadata": {"mem0_key": "pref_dark_mode"},
-                },
+                }
             ]
         }
 
@@ -111,9 +111,7 @@ class TestMem0MemoryAdapterStore:
             adapter._initialized = True
 
             await adapter.store(
-                "acme:chat",
-                "user_pref",
-                {"theme": "dark", "lang": "ru"},
+                "acme:chat", "user_pref", {"theme": "dark", "lang": "ru"}
             )
 
         mock_client.add.assert_called_once()

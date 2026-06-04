@@ -32,10 +32,10 @@ def plugin_dir(tmp_path: Path) -> Path:
     root = tmp_path / "extensions" / "demo"
     root.mkdir(parents=True)
     (root / "plugin.toml").write_text(
-        "name = \"demo\"\n"
-        "version = \"1.0.0\"\n"
-        "requires_core = \">=0.2,<1.0\"\n"
-        "entry_class = \"extensions.demo.plugin.Demo\"\n"
+        'name = "demo"\n'
+        'version = "1.0.0"\n'
+        'requires_core = ">=0.2,<1.0"\n'
+        'entry_class = "extensions.demo.plugin.Demo"\n'
     )
     return root
 

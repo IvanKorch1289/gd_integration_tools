@@ -7,7 +7,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("record_hit", "record_miss", "get_metrics_snapshot")
+__all__ = ("get_metrics_snapshot", "record_hit", "record_miss")
 
 _hits: Any = None
 _misses: Any = None

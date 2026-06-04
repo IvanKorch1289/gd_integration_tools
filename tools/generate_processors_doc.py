@@ -38,8 +38,9 @@ def _iter_processor_classes(path: Path):
         if not isinstance(node, ast.ClassDef):
             continue
         bases = {
-            b.attr if isinstance(b, ast.Attribute) else
-            (b.id if isinstance(b, ast.Name) else "")
+            b.attr
+            if isinstance(b, ast.Attribute)
+            else (b.id if isinstance(b, ast.Name) else "")
             for b in node.bases
         }
         if "BaseProcessor" not in bases:

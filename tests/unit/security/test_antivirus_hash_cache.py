@@ -61,12 +61,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes,
-        *,
-        ex: int | None = None,
-        **_: Any,
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
     ) -> bool:
         self._data[key] = value
         self.set_calls.append((key, value, ex))
@@ -189,9 +184,7 @@ async def test_get_uses_orjson_payload_layout(fake_redis: Any) -> None:
     verdict = AntivirusScanResult(clean=False, signature="Foo")
     await cache.put(b"raw", verdict)
 
-    raw = await fake_redis.get(
-        "antivirus:hash:" + hashlib.sha256(b"raw").hexdigest()
-    )
+    raw = await fake_redis.get("antivirus:hash:" + hashlib.sha256(b"raw").hexdigest())
     assert raw is not None
     decoded = orjson.loads(raw)
     assert decoded == {"clean": False, "signature": "Foo"}

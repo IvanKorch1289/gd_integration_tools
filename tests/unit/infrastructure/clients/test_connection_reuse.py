@@ -131,8 +131,8 @@ async def test_pings_idle_connection() -> None:
     now = time.monotonic()
     manager._pools["idle_pool"].metadata = ConnectionMetadata(
         name="idle_pool",
-        created_at=now - 30.0,   # lifetime 30s < max_lifetime 3600s
-        last_used=now - 120.0,   # idle 120s > idle_timeout 60s
+        created_at=now - 30.0,  # lifetime 30s < max_lifetime 3600s
+        last_used=now - 120.0,  # idle 120s > idle_timeout 60s
     )
     manager._pools["idle_pool"].last_connection = fake_pool
 
@@ -179,7 +179,7 @@ async def test_recycles_old_connection_after_max_lifetime() -> None:
     manager._pools["old_pool"].metadata = ConnectionMetadata(
         name="old_pool",
         created_at=old_created_at,
-        last_used=now - 5.0,   # недавно использовался
+        last_used=now - 5.0,  # недавно использовался
         use_count=42,
     )
     manager._pools["old_pool"].last_connection = fake_pool

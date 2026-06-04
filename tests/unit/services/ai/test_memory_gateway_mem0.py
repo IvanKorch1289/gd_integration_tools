@@ -15,9 +15,7 @@ from src.backend.services.ai.memory_gateway import UnifiedMemoryGateway
 async def test_recall_mem0_returns_empty_when_not_configured() -> None:
     """При отсутствии mem0 возвращает []."""
     gateway = UnifiedMemoryGateway(short_term=AsyncMock())
-    result = await gateway.recall_mem0(
-        tenant_id="t1", session_id="s1", query="hello"
-    )
+    result = await gateway.recall_mem0(tenant_id="t1", session_id="s1", query="hello")
     assert result == []
 
 

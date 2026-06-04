@@ -93,7 +93,7 @@ class ImageIngester:
         except ImportError:
             logger.warning("ImageIngester: Pillow не установлен — метаданные пропущены")
             meta["warnings"] = ["pillow_not_installed"]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ImageIngester: ошибка чтения metadata: %s", exc)
             meta["warnings"] = [f"pil_failed: {exc}"]
 
@@ -101,7 +101,7 @@ class ImageIngester:
             try:
                 caption = await self.caption_provider(content)
                 meta["caption"] = caption
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("ImageIngester: caption provider упал: %s", exc)
                 meta.setdefault("warnings", []).append(f"caption_failed: {exc}")
 
@@ -144,7 +144,7 @@ class ImageIngester:
                             for tag, val in exif.items()
                             if val is not None
                         }
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.debug("ImageIngester: EXIF недоступен: %s", exc)
 
         return meta

@@ -36,8 +36,7 @@ def _make_adapter_with_mock_cluster() -> tuple[RedisClusterAdapter, MagicMock]:
     mock_cluster_instance.aclose = AsyncMock(return_value=None)
 
     with patch(
-        "redis.asyncio.cluster.RedisCluster",
-        return_value=mock_cluster_instance,
+        "redis.asyncio.cluster.RedisCluster", return_value=mock_cluster_instance
     ):
         adapter = RedisClusterAdapter(
             startup_nodes=[ClusterNode(host="redis-1", port=6379)],
@@ -101,11 +100,10 @@ async def test_adapter_close_fallback_to_close_on_attribute_error() -> None:
     mock_cluster_instance.close = AsyncMock(return_value=None)
 
     with patch(
-        "redis.asyncio.cluster.RedisCluster",
-        return_value=mock_cluster_instance,
+        "redis.asyncio.cluster.RedisCluster", return_value=mock_cluster_instance
     ):
         adapter = RedisClusterAdapter(
-            startup_nodes=[ClusterNode(host="redis-1", port=6379)],
+            startup_nodes=[ClusterNode(host="redis-1", port=6379)]
         )
         await adapter.close()
 

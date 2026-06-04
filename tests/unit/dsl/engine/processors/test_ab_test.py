@@ -7,10 +7,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.processors.ab_test import (
-    ABTestProcessor,
-    select_variant,
-)
+from src.backend.dsl.engine.processors.ab_test import ABTestProcessor, select_variant
 
 
 class _FakeExchange:
@@ -37,10 +34,7 @@ def test_select_variant_different_cid_can_differ() -> None:
     a_count = sum(
         1
         for i in range(1000)
-        if select_variant(
-            correlation_id=f"user-{i}", split=(0.5, 0.5)
-        )
-        == "A"
+        if select_variant(correlation_id=f"user-{i}", split=(0.5, 0.5)) == "A"
     )
     # 50%-split на 1000 примерах: 400-600 — нормально.
     assert 400 < a_count < 600
@@ -50,10 +44,7 @@ def test_select_variant_skewed_split() -> None:
     a_count = sum(
         1
         for i in range(1000)
-        if select_variant(
-            correlation_id=f"user-{i}", split=(0.9, 0.1)
-        )
-        == "A"
+        if select_variant(correlation_id=f"user-{i}", split=(0.9, 0.1)) == "A"
     )
     assert a_count > 800
 
@@ -70,7 +61,8 @@ def test_processor_requires_experiment_id() -> None:
 def test_processor_rejects_invalid_split() -> None:
     with pytest.raises(ValueError, match="split"):
         ABTestProcessor(
-            experiment_id="x", split=(0.5,)  # type: ignore[arg-type]
+            experiment_id="x",
+            split=(0.5,),  # type: ignore[arg-type]
         )
     with pytest.raises(ValueError):
         ABTestProcessor(experiment_id="x", split=(-0.1, 0.5))
@@ -87,9 +79,7 @@ async def test_process_writes_variant_to_exchange() -> None:
 
 def test_processor_to_spec_round_trip() -> None:
     p = ABTestProcessor(
-        experiment_id="checkout",
-        split=(0.7, 0.3),
-        track_metric="conversion",
+        experiment_id="checkout", split=(0.7, 0.3), track_metric="conversion"
     )
     spec = p.to_spec()["ab_test"]
     assert spec["experiment_id"] == "checkout"

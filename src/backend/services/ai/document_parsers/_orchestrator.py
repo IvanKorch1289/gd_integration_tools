@@ -129,7 +129,7 @@ async def parse_document(
             return text, _meta(
                 effective_mime, content, warnings, filename, "markitdown", True
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             warnings.append(f"markitdown failed: {exc}; fallback to legacy")
             logger.warning(
                 "parse_document: markitdown упал на mime=%s: %s — fallback",
@@ -183,7 +183,7 @@ async def _parse_html_legacy(content: bytes) -> tuple[str, list[str]]:
 
         soup = BeautifulSoup(content, "lxml")
         return soup.get_text(separator="\n", strip=True), warnings
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         warnings.append(f"bs4 fallback failed: {exc}")
         return _parse_text(content)
 

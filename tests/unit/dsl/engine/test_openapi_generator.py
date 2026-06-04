@@ -73,8 +73,7 @@ class TestGenerateOpenapi:
     def test_pipeline_with_description(self) -> None:
         """Pipeline description should be used as title."""
         pipeline = Pipeline(
-            route_id="my-route",
-            description="My important integration route"
+            route_id="my-route", description="My important integration route"
         )
 
         spec = generate_openapi(pipeline)
@@ -83,10 +82,7 @@ class TestGenerateOpenapi:
 
     def test_pipeline_with_source(self) -> None:
         """Pipeline source should be preserved in operation."""
-        pipeline = Pipeline(
-            route_id="source-route",
-            source="internal:tech.send_email"
-        )
+        pipeline = Pipeline(route_id="source-route", source="internal:tech.send_email")
 
         spec = generate_openapi(pipeline)
 
@@ -95,10 +91,7 @@ class TestGenerateOpenapi:
 
     def test_pipeline_with_protocol_rest(self) -> None:
         """REST protocol should produce POST /{route_id}."""
-        pipeline = Pipeline(
-            route_id="rest-route",
-            protocol=ProtocolType.rest
-        )
+        pipeline = Pipeline(route_id="rest-route", protocol=ProtocolType.rest)
 
         spec = generate_openapi(pipeline)
 
@@ -108,10 +101,7 @@ class TestGenerateOpenapi:
 
     def test_pipeline_with_protocol_graphql(self) -> None:
         """GraphQL protocol should produce /graphql endpoint."""
-        pipeline = Pipeline(
-            route_id="graphql-api",
-            protocol=ProtocolType.graphql
-        )
+        pipeline = Pipeline(route_id="graphql-api", protocol=ProtocolType.graphql)
 
         spec = generate_openapi(pipeline)
 
@@ -120,10 +110,7 @@ class TestGenerateOpenapi:
 
     def test_pipeline_with_protocol_websocket(self) -> None:
         """WebSocket protocol should produce /ws endpoint."""
-        pipeline = Pipeline(
-            route_id="ws-pipeline",
-            protocol=ProtocolType.websocket
-        )
+        pipeline = Pipeline(route_id="ws-pipeline", protocol=ProtocolType.websocket)
 
         spec = generate_openapi(pipeline)
 
@@ -132,10 +119,7 @@ class TestGenerateOpenapi:
 
     def test_pipeline_with_protocol_sse(self) -> None:
         """SSE protocol should produce GET /stream endpoint."""
-        pipeline = Pipeline(
-            route_id="sse-stream",
-            protocol=ProtocolType.sse
-        )
+        pipeline = Pipeline(route_id="sse-stream", protocol=ProtocolType.sse)
 
         spec = generate_openapi(pipeline)
 
@@ -146,7 +130,7 @@ class TestGenerateOpenapi:
         """Transport config endpoint should be used as base URL."""
         pipeline = Pipeline(
             route_id="custom-endpoint",
-            transport_config=TransportConfig(endpoint="https://api.example.com/v1")
+            transport_config=TransportConfig(endpoint="https://api.example.com/v1"),
         )
 
         spec = generate_openapi(pipeline)
@@ -166,14 +150,13 @@ class TestGenerateOpenapi:
         assert "x-processors" in op
         assert len(op["x-processors"]) == 2
         assert op["x-processors"][0]["name"] == "proc1"
-        assert op["x-processors"][1]["spec"] == {"set_property": {"key": "foo", "value": "bar"}}
+        assert op["x-processors"][1]["spec"] == {
+            "set_property": {"key": "foo", "value": "bar"}
+        }
 
     def test_pipeline_with_tenant_aware(self) -> None:
         """Tenant-aware pipeline should have Tenant tag."""
-        pipeline = Pipeline(
-            route_id="tenant-route",
-            tenant_aware=True
-        )
+        pipeline = Pipeline(route_id="tenant-route", tenant_aware=True)
 
         spec = generate_openapi(pipeline)
 
@@ -184,8 +167,7 @@ class TestGenerateOpenapi:
     def test_pipeline_with_feature_flag(self) -> None:
         """Feature flag should appear in operation extensions."""
         pipeline = Pipeline(
-            route_id="flagged-route",
-            feature_flag="new_feature_enabled"
+            route_id="flagged-route", feature_flag="new_feature_enabled"
         )
 
         spec = generate_openapi(pipeline)
@@ -230,10 +212,7 @@ class TestGenerateOpenapi:
 
     def test_rest_protocol_has_request_body(self) -> None:
         """REST protocol should include requestBody."""
-        pipeline = Pipeline(
-            route_id="rest-with-body",
-            protocol=ProtocolType.rest
-        )
+        pipeline = Pipeline(route_id="rest-with-body", protocol=ProtocolType.rest)
 
         spec = generate_openapi(pipeline)
 

@@ -11,12 +11,12 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 
 __all__ = (
+    "QuotaExceeded",
+    "QuotaTracker",
     "TenantContext",
     "current_tenant",
     "set_tenant",
     "tenant_scope",
-    "QuotaTracker",
-    "QuotaExceeded",
 )
 
 

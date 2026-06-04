@@ -39,10 +39,10 @@ from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
+    "FakeRateLimitChecker",
     "GlobalRateLimitMiddleware",
     "RateLimitChecker",
     "RateLimitConfig",
-    "FakeRateLimitChecker",
     "RedisRateLimitChecker",
     "tenant_aware_identifier",
 )
@@ -199,7 +199,7 @@ class RedisRateLimitChecker:
 
     async def check(self, identifier: str) -> tuple[bool, int, int]:
         """Проверить лимит — см. :meth:`RateLimitChecker.check`."""
-        import time  # noqa: PLC0415
+        import time
 
         now_bucket = int(time.time() / self._window)
         key = f"{self._prefix}{identifier}:{now_bucket}"
@@ -208,7 +208,7 @@ class RedisRateLimitChecker:
             if current == 1:
                 # Set TTL только на первый incr (минимизация Redis round-trips).
                 await self._redis.expire(key, int(self._window) + 1)
-        except Exception as exc:  # noqa: BLE001 — fail-open
+        except Exception as exc:
             _logger.warning(
                 "RedisRateLimitChecker failed for identifier=%s: %s", identifier, exc
             )
@@ -275,7 +275,7 @@ class RedisRateLimitChecker:
             return RateLimitConfig(
                 max_per_window=max_per_window, window_seconds=window_seconds
             )
-        except Exception as exc:  # noqa: BLE001 — fail-open
+        except Exception as exc:
             _logger.warning(
                 "RedisRateLimitChecker.check_route_override failed for route=%s: %s",
                 route,
@@ -334,12 +334,12 @@ class GlobalRateLimitMiddleware:
     def _default_feature_enabled() -> bool:
         """Lazy-проверка feature-flag ``multi_tenant_rate_limit_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             return bool(
                 getattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
             )
-        except Exception as _:  # noqa: BLE001 — best-effort
+        except Exception as _:
             return False
 
     def _resolve_checker(self, path: str) -> RateLimitChecker:
@@ -364,7 +364,7 @@ class GlobalRateLimitMiddleware:
         checker = self._resolve_checker(scope.get("path", ""))
         try:
             allowed, remaining, retry_after = await checker.check(identifier)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Защитный fallback: если checker упал — пропускаем запрос,
             # чтобы не превратить rate-limit infrastructure в SPoF.
             _logger.warning(

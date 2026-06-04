@@ -92,7 +92,7 @@ class FastMCPserver:
     def __init__(
         self,
         skill_registry: SkillRegistry | None = None,
-        host: str = "0.0.0.0",
+        host: str = "127.0.0.1",
         port: int = 8765,
     ) -> None:
         self._skill_registry = skill_registry or SkillRegistry()

@@ -18,9 +18,7 @@ from src.backend.infrastructure.sources.cdc_postgres_logical import (
 
 def test_validates_mode() -> None:
     with pytest.raises(ValueError, match="mode"):
-        CdcPostgresLogicalSource(
-            "src1", "orders", dsn="postgres://", mode="invalid"
-        )
+        CdcPostgresLogicalSource("src1", "orders", dsn="postgres://", mode="invalid")
 
 
 def test_validates_required_args() -> None:
@@ -52,9 +50,7 @@ async def test_setup_runs_publication_and_slot_ddl() -> None:
 
 
 @pytest.mark.asyncio
-async def test_start_skipped_when_flag_off(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_start_skipped_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "cdc_postgres_enabled", False)
     src = CdcPostgresLogicalSource("s1", "orders", dsn="postgres://x")
     on_event = AsyncMock()
@@ -88,9 +84,7 @@ async def test_cursor_store_set_get(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_full_mode_emits_snapshot_marker(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_full_mode_emits_snapshot_marker(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "cdc_postgres_enabled", True)
     received = []
 
@@ -100,8 +94,7 @@ async def test_full_mode_emits_snapshot_marker(
     src = CdcPostgresLogicalSource("s1", "orders", dsn="postgres://x", mode="full")
     # Stub _inner.start, чтобы не подключаться к настоящему PG.
     monkeypatch.setattr(
-        "src.backend.infrastructure.sources.cdc.CDCSource.start",
-        AsyncMock(),
+        "src.backend.infrastructure.sources.cdc.CDCSource.start", AsyncMock()
     )
     await src.start(on_event)
     assert any(e.payload.get("event") == "snapshot_started" for e in received)

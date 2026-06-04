@@ -159,7 +159,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
 
     async def get_policy(
         self, workflow_id: str, tenant_id: str | None = None
-    ) -> "AIPolicySpec | None":
+    ) -> AIPolicySpec | None:
         """Возвращает resolved :class:`AIPolicySpec` для заданного workflow.
 
         Позволяет extension developer узнать, какая модель будет использована,

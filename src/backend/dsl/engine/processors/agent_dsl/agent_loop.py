@@ -92,9 +92,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         self.budget_cost_usd = budget_cost_usd
         self.budget_tokens = budget_tokens
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         total_cost = 0.0
         total_tokens = 0
         stop_reason: str = "max_iterations"
@@ -141,7 +139,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         exchange.set_property("agent_loop_total_cost_usd", total_cost)
         exchange.set_property("agent_loop_total_tokens", total_tokens)
 
-    def _stop_condition_met(self, exchange: "Exchange[Any]") -> bool:
+    def _stop_condition_met(self, exchange: Exchange[Any]) -> bool:
         """Проверить ``stop_condition_property`` через dot-path."""
         if self.stop_condition_property is None:
             return False
@@ -157,7 +155,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         return bool(cursor)
 
     @staticmethod
-    def _accumulate_cost(exchange: "Exchange[Any]", accumulator: float) -> float:
+    def _accumulate_cost(exchange: Exchange[Any], accumulator: float) -> float:
         """Прибавить cost из последнего ``agent_result`` (если есть)."""
         result = exchange.get_property("agent_result")
         if isinstance(result, dict):
@@ -167,7 +165,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         return accumulator
 
     @staticmethod
-    def _accumulate_tokens(exchange: "Exchange[Any]", accumulator: int) -> int:
+    def _accumulate_tokens(exchange: Exchange[Any], accumulator: int) -> int:
         """Прибавить prompt+completion tokens из последнего ``agent_result``."""
         result = exchange.get_property("agent_result")
         if isinstance(result, dict):

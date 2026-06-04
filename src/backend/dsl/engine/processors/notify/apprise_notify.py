@@ -91,7 +91,7 @@ class AppriseNotifyProcessor(BaseProcessor):
         self.result_property = result_property
 
     @classmethod
-    def from_params(cls, params: AppriseNotifyParams) -> "AppriseNotifyProcessor":
+    def from_params(cls, params: AppriseNotifyParams) -> AppriseNotifyProcessor:
         """Фабричный метод из Pydantic-модели параметров.
 
         Args:

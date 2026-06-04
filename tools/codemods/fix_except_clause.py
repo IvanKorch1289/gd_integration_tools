@@ -54,9 +54,7 @@ class FixExceptClauseTransformer(cst.CSTTransformer):
     """
 
     def leave_ExceptHandler(  # noqa: N802 — libcst API
-        self,
-        original_node: cst.ExceptHandler,
-        updated_node: cst.ExceptHandler,
+        self, original_node: cst.ExceptHandler, updated_node: cst.ExceptHandler
     ) -> cst.ExceptHandler:
         """Добавить скобки к tuple-эксепшену без скобок."""
         node_type = updated_node.type
@@ -65,8 +63,7 @@ class FixExceptClauseTransformer(cst.CSTTransformer):
         if node_type.lpar:
             return updated_node
         new_type = node_type.with_changes(
-            lpar=[cst.LeftParen()],
-            rpar=[cst.RightParen()],
+            lpar=[cst.LeftParen()], rpar=[cst.RightParen()]
         )
         return updated_node.with_changes(type=new_type)
 
@@ -108,12 +105,7 @@ def transform_source(source: str) -> str:
     return new_tree.code
 
 
-def process_file(
-    path: Path,
-    *,
-    check_only: bool,
-    dry_run: bool,
-) -> bool:
+def process_file(path: Path, *, check_only: bool, dry_run: bool) -> bool:
     """Обработать один файл. Вернуть ``True``, если файл изменился (или изменился бы)."""
     try:
         source = path.read_text(encoding="utf-8")
@@ -160,13 +152,10 @@ def main(argv: list[str] | None = None) -> int:
         ``1`` — в ``--check`` режиме нашлись файлы, требующие исправления.
     """
     parser = argparse.ArgumentParser(
-        description="Codemod: except A, B: → except (A, B): (libcst)",
+        description="Codemod: except A, B: → except (A, B): (libcst)"
     )
     parser.add_argument(
-        "paths",
-        nargs="+",
-        type=Path,
-        help="Файлы или директории для обхода",
+        "paths", nargs="+", type=Path, help="Файлы или директории для обхода"
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -189,19 +178,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.check:
         if changed_count:
-            print(
-                f"\n{changed_count} файл(ов) требует исправления.",
-                file=sys.stderr,
-            )
+            print(f"\n{changed_count} файл(ов) требует исправления.", file=sys.stderr)
             return 1
         print("OK: все файлы соответствуют стилю.")
         return 0
 
     if args.dry_run:
-        print(
-            f"\n{changed_count} файл(ов) изменилось бы (dry-run).",
-            file=sys.stderr,
-        )
+        print(f"\n{changed_count} файл(ов) изменилось бы (dry-run).", file=sys.stderr)
         return 0
 
     print(f"\n{changed_count} файл(ов) исправлено.")

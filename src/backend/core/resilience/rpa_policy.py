@@ -36,16 +36,17 @@ import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any, TypeVar
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
 
 __all__ = (
+    "RPACallContext",
+    "RPACallExhausted",
     "RPACallPolicy",
     "RPACallResult",
-    "RPACallExhausted",
-    "RPACallContext",
     "get_rpa_policy",
     "set_rpa_policy",
 )
@@ -154,7 +155,7 @@ class RPACallPolicy:
         """Exponential backoff с jitter (attempt — 0-indexed)."""
         base = min(self.backoff_initial * (2**attempt), self.backoff_max)
         if self.jitter > 0:
-            base *= 1 + random.uniform(-self.jitter, self.jitter)  # noqa: S311
+            base *= 1 + random.uniform(-self.jitter, self.jitter)  # noqa: S311  # non-cryptographic use
         return max(0.0, base)
 
     async def call(
@@ -208,7 +209,7 @@ class RPACallPolicy:
             ctx.attempts = attempt + 1
             try:
                 result = await coro_factory()
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 ctx.last_error = exc
                 now = time.monotonic()
                 if ctx.first_failed_at_ts is None:
@@ -218,7 +219,7 @@ class RPACallPolicy:
                 if self._on_attempt is not None:
                     try:
                         self._on_attempt(ctx, attempt, exc)
-                    except Exception as _:  # noqa: BLE001
+                    except Exception as _:
                         _logger.exception("RPACallPolicy on_attempt callback failed")
 
                 if self._breaker is not None:
@@ -243,7 +244,7 @@ class RPACallPolicy:
                 if self._on_attempt is not None:
                     try:
                         self._on_attempt(ctx, attempt, None)
-                    except Exception as _:  # noqa: BLE001
+                    except Exception as _:
                         _logger.exception("RPACallPolicy on_attempt success cb failed")
                 return result
 
@@ -256,17 +257,17 @@ class RPACallPolicy:
         """Записывает envelope в DLQ (если writer настроен)."""
         if self._dlq_writer is None:
             return
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         first_ts = (
-            datetime.fromtimestamp(ctx.first_failed_at_ts, tz=timezone.utc)
+            datetime.fromtimestamp(ctx.first_failed_at_ts, tz=UTC)
             if ctx.first_failed_at_ts
-            else datetime.now(timezone.utc)
+            else datetime.now(UTC)
         )
         last_ts = (
-            datetime.fromtimestamp(ctx.last_failed_at_ts, tz=timezone.utc)
+            datetime.fromtimestamp(ctx.last_failed_at_ts, tz=UTC)
             if ctx.last_failed_at_ts
-            else datetime.now(timezone.utc)
+            else datetime.now(UTC)
         )
         envelope = DLQEnvelope(
             transport=ctx.transport,
@@ -283,7 +284,7 @@ class RPACallPolicy:
         )
         try:
             await self._dlq_writer.write(envelope)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _logger.exception(
                 "RPACallPolicy[%s] DLQ write failed transport=%s",
                 self.name,

@@ -122,7 +122,7 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="ok")
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
         except Exception as exc:
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
@@ -133,7 +133,7 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="error")
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
 
     @staticmethod

@@ -20,8 +20,9 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any
 
 from src.backend.core.resilience.breaker import (
     Breaker,

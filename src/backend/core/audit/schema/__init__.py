@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__all__ = ("AIInvocationEventType", "AIInvocationEvent", "AIInvocationPayload")
+__all__ = ("AIInvocationEvent", "AIInvocationEventType", "AIInvocationPayload")
 
 from src.backend.core.audit.schema.ai_invocation import (
     AIInvocationEvent,

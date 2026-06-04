@@ -11,7 +11,8 @@ spec вида ``{"sink_id": "...", "kind": "http", ...}`` и возвращае�
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind
 from src.backend.infrastructure.sinks.email_sink import EmailSink

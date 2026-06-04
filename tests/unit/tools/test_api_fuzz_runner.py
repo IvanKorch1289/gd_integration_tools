@@ -18,9 +18,7 @@ ALLOWLIST_PATH = Path("tools/checks/schemathesis_allowlist.json")
 
 def _import_api_fuzz():
     """Подгрузить tools/api_fuzz_runner.py через importlib."""
-    spec = importlib.util.spec_from_file_location(
-        "_api_fuzz_test", API_FUZZ_PATH
-    )
+    spec = importlib.util.spec_from_file_location("_api_fuzz_test", API_FUZZ_PATH)
     if spec is None or spec.loader is None:
         raise ImportError("Не удалось загрузить api_fuzz_runner.py")
     module = importlib.util.module_from_spec(spec)

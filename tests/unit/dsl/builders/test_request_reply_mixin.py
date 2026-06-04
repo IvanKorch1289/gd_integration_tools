@@ -21,7 +21,9 @@ class TestRequest:
     def test_adds_request_processor(self) -> None:
         pipeline = (
             RouteBuilder.from_("test.request", source="internal:test")
-            .request("events.test", {"q": "hello"}, timeout=10.0, result_property="resp")
+            .request(
+                "events.test", {"q": "hello"}, timeout=10.0, result_property="resp"
+            )
             .build()
         )
         assert len(pipeline.processors) == 1

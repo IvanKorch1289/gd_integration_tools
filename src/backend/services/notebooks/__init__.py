@@ -13,10 +13,10 @@ from src.backend.services.notebooks.repository import (
 from src.backend.services.notebooks.service import NotebookService, get_notebook_service
 
 __all__ = (
-    "Notebook",
-    "NotebookVersion",
-    "NotebookRepository",
     "InMemoryNotebookRepository",
+    "Notebook",
+    "NotebookRepository",
     "NotebookService",
+    "NotebookVersion",
     "get_notebook_service",
 )

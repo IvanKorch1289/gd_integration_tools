@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.core.resilience.degradation import degradation_manager
 from src.backend.core.utils.task_registry import get_task_registry
@@ -50,7 +51,7 @@ class SelfHealer:
                 "SelfHealer started via APScheduler (interval=%ds)", self._interval
             )
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("APScheduler недоступен, fallback на asyncio: %s", exc)
 
         self._task = get_task_registry().create_task(
@@ -80,7 +81,7 @@ class SelfHealer:
                 if result:
                     degradation_manager.report_success(name)
                     logger.info("SelfHealer: %s восстановлен", name)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("SelfHealer: %s ещё down: %s", name, exc)
 
     async def _heal_loop(self) -> None:

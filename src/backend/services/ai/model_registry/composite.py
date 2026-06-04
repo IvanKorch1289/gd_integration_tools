@@ -38,7 +38,7 @@ class CompositeModelRegistry:
         """Backend, используемый для write-операций по умолчанию."""
         return self._primary
 
-    def with_primary(self, backend_id: str) -> "CompositeModelRegistry":
+    def with_primary(self, backend_id: str) -> CompositeModelRegistry:
         """Создать новый Composite с другим primary backend."""
         if backend_id not in self._backends:
             raise KeyError(backend_id)
@@ -61,7 +61,7 @@ class CompositeModelRegistry:
                     m_extra = dict(m.extra)
                     m_extra.setdefault("backend", backend_id)
                     out.append(m.model_copy(update={"extra": m_extra}))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning(
                     "Composite list_models: backend=%s failed: %s", backend_id, exc
                 )
@@ -87,7 +87,7 @@ class CompositeModelRegistry:
                     m_extra = dict(m.extra)
                     m_extra.setdefault("backend", backend_id)
                     return m.model_copy(update={"extra": m_extra})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("get_model backend=%s: %s", backend_id, exc)
         return None
 

@@ -27,10 +27,7 @@ def _enable_flag(monkeypatch: pytest.MonkeyPatch, value: bool = True) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags,
-        "rag_cache_l3_retrieval_invalidation",
-        value,
-        raising=False,
+        feature_flags, "rag_cache_l3_retrieval_invalidation", value, raising=False
     )
 
 
@@ -127,10 +124,7 @@ async def test_l3_publish_invalidate_calls_redis(
     from src.backend.core.di import providers as _providers
 
     monkeypatch.setattr(
-        _providers,
-        "get_redis_stream_client_provider",
-        lambda: fake_raw,
-        raising=False,
+        _providers, "get_redis_stream_client_provider", lambda: fake_raw, raising=False
     )
     ok = await cache.publish_invalidate("ns-1", doc_id="doc-42")
     assert ok is True

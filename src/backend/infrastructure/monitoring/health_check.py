@@ -174,7 +174,7 @@ class HealthCheck:
 
 
 @asynccontextmanager
-async def get_healthcheck_service() -> AsyncGenerator[HealthCheck, None]:
+async def get_healthcheck_service() -> AsyncGenerator[HealthCheck]:
     """Фабрика для создания экземпляра HealthCheck с управлением контекстом.
 
     Позволяет использовать конструкцию:

@@ -111,3 +111,93 @@ async def test_get_success_rate_no_data() -> None:
     service = CronDashboardService(clickhouse_client_factory=factory)
     rate = await service.get_success_rate("job-empty")
     assert rate == 0.0
+
+
+@pytest.mark.asyncio
+async def test_list_scheduled_trigger_without_cron(scheduler_mock: Any) -> None:
+    scheduler_mock.list_jobs.return_value = [
+        {
+            "id": "job-3",
+            "name": "Job 3",
+            "next_run_time": None,
+            "trigger": "date[2026-01-01]",
+            "paused": False,
+        }
+    ]
+    service = CronDashboardService(clickhouse_client_factory=lambda: None)
+    with patch(
+        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        return_value=scheduler_mock,
+    ):
+        items = await service.list_scheduled()
+    assert items[0].cron_expr == ""
+    assert items[0].timezone == "UTC"
+
+
+@pytest.mark.asyncio
+async def test_list_scheduled_trigger_without_timezone(scheduler_mock: Any) -> None:
+    scheduler_mock.list_jobs.return_value = [
+        {
+            "id": "job-4",
+            "name": "Job 4",
+            "next_run_time": None,
+            "trigger": "cron[0 0 * * *]",
+            "paused": False,
+        }
+    ]
+    service = CronDashboardService(clickhouse_client_factory=lambda: None)
+    with patch(
+        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        return_value=scheduler_mock,
+    ):
+        items = await service.list_scheduled()
+    assert items[0].cron_expr == "0 0 * * *"
+    assert items[0].timezone == "UTC"
+
+
+@pytest.mark.asyncio
+async def test_get_success_rate_query_exception() -> None:
+    client = MagicMock()
+    client.query = AsyncMock(side_effect=RuntimeError("query fail"))
+
+    async def factory() -> Any:
+        return client
+
+    service = CronDashboardService(clickhouse_client_factory=factory)
+    rate = await service.get_success_rate("job-1")
+    assert rate == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_ch_client_fallback() -> None:
+    mock_client = MagicMock()
+    fake_ch = MagicMock()
+    fake_ch.get_async_client = AsyncMock(return_value=mock_client)
+    with patch.dict("sys.modules", {"clickhouse_connect": fake_ch}):
+        with patch("src.backend.core.config.settings") as mock_settings:
+            mock_settings.clickhouse.host = "ch-host"
+            mock_settings.clickhouse.port = 9000
+            mock_settings.clickhouse.database = "db1"
+            service = CronDashboardService()
+            client = await service._get_ch_client()
+    assert client is mock_client
+    fake_ch.get_async_client.assert_awaited_once_with(
+        host="ch-host", port=9000, database="db1"
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_ch_client_fallback_no_clickhouse_attr() -> None:
+    mock_client = MagicMock()
+    fake_ch = MagicMock()
+    fake_ch.get_async_client = AsyncMock(return_value=mock_client)
+    with patch.dict("sys.modules", {"clickhouse_connect": fake_ch}):
+        with patch("src.backend.core.config.settings") as mock_settings:
+            mock_settings.configure_mock(**{"clickhouse.side_effect": AttributeError})
+            del mock_settings.clickhouse
+            service = CronDashboardService()
+            client = await service._get_ch_client()
+    assert client is mock_client
+    fake_ch.get_async_client.assert_awaited_once_with(
+        host="localhost", port=8123, database="default"
+    )

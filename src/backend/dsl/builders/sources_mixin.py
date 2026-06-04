@@ -64,7 +64,7 @@ class SourcesMixin:
         password: str | None = None,
         processed_marker_path: str | None = None,
         marker_dedup: bool = True,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с polling-источником WebDAV (S13 K3 W2, INF-2.8).
 
         Args:
@@ -109,7 +109,7 @@ class SourcesMixin:
         publication_names: list[str] | None = None,
         plugin: str = "pgoutput",
         **kwargs: Any,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником CDC (PostgreSQL logical replication).
 
         Лениво импортирует :class:`CDCSource` из
@@ -141,7 +141,7 @@ class SourcesMixin:
         import importlib
 
         mod = importlib.import_module("src.backend.infrastructure.sources.cdc")
-        CDCSource = mod.CDCSource  # noqa: N806
+        CDCSource = mod.CDCSource
         effective_slot = slot_name or table
         source_instance = CDCSource(
             source_id=route_id,
@@ -167,7 +167,7 @@ class SourcesMixin:
         publication: str | None = None,
         plugin: str = "pgoutput",
         **kwargs: Any,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """K3 S5 W5 — расширенный CDC через :class:`CdcPostgresLogicalSource`.
 
         В отличие от :meth:`from_cdc`, поддерживает:
@@ -193,7 +193,7 @@ class SourcesMixin:
         mod = importlib.import_module(
             "src.backend.infrastructure.sources.cdc_postgres_logical"
         )
-        SourceCls = mod.CdcPostgresLogicalSource  # noqa: N806
+        SourceCls = mod.CdcPostgresLogicalSource
         source_instance = SourceCls(
             source_id=route_id,
             table=table,
@@ -221,7 +221,7 @@ class SourcesMixin:
         batch_size: int = 100,
         channel: str | None = None,
         **kwargs: Any,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником CDC Capture.
 
         Лениво импортирует :class:`CDCClient` из
@@ -288,7 +288,7 @@ class SourcesMixin:
         bootstrap_servers: str,
         group_id: str,
         **kwargs: Any,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником Apache Kafka.
 
         Лениво импортирует :class:`MQSource` с transport ``kafka``
@@ -320,7 +320,7 @@ class SourcesMixin:
         import importlib
 
         mod = importlib.import_module("src.backend.infrastructure.sources.mq")
-        MQSource = mod.MQSource  # noqa: N806
+        MQSource = mod.MQSource
         source_instance = MQSource(
             source_id=route_id,
             transport="kafka",
@@ -336,7 +336,7 @@ class SourcesMixin:
     @classmethod
     def from_rabbit(
         cls, route_id: str, queue: str, url: str, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником RabbitMQ.
 
         Лениво импортирует :class:`MQSource` с transport ``rabbitmq``
@@ -366,7 +366,7 @@ class SourcesMixin:
         import importlib
 
         mod = importlib.import_module("src.backend.infrastructure.sources.mq")
-        MQSource = mod.MQSource  # noqa: N806
+        MQSource = mod.MQSource
         source_instance = MQSource(
             source_id=route_id,
             transport="rabbitmq",
@@ -381,7 +381,7 @@ class SourcesMixin:
     @classmethod
     def from_mqtt(
         cls, route_id: str, topic: str, broker_url: str, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником MQTT.
 
         MQTT Source — лёгкий wrapper поверх ``aiomqtt`` (lazy-import).
@@ -422,7 +422,7 @@ class SourcesMixin:
     @classmethod
     def from_redis_streams(
         cls, route_id: str, stream: str, consumer_group: str, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником Redis Streams.
 
         Лениво импортирует :class:`MQSource` с transport ``redis_streams``
@@ -454,7 +454,7 @@ class SourcesMixin:
         import importlib
 
         mod = importlib.import_module("src.backend.infrastructure.sources.mq")
-        MQSource = mod.MQSource  # noqa: N806
+        MQSource = mod.MQSource
         source_instance = MQSource(
             source_id=route_id,
             transport="redis_streams",
@@ -469,7 +469,7 @@ class SourcesMixin:
     @classmethod
     def from_filewatcher(
         cls, route_id: str, path: str, *, recursive: bool = True, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником FileWatcher (watchfiles.awatch).
 
         Лениво импортирует :class:`FileWatcherSource` из
@@ -502,7 +502,7 @@ class SourcesMixin:
         from pathlib import Path
 
         mod = importlib.import_module("src.backend.infrastructure.sources.file_watcher")
-        FileWatcherSource = mod.FileWatcherSource  # noqa: N806
+        FileWatcherSource = mod.FileWatcherSource
         source_instance = FileWatcherSource(
             path=Path(path), recursive=recursive, **kwargs
         )
@@ -511,7 +511,7 @@ class SourcesMixin:
         return builder
 
     @classmethod
-    def from_webhook(cls, route_id: str, path: str, **kwargs: Any) -> "RouteBuilder":
+    def from_webhook(cls, route_id: str, path: str, **kwargs: Any) -> RouteBuilder:
         """Создаёт маршрут с источником inbound webhook.
 
         Лениво импортирует :class:`WebhookSource` из
@@ -543,7 +543,7 @@ class SourcesMixin:
         import importlib
 
         mod = importlib.import_module("src.backend.infrastructure.sources.webhook")
-        WebhookSource = mod.WebhookSource  # noqa: N806
+        WebhookSource = mod.WebhookSource
         source_instance = WebhookSource(source_id=route_id, path=path, **kwargs)
         builder: RouteBuilder = cls(route_id=route_id, source=f"webhook:{path}")
         object.__setattr__(builder, "_source_instance", source_instance)
@@ -552,7 +552,7 @@ class SourcesMixin:
     @classmethod
     def from_schedule(
         cls, route_id: str, cron_expr: str, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником cron-расписания.
 
         Лениво импортирует :class:`PollingSource` из

@@ -50,9 +50,10 @@ import hashlib
 import hmac
 import logging
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.codec.json import canonical_json_bytes, dumps_str
 
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-__all__ = ("ImmutableAuditStore", "VerifyResult", "AuditIntegrityError")
+__all__ = ("AuditIntegrityError", "ImmutableAuditStore", "VerifyResult")
 
 
 logger = logging.getLogger("observability.immutable_audit")
@@ -129,7 +130,7 @@ class ImmutableAuditStore:
                 return (
                     fallback.encode("utf-8") if isinstance(fallback, str) else fallback
                 )
-        except Exception as exc:  # noqa: BLE001 — settings might be unavailable
+        except Exception as exc:
             logger.error("Не удалось прочитать fallback secret_key: %s", exc)
         logger.error(
             "AUDIT_SECRET_KEY отсутствует — использую пустой ключ "
@@ -192,7 +193,7 @@ class ImmutableAuditStore:
         """
         from sqlalchemy import text  # local import, чтобы модуль был ленивым
 
-        occurred_at = datetime.now(timezone.utc)
+        occurred_at = datetime.now(UTC)
         event_dict = {
             "actor": actor,
             "action": action,
@@ -215,7 +216,7 @@ class ImmutableAuditStore:
             prev_row = (
                 await session.execute(
                     text(
-                        f"SELECT event_hash FROM {self._table} "  # noqa: S608  # self._table — ctor-parameter, не user input
+                        f"SELECT event_hash FROM {self._table} "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
                         f"ORDER BY seq DESC LIMIT 1"
                     )
                 )
@@ -225,7 +226,7 @@ class ImmutableAuditStore:
 
             await session.execute(
                 text(
-                    f"INSERT INTO {self._table} "  # noqa: S608  # self._table — ctor-parameter, не user input
+                    f"INSERT INTO {self._table} "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
                     f"(actor, action, resource, outcome, metadata, "
                     f" tenant_id, correlation_id, prev_hash, event_hash, "
                     f" occurred_at) "
@@ -267,7 +268,7 @@ class ImmutableAuditStore:
         from sqlalchemy import text
 
         sql = (
-            f"SELECT seq, actor, action, resource, outcome, metadata, "  # noqa: S608  # self._table — ctor-parameter, не user input
+            f"SELECT seq, actor, action, resource, outcome, metadata, "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
             f" tenant_id, correlation_id, prev_hash, event_hash, occurred_at "
             f"FROM {self._table} "
             f"WHERE seq >= :from_seq "
@@ -296,7 +297,9 @@ class ImmutableAuditStore:
             async with self._session_scope() as session:
                 anchor_row = (
                     await session.execute(
-                        text(f"SELECT event_hash FROM {self._table} WHERE seq = :s"),  # noqa: S608  # self._table — ctor-parameter, не user input
+                        text(
+                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # noqa: S608  # internal query with controlled parameters
+                        ),  # self._table — ctor-parameter, не user input
                         {"s": int(first[0]) - 1},
                     )
                 ).first()
@@ -389,7 +392,7 @@ class _SessionScope:
         self._src = factory_result
         self._gen: Any = None
 
-    async def __aenter__(self) -> "AsyncSession":
+    async def __aenter__(self) -> AsyncSession:
         # Вариант 1: async context manager.
         if hasattr(self._src, "__aenter__"):
             self._gen = self._src

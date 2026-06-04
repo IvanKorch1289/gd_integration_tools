@@ -63,7 +63,7 @@ class MqSink(Sink):
                 await broker.publish(body, self.topic, **self.extra)
             finally:
                 await broker.close()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -78,7 +78,7 @@ class MqSink(Sink):
         try:
             await broker.connect()
             await broker.close()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         return True
 

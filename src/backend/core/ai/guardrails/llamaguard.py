@@ -25,7 +25,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("LlamaGuardRuntime", "GuardResult")
+__all__ = ("GuardResult", "LlamaGuardRuntime")
 
 
 # Категории OAI moderation API (совместимый набор)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__all__ = ("GatewayError", "GatewayUnavailable", "GatewayRateLimited")
+__all__ = ("GatewayError", "GatewayRateLimited", "GatewayUnavailable")
 
 
 class GatewayError(RuntimeError):

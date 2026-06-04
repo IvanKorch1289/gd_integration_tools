@@ -172,7 +172,7 @@ class RedisSettings(BaseSettingsWithLoader):
             Список classes-исключений; пустой список, если ничего не
             удалось резолвить.
         """
-        import importlib  # noqa: PLC0415 — lazy
+        import importlib
 
         result: list[type[BaseException]] = []
         for fqn in self.retry_on_error:
@@ -211,7 +211,7 @@ class RedisSettings(BaseSettingsWithLoader):
 
     @field_validator("port", "db_cache", "db_queue", "db_limits", "db_tasks")
     @classmethod
-    def validate_redis_numbers(cls, v):
+    def validate_redis_numbers(cls, v: int) -> int:
         if isinstance(v, int) and v < 0:
             raise ValueError("Значение должно быть неотрицательным целым числом")
         return v

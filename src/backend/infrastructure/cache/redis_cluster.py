@@ -90,7 +90,7 @@ class RedisClusterAdapter:
             if isinstance(result, dict):
                 return all(bool(v) for v in result.values())
             return bool(result)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("RedisClusterAdapter.ping failed: %s", exc)
             return False
 
@@ -106,7 +106,7 @@ class RedisClusterAdapter:
         except AttributeError:
             # redis-py <5 имеет .close() вместо .aclose() — fallback.
             await self._cluster.close()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("RedisClusterAdapter.close error: %s", exc)
         self._closed = True
 
@@ -146,7 +146,7 @@ class RedisClusterAdapter:
         # внутреннюю группировку по shard'у.
         try:
             return await self._cluster.mget(list(keys))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             # Fallback: fan-out параллельных GET.
             import asyncio
 
@@ -165,14 +165,14 @@ class RedisClusterAdapter:
             return
         try:
             await self._cluster.mset(mapping)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             import asyncio
 
             await asyncio.gather(*(self._cluster.set(k, v) for k, v in mapping.items()))
 
     async def keys_scan_batch(
         self, pattern: str, *, batch_size: int = 1000
-    ) -> "AsyncIterator[list[bytes]]":
+    ) -> AsyncIterator[list[bytes]]:
         """SCAN keys батчами по shard'ам (S13 K2 W6).
 
         Используется для bulk-cleanup и invalidation operations.
@@ -195,4 +195,4 @@ class RedisClusterAdapter:
         Все ``keys`` ДОЛЖНЫ находиться в одном slot (используй hashtag
         для force routing: ``{user:42}:name`` + ``{user:42}:visits``).
         """
-        return await self._cluster.eval(script, len(keys), *keys, *args)
+        return await self._cluster.eval(script, len(keys), *keys, *args)  # type: ignore[misc]

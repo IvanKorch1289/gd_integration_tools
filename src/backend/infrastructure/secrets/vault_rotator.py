@@ -202,7 +202,7 @@ class VaultSecretRotator:
             Ошибки отдельных path'ов логируются через structlog и не прерывают
             обход остальных путей.
         """
-        import hvac  # noqa: PLC0415 — lazy import, намеренно внутри метода
+        import hvac
 
         vault_client: hvac.Client = hvac.Client()
 
@@ -297,7 +297,7 @@ class VaultSecretRotator:
                         "vault_rotator.secret_unchanged", path=path, version=new_version
                     )
 
-            except Exception as exc:  # noqa: BLE001 — намеренный broad catch для изоляции path
+            except Exception as exc:
                 # Graceful reconnect: логируем и продолжаем (старый секрет активен)
                 if "connection" in str(exc).lower() or "vault" in str(exc).lower():
                     logger.warning(
@@ -346,7 +346,7 @@ def get_vault_rotator() -> VaultSecretRotator:
     Returns:
         Единственный экземпляр VaultSecretRotator для текущего процесса.
     """
-    global _vault_rotator_instance  # noqa: PLW0603 — намеренный singleton pattern
+    global _vault_rotator_instance
     if _vault_rotator_instance is None:
         _vault_rotator_instance = VaultSecretRotator()
     return _vault_rotator_instance

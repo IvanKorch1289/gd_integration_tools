@@ -35,11 +35,7 @@ def valid_command_payload() -> dict[str, Any]:
 
 @pytest.fixture
 def valid_callback_payload() -> dict[str, Any]:
-    return {
-        "sync_id": "sync-2",
-        "status": "ok",
-        "result": {"data": "value"},
-    }
+    return {"sync_id": "sync-2", "status": "ok", "result": {"data": "value"}}
 
 
 # ─── health ──────────────────────────────────────────────────────────────────
@@ -99,7 +95,9 @@ async def test_receive_command_no_route(valid_command_payload: dict[str, Any]) -
 
 
 @pytest.mark.asyncio
-async def test_receive_command_dispatch_error(valid_command_payload: dict[str, Any]) -> None:
+async def test_receive_command_dispatch_error(
+    valid_command_payload: dict[str, Any],
+) -> None:
     """receive_command returns error when dispatch fails."""
     mock_request = MagicMock(spec=Request)
     mock_request.json = AsyncMock(return_value=valid_command_payload)
@@ -150,7 +148,8 @@ async def test_dispatch_to_route_success() -> None:
     mock_bridge.success = True
 
     with patch(
-        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl", return_value=mock_bridge
+        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl",
+        return_value=mock_bridge,
     ) as mock_dispatch:
         result = await mod._dispatch_to_route(
             "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
@@ -172,7 +171,8 @@ async def test_dispatch_to_route_fallback() -> None:
     fallback.success = True
 
     with patch(
-        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl", side_effect=[primary, fallback]
+        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl",
+        side_effect=[primary, fallback],
     ) as mock_dispatch:
         result = await mod._dispatch_to_route(
             "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
@@ -190,7 +190,8 @@ async def test_dispatch_to_route_no_fallback() -> None:
     primary.success = False
 
     with patch(
-        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl", side_effect=[primary, primary]
+        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl",
+        side_effect=[primary, primary],
     ):
         result = await mod._dispatch_to_route(
             "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
@@ -207,7 +208,10 @@ async def test_dispatch_to_route_no_fallback_id() -> None:
     primary.error_code = "action_not_found"
     primary.success = False
 
-    with patch("src.backend.entrypoints._action_bridge.dispatch_action_or_dsl", return_value=primary):
+    with patch(
+        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl",
+        return_value=primary,
+    ):
         result = await mod._dispatch_to_route(
             "express.command.test", None, {"body": "x"}, "sync-1"
         )
@@ -224,7 +228,10 @@ async def test_dispatch_to_route_error() -> None:
     mock_bridge.success = False
     mock_bridge.error = "boom"
 
-    with patch("src.backend.entrypoints._action_bridge.dispatch_action_or_dsl", return_value=mock_bridge):
+    with patch(
+        "src.backend.entrypoints._action_bridge.dispatch_action_or_dsl",
+        return_value=mock_bridge,
+    ):
         result = await mod._dispatch_to_route(
             "express.command.test", None, {"body": "x"}, "sync-1"
         )
@@ -242,10 +249,15 @@ async def test_log_incoming_appends_message() -> None:
     mock_dialog_store = AsyncMock()
     mock_session_store = AsyncMock()
 
-    with patch(
-        "src.backend.core.di.providers.get_express_dialog_store_provider", return_value=mock_dialog_store
-    ), patch(
-        "src.backend.core.di.providers.get_express_session_store_provider", return_value=mock_session_store
+    with (
+        patch(
+            "src.backend.core.di.providers.get_express_dialog_store_provider",
+            return_value=mock_dialog_store,
+        ),
+        patch(
+            "src.backend.core.di.providers.get_express_session_store_provider",
+            return_value=mock_session_store,
+        ),
     ):
         await mod._log_incoming(
             {
@@ -264,9 +276,13 @@ async def test_log_incoming_appends_message() -> None:
 @pytest.mark.asyncio
 async def test_log_incoming_graceful_on_error(caplog: pytest.LogCaptureFixture) -> None:
     """_log_incoming silently skips on store error."""
-    with patch(
-        "src.backend.core.di.providers.get_express_dialog_store_provider", side_effect=RuntimeError("boom")
-    ), caplog.at_level("DEBUG"):
+    with (
+        patch(
+            "src.backend.core.di.providers.get_express_dialog_store_provider",
+            side_effect=RuntimeError("boom"),
+        ),
+        caplog.at_level("DEBUG"),
+    ):
         await mod._log_incoming({}, sync_id="sync-1")
 
     assert "Express incoming log skipped" in caplog.text

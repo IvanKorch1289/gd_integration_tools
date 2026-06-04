@@ -71,9 +71,7 @@ def test_with_retries_overrides_retry_processor() -> None:
 def test_with_retries_without_backoff_keeps_existing() -> None:
     inner = _NoopProcessor(name="inner")
     pipeline = (
-        _builder()
-        .retry([inner], max_attempts=3, backoff="exponential")
-        .with_retries(5)
+        _builder().retry([inner], max_attempts=3, backoff="exponential").with_retries(5)
     )
     last = pipeline._processors[-1]
     assert last._max_attempts == 5
@@ -92,8 +90,7 @@ def test_with_headers_merge_combines_with_existing() -> None:
     b = (
         _builder()
         .http_call(
-            "https://api.example.com",
-            headers={"X-Trace": "init", "X-Original": "keep"},
+            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"}
         )
         .with_headers({"X-Trace": "override", "X-New": "added"}, mode="merge")
     )
@@ -109,8 +106,7 @@ def test_with_headers_replace_drops_previous() -> None:
     b = (
         _builder()
         .http_call(
-            "https://api.example.com",
-            headers={"X-Trace": "init", "X-Original": "keep"},
+            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"}
         )
         .with_headers({"X-New": "only"}, mode="replace")
     )
@@ -128,11 +124,7 @@ def test_with_headers_invalid_mode_raises() -> None:
 
 
 def test_with_auth_token_sets_auth_token() -> None:
-    b = (
-        _builder()
-        .http_call("https://api.example.com")
-        .with_auth(token="bearer-xyz")
-    )
+    b = _builder().http_call("https://api.example.com").with_auth(token="bearer-xyz")
     last = b._processors[-1]
     assert last._auth_token == "bearer-xyz"
 

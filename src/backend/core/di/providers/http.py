@@ -113,7 +113,7 @@ def set_express_metrics_recorder_provider(recorder: Any) -> None:
 
 def _noop_express_metrics_recorder(bot: str, command: str) -> None:
     """Заглушка, если backend метрик недоступен."""
-    return None
+    return
 
 
 # ─────────────── Express BotX client / factory / message class ───────────────
@@ -263,13 +263,13 @@ def set_stream_client_provider(client: Any) -> None:
 
 __all__ = (
     "get_browser_client_provider",
-    "get_external_session_manager_provider",
     "get_express_bot_client_factory_provider",
     "get_express_botx_message_class_provider",
     "get_express_client_provider",
     "get_express_dialog_store_provider",
     "get_express_metrics_recorder_provider",
     "get_express_session_store_provider",
+    "get_external_session_manager_provider",
     "get_http_client_provider",
     "get_import_gateway_factory_provider",
     "get_redis_cursor_factory_provider",
@@ -279,12 +279,12 @@ __all__ = (
     "get_smtp_client_provider",
     "get_stream_client_provider",
     "set_browser_client_provider",
-    "set_external_session_manager_provider",
     "set_express_bot_client_factory_provider",
     "set_express_client_provider",
     "set_express_dialog_store_provider",
     "set_express_metrics_recorder_provider",
     "set_express_session_store_provider",
+    "set_external_session_manager_provider",
     "set_http_client_provider",
     "set_import_gateway_factory_provider",
     "set_redis_cursor_factory_provider",

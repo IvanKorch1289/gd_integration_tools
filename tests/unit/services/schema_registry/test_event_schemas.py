@@ -16,15 +16,20 @@ from src.backend.services.schema_registry.registry import (
 class TestRegisterDefaultEventSchemas:
     def test_all_registered(self) -> None:
         reg = ServiceSchemaRegistry()
-        with patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
-        ) as mock_order, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
-        ) as mock_pipe, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
-        ) as mock_flag, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
-        ) as mock_route:
+        with (
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
+            ) as mock_order,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
+            ) as mock_pipe,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
+            ) as mock_flag,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
+            ) as mock_route,
+        ):
             mock_order.__name__ = "OrderEvent"
             mock_order.model_json_schema.return_value = {"type": "object"}
             mock_pipe.__name__ = "PipelineEvent"
@@ -42,15 +47,20 @@ class TestRegisterDefaultEventSchemas:
 
     def test_skip_on_exception(self) -> None:
         reg = ServiceSchemaRegistry()
-        with patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
-        ) as mock_order, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
-        ) as mock_pipe, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
-        ) as mock_flag, patch(
-            "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
-        ) as mock_route:
+        with (
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
+            ) as mock_order,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
+            ) as mock_pipe,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
+            ) as mock_flag,
+            patch(
+                "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
+            ) as mock_route,
+        ):
             mock_order.__name__ = "OrderEvent"
             mock_order.model_json_schema.side_effect = RuntimeError("bad")
             mock_pipe.__name__ = "PipelineEvent"

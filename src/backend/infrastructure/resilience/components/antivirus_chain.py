@@ -70,7 +70,7 @@ def _build_http_av() -> AntivirusCallable:
 
         try:
             service = get_antivirus_service()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise ConnectionError(f"HTTP-AV service не сконфигурирован: {exc}") from exc
         backend = HttpAntivirusBackend(service=service)
         return await backend.scan_bytes(payload)

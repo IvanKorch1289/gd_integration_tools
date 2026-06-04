@@ -49,7 +49,7 @@ class NotebookIndexer:
                 },
                 namespace=_NAMESPACE,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "NotebookIndexer.index_one failed (notebook %s): %s", notebook.id, exc
             )
@@ -59,7 +59,7 @@ class NotebookIndexer:
         """Удаляет chunks notebook'а из RAG (по metadata.notebook_id)."""
         try:
             return await self._rag.delete(notebook_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "NotebookIndexer.delete_one failed (notebook %s): %s", notebook_id, exc
             )
@@ -93,5 +93,5 @@ def _factory() -> NotebookIndexer:
 
 
 @app_state_singleton("notebook_indexer", factory=_factory)
-def get_notebook_indexer() -> NotebookIndexer:
+def get_notebook_indexer() -> NotebookIndexer:  # type: ignore[empty-body]
     """Singleton ``NotebookIndexer``."""

@@ -85,7 +85,7 @@ class UnitConversionProcessor(BaseProcessor):
         self._from_value_source = from_value_source
         self._target = to
 
-    def _resolve_value(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_value(self, exchange: Exchange[Any]) -> Any:
         if self._value is not None:
             return self._value
         if not self._from_value_source:
@@ -103,7 +103,7 @@ class UnitConversionProcessor(BaseProcessor):
             )
         return None
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -118,16 +118,14 @@ class UnitConversionProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_unit_conversion:
                 exchange.set_property("unit_conversion_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         try:
@@ -141,7 +139,7 @@ class UnitConversionProcessor(BaseProcessor):
             ureg = pint.UnitRegistry()
             quantity = ureg.Quantity(float(raw), self._from_unit)
             converted = quantity.to(self._to_unit)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"unit_conversion error: {exc}")
             return
 

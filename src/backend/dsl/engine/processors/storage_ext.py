@@ -14,8 +14,8 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "Neo4jQueryProcessor",
-    "TimeSeriesWriteProcessor",
     "PriorityEnqueueProcessor",
+    "TimeSeriesWriteProcessor",
 )
 
 logger = logging.getLogger("dsl.storage_ext")
@@ -149,7 +149,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         columns = ["timestamp", *self._tags, self._field]
         placeholders = ", ".join(f":{c}" for c in columns)
         col_names = ", ".join(columns)
-        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # noqa: S608  # _table/_tags/_field — DSL-config параметры, не runtime input
+        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # _table/_tags/_field — DSL-config параметры, не runtime input  # noqa: S608  # internal query with controlled parameters
 
         async with engine.connect() as conn:
             for point in points:

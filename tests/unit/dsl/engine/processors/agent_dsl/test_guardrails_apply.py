@@ -73,7 +73,9 @@ async def test_safe_text_passes(
     await proc.process(ex, context)
 
     verdict = ex.get_property("guardrails_verdict")
-    assert verdict == {"input": {"safe": True, "flagged_categories": [], "stage": "input"}}
+    assert verdict == {
+        "input": {"safe": True, "flagged_categories": [], "stage": "input"}
+    }
     assert ex.error is None
     assert not ex.stopped
 

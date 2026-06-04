@@ -180,12 +180,10 @@ class K8sHPAMetricsExporter:
             # Lazy import feature_flags, чтобы избежать циклических зависимостей
             # при инициализации модуля.
             try:
-                from src.backend.core.config.features import (
-                    feature_flags,  # noqa: PLC0415
-                )
+                from src.backend.core.config.features import feature_flags
 
                 enabled = feature_flags.k8s_hpa_exporter
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 enabled = False
 
             if not enabled:
@@ -243,7 +241,7 @@ def get_hpa_exporter() -> K8sHPAMetricsExporter:
         exporter = get_hpa_exporter()
         assert get_hpa_exporter() is exporter  # тот же объект
     """
-    global _singleton_instance  # noqa: PLW0603
+    global _singleton_instance
     if _singleton_instance is None:
         with _singleton_lock:
             if _singleton_instance is None:
@@ -256,7 +254,7 @@ def reset_hpa_exporter() -> None:
 
     После вызова следующий ``get_hpa_exporter()`` создаст новый экземпляр.
     """
-    global _singleton_instance  # noqa: PLW0603
+    global _singleton_instance
     with _singleton_lock:
         _singleton_instance = None
 
@@ -299,4 +297,7 @@ def _format_sample(sample: HPAMetricSample) -> str:
 
 if TYPE_CHECKING:
     # Проверка типов: убедимся, что HandlerFn совместим с Callable
-    _: HandlerFn = lambda: None  # noqa: E731
+    def _type_check() -> None:
+        pass
+
+    _: HandlerFn = _type_check

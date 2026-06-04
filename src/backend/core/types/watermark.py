@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-__all__ = ("WatermarkState", "LatePolicy")
+__all__ = ("LatePolicy", "WatermarkState")
 
 
 class LatePolicy(str, Enum):

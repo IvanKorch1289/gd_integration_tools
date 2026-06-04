@@ -27,8 +27,7 @@ class _FakeAIGateway:
         if request.workflow_id == "fail_me":
             raise RuntimeError("synthetic failure")
         return self.responses.get(
-            request.workflow_id,
-            AIResponse(content="default", model_used="m"),
+            request.workflow_id, AIResponse(content="default", model_used="m")
         )
 
 
@@ -44,9 +43,7 @@ def test_init_validates_non_empty_agents() -> None:
 
 def test_init_validates_key_required() -> None:
     with pytest.raises(ValueError, match="без 'key'"):
-        AgentParallelProcessor(
-            agents=[{"workflow_id": "x", "prompt_inline": "y"}]
-        )
+        AgentParallelProcessor(agents=[{"workflow_id": "x", "prompt_inline": "y"}])
 
 
 def test_init_validates_workflow_id_required() -> None:
@@ -56,8 +53,7 @@ def test_init_validates_workflow_id_required() -> None:
 
 @pytest.mark.asyncio
 async def test_fan_out_collects_results_by_key(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -68,9 +64,7 @@ async def test_fan_out_collects_results_by_key(
             "antifraud": AIResponse(content="low", model_used="m2"),
         }
     )
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
     ex: Exchange[Any] = Exchange(in_message=Message(body={}))
     ex.meta.tenant_id = "acme"
@@ -91,18 +85,13 @@ async def test_fan_out_collects_results_by_key(
 
 @pytest.mark.asyncio
 async def test_continue_on_error_captures_failure(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
-    gw = _FakeAIGateway(
-        {"ok_one": AIResponse(content="ok", model_used="m")}
-    )
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    gw = _FakeAIGateway({"ok_one": AIResponse(content="ok", model_used="m")})
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
     ex: Exchange[Any] = Exchange()
     proc = AgentParallelProcessor(
@@ -121,8 +110,7 @@ async def test_continue_on_error_captures_failure(
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -139,16 +127,13 @@ async def test_feature_flag_off_is_pass_through(
 
 @pytest.mark.asyncio
 async def test_custom_result_property(
-    monkeypatch: pytest.MonkeyPatch,
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     gw = _FakeAIGateway({"ok": AIResponse(content="r", model_used="m")})
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
     ex: Exchange[Any] = Exchange()
     proc = AgentParallelProcessor(
@@ -163,9 +148,7 @@ async def test_custom_result_property(
 
 def test_to_spec_round_trip() -> None:
     proc = AgentParallelProcessor(
-        agents=[
-            {"key": "a", "workflow_id": "x", "prompt_inline": "p"},
-        ],
+        agents=[{"key": "a", "workflow_id": "x", "prompt_inline": "p"}],
         result_property="my_res",
         timeout_s=15.0,
         continue_on_error=False,

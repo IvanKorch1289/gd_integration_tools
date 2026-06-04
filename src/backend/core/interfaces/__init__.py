@@ -213,7 +213,7 @@ class CircuitBreaker:
             return self._half_open_calls <= self._config.half_open_max_calls
         return False
 
-    async def __aenter__(self) -> "CircuitBreaker":
+    async def __aenter__(self) -> CircuitBreaker:
         if not self.allow_request():
             raise CircuitBreakerOpenError(self.name)
         return self

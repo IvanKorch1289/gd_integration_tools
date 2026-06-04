@@ -7,7 +7,8 @@ S39 W3b: ``bulk_insert_mappings`` / ``bulk_update_mappings`` через
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
@@ -31,8 +32,12 @@ def _default_session_provider() -> Callable[[], Any]:
         from src.backend.infrastructure.database.database import (
             get_external_db_registry,
         )
+
         def _p() -> Any:
-            return get_external_db_registry().get_bundle("default").async_session_maker()
+            return (
+                get_external_db_registry().get_bundle("default").async_session_maker()
+            )
+
         _DEFAULT_PROVIDER = _p
     return _DEFAULT_PROVIDER
 
@@ -54,7 +59,9 @@ class BatchProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         if mode not in ("insert", "update", "delete"):
-            raise ValueError(f"mode должен быть insert/update/delete, получено {mode!r}")
+            raise ValueError(
+                f"mode должен быть insert/update/delete, получено {mode!r}"
+            )
         if batch_size <= 0:
             raise ValueError(f"batch_size должен быть > 0, получено {batch_size}")
         super().__init__(name=name or f"batch_{mode}")
@@ -63,25 +70,42 @@ class BatchProcessor(BaseProcessor):
         self._session_provider = session_provider or _default_session_provider()
 
     @handle_processor_error
-    async def process(self, exchange: "Exchange", context: "ExecutionContext") -> None:
-        rows: Any = exchange.properties.get(self._source_field) or exchange.in_message.body
+    async def process(self, exchange: Exchange, context: ExecutionContext) -> None:
+        rows: Any = (
+            exchange.properties.get(self._source_field) or exchange.in_message.body
+        )
         key = f"batch_{self._mode}_result"
         if not isinstance(rows, list) or not rows:
             self._set_result(exchange, key, 0, 0, 0, rows)
             return
-        batches = [rows[i : i + self._batch_size] for i in range(0, len(rows), self._batch_size)]
+        batches = [
+            rows[i : i + self._batch_size]
+            for i in range(0, len(rows), self._batch_size)
+        ]
         total, committed = await self._run_batches(batches)
         self._set_result(exchange, key, total, committed, len(batches), rows)
 
     def _set_result(
-        self, exchange: "Exchange", key: str,
-        processed: int, batches: int, total_batches: int, rows: Any,
+        self,
+        exchange: Exchange,
+        key: str,
+        processed: int,
+        batches: int,
+        total_batches: int,
+        rows: Any,
     ) -> None:
         sf = self._source_field
-        exchange.set_property(key, {
-            "mode": self._mode, "processed": processed, "batches": batches,
-            "total_batches": total_batches, "affected": processed, "source_field": sf,
-        })
+        exchange.set_property(
+            key,
+            {
+                "mode": self._mode,
+                "processed": processed,
+                "batches": batches,
+                "total_batches": total_batches,
+                "affected": processed,
+                "source_field": sf,
+            },
+        )
         exchange.set_out(body=rows, headers=dict(exchange.in_message.headers))
 
     async def _run_batches(self, batches: list[list[dict]]) -> tuple[int, int]:
@@ -117,9 +141,11 @@ class BatchProcessor(BaseProcessor):
             await session.execute(delete(self._model).where(pk_col.in_(ids)))
 
     def to_spec(self) -> dict[str, Any] | None:
-        return {"batch": {
-            "mode": self._mode,
-            "model": getattr(self._model, "__name__", str(self._model)),
-            "batch_size": self._batch_size,
-            "source_field": self._source_field,
-        }}
+        return {
+            "batch": {
+                "mode": self._mode,
+                "model": getattr(self._model, "__name__", str(self._model)),
+                "batch_size": self._batch_size,
+                "source_field": self._source_field,
+            }
+        }

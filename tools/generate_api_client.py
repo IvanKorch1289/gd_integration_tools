@@ -38,7 +38,13 @@ def path_to_method_name(method: str, path: str) -> str:
     clean = re.sub(r"[^a-zA-Z0-9/]", "", clean)
     parts = [p for p in clean.strip("/").split("/") if p]
     name = "_".join(parts)
-    prefix_map = {"GET": "get", "POST": "create", "PUT": "update", "PATCH": "patch", "DELETE": "delete"}
+    prefix_map = {
+        "GET": "get",
+        "POST": "create",
+        "PUT": "update",
+        "PATCH": "patch",
+        "DELETE": "delete",
+    }
     prefix = prefix_map.get(method.upper(), method.lower())
     if name and not name.startswith(prefix):
         name = f"{prefix}_{name}"
@@ -169,8 +175,14 @@ class FieldSpec:
 
 class EndpointSpec:
     __slots__ = (
-        "method", "path", "method_name", "summary",
-        "query_params", "path_params", "body_fields", "response_fields",
+        "method",
+        "path",
+        "method_name",
+        "summary",
+        "query_params",
+        "path_params",
+        "body_fields",
+        "response_fields",
     )
 
     def __init__(self) -> None:
@@ -248,10 +260,7 @@ def _parse_postman_item(item: dict, endpoints: list[EndpointSpec]) -> None:
             if isinstance(resp_json, dict):
                 for k, v in resp_json.items():
                     ep.response_fields.append(
-                        FieldSpec(
-                            name=k,
-                            python_type=_infer_python_type_from_value(v),
-                        )
+                        FieldSpec(name=k, python_type=_infer_python_type_from_value(v))
                     )
                 break  # берём первый пример
         except (json.JSONDecodeError, TypeError):
@@ -314,7 +323,9 @@ def parse_openapi(data: dict) -> list[EndpointSpec]:
             for param in spec.get("parameters", []):
                 fs = FieldSpec(
                     name=param.get("name", "param"),
-                    python_type=_openapi_schema_to_python_type(param.get("schema", {}), components),
+                    python_type=_openapi_schema_to_python_type(
+                        param.get("schema", {}), components
+                    ),
                     required=param.get("required", False),
                     description=param.get("description", ""),
                 )
@@ -333,9 +344,13 @@ def parse_openapi(data: dict) -> list[EndpointSpec]:
             for code, resp in responses.items():
                 if code.startswith("2"):
                     resp_content = resp.get("content", {})
-                    resp_schema = resp_content.get("application/json", {}).get("schema", {})
+                    resp_schema = resp_content.get("application/json", {}).get(
+                        "schema", {}
+                    )
                     if resp_schema:
-                        ep.response_fields = _extract_fields_from_schema(resp_schema, components)
+                        ep.response_fields = _extract_fields_from_schema(
+                            resp_schema, components
+                        )
                     break
 
             endpoints.append(ep)
@@ -434,11 +449,7 @@ def render_schemas(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
 
     # __all__
     all_str = ", ".join(f'"{n}"' for n in all_names)
-    header = [
-        "",
-        f"__all__ = ({all_str},)",
-        "",
-    ]
+    header = ["", f"__all__ = ({all_str},)", ""]
 
     final_lines = lines[:1] + lines[1:6] + header + lines[6:]
     return "\n".join(final_lines) + "\n"
@@ -470,7 +481,7 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
         # Собираем query params
         qp_lines: list[str] = []
         for qp in ep.query_params:
-            qp_lines.append(f'        if {qp.name} is not None:')
+            qp_lines.append(f"        if {qp.name} is not None:")
             qp_lines.append(f'            params["{qp.name}"] = {qp.name}')
 
         # Собираем body
@@ -482,7 +493,7 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
                 if bf.required:
                     json_lines.append(f'        json_body["{bf.name}"] = {bf.name}')
                 else:
-                    json_lines.append(f'        if {bf.name} is not None:')
+                    json_lines.append(f"        if {bf.name} is not None:")
                     json_lines.append(f'            json_body["{bf.name}"] = {bf.name}')
 
         method_code = [
@@ -513,12 +524,14 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
             req_kwargs.append("                params=params or None,")
         if body_fields:
             req_kwargs.append("                json=json_body,")
-        req_kwargs.extend([
-            "                headers=self._auth_headers(),",
-            "                connect_timeout=self._settings.connect_timeout,",
-            "                read_timeout=self._settings.read_timeout,",
-            "                total_timeout=self._settings.connect_timeout + self._settings.read_timeout,",
-        ])
+        req_kwargs.extend(
+            [
+                "                headers=self._auth_headers(),",
+                "                connect_timeout=self._settings.connect_timeout,",
+                "                read_timeout=self._settings.read_timeout,",
+                "                total_timeout=self._settings.connect_timeout + self._settings.read_timeout,",
+            ]
+        )
 
         method_code.append("            return await self._client.make_request(")
         method_code.extend(req_kwargs)
@@ -532,7 +545,8 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
 
     methods_block = "\n\n".join(methods_code)
 
-    return dedent(f'''\
+    return (
+        dedent(f'''\
         """Сервис интеграции с {name} API.
 
         Сгенерирован автоматически из Postman Collection / OpenAPI.
@@ -563,7 +577,10 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
                     return {{"Authorization": f"Bearer {{self._settings.api_key}}"}}
                 return {{}}
 
-    ''') + indent(methods_block, "") + "\n\n\n" + dedent(f'''\
+    ''')
+        + indent(methods_block, "")
+        + "\n\n\n"
+        + dedent(f"""\
         _{name}_service_instance: "API{class_prefix}Service | None" = None
 
 
@@ -572,7 +589,8 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
             if _{name}_service_instance is None:
                 _{name}_service_instance = API{class_prefix}Service()
             return _{name}_service_instance
-    ''')
+    """)
+    )
 
 
 def render_settings(name: str, class_prefix: str) -> str:
@@ -602,7 +620,9 @@ def render_settings(name: str, class_prefix: str) -> str:
     ''')
 
 
-def render_actions_fragment(name: str, class_prefix: str, endpoints: list[EndpointSpec]) -> str:
+def render_actions_fragment(
+    name: str, class_prefix: str, endpoints: list[EndpointSpec]
+) -> str:
     """Генерирует фрагмент для setup.py."""
     lines = [
         f"# --- {name} API actions ---",
@@ -618,11 +638,11 @@ def render_actions_fragment(name: str, class_prefix: str, endpoints: list[Endpoi
             schema_class = f"{class_prefix}{method_camel}Request"
             schema_import = f"  # payload_model: {schema_class}"
 
-        lines.append('action_handler_registry.register(')
+        lines.append("action_handler_registry.register(")
         lines.append(f'    action="{name}.{ep.method_name}",')
-        lines.append(f'    service_getter=get_{name}_service,')
+        lines.append(f"    service_getter=get_{name}_service,")
         lines.append(f'    service_method="{ep.method_name}",{schema_import}')
-        lines.append(')')
+        lines.append(")")
 
     return "\n".join(lines)
 
@@ -646,9 +666,13 @@ def load_input(input_path: Path) -> dict:
     if input_path.suffix in (".yaml", ".yml"):
         try:
             import yaml
+
             return yaml.safe_load(text)
         except ImportError:
-            print("ERROR: pyyaml required for YAML files. Install: pip install pyyaml", file=sys.stderr)
+            print(
+                "ERROR: pyyaml required for YAML files. Install: pip install pyyaml",
+                file=sys.stderr,
+            )
             sys.exit(1)
     return json.loads(text)
 
@@ -672,11 +696,21 @@ def main() -> None:
               python tools/generate_api_client.py --source postman --input api.json --name payments --force
         """),
     )
-    parser.add_argument("--source", choices=["swagger", "postman", "auto"], default="auto",
-                        help="Тип источника (auto — определить автоматически)")
+    parser.add_argument(
+        "--source",
+        choices=["swagger", "postman", "auto"],
+        default="auto",
+        help="Тип источника (auto — определить автоматически)",
+    )
     parser.add_argument("--input", required=True, help="Путь к файлу спецификации")
-    parser.add_argument("--name", required=True, help="Имя сервиса в snake_case (например: external_crm)")
-    parser.add_argument("--force", action="store_true", help="Перезаписать существующие файлы")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Имя сервиса в snake_case (например: external_crm)",
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Перезаписать существующие файлы"
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -698,7 +732,10 @@ def main() -> None:
     if source == "auto":
         source = detect_source(data)
         if source == "unknown":
-            print("ERROR: Cannot detect source type. Use --source explicitly.", file=sys.stderr)
+            print(
+                "ERROR: Cannot detect source type. Use --source explicitly.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         print(f"  Detected: {source}")
 

@@ -35,7 +35,7 @@ class SQLRuleEngineRepository(RuleEngineRepository):
             на каждый запрос; commit на upsert/delete).
     """
 
-    def __init__(self, session: "AsyncSession") -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     @staticmethod
@@ -139,4 +139,4 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         else:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id == tenant_id)
         result = await self._session.execute(stmt)
-        return (result.rowcount or 0) > 0
+        return (result.rowcount or 0) > 0  # type: ignore[attr-defined]

@@ -59,7 +59,7 @@ class LocalProcessScaler:
             return None
         try:
             return int(self.master_pid_file.read_text().strip())
-        except OSError, ValueError:
+        except (OSError, ValueError):
             return None
 
     def scale_up(self, by: int = 1) -> bool:
@@ -128,5 +128,5 @@ class LocalProcessScaler:
                 )
             ]
             return max(len(workers) - 1, self.min_workers)  # -1 для master
-        except Exception as _:  # noqa: BLE001 — psutil может быть недоступен
+        except Exception as _:
             return self.min_workers

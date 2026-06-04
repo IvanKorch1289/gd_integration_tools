@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -111,7 +112,7 @@ class ProcessorPool:
                 )
             else:
                 loop = asyncio.get_event_loop()
-                await asyncio.wait_for(
+                await asyncio.wait_for(  # type: ignore[unused-coroutine]
                     loop.run_in_executor(
                         self._get_thread_pool(),
                         lambda: processor.process(exchange, context),
@@ -126,7 +127,7 @@ class ProcessorPool:
                 "duration_ms": duration_ms,
                 "status": "ok",
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pooled.error = f"Timeout after {timeout}s"
             return processor, {
                 "processor": processor.name,
@@ -135,7 +136,7 @@ class ProcessorPool:
                 "status": "error",
                 "error": pooled.error,
             }
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             pooled.error = str(exc)
             return processor, {
                 "processor": processor.name,

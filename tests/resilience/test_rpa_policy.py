@@ -23,10 +23,7 @@ import httpx
 import pytest
 
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
-from src.backend.core.resilience.rpa_policy import (
-    RPACallExhausted,
-    RPACallPolicy,
-)
+from src.backend.core.resilience.rpa_policy import RPACallExhausted, RPACallPolicy
 
 pytestmark = pytest.mark.asyncio
 
@@ -60,10 +57,7 @@ def dlq() -> _InMemoryDLQ:
 
 
 def _make_policy(
-    dlq: DLQWriter | None,
-    *,
-    max_attempts: int = 3,
-    backoff: float = 0.001,
+    dlq: DLQWriter | None, *, max_attempts: int = 3, backoff: float = 0.001
 ) -> RPACallPolicy:
     return RPACallPolicy(
         name="test",

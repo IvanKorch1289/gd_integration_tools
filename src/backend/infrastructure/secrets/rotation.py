@@ -61,7 +61,7 @@ class RotationScheduler:
         for name in self._watched:
             try:
                 current = self._fetch_version(name)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning(
                     "rotation.fetch_version_failed name=%s err=%s", name, exc
                 )
@@ -77,7 +77,7 @@ class RotationScheduler:
 
             try:
                 snapshot = self._broker.get_versioned(name, current)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning(
                     "rotation.read_new_version_failed name=%s ver=%d err=%s",
                     name,
@@ -104,7 +104,7 @@ class RotationScheduler:
                     await self.poll_once()
                 except asyncio.CancelledError:
                     raise
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning("rotation.loop_error: %s", exc)
                 await asyncio.sleep(self._interval)
 
@@ -125,7 +125,7 @@ class RotationScheduler:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except (asyncio.CancelledError, Exception):
                 pass
 
     def add_watch(self, name: str, *, current_version: int | None = None) -> None:

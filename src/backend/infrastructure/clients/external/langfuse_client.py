@@ -103,5 +103,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("langfuse_client", LangFuseClient)
-def get_langfuse_client() -> LangFuseClient:
+def get_langfuse_client() -> LangFuseClient:  # type: ignore[empty-body]
     """Возвращает LangFuseClient из app.state или lazy-init fallback."""

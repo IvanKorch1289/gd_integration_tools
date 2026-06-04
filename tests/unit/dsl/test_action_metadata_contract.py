@@ -57,8 +57,7 @@ class TestRegisteredActionMetadata:
     ) -> None:
         # Sanity: должно быть хотя бы несколько десятков action.
         assert len(registered_metadata) >= 50, (
-            f"Зарегистрировано подозрительно мало action: "
-            f"{len(registered_metadata)}"
+            f"Зарегистрировано подозрительно мало action: {len(registered_metadata)}"
         )
 
     def test_action_name_is_non_empty_string(
@@ -143,10 +142,7 @@ class TestSpecToMetadataInference:
         ],
     )
     def test_default_inference_from_method(
-        self,
-        method: str,
-        expected_effect: str,
-        expected_idempotent: bool,
+        self, method: str, expected_effect: str, expected_idempotent: bool
     ) -> None:
         spec = ActionSpec(
             name=f"test.{method.lower()}",

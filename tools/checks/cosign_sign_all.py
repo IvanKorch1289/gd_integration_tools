@@ -397,9 +397,7 @@ def main(argv: list[str] | None = None) -> int:
         help="каталог с SBOM (sbom.cdx.json/xml)",
     )
     parser.add_argument(
-        "--wheels-dir",
-        default=str(_PROJECT_ROOT / "dist"),
-        help="каталог с *.whl",
+        "--wheels-dir", default=str(_PROJECT_ROOT / "dist"), help="каталог с *.whl"
     )
     parser.add_argument(
         "--extensions-dir",

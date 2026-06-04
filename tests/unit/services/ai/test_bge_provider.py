@@ -16,7 +16,9 @@ from src.backend.services.ai.embedding_providers_bge import (
 
 
 @pytest.mark.asyncio
-async def test_bge_raises_when_flagembedding_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_bge_raises_when_flagembedding_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setitem(sys.modules, "FlagEmbedding", None)
     provider = BGEM3EmbeddingProvider()
     with pytest.raises(BGEUnavailable):
@@ -28,8 +30,7 @@ async def test_bge_embed_uses_mocked_model(monkeypatch: pytest.MonkeyPatch) -> N
     fake_model = MagicMock()
     fake_model.encode.return_value = {"dense_vecs": [[0.1] * 1024]}
     fake_module = SimpleNamespace(
-        BGEM3FlagModel=MagicMock(return_value=fake_model),
-        FlagReranker=MagicMock(),
+        BGEM3FlagModel=MagicMock(return_value=fake_model), FlagReranker=MagicMock()
     )
     monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_module)
     provider = BGEM3EmbeddingProvider()
@@ -42,8 +43,7 @@ async def test_bge_reranker_sorts_desc(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_model = MagicMock()
     fake_model.compute_score.return_value = [0.2, 0.9, 0.5]
     fake_module = SimpleNamespace(
-        BGEM3FlagModel=MagicMock(),
-        FlagReranker=MagicMock(return_value=fake_model),
+        BGEM3FlagModel=MagicMock(), FlagReranker=MagicMock(return_value=fake_model)
     )
     monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_module)
     rr = BGERerankerV2M3()

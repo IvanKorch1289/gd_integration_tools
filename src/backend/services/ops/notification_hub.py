@@ -44,7 +44,7 @@ from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
 
-__all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
+__all__ = ("Channel", "NotificationHub", "NotificationRequest", "get_notification_hub")
 
 logger = logging.getLogger(__name__)
 

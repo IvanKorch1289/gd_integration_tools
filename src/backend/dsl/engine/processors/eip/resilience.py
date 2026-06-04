@@ -12,9 +12,9 @@ _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
 __all__ = (
+    "CircuitBreakerProcessor",
     "DeadLetterProcessor",
     "FallbackChainProcessor",
-    "CircuitBreakerProcessor",
     "TimeoutProcessor",
 )
 
@@ -249,7 +249,7 @@ class TimeoutProcessor(BaseProcessor):
                 run_sub_processors(self._processors, exchange, context),
                 timeout=self._seconds,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             exchange.set_property("timeout_exceeded", True)
             exchange.set_property("timeout_limit_seconds", self._seconds)
 

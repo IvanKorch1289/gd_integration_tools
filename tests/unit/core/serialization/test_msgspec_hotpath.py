@@ -65,9 +65,7 @@ def test_encode_ws_frame_round_trip() -> None:
 
 
 def test_encode_audit_event_minimal() -> None:
-    data = json.loads(
-        encode_audit_event(action="x.created", actor="system")
-    )
+    data = json.loads(encode_audit_event(action="x.created", actor="system"))
     assert data == {"action": "x.created", "actor": "system"}
 
 

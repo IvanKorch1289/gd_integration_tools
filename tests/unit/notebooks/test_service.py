@@ -74,9 +74,7 @@ async def test_get_unknown_returns_none(service: NotebookService) -> None:
     assert await service.get("does-not-exist") is None
 
 
-async def test_update_content_appends_new_version(
-    service: NotebookService,
-) -> None:
+async def test_update_content_appends_new_version(service: NotebookService) -> None:
     """``update_content`` создаёт новую версию и инкрементирует latest_version."""
     nb = await service.create(title="t", content="v1", created_by="u")
     updated = await service.update_content(
@@ -94,15 +92,11 @@ async def test_update_content_for_unknown_returns_none(
     service: NotebookService,
 ) -> None:
     """Обновление несуществующего notebook'а → None."""
-    result = await service.update_content(
-        notebook_id="nope", content="x", user="u"
-    )
+    result = await service.update_content(notebook_id="nope", content="x", user="u")
     assert result is None
 
 
-async def test_get_version_returns_specific_version(
-    service: NotebookService,
-) -> None:
+async def test_get_version_returns_specific_version(service: NotebookService) -> None:
     """``get_version`` возвращает конкретную версию по номеру."""
     nb = await service.create(title="t", content="v1", created_by="u")
     await service.update_content(notebook_id=nb.id, content="v2", user="u")
@@ -154,20 +148,15 @@ async def test_restore_version_creates_new_version_with_old_content(
     assert "restore" in (restored.versions[-1].summary or "").lower()
 
 
-async def test_restore_unknown_version_returns_none(
-    service: NotebookService,
-) -> None:
+async def test_restore_unknown_version_returns_none(service: NotebookService) -> None:
     """Восстановление несуществующей версии → None."""
     nb = await service.create(title="t", content="v1", created_by="u")
     assert (
-        await service.restore_version(notebook_id=nb.id, version=99, user="u")
-        is None
+        await service.restore_version(notebook_id=nb.id, version=99, user="u") is None
     )
 
 
-async def test_list_all_returns_existing_notebooks(
-    service: NotebookService,
-) -> None:
+async def test_list_all_returns_existing_notebooks(service: NotebookService) -> None:
     """``list_all`` возвращает все notebook'и без фильтров."""
     a = await service.create(title="a", content="", created_by="u")
     b = await service.create(title="b", content="", created_by="u")
@@ -189,9 +178,7 @@ async def test_list_all_filters_by_tag(service: NotebookService) -> None:
     assert "b" not in titles
 
 
-async def test_list_all_excludes_deleted_by_default(
-    service: NotebookService,
-) -> None:
+async def test_list_all_excludes_deleted_by_default(service: NotebookService) -> None:
     """По умолчанию soft-deleted записи не возвращаются."""
     a = await service.create(title="a", content="", created_by="u")
     b = await service.create(title="b", content="", created_by="u")
@@ -251,9 +238,7 @@ async def test_update_content_after_delete_returns_none(
     """Обновление soft-deleted notebook'а → None."""
     nb = await service.create(title="t", content="v1", created_by="u")
     await service.delete(nb.id)
-    result = await service.update_content(
-        notebook_id=nb.id, content="v2", user="u"
-    )
+    result = await service.update_content(notebook_id=nb.id, content="v2", user="u")
     assert result is None
 
 
@@ -263,15 +248,11 @@ async def test_restore_version_after_delete_returns_none(
     """Восстановление версии у soft-deleted notebook'а → None."""
     nb = await service.create(title="t", content="v1", created_by="u")
     await service.delete(nb.id)
-    result = await service.restore_version(
-        notebook_id=nb.id, version=1, user="u"
-    )
+    result = await service.restore_version(notebook_id=nb.id, version=1, user="u")
     assert result is None
 
 
-async def test_ensure_indexes_is_noop_for_in_memory(
-    service: NotebookService,
-) -> None:
+async def test_ensure_indexes_is_noop_for_in_memory(service: NotebookService) -> None:
     """``ensure_indexes`` для in-memory backend'а — no-op (не падает)."""
     # просто проверяем, что вызов не бросает
     await service.ensure_indexes()

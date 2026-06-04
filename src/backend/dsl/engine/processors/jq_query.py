@@ -75,7 +75,7 @@ class JqProcessor(BaseProcessor):
         self._target = to
         self._mode = mode
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -90,16 +90,14 @@ class JqProcessor(BaseProcessor):
             return
         exchange.set_property(self._target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_jq:
                 exchange.set_property("jq_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         try:
@@ -113,7 +111,7 @@ class JqProcessor(BaseProcessor):
             results = jmespath.search(self._expr, body)
             if not isinstance(results, list):
                 results = [results] if results is not None else []
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"jq evaluation error: {exc}")
             return
 

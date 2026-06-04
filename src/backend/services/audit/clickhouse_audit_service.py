@@ -40,7 +40,7 @@ import logging
 import threading
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
@@ -83,7 +83,7 @@ class AuditEvent:
         """
         return {
             "event_id": self.event_id,
-            "timestamp": self.timestamp.astimezone(timezone.utc),
+            "timestamp": self.timestamp.astimezone(UTC),
             "event_type": self.event_type,
             "tenant_id": self.tenant_id,
             "user_id": self.user_id,
@@ -108,7 +108,7 @@ def _make_default_timestamp() -> datetime:
     Returns:
         Текущая временная метка в timezone-aware формате UTC.
     """
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def make_audit_event(
@@ -303,7 +303,7 @@ def get_audit_service() -> ClickHouseAuditService:
     Returns:
         Единственный экземпляр :class:`ClickHouseAuditService`.
     """
-    global _service_instance  # noqa: PLW0603
+    global _service_instance
     if _service_instance is not None:
         return _service_instance
     with _service_lock:

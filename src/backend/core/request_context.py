@@ -79,7 +79,7 @@ class RequestContext:
     client_id: str | None = None
 
     @classmethod
-    def current(cls) -> "RequestContext | None":
+    def current(cls) -> RequestContext | None:
         """Возвращает текущий RequestContext или ``None``."""
         return REQUEST_CONTEXT_VAR.get(None)
 

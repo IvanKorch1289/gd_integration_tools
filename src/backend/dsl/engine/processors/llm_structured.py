@@ -132,7 +132,7 @@ class LLMStructuredProcessor(BaseProcessor):
         self,
         *,
         model: str,
-        output_schema: "type[BaseModel] | str | None",
+        output_schema: type[BaseModel] | str | None,
         prompt: str,
         retry: int = _DEFAULT_RETRY,
         temperature: float = _DEFAULT_TEMPERATURE,
@@ -165,7 +165,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
     # ── Schema resolution ─────────────────────────────────────────────
 
-    def _resolve_schema(self) -> "type[BaseModel]":
+    def _resolve_schema(self) -> type[BaseModel]:
         """Резолвит ``output_schema`` в Pydantic-класс.
 
         Поддерживается:
@@ -215,7 +215,7 @@ class LLMStructuredProcessor(BaseProcessor):
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             entry = None
 
         if entry is not None:
@@ -240,7 +240,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
     # ── Prompt resolution ─────────────────────────────────────────────
 
-    def _resolve_prompt(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_prompt(self, exchange: Exchange[Any]) -> str:
         """Подставляет ``${body.x}`` / ``${properties.y}`` из exchange.
 
         Args:
@@ -258,7 +258,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
         pattern = re.compile(r"\$\{([^}]+)\}")
 
-        def _replace(match: "re.Match[str]") -> str:
+        def _replace(match: re.Match[str]) -> str:
             path = match.group(1).strip()
             if path == "body":
                 return str(body)
@@ -281,9 +281,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
     # ── Main process ──────────────────────────────────────────────────
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет LLM-вызов и записывает результат в exchange.
 
         Алгоритм:
@@ -343,7 +341,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
         try:
             result, raw_response = await self._call_with_completion(_call)
-        except Exception as exc:  # noqa: BLE001 — обёртка: pydantic.ValidationError + transport
+        except Exception as exc:
             _logger.warning(
                 "llm_structured failed: model=%s provider=%s error=%s",
                 self._model,
@@ -413,7 +411,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None
-        except ImportError, AttributeError, TypeError, ValueError:
+        except (ImportError, AttributeError, TypeError, ValueError):
             return None
 
     @staticmethod
@@ -431,10 +429,10 @@ class LLMStructuredProcessor(BaseProcessor):
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
-    def _write_result(self, exchange: "Exchange[Any]", result: Any) -> None:
+    def _write_result(self, exchange: Exchange[Any], result: Any) -> None:
         """Записывает результат в путь ``self._to``.
 
         Поддерживается:

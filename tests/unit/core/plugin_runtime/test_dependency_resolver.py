@@ -24,9 +24,7 @@ from src.backend.services.plugins.manifest_v11 import (
 
 
 def _make_manifest(
-    name: str,
-    *,
-    requires: dict[str, str] | None = None,
+    name: str, *, requires: dict[str, str] | None = None
 ) -> PluginManifestV11:
     """Утилита: минимальный PluginManifestV11 с заданными зависимостями.
 
@@ -40,7 +38,7 @@ def _make_manifest(
         requires_core=">=0.2,<1.0",
         entry_class=f"extensions.{name}.plugin.Plugin",
         compatibility=PluginCompatibility(
-            requires_plugins={dep: ">=0.0" for dep in (requires or {})},
+            requires_plugins={dep: ">=0.0" for dep in (requires or {})}
         ),
     )
 
@@ -64,9 +62,7 @@ def test_diamond_dependency_places_root_first_and_tail_last() -> None:
         "alpha": _make_manifest("alpha"),
         "beta": _make_manifest("beta", requires={"alpha": ">=0.0"}),
         "gamma": _make_manifest("gamma", requires={"alpha": ">=0.0"}),
-        "delta": _make_manifest(
-            "delta", requires={"beta": ">=0.0", "gamma": ">=0.0"}
-        ),
+        "delta": _make_manifest("delta", requires={"beta": ">=0.0", "gamma": ">=0.0"}),
     }
     ordered = PluginGraphResolver().resolve(manifests)
     names = [m.name for m in ordered]
@@ -108,8 +104,6 @@ def test_simple_cycle_raises_plugin_dependency_cycle_error() -> None:
 
 def test_missing_dependency_raises_keyerror() -> None:
     """A → ghost, ghost отсутствует во входе → ``KeyError``."""
-    manifests = {
-        "alpha": _make_manifest("alpha", requires={"ghost": ">=0.0"}),
-    }
+    manifests = {"alpha": _make_manifest("alpha", requires={"ghost": ">=0.0"})}
     with pytest.raises(KeyError, match="ghost"):
         PluginGraphResolver().resolve(manifests)

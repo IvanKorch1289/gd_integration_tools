@@ -133,7 +133,7 @@ def _noop_llm_judge_metrics(
     *, model: str, hallucination: float, relevance: float, toxicity: float
 ) -> None:
     """Заглушка, если backend метрик недоступен."""
-    return None
+    return
 
 
 # ─────────────── Model enum registry ───────────────

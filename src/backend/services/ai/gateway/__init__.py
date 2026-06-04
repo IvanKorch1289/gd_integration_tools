@@ -14,9 +14,9 @@ from src.backend.services.ai.gateway.exceptions import (
 )
 
 __all__ = (
-    "LiteLLMGateway",
-    "get_litellm_gateway",
     "GatewayError",
     "GatewayRateLimited",
     "GatewayUnavailable",
+    "LiteLLMGateway",
+    "get_litellm_gateway",
 )

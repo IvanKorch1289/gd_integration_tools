@@ -51,7 +51,7 @@ class CodeSandbox(Protocol):
         *,
         timeout_s: float = 30.0,
         files: Mapping[str, bytes] | None = None,
-        workspace: "WorkspaceHandle | None" = None,
+        workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
         """Выполнить ``code`` в изолированной среде.
 
@@ -87,7 +87,7 @@ class NoOpSandbox:
         *,
         timeout_s: float = 30.0,
         files: Mapping[str, bytes] | None = None,
-        workspace: "WorkspaceHandle | None" = None,
+        workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
         raise RuntimeError(
             "CodeSandbox не сконфигурирован: установите e2b-code-interpreter "

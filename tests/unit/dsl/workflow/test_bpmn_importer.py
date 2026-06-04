@@ -17,10 +17,7 @@ from src.backend.dsl.workflow.spec import ActivityDeclaration, WorkflowDeclarati
 
 
 _CREDIT_SCORING_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "docs"
-    / "bpmn"
-    / "credit_scoring_sample.bpmn"
+    Path(__file__).resolve().parents[4] / "docs" / "bpmn" / "credit_scoring_sample.bpmn"
 )
 
 
@@ -68,7 +65,9 @@ def test_xor_gateway_maps_to_xor_kind() -> None:
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
-        s for s in decl.steps if s.name.startswith("__gateway__")  # type: ignore[union-attr]
+        s
+        for s in decl.steps
+        if s.name.startswith("__gateway__")  # type: ignore[union-attr]
     )
     assert isinstance(gateway_step, ActivityDeclaration)
     assert gateway_step.args["gateway"]["kind"] == "xor"
@@ -90,7 +89,9 @@ def test_parallel_gateway_maps_to_and() -> None:
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
-        s for s in decl.steps if s.name.startswith("__gateway__")  # type: ignore[union-attr]
+        s
+        for s in decl.steps
+        if s.name.startswith("__gateway__")  # type: ignore[union-attr]
     )
     assert gateway_step.args["gateway"]["kind"] == "and"  # type: ignore[union-attr]
 
@@ -110,7 +111,9 @@ def test_inclusive_gateway_maps_to_or() -> None:
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
-        s for s in decl.steps if s.name.startswith("__gateway__")  # type: ignore[union-attr]
+        s
+        for s in decl.steps
+        if s.name.startswith("__gateway__")  # type: ignore[union-attr]
     )
     assert gateway_step.args["gateway"]["kind"] == "or"  # type: ignore[union-attr]
 
@@ -144,8 +147,7 @@ def test_import_disabled_when_feature_off() -> None:
     )
     with (
         patch(
-            "src.backend.core.config.features.feature_flags.workflow_bpmn_import",
-            False,
+            "src.backend.core.config.features.feature_flags.workflow_bpmn_import", False
         ),
         pytest.raises(BpmnImportDisabledError),
     ):

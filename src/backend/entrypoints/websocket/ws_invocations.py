@@ -141,13 +141,13 @@ async def websocket_invocations(websocket: WebSocket) -> None:
 
     except WebSocketDisconnect:
         logger.debug("WS /ws/invocations disconnected")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.exception("WS /ws/invocations failed: %s", exc)
     finally:
         for invocation_id in bound:
             try:
                 await ws_channel.unregister(invocation_id)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.debug("unregister failed for %s", invocation_id, exc_info=True)
 
 
@@ -226,7 +226,7 @@ async def _stream_llm_to_ws(
         )
     except WebSocketDisconnect:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("llm.stream over WS failed: %s", exc)
         await websocket.send_json(
             {"type": "error", "invocation_id": invocation_id, "error": str(exc)}

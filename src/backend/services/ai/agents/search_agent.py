@@ -42,7 +42,7 @@ class SearchAgent:
         if _PLUGIN_FILE.is_file():
             try:
                 self._registry.from_plugin_file(_PLUGIN_FILE)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("SearchAgent: tools load failed: %s", exc)
         self._loaded = True
 
@@ -97,11 +97,11 @@ class SearchAgent:
         try:
             result = await target.callable(**kwargs)
             return {"success": True, "tool": target.id, "result": result}
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("SearchAgent: tool %s failed: %s", target.id, exc)
             return {"success": False, "tool": target.id, "error": str(exc)}
 
 
 @app_state_singleton("search_agent", factory=SearchAgent)
-def get_search_agent() -> SearchAgent:
+def get_search_agent() -> SearchAgent:  # type: ignore[empty-body]
     """Singleton SearchAgent (через app.state)."""

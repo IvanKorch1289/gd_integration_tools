@@ -23,10 +23,7 @@ def _toml_old() -> dict:
             {"name": "db.read", "scope": "credit_db"},
             {"name": "secrets.read", "scope": "vault://credit/*"},
         ],
-        "provides": {
-            "actions": ["credit.score"],
-            "processors": ["bki_normalizer"],
-        },
+        "provides": {"actions": ["credit.score"], "processors": ["bki_normalizer"]},
         "compatibility": {"requires_plugins": {"shared_models": ">=1.0,<2.0"}},
     }
 
@@ -42,7 +39,7 @@ def _toml_new() -> dict:
             {"name": "ai.llm.openai"},  # added
         ],
         "provides": {
-            "actions": ["credit.score", "credit.assess"],  # +credit.assess
+            "actions": ["credit.score", "credit.assess"]  # +credit.assess
             # processors удалены полностью → breaking
         },
         "compatibility": {

@@ -14,14 +14,14 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
+    "CompressProcessor",
+    "DeadlineProcessor",
+    "DecompressProcessor",
     "GeoIpProcessor",
     "JwtSignProcessor",
     "JwtVerifyProcessor",
-    "CompressProcessor",
-    "DecompressProcessor",
     "WebhookSignProcessor",
     "WebhookSignVerifyProcessor",
-    "DeadlineProcessor",
 )
 
 logger = logging.getLogger("dsl.enrichment")

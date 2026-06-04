@@ -38,7 +38,7 @@ class TemporalActivityWrapper:
     (см. :func:`wrap_as_temporal_activity`).
     """
 
-    __slots__ = ("_callable", "_name", "_is_async")
+    __slots__ = ("_callable", "_is_async", "_name")
 
     def __init__(self, fn: Callable[..., Any], name: str | None = None) -> None:
         """Инициализирует обёртку.
@@ -49,7 +49,7 @@ class TemporalActivityWrapper:
                 по умолчанию — ``fn.__qualname__``.
         """
         self._callable = fn
-        self._name = name or getattr(fn, "__qualname__", repr(fn))
+        self._name = str(name or getattr(fn, "__qualname__", repr(fn)))
         self._is_async = inspect.iscoroutinefunction(fn)
 
     @property

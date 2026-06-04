@@ -47,11 +47,7 @@ class FakeWebSocket:
     """Минимальный stub под Starlette WebSocket для unit-тестов."""
 
     def __init__(
-        self,
-        incoming: list[Any],
-        *,
-        invoker: Any,
-        registry: ReplyChannelRegistry,
+        self, incoming: list[Any], *, invoker: Any, registry: ReplyChannelRegistry
     ) -> None:
         self._incoming = list(incoming)
         self.sent: list[dict[str, Any]] = []
@@ -84,9 +80,7 @@ def _registry_with_ws() -> tuple[ReplyChannelRegistry, WsReplyChannel]:
     return registry, ws_channel
 
 
-def _make_invoker(
-    response: InvocationResponse | None = None,
-) -> MagicMock:
+def _make_invoker(response: InvocationResponse | None = None) -> MagicMock:
     invoker = MagicMock()
     invoker.invoke = AsyncMock(return_value=response) if response else AsyncMock()
     return invoker
@@ -259,4 +253,3 @@ class TestWebsocketInvocations:
             )
         )
         assert len(ws.sent) == before
-

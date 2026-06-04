@@ -160,9 +160,7 @@ class TestJsonPathProcessor:
     async def test_extract_to_property(self) -> None:
         body = {"user": {"email": "x@y.io"}}
         ex = _exchange(body=body)
-        proc = JsonPathProcessor(
-            "$.user.email", single=True, to_property="user_email"
-        )
+        proc = JsonPathProcessor("$.user.email", single=True, to_property="user_email")
         await proc.process(ex, _ctx())
         assert ex.properties["user_email"] == "x@y.io"
         assert ex.out_message is None
@@ -242,18 +240,14 @@ class TestUnitConversionProcessor:
 
     async def test_scalar_body_with_from_unit(self) -> None:
         ex = _exchange(body=10.0)
-        proc = UnitConversionProcessor(
-            from_unit="km", to_unit="mile", precision=4
-        )
+        proc = UnitConversionProcessor(from_unit="km", to_unit="mile", precision=4)
         await proc.process(ex, _ctx())
         assert ex.out_message is not None
         assert ex.out_message.body == pytest.approx(6.2137, abs=0.001)
 
     async def test_list_body(self) -> None:
         ex = _exchange(body=[1, 2, 3])
-        proc = UnitConversionProcessor(
-            from_unit="meter", to_unit="centimeter"
-        )
+        proc = UnitConversionProcessor(from_unit="meter", to_unit="centimeter")
         await proc.process(ex, _ctx())
         assert ex.out_message is not None
         assert ex.out_message.body == [100.0, 200.0, 300.0]
@@ -387,14 +381,8 @@ class TestIcsCalendarProcessor:
             IcsCalendarProcessor(mode="weird")
 
     def test_to_spec(self) -> None:
-        proc = IcsCalendarProcessor(
-            mode="build", only_first=True, prodid="-//demo//RU"
-        )
+        proc = IcsCalendarProcessor(mode="build", only_first=True, prodid="-//demo//RU")
         spec = proc.to_spec()
         assert spec == {
-            "parse_ics": {
-                "mode": "build",
-                "only_first": True,
-                "prodid": "-//demo//RU",
-            }
+            "parse_ics": {"mode": "build", "only_first": True, "prodid": "-//demo//RU"}
         }

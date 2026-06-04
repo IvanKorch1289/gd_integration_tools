@@ -99,7 +99,7 @@ class MLPredictProcessor(BaseProcessor):
             # Кэшируем
             object.__setattr__(self, "_cached_artifact_uri", result)
             return result
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("LocalFSModelRegistry lookup failed: %s", exc)
             object.__setattr__(self, "_cached_artifact_uri", None)
         return None

@@ -53,7 +53,7 @@ EXIT_ERROR = 2
 def _parse_args() -> argparse.Namespace:
     """Разбирает argv в Namespace."""
     parser = argparse.ArgumentParser(
-        description="Performance gate — запускает locust-сценарий и валидирует пороги.",
+        description="Performance gate — запускает locust-сценарий и валидирует пороги."
     )
     parser.add_argument(
         "--scenario",
@@ -68,11 +68,19 @@ def _parse_args() -> argparse.Namespace:
         "--spawn-rate", type=int, default=10, help="Users spawn rate per second."
     )
     parser.add_argument(
-        "--duration", type=str, default="60s", help="Длительность теста (locust format)."
+        "--duration",
+        type=str,
+        default="60s",
+        help="Длительность теста (locust format).",
     )
-    parser.add_argument("--host", type=str, default="http://localhost:8000", help="Target host.")
     parser.add_argument(
-        "--rps-floor", type=float, default=1000.0, help="Минимум RPS (failure < threshold)."
+        "--host", type=str, default="http://localhost:8000", help="Target host."
+    )
+    parser.add_argument(
+        "--rps-floor",
+        type=float,
+        default=1000.0,
+        help="Минимум RPS (failure < threshold).",
     )
     parser.add_argument(
         "--p95-max-ms", type=float, default=200.0, help="Максимум p95-latency, мс."

@@ -246,5 +246,5 @@ class LiteLLMGateway:
 
 
 @app_state_singleton("litellm_gateway", factory=LiteLLMGateway)
-def get_litellm_gateway() -> LiteLLMGateway:
+def get_litellm_gateway() -> LiteLLMGateway:  # type: ignore
     """Возвращает singleton :class:`LiteLLMGateway` из ``app.state``."""

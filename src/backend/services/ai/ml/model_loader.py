@@ -27,7 +27,7 @@ __all__ = ("MLModelLoader",)
 logger = logging.getLogger(__name__)
 
 # Module-level singleton instance for process lifetime
-_loader_instance: "MLModelLoaderProtocol | None" = None
+_loader_instance: MLModelLoaderProtocol | None = None
 
 
 def get_ml_model_loader() -> MLModelLoaderProtocol:
@@ -161,7 +161,7 @@ class MLModelLoader:
         # (V22 RLS, AI_WORKSPACE=/ai-models/) is still respected upstream.
         try:
             return torch.load(path, map_location="cpu", weights_only=True)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise RuntimeError(
                 f"torch.load(weights_only=True) failed for {path}. "
                 "Model may contain pickled code — refusing to load with "
@@ -207,7 +207,7 @@ class MLModelLoader:
         for cls in (CatBoostClassifier, CatBoostRegressor):
             try:
                 return cls().load_model(str(path))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("CatBoost load attempt failed for %s: %s", path, exc)
                 continue
         raise RuntimeError(f"Cannot load {path} as CatBoost model")

@@ -28,14 +28,14 @@ from src.backend.infrastructure.antivirus.service import (
 )
 
 __all__ = (
-    "ClamAVUnixBackend",
-    "ClamAVTcpBackend",
-    "HttpAntivirusBackend",
     "AntivirusHashCache",
-    "create_antivirus_backend",
     "AntivirusService",
-    "VirusDetectedError",
+    "ClamAVTcpBackend",
+    "ClamAVUnixBackend",
+    "HttpAntivirusBackend",
     "UnknownAntivirusVerdictError",
+    "VirusDetectedError",
+    "create_antivirus_backend",
     "get_antivirus_service",
     "get_antivirus_service_dependency",
 )

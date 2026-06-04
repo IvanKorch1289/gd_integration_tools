@@ -83,7 +83,7 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
             connection.exec_driver_sql(
                 "SELECT set_config('app.tenant_id', %s, true)", (str(tenant_id),)
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             db_logger.warning(
                 "RLS SET LOCAL app.tenant_id не применён: %s", exc, exc_info=True
             )

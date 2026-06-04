@@ -47,11 +47,17 @@ class TestInfrastructureDSLInMRO:
     def test_method_count(self) -> None:
         methods = [m for m in dir(InfrastructureDSL) if not m.startswith("_")]
         expected = [
-            "redis_set", "redis_get", "redis_delete",
-            "clickhouse_insert", "clickhouse_query",
-            "es_index", "es_search",
-            "mongo_insert", "mongo_find",
-            "s3_put", "sql_exec",
+            "redis_set",
+            "redis_get",
+            "redis_delete",
+            "clickhouse_insert",
+            "clickhouse_query",
+            "es_index",
+            "es_search",
+            "mongo_insert",
+            "mongo_find",
+            "s3_put",
+            "sql_exec",
         ]
         for m in expected:
             assert m in methods, f"Missing method: {m}"
@@ -66,13 +72,13 @@ class TestRedisMethods:
     def test_redis_set_with_ttl(self, builder: RouteBuilder) -> None:
         builder.redis_set("k", "v", ttl_seconds=60)
         proc = builder._processors[-1]
-        assert proc.params['ttl_seconds'] == 60
+        assert proc.params["ttl_seconds"] == 60
 
     def test_redis_get_with_default(self, builder: RouteBuilder) -> None:
         builder.redis_get("missing", default="fallback")
         proc = builder._processors[-1]
         assert isinstance(proc, RedisGetProcessor)
-        assert proc.params['default'] == "fallback"
+        assert proc.params["default"] == "fallback"
 
     def test_redis_delete(self, builder: RouteBuilder) -> None:
         builder.redis_delete("k")
@@ -92,7 +98,7 @@ class TestClickHouseMethods:
         builder.clickhouse_query("SELECT 1", to_property="result")
         proc = builder._processors[-1]
         assert isinstance(proc, ClickHouseQueryProcessor)
-        assert proc.params['to_property'] == "result"
+        assert proc.params["to_property"] == "result"
 
 
 class TestElasticsearchMethods:
@@ -103,13 +109,13 @@ class TestElasticsearchMethods:
     def test_es_index_auto_id(self, builder: RouteBuilder) -> None:
         builder.es_index("idx", doc_id_from=None)
         proc = builder._processors[-1]
-        assert proc.params['doc_id_from'] is None
+        assert proc.params["doc_id_from"] is None
 
     def test_es_search(self, builder: RouteBuilder) -> None:
         builder.es_search("idx", {"query": {"match_all": {}}}, size=20)
         proc = builder._processors[-1]
         assert isinstance(proc, ElasticsearchSearchProcessor)
-        assert proc.params['size'] == 20
+        assert proc.params["size"] == 20
 
 
 class TestMongoMethods:
@@ -121,7 +127,7 @@ class TestMongoMethods:
         builder.mongo_find("users", {"active": True}, to_property="docs")
         proc = builder._processors[-1]
         assert isinstance(proc, MongoFindProcessor)
-        assert proc.params['to_property'] == "docs"
+        assert proc.params["to_property"] == "docs"
 
 
 class TestS3AndSQL:
@@ -133,15 +139,14 @@ class TestS3AndSQL:
         builder.sql_exec("DELETE FROM x", params={"id": 1})
         proc = builder._processors[-1]
         assert isinstance(proc, SqlExecProcessor)
-        assert proc.params['params'] == {"id": 1}
+        assert proc.params["params"] == {"id": 1}
 
 
 class TestChainingAndIntegration:
     def test_all_chainable(self, builder: RouteBuilder) -> None:
         """Every method returns self (RouteBuilder)."""
         result = (
-            builder
-            .redis_set("k", "v")
+            builder.redis_set("k", "v")
             .redis_get("k")
             .redis_delete("k")
             .clickhouse_insert("t")

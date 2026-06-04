@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from asyncio import Lock
+from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
-from typing import Any, AsyncGenerator, Callable, Coroutine, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 try:
     from botocore.exceptions import (  # type: ignore[import-not-found]
-        ClientError as BotoClientError,
+        ClientError as BotoClientError,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
     )
 except ImportError:  # botocore — опциональная зависимость dev_light
 
@@ -30,7 +31,7 @@ from functools import lru_cache
 from src.backend.core.config.settings import FileStorageSettings, settings
 from src.backend.core.errors import ServiceError
 
-__all__ = ("S3Client", "s3_client", "get_s3_client")
+__all__ = ("S3Client", "get_s3_client", "s3_client")
 
 
 P = ParamSpec("P")
@@ -63,7 +64,7 @@ class BaseS3Client(ABC):
 
     @abstractmethod
     @asynccontextmanager
-    async def client_context(self) -> AsyncGenerator[Any, None]:
+    async def client_context(self) -> AsyncGenerator[Any]:
         """Контекстный менеджер для операций с клиентом."""
         pass
 
@@ -147,7 +148,7 @@ class S3Client(BaseS3Client):
         # без extras `[sources-cdc,...]` модуль отсутствует — graceful
         # skip без crash (тесты unrelated до S3 продолжают собираться).
         try:
-            from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
+            from aiobotocore.config import AioConfig
             from aiobotocore.session import get_session
         except ImportError:
             self._session = None
@@ -246,7 +247,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except BotoClientError, OSError, TimeoutError:
+        except (BotoClientError, OSError, TimeoutError):
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -274,14 +275,14 @@ class S3Client(BaseS3Client):
                 raise ConnectionError("Не удалось подключиться к S3") from exc
 
     @asynccontextmanager
-    async def client_context(self) -> AsyncGenerator[Any, None]:
+    async def client_context(self) -> AsyncGenerator[Any]:
         """Контекстный менеджер для работы с клиентом S3 с автоматическим переподключением."""
         try:
             if not self.is_connected:
                 await self.connect()
             yield self._client
         except Exception as exc:
-            self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка соединения: {exc!s}", exc_info=True)
             await self.close()
             raise BotoClientError(
                 error_response={"Error": {"Message": "Ошибка API S3"}},
@@ -322,7 +323,7 @@ class S3Client(BaseS3Client):
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при загрузке объекта: {str(exc)}", exc_info=True
+                    f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -434,7 +435,7 @@ class S3Client(BaseS3Client):
                         await client.abort_multipart_upload(
                             Bucket=bucket, Key=key, UploadId=upload_id
                         )
-                    except Exception as _:  # noqa: BLE001
+                    except Exception as _:
                         self.logger.exception(
                             "s3.multipart_abort_failed key=%s upload_id=%s",
                             key,
@@ -454,7 +455,7 @@ class S3Client(BaseS3Client):
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при копировании объекта: {str(exc)}", exc_info=True
+                    f"Ошибка при копировании объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -471,7 +472,7 @@ class S3Client(BaseS3Client):
                 return url
             except Exception as exc:
                 self.logger.error(
-                    f"Ошибка генерации предварительно подписанного URL: {str(exc)}",
+                    f"Ошибка генерации предварительно подписанного URL: {exc!s}",
                     exc_info=True,
                 )
                 raise BotoClientError(
@@ -498,7 +499,7 @@ class S3Client(BaseS3Client):
                 }
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при массовом удалении: {str(exc)}", exc_info=True
+                    f"Ошибка при массовом удалении: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -514,7 +515,7 @@ class S3Client(BaseS3Client):
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при удалении объекта: {str(exc)}", exc_info=True
+                    f"Ошибка при удалении объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -552,7 +553,7 @@ class S3Client(BaseS3Client):
                 return objects
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при получении списка объектов: {str(exc)}", exc_info=True
+                    f"Ошибка при получении списка объектов: {exc!s}", exc_info=True
                 )
                 return []
 

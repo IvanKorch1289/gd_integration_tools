@@ -19,13 +19,13 @@ billing и Grafana dashboards.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-__all__ = ("AIInvocationEventType", "AIInvocationEvent", "AIInvocationPayload")
+__all__ = ("AIInvocationEvent", "AIInvocationEventType", "AIInvocationPayload")
 
 
 class AIInvocationEventType(StrEnum):
@@ -54,7 +54,7 @@ class AIInvocationPayload(BaseModel):
     # Идентификация вызова
     event_id: str = Field(default_factory=lambda: str(uuid4()))
     event_type: AIInvocationEventType
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Контекст вызова
     workflow_id: str | None = None
@@ -110,7 +110,7 @@ class AIInvocationEvent(BaseModel):
 
     event_id: str = Field(default_factory=lambda: str(uuid4()))
     event_type: AIInvocationEventType
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Mandatory context
     workflow_id: str
@@ -147,7 +147,7 @@ class AIInvocationEvent(BaseModel):
 
     def with_guard_result(
         self, guard_type: str, verdict: str, categories: list[str]
-    ) -> "AIInvocationEvent":
+    ) -> AIInvocationEvent:
         """Копирует событие с guard result (для guarded.input/output событий)."""
         return self.model_copy(
             update={
@@ -159,7 +159,7 @@ class AIInvocationEvent(BaseModel):
 
     def with_pii_result(
         self, detected: bool, entity_types: list[str]
-    ) -> "AIInvocationEvent":
+    ) -> AIInvocationEvent:
         """Копирует событие с PII result."""
         return self.model_copy(
             update={"pii_detected": detected, "pii_entity_types": entity_types}

@@ -61,7 +61,7 @@ class ResponseValidatorProcessor(BaseProcessor):
     def __init__(
         self,
         *,
-        schema: "type[BaseModel] | str | None" = None,
+        schema: type[BaseModel] | str | None = None,
         on_error: str = "fail",
         source: str = "out_body",
     ) -> None:
@@ -76,7 +76,7 @@ class ResponseValidatorProcessor(BaseProcessor):
         self.on_error = on_error
         self.source = source
 
-    def _resolve_schema(self) -> "type[BaseModel] | None":
+    def _resolve_schema(self) -> type[BaseModel] | None:
         """Поддержка string-ref ``module:ClassName`` для YAML-loader."""
         if self.schema is None:
             return None
@@ -90,11 +90,10 @@ class ResponseValidatorProcessor(BaseProcessor):
                     f"got {self.schema!r}"
                 )
             module = importlib.import_module(module_name)
-            cls = getattr(module, class_name)
-            return cls
+            return getattr(module, class_name)
         return self.schema
 
-    def _resolve_body(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_body(self, exchange: Exchange[Any]) -> Any:
         if self.source == "in_body":
             return exchange.in_message.body
         out_message = getattr(exchange, "out_message", None)
@@ -104,7 +103,7 @@ class ResponseValidatorProcessor(BaseProcessor):
                 return body
         return exchange.in_message.body
 
-    def _handle_error(self, exchange: "Exchange[Any]", error: Exception) -> None:
+    def _handle_error(self, exchange: Exchange[Any], error: Exception) -> None:
         message = f"validate_response failed: {error}"
         match self.on_error:
             case "fail":
@@ -118,9 +117,7 @@ class ResponseValidatorProcessor(BaseProcessor):
                 exchange.set_property("_validation_error", str(error))
                 _logger.warning("validate_response (warn): %s", message)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         model = self._resolve_schema()
         if model is None:
             return  # no-op до подстановки реальной модели

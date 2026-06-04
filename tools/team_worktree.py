@@ -42,8 +42,7 @@ def _resolve_team(team_id: str) -> tuple[str, str]:
     key = f"k{team_id}"
     if key not in teams:
         print(
-            f"✗ Команда '{key}' не найдена. Доступно: {sorted(teams)}",
-            file=sys.stderr,
+            f"✗ Команда '{key}' не найдена. Доступно: {sorted(teams)}", file=sys.stderr
         )
         sys.exit(2)
     team_data = teams[key]

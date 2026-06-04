@@ -44,13 +44,14 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.core.security.vault_cipher import VaultTransitCipher
 
 
-__all__ = ("encrypt_field", "decrypt_field", "encrypt_mapping", "decrypt_mapping")
+__all__ = ("decrypt_field", "decrypt_mapping", "encrypt_field", "encrypt_mapping")
 
 
 logger = logging.getLogger("security.vault_cipher_sa")
@@ -67,14 +68,14 @@ def _default_deserializer(raw: bytes) -> Any:
     text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else raw
     try:
         return json.loads(text)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return text
 
 
 async def encrypt_field(
     obj: Any,
     field: str,
-    cipher: "VaultTransitCipher",
+    cipher: VaultTransitCipher,
     *,
     serializer: Callable[[Any], bytes | str] | None = None,
 ) -> None:
@@ -104,7 +105,7 @@ async def encrypt_field(
 async def decrypt_field(
     obj: Any,
     field: str,
-    cipher: "VaultTransitCipher",
+    cipher: VaultTransitCipher,
     *,
     deserializer: Callable[[bytes], Any] | None = None,
 ) -> None:
@@ -134,7 +135,7 @@ async def decrypt_field(
 async def encrypt_mapping(
     mapping: dict[str, Any],
     fields: list[str],
-    cipher: "VaultTransitCipher",
+    cipher: VaultTransitCipher,
     *,
     serializer: Callable[[Any], bytes | str] | None = None,
 ) -> dict[str, Any]:
@@ -157,7 +158,7 @@ async def encrypt_mapping(
 async def decrypt_mapping(
     mapping: dict[str, Any],
     fields: list[str],
-    cipher: "VaultTransitCipher",
+    cipher: VaultTransitCipher,
     *,
     deserializer: Callable[[bytes], Any] | None = None,
 ) -> dict[str, Any]:

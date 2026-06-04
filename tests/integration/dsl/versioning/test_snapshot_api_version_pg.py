@@ -47,9 +47,7 @@ async def test_dsl_snapshot_round_trip_with_api_version_pg(
 
         row = (
             await session.execute(
-                select(DslSnapshot).where(
-                    DslSnapshot.route_id == "rt.versioning.pg"
-                )
+                select(DslSnapshot).where(DslSnapshot.route_id == "rt.versioning.pg")
             )
         ).scalar_one()
         assert row.api_version == "v2"

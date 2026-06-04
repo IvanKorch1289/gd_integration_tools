@@ -14,16 +14,17 @@ from __future__ import annotations
 
 import functools
 import logging
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, TypeVar
 
 __all__ = (
+    "SoftDeleteMixin",
     "bulk_upsert",
     "soft_delete",
     "transactional",
     "with_audit_timestamps",
-    "SoftDeleteMixin",
 )
 
 logger = logging.getLogger("services.extensions")

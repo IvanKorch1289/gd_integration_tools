@@ -187,7 +187,11 @@ def main() -> int:
 
     violations: list[Violation] = []
     for py_file in root.rglob("*.py"):
-        rel = py_file.relative_to(root.parent.parent) if root.parent.parent in py_file.parents else py_file
+        rel = (
+            py_file.relative_to(root.parent.parent)
+            if root.parent.parent in py_file.parents
+            else py_file
+        )
         if str(rel) in allowlist:
             continue
         violations.extend(_check_file(py_file))
@@ -199,9 +203,7 @@ def main() -> int:
     print(f"⚠ check_ai_gateway_coverage: {len(violations)} violation(s):")
     for v in violations:
         print(f"  {v.file_path}:{v.line}:{v.col} — {v.pattern}: {v.description}")
-    print(
-        "\nИсправление: оборачивайте LLM-вызов в core.ai.gateway.AIGateway.invoke()."
-    )
+    print("\nИсправление: оборачивайте LLM-вызов в core.ai.gateway.AIGateway.invoke().")
     print("Подробности: docs/adr/0066-ai-gateway-facade.md.")
 
     if args.strict:

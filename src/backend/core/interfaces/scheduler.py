@@ -24,7 +24,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = ("SchedulerBackend", "ScheduledJob")
+__all__ = ("ScheduledJob", "SchedulerBackend")
 
 
 class ScheduledJob:
@@ -43,7 +43,7 @@ class ScheduledJob:
     def __init__(
         self,
         *,
-        id: str,  # noqa: A002 — общепринятый field name в scheduling-API
+        id: str,
         name: str,
         next_run_time: str | None,
         trigger: str,

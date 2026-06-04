@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("CloudEvent", "envelope", "parse_envelope")
@@ -23,7 +23,7 @@ class CloudEvent:
     source: str
     subject: str | None = None
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    time: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     specversion: str = "1.0"
     datacontenttype: str = "application/json"
     data: Any = None
@@ -82,7 +82,7 @@ def parse_envelope(raw: dict[str, Any]) -> CloudEvent:
         source=raw.get("source", ""),
         subject=raw.get("subject"),
         id=raw.get("id") or str(uuid.uuid4()),
-        time=raw.get("time") or datetime.now(timezone.utc).isoformat(),
+        time=raw.get("time") or datetime.now(UTC).isoformat(),
         specversion=raw.get("specversion", "1.0"),
         datacontenttype=raw.get("datacontenttype", "application/json"),
         data=raw.get("data"),

@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
-__all__ = ("run_workflow_dryrun", "DryRunReport")
+__all__ = ("DryRunReport", "run_workflow_dryrun")
 
 
 DryRunReport = dict[str, Any]

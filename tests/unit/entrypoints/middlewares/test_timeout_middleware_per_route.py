@@ -95,10 +95,7 @@ class TestPerRouteLookup:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
         # heavy: 0.05s budget; endpoint sleeps 0.5s → должен timeout-нуться.
-        app = _build_app(
-            route_timeouts={"/api/v1/heavy": 0.05},
-            sleep_seconds=0.5,
-        )
+        app = _build_app(route_timeouts={"/api/v1/heavy": 0.05}, sleep_seconds=0.5)
         client = TestClient(app)
         resp = client.get("/api/v1/heavy/process")
         assert resp.status_code == 408
@@ -110,37 +107,26 @@ class TestPerRouteLookup:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
         # /api/healthz не matches /api/v1/heavy prefix → global=5.0s.
-        app = _build_app(
-            route_timeouts={"/api/v1/heavy": 0.05},
-            sleep_seconds=0.0,
-        )
+        app = _build_app(route_timeouts={"/api/v1/heavy": 0.05}, sleep_seconds=0.0)
         client = TestClient(app)
         resp = client.get("/api/healthz")
         assert resp.status_code == 200  # быстрый ответ, global default OK
 
-    def test_longest_prefix_wins(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_longest_prefix_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """advisor pt 3: longest-prefix-match при overlapping prefixes."""
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
         # Два prefix'а: общий /api (5.0s) и специфичный /api/v1/heavy (0.05s).
         # Endpoint /api/v1/heavy/process должен match'нуть /api/v1/heavy.
         app = _build_app(
-            route_timeouts={
-                "/api": 5.0,
-                "/api/v1/heavy": 0.05,
-            },
-            sleep_seconds=0.5,
+            route_timeouts={"/api": 5.0, "/api/v1/heavy": 0.05}, sleep_seconds=0.5
         )
         client = TestClient(app)
         resp = client.get("/api/v1/heavy/process")
         # Longest prefix /api/v1/heavy выигрывает (0.05s) → 408.
         assert resp.status_code == 408
 
-    def test_empty_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_empty_registry_uses_global(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
         app = _build_app(route_timeouts={}, sleep_seconds=0.0)
@@ -148,9 +134,7 @@ class TestPerRouteLookup:
         resp = client.get("/api/healthz")
         assert resp.status_code == 200
 
-    def test_none_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_none_registry_uses_global(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
         app = _build_app(route_timeouts=None, sleep_seconds=0.0)

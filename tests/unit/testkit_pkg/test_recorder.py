@@ -53,7 +53,9 @@ async def test_recorder_captures_response_via_mock_transport() -> None:
         return httpx.Response(200, json={"ok": True})
 
     transport = httpx.MockTransport(handler)
-    async with httpx.AsyncClient(transport=transport, base_url="https://mock.local") as client:
+    async with httpx.AsyncClient(
+        transport=transport, base_url="https://mock.local"
+    ) as client:
         request = client.build_request("GET", "/items")
         response = await client.send(request)
         await response.aread()

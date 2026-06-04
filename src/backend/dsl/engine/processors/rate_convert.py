@@ -110,7 +110,7 @@ class RateConvertProcessor(BaseProcessor):
         self._provider = provider
         self._target = to
 
-    def _resolve_amount(self, exchange: "Exchange[Any]") -> float | None:
+    def _resolve_amount(self, exchange: Exchange[Any]) -> float | None:
         if self._amount is not None:
             return float(self._amount)
         if not self._amount_source:
@@ -129,7 +129,7 @@ class RateConvertProcessor(BaseProcessor):
             value = None
         return float(value) if value is not None else None
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -157,16 +157,14 @@ class RateConvertProcessor(BaseProcessor):
         rate_value = rates.get(self._to)
         return float(rate_value) if rate_value is not None else None
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_rate_convert:
                 exchange.set_property("rate_convert_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         amount = self._resolve_amount(exchange)
@@ -176,7 +174,7 @@ class RateConvertProcessor(BaseProcessor):
 
         try:
             rate = await self._fetch_rate()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"rate_convert provider error: {exc}")
             return
 

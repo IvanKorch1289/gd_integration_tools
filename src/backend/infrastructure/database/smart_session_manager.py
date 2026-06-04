@@ -53,7 +53,7 @@ from typing import Any, Literal
 
 from sqlalchemy import text
 
-__all__ = ("SmartSessionManager", "SessionMode")
+__all__ = ("SessionMode", "SmartSessionManager")
 
 SessionMode = Literal["read", "write"]
 
@@ -197,7 +197,7 @@ class SmartSessionManager:
 
             if not feature_flags.multi_replica_failover:
                 return False
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
         return (time.monotonic() - self._last_lag_check) >= self._lag_check_interval
 

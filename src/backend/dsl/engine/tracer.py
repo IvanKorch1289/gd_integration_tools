@@ -11,10 +11,11 @@
 
 import asyncio
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, AsyncGenerator
+from typing import Any
 
 __all__ = ("ExecutionTracer", "TraceEvent", "get_tracer")
 
@@ -57,7 +58,7 @@ class ExecutionTracer:
     @asynccontextmanager
     async def trace(
         self, route_id: str, processor_name: str, processor_type: str
-    ) -> AsyncGenerator[dict[str, Any], None]:
+    ) -> AsyncGenerator[dict[str, Any]]:
         """Context manager: emit start/end events с timing."""
         ts = datetime.now(UTC).isoformat()
 
@@ -114,10 +115,10 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except asyncio.QueueEmpty, asyncio.QueueFull:
+                    except (asyncio.QueueEmpty, asyncio.QueueFull):
                         pass
 
-    async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent, None]:
+    async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent]:
         """SSE-подписка на trace events конкретного маршрута."""
         queue: asyncio.Queue[TraceEvent] = asyncio.Queue(maxsize=1000)
         self._subscribers.setdefault(route_id, []).append(queue)
@@ -133,7 +134,7 @@ class ExecutionTracer:
             if not subs:
                 self._subscribers.pop(route_id, None)
 
-    async def subscribe_all(self) -> AsyncGenerator[TraceEvent, None]:
+    async def subscribe_all(self) -> AsyncGenerator[TraceEvent]:
         """SSE-подписка на все trace events."""
         queue: asyncio.Queue[TraceEvent] = asyncio.Queue(maxsize=5000)
         self._subscribers.setdefault("__all__", []).append(queue)
@@ -152,5 +153,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("tracer", ExecutionTracer)
-def get_tracer() -> ExecutionTracer:
+def get_tracer() -> ExecutionTracer:  # type: ignore[empty-body]
     """Возвращает ExecutionTracer из app.state или lazy-init fallback."""

@@ -1,11 +1,8 @@
-"""Unit-тесты OCR-процессора — Wave ``[wave:s18/w0-goal-driven-sweep-2-ocr]``."""
-
-# ruff: noqa: S101, S108
+"""Unit tests for src.backend.services.rpa.ocr_processor."""
 
 from __future__ import annotations
 
-import sys
-from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -16,62 +13,83 @@ from src.backend.services.rpa.ocr_processor import (
 )
 
 
-def test_noop_returns_empty_string() -> None:
-    """NoOp возвращает пустую строку при любом входе."""
-    proc = NoOpOCRProcessor()
-    assert proc.is_available is True
-    assert proc.recognize("/tmp/screen.png") == ""
-    assert proc.recognize("/tmp/screen.png", lang="rus") == ""
+class TestNoOpOCRProcessor:
+    def test_available(self) -> None:
+        proc = NoOpOCRProcessor()
+        assert proc.is_available is True
+
+    def test_recognize(self, caplog: pytest.LogCaptureFixture) -> None:
+        proc = NoOpOCRProcessor()
+        with caplog.at_level("WARNING"):
+            result = proc.recognize("/img.png", lang="eng")
+        assert result == ""
+        assert "no backend configured" in caplog.text
 
 
-def test_pytesseract_unavailable_returns_empty(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """При отсутствии pytesseract — empty string без падения."""
-    monkeypatch.setitem(sys.modules, "pytesseract", None)
-    proc = PytesseractOCRProcessor()
-    assert proc.is_available is False
-    assert proc.recognize("/tmp/screen.png") == ""
+class TestPytesseractOCRProcessor:
+    def test_available_when_installed(self) -> None:
+        with patch.dict("sys.modules", {"pytesseract": MagicMock()}):
+            proc = PytesseractOCRProcessor()
+            assert proc.is_available is True
+
+    def test_not_installed(self) -> None:
+        with patch.dict("sys.modules", {"pytesseract": None}):
+            proc = PytesseractOCRProcessor()
+            assert proc.is_available is False
+
+    def test_recognize_success(self) -> None:
+        fake_pt = MagicMock()
+        fake_pt.image_to_string.return_value = "hello"
+        with patch.dict("sys.modules", {"pytesseract": fake_pt}):
+            proc = PytesseractOCRProcessor()
+            assert proc.recognize("/img.png") == "hello"
+            fake_pt.image_to_string.assert_called_once_with("/img.png", lang="eng")
+
+    def test_recognize_import_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        with patch.dict("sys.modules", {"pytesseract": None}):
+            proc = PytesseractOCRProcessor()
+            with caplog.at_level("WARNING"):
+                assert proc.recognize("/img.png") == ""
+        assert "pytesseract not installed" in caplog.text
+
+    def test_recognize_runtime_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        fake_pt = MagicMock()
+        fake_pt.image_to_string.side_effect = RuntimeError("tess fail")
+        with patch.dict("sys.modules", {"pytesseract": fake_pt}):
+            proc = PytesseractOCRProcessor()
+            with caplog.at_level("WARNING"):
+                assert proc.recognize("/img.png") == ""
+        assert "recognize failed" in caplog.text
 
 
-def test_pytesseract_calls_image_to_string(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Когда pytesseract присутствует — делегирует image_to_string."""
-    import types
+class TestFromEnvironment:
+    def test_feature_flag_off(self) -> None:
+        with patch("src.backend.core.config.features.feature_flags") as ff:
+            ff.rpa_ocr_enabled = False
+            proc = from_environment()
+        assert isinstance(proc, NoOpOCRProcessor)
 
-    fake = types.ModuleType("pytesseract")
-    captured: dict[str, Any] = {}
+    def test_feature_flag_on_no_pytesseract(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with patch("src.backend.core.config.features.feature_flags") as ff:
+            ff.rpa_ocr_enabled = True
+            with patch.dict("sys.modules", {"pytesseract": None}):
+                with caplog.at_level("WARNING"):
+                    proc = from_environment()
+        assert isinstance(proc, NoOpOCRProcessor)
+        assert "fallback на NoOp" in caplog.text
 
-    def _image_to_string(path: str, lang: str = "eng") -> str:
-        captured["path"] = path
-        captured["lang"] = lang
-        return "Hello, world!"
+    def test_feature_flag_on_ok(self) -> None:
+        with patch("src.backend.core.config.features.feature_flags") as ff:
+            ff.rpa_ocr_enabled = True
+            with patch.dict("sys.modules", {"pytesseract": MagicMock()}):
+                proc = from_environment()
+        assert isinstance(proc, PytesseractOCRProcessor)
 
-    fake.image_to_string = _image_to_string  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "pytesseract", fake)
-    proc = PytesseractOCRProcessor()
-    assert proc.is_available is True
-    result = proc.recognize("/tmp/img.png", lang="eng+rus")
-    assert result == "Hello, world!"
-    assert captured == {"path": "/tmp/img.png", "lang": "eng+rus"}
-
-
-def test_from_environment_returns_noop_when_flag_off(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """При выключенном feature-flag фабрика возвращает NoOp."""
-    from src.backend.core.config.features import feature_flags
-
-    monkeypatch.setattr(feature_flags, "rpa_ocr_enabled", False)
-    assert isinstance(from_environment(), NoOpOCRProcessor)
-
-
-def test_from_environment_returns_noop_when_pytesseract_missing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """При включённом flag, но без pytesseract — фабрика возвращает NoOp."""
-    from src.backend.core.config.features import feature_flags
-
-    monkeypatch.setattr(feature_flags, "rpa_ocr_enabled", True)
-    monkeypatch.setitem(sys.modules, "pytesseract", None)
-    result = from_environment()
-    assert isinstance(result, NoOpOCRProcessor)
+    def test_import_error_early(self) -> None:
+        with patch(
+            "src.backend.core.config.features.feature_flags", side_effect=ImportError
+        ):
+            proc = from_environment()
+        assert isinstance(proc, NoOpOCRProcessor)

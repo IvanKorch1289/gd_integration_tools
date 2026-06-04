@@ -65,7 +65,7 @@ class ProcessorSearch:
     documents: list[tuple[str, set[str], str, str, str]]
 
     @classmethod
-    def from_registry(cls) -> "ProcessorSearch":
+    def from_registry(cls) -> ProcessorSearch:
         """Берёт записи из глобального ProcessorRegistry."""
         from src.backend.dsl.registry.processor import get_processor_registry
 
@@ -78,7 +78,7 @@ class ProcessorSearch:
         return cls(documents=docs)
 
     @classmethod
-    def from_specs(cls, specs: list[Any]) -> "ProcessorSearch":
+    def from_specs(cls, specs: list[Any]) -> ProcessorSearch:
         """Альтернативный конструктор для тестов (не требует реестра)."""
         docs: list[tuple[str, set[str], str, str, str]] = []
         for spec in specs:
@@ -118,7 +118,7 @@ class ProcessorSearch:
             return []
 
         scores: list[SearchResult] = []
-        for fqn, tokens, desc, ns, name in self.documents:
+        for _fqn, tokens, desc, ns, name in self.documents:
             if not tokens:
                 continue
             inter = len(q_tokens & tokens)

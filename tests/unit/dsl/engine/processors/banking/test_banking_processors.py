@@ -83,24 +83,14 @@ async def test_banking_credit_scoring_rules_approve() -> None:
                     expr="income > 100000 and debt_ratio < 0.3",
                     decision="APPROVE",
                 ),
-                Rule(
-                    name="low_score",
-                    expr="credit_score < 500",
-                    decision="REJECT",
-                ),
+                Rule(name="low_score", expr="credit_score < 500", decision="REJECT"),
             ],
             context_from="applicant",
             decision_to="decision",
         )
     )
     exchange = _make_exchange(
-        body={
-            "applicant": {
-                "income": 150000,
-                "debt_ratio": 0.2,
-                "credit_score": 750,
-            }
-        }
+        body={"applicant": {"income": 150000, "debt_ratio": 0.2, "credit_score": 750}}
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -131,9 +121,7 @@ async def test_banking_render_docx_credit_decision_letter(tmp_path: Path) -> Non
 
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(template),
-            context_from=None,
-            output_to="docx_path",
+            template=str(template), context_from=None, output_to="docx_path"
         )
     )
     exchange = _make_exchange(

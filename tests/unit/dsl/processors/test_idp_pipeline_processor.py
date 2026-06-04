@@ -32,10 +32,7 @@ def _make_exchange(body: Any = b"") -> Exchange:
 
 
 _INVOICE_BODY = (
-    b"Invoice #12345\n"
-    b"Date: 2026-05-01\n"
-    b"Vendor: Acme Corp\n"
-    b"Total: $1,234.56\n"
+    b"Invoice #12345\nDate: 2026-05-01\nVendor: Acme Corp\nTotal: $1,234.56\n"
 )
 
 _CONTRACT_BODY = (
@@ -121,12 +118,7 @@ class TestExtraction:
 
     def test_idp_extract_with_custom_patterns(self) -> None:
         """Custom extractors inherit canonical field names from defaults."""
-        custom = {
-            "invoice": [
-                r"Ref\s*[:\-]\s*(\w+)",
-                r"Amount\s*[:\-]\s*\$?([\d.]+)",
-            ]
-        }
+        custom = {"invoice": [r"Ref\s*[:\-]\s*(\w+)", r"Amount\s*[:\-]\s*\$?([\d.]+)"]}
         p = IDPPipelineProcessor(doc_type="invoice", extractors=custom)
         ex = _make_exchange(b"Ref: ABC99\nAmount: $750.00")
         import asyncio
@@ -227,9 +219,7 @@ class TestValidation:
     def test_idp_validation_errors_total_not_positive(self) -> None:
         """Total=0 fails the total_positive validator."""
         p = IDPPipelineProcessor(doc_type="invoice")
-        ex = _make_exchange(
-            b"Invoice #1\nDate: 2026-01-01\nVendor: X\nTotal: $0.00"
-        )
+        ex = _make_exchange(b"Invoice #1\nDate: 2026-01-01\nVendor: X\nTotal: $0.00")
         import asyncio
 
         loop = asyncio.new_event_loop()
@@ -285,9 +275,7 @@ class TestRouting:
         # 2-of-4 patterns match → confidence 0.5; default threshold 0.8
         # would force HITL, but with threshold=0.3 it's auto-processed.
         p = IDPPipelineProcessor(doc_type="invoice", confidence_threshold=0.3)
-        ex = _make_exchange(
-            b"Invoice #42\nDate: 2026-03-03\nrandom text\nrandom text"
-        )
+        ex = _make_exchange(b"Invoice #42\nDate: 2026-03-03\nrandom text\nrandom text")
         import asyncio
 
         loop = asyncio.new_event_loop()
@@ -349,9 +337,7 @@ class TestObservability:
 
     def test_idp_hitl_property_custom_name(self) -> None:
         """Custom hitl_property is honored."""
-        p = IDPPipelineProcessor(
-            doc_type="invoice", hitl_property="my_hitl_flag"
-        )
+        p = IDPPipelineProcessor(doc_type="invoice", hitl_property="my_hitl_flag")
         ex = _make_exchange(_INVOICE_BODY)
         import asyncio
 

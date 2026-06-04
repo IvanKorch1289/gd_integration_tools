@@ -10,7 +10,7 @@ import time as _time
 
 from src.backend.core.interfaces.clock import Clock
 
-__all__ = ("RealClock", "FakeClock")
+__all__ = ("FakeClock", "RealClock")
 
 
 class RealClock:

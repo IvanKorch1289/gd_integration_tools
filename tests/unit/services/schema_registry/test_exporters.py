@@ -141,9 +141,7 @@ class TestExportAsyncAPI:
         reg = ServiceSchemaRegistry()
         reg.register(
             SchemaEntry(
-                kind=SchemaKind.ROUTE,
-                name="r1",
-                meta={"description": "Do thing"},
+                kind=SchemaKind.ROUTE, name="r1", meta={"description": "Do thing"}
             )
         )
         result = export_asyncapi(reg)

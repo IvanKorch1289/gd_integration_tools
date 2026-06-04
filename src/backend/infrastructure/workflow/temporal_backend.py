@@ -107,7 +107,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
         namespace: str = "default",
         default_task_queue: str = "default",
         api_key: str | None = None,
-    ) -> "TemporalWorkflowBackend":
+    ) -> TemporalWorkflowBackend:
         """Lazy-import ``temporalio`` + connect.
 
         ``api_key`` для Temporal Cloud (mTLS-настройки — отдельный

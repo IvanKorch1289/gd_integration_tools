@@ -40,10 +40,7 @@ class CodegenEngine:
     """
 
     def __init__(
-        self,
-        *,
-        templates_dir: Path | None = None,
-        format_on_write: bool = True,
+        self, *, templates_dir: Path | None = None, format_on_write: bool = True
     ) -> None:
         """Инициализирует Jinja2-окружение из ``templates_dir``."""
         self._dir = templates_dir or TEMPLATES_DIR

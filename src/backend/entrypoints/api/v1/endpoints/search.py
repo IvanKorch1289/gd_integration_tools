@@ -136,7 +136,7 @@ async def _safe_search(
     try:
         service = get_search_service()
         return await service.search(index, query, size=limit, from_=offset, sort=sort)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Search failed for index %s: %s", index, exc)
         return []
 
@@ -227,7 +227,7 @@ class _SearchFacade:
             aggs = {"by_field": {"terms": {"field": field, "size": size}}}
             es_query = _build_text_query(q) if q else None
             return await service.aggregate(index, aggs, query=es_query)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Aggregation failed for %s: %s", index, exc)
             return {}
 
@@ -256,7 +256,7 @@ class _SearchFacade:
             return await service.aggregate_terms(
                 index, field, filters=filters or None, size=size
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("facets failed for %s.%s: %s", index, field, exc)
             return {}
 

@@ -158,9 +158,7 @@ def _walk_calls(tree: ast.AST) -> Iterable[ast.Call]:
             yield node
 
 
-def _check_kwarg_findings(
-    call: ast.Call, path: Path, min_length: int
-) -> list[Finding]:
+def _check_kwarg_findings(call: ast.Call, path: Path, min_length: int) -> list[Finding]:
     out: list[Finding] = []
     for kw in call.keywords:
         if kw.arg is None or kw.arg not in PROMPT_KWARGS:
@@ -294,9 +292,7 @@ def scan_paths(
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry-point."""
-    parser = argparse.ArgumentParser(
-        description="AST-checker hardcoded LLM-prompts"
-    )
+    parser = argparse.ArgumentParser(description="AST-checker hardcoded LLM-prompts")
     parser.add_argument(
         "--root",
         type=Path,
@@ -318,24 +314,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Файл с glob-масками исключений",
     )
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="exit=1 при наличии findings",
+        "--strict", action="store_true", help="exit=1 при наличии findings"
     )
     parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Печатать только итоговое количество",
+        "--quiet", action="store_true", help="Печатать только итоговое количество"
     )
     args = parser.parse_args(argv)
 
     roots: list[Path] = args.root or [Path("src/backend/services/ai")]
     allowlist = _load_allowlist(args.allowlist)
-    findings = scan_paths(
-        roots,
-        min_length=args.min_length,
-        allowlist=allowlist,
-    )
+    findings = scan_paths(roots, min_length=args.min_length, allowlist=allowlist)
 
     if not args.quiet:
         for f in findings:

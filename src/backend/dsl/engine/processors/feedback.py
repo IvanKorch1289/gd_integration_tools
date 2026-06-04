@@ -133,18 +133,18 @@ class FeedbackProcessor(BaseProcessor):
                     "route_run_id": route_run_id,
                 },
             )
-        except Exception as exc:  # noqa: BLE001 — fail-soft
+        except Exception as exc:
             _logger.warning("FeedbackProcessor: ошибка записи: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
 
     @staticmethod
     def _stringify(exchange: Exchange[Any]) -> str:
         """Сериализует body для записи в response-поле."""
-        body = exchange.body
+        body = exchange.in_message.body
         if isinstance(body, (bytes, bytearray)):
             try:
                 return body.decode("utf-8", errors="replace")
-            except UnicodeDecodeError, AttributeError:
+            except (UnicodeDecodeError, AttributeError):
                 return repr(body)
         return "" if body is None else str(body)
 

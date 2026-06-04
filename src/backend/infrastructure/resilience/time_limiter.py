@@ -16,7 +16,6 @@ import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque
 
 __all__ = ("TimeLimiter",)
 
@@ -42,7 +41,7 @@ class TimeLimiter:
     percentile: float = 0.99
     safety_factor: float = 1.5
     window_size: int = 256
-    _samples: Deque[float] = field(default_factory=lambda: deque(maxlen=256))
+    _samples: deque[float] = field(default_factory=lambda: deque(maxlen=256))
 
     def _current_timeout(self) -> float:
         if len(self._samples) < 8:
@@ -64,7 +63,7 @@ class TimeLimiter:
             result = await asyncio.wait_for(coro, timeout=timeout)
             self.record_sample(time.monotonic() - start)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "TimeLimiter '%s' tripped after %.2fs (adaptive bound)",
                 self.name,

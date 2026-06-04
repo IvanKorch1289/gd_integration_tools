@@ -297,7 +297,7 @@ class AgentInvokeDeclaration(BaseModel):
         description="Per-invocation timeout; None — использует workflow-default.",
     )
     # S28 W2: Memory orchestration fields
-    memory_scope: "MemoryScope | None" = Field(
+    memory_scope: MemoryScope | None = Field(
         default=None,
         description=(
             "Memory scope для агента. Если None — наследуется из AgentSpec "
@@ -582,7 +582,7 @@ class WorkflowDeclaration(BaseModel):
         default=None,
         description="Default retry-политика; перекрывается per-activity ``retry_policy``.",
     )
-    sla: "SlaPolicy | None" = Field(
+    sla: SlaPolicy | None = Field(
         default=None,
         description=(
             "SLA-политика workflow (Sprint 9 K3 W10). Если execution_seconds "

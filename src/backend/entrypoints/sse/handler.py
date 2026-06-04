@@ -21,7 +21,7 @@ from starlette.responses import StreamingResponse
 
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 
-__all__ = ("sse_router", "event_bus")
+__all__ = ("event_bus", "sse_router")
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ async def sse_stream(request: Request) -> StreamingResponse:
                     event_type = event.get("event", "message")
                     data = json.dumps(event.get("data"), ensure_ascii=False)
                     yield f"event: {event_type}\ndata: {data}\n\n"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Heartbeat для поддержания соединения
                     yield ": heartbeat\n\n"
         finally:
@@ -125,7 +125,7 @@ async def sse_stream(request: Request) -> StreamingResponse:
             policy = tenant_policy if tenant_policy else PiiStreamPolicy()
             async for chunk in stream_filter(_raw_generator(), policy):
                 yield chunk
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             async for chunk in _raw_generator():
                 yield chunk
 
@@ -197,7 +197,7 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
                 idempotency_key=idempotency_key,
                 attributes={"path": str(request.url.path)},
             )
-        except Exception as exc:  # noqa: BLE001 — стримим как event.
+        except Exception as exc:
             logger.exception("SSE invoke ошибка: %s", exc)
             err = {"code": "dispatch_failed", "message": str(exc)}
             yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"

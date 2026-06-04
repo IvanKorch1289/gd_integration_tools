@@ -50,10 +50,7 @@ def test_capabilities_for_lazy_ref() -> None:
     base = _FakeBaseRegistry()
     lazy = LazyProcessorRegistry(base=base)
     lazy.register_lazy(
-        name="y",
-        namespace="core",
-        module_path="m:Y",
-        capabilities=("cap.x", "cap.y"),
+        name="y", namespace="core", module_path="m:Y", capabilities=("cap.x", "cap.y")
     )
     assert lazy.capabilities_for("core:y") == ("cap.x", "cap.y")
 
@@ -104,17 +101,12 @@ def test_resolve_imports_module_and_registers(tmp_path, monkeypatch) -> None:
     # Создаём фейковый модуль с processor-like
     fake_module = tmp_path / "fake_lazy_proc.py"
     fake_module.write_text(
-        "class FakeProc:\n"
-        "    fqn = 'core:fake'\n"
-        "    capabilities = ()\n"
-        "\n"
+        "class FakeProc:\n    fqn = 'core:fake'\n    capabilities = ()\n\n"
     )
     monkeypatch.syspath_prepend(str(tmp_path))
 
     lazy.register_lazy(
-        name="fake",
-        namespace="core",
-        module_path="fake_lazy_proc:FakeProc",
+        name="fake", namespace="core", module_path="fake_lazy_proc:FakeProc"
     )
     # До resolve в base нет
     with pytest.raises(ProcessorNotFoundError):

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -97,14 +97,14 @@ class QueueSettings(BaseSettingsWithLoader):
 
     @field_validator("port")
     @classmethod
-    def validate_port(cls, v, values):
+    def validate_port(cls, v: int, values: Any) -> int:
         if v == 465 and not values.data.get("use_tls"):
             raise ValueError("Порт 465 требует включения SSL/TLS")
         return v
 
     @field_validator("ca_bundle")
     @classmethod
-    def validate_ca_path(cls, v):
+    def validate_ca_path(cls, v: Path | None) -> Path | None:
         if v and not v.exists():
             raise ValueError(f"Файл CA bundle не найден: {v}")
         return v

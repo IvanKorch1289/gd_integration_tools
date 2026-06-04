@@ -70,7 +70,7 @@ from src.backend.core.resilience.breaker import (
 
 breaker_registry = get_breaker_registry()
 
-__all__ = ("GraylogGelfLogSink", "GelfProtocol")
+__all__ = ("GelfProtocol", "GraylogGelfLogSink")
 
 
 GelfProtocol = Literal["udp", "tcp"]
@@ -181,7 +181,7 @@ class GraylogGelfLogSink(LogSink):
 
         try:
             payload = self._serialize(record)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             # fallback: всё неизвестное → str
             payload = self._serialize({k: _coerce(v) for k, v in record.items()})
 
@@ -221,7 +221,7 @@ class GraylogGelfLogSink(LogSink):
             self._worker_task.cancel()
             try:
                 await self._worker_task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):
                 pass
         await asyncio.to_thread(self._close_sockets)
 
@@ -262,7 +262,7 @@ class GraylogGelfLogSink(LogSink):
                 # purgatory увеличил failure-counter; sink остаётся "живым",
                 # но текущая запись потеряна; reconnect — на следующей итерации
                 self.is_healthy = False
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 # любой неожиданный сбой не должен ронять worker
                 self.is_healthy = False
                 _INTERNAL_LOG.exception("graylog drain unexpected error")

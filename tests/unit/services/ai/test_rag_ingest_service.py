@@ -16,8 +16,7 @@ async def test_ingest_inline_processes_all_files() -> None:
     service = RagIngestService(rag_service=rag, deferred=False)
 
     result = await service.ingest(
-        files=[("a.txt", b"hello"), ("b.txt", b"world")],
-        collection="docs",
+        files=[("a.txt", b"hello"), ("b.txt", b"world")], collection="docs"
     )
     assert result["status"] == "completed"
     assert result["doc_ids"] == ["doc1", "doc2"]
@@ -31,9 +30,7 @@ async def test_ingest_records_errors() -> None:
     rag.ingest = AsyncMock(side_effect=[RuntimeError("boom"), "doc-ok"])
     service = RagIngestService(rag_service=rag, deferred=False)
 
-    result = await service.ingest(
-        files=[("bad.txt", b"x"), ("good.txt", b"y")]
-    )
+    result = await service.ingest(files=[("bad.txt", b"x"), ("good.txt", b"y")])
     assert result["status"] == "completed_with_errors"
     assert result["doc_ids"] == ["doc-ok"]
     assert result["errors"][0]["file"] == "bad.txt"

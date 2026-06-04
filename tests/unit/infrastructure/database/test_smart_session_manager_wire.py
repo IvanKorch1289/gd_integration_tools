@@ -65,8 +65,7 @@ async def test_smart_session_manager_uses_bundle_replica() -> None:
     primary_smk = _FakeSessionMaker("primary")
     replica_smk = _FakeSessionMaker("replica")
     manager = SmartSessionManager(
-        primary_sessionmaker=primary_smk,
-        replica_sessionmaker=replica_smk,
+        primary_sessionmaker=primary_smk, replica_sessionmaker=replica_smk
     )
 
     async with manager.acquire(mode="read") as session:
@@ -84,8 +83,7 @@ async def test_smart_session_manager_without_replica_falls_back() -> None:
 
     primary_smk = _FakeSessionMaker("primary")
     manager = SmartSessionManager(
-        primary_sessionmaker=primary_smk,
-        replica_sessionmaker=None,
+        primary_sessionmaker=primary_smk, replica_sessionmaker=None
     )
 
     async with manager.acquire(mode="read") as session:
@@ -149,8 +147,7 @@ async def test_smart_read_write_depends_resolve(
     replica_smk = _FakeSessionMaker("replica")
 
     fake_manager = SmartSessionManager(
-        primary_sessionmaker=primary_smk,
-        replica_sessionmaker=replica_smk,
+        primary_sessionmaker=primary_smk, replica_sessionmaker=replica_smk
     )
     monkeypatch.setattr(db_mod, "get_smart_session_manager", lambda: fake_manager)
 

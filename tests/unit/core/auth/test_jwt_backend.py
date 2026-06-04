@@ -50,12 +50,7 @@ def base_claims() -> dict[str, Any]:
 
 @pytest.fixture
 def hs_backend() -> JwtBackend:
-    return JwtBackend(
-        algorithms=["HS256"],
-        secret=HS_SECRET,
-        issuer=ISS,
-        audience=AUD,
-    )
+    return JwtBackend(algorithms=["HS256"], secret=HS_SECRET, issuer=ISS, audience=AUD)
 
 
 class _FakeRequest:
@@ -106,15 +101,10 @@ async def test_hs256_expired_rejected(
 
 
 @pytest.mark.asyncio
-async def test_algorithm_not_in_whitelist_rejected(
-    base_claims: dict[str, Any],
-) -> None:
+async def test_algorithm_not_in_whitelist_rejected(base_claims: dict[str, Any]) -> None:
     """Backend whitelist'ит только HS384; токен HS256 должен быть отвергнут."""
     backend = JwtBackend(
-        algorithms=["HS384"],
-        secret=HS_SECRET,
-        issuer=ISS,
-        audience=AUD,
+        algorithms=["HS384"], secret=HS_SECRET, issuer=ISS, audience=AUD
     )
     token = _make_hs_token(base_claims, alg="HS256")
     with pytest.raises(JwtVerificationError, match="HS256"):
@@ -131,9 +121,7 @@ async def test_wrong_signature_rejected(
 
 
 @pytest.mark.asyncio
-async def test_blacklisted_jti_rejected(
-    base_claims: dict[str, Any],
-) -> None:
+async def test_blacklisted_jti_rejected(base_claims: dict[str, Any]) -> None:
     class FakeBlacklist:
         async def is_revoked(self, jti: str) -> bool:
             return jti == "jti-1"
@@ -253,9 +241,7 @@ async def test_verify_returns_none_for_non_bearer(hs_backend: JwtBackend) -> Non
 
 
 @pytest.mark.asyncio
-async def test_verify_returns_none_for_malformed_token(
-    hs_backend: JwtBackend,
-) -> None:
+async def test_verify_returns_none_for_malformed_token(hs_backend: JwtBackend) -> None:
     ctx = await hs_backend.verify(_FakeRequest({"Authorization": "Bearer not-a-jwt"}))
     assert ctx is None
 
@@ -313,7 +299,8 @@ async def test_rs256_missing_kid_rejected(base_claims: dict[str, Any]) -> None:
             return None
 
     backend = JwtBackend(
-        algorithms=["RS256"], jwks=FakeJwks()  # type: ignore[arg-type]
+        algorithms=["RS256"],
+        jwks=FakeJwks(),  # type: ignore[arg-type]
     )
     token = joserfc_jwt.encode({"alg": "RS256"}, base_claims, rsa_key)
     with pytest.raises(JwtVerificationError, match="kid"):
@@ -342,9 +329,7 @@ def test_constructor_rejects_unknown_algorithm() -> None:
 
 def test_parse_header_unsafe_extracts_alg_and_kid() -> None:
     rsa_key = RSAKey.generate_key(2048, parameters={"kid": "kid-x"})
-    token = joserfc_jwt.encode(
-        {"alg": "RS256", "kid": "kid-x"}, {"sub": "u"}, rsa_key
-    )
+    token = joserfc_jwt.encode({"alg": "RS256", "kid": "kid-x"}, {"sub": "u"}, rsa_key)
     header = _parse_header_unsafe(token)
     assert header["alg"] == "RS256"
     assert header["kid"] == "kid-x"

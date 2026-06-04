@@ -48,11 +48,7 @@ def test_orders_saga_compensate_chain_has_three_steps() -> None:
     saga = build_orders_saga_workflow().steps[0]
     assert isinstance(saga, SagaDeclaration)
     compensate_names = [step.name for step in saga.compensate]
-    assert compensate_names == [
-        "orders.cancel",
-        "inventory.release",
-        "payments.refund",
-    ]
+    assert compensate_names == ["orders.cancel", "inventory.release", "payments.refund"]
 
 
 def test_orders_saga_forward_compensate_length_match() -> None:

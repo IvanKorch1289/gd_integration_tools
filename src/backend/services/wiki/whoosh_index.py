@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 from src.backend.core.di import app_state_singleton
 
@@ -149,7 +149,7 @@ class WhooshIndex:
                     continue
                 try:
                     content = md.read_text(encoding="utf-8")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.warning("wiki: cannot read %s (%s)", md, exc)
                     continue
                 writer.update_document(
@@ -217,7 +217,7 @@ class WhooshIndex:
 
 
 @app_state_singleton("wiki_index", factory=WhooshIndex)
-def get_wiki_index() -> WhooshIndex:
+def get_wiki_index() -> WhooshIndex:  # type: ignore[empty-body]
     """Singleton WhooshIndex (через app.state)."""
 
 

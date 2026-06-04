@@ -60,7 +60,7 @@ async def list_consumers() -> dict[str, Any]:
     for source_id, source in _REGISTRY.items():
         try:
             info = await source.fetch_consumer_info()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             info = {"error": str(exc), "source_id": source_id}
         info["source_id"] = source_id
         metrics_mod.record_consumer_info(info)

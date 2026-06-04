@@ -63,8 +63,7 @@ async def test_caller_override_wins_over_context() -> None:
     client, captured = _make_client_with_capture()
     try:
         await client.get(
-            "https://example.com/api",
-            headers={"X-Correlation-ID": "cid-explicit"},
+            "https://example.com/api", headers={"X-Correlation-ID": "cid-explicit"}
         )
     finally:
         await client.aclose()

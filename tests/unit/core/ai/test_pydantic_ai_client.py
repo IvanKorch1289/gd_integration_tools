@@ -15,9 +15,16 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.ai.pydantic_ai_client import LLMDependencies, LLMResult, PydanticAIClient
+from src.backend.core.ai.pydantic_ai_client import (
+    LLMDependencies,
+    LLMResult,
+    PydanticAIClient,
+)
 from src.backend.core.ai.policy.spec import ModelRouterSpec
-from src.backend.services.ai.gateway.exceptions import GatewayRateLimited, GatewayUnavailable
+from src.backend.services.ai.gateway.exceptions import (
+    GatewayRateLimited,
+    GatewayUnavailable,
+)
 
 
 class _FakeLLMGateway:
@@ -79,9 +86,7 @@ class _FakeMetricsRegistry:
         self._counter_objs[name] = obj
         return obj
 
-    def histogram(
-        self, name: str, description: str, *, labels: tuple[str, ...] = ()
-    ):
+    def histogram(self, name: str, description: str, *, labels: tuple[str, ...] = ()):
         obj = _FakeHistogram(name, self.histograms)
         self._histogram_objs[name] = obj
         return obj
@@ -98,9 +103,7 @@ class _FakeMetricsRegistry:
 
 
 class _FakeCounter:
-    def __init__(
-        self, name: str, storage: dict[str, list[dict[str, str]]]
-    ) -> None:
+    def __init__(self, name: str, storage: dict[str, list[dict[str, str]]]) -> None:
         self._name = name
         self._storage = storage
 
@@ -165,9 +168,7 @@ async def test_run_happy_path(fake_gateway: _FakeLLMGateway) -> None:
     client = PydanticAIClient(
         gateway=fake_gateway,
         model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini",
-            fallback=["openai/gpt-4o"],
-            retry_attempts=2,
+            primary="openai/gpt-4o-mini", fallback=["openai/gpt-4o"], retry_attempts=2
         ),
         metrics_registry=None,
     )
@@ -200,13 +201,10 @@ async def test_deps_passed_to_run(fake_gateway: _FakeLLMGateway) -> None:
 
 
 @pytest.mark.asyncio
-async def test_tokens_extracted_from_response(
-    fake_gateway: _FakeLLMGateway,
-) -> None:
+async def test_tokens_extracted_from_response(fake_gateway: _FakeLLMGateway) -> None:
     """Tokens правильно извлекаются из litellm-ответа."""
     client = PydanticAIClient(
-        gateway=fake_gateway,
-        model_router=ModelRouterSpec(primary="openai/gpt-4o-mini"),
+        gateway=fake_gateway, model_router=ModelRouterSpec(primary="openai/gpt-4o-mini")
     )
 
     result = await client.run(prompt="test")
@@ -222,10 +220,7 @@ async def test_metrics_success_emitted(
     """Успешный вызов → counter + histogram emission."""
     client = PydanticAIClient(
         gateway=fake_gateway,
-        model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini",
-            retry_attempts=2,
-        ),
+        model_router=ModelRouterSpec(primary="openai/gpt-4o-mini", retry_attempts=2),
         metrics_registry=fake_metrics,
     )
 
@@ -278,10 +273,7 @@ async def test_rate_limit_propagates() -> None:
 
     client = PydanticAIClient(
         gateway=gateway,
-        model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini",
-            retry_attempts=1,
-        ),
+        model_router=ModelRouterSpec(primary="openai/gpt-4o-mini", retry_attempts=1),
     )
 
     with pytest.raises(GatewayRateLimited, match="Rate limited"):
@@ -297,9 +289,7 @@ async def test_unavailable_propagates() -> None:
     client = PydanticAIClient(
         gateway=gateway,
         model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini",
-            fallback=["openai/gpt-4o"],
-            retry_attempts=1,
+            primary="openai/gpt-4o-mini", fallback=["openai/gpt-4o"], retry_attempts=1
         ),
     )
 

@@ -33,7 +33,7 @@ import asyncio
 import logging
 import shutil
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 __all__ = ("AIWorkspaceCleaner",)
@@ -99,16 +99,14 @@ class AIWorkspaceCleaner:
         No-op, если feature-flag ``ai_workspace_ttl_cleanup`` выключен.
         Повторный вызов идемпотентен.
         """
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.ai_workspace_ttl_cleanup:
             return
         if self._task is not None and not self._task.done():
             return
         self._stopped = False
-        from src.backend.core.utils.task_registry import (
-            get_task_registry,  # noqa: PLC0415
-        )
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
             self._cleanup_loop(), name="ai-workspace-cleaner"
@@ -125,7 +123,7 @@ class AIWorkspaceCleaner:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except (asyncio.CancelledError, Exception):
                 pass
 
     def cleanup_expired(self, now: datetime, ttl_days: int | None = None) -> int:
@@ -233,13 +231,13 @@ class AIWorkspaceCleaner:
             while not self._stopped:
                 await asyncio.sleep(self._interval)
                 try:
-                    now = datetime.now(tz=timezone.utc)
+                    now = datetime.now(tz=UTC)
                     self.cleanup_expired(now)
                     if self._root.exists():
                         for tenant_dir in self._root.iterdir():
                             if tenant_dir.is_dir():
                                 self.enforce_size_quota(tenant_dir)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning(
                         "ai_workspace_cleaner.loop_error", extra={"error": repr(exc)}
                     )

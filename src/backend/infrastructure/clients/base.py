@@ -134,7 +134,7 @@ class ManagedAsyncClient(ABC, Generic[T]):
     def name(self) -> str:
         return self._name
 
-    async def __aenter__(self) -> "ManagedAsyncClient[T]":
+    async def __aenter__(self) -> ManagedAsyncClient[T]:
         await self.ensure_connected()
         return self
 

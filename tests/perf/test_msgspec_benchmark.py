@@ -153,9 +153,7 @@ def test_pydantic_event_batch_serialize(benchmark: Any) -> None:
 @pytest.mark.benchmark(group="serialize_event_x100")
 def test_msgspec_event_batch_serialize(benchmark: Any) -> None:
     """msgspec пакетная сериализация 100 events."""
-    events = [
-        msgspec.convert(SAMPLE_EVENT, type=MsgspecEvent) for _ in range(100)
-    ]
+    events = [msgspec.convert(SAMPLE_EVENT, type=MsgspecEvent) for _ in range(100)]
     encoder = msgspec.json.Encoder()
 
     def _run() -> list[bytes]:
@@ -173,9 +171,7 @@ SAMPLE_RESPONSE_JSON = msgspec.json.encode(SAMPLE_RESPONSE)
 @pytest.mark.benchmark(group="parse_response_dto")
 def test_pydantic_response_dto_parse(benchmark: Any) -> None:
     """Pydantic парсинг JSON → модель."""
-    benchmark(
-        PydanticResponseDTO.model_validate_json, SAMPLE_RESPONSE_JSON
-    )
+    benchmark(PydanticResponseDTO.model_validate_json, SAMPLE_RESPONSE_JSON)
 
 
 @pytest.mark.benchmark(group="parse_response_dto")

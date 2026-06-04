@@ -17,7 +17,7 @@ from src.backend.core.di.providers import (
     get_redis_pubsub_factory_provider,
 )
 
-__all__ = ("WebhookSubscription", "RedisWebhookRegistry", "redis_webhook_registry")
+__all__ = ("RedisWebhookRegistry", "WebhookSubscription", "redis_webhook_registry")
 
 logger = logging.getLogger("entrypoints.webhook.redis_registry")
 

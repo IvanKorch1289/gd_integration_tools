@@ -4,18 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.infrastructure.secrets.broker import (
-    SecretBrokerImpl,
-    SecretValue,
-)
+from src.backend.infrastructure.secrets.broker import SecretBrokerImpl, SecretValue
 from src.backend.infrastructure.secrets.rotation import RotationScheduler
 
 
 class _FakeBackend:
     def __init__(self, snapshots: list[SecretValue]) -> None:
-        self._by_version: dict[int, SecretValue] = {
-            s.version: s for s in snapshots
-        }
+        self._by_version: dict[int, SecretValue] = {s.version: s for s in snapshots}
 
     def get(self, name: str) -> SecretValue:
         return max(self._by_version.values(), key=lambda s: s.version)
@@ -57,17 +52,13 @@ async def test_poll_once_notifies_on_version_change() -> None:
 
 @pytest.mark.asyncio
 async def test_poll_once_skips_when_version_stable() -> None:
-    backend = _FakeBackend(
-        [SecretValue(name="db/pg", value="v1", version=1)]
-    )
+    backend = _FakeBackend([SecretValue(name="db/pg", value="v1", version=1)])
     broker = SecretBrokerImpl(backend=backend)
     received: list[SecretValue] = []
     broker.subscribe_rotation("db/pg", received.append)
 
     scheduler = RotationScheduler(
-        broker=broker,
-        watched_secrets=["db/pg"],
-        version_fetcher=lambda _name: 1,
+        broker=broker, watched_secrets=["db/pg"], version_fetcher=lambda _name: 1
     )
     await scheduler.poll_once()
     await scheduler.poll_once()
@@ -76,14 +67,10 @@ async def test_poll_once_skips_when_version_stable() -> None:
 
 @pytest.mark.asyncio
 async def test_add_watch_extends_list_without_restart() -> None:
-    backend = _FakeBackend(
-        [SecretValue(name="api/key", value="k", version=1)]
-    )
+    backend = _FakeBackend([SecretValue(name="api/key", value="k", version=1)])
     broker = SecretBrokerImpl(backend=backend)
     scheduler = RotationScheduler(
-        broker=broker,
-        watched_secrets=[],
-        version_fetcher=lambda _name: 1,
+        broker=broker, watched_secrets=[], version_fetcher=lambda _name: 1
     )
     scheduler.add_watch("api/key", current_version=1)
     assert "api/key" in scheduler.known_versions()
@@ -92,9 +79,7 @@ async def test_add_watch_extends_list_without_restart() -> None:
 @pytest.mark.asyncio
 async def test_start_and_stop_lifecycle() -> None:
     """``start()`` создаёт task, ``stop()`` отменяет его."""
-    backend = _FakeBackend(
-        [SecretValue(name="db/pg", value="v1", version=1)]
-    )
+    backend = _FakeBackend([SecretValue(name="db/pg", value="v1", version=1)])
     broker = SecretBrokerImpl(backend=backend)
     scheduler = RotationScheduler(
         broker=broker,

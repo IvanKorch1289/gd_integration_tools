@@ -20,7 +20,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 __all__ = ("CertificateBundle", "VaultPkiClient")
@@ -95,7 +95,7 @@ class VaultPkiClient:
         если ``not_after - now > renew_buffer``. Иначе issue новый.
         """
         key = (role, common_name)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cached = self._cache.get(key)
         if cached is not None:
             time_to_expire = (cached.bundle.not_after - now).total_seconds()
@@ -110,6 +110,8 @@ class VaultPkiClient:
         if not response:
             raise RuntimeError(f"Vault PKI issue empty response для {path}")
         data = response.get("data") if isinstance(response, dict) else response
+        if data is None or not isinstance(data, dict):
+            raise RuntimeError(f"Vault PKI issue missing data для {path}")
 
         not_after = self._parse_expiration(data, ttl=ttl)
         bundle = CertificateBundle(
@@ -142,9 +144,9 @@ class VaultPkiClient:
         """Парсит ``expiration`` (Unix timestamp) или вычисляет из ttl."""
         exp = data.get("expiration")
         if isinstance(exp, (int, float)):
-            return datetime.fromtimestamp(exp, tz=timezone.utc)
+            return datetime.fromtimestamp(exp, tz=UTC)
         seconds = _parse_ttl_to_seconds(ttl)
-        return datetime.now(timezone.utc) + timedelta(seconds=seconds)
+        return datetime.now(UTC) + timedelta(seconds=seconds)
 
 
 def _parse_ttl_to_seconds(ttl: str) -> int:

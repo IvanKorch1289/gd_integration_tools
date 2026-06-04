@@ -9,10 +9,7 @@ from pathlib import Path
 
 def _load_module():
     path = (
-        Path(__file__).resolve().parents[3]
-        / "tools"
-        / "checks"
-        / "dsl_complexity.py"
+        Path(__file__).resolve().parents[3] / "tools" / "checks" / "dsl_complexity.py"
     )
     spec = importlib.util.spec_from_file_location("_dsl_complexity_test", path)
     assert spec is not None and spec.loader is not None

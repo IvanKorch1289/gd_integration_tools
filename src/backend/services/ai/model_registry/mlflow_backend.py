@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
@@ -43,7 +44,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         if self._client is not None:
             return self._client
         try:
-            from mlflow.tracking import MlflowClient  # noqa: PLC0415
+            from mlflow.tracking import MlflowClient
         except ImportError as exc:
             raise RuntimeError(
                 "mlflow не установлен; добавьте extra ai-model-registry "
@@ -112,7 +113,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             await loop.run_in_executor(
                 None, lambda: client.create_registered_model(record.name)
             )
-        except Exception as _:  # noqa: BLE001 — already exists OK
+        except Exception as _:
             pass
 
         artifact_uri = record.artifact_uri or "models:/placeholder"
@@ -126,8 +127,11 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         for k, v in record.tags.items():
             await loop.run_in_executor(
                 None,
-                lambda key=k, val=v, mv_=mv: client.set_model_version_tag(
-                    record.name, mv_.version, key, val
+                cast(
+                    "Callable[[], Any]",
+                    lambda key=k, val=v, mv_=mv: client.set_model_version_tag(
+                        record.name, mv_.version, key, val
+                    ),
                 ),
             )
         return self._mlflow_to_record(mv)

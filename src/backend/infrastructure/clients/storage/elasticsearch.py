@@ -158,7 +158,7 @@ class ElasticSearchClient:
         try:
             await client.delete(index=self._prefixed(index), id=doc_id)
             return True
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
     async def create_index(
@@ -185,9 +185,9 @@ class ElasticSearchClient:
         result: dict[str, bool] = {}
         try:
             client = await self._ensure_client()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ensure_indices: ES недоступен (%s)", exc)
-            return {n: False for n in names}
+            return dict.fromkeys(names, False)
 
         for name in names:
             prefixed = self._prefixed(name)
@@ -201,7 +201,7 @@ class ElasticSearchClient:
                 await client.indices.create(index=prefixed, body=body)
                 logger.info("Index %s created (ensure_indices)", prefixed)
                 result[name] = True
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("ensure_indices(%s) failed: %s", prefixed, exc)
                 result[name] = False
         return result
@@ -236,7 +236,7 @@ class ElasticSearchClient:
         try:
             client = await self._ensure_client()
             return await client.ping()
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 
@@ -263,5 +263,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("elasticsearch_client", _create_elasticsearch_client)
-def get_elasticsearch_client() -> ElasticSearchClient:
+def get_elasticsearch_client() -> ElasticSearchClient:  # type: ignore[empty-body]
     """Возвращает ElasticSearchClient из app.state или lazy-init fallback."""

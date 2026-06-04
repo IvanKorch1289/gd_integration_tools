@@ -148,9 +148,7 @@ async def test_audit_wraps_non_dict_metadata() -> None:
     fake_store.append = AsyncMock(return_value="h3")
 
     proc = AuditProcessor(
-        action="x",
-        metadata_from="properties.payload",
-        outcome="success",
+        action="x", metadata_from="properties.payload", outcome="success"
     )
     exchange = _make_exchange(properties={"payload": "raw-string"})
 
@@ -167,9 +165,7 @@ async def test_audit_outcome_from_expression_overrides_static() -> None:
     fake_store.append = AsyncMock(return_value="h4")
 
     proc = AuditProcessor(
-        action="order.processed",
-        outcome="success",
-        outcome_from="properties.outcome",
+        action="order.processed", outcome="success", outcome_from="properties.outcome"
     )
     exchange = _make_exchange(properties={"outcome": "failure"})
 
@@ -185,9 +181,7 @@ async def test_audit_outcome_from_invalid_falls_back_to_error() -> None:
     fake_store.append = AsyncMock(return_value="h5")
 
     proc = AuditProcessor(
-        action="x",
-        outcome="success",
-        outcome_from="properties.outcome",
+        action="x", outcome="success", outcome_from="properties.outcome"
     )
     exchange = _make_exchange(properties={"outcome": "weird-value"})
 

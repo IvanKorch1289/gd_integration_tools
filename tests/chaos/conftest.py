@@ -32,7 +32,9 @@ from testkit.chaos_fixtures import (  # noqa: F401
 )
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Авто-помечает все тесты в этом каталоге маркерами chaos и requires_toxiproxy.
 
     Args:

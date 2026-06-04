@@ -20,25 +20,25 @@ CacheGetCallable = Callable[[str], Awaitable[bytes | None]]
 
 
 async def _redis_get(key: str) -> bytes | None:
-    from src.backend.infrastructure.cache.factory import get_cache_backend
+    from src.backend.infrastructure.cache.factory import create_cache_backend
 
-    backend = get_cache_backend("redis")
+    backend = create_cache_backend("redis")
     value = await backend.get(key)
     return value if isinstance(value, bytes) or value is None else str(value).encode()
 
 
 async def _memcached_get(key: str) -> bytes | None:
-    from src.backend.infrastructure.cache.factory import get_cache_backend
+    from src.backend.infrastructure.cache.factory import create_cache_backend
 
-    backend = get_cache_backend("memcached")
+    backend = create_cache_backend("memcached")
     value = await backend.get(key)
     return value if isinstance(value, bytes) or value is None else str(value).encode()
 
 
 async def _memory_get(key: str) -> bytes | None:
-    from src.backend.infrastructure.cache.backends.memory import MemoryCacheBackend
+    from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
-    backend: MemoryCacheBackend = _memory_singleton()
+    backend: MemoryBackend = _memory_singleton()
     value = await backend.get(key)
     return value if isinstance(value, bytes) or value is None else str(value).encode()
 
@@ -49,9 +49,9 @@ _memory_backend = None
 def _memory_singleton():
     global _memory_backend
     if _memory_backend is None:
-        from src.backend.infrastructure.cache.backends.memory import MemoryCacheBackend
+        from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
-        _memory_backend = MemoryCacheBackend(maxsize=1000)
+        _memory_backend = MemoryBackend(maxsize=1000)
     return _memory_backend
 
 

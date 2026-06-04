@@ -64,7 +64,11 @@ class TestLLMCallProcessor:
         assert exchange.properties.get("llm.model") == "gpt-4-0613"
         assert exchange.properties.get("llm.tokens_used") == 100
         assert exchange.properties.get("llm.cost_usd") == round(100 * 0.00002, 6)
-        assert exchange.in_message.body == {"content": "ok", "usage": {"total_tokens": 100}, "model": "gpt-4-0613"}
+        assert exchange.in_message.body == {
+            "content": "ok",
+            "usage": {"total_tokens": 100},
+            "model": "gpt-4-0613",
+        }
 
     @pytest.mark.asyncio
     async def test_uses_prompt_property(self) -> None:
@@ -117,7 +121,9 @@ class TestLLMCallProcessor:
         ):
             await proc.process(exchange, _Context())
 
-        assert "LLM call failed after 2 attempts" in exchange.properties.get("_error", "")
+        assert "LLM call failed after 2 attempts" in exchange.properties.get(
+            "_error", ""
+        )
         assert mock_agent.chat.await_count == 2
 
     @pytest.mark.asyncio

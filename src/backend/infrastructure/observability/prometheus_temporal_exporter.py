@@ -16,9 +16,9 @@ from typing import Any
 
 __all__ = (
     "get_temporal_metrics",
+    "record_scale_event",
     "set_task_queue_depth",
     "set_workers_active",
-    "record_scale_event",
 )
 
 _logger = logging.getLogger("infrastructure.observability.temporal_exporter")
@@ -53,7 +53,7 @@ def _ensure_metrics() -> dict[str, Any]:
                 labels=("action",),
             ),
         }
-    except ImportError, ValueError:
+    except (ImportError, ValueError):
         _metrics = {"_disabled": True}
     return _metrics
 
@@ -75,7 +75,7 @@ def set_task_queue_depth(task_queue: str, depth: int) -> None:
     if gauge is not None and not isinstance(gauge, bool):
         try:
             gauge.labels(task_queue=task_queue).set(depth)
-        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+        except Exception as exc:
             _logger.debug(
                 "temporal_exporter.task_queue_depth_set_failed: %s",
                 exc,
@@ -93,7 +93,7 @@ def set_workers_active(task_queue: str, count: int) -> None:
     if gauge is not None and not isinstance(gauge, bool):
         try:
             gauge.labels(task_queue=task_queue).set(count)
-        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+        except Exception as exc:
             _logger.debug(
                 "temporal_exporter.workers_active_set_failed: %s",
                 exc,
@@ -111,7 +111,7 @@ def record_scale_event(action: str) -> None:
     if counter is not None and not isinstance(counter, bool):
         try:
             counter.labels(action=action).inc()
-        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+        except Exception as exc:
             _logger.debug(
                 "temporal_exporter.scale_event_inc_failed: %s",
                 exc,

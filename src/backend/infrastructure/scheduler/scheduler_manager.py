@@ -1,3 +1,4 @@
+from datetime import UTC
 from functools import lru_cache
 from typing import Any
 
@@ -11,7 +12,7 @@ from src.backend.infrastructure.scheduler.scheduled_tasks import (
 
 scheduler_logger = get_logger("scheduler")
 
-__all__ = ("scheduler_manager", "SchedulerManager", "get_scheduler_manager")
+__all__ = ("SchedulerManager", "get_scheduler_manager", "scheduler_manager")
 
 
 class SchedulerManager:
@@ -92,7 +93,7 @@ class SchedulerManager:
                 is_memory=self._default_jobstore_is_memory,
                 is_production=settings.app.environment == "production",
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.logger.warning("Scheduler observability bootstrap skipped: %s", exc)
 
     async def stop(self):
@@ -124,7 +125,7 @@ class SchedulerManager:
                     self.logger.info(f"Задача '{event.job_id}' успешно удалена.")
                 except Exception as exc:
                     self.logger.error(
-                        f"Ошибка при удалении задачи '{event.job_id}': {str(exc)}"
+                        f"Ошибка при удалении задачи '{event.job_id}': {exc!s}"
                     )
 
         # Регистрируем обработчик
@@ -162,9 +163,7 @@ class SchedulerManager:
                     self.scheduler.remove_job(job.id)
                     self.logger.info(f"Задача '{job.id}' успешно удалена.")
                 except Exception as exc:
-                    self.logger.error(
-                        f"Ошибка при удалении задачи '{job.id}': {str(exc)}"
-                    )
+                    self.logger.error(f"Ошибка при удалении задачи '{job.id}': {exc!s}")
 
     # ── Sprint 12 K3 W2: cron API для UI / admin REST ──
 
@@ -232,7 +231,7 @@ class SchedulerManager:
             self.scheduler.pause_job(job_id)
             self.logger.info(f"Job {job_id!r} приостановлен.")
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.logger.warning(f"pause_job({job_id!r}) failed: {exc}")
             return False
 
@@ -242,7 +241,7 @@ class SchedulerManager:
             self.scheduler.resume_job(job_id)
             self.logger.info(f"Job {job_id!r} возобновлён.")
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.logger.warning(f"resume_job({job_id!r}) failed: {exc}")
             return False
 
@@ -253,12 +252,11 @@ class SchedulerManager:
         ``modify_job(next_run_time=datetime.now())``.
         """
         from datetime import datetime
-        from datetime import timezone as _tz
 
         try:
-            self.scheduler.modify_job(job_id, next_run_time=datetime.now(_tz.utc))
+            self.scheduler.modify_job(job_id, next_run_time=datetime.now(UTC))
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.logger.warning(f"run_job_now({job_id!r}) failed: {exc}")
             return False
 
@@ -298,7 +296,7 @@ def get_scheduler_manager() -> SchedulerManager:
                 callable_ref=consolidate_idle_sessions,
                 timezone=settings.scheduler.timezone,
             )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         manager.logger.warning(
             "LangMem consolidation job registration skipped: %s", exc
         )

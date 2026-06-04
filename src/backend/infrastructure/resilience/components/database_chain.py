@@ -107,7 +107,7 @@ def _check_snapshot_freshness() -> None:
         _ensure_stale_metric()
         if _stale_warning_counter is not None:
             _stale_warning_counter.inc()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # Snapshot-job или метрики могут быть недоступны (dev_light/тесты);
         # не ломаем fallback из-за вспомогательной телеметрии.
         logger.debug("Snapshot freshness check skipped: %s", exc)

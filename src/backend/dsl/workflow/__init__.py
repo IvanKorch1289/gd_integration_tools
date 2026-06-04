@@ -23,7 +23,8 @@ Public API:
 файлы импортируются в dev_light без установленного Temporal.
 """
 
-from src.backend.dsl.workflow.builder import SagaBuilder, WorkflowBuilder
+from src.backend.dsl.workflow.builder import SagaBuilder as SagaBuilder
+from src.backend.dsl.workflow.builder import WorkflowBuilder as WorkflowBuilder
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     PauseDeclaration,

@@ -31,11 +31,7 @@ def _write(tmp_path: Path, name: str, src: str) -> Path:
 
 def test_kwarg_long_literal_detected(tmp_path: Path) -> None:
     """Литерал > 50 символов в system_prompt → finding."""
-    src = (
-        "agent.invoke(\n"
-        "    system_prompt='" + "А" * 60 + "',\n"
-        ")\n"
-    )
+    src = "agent.invoke(\n    system_prompt='" + "А" * 60 + "',\n)\n"
     path = _write(tmp_path, "a.py", src)
     findings = scan_file(path)
     assert len(findings) == 1
@@ -220,15 +216,7 @@ def test_cli_exit_one_when_strict_and_found(
 ) -> None:
     """Findings + --strict → exit=1."""
     _write(tmp_path, "bad.py", "agent.invoke(system_prompt='" + "x" * 60 + "')\n")
-    rc = main(
-        [
-            "--root",
-            str(tmp_path),
-            "--allowlist",
-            "/nonexistent",
-            "--strict",
-        ]
-    )
+    rc = main(["--root", str(tmp_path), "--allowlist", "/nonexistent", "--strict"])
     assert rc == 1
     err = capsys.readouterr().err
     assert "FOUND" in err
@@ -239,14 +227,7 @@ def test_cli_exit_zero_when_warn_only(
 ) -> None:
     """Findings без --strict → exit=0 (warn-only)."""
     _write(tmp_path, "bad.py", "agent.invoke(system_prompt='" + "x" * 60 + "')\n")
-    rc = main(
-        [
-            "--root",
-            str(tmp_path),
-            "--allowlist",
-            "/nonexistent",
-        ]
-    )
+    rc = main(["--root", str(tmp_path), "--allowlist", "/nonexistent"])
     assert rc == 0
 
 

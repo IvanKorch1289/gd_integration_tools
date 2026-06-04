@@ -11,7 +11,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from src.backend.core.models.express import ExpressDialog, ExpressMessage
 
-__all__ = ("ExpressMessage", "ExpressDialog", "ExpressDialogStore")
+__all__ = ("ExpressDialog", "ExpressDialogStore", "ExpressMessage")
 
 
 @runtime_checkable

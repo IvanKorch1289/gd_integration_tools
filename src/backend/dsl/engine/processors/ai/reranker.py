@@ -135,7 +135,7 @@ class RerankerProcessor(BaseProcessor):
             scores = model.predict(pairs)
             if not isinstance(scores, list):
                 scores = [scores]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("RerankerProcessor: model.predict failed: %s", exc)
             exchange.set_property(self._output_property, candidates[: self._top_k])
             return
@@ -176,7 +176,7 @@ class RerankerProcessor(BaseProcessor):
             return self._model
 
         try:
-            from sentence_transformers import CrossEncoder  # noqa: PLC0415
+            from sentence_transformers import CrossEncoder
 
             self._model = CrossEncoder(self._model_name)
             logger.info(
@@ -189,7 +189,7 @@ class RerankerProcessor(BaseProcessor):
                 "Install: pip install sentence-transformers"
             )
             return None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "RerankerProcessor: failed to load model %s: %s", self._model_name, exc
             )

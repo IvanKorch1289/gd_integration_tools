@@ -39,7 +39,7 @@ __all__ = ("BoundedInMemoryBucket", "shutdown_pyrate_leaker")
 _logger = logging.getLogger("resilience.pyrate_compat")
 
 
-async def shutdown_pyrate_leaker(limiter: "Limiter") -> None:
+async def shutdown_pyrate_leaker(limiter: Limiter) -> None:
     """Останавливает фоновую ``Leaker.aio_leak_task`` указанного Limiter'а.
 
     Вызывается из application shutdown hook. Безопасен к повторному
@@ -65,7 +65,7 @@ async def shutdown_pyrate_leaker(limiter: "Limiter") -> None:
         await leak_task
     except asyncio.CancelledError:
         return
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.debug("pyrate Leaker join error: %s", exc)
 
 
@@ -89,7 +89,7 @@ class BoundedInMemoryBucket(InMemoryBucket):
         super().__init__(rates)
         self.max_items = max_items
 
-    def put(self, item: "RateItem") -> bool:
+    def put(self, item: RateItem) -> bool:
         """Прокси к ``InMemoryBucket.put`` с post-trim до ``max_items``."""
         accepted = super().put(item)
         if accepted and len(self.items) > self.max_items:

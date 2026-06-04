@@ -34,7 +34,7 @@ from typing import Any
 import httpx
 import jwt
 
-__all__ = ("BotConfig", "BotxMessage", "BotxButton", "BotxMention", "ExpressBotClient")
+__all__ = ("BotConfig", "BotxButton", "BotxMention", "BotxMessage", "ExpressBotClient")
 
 _logger = logging.getLogger("infrastructure.express_bot")
 
@@ -255,7 +255,7 @@ class ExpressBotClient:
                 base_url=self._config.base_url,
                 timeout=self._config.timeout,
             )
-        return self._http
+        return self._http  # type: ignore[return-value]
 
     def _generate_token(self) -> str:
         """Генерирует JWT HS256 токен для текущего запроса.

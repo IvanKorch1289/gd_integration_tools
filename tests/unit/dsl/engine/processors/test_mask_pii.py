@@ -41,9 +41,7 @@ def _ex(
 @pytest.mark.asyncio
 async def test_target_body_dict_masks_emails_and_phones() -> None:
     proc = MaskPiiProcessor(targets=["body"])
-    exchange = _ex(
-        body={"email": "alice@x.io", "phone": "+7 999 1234567", "age": 30},
-    )
+    exchange = _ex(body={"email": "alice@x.io", "phone": "+7 999 1234567", "age": 30})
     await proc.process(exchange, AsyncMock())
     body = exchange.in_message.body
     assert body["email"] == "***"
@@ -118,11 +116,7 @@ async def test_query_no_request_is_noop() -> None:
 async def test_fields_whitelist_masks_only_selected() -> None:
     proc = MaskPiiProcessor(targets=["body"], fields=["email"])
     exchange = _ex(
-        body={
-            "email": "a@x.io",
-            "phone": "+7 999 1234567",
-            "note": "ничего секретного",
-        },
+        body={"email": "a@x.io", "phone": "+7 999 1234567", "note": "ничего секретного"}
     )
     await proc.process(exchange, AsyncMock())
     body = exchange.in_message.body
@@ -138,9 +132,7 @@ async def test_fields_whitelist_masks_only_selected() -> None:
 @pytest.mark.asyncio
 async def test_custom_patterns_replace_defaults() -> None:
     proc = MaskPiiProcessor(
-        targets=["body"],
-        patterns=[r"secret_\d+"],
-        replacement="<hidden>",
+        targets=["body"], patterns=[r"secret_\d+"], replacement="<hidden>"
     )
     exchange = _ex(body={"key": "secret_42 и email=a@b.c"})
     await proc.process(exchange, AsyncMock())
@@ -185,8 +177,7 @@ def test_allowed_targets_is_frozenset() -> None:
 async def test_multi_target_body_and_headers() -> None:
     proc = MaskPiiProcessor(targets=["body", "headers"])
     exchange = _ex(
-        body={"email": "u@x.io"},
-        headers={"X-Email": "h@x.io", "X-Trace": "tid-1"},
+        body={"email": "u@x.io"}, headers={"X-Email": "h@x.io", "X-Trace": "tid-1"}
     )
     await proc.process(exchange, AsyncMock())
     assert exchange.in_message.body["email"] == "***"

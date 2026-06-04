@@ -40,7 +40,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-__all__ = ("render_macros", "has_jinja_syntax")
+__all__ = ("has_jinja_syntax", "render_macros")
 
 
 def has_jinja_syntax(text: str) -> bool:
@@ -73,7 +73,7 @@ def render_macros(
     env = Environment(  # nosec B701
         loader=FileSystemLoader(loader_path),
         undefined=StrictUndefined,
-        autoescape=False,  # noqa: S701
+        autoescape=False,  # noqa: S701  # internal macro preprocessing
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,

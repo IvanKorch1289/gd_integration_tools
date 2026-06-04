@@ -66,7 +66,10 @@ def test_skill_registry_from_toml_loads_skills(tmp_path: Path) -> None:
     """from_toml_manifest загружает [[skill]] секции из plugin.toml V11.2."""
     registry = SkillRegistry()
     plugin_toml = tmp_path / "plugin.toml"
-    plugin_toml.write_text('[[skill]]\nid="credit.score"\nversion="1.0"\nhandler="skills.credit:score"\n', encoding="utf-8")
+    plugin_toml.write_text(
+        '[[skill]]\nid="credit.score"\nversion="1.0"\nhandler="skills.credit:score"\n',
+        encoding="utf-8",
+    )
     specs = registry.from_toml_manifest(plugin_toml)
     assert len(specs) == 1
     assert specs[0].id == "credit.score"

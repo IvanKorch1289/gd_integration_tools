@@ -52,7 +52,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         else:
             try:
                 body_bytes = await request.body()
-            except Exception:  # noqa: BLE001, S110
+            except Exception:
                 pass
 
         response = await call_next(request)
@@ -109,7 +109,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
                 stream_name="audit-log",
                 data={k: str(v) for k, v in audit_event.items()},
             )
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
 
         # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget).
@@ -135,7 +135,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             }
             ch = get_clickhouse_client_provider()
             await ch.insert("audit_log", [ch_row])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit insert failed: %s", exc)
 
         return response

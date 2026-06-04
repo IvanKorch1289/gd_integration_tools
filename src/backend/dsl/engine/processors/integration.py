@@ -1,16 +1,17 @@
 """Integration processors — EventBus, Agent Memory, Reply-channel."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
+    "AwaitReplyProcessor",
     "EventPublishProcessor",
     "MemoryLoadProcessor",
     "MemorySaveProcessor",
-    "AwaitReplyProcessor",
 )
 
 
@@ -39,7 +40,7 @@ class EventPublishProcessor(BaseProcessor):
             data = {
                 "route_id": context.route_id,
                 "body": exchange.in_message.body,
-                "correlation_id": exchange.correlation_id,
+                "correlation_id": exchange.meta.correlation_id,
             }
         event = type("PipelineEvent", (BaseModel,), data)()
         await bus.publish(self._channel, event)
@@ -57,7 +58,7 @@ class MemoryLoadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         session_id = exchange.in_message.headers.get(self._session_header)
         if not session_id:
-            session_id = exchange.correlation_id
+            session_id = exchange.meta.correlation_id
         from src.backend.services.ai.agent_memory import get_agent_memory_service
 
         memory_svc = get_agent_memory_service()
@@ -123,6 +124,6 @@ class AwaitReplyProcessor(BaseProcessor):
             self._channel,
             payload,
             timeout=self._timeout,
-            correlation_id=exchange.correlation_id,
+            correlation_id=exchange.meta.correlation_id,
         )
         exchange.in_message.body = reply

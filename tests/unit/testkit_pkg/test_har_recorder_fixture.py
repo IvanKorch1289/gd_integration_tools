@@ -18,8 +18,7 @@ from testkit.recorder import HARCassette, HARRecorder
 
 
 def test_har_recorder_fixture_round_trip(
-    har_recorder: HARRecorder,
-    har_cassette_path: Path,
+    har_recorder: HARRecorder, har_cassette_path: Path
 ) -> None:
     """Fixture даёт recorder с mask_secrets=True и записываемый путь кассеты."""
 
@@ -33,17 +32,14 @@ def test_har_recorder_fixture_round_trip(
 
 @pytest.mark.asyncio
 async def test_har_recorder_fixture_records_via_mock_transport(
-    har_recorder: HARRecorder,
-    har_cassette_path: Path,
+    har_recorder: HARRecorder, har_cassette_path: Path
 ) -> None:
     """Fixture записывает MockTransport-ответ и переживает round-trip."""
 
     async def handler(request: httpx.Request) -> httpx.Response:
         # Sensitive header — должен быть замаскирован при записи.
         return httpx.Response(
-            200,
-            json={"items": ["a", "b"]},
-            headers={"x-api-key": "supersecret-token"},
+            200, json={"items": ["a", "b"]}, headers={"x-api-key": "supersecret-token"}
         )
 
     transport = httpx.MockTransport(handler)

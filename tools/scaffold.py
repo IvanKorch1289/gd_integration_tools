@@ -187,7 +187,9 @@ def main() -> None:
 
     s = sub.add_parser("service", help="Создать новый сервис")
     s.add_argument("--name", required=True, help="Имя класса (без Service-суффикса)")
-    s.add_argument("--group", choices=["ai", "ops", "integrations", "io", "core"], help="Подпакет")
+    s.add_argument(
+        "--group", choices=["ai", "ops", "integrations", "io", "core"], help="Подпакет"
+    )
     s.add_argument("--dry-run", action="store_true")
     s.set_defaults(func=cmd_service)
 

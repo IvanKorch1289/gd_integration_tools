@@ -236,7 +236,7 @@ class TelegramBotClient:
                 base_url=f"{self._config.base_url}/bot{self._config.token}",
                 timeout=self._config.timeout,
             )
-        return self._http
+        return self._http  # type: ignore[return-value]
 
     async def _call(self, method: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Низкоуровневый POST к Bot API.

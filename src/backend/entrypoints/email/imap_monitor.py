@@ -23,7 +23,7 @@ from typing import Any
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.service import get_dsl_service
 
-__all__ = ("ImapMonitor", "ImapConfig")
+__all__ = ("ImapConfig", "ImapMonitor")
 
 logger = logging.getLogger(__name__)
 

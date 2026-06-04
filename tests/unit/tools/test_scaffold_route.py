@@ -74,23 +74,45 @@ def test_write_scaffold_creates_files(tmp_path: Path) -> None:
     assert data["route_id"] == "demo_route"
 
 
-def test_write_scaffold_refuses_existing_dir_without_force(
-    tmp_path: Path,
-) -> None:
+def test_write_scaffold_refuses_existing_dir_without_force(tmp_path: Path) -> None:
     mod.write_scaffold(
-        "x", source="http", sink="http", ai=False, retry=False, force=False, routes_dir=tmp_path
+        "x",
+        source="http",
+        sink="http",
+        ai=False,
+        retry=False,
+        force=False,
+        routes_dir=tmp_path,
     )
     with pytest.raises(FileExistsError):
         mod.write_scaffold(
-            "x", source="http", sink="http", ai=False, retry=False, force=False, routes_dir=tmp_path
+            "x",
+            source="http",
+            sink="http",
+            ai=False,
+            retry=False,
+            force=False,
+            routes_dir=tmp_path,
         )
 
 
 def test_write_scaffold_force_overwrites(tmp_path: Path) -> None:
     mod.write_scaffold(
-        "x", source="http", sink="http", ai=False, retry=False, force=False, routes_dir=tmp_path
+        "x",
+        source="http",
+        sink="http",
+        ai=False,
+        retry=False,
+        force=False,
+        routes_dir=tmp_path,
     )
     # второй вызов с force=True — должен пройти
     mod.write_scaffold(
-        "x", source="http", sink="http", ai=False, retry=False, force=True, routes_dir=tmp_path
+        "x",
+        source="http",
+        sink="http",
+        ai=False,
+        retry=False,
+        force=True,
+        routes_dir=tmp_path,
     )

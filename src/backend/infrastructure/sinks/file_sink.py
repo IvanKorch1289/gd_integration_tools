@@ -51,7 +51,7 @@ class FileSink(Sink):
 
         try:
             written = await asyncio.to_thread(self._write_sync, target, text)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )

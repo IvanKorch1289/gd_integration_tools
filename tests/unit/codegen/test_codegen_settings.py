@@ -85,7 +85,8 @@ class TestRenderClassModule:
             base="BaseConnectorSettings",
         )
         assert (
-            "from src.backend.core.config.integration_base import BaseConnectorSettings" in out
+            "from src.backend.core.config.integration_base import BaseConnectorSettings"
+            in out
         )
         assert "class KafkaSettings(BaseConnectorSettings):" in out
         ast.parse(out)

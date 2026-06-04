@@ -132,7 +132,7 @@ class ScanFileProcessor(BaseProcessor):
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:
                         return data
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning(
                         "ScanFile: S3 read для key=%r упал: %s — fallback property",
                         key,
@@ -157,7 +157,7 @@ class ScanFileProcessor(BaseProcessor):
             )
 
             record_antivirus_scan(threat=threat)
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
 
     def to_spec(self) -> dict:

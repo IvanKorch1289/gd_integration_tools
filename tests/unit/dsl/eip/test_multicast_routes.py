@@ -71,9 +71,15 @@ class _FakeEngine:
         # Имитирует конструктор ExecutionEngine(route_registry=...)
         return self
 
-    async def run_pipeline(
-        self, pipeline: Any, exchange: Exchange, context: ExecutionContext
-    ) -> None:  # noqa: ARG002
+    async def execute(
+        self,
+        pipeline: Any,
+        *,
+        exchange: Exchange[Any] | None = None,
+        body: Any = None,
+        headers: dict[str, Any] | None = None,
+        context: ExecutionContext | None = None,
+    ) -> Exchange[Any]:
         # Определяем, к какому route_id относится pipeline.
         route_id = pipeline  # в тестах pipeline-маркер == route_id
         if route_id in self.delays:
@@ -81,10 +87,11 @@ class _FakeEngine:
         if route_id in self.raises:
             raise self.raises[route_id]
         if route_id in self.errors:
-            exchange.fail(self.errors[route_id])
-            return
-        body = self.results.get(route_id, {"ok": route_id})
-        exchange.set_out(body=body)
+            exchange.fail(self.errors[route_id])  # type: ignore[union-attr]
+            return exchange  # type: ignore[return-value]
+        result_body = self.results.get(route_id, {"ok": route_id})
+        exchange.set_out(body=result_body)  # type: ignore[union-attr]
+        return exchange  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -130,9 +137,7 @@ async def test_strategy_all_collects_all_results(patched_routing) -> None:
     registry, engine_holder = patched_routing
     registry.register("a", "a")
     registry.register("b", "b")
-    engine_holder["engine"] = _FakeEngine(
-        results={"a": {"r": "A"}, "b": {"r": "B"}}
-    )
+    engine_holder["engine"] = _FakeEngine(results={"a": {"r": "A"}, "b": {"r": "B"}})
 
     proc = MulticastRoutesProcessor(["a", "b"], strategy="all", on_error="continue")
     ex = _make_exchange()
@@ -190,13 +195,10 @@ async def test_strategy_first_success_returns_first_done(patched_routing) -> Non
     registry.register("fast", "fast")
     registry.register("slow", "slow")
     engine_holder["engine"] = _FakeEngine(
-        results={"fast": {"f": 1}, "slow": {"s": 2}},
-        delays={"slow": 0.5},
+        results={"fast": {"f": 1}, "slow": {"s": 2}}, delays={"slow": 0.5}
     )
 
-    proc = MulticastRoutesProcessor(
-        ["fast", "slow"], strategy="first_success"
-    )
+    proc = MulticastRoutesProcessor(["fast", "slow"], strategy="first_success")
     ex = _make_exchange()
     await proc.process(ex, _make_context())
 
@@ -238,9 +240,7 @@ async def test_unregistered_route_recorded_as_error(patched_routing) -> None:
     _registry, engine_holder = patched_routing
     engine_holder["engine"] = _FakeEngine()
 
-    proc = MulticastRoutesProcessor(
-        ["missing"], strategy="all", on_error="continue"
-    )
+    proc = MulticastRoutesProcessor(["missing"], strategy="all", on_error="continue")
     ex = _make_exchange()
     await proc.process(ex, _make_context())
 

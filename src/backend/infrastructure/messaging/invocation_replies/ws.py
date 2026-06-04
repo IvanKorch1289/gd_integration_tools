@@ -24,7 +24,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse
 
-__all__ = ("WsReplyChannel", "WsConnection")
+__all__ = ("WsConnection", "WsReplyChannel")
 
 logger = logging.getLogger("messaging.invocation_replies.ws")
 
@@ -72,7 +72,7 @@ class WsReplyChannel(InvocationReplyChannel):
             return
         try:
             await connection.send_json(_response_to_dict(response))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "WS push failed (invocation_id=%s): %s", response.invocation_id, exc
             )

@@ -82,7 +82,7 @@ def _configure_application_components(app: FastAPI) -> None:
     if settings.app.telemetry_enabled:
         try:
             setup_tracing(app=app)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             import logging
 
             logging.getLogger("app_factory").warning(
@@ -216,7 +216,7 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
         from src.backend.dsl.commands.setup import register_action_handlers
 
         register_action_handlers()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logging.getLogger("app_factory").warning(
             "register_action_handlers пропущен: %s "
             "(action auto-loop пройдёт по уже существующим handler'ам)",
@@ -225,7 +225,7 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
 
     try:
         added = auto_register_unrouted_actions(app)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logging.getLogger("app_factory").warning(
             "auto_register_unrouted_actions упал: %s — пропускаем", exc
         )
@@ -253,7 +253,7 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
         )
 
         auto_register_strawberry_schema(app, path="/api/v1/graphql")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logging.getLogger("app_factory").warning(
             "Wave 1.4 auto-schema пропущена: %s", exc
         )

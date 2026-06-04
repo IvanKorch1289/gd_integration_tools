@@ -46,10 +46,7 @@ class _FakeSanitizer:
     """
 
     def __init__(
-        self,
-        *,
-        raise_runtime: bool = False,
-        raise_unexpected: bool = False,
+        self, *, raise_runtime: bool = False, raise_unexpected: bool = False
     ) -> None:
         self.calls: list[tuple[str, str | None]] = []
         self._raise_runtime = raise_runtime
@@ -72,16 +69,12 @@ class _FakeSanitizer:
 
 
 def _make_policy(
-    *,
-    sanitizer_language: str | None = None,
-    audit_extra: dict[str, str] | None = None,
+    *, sanitizer_language: str | None = None, audit_extra: dict[str, str] | None = None
 ) -> AIPolicySpec:
     """Удобный конструктор минимально-валидной AIPolicySpec."""
     input_sanitizers: list[SanitizerRef] = []
     if sanitizer_language is not None:
-        input_sanitizers.append(
-            SanitizerRef(name=f"presidio:{sanitizer_language}")
-        )
+        input_sanitizers.append(SanitizerRef(name=f"presidio:{sanitizer_language}"))
     return AIPolicySpec(
         name="test_policy",
         workflow_pattern="*",
@@ -122,11 +115,7 @@ async def test_input_sanitizers_returns_empty_for_blank_prompt() -> None:
     """Пустой prompt не вызывает sanitizer и возвращается как есть."""
     sanitizer = _FakeSanitizer()
     gateway = AIGateway(sanitizer=sanitizer)
-    request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-    )
+    request = AIRequest(workflow_id="wf", tenant_id="t-1", correlation_id="req-1")
 
     result = await gateway._apply_input_sanitizers(request, policy=None)
 
@@ -176,10 +165,7 @@ async def test_input_sanitizers_handles_unexpected_exception_gracefully() -> Non
     sanitizer = _FakeSanitizer(raise_unexpected=True)
     gateway = AIGateway(sanitizer=sanitizer)
     request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-        prompt_inline="any",
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="any"
     )
 
     result = await gateway._apply_input_sanitizers(request, policy=None)
@@ -193,10 +179,7 @@ async def test_input_sanitizers_uses_language_from_policy() -> None:
     gateway = AIGateway(sanitizer=sanitizer)
     policy = _make_policy(sanitizer_language="en")
     request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-        prompt_inline="hello",
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="hello"
     )
 
     await gateway._apply_input_sanitizers(request, policy=policy)
@@ -303,9 +286,7 @@ async def test_audit_emit_uses_injected_service() -> None:
     audit.emit = AsyncMock()
     gateway = AIGateway(audit_service=audit)
     request = AIRequest(
-        workflow_id="credit_check",
-        tenant_id="t-premium",
-        correlation_id="req-xyz",
+        workflow_id="credit_check", tenant_id="t-premium", correlation_id="req-xyz"
     )
     response = AIResponse(
         content="ok",
@@ -348,11 +329,7 @@ async def test_audit_emit_includes_policy_name_and_extra_attrs() -> None:
     audit.emit = AsyncMock()
     gateway = AIGateway(audit_service=audit)
     policy = _make_policy(audit_extra={"compliance": "152-FZ", "domain": "credit"})
-    request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-    )
+    request = AIRequest(workflow_id="wf", tenant_id="t-1", correlation_id="req-1")
     response = AIResponse(content="ok")
 
     await gateway._audit_emit(request, policy=policy, response=response)
@@ -374,16 +351,10 @@ async def test_audit_emit_resolves_singleton_when_service_none(
 
     import src.backend.services.audit.audit_service as audit_module
 
-    monkeypatch.setattr(
-        audit_module, "get_unified_audit_service", lambda: fake_audit
-    )
+    monkeypatch.setattr(audit_module, "get_unified_audit_service", lambda: fake_audit)
 
     gateway = AIGateway(audit_service=None)
-    request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-    )
+    request = AIRequest(workflow_id="wf", tenant_id="t-1", correlation_id="req-1")
     response = AIResponse(content="ok")
 
     await gateway._audit_emit(request, policy=None, response=response)
@@ -403,11 +374,7 @@ async def test_audit_emit_swallows_singleton_lookup_error(
     monkeypatch.setattr(audit_module, "get_unified_audit_service", _boom)
 
     gateway = AIGateway(audit_service=None)
-    request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-    )
+    request = AIRequest(workflow_id="wf", tenant_id="t-1", correlation_id="req-1")
     response = AIResponse(content="ok")
 
     # не должно raise
@@ -420,11 +387,7 @@ async def test_audit_emit_swallows_emit_exception() -> None:
     audit = MagicMock()
     audit.emit = AsyncMock(side_effect=RuntimeError("CH down"))
     gateway = AIGateway(audit_service=audit)
-    request = AIRequest(
-        workflow_id="wf",
-        tenant_id="t-1",
-        correlation_id="req-1",
-    )
+    request = AIRequest(workflow_id="wf", tenant_id="t-1", correlation_id="req-1")
     response = AIResponse(content="ok")
 
     # не должно raise

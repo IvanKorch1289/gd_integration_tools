@@ -104,7 +104,7 @@ class LdapQueryProcessor(BaseProcessor):
         self._target = to
         self._use_ssl = use_ssl
 
-    def _apply_target(self, exchange: "Exchange[Any]", value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], value: Any) -> None:
         if self._target.startswith("body."):
             field = self._target[len("body.") :]
             body = exchange.in_message.body
@@ -150,16 +150,14 @@ class LdapQueryProcessor(BaseProcessor):
         finally:
             conn.unbind()
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_ldap_query:
                 exchange.set_property("ldap_query_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         # Primary path: ldap3 + asyncio.to_thread (стабильный wheel py3.14).
@@ -170,7 +168,7 @@ class LdapQueryProcessor(BaseProcessor):
         except ImportError:
             exchange.fail("ldap_query: ldap3 not available")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             exchange.fail(f"ldap_query error: {exc}")
             return
 

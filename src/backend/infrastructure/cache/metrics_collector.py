@@ -25,9 +25,9 @@ def _ensure_lru_metrics() -> None:
     """Lazy-initialize LRU metrics counters."""
     global _lru_snapshot
     try:
-        from src.backend.infrastructure.cache.lru_cache import (  # noqa: F401
-            _metric_hits,
-            _metric_misses,
+        from src.backend.infrastructure.cache.lru_cache import (
+            _metric_hits,  # noqa: F401
+            _metric_misses,  # noqa: F401
         )
 
         # These are prometheus counters - we can't easily read their values

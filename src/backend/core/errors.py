@@ -10,16 +10,16 @@ from typing import Any
 from starlette import status
 
 __all__ = (
-    "BaseError",
-    "BadRequestError",
-    "UnprocessableError",
-    "NotFoundError",
-    "DatabaseError",
     "AuthenticationError",
     "AuthorizationError",
-    "ServiceError",
+    "BadRequestError",
+    "BaseError",
+    "DatabaseError",
+    "NotFoundError",
     "RouteDisabledError",
+    "ServiceError",
     "TenantContextRequiredError",
+    "UnprocessableError",
 )
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.

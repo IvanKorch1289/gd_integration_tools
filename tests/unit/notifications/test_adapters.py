@@ -44,8 +44,7 @@ def test_telegram_adapter_conforms_to_protocol() -> None:
     )
 
     adapter = TelegramAdapter(
-        bot_token_provider=lambda: "123:abc",
-        upstream_name="telegram",
+        bot_token_provider=lambda: "123:abc", upstream_name="telegram"
     )
 
     assert adapter.kind == "telegram"

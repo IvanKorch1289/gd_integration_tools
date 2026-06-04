@@ -57,13 +57,23 @@ class TestSprint7FlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 13 mixins в MRO (после T1.3.15)
         for cls in (
-            "AuthFlags", "SecurityFlags", "ObservabilityFlags",
-            "NetFlags", "PluginsFlags", "WorkflowFlags",
-            "AIFlags", "DSLFlags", "ExperimentalFlags",
-            "ResilienceFlags", "BillingFlags",
-            "Sprint5Flags", "Sprint6Flags", "Sprint7Flags",
+            "AuthFlags",
+            "SecurityFlags",
+            "ObservabilityFlags",
+            "NetFlags",
+            "PluginsFlags",
+            "WorkflowFlags",
+            "AIFlags",
+            "DSLFlags",
+            "ExperimentalFlags",
+            "ResilienceFlags",
+            "BillingFlags",
+            "Sprint5Flags",
+            "Sprint6Flags",
+            "Sprint7Flags",
         ):
             assert cls in mro_names, f"{cls} missing в MRO"

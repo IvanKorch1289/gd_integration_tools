@@ -85,9 +85,7 @@ def fresh_registry() -> ProcessorRegistry:
 
 class TestProcessorRegistryBasics:
     def test_register_and_get_by_fqn(self, fresh_registry: ProcessorRegistry) -> None:
-        spec = ProcessorSpec(
-            name="dummy", namespace="test", cls=_DummyProcessor
-        )
+        spec = ProcessorSpec(name="dummy", namespace="test", cls=_DummyProcessor)
         fresh_registry.register(spec)
         assert fresh_registry.get("test:dummy") is spec
         assert "test:dummy" in fresh_registry
@@ -97,9 +95,7 @@ class TestProcessorRegistryBasics:
         with pytest.raises(ProcessorNotFoundError):
             fresh_registry.get("missing:processor")
 
-    def test_get_by_short_prefers_core(
-        self, fresh_registry: ProcessorRegistry
-    ) -> None:
+    def test_get_by_short_prefers_core(self, fresh_registry: ProcessorRegistry) -> None:
         core = ProcessorSpec(name="dummy", namespace="core", cls=_DummyProcessor)
         plugin = ProcessorSpec(name="dummy", namespace="plug", cls=_DummyProcessor)
         fresh_registry.register(core)
@@ -107,9 +103,7 @@ class TestProcessorRegistryBasics:
 
         # default prefer_namespace="core"
         assert fresh_registry.get_by_short("dummy") is core
-        assert (
-            fresh_registry.get_by_short("dummy", prefer_namespace="plug") is plugin
-        )
+        assert fresh_registry.get_by_short("dummy", prefer_namespace="plug") is plugin
 
     def test_list_by_namespace(self, fresh_registry: ProcessorRegistry) -> None:
         a = ProcessorSpec(name="x", namespace="ns1", cls=_DummyProcessor)
@@ -135,9 +129,7 @@ class TestProcessorRegistryConflict:
     def test_replaces_overrides_existing(
         self, fresh_registry: ProcessorRegistry
     ) -> None:
-        original = ProcessorSpec(
-            name="http", namespace="core", cls=_DummyProcessor
-        )
+        original = ProcessorSpec(name="http", namespace="core", cls=_DummyProcessor)
         fresh_registry.register(original)
 
         override = ProcessorSpec(
@@ -152,9 +144,7 @@ class TestProcessorRegistryConflict:
         assert fresh_registry.get("core:http") is override
         assert fresh_registry.get("core:http").meta["override_by"] == "test"
 
-    def test_replaces_unknown_raises(
-        self, fresh_registry: ProcessorRegistry
-    ) -> None:
+    def test_replaces_unknown_raises(self, fresh_registry: ProcessorRegistry) -> None:
         spec = ProcessorSpec(
             name="x", namespace="plug", cls=_DummyProcessor, replaces="core:nope"
         )
@@ -163,9 +153,7 @@ class TestProcessorRegistryConflict:
 
 
 class TestProcessorRegistryUnregister:
-    def test_unregister_removes_entry(
-        self, fresh_registry: ProcessorRegistry
-    ) -> None:
+    def test_unregister_removes_entry(self, fresh_registry: ProcessorRegistry) -> None:
         spec = ProcessorSpec(name="x", namespace="ns", cls=_DummyProcessor)
         fresh_registry.register(spec)
         assert "ns:x" in fresh_registry

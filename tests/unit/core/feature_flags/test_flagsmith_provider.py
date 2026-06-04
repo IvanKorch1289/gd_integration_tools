@@ -50,25 +50,19 @@ class TestProviderError:
 class TestIsExternalProviderEnabled:
     def test_flag_off(self) -> None:
         mock_flags = MagicMock(spec=[])
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert is_external_provider_enabled() is False
 
     def test_flag_on(self) -> None:
         mock_flags = MagicMock()
         mock_flags.openfeature_external = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert is_external_provider_enabled() is True
 
     def test_flag_off_explicitly(self) -> None:
         mock_flags = MagicMock()
         mock_flags.openfeature_external = False
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert is_external_provider_enabled() is False
 
     def test_exception_returns_false(self) -> None:
@@ -129,9 +123,7 @@ class TestResolveBoolean:
         """ProviderError на _get_client → default."""
         p = FlagsmithProvider(environment_key="k")
         with patch.object(p, "_enabled", return_value=True):
-            with patch.object(
-                p, "_get_client", side_effect=ProviderError("err")
-            ):
+            with patch.object(p, "_get_client", side_effect=ProviderError("err")):
                 with patch(
                     "src.backend.core.feature_flags.flagsmith_provider._logger"
                 ) as mock_logger:
@@ -168,9 +160,7 @@ class TestResolveString:
     async def test_provider_error(self) -> None:
         p = FlagsmithProvider(environment_key="k")
         with patch.object(p, "_enabled", return_value=True):
-            with patch.object(
-                p, "_get_client", side_effect=ProviderError("err")
-            ):
+            with patch.object(p, "_get_client", side_effect=ProviderError("err")):
                 result = await p.resolve_string_value("flag", default="d")
                 assert result == "d"
 
@@ -202,9 +192,7 @@ class TestResolveInteger:
     async def test_provider_error(self) -> None:
         p = FlagsmithProvider(environment_key="k")
         with patch.object(p, "_enabled", return_value=True):
-            with patch.object(
-                p, "_get_client", side_effect=ProviderError("err")
-            ):
+            with patch.object(p, "_get_client", side_effect=ProviderError("err")):
                 result = await p.resolve_integer_value("flag", default=42)
                 assert result == 42
 
@@ -236,12 +224,8 @@ class TestResolveObject:
     async def test_provider_error(self) -> None:
         p = FlagsmithProvider(environment_key="k")
         with patch.object(p, "_enabled", return_value=True):
-            with patch.object(
-                p, "_get_client", side_effect=ProviderError("err")
-            ):
-                result = await p.resolve_object_value(
-                    "flag", default={"x": 1}
-                )
+            with patch.object(p, "_get_client", side_effect=ProviderError("err")):
+                result = await p.resolve_object_value("flag", default={"x": 1})
                 assert result == {"x": 1}
 
     @pytest.mark.asyncio
@@ -249,9 +233,7 @@ class TestResolveObject:
         p = FlagsmithProvider(environment_key="k")
         with patch.object(p, "_enabled", return_value=True):
             with patch.object(p, "_get_client", return_value=MagicMock()):
-                result = await p.resolve_object_value(
-                    "flag", default={"x": 1}
-                )
+                result = await p.resolve_object_value("flag", default={"x": 1})
                 assert result == {"x": 1}
 
 
@@ -334,9 +316,7 @@ class TestGetClient:
             assert client is mock_http
             assert mock_make.called
             assert mock_make.call_args.kwargs["base_url"] == p.api_url
-            assert mock_make.call_args.kwargs["headers"] == {
-                "X-Environment-Key": "k"
-            }
+            assert mock_make.call_args.kwargs["headers"] == {"X-Environment-Key": "k"}
             assert mock_make.call_args.kwargs["plugin"] == (
                 "core/feature_flags/flagsmith_provider"
             )

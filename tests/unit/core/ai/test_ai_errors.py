@@ -45,9 +45,7 @@ class TestGuardrailViolationError:
         assert "blocked" in str(exc)
 
     def test_default_on_block_and_content(self) -> None:
-        exc = GuardrailViolationError(
-            guard_name="g1", flagged_categories=["spam"]
-        )
+        exc = GuardrailViolationError(guard_name="g1", flagged_categories=["spam"])
         assert exc.on_block == "fail"
         assert exc.content == ""
 
@@ -60,9 +58,7 @@ class TestAIWorkspaceError:
 
 class TestWorkspaceQuotaExceededError:
     def test_message(self) -> None:
-        exc = WorkspaceQuotaExceededError(
-            tenant="t1", used_bytes=100, quota_bytes=50
-        )
+        exc = WorkspaceQuotaExceededError(tenant="t1", used_bytes=100, quota_bytes=50)
         assert exc.tenant == "t1"
         assert exc.used_bytes == 100
         assert exc.quota_bytes == 50

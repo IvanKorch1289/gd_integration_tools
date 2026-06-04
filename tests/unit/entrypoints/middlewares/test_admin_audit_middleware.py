@@ -61,7 +61,9 @@ def test_patch_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) ->
     )
     app = _make_app_with_ctx(ctx)
     client = TestClient(app)
-    r = client.patch("/tech/degradation/level", json={"mode": "READ_ONLY", "reason": "test"})
+    r = client.patch(
+        "/tech/degradation/level", json={"mode": "READ_ONLY", "reason": "test"}
+    )
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]
     assert records, "ожидаем хотя бы одну запись в audit_log.admin"
@@ -75,7 +77,9 @@ def test_patch_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) ->
     assert rec.correlation_id == "corr-123"
 
 
-def test_get_admin_path_does_not_emit_audit(caplog_audit: pytest.LogCaptureFixture) -> None:
+def test_get_admin_path_does_not_emit_audit(
+    caplog_audit: pytest.LogCaptureFixture,
+) -> None:
     ctx = AuthContext(
         method=AuthMethod.JWT,
         principal="admin-1",
@@ -108,11 +112,7 @@ def test_post_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) -> 
 
 
 def test_non_admin_path_skipped(caplog_audit: pytest.LogCaptureFixture) -> None:
-    ctx = AuthContext(
-        method=AuthMethod.JWT,
-        principal="user",
-        metadata={},
-    )
+    ctx = AuthContext(method=AuthMethod.JWT, principal="user", metadata={})
     app = _make_app_with_ctx(ctx)
     client = TestClient(app)
     r = client.get("/api/v1/users")
@@ -121,7 +121,9 @@ def test_non_admin_path_skipped(caplog_audit: pytest.LogCaptureFixture) -> None:
     assert not records
 
 
-def test_anonymous_principal_when_ctx_absent(caplog_audit: pytest.LogCaptureFixture) -> None:
+def test_anonymous_principal_when_ctx_absent(
+    caplog_audit: pytest.LogCaptureFixture,
+) -> None:
     app = _make_app_with_ctx(None)
     client = TestClient(app)
     r = client.patch("/tech/degradation/level", json={"mode": "FULL"})

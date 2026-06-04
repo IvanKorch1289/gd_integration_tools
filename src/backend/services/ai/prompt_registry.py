@@ -24,7 +24,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ("PromptRegistry", "get_prompt_registry", "PromptVersion")
+__all__ = ("PromptRegistry", "PromptVersion", "get_prompt_registry")
 
 logger = logging.getLogger("services.prompts")
 

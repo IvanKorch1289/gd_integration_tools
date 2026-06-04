@@ -97,10 +97,16 @@ def test_fallback_counter_increments_on_import_error(
     adapter = PresidioSanitizerAdapter()
     # Эмулируем отсутствие presidio через monkeypatch builtins.__import__
     # (раздел try ... import presidio_analyzer в _ensure_initialized).
-    real_import = __builtins__["__import__"] if isinstance(__builtins__, dict) else __builtins__.__import__
+    real_import = (
+        __builtins__["__import__"]
+        if isinstance(__builtins__, dict)
+        else __builtins__.__import__
+    )
 
     def _fake_import(name: str, *args: object, **kwargs: object) -> object:
-        if name.startswith("presidio_analyzer") or name.startswith("presidio_anonymizer"):
+        if name.startswith("presidio_analyzer") or name.startswith(
+            "presidio_anonymizer"
+        ):
             raise ImportError(f"эмуляция отсутствия пакета: {name}")
         return real_import(name, *args, **kwargs)
 
@@ -131,9 +137,7 @@ def test_real_counter_emit_works() -> None:
     _record_presidio_fallback(reason="smoke")  # повторный вызов — counter уже создан.
 
 
-def test_ai_agent_uses_presidio_when_flag_on(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ai_agent_uses_presidio_when_flag_on(monkeypatch: pytest.MonkeyPatch) -> None:
     """AIAgentService при включённом флаге резолвит PresidioSanitizerAdapter в __init__.
 
     Это smoke-тест enforcement цепочки prod.yml → feature_flag → DI provider →

@@ -72,6 +72,7 @@ class TestSprints2427FlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 21 mixins в MRO (после T1.3.21 sprints_24_27)
         assert "Sprints2427Flags" in mro_names, "Sprints2427Flags missing в MRO"

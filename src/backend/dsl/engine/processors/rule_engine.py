@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 
-__all__ = ("Rule", "EvaluateRulesParams", "EvaluateRulesProcessor")
+__all__ = ("EvaluateRulesParams", "EvaluateRulesProcessor", "Rule")
 
 
 class Rule(BaseModel):
@@ -120,7 +120,7 @@ class EvaluateRulesProcessor(BaseProcessor):
                 if bool(evaluator.eval(rule.expr)):
                     matched = rule
                     break
-            except Exception as _:  # noqa: BLE001 — best-effort skip плохого правила
+            except Exception as _:
                 continue
 
         decision = matched.decision if matched else self.params.default_decision

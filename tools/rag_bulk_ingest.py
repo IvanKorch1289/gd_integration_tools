@@ -35,9 +35,7 @@ def _iter_files(root: Path, suffixes: set[str]) -> list[Path]:
 
 async def _build_service() -> object:
     """Поднимает ``RagIngestService`` без HTTP-app."""
-    from src.backend.infrastructure.clients.storage.vector_store import (
-        get_vector_store,
-    )
+    from src.backend.infrastructure.clients.storage.vector_store import get_vector_store
     from src.backend.services.ai.rag_ingest_service import RagIngestService
     from src.backend.services.ai.rag_service import RAGService
 
@@ -83,10 +81,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--dir", required=True, type=Path, help="Каталог с файлами.")
     parser.add_argument("--collection", default="default", help="Namespace RAG.")
     parser.add_argument(
-        "--workers",
-        default=4,
-        type=int,
-        help="Параллелизм (default 4).",
+        "--workers", default=4, type=int, help="Параллелизм (default 4)."
     )
     parser.add_argument(
         "--dry-run",
@@ -99,9 +94,7 @@ def _parse_args() -> argparse.Namespace:
         help="Список расширений через запятую.",
     )
     parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
     )
     return parser.parse_args()
 

@@ -18,8 +18,9 @@ DSL-маршрут (``DslService.dispatch(route_id=...)``).
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 __all__ = ("BridgeResult", "dispatch_action_or_dsl", "is_dispatcher_enabled_for")
 
@@ -186,7 +187,7 @@ async def _dispatch_dsl(
             via="missing",
             error_code="action_not_found",
         )
-    except Exception as exc:  # noqa: BLE001 — мост маппит в envelope.
+    except Exception as exc:
         return BridgeResult(
             success=False,
             error=str(exc) or exc.__class__.__name__,

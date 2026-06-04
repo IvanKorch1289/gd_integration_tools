@@ -70,7 +70,7 @@ class GrpcSink(Sink):
                 )
             finally:
                 await channel.close()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
@@ -101,6 +101,6 @@ class GrpcSink(Sink):
                 await channel.channel_ready()
             finally:
                 await channel.close()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
         return True

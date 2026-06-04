@@ -52,10 +52,7 @@ def test_payments_saga_compensate_chain_has_two_steps() -> None:
     saga = build_payments_saga_workflow().steps[0]
     assert isinstance(saga, SagaDeclaration)
     compensate_names = [step.name for step in saga.compensate]
-    assert compensate_names == [
-        "payments.void_authorization",
-        "payments.void_capture",
-    ]
+    assert compensate_names == ["payments.void_authorization", "payments.void_capture"]
 
 
 def test_payments_saga_forward_longer_than_compensate() -> None:

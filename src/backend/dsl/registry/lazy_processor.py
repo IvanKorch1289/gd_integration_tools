@@ -72,8 +72,7 @@ def load_processor_class(module_path: str) -> type:
     if not module_name or not attr:
         raise ImportError(f"module_path must be 'module:attr', got {module_path!r}")
     module = importlib.import_module(module_name)
-    cls = getattr(module, attr)
-    return cls
+    return getattr(module, attr)
 
 
 class LazyProcessorRegistry:
@@ -174,7 +173,7 @@ class LazyProcessorRegistry:
             try:
                 self.resolve(ref.fqn)
                 count += 1
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.exception(
                     "lazy_processor.resolve_failed",
                     extra={"fqn": ref.fqn, "module_path": ref.module_path},

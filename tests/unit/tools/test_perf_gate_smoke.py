@@ -84,9 +84,7 @@ def _import_perf_gate():
     """Подгрузить tools/perf_gate.py через importlib (для теста)."""
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location(
-        "_perf_gate_test", PERF_GATE_PATH
-    )
+    spec = importlib.util.spec_from_file_location("_perf_gate_test", PERF_GATE_PATH)
     if spec is None or spec.loader is None:  # pragma: no cover
         raise ImportError("Не удалось загрузить perf_gate.py")
     module = importlib.util.module_from_spec(spec)

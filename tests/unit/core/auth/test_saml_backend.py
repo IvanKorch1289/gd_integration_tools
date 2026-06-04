@@ -44,9 +44,7 @@ def _backend(*, now: list[float] | None = None) -> SamlBackend:
 
     nonces = iter(["req-1", "req-2", "req-3"])
     return SamlBackend(
-        config=_config(),
-        clock=clock,
-        nonce_factory=lambda: next(nonces),
+        config=_config(), clock=clock, nonce_factory=lambda: next(nonces)
     )
 
 
@@ -68,9 +66,7 @@ def test_process_response_validates_request_id() -> None:
         attributes={"email": "alice@example.com"},
         session_index="sess-1",
     )
-    result = backend.process_saml_response(
-        request_id=rid, validator=lambda: expected
-    )
+    result = backend.process_saml_response(request_id=rid, validator=lambda: expected)
     assert result == expected
 
 

@@ -33,22 +33,22 @@ if TYPE_CHECKING:
     from src.backend.core.interfaces.watermark_store import WatermarkStore
 
 __all__ = (
-    "get_reply_registry",
-    "get_reply_registry_ws",
     "get_invoker_dep",
-    "get_reply_registry_singleton",
     "get_invoker_singleton",
-    "get_watermark_store_singleton",
+    "get_reply_registry",
+    "get_reply_registry_singleton",
+    "get_reply_registry_ws",
     "get_watermark_store_optional",
+    "get_watermark_store_singleton",
 )
 
 
-async def get_reply_registry(request: "Request") -> "ReplyChannelRegistryProtocol":
+async def get_reply_registry(request: Request) -> ReplyChannelRegistryProtocol:
     """FastAPI Depends: возвращает registry из ``request.app.state``."""
     return request.app.state.reply_registry
 
 
-def get_reply_registry_ws(websocket: "WebSocket") -> "ReplyChannelRegistryProtocol":
+def get_reply_registry_ws(websocket: WebSocket) -> ReplyChannelRegistryProtocol:
     """WebSocket-эквивалент: registry из ``websocket.app.state``.
 
     FastAPI Depends ограниченно поддерживается в WebSocket-роутах,
@@ -57,13 +57,13 @@ def get_reply_registry_ws(websocket: "WebSocket") -> "ReplyChannelRegistryProtoc
     return websocket.app.state.reply_registry
 
 
-async def get_invoker_dep(request: "Request") -> "InvokerProtocol":
+async def get_invoker_dep(request: Request) -> InvokerProtocol:
     """FastAPI Depends: возвращает :class:`Invoker` из ``request.app.state``."""
     return request.app.state.invoker
 
 
 @app_state_singleton("reply_registry")
-def get_reply_registry_singleton() -> "ReplyChannelRegistryProtocol":
+def get_reply_registry_singleton() -> ReplyChannelRegistryProtocol:
     """Singleton-аксессор для non-request контекстов (DSL processors, scripts).
 
     Lazy-резолв из ``app.state.reply_registry``. Если registry ещё не
@@ -77,7 +77,7 @@ def get_reply_registry_singleton() -> "ReplyChannelRegistryProtocol":
 
 
 @app_state_singleton("invoker")
-def get_invoker_singleton() -> "InvokerProtocol":
+def get_invoker_singleton() -> InvokerProtocol:
     """Singleton-аксессор :class:`Invoker` для non-request контекстов.
 
     Lazy-резолв из ``app.state.invoker``. Factory здесь не задаётся:
@@ -89,7 +89,7 @@ def get_invoker_singleton() -> "InvokerProtocol":
 
 
 @app_state_singleton("watermark_store")
-def get_watermark_store_singleton() -> "WatermarkStore":
+def get_watermark_store_singleton() -> WatermarkStore:
     """Singleton-аксессор :class:`WatermarkStore` (W14.5).
 
     Lazy-резолв из ``app.state.watermark_store``. Factory не задаётся,
@@ -102,7 +102,7 @@ def get_watermark_store_singleton() -> "WatermarkStore":
     )
 
 
-def get_watermark_store_optional() -> "WatermarkStore | None":
+def get_watermark_store_optional() -> WatermarkStore | None:
     """Безопасный аксессор: возвращает ``None`` без зарегистрированного store.
 
     Используется в DSL-builder и unit-тестах, где app.state может быть не

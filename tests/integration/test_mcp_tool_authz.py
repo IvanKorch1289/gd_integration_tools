@@ -22,9 +22,7 @@ def test_authz_passthrough_when_disabled(monkeypatch: pytest.MonkeyPatch) -> Non
     from src.backend.core.config import ai_2026
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_authz_enabled", False, raising=True
-    )
+    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", False, raising=True)
     assert _check_mcp_tool_authz("custom.action") is None
     assert _check_mcp_tool_authz("admin.purge") is None
 
@@ -36,9 +34,7 @@ def test_authz_deny_when_enabled_and_not_in_allowlist(
     from src.backend.core.config import ai_2026
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True
-    )
+    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(ai_2026.mcp_settings, "tool_allowlist", [], raising=True)
     monkeypatch.setattr(
         ai_2026.mcp_settings,
@@ -61,9 +57,7 @@ def test_authz_allow_when_in_explicit_allowlist(
     from src.backend.core.config import ai_2026
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True
-    )
+    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(
         ai_2026.mcp_settings,
         "tool_allowlist",
@@ -79,16 +73,12 @@ def test_authz_allow_when_in_explicit_allowlist(
     assert _check_mcp_tool_authz("other.action") == "not_in_allowlist_or_public_ns"
 
 
-def test_authz_allow_when_namespace_is_public(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_authz_allow_when_namespace_is_public(monkeypatch: pytest.MonkeyPatch) -> None:
     """action в public namespace → allow."""
     from src.backend.core.config import ai_2026
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True
-    )
+    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(ai_2026.mcp_settings, "tool_allowlist", [], raising=True)
     monkeypatch.setattr(
         ai_2026.mcp_settings,
@@ -110,9 +100,7 @@ def test_authz_handles_action_without_namespace(
     from src.backend.core.config import ai_2026
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True
-    )
+    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(
         ai_2026.mcp_settings, "tool_allowlist", ["legacy_action"], raising=True
     )

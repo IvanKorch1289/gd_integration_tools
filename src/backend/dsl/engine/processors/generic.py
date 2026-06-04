@@ -10,20 +10,21 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 __all__ = (
-    "ShadowModeProcessor",
-    "BulkheadProcessor",
-    "LineageTrackerProcessor",
-    "SseSourceProcessor",
-    "SchemaValidateProcessor",
     "AbTestRouterProcessor",
+    "BulkheadProcessor",
     "FeatureFlagGuardProcessor",
+    "LineageTrackerProcessor",
+    "SchemaValidateProcessor",
+    "ShadowModeProcessor",
+    "SseSourceProcessor",
 )
 
 logger = logging.getLogger("dsl.generic")
@@ -61,7 +62,7 @@ class BulkheadProcessor(BaseProcessor):
     Реализован через asyncio.Semaphore — общий на имя bulkhead'а.
     """
 
-    _semaphores: dict[str, asyncio.Semaphore] = {}
+    _semaphores: ClassVar[dict[str, asyncio.Semaphore]] = {}
 
     def __init__(
         self,
@@ -245,7 +246,7 @@ class FeatureFlagGuardProcessor(BaseProcessor):
         if self._resolver:
             try:
                 enabled = bool(self._resolver(self.flag))
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.warning("feature flag resolver failed for %s", self.flag)
         else:
             flags = exchange.get_property("_feature_flags") or {}

@@ -29,12 +29,12 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 __all__ = (
-    "RuntimeFeatureFlagOverrides",
     "FeatureFlagChange",
+    "RuntimeFeatureFlagOverrides",
     "get_runtime_overrides",
     "reset_runtime_overrides",
 )
@@ -60,7 +60,7 @@ class FeatureFlagChange:
     old_value: Any
     new_value: Any
     actor: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class RuntimeFeatureFlagOverrides:
@@ -74,7 +74,7 @@ class RuntimeFeatureFlagOverrides:
         per-tenant override > global override > static registry (default).
     """
 
-    __slots__ = ("_global", "_per_tenant", "_lock")
+    __slots__ = ("_global", "_lock", "_per_tenant")
 
     def __init__(self) -> None:
         self._global: dict[str, Any] = {}

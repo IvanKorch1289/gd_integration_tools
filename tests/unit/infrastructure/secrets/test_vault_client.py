@@ -23,13 +23,10 @@ class TestVaultClient:
     @pytest.fixture
     def mock_hvac_response(self) -> MagicMock:
         """Create a mock hvac response with given version and data."""
+
         def _make_response(version: int, data: dict[str, Any]) -> dict[str, Any]:
-            return {
-                "data": {
-                    "metadata": {"version": version},
-                    "data": data,
-                }
-            }
+            return {"data": {"metadata": {"version": version}, "data": data}}
+
         return MagicMock()
 
     @pytest.fixture
@@ -39,6 +36,7 @@ class TestVaultClient:
             VaultClient,
             VaultClientConfig,
         )
+
         config = VaultClientConfig(
             drift_tolerance_seconds=300.0,
             reconnect_base_delay=1.0,
@@ -108,10 +106,7 @@ class TestVaultClient:
         rotator.register("secret/data/db/password", callback)
 
         mock_response = {
-            "data": {
-                "metadata": {"version": 1},
-                "data": {"password": "secret-v1"},
-            }
+            "data": {"metadata": {"version": 1}, "data": {"password": "secret-v1"}}
         }
 
         mock_client = MagicMock()
@@ -141,10 +136,7 @@ class TestVaultClient:
 
         # New version response
         mock_response = {
-            "data": {
-                "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
-            }
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
         }
 
         mock_client = MagicMock()
@@ -180,10 +172,7 @@ class TestVaultClient:
 
         # New version response
         mock_response = {
-            "data": {
-                "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
-            }
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
         }
 
         mock_client = MagicMock()
@@ -221,10 +210,7 @@ class TestVaultClient:
 
         # New version response
         mock_response = {
-            "data": {
-                "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
-            }
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
         }
 
         mock_client = MagicMock()
@@ -263,10 +249,7 @@ class TestVaultClient:
 
         # New version response
         mock_response = {
-            "data": {
-                "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
-            }
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
         }
 
         mock_client = MagicMock()
@@ -305,10 +288,7 @@ class TestVaultClient:
 
         # New version response
         mock_response = {
-            "data": {
-                "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
-            }
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
         }
 
         mock_client = MagicMock()

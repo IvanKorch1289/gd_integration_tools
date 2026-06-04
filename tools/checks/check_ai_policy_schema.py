@@ -81,7 +81,9 @@ def main() -> int:
         schema = AIPolicySpec.model_json_schema()
         out_path = Path(args.emit_schema)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(schema, indent=2, ensure_ascii=False), encoding="utf-8")
+        out_path.write_text(
+            json.dumps(schema, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         print(f"✓ JSON-Schema экспортирован: {out_path}")
         return 0
 
@@ -108,7 +110,9 @@ def main() -> int:
             failed.append((path, msg))
 
     if failed:
-        print(f"\n✗ check_ai_policy_schema: {len(failed)} файл(а/ов) не прошли валидацию")
+        print(
+            f"\n✗ check_ai_policy_schema: {len(failed)} файл(а/ов) не прошли валидацию"
+        )
         return 1
     print(f"\n✓ check_ai_policy_schema: {len(yaml_files)} файл(а/ов) валидны")
     return 0

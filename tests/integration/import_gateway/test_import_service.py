@@ -141,13 +141,11 @@ async def test_import_service_orphan_cleanup_after_endpoint_removal() -> None:
     # Второй импорт — модифицированный spec без createPet
     modified = (FIXTURES / "openapi" / "petstore_minimal.yaml").read_text()
     modified = modified.replace(
-        "    post:\n      operationId: createPet\n      summary: Create pet\n      requestBody:\n        required: true\n        content:\n          application/json:\n            schema:\n              $ref: \"#/components/schemas/Pet\"\n      responses:\n        \"201\":\n          description: Created\n",
+        '    post:\n      operationId: createPet\n      summary: Create pet\n      requestBody:\n        required: true\n        content:\n          application/json:\n            schema:\n              $ref: "#/components/schemas/Pet"\n      responses:\n        "201":\n          description: Created\n',
         "",
     )
     src_v2 = ImportSource(
-        kind=ImportSourceKind.OPENAPI,
-        content=modified.encode(),
-        prefix="petstore",
+        kind=ImportSourceKind.OPENAPI, content=modified.encode(), prefix="petstore"
     )
     result = await svc.import_and_register(src_v2, force=True, register_actions=False)
     assert "petstore.createPet" in result["removed_orphans"]

@@ -68,7 +68,7 @@ class CapabilitySupersetError(CapabilityError):
     V11.1a: ``route.capabilities ⊆ union(plugin.capabilities) ∪ core_public``.
     """
 
-    def __init__(self, *, route: str, offending: tuple["CapabilityRef", ...]) -> None:
+    def __init__(self, *, route: str, offending: tuple[CapabilityRef, ...]) -> None:
         self.route = route
         self.offending = offending
         names = ", ".join(f"{c.name}({c.scope!r})" for c in offending)

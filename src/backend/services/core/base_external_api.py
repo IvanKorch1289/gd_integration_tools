@@ -83,20 +83,20 @@ class BaseExternalAPIClient:
             return self._outbound_http_client
         try:
             from src.backend.core.config.waf import waf_settings
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
         if not getattr(waf_settings, "outbound_via_facade", False):
             return None
         try:
             from src.backend.core.net.outbound_http import OutboundHttpClient
             from src.backend.core.svcs_registry import get_service, has_service
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
         if not has_service(OutboundHttpClient):
             return None
         try:
             return get_service(OutboundHttpClient)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return None
 
     def _url(self, endpoint_key: str) -> str:
@@ -166,7 +166,7 @@ class BaseExternalAPIClient:
                 total = get_adaptive_timeout_policy().get_timeout(
                     host, endpoint, default_seconds=total
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug(
                     "BaseExternalAPIClient: adaptive timeout policy lookup failed: %s",
                     exc,
@@ -190,7 +190,7 @@ class BaseExternalAPIClient:
             )
 
             get_adaptive_timeout_policy().record_latency(host, endpoint, latency_ms)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("BaseExternalAPIClient: record latency failed: %s", exc)
 
     async def _request(

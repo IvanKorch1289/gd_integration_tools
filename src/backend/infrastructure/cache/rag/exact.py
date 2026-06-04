@@ -49,7 +49,7 @@ class L1ExactCache:
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._key(query, tenant=tenant))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L1 cache get failed: %s", exc)
             record_miss("l1")
             return None
@@ -59,7 +59,7 @@ class L1ExactCache:
         record_hit("l1")
         try:
             return orjson.loads(raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L1 cache decode failed: %s", exc)
             return None
 
@@ -69,14 +69,14 @@ class L1ExactCache:
             await client.cache_set(
                 self._key(query, tenant=tenant), orjson.dumps(value), self._ttl
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L1 cache set failed: %s", exc)
 
     async def invalidate(self, query: str, *, tenant: str | None = None) -> None:
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, tenant=tenant))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L1 cache invalidate failed: %s", exc)
 
     async def flush(self) -> int:
@@ -92,6 +92,6 @@ class L1ExactCache:
                 return deleted
 
             return int(await client.execute("cache", _scan_and_unlink))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("L1 cache flush failed: %s", exc)
             return 0

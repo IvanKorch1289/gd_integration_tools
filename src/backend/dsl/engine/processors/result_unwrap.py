@@ -82,7 +82,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         self._target_err = to_err
         self._on_err = on_err
 
-    def _resolve_source(self, exchange: "Exchange[Any]") -> Any:
+    def _resolve_source(self, exchange: Exchange[Any]) -> Any:
         body = exchange.in_message.body
         if self._source == "body":
             return body
@@ -94,7 +94,7 @@ class ResultUnwrapProcessor(BaseProcessor):
             return exchange.properties.get(field)
         return None
 
-    def _apply_target(self, exchange: "Exchange[Any]", target: str, value: Any) -> None:
+    def _apply_target(self, exchange: Exchange[Any], target: str, value: Any) -> None:
         if target.startswith("body."):
             field = target[len("body.") :]
             body = exchange.in_message.body
@@ -109,16 +109,14 @@ class ResultUnwrapProcessor(BaseProcessor):
             return
         exchange.set_property(target, value)
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.result_unwrap_processor:
                 exchange.set_property("result_unwrap_status", "skipped")
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         # Lazy-import result library (extra)

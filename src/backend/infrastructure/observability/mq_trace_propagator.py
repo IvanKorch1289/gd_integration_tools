@@ -48,7 +48,7 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-__all__ = ("inject_into_headers", "extract_from_headers")
+__all__ = ("extract_from_headers", "inject_into_headers")
 
 _logger = logging.getLogger(__name__)
 
@@ -74,13 +74,13 @@ def inject_into_headers(headers: dict[str, str]) -> None:
           (no-op behaviour).
     """
     try:
-        from opentelemetry.propagate import inject  # noqa: PLC0415
+        from opentelemetry.propagate import inject
     except ImportError:
         _logger.debug("OTel propagate unavailable — skip traceparent inject")
         return
     try:
         inject(headers)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("mq_trace_propagator inject failed: %s", exc)
 
 
@@ -100,13 +100,13 @@ def extract_from_headers(headers: Mapping[str, Any]) -> Any:
         No-op fallback (empty context) при отсутствии OTel или ошибке.
     """
     try:
-        from opentelemetry.propagate import extract  # noqa: PLC0415
+        from opentelemetry.propagate import extract
     except ImportError:
         _logger.debug("OTel propagate unavailable — return empty context")
         return None
     try:
         normalized = {k.lower(): _bytes_to_str(v) for k, v in headers.items()}
         return extract(normalized)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("mq_trace_propagator extract failed: %s", exc)
         return None

@@ -14,7 +14,9 @@ from src.backend.services.ai.embeddings.migration_runner import (
 
 
 @pytest.mark.asyncio
-async def test_router_returns_v1_when_feature_off(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_router_returns_v1_when_feature_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Без feature-flag роутер всегда возвращает v1."""
     from src.backend.core.config import features
 
@@ -28,7 +30,9 @@ async def test_router_returns_v1_when_feature_off(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_router_returns_v2_when_traffic_100(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_router_returns_v2_when_traffic_100(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """traffic=100 → весь трафик на v2."""
     from src.backend.core.config import features
 

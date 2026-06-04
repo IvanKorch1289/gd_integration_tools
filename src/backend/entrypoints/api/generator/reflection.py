@@ -10,14 +10,14 @@ from src.backend.entrypoints.api.generator.invocation import InvocationSpec
 from src.backend.schemas.invocation import InvokeMode
 
 __all__ = (
-    "build_model_parameters",
+    "body_parameter",
     "build_invocation_parameters",
-    "request_parameter",
+    "build_model_parameters",
+    "make_signature",
     "path_parameter",
     "query_parameter",
+    "request_parameter",
     "required_query_parameter",
-    "body_parameter",
-    "make_signature",
 )
 
 

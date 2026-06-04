@@ -30,10 +30,7 @@ def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
 _AVRO_SCHEMA: dict = {
     "type": "record",
     "name": "Order",
-    "fields": [
-        {"name": "id", "type": "long"},
-        {"name": "amount", "type": "double"},
-    ],
+    "fields": [{"name": "id", "type": "long"}, {"name": "amount", "type": "double"}],
 }
 
 

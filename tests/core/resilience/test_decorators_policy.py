@@ -24,6 +24,7 @@ class TestPolicyDecorator:
 
         # Cleanup registry
         from src.backend.core.resilience.breaker import get_breaker_registry
+
         reg = get_breaker_registry()
         if "test_spec" in reg._breakers:
             del reg._breakers["test_spec"]
@@ -42,6 +43,7 @@ class TestPolicyDecorator:
 
         # Cleanup
         from src.backend.core.resilience.breaker import get_breaker_registry
+
         reg = get_breaker_registry()
         if "my_breaker_name" in reg._breakers:
             del reg._breakers["my_breaker_name"]

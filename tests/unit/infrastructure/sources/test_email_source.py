@@ -117,9 +117,7 @@ async def test_email_trigger_stops_when_no_match() -> None:
 
 @pytest.mark.asyncio
 async def test_email_trigger_does_not_propagate_when_disabled() -> None:
-    proc = EmailTriggerProcessor(
-        subject_pattern="INVOICE", propagate_metadata=False
-    )
+    proc = EmailTriggerProcessor(subject_pattern="INVOICE", propagate_metadata=False)
     exchange = _exchange({"subject": "INVOICE-42", "from": "a@b"})
     context = ExecutionContext(route_id="r")
     await proc.process(exchange, context)

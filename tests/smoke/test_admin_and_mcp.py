@@ -12,7 +12,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.backend.entrypoints.api.v1.endpoints.admin_schemas import router as schemas_router
+from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
+    router as schemas_router,
+)
 from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
     router as admin_capabilities_router,
 )

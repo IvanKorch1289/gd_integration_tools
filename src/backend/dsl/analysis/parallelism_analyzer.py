@@ -105,7 +105,7 @@ class ParallelismAnalyzer:
         """
         produces: dict[str, str] = {}
         consumes: dict[str, set[str]] = {sid: set() for sid in step_ids}
-        for step, sid in zip(steps, step_ids):
+        for step, sid in zip(steps, step_ids, strict=False):
             # consumes: ищем references в string значениях step.
             for value in self._iter_values(step):
                 for ref in self._extract_refs(value):
@@ -179,7 +179,7 @@ class ParallelismAnalyzer:
         # Простейшая эвристика: путь через шаги с максимальным in-degree.
         if not deps:
             return list(step_ids)
-        in_degree: dict[str, int] = {sid: 0 for sid in step_ids}
+        in_degree: dict[str, int] = dict.fromkeys(step_ids, 0)
         for d in deps:
             in_degree[d.to_step] += 1
         return [sid for sid in step_ids if in_degree[sid] > 0] or list(step_ids)
@@ -198,7 +198,7 @@ class ParallelismAnalyzer:
     def _build_hints(self, groups: list[list[str]], step_ids: list[str]) -> list[Hint]:
         hints: list[Hint] = []
         # LR-PAR-001: если есть group размером >1 — можно использовать .parallel.
-        for level_idx, group in enumerate(groups):
+        for _level_idx, group in enumerate(groups):
             if len(group) > 1:
                 hints.append(
                     Hint(

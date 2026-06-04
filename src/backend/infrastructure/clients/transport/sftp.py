@@ -97,18 +97,18 @@ class SftpClient(BaseSftpClient):
         """
         import asyncssh
 
-        async with asyncssh.connect(
-            self.host,
-            port=self.port,
-            username=self.username,
-            password=self.password,
-            known_hosts=_resolve_known_hosts(),
-        ) as conn:
-            async with conn.start_sftp_client() as sftp:
-                await sftp.put(local_path, remote_path)
-                logger.info(
-                    "SFTP upload: %s → %s:%s", local_path, self.host, remote_path
-                )
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            await sftp.put(local_path, remote_path)
+            logger.info("SFTP upload: %s → %s:%s", local_path, self.host, remote_path)
 
     async def download(self, remote_path: str, local_path: str) -> None:
         """Скачивает файл с SFTP-сервера.
@@ -119,18 +119,18 @@ class SftpClient(BaseSftpClient):
         """
         import asyncssh
 
-        async with asyncssh.connect(
-            self.host,
-            port=self.port,
-            username=self.username,
-            password=self.password,
-            known_hosts=_resolve_known_hosts(),
-        ) as conn:
-            async with conn.start_sftp_client() as sftp:
-                await sftp.get(remote_path, local_path)
-                logger.info(
-                    "SFTP download: %s:%s → %s", self.host, remote_path, local_path
-                )
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            await sftp.get(remote_path, local_path)
+            logger.info("SFTP download: %s:%s → %s", self.host, remote_path, local_path)
 
     async def list_dir(self, remote_path: str = ".") -> list[dict[str, Any]]:
         """Возвращает список файлов в директории.
@@ -143,26 +143,28 @@ class SftpClient(BaseSftpClient):
         """
         import asyncssh
 
-        async with asyncssh.connect(
-            self.host,
-            port=self.port,
-            username=self.username,
-            password=self.password,
-            known_hosts=_resolve_known_hosts(),
-        ) as conn:
-            async with conn.start_sftp_client() as sftp:
-                entries = await sftp.readdir(remote_path)
-                return [
-                    {
-                        "filename": entry.filename,
-                        "size": entry.attrs.size if entry.attrs else None,
-                        "modified": str(entry.attrs.mtime)
-                        if entry.attrs and entry.attrs.mtime
-                        else None,
-                    }
-                    for entry in entries
-                    if entry.filename not in (".", "..")
-                ]
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            entries = await sftp.readdir(remote_path)
+            return [
+                {
+                    "filename": entry.filename,
+                    "size": entry.attrs.size if entry.attrs else None,
+                    "modified": str(entry.attrs.mtime)
+                    if entry.attrs and entry.attrs.mtime
+                    else None,
+                }
+                for entry in entries
+                if entry.filename not in (".", "..")
+            ]
 
     async def download_bytes(self, remote_path: str) -> bytes:
         """Скачивает файл как bytes.
@@ -175,16 +177,18 @@ class SftpClient(BaseSftpClient):
         """
         import asyncssh
 
-        async with asyncssh.connect(
-            self.host,
-            port=self.port,
-            username=self.username,
-            password=self.password,
-            known_hosts=_resolve_known_hosts(),
-        ) as conn:
-            async with conn.start_sftp_client() as sftp:
-                async with sftp.open(remote_path, "rb") as f:
-                    return await f.read()
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+            sftp.open(remote_path, "rb") as f,
+        ):
+            return await f.read()
 
 
 def get_sftp_client(

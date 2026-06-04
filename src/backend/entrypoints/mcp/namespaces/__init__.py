@@ -14,10 +14,10 @@ Namespace-группировка позволяет:
 from __future__ import annotations
 
 __all__ = (
-    "CREDIT_NAMESPACE",
-    "ANALYTICS_NAMESPACE",
-    "SYSTEM_NAMESPACE",
     "AI_NAMESPACE",
+    "ANALYTICS_NAMESPACE",
+    "CREDIT_NAMESPACE",
+    "SYSTEM_NAMESPACE",
     "MCPNamespace",
     "get_namespace_for_action",
     "list_namespaces",

@@ -19,10 +19,11 @@ State machine:
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncIterator, Final
+from typing import TYPE_CHECKING, Final
 
-from src.backend.core.resilience.breaker import BreakerSpec, breaker_registry
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.resilience.breaker import CircuitOpen as CircuitOpen
 
 if TYPE_CHECKING:
@@ -49,7 +50,7 @@ class ClientCircuitBreaker:
     ) -> None:
         self.name = name
         self.host = host
-        self._breaker = breaker_registry.get_or_create(
+        self._breaker = get_breaker_registry().get_or_create(
             f"{name}@{host}",
             BreakerSpec(
                 failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
@@ -59,8 +60,8 @@ class ClientCircuitBreaker:
 
     @classmethod
     def from_profile(
-        cls, *, name: str, profile: "PoolingProfile", host: str = "default"
-    ) -> "ClientCircuitBreaker":
+        cls, *, name: str, profile: PoolingProfile, host: str = "default"
+    ) -> ClientCircuitBreaker:
         """Создать CB из ``PoolingProfile`` (circuit_threshold + circuit_recovery_s)."""
         return cls(
             name=name,

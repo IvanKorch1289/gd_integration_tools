@@ -1,6 +1,7 @@
 """Request kwargs marshalling for action endpoints."""
 
-from typing import Any, Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
+from typing import Any
 
 from fastapi import Request
 from pydantic import BaseModel
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 from src.backend.entrypoints.api.generator.specs import ActionSpec, RouteDecorator
 from src.backend.schemas.invocation import InvocationOptionsSchema
 
-__all__ = ("prepare_call_kwargs", "extract_invocation_kwargs", "decorate_endpoint")
+__all__ = ("decorate_endpoint", "extract_invocation_kwargs", "prepare_call_kwargs")
 
 
 def prepare_call_kwargs(

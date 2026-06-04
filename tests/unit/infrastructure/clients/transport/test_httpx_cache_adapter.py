@@ -16,9 +16,7 @@ def test_is_hishel_available_returns_bool() -> None:
     assert isinstance(is_hishel_available(), bool)
 
 
-def test_build_cache_transport_returns_none_when_hishel_missing(
-    monkeypatch,
-) -> None:
+def test_build_cache_transport_returns_none_when_hishel_missing(monkeypatch) -> None:
     """Когда hishel недоступен, build_cache_transport возвращает None."""
     import builtins
 

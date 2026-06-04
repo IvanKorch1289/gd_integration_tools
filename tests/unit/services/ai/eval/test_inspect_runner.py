@@ -24,10 +24,7 @@ class _StubSuite:
     description: str = "stub suite"
 
     def build_dataset(self) -> list[dict[str, Any]]:
-        return [
-            {"id": "s1", "expected": "hello"},
-            {"id": "s2", "expected": "world"},
-        ]
+        return [{"id": "s1", "expected": "hello"}, {"id": "s2", "expected": "world"}]
 
     def score(self, sample: dict[str, Any], output: str) -> dict[str, float]:
         return {"accuracy": 1.0 if output == sample.get("expected") else 0.0}
@@ -40,7 +37,9 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     monkeypatch.setattr(feature_flags, "inspect_ai_eval_enabled", value, raising=False)
 
 
-def test_runner_disabled_when_flag_off(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_runner_disabled_when_flag_off(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     _force_flag(monkeypatch, False)
     runner = InspectRunner(artifacts_dir=tmp_path, suites=[_StubSuite()])
     summary = runner.run_all(write_artifacts=False)
@@ -48,7 +47,9 @@ def test_runner_disabled_when_flag_off(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert summary.total_samples == 0
 
 
-def test_runner_runs_stub_suite(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_runner_runs_stub_suite(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     _force_flag(monkeypatch, True)
     runner = InspectRunner(artifacts_dir=tmp_path, suites=[_StubSuite()])
     summary = runner.run_all(write_artifacts=True)
@@ -74,7 +75,9 @@ def test_runner_writes_json_md(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
 
 
 def test_summary_markdown_format() -> None:
-    summary = SuiteSummary(started_at="2026-05-14T00:00:00Z", finished_at="2026-05-14T00:01:00Z")
+    summary = SuiteSummary(
+        started_at="2026-05-14T00:00:00Z", finished_at="2026-05-14T00:01:00Z"
+    )
     summary.suites.append(
         SuiteResult(
             name="x",

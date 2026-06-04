@@ -43,7 +43,10 @@ class TestConnectorRegistry:
 
     def test_errors_provider_set(self) -> None:
         # get-only function (no set_), just verify import
-        from src.backend.core.di.providers.db import get_connector_registry_errors_provider
+        from src.backend.core.di.providers.db import (
+            get_connector_registry_errors_provider,
+        )
+
         assert callable(get_connector_registry_errors_provider)
 
 
@@ -69,6 +72,7 @@ class TestDbModuleIsolation:
         db.set_clickhouse_client_provider("DB_VALUE")
         # Set cache override (different domain)
         from src.backend.core.di.providers import cache
+
         cache.set_cache_invalidator_provider("CACHE_VALUE")
         # Each isolated
         assert db.get_clickhouse_client_provider() == "DB_VALUE"

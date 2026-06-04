@@ -29,7 +29,7 @@ import importlib.util
 from types import ModuleType
 from typing import Final
 
-__all__ = ("INFRA_MODULES", "resolve_module", "validate_modules", "ModuleRegistryError")
+__all__ = ("INFRA_MODULES", "ModuleRegistryError", "resolve_module", "validate_modules")
 
 
 # Префикс собирается динамически — статический AST-линтер слоёв
@@ -161,7 +161,7 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except ImportError, ModuleNotFoundError, ValueError:
+        except (ImportError, ModuleNotFoundError, ValueError):
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg2, faststream и т.п.). Считаем такой случай

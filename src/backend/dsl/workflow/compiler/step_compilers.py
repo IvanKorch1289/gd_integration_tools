@@ -23,8 +23,9 @@ workflow) и эмитит соответствующий ``temporalio.workflow.*
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, timedelta
+from typing import Any
 
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -42,13 +43,13 @@ from src.backend.dsl.workflow.spec import (
 __all__ = (
     "StepCompiler",
     "compile_activity_step",
+    "compile_agent_invoke_step",
     "compile_pause_step",
     "compile_resume_step",
     "compile_saga_step",
     "compile_sensor_step",
     "compile_signal_wait_step",
     "compile_sleep_step",
-    "compile_agent_invoke_step",
     "dispatch_step_compile",
 )
 
@@ -146,7 +147,7 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
                 continue
             try:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
-            except Exception as comp_exc:  # noqa: BLE001 — saga best-effort
+            except Exception as comp_exc:
                 if decl.strict_compensate:
                     raise comp_exc
                 workflow.logger.warning(
@@ -215,11 +216,9 @@ async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any
 
     workflow.pause()
     if decl.output_key:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(UTC).isoformat()
     return None
 
 
@@ -295,7 +294,7 @@ async def compile_agent_invoke_step(
     else:
         # Simple dot-path
         parts = decl.input_context.split(".")
-        cursor: Any = ctx.get("_input", {})
+        cursor = ctx.get("_input", {})
         for part in parts:
             if cursor is None:
                 break
@@ -324,7 +323,7 @@ async def compile_agent_invoke_step(
                     "integration pending S24 W3 — using stateless fallback",
                     decl.agent_id,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("LangGraph saver unavailable: %s", exc)
 
     # Stateless call via AIGateway

@@ -43,10 +43,7 @@ def test_rrf_merge_combines_ranks() -> None:
 
 def test_rrf_provenance_includes_both_sources() -> None:
     """RRF: для doc в обоих списках sources содержит и 'dense', и 'bm25'."""
-    ranked_lists = [
-        ("dense", ["doc1", "doc2"]),
-        ("bm25", ["doc1", "doc3"]),
-    ]
+    ranked_lists = [("dense", ["doc1", "doc2"]), ("bm25", ["doc1", "doc3"])]
     merged = rrf_merge(ranked_lists=ranked_lists, k=60)
     by_id = {cid: (score, sources) for cid, score, sources in merged}
     assert sorted(by_id["doc1"][1]) == ["bm25", "dense"]
@@ -116,9 +113,7 @@ async def test_retrieve_graceful_on_dense_failure(
 ) -> None:
     """Dense raise → fallback на BM25 only (или пустой результат)."""
     dense_mock = AsyncMock(side_effect=RuntimeError("vector store down"))
-    corpus = [
-        {"id": "doc1", "text": "text", "metadata": {}},
-    ]
+    corpus = [{"id": "doc1", "text": "text", "metadata": {}}]
     retriever = HybridRetriever(dense_search=dense_mock, corpus=corpus)
 
     class _FakeBM25:

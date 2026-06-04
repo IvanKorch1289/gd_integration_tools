@@ -64,7 +64,7 @@ def _resolve_tenant_segment() -> str:
         ctx = current_tenant()
         if ctx is not None and ctx.tenant_id:
             return f"tenant:{ctx.tenant_id}"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Tenant context недоступен (fallback _default_): %s", exc)
     return "tenant:_default_"
 

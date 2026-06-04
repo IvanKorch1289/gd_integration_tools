@@ -130,9 +130,7 @@ class TestPolicyChainTimeout:
 
     @pytest.fixture(autouse=True)
     def _enable_chainable(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            feature_flags, "policy_chainable_enabled", True
-        )
+        monkeypatch.setattr(feature_flags, "policy_chainable_enabled", True)
 
     def _builder(self) -> object:
         # Минимальный stub builder с _processors атрибутом.

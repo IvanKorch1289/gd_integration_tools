@@ -29,7 +29,7 @@ def _parse_args() -> argparse.Namespace:
         description=(
             "Sprint 6 K2: запуск Granian с production-tuning из "
             "core/scaling/granian_tuning.py (ADR-0059)."
-        ),
+        )
     )
     parser.add_argument(
         "--app",
@@ -92,15 +92,14 @@ def main() -> int:
         os.environ["GRANIAN_WORKERS"] = str(args.workers)
 
     cmd = granian_tuning.build_cli_command(
-        app=args.app,
-        host=args.host,
-        port=args.port,
-        granian_cmd=granian_cmd,
+        app=args.app, host=args.host, port=args.port, granian_cmd=granian_cmd
     )
 
     print(f"[granian-runner] interface={granian_tuning.resolved_interface}")
     print(f"[granian-runner] workers={granian_tuning.resolved_workers}")
-    print(f"[granian-runner] blocking_threads={granian_tuning.resolved_blocking_threads}")
+    print(
+        f"[granian-runner] blocking_threads={granian_tuning.resolved_blocking_threads}"
+    )
     print(f"[granian-runner] loop={granian_tuning.loop}")
     print(f"[granian-runner] command: {' '.join(cmd)}")
 

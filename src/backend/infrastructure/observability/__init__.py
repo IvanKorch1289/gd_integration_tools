@@ -10,6 +10,6 @@ from src.backend.infrastructure.observability.pii_filter import redact_for_obser
 __all__ = (
     "get_correlation_id",
     "new_correlation_id",
-    "set_correlation_context",
     "redact_for_observability",
+    "set_correlation_context",
 )

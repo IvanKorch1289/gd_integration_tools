@@ -419,10 +419,10 @@ class PIITokenizer:
                 resource="pii_tokenizer",
                 details=details,
             )
-        except Exception as exc:  # noqa: BLE001 — audit не должен ломать pipeline
+        except Exception as exc:
             _logger.debug("audit emit failed for %s: %r", event, exc)
 
-    def _supported_entity_types(self, language: str) -> "Sequence[str]":
+    def _supported_entity_types(self, language: str) -> Sequence[str]:
         """Список поддерживаемых entity types для языка.
 
         Args:

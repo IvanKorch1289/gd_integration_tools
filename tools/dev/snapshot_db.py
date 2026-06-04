@@ -31,10 +31,7 @@ from pathlib import Path
 
 
 def snapshot_pg_to_sqlite(
-    *,
-    pg_engine: object,
-    sqlite_path: Path,
-    include_tables: list[str] | None = None,
+    *, pg_engine: object, sqlite_path: Path, include_tables: list[str] | None = None
 ) -> dict[str, int]:
     """Копирует таблицы из PG в SQLite-файл.
 
@@ -50,12 +47,10 @@ def snapshot_pg_to_sqlite(
     conn = sqlite3.connect(sqlite_path)
     cursor = conn.cursor()
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS metadata ("
-        "key TEXT PRIMARY KEY, value TEXT)"
+        "CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)"
     )
     cursor.execute(
-        "INSERT OR REPLACE INTO metadata VALUES (?, ?)",
-        ("snapshot_version", "1.0"),
+        "INSERT OR REPLACE INTO metadata VALUES (?, ?)", ("snapshot_version", "1.0")
     )
     cursor.execute(
         "INSERT OR REPLACE INTO metadata VALUES (?, ?)",
@@ -81,9 +76,7 @@ def snapshot_pg_to_sqlite(
             )
             for row in rows
         ]
-        cursor.executemany(
-            f"INSERT INTO pg_{table} VALUES ({placeholders})", values
-        )
+        cursor.executemany(f"INSERT INTO pg_{table} VALUES ({placeholders})", values)
         counts[table] = len(rows)
 
     conn.commit()
@@ -92,10 +85,7 @@ def snapshot_pg_to_sqlite(
 
 
 def snapshot_redis_to_sqlite(
-    *,
-    redis_client: object,
-    sqlite_path: Path,
-    key_pattern: str = "*",
+    *, redis_client: object, sqlite_path: Path, key_pattern: str = "*"
 ) -> int:
     """Дамп Redis ключей в snapshot.
 
@@ -151,10 +141,7 @@ def _select_all(pg_engine: object, table: str) -> list[dict]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Snapshot dev_light → SQLite.")
     parser.add_argument(
-        "--output",
-        type=Path,
-        required=True,
-        help="путь к SQLite snapshot файлу",
+        "--output", type=Path, required=True, help="путь к SQLite snapshot файлу"
     )
     parser.add_argument(
         "--include-tables",
@@ -162,9 +149,7 @@ def main(argv: list[str] | None = None) -> int:
         help="comma-separated имена таблиц (default — все public)",
     )
     parser.add_argument(
-        "--skip-redis",
-        action="store_true",
-        help="не дампить Redis (только PG)",
+        "--skip-redis", action="store_true", help="не дампить Redis (только PG)"
     )
     args = parser.parse_args(argv)
 
@@ -180,9 +165,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     counts = snapshot_pg_to_sqlite(
-        pg_engine=sync_engine,
-        sqlite_path=args.output,
-        include_tables=tables or None,
+        pg_engine=sync_engine, sqlite_path=args.output, include_tables=tables or None
     )
     print(f"PG tables dumped: {len(counts)}")
     for table, n in counts.items():

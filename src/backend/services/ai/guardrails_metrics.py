@@ -165,7 +165,7 @@ class GuardrailsMetricsService:
                         "latency_ms": latency_ms,
                     }
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("GuardrailsMetrics CH write failed: %s", exc)
 
     async def mark_false_positive(self, *, tenant_id: str, count: int = 1) -> None:

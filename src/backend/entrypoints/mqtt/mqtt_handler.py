@@ -23,7 +23,7 @@ from pydantic_settings import SettingsConfigDict
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = ("MqttSettings", "MqttHandler", "get_mqtt_handler")
+__all__ = ("MqttHandler", "MqttSettings", "get_mqtt_handler")
 
 logger = logging.getLogger("mqtt")
 
@@ -243,5 +243,5 @@ from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("mqtt_handler", _create_mqtt_handler)
-def get_mqtt_handler() -> MqttHandler:
+def get_mqtt_handler() -> MqttHandler:  # type: ignore[empty-body]
     """Возвращает MqttHandler из app.state или lazy-init fallback."""

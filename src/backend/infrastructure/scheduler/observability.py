@@ -93,11 +93,11 @@ def _emit(counter: Any | None, *, job_id: str, status: str) -> None:
         return
     try:
         counter.labels(job_id=job_id or "unknown", status=status).inc()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.debug("scheduler counter inc failed: %s", exc)
 
 
-def attach_scheduler_metrics(scheduler: "AsyncIOScheduler") -> None:
+def attach_scheduler_metrics(scheduler: AsyncIOScheduler) -> None:
     """Подключает Prometheus-listeners к APScheduler.
 
     Args:
@@ -134,7 +134,7 @@ def attach_scheduler_metrics(scheduler: "AsyncIOScheduler") -> None:
         elapsed = max(0.0, time.monotonic() - start)
         try:
             _JOB_DURATION.labels(job_id=job_id, status=status).observe(elapsed)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("scheduler duration observe failed: %s", exc)
 
     def _on_submitted(event: Any) -> None:
@@ -142,7 +142,7 @@ def attach_scheduler_metrics(scheduler: "AsyncIOScheduler") -> None:
         if _JOB_STARTED is not None:
             try:
                 _JOB_STARTED.labels(job_id=str(event.job_id or "unknown")).inc()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("scheduler started inc failed: %s", exc)
 
     def _on_executed(event: Any) -> None:
@@ -194,7 +194,7 @@ def report_jobstore_type(*, is_memory: bool, is_production: bool) -> None:
         try:
             gauge.labels(type="memory").set(1.0 if is_memory else 0.0)
             gauge.labels(type="sqlalchemy").set(0.0 if is_memory else 1.0)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("scheduler gauge set failed: %s", exc)
 
     if is_memory and is_production:

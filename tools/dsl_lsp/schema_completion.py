@@ -157,14 +157,21 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
         "required": ["url"],
         "properties": {
             "url": {"type": "string", "description": "Redirect target URL"},
-            "code": {"type": "integer", "description": "HTTP redirect code", "default": 302},
+            "code": {
+                "type": "integer",
+                "description": "HTTP redirect code",
+                "default": 302,
+            },
         },
     },
     "call_function": {
         "type": "object",
         "required": ["ref"],
         "properties": {
-            "ref": {"type": "string", "description": "Function reference 'module:function'"},
+            "ref": {
+                "type": "string",
+                "description": "Function reference 'module:function'",
+            },
             "args": {"type": "object", "description": "Keyword arguments to pass"},
         },
     },
@@ -173,14 +180,17 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
         "required": ["name", "mode"],
         "properties": {
             "name": {"type": "string", "description": "Action name"},
-            "mode": {"type": "string", "enum": ["sync", "async", "bg", "api", "sse", "ws"]},
+            "mode": {
+                "type": "string",
+                "enum": ["sync", "async", "bg", "api", "sse", "ws"],
+            },
         },
     },
     "transform": {
         "type": "object",
         "required": ["set"],
         "properties": {
-            "set": {"type": "object", "description": "JMESPath/JSONata assignments"},
+            "set": {"type": "object", "description": "JMESPath/JSONata assignments"}
         },
     },
     "choice": {
@@ -196,14 +206,17 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
                         "steps": {"type": "array"},
                     },
                 },
-            },
+            }
         },
     },
     "parallel": {
         "type": "object",
         "required": ["branches"],
         "properties": {
-            "branches": {"type": "array", "items": {"type": "object", "properties": {"steps": {"type": "array"}}}},
+            "branches": {
+                "type": "array",
+                "items": {"type": "object", "properties": {"steps": {"type": "array"}}},
+            }
         },
     },
     "try_catch": {
@@ -217,34 +230,22 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
     "saga": {
         "type": "object",
         "required": ["steps", "compensate"],
-        "properties": {
-            "steps": {"type": "array"},
-            "compensate": {"type": "array"},
-        },
+        "properties": {"steps": {"type": "array"}, "compensate": {"type": "array"}},
     },
     "invoke_workflow": {
         "type": "object",
         "required": ["workflow"],
-        "properties": {
-            "workflow": {"type": "string"},
-            "args": {"type": "object"},
-        },
+        "properties": {"workflow": {"type": "string"}, "args": {"type": "object"}},
     },
     "crud_create": {
         "type": "object",
         "required": ["entity", "body"],
-        "properties": {
-            "entity": {"type": "string"},
-            "body": {"type": "object"},
-        },
+        "properties": {"entity": {"type": "string"}, "body": {"type": "object"}},
     },
     "crud_read": {
         "type": "object",
         "required": ["entity"],
-        "properties": {
-            "entity": {"type": "string"},
-            "filter": {"type": "object"},
-        },
+        "properties": {"entity": {"type": "string"}, "filter": {"type": "object"}},
     },
     "crud_update": {
         "type": "object",
@@ -266,10 +267,7 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
     "publish_event": {
         "type": "object",
         "required": ["topic", "payload"],
-        "properties": {
-            "topic": {"type": "string"},
-            "payload": {"type": "object"},
-        },
+        "properties": {"topic": {"type": "string"}, "payload": {"type": "object"}},
     },
     "notify_cascade": {
         "type": "object",
@@ -283,10 +281,7 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
     "audit": {
         "type": "object",
         "required": ["event"],
-        "properties": {
-            "event": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
+        "properties": {"event": {"type": "string"}, "metadata": {"type": "object"}},
     },
     "validate_response": {
         "type": "object",
@@ -299,34 +294,22 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
     "db_query_external": {
         "type": "object",
         "required": ["query"],
-        "properties": {
-            "query": {"type": "string"},
-            "params": {"type": "array"},
-        },
+        "properties": {"query": {"type": "string"}, "params": {"type": "array"}},
     },
     "db_call_procedure": {
         "type": "object",
         "required": ["procedure"],
-        "properties": {
-            "procedure": {"type": "string"},
-            "params": {"type": "array"},
-        },
+        "properties": {"procedure": {"type": "string"}, "params": {"type": "array"}},
     },
     "get_setting": {
         "type": "object",
         "required": ["path", "to"],
-        "properties": {
-            "path": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"path": {"type": "string"}, "to": {"type": "string"}},
     },
     "sink_publish": {
         "type": "object",
         "required": ["sink", "content"],
-        "properties": {
-            "sink": {"type": "string"},
-            "content": {"type": "object"},
-        },
+        "properties": {"sink": {"type": "string"}, "content": {"type": "object"}},
     },
     "validate_request": {
         "type": "object",
@@ -339,7 +322,7 @@ STEP_SCHEMA_SNIPPETS: dict[str, dict[str, object]] = {
                     "properties": {"type": "object"},
                     "required": {"type": "array", "items": {"type": "string"}},
                 },
-            },
+            }
         },
     },
 }

@@ -26,8 +26,8 @@ import orjson
 logger = logging.getLogger(__name__)
 
 __all__ = (
-    "IngestStateStore",
     "InMemoryIngestStateStore",
+    "IngestStateStore",
     "RedisIngestStateStore",
     "build_ingest_state_store",
 )
@@ -124,7 +124,7 @@ class RedisIngestStateStore:
                 await pipe.execute()
 
             await client.execute("cache", op)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RedisIngestStateStore.create failed: %s", exc)
 
     async def update(self, task_id: str, **fields: Any) -> None:
@@ -138,14 +138,14 @@ class RedisIngestStateStore:
             await client.cache_set(
                 self._task_key(task_id), orjson.dumps(snapshot), self._ttl
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RedisIngestStateStore.update failed: %s", exc)
 
     async def get(self, task_id: str) -> dict[str, Any] | None:
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._task_key(task_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RedisIngestStateStore.get failed: %s", exc)
             return None
         if not raw:
@@ -153,7 +153,7 @@ class RedisIngestStateStore:
         try:
             data = orjson.loads(raw)
             return data if isinstance(data, dict) else None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RedisIngestStateStore decode failed: %s", exc)
             return None
 
@@ -167,7 +167,7 @@ class RedisIngestStateStore:
                 return [k.decode() if isinstance(k, bytes) else str(k) for k in raw]
 
             ids: list[str] = await client.execute("cache", op)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RedisIngestStateStore.list_recent failed: %s", exc)
             return []
         out: list[dict[str, Any]] = []

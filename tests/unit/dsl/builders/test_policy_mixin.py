@@ -38,20 +38,12 @@ def test_single_cache_policy() -> None:
     p = builder._processors[0]
     assert isinstance(p, PolicyMarkerProcessor)
     assert p.policy_name == "cache"
-    assert p.params == {
-        "ttl_seconds": 120,
-        "key": None,
-        "backend": "redis",
-    }
+    assert p.params == {"ttl_seconds": 120, "key": None, "backend": "redis"}
 
 
 def test_chained_two_policies() -> None:
     builder = _FakeBuilder()
-    result = (
-        builder.policy.cache(ttl_seconds=60).policy.circuit_breaker(
-            threshold=10
-        )
-    )
+    result = builder.policy.cache(ttl_seconds=60).policy.circuit_breaker(threshold=10)
     assert result is builder
     assert len(builder._processors) == 2
     assert builder._processors[0].policy_name == "cache"

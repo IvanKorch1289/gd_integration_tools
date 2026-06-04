@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -39,9 +40,7 @@ async def test_read_invokes_capability_check(
 
 
 @pytest.mark.asyncio
-async def test_read_returns_bytes(
-    manager: AIWorkspaceManager, tmp_path: Path
-) -> None:
+async def test_read_returns_bytes(manager: AIWorkspaceManager, tmp_path: Path) -> None:
     fs = AIFsFacade(workspace_manager=manager)
     target = tmp_path / "data.txt"
     target.write_text("hello")
@@ -58,9 +57,7 @@ async def test_read_directory_raises(
 
 
 @pytest.mark.asyncio
-async def test_create_new_writes_inside_workspace(
-    manager: AIWorkspaceManager,
-) -> None:
+async def test_create_new_writes_inside_workspace(manager: AIWorkspaceManager) -> None:
     fs = AIFsFacade(workspace_manager=manager)
     handle = await manager.create_new(tenant="t1")
     target = fs.create_new(handle, "report.json", b'{"ok":true}')
@@ -70,9 +67,7 @@ async def test_create_new_writes_inside_workspace(
 
 
 @pytest.mark.asyncio
-async def test_create_new_blocks_overwrite(
-    manager: AIWorkspaceManager,
-) -> None:
+async def test_create_new_blocks_overwrite(manager: AIWorkspaceManager) -> None:
     """create_new — non-overwriting, повторная запись → :class:`FsForbiddenWriteError`."""
     fs = AIFsFacade(workspace_manager=manager)
     handle = await manager.create_new(tenant="t1")
@@ -83,9 +78,7 @@ async def test_create_new_blocks_overwrite(
 
 
 @pytest.mark.asyncio
-async def test_create_new_blocks_traversal(
-    manager: AIWorkspaceManager,
-) -> None:
+async def test_create_new_blocks_traversal(manager: AIWorkspaceManager) -> None:
     """``..``-traversal → :class:`FsForbiddenWriteError`."""
     fs = AIFsFacade(workspace_manager=manager)
     handle = await manager.create_new(tenant="t1")
@@ -105,9 +98,7 @@ async def test_create_new_blocks_absolute_path(
 
 
 @pytest.mark.asyncio
-async def test_create_new_capability_check_invoked(
-    manager: AIWorkspaceManager,
-) -> None:
+async def test_create_new_capability_check_invoked(manager: AIWorkspaceManager) -> None:
     seen: list[tuple[str, str, str | None]] = []
 
     def fake_check(plugin: str, capability: str, scope: str | None) -> None:
@@ -117,3 +108,36 @@ async def test_create_new_capability_check_invoked(
     handle = await manager.create_new(tenant="t1")
     fs.create_new(handle, "report.json", b"{}")
     assert seen == [("ai-agent", "fs.create_new", handle.path.as_posix())]
+
+
+@pytest.mark.asyncio
+async def test_create_new_symlink_escape(
+    manager: AIWorkspaceManager, tmp_path: Path
+) -> None:
+    """Symlink, ведущий за пределы workspace, должен быть отвергнут."""
+    fs = AIFsFacade(workspace_manager=manager)
+    handle = await manager.create_new(tenant="t1")
+    outside = tmp_path / "outside.txt"
+    outside.write_text("x")
+    symlink = handle.path / "link"
+    symlink.symlink_to(outside)
+    with pytest.raises(FsForbiddenWriteError) as exc_info:
+        fs.create_new(handle, "link", b"x")
+    assert "escapes workspace" in exc_info.value.reason
+
+
+@pytest.mark.asyncio
+async def test_create_new_unified_capability(manager: AIWorkspaceManager) -> None:
+    """K1 S19 W5: unified fs.write.workspace.<session_id> capability."""
+    seen: list[tuple[str, str, str | None]] = []
+
+    def fake_check(plugin: str, capability: str, scope: str | None) -> None:
+        seen.append((plugin, capability, scope))
+
+    fs = AIFsFacade(workspace_manager=manager, capability_check=fake_check)
+    handle = await manager.create_new(tenant="t1")
+    with patch("src.backend.core.config.features.feature_flags") as ff:
+        ff.ai_safety_capability_unify = True
+        fs.create_new(handle, "report.json", b"{}")
+    assert any(c[1] == "fs.write" for c in seen)
+    assert any("workspace." in (c[2] or "") for c in seen)

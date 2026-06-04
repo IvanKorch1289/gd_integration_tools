@@ -139,7 +139,7 @@ class RAGService:
             return
         try:
             await self._cache.invalidate_by_tag(f"namespace:{namespace}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RAG cache invalidate skipped: %s", exc)
 
     async def search(
@@ -166,7 +166,7 @@ class RAGService:
         if self._cache is not None and results:
             try:
                 await self._cache.store_chunks(query, results, namespace=namespace)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("RAG L3 store skipped: %s", exc)
         return results
 
@@ -211,7 +211,7 @@ class RAGService:
         if self._cache is not None:
             try:
                 await self._cache.store_answer(tenant_key, answer, tenant=namespace)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("RAG augment store skipped: %s", exc)
         return answer
 
@@ -311,7 +311,7 @@ class RAGService:
                 namespace,
             )
             return 0
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("delete_collection(%s) failed: %s", namespace, exc)
             return 0
 
@@ -325,7 +325,7 @@ class RAGService:
             cnt = int(await self._store.count_where({"namespace": namespace}))
         except NotImplementedError:
             cnt = 0
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("get_collection_stats(%s) failed: %s", namespace, exc)
             cnt = 0
         return {"namespace": namespace, "count": cnt, "exists": cnt > 0}
@@ -342,7 +342,7 @@ class RAGService:
             return int(await self._store.count_where({"namespace": collection}))
         except NotImplementedError:
             return 0
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("count(%s) failed: %s", collection, exc)
             return 0
 
@@ -370,7 +370,7 @@ def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
         from src.backend.core.config.rag import rag_settings
 
         attribution_on = bool(getattr(rag_settings, "source_attribution_enabled", True))
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         attribution_on = True
 
     parts: list[str] = []
@@ -420,7 +420,7 @@ def _filter_by_embedding_version(results: list[dict[str, Any]]) -> list[dict[str
         return results
     try:
         from src.backend.core.config.rag import rag_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return results
 
     current_model = getattr(rag_settings, "embedding_model", None)
@@ -461,7 +461,7 @@ def _record_embedding_provenance(chunk_model: str, current_model: str) -> None:
             labels=("chunk_model", "current_model"),
         )
         counter.labels(chunk_model=chunk_model, current_model=current_model).inc()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.debug("rag_model_mismatch metric emit failed", exc_info=True)
 
 

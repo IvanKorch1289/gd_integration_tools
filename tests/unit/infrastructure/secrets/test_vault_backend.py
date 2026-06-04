@@ -10,10 +10,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.infrastructure.secrets.vault_backend import (
-    VaultBackend,
-    VaultConfig,
-)
+from src.backend.infrastructure.secrets.vault_backend import VaultBackend, VaultConfig
 
 
 class _FakeKVv2:
@@ -21,11 +18,7 @@ class _FakeKVv2:
         self._data = data
 
     def read_secret_version(
-        self,
-        *,
-        path: str,
-        mount_point: str = "secret",
-        version: int | None = None,
+        self, *, path: str, mount_point: str = "secret", version: int | None = None
     ) -> dict[str, Any]:
         if path not in self._data:
             raise KeyError(path)
@@ -40,11 +33,7 @@ class _FakeKVv2:
     def read_secret_metadata(
         self, *, path: str, mount_point: str = "secret"
     ) -> dict[str, Any]:
-        return {
-            "data": {
-                "current_version": self._data[path].get("version", 1),
-            }
-        }
+        return {"data": {"current_version": self._data[path].get("version", 1)}}
 
 
 class _FakeKVAPI:
@@ -74,18 +63,14 @@ def fake_client() -> _FakeClient:
 
 
 def test_get_returns_value_field(fake_client: _FakeClient) -> None:
-    backend = VaultBackend(
-        config=VaultConfig(url="http://x"), client=fake_client
-    )
+    backend = VaultBackend(config=VaultConfig(url="http://x"), client=fake_client)
     snap = backend.get("db/pg")
     assert snap.value == "pg_password"
     assert snap.version == 3
 
 
 def test_get_serializes_dict_when_no_value_field(fake_client: _FakeClient) -> None:
-    backend = VaultBackend(
-        config=VaultConfig(url="http://x"), client=fake_client
-    )
+    backend = VaultBackend(config=VaultConfig(url="http://x"), client=fake_client)
     snap = backend.get("json/secret")
     # JSON sort_keys=True гарантирует детерминизм.
     assert snap.value == '{"foo": "bar", "n": 42}'
@@ -93,9 +78,7 @@ def test_get_serializes_dict_when_no_value_field(fake_client: _FakeClient) -> No
 
 @pytest.mark.asyncio
 async def test_get_versioned_passes_version(fake_client: _FakeClient) -> None:
-    backend = VaultBackend(
-        config=VaultConfig(url="http://x"), client=fake_client
-    )
+    backend = VaultBackend(config=VaultConfig(url="http://x"), client=fake_client)
     snap = await backend.get_versioned("api/key", 7)
     # _FakeKVv2 echoes version → проверяем, что параметр пробрасывается.
     assert snap.version == 7
@@ -103,8 +86,6 @@ async def test_get_versioned_passes_version(fake_client: _FakeClient) -> None:
 
 @pytest.mark.asyncio
 async def test_get_metadata_returns_data_block(fake_client: _FakeClient) -> None:
-    backend = VaultBackend(
-        config=VaultConfig(url="http://x"), client=fake_client
-    )
+    backend = VaultBackend(config=VaultConfig(url="http://x"), client=fake_client)
     meta = await backend.get_metadata("db/pg")
     assert meta == {"current_version": 3}

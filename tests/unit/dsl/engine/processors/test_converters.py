@@ -57,6 +57,7 @@ class TestConversionStrategies:
     def test_msgpack_to_json(self) -> None:
         pytest.importorskip("msgpack")
         import msgpack
+
         strategy = MsgpackToJson()
         data = msgpack.packb({"key": "value"}, use_bin_type=True)
         result = strategy.convert(data)
@@ -107,10 +108,7 @@ class TestConversionStrategies:
     def test_dict_to_csv(self) -> None:
         pytest.importorskip("polars")
         strategy = DictToCsv()
-        data = [
-            {"name": "Alice", "age": 30},
-            {"name": "Bob", "age": 25},
-        ]
+        data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
         result = strategy.convert(data)
         assert "name,age" in result
         assert "Alice,30" in result
@@ -204,7 +202,9 @@ class TestConvertProcessorProcess:
     @pytest.mark.asyncio
     async def test_convert_preserves_headers(self) -> None:
         proc = ConvertProcessor(from_format="json", to_format="yaml")
-        ex = Exchange(in_message=Message(body={"key": "value"}, headers={"X-Custom": "header"}))
+        ex = Exchange(
+            in_message=Message(body={"key": "value"}, headers={"X-Custom": "header"})
+        )
         await proc.process(ex, MagicMock())
         assert ex.out_message.headers.get("X-Custom") == "header"
 

@@ -92,7 +92,7 @@ class VaultTransitCipher:
         self.timeout = timeout
         self._max_connections = max_connections
         self._max_keepalive = max_keepalive_connections
-        self._client: "httpx.AsyncClient | None" = None
+        self._client: httpx.AsyncClient | None = None
 
         if not self.vault_token:
             logger.warning(
@@ -102,7 +102,7 @@ class VaultTransitCipher:
 
     # ------------------------------------------------------------------ infra
 
-    def _ensure_client(self) -> "httpx.AsyncClient":
+    def _ensure_client(self) -> httpx.AsyncClient:
         """Lazy-init singleton httpx-клиента через make_http_client фасад.
 
         S11 carryover: WAF-coverage gate. При активном
@@ -135,7 +135,7 @@ class VaultTransitCipher:
                 self._max_connections,
                 self._max_keepalive,
             )
-        return self._client
+        return self._client  # type: ignore[return-value]
 
     async def close(self) -> None:
         """Graceful shutdown httpx клиента (идемпотентно)."""
@@ -162,7 +162,7 @@ class VaultTransitCipher:
         client = self._ensure_client()
         try:
             resp = await client.post(path, json={"plaintext": b64_pt})
-        except Exception as exc:  # noqa: BLE001 — сеть/TLS/timeout
+        except Exception as exc:
             raise VaultCipherError(f"vault encrypt network error: {exc}") from exc
         if resp.status_code != 200:
             raise VaultCipherError(
@@ -195,7 +195,7 @@ class VaultTransitCipher:
         client = self._ensure_client()
         try:
             resp = await client.post(path, json={"ciphertext": ciphertext})
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VaultCipherError(f"vault decrypt network error: {exc}") from exc
         if resp.status_code != 200:
             raise VaultCipherError(
@@ -209,7 +209,7 @@ class VaultTransitCipher:
             ) from exc
         try:
             return base64.b64decode(b64_pt)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VaultCipherError(f"vault decrypt base64 error: {exc}") from exc
 
     # ----------------------------------------------------------------- rotate
@@ -227,7 +227,7 @@ class VaultTransitCipher:
         client = self._ensure_client()
         try:
             resp = await client.post(path, json={})
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VaultCipherError(f"vault rotate network error: {exc}") from exc
         if resp.status_code not in (200, 204):
             raise VaultCipherError(
@@ -237,7 +237,7 @@ class VaultTransitCipher:
         read_path = f"/v1/{self.mount_path}/keys/{self.key_name}"
         try:
             meta_resp = await client.get(read_path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VaultCipherError(f"vault read-key network error: {exc}") from exc
         if meta_resp.status_code != 200:
             raise VaultCipherError(

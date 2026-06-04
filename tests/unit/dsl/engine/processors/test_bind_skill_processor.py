@@ -10,9 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.dsl.engine.processors.agent_dsl.bind_skill import (
-    BindSkillProcessor,
-)
+from src.backend.dsl.engine.processors.agent_dsl.bind_skill import BindSkillProcessor
 
 
 class _Exchange:
@@ -38,7 +36,9 @@ class TestBindSkillProcessor:
     """Tests for :class:`BindSkillProcessor`."""
 
     @pytest.mark.asyncio
-    async def test_no_registry_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_no_registry_logs_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Without skill_registry in context, processor logs and returns."""
         proc = BindSkillProcessor(pack_id="pk1")
         exchange = _Exchange()
@@ -47,7 +47,9 @@ class TestBindSkillProcessor:
         assert "skill_registry not in context" in caplog.text
 
     @pytest.mark.asyncio
-    async def test_pack_not_found_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_pack_not_found_logs_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """When pack is not found, processor logs and returns."""
         proc = BindSkillProcessor(pack_id="pk1")
         exchange = _Exchange()

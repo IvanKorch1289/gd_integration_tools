@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from aioimaplib import IMAP4_SSL
@@ -72,7 +73,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         self._password_provider = password_provider
         self._use_ssl = use_ssl
         self._timeout_s = timeout_s
-        self._pool: asyncio.Queue["IMAP4_SSL"] = asyncio.Queue(
+        self._pool: asyncio.Queue[IMAP4_SSL] = asyncio.Queue(
             maxsize=self.pooling.max_size
         )
         self._created: int = 0  # сколько соединений фактически открыто
@@ -139,7 +140,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
                 probe="NOOP",
                 pool_created=self._created,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}",
                 mode=mode,
@@ -149,7 +150,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
     # -- Pool API -----------------------------------------------------
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator["IMAP4_SSL"]:
+    async def acquire(self) -> AsyncIterator[IMAP4_SSL]:
         """Получить IMAP-соединение из пула. По выходу — вернуть.
 
         Если очередь пустая и max_size не достигнут — открывается новое.
@@ -159,7 +160,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         if not self._started:
             raise RuntimeError(f"ImapConnectionPool '{self.name}' not started")
 
-        conn: "IMAP4_SSL | None" = None
+        conn: IMAP4_SSL | None = None
         try:
             try:
                 conn = self._pool.get_nowait()
@@ -193,7 +194,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
 
     # -- Private ------------------------------------------------------
 
-    async def _dial(self) -> "IMAP4_SSL":
+    async def _dial(self) -> IMAP4_SSL:
         """Открыть новое IMAP-соединение + LOGIN.
 
         Используется в `start()` (pre-warm) и `acquire()` (if free-pool
@@ -214,12 +215,12 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         await conn.login(self._username, password)
         return conn
 
-    async def _is_alive(self, conn: "IMAP4_SSL") -> bool:
+    async def _is_alive(self, conn: IMAP4_SSL) -> bool:
         """Cheap liveness-probe: NOOP должен вернуть OK."""
         try:
             await asyncio.wait_for(conn.noop(), timeout=1.5)
             return True
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
 

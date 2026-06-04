@@ -25,11 +25,11 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "register_provider",
+    "clear_registry",
     "get_provider",
     "list_providers",
+    "register_provider",
     "unregister_provider",
-    "clear_registry",
 )
 
 _registry: dict[str, dict[str, Any]] = {}

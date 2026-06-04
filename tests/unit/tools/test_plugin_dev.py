@@ -49,9 +49,7 @@ def test_ensure_extension_returns_path(monkeypatch, tmp_path) -> None:
 def test_dry_run_prints_backend_command(capsys, tmp_path, monkeypatch) -> None:
     (tmp_path / "extensions" / "demo").mkdir(parents=True)
     monkeypatch.setattr(mod, "ROOT", tmp_path)
-    monkeypatch.setattr(
-        mod, "COMPOSE_FILE", tmp_path / "docker-compose.plugin-dev.yml"
-    )
+    monkeypatch.setattr(mod, "COMPOSE_FILE", tmp_path / "docker-compose.plugin-dev.yml")
     rc = mod.main(["--name", "demo", "--dry-run"])
     out = capsys.readouterr().out
     assert rc == 0

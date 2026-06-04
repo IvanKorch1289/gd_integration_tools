@@ -163,11 +163,7 @@ def check_plugin_semver(plugin_path: Path) -> SemverCheckResult:
     return SemverCheckResult(valid=True, version=version, requires_core=requires_core)
 
 
-def _check_strict_mode(
-    version: str,  # noqa: ARG001
-    requires_core: str,  # noqa: ARG001
-    errors: list[str],
-) -> None:
+def _check_strict_mode(version: str, requires_core: str, errors: list[str]) -> None:
     """Выполняет дополнительные проверки в strict-режиме.
 
     В strict-режиме (plugin_semver_strict=True) применяются
@@ -180,11 +176,11 @@ def _check_strict_mode(
         errors: Список, в который добавляются найденные ошибки.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.plugin_semver_strict:
             return
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         # feature_flags недоступны в тестах без DI — пропускаем strict.
         return
 
@@ -221,7 +217,7 @@ def is_compatible(plugin_requires: str, core_version: str) -> bool:
     try:
         spec = SpecifierSet(plugin_requires)
         version = Version(core_version)
-    except InvalidSpecifier, Exception:  # noqa: BLE001
+    except (InvalidSpecifier, Exception):
         return False
 
     return version in spec

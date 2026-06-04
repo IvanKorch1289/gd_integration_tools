@@ -66,8 +66,7 @@ def test_resolved_interface_with_rsgi_flag_on() -> None:
     cfg = GranianTuning(interface="rsgi")
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         assert cfg.resolved_interface == "rsgi"
 
@@ -78,8 +77,7 @@ def test_build_cli_command_has_required_flags() -> None:
     cfg = GranianTuning(workers=4, blocking_threads=16, loop="uvloop")
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         cmd = cfg.build_cli_command(app="src.main:app", host="0.0.0.0", port=8000)
 

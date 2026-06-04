@@ -99,12 +99,10 @@ class EmailTriggerProcessor(BaseProcessor):
         sender = str(payload.get("from", ""))
         if self._subject_re is not None and not self._subject_re.search(subject):
             return False
-        if (
+        return not (
             self._from_filter is not None
             and self._from_filter.lower() not in sender.lower()
-        ):
-            return False
-        return True
+        )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет фильтры; останавливает exchange при non-match."""

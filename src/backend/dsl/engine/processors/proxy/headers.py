@@ -17,8 +17,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 __all__ = ("HeaderMapPolicy",)
 
@@ -49,7 +49,7 @@ class HeaderMapPolicy:
         return result
 
     @classmethod
-    def from_dict(cls, raw: dict[str, object] | None) -> "HeaderMapPolicy":
+    def from_dict(cls, raw: dict[str, object] | None) -> HeaderMapPolicy:
         if not raw:
             return cls()
         add_val = raw.get("add") or {}

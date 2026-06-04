@@ -59,7 +59,7 @@ def register_admin(
     """
     try:
         from src.backend.utilities.admin_panel.setup_admin import setup_admin
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning(
             "Не удалось подключить sqladmin (utilities.admin_panel): %s", exc
         )
@@ -67,7 +67,7 @@ def register_admin(
 
     try:
         setup_admin(app=app)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("setup_admin(...) упал: %s", exc)
         return None
 
@@ -85,7 +85,7 @@ def register_admin(
     for view_cls in extra_views:
         try:
             admin_instance.add_view(view_cls)  # type: ignore[attr-defined]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "Не удалось зарегистрировать ModelView %r: %s", view_cls, exc
             )

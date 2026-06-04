@@ -1,6 +1,6 @@
 from enum import Enum
 
-__all__ = ("InvokeMode", "BrokerKind")
+__all__ = ("BrokerKind", "InvokeMode")
 
 
 class InvokeMode(str, Enum):

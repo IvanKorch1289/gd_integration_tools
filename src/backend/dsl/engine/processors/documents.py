@@ -109,10 +109,7 @@ def _resolve_path(body: Any, dotted: str | None) -> Any:
         return body
     obj: Any = body
     for part in dotted.split("."):
-        if isinstance(obj, dict):
-            obj = obj.get(part)
-        else:
-            obj = getattr(obj, part, None)
+        obj = obj.get(part) if isinstance(obj, dict) else getattr(obj, part, None)
         if obj is None:
             return None
     return obj

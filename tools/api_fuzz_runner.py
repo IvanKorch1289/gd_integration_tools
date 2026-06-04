@@ -47,7 +47,7 @@ def _parse_args() -> argparse.Namespace:
         description=(
             "Sprint 6 K2: schemathesis API fuzzing runner. "
             "Warn-only до Sprint 7 (feature_flag schemathesis_gate_enabled)."
-        ),
+        )
     )
     parser.add_argument(
         "--openapi",
@@ -74,10 +74,7 @@ def _parse_args() -> argparse.Namespace:
         help="Maximum examples per endpoint (default 20 для CI; локально 100+).",
     )
     parser.add_argument(
-        "--workers",
-        type=int,
-        default=4,
-        help="Параллельные workers для тестов.",
+        "--workers", type=int, default=4, help="Параллельные workers для тестов."
     )
     parser.add_argument(
         "--allowlist",
@@ -149,11 +146,7 @@ def _run_schemathesis(args: argparse.Namespace) -> tuple[int, str, str]:
     ]
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600,
-            check=False,
+            cmd, capture_output=True, text=True, timeout=600, check=False
         )
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
@@ -226,8 +219,7 @@ def main() -> int:
 
     if strict:
         print(
-            f"[api-fuzz] FAIL (strict) — {non_allowlisted} non-allowlisted "
-            "violations",
+            f"[api-fuzz] FAIL (strict) — {non_allowlisted} non-allowlisted violations",
             file=sys.stderr,
         )
         return EXIT_VIOLATIONS

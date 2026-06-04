@@ -203,10 +203,7 @@ class TestAutoRegisterUnroutedActions:
         auto_register_unrouted_actions(app, registry)
 
         client = TestClient(app)
-        response = client.post(
-            f"{_AUTO_PREFIX}/demo.do_thing",
-            json={"foo": "bar"},
-        )
+        response = client.post(f"{_AUTO_PREFIX}/demo.do_thing", json={"foo": "bar"})
         assert response.status_code == 200
         assert response.json() == {"ok": True, "received": {"foo": "bar"}}
         assert service.calls == [("do_thing", {"foo": "bar"})]
@@ -230,9 +227,7 @@ class TestAutoRegisterUnroutedActions:
         assert body["items"] == []
         assert body["args"] == {"page": "1", "size": "10"}
 
-    def test_returns_default_registry_when_omitted(
-        self, app: FastAPI
-    ) -> None:
+    def test_returns_default_registry_when_omitted(self, app: FastAPI) -> None:
         # Без явного ``registry`` функция использует глобальный
         # ``action_handler_registry`` — тест проверяет лишь, что вызов
         # не падает (число добавленных зависит от глобального состояния).

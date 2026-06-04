@@ -118,9 +118,7 @@ class TestTelegramSendProcessor:
         assert payload["inline_keyboard"] == [[{"text": "Y", "callback_data": "y"}]]
 
     async def test_send_static_body(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "send", fake_client)
         proc = TelegramSendProcessor(body="hello", chat_id_from="body.chat_id")
@@ -135,9 +133,7 @@ class TestTelegramSendProcessor:
         assert exchange.get_property("telegram_message_id") == 100
 
     async def test_send_missing_chat_id_fails(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "send", fake_client)
         proc = TelegramSendProcessor(body="hi")
@@ -149,9 +145,7 @@ class TestTelegramSendProcessor:
         fake_client.send_message.assert_not_awaited()
 
     async def test_send_handles_client_exception(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "send", fake_client)
         fake_client.send_message.side_effect = RuntimeError("boom")
@@ -174,9 +168,7 @@ class TestTelegramReplyProcessor:
         assert spec["telegram_reply"]["body"] == "re"
 
     async def test_reply_with_source_id(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "reply", fake_client)
         proc = TelegramReplyProcessor(
@@ -204,9 +196,7 @@ class TestTelegramEditProcessor:
         assert spec["telegram_edit"]["body"] == "new"
 
     async def test_edit_with_text(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "edit", fake_client)
         proc = TelegramEditProcessor(body="updated")
@@ -222,9 +212,7 @@ class TestTelegramEditProcessor:
         assert kwargs["text"] == "updated"
 
     async def test_edit_skips_when_no_fields(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "edit", fake_client)
         proc = TelegramEditProcessor()
@@ -250,9 +238,7 @@ class TestTelegramTypingProcessor:
         assert spec["telegram_typing"]["action"] == "upload_photo"
 
     async def test_typing_sends_chat_action(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "typing", fake_client)
         proc = TelegramTypingProcessor(action="typing")
@@ -284,9 +270,7 @@ class TestTelegramSendFileProcessor:
         assert spec["telegram_send_file"]["body"] == "cap"
 
     async def test_send_file_from_property(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "send_file", fake_client)
         proc = TelegramSendFileProcessor(
@@ -315,9 +299,7 @@ class TestTelegramMentionProcessor:
 
     def test_to_spec_round_trip(self) -> None:
         proc = TelegramMentionProcessor(
-            user_id_from="body.uid",
-            display_name_from="body.name",
-            append=True,
+            user_id_from="body.uid", display_name_from="body.name", append=True
         )
         spec = proc.to_spec()
         assert spec["telegram_mention"]["user_id_from"] == "body.uid"
@@ -338,9 +320,7 @@ class TestTelegramMentionProcessor:
 
     async def test_mention_html(self) -> None:
         proc = TelegramMentionProcessor(
-            user_id_from="body.uid",
-            display_name_from="body.name",
-            parse_mode="HTML",
+            user_id_from="body.uid", display_name_from="body.name", parse_mode="HTML"
         )
         exchange = _make_exchange(body={"uid": 42, "name": "Bob"})
 
@@ -351,9 +331,7 @@ class TestTelegramMentionProcessor:
 
     async def test_mention_append(self) -> None:
         proc = TelegramMentionProcessor(
-            user_id_from="body.uid",
-            display_name_from="body.name",
-            append=True,
+            user_id_from="body.uid", display_name_from="body.name", append=True
         )
         exchange = _make_exchange(body={"uid": 1, "name": "X"})
         exchange.set_property("telegram_mention", "prev")
@@ -382,9 +360,7 @@ class TestTelegramStatusProcessor:
         assert spec["telegram_status"]["bot"] == "main_bot"
 
     async def test_status_writes_profile(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        fake_client: FakeTelegramClient,
+        self, monkeypatch: pytest.MonkeyPatch, fake_client: FakeTelegramClient
     ) -> None:
         _install_client(monkeypatch, "status", fake_client)
         proc = TelegramStatusProcessor()

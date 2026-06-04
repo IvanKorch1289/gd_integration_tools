@@ -12,13 +12,14 @@ Scaffold для операционных примитивов оркестрац
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = ("Sensor", "Backfill", "DryRun", "HumanApproval")
+__all__ = ("Backfill", "DryRun", "HumanApproval", "Sensor")
 
 
 @dataclass(slots=True)
@@ -121,7 +122,7 @@ class HumanApproval:
         if timeout is not None:
             try:
                 await asyncio.wait_for(self.approved.wait(), timeout=timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.decision = "rejected_timeout"
                 return self.decision
         else:

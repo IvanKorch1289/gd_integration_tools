@@ -37,21 +37,14 @@ class _FakeStreamCM:
 def _make_chunk(content: str = "", finish: str | None = None) -> dict[str, Any]:
     return {
         "choices": [
-            {
-                "delta": {"content": content} if content else {},
-                "finish_reason": finish,
-            }
+            {"delta": {"content": content} if content else {}, "finish_reason": finish}
         ]
     }
 
 
 @pytest.mark.asyncio
 async def test_astream_yields_normalized_chunks() -> None:
-    chunks = [
-        _make_chunk("Hello"),
-        _make_chunk(" world"),
-        _make_chunk(finish="stop"),
-    ]
+    chunks = [_make_chunk("Hello"), _make_chunk(" world"), _make_chunk(finish="stop")]
     gateway = type("G", (), {})()
     gateway.acompletion = AsyncMock(return_value=_FakeStreamCM(chunks))
     service = LLMStreamingService(gateway=gateway, chunk_size=1)

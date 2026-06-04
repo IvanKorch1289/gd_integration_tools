@@ -47,9 +47,7 @@ async def test_create_new_emits_audit_event(workspace_root: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_quota_exceeded_blocks_new_workspace(workspace_root: Path) -> None:
-    manager = AIWorkspaceManager(
-        root=workspace_root, per_tenant_quota_bytes=10
-    )
+    manager = AIWorkspaceManager(root=workspace_root, per_tenant_quota_bytes=10)
     await manager.create_new(tenant="t1")
     manager.add_used_bytes("t1", 100)
     with pytest.raises(WorkspaceQuotaExceededError):
@@ -66,9 +64,7 @@ async def test_ttl_expired_handle_blocks_writes(workspace_root: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_cleanup_expired_removes_old_workspaces(
-    workspace_root: Path,
-) -> None:
+async def test_cleanup_expired_removes_old_workspaces(workspace_root: Path) -> None:
     manager = AIWorkspaceManager(root=workspace_root, ttl_seconds=0.001)
     h1 = await manager.create_new(tenant="t1")
     (h1.path / "a.txt").write_text("x")
@@ -80,9 +76,7 @@ async def test_cleanup_expired_removes_old_workspaces(
 
 @pytest.mark.asyncio
 async def test_shutdown_cancels_cleanup_loop(workspace_root: Path) -> None:
-    manager = AIWorkspaceManager(
-        root=workspace_root, cleanup_interval_seconds=0.05
-    )
+    manager = AIWorkspaceManager(root=workspace_root, cleanup_interval_seconds=0.05)
     await manager.start_cleanup_loop()
     await manager.shutdown()
     # Re-shutdown идемпотентен.

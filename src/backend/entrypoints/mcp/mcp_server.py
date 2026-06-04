@@ -54,7 +54,7 @@ def create_mcp_server() -> Any:
         from src.backend.entrypoints.mcp.namespaces.ai_mcp import register_ai_tools
 
         register_ai_tools(mcp)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("AI namespace MCP tools registration skipped: %s", exc)
 
     # IL-WF1.5: auto-export durable workflows как MCP tools
@@ -64,7 +64,7 @@ def create_mcp_server() -> Any:
         from src.backend.entrypoints.mcp.workflow_tools import register_workflow_tools
 
         register_workflow_tools(mcp)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("workflow MCP tools registration skipped: %s", exc)
 
     return mcp
@@ -102,7 +102,7 @@ def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
         return None
     try:
         return metadata.input_model.model_json_schema()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
 
 
@@ -128,7 +128,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
         from src.backend.core.config.ai_2026 import mcp_settings
 
         legacy_inline = bool(mcp_settings.legacy_description_schema)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         legacy_inline = False
 
     if schema is not None and legacy_inline:
@@ -147,7 +147,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:  # noqa: PERF203
+        except (TypeError, ValueError):
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -168,7 +168,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -208,7 +208,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     """
     try:
         from src.backend.core.config.ai_2026 import mcp_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return None
     if not mcp_settings.tool_authz_enabled:
         return None
@@ -235,7 +235,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
                     gate.check(plugin="mcp", capability=cap, requested_scope=None)
                 except CapabilityDeniedError:
                     return f"capability_denied:{cap}"
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         # Best-effort: capability check failure → deny
         return "capability_check_failed"
 
@@ -288,7 +288,7 @@ def _register_route_tools(mcp: Any) -> None:
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()
@@ -371,7 +371,7 @@ def _register_template_tools(mcp: Any) -> None:
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps({"error": "Invalid JSON params"}).decode()
 
         try:
@@ -457,7 +457,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except orjson.JSONDecodeError, TypeError:
+                except (orjson.JSONDecodeError, TypeError):
                     pass
 
             result = strategy.convert(input_data)
@@ -693,5 +693,5 @@ def _register_document_tools(mcp: Any) -> None:
                     "filename": meta.get("filename"),
                 }
             ).decode()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return orjson.dumps({"error": str(exc)}).decode()

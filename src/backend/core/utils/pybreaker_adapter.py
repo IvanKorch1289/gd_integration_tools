@@ -27,6 +27,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any, Final, Protocol, runtime_checkable
 
 __all__ = (
@@ -222,10 +223,10 @@ class InMemoryPybreakerAdapter:
 
     async def _on_failure(self) -> None:
         """Обработать отказ: инкремент counter; при достижении fail_max → open."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         self._fail_counter += 1
-        self._last_failure_at_iso = datetime.now(timezone.utc).isoformat()
+        self._last_failure_at_iso = datetime.now(UTC).isoformat()
         if self._fail_counter >= self._fail_max:
             self._state = "open"
             _logger.warning(
@@ -360,13 +361,13 @@ class PybreakerSDKAdapter:
 
         Метод оставлен для совместимости с [InMemoryPybreakerAdapter.restore].
         """
-        return None
+        return
 
 
 def _is_pybreaker_available() -> bool:
     """Lazy-check доступности pybreaker SDK без побочных эффектов."""
     try:
-        import pybreaker  # noqa: F401  # type: ignore[import-not-found]
+        import pybreaker  # noqa: F401
     except ImportError:
         return False
     return True
@@ -407,7 +408,7 @@ def make_pybreaker_adapter(
         from src.backend.core.config.v11 import v11_settings
 
         sdk_enabled = bool(v11_settings.pybreaker_enabled)
-    except Exception:  # noqa: BLE001  # на ранней инициализации возможны импорт-ошибки
+    except Exception:  # на ранней инициализации возможны импорт-ошибки
         sdk_enabled = False
 
     if sdk_enabled and _is_pybreaker_available():

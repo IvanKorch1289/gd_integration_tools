@@ -9,7 +9,8 @@ Stateless — см. контракт в ``base.py``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import (
@@ -57,7 +58,7 @@ class ControlFlowMixin:
         when: list[ChoiceBranch]
         | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
         otherwise: list[BaseProcessor] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """When/Otherwise: ветвление по JMESPath-веткам или предикатам.
 
         Принимает либо новый формат — список :class:`ChoiceBranch` с
@@ -72,7 +73,7 @@ class ControlFlowMixin:
         cases: dict[str, list[BaseProcessor]],
         *,
         default: list[BaseProcessor] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """n8n Switch — case/match роутинг по значению поля."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.patterns",
@@ -89,7 +90,7 @@ class ControlFlowMixin:
         try_processors: list[BaseProcessor],
         catch_processors: list[BaseProcessor] | None = None,
         finally_processors: list[BaseProcessor] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Try/Catch/Finally: exception handling в pipeline."""
         return self._add(  # type: ignore[attr-defined]
             TryCatchProcessor(
@@ -106,7 +107,7 @@ class ControlFlowMixin:
         max_attempts: int = 3,
         delay_seconds: float = 1.0,
         backoff: str = "exponential",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Retry с backoff: повторяет процессоры при ошибке. backoff: fixed|exponential."""
         return self._add(  # type: ignore[attr-defined]
             RetryProcessor(
@@ -117,13 +118,13 @@ class ControlFlowMixin:
             )
         )
 
-    def fallback(self, processors: list[BaseProcessor]) -> "RouteBuilder":
+    def fallback(self, processors: list[BaseProcessor]) -> RouteBuilder:
         """Fallback-цепочка: последовательно пробует процессоры, останавливается на первом успехе."""
         return self._add(FallbackChainProcessor(processors=processors))  # type: ignore[attr-defined]
 
     def dead_letter(
         self, processors: list[BaseProcessor], *, dlq_stream: str = "dsl-dlq"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Dead Letter Channel: при ошибке — отправка в Redis stream."""
         return self._add(  # type: ignore[attr-defined]
             DeadLetterProcessor(processors=processors, dlq_stream=dlq_stream)
@@ -135,7 +136,7 @@ class ControlFlowMixin:
         action: str | None = None,
         processors: list[BaseProcessor] | None = None,
         dlq_stream: str = "dsl-dlq",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Глобальный error handler для pipeline — оборачивает ВСЕ накопленные процессоры.
 
         При ошибке делегирует в action или выполняет processors, всё попадает в DLQ.
@@ -168,13 +169,13 @@ class ControlFlowMixin:
 
     def parallel(
         self, branches: dict[str, list[BaseProcessor]], *, strategy: str = "all"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Параллельное выполнение именованных веток. strategy: all|first."""
         return self._add(  # type: ignore[attr-defined]
             ParallelProcessor(branches=branches, strategy=strategy)
         )
 
-    def saga(self, steps: list[SagaStep]) -> "RouteBuilder":
+    def saga(self, steps: list[SagaStep]) -> RouteBuilder:
         """Saga-паттерн: последовательные шаги с компенсацией при ошибке."""
         return self._add(SagaProcessor(steps=steps))  # type: ignore[attr-defined]
 
@@ -183,7 +184,7 @@ class ControlFlowMixin:
         key_expression: Callable[[Exchange[Any]], str],
         *,
         ttl_seconds: int = 86400,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Идемпотентный consumer: дедупликация через Redis SET NX EX."""
         return self._add(  # type: ignore[attr-defined]
             IdempotentConsumerProcessor(
@@ -193,7 +194,7 @@ class ControlFlowMixin:
 
     # ── Time control / circuit_breaker / loop ──
 
-    def throttle(self, rate: float, *, burst: int = 1) -> "RouteBuilder":
+    def throttle(self, rate: float, *, burst: int = 1) -> RouteBuilder:
         """Throttler: rate-limit N сообщений/сек (token bucket)."""
         return self._add(ThrottlerProcessor(rate=rate, burst=burst))  # type: ignore[attr-defined]
 
@@ -202,7 +203,7 @@ class ControlFlowMixin:
         delay_ms: int | None = None,
         *,
         scheduled_time_fn: Callable[[Exchange[Any]], float] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Delay: задержка на N миллисекунд или до timestamp."""
         return self._add(  # type: ignore[attr-defined]
             DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn)
@@ -216,7 +217,7 @@ class ControlFlowMixin:
         recovery_timeout: float = 30.0,
         fallback_processors: list[BaseProcessor] | None = None,
         breaker_name: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN).
 
         Wave 26.7: state-machine делегируется в shared ``breaker_registry``;
@@ -241,7 +242,7 @@ class ControlFlowMixin:
         count: int | None = None,
         until: Callable[[Exchange[Any]], bool] | None = None,
         max_iterations: int = 1000,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Loop — execute sub-processors N times or until condition."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -259,7 +260,7 @@ class ControlFlowMixin:
         *,
         copy_exchange: bool = True,
         max_iterations: int = 10000,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """For-Each — iterate over a collection, executing sub-processors for each item.
 
         Args:
@@ -283,7 +284,7 @@ class ControlFlowMixin:
         *,
         seconds: float = 30.0,
         fallback_processors: list[BaseProcessor] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Timeout — wrap sub-processors with a time limit."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -301,7 +302,7 @@ class ControlFlowMixin:
         *,
         header_name: str = "x-created-at",
         drop_action: str = "fail",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Message Expiration: отбрасывает сообщения старше ``ttl_seconds``."""
         return self._add(  # type: ignore[attr-defined]
             MessageExpirationProcessor(
@@ -311,7 +312,7 @@ class ControlFlowMixin:
             )
         )
 
-    def correlation_id(self, *, header: str = "x-correlation-id") -> "RouteBuilder":
+    def correlation_id(self, *, header: str = "x-correlation-id") -> RouteBuilder:
         """Correlation Identifier: проставляет/пропагирует correlation-id."""
         return self._add(CorrelationIdProcessor(header=header))  # type: ignore[attr-defined]
 
@@ -327,7 +328,7 @@ class ControlFlowMixin:
         timeout_seconds: float = 86_400.0,
         payload_path: str | None = None,
         request_info_processors: list[BaseProcessor] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """HITL-approval: приостанавливает pipeline, ожидает approve/reject от оператора.
 
         Использует :class:`HitlService` для регистрации pending signal и ожидания

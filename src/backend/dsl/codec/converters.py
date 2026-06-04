@@ -1,6 +1,6 @@
 """Конвертеры значений: numpy-скаляры, regex-паттерны, pydantic-модели."""
 
-from typing import Any, Type
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ def convert_numpy_types(value: Any) -> Any:
     if callable(item):
         try:
             return item()
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return value
     return value
 
@@ -33,7 +33,7 @@ def convert_pattern(pattern: str) -> str:
 
 
 def transfer_model_to_schema(
-    instance: Any, schema: Type[BaseModel], from_attributes: bool = False
+    instance: Any, schema: type[BaseModel], from_attributes: bool = False
 ) -> BaseModel:
     """ORM/dict → pydantic-схема через `model_validate`."""
     try:

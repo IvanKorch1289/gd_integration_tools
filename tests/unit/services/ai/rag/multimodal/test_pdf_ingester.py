@@ -39,9 +39,7 @@ def _make_minimal_pdf(text: str = "Hello multimodal RAG world") -> bytes:
     # Самый компактный валидный PDF — текстовая операция в content stream.
     # Используем сырой PDF-stream, чтобы не зависеть от reportlab.
     safe_text = text.replace("(", "\\(").replace(")", "\\)")
-    content_bytes = (
-        f"BT /F1 12 Tf 50 700 Td ({safe_text}) Tj ET".encode("latin-1")
-    )
+    content_bytes = f"BT /F1 12 Tf 50 700 Td ({safe_text}) Tj ET".encode("latin-1")
 
     writer = PdfWriter()
     page = writer.add_blank_page(width=612, height=792)
@@ -155,7 +153,9 @@ async def test_pdf_ingester_extracts_text_via_pypdf() -> None:
         # Если есть chunks вообще — должны быть text.
         assert text_chunks
         assert all(isinstance(c, ChunkDoc) for c in text_chunks)
-        assert all(c.metadata.get("document_id") == result.document_id for c in text_chunks)
+        assert all(
+            c.metadata.get("document_id") == result.document_id for c in text_chunks
+        )
 
 
 # ─── Тест 6: ingest() возвращает list[ChunkDoc] напрямую ─────────────────────

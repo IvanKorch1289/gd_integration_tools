@@ -37,10 +37,10 @@ from typing import Literal
 CacheLayer = Literal["service", "repository"]
 
 __all__ = (
-    "CacheConfigRegistry",
-    "CacheLayerValidator",
-    "CacheDuplicationError",
     "CacheConfigEntry",
+    "CacheConfigRegistry",
+    "CacheDuplicationError",
+    "CacheLayerValidator",
 )
 
 

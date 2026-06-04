@@ -11,9 +11,7 @@ import pytest
 
 from src.backend.core.config.features import feature_flags
 from src.backend.dsl.engine.exchange import Exchange, Message
-from src.backend.dsl.engine.processors.db_call_procedure import (
-    DbCallProcedureProcessor,
-)
+from src.backend.dsl.engine.processors.db_call_procedure import DbCallProcedureProcessor
 
 
 def _ex(body: Any = None) -> Exchange[Any]:
@@ -36,19 +34,13 @@ def test_validates_constructor() -> None:
 
 def test_build_call_sql_dialects() -> None:
     proc_pg = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
-    assert (
-        proc_pg._build_call_sql({"id": 1}) == "CALL public.recalc(:id)"
-    )
+    assert proc_pg._build_call_sql({"id": 1}) == "CALL public.recalc(:id)"
     proc_mssql = DbCallProcedureProcessor(
         profile="p", name="recalc", dialect="mssql", schema="dbo"
     )
     assert proc_mssql._build_call_sql({"id": 1}) == "EXEC dbo.recalc :id"
-    proc_oracle = DbCallProcedureProcessor(
-        profile="p", name="recalc", dialect="oracle"
-    )
-    assert (
-        proc_oracle._build_call_sql({"id": 1}) == "BEGIN public.recalc(:id); END;"
-    )
+    proc_oracle = DbCallProcedureProcessor(profile="p", name="recalc", dialect="oracle")
+    assert proc_oracle._build_call_sql({"id": 1}) == "BEGIN public.recalc(:id); END;"
 
 
 @pytest.mark.asyncio

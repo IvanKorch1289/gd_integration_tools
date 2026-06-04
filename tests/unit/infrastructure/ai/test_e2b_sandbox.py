@@ -51,16 +51,11 @@ def test_register_e2b_sandbox_falls_back_to_noop_without_env(
 ) -> None:
     """Без E2B_API_KEY register_e2b_sandbox даёт NoOpSandbox."""
     from src.backend.core.ai.sandbox import CodeSandbox
-    from src.backend.core.svcs_registry import (
-        clear_registry,
-        get_service,
-    )
+    from src.backend.core.svcs_registry import clear_registry, get_service
 
     clear_registry()
     monkeypatch.delenv("E2B_API_KEY", raising=False)
-    from src.backend.plugins.composition.ai_safety_setup import (
-        register_e2b_sandbox,
-    )
+    from src.backend.plugins.composition.ai_safety_setup import register_e2b_sandbox
 
     register_e2b_sandbox()
     sandbox = get_service(CodeSandbox)

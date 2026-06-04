@@ -51,7 +51,9 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
         if self._sample_rate < 1.0:
             import random
 
-            if random.random() > self._sample_rate:  # noqa: S311  # sampling decision, не криптография
+            if (
+                random.random() > self._sample_rate  # noqa: S311  # non-cryptographic use
+            ):  # sampling decision, не криптография
                 return await call_next(request)
 
         start = time.monotonic()

@@ -40,10 +40,10 @@ def _flag_enabled() -> bool:
     Безопасно к импорту в unit-тестах без settings.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+        from src.backend.core.config.features import feature_flags
 
         return bool(getattr(feature_flags, "waf_outbound_via_facade", False))
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return False
 
 

@@ -122,7 +122,7 @@ class FakeWorkflowBackend(WorkflowBackend):
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
         """No-op: fake не моделирует replay-семантику."""
-        return None
+        return
 
     # --- helpers для тестов ---------------------------------------------
 

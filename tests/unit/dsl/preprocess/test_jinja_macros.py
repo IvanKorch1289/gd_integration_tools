@@ -47,9 +47,7 @@ policy:
 
 def test_render_macros_includes_external_file(tmp_path: Path) -> None:
     inc = tmp_path / "policy.yaml.j2"
-    inc.write_text(
-        "policy:\n  retry:\n    attempts: 7\n", encoding="utf-8"
-    )
+    inc.write_text("policy:\n  retry:\n    attempts: 7\n", encoding="utf-8")
     raw = """
 route_id: x
 {% include 'policy.yaml.j2' %}

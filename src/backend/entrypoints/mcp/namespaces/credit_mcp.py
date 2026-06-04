@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from fastmcp import FastMCP
 
 
-def register_credit_tools(mcp: "FastMCP") -> None:
+def register_credit_tools(mcp: FastMCP) -> None:
     """Регистрирует все credit.* actions как MCP tools в namespace.
 
     Args:
@@ -31,7 +31,7 @@ def register_credit_tools(mcp: "FastMCP") -> None:
         _register_credit_tool(mcp, action_name)
 
 
-def _register_credit_tool(mcp: "FastMCP", action_name: str) -> None:
+def _register_credit_tool(mcp: FastMCP, action_name: str) -> None:
     """Регистрирует один credit action как MCP tool."""
     import inspect
 
@@ -51,7 +51,7 @@ def _register_credit_tool(mcp: "FastMCP", action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -70,7 +70,7 @@ def _register_credit_tool(mcp: "FastMCP", action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(

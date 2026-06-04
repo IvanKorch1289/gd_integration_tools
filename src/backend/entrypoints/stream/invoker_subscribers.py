@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import Any
 
 from faststream.rabbit.fastapi import RabbitMessage
-from faststream.redis.fastapi import Redis, RedisMessage
+from faststream.redis.fastapi import Redis, RedisChannelMessage
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import (
@@ -28,7 +28,7 @@ from src.backend.core.di.providers import (
     get_stream_logger_provider,
 )
 
-__all__ = ("handle_redis_invocation", "handle_rabbit_invocation")
+__all__ = ("handle_rabbit_invocation", "handle_redis_invocation")
 
 stream_client = get_stream_client_provider()
 stream_logger = get_stream_logger_provider()
@@ -38,7 +38,7 @@ stream_logger = get_stream_logger_provider()
     stream=settings.redis.get_stream_name("invocations-in")
 )
 async def handle_redis_invocation(
-    body: dict[str, Any], msg: RedisMessage, redis: Redis
+    body: dict[str, Any], msg: RedisChannelMessage, redis: Redis
 ) -> None:
     """Подписчик Redis Streams: принимает InvocationRequest и вызывает Invoker."""
     await _dispatch_invocation_message(
@@ -86,7 +86,7 @@ async def _dispatch_invocation_message(
     invoker = get_invoker()
     try:
         await invoker.invoke(request)
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         stream_logger.exception(
             "MQ invocation: Invoker.invoke failed source=%s id=%s",
             source,

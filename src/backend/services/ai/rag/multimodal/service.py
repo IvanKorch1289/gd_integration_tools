@@ -85,6 +85,8 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         super().__init__()
         self._collections: dict[str, dict[str, ChunkDoc]] = {}
         self._embedder: Any | None = None
+        self._captioner: Any | None = None
+        self._whisper: Any | None = None
         self._pdf_ingester = PDFIngester()
         self._image_ingester = ImageIngester()
 
@@ -255,7 +257,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             return _dummy_embedding(content)
         try:
             return await self._embedder.embed(content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "MultimodalRAGService: embedder упал (%s) — fallback на dummy", exc
             )
@@ -298,7 +300,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
 
 @app_state_singleton("multimodal_rag", factory=MultimodalRAGService)
-def get_multimodal_rag() -> MultimodalRAGService:
+def get_multimodal_rag() -> MultimodalRAGService:  # type: ignore[empty-body]
     """Возвращает singleton ``MultimodalRAGService`` через DI.
 
     Returns:

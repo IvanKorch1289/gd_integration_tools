@@ -44,10 +44,7 @@ def _ctx() -> ExecutionContext:
 _AVRO_SCHEMA = {
     "type": "record",
     "name": "User",
-    "fields": [
-        {"name": "id", "type": "long"},
-        {"name": "name", "type": "string"},
-    ],
+    "fields": [{"name": "id", "type": "long"}, {"name": "name", "type": "string"}],
 }
 
 
@@ -108,7 +105,9 @@ class _FakeProtoMessage:
 
 
 @pytest.mark.asyncio
-async def test_protobuf_encode_decode_round_trip(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_protobuf_encode_decode_round_trip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """encode dict → bytes → decode dict (через fake-класс).
 
     Заменяем ``google.protobuf.json_format.ParseDict`` / ``MessageToDict`` на

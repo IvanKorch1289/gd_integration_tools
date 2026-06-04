@@ -9,6 +9,7 @@
 
 Вызов: ``check_no_tests.py <staged files...>``.
 """
+
 from __future__ import annotations
 
 import re
@@ -45,7 +46,9 @@ def main() -> int:
             except (OSError, UnicodeDecodeError):
                 continue
             if BAD_IMPORTS.search(text):
-                errors.append(f"{rel}: содержит запрещённый импорт тестового фреймворка")
+                errors.append(
+                    f"{rel}: содержит запрещённый импорт тестового фреймворка"
+                )
     if errors:
         print("ERROR: политика 'no tests' нарушена:", file=sys.stderr)
         for e in errors:

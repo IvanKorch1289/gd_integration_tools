@@ -73,6 +73,7 @@ class TestSprint19DXFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # Sprint19DXFlags must be in MRO alongside its parallel siblings
         # (sprint5_k2, sprint19_ai) and earlier splits.

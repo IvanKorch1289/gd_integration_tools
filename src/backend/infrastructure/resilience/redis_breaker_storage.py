@@ -84,7 +84,7 @@ class RedisBreakerStateStorage:
                 await self._redis.set(key, payload, ex=self._ttl)
             else:
                 await self._redis.set(key, payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Сетевая ошибка не должна валить CB — лог + продолжаем.
             _logger.warning(
                 "RedisBreakerStateStorage save(%s) failed: %s", state.name, exc
@@ -102,7 +102,7 @@ class RedisBreakerStateStorage:
         key = self._key(name)
         try:
             raw = await self._redis.get(key)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("RedisBreakerStateStorage load(%s) failed: %s", name, exc)
             return None
 

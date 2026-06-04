@@ -133,7 +133,7 @@ class SkillRegistry:
         """Инициализация пустого реестра."""
         self._skills: dict[str, SkillSpec] = {}
 
-    def from_toml_manifest(self, plugin_toml: "Path") -> list[SkillSpec]:
+    def from_toml_manifest(self, plugin_toml: Path) -> list[SkillSpec]:
         """Загрузить ``[[skill]]`` секции из ``plugin.toml`` V11.2.
 
         Args:
@@ -183,7 +183,7 @@ class SkillRegistry:
 
         return results
 
-    def from_python_decorator(self, func: "Callable[..., Any]") -> SkillSpec:
+    def from_python_decorator(self, func: Callable[..., Any]) -> SkillSpec:
         """Создать :class:`SkillSpec` из legacy ``@agent_tool``-функции.
 
         Args:

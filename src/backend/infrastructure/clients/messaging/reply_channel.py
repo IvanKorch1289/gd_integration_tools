@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.messaging.event_bus import EventBus
 
-__all__ = ("ReplyChannel", "ReplyTimeoutError", "DEFAULT_REPLY_TIMEOUT_S")
+__all__ = ("DEFAULT_REPLY_TIMEOUT_S", "ReplyChannel", "ReplyTimeoutError")
 
 logger = logging.getLogger("eventing.reply_channel")
 
@@ -65,16 +65,16 @@ class ReplyChannel:
     не поддерживаются (должен быть уникальным).
     """
 
-    _instance: "ReplyChannel | None" = None
+    _instance: ReplyChannel | None = None
 
-    def __init__(self, event_bus: "EventBus") -> None:
+    def __init__(self, event_bus: EventBus) -> None:
         self._bus = event_bus
         self._pending: dict[str, asyncio.Future[dict[str, Any]]] = {}
         self._lock = asyncio.Lock()
         self._subscribed = False
 
     @classmethod
-    def instance(cls, event_bus: "EventBus | None" = None) -> "ReplyChannel":
+    def instance(cls, event_bus: EventBus | None = None) -> ReplyChannel:
         """Возвращает singleton. На первый вызов обязателен ``event_bus``."""
         if cls._instance is None:
             if event_bus is None:
@@ -125,7 +125,7 @@ class ReplyChannel:
         try:
             await self._bus_publish_raw(target_channel, request)
             return await asyncio.wait_for(fut, timeout=timeout)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise ReplyTimeoutError(
                 f"reply timeout after {timeout}s (correlation_id={cid})"
             ) from exc
@@ -167,7 +167,7 @@ class ReplyChannel:
             subscriber = broker.subscriber(REPLY_CHANNEL_PREFIX + "*")
             subscriber(self.deliver)
             self._subscribed = True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "ReplyChannel subscribe failed (fallback in-process): %s", exc
             )

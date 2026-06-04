@@ -61,7 +61,7 @@ class TemplateRegistry:
     Postgres-бэкенд.
     """
 
-    _instance: "TemplateRegistry | None" = None
+    _instance: TemplateRegistry | None = None
 
     def __init__(self) -> None:
         self._entries: dict[str, TemplateEntry] = {}
@@ -74,7 +74,7 @@ class TemplateRegistry:
         )
 
     @classmethod
-    def instance(cls) -> "TemplateRegistry":
+    def instance(cls) -> TemplateRegistry:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -166,7 +166,7 @@ class TemplateRegistry:
         try:
             subject = self._env.from_string(spec.subject).render(**ctx)
             body = self._env.from_string(spec.body).render(**ctx)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise ValueError(
                 f"Template '{key}' rendering failed: {type(exc).__name__}: {exc}"
             ) from exc
@@ -191,11 +191,11 @@ def get_template_registry() -> TemplateRegistry:
 
 
 __all__ = (
-    "TemplateRegistry",
-    "TemplateEntry",
-    "TemplateSpec",
-    "TemplateNotFoundError",
-    "get_template_registry",
     "DEFAULT_LOCALE",
     "SUPPORTED_LOCALES",
+    "TemplateEntry",
+    "TemplateNotFoundError",
+    "TemplateRegistry",
+    "TemplateSpec",
+    "get_template_registry",
 )

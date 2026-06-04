@@ -15,6 +15,7 @@ class TestTaskWatchdog:
             get_task_watchdog,
             _reset_task_watchdog,
         )
+
         # Verify the class can be instantiated
         wd = TaskWatchdog()
         assert wd is not None
@@ -27,6 +28,7 @@ class TestTaskWatchdog:
             TaskWatchdog,
             _reset_task_watchdog,
         )
+
         _reset_task_watchdog()
 
         with patch("src.backend.core.config.features.feature_flags") as ff:
@@ -61,14 +63,20 @@ class TestTaskWatchdog:
             TaskWatchdog,
             _reset_task_watchdog,
         )
+
         _reset_task_watchdog()
 
-        with patch("src.backend.core.config.features.feature_flags") as ff, \
-             patch("src.backend.core.utils.task_registry.get_task_registry") as mock_get_tr:
-
+        with (
+            patch("src.backend.core.config.features.feature_flags") as ff,
+            patch(
+                "src.backend.core.utils.task_registry.get_task_registry"
+            ) as mock_get_tr,
+        ):
             ff.task_watchdog_deadline = True
             mock_registry = AsyncMock()
-            mock_registry.create_task = lambda coro, name=None: asyncio.create_task(coro)
+            mock_registry.create_task = lambda coro, name=None: asyncio.create_task(
+                coro
+            )
             mock_get_tr.return_value = mock_registry
 
             wd = TaskWatchdog(tick_interval=0.01)

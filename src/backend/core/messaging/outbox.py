@@ -26,7 +26,7 @@ import asyncio
 import uuid
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
@@ -83,8 +83,8 @@ class OutboxEvent(BaseModel):
     status: OutboxEventStatus = OutboxEventStatus.PENDING
     tenant_id: str | None = None
     correlation_id: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 @runtime_checkable
@@ -240,7 +240,7 @@ class FakeOutbox:
                     event.payload = dict(override_payload)
                 event.status = OutboxEventStatus.PENDING
                 event.retry_count = 0
-                event.updated_at = datetime.now(timezone.utc)
+                event.updated_at = datetime.now(UTC)
                 self._replay_log.append((eid, "replay"))
                 affected += 1
         return affected
@@ -254,7 +254,7 @@ class FakeOutbox:
     ) -> int:
         """Manual resolution — см. [OutboxBackend.mark_resolved]."""
         affected = 0
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         async with self._lock:
             for eid in event_ids:
                 event = self._events.get(eid)
@@ -288,7 +288,7 @@ class FakeOutbox:
             event.error_class = type(error).__name__
             event.error_message = str(error)
             event.retry_count = event.max_attempts
-            event.updated_at = datetime.now(timezone.utc)
+            event.updated_at = datetime.now(UTC)
             return True
 
     async def stats(self) -> dict[str, int]:

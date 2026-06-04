@@ -34,17 +34,17 @@ class AIPluginRegistry:
     def __init__(self) -> None:
         self._specs: dict[str, AIServiceSpec] = {}
 
-    def register(self, spec: "AIServiceSpec") -> None:
+    def register(self, spec: AIServiceSpec) -> None:
         """Зарегистрировать новый spec (overwrite by name)."""
         if spec.name in self._specs:
             _logger.debug("AI service overwrite: %s", spec.name)
         self._specs[spec.name] = spec
 
-    def get(self, name: str) -> "AIServiceSpec | None":
+    def get(self, name: str) -> AIServiceSpec | None:
         """Получить spec по имени, ``None`` если не найден."""
         return self._specs.get(name)
 
-    def all(self) -> list["AIServiceSpec"]:
+    def all(self) -> list[AIServiceSpec]:
         """Все зарегистрированные сервисы (sorted by name)."""
         return [self._specs[n] for n in sorted(self._specs)]
 

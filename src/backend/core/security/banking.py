@@ -15,20 +15,20 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
 __all__ = (
+    "AntiFraudEngine",
+    "AntiFraudRule",
     "CryptoProvider",
     "DummyCryptoProvider",
     "HsmBackend",
+    "SignedTransaction",
     "SoftwareHsmBackend",
     "TxSigner",
-    "AntiFraudRule",
-    "AntiFraudEngine",
-    "SignedTransaction",
 )
 
 
@@ -112,7 +112,7 @@ class TxSigner:
             payload=payload,
             signature=signature,
             key_id=key_id,
-            signed_at=datetime.now(timezone.utc),
+            signed_at=datetime.now(UTC),
             algorithm=self._algorithm,
         )
 
@@ -152,7 +152,7 @@ class AntiFraudEngine:
             try:
                 if rule.predicate(tx):
                     triggered.append(rule)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 logger.debug(
                     "anti-fraud rule predicate raised; rule skipped", exc_info=True
                 )

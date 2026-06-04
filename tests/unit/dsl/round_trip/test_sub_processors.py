@@ -118,8 +118,7 @@ def test_choice_jmespath_round_trip() -> None:
     builder = RouteBuilder.from_("rt.choice", source="test:rt.choice").choice(
         when=[
             ChoiceBranch(
-                expr="status == 'ok'",
-                processors=[LogProcessor(level="info")],
+                expr="status == 'ok'", processors=[LogProcessor(level="info")]
             ),
             ChoiceBranch(
                 expr="status == 'fail'",
@@ -181,9 +180,7 @@ def test_try_catch_with_callable_child_skipped() -> None:
 
     inner = TryCatchProcessor(
         try_processors=[
-            DispatchActionProcessor(
-                action="x.y", payload_factory=lambda ex: {"v": 1}
-            )
+            DispatchActionProcessor(action="x.y", payload_factory=lambda ex: {"v": 1})
         ],
         catch_processors=[LogProcessor(level="error")],
     )

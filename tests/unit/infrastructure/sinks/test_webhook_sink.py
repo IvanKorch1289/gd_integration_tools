@@ -27,7 +27,9 @@ class _FakeResponse:
         self.request = MagicMock()
 
 
-def _fake_client(resp: _FakeResponse | None = None, side_effect: Exception | None = None) -> AsyncMock:
+def _fake_client(
+    resp: _FakeResponse | None = None, side_effect: Exception | None = None
+) -> AsyncMock:
     client = AsyncMock()
     if side_effect is not None:
         client.post = AsyncMock(side_effect=side_effect)
@@ -68,7 +70,9 @@ async def test_send_with_secret_signature() -> None:
     client = _fake_client(resp)
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
-        sink = WebhookSink(sink_id="w2", url="http://hook.test", event="pay", secret="shh")
+        sink = WebhookSink(
+            sink_id="w2", url="http://hook.test", event="pay", secret="shh"
+        )
         payload = {"amount": 100}
         result = await sink.send(payload)
 
@@ -78,9 +82,7 @@ async def test_send_with_secret_signature() -> None:
     headers = call_kwargs["headers"]
     assert headers["X-Webhook-Event"] == "pay"
     assert "X-Webhook-Signature" in headers
-    expected_sig = hmac.new(
-        b"shh", b'{"amount":100}', hashlib.sha256
-    ).hexdigest()
+    expected_sig = hmac.new(b"shh", b'{"amount":100}', hashlib.sha256).hexdigest()
     assert headers["X-Webhook-Signature"] == expected_sig
 
 
@@ -110,7 +112,9 @@ async def test_send_network_exception() -> None:
 
 
 @pytest.mark.asyncio
-async def test_send_returns_false_when_httpx_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_send_returns_false_when_httpx_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setitem(sys.modules, "httpx", None)  # type: ignore[arg-type]
     sink = WebhookSink(sink_id="w5", url="http://hook.test", event="evt")
     result = await sink.send({})
@@ -156,9 +160,7 @@ async def test_send_with_rpa_policy_enabled(monkeypatch: pytest.MonkeyPatch) -> 
     fake_flags = MagicMock()
     fake_flags.webhook_resilience_policy_enabled = True
     monkeypatch.setitem(
-        sys.modules,
-        "src.backend.core.config.features",
-        types.ModuleType("features"),
+        sys.modules, "src.backend.core.config.features", types.ModuleType("features")
     )
     import src.backend.core.config.features as _features_mod
 

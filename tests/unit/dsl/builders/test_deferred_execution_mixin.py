@@ -228,13 +228,17 @@ class TestDeferUntil:
         b = builder.defer_until(1234567890.5)
         assert b._deferred["timestamp"] == 1234567890.5
 
-    def test_defer_until_naive_datetime_treated_as_utc(self, builder: RouteBuilder) -> None:
+    def test_defer_until_naive_datetime_treated_as_utc(
+        self, builder: RouteBuilder
+    ) -> None:
         naive = datetime(2026, 6, 1, 12, 0, 0)  # no tz
         b = builder.defer_until(naive)
         expected = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp()
         assert b._deferred["timestamp"] == expected
 
-    def test_defer_until_aware_datetime_converted_to_utc(self, builder: RouteBuilder) -> None:
+    def test_defer_until_aware_datetime_converted_to_utc(
+        self, builder: RouteBuilder
+    ) -> None:
         from zoneinfo import ZoneInfo
 
         moscow = ZoneInfo("Europe/Moscow")
@@ -379,7 +383,13 @@ class TestModuleAPI:
         assert DEFAULT_DELAY_SECONDS == 60
 
     def test_mixin_has_expected_methods(self) -> None:
-        expected = {"defer_for", "schedule", "defer_until", "defer_if", "cancel_deferred"}
+        expected = {
+            "defer_for",
+            "schedule",
+            "defer_until",
+            "defer_if",
+            "cancel_deferred",
+        }
         for name in expected:
             assert hasattr(DeferredExecutionMixin, name), f"Missing method: {name}"
             assert callable(getattr(DeferredExecutionMixin, name))

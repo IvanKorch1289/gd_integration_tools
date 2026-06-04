@@ -36,11 +36,7 @@ class _FakeResponse:
         self.model = model
 
 
-def _make_gateway(
-    *,
-    response: Any = None,
-    cost: float = 0.0042,
-) -> Any:
+def _make_gateway(*, response: Any = None, cost: float = 0.0042) -> Any:
     """Сконструировать mock-gateway с acompletion + acost_estimate."""
     gateway = MagicMock()
     gateway.acompletion = AsyncMock(return_value=response or _FakeResponse())
@@ -68,8 +64,7 @@ def test_cost_tracking_invoked(monkeypatch: pytest.MonkeyPatch) -> None:
     """acost_estimate вызывается для каждого вызова."""
     gateway = _make_gateway(cost=0.05)
     monkeypatch.setattr(
-        "src.backend.services.ai.workflow_activities._resolve_gateway",
-        lambda: gateway,
+        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway
     )
     asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x")))
     gateway.acost_estimate.assert_called_once()
@@ -102,9 +97,7 @@ def test_structured_output_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out.structured == {"score": 0.95, "label": "approved"}
 
 
-def test_structured_output_invalid_json_warns(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_structured_output_invalid_json_warns(monkeypatch: pytest.MonkeyPatch) -> None:
     """Невалидный JSON при schema → structured=None, warning логируется."""
     response = _FakeResponse(content="not json")
     monkeypatch.setattr(

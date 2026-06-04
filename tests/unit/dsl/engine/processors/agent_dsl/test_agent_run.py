@@ -81,9 +81,7 @@ def test_capability_scope_returns_workflow_id() -> None:
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch,
-    exchange: Exchange[Any],
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
     """При выключенном feature_flag — processor — silent no-op."""
     from src.backend.core.config.features import feature_flags
@@ -107,9 +105,7 @@ async def test_happy_path_writes_agent_result(
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     gw = _FakeAIGateway(fake_response)
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
     proc = AgentRunProcessor(workflow_id="credit_check", prompt_inline="check it")
     await proc.process(exchange, context)
@@ -133,9 +129,7 @@ async def test_happy_path_writes_agent_result(
 
 @pytest.mark.asyncio
 async def test_missing_gateway_sets_error(
-    monkeypatch: pytest.MonkeyPatch,
-    exchange: Exchange[Any],
-    context: ExecutionContext,
+    monkeypatch: pytest.MonkeyPatch, exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -163,17 +157,11 @@ async def test_extract_context_body_path(
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     gw = _FakeAIGateway(fake_response)
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
-    ex: Exchange[Any] = Exchange(
-        in_message=Message(body={"context": {"key": "value"}})
-    )
+    ex: Exchange[Any] = Exchange(in_message=Message(body={"context": {"key": "value"}}))
     proc = AgentRunProcessor(
-        workflow_id="x",
-        prompt_inline="x",
-        context_property="body.context",
+        workflow_id="x", prompt_inline="x", context_property="body.context"
     )
     await proc.process(ex, context)
     assert gw.calls[0].context == {"key": "value"}
@@ -190,16 +178,12 @@ async def test_extract_context_property_path(
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     gw = _FakeAIGateway(fake_response)
-    monkeypatch.setattr(
-        AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw)
-    )
+    monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
     ex: Exchange[Any] = Exchange()
     ex.set_property("my_prop", {"alpha": 1})
     proc = AgentRunProcessor(
-        workflow_id="x",
-        prompt_inline="x",
-        context_property="property:my_prop",
+        workflow_id="x", prompt_inline="x", context_property="property:my_prop"
     )
     await proc.process(ex, context)
     assert gw.calls[0].context == {"alpha": 1}
@@ -208,9 +192,7 @@ async def test_extract_context_property_path(
 def test_to_spec_round_trip_minimal() -> None:
     proc = AgentRunProcessor(workflow_id="credit_check", prompt_inline="x")
     spec = proc.to_spec()
-    assert spec == {
-        "agent_run": {"workflow_id": "credit_check", "prompt_inline": "x"}
-    }
+    assert spec == {"agent_run": {"workflow_id": "credit_check", "prompt_inline": "x"}}
 
 
 def test_to_spec_round_trip_full() -> None:

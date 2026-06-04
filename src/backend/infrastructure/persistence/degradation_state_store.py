@@ -31,12 +31,12 @@ class DegradationStateStore(Protocol):
     """Контракт для persistence-слоя."""
 
     async def persist(
-        self, mode: "DegradationMode", transition: "DegradationTransition"
+        self, mode: DegradationMode, transition: DegradationTransition
     ) -> None: ...
 
-    async def load_current(self) -> "DegradationMode | None": ...
+    async def load_current(self) -> DegradationMode | None: ...
 
-    async def load_history(self, n: int = 20) -> list["DegradationTransition"]: ...
+    async def load_history(self, n: int = 20) -> list[DegradationTransition]: ...
 
 
 class InMemoryDegradationStateStore:
@@ -47,17 +47,17 @@ class InMemoryDegradationStateStore:
         self._history: list[DegradationTransition] = []
 
     async def persist(
-        self, mode: "DegradationMode", transition: "DegradationTransition"
+        self, mode: DegradationMode, transition: DegradationTransition
     ) -> None:
         self._current = mode
         self._history.append(transition)
         if len(self._history) > 100:
             self._history.pop(0)
 
-    async def load_current(self) -> "DegradationMode | None":
+    async def load_current(self) -> DegradationMode | None:
         return self._current
 
-    async def load_history(self, n: int = 20) -> list["DegradationTransition"]:
+    async def load_history(self, n: int = 20) -> list[DegradationTransition]:
         return self._history[-n:]
 
 
@@ -77,7 +77,7 @@ class RedisDegradationStateStore:
         self._redis = redis_client
 
     async def persist(
-        self, mode: "DegradationMode", transition: "DegradationTransition"
+        self, mode: DegradationMode, transition: DegradationTransition
     ) -> None:
         import json
         from dataclasses import asdict
@@ -86,7 +86,7 @@ class RedisDegradationStateStore:
         await self._redis.lpush(self.KEY_HISTORY, json.dumps(asdict(transition)))
         await self._redis.ltrim(self.KEY_HISTORY, 0, 99)
 
-    async def load_current(self) -> "DegradationMode | None":
+    async def load_current(self) -> DegradationMode | None:
         from src.backend.core.resilience.degradation import DegradationMode
 
         raw = await self._redis.get(self.KEY_CURRENT)
@@ -97,7 +97,7 @@ class RedisDegradationStateStore:
         except ValueError:
             return None
 
-    async def load_history(self, n: int = 20) -> list["DegradationTransition"]:
+    async def load_history(self, n: int = 20) -> list[DegradationTransition]:
         import json
 
         from src.backend.core.resilience.degradation import DegradationTransition
@@ -110,6 +110,6 @@ class RedisDegradationStateStore:
             try:
                 data = json.loads(raw)
                 result.append(DegradationTransition(**data))
-            except json.JSONDecodeError, TypeError:
+            except (json.JSONDecodeError, TypeError):
                 continue
         return result

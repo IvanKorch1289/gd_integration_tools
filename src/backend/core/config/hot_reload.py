@@ -73,7 +73,7 @@ class ConfigHotReloader:
                 if asyncio.iscoroutine(result):
                     await result
                 ok += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 failed.append(
                     {"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)}
                 )

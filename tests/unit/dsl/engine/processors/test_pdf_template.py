@@ -27,8 +27,7 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_render_simple_pdf() -> None:
     pytest.importorskip("reportlab")
     proc = PdfTemplateProcessor(
-        template="Order #{{ id }} for {{ customer }}",
-        to="body.pdf",
+        template="Order #{{ id }} for {{ customer }}", to="body.pdf"
     )
     ex = _ex({"id": 42, "customer": "Acme"})
 

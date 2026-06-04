@@ -99,9 +99,7 @@ async def test_proxy_exchange_var_source() -> None:
 
 async def test_proxy_query_param_source() -> None:
     """proxy: query_param — URL из header вида ``__query_<key>``."""
-    proc = RedirectProcessor(
-        mode="proxy", url_source="query_param", source_key="next"
-    )
+    proc = RedirectProcessor(mode="proxy", url_source="query_param", source_key="next")
     exchange = _make_exchange(headers={"__query_next": "http://qp.example/dest"})
     await proc.process(exchange, _make_context())
     assert exchange.get_property("_redirect_to") == "http://qp.example/dest"
@@ -219,9 +217,7 @@ def test_to_spec_proxy_with_allowed_hosts() -> None:
 
 async def test_proxy_missing_url_in_source_raises() -> None:
     """Если в источнике URL отсутствует — поднимается ValueError."""
-    proc = RedirectProcessor(
-        mode="proxy", url_source="header", source_key="X-Missing"
-    )
+    proc = RedirectProcessor(mode="proxy", url_source="header", source_key="X-Missing")
     exchange = _make_exchange()
     with pytest.raises(ValueError, match="не удалось получить URL"):
         await proc.process(exchange, _make_context())
@@ -229,9 +225,7 @@ async def test_proxy_missing_url_in_source_raises() -> None:
 
 async def test_proxy_body_field_non_dict_returns_none() -> None:
     """body_field на не-dict body → попытка извлечь URL вернёт None → ValueError."""
-    proc = RedirectProcessor(
-        mode="proxy", url_source="body_field", source_key="x.y"
-    )
+    proc = RedirectProcessor(mode="proxy", url_source="body_field", source_key="x.y")
     exchange = _make_exchange(body="raw string")
     with pytest.raises(ValueError):
         await proc.process(exchange, _make_context())

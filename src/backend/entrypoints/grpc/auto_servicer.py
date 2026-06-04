@@ -54,7 +54,7 @@ class AutoServicerBundle:
         add_to_server: Функция ``add_<Service>AutoServiceServicer_to_server``.
     """
 
-    __slots__ = ("service", "pb2", "pb2_grpc", "servicer_cls", "add_to_server")
+    __slots__ = ("add_to_server", "pb2", "pb2_grpc", "service", "servicer_cls")
 
     def __init__(
         self,
@@ -96,7 +96,7 @@ def _import_pair(service: str) -> tuple[Any, Any] | None:
     try:
         pb2 = importlib.import_module(f"{_AUTO_PROTO_PACKAGE}.{service}_pb2")
         pb2_grpc = importlib.import_module(f"{_AUTO_PROTO_PACKAGE}.{service}_pb2_grpc")
-    except Exception as exc:  # noqa: BLE001 — codegen может быть кривым
+    except Exception as exc:
         logger.warning("Не удалось импортировать pb2/pb2_grpc для %s: %s", service, exc)
         return None
     return pb2, pb2_grpc
@@ -141,13 +141,13 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
         else:
             data = {"data": str(result)}
 
-        response_cls = self._response_cls_for(action_id)  # noqa: SLF001
+        response_cls = self._response_cls_for(action_id)
         if response_cls is None:
             return None
         msg = response_cls()
         try:
             ParseDict(data, msg, ignore_unknown_fields=True)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ParseDict %s упал: %s", action_id, exc)
         return msg
 

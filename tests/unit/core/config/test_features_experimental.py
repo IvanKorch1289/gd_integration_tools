@@ -58,27 +58,36 @@ class TestExperimentalFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 8 mixins в MRO
-        for cls in ("AuthFlags", "SecurityFlags", "ObservabilityFlags",
-                    "NetFlags", "WorkflowFlags", "AIFlags", "DSLFlags",
-                    "ExperimentalFlags"):
+        for cls in (
+            "AuthFlags",
+            "SecurityFlags",
+            "ObservabilityFlags",
+            "NetFlags",
+            "WorkflowFlags",
+            "AIFlags",
+            "DSLFlags",
+            "ExperimentalFlags",
+        ):
             assert cls in mro_names, f"{cls} missing в MRO"
         # ВСЕ 9 ORIGINAL DOMAINS extracted (T1.3.1 — T1.3.9 = 8 mixins, 9th is the experimental)
 
     def test_t1_3_plan_complete(self) -> None:
         """Verify that all 9 T1.3.x PRs из плана extracted (8 mixins + experimental in same)."""
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 8 mixins от T1.3.1 до T1.3.9 (8th = ExperimentalFlags)
         expected_mixins = [
-            "AuthFlags",          # T1.3.1
-            "SecurityFlags",      # T1.3.2
-            "ObservabilityFlags", # T1.3.4
-            "NetFlags",           # T1.3.5
-            "WorkflowFlags",      # T1.3.6
-            "AIFlags",            # T1.3.7
-            "DSLFlags",           # T1.3.8
+            "AuthFlags",  # T1.3.1
+            "SecurityFlags",  # T1.3.2
+            "ObservabilityFlags",  # T1.3.4
+            "NetFlags",  # T1.3.5
+            "WorkflowFlags",  # T1.3.6
+            "AIFlags",  # T1.3.7
+            "DSLFlags",  # T1.3.8
             "ExperimentalFlags",  # T1.3.9
         ]
         for cls in expected_mixins:

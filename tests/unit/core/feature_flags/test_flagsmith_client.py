@@ -95,8 +95,16 @@ class TestGetEnvironmentFlags:
             return_value=_make_response(
                 status_code=200,
                 json_data=[
-                    {"feature": {"name": "f1"}, "enabled": True, "feature_state_value": "v1"},
-                    {"feature": {"name": "f2"}, "enabled": False, "feature_state_value": None},
+                    {
+                        "feature": {"name": "f1"},
+                        "enabled": True,
+                        "feature_state_value": "v1",
+                    },
+                    {
+                        "feature": {"name": "f2"},
+                        "enabled": False,
+                        "feature_state_value": None,
+                    },
                 ],
             )
         )
@@ -130,15 +138,11 @@ class TestGetEnvironmentFlags:
         c = FlagsmithClient(environment_key="k")
         client = AsyncMock()
         client.get = AsyncMock(
-            return_value=_make_response(
-                status_code=500, text="internal error"
-            )
+            return_value=_make_response(status_code=500, text="internal error")
         )
         c._client = client
 
-        with patch(
-            "src.backend.core.feature_flags.flagsmith_client._logger"
-        ):
+        with patch("src.backend.core.feature_flags.flagsmith_client._logger"):
             result = await c.get_environment_flags()
             assert result == []
 
@@ -159,7 +163,11 @@ class TestGetIdentityFlags:
                 status_code=200,
                 json_data={
                     "flags": [
-                        {"feature": {"name": "f1"}, "enabled": True, "feature_state_value": "v1"},
+                        {
+                            "feature": {"name": "f1"},
+                            "enabled": True,
+                            "feature_state_value": "v1",
+                        }
                     ]
                 },
             )
@@ -201,9 +209,7 @@ class TestGetIdentityFlags:
     async def test_non_200_returns_empty(self) -> None:
         c = FlagsmithClient(environment_key="k")
         client = AsyncMock()
-        client.get = AsyncMock(
-            return_value=_make_response(status_code=404)
-        )
+        client.get = AsyncMock(return_value=_make_response(status_code=404))
         c._client = client
 
         result = await c.get_identity_flags(tenant_id="t1")
@@ -218,9 +224,7 @@ class TestGetIdentityFlags:
         )
         c._client = client
 
-        result = await c.get_identity_flags(
-            tenant_id="t1", traits={"plan": "pro"}
-        )
+        result = await c.get_identity_flags(tenant_id="t1", traits={"plan": "pro"})
         assert result == []
 
 

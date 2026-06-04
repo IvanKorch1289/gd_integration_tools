@@ -183,7 +183,7 @@ class IngestFileProcessor(BaseProcessor):
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:
                         return data, filename
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning(
                         "IngestFile: S3 read для key=%r упал: %s — fallback property",
                         key,

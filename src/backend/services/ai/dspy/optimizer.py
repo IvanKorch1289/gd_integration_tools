@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("DSPyOptimizer", "BaselineDataset", "CompileReport", "DSPyPipeline")
+__all__ = ("BaselineDataset", "CompileReport", "DSPyOptimizer", "DSPyPipeline")
 
 
 class DSPyPipeline(Protocol):
@@ -137,13 +137,13 @@ class DSPyOptimizer:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.dspy_eval_pipeline_enabled)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("DSPyOptimizer: feature_flags недоступны: %s", exc)
             return False
 
     def _is_sdk_available(self) -> bool:
         try:
-            import dspy  # type: ignore[import-not-found]  # noqa: F401
+            import dspy  # noqa: F401
 
             return True
         except ImportError:
@@ -160,7 +160,7 @@ class DSPyOptimizer:
         # bootstrap → optimized callable.
         try:
             optimized_callable = self._bootstrap(pipeline, train)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("DSPyOptimizer bootstrap failed: %s", exc)
             return CompileReport(
                 pipeline_name=pipeline.name,
@@ -199,7 +199,7 @@ def _avg_metric(
         try:
             output = runner(example)
             total += float(pipeline.metric(example, output))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("DSPy example failed: %s", exc)
     return total / len(examples)
 

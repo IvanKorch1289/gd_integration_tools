@@ -17,7 +17,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.services.ai.rag_ingest_store import (
@@ -43,7 +43,7 @@ def _chunker_fingerprint() -> str:
         version = rag_ingest_settings.chunker_fingerprint_version
         size = rag_settings.chunk_size
         overlap = rag_settings.chunk_overlap
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         version, size, overlap = 1, 0, 0
     raw = f"v{version}:{size}:{overlap}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
@@ -90,15 +90,13 @@ class RagIngestService:
             "errors": [],
             "collection": collection,
             "chunker_fingerprint": _chunker_fingerprint(),
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
         }
         await self._store.create(task_id, payload)
 
         coroutine = self._run(task_id, files, collection, payload)
         if self._deferred:
-            from src.backend.core.utils.task_registry import (  # noqa: PLC0415
-                get_task_registry,
-            )
+            from src.backend.core.utils.task_registry import get_task_registry
 
             get_task_registry().create_task(coroutine, name=f"rag-ingest-{task_id}")
         else:
@@ -131,7 +129,7 @@ class RagIngestService:
                     content_text, metadata=metadata, namespace=collection
                 )
                 state["doc_ids"].append(doc_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 state["errors"].append({"file": filename, "error": str(exc)})
             state["processed"] += 1
             await self._store.update(
@@ -143,7 +141,7 @@ class RagIngestService:
         state["status"] = (
             "completed" if not state["errors"] else "completed_with_errors"
         )
-        state["finished_at"] = datetime.now(timezone.utc).isoformat()
+        state["finished_at"] = datetime.now(UTC).isoformat()
         await self._store.update(
             task_id, status=state["status"], finished_at=state["finished_at"]
         )
@@ -175,7 +173,7 @@ def _resolve_embedding_provenance() -> dict[str, Any]:
     try:
         from src.backend.core.config.ai_2026 import rag_ingest_settings
         from src.backend.core.config.rag import rag_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return {}
     return {
         "embedding_provider": getattr(rag_settings, "embedding_provider", "unknown"),
@@ -208,7 +206,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
     """
     try:
         from src.backend.core.config.ai_2026 import rag_ingest_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         return content_text, {"pii_masked": False}
     if not rag_ingest_settings.pii_mask_on_ingest:
         return content_text, {"pii_masked": False}
@@ -223,7 +221,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
             "pii_masked": True,
             "pii_masker_version": masker_version,
         }
-    except Exception as exc:  # noqa: BLE001 — не блокируем ingest при сбое sanitizer
+    except Exception as exc:
         logger.warning("rag_ingest_pii_mask_failed: %s", exc)
         return content_text, {"pii_masked": False, "pii_mask_error": str(exc)}
 
@@ -249,6 +247,6 @@ def get_rag_ingest_service() -> RagIngestService:
             _singleton = RagIngestService(
                 deferred=rag_ingest_settings.deferred, store=store
             )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             _singleton = RagIngestService()
     return _singleton

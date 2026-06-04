@@ -19,11 +19,11 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "CitrixSessionProcessor",
-    "TerminalEmulator3270Processor",
     "AppiumMobileProcessor",
+    "CitrixSessionProcessor",
     "EmailDrivenProcessor",
     "KeystrokeReplayProcessor",
+    "TerminalEmulator3270Processor",
 )
 
 

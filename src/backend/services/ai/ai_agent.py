@@ -561,7 +561,7 @@ class AIAgentService:
         """
         try:
             from src.backend.core.config.ai_2026 import ai_agent_settings
-        except Exception as _:  # noqa: BLE001 — конфиг недоступен
+        except Exception as _:
             return None
         if not ai_agent_settings.policy_gate_enabled:
             return None
@@ -577,7 +577,7 @@ class AIAgentService:
 
         try:
             gateway = self._resolve_authz_gateway()
-        except Exception as exc:  # noqa: BLE001 — fail-closed
+        except Exception as exc:
             logger.warning("ai_policy_gate_unavailable: %s", exc)
             return self._policy_gate_deny(
                 principal=str(principal),
@@ -600,7 +600,7 @@ class AIAgentService:
                 action="call",
                 context=context,
             )
-        except Exception as exc:  # noqa: BLE001 — fail-closed
+        except Exception as exc:
             logger.warning("ai_policy_gate_authorize_failed: %s", exc)
             return self._policy_gate_deny(
                 principal=str(principal),
@@ -646,7 +646,7 @@ class AIAgentService:
             if app is None:
                 return None
             return getattr(app.state, "authorization_gateway", None)
-        except Exception as _:  # noqa: BLE001 — caller handles fail-closed
+        except Exception as _:
             return None
 
     @staticmethod

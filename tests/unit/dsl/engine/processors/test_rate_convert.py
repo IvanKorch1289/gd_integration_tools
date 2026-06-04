@@ -26,10 +26,7 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_convert_with_mocked_provider() -> None:
     proc = RateConvertProcessor(
-        from_currency="USD",
-        to_currency="EUR",
-        amount=100,
-        to="body.eur",
+        from_currency="USD", to_currency="EUR", amount=100, to="body.eur"
     )
     ex = _ex({})
 
@@ -66,9 +63,7 @@ async def test_amount_required() -> None:
 @pytest.mark.asyncio
 async def test_skipped_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "proc_rate_convert", False)
-    proc = RateConvertProcessor(
-        from_currency="USD", to_currency="EUR", amount=10
-    )
+    proc = RateConvertProcessor(from_currency="USD", to_currency="EUR", amount=10)
     ex = _ex({})
     await proc.process(ex, AsyncMock())
     assert ex.properties.get("rate_convert_status") == "skipped"

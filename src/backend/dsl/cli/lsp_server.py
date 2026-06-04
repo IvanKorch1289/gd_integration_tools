@@ -149,7 +149,7 @@ def create_server() -> Any:
         line = document.lines[line_idx]
         # Извлекаем первое слово (ключ перед `:` или `=`).
         token = line.lstrip().split(":", 1)[0].split("=", 1)[0].strip(" -")
-        lookup = {k: d for k, d in (*ROUTE_COMPLETIONS, *STEP_COMPLETIONS)}
+        lookup = dict((*ROUTE_COMPLETIONS, *STEP_COMPLETIONS))
         detail = lookup.get(token)
         if detail is None:
             return None
@@ -183,7 +183,7 @@ async def _publish_diagnostics(ls: Any, uri: str) -> None:
 
     try:
         issues = lint_path(path, strict=strict)
-    except Exception as exc:  # noqa: BLE001 — LSP не должен крашить IDE.
+    except Exception as exc:
         _logger.error("DSL linter error для %s: %s", path, exc)
         issues = []
 

@@ -106,10 +106,12 @@ class DSLLinter:
 
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
-            if type_name.endswith("DispatchActionProcessor") or type_name.endswith("EnrichProcessor"):
+            if type_name.endswith("DispatchActionProcessor") or type_name.endswith(
+                "EnrichProcessor"
+            ):
                 action = getattr(p, "action", None)
                 if action and action not in known_actions:
-                    available = ", ".join(sorted(list(known_actions))[:10])
+                    available = ", ".join(sorted(known_actions)[:10])
                     suffix = "..." if len(known_actions) > 10 else ""
                     issues.append(
                         LintIssue(
@@ -178,15 +180,11 @@ class DSLLinter:
                 result_prop = getattr(p, "result_property", None)
                 if result_prop:
                     set_props[result_prop] = i
-            elif type_name == "SkillInvokeProcessor":
-                result_prop = getattr(p, "result_property", None)
-                if result_prop:
-                    set_props[result_prop] = i
-            elif type_name == "MemoryRecallProcessor":
-                result_prop = getattr(p, "result_property", None)
-                if result_prop:
-                    set_props[result_prop] = i
-            elif type_name == "AgentRunProcessor":
+            elif (
+                type_name == "SkillInvokeProcessor"
+                or type_name == "MemoryRecallProcessor"
+                or type_name == "AgentRunProcessor"
+            ):
                 result_prop = getattr(p, "result_property", None)
                 if result_prop:
                     set_props[result_prop] = i
@@ -197,7 +195,7 @@ class DSLLinter:
 
         # Собираем все чтения свойств
         read_props: set[str] = set()
-        for i, p in enumerate(pipeline.processors):
+        for _i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
             patterns: list[str] = []
             for cls_name, attrs in _PROPERTY_READ_PATTERNS.items():
@@ -253,7 +251,7 @@ class DSLLinter:
 
         # body.field или ${body.field} - извлекаем только body как reference
         body_pattern = r"(?:\$\{)?body(?:\.([a-zA-Z_][a-zA-Z0-9_]*))?\}?"
-        for match in re.finditer(body_pattern, value):
+        for _match in re.finditer(body_pattern, value):
             refs.add("body")
 
         return refs

@@ -35,7 +35,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.workflow.backend import WorkflowBackend, WorkflowHandle
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -100,7 +101,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         self._backend_factory = backend_factory
 
     @staticmethod
-    def _resolve_ref(value: str, exchange: "Exchange[Any]") -> str:
+    def _resolve_ref(value: str, exchange: Exchange[Any]) -> str:
         """Резолвит ``${body.path}`` / ``${property.path}`` через exchange."""
         if not (value.startswith(_REF_PREFIX) and value.endswith(_REF_SUFFIX)):
             return value
@@ -133,9 +134,7 @@ class CancelWorkflowProcessor(BaseProcessor):
 
         return await create_workflow_backend(kind="auto")
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отменяет workflow и эмитит audit-event ``workflow.cancel``."""
         wf_id = self._resolve_ref(self.workflow_id_spec, exchange)
         if not wf_id:
@@ -166,7 +165,7 @@ class CancelWorkflowProcessor(BaseProcessor):
                         "namespace": self.namespace_name,
                     },
                 )
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         exchange.set_property(

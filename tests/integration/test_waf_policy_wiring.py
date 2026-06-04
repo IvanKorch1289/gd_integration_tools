@@ -55,16 +55,13 @@ def test_register_outbound_http_client_provides_singleton() -> None:
     assert isinstance(client, OutboundHttpClient)
 
 
-def test_outbound_http_client_strict_denied_host(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_outbound_http_client_strict_denied_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """strict=True + denied host → WafBypassError при request()."""
-    custom = WafPolicy(
-        allow_hosts=frozenset({"trusted.example.com"}),
-        strict=True,
-    )
+    custom = WafPolicy(allow_hosts=frozenset({"trusted.example.com"}), strict=True)
     register_factory(WafPolicy, lambda: custom)
-    from src.backend.plugins.composition.waf_setup import (
-        register_outbound_http_client,
-    )
+    from src.backend.plugins.composition.waf_setup import register_outbound_http_client
 
     register_outbound_http_client()
     client = get_service(OutboundHttpClient)
@@ -116,14 +113,9 @@ def test_capability_denied_when_gate_present_without_declaration() -> None:
 @pytest.mark.asyncio
 async def test_outbound_http_client_raises_on_strict_violation() -> None:
     """End-to-end: strict + не allowed host → WafBypassError при request()."""
-    custom = WafPolicy(
-        allow_hosts=frozenset({"trusted.example.com"}),
-        strict=True,
-    )
+    custom = WafPolicy(allow_hosts=frozenset({"trusted.example.com"}), strict=True)
     register_factory(WafPolicy, lambda: custom)
-    from src.backend.plugins.composition.waf_setup import (
-        register_outbound_http_client,
-    )
+    from src.backend.plugins.composition.waf_setup import register_outbound_http_client
 
     register_outbound_http_client()
     client = get_service(OutboundHttpClient)

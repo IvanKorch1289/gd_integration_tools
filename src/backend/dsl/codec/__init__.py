@@ -38,24 +38,24 @@ from src.backend.dsl.codec.json import (
 )
 
 __all__ = (
-    "decode_as",
-    "encode_as",
-    "supported_formats",
-    # base64
-    "decode_base64",
-    "encode_base64",
     # json
     "canonical_json_bytes",
+    # converters
+    "convert_numpy_types",
+    "convert_pattern",
+    "decode_as",
+    # base64
+    "decode_base64",
     "dumps_bytes",
     "dumps_str",
+    "encode_as",
+    "encode_base64",
     "from_jsonable",
     "json_dumps",
     "json_loads",
     "loads",
+    "supported_formats",
     "to_jsonable",
-    # converters
-    "convert_numpy_types",
-    "convert_pattern",
     "transfer_model_to_schema",
 )
 
@@ -135,13 +135,17 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         try:
             from swiftmt import parser  # type: ignore[import-not-found]
         except ImportError:
-            raise RuntimeError("swiftmt не установлен — установите gdi[banking]")
+            raise RuntimeError(
+                "swiftmt не установлен — установите gdi[banking]"
+            ) from None
         return parser.parse(raw if isinstance(raw, str) else raw.decode("utf-8"))
     if fmt == "hl7":
         try:
             import hl7apy.parser  # type: ignore[import-not-found]
         except ImportError:
-            raise RuntimeError("hl7apy не установлен — установите gdi[banking]")
+            raise RuntimeError(
+                "hl7apy не установлен — установите gdi[banking]"
+            ) from None
         return hl7apy.parser.parse_message(
             raw if isinstance(raw, str) else raw.decode("utf-8")
         )
@@ -149,7 +153,9 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         try:
             import iso8583  # type: ignore[import-not-found]
         except ImportError:
-            raise RuntimeError("iso8583 не установлен — установите gdi[banking]")
+            raise RuntimeError(
+                "iso8583 не установлен — установите gdi[banking]"
+            ) from None
         return iso8583.decode(
             raw if isinstance(raw, (bytes, bytearray)) else raw.encode()
         )

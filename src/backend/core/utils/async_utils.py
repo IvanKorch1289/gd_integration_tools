@@ -22,12 +22,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 __all__ = (
-    "run_sync_in_thread",
-    "gather_with_timeout",
     "async_with_timeout",
+    "gather_with_timeout",
+    "run_sync_in_thread",
     "task_group_tolerant",
 )
 
@@ -73,7 +74,7 @@ async def gather_with_timeout(
             asyncio.gather(*coros, return_exceptions=return_exceptions), timeout=timeout
         )
         return list(results)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning("gather_with_timeout exceeded %ds", timeout)
         raise
 
@@ -84,7 +85,7 @@ async def async_with_timeout(
     """Выполняет coroutine с timeout. При timeout возвращает default."""
     try:
         return await asyncio.wait_for(coro, timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return default
 
 
@@ -111,7 +112,7 @@ async def task_group_tolerant(coros: list[Awaitable[T]]) -> list[T | BaseExcepti
     async def _wrap(idx: int, awaitable: Awaitable[T]) -> None:
         try:
             results[idx] = await awaitable
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             results[idx] = exc
 
     async with asyncio.TaskGroup() as tg:

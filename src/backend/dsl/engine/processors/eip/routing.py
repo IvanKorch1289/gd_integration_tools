@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
@@ -12,11 +13,11 @@ _camel_logger = logging.getLogger("dsl.camel")
 
 __all__ = (
     "DynamicRouterProcessor",
-    "ScatterGatherProcessor",
-    "RecipientListProcessor",
     "LoadBalancerProcessor",
     "MulticastProcessor",
     "MulticastRoutesProcessor",
+    "RecipientListProcessor",
+    "ScatterGatherProcessor",
 )
 
 
@@ -100,14 +101,14 @@ class ScatterGatherProcessor(BaseProcessor):
             raw_results = await asyncio.wait_for(
                 asyncio.gather(*tasks, return_exceptions=True), timeout=self._timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             exchange.fail(f"Scatter-gather timeout ({self._timeout}s)")
             return
 
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}
         for item in raw_results:
-            if isinstance(item, Exception):
+            if isinstance(item, BaseException):
                 errors["_exception"] = str(item)
             else:
                 rid, result, error = item
@@ -174,7 +175,7 @@ class RecipientListProcessor(BaseProcessor):
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}
         for item in raw:
-            if isinstance(item, Exception):
+            if isinstance(item, BaseException):
                 errors["_exception"] = str(item)
             else:
                 rid, result, error = item
@@ -227,12 +228,16 @@ class LoadBalancerProcessor(BaseProcessor):
         if self._strategy == "random":
             import random as _random
 
-            return _random.choice(self._targets)  # noqa: S311  # load-balancing, не криптография
+            return _random.choice(  # noqa: S311  # load-balancing, не криптография  # non-cryptographic use
+                self._targets
+            )
 
         if self._strategy == "weighted" and self._weights:
             import random as _random
 
-            return _random.choices(self._targets, weights=self._weights, k=1)[0]  # noqa: S311  # weighted load-balancing, не криптография
+            return _random.choices(self._targets, weights=self._weights, k=1)[  # noqa: S311  # non-cryptographic use
+                0
+            ]  # weighted load-balancing, не криптография
 
         if self._strategy == "sticky" and self._sticky_header:
             key = exchange.in_message.headers.get(self._sticky_header, "")
@@ -242,6 +247,7 @@ class LoadBalancerProcessor(BaseProcessor):
         return self._targets[0]
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Select a target and forward exchange via sub-pipeline executor."""
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         target = await self._select_target(exchange)
@@ -307,6 +313,7 @@ class MulticastProcessor(BaseProcessor):
         return index, result, branch_exchange.error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Execute branches in parallel and aggregate results."""
         body = exchange.in_message.body
         headers = exchange.in_message.headers
 
@@ -337,7 +344,7 @@ class MulticastProcessor(BaseProcessor):
                     results[idx] = result
         else:
             for coro_result in await asyncio.gather(*tasks, return_exceptions=True):
-                if isinstance(coro_result, Exception):
+                if isinstance(coro_result, BaseException):
                     errors[-1] = str(coro_result)
                 else:
                     idx, result, error = coro_result
@@ -416,7 +423,7 @@ class MulticastRoutesProcessor(BaseProcessor):
             branch_exchange.status = ExchangeStatus.processing
             try:
                 await asyncio.wait_for(
-                    engine.run_pipeline(pipeline, branch_exchange, context),
+                    engine.execute(pipeline, exchange=branch_exchange, context=context),
                     timeout=self._timeout,
                 )
             except TimeoutError:
@@ -451,7 +458,7 @@ class MulticastRoutesProcessor(BaseProcessor):
                     break
         else:
             for completed in await asyncio.gather(*tasks, return_exceptions=True):
-                if isinstance(completed, Exception):
+                if isinstance(completed, BaseException):
                     errors["__gather__"] = str(completed)
                     continue
                 rid, result, err = completed

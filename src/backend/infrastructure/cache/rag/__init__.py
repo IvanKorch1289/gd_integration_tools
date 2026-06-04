@@ -21,8 +21,8 @@ __all__ = (
     "L1ExactCache",
     "L2SemanticRagCache",
     "L3RetrievalCache",
-    "ThreeTierRagCache",
     "RagInvalidationBus",
+    "ThreeTierRagCache",
     "record_hit",
     "record_miss",
 )

@@ -45,7 +45,9 @@ async def test_watcher_filters_by_pattern(tmp_path: Path) -> None:
     def filter_csv(change, path):
         return str(path).endswith(".csv")
 
-    src = FileWatcherSource("test_filter", tmp_path, debounce=0.05, watch_filter=filter_csv)
+    src = FileWatcherSource(
+        "test_filter", tmp_path, debounce=0.05, watch_filter=filter_csv
+    )
     await src.start(cb)
     try:
         await asyncio.sleep(0.1)

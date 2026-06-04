@@ -13,7 +13,7 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-__all__ = ("CAPABILITY_NAME_PATTERN", "CapabilityRef", "DEFAULT_CAPABILITY_CATALOG")
+__all__ = ("CAPABILITY_NAME_PATTERN", "DEFAULT_CAPABILITY_CATALOG", "CapabilityRef")
 
 CAPABILITY_NAME_PATTERN: Final[str] = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$"
 """Грамматика имени capability: ``<resource>.<verb>``."""

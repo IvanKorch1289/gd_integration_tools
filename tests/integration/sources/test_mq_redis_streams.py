@@ -50,10 +50,7 @@ async def test_mq_source_redis_streams_e2e_dispatches_event(
 
     real_broker = RedisBroker("redis://localhost:6379/0")
     src = MQSource(
-        "orders_in",
-        transport="redis_streams",
-        topic="orders.stream",
-        group="gd-orders",
+        "orders_in", transport="redis_streams", topic="orders.stream", group="gd-orders"
     )
 
     monkeypatch.setattr(src, "_build_broker", lambda: real_broker)

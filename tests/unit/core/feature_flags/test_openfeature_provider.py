@@ -96,7 +96,9 @@ class TestInMemoryProvider:
             return_value=mock_runtime,
         ):
             result = await p.resolve_boolean_value(
-                "flag", default=False, evaluation_context=EvaluationContext(tenant_id="t1")
+                "flag",
+                default=False,
+                evaluation_context=EvaluationContext(tenant_id="t1"),
             )
             assert result is True
 
@@ -106,9 +108,7 @@ class TestInMemoryProvider:
         p = InMemoryProvider()
         mock_flags = MagicMock()
         mock_flags.experimental_feature = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             result = await p.resolve_boolean_value(
                 "experimental_feature", default=False
             )
@@ -119,9 +119,7 @@ class TestInMemoryProvider:
         """Нет overrides, нет в local → default."""
         p = InMemoryProvider()
         mock_flags = MagicMock(spec=[])  # No attributes
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             result = await p.resolve_boolean_value("nonexistent", default=True)
             assert result is True
 
@@ -277,9 +275,7 @@ class TestFlagsmithBackend:
     async def test_resolve_string_provider_raises(self) -> None:
         b = FlagsmithBackend(fallback=InMemoryProvider(overrides={"flag": "fb"}))
         mock_provider = MagicMock()
-        mock_provider.resolve_string_value = AsyncMock(
-            side_effect=RuntimeError("err")
-        )
+        mock_provider.resolve_string_value = AsyncMock(side_effect=RuntimeError("err"))
         b._provider = mock_provider
 
         result = await b.resolve_string_value("flag", default="default")
@@ -299,9 +295,7 @@ class TestFlagsmithBackend:
     async def test_resolve_integer_provider_raises(self) -> None:
         b = FlagsmithBackend(fallback=InMemoryProvider(overrides={"flag": 100}))
         mock_provider = MagicMock()
-        mock_provider.resolve_integer_value = AsyncMock(
-            side_effect=Exception("err")
-        )
+        mock_provider.resolve_integer_value = AsyncMock(side_effect=Exception("err"))
         b._provider = mock_provider
 
         result = await b.resolve_integer_value("flag", default=0)
@@ -321,9 +315,7 @@ class TestFlagsmithBackend:
     async def test_resolve_object_provider_raises(self) -> None:
         b = FlagsmithBackend(fallback=InMemoryProvider(overrides={"flag": {"x": 1}}))
         mock_provider = MagicMock()
-        mock_provider.resolve_object_value = AsyncMock(
-            side_effect=Exception("err")
-        )
+        mock_provider.resolve_object_value = AsyncMock(side_effect=Exception("err"))
         b._provider = mock_provider
 
         result = await b.resolve_object_value("flag", default={})
@@ -388,16 +380,12 @@ class TestReadLocalFlag:
     def test_reads_attribute(self) -> None:
         mock_flags = MagicMock()
         mock_flags.some_flag = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert _read_local_flag("some_flag", default=False) is True
 
     def test_returns_default_if_missing(self) -> None:
         mock_flags = MagicMock(spec=[])
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert _read_local_flag("missing", default=True) is True
 
     def test_returns_default_on_exception(self) -> None:
@@ -422,17 +410,13 @@ class TestIsFlagsmithBackendEnabled:
         # Env lowercase check → "flagsmith" matches
         mock_flags = MagicMock()
         mock_flags.openfeature_flagsmith_backend = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert is_flagsmith_backend_enabled() is True
 
     def test_env_set_flag_off(self) -> None:
         os.environ["FEATURE_FLAG_BACKEND"] = "flagsmith"
         mock_flags = MagicMock(spec=[])  # Flag attribute missing
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             assert is_flagsmith_backend_enabled() is False
 
 
@@ -461,9 +445,7 @@ class TestGetOpenfeatureBackend:
         os.environ["FEATURE_FLAG_BACKEND"] = "flagsmith"
         mock_flags = MagicMock()
         mock_flags.openfeature_flagsmith_backend = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             b = get_openfeature_backend()
             assert isinstance(b, FlagsmithBackend)
             assert b.environment_key is None  # No FLAGSMITH_ENVIRONMENT_KEY
@@ -473,9 +455,7 @@ class TestGetOpenfeatureBackend:
         os.environ["FLAGSMITH_ENVIRONMENT_KEY"] = "env-key"
         mock_flags = MagicMock()
         mock_flags.openfeature_flagsmith_backend = True
-        with patch(
-            "src.backend.core.config.features.feature_flags", mock_flags
-        ):
+        with patch("src.backend.core.config.features.feature_flags", mock_flags):
             b = get_openfeature_backend()
             assert isinstance(b, FlagsmithBackend)
             assert b.environment_key == "env-key"

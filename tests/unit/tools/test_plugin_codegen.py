@@ -43,9 +43,7 @@ def test_scaffold_creates_plugin_dir(codegen: PluginCodegen, tmp_path: Path) -> 
     assert (plugin / "tests").is_dir()
 
 
-def test_scaffold_with_features_writes_actions(
-    codegen: PluginCodegen,
-) -> None:
+def test_scaffold_with_features_writes_actions(codegen: PluginCodegen) -> None:
     plugin = codegen.scaffold(name="my_plugin", features=["ping", "echo"])
     manifest = (plugin / "plugin.toml").read_text()
     assert '"my_plugin.ping"' in manifest
@@ -54,8 +52,7 @@ def test_scaffold_with_features_writes_actions(
 
 def test_scaffold_with_capabilities(codegen: PluginCodegen) -> None:
     plugin = codegen.scaffold(
-        name="my_plugin",
-        capabilities=["mq.publish:topic.events.*", "http.outbound"],
+        name="my_plugin", capabilities=["mq.publish:topic.events.*", "http.outbound"]
     )
     manifest = (plugin / "plugin.toml").read_text()
     assert 'name = "mq.publish"' in manifest

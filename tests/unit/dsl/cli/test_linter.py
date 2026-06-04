@@ -53,8 +53,7 @@ def test_missing_required_field_in_toml(tmp_path: Path) -> None:
 def test_invalid_yaml(tmp_path: Path) -> None:
     """Битый YAML → INVALID_YAML error."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "x.dsl.yaml").write_text("not: valid: yaml: :::", encoding="utf-8")
 
@@ -66,8 +65,7 @@ def test_invalid_yaml(tmp_path: Path) -> None:
 def test_missing_required_dsl_fields(tmp_path: Path) -> None:
     """YAML без from/steps → MISSING_REQUIRED_DSL_FIELDS."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "x.dsl.yaml").write_text("some_other_key: value\n", encoding="utf-8")
 
@@ -79,8 +77,7 @@ def test_missing_required_dsl_fields(tmp_path: Path) -> None:
 def test_missing_capability_warning(tmp_path: Path) -> None:
     """http_call без net.outbound в capabilities → MISSING_CAPABILITY warning."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "x.dsl.yaml").write_text(
         "from:\n  http:\n    path: /x\nsteps:\n  - http_call:\n      url: http://x\n",
@@ -96,8 +93,7 @@ def test_missing_capability_warning(tmp_path: Path) -> None:
 def test_strict_mode_promotes_warnings_to_errors(tmp_path: Path) -> None:
     """В strict-mode MISSING_CAPABILITY становится error."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "x.dsl.yaml").write_text(
         "from:\n  http:\n    path: /x\nsteps:\n  - http_call:\n      url: http://x\n",
@@ -129,8 +125,7 @@ def test_capability_declared_suppresses_warning(tmp_path: Path) -> None:
 def test_lint_path_accepts_directory(tmp_path: Path) -> None:
     """``lint_path()`` принимает каталог и работает как lint_route."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="ok"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="ok"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "ok.dsl.yaml").write_text(
         "from:\n  http:\n    path: /ok\nsteps: []\n", encoding="utf-8"
@@ -143,20 +138,13 @@ def test_lint_path_accepts_directory(tmp_path: Path) -> None:
 
 def test_cli_returns_exit_1_on_error(tmp_path: Path) -> None:
     """CLI exit-code 1 при errors."""
-    (tmp_path / "route.toml").write_text(
-        '[route]\nversion="0.1.0"\n', encoding="utf-8"
-    )
+    (tmp_path / "route.toml").write_text('[route]\nversion="0.1.0"\n', encoding="utf-8")
     (tmp_path / "x.dsl.yaml").write_text(
         "from:\n  http:\n    path: /x\nsteps: []\n", encoding="utf-8"
     )
 
     result = subprocess.run(  # noqa: S603 (trusted local script)
-        [
-            sys.executable,
-            "-m",
-            "src.backend.dsl.cli.linter",
-            str(tmp_path),
-        ],
+        [sys.executable, "-m", "src.backend.dsl.cli.linter", str(tmp_path)],
         capture_output=True,
         text=True,
         timeout=15,
@@ -168,21 +156,14 @@ def test_cli_returns_exit_1_on_error(tmp_path: Path) -> None:
 def test_cli_json_output(tmp_path: Path) -> None:
     """CLI с --json возвращает валидный JSON."""
     (tmp_path / "route.toml").write_text(
-        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n',
-        encoding="utf-8",
+        '[route]\nname="x"\nversion="0.1.0"\nrequires_core=">=0.1"\n', encoding="utf-8"
     )
     (tmp_path / "x.dsl.yaml").write_text(
         "from:\n  http:\n    path: /x\nsteps: []\n", encoding="utf-8"
     )
 
     result = subprocess.run(  # noqa: S603 (trusted local script)
-        [
-            sys.executable,
-            "-m",
-            "src.backend.dsl.cli.linter",
-            str(tmp_path),
-            "--json",
-        ],
+        [sys.executable, "-m", "src.backend.dsl.cli.linter", str(tmp_path), "--json"],
         capture_output=True,
         text=True,
         timeout=15,

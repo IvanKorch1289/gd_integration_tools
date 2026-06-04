@@ -20,7 +20,7 @@ DoD full (S9 carryover):
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
@@ -89,10 +89,8 @@ class DLQEnvelope(BaseModel):
     error_message: str
     reason: DLQReason = DLQReason.UNEXPECTED
     retry_count: int = 0
-    first_failed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    last_failed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    first_failed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_failed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     dlq_class: str = "operational"
     """S13 K3 W4: класс для policy-based retention (``financial`` / ``analytics`` / ``operational``)."""
     metadata: dict[str, Any] = Field(default_factory=dict)

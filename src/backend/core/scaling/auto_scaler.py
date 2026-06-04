@@ -78,9 +78,9 @@ class AutoScaler:
         self._task.cancel()
         try:
             await self._task
-        except asyncio.CancelledError:  # noqa: BLE001 — graceful shutdown
+        except asyncio.CancelledError:
             pass
-        except Exception:  # noqa: BLE001, S110 — graceful shutdown
+        except Exception:
             pass
         finally:
             self._task = None
@@ -106,7 +106,7 @@ class AutoScaler:
             try:
                 self._hpa_exporter.export()
                 result["hpa_exported"] = True
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 _logger.exception("hpa_exporter.export raised; suppressed")
         return result
 
@@ -116,13 +116,13 @@ class AutoScaler:
             while not self._stop_event.is_set():
                 try:
                     await self.tick_once()
-                except Exception as _:  # noqa: BLE001
+                except Exception as _:
                     _logger.exception("AutoScaler tick_once raised; продолжаем")
                 try:
                     await asyncio.wait_for(
                         self._stop_event.wait(), timeout=self._tick_interval_s
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass
         except asyncio.CancelledError:
             _logger.debug("AutoScaler._run_loop cancelled")
@@ -174,11 +174,10 @@ class TemporalWorkerScaler:
         if self._metrics_exporter is not None:
             return self._metrics_exporter
         try:
-            # noqa: PLC0415 — lazy import в runtime, не на уровне модуля
             from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
                 record_scale_event as _record,
             )
-            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (  # noqa: PLC0415
+            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
                 set_task_queue_depth as _set_depth,
             )
             from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
@@ -208,7 +207,7 @@ class TemporalWorkerScaler:
 
         try:
             depths: dict[str, int] = await self._pool.get_queue_depth()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("TemporalWorkerScaler.get_queue_depth failed: %s", exc)
             return {"action": "skip", "reason": str(exc)}
 
@@ -272,7 +271,7 @@ class TemporalWorkerScaler:
                 result = starter(task_queue=self._task_queue)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("AutoScaler: starter failed: %s", exc)
 
     async def _safe_stop_worker(self) -> None:
@@ -282,5 +281,5 @@ class TemporalWorkerScaler:
                 result = stopper(task_queue=self._task_queue)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.debug("AutoScaler: starter failed: %s", exc)

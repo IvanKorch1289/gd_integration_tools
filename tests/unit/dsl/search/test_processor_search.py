@@ -69,17 +69,13 @@ def test_search_top_k_limits_results() -> None:
 
 
 def test_search_result_dataclass_immutable() -> None:
-    r = SearchResult(
-        processor_name="x", namespace="core", score=0.5, description="d"
-    )
+    r = SearchResult(processor_name="x", namespace="core", score=0.5, description="d")
     with pytest.raises(AttributeError):
         r.score = 0.9  # type: ignore[misc]
 
 
 def test_search_score_in_0_1_range() -> None:
-    s = ProcessorSearch.from_specs(
-        [_FakeSpec(name="http_call", cls=_HttpCallProc)]
-    )
+    s = ProcessorSearch.from_specs([_FakeSpec(name="http_call", cls=_HttpCallProc)])
     r = s.search("http")
     assert r
     assert 0.0 <= r[0].score <= 1.0

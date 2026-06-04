@@ -13,7 +13,8 @@
     TimeoutMiddleware) — отдельная wave; сейчас registry опционален.
 """
 
-from asyncio import TimeoutError, wait_for
+import builtins
+from asyncio import wait_for
 from collections.abc import Mapping
 
 from fastapi import Request, Response
@@ -71,7 +72,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         timeout_seconds = self._resolve_timeout(request.url.path)
         try:
             return await wait_for(call_next(request), timeout=timeout_seconds)
-        except TimeoutError:
+        except builtins.TimeoutError:
             get_app_logger_provider().warning(
                 "Превышено время обработки запроса: %s (timeout=%.2fs)",
                 request.url,
@@ -97,8 +98,8 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     def _is_per_route_enabled() -> bool:
         """Lazy-проверка feature-flag ``per_route_timeout_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+            from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
-        except Exception as _:  # noqa: BLE001 — best-effort
+        except Exception as _:
             return False

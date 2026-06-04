@@ -281,7 +281,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 
@@ -309,7 +309,7 @@ def _create_clickhouse_client() -> ClickHouseClient:
 
 
 @app_state_singleton("clickhouse_client", _create_clickhouse_client)
-def get_clickhouse_client() -> ClickHouseClient:
+def get_clickhouse_client() -> ClickHouseClient:  # type: ignore[empty-body]
     """Возвращает singleton ``ClickHouseClient`` из ``app.state`` (или lazy-init).
 
     Декоратор :func:`app_state_singleton` подменяет тело функции — оно

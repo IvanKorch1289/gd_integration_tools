@@ -69,7 +69,7 @@ def select_variant(*, correlation_id: str | None, split: tuple[float, float]) ->
         h = hashlib.sha256(correlation_id.encode("utf-8")).digest()
         score = (int.from_bytes(h[:4], "big") % 10_000) / 10_000.0
     else:
-        score = random.random()  # noqa: S311
+        score = random.random()  # noqa: S311  # non-cryptographic use
 
     return "A" if score < a_share else "B"
 

@@ -159,7 +159,7 @@ class ConfigValidator:
     """
 
     def validate(
-        self, settings: "Settings", waf_settings: "WafSettings"
+        self, settings: Settings, waf_settings: WafSettings
     ) -> tuple[ConfigViolation, ...]:
         """Возвращает кортеж обнаруженных нарушений (может быть пустым).
 
@@ -194,12 +194,12 @@ class ConfigValidator:
         return tuple(violations)
 
     @staticmethod
-    def _is_prod(app: "AppBaseSettings") -> bool:
+    def _is_prod(app: AppBaseSettings) -> bool:
         """Признак production-окружения — единственная точка решения."""
         return app.environment == PRODUCTION_ENV
 
     def _check_waf_strict_prod(
-        self, app: "AppBaseSettings", waf: "WafSettings"
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """B-2: в production обязателен ``WAF_STRICT=true``."""
         if not self._is_prod(app):
@@ -224,7 +224,7 @@ class ConfigValidator:
         ]
 
     def _check_waf_strict_allow_empty(
-        self, app: "AppBaseSettings", waf: "WafSettings"
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """В production ``strict=True`` без allow_hosts блокирует ВСЕ исходящие.
 
@@ -253,7 +253,7 @@ class ConfigValidator:
         ]
 
     def _check_clamav_fail_open_in_prod(
-        self, app: "AppBaseSettings", waf: "WafSettings"
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """Sprint 16 Wave 7 (B-3 finale): ClamAV enabled+fail_open в prod = WARNING.
 
@@ -284,7 +284,7 @@ class ConfigValidator:
             )
         ]
 
-    def _check_swagger_in_prod(self, app: "AppBaseSettings") -> list[ConfigViolation]:
+    def _check_swagger_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:
         """Swagger UI в production раскрывает структуру API наружу."""
         if not self._is_prod(app):
             return []
@@ -304,7 +304,7 @@ class ConfigValidator:
             )
         ]
 
-    def _check_redoc_in_prod(self, app: "AppBaseSettings") -> list[ConfigViolation]:
+    def _check_redoc_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:
         """ReDoc UI в production раскрывает структуру API наружу."""
         if not self._is_prod(app):
             return []
@@ -325,7 +325,7 @@ class ConfigValidator:
         ]
 
     def _check_admin_without_ips(
-        self, app: "AppBaseSettings", secure: "SecureSettings"
+        self, app: AppBaseSettings, secure: SecureSettings
     ) -> list[ConfigViolation]:
         """Admin-эндпоинты в production обязаны быть защищены IP-allowlist."""
         if not self._is_prod(app):
@@ -355,7 +355,7 @@ class ConfigValidator:
         ]
 
     def _check_vault_disabled_in_prod(
-        self, app: "AppBaseSettings", vault: "VaultSettings"
+        self, app: AppBaseSettings, vault: VaultSettings
     ) -> list[ConfigViolation]:
         """В production отключение Vault приводит к чтению секретов из env."""
         if not self._is_prod(app):
@@ -379,7 +379,7 @@ class ConfigValidator:
         ]
 
     def _check_cors_credentials_with_wildcard(
-        self, secure: "SecureSettings"
+        self, secure: SecureSettings
     ) -> list[ConfigViolation]:
         """CORS ``allow_credentials=true`` с wildcard origin запрещён по RFC.
 
@@ -413,9 +413,7 @@ class ConfigValidator:
             )
         ]
 
-    def _check_debug_mode_in_prod(
-        self, app: "AppBaseSettings"
-    ) -> list[ConfigViolation]:
+    def _check_debug_mode_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:
         """D14: ``debug_mode=True`` в production-окружении.
 
         Defense-in-depth backstop: pydantic ``check_debug_mode`` ловит
@@ -447,7 +445,7 @@ class ConfigValidator:
         ]
 
     def _check_jwt_secret_too_short(
-        self, app: "AppBaseSettings", secure: "SecureSettings"
+        self, app: AppBaseSettings, secure: SecureSettings
     ) -> list[ConfigViolation]:
         """D14: ``secret_key`` короче ``JWT_SECRET_MIN_LENGTH`` символов.
 
@@ -495,7 +493,7 @@ class ConfigValidator:
         ]
 
     def _check_database_host_in_prod(
-        self, app: "AppBaseSettings", database: "DatabaseConnectionSettings"
+        self, app: AppBaseSettings, database: DatabaseConnectionSettings
     ) -> list[ConfigViolation]:
         """R-CFG-1: ``database.host`` пустой в production для non-sqlite.
 
@@ -532,7 +530,7 @@ class ConfigValidator:
         ]
 
     def _check_redis_host_required_in_prod(
-        self, app: "AppBaseSettings", redis: "RedisSettings"
+        self, app: AppBaseSettings, redis: RedisSettings
     ) -> list[ConfigViolation]:
         """R-CFG-2a: ``redis.host`` пустой в production при Redis enabled.
 
@@ -564,7 +562,7 @@ class ConfigValidator:
         ]
 
     def _check_redis_host_localhost_in_prod(
-        self, app: "AppBaseSettings", redis: "RedisSettings"
+        self, app: AppBaseSettings, redis: RedisSettings
     ) -> list[ConfigViolation]:
         """R-CFG-2b: ``redis.host`` = localhost/127.0.0.1 в production.
 
@@ -601,7 +599,7 @@ class ConfigValidator:
         return []
 
     def _check_feature_flag_dependency_unmet(
-        self, settings: "Settings"
+        self, settings: Settings
     ) -> list[ConfigViolation]:
         """D14: зависимый feature-flag включён, а требуемый — нет.
 
@@ -677,8 +675,8 @@ class ConfigValidator:
 
 
 def validate_startup_config(
-    settings: "Settings",
-    waf_settings: "WafSettings",
+    settings: Settings,
+    waf_settings: WafSettings,
     *,
     raise_on_critical_in_prod: bool = True,
 ) -> tuple[ConfigViolation, ...]:

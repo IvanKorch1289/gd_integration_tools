@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.models.notebooks import Notebook, NotebookVersion
@@ -24,7 +24,7 @@ _COLLECTION = "notebooks"
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _doc_to_notebook(doc: dict[str, Any]) -> Notebook:
@@ -60,7 +60,7 @@ class MongoNotebookRepository:
                 [("is_deleted", 1), ("updated_at", -1)], name="is_deleted_updated_at"
             )
             await collection.create_index("title", name="title_idx")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("MongoNotebookRepository: ensure_indexes failed: %s", exc)
 
     async def create(self, notebook: Notebook) -> Notebook:

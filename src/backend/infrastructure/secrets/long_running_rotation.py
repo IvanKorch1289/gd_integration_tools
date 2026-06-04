@@ -90,13 +90,13 @@ class LongRunningSecretRotator:
 
     __slots__ = (
         "_backend",
-        "_secret_path",
-        "_refresh_interval",
-        "_heartbeat",
-        "_time_source",
         "_cached_value",
+        "_heartbeat",
         "_last_fetched",
         "_lock",
+        "_refresh_interval",
+        "_secret_path",
+        "_time_source",
     )
 
     def __init__(
@@ -161,5 +161,5 @@ class LongRunningSecretRotator:
             if inspect.isawaitable(result):
                 awaitable: Awaitable[Any] = result
                 await awaitable
-        except Exception as _:  # noqa: BLE001 — heartbeat не должен валить activity
+        except Exception as _:
             _logger.exception("Heartbeat callback raised; suppressing")

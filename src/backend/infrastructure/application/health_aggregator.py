@@ -28,8 +28,9 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import HealthMode
@@ -37,8 +38,6 @@ if TYPE_CHECKING:
 __all__ = ("HealthAggregator", "get_health_aggregator")
 
 logger = logging.getLogger("infra.health")
-
-HealthMode = Literal["fast", "deep"]  # noqa: F811  (re-export для удобства)
 
 #: Legacy-сигнатура (backward-compat): функция без аргументов, возвращает dict.
 #: Новая сигнатура может принимать kwarg ``mode`` — aggregator прокинет его
@@ -98,7 +97,7 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return False
         return "mode" in sig.parameters
 
@@ -121,7 +120,7 @@ class HealthAggregator:
             result.setdefault("status", "unknown")
             result.setdefault("mode", mode)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "name": name,
                 "status": "error",
@@ -157,7 +156,7 @@ class HealthAggregator:
             return {}
         try:
             results = await registry.health_all(mode=mode)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ConnectorRegistry.health_all failed: %s", exc)
             return {}
         out: dict[str, dict[str, Any]] = {}
@@ -245,7 +244,7 @@ class HealthAggregator:
                 previous_status=previous, current_status=current, components=components
             )
             await bus.publish("events.health", event)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("Health transition publish skipped: %s", exc)
 
     async def check_single(
@@ -261,7 +260,7 @@ class HealthAggregator:
                 from src.backend.infrastructure.registry import ConnectorRegistry
 
                 client = ConnectorRegistry.instance().get(name)
-            except Exception as _:  # noqa: BLE001
+            except Exception as _:
                 return {
                     "name": name,
                     "status": "error",
@@ -277,7 +276,7 @@ class HealthAggregator:
                     "details": r.details,
                     "error": r.error,
                 }
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 return {"name": name, "status": "error", "error": str(exc)[:200]}
         return {"name": name, "status": "error", "error": "Component not registered"}
 

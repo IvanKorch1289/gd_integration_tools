@@ -10,10 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.backend.core.interfaces.rule_engine import (
-    RuleEngineRepository,
-    RulesetDoc,
-)
+from src.backend.core.interfaces.rule_engine import RuleEngineRepository, RulesetDoc
 from src.backend.services.integrations.rule_engine.registry import (
     HOT_RELOAD_TTL_SECONDS,
     RuleEngineRegistry,
@@ -33,20 +30,15 @@ class FakeRepo(RuleEngineRepository):
         self._docs[(doc.name, doc.tenant_id)] = doc
 
     async def get(
-        self,
-        name: str,
-        *,
-        version: str | None = None,
-        tenant_id: str | None = None,
+        self, name: str, *, version: str | None = None, tenant_id: str | None = None
     ) -> RulesetDoc | None:
         self.get_calls += 1
         return self._docs.get((name, tenant_id))
 
-    async def list_active(
-        self, *, tenant_id: str | None = None
-    ) -> list[RulesetDoc]:
+    async def list_active(self, *, tenant_id: str | None = None) -> list[RulesetDoc]:
         return [
-            d for d in self._docs.values()
+            d
+            for d in self._docs.values()
             if (tenant_id is None or d.tenant_id == tenant_id) and d.enabled
         ]
 

@@ -65,6 +65,7 @@ class TestSprint19AIFlagsComposition:
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags
+
         mro_names = [c.__name__ for c in FeatureFlags.__mro__]
         # 24 mixins в MRO after T1.3.24
         for cls in ("Sprint5K2Flags", "Sprint19DXFlags", "Sprint19AIFlags"):

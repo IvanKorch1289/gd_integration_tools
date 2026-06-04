@@ -42,8 +42,7 @@ class _StubInvoker:
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:
         self.calls.append(request)
         return InvocationResponse(
-            invocation_id=request.invocation_id,
-            status=InvocationStatus.OK,
+            invocation_id=request.invocation_id, status=InvocationStatus.OK
         )
 
 
@@ -86,10 +85,7 @@ async def test_idempotency_skipped_when_disabled() -> None:
     spec = SourceSpec(id="s", kind="webhook", action="a", idempotency=False)
 
     await start_all_sources(
-        registry=registry,
-        invoker=invoker,
-        specs=[spec],
-        dedupe=MemoryDedupeStore(),
+        registry=registry, invoker=invoker, specs=[spec], dedupe=MemoryDedupeStore()
     )
     assert src.received_cb is not None
     ev = SourceEvent(

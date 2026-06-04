@@ -82,16 +82,14 @@ class MemoryRecallProcessor(BaseAIProcessor):
         self.k = k
         self.result_property = result_property
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``ai.memory.read`` = после ``":"`` в namespace."""
         del exchange
         if ":" in self.namespace:
             return self.namespace.split(":", 1)[1]
         return self.namespace
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         backend = self._resolve_backend()
         if backend is None:
@@ -107,20 +105,20 @@ class MemoryRecallProcessor(BaseAIProcessor):
 
         try:
             records = await backend.recall(namespace, query, k=self.k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("%s: recall failed (%s) — empty result", self.name, exc)
             records = []
 
         exchange.set_property(self.result_property, list(records))
 
-    def _resolve_namespace(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_namespace(self, exchange: Exchange[Any]) -> str:
         """Подставить ``${tenant_id}`` placeholder."""
         if "${tenant_id}" not in self.namespace:
             return self.namespace
         tenant = exchange.meta.tenant_id or "unknown"
         return self.namespace.replace("${tenant_id}", tenant)
 
-    def _resolve_query(self, exchange: "Exchange[Any]") -> str:
+    def _resolve_query(self, exchange: Exchange[Any]) -> str:
         """Достать query из property или вернуть статичный."""
         if self.query_property is not None:
             parts = self.query_property.split(".")
@@ -159,7 +157,7 @@ class MemoryRecallProcessor(BaseAIProcessor):
             container = get_container()
             if container is not None:
                 return container.resolve_optional("memory_backend")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.debug("DI container resolve failed: %s", exc)
         return None
 

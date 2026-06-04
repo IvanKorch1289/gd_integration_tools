@@ -119,5 +119,5 @@ class ProcessorPluginRegistry:
 
 
 @app_state_singleton("plugin_registry", ProcessorPluginRegistry)
-def get_processor_plugin_registry() -> ProcessorPluginRegistry:
+def get_processor_plugin_registry() -> ProcessorPluginRegistry:  # type: ignore[empty-body]
     """Возвращает ProcessorPluginRegistry из app.state или lazy-init fallback."""

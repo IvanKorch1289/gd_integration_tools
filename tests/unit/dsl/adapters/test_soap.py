@@ -40,10 +40,7 @@ class TestCreateExchange:
         raw_input: dict[str, Any] = {
             "operation": "GetUser",
             "payload": {"id": 42},
-            "headers": {
-                "soap-action": "GetUser",
-                "X-Request-Id": "req-1",
-            },
+            "headers": {"soap-action": "GetUser", "X-Request-Id": "req-1"},
         }
 
         exchange = await adapter.create_exchange(raw_input)
@@ -68,15 +65,9 @@ class TestCreateExchange:
         exchange = await adapter.create_exchange({})
 
         assert exchange.in_message.body == {}
-        assert exchange.in_message.headers == {
-            "soap-action": "",
-            "soap-operation": "",
-        }
+        assert exchange.in_message.headers == {"soap-action": "", "soap-operation": ""}
         assert exchange.meta.protocol == ProtocolType.soap
-        assert exchange.meta.protocol_attrs == {
-            "soap_operation": "",
-            "soap_action": "",
-        }
+        assert exchange.meta.protocol_attrs == {"soap_operation": "", "soap_action": ""}
 
     async def test_only_operation_and_payload(self) -> None:
         """Без headers — пустые ``soap-action``/``soap-operation``-производные."""
@@ -104,12 +95,10 @@ class TestCreateExchange:
         exchange = await adapter.create_exchange(raw_input)
 
         assert (
-            exchange.in_message.headers["soap-action"]
-            == "http://example.com/GetUser"
+            exchange.in_message.headers["soap-action"] == "http://example.com/GetUser"
         )
         assert (
-            exchange.meta.protocol_attrs["soap_action"]
-            == "http://example.com/GetUser"
+            exchange.meta.protocol_attrs["soap_action"] == "http://example.com/GetUser"
         )
 
 

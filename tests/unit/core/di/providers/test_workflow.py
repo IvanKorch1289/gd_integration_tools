@@ -58,7 +58,10 @@ class TestWorkflowStateStore:
 
 class TestWorkflowStateRowClass:
     def test_get_only(self) -> None:
-        from src.backend.core.di.providers.workflow import get_workflow_state_row_class_provider
+        from src.backend.core.di.providers.workflow import (
+            get_workflow_state_row_class_provider,
+        )
+
         assert callable(get_workflow_state_row_class_provider)
 
 
@@ -74,6 +77,7 @@ class TestWorkflowInstanceModel:
         from src.backend.core.di.providers.workflow import (
             get_workflow_instance_model_provider,
         )
+
         assert callable(get_workflow_instance_model_provider)
 
 
@@ -82,6 +86,7 @@ class TestWorkflowStatusEnum:
         from src.backend.core.di.providers.workflow import (
             get_workflow_status_enum_provider,
         )
+
         assert callable(get_workflow_status_enum_provider)
 
 
@@ -109,6 +114,7 @@ class TestRateLimiter:
         from src.backend.core.di.providers.workflow import (
             get_rate_limit_classes_provider,
         )
+
         assert callable(get_rate_limit_classes_provider)
 
 

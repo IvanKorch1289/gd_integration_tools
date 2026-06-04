@@ -1,6 +1,7 @@
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from functools import lru_cache, wraps
-from typing import Any, AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -17,11 +18,11 @@ breaker_registry = get_breaker_registry()
 
 __all__ = (
     "DatabaseSessionManager",
-    "main_session_manager",
     "get_external_session_manager",
     "get_main_session_manager",
     "get_smart_read_session",
     "get_smart_write_session",
+    "main_session_manager",
 )
 
 
@@ -55,25 +56,24 @@ class DatabaseSessionManager:
         )
 
     @asynccontextmanager
-    async def create_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def create_session(self) -> AsyncGenerator[AsyncSession]:
         """Создаёт и возвращает асинхронную сессию (под защитой circuit breaker)."""
-        async with self._breaker.guard():
-            async with self.session_maker() as session:
-                try:
-                    yield session
-                except Exception as exc:
-                    self.logger.error(
-                        "Ошибка при работе с сессией БД '%s': %s",
-                        self.db_name,
-                        str(exc),
-                        exc_info=True,
-                    )
-                    raise DatabaseError(
-                        message=f"Failed to create database session for '{self.db_name}'"
-                    ) from exc
+        async with self._breaker.guard(), self.session_maker() as session:
+            try:
+                yield session
+            except Exception as exc:
+                self.logger.error(
+                    "Ошибка при работе с сессией БД '%s': %s",
+                    self.db_name,
+                    str(exc),
+                    exc_info=True,
+                )
+                raise DatabaseError(
+                    message=f"Failed to create database session for '{self.db_name}'"
+                ) from exc
 
     @asynccontextmanager
-    async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:
+    async def transaction(self, session: AsyncSession) -> AsyncGenerator[None]:
         """
         Выполняет commit при успехе и rollback при ошибке.
         """
@@ -89,20 +89,19 @@ class DatabaseSessionManager:
                 message=f"Transaction failed for '{self.db_name}'"
             ) from exc
 
-    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(self) -> AsyncGenerator[AsyncSession]:
         """
         Dependency-совместимый генератор сессии без auto-commit.
         """
         async with self.create_session() as session:
             yield session
 
-    async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_transaction_session(self) -> AsyncGenerator[AsyncSession]:
         """
         Dependency-совместимый генератор транзакционной сессии.
         """
-        async with self.create_session() as session:
-            async with self.transaction(session):
-                yield session
+        async with self.create_session() as session, self.transaction(session):
+            yield session
 
     def connection(
         self, isolation_level: str | None = None, commit: bool = True
@@ -150,7 +149,7 @@ class DatabaseSessionManager:
                         raise DatabaseError(
                             message=(
                                 f"Ошибка при выполнении транзакции "
-                                f"в БД '{self.db_name}' - {str(exc)}"
+                                f"в БД '{self.db_name}' - {exc!s}"
                             )
                         ) from exc
 
@@ -178,7 +177,7 @@ def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
     )
 
 
-async def get_smart_read_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_smart_read_session() -> AsyncGenerator[AsyncSession]:
     """FastAPI Depends-совместимый генератор read-only сессии (S11 K2 W2).
 
     Использует :class:`SmartSessionManager`: read-запросы идут на
@@ -191,7 +190,7 @@ async def get_smart_read_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_smart_write_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_smart_write_session() -> AsyncGenerator[AsyncSession]:
     """FastAPI Depends-совместимый генератор write-сессии (S11 K2 W2).
 
     Write-сессии всегда идут на primary engine; replica для write

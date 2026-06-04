@@ -29,7 +29,9 @@ from src.backend.schemas.invocation import ActionCommandSchema
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 
-def _make_exchange(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
+def _make_exchange(
+    body: Any = None, headers: dict[str, Any] | None = None
+) -> Exchange[Any]:
     """Создаёт реальный Exchange c заданным in_message."""
     return Exchange(in_message=Message(body=body, headers=headers or {}))
 
@@ -200,10 +202,7 @@ class TestEntityUpdateProcessor:
         context.action_registry.dispatch.assert_awaited_once()
         command = _dispatched_command(context)
         assert command.action == "user.update"
-        assert command.payload == {
-            "id": "u-7",
-            "data": {"id": "u-7", "name": "carol"},
-        }
+        assert command.payload == {"id": "u-7", "data": {"id": "u-7", "name": "carol"}}
 
     async def test_missing_id_fails(self) -> None:
         """Отсутствие id приводит к exchange.fail()."""

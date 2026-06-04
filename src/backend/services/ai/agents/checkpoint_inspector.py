@@ -97,7 +97,7 @@ class CheckpointInspector:
                         checkpoint_count=len(ckpts),
                     )
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("CheckpointInspector list_sessions failed: %s", exc)
         return results[offset : offset + limit]
 
@@ -110,7 +110,7 @@ class CheckpointInspector:
             return None
         try:
             tuple_ = await saver.aget_tuple({"configurable": {"thread_id": session_id}})
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("get_state failed for %s: %s", session_id, exc)
             return None
         if tuple_ is None:
@@ -147,7 +147,7 @@ class CheckpointInspector:
                     }
                 }
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("restore failed: %s", exc)
             return False
         return tuple_ is not None

@@ -410,7 +410,9 @@ class TestCapabilityGateAuditAndStrict:
         )
         loaded = await loader.discover_and_load()
         assert loaded[0].status == "enabled"
-        allocated = [e for e in events if e.get("event") == "route.capabilities.allocated"]
+        allocated = [
+            e for e in events if e.get("event") == "route.capabilities.allocated"
+        ]
         assert len(allocated) == 1
         assert allocated[0]["route"] == "r_audit"
         caps = allocated[0]["capabilities"]

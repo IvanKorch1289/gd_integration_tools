@@ -262,9 +262,7 @@ class SagaLRAProcessor(BaseProcessor):
         * Detects duplicate names and empty ``action`` callables.
         """
         if not isinstance(steps, list):
-            raise TypeError(
-                f"steps должен быть list, получено {type(steps).__name__}"
-            )
+            raise TypeError(f"steps должен быть list, получено {type(steps).__name__}")
         seen: set[str] = set()
         normalized: list[SagaStepSpec] = []
         for i, raw in enumerate(steps):
@@ -293,21 +291,13 @@ class SagaLRAProcessor(BaseProcessor):
                 raise ValueError(f"step #{i}: дубликат name {name!r}")
             seen.add(name)
             normalized.append(
-                {
-                    "name": name,
-                    "action": action,
-                    "compensation": compensation,
-                }
+                {"name": name, "action": action, "compensation": compensation}
             )
         return normalized
 
     # ── State machine helpers ──────────────────────────────────────
 
-    def _set_state(
-        self,
-        exchange: Exchange[Any],
-        new_state: str,
-    ) -> None:
+    def _set_state(self, exchange: Exchange[Any], new_state: str) -> None:
         """Set saga state and notify listener (if any)."""
         if new_state not in _VALID_STATES:
             raise ValueError(f"unknown saga state: {new_state!r}")
@@ -318,8 +308,7 @@ class SagaLRAProcessor(BaseProcessor):
                 self._on_state_change(old_state or "", new_state, exchange)
             except Exception:
                 _lra_logger.exception(
-                    "SagaLRA on_state_change callback raised: saga_id=%s",
-                    self._saga_id,
+                    "SagaLRA on_state_change callback raised: saga_id=%s", self._saga_id
                 )
 
     def _publish_result(
@@ -384,9 +373,7 @@ class SagaLRAProcessor(BaseProcessor):
         """
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise SagaLRAError(
-                f"saga timeout exceeded before step {step['name']!r}"
-            )
+            raise SagaLRAError(f"saga timeout exceeded before step {step['name']!r}")
         # Per-step timeout: use min of (per_step_timeout, remaining).
         step_timeout = self._per_step_timeout
         if step_timeout is not None:
@@ -396,19 +383,20 @@ class SagaLRAProcessor(BaseProcessor):
             if step_timeout is not None:
                 return await asyncio.wait_for(
                     self._invoke(
-                        step["action"], exchange, context,
-                        step_name=step["name"], kind="action",
+                        step["action"],
+                        exchange,
+                        context,
+                        step_name=step["name"],
+                        kind="action",
                     ),
                     timeout=step_timeout,
                 )
             return await self._invoke(
-                step["action"], exchange, context,
-                step_name=step["name"], kind="action",
+                step["action"], exchange, context, step_name=step["name"], kind="action"
             )
         except TimeoutError as exc:
             raise SagaLRAError(
-                f"step {step['name']!r} action timed out "
-                f"after {step_timeout}s"
+                f"step {step['name']!r} action timed out after {step_timeout}s"
             ) from exc
 
     async def _run_compensation(
@@ -431,14 +419,12 @@ class SagaLRAProcessor(BaseProcessor):
             return None
         if step["name"] in ran_compensations:
             _lra_logger.debug(
-                "SagaLRA compensation %s already run (idempotent skip)",
-                step["name"],
+                "SagaLRA compensation %s already run (idempotent skip)", step["name"]
             )
             return None
         try:
             await self._invoke(
-                comp, exchange, context,
-                step_name=step["name"], kind="compensation",
+                comp, exchange, context, step_name=step["name"], kind="compensation"
             )
             ran_compensations.add(step["name"])
             return None
@@ -446,18 +432,12 @@ class SagaLRAProcessor(BaseProcessor):
             # Mark as "ran" so a retry won't repeat the same failure,
             # but the caller will see this via the returned exception.
             ran_compensations.add(step["name"])
-            _lra_logger.error(
-                "SagaLRA compensation %s failed: %s", step["name"], exc
-            )
+            _lra_logger.error("SagaLRA compensation %s failed: %s", step["name"], exc)
             return exc
 
     # ── Main entrypoint ───────────────────────────────────────────
 
-    async def process(
-        self,
-        exchange: Exchange[Any],
-        context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Run the saga; on failure, compensate completed steps in REVERSE order."""
         # Initial bookkeeping.
         exchange.set_property("saga_id", self._saga_id)
@@ -479,7 +459,7 @@ class SagaLRAProcessor(BaseProcessor):
         for step in self._steps:
             try:
                 await self._run_action(step, exchange, context, deadline=deadline)
-            except Exception as action_exc:  # noqa: BLE001
+            except Exception as action_exc:
                 failed_step = step["name"]
                 last_action_error = action_exc
                 _lra_logger.error(
@@ -521,14 +501,12 @@ class SagaLRAProcessor(BaseProcessor):
                 if step["name"] not in completed:
                     continue
                 exc = await self._run_compensation(
-                    step, exchange, context, ran_compensations=ran_compensations,
+                    step, exchange, context, ran_compensations=ran_compensations
                 )
                 if step["name"] in compensations_run:
                     continue
                 compensations_run.append(step["name"])
-                exchange.set_property(
-                    "saga_compensations_run", list(compensations_run)
-                )
+                exchange.set_property("saga_compensations_run", list(compensations_run))
                 if exc is not None:
                     compensation_errors.append((step["name"], exc))
                     if self._fail_fast:
@@ -546,18 +524,14 @@ class SagaLRAProcessor(BaseProcessor):
                 completed=completed,
                 failed_step=failed_step,
                 compensations_run=compensations_run,
-                compensation_errors=[
-                    (n, str(e)) for n, e in compensation_errors
-                ],
+                compensation_errors=[(n, str(e)) for n, e in compensation_errors],
                 final_state=final_state,
                 error=str(last_action_error) if last_action_error else None,
             )
             self._set_state(exchange, final_state)
 
             # Mark the exchange as failed (Camel-style) and raise.
-            exchange.fail(
-                f"Saga failed at step {failed_step!r}: {last_action_error}"
-            )
+            exchange.fail(f"Saga failed at step {failed_step!r}: {last_action_error}")
             wrapped = SagaCompensationError(
                 f"Saga failed at step {failed_step!r}",
                 original_error=last_action_error,

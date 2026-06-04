@@ -38,9 +38,7 @@ def _parse_git_log(from_ref: str | None = None, to_ref: str = "HEAD") -> list[Co
     """Parse git log for wave-tagged commits."""
     import subprocess
 
-    cmd = [
-        "git", "log", "--format=%H|%s|%an",
-    ]
+    cmd = ["git", "log", "--format=%H|%s|%an"]
     if from_ref:
         cmd.append(f"{from_ref}..{to_ref}")
     else:
@@ -64,7 +62,9 @@ def _parse_git_log(from_ref: str | None = None, to_ref: str = "HEAD") -> list[Co
         sha, message, author = parts
         wave_match = _WAVE_RE.search(message)
         wave_tag = wave_match.group(1) if wave_match else None
-        commits.append(Commit(sha=sha, message=message, author=author, wave_tag=wave_tag))
+        commits.append(
+            Commit(sha=sha, message=message, author=author, wave_tag=wave_tag)
+        )
     return commits
 
 
@@ -91,9 +91,7 @@ def _format_commit(commit: Commit) -> str:
 
 
 def main(
-    from_ref: str | None = None,
-    to_ref: str = "HEAD",
-    output: Path | None = None,
+    from_ref: str | None = None, to_ref: str = "HEAD", output: Path | None = None
 ) -> int:
     commits = _parse_git_log(from_ref, to_ref)
     if not commits:
@@ -135,18 +133,23 @@ def main(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Generate release notes from wave-tags")
-    parser.add_argument(
-        "--from", dest="from_ref", default=None,
-        help="Start git ref (exclusive). If not given, uses all commits."
+    parser = argparse.ArgumentParser(
+        description="Generate release notes from wave-tags"
     )
     parser.add_argument(
-        "--to", dest="to_ref", default="HEAD",
-        help="End git ref (inclusive). Default: HEAD."
+        "--from",
+        dest="from_ref",
+        default=None,
+        help="Start git ref (exclusive). If not given, uses all commits.",
     )
     parser.add_argument(
-        "--output", "-o", type=Path, default=None,
-        help="Output file (default: stdout)"
+        "--to",
+        dest="to_ref",
+        default="HEAD",
+        help="End git ref (inclusive). Default: HEAD.",
+    )
+    parser.add_argument(
+        "--output", "-o", type=Path, default=None, help="Output file (default: stdout)"
     )
     args = parser.parse_args()
     sys.exit(main(args.from_ref, args.to_ref, args.output))

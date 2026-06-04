@@ -143,15 +143,13 @@ class AgentGraphProcessor(BaseAIProcessor):
         self.max_handoffs = max_handoffs
         self.result_property = result_property
 
-    def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope = first workflow_id for capability gate."""
         if self.agents:
             return self.agents[0].get("workflow_id")
         return None
 
-    async def _run(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if self.graph_type == "supervisor":
             result = await self._run_supervisor(exchange, context)
         else:
@@ -160,7 +158,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         exchange.set_property(self.result_property, result)
 
     async def _run_supervisor(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
         """Execute multi-agent supervisor via existing MultiAgentSupervisor."""
         try:
@@ -229,13 +227,12 @@ class AgentGraphProcessor(BaseAIProcessor):
         )
 
         prompt = self._extract_prompt(exchange)
-        result = await supervisor.run(
+        return await supervisor.run(
             prompt=prompt, payload=self._build_payload(exchange)
         )
-        return result
 
     async def _run_react(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
         """Execute ReAct agent via existing build_and_run_agent."""
         try:
@@ -252,12 +249,9 @@ class AgentGraphProcessor(BaseAIProcessor):
             }
 
         prompt = self._prompt_with_context(exchange)
-        result = await build_and_run_agent(
-            prompt=prompt, tool_actions=self.tool_actions
-        )
-        return result
+        return await build_and_run_agent(prompt=prompt, tool_actions=self.tool_actions)
 
-    def _extract_prompt(self, exchange: "Exchange[Any]") -> str:
+    def _extract_prompt(self, exchange: Exchange[Any]) -> str:
         """Extract prompt from exchange body or property."""
         body = exchange.in_message.body
         if isinstance(body, dict):
@@ -271,7 +265,7 @@ class AgentGraphProcessor(BaseAIProcessor):
             return body
         return str(body or "")
 
-    def _prompt_with_context(self, exchange: "Exchange[Any]") -> str:
+    def _prompt_with_context(self, exchange: Exchange[Any]) -> str:
         """Build prompt with exchange context for ReAct agent."""
         prompt = self.prompt_inline or ""
         body = exchange.in_message.body
@@ -283,7 +277,7 @@ class AgentGraphProcessor(BaseAIProcessor):
                 prompt = f"{prompt}\n\nContext: {user_input}"
         return prompt
 
-    def _build_payload(self, exchange: "Exchange[Any]") -> dict[str, Any]:
+    def _build_payload(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Build payload dict from exchange body."""
         body = exchange.in_message.body
         if isinstance(body, dict):

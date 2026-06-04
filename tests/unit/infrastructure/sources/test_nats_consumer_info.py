@@ -12,9 +12,7 @@ import pytest
 
 @pytest.fixture
 def source():
-    from src.backend.infrastructure.sources.nats_jetstream import (
-        NATSJetStreamSource,
-    )
+    from src.backend.infrastructure.sources.nats_jetstream import NATSJetStreamSource
 
     src = NATSJetStreamSource(
         subject="orders.created", stream="ORDERS", durable="orders-consumer"
@@ -85,7 +83,5 @@ def test_record_consumer_info_no_op_without_prometheus() -> None:
     )
 
     # Без exception на normal данных.
-    record_consumer_info(
-        {"stream": "X", "durable": "y", "pending_messages": 0}
-    )
+    record_consumer_info({"stream": "X", "durable": "y", "pending_messages": 0})
     record_consumer_info({"stream": "X", "durable": "y", "error": "disconnected"})

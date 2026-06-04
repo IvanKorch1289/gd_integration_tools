@@ -37,9 +37,7 @@ def handler(config: SamlConfig) -> SamlSpHandler:
     return SamlSpHandler(backend=backend, default_post_login_url="/dashboard")
 
 
-def test_initiate_login_returns_redirect_and_request_id(
-    handler: SamlSpHandler,
-) -> None:
+def test_initiate_login_returns_redirect_and_request_id(handler: SamlSpHandler) -> None:
     result = handler.initiate_login()
     assert result.redirect_url.startswith("https://idp.test/sso?SAMLRequest=")
     assert result.request_id
@@ -62,16 +60,14 @@ def test_consume_acs_replay_defence(handler: SamlSpHandler) -> None:
 
     # Первый ACS-вызов проходит
     out = handler.consume_acs(
-        request_id=login.request_id,
-        validator_factory=lambda: auth_result,
+        request_id=login.request_id, validator_factory=lambda: auth_result
     )
     assert out.principal == "user@bank.local"
 
     # Повторное использование того же request_id отклоняется
     with pytest.raises(SamlError, match="replay"):
         handler.consume_acs(
-            request_id=login.request_id,
-            validator_factory=lambda: auth_result,
+            request_id=login.request_id, validator_factory=lambda: auth_result
         )
 
 
@@ -104,9 +100,7 @@ def test_consume_acs_expired_window(config: SamlConfig) -> None:
         )
 
 
-def test_validator_exception_wrapped_as_saml_error(
-    handler: SamlSpHandler,
-) -> None:
+def test_validator_exception_wrapped_as_saml_error(handler: SamlSpHandler) -> None:
     login = handler.initiate_login()
 
     def _bad_validator() -> SamlAuthResult:
@@ -114,8 +108,7 @@ def test_validator_exception_wrapped_as_saml_error(
 
     with pytest.raises(SamlError, match="validation failed"):
         handler.consume_acs(
-            request_id=login.request_id,
-            validator_factory=_bad_validator,
+            request_id=login.request_id, validator_factory=_bad_validator
         )
 
 

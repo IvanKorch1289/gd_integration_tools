@@ -100,7 +100,9 @@ def test_build_chat_model_falls_back_to_community(
     fake_chat_models.ChatLiteLLM = _CommunityChatLiteLLM
     fake_community.chat_models = fake_chat_models
     monkeypatch.setitem(sys.modules, "langchain_community", fake_community)
-    monkeypatch.setitem(sys.modules, "langchain_community.chat_models", fake_chat_models)
+    monkeypatch.setitem(
+        sys.modules, "langchain_community.chat_models", fake_chat_models
+    )
 
     from src.backend.services.ai.ai_graph import build_chat_model
 
@@ -162,7 +164,9 @@ async def test_build_and_run_agent_invokes_react(
             captured_invoke.update(payload)
             return {"messages": [SimpleNamespace(content="ok-final")]}
 
-    def _fake_create_react_agent(llm: Any, tools: list[Any], **kwargs: Any) -> _FakeAgent:
+    def _fake_create_react_agent(
+        llm: Any, tools: list[Any], **kwargs: Any
+    ) -> _FakeAgent:
         captured_invoke["llm_present"] = llm is not None
         captured_invoke["tools_count"] = len(tools)
         captured_invoke["checkpointer"] = kwargs.get("checkpointer")
@@ -178,9 +182,7 @@ async def test_build_and_run_agent_invokes_react(
     from src.backend.services.ai.ai_graph import build_and_run_agent
 
     result = await build_and_run_agent(
-        "test prompt",
-        tool_actions=[],
-        gateway=fake_litellm_gateway,
+        "test prompt", tool_actions=[], gateway=fake_litellm_gateway
     )
     assert result["prompt"] == "test prompt"
     assert result["response"] == "ok-final"

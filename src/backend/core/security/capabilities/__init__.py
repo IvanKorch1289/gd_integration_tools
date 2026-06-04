@@ -44,8 +44,9 @@ from src.backend.core.security.capabilities.vocabulary import (
 )
 
 __all__ = (
-    "AuditCallback",
     "CAPABILITY_NAME_PATTERN",
+    "DEFAULT_CAPABILITY_CATALOG",
+    "AuditCallback",
     "CapabilityAuditEvent",
     "CapabilityAuditEventKind",
     "CapabilityDef",
@@ -58,7 +59,6 @@ __all__ = (
     "CapabilityRule",
     "CapabilitySupersetError",
     "CapabilityVocabulary",
-    "DEFAULT_CAPABILITY_CATALOG",
     "ExactAliasMatcher",
     "GlobScopeMatcher",
     "PolicyDecision",

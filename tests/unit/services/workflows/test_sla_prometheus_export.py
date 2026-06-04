@@ -6,10 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.services.workflows.sla_alerting import (
-    SlaBreachLevel,
-    evaluate_sla,
-)
+from src.backend.services.workflows.sla_alerting import SlaBreachLevel, evaluate_sla
 
 prom = pytest.importorskip("prometheus_client", reason="prometheus_client отсутствует")
 

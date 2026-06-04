@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
@@ -31,7 +31,7 @@ logger = logging.getLogger("services.ai.feedback")
 
 def _utc_now() -> datetime:
     """Возвращает текущий момент в UTC (aware)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class AIFeedbackService:
@@ -139,7 +139,7 @@ class AIFeedbackService:
         """Wave D.6: оптинально подаёт feedback в RLMFeedbackProcessor."""
         try:
             from src.backend.core.config.ai_2026 import langmem_settings
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return
         if not langmem_settings.rlm_enabled:
             return
@@ -151,7 +151,7 @@ class AIFeedbackService:
             await RLMFeedbackProcessor().on_feedback_received(
                 doc_id=str(doc_id), label=rlm_label
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("RLM feedback hook skipped: %s", exc)
 
     @staticmethod
@@ -239,7 +239,7 @@ class AIFeedbackService:
 
 
 @app_state_singleton("ai_feedback_service", factory=AIFeedbackService)
-def get_ai_feedback_service() -> AIFeedbackService:
+def get_ai_feedback_service() -> AIFeedbackService:  # type: ignore[empty-body]
     """Возвращает singleton ``AIFeedbackService``.
 
     Источник экземпляра — ``app.state.ai_feedback_service`` (подмена

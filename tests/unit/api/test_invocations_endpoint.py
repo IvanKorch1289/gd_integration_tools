@@ -196,9 +196,7 @@ class TestPayloadPassthrough:
         )
 
         payload: dict[str, Any] = {"deeply": {"nested": [1, 2, {"key": "v"}]}}
-        body = InvocationRequestSchema(
-            action="deep.test", mode="sync", payload=payload
-        )
+        body = InvocationRequestSchema(action="deep.test", mode="sync", payload=payload)
         await post_invocation(body, Response(), invoker=invoker)
 
         request = invoker.invoke.call_args[0][0]

@@ -33,12 +33,13 @@ Feature flag: ``feature_flags.policy_chainable_enabled`` (default-OFF).
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
 
-__all__ = ("PolicyMixin", "PolicyChain")
+__all__ = ("PolicyChain", "PolicyMixin")
 
 
 class PolicyChain:
@@ -51,12 +52,12 @@ class PolicyChain:
 
     __slots__ = ("_builder",)
 
-    def __init__(self, builder: "RouteBuilder") -> None:
+    def __init__(self, builder: RouteBuilder) -> None:
         self._builder = builder
 
     def cache(
         self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add cache policy (через CacheProcessor / Redis backend)."""
         return self._add_policy_processor(
             "cache", ttl_seconds=ttl_seconds, key=key, backend=backend
@@ -68,7 +69,7 @@ class PolicyChain:
         threshold: int = 5,
         timeout_seconds: int = 30,
         recovery_seconds: int = 60,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add circuit-breaker policy (через ResilienceCoordinator)."""
         return self._add_policy_processor(
             "circuit_breaker",
@@ -79,7 +80,7 @@ class PolicyChain:
 
     def rate_limit(
         self, *, rate: int = 100, per_seconds: int = 1, scope: str = "global"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add rate-limit policy (через ThrottlerProcessor / RateLimiter)."""
         return self._add_policy_processor(
             "rate_limit", rate=rate, per_seconds=per_seconds, scope=scope
@@ -93,7 +94,7 @@ class PolicyChain:
         read: float | None = None,
         write: float | None = None,
         total: float | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add timeout policy (через TimeoutProcessor).
 
         S18 W6 (Gateway-centralization): расширенная сигнатура с 4-мя
@@ -137,7 +138,7 @@ class PolicyChain:
 
     def retry(
         self, *, max_attempts: int = 3, backoff_seconds: float = 1.0
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add retry policy (через RetryProcessor / tenacity)."""
         return self._add_policy_processor(
             "retry", max_attempts=max_attempts, backoff_seconds=backoff_seconds
@@ -145,7 +146,7 @@ class PolicyChain:
 
     def bulkhead(
         self, *, max_concurrent: int = 10, wait_timeout_seconds: float = 5.0
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add bulkhead policy (через BulkheadProcessor / asyncio.Semaphore)."""
         return self._add_policy_processor(
             "bulkhead",
@@ -161,7 +162,7 @@ class PolicyChain:
         min_timeout: float = 2.0,
         max_timeout: float = 60.0,
         window_size: int = 100,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """[wave:s19/k2-w3-adaptive-timeout-policy] Adaptive timeout policy.
 
         Вычисляет таймаут динамически на основе historical latency percentile.
@@ -197,13 +198,13 @@ class PolicyChain:
 
     def idempotency(
         self, *, key: str = "header.X-Idempotency-Key", ttl_seconds: int = 3600
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Add idempotency policy (через IdempotentConsumerProcessor)."""
         return self._add_policy_processor(
             "idempotency", key=key, ttl_seconds=ttl_seconds
         )
 
-    def _add_policy_processor(self, name: str, **kwargs: Any) -> "RouteBuilder":
+    def _add_policy_processor(self, name: str, **kwargs: Any) -> RouteBuilder:
         """Создаёт PolicyMarkerProcessor и добавляет в builder.
 
         Returns:
@@ -217,13 +218,13 @@ class PolicyChain:
                 marker = PolicyMarkerProcessor(
                     policy_name=name, params=kwargs, enabled=False
                 )
-                self._builder._processors.append(marker)
+                self._builder._processors.append(marker)  # type: ignore[attr-defined]
                 return self._builder
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         marker = PolicyMarkerProcessor(policy_name=name, params=kwargs, enabled=True)
-        self._builder._processors.append(marker)
+        self._builder._processors.append(marker)  # type: ignore[attr-defined]
         return self._builder
 
 
@@ -253,7 +254,7 @@ class PolicyMarkerProcessor:
 
             if not feature_flags.policy_chainable_enabled:
                 return
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             pass
 
         if not self.enabled:
@@ -273,10 +274,8 @@ class PolicyMarkerProcessor:
             coordinator = ResilienceCoordinator()
             register = getattr(coordinator, f"register_{self.policy_name}", None)
             if register and callable(register):
-                try:
+                with contextlib.suppress(Exception):
                     register(**self.params)
-                except Exception as _:  # noqa: BLE001
-                    pass
         except ImportError:
             pass
 

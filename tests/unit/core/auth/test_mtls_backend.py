@@ -141,9 +141,7 @@ def test_issuer_pinning_blocks_wrong_ca() -> None:
             issuer_cn="evil-ca",
         )
 
-    backend = MtlsBackend(
-        config=config, cert_parser=parser, current_time=lambda: 100.0
-    )
+    backend = MtlsBackend(config=config, cert_parser=parser, current_time=lambda: 100.0)
     with pytest.raises(MtlsVerificationError) as exc_info:
         backend.verify(_request(**{"X-Client-Cert": "PEM"}))
     assert "issuer" in exc_info.value.reason

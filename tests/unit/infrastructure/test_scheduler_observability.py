@@ -21,8 +21,7 @@ def test_report_jobstore_type_memory_in_prod_logs_critical(
     with caplog.at_level(logging.CRITICAL):
         report_jobstore_type(is_memory=True, is_production=True)
     assert any(
-        "scheduler.memory_jobstore_in_production" in r.message
-        for r in caplog.records
+        "scheduler.memory_jobstore_in_production" in r.message for r in caplog.records
     )
 
 
@@ -62,9 +61,7 @@ def test_attach_scheduler_metrics_attaches_four_listeners() -> None:
 
     attach_scheduler_metrics(scheduler)
 
-    new_listeners = [
-        ln for ln in scheduler._listeners if ln not in baseline_listeners
-    ]
+    new_listeners = [ln for ln in scheduler._listeners if ln not in baseline_listeners]
     # APScheduler хранит listeners как (callback, mask) tuples.
     masks = {ln[1] for ln in new_listeners}
     assert EVENT_JOB_SUBMITTED in masks

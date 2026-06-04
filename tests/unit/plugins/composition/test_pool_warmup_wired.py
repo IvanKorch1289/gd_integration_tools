@@ -52,16 +52,13 @@ async def test_warmup_invokes_both_engines_when_replica_available(
 
     primary = object()
     replica = object()
-    fake_initializer = SimpleNamespace(
-        async_engine=primary, replica_engine=replica
-    )
+    fake_initializer = SimpleNamespace(async_engine=primary, replica_engine=replica)
 
     monkeypatch.setattr(setup_infra, "get_db_initializer", lambda: fake_initializer)
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup",
-        _StubPoolWarmup,
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
     )
 
     await setup_infra._warmup_connection_pools()
@@ -95,8 +92,7 @@ async def test_warmup_fallback_primary_only_when_no_replica(
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup",
-        _StubPoolWarmup,
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
     )
 
     await setup_infra._warmup_connection_pools()
@@ -125,8 +121,7 @@ async def test_warmup_noop_when_all_backends_disabled(
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup",
-        _StubPoolWarmup,
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
     )
 
     await setup_infra._warmup_connection_pools()

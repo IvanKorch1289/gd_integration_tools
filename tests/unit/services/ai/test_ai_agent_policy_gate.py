@@ -142,9 +142,7 @@ async def test_fail_closed_when_gateway_unavailable(
 
 
 @pytest.mark.asyncio
-async def test_fail_closed_when_gateway_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_fail_closed_when_gateway_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """gate=True + gateway.authorize raises → fail-closed deny."""
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.ai_agent import AIAgentService

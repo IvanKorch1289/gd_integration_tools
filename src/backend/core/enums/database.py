@@ -1,6 +1,6 @@
 from enum import Enum
 
-__all__ = ("DatabaseTypeChoices", "IsolationLevelChoices", "DatabaseProfileChoices")
+__all__ = ("DatabaseProfileChoices", "DatabaseTypeChoices", "IsolationLevelChoices")
 
 
 class DatabaseTypeChoices(str, Enum):

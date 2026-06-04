@@ -51,21 +51,19 @@ class HealthResult:
     error: str | None = None
 
     @classmethod
-    def ok(
-        cls, *, latency_ms: float, mode: HealthMode, **details: Any
-    ) -> "HealthResult":
+    def ok(cls, *, latency_ms: float, mode: HealthMode, **details: Any) -> HealthResult:
         return cls(status="ok", latency_ms=latency_ms, mode=mode, details=dict(details))
 
     @classmethod
     def failed(
         cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0
-    ) -> "HealthResult":
+    ) -> HealthResult:
         return cls(status="failed", latency_ms=latency_ms, mode=mode, error=error)
 
     @classmethod
     def degraded(
         cls, *, error: str, mode: HealthMode, latency_ms: float, **details: Any
-    ) -> "HealthResult":
+    ) -> HealthResult:
         return cls(
             status="degraded",
             latency_ms=latency_ms,
@@ -155,7 +153,7 @@ class InfrastructureClient(ABC):
     # -- Helpers -------------------------------------------------------
 
     async def _timed_health(
-        self, probe: "Callable[[], Any]", mode: HealthMode
+        self, probe: Callable[[], Any], mode: HealthMode
     ) -> HealthResult:
         """Helper для клиентов: оборачивает probe-колбек в timing + exception handling."""
         start = time.perf_counter()
@@ -164,7 +162,7 @@ class InfrastructureClient(ABC):
             latency_ms = (time.perf_counter() - start) * 1000.0
             details = extra if isinstance(extra, dict) else {}
             return HealthResult.ok(latency_ms=latency_ms, mode=mode, **details)
-        except Exception as exc:  # noqa: BLE001  (хотим поймать всё)
+        except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
@@ -176,9 +174,9 @@ class ConnectorValidationError(RuntimeError):
 
 
 __all__ = (
+    "ConnectorValidationError",
     "HealthMode",
     "HealthResult",
     "HealthStatus",
     "InfrastructureClient",
-    "ConnectorValidationError",
 )
