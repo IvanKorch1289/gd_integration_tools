@@ -1,23 +1,23 @@
-"""FormatConvertersMixin (S40 W1 — JSON/CSV/XML/YAML/Excel conversions для body).
+"""FormatConvertersMixin (S40 W1+W2 — format conversions для body).
 
-Adds 10 chainable methods to ``RouteBuilder`` for common format conversions
-on ``exchange.body`` / ``exchange.properties``. Назван ``FormatConvertersMixin``
-(не ``ConvertersMixin``) чтобы не конфликтовать с Phase-2.1
-:class:`dsl.builders.converters.ConvertersMixin` (hash/encrypt/decrypt/
-compress/decompress — 5 методов), который уже в MRO.
+S40 W1: 10 chainable методов (JSON/CSV/XML/YAML/Excel).
+S40 W2: +10 chainable методов (Parquet/MessagePack/TOML/INI/Base64).
+Итого 20/40 converters.
 
-10 методов = 5 форматов × 2 направления:
-    * JSON:  ``to_json``  / ``from_json``
-    * CSV:   ``to_csv``   / ``from_csv``
-    * XML:   ``to_xml``   / ``from_xml``
-    * YAML:  ``to_yaml``  / ``from_yaml``
-    * Excel: ``to_excel`` / ``from_excel``
+Назван ``FormatConvertersMixin`` (не ``ConvertersMixin``) чтобы не конфликтовать
+с Phase-2.1 :class:`dsl.builders.converters.ConvertersMixin` (hash/encrypt/
+decrypt/compress/decompress — 5 методов), который уже в MRO.
+
+20 методов = 10 форматов × 2 направления:
+    W1: JSON, CSV, XML, YAML, Excel.
+    W2: Parquet, MessagePack, TOML, INI, Base64.
 
 Зависимости (lazy-import, dev-friendly):
-    * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree`` — всегда;
-    * optional: ``yaml``     (to_yaml / from_yaml);
-    * optional: ``openpyxl`` (to_excel / from_excel);
-    * optional: ``xmltodict`` (from_xml — fallback на stdlib при отсутствии).
+    * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree``, ``base64``,
+      ``configparser``, ``tomllib`` (3.11+), ``pickle``;
+    * optional: ``yaml``, ``openpyxl``, ``xmltodict``;
+    * optional: ``pyarrow`` (Parquet), ``msgpack`` (fallback → ``pickle``),
+      ``tomli_w`` (TOML write — fallback на ImportError с понятным message).
 """
 
 from __future__ import annotations
@@ -83,7 +83,7 @@ def _to_text(data: Any) -> str:
     """bytes/bytearray → str (utf-8 best-effort)."""
     if isinstance(data, (bytes, bytearray)):
         return data.decode("utf-8", errors="replace")
-    return data  # type: ignore[return-value]
+    return data
 
 
 # ── Processor ─────────────────────────────────────────────────────────
@@ -109,6 +109,7 @@ class FormatConvertProcessor(BaseProcessor):
         headers: list[str] | None = None,
         root_tag: str = "root",
         sheet_name: str = "Sheet1",
+        compression: str = "snappy",
         source_value: Any = None,
         from_property: str = "body",
         name: str | None = None,
@@ -120,6 +121,7 @@ class FormatConvertProcessor(BaseProcessor):
         self.headers = headers
         self.root_tag = root_tag
         self.sheet_name = sheet_name
+        self.compression = compression
         self.source_value = source_value
         self.from_property = from_property
 
@@ -167,6 +169,26 @@ class FormatConvertProcessor(BaseProcessor):
             return self._to_excel(data)
         if self.direction == "from_excel":
             return self._from_excel(data)
+        if self.direction == "to_parquet":
+            return self._to_parquet(data)
+        if self.direction == "from_parquet":
+            return self._from_parquet(data)
+        if self.direction == "to_msgpack":
+            return self._to_msgpack(data)
+        if self.direction == "from_msgpack":
+            return self._from_msgpack(data)
+        if self.direction == "to_toml":
+            return self._to_toml(data)
+        if self.direction == "from_toml":
+            return self._from_toml(data)
+        if self.direction == "to_ini":
+            return self._to_ini(data)
+        if self.direction == "from_ini":
+            return self._from_ini(data)
+        if self.direction == "to_base64":
+            return self._to_base64(data)
+        if self.direction == "from_base64":
+            return self._from_base64(data)
         raise ValueError(f"unknown direction: {self.direction!r}")
 
     # ── JSON ──
@@ -215,7 +237,7 @@ class FormatConvertProcessor(BaseProcessor):
         if not text:
             return {}
         try:
-            import xmltodict  # type: ignore[import-untyped]
+            import xmltodict
 
             parsed = xmltodict.parse(text)
             if len(parsed) == 1:
@@ -228,7 +250,7 @@ class FormatConvertProcessor(BaseProcessor):
 
     def _to_yaml(self, data: Any) -> str:
         try:
-            import yaml  # type: ignore[import-untyped]
+            import yaml
 
             return yaml.dump(data, default_flow_style=False, allow_unicode=True)
         except ImportError:
@@ -239,7 +261,7 @@ class FormatConvertProcessor(BaseProcessor):
         if not text:
             return {}
         try:
-            import yaml  # type: ignore[import-untyped]
+            import yaml
 
             return yaml.safe_load(text) or {}
         except ImportError:
@@ -248,7 +270,7 @@ class FormatConvertProcessor(BaseProcessor):
     # ── Excel ──
 
     def _to_excel(self, data: Any) -> bytes:
-        import openpyxl  # type: ignore[import-untyped]
+        import openpyxl
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -265,7 +287,7 @@ class FormatConvertProcessor(BaseProcessor):
         return buf.getvalue()
 
     def _from_excel(self, data: Any) -> list[dict[str, Any]]:
-        import openpyxl  # type: ignore[import-untyped]
+        import openpyxl
 
         if isinstance(data, (bytes, bytearray)):
             wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
@@ -284,6 +306,156 @@ class FormatConvertProcessor(BaseProcessor):
         for r in rows[1:]:
             out.append({h: v for h, v in zip(hdrs, r, strict=False)})
         return out
+
+    # ── Parquet (S40 W2) ──
+
+    def _to_parquet(self, data: Any) -> bytes:
+        try:
+            import pyarrow as pa
+            import pyarrow.parquet as pq
+        except ImportError as exc:
+            raise ImportError(
+                "to_parquet requires 'pyarrow' (pip install pyarrow)"
+            ) from exc
+        rows = list(data) if data else []
+        if rows and not isinstance(rows[0], dict):
+            rows = [{"value": r} for r in rows]
+        table = pa.Table.from_pylist(rows) if rows else pa.table({})
+        buf = io.BytesIO()
+        pq.write_table(table, buf, compression=self.compression)
+        return buf.getvalue()
+
+    def _from_parquet(self, data: Any) -> list[dict[str, Any]]:
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as exc:
+            raise ImportError(
+                "from_parquet requires 'pyarrow' (pip install pyarrow)"
+            ) from exc
+        if isinstance(data, (bytes, bytearray)):
+            table = pq.read_table(io.BytesIO(bytes(data)))
+        elif isinstance(data, str):
+            table = pq.read_table(io.BytesIO(data.encode("utf-8")))
+        else:
+            table = pq.read_table(data)
+        return table.to_pylist()
+
+    # ── MessagePack (S40 W2) — graceful fallback на pickle ──
+
+    def _to_msgpack(self, data: Any) -> bytes:
+        try:
+            import msgpack
+
+            return msgpack.packb(data, use_bin_type=True)
+        except ImportError:
+            # Fallback: pickle используется только когда msgpack недоступен
+            # (dev_light / minimal install). Данные остаются в pipeline — это
+            # наш собственный round-trip, не untrusted input.
+            import pickle
+
+            return pickle.dumps(data)
+
+    def _from_msgpack(self, data: Any) -> Any:
+        if isinstance(data, (bytes, bytearray)):
+            raw = bytes(data)
+        elif isinstance(data, str):
+            raw = data.encode("utf-8")
+        else:
+            raw = data
+        try:
+            import msgpack
+
+            return msgpack.unpackb(raw, raw=False)
+        except ImportError:
+            # Symmetric fallback к pickle — см. комментарий в _to_msgpack.
+            import pickle
+
+            return pickle.loads(raw)  # noqa: S301 — см. комментарий выше
+
+    # ── TOML (S40 W2) — read: stdlib tomllib; write: tomli_w ──
+
+    def _to_toml(self, data: Any) -> str:
+        if not isinstance(data, dict):
+            raise ValueError("to_toml requires dict at body")
+        try:
+            import tomli_w
+
+            return tomli_w.dumps(data)
+        except ImportError as exc:
+            raise ImportError(
+                "to_toml requires 'tomli_w' (pip install tomli_w)"
+            ) from exc
+
+    def _from_toml(self, data: Any) -> dict[str, Any]:
+        text = _to_text(data)
+        if not text:
+            return {}
+        try:
+            import tomllib
+        except ImportError:  # Python < 3.11
+            try:
+                import tomli as tomllib  # type: ignore[import-untyped,no-redef]
+            except ImportError as exc:
+                raise ImportError(
+                    "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'"
+                ) from exc
+        return tomllib.loads(text)
+
+    # ── INI (S40 W2) — stdlib configparser ──
+
+    def _to_ini(self, data: Any) -> str:
+        import configparser
+
+        if not isinstance(data, dict):
+            raise ValueError("to_ini requires dict at body")
+        cp = configparser.ConfigParser()
+        for k, v in data.items():
+            if isinstance(v, dict):
+                cp[str(k)] = {str(sk): str(sv) for sk, sv in v.items()}
+            else:
+                if not cp.has_section("DEFAULT"):
+                    cp["DEFAULT"] = {}
+                cp["DEFAULT"][str(k)] = str(v)
+        buf = io.StringIO()
+        cp.write(buf)
+        return buf.getvalue()
+
+    def _from_ini(self, data: Any) -> dict[str, Any]:
+        import configparser
+
+        text = _to_text(data)
+        if not text:
+            return {}
+        cp = configparser.ConfigParser()
+        cp.read_string(text)
+        out: dict[str, Any] = {}
+        for section in cp.sections():
+            out[section] = dict(cp.items(section))
+        defaults = dict(cp.defaults())
+        if defaults:
+            out["DEFAULT"] = defaults
+        return out
+
+    # ── Base64 (S40 W2) — stdlib base64 ──
+
+    def _to_base64(self, data: Any) -> str:
+        import base64
+
+        if isinstance(data, (bytes, bytearray)):
+            raw = bytes(data)
+        elif isinstance(data, str):
+            raw = data.encode("utf-8")
+        else:
+            raw = str(data).encode("utf-8")
+        return base64.b64encode(raw).decode("ascii")
+
+    def _from_base64(self, data: Any) -> bytes:
+        import base64
+
+        text = _to_text(data)
+        if not text:
+            return b""
+        return base64.b64decode(text, validate=False)
 
 
 # ── Mixin ─────────────────────────────────────────────────────────────
@@ -329,9 +501,7 @@ class FormatConvertersMixin:
             FormatConvertProcessor(direction="to_csv", fmt="csv", headers=headers)
         )
 
-    def from_csv(
-        self, csv_string: str | None = None
-    ) -> "RouteBuilder":
+    def from_csv(self, csv_string: str | None = None) -> "RouteBuilder":
         """Parse CSV → ``list[dict]``.
 
         ``csv_string``: явное значение (default = ``exchange.in_message.body``).
@@ -350,9 +520,7 @@ class FormatConvertersMixin:
             FormatConvertProcessor(direction="to_xml", fmt="xml", root_tag=root_tag)
         )
 
-    def from_xml(
-        self, xml_string: str | None = None
-    ) -> "RouteBuilder":
+    def from_xml(self, xml_string: str | None = None) -> "RouteBuilder":
         """Parse XML → ``dict`` (через ``xmltodict`` если есть, иначе stdlib)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
@@ -368,9 +536,7 @@ class FormatConvertersMixin:
             FormatConvertProcessor(direction="to_yaml", fmt="yaml")
         )
 
-    def from_yaml(
-        self, yaml_string: str | None = None
-    ) -> "RouteBuilder":
+    def from_yaml(self, yaml_string: str | None = None) -> "RouteBuilder":
         """Parse YAML → ``dict``/``list``."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
@@ -388,12 +554,92 @@ class FormatConvertersMixin:
             )
         )
 
-    def from_excel(
-        self, excel_bytes: bytes | None = None
-    ) -> "RouteBuilder":
+    def from_excel(self, excel_bytes: bytes | None = None) -> "RouteBuilder":
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
                 direction="from_excel", fmt="excel", source_value=excel_bytes
+            )
+        )
+
+    # ── Parquet (S40 W2) ──
+
+    def to_parquet(self, *, compression: str = "snappy") -> "RouteBuilder":
+        """Convert ``list[dict]`` → parquet bytes (pyarrow)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="to_parquet", fmt="parquet", compression=compression
+            )
+        )
+
+    def from_parquet(self, parquet_bytes: bytes | None = None) -> "RouteBuilder":
+        """Parse parquet → ``list[dict]`` (pyarrow)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_parquet", fmt="parquet", source_value=parquet_bytes
+            )
+        )
+
+    # ── MessagePack (S40 W2) ──
+
+    def to_msgpack(self) -> "RouteBuilder":
+        """Convert ``dict``/``list`` → msgpack bytes (fallback: ``pickle``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_msgpack", fmt="msgpack")
+        )
+
+    def from_msgpack(self, msgpack_bytes: bytes | None = None) -> "RouteBuilder":
+        """Parse msgpack → ``dict``/``list`` (fallback: ``pickle``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_msgpack", fmt="msgpack", source_value=msgpack_bytes
+            )
+        )
+
+    # ── TOML (S40 W2) ──
+
+    def to_toml(self) -> "RouteBuilder":
+        """Convert ``dict`` → TOML string (``tomli_w``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_toml", fmt="toml")
+        )
+
+    def from_toml(self, toml_string: str | None = None) -> "RouteBuilder":
+        """Parse TOML → ``dict`` (``tomllib`` stdlib 3.11+)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_toml", fmt="toml", source_value=toml_string
+            )
+        )
+
+    # ── INI (S40 W2) ──
+
+    def to_ini(self) -> "RouteBuilder":
+        """Convert ``dict`` → INI string (stdlib ``configparser``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_ini", fmt="ini")
+        )
+
+    def from_ini(self, ini_string: str | None = None) -> "RouteBuilder":
+        """Parse INI → ``dict`` (stdlib ``configparser``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_ini", fmt="ini", source_value=ini_string
+            )
+        )
+
+    # ── Base64 (S40 W2) ──
+
+    def to_base64(self) -> "RouteBuilder":
+        """Encode ``bytes``/``str`` → base64 string (stdlib ``base64``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_base64", fmt="base64")
+        )
+
+    def from_base64(self, b64_string: str | None = None) -> "RouteBuilder":
+        """Decode base64 string → ``bytes`` (stdlib ``base64``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_base64", fmt="base64", source_value=b64_string
             )
         )

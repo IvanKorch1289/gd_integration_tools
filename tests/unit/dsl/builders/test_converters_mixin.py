@@ -35,10 +35,11 @@ def builder() -> RouteBuilder:
     return RouteBuilder.from_("test_format_route", source="internal:test")
 
 
-def _make_exchange(body: Any = None, properties: dict[str, Any] | None = None) -> Exchange:
+def _make_exchange(
+    body: Any = None, properties: dict[str, Any] | None = None
+) -> Exchange:
     return Exchange(
-        in_message=Message(body=body, headers={}),
-        properties=properties or {},
+        in_message=Message(body=body, headers={}), properties=properties or {}
     )
 
 
@@ -436,7 +437,7 @@ class TestFromExcel:
 
 
 class TestChaining:
-    def test_full_chain_all_10(self, builder: RouteBuilder) -> None:
+    def test_full_chain_all_20(self, builder: RouteBuilder) -> None:
         result = (
             builder.to_json()
             .from_json()
@@ -448,12 +449,340 @@ class TestChaining:
             .from_yaml()
             .to_excel()
             .from_excel()
+            .to_parquet()
+            .from_parquet()
+            .to_msgpack()
+            .from_msgpack()
+            .to_toml()
+            .from_toml()
+            .to_ini()
+            .from_ini()
+            .to_base64()
+            .from_base64()
         )
         assert isinstance(result, RouteBuilder)
-        assert len(result._processors) == 10
+        assert len(result._processors) == 20
 
     def test_chain_after_other_mixin_method(self, builder: RouteBuilder) -> None:
         # to_json после существующих .hash() и .log() (проверка MRO)
         result = builder.log().to_json().hash()
         assert isinstance(result, RouteBuilder)
         assert len(result._processors) == 3
+
+
+# ─── Parquet (S40 W2) ─────────────────────────────────────────────────
+
+
+class TestToParquet:
+    def test_to_parquet_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_parquet()
+        last = b._processors[-1]
+        assert isinstance(last, FormatConvertProcessor)
+        assert last.direction == "to_parquet"
+        assert last.compression == "snappy"
+        ex = _make_exchange(body=[{"a": 1, "b": "x"}, {"a": 2, "b": "y"}])
+        _run(last.process(ex, context=MagicMock()))
+        assert isinstance(ex.out_message.body, bytes)
+        # Parquet magic header: PAR1
+        assert ex.out_message.body[:4] == b"PAR1"
+        assert ex.out_message.body[-4:] == b"PAR1"
+
+    def test_to_parquet_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_parquet().to_parquet(compression="gzip")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+        assert result._processors[-1].compression == "gzip"
+
+    def test_to_parquet_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_parquet()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_to_parquet_compression_kwarg(self, builder: RouteBuilder) -> None:
+        b = builder.to_parquet(compression="gzip")
+        assert b._processors[-1].compression == "gzip"
+
+
+class TestFromParquet:
+    def test_from_parquet_basic(self, builder: RouteBuilder) -> None:
+        # build via to_parquet first
+        b_to = builder.to_parquet()
+        ex_to = _make_exchange(body=[{"k": 1}, {"k": 2}])
+        _run(b_to._processors[-1].process(ex_to, context=MagicMock()))
+        # feed to from_parquet
+        b = builder.from_parquet(ex_to.out_message.body)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == [{"k": 1}, {"k": 2}]
+
+    def test_from_parquet_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_parquet(b"PAR1PAR1").from_parquet(b"PAR1PAR1")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_parquet_from_body(self, builder: RouteBuilder) -> None:
+        b_to = builder.to_parquet()
+        ex_to = _make_exchange(body=[{"x": "hello"}])
+        _run(b_to._processors[-1].process(ex_to, context=MagicMock()))
+        b = builder.from_parquet()
+        ex = _make_exchange(body=ex_to.out_message.body)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == [{"x": "hello"}]
+
+    def test_parquet_round_trip(self, builder: RouteBuilder) -> None:
+        data = [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]
+        b1 = builder.to_parquet()
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_parquet()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+# ─── MessagePack (S40 W2) ─────────────────────────────────────────────
+
+
+class TestToMsgpack:
+    def test_to_msgpack_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_msgpack()
+        ex = _make_exchange(body={"a": 1, "b": [1, 2]})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert isinstance(ex.out_message.body, bytes)
+        assert len(ex.out_message.body) > 0
+
+    def test_to_msgpack_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_msgpack().to_msgpack()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_msgpack_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_msgpack()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+
+class TestFromMsgpack:
+    def test_from_msgpack_basic(self, builder: RouteBuilder) -> None:
+        b_to = builder.to_msgpack()
+        ex_to = _make_exchange(body={"k": "v", "n": 42})
+        _run(b_to._processors[-1].process(ex_to, context=MagicMock()))
+        b = builder.from_msgpack(ex_to.out_message.body)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {"k": "v", "n": 42}
+
+    def test_from_msgpack_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_msgpack(b"").from_msgpack(b"")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_msgpack_from_body(self, builder: RouteBuilder) -> None:
+        b_to = builder.to_msgpack()
+        ex_to = _make_exchange(body=[1, 2, 3])
+        _run(b_to._processors[-1].process(ex_to, context=MagicMock()))
+        b = builder.from_msgpack()
+        ex = _make_exchange(body=ex_to.out_message.body)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == [1, 2, 3]
+
+    def test_msgpack_round_trip(self, builder: RouteBuilder) -> None:
+        data = {"x": [1, 2], "y": {"z": "deep"}}
+        b1 = builder.to_msgpack()
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_msgpack()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+# ─── TOML (S40 W2) ────────────────────────────────────────────────────
+
+
+class TestToToml:
+    def test_to_toml_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_toml()
+        ex = _make_exchange(body={"name": "Alice", "age": 30})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert "name" in ex.out_message.body
+        assert '"Alice"' in ex.out_message.body or "'Alice'" in ex.out_message.body
+
+    def test_to_toml_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_toml().to_toml()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_toml_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_toml()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_to_toml_non_dict_raises(self, builder: RouteBuilder) -> None:
+        b = builder.to_toml()
+        ex = _make_exchange(body=[1, 2, 3])  # list, not dict
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        # value error → exchange.fail()
+        assert ex.error is not None
+        assert "to_toml" in ex.error
+
+
+class TestFromToml:
+    def test_from_toml_basic(self, builder: RouteBuilder) -> None:
+        toml_str = 'name = "Bob"\nage = 25\n'
+        b = builder.from_toml(toml_str)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {"name": "Bob", "age": 25}
+
+    def test_from_toml_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_toml("a = 1\n").from_toml("b = 2\n")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_toml_empty(self, builder: RouteBuilder) -> None:
+        b = builder.from_toml("")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {}
+
+    def test_from_toml_from_body(self, builder: RouteBuilder) -> None:
+        b = builder.from_toml()
+        ex = _make_exchange(body="k = 42\n")
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {"k": 42}
+
+    def test_toml_round_trip(self, builder: RouteBuilder) -> None:
+        data = {"title": "X", "count": 7}
+        b1 = builder.to_toml()
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_toml()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+# ─── INI (S40 W2) ──────────────────────────────────────────────────────
+
+
+class TestToIni:
+    def test_to_ini_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_ini()
+        ex = _make_exchange(body={"db": {"host": "localhost", "port": "5432"}})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        out = ex.out_message.body
+        assert "[db]" in out
+        assert "host" in out
+        assert "localhost" in out
+
+    def test_to_ini_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_ini().to_ini()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_ini_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_ini()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_to_ini_with_flat_keys(self, builder: RouteBuilder) -> None:
+        b = builder.to_ini()
+        ex = _make_exchange(body={"app": "demo", "env": "prod"})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        # flat keys go to DEFAULT section
+        assert "[DEFAULT]" in ex.out_message.body
+
+
+class TestFromIni:
+    def test_from_ini_basic(self, builder: RouteBuilder) -> None:
+        ini_str = "[db]\nhost = localhost\nport = 5432\n\n"
+        b = builder.from_ini(ini_str)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert "db" in ex.out_message.body
+        assert ex.out_message.body["db"]["host"] == "localhost"
+
+    def test_from_ini_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_ini("").from_ini("")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_ini_empty(self, builder: RouteBuilder) -> None:
+        b = builder.from_ini("")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {}
+
+    def test_from_ini_from_body(self, builder: RouteBuilder) -> None:
+        b = builder.from_ini()
+        ex = _make_exchange(body="[s]\nk = v\n")
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body["s"]["k"] == "v"
+
+
+# ─── Base64 (S40 W2) ──────────────────────────────────────────────────
+
+
+class TestToBase64:
+    def test_to_base64_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_base64()
+        ex = _make_exchange(body=b"hello world")
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == "aGVsbG8gd29ybGQ="
+
+    def test_to_base64_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_base64().to_base64()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_base64_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_base64()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_to_base64_str_input(self, builder: RouteBuilder) -> None:
+        b = builder.to_base64()
+        ex = _make_exchange(body="hi")
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == "aGk="
+
+
+class TestFromBase64:
+    def test_from_base64_basic(self, builder: RouteBuilder) -> None:
+        b = builder.from_base64("aGVsbG8gd29ybGQ=")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == b"hello world"
+
+    def test_from_base64_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_base64("").from_base64("")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_base64_empty(self, builder: RouteBuilder) -> None:
+        b = builder.from_base64("")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == b""
+
+    def test_from_base64_from_body(self, builder: RouteBuilder) -> None:
+        b = builder.from_base64()
+        ex = _make_exchange(body="aGk=")
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == b"hi"
+
+    def test_base64_round_trip(self, builder: RouteBuilder) -> None:
+        original = b"some binary \x00 data \xff"
+        b1 = builder.to_base64()
+        ex = _make_exchange(body=original)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_base64()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == original
