@@ -65,6 +65,7 @@ from src.backend.dsl.engine.processors import (
     ValidateProcessor,
 )
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
+from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 
 __all__ = ("RouteBuilder",)
 
@@ -92,6 +93,7 @@ class RouteBuilder(  # type: ignore[misc]
     InfrastructureDSL,
     AgentDSLMixin,
     PlanExecuteMixin,
+    ReflectionLoopMixin,
 ):
     """Fluent-builder для DSL-маршрутов.
 
