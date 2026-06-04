@@ -1,9 +1,11 @@
-"""FormatConvertersMixin (S40 W1+W2+W3 — format conversions для body).
+"""FormatConvertersMixin (S40 W1+W2+W3+W4 FINAL — format conversions для body).
 
 S40 W1: 10 chainable методов (JSON/CSV/XML/YAML/Excel).
 S40 W2: +10 chainable методов (Parquet/MessagePack/TOML/INI/Base64).
 S40 W3: +10 chainable методов (URL/HTML/Markdown/UUID/JWT/Bencode).
-Итого 30/40 converters.
+S40 W4 FINAL: +5 chainable методов (from_jwt/to_compact_json/to|from_protobuf_like/
+                                    to_avro_like).
+Итого 40/40 converters.
 
 Назван ``FormatConvertersMixin`` (не ``ConvertersMixin``) чтобы не конфликтовать
 с Phase-2.1 :class:`dsl.builders.converters.ConvertersMixin` (hash/encrypt/
@@ -26,6 +28,7 @@ decrypt/compress/decompress — 5 методов), который уже в MRO.
 
 from __future__ import annotations
 
+import base64
 import csv
 import html
 import io
@@ -125,6 +128,8 @@ class FormatConvertProcessor(BaseProcessor):
         secret: str | None = None,
         algorithm: str = "HS256",
         claims: dict[str, Any] | None = None,
+        # Avro-like (S40 W4)
+        schema: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name or f"format:{direction}:{fmt}")
         self.direction = direction
@@ -139,6 +144,7 @@ class FormatConvertProcessor(BaseProcessor):
         self.secret = secret
         self.algorithm = algorithm
         self.claims = claims
+        self.schema = schema
 
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
@@ -225,6 +231,17 @@ class FormatConvertProcessor(BaseProcessor):
             return self._to_bencode(data)  # type: ignore[attr-defined]
         if self.direction == "from_bencode":
             return self._from_bencode(data)  # type: ignore[attr-defined]
+        # ── S40 W4 FINAL: from_jwt / to_compact_json / to|from_protobuf_like / to_avro_like ──
+        if self.direction == "from_jwt":
+            return self._from_jwt(data)  # type: ignore[attr-defined]
+        if self.direction == "to_compact_json":
+            return self._to_compact_json(data)  # type: ignore[attr-defined]
+        if self.direction == "to_protobuf_like":
+            return self._to_protobuf_like(data)  # type: ignore[attr-defined]
+        if self.direction == "from_protobuf_like":
+            return self._from_protobuf_like(data)  # type: ignore[attr-defined]
+        if self.direction == "to_avro_like":
+            return self._to_avro_like(data)  # type: ignore[attr-defined]
         raise ValueError(f"unknown direction: {self.direction!r}")
 
     # ── JSON ──
@@ -604,6 +621,86 @@ class FormatConvertProcessor(BaseProcessor):
         result, _consumed = _bdecode(raw, 0)
         return result
 
+    # ── JWT decode (S40 W4) — companion к to_jwt (W3) ──
+
+    def _from_jwt(self, data: Any) -> dict[str, Any]:
+        """Decode JWT string → claims ``dict``.
+
+        Алгоритм и секрет берутся из ``self.algorithm``/``self.secret``
+        (выставленных в ``__init__`` через mixin kwargs). joserfc делает
+        verify signature → возвращает ``Token`` c атрибутом ``claims``.
+        """
+        try:
+            from joserfc import jwt as _jwt
+            from joserfc.jwk import OctKey
+        except ImportError as exc:
+            raise ImportError(
+                "from_jwt requires 'joserfc' (pip install joserfc)"
+            ) from exc
+        if not self.secret:
+            raise ValueError("from_jwt requires 'secret' kwarg (HS* algorithms)")
+        token = _to_text(data)
+        if not token:
+            return {}
+        key = OctKey.import_key(self.secret)
+        result = _jwt.decode(token, key, algorithms=[self.algorithm])
+        return dict(result.claims)
+
+    # ── Compact JSON (S40 W4) — JSON без пробелов ──
+
+    def _to_compact_json(self, data: Any) -> str:
+        """``dict`` → minified JSON (no indent, no spaces between separators)."""
+        if isinstance(data, (bytes, bytearray)):
+            return data.decode("utf-8", errors="replace")
+        if isinstance(data, str):
+            return data  # already a string — assume compact
+        return json.dumps(data, separators=(",", ":"), default=str, ensure_ascii=False)
+
+    # ── Protobuf-like (S40 W4) — base64(JSON) (без real protobuf dep) ──
+
+    def _to_protobuf_like(self, data: Any) -> bytes:
+        """``dict`` → base64-encoded JSON ``bytes`` (protobuf-like wire format).
+
+        Реальный protobuf не используется (dev-friendly). Формат —
+        ``base64(json(dict))``, что round-trip-ается через ``from_protobuf_like``.
+        """
+        if data is None:
+            return b""
+        text = json.dumps(data, separators=(",", ":"), default=str, ensure_ascii=False)
+        return base64.b64encode(text.encode("utf-8"))
+
+    def _from_protobuf_like(self, data: Any) -> Any:
+        """base64-encoded JSON ``bytes`` → ``dict`` (inverse of ``to_protobuf_like``)."""
+        if isinstance(data, (bytes, bytearray)):
+            raw = bytes(data)
+        elif isinstance(data, str):
+            raw = data.encode("utf-8")
+        else:
+            raise TypeError(
+                f"from_protobuf_like requires bytes/str, got {type(data)}"
+            )
+        if not raw:
+            return None
+        text = base64.b64decode(raw).decode("utf-8", errors="replace")
+        if not text:
+            return None
+        return json.loads(text)
+
+    # ── Avro-like (S40 W4) — JSON с ``{"schema": ..., "data": ...}`` обёрткой ──
+
+    def _to_avro_like(self, data: Any) -> str:
+        """``dict`` → JSON ``str`` с обёрткой ``{"schema": ..., "data": ...}``.
+
+        ``self.schema`` — переданный пользователем schema dict
+        (default — пустой ``{}``). Реальный Avro не парсится — формат
+        совместим с confluent / fastavro "datum in envelope" паттерном.
+        """
+        envelope = {
+            "schema": self.schema if self.schema is not None else {},
+            "data": data,
+        }
+        return json.dumps(envelope, default=str, ensure_ascii=False)
+
 
 # ── Bencode (S40 W3) — recursive encoder/decoder, no external deps ──
 
@@ -941,5 +1038,74 @@ class FormatConvertersMixin:
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
                 direction="from_bencode", fmt="bencode", source_value=bcode_bytes
+            )
+        )
+
+    # ── JWT decode (S40 W4) — companion к to_jwt (W3) ──
+
+    def from_jwt(
+        self,
+        jwt_string: str | None = None,
+        *,
+        secret: str,
+        algorithm: str = "HS256",
+    ) -> "RouteBuilder":
+        """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc).
+
+        ``jwt_string``: явный токен (default = ``exchange.in_message.body``).
+        ``secret``: shared secret (HS256/HS384/HS512).
+        ``algorithm``: JWT ``alg`` header value (default ``HS256``).
+        """
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_jwt",
+                fmt="jwt",
+                source_value=jwt_string,
+                secret=secret,
+                algorithm=algorithm,
+            )
+        )
+
+    # ── Compact JSON (S40 W4) — minified JSON без пробелов ──
+
+    def to_compact_json(self) -> "RouteBuilder":
+        """Convert ``dict`` → minified JSON ``str`` (no indent, no spaces)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_compact_json", fmt="compact_json")
+        )
+
+    # ── Protobuf-like (S40 W4) — base64(JSON) (без real protobuf dep) ──
+
+    def to_protobuf_like(self) -> "RouteBuilder":
+        """Convert ``dict`` → base64-encoded JSON ``bytes`` (protobuf-like wire format).
+
+        No real protobuf dep — формат ``base64(json(dict))`` round-trip-ается
+        через :meth:`from_protobuf_like`.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_protobuf_like", fmt="protobuf_like")
+        )
+
+    def from_protobuf_like(self, pb_bytes: bytes | None = None) -> "RouteBuilder":
+        """Decode base64-encoded JSON ``bytes`` → ``dict`` (inverse of to_protobuf_like)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_protobuf_like",
+                fmt="protobuf_like",
+                source_value=pb_bytes,
+            )
+        )
+
+    # ── Avro-like (S40 W4) — JSON c ``{"schema": ..., "data": ...}`` обёрткой ──
+
+    def to_avro_like(self, schema: dict[str, Any] | None = None) -> "RouteBuilder":
+        """Convert ``dict`` → JSON ``str`` c обёрткой ``{"schema": ..., "data": ...}``.
+
+        ``schema``: optional Avro-like schema dict (stored as-is in envelope).
+        Совместим с "datum in envelope" паттерном (confluent / fastavro).
+        """
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="to_avro_like", fmt="avro_like", schema=schema
             )
         )

@@ -94,6 +94,12 @@ class TestMixinRegistration:
             "to_jwt",
             "to_bencode",
             "from_bencode",
+            # S40 W4 FINAL (5 → 40/40)
+            "from_jwt",
+            "to_compact_json",
+            "to_protobuf_like",
+            "from_protobuf_like",
+            "to_avro_like",
         ):
             assert callable(getattr(FormatConvertersMixin, method)), method
 
@@ -1174,3 +1180,215 @@ class TestFromBencode:
         _run(b2._processors[-1].process(ex2, context=MagicMock()))
         # keys become bytes after round-trip
         assert ex2.out_message.body == {b"name": b"alice", b"age": 30, b"tags": [b"admin", b"user"]}
+
+
+# ─── S40 W4 FINAL: from_jwt / to_compact_json / to|from_protobuf_like / to_avro_like ──
+
+
+class TestFromJwt:
+    def test_from_jwt_basic(self, builder: RouteBuilder) -> None:
+        """Round-trip: to_jwt → from_jwt → original claims."""
+        from joserfc import jwt as _jwt
+        from joserfc.jwk import OctKey
+
+        secret = "this-is-a-very-long-test-secret-key-1234"
+        key = OctKey.import_key(secret)
+        token = _jwt.encode(
+            {"alg": "HS256", "typ": "JWT"},
+            {"sub": "carol", "role": "user", "exp": 9999999999},
+            key,
+        )
+        b = builder.from_jwt(token, secret=secret)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {
+            "sub": "carol",
+            "role": "user",
+            "exp": 9999999999,
+        }
+
+    def test_from_jwt_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_jwt(secret="x" * 32).from_jwt(secret="y" * 32)
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_jwt_empty(self, builder: RouteBuilder) -> None:
+        b = builder.from_jwt("", secret="x" * 32)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {}
+
+    def test_from_jwt_no_secret_raises(self, builder: RouteBuilder) -> None:
+        """Без secret — ``from_jwt`` raise → exchange.error."""
+        b = builder.from_jwt("dummy.token.here", secret="")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.error is not None
+        assert "secret" in ex.error.lower()
+
+    def test_from_jwt_invalid_signature_raises(self, builder: RouteBuilder) -> None:
+        """Токен с неверной подписью → exchange.error (verify fails)."""
+        from joserfc import jwt as _jwt
+        from joserfc.jwk import OctKey
+
+        # Sign with one secret, verify with another → must fail
+        key_a = OctKey.import_key("this-is-a-very-long-test-secret-A-1234")
+        token = _jwt.encode(
+            {"alg": "HS256", "typ": "JWT"},
+            {"sub": "x"},
+            key_a,
+        )
+        b = builder.from_jwt(token, secret="this-is-a-very-long-test-secret-B-5678")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.error is not None
+
+    def test_jwt_round_trip(self, builder: RouteBuilder) -> None:
+        """to_jwt → from_jwt → identity для claims."""
+        secret = "this-is-a-very-long-test-secret-key-1234"
+        data = {"sub": "dave", "scope": ["read", "write"]}
+        b1 = builder.to_jwt(secret=secret)
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        token = ex.out_message.body
+        b2 = builder.from_jwt(secret=secret)
+        ex2 = _make_exchange(body=token)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+class TestToCompactJson:
+    def test_to_compact_json_basic(self, builder: RouteBuilder) -> None:
+        b = builder.to_compact_json()
+        last = b._processors[-1]
+        assert last.direction == "to_compact_json"
+        ex = _make_exchange(body={"a": 1, "b": [1, 2]})
+        _run(last.process(ex, context=MagicMock()))
+        # minified: no spaces between separators
+        assert ex.out_message.body == '{"a":1,"b":[1,2]}'
+
+    def test_to_compact_json_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_compact_json().to_compact_json()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_compact_json_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_compact_json()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_to_compact_json_no_spaces(self, builder: RouteBuilder) -> None:
+        """Ключевое свойство: результат НЕ содержит пробелов и indent."""
+        b = builder.to_compact_json()
+        ex = _make_exchange(body={"x": {"y": [1, 2, 3]}})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        body = ex.out_message.body
+        assert " " not in body
+        assert "\n" not in body
+        assert body == '{"x":{"y":[1,2,3]}}'
+
+    def test_compact_json_round_trip(self, builder: RouteBuilder) -> None:
+        """to_compact_json → from_json → identity."""
+        data = {"nested": {"x": [1, 2, 3], "y": "str"}}
+        b1 = builder.to_compact_json()
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_json()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+class TestToProtobufLike:
+    def test_to_protobuf_like_basic(self, builder: RouteBuilder) -> None:
+        import base64
+
+        b = builder.to_protobuf_like()
+        last = b._processors[-1]
+        assert last.direction == "to_protobuf_like"
+        ex = _make_exchange(body={"a": 1, "b": "hello"})
+        _run(last.process(ex, context=MagicMock()))
+        assert isinstance(ex.out_message.body, bytes)
+        # base64-encoded compact JSON
+        decoded = base64.b64decode(ex.out_message.body).decode("utf-8")
+        assert json.loads(decoded) == {"a": 1, "b": "hello"}
+
+    def test_to_protobuf_like_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_protobuf_like().to_protobuf_like()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_protobuf_like_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_protobuf_like()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        # process() early-returns body=None when input is None
+        assert ex.out_message.body is None
+
+
+class TestFromProtobufLike:
+    def test_from_protobuf_like_basic(self, builder: RouteBuilder) -> None:
+        import base64
+
+        payload = base64.b64encode(b'{"x":42,"y":"abc"}').decode("ascii")
+        b = builder.from_protobuf_like(payload)
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body == {"x": 42, "y": "abc"}
+
+    def test_from_protobuf_like_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.from_protobuf_like(b"e30=").from_protobuf_like(b"e30=")
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_from_protobuf_like_empty(self, builder: RouteBuilder) -> None:
+        b = builder.from_protobuf_like(b"")
+        ex = _make_exchange()
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        assert ex.out_message.body is None
+
+    def test_protobuf_like_round_trip(self, builder: RouteBuilder) -> None:
+        """to_protobuf_like → from_protobuf_like → identity."""
+        data = {"name": "alice", "tags": [1, 2, 3], "nested": {"k": "v"}}
+        b1 = builder.to_protobuf_like()
+        ex = _make_exchange(body=data)
+        _run(b1._processors[-1].process(ex, context=MagicMock()))
+        b2 = builder.from_protobuf_like()
+        ex2 = _make_exchange(body=ex.out_message.body)
+        _run(b2._processors[-1].process(ex2, context=MagicMock()))
+        assert ex2.out_message.body == data
+
+
+class TestToAvroLike:
+    def test_to_avro_like_basic(self, builder: RouteBuilder) -> None:
+        schema = {"type": "record", "name": "User", "fields": [{"name": "id", "type": "int"}]}
+        b = builder.to_avro_like(schema=schema)
+        last = b._processors[-1]
+        assert last.direction == "to_avro_like"
+        assert last.schema == schema
+        ex = _make_exchange(body={"id": 42})
+        _run(last.process(ex, context=MagicMock()))
+        envelope = json.loads(ex.out_message.body)
+        assert envelope == {"schema": schema, "data": {"id": 42}}
+
+    def test_to_avro_like_chainable(self, builder: RouteBuilder) -> None:
+        result = builder.to_avro_like().to_avro_like()
+        assert isinstance(result, RouteBuilder)
+        assert len(result._processors) == 2
+
+    def test_to_avro_like_empty(self, builder: RouteBuilder) -> None:
+        b = builder.to_avro_like()
+        ex = _make_exchange(body=None)
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        # process() early-returns body=None when input is None
+        assert ex.out_message.body is None
+
+    def test_to_avro_like_default_schema(self, builder: RouteBuilder) -> None:
+        """Без schema → ``{"schema": {}, "data": ...}``."""
+        b = builder.to_avro_like()
+        ex = _make_exchange(body={"k": "v"})
+        _run(b._processors[-1].process(ex, context=MagicMock()))
+        envelope = json.loads(ex.out_message.body)
+        assert envelope["schema"] == {}
+        assert envelope["data"] == {"k": "v"}
