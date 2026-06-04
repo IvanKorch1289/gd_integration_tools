@@ -7,10 +7,7 @@
 title = "Home / Getting Started"
 pages = [
     "00_Home",
-    "02_Glossary",
-    "03_Tutorial",
     "04_Onboarding",
-    "05_Architecture_Map",
 ]
 
 [groups.ai]
@@ -25,7 +22,6 @@ pages = [
     "49_Model_Registry",
     "75_RAG_Ingest_Wizard",
     "81_Adaptive_RAG_Dashboard",
-    "82_AI_Feedback",
     "85_RAG_Bulk_Upload",
 ]
 
@@ -39,11 +35,8 @@ pages = [
     "35_Codegen_Wizard",
     "36_Express_Bots",
     "37_API_Caller",
-    "38_Import_Schema",
+    "38_Blueprint_Gallery",
     "39_Invocation_Console",
-    "40_dsl_visual_editor",
-    "40_Schema_Viewer",
-    "44_DSL_Diff_History",
     "46_DSL_DryRun",
 ]
 
@@ -58,7 +51,6 @@ pages = [
     "18_Workflow_Versioning",
     "19_Saga_Compensation_Viewer",
     "66_Workflow_Logs",
-    "69_Workflow_Live_Logs",
 ]
 
 [groups.ops]
@@ -68,7 +60,6 @@ pages = [
     "13_Cron_Builder",
     "14_Cron_Dashboard",
     "41_Search",
-    "42_Notebooks",
     "43_Realtime_Logs",
     "51_Healthcheck",
     "52_Resilience",
@@ -78,15 +69,13 @@ pages = [
     "56_Processes",
     "57_Files_S3",
     "58_Action_Bus",
-    "59_S3_Files",
-    "60_Cache_Explorer",
+    "60_Cache_Admin",
     "61_Audit_Log",
-    "62_Schema_Registry",
+    "62_Schema_Admin",
     "63_Wiki",
     "64_SQL_Admin",
     "65_Services",
     "67_Jobs",
-    "74_Cache_Dashboard",
     "78_Graceful_Degradation",
     "79_Resilience_Profile_Editor",
     "80_Pipeline_Parallelism",
@@ -106,7 +95,6 @@ pages = [
     "77_Processor_Catalog",
     "82_Tenant_Feature_Flags",
     "83_Tenant_Inspection",
-    "84_Sessions",  # S27 Wave 3: заменил admin-react SessionList.tsx
 ]
 
 [notes]

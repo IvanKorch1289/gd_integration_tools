@@ -6,8 +6,6 @@
 # Формат: old = "new"
 
 [redirects]
-"00_Glossary" = "02_Glossary"
-"00_Tutorial" = "03_Tutorial"
 "13_Healthcheck_Dashboard" = "51_Healthcheck"
 "13_Resilience_Dashboard" = "52_Resilience"
 "14_Queue_Monitor" = "53_Queue_Monitor"
@@ -33,4 +31,12 @@
 "63_Feature_Flags" = "50_Feature_Flags"
 "65_workflow_live_logs" = "69_Workflow_Live_Logs"
 "66_Jobs" = "67_Jobs"
+"40_dsl_visual_editor" = "31_DSL_Visual_Editor"
+"59_S3_Files" = "57_Files_S3"
+"74_Cache_Dashboard" = "60_Cache_Admin"
+"82_AI_Feedback" = "21_AI_Feedback"
+"69_Workflow_Live_Logs" = "66_Workflow_Logs"
+"38_Import_Schema" = "62_Schema_Admin"
+"62_Schema_Registry" = "62_Schema_Admin"
+"87_Schema_Viewer" = "62_Schema_Admin"
 "67_Plugin_Marketplace" = "68_Plugin_Marketplace"
