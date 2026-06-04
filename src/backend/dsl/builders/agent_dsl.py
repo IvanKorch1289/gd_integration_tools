@@ -226,6 +226,57 @@ class AgentDSLMixin:
             )
         )
 
+    def plan_execute(
+        self,
+        *,
+        planner_workflow_id: str,
+        executor_workflow_id: str,
+        verifier_workflow_id: str,
+        max_replans: int = 3,
+        plan_output_property: str = "plan",
+        result_property: str = "plan_execute_result",
+        timeout_s: float = 300.0,
+    ) -> RouteBuilder:
+        """Plan-and-Execute agentic pattern с verification + replan (S39 W2).
+
+        LLM генерирует план (список шагов) → каждый шаг выполняется через
+        executor → verifier проверяет результат. При ``fail`` — replan
+        с контекстом ошибок (до ``max_replans``).
+
+        Args:
+            planner_workflow_id: workflow_id для генерации плана.
+            executor_workflow_id: workflow_id для выполнения шага.
+            verifier_workflow_id: workflow_id для верификации результата.
+            max_replans: Максимум попыток перепланировать. Default ``3``.
+            plan_output_property: Свойство для сохранения плана.
+            result_property: Свойство для финального результата.
+            timeout_s: Таймаут на один LLM-вызов. Default ``300``.
+
+        Example::
+
+            builder.plan_execute(
+                planner_workflow_id="generate_plan",
+                executor_workflow_id="execute_step",
+                verifier_workflow_id="verify_step",
+                max_replans=3,
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
+            PlanExecuteProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            PlanExecuteProcessor(
+                planner_workflow_id=planner_workflow_id,
+                executor_workflow_id=executor_workflow_id,
+                verifier_workflow_id=verifier_workflow_id,
+                max_replans=max_replans,
+                plan_output_property=plan_output_property,
+                result_property=result_property,
+                timeout_s=timeout_s,
+            )
+        )
+
     # ── W2 — Guardrails + PII (3 methods) ──
 
     def guardrails_apply(

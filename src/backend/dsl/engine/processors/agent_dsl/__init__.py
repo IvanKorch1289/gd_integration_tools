@@ -1,4 +1,4 @@
-"""DSL-процессоры Agent DSL (Sprint 27 W1-W3, S28 W4-W5).
+"""DSL-процессоры Agent DSL (Sprint 27 W1-W3, S28 W4-W5, S39 W2).
 
 Декларативная агентика поверх :class:`AIGateway` (ADR-NEW-19, S25 W1):
 
@@ -8,6 +8,7 @@
 * :class:`AgentParallelProcessor` — fan-out агентов через TaskGroup;
 * :class:`AgentGraphProcessor` — LangGraph execution as DSL step (S28 W4).
   Supervisor mode (LLM-driven multi-agent handoff) и ReAct mode.
+* :class:`PlanExecuteProcessor` — Plan-and-Execute с verification + replan (S39 W2);
 * :class:`GuardrailsApplyProcessor` — Llama Guard input/output;
 * :class:`PIIMaskProcessor` / :class:`PIIUnmaskProcessor` — reversible PII
   (S25 W4 ADR-NEW-21);
@@ -42,6 +43,9 @@ from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
     AgentParallelProcessor,
 )
 from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor
+from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
+    PlanExecuteProcessor,
+)
 from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
     GuardrailsApplyProcessor,
 )
@@ -64,6 +68,7 @@ __all__: tuple[str, ...] = (
     "AgentLoopProcessor",
     "AgentParallelProcessor",
     "AgentRunProcessor",
+    "PlanExecuteProcessor",
     "GuardrailsApplyProcessor",
     "MCPToolProcessor",
     "MemoryRecallProcessor",

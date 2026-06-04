@@ -53,6 +53,7 @@ from src.backend.dsl.builders.request_reply import RequestReplyMixin
 from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
 from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
+from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
@@ -90,6 +91,7 @@ class RouteBuilder(  # type: ignore[misc]
     TemplateEngineMixin,
     InfrastructureDSL,
     AgentDSLMixin,
+    PlanExecuteMixin,
 ):
     """Fluent-builder для DSL-маршрутов.
 
