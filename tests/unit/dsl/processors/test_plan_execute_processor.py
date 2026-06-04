@@ -279,9 +279,10 @@ class TestPlanVerifier:
         plans = [
             [PlanStep(step_id="s1", action="x", params={"r": "first"})],
             [PlanStep(step_id="s2", action="x", params={"r": "second"})],
-        ]
+            [PlanStep(step_id="s3", action="x", params={"r": "third"})],
+        ]  # 3 plans: original + 2 replans
         planner = AsyncMock(side_effect=plans)
-        executor = AsyncMock(side_effect=["first", "second"])
+        executor = AsyncMock(side_effect=["first", "second", "third"])
 
         p = PlanExecuteProcessor(
             planner=planner, executor=executor, verifier=_constant_verifier(False)
