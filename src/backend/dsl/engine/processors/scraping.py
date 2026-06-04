@@ -33,13 +33,9 @@ _BLOCKED_IP_PREFIXES = (
 _BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "metadata.aws"}
 
 
-def _validate_url(url: str) -> None:
-    """Block requests to private networks, localhost, and cloud metadata endpoints."""
+def _is_blocked_host(host: str) -> None:
+    """Raise ValueError if *host* is a blocked hostname or private IP."""
     import ipaddress
-    from urllib.parse import urlparse
-
-    parsed = urlparse(url)
-    host = (parsed.hostname or "").lower()
 
     if host in _BLOCKED_HOSTS:
         raise ValueError(f"Blocked host: {host}")
@@ -50,10 +46,20 @@ def _validate_url(url: str) -> None:
 
     try:
         addr = ipaddress.ip_address(host)
-        if addr.is_private or addr.is_loopback or addr.is_link_local:
-            raise ValueError(f"Blocked private/loopback IP: {host}")
     except ValueError:
         pass
+    else:
+        if addr.is_private or addr.is_loopback or addr.is_link_local:
+            raise ValueError(f"Blocked private/loopback IP: {host}")
+
+
+def _validate_url(url: str) -> None:
+    """Block requests to private networks, localhost, and cloud metadata endpoints."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    _is_blocked_host(host)
 
 
 # ── Anti-bot stealth helpers ──
@@ -130,6 +136,18 @@ class ScrapeProcessor(BaseProcessor):
         self._selectors = selectors or {}
         self._url_property = url_property
         self._output_property = output_property
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._url is not None:
+            spec["url"] = self._url
+        if self._selectors:
+            spec["selectors"] = self._selectors
+        if self._url_property is not None:
+            spec["url_property"] = self._url_property
+        if self._output_property != "scraped":
+            spec["output_property"] = self._output_property
+        return {"scrape": spec}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Scrape HTML and extract structured data via CSS selectors."""
@@ -217,6 +235,22 @@ class PaginateProcessor(BaseProcessor):
         self._start_url = start_url
         self._delay = delay_seconds
         self._output_property = output_property
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._next_selector != "a.next":
+            spec["next_selector"] = self._next_selector
+        if self._item_selector is not None:
+            spec["item_selector"] = self._item_selector
+        if self._max_pages != 10:
+            spec["max_pages"] = self._max_pages
+        if self._start_url is not None:
+            spec["start_url"] = self._start_url
+        if self._delay != 2.0:
+            spec["delay_seconds"] = self._delay
+        if self._output_property != "paginated_results":
+            spec["output_property"] = self._output_property
+        return {"paginate": spec}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Crawl multiple pages and collect items."""
@@ -343,6 +377,18 @@ class ApiProxyProcessor(BaseProcessor):
         self._path = path
         self._headers_mapping = headers_mapping or {}
         self._timeout = timeout
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"base_url": self._base_url}
+        if self._method != "GET":
+            spec["method"] = self._method
+        if self._path:
+            spec["path"] = self._path
+        if self._headers_mapping:
+            spec["headers_mapping"] = self._headers_mapping
+        if self._timeout != 30.0:
+            spec["timeout"] = self._timeout
+        return {"api_proxy": spec}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Forward exchange to external API with optional transformation."""
