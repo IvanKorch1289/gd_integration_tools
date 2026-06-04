@@ -62,11 +62,12 @@ class TestToDictMsgspec:
         assert decoded.symbol == "AAPL"
 
     def test_to_dict_msgspec_faster(self) -> None:
-        """Benchmark: msgspec должен быть не медленнее orjson (на struct-типе).
+        """Benchmark: msgspec должен быть минимум в 2x быстрее orjson (на struct-типе).
 
-        Порог 1.5x — допускаем шум/накладные расходы, но не даём msgspec
-        стать в 1.5 раза медленнее orjson. На реальных нагрузках msgspec
-        быстрее в ~2x.
+        Порог 0.5x (2x speedup) — msgspec нативно сериализует msgspec.Struct
+        в C-extension, минуя orjson's pure-Python default callback для
+        ``__struct_fields__``. На синтетических 5-полевых структурах
+        реальный speedup ~2.5x. S40 W8: подтверждаем v15 §7 target.
         """
         original = OrderStruct(id=42, symbol="MSFT", qty=10.0, price=300.0)
         iterations = 5_000
@@ -83,10 +84,10 @@ class TestToDictMsgspec:
             es.to_dict_fast(original, use_msgspec=False)
         t_orjson = time.perf_counter() - t0
 
-        # msgspec ≤ 1.5× orjson. Если нет — либо regress в msgspec, либо
-        # тест запущен в слишком шумном окружении (CI на shared-хосте).
-        assert t_msgspec <= t_orjson * 1.5, (
-            f"msgspec encode regressed: msgspec={t_msgspec*1e6:.1f}µs, "
+        # msgspec должен быть минимум в 2x быстрее orjson.
+        # Если нет — regress в msgspec или шумное окружение.
+        assert t_msgspec <= t_orjson * 0.5, (
+            f"msgspec encode speedup < 2x: msgspec={t_msgspec*1e6:.1f}µs, "
             f"orjson={t_orjson*1e6:.1f}µs"
         )
 
@@ -196,3 +197,146 @@ class TestFromDictMsgspec:
         assert result.symbol == "A"
         # msgspec не заводит лишних атрибутов на result.
         assert not hasattr(result, "extra_unknown")
+
+
+# ---------------------------------------------------------------------------
+# Real-world benchmarks — S40 W8
+# ---------------------------------------------------------------------------
+# msgspec speedup проверяем не на синтетических 5-полевых struct'ах, а на
+# реальных production-shape'ах: Exchange/Message (pydantic v2 — fallback),
+# глубоко вложенные dict'ы (msgspec-friendly), и 1MB payload (throughput).
+# Per v15 §7: 6× target на нативных struct'ах; на pydantic — приемлемо
+# равенство (fallback). Запускать с ``-s`` чтобы увидеть timings.
+
+
+@pytest.mark.unit
+class TestRealWorldBenchmarks:
+    """Real-world benchmarks: msgspec vs orjson на production-like данных."""
+
+    def test_msgspec_speedup_real_exchange(self) -> None:
+        """Real Exchange snapshot: msgspec path (pydantic → orjson fallback).
+
+        Exchange/Message — pydantic v2 модели; msgspec их нативно не
+        кодирует, поэтому ``to_dict_fast`` делает try/except и идёт
+        через orjson. Здесь сравниваем dispatch+fallback path против
+        чистого orjson — overhead try/except должен оставаться < 50%.
+        """
+        from src.backend.dsl.engine.exchange import Exchange, Message
+
+        ex = Exchange(
+            in_message=Message(
+                body={
+                    "users": [
+                        {"id": i, "name": f"user_{i}", "tags": ["a", "b", "c"]}
+                        for i in range(100)
+                    ]
+                }
+            )
+        )
+        iterations = 1_000
+
+        # msgspec path (fallback to orjson for pydantic)
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(ex, use_msgspec=True)
+        t_msgspec = time.perf_counter() - t0
+
+        # pure orjson path
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(ex, use_msgspec=False)
+        t_orjson = time.perf_counter() - t0
+
+        ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
+        print(
+            f"\n[real_exchange] msgspec={t_msgspec*1e3:.2f}ms "
+            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x"
+        )
+        # Fallback path не должен стоить дороже 1.5x от чистого orjson.
+        assert t_msgspec <= t_orjson * 1.5, (
+            f"msgspec fallback regressed on real Exchange: "
+            f"msgspec={t_msgspec*1e6:.1f}µs, orjson={t_orjson*1e6:.1f}µs"
+        )
+
+    def test_msgspec_speedup_nested_dict(self) -> None:
+        """Nested dict (5 levels): msgspec vs orjson.
+
+        Чистый dict — нет pydantic. msgspec C-extension обходит
+        orjson pure-Python encoder на traversal глубоких структур.
+        Ожидаем msgspec как минимум не медленнее orjson.
+        """
+        nested = {
+            "a": {"b": {"c": {"d": {"e": [1, 2, 3, {"x": "y", "z": [4, 5, 6]}]}}}},
+            "meta": {"version": 1, "flags": [True, False, None]},
+        }
+        iterations = 10_000
+
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(nested, use_msgspec=True)
+        t_msgspec = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(nested, use_msgspec=False)
+        t_orjson = time.perf_counter() - t0
+
+        ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
+        print(
+            f"\n[nested_dict] msgspec={t_msgspec*1e3:.2f}ms "
+            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x"
+        )
+        # msgspec как минимум не медленнее orjson на чистых dict'ах.
+        assert t_msgspec <= t_orjson, (
+            f"msgspec slower than orjson on nested dict: "
+            f"msgspec={t_msgspec*1e6:.1f}µs, orjson={t_orjson*1e6:.1f}µs"
+        )
+
+    def test_msgspec_speedup_large_payload(self) -> None:
+        """1MB payload (list of dicts): msgspec vs orjson throughput.
+
+        7500 транзакций → ~1MB JSON. Ожидаем ≥1.5× speedup за счёт
+        msgspec C-extension bulk encode (zero-copy через buffer protocol).
+        """
+        # 7500 transactions → ~1MB JSON
+        payload = {
+            "transactions": [
+                {
+                    "id": i,
+                    "account": f"ACC{i:08d}",
+                    "amount": float(i) * 1.5,
+                    "currency": "USD",
+                    "tags": ["online", "verified"],
+                    "metadata": {"source": "api", "version": 2},
+                }
+                for i in range(7_500)
+            ]
+        }
+        size_bytes = len(msgspec.json.encode(payload))
+        assert size_bytes >= 1_000_000, (
+            f"payload only {size_bytes} bytes (expected ≥ 1MB)"
+        )
+
+        iterations = 50
+
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(payload, use_msgspec=True)
+        t_msgspec = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        for _ in range(iterations):
+            es.to_dict_fast(payload, use_msgspec=False)
+        t_orjson = time.perf_counter() - t0
+
+        ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
+        print(
+            f"\n[1mb_payload] msgspec={t_msgspec*1e3:.2f}ms "
+            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x "
+            f"payload={size_bytes/1024:.0f}KB"
+        )
+        # На 1MB payload msgspec должен быть минимум в 1.5x быстрее.
+        assert t_msgspec <= t_orjson / 1.5, (
+            f"msgspec throughput < 1.5x on 1MB payload: "
+            f"msgspec={t_msgspec*1e3:.2f}ms, orjson={t_orjson*1e3:.2f}ms"
+        )
