@@ -28,17 +28,29 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
+from src.backend.dsl.builders.batch import BatchMixin
+from src.backend.dsl.builders.collection import CollectionMixin
+from src.backend.dsl.builders.content import ContentMixin
+from src.backend.dsl.builders.content_mixin import EIPContentMixin
 from src.backend.dsl.builders.control_flow import ControlFlowMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
+from src.backend.dsl.builders.data_store import DataStoreStepMixin
+from src.backend.dsl.builders.data_store_mixin import DataStoreMixin
 from src.backend.dsl.builders.eip import EIPMixin
 from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
+from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
 from src.backend.dsl.builders.integration import IntegrationMixin
+from src.backend.dsl.builders.request_reply import RequestReplyMixin
+from src.backend.dsl.builders.saga_lra import SagaLRAMixin
+from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
+from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
@@ -55,13 +67,24 @@ __all__ = ("RouteBuilder",)
 
 
 @dataclass(slots=True)
-class RouteBuilder(
+class RouteBuilder(  # type: ignore[misc]
     AIRPAMixin,
+    BatchMixin,
+    CollectionMixin,
+    EIPContentMixin,
+    ContentMixin,
     ControlFlowMixin,
+    DataStoreStepMixin,
+    DataStoreMixin,
     EIPMixin,
     EventBusMixin,
     IntegrationMixin,
     ConvertersMixin,
+    RequestReplyMixin,
+    SagaLRAMixin,
+    TemplateEngineChainMixin,
+    TemplateEngineMixin,
+    InfrastructureDSL,
     AgentDSLMixin,
 ):
     """Fluent-builder для DSL-маршрутов.
@@ -83,13 +106,15 @@ class RouteBuilder(
     _protocol: ProtocolType | None = None
     _transport_config: TransportConfig | None = None
     _feature_flag: str | None = None
+    _data_stores: dict[str, Any] = field(default_factory=dict)
+    _jinja_env: Any = field(default=None, repr=False, compare=False)
 
     # ── Core helpers ──
 
     @classmethod
     def from_(
         cls, route_id: str, source: str, *, description: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder.
 
         Args:
@@ -115,7 +140,7 @@ class RouteBuilder(
     @classmethod
     def from_registered_source(
         cls, route_id: str, source_id: str, *, description: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source.
 
         Связь Source → DSL делается на уровне ``services.sources.lifecycle``
@@ -141,13 +166,13 @@ class RouteBuilder(
             route_id=route_id, source=f"source:{source_id}", description=description
         )
 
-    def _add(self, processor: BaseProcessor) -> "RouteBuilder":
+    def _add(self, processor: BaseProcessor) -> RouteBuilder:
         self._processors.append(processor)
         return self
 
     def _add_lazy(
         self, import_path: str, class_name: str, **kwargs: Any
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Lazy import + создание процессора. Для AI/Web/Export/Integration."""
         import importlib
 
@@ -157,24 +182,24 @@ class RouteBuilder(
 
     # ── Pipeline composition ──
 
-    def process(self, processor: BaseProcessor) -> "RouteBuilder":
+    def process(self, processor: BaseProcessor) -> RouteBuilder:
         """Добавляет произвольный процессор в pipeline."""
         return self._add(processor)
 
-    def to(self, processor: BaseProcessor) -> "RouteBuilder":
+    def to(self, processor: BaseProcessor) -> RouteBuilder:
         """Алиас для process() — fluent naming."""
         return self._add(processor)
 
     def process_fn(
         self, func: ProcessorCallable, *, name: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавляет обычную функцию или coroutine как процессор.
 
         Функция принимает (exchange, context) и модифицирует exchange in-place.
         """
         return self._add(CallableProcessor(func=func, name=name))
 
-    def include(self, other: Pipeline) -> "RouteBuilder":
+    def include(self, other: Pipeline) -> RouteBuilder:
         """Включает все процессоры из другого Pipeline (композиция)."""
         self._processors.extend(other.processors)
         return self
@@ -205,7 +230,7 @@ class RouteBuilder(
                 return attr
         return None
 
-    def with_timeout(self, seconds: float) -> "RouteBuilder":
+    def with_timeout(self, seconds: float) -> RouteBuilder:
         """Переопределяет timeout последнего step.
 
         Применимо к процессорам, имеющим атрибут ``_timeout`` или ``timeout``
@@ -231,7 +256,7 @@ class RouteBuilder(
 
     def with_retries(
         self, max_attempts: int, *, backoff: str | float | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Переопределяет количество попыток retry для предыдущего step.
 
         Применимо к процессорам, имеющим атрибут ``_max_attempts``,
@@ -265,7 +290,7 @@ class RouteBuilder(
 
     def with_headers(
         self, headers: dict[str, str], *, mode: str = "merge"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Переопределяет HTTP-заголовки предыдущего step.
 
         Args:
@@ -304,7 +329,7 @@ class RouteBuilder(
         token: str | None = None,
         api_key: str | None = None,
         mtls_cert: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Переопределяет auth для предыдущего step.
 
         Поддерживается ровно один способ за вызов:
@@ -345,32 +370,32 @@ class RouteBuilder(
 
     # ── Core processors ──
 
-    def set_header(self, key: str, value: Any) -> "RouteBuilder":
+    def set_header(self, key: str, value: Any) -> RouteBuilder:
         """Устанавливает заголовок в in_message."""
         return self._add(SetHeaderProcessor(key=key, value=value))
 
-    def set_property(self, key: str, value: Any) -> "RouteBuilder":
+    def set_property(self, key: str, value: Any) -> RouteBuilder:
         """Устанавливает runtime-свойство Exchange."""
         return self._add(SetPropertyProcessor(key=key, value=value))
 
-    def log(self, level: str = "info") -> "RouteBuilder":
+    def log(self, level: str = "info") -> RouteBuilder:
         """Логирование текущего состояния Exchange (для отладки)."""
         return self._add(LogProcessor(level=level))
 
-    def validate(self, model: type) -> "RouteBuilder":
+    def validate(self, model: type) -> RouteBuilder:
         """Pydantic-валидация body; при ошибке Exchange останавливается."""
         return self._add(ValidateProcessor(model=model))
 
     # ── Feature-flag metadata ──
 
-    def feature_flag(self, name: str) -> "RouteBuilder":
+    def feature_flag(self, name: str) -> RouteBuilder:
         """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
         self._feature_flag = name
         return self
 
     # ── Generic (универсальные) helpers ──
 
-    def shadow_mode(self, processors: list[BaseProcessor]) -> "RouteBuilder":
+    def shadow_mode(self, processors: list[BaseProcessor]) -> RouteBuilder:
         """Исполняет вложенную ветку в shadow-режиме (без side effects)."""
         from src.backend.dsl.engine.processors.generic import ShadowModeProcessor
 
@@ -384,7 +409,7 @@ class RouteBuilder(
         *,
         wait: bool = True,
         timeout: float | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
         from src.backend.dsl.engine.processors.generic import BulkheadProcessor
 
@@ -398,7 +423,7 @@ class RouteBuilder(
             )
         )
 
-    def lineage(self, tag: str = "step") -> "RouteBuilder":
+    def lineage(self, tag: str = "step") -> RouteBuilder:
         """Записывает шаг в `_lineage` property (data governance)."""
         from src.backend.dsl.engine.processors.generic import LineageTrackerProcessor
 
@@ -411,7 +436,7 @@ class RouteBuilder(
         *,
         split_percent: int = 50,
         key_fn: Callable[[Exchange[Any]], str] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Стабильная маршрутизация X% трафика на вариант B."""
         from src.backend.dsl.engine.processors.generic import AbTestRouterProcessor
 
@@ -430,7 +455,7 @@ class RouteBuilder(
         processors: list[BaseProcessor],
         *,
         resolver: Callable[[str], bool] | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Выполняет ветку процессоров только при включённом feature flag.
 
         Не путать с ``feature_flag(name)`` (метаданная маршрута, отключает
@@ -452,7 +477,7 @@ class RouteBuilder(
         header: str = "x-tenant-id",
         body_path: str | None = None,
         required: bool = True,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",
@@ -462,13 +487,13 @@ class RouteBuilder(
             required=required,
         )
 
-    def cost_tracker(self) -> "RouteBuilder":
+    def cost_tracker(self) -> RouteBuilder:
         """Инициализация cost-словаря в properties (LLM-токены, HTTP, DB, USD)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business", "CostTrackerProcessor"
         )
 
-    def outbox(self, *, topic: str) -> "RouteBuilder":
+    def outbox(self, *, topic: str) -> RouteBuilder:
         """Transactional Outbox: запись события в outbox-таблицу."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business", "OutboxProcessor", topic=topic
@@ -476,7 +501,7 @@ class RouteBuilder(
 
     def mask(
         self, *, patterns: list[str] | None = None, replacement: str = "***"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",
@@ -485,7 +510,7 @@ class RouteBuilder(
             replacement=replacement,
         )
 
-    def compliance_labels(self, *, labels: list[str]) -> "RouteBuilder":
+    def compliance_labels(self, *, labels: list[str]) -> RouteBuilder:
         """Compliance-метки на Exchange (PII/PCI/FIN/GDPR)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",
@@ -527,7 +552,7 @@ class RouteBuilder(
             from src.backend.dsl.commands.registry import action_handler_registry
 
             available = set(action_handler_registry.list_actions())
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             return
 
         if not available:
