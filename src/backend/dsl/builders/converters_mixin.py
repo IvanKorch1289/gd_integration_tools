@@ -1,30 +1,38 @@
-"""FormatConvertersMixin (S40 W1+W2 — format conversions для body).
+"""FormatConvertersMixin (S40 W1+W2+W3 — format conversions для body).
 
 S40 W1: 10 chainable методов (JSON/CSV/XML/YAML/Excel).
 S40 W2: +10 chainable методов (Parquet/MessagePack/TOML/INI/Base64).
-Итого 20/40 converters.
+S40 W3: +10 chainable методов (URL/HTML/Markdown/UUID/JWT/Bencode).
+Итого 30/40 converters.
 
 Назван ``FormatConvertersMixin`` (не ``ConvertersMixin``) чтобы не конфликтовать
 с Phase-2.1 :class:`dsl.builders.converters.ConvertersMixin` (hash/encrypt/
 decrypt/compress/decompress — 5 методов), который уже в MRO.
 
-20 методов = 10 форматов × 2 направления:
+30 методов = 15 форматов × 2 направления (для большинства):
     W1: JSON, CSV, XML, YAML, Excel.
     W2: Parquet, MessagePack, TOML, INI, Base64.
+    W3: URL-encoding, HTML, Markdown, UUID*, JWT*, Bencode (* = to_ only).
 
 Зависимости (lazy-import, dev-friendly):
     * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree``, ``base64``,
-      ``configparser``, ``tomllib`` (3.11+), ``pickle``;
-    * optional: ``yaml``, ``openpyxl``, ``xmltodict``;
+      ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
+      ``urllib.parse``, ``uuid``, ``re``;
+    * optional: ``yaml``, ``openpyxl``, ``xmltodict``, ``joserfc``;
     * optional: ``pyarrow`` (Parquet), ``msgpack`` (fallback → ``pickle``),
-      ``tomli_w`` (TOML write — fallback на ImportError с понятным message).
+      ``tomli_w`` (TOML write — fallback на ImportError с понятным message);
+    * bencode: собственная ~40-строчная реализация (без внешних deps).
 """
 
 from __future__ import annotations
 
 import csv
+import html
 import io
 import json
+import re
+import urllib.parse
+import uuid
 import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -113,6 +121,10 @@ class FormatConvertProcessor(BaseProcessor):
         source_value: Any = None,
         from_property: str = "body",
         name: str | None = None,
+        # JWT (S40 W3)
+        secret: str | None = None,
+        algorithm: str = "HS256",
+        claims: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name or f"format:{direction}:{fmt}")
         self.direction = direction
@@ -124,6 +136,9 @@ class FormatConvertProcessor(BaseProcessor):
         self.compression = compression
         self.source_value = source_value
         self.from_property = from_property
+        self.secret = secret
+        self.algorithm = algorithm
+        self.claims = claims
 
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
@@ -189,6 +204,27 @@ class FormatConvertProcessor(BaseProcessor):
             return self._to_base64(data)
         if self.direction == "from_base64":
             return self._from_base64(data)
+        # ── S40 W3: URL / HTML / Markdown / UUID / JWT / Bencode ──
+        if self.direction == "to_url_encoded":
+            return self._to_url_encoded(data)  # type: ignore[attr-defined]
+        if self.direction == "from_url_encoded":
+            return self._from_url_encoded(data)  # type: ignore[attr-defined]
+        if self.direction == "to_html_escape":
+            return self._to_html_escape(data)  # type: ignore[attr-defined]
+        if self.direction == "from_html_unescape":
+            return self._from_html_unescape(data)  # type: ignore[attr-defined]
+        if self.direction == "to_markdown":
+            return self._to_markdown(data)  # type: ignore[attr-defined]
+        if self.direction == "from_markdown":
+            return self._from_markdown(data)  # type: ignore[attr-defined]
+        if self.direction == "to_uuid_string":
+            return self._to_uuid_string(data)  # type: ignore[attr-defined]
+        if self.direction == "to_jwt":
+            return self._to_jwt(data)  # type: ignore[attr-defined]
+        if self.direction == "to_bencode":
+            return self._to_bencode(data)  # type: ignore[attr-defined]
+        if self.direction == "from_bencode":
+            return self._from_bencode(data)  # type: ignore[attr-defined]
         raise ValueError(f"unknown direction: {self.direction!r}")
 
     # ── JSON ──
@@ -394,7 +430,7 @@ class FormatConvertProcessor(BaseProcessor):
             import tomllib
         except ImportError:  # Python < 3.11
             try:
-                import tomli as tomllib  # type: ignore[import-untyped,no-redef]
+                import tomli as tomllib  # type: ignore[import-untyped,no-redef]  # type: ignore  # type: ignore[unused-ignore]
             except ImportError as exc:
                 raise ImportError(
                     "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'"
@@ -456,6 +492,172 @@ class FormatConvertProcessor(BaseProcessor):
         if not text:
             return b""
         return base64.b64decode(text, validate=False)
+
+    # ── URL-encoding (S40 W3) — stdlib urllib.parse ──
+
+    def _to_url_encoded(self, data: Any) -> str:
+        if isinstance(data, str):
+            return data
+        if isinstance(data, (bytes, bytearray)):
+            data = data.decode("utf-8", errors="replace")
+        if data is None:
+            return ""
+        return urllib.parse.urlencode(data, doseq=True)
+
+    def _from_url_encoded(self, data: Any) -> dict[str, Any]:
+        text = _to_text(data)
+        if not text:
+            return {}
+        parsed = urllib.parse.parse_qs(text, keep_blank_values=True)
+        return {k: (v[0] if len(v) == 1 else v) for k, v in parsed.items()}
+
+    # ── HTML (S40 W3) — stdlib html ──
+
+    def _to_html_escape(self, data: Any) -> str:
+        if data is None:
+            return ""
+        return html.escape(_to_text(data), quote=True)
+
+    def _from_html_unescape(self, data: Any) -> str:
+        text = _to_text(data)
+        if not text:
+            return ""
+        return html.unescape(text)
+
+    # ── Markdown (S40 W3) — stdlib re (simple header-based) ──
+
+    def _to_markdown(self, data: Any) -> str:
+        if isinstance(data, str):
+            return data
+        if data is None:
+            return ""
+        if not isinstance(data, dict):
+            data = {"value": data}
+        parts: list[str] = []
+        for k, v in data.items():
+            parts.append(f"# {k}")
+            if isinstance(v, (dict, list)):
+                parts.append(json.dumps(v, default=str, ensure_ascii=False))
+            else:
+                parts.append(str(v))
+            parts.append("")
+        return "\n".join(parts)
+
+    def _from_markdown(self, data: Any) -> dict[str, str]:
+        text = _to_text(data)
+        if not text:
+            return {}
+        out: dict[str, str] = {}
+        current_key: str | None = None
+        current_lines: list[str] = []
+        for line in text.splitlines():
+            m = re.match(r"^#\s+(.+?)\s*$", line)
+            if m:
+                if current_key is not None:
+                    out[current_key] = "\n".join(current_lines).strip()
+                current_key = m.group(1)
+                current_lines = []
+            else:
+                current_lines.append(line)
+        if current_key is not None:
+            out[current_key] = "\n".join(current_lines).strip()
+        return out
+
+    # ── UUID (S40 W3) — stdlib uuid (to_ only — UUID не имеет "from") ──
+
+    def _to_uuid_string(self, data: Any) -> str:
+        return str(uuid.uuid4())
+
+    # ── JWT (S40 W3) — joserfc (to_ only — verify/decode вне scope) ──
+
+    def _to_jwt(self, data: Any) -> str:
+        try:
+            from joserfc import jwt as _jwt
+            from joserfc.jwk import OctKey
+        except ImportError as exc:
+            raise ImportError(
+                "to_jwt requires 'joserfc' (pip install joserfc)"
+            ) from exc
+        if not self.secret:
+            raise ValueError("to_jwt requires 'secret' kwarg (>= 16 chars recommended)")
+        body_claims: dict[str, Any] = dict(data) if isinstance(data, dict) else {}
+        if self.claims:
+            body_claims.update(self.claims)
+        key = OctKey.import_key(self.secret)
+        header = {"alg": self.algorithm, "typ": "JWT"}
+        return _jwt.encode(header, body_claims, key)
+
+    # ── Bencode (S40 W3) — bitTorrent bcode (custom ~40-LOC) ──
+
+    def _to_bencode(self, data: Any) -> bytes:
+        return _bencode(data)
+
+    def _from_bencode(self, data: Any) -> Any:
+        if isinstance(data, (bytes, bytearray)):
+            raw = bytes(data)
+        elif isinstance(data, str):
+            raw = data.encode("utf-8")
+        else:
+            raise TypeError(f"from_bencode requires bytes/str, got {type(data)}")
+        if not raw:
+            return None
+        result, _consumed = _bdecode(raw, 0)
+        return result
+
+
+# ── Bencode (S40 W3) — recursive encoder/decoder, no external deps ──
+
+
+def _bencode(obj: Any) -> bytes:
+    """Recursive bencode encoder (bitTorrent metafile format)."""
+    if isinstance(obj, bool):
+        raise TypeError("bencode does not support bool (use 0/1 ints)")
+    if isinstance(obj, int):
+        return b"i" + str(obj).encode("ascii") + b"e"
+    if isinstance(obj, (str, bytes, bytearray)):
+        b = obj.encode("utf-8") if isinstance(obj, str) else bytes(obj)
+        return str(len(b)).encode("ascii") + b":" + b
+    if isinstance(obj, (list, tuple)):
+        return b"l" + b"".join(_bencode(x) for x in obj) + b"e"
+    if isinstance(obj, dict):
+        items: list[tuple[bytes, Any]] = []
+        for k, v in obj.items():
+            if not isinstance(k, (str, bytes, bytearray)):
+                raise TypeError(f"bencode dict keys must be str/bytes, got {type(k)}")
+            kb = k.encode("utf-8") if isinstance(k, str) else bytes(k)
+            items.append((kb, v))
+        items.sort(key=lambda kv: kv[0])
+        return b"d" + b"".join(_bencode(k) + _bencode(v) for k, v in items) + b"e"
+    raise TypeError(f"cannot bencode {type(obj)}")
+
+
+def _bdecode(data: bytes, idx: int) -> tuple[Any, int]:
+    """Recursive bencode decoder. Returns (value, new_idx)."""
+    ch = data[idx : idx + 1]
+    if ch == b"i":
+        end = data.index(b"e", idx)
+        val = int(data[idx + 1 : end])
+        return val, end + 1
+    if ch == b"l":
+        idx += 1
+        out: list[Any] = []
+        while data[idx : idx + 1] != b"e":
+            item, idx = _bdecode(data, idx)
+            out.append(item)
+        return out, idx + 1
+    if ch == b"d":
+        idx += 1
+        out_d: dict[Any, Any] = {}
+        while data[idx : idx + 1] != b"e":
+            k, idx = _bdecode(data, idx)
+            v, idx = _bdecode(data, idx)
+            out_d[k] = v
+        return out_d, idx + 1
+    # byte string: <len>:<bytes>
+    colon = data.index(b":", idx)
+    length = int(data[idx:colon])
+    start = colon + 1
+    return data[start : start + length], start + length
 
 
 # ── Mixin ─────────────────────────────────────────────────────────────
@@ -641,5 +843,103 @@ class FormatConvertersMixin:
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
                 direction="from_base64", fmt="base64", source_value=b64_string
+            )
+        )
+
+    # ── URL-encoding (S40 W3) ──
+
+    def to_url_encoded(self) -> "RouteBuilder":
+        """Convert ``dict`` → URL-encoded string (application/x-www-form-urlencoded)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_url_encoded", fmt="url_encoded")
+        )
+
+    def from_url_encoded(self, url_string: str | None = None) -> "RouteBuilder":
+        """Parse URL-encoded string → ``dict`` (multi-value → ``list``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_url_encoded", fmt="url_encoded", source_value=url_string
+            )
+        )
+
+    # ── HTML (S40 W3) ──
+
+    def to_html_escape(self) -> "RouteBuilder":
+        """HTML-escape string (``<>&"'`` → entities, ``quote=True``)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_html_escape", fmt="html_escape")
+        )
+
+    def from_html_unescape(self, html_string: str | None = None) -> "RouteBuilder":
+        """HTML-unescape string (entities → ``<>&"'`` chars)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_html_unescape",
+                fmt="html_unescape",
+                source_value=html_string,
+            )
+        )
+
+    # ── Markdown (S40 W3) — simple header-based ──
+
+    def to_markdown(self) -> "RouteBuilder":
+        """Convert ``dict`` → markdown string (``# key`` per top-level key)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_markdown", fmt="markdown")
+        )
+
+    def from_markdown(self, md_string: str | None = None) -> "RouteBuilder":
+        """Parse markdown → ``dict`` (extracts ``# heading`` → content)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_markdown", fmt="markdown", source_value=md_string
+            )
+        )
+
+    # ── UUID (S40 W3) — generator (to_ only) ──
+
+    def to_uuid_string(self) -> "RouteBuilder":
+        """Generate UUID4 string (``body`` ignored, always fresh)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_uuid_string", fmt="uuid_string")
+        )
+
+    # ── JWT (S40 W3) — encoder (to_ only; decode вне scope) ──
+
+    def to_jwt(
+        self,
+        *,
+        secret: str,
+        algorithm: str = "HS256",
+        claims: dict[str, Any] | None = None,
+    ) -> "RouteBuilder":
+        """Encode ``exchange.body`` (dict) → JWT string (HS256 default).
+
+        ``claims``: extra claims merged into body (claims override body keys).
+        Requires ``joserfc`` (project dep).
+        """
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="to_jwt",
+                fmt="jwt",
+                secret=secret,
+                algorithm=algorithm,
+                claims=claims,
+            )
+        )
+
+    # ── Bencode (S40 W3) ──
+
+    def to_bencode(self) -> "RouteBuilder":
+        """Convert ``dict``/``list`` → bencoded bytes (bitTorrent metafile)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(direction="to_bencode", fmt="bencode")
+        )
+
+    def from_bencode(self, bcode_bytes: bytes | None = None) -> "RouteBuilder":
+        """Parse bencoded bytes → Python object (no external deps)."""
+        return self._add(  # type: ignore[attr-defined]
+            FormatConvertProcessor(
+                direction="from_bencode", fmt="bencode", source_value=bcode_bytes
             )
         )
