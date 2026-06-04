@@ -1,6 +1,6 @@
 {
   "_comment": "[wave:s38/post-p1.2c-coverage] S38 closure baseline. Coverage gate threshold: 75% (raised S19 K2 W4). New modules (gateway_orchestrator_mixin 100%, providers/ 78%) covered by 109 new tests. Total noqa: 1677→368 (-78%, mechanical closure T-P0.1.13). Actual coverage now ~75%+ (2026-06-03).",
-  "coverage_percent": 61.61,
+  "coverage_percent": 62.57,
   "threshold": 50.0,
   "target_threshold": 75.0,
   "achieved_threshold": true,

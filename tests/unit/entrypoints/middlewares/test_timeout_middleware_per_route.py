@@ -24,6 +24,18 @@ from src.backend.core.config.settings import settings
 from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
 
 
+@pytest.fixture(autouse=True)
+def _cancel_pending_asyncio_tasks():
+    yield
+    try:
+        loop = asyncio.get_running_loop()
+        for task in asyncio.all_tasks(loop):
+            if not task.done():
+                task.cancel()
+    except RuntimeError:
+        pass
+
+
 def _build_app(
     *, route_timeouts: dict[str, float] | None = None, sleep_seconds: float = 0.0
 ) -> FastAPI:

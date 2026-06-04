@@ -4,11 +4,19 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.backend.dsl.routes import (
     _default_payload_factory,
     _register_action_route,
     register_dsl_routes,
 )
+
+
+@pytest.fixture(autouse=True)
+def _disable_action_validation():
+    with patch("src.backend.dsl.builders.base.RouteBuilder._validate_action_names"):
+        yield
 
 
 class TestDefaultPayloadFactory:

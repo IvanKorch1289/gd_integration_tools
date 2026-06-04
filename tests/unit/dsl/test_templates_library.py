@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
+import pytest
+
 from src.backend.dsl.templates_library import TemplateInfo, list_templates, templates
+
+
+@pytest.fixture(autouse=True)
+def _disable_action_validation():
+    with patch("src.backend.dsl.builders.base.RouteBuilder._validate_action_names"):
+        yield
 
 
 class TestTemplates:

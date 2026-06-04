@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from src.backend.core.di.providers import workflow
+
+
+@pytest.fixture(autouse=True)
+def _reset_workflow_providers():
+    yield
+    workflow._overrides.clear()
 
 
 class TestActionBusService:
