@@ -41,6 +41,7 @@ from src.backend.dsl.builders.content import ContentMixin
 from src.backend.dsl.builders.content_mixin import EIPContentMixin
 from src.backend.dsl.builders.control_flow import ControlFlowMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
+from src.backend.dsl.builders.converters_mixin import FormatConvertersMixin
 from src.backend.dsl.builders.data_store import DataStoreStepMixin
 from src.backend.dsl.builders.data_store_mixin import DataStoreMixin
 from src.backend.dsl.builders.deferred_execution_mixin import DeferredExecutionMixin
@@ -82,6 +83,7 @@ class RouteBuilder(  # type: ignore[misc]
     EventBusMixin,
     IntegrationMixin,
     ConvertersMixin,
+    FormatConvertersMixin,
     RequestReplyMixin,
     SagaLRAMixin,
     TemplateEngineChainMixin,
