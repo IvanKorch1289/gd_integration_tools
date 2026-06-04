@@ -1,0 +1,53 @@
+# Sprint 39 W4 — .mutmut-ignore
+# ------------------------------------------------------------------------------
+# Mutmut применяет glob-паттерны (не regex) к каждому генерируемому мутанту.
+# Любая мутация, попадающая под ignore-паттерн, помечается как "skipped" и
+# исключается из mutation score. Это убирает "noisy" мутации в:
+#   1) автогенерированном коде (protobuf stubs, alembic versions, OpenAPI);
+#   2) кодогенерируемых DSL-обёртках (декораторы, mixin'ы без логики);
+#   3) самих тестах (мутировать тесты — бессмысленно, они и есть "оракул");
+#   4) dev-only stub'ах (TODO-маркеры, NotImplementedError).
+#
+# Mutmut 2.x: формат — один glob-паттерн на строку, комментарии начинаются с `#`.
+# Пустые строки игнорируются. Строки без glob (literal) матчат как substring.
+
+# ---- автоген / protobuf / migrations -----------------------------------------
+src/backend/entrypoints/grpc/protobuf/auto/**
+src/backend/infrastructure/db/migrations/versions/**
+**/generated/**
+**/autogen/**
+**/_pb2.py
+**/_pb2_grpc.py
+**/*.pb.cc
+**/*.pb.go
+
+# ---- OpenAPI / TypedDict schemas ---------------------------------------------
+src/backend/entrypoints/rest/openapi_schemas.py
+**/schemas_generated.py
+
+# ---- тесты и тестовые kit'ы ---------------------------------------------------
+tests/**
+**/test_*.py
+**/*_test.py
+**/conftest.py
+**/conftest_*.py
+gd_integration_tools/testkit/**
+
+# ---- type hints / Protocol declarations ---------------------------------------
+**/_types.py
+**/types.py
+**/protocols.py
+**/_protocols.py
+
+# ---- stub / placeholder code --------------------------------------------------
+**/__init__.py          # чаще всего re-export'ы без логики
+**/_compat.py
+**/_version.py
+**/version.py
+
+# ---- CDC scaffold (R2.1, real impl в R3.4) ------------------------------------
+src/backend/infrastructure/cdc/**
+
+# ---- external 3rd-party imports (не наш код) ---------------------------------
+**/vendor/**
+**/third_party/**

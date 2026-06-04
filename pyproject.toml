@@ -907,3 +907,42 @@ ignore_names = [
     # DSL templates — параметр используется через kwarg call в default registry
     "target_table",
 ]
+
+# -----------------------------------------------------------------------------
+# Mutation testing (S39 W4 — branch coverage 38% → 55% via mutation analysis)
+# -----------------------------------------------------------------------------
+# Mutmut 2.4.4: вводит точечные мутации (operator/constant/name/boundary) в
+# paths_to_mutate и прогоняет тесты из tests_dir. Mutation score = (killed /
+# total). Цель: довести score до 55% — это соответствует real-mutation-based
+# branch coverage, а не поверхностной line coverage.
+#
+# Конфиг intentionally ограничивает 3 hot-модулями (FeatureFlags, RouteBuilder,
+# CircuitBreaker), чтобы цикл прогона укладывался в <5 минут. Расширять
+# paths_to_mutate инкрементально — по модулю за раз.
+#
+# Mutmut 2.4.4 API notes (см. .venv/lib/python3.13/site-packages/mutmut/__init__.py:config_from_file):
+#   - читает ТОЛЬКО ключи, совпадающие с click-опциями run-сабкоманды;
+#   - dict_synonyms и tests_dir ожидаются СТРОКАМИ (split по ',' или ':');
+#   - минимальный score / timeout / max_concurrent_spawns — не читаются из
+#     конфига; их выставляет scripts/run_mutation_tests.sh через CLI/env.
+#   - .coverage файл жёстко зашит; используем общий .coverage + --use-coverage.
+[tool.mutmut]
+paths_to_mutate = [
+    "src/backend/core/config/features/__init__.py",
+    "src/backend/dsl/builders/base.py",
+    "src/backend/core/resilience/breaker.py",
+]
+backup = false
+runner = "pytest"
+# mutmut split_paths() делит по ',' или ':' — передаём одной строкой.
+tests_dir = "tests/unit/core/config:tests/unit/dsl/builders:tests/unit/core/resilience"
+# dict_synonyms — comma-separated string, по дефолту пусто (мутируем dict.get
+# штатно, см. MUTATION_OPERATORS в mutmut/__init__.py).
+dict_synonyms = ""
+# paths-to-exclude — glob-паттерны, не мутировать (см. .mutmut-ignore для
+# полного списка, здесь — критичные stub'ы, которые всегда бесполезно
+# мутировать).
+paths_to_exclude = "**/conftest.py:**/__init__.py:**/_compat.py"
+# --use-coverage включён по умолчанию через wrapper-скрипт (CI-режим).
+# Минимальный score 55% enforced в scripts/run_mutation_tests.sh через awk,
+# т.к. mutmut 2.4.4 не имеет нативного gate'а (exit code 1 при failed mutants).
