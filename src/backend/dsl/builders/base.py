@@ -43,6 +43,7 @@ from src.backend.dsl.builders.control_flow import ControlFlowMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
 from src.backend.dsl.builders.data_store import DataStoreStepMixin
 from src.backend.dsl.builders.data_store_mixin import DataStoreMixin
+from src.backend.dsl.builders.deferred_execution_mixin import DeferredExecutionMixin
 from src.backend.dsl.builders.eip import EIPMixin
 from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
 from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
@@ -76,6 +77,7 @@ class RouteBuilder(  # type: ignore[misc]
     ControlFlowMixin,
     DataStoreStepMixin,
     DataStoreMixin,
+    DeferredExecutionMixin,
     EIPMixin,
     EventBusMixin,
     IntegrationMixin,
@@ -107,6 +109,7 @@ class RouteBuilder(  # type: ignore[misc]
     _transport_config: TransportConfig | None = None
     _feature_flag: str | None = None
     _data_stores: dict[str, Any] = field(default_factory=dict)
+    _deferred: dict[str, Any] = field(default_factory=dict)
     _jinja_env: Any = field(default=None, repr=False, compare=False)
 
     # ── Core helpers ──
