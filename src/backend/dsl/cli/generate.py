@@ -301,8 +301,9 @@ class {name}(BaseProcessor):
             exchange: The current exchange.
             context: Execution context.
         """
-        # TODO: Implement {name}
-        pass
+        # TODO(S40-W6): Implement {name} — audit found placeholder
+        msg = f"{name!r} not implemented — fill in process() body"
+        raise NotImplementedError(msg)
 '''
 
 

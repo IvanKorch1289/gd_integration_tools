@@ -42,7 +42,7 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
     """Hash-based embedder (offline/unit). Не ML-grade, но стабильный + детерминированный."""
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
-        vec[int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim] += 1.0  # noqa: S324
+        vec[int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim] += 1.0  # noqa: S324
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 

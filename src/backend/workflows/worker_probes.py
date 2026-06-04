@@ -71,7 +71,7 @@ class WorkerProbesServer:
         runner: Any,
         worker_id: str,
         port: int = 9100,
-        host: str = "0.0.0.0",
+        host: str = "127.0.0.1",  # bound to localhost by default (S40-W6 audit)
         readiness_check: ReadinessFn | None = None,
     ) -> None:
         self._runner = runner

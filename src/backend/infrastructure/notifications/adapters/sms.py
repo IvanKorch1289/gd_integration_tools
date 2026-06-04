@@ -83,7 +83,7 @@ class SMSAdapter:
         client = upstream(self._upstream_name)
 
         # Per-provider payload. Сейчас только smsru полностью документирован;
-        # mts/megafon — scaffolding (TODO: подтвердить интеграцию).
+        # mts/megafon — scaffolding (TODO(S40-W6): подтвердить интеграцию).
         if self._provider == "smsru":
             params = {
                 "api_id": creds,
@@ -102,8 +102,11 @@ class SMSAdapter:
                 raise RuntimeError(f"SMS.ru API error: {data}")
             return
 
-        # TODO: подтвердить endpoint и формат МТС при интеграции.
+        # TODO(S40-W6): подтвердить endpoint и формат МТС при интеграции.
         if self._provider == "mts":
+            raise NotImplementedError(
+                "MTS SMS provider — endpoint/payload unverified, S40-W6 audit"
+            )
             headers = {"Authorization": f"Bearer {creds}"}
             payload = {
                 "messages": [{"to": recipient, "from": self._sender_id, "text": body}]
@@ -115,8 +118,11 @@ class SMSAdapter:
                 raise RuntimeError(f"MTS send failed: {response.status_code}")
             return
 
-        # TODO: подтвердить endpoint и формат МегаФон.
+        # TODO(S40-W6): подтвердить endpoint и формат МегаФон.
         if self._provider == "megafon":
+            raise NotImplementedError(
+                "МегаФон SMS provider — endpoint/payload unverified, S40-W6 audit"
+            )
             headers = {"Authorization": creds}
             megafon_payload: dict[str, Any] = {
                 "destination": recipient,

@@ -167,7 +167,7 @@ class GranianTuning(BaseSettingsWithLoader):
         self,
         *,
         app: str,
-        host: str = "0.0.0.0",
+        host: str = "127.0.0.1",  # bound to localhost by default (S40-W6 audit)
         port: int = 8000,
         granian_cmd: str = "granian",
     ) -> list[str]:
