@@ -182,3 +182,7 @@ docs/api/_build/
 
 # Agent plans (per cleanup 2026-06-05)
 .hermes/plans/
+
+# sphinx-autoapi intermediate + build output (Sprint 39 W4)
+docs/api/autoapi/
+docs/api/_build/
