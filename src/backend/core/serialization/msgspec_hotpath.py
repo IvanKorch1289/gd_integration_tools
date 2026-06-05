@@ -32,6 +32,7 @@ __all__ = (
     "decode_json",
     "encode_audit_event",
     "encode_json",
+    "encode_json_str",
     "encode_ws_frame",
     "hash_cache_key",
 )
@@ -87,6 +88,11 @@ def hash_cache_key(*parts: str) -> str:
         h.update(part.encode("utf-8"))
         h.update(b"\x00")
     return h.hexdigest()[:16]
+
+
+def encode_json_str(value: Any) -> str:
+    """JSON-encode → str (alias: encode_json + utf-8 decode)."""
+    return encode_json(value).decode("utf-8")
 
 
 def encode_ws_frame(value: dict[str, Any]) -> bytes:

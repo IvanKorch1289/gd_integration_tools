@@ -5,15 +5,19 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
+from enum import Enum
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import Request
+from pydantic import BaseModel
 
 from src.backend.entrypoints.sse.handler import (
     EventBus,
     _InvokeRequest,
+    _to_primitive,
     event_bus,
     sse_invoke,
     sse_stream,
@@ -256,7 +260,7 @@ class TestSseInvoke:
         text = "".join(chunks)
         assert "event: start" in text
         assert "event: result" in text
-        assert '"ok": true' in text
+        assert '"ok":true' in text
         assert "event: end" in text
 
     @pytest.mark.asyncio
@@ -300,3 +304,84 @@ class TestSseInvoke:
         assert "event: error" in text
         assert "boom" in text
         assert "event: end" in text
+
+    @pytest.mark.asyncio
+    async def test_invoke_success_with_datetime(self) -> None:
+        """datetime в bridge.data сериализуется в ISO-формат через _to_primitive."""
+        request = MagicMock(spec=Request)
+        request.headers = {}
+        request.url.path = "/events/invoke"
+        body = _InvokeRequest(action="test", payload={})
+        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        with patch(
+            "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
+            new_callable=AsyncMock,
+        ) as mock_bridge:
+            mock_bridge.return_value = MagicMock(
+                success=True, data={"created_at": now}, error=None, error_code=None
+            )
+            resp = await sse_invoke(request, body)
+            chunks = [c async for c in resp.body_iterator]
+        text = "".join(chunks)
+        assert "event: start" in text
+        assert "event: result" in text
+        assert "2026-06-05T12:00:00+00:00" in text
+        assert "event: end" in text
+
+    @pytest.mark.asyncio
+    async def test_invoke_success_with_enum(self) -> None:
+        """Enum в bridge.data сериализуется как value через _to_primitive."""
+
+        class Status(Enum):
+            OK = "ok"
+
+        request = MagicMock(spec=Request)
+        request.headers = {}
+        request.url.path = "/events/invoke"
+        body = _InvokeRequest(action="test", payload={})
+        with patch(
+            "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
+            new_callable=AsyncMock,
+        ) as mock_bridge:
+            mock_bridge.return_value = MagicMock(
+                success=True, data={"status": Status.OK}, error=None, error_code=None
+            )
+            resp = await sse_invoke(request, body)
+            chunks = [c async for c in resp.body_iterator]
+        text = "".join(chunks)
+        assert "event: start" in text
+        assert "event: result" in text
+        assert '"status":"ok"' in text
+        assert "event: end" in text
+
+
+class TestToPrimitive:
+    def test_base_model(self) -> None:
+        class Item(BaseModel):
+            name: str
+            count: int
+
+        assert _to_primitive(Item(name="x", count=1)) == {"name": "x", "count": 1}
+
+    def test_datetime(self) -> None:
+        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        assert _to_primitive(now) == "2026-06-05T12:00:00+00:00"
+
+    def test_enum(self) -> None:
+        class Color(Enum):
+            RED = 1
+
+        assert _to_primitive(Color.RED) == 1
+
+    def test_nested(self) -> None:
+        class Item(BaseModel):
+            name: str
+
+        nested = {
+            "items": [Item(name="a")],
+            "meta": {"ts": datetime.datetime(2026, 1, 1)},
+        }
+        assert _to_primitive(nested) == {
+            "items": [{"name": "a"}],
+            "meta": {"ts": "2026-01-01T00:00:00"},
+        }

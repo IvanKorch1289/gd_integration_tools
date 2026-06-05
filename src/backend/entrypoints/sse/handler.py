@@ -11,14 +11,16 @@
 """
 
 import asyncio
-import json
+import datetime
 import logging
+from enum import Enum
 from typing import Any
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json_str
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 
 __all__ = ("event_bus", "sse_router")
@@ -26,6 +28,21 @@ __all__ = ("event_bus", "sse_router")
 logger = logging.getLogger(__name__)
 
 sse_router = APIRouter(prefix="/events", tags=["SSE"])
+
+
+def _to_primitive(value: Any) -> Any:
+    """Приводит value к JSON-сериализуемым примитивам (BaseModel → dict)."""
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if isinstance(value, datetime.datetime):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, list):
+        return [_to_primitive(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _to_primitive(v) for k, v in value.items()}
+    return value
 
 
 class EventBus:
@@ -97,10 +114,9 @@ async def sse_stream(request: Request) -> StreamingResponse:
 
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                    import json
 
                     event_type = event.get("event", "message")
-                    data = json.dumps(event.get("data"), ensure_ascii=False)
+                    data = encode_json_str(_to_primitive(event.get("data")))
                     yield f"event: {event_type}\ndata: {data}\n\n"
                 except TimeoutError:
                     # Heartbeat для поддержания соединения
@@ -185,7 +201,7 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
     async def stream() -> Any:
         """Генератор SSE-событий: start → result|error → end."""
         yield (
-            f"event: start\ndata: {json.dumps({'action': body.action}, ensure_ascii=False)}\n\n"
+            f"event: start\ndata: {encode_json_str({'action': body.action})}\n\n"
         )
         try:
             bridge = await dispatch_action_or_dsl(
@@ -200,19 +216,19 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
         except Exception as exc:
             logger.exception("SSE invoke ошибка: %s", exc)
             err = {"code": "dispatch_failed", "message": str(exc)}
-            yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+            yield f"event: error\ndata: {encode_json_str(err)}\n\n"
             yield "event: end\ndata: {}\n\n"
             return
 
         if bridge.success:
-            payload = json.dumps(bridge.data, ensure_ascii=False, default=str)
+            payload = encode_json_str(_to_primitive(bridge.data))
             yield f"event: result\ndata: {payload}\n\n"
         else:
             err = {
                 "code": bridge.error_code or "dispatch_failed",
                 "message": bridge.error or "dispatch failed",
             }
-            yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+            yield f"event: error\ndata: {encode_json_str(err)}\n\n"
         yield "event: end\ndata: {}\n\n"
 
     return StreamingResponse(
