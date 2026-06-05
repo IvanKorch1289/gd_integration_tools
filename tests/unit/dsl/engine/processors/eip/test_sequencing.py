@@ -21,9 +21,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 async def test_resequencer_emits_on_batch_size() -> None:
     """При достижении batch_size сообщения сортируются и выдаются."""
     proc = ResequencerProcessor(
-        correlation_key=lambda ex: "corr1",
-        sequence_field="seq",
-        batch_size=3,
+        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=3
     )
     ctx = AsyncMock()
 
@@ -39,7 +37,11 @@ async def test_resequencer_emits_on_batch_size() -> None:
     e3 = _ex(body={"seq": 2, "data": "b"})
     await proc.process(e3, ctx)
     assert e3.properties.get("resequenced") is True
-    assert e3.out_message.body == [{"seq": 1, "data": "a"}, {"seq": 2, "data": "b"}, {"seq": 3, "data": "c"}]
+    assert e3.out_message.body == [
+        {"seq": 1, "data": "a"},
+        {"seq": 2, "data": "b"},
+        {"seq": 3, "data": "c"},
+    ]
 
 
 @pytest.mark.asyncio
@@ -52,9 +54,7 @@ async def test_resequencer_uses_getattr() -> None:
             self.val = val
 
     proc = ResequencerProcessor(
-        correlation_key=lambda ex: "corr1",
-        sequence_field="seq",
-        batch_size=2,
+        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=2
     )
     ctx = AsyncMock()
 

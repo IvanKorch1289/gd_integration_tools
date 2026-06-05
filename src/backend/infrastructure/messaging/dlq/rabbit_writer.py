@@ -2,6 +2,8 @@
 
 Queue-name: ``dlq.{transport}``. Persistent сообщения (``delivery_mode=2``).
 Использует aio-pika.
+
+Сериализация: msgspec JSON (быстрее orjson по бенчмаркам Wave 7).
 """
 
 from __future__ import annotations
@@ -9,6 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("RabbitDLQWriter",)
@@ -36,7 +39,7 @@ class RabbitDLQWriter:
         from aio_pika import DeliveryMode, Message
 
         routing_key = f"{self._queue_prefix}{envelope.transport}"
-        payload = envelope.model_dump_json().encode("utf-8")
+        payload = encode_json(envelope.model_dump(mode="json"))
         message = Message(
             body=payload,
             delivery_mode=DeliveryMode.PERSISTENT,

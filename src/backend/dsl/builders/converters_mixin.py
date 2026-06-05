@@ -313,11 +313,7 @@ class FormatConvertersMixin:
     # ── JWT decode (S40 W4) — companion к to_jwt (W3) ──
 
     def from_jwt(
-        self,
-        jwt_string: str | None = None,
-        *,
-        secret: str,
-        algorithm: str = "HS256",
+        self, jwt_string: str | None = None, *, secret: str, algorithm: str = "HS256"
     ) -> "RouteBuilder":
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc).
 

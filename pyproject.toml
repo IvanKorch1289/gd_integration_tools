@@ -3,7 +3,7 @@ name = "gd_advanced_tools"
 version = "0.20.0"
 description = "GD Integration Tools — интеграционная шина на Python 3.14"
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.14,<3.15"
 authors = [
     { name = "crazyivan1289", email = "crazyivan1289@gmail.com" }
 ]
@@ -483,8 +483,8 @@ default-groups = ["dev"]
 # (paddlepaddle/aioldap3/pygls split). См. UV hint "limit the environments
 # with tool.uv.environments".
 environments = [
-    "sys_platform == 'linux' and python_full_version == '3.13.*'",
-    "sys_platform == 'darwin' and python_full_version == '3.13.*'",
+    "sys_platform == 'linux' and python_full_version == '3.14.*'",
+    "sys_platform == 'darwin' and python_full_version == '3.14.*'",
 ]
 # Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]:
 # mlflow>=2.18,<3 декларирует pyarrow<20, но pyarrow в core зависит от
@@ -747,7 +747,7 @@ disable_error_code = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py313"
+target-version = "py314"
 exclude = [
     "src/backend/entrypoints/grpc/protobuf/*"
 ]

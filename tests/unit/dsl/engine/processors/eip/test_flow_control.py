@@ -67,7 +67,9 @@ async def test_wire_tap_runs_async() -> None:
     e = _ex(body={"main": True})
 
     mock_task = MagicMock()
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.get_task_registry") as mock_reg:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.get_task_registry"
+    ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
         mock_reg.return_value = mock_registry
@@ -87,7 +89,9 @@ async def test_wire_tap_ignores_tap_failure() -> None:
     e = _ex(body={"main": True})
 
     mock_task = MagicMock()
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.get_task_registry") as mock_reg:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.get_task_registry"
+    ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
         mock_reg.return_value = mock_registry
@@ -108,7 +112,9 @@ async def test_throttler_allows_under_rate() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep") as mock_sleep:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+    ) as mock_sleep:
         await proc.process(e, ctx)
 
     mock_sleep.assert_not_called()
@@ -124,7 +130,9 @@ async def test_throttler_sleeps_when_over_rate() -> None:
     # First call consumes token
     await proc.process(e, ctx)
 
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep") as mock_sleep:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+    ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once()
 
@@ -148,7 +156,9 @@ async def test_delay_by_ms() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep") as mock_sleep:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+    ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once_with(0.1)
 
@@ -160,8 +170,13 @@ async def test_delay_by_scheduled_time() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.time.time", return_value=500.0):
-        with patch("src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep") as mock_sleep:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.time.time",
+        return_value=500.0,
+    ):
+        with patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+        ) as mock_sleep:
             await proc.process(e, ctx)
             mock_sleep.assert_called_once_with(500.0)
 
@@ -173,8 +188,13 @@ async def test_delay_no_sleep_when_past() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.flow_control.time.time", return_value=500.0):
-        with patch("src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep") as mock_sleep:
+    with patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.time.time",
+        return_value=500.0,
+    ):
+        with patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+        ) as mock_sleep:
             await proc.process(e, ctx)
             mock_sleep.assert_not_called()
 
@@ -242,7 +262,9 @@ async def test_aggregator_flush_expired() -> None:
 @pytest.mark.asyncio
 async def test_aggregator_max_keys_eviction() -> None:
     """При превышении _MAX_CORRELATION_KEYS удаляется старый буфер."""
-    proc = AggregatorProcessor(correlation_key=lambda ex: ex.meta.exchange_id, batch_size=10)
+    proc = AggregatorProcessor(
+        correlation_key=lambda ex: ex.meta.exchange_id, batch_size=10
+    )
     ctx = AsyncMock()
     proc._MAX_CORRELATION_KEYS = 2
     for i in range(3):
@@ -366,7 +388,9 @@ async def test_for_each_jmespath_none_defaults_empty() -> None:
 async def test_for_each_max_iterations() -> None:
     """Не более max_iterations элементов."""
     dummy = DummyProcessor("res")
-    proc = ForEachProcessor(items_path="data.items", processors=[dummy], max_iterations=2)
+    proc = ForEachProcessor(
+        items_path="data.items", processors=[dummy], max_iterations=2
+    )
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3, 4]}})
 

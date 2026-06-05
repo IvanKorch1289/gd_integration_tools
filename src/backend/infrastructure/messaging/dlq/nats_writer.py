@@ -1,6 +1,7 @@
 """NATSDLQWriter — публикует DLQEnvelope в NATS subject (Sprint 9 K2 W1).
 
 Subject: ``dlq.{transport}``. JetStream persistence через ``js.publish``.
+Сериализация: msgspec JSON (быстрее orjson по бенчмаркам Wave 7).
 """
 
 from __future__ import annotations
@@ -8,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("NATSDLQWriter",)
@@ -29,7 +31,7 @@ class NATSDLQWriter:
 
     async def write(self, envelope: DLQEnvelope) -> None:
         subject = f"{self._subject_prefix}{envelope.transport}"
-        payload = envelope.model_dump_json().encode("utf-8")
+        payload = encode_json(envelope.model_dump(mode="json"))
         try:
             await self._js.publish(
                 subject,

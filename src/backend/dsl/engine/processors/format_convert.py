@@ -22,25 +22,6 @@ S40 W4 FINAL: +5 chainable методов (from_jwt/to_compact_json/to|from_prot
     * bencode: собственная ~40-строчная реализация (без внешних deps).
 """
 
-Назван ``FormatConvertersMixin`` (не ``ConvertersMixin``) чтобы не конфликтовать
-с Phase-2.1 :class:`dsl.builders.converters.ConvertersMixin` (hash/encrypt/
-decrypt/compress/decompress — 5 методов), который уже в MRO.
-
-30 методов = 15 форматов × 2 направления (для большинства):
-    W1: JSON, CSV, XML, YAML, Excel.
-    W2: Parquet, MessagePack, TOML, INI, Base64.
-    W3: URL-encoding, HTML, Markdown, UUID*, JWT*, Bencode (* = to_ only).
-
-Зависимости (lazy-import, dev-friendly):
-    * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree``, ``base64``,
-      ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
-      ``urllib.parse``, ``uuid``, ``re``;
-    * optional: ``yaml``, ``openpyxl``, ``xmltodict``, ``joserfc``;
-    * optional: ``pyarrow`` (Parquet), ``msgpack`` (fallback → ``pickle``),
-      ``tomli_w`` (TOML write — fallback на ImportError с понятным message);
-    * bencode: собственная ~40-строчная реализация (без внешних deps).
-"""
-
 from __future__ import annotations
 
 import base64
@@ -60,7 +41,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
-__all__ = ("FormatConvertProcessor",)
 # ── Stdlib helpers (no external deps) ─────────────────────────────────
 
 
@@ -107,6 +87,8 @@ def _to_text(data: Any) -> str:
     if isinstance(data, (bytes, bytearray)):
         return data.decode("utf-8", errors="replace")
     return data
+
+
 class FormatConvertProcessor(BaseProcessor):
     """Универсальный format-conversion processor (S40 W1).
 
@@ -683,9 +665,7 @@ class FormatConvertProcessor(BaseProcessor):
         elif isinstance(data, str):
             raw = data.encode("utf-8")
         else:
-            raise TypeError(
-                f"from_protobuf_like requires bytes/str, got {type(data)}"
-            )
+            raise TypeError(f"from_protobuf_like requires bytes/str, got {type(data)}")
         if not raw:
             return None
         text = base64.b64decode(raw).decode("utf-8", errors="replace")
@@ -707,6 +687,8 @@ class FormatConvertProcessor(BaseProcessor):
             "data": data,
         }
         return json.dumps(envelope, default=str, ensure_ascii=False)
+
+
 def _bencode(obj: Any) -> bytes:
     """Recursive bencode encoder (bitTorrent metafile format)."""
     if isinstance(obj, bool):
@@ -757,5 +739,6 @@ def _bdecode(data: bytes, idx: int) -> tuple[Any, int]:
     length = int(data[idx:colon])
     start = colon + 1
     return data[start : start + length], start + length
+
 
 __all__ = ("FormatConvertProcessor",)

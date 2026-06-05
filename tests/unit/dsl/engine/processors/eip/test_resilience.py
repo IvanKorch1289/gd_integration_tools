@@ -63,7 +63,9 @@ async def test_dead_letter_no_dlq_on_success() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         await proc.process(e, ctx)
 
     assert e.status != ExchangeStatus.failed
@@ -78,7 +80,9 @@ async def test_dead_letter_sends_to_dlq_on_failure() -> None:
     ctx = AsyncMock()
     e = _ex(body={"id": 1})
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
@@ -95,7 +99,9 @@ async def test_dead_letter_dlq_error_logged() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis down")
         await proc.process(e, ctx)
 

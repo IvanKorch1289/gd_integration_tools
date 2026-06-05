@@ -143,12 +143,14 @@ class StreamClient:
 
         from faststream.rabbit.fastapi import RabbitRouter
 
+        # NOTE: max_consumers removed — FastStream >=0.6.7 / 0.7.0 dropped
+        # the parameter from RabbitRouter.__init__. The setting still lives
+        # in queue config for backward compat but is ignored by FastStream.
         self.rabbit_router = RabbitRouter(
             url=self.rabbit_settings.queue_url,
             security=BaseSecurity(use_ssl=self.rabbit_settings.use_ssl),
             timeout=self.rabbit_settings.timeout,
             reconnect_interval=self.rabbit_settings.reconnect_interval,
-            max_consumers=self.rabbit_settings.max_consumers,
             graceful_timeout=self.rabbit_settings.graceful_timeout,
             schema_url="/asyncapi",
             specification_tags=[{"name": "rabbitmq"}],

@@ -10,7 +10,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, Message
-from src.backend.dsl.engine.processors.eip.idempotency import IdempotentConsumerProcessor
+from src.backend.dsl.engine.processors.eip.idempotency import (
+    IdempotentConsumerProcessor,
+)
 
 
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
@@ -24,7 +26,9 @@ async def test_idempotent_new_message() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(return_value=True)
         await proc.process(e, ctx)
 
@@ -39,7 +43,9 @@ async def test_idempotent_duplicate_message() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(return_value=False)
         await proc.process(e, ctx)
 
@@ -54,7 +60,9 @@ async def test_idempotent_redis_error_proceeds() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(side_effect=RuntimeError("redis down"))
         await proc.process(e, ctx)
 
