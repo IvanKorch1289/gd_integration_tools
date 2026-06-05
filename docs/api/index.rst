@@ -51,6 +51,7 @@ Build layout
    :hidden:
 
    modules
+   autoapi/index
 
 Indices
 -------
@@ -58,3 +59,13 @@ Indices
 * :ref:`genindex` — алфавитный указатель.
 * :ref:`modindex` — указатель модулей.
 * :ref:`search` — полнотекстовый поиск.
+
+AutoAPI (v19)
+-------------
+
+Полный **авто-сгенерированный** API reference всех модулей проекта
+(``src/backend/dsl/``, ``core``, ``ai``, ``services``, ``infrastructure``,
+``entrypoints``, ``testkit``) — в разделе :doc:`autoapi/index`.
+
+Генерация: ``sphinx-autoapi 3.8.0`` (автоматически при
+``make -C docs/api html``).

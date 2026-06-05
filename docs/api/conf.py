@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "autoapi.extension",  # v19: auto-generated full API reference
 ]
 
 master_doc = "index"
@@ -81,3 +82,39 @@ html_show_sourcelink = True
 
 # Intersphinx: cross-refs на Python stdlib.
 intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
+
+# ── sphinx-autoapi config (v19) ─────────────────────────────────────
+# Auto-generates full API reference for `src/backend/dsl/` and core modules.
+# Output: docs/api/_build/html/autoapi/index.html
+# Note: paths are relative to conf.py (which lives in docs/api/).
+#       We need ../../ to reach project root.
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]  # /home/user/.../gd_integration_tools
+autoapi_type = "python"
+autoapi_dirs = [
+    str(_PROJECT_ROOT / "src" / "backend" / "dsl"),
+    str(_PROJECT_ROOT / "src" / "backend" / "core"),
+    str(_PROJECT_ROOT / "src" / "backend" / "ai"),
+    str(_PROJECT_ROOT / "src" / "backend" / "services"),
+    str(_PROJECT_ROOT / "src" / "backend" / "infrastructure"),
+    str(_PROJECT_ROOT / "src" / "backend" / "entrypoints"),
+    str(_PROJECT_ROOT / "src" / "testkit"),
+]
+autoapi_root = "autoapi"
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
+autoapi_member_order = "bysource"
+autoapi_python_class_content = "class"
+autoapi_keep_files = False
+# Skip tests, migrations, generated, and __pycache__
+autoapi_exclude_patterns = [
+    r".*__pycache__.*",
+    r".*\.venv.*",
+    r".*test_.*",
+    r".*_test\.py",
+    r".*\.git.*",
+]

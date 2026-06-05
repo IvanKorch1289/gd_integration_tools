@@ -12,3 +12,7 @@ sphinx>=9.1.0,<10.0.0
 
 # ReadTheDocs theme for API reference
 sphinx-rtd-theme>=3.0.0,<4.0.0
+
+# sphinx-autoapi: auto-generates full API reference (v19)
+# Walks `autoapi_dirs` and produces HTML in autoapi/ subdirectory
+sphinx-autoapi>=3.0.0,<4.0.0
