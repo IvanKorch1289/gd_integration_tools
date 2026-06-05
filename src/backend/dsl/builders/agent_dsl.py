@@ -277,6 +277,62 @@ class AgentDSLMixin:
             )
         )
 
+    def reflection_loop_workflow(
+        self,
+        *,
+        generator_workflow_id: str,
+        reflector_workflow_id: str,
+        refiner_workflow_id: str | None = None,
+        max_iterations: int = 3,
+        stop_verdict: str = "ok",
+        result_property: str = "reflection_result",
+        history_property: str | None = "reflection_history",
+        timeout_s: float = 300.0,
+    ) -> RouteBuilder:
+        """Generate → Reflect → Refine agentic pattern via workflows (S39 W3).
+
+        LLM генерирует draft → reflector оценивает и возвращает
+        ``verdict`` + ``critique`` → refiner улучшает draft.
+        Цикл останавливается при ``verdict == stop_verdict``
+        или после ``max_iterations``.
+
+        Args:
+            generator_workflow_id: workflow_id для генерации начального draft.
+            reflector_workflow_id: workflow_id для критики draft.
+            refiner_workflow_id: workflow_id для улучшения draft.
+                Default ``None`` — используется ``generator_workflow_id``.
+            max_iterations: Максимум итераций reflection + refine. Default ``3``.
+            stop_verdict: Значение verdict для остановки. Default ``"ok"``.
+            result_property: Свойство для финального результата.
+            history_property: Свойство для истории итераций. Default ``"reflection_history"``.
+            timeout_s: Таймаут на один LLM-вызов. Default ``300``.
+
+        Example::
+
+            builder.reflection_loop_workflow(
+                generator_workflow_id="generate_draft",
+                reflector_workflow_id="reflect",
+                refiner_workflow_id="refine",
+                max_iterations=3,
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
+            ReflectionLoopProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            ReflectionLoopProcessor(
+                generator_workflow_id=generator_workflow_id,
+                reflector_workflow_id=reflector_workflow_id,
+                refiner_workflow_id=refiner_workflow_id,
+                max_iterations=max_iterations,
+                stop_verdict=stop_verdict,
+                result_property=result_property,
+                history_property=history_property,
+                timeout_s=timeout_s,
+            )
+        )
+
     # ── W2 — Guardrails + PII (3 methods) ──
 
     def guardrails_apply(

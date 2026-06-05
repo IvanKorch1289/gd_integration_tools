@@ -1,4 +1,4 @@
-"""DSL-процессоры Agent DSL (Sprint 27 W1-W3, S28 W4-W5, S39 W2).
+"""DSL-процессоры Agent DSL (Sprint 27 W1-W3, S28 W4-W5, S39 W2-W3).
 
 Декларативная агентика поверх :class:`AIGateway` (ADR-NEW-19, S25 W1):
 
@@ -9,6 +9,7 @@
 * :class:`AgentGraphProcessor` — LangGraph execution as DSL step (S28 W4).
   Supervisor mode (LLM-driven multi-agent handoff) и ReAct mode.
 * :class:`PlanExecuteProcessor` — Plan-and-Execute с verification + replan (S39 W2);
+* :class:`ReflectionLoopProcessor` — Generate → Reflect → Refine loop (S39 W3);
 * :class:`GuardrailsApplyProcessor` — Llama Guard input/output;
 * :class:`PIIMaskProcessor` / :class:`PIIUnmaskProcessor` — reversible PII
   (S25 W4 ADR-NEW-21);
@@ -43,9 +44,6 @@ from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
     AgentParallelProcessor,
 )
 from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor
-from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
-    PlanExecuteProcessor,
-)
 from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
     GuardrailsApplyProcessor,
 )
@@ -58,6 +56,12 @@ from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
 )
 from src.backend.dsl.engine.processors.agent_dsl.pii_mask import PIIMaskProcessor
 from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import PIIUnmaskProcessor
+from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
+    PlanExecuteProcessor,
+)
+from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
+    ReflectionLoopProcessor,
+)
 from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
     SkillInvokeProcessor,
 )
@@ -69,6 +73,7 @@ __all__: tuple[str, ...] = (
     "AgentParallelProcessor",
     "AgentRunProcessor",
     "PlanExecuteProcessor",
+    "ReflectionLoopProcessor",
     "GuardrailsApplyProcessor",
     "MCPToolProcessor",
     "MemoryRecallProcessor",
