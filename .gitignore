@@ -178,3 +178,7 @@ testkit/cassettes/*.json
 .sentry-native/
 .claude/smells/
 docs/autoapi/
+docs/api/_build/
+
+# Agent plans (per cleanup 2026-06-05)
+.hermes/plans/
