@@ -1,8 +1,8 @@
 # CLAUDE.md — gd_integration_tools
 
-> **Версия документа**: V22 (синхронизирована с PLAN.md V22 FINAL от 2026-05-21).
-> Любая работа выполняется в соответствии с этим документом и `PLAN.md`.
-> Архив V21: `vault/archive-plan-v21.md`. GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
+> **Версия документа**: V22 (синхронизирована с `ARCHITECTURE.md` от 2026-05-21).
+> Любая работа выполняется в соответствии с этим документом и `ARCHITECTURE.md`.
+> GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## Текущий план
 
-**Главный документ**: `PLAN.md` (V15 FINAL) и `/root/.claude/plans/foamy-puzzling-dragonfly.md` (полный аналитический GAP-анализ).
+**Главные документы**: `ARCHITECTURE.md` (карта архитектуры) и `/root/.claude/plans/foamy-puzzling-dragonfly.md` (полный аналитический GAP-анализ).
 
 **Срок**: 14-15 недель ≈ 3.5 месяца при параллельной работе **4 разработчиков**:
 - **Dev1 — Plugin/Platform** (capability-gate, ASGI middleware, Auth, WAF, supply-chain, leak prevention)
@@ -40,7 +40,7 @@
 
 ## Что читать сначала
 
-1. `PLAN.md` (V15 FINAL) — текущий roadmap и решения;
+1. `ARCHITECTURE.md` — карта архитектуры;
 2. `graphify-out/GRAPH_REPORT.md` (если есть);
 3. `graphify-out/wiki/index.md` (основной индекс при наличии);
 4. `ARCHITECTURE.md`;
@@ -53,7 +53,7 @@
 
 ## Приоритет источников
 
-1. **`PLAN.md` V15** (фиксирует курс развития);
+1. **`ARCHITECTURE.md`** (карта архитектуры, текущий курс развития);
 2. исходный код;
 3. Graphify (`graphify-out/...`);
 4. `ARCHITECTURE.md`;
@@ -155,7 +155,7 @@ ResponseValidatorProcessor	dsl/engine/processors/validation/	Pydantic-validation
 
 Порядок:
 
-    Определить цель задачи (привязать к Wave/Sprint из PLAN.md).
+    Определить цель задачи (привязать к Wave/Sprint из CHANGELOG.md).
     Определить потенциально затронутые модули, импортёры и зависимости (Graphify).
     Если задача требует актуальных внешних данных — выполнить web research.
     Проверить проект через бибилотеку codeclone.
@@ -336,7 +336,7 @@ ResponseValidatorProcessor (dsl/engine/processors/validation/response.py) — Py
 
 Внешнее исследование
 
-Сначала использовать внутренний контекст: PLAN.md, Graphify, ARCHITECTURE.md, .claude/DECISIONS.md, релевантные исходники. Только если задача требует актуальных внешних данных — Context7 MCP (для документации библиотек) + DuckDuckGo MCP (для сравнений/статуса/мнений) + Fetch MCP / WebSearch / WebFetch.
+Сначала использовать внутренний контекст: Graphify, ARCHITECTURE.md, .claude/DECISIONS.md, релевантные исходники. Только если задача требует актуальных внешних данных — Context7 MCP (для документации библиотек) + DuckDuckGo MCP (для сравнений/статуса/мнений) + Fetch MCP / WebSearch / WebFetch.
 
 Инструменты (порядок предпочтения):
 1. **Context7 MCP** (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`) — ПЕРВИЧНЫЙ для API/конфигурации/синтаксиса/version-specific документации. Использовать ВСЕГДА для библиотечных вопросов, даже популярных (FastAPI, Pydantic, SQLAlchemy, Temporal, httpx, structlog). Цитаты помечать `[ctx7: <library>@<version>]`.
@@ -411,7 +411,7 @@ Dev2 — DSL/Workflow	RouteBuilder split (Wave G), .crud_*, .get_setting(), .val
 Dev3 — Frontend/Ops	Frontend split, tools/Makefile/manage.py reorganization, docs (Sphinx + Diátaxis + pre-push gate), 3-tier auto-reg, dashboards, chaos-tests, auto-scaler, Graylog pool
 Dev4 — AI/Data	PydanticAI, LiteLLM, RAG cache (3 уровня), LangMem + RLM-toolkit, FastMCP, Multimodal RAG, AI Safety, AI cost dashboard, ClickHouse pool
 
-См. PLAN.md §6 (Wave-расписание Sprint 0–9).
+См. CHANGELOG.md (история спринтов).
 Основные агенты (.claude/agents/)
 Агент	Назначение	Запуск
 feature-coordinator	Главный координатор фич; AskUserQuestion → план → делегирование subagents → контроль	proactive / /plan
@@ -447,9 +447,8 @@ python tools/checks/check_layers.py
 @include .claude/rules/online-research.md
 @include .claude/rules/dependency-decision.md
 @include .claude/rules/path-policy.md
-Ссылки
+## Ссылки
 
-    PLAN.md — главный roadmap (V15 FINAL)
     /root/.claude/plans/foamy-puzzling-dragonfly.md — полный аналитический GAP-анализ
     ARCHITECTURE.md — карта архитектуры (требует обновления после Wave 12)
     .claude/CONTEXT.md — оперативная сводка
@@ -457,4 +456,4 @@ python tools/checks/check_layers.py
     .claude/KNOWN_ISSUES.md — открытый техдолг
     vault/session-*-summary.md — архив сессий
 
-Версия CLAUDE.md синхронизирована с PLAN.md V15 (2026-05-05). При обновлении PLAN.md обновлять синхронно.
+Версия CLAUDE.md: V22 (2026-06-05). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
