@@ -1,187 +1,182 @@
-"""Unit tests for src.backend.entrypoints.email.imap_monitor (v17 §1.1).
+# ruff: noqa: S101
+"""Smoke tests for IMAP monitor (entrypoints/email/imap_monitor.py)."""
 
-Per v17 §1.1: IMAP entrypoint (357 LOC) "не анализировался в 16
-предыдущих итерациях". Coverage gap → add tests.
-"""
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-try:
-    from src.backend.entrypoints.email.imap_monitor import (  # type: ignore[attr-defined]
-        ImapMonitor,
-        ImapSettings,
+from src.backend.entrypoints.email.imap_monitor import ImapConfig, ImapMonitor
+
+# ── ImapConfig dataclass ───────────────────────────────────────────
+
+
+def test_imap_config_defaults() -> None:
+    cfg = ImapConfig(host="imap.example.com")
+    assert cfg.host == "imap.example.com"
+    assert cfg.port == 993
+    assert cfg.username == ""
+    assert cfg.password == ""
+    assert cfg.folder == "INBOX"
+    assert cfg.poll_interval == 60.0
+    assert cfg.use_ssl is True
+    assert cfg.starttls is True
+    assert cfg.verify_cert is True
+    assert cfg.idle_mode is False
+    assert cfg.idle_timeout == 29 * 60
+    assert cfg.subject_pattern is None
+    assert cfg.from_filter is None
+    assert cfg.since_uid == 0
+
+
+def test_imap_config_custom_values() -> None:
+    cfg = ImapConfig(
+        host="mail",
+        port=143,
+        username="u",
+        password="p",
+        folder="Sent",
+        poll_interval=10.0,
+        use_ssl=False,
+        starttls=False,
+        idle_mode=True,
+        subject_pattern="re:foo",
     )
-    HAS_IMAP_MONITOR = True
-except (ImportError, ModuleNotFoundError, AttributeError):
-    HAS_IMAP_MONITOR = False
+    assert cfg.port == 143
+    assert cfg.folder == "Sent"
+    assert cfg.poll_interval == 10.0
+    assert cfg.use_ssl is False
+    assert cfg.idle_mode is True
+    assert cfg.subject_pattern == "re:foo"
 
 
-@pytest.fixture
-def mock_settings() -> "ImapSettings":
-    return ImapSettings(
-        host="imap.example.com",
-        port=993,
-        username="user@example.com",
-        password="x" * 16,
-        mailbox="INBOX",
-        use_ssl=True,
+# ── ImapMonitor: filter pattern compilation ─────────────────────────
+
+
+def test_compile_subject_pattern_none() -> None:
+    assert ImapMonitor._compile_subject_pattern(None) is None
+    assert ImapMonitor._compile_subject_pattern("") is None
+
+
+def test_compile_subject_pattern_literal() -> None:
+    pat = ImapMonitor._compile_subject_pattern("hello")
+    assert pat is not None
+    assert pat.search("Hello world") is not None
+    assert pat.search("Bye") is None
+
+
+def test_compile_subject_pattern_re_prefix() -> None:
+    pat = ImapMonitor._compile_subject_pattern(r"re:foo\d+")
+    assert pat is not None
+    assert pat.search("foo42") is not None
+    assert pat.search("foo") is None
+
+
+# ── ImapMonitor: filter matching ────────────────────────────────────
+
+
+def test_matches_filters_no_filters() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False)
+    mon = ImapMonitor(cfg)
+    assert mon._matches_filters({"subject": "anything", "from": "a@b.c"}) is True
+
+
+def test_matches_filters_subject_literal() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False, subject_pattern="alert")
+    mon = ImapMonitor(cfg)
+    assert mon._matches_filters({"subject": "ALERT: problem", "from": "a@b.c"}) is True
+    assert mon._matches_filters({"subject": "hello", "from": "a@b.c"}) is False
+
+
+def test_matches_filters_from_substring() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False, from_filter="example.com")
+    mon = ImapMonitor(cfg)
+    assert mon._matches_filters({"subject": "x", "from": "user@EXAMPLE.com"}) is True
+    assert mon._matches_filters({"subject": "x", "from": "user@other.com"}) is False
+
+
+# ── ImapMonitor: SSL context ────────────────────────────────────────
+
+
+def test_ssl_context_returns_none_when_no_ssl() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False)
+    mon = ImapMonitor(cfg)
+    assert mon._ssl_context() is None
+
+
+def test_ssl_context_returns_context_when_ssl() -> None:
+    cfg = ImapConfig(host="x", use_ssl=True, starttls=False)
+    mon = ImapMonitor(cfg)
+    ctx = mon._ssl_context()
+    assert ctx is not None
+
+
+def test_ssl_context_logs_warning_when_no_verify() -> None:
+    cfg = ImapConfig(host="x", use_ssl=True, starttls=False, verify_cert=False)
+    mon = ImapMonitor(cfg)
+    with patch("src.backend.entrypoints.email.imap_monitor.logger") as mock_log:
+        ctx = mon._ssl_context()
+    assert ctx is not None
+    mock_log.warning.assert_called()
+
+
+# ── ImapMonitor: resolve password ───────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_resolve_password_from_config() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False, password="plain")
+    mon = ImapMonitor(cfg)
+    pw = await mon._resolve_password()
+    assert pw == "plain"
+
+
+@pytest.mark.asyncio
+async def test_resolve_password_vault_failure_falls_back() -> None:
+    cfg = ImapConfig(
+        host="x",
+        use_ssl=False,
+        starttls=False,
+        password="fallback",
+        password_vault_ref="vault:bad#key",
     )
-
-
-@pytest.fixture
-def mock_imap_connection() -> AsyncMock:
-    conn = AsyncMock()
-    conn.wait_hello_from_server = AsyncMock(return_value=("OK", [b"welcome"]))
-    conn.login = AsyncMock(return_value=("OK", [b"login successful"]))
-    conn.logout = AsyncMock(return_value=("BYE", [b"logout"]))
-    conn.select = AsyncMock(return_value=("OK", [b"1"]))
-    conn.idle = AsyncMock(return_value=("OK", [b"idling"]))
-    return conn
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_imap_monitor_imports() -> None:
-    from src.backend.entrypoints.email import imap_monitor  # type: ignore[attr-defined]
-    assert imap_monitor is not None
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_monitor_creation(mock_settings: "ImapSettings") -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    assert monitor is not None
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_monitor_default_settings() -> None:
-    settings = ImapSettings(host="h", port=993, username="u", password="p")
-    monitor = ImapMonitor(settings=settings)
-    assert monitor is not None
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_monitor_custom_settings(mock_settings: "ImapSettings") -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    assert monitor.settings.host == "imap.example.com"
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_connect_to_imap(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings)
+    mon = ImapMonitor(cfg)
     with patch(
-        "src.backend.entrypoints.email.imap_monitor.aioimaplib.IMAP4_SSL",
-        return_value=mock_imap_connection,
+        "src.backend.core.di.providers.get_vault_refresher_provider",
+        side_effect=RuntimeError("vault down"),
     ):
-        await monitor.connect()
+        pw = await mon._resolve_password()
+    assert pw == "fallback"
 
 
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
+# ── ImapMonitor: lifecycle state ────────────────────────────────────
+
+
+def test_initial_state() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False)
+    mon = ImapMonitor(cfg)
+    assert mon._task is None
+    assert mon._running is False
+    assert mon._last_uid == 0
+
+
+def test_initial_state_with_since_uid() -> None:
+    cfg = ImapConfig(host="x", use_ssl=False, starttls=False, since_uid=42)
+    mon = ImapMonitor(cfg)
+    assert mon._last_uid == 42
+
+
+# ── Mark unrunnable / live network paths as xfail ───────────────────
+
+
+@pytest.mark.xfail(reason="Requires live IMAP server", strict=False)
 @pytest.mark.asyncio
-async def test_disconnect_from_imap(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    monitor._conn = mock_imap_connection
-    await monitor.disconnect()
-    mock_imap_connection.logout.assert_awaited_once()
+async def test_connect_live_server() -> None:
+    cfg = ImapConfig(host="imap.example.com", username="x", password="y")
+    mon = ImapMonitor(cfg)
+    _ = await mon._connect()
 
 
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_idle_loop_runs(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    monitor._conn = mock_imap_connection
-    task = asyncio.create_task(monitor._idle_loop())
-    await asyncio.sleep(0.01)
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_message_callback(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    callback = AsyncMock()
-    monitor = ImapMonitor(settings=mock_settings, on_message=callback)
-    monitor._conn = mock_imap_connection
-    assert monitor is not None
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_reconnect_after_disconnect(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings, max_reconnects=3)
-    monitor._conn = mock_imap_connection
-    await monitor._reconnect()
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_max_reconnect_attempts(mock_settings: "ImapSettings") -> None:
-    monitor = ImapMonitor(settings=mock_settings, max_reconnects=2)
-    with patch.object(monitor, "_connect", side_effect=ConnectionError("fail")):
-        with pytest.raises(ConnectionError):
-            await monitor._reconnect_with_backoff()
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_mailbox_selection(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    with patch(
-        "src.backend.entrypoints.email.imap_monitor.aioimaplib.IMAP4_SSL",
-        return_value=mock_imap_connection,
-    ):
-        await monitor.connect()
-        mock_imap_connection.select.assert_awaited_with(mailbox="INBOX")
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_idle_timeout_setting(mock_settings: "ImapSettings") -> None:
-    mock_settings.idle_timeout = 1
-    monitor = ImapMonitor(settings=mock_settings)
-    assert monitor.settings.idle_timeout == 1
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-@pytest.mark.asyncio
-async def test_graceful_shutdown(
-    mock_settings: "ImapSettings", mock_imap_connection: AsyncMock
-) -> None:
-    monitor = ImapMonitor(settings=mock_settings)
-    monitor._conn = mock_imap_connection
-    await monitor.shutdown()
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_settings_default_ssl() -> None:
-    settings = ImapSettings(host="h", port=993, username="u", password="p")
-    assert settings.use_ssl is True
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_settings_default_port() -> None:
-    settings = ImapSettings(host="h", username="u", password="p")
-    assert settings.port == 993 or settings.port is None
-
-
-@pytest.mark.skipif(not HAS_IMAP_MONITOR, reason="imap_monitor not importable")
-def test_settings_required_fields() -> None:
-    with pytest.raises((ValueError, TypeError)):
-        ImapSettings()
+# Helper: just to silence unused import warning
+_ = MagicMock
