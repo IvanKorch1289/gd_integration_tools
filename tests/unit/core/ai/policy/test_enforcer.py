@@ -115,6 +115,7 @@ def make_guard_ref(name: str, on_block: str = "fail") -> MagicMock:
 # ── guard_output tests ───────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_llama_safe_no_error(mock_llama_runtime: MagicMock) -> None:
     """Safe output не поднимает исключений."""
@@ -129,6 +130,7 @@ async def test_guard_output_llama_safe_no_error(mock_llama_runtime: MagicMock) -
     mock_llama_runtime.classify.assert_awaited_once()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_llama_unsafe_fail_raises(
     mock_unsafe_runtime: MagicMock,
@@ -149,6 +151,7 @@ async def test_guard_output_llama_unsafe_fail_raises(
     assert exc_info.value.on_block == "fail"
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_llama_unsafe_dlq_no_raise(
     mock_unsafe_runtime: MagicMock,
@@ -171,6 +174,7 @@ async def test_guard_output_llama_unsafe_dlq_no_raise(
     mock_unsafe_runtime.classify.assert_awaited_once()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_llama_unsafe_warn_no_raise(
     mock_unsafe_runtime: MagicMock,
@@ -188,6 +192,7 @@ async def test_guard_output_llama_unsafe_warn_no_raise(
         mock_log.warning.assert_called_once()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_no_runtime_no_op() -> None:
     """Без runtime output guards пропускаются (no-op)."""
@@ -201,6 +206,7 @@ async def test_guard_output_no_runtime_no_op() -> None:
     await enforcer.guard_output(response, policy)
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_empty_content_skipped(
     mock_llama_runtime: MagicMock,
@@ -217,6 +223,7 @@ async def test_guard_output_empty_content_skipped(
     mock_llama_runtime.classify.assert_not_called()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_multiple_guards_all_checked(
     mock_llama_runtime: MagicMock,
@@ -236,6 +243,7 @@ async def test_guard_output_multiple_guards_all_checked(
     assert mock_llama_runtime.classify.await_count == 2
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_output_unknown_guard_warns(mock_llama_runtime: MagicMock) -> None:
     """Неизвестный guard логируется как warning, не падает."""
@@ -255,6 +263,7 @@ async def test_guard_output_unknown_guard_warns(mock_llama_runtime: MagicMock) -
 # ── guard_input tests ────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_rebuff_blocked(mock_rebuff_client: MagicMock) -> None:
     """Rebuff injected input при on_block=fail поднимает GuardrailViolationError."""
@@ -275,6 +284,7 @@ async def test_guard_input_rebuff_blocked(mock_rebuff_client: MagicMock) -> None
     assert "sqli" in exc_info.value.flagged_categories
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_lakera_blocked(mock_lakera_client: MagicMock) -> None:
     """Lakera flagged input при on_block=fail поднимает GuardrailViolationError."""
@@ -295,6 +305,7 @@ async def test_guard_input_lakera_blocked(mock_lakera_client: MagicMock) -> None
     assert "prompt_injection" in exc_info.value.flagged_categories
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_nemo_skipped() -> None:
     """NeMo guard пропускается (Python 3.14 incompat)."""
@@ -309,6 +320,7 @@ async def test_guard_input_nemo_skipped() -> None:
         mock_log.debug.assert_called()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_empty_skipped() -> None:
     """Пустой input_guards пропускается без вызова клиентов."""
@@ -320,6 +332,7 @@ async def test_guard_input_empty_skipped() -> None:
     await enforcer.guard_input(prompt, policy)
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_blocked(mock_llm_guard_client: MagicMock) -> None:
     """LLM Guard flagged input при on_block=fail поднимает GuardrailViolationError."""
@@ -336,6 +349,7 @@ async def test_guard_input_llm_guard_blocked(mock_llm_guard_client: MagicMock) -
     assert "PromptInjection" in exc_info.value.flagged_categories
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_safe(
     mock_llm_guard_client_safe: MagicMock,
@@ -352,6 +366,7 @@ async def test_guard_input_llm_guard_safe(
     assert results[0].verdict == "passed"
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_no_client_warns() -> None:
     """Без llm_guard_client guard пропускается с warning."""
@@ -369,6 +384,7 @@ async def test_guard_input_llm_guard_no_client_warns() -> None:
     assert results[0].verdict == "passed"
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_warns_on_error(
     mock_llm_guard_client: MagicMock,
@@ -388,6 +404,7 @@ async def test_guard_input_llm_guard_warns_on_error(
     assert results[0].verdict == "passed"
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_fail_on_error(
     mock_llm_guard_client: MagicMock,
@@ -409,6 +426,7 @@ async def test_guard_input_llm_guard_fail_on_error(
 # ── GuardrailViolationError tests ───────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_guardrail_violation_error_attrs() -> None:
     """GuardrailViolationError хранит правильные атрибуты."""
     err = GuardrailViolationError(
@@ -425,6 +443,7 @@ def test_guardrail_violation_error_attrs() -> None:
     assert "hate" in str(err)
 
 
+@pytest.mark.unit
 def test_guardrail_violation_error_content_truncated() -> None:
     """Content обрезается до 200 символов."""
     long_content = "x" * 500
