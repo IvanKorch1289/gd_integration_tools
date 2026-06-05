@@ -18,11 +18,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import orjson
 from fastapi.responses import JSONResponse
 from idempotency_header_middleware import IdempotencyHeaderMiddleware
 from idempotency_header_middleware.backends.base import Backend
 from idempotency_header_middleware.backends.memory import MemoryBackend
+
+from src.backend.core.serialization.msgspec_hotpath import decode_json, encode_json
 
 __all__ = (
     "IDEMPOTENCY_HEADER",
@@ -81,13 +82,13 @@ class RedisNxBackend(Backend):
             return None
         status_raw = await self._redis.get(status_key)
         status_code = int(status_raw) if status_raw is not None else 200
-        return JSONResponse(orjson.loads(payload), status_code=status_code)
+        return JSONResponse(decode_json(payload), status_code=status_code)
 
     async def store_response_data(
         self, idempotency_key: str, payload: dict, status_code: int
     ) -> None:
         body_key, status_key = self._response_keys(idempotency_key)
-        body_bytes = orjson.dumps(payload)
+        body_bytes = encode_json(payload)
         await self._redis.set(body_key, body_bytes, ex=self._response_ttl)
         await self._redis.set(status_key, str(status_code), ex=self._response_ttl)
 

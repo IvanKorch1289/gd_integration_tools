@@ -18,6 +18,8 @@ from typing import Any
 
 import orjson
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json
+
 __all__ = ("create_mcp_server", "register_mcp_tools")
 
 logger = logging.getLogger(__name__)
@@ -133,7 +135,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
     if schema is not None and legacy_inline:
         description_parts.append(
-            "Payload (JSON-Schema): " + orjson.dumps(schema).decode()
+            "Payload (JSON-Schema): " + encode_json(schema).decode("utf-8")
         )
 
     tool_kwargs: dict[str, Any] = {
@@ -162,9 +164,9 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 "mcp_tool_denied",
                 extra={"action": _action, "reason": deny_reason, "source": "mcp"},
             )
-            return orjson.dumps(
+            return encode_json(
                 {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
-            ).decode()
+            ).decode("utf-8")
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
@@ -178,10 +180,10 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
         try:
             result = await action_handler_registry.dispatch(command)
             if hasattr(result, "model_dump"):
-                return orjson.dumps(result.model_dump(mode="json")).decode()
-            return orjson.dumps(result).decode()
+                return encode_json(result.model_dump(mode="json")).decode("utf-8")
+            return encode_json(result).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
 
 def _check_mcp_tool_authz(action_name: str) -> str | None:
@@ -271,7 +273,7 @@ def _register_route_tools(mcp: Any) -> None:
                         else None,
                     }
                 )
-        return orjson.dumps(routes).decode()
+        return encode_json(routes).decode("utf-8")
 
     @mcp.tool(
         name="route_execute",
@@ -284,7 +286,7 @@ def _register_route_tools(mcp: Any) -> None:
         try:
             pipeline = route_registry.get(route_id)
         except KeyError:
-            return orjson.dumps({"error": f"Route '{route_id}' not found"}).decode()
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
 
         try:
             parsed = orjson.loads(payload) if payload else {}
@@ -299,7 +301,7 @@ def _register_route_tools(mcp: Any) -> None:
             if exchange.out_message
             else exchange.in_message.body
         )
-        return orjson.dumps(
+        return encode_json(
             {
                 "status": exchange.status.value,
                 "result": result,
@@ -310,8 +312,7 @@ def _register_route_tools(mcp: Any) -> None:
                     if not k.startswith("_")
                 },
             },
-            default=str,
-        ).decode()
+        ).decode("utf-8")
 
     @mcp.tool(
         name="route_inspect",
@@ -322,9 +323,9 @@ def _register_route_tools(mcp: Any) -> None:
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
-            return orjson.dumps({"error": f"Route '{route_id}' not found"}).decode()
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
 
-        return orjson.dumps(
+        return encode_json(
             {
                 "route_id": pipeline.route_id,
                 "source": pipeline.source,
@@ -336,7 +337,7 @@ def _register_route_tools(mcp: Any) -> None:
                     for p in pipeline.processors
                 ],
             }
-        ).decode()
+        ).decode("utf-8")
 
 
 # ── Template Tools ──
@@ -353,7 +354,7 @@ def _register_template_tools(mcp: Any) -> None:
     async def template_list() -> str:
         from src.backend.dsl.templates_library import list_templates
 
-        return orjson.dumps(list_templates()).decode()
+        return encode_json(list_templates()).decode("utf-8")
 
     @mcp.tool(
         name="template_instantiate",
@@ -365,19 +366,19 @@ def _register_template_tools(mcp: Any) -> None:
 
         tmpl = templates.get(template_id)
         if not tmpl:
-            return orjson.dumps(
+            return encode_json(
                 {"error": f"Template '{template_id}' not found"}
-            ).decode()
+            ).decode("utf-8")
 
         try:
             parsed_params = orjson.loads(params) if params else {}
         except (orjson.JSONDecodeError, TypeError):
-            return orjson.dumps({"error": "Invalid JSON params"}).decode()
+            return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:
             result = tmpl.builder(**parsed_params)
             if isinstance(result, list):
-                return orjson.dumps(
+                return encode_json(
                     {
                         "status": "ok",
                         "pipelines": [
@@ -385,17 +386,17 @@ def _register_template_tools(mcp: Any) -> None:
                             for p in result
                         ],
                     }
-                ).decode()
-            return orjson.dumps(
+                ).decode("utf-8")
+            return encode_json(
                 {
                     "status": "ok",
                     "route_id": result.route_id,
                     "processors": len(result.processors),
                     "processor_names": [p.name for p in result.processors],
                 }
-            ).decode()
+            ).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
     @mcp.tool(
         name="macro_list",
@@ -427,7 +428,7 @@ def _register_template_tools(mcp: Any) -> None:
                         ],
                     }
                 )
-        return orjson.dumps(result).decode()
+        return encode_json(result).decode("utf-8")
 
 
 # ── Format Conversion Tools ──
@@ -448,9 +449,9 @@ def _register_convert_tools(mcp: Any) -> None:
         strategy = _STRATEGIES.get(key)
         if not strategy:
             available = list(_STRATEGIES.keys())
-            return orjson.dumps(
+            return encode_json(
                 {"error": f"No converter for {key}", "available": available}
-            ).decode()
+            ).decode("utf-8")
 
         try:
             input_data: Any = data
@@ -465,20 +466,20 @@ def _register_convert_tools(mcp: Any) -> None:
             if isinstance(result, bytes):
                 import base64
 
-                return orjson.dumps(
+                return encode_json(
                     {
                         "format": to_format,
                         "encoding": "base64",
-                        "data": base64.b64encode(result).decode(),
+                        "data": base64.b64encode(result).decode("utf-8"),
                     }
-                ).decode()
+                ).decode("utf-8")
 
             if isinstance(result, str):
                 return result
 
-            return orjson.dumps(result, default=str).decode()
+            return encode_json(result).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
     @mcp.tool(
         name="convert_list_formats",
@@ -487,7 +488,7 @@ def _register_convert_tools(mcp: Any) -> None:
     async def convert_list_formats() -> str:
         from src.backend.dsl.engine.processors.converters import _STRATEGIES
 
-        return orjson.dumps(list(_STRATEGIES.keys())).decode()
+        return encode_json(list(_STRATEGIES.keys())).decode("utf-8")
 
 
 # ── System/Monitoring Tools ──
@@ -509,10 +510,10 @@ def _register_system_tools(mcp: Any) -> None:
                 ActionCommandSchema(action="tech.check_all_services", payload={})
             )
             if hasattr(result, "model_dump"):
-                return orjson.dumps(result.model_dump(mode="json")).decode()
-            return orjson.dumps(result, default=str).decode()
+                return encode_json(result.model_dump(mode="json")).decode("utf-8")
+            return encode_json(result).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
     @mcp.tool(
         name="system_actions",
@@ -528,7 +529,7 @@ def _register_system_tools(mcp: Any) -> None:
             domain = action.split(".")[0] if "." in action else "other"
             domains.setdefault(domain, []).append(action)
 
-        return orjson.dumps({"total": len(actions), "domains": domains}).decode()
+        return encode_json({"total": len(actions), "domains": domains}).decode("utf-8")
 
     @mcp.tool(
         name="system_processors",
@@ -553,7 +554,7 @@ def _register_system_tools(mcp: Any) -> None:
                 result.append({"name": name, "description": doc})
 
         result.sort(key=lambda x: x["name"])
-        return orjson.dumps(result).decode()
+        return encode_json(result).decode("utf-8")
 
     @mcp.tool(
         name="system_feature_flags",
@@ -563,7 +564,7 @@ def _register_system_tools(mcp: Any) -> None:
     async def system_feature_flags() -> str:
         from src.backend.core.state.runtime import disabled_feature_flags
 
-        return orjson.dumps({"disabled_flags": list(disabled_feature_flags)}).decode()
+        return encode_json({"disabled_flags": list(disabled_feature_flags)}).decode("utf-8")
 
 
 # ── YAML Pipeline Tools ──
@@ -583,11 +584,11 @@ def _register_yaml_tools(mcp: Any) -> None:
         try:
             import yaml
         except ImportError:
-            return orjson.dumps({"error": "PyYAML not installed"}).decode()
+            return encode_json({"error": "PyYAML not installed"}).decode("utf-8")
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
-            return orjson.dumps({"error": f"Route '{route_id}' not found"}).decode()
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
 
         spec = {
             "route_id": pipeline.route_id,
@@ -612,20 +613,20 @@ def _register_yaml_tools(mcp: Any) -> None:
         try:
             from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
         except ImportError:
-            return orjson.dumps({"error": "yaml_loader not available"}).decode()
+            return encode_json({"error": "yaml_loader not available"}).decode("utf-8")
 
         try:
             pipeline = load_pipeline_from_yaml(yaml_str)
             route_registry.register(pipeline)
-            return orjson.dumps(
+            return encode_json(
                 {
                     "status": "registered",
                     "route_id": pipeline.route_id,
                     "processors": len(pipeline.processors),
                 }
-            ).decode()
+            ).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
     @mcp.tool(
         name="route_metrics",
@@ -639,10 +640,10 @@ def _register_yaml_tools(mcp: Any) -> None:
             tracker = get_slo_tracker_provider()
             report = tracker.get_report()
             if route_id:
-                return orjson.dumps({route_id: report.get(route_id, {})}).decode()
-            return orjson.dumps(report).decode()
+                return encode_json({route_id: report.get(route_id, {})}).decode("utf-8")
+            return encode_json(report).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")
 
 
 # ── Document Tools (Sprint S5 — markitdown integration) ──
@@ -676,14 +677,14 @@ def _register_document_tools(mcp: Any) -> None:
         try:
             target = _Path(path)
             if not target.exists():
-                return orjson.dumps({"error": f"File not found: {path}"}).decode()
+                return encode_json({"error": f"File not found: {path}"}).decode("utf-8")
 
             wm = AIWorkspaceManager(root=ai_workspace_settings.workspace_root)
             facade = AIFsFacade(
                 workspace_manager=wm, capability_check=None, plugin="mcp"
             )
             text, meta = await facade.read_as_markdown(target, mime=mime)
-            return orjson.dumps(
+            return encode_json(
                 {
                     "markdown": text,
                     "engine": meta.get("engine"),
@@ -692,6 +693,6 @@ def _register_document_tools(mcp: Any) -> None:
                     "warnings": list(meta.get("warnings") or []),
                     "filename": meta.get("filename"),
                 }
-            ).decode()
+            ).decode("utf-8")
         except Exception as exc:
-            return orjson.dumps({"error": str(exc)}).decode()
+            return encode_json({"error": str(exc)}).decode("utf-8")

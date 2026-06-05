@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json
+
 if TYPE_CHECKING:
     import grpc
 
@@ -109,9 +111,9 @@ class BaseGRPCServicer:
         if result is None:
             return "{}"
         if hasattr(result, "model_dump"):
-            return orjson.dumps(result.model_dump(mode="json")).decode()
+            return encode_json(result.model_dump(mode="json")).decode("utf-8")
         if isinstance(result, (dict, list)):
-            return orjson.dumps(result).decode()
+            return encode_json(result).decode("utf-8")
         return str(result)
 
 
@@ -314,8 +316,13 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         result_json = ""
         if response.result is not None:
             try:
-                result_json = orjson.dumps(response.result, default=str).decode()
-            except (TypeError, ValueError):
+                if hasattr(response.result, "model_dump"):
+                    result_json = encode_json(
+                        response.result.model_dump(mode="json")
+                    ).decode("utf-8")
+                else:
+                    result_json = encode_json(response.result).decode("utf-8")
+            except Exception:
                 result_json = str(response.result)
 
         return InvokerInvokeResponse(
