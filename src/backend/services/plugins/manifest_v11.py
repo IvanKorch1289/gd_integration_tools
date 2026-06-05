@@ -19,9 +19,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.backend.core.security.capabilities import CapabilityRef
+from src.backend.core.security.capabilities import (
+    DEFAULT_CAPABILITY_CATALOG,
+    CapabilityRef,
+)
 
 __all__ = (
     "PluginCompatibility",
@@ -29,6 +32,7 @@ __all__ = (
     "PluginManifestV11",
     "PluginProvides",
     "PluginSandbox",
+    "PluginTenantDecl",
     "load_plugin_manifest",
 )
 
@@ -140,6 +144,47 @@ class PluginSandbox(BaseModel):
     allow_imports: tuple[str, ...] = ()
 
 
+class PluginTenantDecl(BaseModel):
+    """V15 GAP Gap 4 (Sprint 36) — декларация tenant-aware capabilities.
+
+    Минимальный slice: перечисляет **только имена** capabilities, которые
+    плагин регистрирует для конкретного tenant'а. ``scope`` в этой
+    версии НЕ поддерживается (см. Open Question Q1 в KIMI-плане
+    ``/tmp/kimi-gap4-plan.md``) — будет добавлен в следующем slice как
+    inline-таблица ``[[tenants.capabilities]] name=… scope=…``.
+
+    Используется :class:`PluginLoaderV11` для вызова
+    :meth:`CapabilityGate.declare_tenant` после парсинга манифеста.
+    Валидация против :data:`DEFAULT_CAPABILITY_CATALOG` гарантирует, что
+    в манифесте не появятся имена, отсутствующие в vocabulary (fail-fast
+    при load, а не при первом runtime-обращении).
+
+    Attributes:
+        name: Tenant id (например, ``"tenant_a"`` или
+            :data:`SYSTEM_TENANT_ID`).
+        capabilities: Имена capabilities (только ``<resource>.<verb>``,
+            без scope).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str = Field(min_length=1)
+    capabilities: tuple[str, ...] = ()
+
+    @field_validator("capabilities")
+    @classmethod
+    def _validate_grammar(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        """Проверяет грамматику ``<resource>.<verb>`` для каждого имени.
+
+        Используем :class:`CapabilityRef` как parse-tool, чтобы
+        переиспользовать ту же логику валидации грамматики, что и для
+        :attr:`PluginManifestV11.capabilities`.
+        """
+        for cap_name in value:
+            CapabilityRef(name=cap_name)  # raises ValueError при плохой грамматике
+        return value
+
+
 class PluginManifestV11(BaseModel):
     """Манифест плагина V11 (``extensions/<name>/plugin.toml``).
 
@@ -190,6 +235,20 @@ class PluginManifestV11(BaseModel):
     Default = ``"B"`` (secure-by-default): новые плагины без явной
     декларации рассматриваются как untrusted.
     """
+    tenants: tuple[PluginTenantDecl, ...] = ()
+    """V15 GAP Gap 4 (Sprint 36) — декларативные tenant-aware capabilities.
+
+    Каждый :class:`PluginTenantDecl` указывает, какие capabilities плагин
+    регистрирует для конкретного tenant'а. :class:`PluginLoaderV11`
+    итерирует этот список после :meth:`CapabilityGate.declare` и для
+    каждого имени вызывает :meth:`CapabilityGate.declare_tenant` с
+    ``scope=None``.
+
+    Backward compat (KIMI Q2): пустой ``tenants`` + ``tenant_aware=false``
+    — поведение pre-sprint-36 (system tenant), warning не эмитится.
+    Пустой ``tenants`` + ``tenant_aware=true`` — warning в loader
+    (см. :meth:`PluginLoaderV11._load_one`).
+    """
 
     @field_validator("requires_core")
     @classmethod
@@ -200,6 +259,30 @@ class PluginManifestV11(BaseModel):
         except InvalidSpecifier as exc:
             raise ValueError(f"Invalid requires_core spec: {value!r}") from exc
         return value
+
+    @model_validator(mode="after")
+    def _validate_tenants_against_catalog(self) -> PluginManifestV11:
+        """V15 GAP Gap 4: проверить ``tenants.capabilities`` против каталога.
+
+        Если секция ``[[tenants]]`` присутствует (т.е. ``self.tenants``
+        непуст), каждое имя в :attr:`PluginTenantDecl.capabilities`
+        должно присутствовать в :data:`DEFAULT_CAPABILITY_CATALOG`.
+
+        NB: грамматика (``<resource>.<verb>``) уже валидируется в
+        :class:`PluginTenantDecl` через :class:`CapabilityRef`-parse;
+        здесь — **vocabulary** check (защита от опечаток вроде
+        ``mq.publsh`` — грамматика ОК, но имени нет в catalog).
+        Пустая секция — backward compat (warning в loader, не здесь).
+        """
+        for tenant_decl in self.tenants:
+            for cap_name in tenant_decl.capabilities:
+                if cap_name not in DEFAULT_CAPABILITY_CATALOG:
+                    raise ValueError(
+                        f"Plugin {self.name!r}: tenant {tenant_decl.name!r} "
+                        f"declares unknown capability {cap_name!r}; "
+                        f"allowed: {sorted(DEFAULT_CAPABILITY_CATALOG)}"
+                    )
+        return self
 
     def is_compatible_with_core(self, core_version: str) -> bool:
         """Совместим ли плагин с заданной версией ядра."""

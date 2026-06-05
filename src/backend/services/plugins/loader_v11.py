@@ -34,7 +34,11 @@ from src.backend.core.plugin_runtime.dependency_resolver import (
     PluginDependencyCycleError,
     PluginGraphResolver,
 )
-from src.backend.core.security.capabilities import CapabilityError, CapabilityGate
+from src.backend.core.security.capabilities import (
+    CapabilityError,
+    CapabilityGate,
+    CapabilityRef,
+)
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,
@@ -93,6 +97,10 @@ class LoadedPluginV11:
             payload["tenant_aware"] = self.manifest.tenant_aware
             payload["description"] = self.manifest.description
             payload["capabilities"] = [str(c) for c in self.manifest.capabilities]
+            payload["tenants"] = [
+                {"name": t.name, "capabilities": list(t.capabilities)}
+                for t in self.manifest.tenants
+            ]
             payload["provides"] = {
                 "actions": list(self.manifest.provides.actions),
                 "repositories": list(self.manifest.provides.repositories),
@@ -458,6 +466,68 @@ class PluginLoaderV11:
                 reason=f"capability_error: {exc}",
             )
             return
+
+        # V15 GAP Gap 4: tenant-aware declarations (после declare, до import).
+        # Backward compat (KIMI Q2): пустой tenants + tenant_aware=false —
+        # silent fallback к system tenant (pre-sprint-36 поведение).
+        # Пустой tenants + tenant_aware=true → warning (вероятно misconfig).
+        #
+        # Slice 1 caveat (KIMI risk §"CapabilityRef requires scope"): все
+        # capabilities в :data:`DEFAULT_CAPABILITY_CATALOG` имеют
+        # ``scope_required=True``, поэтому ``declare_tenant(scope=None)``
+        # упадёт в :meth:`CapabilityVocabulary.validate_ref`. По плану
+        # slice 1 это **ожидаемая** ситуация: scope для ``[[tenants]]``
+        # ещё не реализован (следующий slice). Поэтому для таких
+        # capabilities — warning + skip (НЕ fail). Плагин всё равно
+        # грузится, runtime API :meth:`CapabilityGate.declare_tenant`
+        # остаётся доступным для scope-aware регистрации.
+        if not manifest.tenants and manifest.tenant_aware:
+            _logger.warning(
+                "Plugin %s is tenant_aware=true but has no [[tenants]] section; "
+                "falling back to system tenant",
+                manifest.name,
+            )
+        for tenant_decl in manifest.tenants:
+            for cap_name in tenant_decl.capabilities:
+                cap_ref = CapabilityRef(name=cap_name)  # scope=None в slice 1
+                try:
+                    self._gate.declare_tenant(
+                        cap_ref, tenant=tenant_decl.name, principal=manifest.name
+                    )
+                except ValueError as exc:
+                    # Slice 1 limitation: ``scope_required=True`` capabilities
+                    # не могут быть задекларированы без scope. Warn + continue
+                    # (плагин грузится, но tenant-таблица остаётся пустой).
+                    _logger.warning(
+                        "Plugin %s tenant capability %r skipped: %s "
+                        "(slice 1 supports only capabilities with "
+                        "scope_required=False; declare via "
+                        "CapabilityGate.declare_tenant at runtime)",
+                        manifest.name,
+                        cap_name,
+                        exc,
+                    )
+                except CapabilityError as exc:
+                    # Hard fail: capability отсутствует в vocabulary или
+                    # уже задекларирована. Schema-валидация должна была
+                    # поймать unknown cap, но оставляем safety net.
+                    _logger.warning(
+                        "Plugin %s tenant capability allocation failed "
+                        "(tenant=%s, capability=%s): %s",
+                        manifest.name,
+                        tenant_decl.name,
+                        cap_name,
+                        exc,
+                    )
+                    self._loaded[manifest.name] = LoadedPluginV11(
+                        name=manifest.name,
+                        version=manifest.version,
+                        manifest_path=manifest_path,
+                        manifest=manifest,
+                        status="failed",
+                        reason=f"tenant_capability_error: {exc}",
+                    )
+                    return
 
         # Import + instantiate + lifecycle
         try:

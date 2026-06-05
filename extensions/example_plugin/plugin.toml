@@ -32,8 +32,30 @@ scope = "example.events.*"
 #
 # Для другого tenant'а тот же вызов вернёт ``False`` (если не задекларировано).
 #
-# NB: ``[[tenants]]`` секция в манифесте — это roadmap (auto-discovery capabilities
-# по AST скану plugin.py), в текущем slice — runtime-only.
+# ─── V15 GAP Gap 4 (Sprint 36, Subagent A): декларативный [[tenants]] ─
+# Slice 1 поддерживает только имена capabilities в ``[[tenants]]`` (без
+# ``scope`` — следующий slice). Пример формата (раскомментируйте
+# блок ниже и установите ``tenant_aware = true`` для активации):
+#
+#   tenant_aware = true
+#
+#   [[tenants]]
+#   name = "tenant_a"
+#   capabilities = ["mq.publish", "db.read"]
+#
+#   [[tenants]]
+#   name = "tenant_b"
+#   capabilities = ["mq.publish"]
+#
+# После ``PluginLoaderV11._load_one`` плагин получит:
+#   gate.check_tenant("mq.publish", "tenant_a", "example_plugin", None) is True
+#   gate.check_tenant("db.read",    "tenant_b", "example_plugin", None) is False
+#   gate.check_tenant("mq.publish", "tenant_c", "example_plugin", None) is False
+#
+# NB: scope=None в slice 1 → работает только для capabilities, у которых
+# ``scope_required=False`` в vocabulary (например, mq.* / net.* / fs.* без
+# обязательного scope). Для ``db.*`` / ``secrets.*`` используйте
+# :meth:`CapabilityGate.declare_tenant` напрямую с явным scope.
 
 # ─── DSL call_function whitelist (K-ARCH-5, S17) ──────────────────
 # NOTE: call_function_modules was removed from manifest schema (ADR-042).

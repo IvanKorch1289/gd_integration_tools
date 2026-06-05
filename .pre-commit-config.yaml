@@ -49,3 +49,10 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
+
+      # TODO (V15 GAP Gap 4 follow-up): добавить hook `discover-plugin-caps`,
+      # который будет рекомендовать (НЕ блокировать) capabilities для
+      # `extensions/*/plugin.py` через `tools/discover_plugin_capabilities.py`.
+      # Планируемая команда: `uv run python tools/discover_plugin_capabilities.py
+      # extensions/<changed_plugin>` на pre-push. Сейчас не реализовано —
+      # ждём стабилизации формата вывода и интеграции с plugin.toml.
