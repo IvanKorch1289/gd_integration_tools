@@ -186,3 +186,6 @@ docs/api/_build/
 # sphinx-autoapi intermediate + build output (Sprint 39 W4)
 docs/api/autoapi/
 docs/api/_build/
+
+# Sprint 40 working files
+coverage-sprint40.json
