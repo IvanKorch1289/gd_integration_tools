@@ -37,6 +37,11 @@ from src.backend.core.security.capabilities.policy import (
     CapabilityRule,
     PolicyDecision,
 )
+from src.backend.core.security.capabilities.tenant import (
+    SYSTEM_TENANT_ID,
+    CapabilityTenant,
+    TenantContext,
+)
 from src.backend.core.security.capabilities.vocabulary import (
     CapabilityDef,
     CapabilityVocabulary,
@@ -58,12 +63,15 @@ __all__ = (
     "CapabilityRef",
     "CapabilityRule",
     "CapabilitySupersetError",
+    "CapabilityTenant",
     "CapabilityVocabulary",
     "ExactAliasMatcher",
     "GlobScopeMatcher",
     "PolicyDecision",
+    "SYSTEM_TENANT_ID",
     "ScopeMatcher",
     "SegmentedGlobMatcher",
+    "TenantContext",
     "URISchemeMatcher",
     "build_default_vocabulary",
     "check_capabilities_subset",

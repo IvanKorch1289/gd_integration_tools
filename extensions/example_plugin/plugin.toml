@@ -16,6 +16,25 @@ trust_tier = "A"
 name = "mq.publish"
 scope = "example.events.*"
 
+# ─── Tenant-aware demo (Sprint 36 V15 GAP, Subagent C) ────────────
+# Этот плагин — ``tenant_aware = false``, поэтому tenant scoping не применяется
+# по умолчанию. Чтобы включить tenant-aware demo, установите ``tenant_aware = true``
+# и зарегистрируйте capabilities для конкретных tenant'ов через
+# :meth:`CapabilityGate.declare_tenant` (runtime), либо через admin-UI.
+#
+# Пример multi-tenant сценария:
+#   gate.declare_tenant(
+#       CapabilityRef(name="mq.publish", scope="example.events.*"),
+#       tenant="tenant_a",
+#       principal="example_plugin",
+#   )
+#   gate.check_tenant("mq.publish", "tenant_a", "example_plugin", "example.events.order_created") is True
+#
+# Для другого tenant'а тот же вызов вернёт ``False`` (если не задекларировано).
+#
+# NB: ``[[tenants]]`` секция в манифесте — это roadmap (auto-discovery capabilities
+# по AST скану plugin.py), в текущем slice — runtime-only.
+
 # ─── DSL call_function whitelist (K-ARCH-5, S17) ──────────────────
 # NOTE: call_function_modules was removed from manifest schema (ADR-042).
 # In strict mode (ENVIRONMENT=production or call_function_whitelist_strict=True),

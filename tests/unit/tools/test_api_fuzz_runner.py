@@ -10,8 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 API_FUZZ_PATH = Path("tools/api_fuzz_runner.py")
 ALLOWLIST_PATH = Path("tools/checks/schemathesis_allowlist.json")
 
