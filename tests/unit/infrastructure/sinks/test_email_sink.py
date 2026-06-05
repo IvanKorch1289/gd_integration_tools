@@ -7,12 +7,11 @@ from __future__ import annotations
 import sys
 import types
 from email.message import EmailMessage
-from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.core.interfaces.sink import SinkKind, SinkResult
+from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.email_sink import EmailSink
 
 

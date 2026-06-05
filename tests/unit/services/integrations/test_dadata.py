@@ -9,7 +9,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.backend.services.integrations.dadata import APIDADATAService, get_dadata_service
+from src.backend.services.integrations.dadata import (
+    APIDADATAService,
+    get_dadata_service,
+)
 
 
 @pytest.fixture(autouse=True)

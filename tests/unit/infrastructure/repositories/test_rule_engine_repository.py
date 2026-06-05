@@ -17,10 +17,7 @@ pytest.importorskip("aiosqlite")
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.backend.core.interfaces.rule_engine import RulesetDoc
-from src.backend.infrastructure.database.models.rule_engine import (
-    RuleEngineBase,
-    RuleEngineRulesetORM,
-)
+from src.backend.infrastructure.database.models.rule_engine import RuleEngineBase
 from src.backend.infrastructure.repositories.rule_engine_repository import (
     SQLRuleEngineRepository,
 )

@@ -47,13 +47,12 @@ async def test_register_single_tool_passes_native_input_schema() -> None:
     from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.entrypoints.mcp.mcp_server import _register_single_tool
 
-    metadata_cls = type(action_handler_registry.get_metadata)
+    type(action_handler_registry.get_metadata)
     captured_action = "demo.action"
 
     class _FakeMeta:
         input_model = _DemoModel
 
-    from src.backend.entrypoints.mcp import mcp_server
 
     original_get_metadata = action_handler_registry.get_metadata
     action_handler_registry.get_metadata = lambda name: (  # type: ignore[assignment]

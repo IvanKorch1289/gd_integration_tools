@@ -23,18 +23,24 @@ def test_listener_registers_handlers(mock_engine: MagicMock) -> None:
         assert mock_listen.call_count == 3
 
 
-def test_before_cursor_execute_sets_start_time(mock_engine: MagicMock) -> None:
-    listener = DatabaseListener(mock_engine, "test_db", 0.5)
+def test_before_cursor_execute_sets_start_time() -> None:
+    captured = {}
+
+    def fake_listens_for(target, identifier):
+        def decorator(fn):
+            captured[identifier] = fn
+            return fn
+        return decorator
+
+    with patch("src.backend.infrastructure.database.listeners.event.listens_for", fake_listens_for):
+        DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 0.5)
+
     context = SimpleNamespace()
-    handler = mock_engine.sync_engine.mock_calls[0][2]["before_cursor_execute"]
-    # Actually listens_for registers a decorator; we test the handler indirectly via
-    # the engine event simulation below using the raw function captured by listens_for.
-    # Simpler: patch listens_for to capture the decorated functions.
+    captured["before_cursor_execute"](None, None, "SELECT 1", (), context, False)
+    assert hasattr(context, "_query_start_time")
 
 
-def test_after_cursor_execute_logs_slow_query(caplog: pytest.LogCaptureFixture) -> None:
-    from unittest.mock import MagicMock, patch
-
+def test_after_cursor_execute_logs_slow_query() -> None:
     captured = {}
 
     def fake_listens_for(target, identifier):
@@ -47,12 +53,13 @@ def test_after_cursor_execute_logs_slow_query(caplog: pytest.LogCaptureFixture) 
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 0.1)
 
     context = SimpleNamespace(_query_start_time=0.0)
-    with caplog.at_level("WARNING"):
+    with patch.object(listener.logger, "warning") as mock_warning:
         captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
-    assert "Slow SQL query detected" in caplog.text
+    mock_warning.assert_called_once()
+    assert "Slow SQL query detected" in mock_warning.call_args[0][0]
 
 
-def test_after_cursor_execute_logs_debug(caplog: pytest.LogCaptureFixture) -> None:
+def test_after_cursor_execute_logs_debug() -> None:
     captured = {}
 
     def fake_listens_for(target, identifier):
@@ -65,12 +72,13 @@ def test_after_cursor_execute_logs_debug(caplog: pytest.LogCaptureFixture) -> No
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 10.0)
 
     context = SimpleNamespace(_query_start_time=0.0)
-    with caplog.at_level("DEBUG"):
+    with patch.object(listener.logger, "debug") as mock_debug:
         captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
-    assert "SQL query executed" in caplog.text
+    mock_debug.assert_called_once()
+    assert "SQL query executed" in mock_debug.call_args[0][0]
 
 
-def test_handle_error_logs_exception(caplog: pytest.LogCaptureFixture) -> None:
+def test_handle_error_logs_exception() -> None:
     captured = {}
 
     def fake_listens_for(target, identifier):
@@ -87,6 +95,7 @@ def test_handle_error_logs_exception(caplog: pytest.LogCaptureFixture) -> None:
         statement="SELECT * FROM users",
         original_exception=RuntimeError("boom"),
     )
-    with caplog.at_level("ERROR"):
+    with patch.object(listener.logger, "error") as mock_error:
         captured["handle_error"](exc_ctx)
-    assert "Database driver error" in caplog.text
+    mock_error.assert_called_once()
+    assert "Database driver error" in mock_error.call_args[0][0]

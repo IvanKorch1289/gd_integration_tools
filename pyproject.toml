@@ -54,7 +54,7 @@ dependencies = [
     "tenacity>=9.0.0,<10.0.0",
     "asyncpg>=0.31.0,<1.0.0",
     "orjson>=3.11.8,<4.0.0",
-    "diskcache>=5.6.4,<6.0.0",
+    "diskcache>=5.6.3,<6.0.0",  # SECURITY 2026-06-05: NO FIX for CVE-2025-69872; project mitigates via JSONDisk (см. .github/workflows/security.yml, S30)
     "strawberry-graphql[fastapi]>=0.262.0",
     "jmespath>=1.0.1,<2.0.0",
     "beautifulsoup4>=4.12.3,<5.0.0",
@@ -816,7 +816,7 @@ ignore = [
 "src/backend/infrastructure/database/pool_monitor.py" = ["E402"]
 "src/backend/infrastructure/security/api_key_manager.py" = ["E402"]
 # Tests: BLE001 intentional (fail-soft), S101/S105/S106/S311 pytest convention.
-"tests/**/*.py" = ["S101", "S105", "S106", "S311", "BLE001"]
+"tests/**/*.py" = ["S101", "S105", "S106", "S311", "BLE001", "S108", "S110"]
 # testkit импортирует heavy-deps lazy внутри функций — допускается S404/S603.
 "testkit/**/*.py" = ["S101", "F401", "F811", "S106", "S105", "S311", "BLE001"]
 # src/testkit mirrors testkit/ patterns (mock fixtures).

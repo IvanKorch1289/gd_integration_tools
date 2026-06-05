@@ -27,7 +27,6 @@ from src.backend.services.audit.clickhouse_audit_service import (
     get_audit_service,
 )
 
-
 # ─── Фикстура базового события ──────────────────────────────────────────────
 
 

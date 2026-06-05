@@ -15,7 +15,6 @@ W11 GAP-AI: v2 удалён, тесты обновлены на v3.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest

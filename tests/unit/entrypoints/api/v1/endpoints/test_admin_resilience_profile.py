@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException, status
 
-from src.backend.entrypoints.api.v1.endpoints import admin_resilience_profile as mod
 from src.backend.core.resilience.resilience_profile import (
     BulkheadPolicy,
     CircuitBreakerPolicy,
@@ -16,6 +14,7 @@ from src.backend.core.resilience.resilience_profile import (
     ResilienceProfile,
     RetryPolicySpec,
 )
+from src.backend.entrypoints.api.v1.endpoints import admin_resilience_profile as mod
 
 
 @pytest.fixture

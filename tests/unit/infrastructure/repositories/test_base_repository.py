@@ -16,7 +16,7 @@ import pytest
 import pytest_asyncio
 from fastapi_pagination import Params
 from sqlalchemy import String
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, configure_mappers, mapped_column
 
 pytest.importorskip("aiosqlite")

@@ -19,7 +19,6 @@ import pytest
 
 from src.backend.services.ai.rag.multi_query_retriever import (
     MultiQueryConfig,
-    MultiQueryResult,
     MultiQueryRetriever,
 )
 

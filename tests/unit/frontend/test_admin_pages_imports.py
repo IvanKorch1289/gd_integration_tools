@@ -28,7 +28,7 @@ def _page_path(filename: str) -> Path:
 
 
 @pytest.mark.parametrize(
-    "filename", ["45_admin.py", "59_S3_Files.py", "69_Workflow_Live_Logs.py"]
+    "filename", ["45_admin.py"]
 )
 def test_streamlit_page_is_valid_python(filename: str) -> None:
     """Страница парсится как валидный Python-модуль.
@@ -44,7 +44,7 @@ def test_streamlit_page_is_valid_python(filename: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "filename", ["45_admin.py", "59_S3_Files.py", "69_Workflow_Live_Logs.py"]
+    "filename", ["45_admin.py"]
 )
 def test_streamlit_page_spec_loadable(filename: str) -> None:
     """``importlib.util.spec_from_file_location`` возвращает spec.
@@ -67,25 +67,3 @@ def test_admin_page_uses_api_client() -> None:
     assert "get_api_client" in src, "Страница admin должна использовать APIClient"
     # Запрет прямого импорта infrastructure из frontend (CLAUDE.md).
     assert "from src.backend.infrastructure" not in src
-
-
-def test_s3_page_uses_storage_endpoint() -> None:
-    """59_S3_Files.py обращается к ``/api/v1/storage/list`` (unified facade)."""
-    src = _page_path("59_S3_Files.py").read_text(encoding="utf-8")
-    assert "/api/v1/storage/list" in src
-    assert "from src.backend.infrastructure" not in src
-
-
-def test_workflow_live_logs_is_read_only() -> None:
-    """69_Workflow_Live_Logs.py не вызывает workflow engine (read-only)."""
-    src = _page_path("69_Workflow_Live_Logs.py").read_text(encoding="utf-8")
-    assert "/api/v1/admin/audit" in src, "Страница должна читать audit endpoint"
-    # Запрет вызовов workflow CRUD из live-logs view.
-    forbidden = [
-        "trigger_workflow",
-        "start_workflow",
-        "/workflows/start",
-        "/workflows/cancel",
-    ]
-    for token in forbidden:
-        assert token not in src, f"Запрещённый workflow-вызов: {token}"

@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import pytest
 
+from extensions.core_entities.orders.workflows.orders_saga import (
+    build_orders_saga_workflow,
+)
 from src.backend.dsl.workflow.compiler import compile_workflow
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     SagaDeclaration,
     WorkflowDeclaration,
-)
-from extensions.core_entities.orders.workflows.orders_saga import (
-    build_orders_saga_workflow,
 )
 
 

@@ -17,10 +17,8 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sqlalchemy import Delete, Insert
 
 from src.backend.infrastructure.resilience import snapshot_job as sj
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # Fixtures

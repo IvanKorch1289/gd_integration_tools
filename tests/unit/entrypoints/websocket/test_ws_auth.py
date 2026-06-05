@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.backend.entrypoints.websocket.ws_auth import (
-    WSAuthError,
     WSAuthenticator,
+    WSAuthError,
     WSSession,
     get_ws_authenticator,
 )

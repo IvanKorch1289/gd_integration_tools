@@ -4,17 +4,13 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.entrypoints.api.v1.endpoints import (
-    admin_feedback as feedback_mod,
-    admin_rag as rag_mod,
-    asyncapi as asyncapi_mod,
-)
-
+from src.backend.entrypoints.api.v1.endpoints import admin_feedback as feedback_mod
+from src.backend.entrypoints.api.v1.endpoints import admin_rag as rag_mod
+from src.backend.entrypoints.api.v1.endpoints import asyncapi as asyncapi_mod
 
 # ─── admin_feedback ─────────────────────────────────────────────────────────
 

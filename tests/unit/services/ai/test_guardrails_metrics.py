@@ -6,8 +6,8 @@ import pytest
 
 from src.backend.services.ai.guardrails_metrics import (
     GuardrailReason,
-    GuardrailVerdict,
     GuardrailsMetricsService,
+    GuardrailVerdict,
 )
 
 

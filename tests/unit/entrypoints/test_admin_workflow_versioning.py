@@ -8,11 +8,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.backend.dsl.workflow.versioning import (
-    WorkflowVersion,
-    WorkflowVersionRegistry,
-    get_global_registry,
-)
+from src.backend.dsl.workflow.versioning import WorkflowVersion, get_global_registry
 from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import router
 
 

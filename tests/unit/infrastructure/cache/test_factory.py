@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+import sys
 
 import pytest
 
@@ -47,9 +47,7 @@ def test_create_keydb_backend(fake_redis_client: None) -> None:
 def test_create_memcached_backend_raises_without_aiomcache(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setitem(
-        "sys.modules", "aiomcache", None
-    )
+    monkeypatch.setitem(sys.modules, "aiomcache", None)
     settings = CacheSettings(backend="memcached")
     with pytest.raises(RuntimeError, match="aiomcache"):
         create_cache_backend(settings)

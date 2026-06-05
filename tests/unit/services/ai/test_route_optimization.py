@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.services.ai.optimization.pr_generator import PRGenerator
 from src.backend.services.ai.optimization.route_analyzer import (
     OptimizationRecommendation,

@@ -9,7 +9,6 @@ import pytest
 
 from src.backend.core.interfaces.action_dispatcher import (
     ActionCommandSchema,
-    ActionError,
     ActionResult,
     DispatchContext,
 )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -289,8 +288,8 @@ class TestOtelMiddleware:
         exc = RuntimeError("fail")
 
         with (
-            patch("opentelemetry.trace.Status") as mock_status,
-            patch("opentelemetry.trace.StatusCode") as mock_status_code,
+            patch("opentelemetry.trace.Status"),
+            patch("opentelemetry.trace.StatusCode"),
         ):
             OtelMiddleware._mark_error(span, exc)
 

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.backend.infrastructure.database.rls_listener import (
-    install_rls_tenant_listener,
     _INSTALLED_ENGINES,
+    install_rls_tenant_listener,
 )
 
 
@@ -136,6 +136,6 @@ def test_after_begin_logs_error(mock_engine: MagicMock, monkeypatch: pytest.Monk
     connection = MagicMock()
     connection.dialect.name = "postgresql"
     connection.exec_driver_sql = MagicMock(side_effect=RuntimeError("pg down"))
-    with caplog.at_level("WARNING"):
+    with caplog.at_level("WARNING", logger="database"):
         captured["after_begin"](None, None, connection)
     assert "RLS SET LOCAL" in caplog.text

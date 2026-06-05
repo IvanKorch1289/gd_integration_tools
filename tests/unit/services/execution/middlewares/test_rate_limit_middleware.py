@@ -1,6 +1,7 @@
 """Tests for src.backend.services.execution.middlewares.rate_limit_middleware."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -8,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.core.interfaces.action_dispatcher import (
-    ActionError,
     ActionMetadata,
     ActionResult,
     DispatchContext,
@@ -185,7 +185,7 @@ class TestRateLimitMiddleware:
         # Identifier should fall back to "global"
         with patch.object(
             mw, "_resolve_limiter", return_value=AsyncMock()
-        ) as limiter_mock:
+        ):
             with patch.object(
                 mw,
                 "_resolve_limiter_module",

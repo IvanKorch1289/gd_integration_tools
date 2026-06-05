@@ -5,8 +5,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     apply_tenant_filter,
@@ -73,11 +71,10 @@ def test_set_tenant_on_new_sets_when_empty() -> None:
     with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
         with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value="t1"):
             apply_tenant_filter(MagicMock())
-
-    obj = SimpleNamespace(tenant_id="")
-    session = SimpleNamespace(new=[obj])
-    captured["before_flush"](session, None, None)
-    assert obj.tenant_id == "t1"
+            obj = SimpleNamespace(tenant_id="")
+            session = SimpleNamespace(new=[obj])
+            captured["before_flush"](session, None, None)
+            assert obj.tenant_id == "t1"
 
 
 def test_set_tenant_on_new_preserves_existing() -> None:
@@ -92,8 +89,7 @@ def test_set_tenant_on_new_preserves_existing() -> None:
     with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
         with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value="t1"):
             apply_tenant_filter(MagicMock())
-
-    obj = SimpleNamespace(tenant_id="existing")
-    session = SimpleNamespace(new=[obj])
-    captured["before_flush"](session, None, None)
-    assert obj.tenant_id == "existing"
+            obj = SimpleNamespace(tenant_id="existing")
+            session = SimpleNamespace(new=[obj])
+            captured["before_flush"](session, None, None)
+            assert obj.tenant_id == "existing"

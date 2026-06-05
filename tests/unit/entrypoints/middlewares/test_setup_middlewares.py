@@ -23,7 +23,7 @@ class TestBuildDefaultRegistry:
             return_value=mock_registry,
         ):
             with patch(
-                "src.backend.entrypoints.middlewares.setup_middlewares.settings",
+                "src.backend.core.config.settings.settings",
                 MagicMock(
                     secure=MagicMock(
                         cors_origins=["*"],

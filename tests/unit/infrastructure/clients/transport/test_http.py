@@ -10,7 +10,6 @@ import httpx
 import pytest
 
 from src.backend.infrastructure.clients.transport.http import (
-    BaseHttpClient,
     HttpClient,
     get_http_client,
     get_http_client_dependency,

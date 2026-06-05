@@ -12,14 +12,14 @@ from __future__ import annotations
 
 import pytest
 
+from extensions.credit_pipeline.workflows.payments_saga import (
+    build_payments_saga_workflow,
+)
 from src.backend.dsl.workflow.compiler import compile_workflow
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     SagaDeclaration,
     WorkflowDeclaration,
-)
-from extensions.credit_pipeline.workflows.payments_saga import (
-    build_payments_saga_workflow,
 )
 
 

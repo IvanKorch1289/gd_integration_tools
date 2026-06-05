@@ -9,7 +9,6 @@ K1 S19 W1: Validates:
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -392,11 +391,11 @@ class TestVaultClientConfig:
     def test_default_values(self) -> None:
         """Test that default config values are correct."""
         from src.backend.infrastructure.secrets.vault_client import (
-            VaultClientConfig,
             _DEFAULT_DRIFT_TOLERANCE,
             _DEFAULT_RECONNECT_BASE_DELAY,
             _DEFAULT_RECONNECT_MAX_DELAY,
             _DEFAULT_ROTATION_INTERVAL,
+            VaultClientConfig,
         )
 
         config = VaultClientConfig()

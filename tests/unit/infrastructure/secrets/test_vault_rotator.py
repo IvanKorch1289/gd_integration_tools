@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -19,7 +18,6 @@ from src.backend.infrastructure.secrets.vault_rotator import (
     VaultSecretRotator,
     get_vault_rotator,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Вспомогательные фикстуры

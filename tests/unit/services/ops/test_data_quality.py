@@ -6,10 +6,10 @@ from __future__ import annotations
 import pytest
 
 from src.backend.services.ops.data_quality import (
+    DataQualityMonitor,
     DQCheckResult,
     DQRule,
     DQSeverity,
-    DataQualityMonitor,
     get_dq_monitor,
 )
 

@@ -10,8 +10,8 @@ import pytest
 from src.backend.entrypoints.mcp.workflow_tools import (
     _sanitize_tool_name,
     _tool_description,
-    register_workflow_tools,
     _trigger_and_maybe_wait,
+    register_workflow_tools,
 )
 from src.backend.workflows.registry import WorkflowDescriptor
 
@@ -34,7 +34,7 @@ class TestToolDescription:
 
     def test_with_description_and_tags(self) -> None:
         desc = WorkflowDescriptor(
-            name="wf1", description="Do thing", tags={"a", "b"}, route_id="r1"
+            name="wf1", description="Do thing", tags=("a", "b")
         )
         result = _tool_description(desc)
         assert "Do thing" in result
@@ -42,7 +42,7 @@ class TestToolDescription:
         assert "b" in result
 
     def test_without_description(self) -> None:
-        desc = WorkflowDescriptor(name="wf1", description="", tags=set(), route_id="r1")
+        desc = WorkflowDescriptor(name="wf1", description="", tags=())
         result = _tool_description(desc)
         assert "wf1" in result
 
@@ -52,7 +52,7 @@ class TestRegisterWorkflowTools:
 
     def test_registers_tools(self) -> None:
         mock_mcp = MagicMock()
-        desc = WorkflowDescriptor(name="wf1", description="", tags=set(), route_id="r1")
+        desc = WorkflowDescriptor(name="wf1", description="", tags=())
         with patch(
             "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.list_all",
             return_value=[desc],
@@ -66,7 +66,7 @@ class TestRegisterWorkflowTools:
 
     def test_skips_missing_route_id(self) -> None:
         mock_mcp = MagicMock()
-        desc = WorkflowDescriptor(name="wf1", description="", tags=set(), route_id="r1")
+        desc = WorkflowDescriptor(name="wf1", description="", tags=())
         with patch(
             "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.list_all",
             return_value=[desc],
@@ -93,15 +93,15 @@ class TestTriggerAndMaybeWait:
         mock_status.pending.value = "pending"
 
         with patch(
-            "src.backend.entrypoints.mcp.workflow_tools.get_workflow_state_store_provider",
+            "src.backend.core.di.providers.get_workflow_state_store_provider",
             return_value=mock_store_cls,
         ):
             with patch(
-                "src.backend.entrypoints.mcp.workflow_tools.get_workflow_status_enum_provider",
+                "src.backend.core.di.providers.get_workflow_status_enum_provider",
                 return_value=mock_status,
             ):
                 with patch(
-                    "src.backend.entrypoints.mcp.workflow_tools.action_handler_registry.is_registered",
+                    "src.backend.dsl.commands.registry.action_handler_registry.is_registered",
                     return_value=False,
                 ):
                     result = await _trigger_and_maybe_wait(
@@ -134,19 +134,19 @@ class TestTriggerAndMaybeWait:
         mock_status.cancelled = MagicMock(value="cancelled")
 
         with patch(
-            "src.backend.entrypoints.mcp.workflow_tools.get_workflow_state_store_provider",
+            "src.backend.core.di.providers.get_workflow_state_store_provider",
             return_value=mock_store_cls,
         ):
             with patch(
-                "src.backend.entrypoints.mcp.workflow_tools.get_workflow_status_enum_provider",
+                "src.backend.core.di.providers.get_workflow_status_enum_provider",
                 return_value=mock_status,
             ):
                 with patch(
-                    "src.backend.entrypoints.mcp.workflow_tools.action_handler_registry.is_registered",
+                    "src.backend.dsl.commands.registry.action_handler_registry.is_registered",
                     return_value=False,
                 ):
                     with patch(
-                        "src.backend.entrypoints.mcp.workflow_tools.asyncio.sleep",
+                        "asyncio.sleep",
                         AsyncMock(),
                     ):
                         result = await _trigger_and_maybe_wait(

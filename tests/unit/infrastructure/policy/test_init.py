@@ -4,11 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.infrastructure.policy import (
-    CasbinAdapter,
-    OPAClient,
-    PolicyDecision,
-)
+from src.backend.infrastructure.policy import CasbinAdapter, OPAClient, PolicyDecision
 from src.backend.infrastructure.policy import __all__ as policy_all
 
 

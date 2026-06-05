@@ -5,8 +5,6 @@ from __future__ import annotations
 from types import ModuleType
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.backend.entrypoints.grpc.auto_servicer import (
     AutoServicerBundle,
     _discover_services,
@@ -40,6 +38,13 @@ class TestDiscoverServices:
         fake_dir = MagicMock()
         fake_dir.exists.return_value = True
         fake_dir.iterdir.return_value = fake_paths
+
+        def _truediv(name):
+            m = MagicMock()
+            m.exists.return_value = "users" not in str(name)
+            return m
+
+        fake_dir.__truediv__ = MagicMock(side_effect=_truediv)
         with patch(
             "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR",
             new=fake_dir,

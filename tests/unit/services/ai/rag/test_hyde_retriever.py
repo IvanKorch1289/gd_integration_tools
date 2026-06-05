@@ -16,11 +16,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.services.ai.rag.hyde_retriever import (
-    HyDEConfig,
-    HyDEResult,
-    HyDERetriever,
-)
+from src.backend.services.ai.rag.hyde_retriever import HyDEConfig, HyDERetriever
 
 
 @pytest.mark.asyncio

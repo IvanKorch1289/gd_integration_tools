@@ -6,7 +6,9 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.backend.infrastructure.resilience.profile_store_memory import InMemoryResilienceProfileStore
+from src.backend.infrastructure.resilience.profile_store_memory import (
+    InMemoryResilienceProfileStore,
+)
 
 
 @dataclass

@@ -10,7 +10,6 @@ import pytest
 from src.backend.services.ai.agents.checkpoint_inspector import (
     CheckpointInspector,
     CheckpointSnapshot,
-    SessionInfo,
 )
 
 

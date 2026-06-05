@@ -100,11 +100,11 @@ def test_bge_reranker_used_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None
 @pytest.mark.unit
 def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """ImportError FlagEmbedding → token-overlap + counter inc."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
@@ -145,11 +145,11 @@ def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> N
 @pytest.mark.unit
 def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """FlagReranker.compute_score raises (CUDA OOM) → fallback + counter inc."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
@@ -188,11 +188,11 @@ def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> 
 @pytest.mark.unit
 def test_reranker_unavailable_early_return(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает early return при _reranker_unavailable=True (line 44)."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
@@ -213,11 +213,11 @@ def test_reranker_unavailable_early_return(monkeypatch: pytest.MonkeyPatch) -> N
 @pytest.mark.unit
 def test_reranker_cache_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает reuse _reranker_cache (line 46)."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
@@ -249,10 +249,10 @@ def test_reranker_cache_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_fallback_on_bge_settings_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает except при импорте bge_settings (lines 50-52)."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     _reset_reranker_cache()
     monkeypatch.delitem(sys.modules, "src.backend.core.config.ai_2026", raising=False)
@@ -276,11 +276,11 @@ def test_fallback_on_bge_settings_import_error(monkeypatch: pytest.MonkeyPatch) 
 @pytest.mark.unit
 def test_fallback_on_flag_reranker_init_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает except при инициализации FlagReranker (lines 80-84)."""
+    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
     from src.backend.core.config import ai_2026
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
-    import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
 
     monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()

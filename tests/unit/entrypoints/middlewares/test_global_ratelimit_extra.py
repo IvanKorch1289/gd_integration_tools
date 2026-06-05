@@ -9,8 +9,8 @@ import pytest
 from src.backend.entrypoints.middlewares.global_ratelimit import (
     FakeRateLimitChecker,
     GlobalRateLimitMiddleware,
-    RedisRateLimitChecker,
     RateLimitConfig,
+    RedisRateLimitChecker,
     tenant_aware_identifier,
 )
 

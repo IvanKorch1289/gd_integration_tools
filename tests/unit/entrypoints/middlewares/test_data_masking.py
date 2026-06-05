@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from starlette.requests import Request
 from starlette.responses import Response
 
 from src.backend.entrypoints.middlewares.data_masking import (
-    DataMaskingMiddleware,
     _EMAIL_RE,
     _PHONE_RE,
+    DataMaskingMiddleware,
 )
 
 

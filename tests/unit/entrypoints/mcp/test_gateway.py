@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from src.backend.entrypoints.mcp.gateway import MCPGateway, _check_feature_flag, _resolve_auth_provider, create_mcp_gateway
+from src.backend.entrypoints.mcp.gateway import (
+    MCPGateway,
+    _check_feature_flag,
+    _resolve_auth_provider,
+    create_mcp_gateway,
+)
 
 
 class TestCheckFeatureFlag:

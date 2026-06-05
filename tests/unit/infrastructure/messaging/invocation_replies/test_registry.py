@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-from src.backend.core.interfaces.invocation_reply import InvocationReplyChannel, ReplyChannelKind
+from src.backend.core.interfaces.invocation_reply import (
+    InvocationReplyChannel,
+    ReplyChannelKind,
+)
 from src.backend.infrastructure.messaging.invocation_replies.registry import (
     ReplyChannelRegistry,
     get_reply_channel_registry,

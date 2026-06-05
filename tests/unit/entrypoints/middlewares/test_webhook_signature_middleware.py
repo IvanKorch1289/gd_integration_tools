@@ -23,7 +23,6 @@ from src.backend.entrypoints.middlewares.webhook_signature import (
 )
 from src.backend.infrastructure.security.signatures import sign_payload
 
-
 WEBHOOK_PATH = "/webhooks/stripe"
 SECRET = "supersecret_key_with_enough_entropy_aaaa"
 

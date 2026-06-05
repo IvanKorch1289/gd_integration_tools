@@ -28,7 +28,6 @@ from src.backend.entrypoints.middlewares.security_headers import (
 )
 from src.backend.entrypoints.middlewares.versioning import APIVersion
 
-
 # ─── AuthMethodHeaderMiddleware ─────────────────────────────────────────────
 
 

@@ -16,11 +16,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.services.ai.rag.docs_indexer import (
-    DocsIndexer,
-    InMemoryQdrantFallback,
-)
-
+from src.backend.services.ai.rag.docs_indexer import DocsIndexer, InMemoryQdrantFallback
 
 # ----- __init__ -----
 

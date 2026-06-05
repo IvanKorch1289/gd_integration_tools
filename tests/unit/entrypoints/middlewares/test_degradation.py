@@ -9,10 +9,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from src.backend.core.resilience.degradation import DegradationMode
-from src.backend.entrypoints.middlewares.degradation import (
-    DEGRADATION_BYPASS_PREFIXES,
-    DegradationMiddleware,
-)
+from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
 
 
 class FakeStatus:

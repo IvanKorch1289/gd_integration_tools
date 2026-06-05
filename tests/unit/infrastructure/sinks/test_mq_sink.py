@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import sys
 import types
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -75,7 +74,7 @@ async def test_send_redis_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.asyncio
 async def test_send_nats_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    fake_broker = _install_fake_broker(monkeypatch, "nats")
+    _install_fake_broker(monkeypatch, "nats")
     sink = MqSink(sink_id="q4", broker="nats", url="nats://localhost", topic="subj")
     result = await sink.send({"x": 1})
     assert result.ok is True
@@ -94,7 +93,7 @@ async def test_send_returns_false_when_broker_missing(
 
 @pytest.mark.asyncio
 async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -> None:
-    fake_broker = _install_fake_broker(
+    _install_fake_broker(
         monkeypatch, "kafka", raise_on_publish=RuntimeError("broker down")
     )
     sink = MqSink(sink_id="q6", broker="kafka", url="k", topic="t")

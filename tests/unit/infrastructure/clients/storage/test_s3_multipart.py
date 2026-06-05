@@ -51,11 +51,10 @@ async def _make_stream(chunks: list[bytes]):
 def s3_client_with_fake(monkeypatch: pytest.MonkeyPatch) -> tuple[Any, _FakeS3Client]:
     """Возвращает S3Client с подменённым client_context на FakeS3Client."""
     from contextlib import asynccontextmanager
+    from pathlib import Path
 
     from src.backend.core.config.services.storage import FileStorageSettings
     from src.backend.infrastructure.clients.storage.s3_pool import S3Client
-
-    from pathlib import Path
 
     settings = FileStorageSettings(
         enabled=False,  # отключает aiobotocore init

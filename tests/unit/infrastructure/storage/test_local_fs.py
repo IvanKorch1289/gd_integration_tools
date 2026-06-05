@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import os
-import warnings
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
 
-import aiofiles
 import pytest
 
 from src.backend.infrastructure.storage.local_fs import LocalFSStorage
@@ -51,7 +47,7 @@ def test_safe_path_rejects_traversal(storage: LocalFSStorage) -> None:
 
 
 def test_safe_path_rejects_escape(storage: LocalFSStorage) -> None:
-    with pytest.raises(ValueError, match="Ключ выходит за пределы"):
+    with pytest.raises(ValueError, match="Небезопасный ключ"):
         storage._safe_path("../secret.txt")
 
 

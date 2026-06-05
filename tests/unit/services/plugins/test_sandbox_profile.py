@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.ai.sandbox import CodeSandbox, SandboxResult
+from src.backend.core.ai.sandbox import SandboxResult
 from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxAdapter,
     PluginSandboxError,

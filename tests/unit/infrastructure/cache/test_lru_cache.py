@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from src.backend.infrastructure.cache.lru_cache import LruMemoryCache, _ensure_metrics
+from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
 
 @pytest.fixture(autouse=True)

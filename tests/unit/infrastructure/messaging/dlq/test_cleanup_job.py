@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.infrastructure.messaging.dlq.cleanup_job import DLQCleanupJob, DLQCleanupStats
+from src.backend.infrastructure.messaging.dlq.cleanup_job import (
+    DLQCleanupJob,
+    DLQCleanupStats,
+)
 
 
 class _FakePolicy:
@@ -92,5 +95,6 @@ async def test_run_uses_custom_clock(fake_registry: _FakeRegistry, fake_client: 
     now = datetime(2024, 1, 1, tzinfo=UTC)
     job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry, clock=lambda: now)
     await job.run()
-    _, call_kwargs = fake_client.execute.call_args
-    assert now.isoformat() in call_kwargs["params"]
+    params_list = [call.kwargs.get("params", []) for call in fake_client.execute.call_args_list]
+    flat = [p for sub in params_list for p in sub]
+    assert now.isoformat() in flat

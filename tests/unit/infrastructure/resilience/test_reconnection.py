@@ -32,11 +32,11 @@ sys.modules["tenacity"] = _tenacity
 _prometheus = MagicMock()
 sys.modules["prometheus_client"] = _prometheus
 
-from src.backend.infrastructure.resilience.reconnection import (
+from src.backend.infrastructure.resilience.reconnection import (  # noqa: E402
     NoReconnect,
     ReconnectForever,
-    ReconnectN,
     ReconnectionError,
+    ReconnectN,
     build,
 )
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from prometheus_client import CollectorRegistry, generate_latest
+from prometheus_client import CollectorRegistry
 from starlette.applications import Starlette
 from starlette.routing import Route
 from starlette.testclient import TestClient

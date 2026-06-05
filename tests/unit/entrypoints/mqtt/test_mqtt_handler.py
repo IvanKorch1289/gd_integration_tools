@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -84,11 +83,13 @@ class TestMqttHandler:
     @pytest.mark.asyncio
     async def test_stop_cancels_task(self, handler: MqttHandler) -> None:
         handler._running = True
-        task = asyncio.create_task(asyncio.sleep(10))
+        task = AsyncMock()
+        task.done.return_value = False
+        task.cancel = MagicMock()
         handler._task = task
         await handler.stop()
         assert handler._running is False
-        assert task.cancelled()
+        assert task.cancel.called
 
     @pytest.mark.asyncio
     async def test_handle_message_with_action(self, handler: MqttHandler) -> None:

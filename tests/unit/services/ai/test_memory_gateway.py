@@ -13,12 +13,11 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.core.interfaces.agent_memory import MemoryFact, MemoryMessage
+from src.backend.core.interfaces.agent_memory import MemoryMessage
 from src.backend.services.ai.memory_gateway import UnifiedMemoryGateway
 
 

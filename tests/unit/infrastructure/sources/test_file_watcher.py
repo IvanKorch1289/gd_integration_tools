@@ -20,7 +20,10 @@ import pytest
 # Пропуск всего модуля, если watchfiles не установлен
 watchfiles = pytest.importorskip("watchfiles")
 
-from src.backend.infrastructure.sources.file_watcher import FileEvent, FileWatcherSource  # noqa: E402
+from src.backend.infrastructure.sources.file_watcher import (  # noqa: E402
+    FileEvent,
+    FileWatcherSource,
+)
 
 
 async def _collect_one(source: FileWatcherSource, timeout: float = 3.0) -> FileEvent:
