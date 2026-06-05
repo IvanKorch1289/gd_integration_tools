@@ -54,7 +54,7 @@ dependencies = [
     "tenacity>=9.0.0,<10.0.0",
     "asyncpg>=0.31.0,<1.0.0",
     "orjson>=3.11.8,<4.0.0",
-    "diskcache>=5.6.3,<6.0.0",
+    "diskcache>=5.6.4,<6.0.0",
     "strawberry-graphql[fastapi]>=0.262.0",
     "jmespath>=1.0.1,<2.0.0",
     "beautifulsoup4>=4.12.3,<5.0.0",
@@ -202,7 +202,7 @@ dsl-extras = [
 rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
-    "chromadb>=0.5.0,<2.0.0",
+    "chromadb>=1.5.20,<2.0.0",
 ]
 # Wave F.4 (V10 #11): fastembed несовместим с Python 3.14 — нет
 # onnxruntime wheels. Доступен только как opt-in для legacy-стендов на
@@ -449,6 +449,7 @@ dev = [
     # Ранее был только в [project.optional-dependencies] dev-light — недоступен в полном dev.
     "aiosqlite>=0.20.0,<1.0.0",
     "python-consul2>=0.1.5",
+    "pytest-xdist>=3.8.0",
 ]
 
 [build-system]
@@ -675,7 +676,7 @@ module = [
     "langfuse.*",
     "mcp",
     "mcp.*",
-    "chromadb",
+    "chromadb>=1.5.20,<2.0.0",  # SECURITY 2026-06-05: bump 0.5.0→1.5.20 (code injection fix)
     "faiss",
     "playwright",
     "playwright.*",
@@ -852,7 +853,7 @@ asyncio_mode = "auto"
 # tests/security vs tests/unit/security, tests/unit/api vs
 # tests/integration/api).
 # См. https://docs.pytest.org/en/stable/explanation/pythonpath.html
-addopts = "-ra --strict-markers --import-mode=importlib"
+addopts = "-ra --strict-markers --import-mode=importlib -n auto --dist=loadgroup"
 markers = [
     "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
     "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",
