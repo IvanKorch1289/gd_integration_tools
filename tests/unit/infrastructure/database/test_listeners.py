@@ -53,8 +53,13 @@ def test_after_cursor_execute_logs_slow_query() -> None:
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 0.1)
 
     context = SimpleNamespace(_query_start_time=0.0)
-    with patch.object(listener.logger, "warning") as mock_warning:
-        captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
+    # after_cursor_execute calls monotonic() ONCE (only at line 59 duration calc);
+    # before_cursor_execute is not invoked in this test (start time pre-set in context).
+    with patch(
+        "src.backend.infrastructure.database.listeners.monotonic", return_value=1.0
+    ):
+        with patch.object(listener.logger, "warning") as mock_warning:
+            captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
     mock_warning.assert_called_once()
     assert "Slow SQL query detected" in mock_warning.call_args[0][0]
 
@@ -72,8 +77,11 @@ def test_after_cursor_execute_logs_debug() -> None:
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 10.0)
 
     context = SimpleNamespace(_query_start_time=0.0)
-    with patch.object(listener.logger, "debug") as mock_debug:
-        captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
+    with patch(
+        "src.backend.infrastructure.database.listeners.monotonic", return_value=0.01
+    ):
+        with patch.object(listener.logger, "debug") as mock_debug:
+            captured["after_cursor_execute"](None, None, "SELECT 1", (), context, False)
     mock_debug.assert_called_once()
     assert "SQL query executed" in mock_debug.call_args[0][0]
 

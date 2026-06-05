@@ -59,7 +59,7 @@ async def test_health_falls_back_to_tech_on_import_error(
         side_effect=ImportError,
     ):
         with patch(
-            "src.backend.services.core.system.get_tech_service", return_value=mock_tech
+            "src.backend.services.core.tech.get_tech_service", return_value=mock_tech
         ):
             mock_tech.check_all_services.return_value = {"fallback": True}
             result = await service.health()
@@ -86,7 +86,7 @@ async def test_get_config_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.get_config.return_value = {"env": "test"}
         result = await service.get_config()
@@ -98,7 +98,7 @@ async def test_list_feature_flags_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.list_feature_flags.return_value = {"flags": []}
         result = await service.list_feature_flags()
@@ -110,7 +110,7 @@ async def test_toggle_feature_flag_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.toggle_feature_flag.return_value = {"flag": "x", "enabled": True}
         result = await service.toggle_feature_flag("x", True)
@@ -125,7 +125,7 @@ async def test_list_services_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.list_services.return_value = [{"name": "svc"}]
         result = await service.list_services()
@@ -137,7 +137,7 @@ async def test_list_actions_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.list_actions.return_value = ["a1", "a2"]
         result = await service.list_actions()
@@ -149,7 +149,7 @@ async def test_list_routes_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.list_routes.return_value = [{"id": "r1"}]
         result = await service.list_routes()
@@ -163,7 +163,7 @@ async def test_list_cache_keys_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.list_cache_keys.return_value = ["k1", "k2"]
         result = await service.list_cache_keys(pattern="test:*")
@@ -176,7 +176,7 @@ async def test_invalidate_cache_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_admin_service", return_value=mock_admin
+        "src.backend.services.core.admin.get_admin_service", return_value=mock_admin
     ):
         mock_admin.invalidate_cache_by_pattern.return_value = {"removed": 5}
         result = await service.invalidate_cache(pattern="test:*")
@@ -214,7 +214,7 @@ async def test_send_email_delegates_to_tech(
     service: SystemService, mock_tech: AsyncMock
 ) -> None:
     with patch(
-        "src.backend.services.core.system.get_tech_service", return_value=mock_tech
+        "src.backend.services.core.tech.get_tech_service", return_value=mock_tech
     ):
         mock_tech.send_email.return_value = {"sent": True}
         result = await service.send_email(to="a@b.com", subject="hi")
@@ -228,7 +228,7 @@ def test_tech_property_lazy_loads() -> None:
     svc = SystemService()
     assert svc._tech is None
     with patch(
-        "src.backend.services.core.system.get_tech_service"
+        "src.backend.services.core.tech.get_tech_service"
     ) as mock_get_tech:
         mock_tech = MagicMock()
         mock_get_tech.return_value = mock_tech
@@ -242,7 +242,7 @@ def test_admin_property_lazy_loads() -> None:
     svc = SystemService()
     assert svc._admin is None
     with patch(
-        "src.backend.services.core.system.get_admin_service"
+        "src.backend.services.core.admin.get_admin_service"
     ) as mock_get_admin:
         mock_admin = MagicMock()
         mock_get_admin.return_value = mock_admin

@@ -112,7 +112,7 @@ def test_after_begin_skips_no_tenant(mock_engine: MagicMock, monkeypatch: pytest
     connection.exec_driver_sql.assert_not_called()
 
 
-def test_after_begin_logs_error(mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+def test_after_begin_logs_error(mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
         MagicMock(rls_postgres_enforce=True),
@@ -136,6 +136,7 @@ def test_after_begin_logs_error(mock_engine: MagicMock, monkeypatch: pytest.Monk
     connection = MagicMock()
     connection.dialect.name = "postgresql"
     connection.exec_driver_sql = MagicMock(side_effect=RuntimeError("pg down"))
-    with caplog.at_level("WARNING", logger="database"):
+    with patch("src.backend.infrastructure.database.rls_listener.db_logger") as mock_logger:
         captured["after_begin"](None, None, connection)
-    assert "RLS SET LOCAL" in caplog.text
+    mock_logger.warning.assert_called_once()
+    assert "RLS SET LOCAL" in mock_logger.warning.call_args[0][0]

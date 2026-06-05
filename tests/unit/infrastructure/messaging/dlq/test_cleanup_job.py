@@ -97,4 +97,6 @@ async def test_run_uses_custom_clock(fake_registry: _FakeRegistry, fake_client: 
     await job.run()
     params_list = [call.kwargs.get("params", []) for call in fake_client.execute.call_args_list]
     flat = [p for sub in params_list for p in sub]
-    assert now.isoformat() in flat
+    # cutoff for class_a (7 days) and class_b (30 days)
+    assert "2023-12-25T00:00:00+00:00" in flat
+    assert "2023-12-02T00:00:00+00:00" in flat

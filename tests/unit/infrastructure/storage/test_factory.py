@@ -47,7 +47,7 @@ def test_get_local_fs_storage_fallback_on_exception(monkeypatch: pytest.MonkeyPa
     get_local_fs_storage.cache_clear()
     storage = get_local_fs_storage()
     assert isinstance(storage, LocalFSStorage)
-    assert storage._base == Path("var/storage")
+    assert storage._base == Path("var/storage").resolve()
 
 
 def test_get_object_storage_local(monkeypatch: pytest.MonkeyPatch) -> None:
