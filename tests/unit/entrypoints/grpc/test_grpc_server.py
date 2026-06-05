@@ -9,11 +9,15 @@ protobuf modules in sys.modules before importing the target.
 from __future__ import annotations
 
 import importlib
+import json
 import sys
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from hypothesis import given
+from hypothesis import settings as hyp_settings
+from hypothesis import strategies as st
 
 # ── Module-level stub setup ─────────────────────────────────────────
 
@@ -88,3 +92,69 @@ def test_safe_error_does_not_leak_traceback(grpc_server_module) -> None:
 def test_base_grpc_servicer_init(grpc_server_module) -> None:
     servicer = grpc_server_module.BaseGRPCServicer()
     assert servicer.logger is not None
+
+
+# === Unit tests (Wave 41 coverage push) ===
+
+
+@pytest.mark.unit
+def test_serialize_pydantic_like_model_uses_model_dump(grpc_server_module) -> None:
+    """Pydantic-like object (has model_dump) → JSON of model_dump(mode='json')."""
+    servicer = grpc_server_module.BaseGRPCServicer()
+    fake = MagicMock()
+    fake.model_dump.return_value = {"id": 1, "name": "alpha"}
+    result = servicer._serialize(fake)
+    fake.model_dump.assert_called_once_with(mode="json")
+    parsed = json.loads(result)
+    assert parsed == {"id": 1, "name": "alpha"}
+
+
+@pytest.mark.unit
+def test_serialize_dict_returns_json(grpc_server_module) -> None:
+    """Plain dict → JSON-encoded string (orjson round-trip)."""
+    servicer = grpc_server_module.BaseGRPCServicer()
+    result = servicer._serialize({"key": "value", "n": 42})
+    assert json.loads(result) == {"key": "value", "n": 42}
+
+
+@pytest.mark.unit
+def test_load_tls_credentials_disabled_returns_none(grpc_server_module) -> None:
+    """When tls_enabled=False on settings.grpc → return None (no TLS)."""
+    fake_settings = MagicMock()
+    fake_settings.grpc.tls_enabled = False
+    with patch.object(grpc_server_module, "settings", fake_settings):
+        result = grpc_server_module._load_tls_credentials()
+    assert result is None
+
+
+# ── Property test: _safe_error preserves BaseError.message verbatim ─────
+
+
+@given(message=st.text(min_size=0, max_size=200))
+@hyp_settings(
+    max_examples=50,
+    suppress_health_check=[
+        __import__("hypothesis").HealthCheck.function_scoped_fixture
+    ],
+)
+@pytest.mark.unit
+def test_safe_error_base_error_preserves_message_property(
+    grpc_server_module, message: str
+) -> None:
+    """For any string message, _safe_error returns it unchanged for BaseError.
+
+    Invariant: BaseError instances always flow their .message attribute
+    through to the gRPC client (no truncation, no formatting, no
+    correlation-id prefix). Generic exceptions DO get the correlation-id
+    prefix — BaseError must NOT.
+
+    The function-scoped fixture is safe to share across hypothesis
+    examples (no mutable state mutated by _safe_error).
+    """
+    from src.backend.core.errors import BaseError
+
+    exc = BaseError(message=message)
+    result = grpc_server_module._safe_error(exc, "ref-abc")
+    assert result == message
+    assert "ref-abc" not in result  # BaseError must not get the generic ref prefix
+    assert "Internal server error" not in result
