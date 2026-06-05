@@ -63,7 +63,7 @@ async def test_dead_letter_no_dlq_on_success() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.redis_client") as mock_redis:
+    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
         await proc.process(e, ctx)
 
     assert e.status != ExchangeStatus.failed
@@ -78,7 +78,7 @@ async def test_dead_letter_sends_to_dlq_on_failure() -> None:
     ctx = AsyncMock()
     e = _ex(body={"id": 1})
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.redis_client") as mock_redis:
+    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
@@ -95,7 +95,7 @@ async def test_dead_letter_dlq_error_logged() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.redis_client") as mock_redis:
+    with patch("src.backend.infrastructure.clients.storage.redis.redis_client") as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis down")
         await proc.process(e, ctx)
 
@@ -110,7 +110,7 @@ async def test_dead_letter_max_retries_zero() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.redis_client"):
+    with patch("src.backend.infrastructure.clients.storage.redis.redis_client"):
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
@@ -200,7 +200,7 @@ async def test_circuit_breaker_success() -> None:
 
     mock_breaker = _make_mock_breaker("closed")
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.get_breaker_registry") as mock_reg:
+    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_reg:
         mock_registry = MagicMock()
         mock_registry.get_or_create.return_value = mock_breaker
         mock_reg.return_value = mock_registry
@@ -222,7 +222,7 @@ async def test_circuit_breaker_open_no_fallback() -> None:
 
     mock_breaker = _make_mock_breaker("open", side_effect=CircuitOpen("open"))
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.get_breaker_registry") as mock_reg:
+    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_reg:
         mock_registry = MagicMock()
         mock_registry.get_or_create.return_value = mock_breaker
         mock_reg.return_value = mock_registry
@@ -246,7 +246,7 @@ async def test_circuit_breaker_open_with_fallback() -> None:
 
     mock_breaker = _make_mock_breaker("open_fallback", side_effect=CircuitOpen("open"))
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.get_breaker_registry") as mock_reg:
+    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_reg:
         mock_registry = MagicMock()
         mock_registry.get_or_create.return_value = mock_breaker
         mock_reg.return_value = mock_registry
@@ -266,7 +266,7 @@ async def test_circuit_breaker_subpipeline_failure() -> None:
 
     mock_breaker = _make_mock_breaker("half-open")
 
-    with patch("src.backend.dsl.engine.processors.eip.resilience.get_breaker_registry") as mock_reg:
+    with patch("src.backend.core.resilience.breaker.get_breaker_registry") as mock_reg:
         mock_registry = MagicMock()
         mock_registry.get_or_create.return_value = mock_breaker
         mock_reg.return_value = mock_registry
@@ -311,24 +311,21 @@ async def test_timeout_success() -> None:
     assert e.properties.get("timeout_exceeded") is None
 
 
-@pytest.mark.asyncio
-async def test_timeout_exceeded_no_fallback() -> None:
-    """Timeout без fallback → exchange.fail."""
-
-    async def slow(*a, **k):
+class SlowProcessor(BaseProcessor):
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
         import asyncio
 
         await asyncio.sleep(10)
-        raise RuntimeError("should not reach")
 
-    proc = TimeoutProcessor(processors=[], seconds=0.001)
+
+@pytest.mark.asyncio
+async def test_timeout_exceeded_no_fallback() -> None:
+    """Timeout без fallback → exchange.fail."""
+    proc = TimeoutProcessor(processors=[SlowProcessor()], seconds=0.001)
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.resilience.run_sub_processors", side_effect=slow
-    ):
-        await proc.process(e, ctx)
+    await proc.process(e, ctx)
 
     assert e.properties.get("timeout_exceeded") is True
     assert e.status == ExchangeStatus.failed
@@ -338,21 +335,14 @@ async def test_timeout_exceeded_no_fallback() -> None:
 @pytest.mark.asyncio
 async def test_timeout_exceeded_with_fallback() -> None:
     """Timeout с fallback → fallback выполняется."""
-
-    async def slow(*a, **k):
-        import asyncio
-
-        await asyncio.sleep(10)
-
     fallback = DummyProcessor("fallback")
-    proc = TimeoutProcessor(processors=[], seconds=0.001, fallback_processors=[fallback])
+    proc = TimeoutProcessor(
+        processors=[SlowProcessor()], seconds=0.001, fallback_processors=[fallback]
+    )
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.resilience.run_sub_processors", side_effect=slow
-    ):
-        await proc.process(e, ctx)
+    await proc.process(e, ctx)
 
     assert e.properties.get("timeout_exceeded") is True
     assert e.out_message.body == "fallback"

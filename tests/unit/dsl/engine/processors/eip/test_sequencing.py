@@ -65,7 +65,8 @@ async def test_resequencer_uses_getattr() -> None:
     e2 = _ex(body=Item(1, "first"))
     await proc.process(e2, ctx)
     assert e2.properties.get("resequenced") is True
-    assert e2.out_message.body == [Item(1, "first"), Item(2, "second")]
+    assert [item.seq for item in e2.out_message.body] == [1, 2]
+    assert [item.val for item in e2.out_message.body] == ["first", "second"]
 
 
 @pytest.mark.asyncio

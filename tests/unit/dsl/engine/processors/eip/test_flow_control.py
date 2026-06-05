@@ -44,6 +44,15 @@ class FailingProcessor(BaseProcessor):
         raise RuntimeError("fail")
 
 
+class SetFailProcessor(BaseProcessor):
+    def __init__(self, error: str = "fail", name: str | None = None) -> None:
+        super().__init__(name=name or "set_fail")
+        self._error = error
+
+    async def process(self, exchange: Exchange[Any], context: Any) -> None:
+        exchange.fail(self._error)
+
+
 # =============================================================================
 # WireTapProcessor
 # =============================================================================
@@ -267,7 +276,7 @@ async def test_loop_until_condition() -> None:
     dummy = DummyProcessor("res")
     proc2 = LoopProcessor(processors=[dummy], until=lambda ex: True, max_iterations=5)
     e2 = _ex(body="start")
-    await proc2.process(e2, ctx=AsyncMock())
+    await proc2.process(e2, AsyncMock())
     assert e2.properties.get("loop_count") == 1
 
 
@@ -285,8 +294,8 @@ async def test_loop_max_iterations() -> None:
 @pytest.mark.asyncio
 async def test_loop_stops_on_failure() -> None:
     """Loop останавливается при failed exchange."""
-    failing = FailingProcessor()
-    proc = LoopProcessor(processors=[failing], count=10, max_iterations=100)
+    set_fail = SetFailProcessor("err")
+    proc = LoopProcessor(processors=[set_fail], count=10, max_iterations=100)
     ctx = AsyncMock()
     e = _ex(body="start")
     await proc.process(e, ctx)
@@ -318,9 +327,7 @@ async def test_for_each_iterates_list() -> None:
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3]}})
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.jmespath.search", return_value=[1, 2, 3]
-    ):
+    with patch("jmespath.search", return_value=[1, 2, 3]):
         await proc.process(e, ctx)
 
     assert e.properties.get("for_each_count") == 3
@@ -335,9 +342,7 @@ async def test_for_each_empty_list() -> None:
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": []}})
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.jmespath.search", return_value=[]
-    ):
+    with patch("jmespath.search", return_value=[]):
         await proc.process(e, ctx)
 
     assert e.properties.get("for_each_count") == 0
@@ -351,9 +356,7 @@ async def test_for_each_jmespath_none_defaults_empty() -> None:
     ctx = AsyncMock()
     e = _ex(body={"data": {}})
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.jmespath.search", return_value=None
-    ):
+    with patch("jmespath.search", return_value=None):
         await proc.process(e, ctx)
 
     assert e.properties.get("for_each_count") == 0
@@ -367,9 +370,7 @@ async def test_for_each_max_iterations() -> None:
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3, 4]}})
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.jmespath.search", return_value=[1, 2, 3, 4]
-    ):
+    with patch("jmespath.search", return_value=[1, 2, 3, 4]):
         await proc.process(e, ctx)
 
     assert e.properties.get("for_each_count") == 2

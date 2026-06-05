@@ -48,8 +48,10 @@ except ImportError:  # pragma: no cover — fallback path
     _DECODER = None
     MSGSPEC_AVAILABLE = False
 
-if not MSGSPEC_AVAILABLE:
+try:
     import orjson
+except ImportError:  # pragma: no cover
+    orjson = None  # type: ignore[assignment]
 
 
 def encode_json(value: Any) -> bytes:

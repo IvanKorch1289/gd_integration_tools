@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("KafkaDLQWriter",)
@@ -26,7 +27,7 @@ class KafkaDLQWriter:
         producer: Pre-initialized AIOKafkaProducer (DI из composition root).
         topic_prefix: префикс topic'а (default ``"dlq."``).
         serializer: Опц. кастомный сериализатор (default — JSON через
-            ``model_dump_json``).
+            ``encode_json`` после ``model_dump(mode='json')``).
     """
 
     def __init__(
@@ -38,7 +39,9 @@ class KafkaDLQWriter:
 
     @staticmethod
     def _default_serialize(envelope: DLQEnvelope) -> bytes:
-        return envelope.model_dump_json().encode("utf-8")
+        # model_dump(mode="json") конвертирует datetime/enum в примитивы,
+        # чтобы msgspec (и orjson fallback) сериализовали без ошибок.
+        return encode_json(envelope.model_dump(mode="json"))
 
     async def write(self, envelope: DLQEnvelope) -> None:
         """Публикует envelope в ``dlq.{transport}``.

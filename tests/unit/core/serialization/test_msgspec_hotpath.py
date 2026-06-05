@@ -87,3 +87,19 @@ def test_encode_audit_event_full() -> None:
 def test_msgspec_available_constant() -> None:
     # На текущем стенде msgspec в основных deps.
     assert MSGSPEC_AVAILABLE is True
+
+
+def test_orjson_fallback_when_msgspec_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Когда msgspec недоступен — encode/decode fallback на orjson."""
+    import src.backend.core.serialization.msgspec_hotpath as mh
+
+    monkeypatch.setattr(mh, "MSGSPEC_AVAILABLE", False)
+    monkeypatch.setattr(mh, "_ENCODER", None)
+    monkeypatch.setattr(mh, "_DECODER", None)
+
+    payload = {"key": "value"}
+    encoded = mh.encode_json(payload)
+    assert isinstance(encoded, bytes)
+    assert mh.decode_json(encoded) == payload

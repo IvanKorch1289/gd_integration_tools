@@ -198,6 +198,49 @@ class TestFromDictMsgspec:
         # msgspec не заводит лишних атрибутов на result.
         assert not hasattr(result, "extra_unknown")
 
+    def test_enc_hook_raises_on_unsupported_type(self) -> None:
+        """_msgspec_enc_hook бросает NotImplementedError на неизвестный тип."""
+        with pytest.raises(NotImplementedError):
+            es._msgspec_enc_hook(object())
+
+    def test_to_dict_fallback_on_msgspec_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Если _encode_msgspec бросает — to_dict_fast fallback'ит на orjson."""
+        calls: list[str] = []
+
+        def _fake_encode_msgspec(obj: Any) -> Any:
+            calls.append("msgspec")
+            raise TypeError("fake msgspec failure")
+
+        def _fake_encode_orjson(obj: Any) -> Any:
+            calls.append("orjson")
+            return {"fallback": True}
+
+        monkeypatch.setattr(es, "_encode_msgspec", _fake_encode_msgspec)
+        monkeypatch.setattr(es, "_encode_orjson", _fake_encode_orjson)
+
+        result = es.to_dict_fast({"a": 1})
+        assert calls == ["msgspec", "orjson"]
+        assert result == {"fallback": True}
+
+    def test_from_dict_fallback_on_msgspec_exception(self) -> None:
+        """Если msgspec.convert бросает — from_dict_fast fallback'ит на cls(**data)."""
+        from pydantic import BaseModel
+
+        class PydanticModel(BaseModel):
+            id: int
+
+        result = es.from_dict_fast(PydanticModel, {"id": 42})
+        assert isinstance(result, PydanticModel)
+        assert result.id == 42
+
+    def test_orjson_default_handles_unsupported_type(self) -> None:
+        """_orjson_default бросает TypeError на полностью неподдерживаемый тип."""
+        class Unserialisable:
+            pass
+
+        with pytest.raises(TypeError):
+            es._orjson_default(Unserialisable())
+
 
 # ---------------------------------------------------------------------------
 # Real-world benchmarks — S40 W8

@@ -13,6 +13,7 @@ from src.backend.services.ai.workflow_activities import (
     LLMActivityInput,
     LLMActivityOutput,
     _execute_llm_call,
+    llm_activity,
     register_llm_activity,
 )
 
@@ -137,3 +138,133 @@ def test_input_validation() -> None:
         LLMActivityInput(prompt="")
     with pytest.raises(ValueError):
         LLMActivityInput(prompt="ok", temperature=3.0)
+
+
+def test_resolve_gateway_raises_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    """_resolve_gateway поднимает RuntimeError при ошибке импорта."""
+
+    def _boom() -> None:
+        raise ImportError("no module")
+
+    monkeypatch.setattr(
+        "src.backend.services.ai.gateway.client.get_litellm_gateway",
+        _boom,
+    )
+    with pytest.raises(RuntimeError, match="LiteLLMGateway недоступен"):
+        from src.backend.services.ai.workflow_activities import _resolve_gateway
+
+        _resolve_gateway()
+
+
+def test_heartbeat_async_exception_suppressed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Async heartbeat который падает — не прокидывает исключение наружу."""
+    monkeypatch.setattr(
+        "src.backend.services.ai.workflow_activities._resolve_gateway",
+        lambda: _make_gateway(),
+    )
+
+    async def _bad_hb() -> None:
+        raise RuntimeError("hb boom")
+
+    # Не должно упасть
+    out = asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x"), heartbeat=_bad_hb))
+    assert out.content == "hello"
+
+
+def test_acost_estimate_exception_uses_zero(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ошибка acost_estimate → cost_usd = 0.0."""
+    gateway = _make_gateway()
+    gateway.acost_estimate = AsyncMock(side_effect=RuntimeError("cost err"))
+    monkeypatch.setattr(
+        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway
+    )
+    out = asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x")))
+    assert out.cost_usd == 0.0
+
+
+def test_llm_activity_with_heartbeat(monkeypatch: pytest.MonkeyPatch) -> None:
+    """llm_activity передаёт temporalio.activity.heartbeat в _execute_llm_call."""
+    hb_mock = MagicMock()
+    monkeypatch.setattr(
+        "src.backend.services.ai.workflow_activities._resolve_gateway",
+        lambda: _make_gateway(),
+    )
+    # Подставляем temporalio.activity в sys.modules чтобы локальный import сработал
+    fake_activity_mod = MagicMock()
+    fake_activity_mod.heartbeat = hb_mock
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "temporalio.activity",
+        fake_activity_mod,
+    )
+    out = asyncio.run(llm_activity(LLMActivityInput(prompt="x")))
+    assert out.content == "hello"
+
+
+def test_register_llm_activity_flag_import_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Если импорт feature_flags падает — register возвращает False (NoOp)."""
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags",
+        None,
+    )
+    # Удалим атрибут чтобы getattr упал
+    monkeypatch.delattr(
+        "src.backend.core.config.features.feature_flags",
+        raising=False,
+    )
+    worker = MagicMock()
+    assert register_llm_activity(worker) is False
+
+
+def test_register_llm_activity_via_activities_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fallback регистрация через worker.activities.append."""
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",
+        True,
+    )
+    worker = MagicMock(spec=["activities"])
+    worker.activities = []
+    assert register_llm_activity(worker) is True
+    assert len(worker.activities) == 1
+
+
+def test_register_llm_activity_activities_not_mutable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """worker.activities не mutable → возвращает False."""
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",
+        True,
+    )
+    worker = MagicMock(spec=["activities"])
+    worker.activities = (MagicMock(),)  # tuple — нет append
+    assert register_llm_activity(worker) is False
+
+
+def test_register_llm_activity_no_registration_method(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Worker без register_activity и activities → False."""
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",
+        True,
+    )
+    worker = MagicMock()
+    del worker.register_activity
+    del worker.activities
+    assert register_llm_activity(worker) is False
+
+
+def test_module_level_temporalio_wrap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """При импорте с доступным temporalio модуль оборачивает llm_activity."""
+    import importlib
+    import sys
+
+    fake_temporalio = MagicMock()
+    fake_activity = MagicMock()
+    fake_activity.defn = MagicMock(return_value=lambda f: f)
+    fake_temporalio.activity = fake_activity
+    monkeypatch.setitem(sys.modules, "temporalio", fake_temporalio)
+    monkeypatch.setitem(sys.modules, "temporalio.activity", fake_activity)
+    import src.backend.services.ai.workflow_activities as wamod
+
+    importlib.reload(wamod)
+    monkeypatch.setattr(wamod, "_resolve_gateway", lambda: _make_gateway())
+    out = asyncio.run(wamod.llm_activity(wamod.LLMActivityInput(prompt="x")))
+    assert out.content == "hello"
