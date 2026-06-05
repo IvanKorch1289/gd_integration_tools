@@ -1,0 +1,94 @@
+# Dependabot — auto-PR для security + version updates
+# Добавлено 2026-06-05: автоматизация vulnerability patches
+
+version: 2
+
+updates:
+  # ── Python (uv) ─────────────────────────────────────────────
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps(dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    # Не открывать >10 PR одновременно (избежать spam)
+    open-pull-requests-limit: 10
+    # Rebase PR при конфликтах
+    rebase-strategy: "auto"
+    # Auto-merge OFF: каждый bump требует review (особенно diskcache, lxml)
+    # которые могут сломать API.
+    # При security-fix: maintainer review обязателен.
+
+  # ── npm admin-react (main) ──────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/src/frontend/admin-react"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "admin-react"
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
+    # Ignore majors: react-router 7.x breaking changes, vite 7.x breaking
+    ignore:
+      - dependency-name: "react-router-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+
+  # ── npm admin-react (legacy copy) ───────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/frontend/admin-react"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "admin-react-legacy"
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+    # Эта копия — старый duplicate. PRs могут быть auto-closed
+    # если maintainer решит удалить frontend/admin-react (см. SECURITY_VULNS_2026-06-05.md).
+
+  # ── GitHub Actions ──────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "ci"
+    open-pull-requests-limit: 5
+    groups:
+      # Группировать minor/patch обновления actions
+      minor-and-patch:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

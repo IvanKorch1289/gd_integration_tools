@@ -102,14 +102,22 @@ rm -rf src/frontend/admin-react/ frontend/admin-react/
 (`src/backend/services/admin/api.py` consumed by React admin). Удаление требует
 явного одобрения user.
 
-## Status (as of 2026-06-05)
+## Status (as of 2026-06-05 — CORRECTED)
 
 | Vuln | Config patch | On-disk apply | Verified |
 |------|:------------:|:-------------:|:--------:|
 | 1. React Router | ✅ | ⏳ `npm install` needed | — |
-| 2. ChromaDB | ✅ | ⏳ `uv sync` needed | — |
+| 2. ChromaDB | ⚠️ best guess | ⏳ `uv sync` needed | user must verify 1.5.20 exists |
 | 3. Vite | ✅ | ⏳ `npm install` needed | — |
-| 4. DiskCache | ✅ | ⏳ `uv sync` needed | — |
+| 4. DiskCache | ❌ **REVERTED** | n/a | **NO FIX available** (CVE-2025-69872). Project mitigates via JSONDisk (см. .github/workflows/security.yml, S30). |
+
+### DiskCache коррекция (2026-06-05)
+
+Первоначально я предложил `diskcache>=5.6.4,<6.0.0` (best guess) —
+**ЭТО НЕВЕРНО**. Проект уже mitigate'ит CVE-2025-69872 через
+`DiskTTLCache uses JSONDisk` (S30) — pip-audit проверяет VERSION,
+not usage, поэтому CVE остаётся в `--ignore-vuln` списке.
+См. `.github/workflows/security.yml` строки 7-9 + 130-131.
 
 ## Дополнительные рекомендации
 

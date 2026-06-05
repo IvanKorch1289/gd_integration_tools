@@ -194,3 +194,50 @@ jobs:
         with:
           sarif_file: trivy.sarif
           category: trivy-fs
+
+  npm-audit:
+    name: npm audit (JS dependencies)
+    # SECURITY 2026-06-05: добавлен npm-audit для admin-react
+    # (security в React/Vite stack — не покрыт pip-audit).
+    # continue-on-error: true — baseline-режим (PR review + manual fix).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        admin-react-dir:
+          - src/frontend/admin-react
+          - frontend/admin-react
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ${{ matrix.admin-react-dir }}/package-lock.json
+
+      - name: Install deps (npm ci)
+        working-directory: ${{ matrix.admin-react-dir }}
+        run: npm ci --no-audit --prefer-offline || npm install --no-audit --prefer-offline
+
+      - name: Run npm audit
+        working-directory: ${{ matrix.admin-react-dir }}
+        # --audit-level=high — не падать на low/medium
+        # JSON output для SARIF upload
+        run: |
+          npm audit --json --audit-level=high > npm-audit.json || true
+          npm audit --audit-level=high 2>&1 | tee npm-audit.txt || true
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.admin-react-dir }}
+          path: ${{ matrix.admin-react-dir }}/npm-audit.*
+          retention-days: 30
