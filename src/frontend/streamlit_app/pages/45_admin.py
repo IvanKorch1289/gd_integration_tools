@@ -18,11 +18,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
-
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
-from src.frontend.streamlit_app.shared.components import dataframe_view
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 setup_page('Admin Console', ':wrench:')
 st.header(":wrench: Admin Console")

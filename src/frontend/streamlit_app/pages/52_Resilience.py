@@ -30,9 +30,10 @@ from typing import Any
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
-
-from src.frontend.streamlit_app.shared.components import dataframe_view  # noqa: E402
+from src.frontend.streamlit_app.shared.components import (
+    dataframe_view,  # noqa: E402
+    setup_page,  # noqa: E402
+)
 
 setup_page('Resilience Dashboard', ':shield:')
 st.header("Resilience Dashboard")

@@ -35,10 +35,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.backend.services.ai.rag.docs_indexer import (  # noqa: E402
-    DocsIndexer,
-    InMemoryQdrantFallback,
-)
+from src.backend.services.ai.rag.docs_indexer import DocsIndexer  # noqa: E402
 
 logger = logging.getLogger("ingest_docs_to_rag")
 

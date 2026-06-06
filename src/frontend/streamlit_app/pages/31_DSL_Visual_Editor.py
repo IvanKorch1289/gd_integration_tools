@@ -22,9 +22,9 @@ import sys
 from pathlib import Path
 
 import streamlit as st
+import yaml as _yaml
 
 from src.frontend.streamlit_app.shared.components import setup_page
-import yaml as _yaml
 
 _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:

@@ -12,9 +12,7 @@ from typing import Any
 import httpx
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
-
-from src.frontend.streamlit_app.shared.components import dataframe_view
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 API_BASE = st.session_state.get("api_base", "http://localhost:8000/api/v1")
 

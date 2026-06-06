@@ -21,9 +21,9 @@ from typing import Any
 
 import httpx
 import streamlit as st
+import websockets
 
 from src.frontend.streamlit_app.shared.components import setup_page
-import websockets
 
 __all__: tuple[str, ...] = ()
 

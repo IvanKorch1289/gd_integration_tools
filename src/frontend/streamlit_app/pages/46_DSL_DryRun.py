@@ -5,12 +5,10 @@ from __future__ import annotations
 import json
 
 import streamlit as st
-
-from src.frontend.streamlit_app.shared.components import setup_page
 import yaml as _yaml
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
-from src.frontend.streamlit_app.shared.components import dataframe_view
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 setup_page('DSL Dry-Run', ':fast_forward:')
 st.header("DSL Dry-Run")
