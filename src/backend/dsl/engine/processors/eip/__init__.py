@@ -15,6 +15,11 @@ from src.backend.dsl.engine.processors.eip.collection import (
     SumByProcessor,
     UniqueProcessor,
 )
+from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+    ContentBasedRouter,
+    MessageFilter,
+    SamplingProcessor,
+)
 from src.backend.dsl.engine.processors.eip.flow_control import (
     AggregatorProcessor,
     DelayProcessor,
@@ -64,6 +69,7 @@ __all__ = (
     "CircuitBreakerProcessor",
     "ClaimCheckProcessor",
     "CollectProcessor",
+    "ContentBasedRouter",
     "DeadLetterProcessor",
     "DelayProcessor",
     "DiffProcessor",
@@ -78,6 +84,7 @@ __all__ = (
     "LoadBalancerProcessor",
     "LoopProcessor",
     "MaxByProcessor",
+    "MessageFilter",
     "MessageTranslatorProcessor",
     "MinByProcessor",
     "MulticastProcessor",
@@ -90,6 +97,7 @@ __all__ = (
     "RecipientListProcessor",
     "ResequencerProcessor",
     "RoutingSlipProcessor",
+    "SamplingProcessor",
     "ScatterGatherProcessor",
     "SimpleRegistry",
     "SortByProcessor",

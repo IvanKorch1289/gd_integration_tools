@@ -212,6 +212,70 @@ class EIPMixin:
             )
         )
 
+    def content_based_router(
+        self,
+        routes: list[tuple[Callable[[Exchange[Any]], bool], str]],
+        *,
+        default_endpoint: str | None = None,
+    ) -> RouteBuilder:
+        """Content-Based Router EIP: route по predicate.
+
+        Apache Camel: https://camel.apache.org/components/latest/eips/contentBasedRouter.html
+
+        First matching predicate wins. Если ни один не match и default_endpoint
+        задан → туда; иначе message dropped.
+
+        Пример::
+
+            .content_based_router([
+                (lambda ex: ex.in_message.body.get("priority") == "high", "high_pri"),
+                (lambda ex: ex.in_message.body.get("country") == "ru", "ru_route"),
+            ], default_endpoint="default")
+        """
+        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+            ContentBasedRouter as _CBR,
+        )
+        return self._add(  # type: ignore[attr-defined]
+            _CBR(routes=routes, default_endpoint=default_endpoint)
+        )
+
+    def sampling(
+        self,
+        *,
+        rate: int | None = None,
+        fraction: float | None = None,
+        time_window_ms: int | None = None,
+        max_in_window: int | None = None,
+        seed: int | None = None,
+    ) -> RouteBuilder:
+        """Sampling EIP: probabilistic subset of messages.
+
+        Apache Camel: https://camel.apache.org/components/latest/eips/sampling.html
+
+        Пример::
+
+            # 10% sampling
+            .sampling(fraction=0.1)
+
+            # Каждый 100-й
+            .sampling(rate=100)
+
+            # 5 per second
+            .sampling(time_window_ms=1000, max_in_window=5)
+        """
+        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+            SamplingProcessor as _SP,
+        )
+        return self._add(  # type: ignore[attr-defined]
+            _SP(
+                rate=rate,
+                fraction=fraction,
+                time_window_ms=time_window_ms,
+                max_in_window=max_in_window,
+                seed=seed,
+            )
+        )
+
     def split(self, expression: str, processors: list[BaseProcessor]) -> RouteBuilder:
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         return self._add(  # type: ignore[attr-defined]
