@@ -191,10 +191,10 @@ class BaseAPIClient:
                 # Last attempt: re-raise
                 raise
         # Should not reach here, but for type safety
-        if last_exc is not None:
+        if last_exc is not None:  # pragma: no cover
             raise last_exc
         msg = f"Request failed after {max_retries + 1} attempts: {path}"
-        raise httpx.HTTPError(msg)
+        raise httpx.HTTPError(msg)  # pragma: no cover
 
 
 _client: BaseAPIClient | None = None
