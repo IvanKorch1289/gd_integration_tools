@@ -1,11 +1,16 @@
-"""HTTP-клиент для вызова FastAPI backend из Streamlit."""
+"""HTTP-клиент для вызова FastAPI backend из Streamlit.
+
+Sprint 44 W6 (TD-009): APIClient наследует BaseAPIClient.
+Унаследованные методы: __init__, _request, get, post, put, patch, delete,
+set_token, JWT propagation, 401/5xx error handling, httpx.Client lifecycle.
+~46 domain methods (workflow/admin/rag/ai/...) сохранены без изменений.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
+from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
 from src.frontend.streamlit_app.config import get_api_base_url
 
 __all__ = ("APIClient", "get_api_client")
@@ -13,37 +18,18 @@ __all__ = ("APIClient", "get_api_client")
 _BASE_URL = get_api_base_url()
 
 
-class APIClient:
-    """Синхронный HTTP-клиент к FastAPI."""
+class APIClient(BaseAPIClient):
+    """Синхронный HTTP-клиент к FastAPI (расширяет BaseAPIClient).
 
-    def __init__(self, base_url: str = _BASE_URL) -> None:
-        self._base_url = base_url.rstrip("/")
+    Унаследованно от BaseAPIClient:
+    - ``__init__(base_url, token=None, max_retries=3, timeout=15.0)``
+    - ``_request(method, path, **kwargs)`` — 401/5xx handling, JWT headers
+    - ``get/post/put/patch/delete`` — delegates to ``_request``
+    - ``set_token(token)`` — JWT propagation для auth-required endpoints
 
-    def _url(self, path: str) -> str:
-        return f"{self._base_url}{path}"
-
-    def _request(self, method: str, path: str, **kwargs: Any) -> Any:
-        with httpx.Client(timeout=15) as client:
-            response = client.request(method, self._url(path), **kwargs)
-            response.raise_for_status()
-            if response.headers.get("content-type", "").startswith("application/json"):
-                return response.json()
-            return response.text
-
-    def get(self, path: str, **kwargs: Any) -> Any:
-        return self._request("GET", path, **kwargs)
-
-    def post(self, path: str, **kwargs: Any) -> Any:
-        return self._request("POST", path, **kwargs)
-
-    def put(self, path: str, **kwargs: Any) -> Any:
-        return self._request("PUT", path, **kwargs)
-
-    def patch(self, path: str, **kwargs: Any) -> Any:
-        return self._request("PATCH", path, **kwargs)
-
-    def delete(self, path: str, **kwargs: Any) -> Any:
-        return self._request("DELETE", path, **kwargs)
+    Специфичное для APIClient: ~46 domain-методов
+    (workflow/admin/rag/ai/...) ниже.
+    """
 
     def get_metrics(self) -> dict[str, Any]:
         return self._request("GET", "/api/v1/admin/metrics")
