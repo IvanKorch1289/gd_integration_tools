@@ -116,11 +116,15 @@ class APIClient(BaseAPIClient):
     def list_overrides(self) -> dict[str, Any]:
         return self._flags.list_overrides()
 
-    def set_override(self, *args: Any, **kwargs: Any) -> Any:
-        return self._flags.set_override(*args, **kwargs)
+    def set_override(
+        self, flag: str, value: Any, tenant_id: str | None = None, actor: str = "ui"
+    ) -> dict[str, Any] | None:
+        return self._flags.set_override(flag, value, tenant_id, actor)
 
-    def clear_override(self, *args: Any, **kwargs: Any) -> Any:
-        return self._flags.clear_override(*args, **kwargs)
+    def clear_override(
+        self, flag: str, tenant_id: str | None = None, actor: str = "ui"
+    ) -> dict[str, Any] | None:
+        return self._flags.clear_override(flag, tenant_id, actor)
 
     # ── Config (2) ─────────────────────────────────────────────────
     def get_config(self) -> dict[str, Any]:
@@ -186,19 +190,23 @@ class APIClient(BaseAPIClient):
         return self._dsl_routes.diff_dsl_route(route_id, yaml_str)
 
     # ── Feedback (5) ───────────────────────────────────────────────
-    def list_feedback_pending(self, **kwargs: Any) -> list[dict[str, Any]]:
+    def list_feedback_pending(
+        self, **kwargs: Any
+    ) -> dict[str, Any]:
         return self._feedback.list_feedback_pending(**kwargs)
 
-    def list_feedback_labeled(self, **kwargs: Any) -> list[dict[str, Any]]:
+    def list_feedback_labeled(
+        self, **kwargs: Any
+    ) -> dict[str, Any]:
         return self._feedback.list_feedback_labeled(**kwargs)
 
     def get_feedback_stats(self) -> dict[str, int]:
         return self._feedback.get_feedback_stats()
 
-    def label_feedback(self, *args: Any, **kwargs: Any) -> Any:
+    def label_feedback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         return self._feedback.label_feedback(*args, **kwargs)
 
-    def index_feedback_to_rag(self, *args: Any, **kwargs: Any) -> Any:
+    def index_feedback_to_rag(self, *args: Any, **kwargs: Any) -> dict[str, int]:
         return self._feedback.index_feedback_to_rag(*args, **kwargs)
 
     # ── Inventory (2) ──────────────────────────────────────────────
