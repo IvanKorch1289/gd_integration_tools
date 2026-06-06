@@ -11,9 +11,7 @@ import pytest
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.processors.data_lineage import DataLineageProcessor
 from src.backend.dsl.processors.event_store import (
-    Event,
     EventStoreProcessor,
-    EventStream,
     InMemoryEventStore,
     get_event_store,
     reset_event_store,
