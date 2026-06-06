@@ -19,14 +19,14 @@ def test_emitter_appends_event() -> None:
     em = InMemoryLineageEmitter()
     em({"event_id": "e1", "node": {"name": "foo"}})
     em({"event_id": "e2", "node": {"name": "bar"}})
-    assert len(em.list()) == 2
+    assert len(em.list_events()) == 2
 
 
 def test_emitter_clear() -> None:
     em = InMemoryLineageEmitter()
     em({"event_id": "e1"})
     em.clear()
-    assert em.list() == []
+    assert em.list_events() == []
 
 
 def test_emitter_rejects_invalid_event() -> None:
@@ -51,7 +51,7 @@ def test_emitter_accepts_lineage_event_with_to_dict() -> None:
         event_id="e1", run_id="r1", event_type="input", node=node
     )
     em(event)
-    stored = em.list()
+    stored = em.list_events()
     assert len(stored) == 1
     assert stored[0]["event_id"] == "e1"
     assert stored[0]["node"]["name"] == "foo"
@@ -106,7 +106,7 @@ def test_emitter_thread_safe() -> None:
         t.start()
     for t in threads:
         t.join()
-    assert len(em.list()) == 500
+    assert len(em.list_events()) == 500
 
 
 # ── Module-level singleton ──────────────────────────────────────────────
@@ -130,9 +130,9 @@ def test_reset_emitter_returns_fresh() -> None:
     fresh = reset_lineage_emitter()
     assert fresh is not em
     # New emitter is empty
-    assert fresh.list() == []
+    assert fresh.list_events() == []
     # Old emitter cleared (reset_lineage_emitter clears old instance first)
-    assert em.list() == []
+    assert em.list_events() == []
 
 
 # ── ISO timestamp helper ────────────────────────────────────────────────

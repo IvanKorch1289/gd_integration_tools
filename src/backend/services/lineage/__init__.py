@@ -11,11 +11,17 @@ from src.backend.services.lineage.lineage_emitter import (
     reset_lineage_emitter,
     set_lineage_emitter,
 )
+from src.backend.services.lineage.lineage_http_emitter import (
+    OpenLineageHttpConfig,
+    OpenLineageHttpEmitter,
+)
 
 __all__ = (
     "InMemoryLineageEmitter",
     "LineageEmitterCallable",
     "LineageEmitterProtocol",
+    "OpenLineageHttpConfig",
+    "OpenLineageHttpEmitter",
     "get_lineage_emitter",
     "reset_lineage_emitter",
     "set_lineage_emitter",
