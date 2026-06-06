@@ -124,7 +124,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
         super().__init__()
         self.logger.info("OrderGRPCServicer инициализирован")
 
-    async def CreateOrder(self, request, context):
+    async def CreateOrder(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         try:
             result = await self._dispatch(
                 "orders.create_skb_order", {"order_id": request.order_id}
@@ -147,7 +149,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             )
             return OrderResponse(error=_safe_error(exc, cid))
 
-    async def GetOrderResult(self, request, context):
+    async def GetOrderResult(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         try:
             result = await self._dispatch(
                 "orders.get_file_and_json", {"order_id": request.order_id}
@@ -170,7 +174,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             )
             return OrderResponse(error=_safe_error(exc, cid))
 
-    async def GetOrder(self, request, context):
+    async def GetOrder(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         try:
             result = await self._dispatch(
                 "orders.get", {"key": "id", "value": request.order_id}
@@ -191,7 +197,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             self.logger.error("GetOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True)
             return OrderDetailResponse(error=_safe_error(exc, cid))
 
-    async def DeleteOrder(self, request, context):
+    async def DeleteOrder(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         try:
             await self._dispatch(
                 "orders.delete", {"key": "id", "value": request.order_id}
@@ -204,13 +212,19 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             )
             return OrderDeleteResponse(success=False, error=_safe_error(exc, cid))
 
-    async def CreateSKBOrder(self, request, context):
+    async def CreateSKBOrder(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         return await self.CreateOrder(request, context)
 
-    async def GetFileAndJson(self, request, context):
+    async def GetFileAndJson(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         return await self.GetOrderResult(request, context)
 
-    async def SendOrderData(self, request, context):
+    async def SendOrderData(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         try:
             result = await self._dispatch(
                 "orders.send_order_data", {"order_id": request.order_id}
@@ -244,7 +258,9 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         self.logger = grpc_logger
         self.logger.info("InvokerGRPCServicer инициализирован")
 
-    async def Invoke(self, request, context):
+    async def Invoke(  # type: ignore[no-untyped-def]
+        self, request, context
+    ):
         from src.backend.core.interfaces.invoker import (
             InvocationMode,
             InvocationRequest,
@@ -379,7 +395,11 @@ class AuthInterceptor:
     def __init__(self, expected_key: str) -> None:
         self._expected_key = expected_key
 
-    async def intercept_service(self, continuation, handler_call_details):
+    async def intercept_service(
+        self,
+        continuation: Any,
+        handler_call_details: Any,
+    ) -> Any:
         from grpc import StatusCode
         from grpc.aio import AbortError
 
@@ -392,7 +412,10 @@ class AuthInterceptor:
                 "gRPC unauthenticated request: method=%s", handler_call_details.method
             )
 
-            async def _abort(_request_or_iterator, context):
+            async def _abort(
+                _request_or_iterator: Any,
+                context: Any,
+            ) -> None:
                 try:
                     await context.abort(
                         StatusCode.UNAUTHENTICATED, "invalid or missing API key"
@@ -404,7 +427,7 @@ class AuthInterceptor:
         return await continuation(handler_call_details)
 
 
-async def serve():
+async def serve() -> None:
     """Запуск gRPC-сервера с регистрацией всех servicer."""
     from concurrent import futures
     from pathlib import Path
