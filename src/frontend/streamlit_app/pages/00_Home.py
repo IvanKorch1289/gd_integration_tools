@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-st.set_page_config(page_title="Home", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page("Home", "🏠")
 
 st.title("GD Integration Tools — Home")
 
