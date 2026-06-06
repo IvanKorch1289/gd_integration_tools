@@ -8,6 +8,7 @@ import streamlit as st
 import yaml as _yaml
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
+from src.frontend.streamlit_app.shared.components import dataframe_view
 
 st.set_page_config(page_title="DSL Dry-Run", page_icon=":fast_forward:", layout="wide")
 st.header("DSL Dry-Run")
@@ -88,7 +89,7 @@ if run:
         }
         for s in result.steps
     ]
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    dataframe_view(rows, hide_index=True)
 
     with st.expander("Raw JSON result"):
         st.json(result.to_dict())

@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 setup_page(
     'Queues',
@@ -44,7 +44,7 @@ else:
 
         topics = stats.get("topics_detail") or []
         if topics:
-            st.dataframe(topics, use_container_width=True)
+            dataframe_view(topics)
 
 if auto_refresh:
     import time

@@ -30,6 +30,8 @@ from typing import Any
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
 import streamlit as st  # noqa: E402
 
+from src.frontend.streamlit_app.shared.components import dataframe_view  # noqa: E402
+
 st.set_page_config(
     page_title="Resilience Dashboard", page_icon=":shield:", layout="wide"
 )
@@ -177,7 +179,7 @@ def _render_circuit_breakers(items: list[dict[str, Any]]) -> None:
         }
         for it in items
     ]
-    st.dataframe(_rows, use_container_width=True, hide_index=True)
+    dataframe_view(_rows, hide_index=True)
 
 
 def _render_rate_limiters(items: list[dict[str, Any]]) -> None:
@@ -223,7 +225,7 @@ def _render_bulkheads(items: list[dict[str, Any]]) -> None:
         }
         for it in items
     ]
-    st.dataframe(_rows, use_container_width=True, hide_index=True)
+    dataframe_view(_rows, hide_index=True)
 
 
 def _render_degradation(items: list[dict[str, Any]]) -> None:
@@ -244,7 +246,7 @@ def _render_degradation(items: list[dict[str, Any]]) -> None:
         }
         for it in items
     ]
-    st.dataframe(_rows, use_container_width=True, hide_index=True)
+    dataframe_view(_rows, hide_index=True)
 
 
 @st.fragment(run_every=5)

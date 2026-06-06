@@ -12,6 +12,8 @@ from typing import Any
 import httpx
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import dataframe_view
+
 API_BASE = st.session_state.get("api_base", "http://localhost:8000/api/v1")
 
 
@@ -61,7 +63,7 @@ with tab_logs:
         )
     )
     if rows:
-        st.dataframe(rows, use_container_width=True)
+        dataframe_view(rows)
     else:
         st.info("Ничего не найдено или индекс пуст.")
 
@@ -75,7 +77,7 @@ with tab_orders:
         )
     rows = _run(_get("/orders", q=q or None, status=status or None, limit=int(limit)))
     if rows:
-        st.dataframe(rows, use_container_width=True)
+        dataframe_view(rows)
     else:
         st.info("Ничего не найдено или индекс пуст.")
 
@@ -89,7 +91,7 @@ with tab_notebooks:
         )
     rows = _run(_get("/notebooks", q=q or None, tag=tag or None, limit=int(limit)))
     if rows:
-        st.dataframe(rows, use_container_width=True)
+        dataframe_view(rows)
     else:
         st.info("Ничего не найдено или индекс пуст.")
 

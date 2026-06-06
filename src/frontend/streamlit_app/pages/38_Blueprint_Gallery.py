@@ -12,6 +12,8 @@ from typing import Any
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import dataframe_view
+
 st.set_page_config(page_title="Blueprint Gallery", page_icon=":art:", layout="wide")
 st.header(":art: Blueprint Gallery")
 st.caption(
@@ -252,4 +254,4 @@ rows = [
     }
     for b in all_blueprints
 ]
-st.dataframe(rows, use_container_width=True, hide_index=True)
+dataframe_view(rows, hide_index=True)

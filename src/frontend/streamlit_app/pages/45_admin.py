@@ -20,6 +20,7 @@ import streamlit as st
 
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.shared.components import dataframe_view
 
 st.set_page_config(page_title="Admin Console", page_icon=":wrench:", layout="wide")
 st.header(":wrench: Admin Console")
@@ -90,7 +91,7 @@ with tab_users:
         st.warning(f"Не удалось получить пользователей: {exc}")
 
     if users:
-        st.dataframe(users, use_container_width=True, height=400, hide_index=True)
+        dataframe_view(users, height=400, hide_index=True)
     else:
         st.info("Пользователи не найдены или endpoint недоступен.")
 

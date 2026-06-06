@@ -29,6 +29,7 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import dataframe_view
 
 st.set_page_config(
     page_title="Workflow Replay · gd_integration_tools", page_icon="⏯️", layout="wide"
@@ -143,7 +144,7 @@ def main() -> None:
     st.caption(f"Всего после фильтров: **{len(filtered)}** / {len(events)}")
 
     # Таблица events.
-    st.dataframe(filtered, use_container_width=True, hide_index=True)
+    dataframe_view(filtered, hide_index=True)
 
     # Waterfall (упрощённый — st.bar_chart по count типов).
     if filtered:

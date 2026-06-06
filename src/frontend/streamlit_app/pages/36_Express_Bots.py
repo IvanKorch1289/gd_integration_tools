@@ -16,6 +16,8 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import dataframe_view
+
 st.set_page_config(
     page_title="Express Bots", page_icon=":speech_balloon:", layout="wide"
 )
@@ -57,7 +59,7 @@ tab_list, tab_send, tab_buttons, tab_metrics = st.tabs(
 
 with tab_list:
     st.subheader("Зарегистрированные боты")
-    st.dataframe(bots, use_container_width=True)
+    dataframe_view(bots)
     st.caption(
         f"Callback URL: ``{express_settings.callback_url or '—'}`` · "
         f"BotX host: ``{express_settings.botx_host or '— (derived)'}``"
