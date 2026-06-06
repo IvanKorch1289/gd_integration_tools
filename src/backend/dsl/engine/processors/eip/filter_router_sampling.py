@@ -33,7 +33,6 @@ from src.backend.dsl.engine.processors.base import (
 
 __all__ = (
     "ContentBasedRouter",
-    "MessageFilter",
     "SamplingProcessor",
 )
 
@@ -126,64 +125,10 @@ class ContentBasedRouter(BaseProcessor):
         }
 
 
-# ── Message Filter ───────────────────────────────────────────────────
-
-class MessageFilter(BaseProcessor):
-    """Пропускает только messages, удовлетворяющие predicate.
-
-    При не-match (default):
-    * Message продолжает pipeline, но exchange.filtered_out = True
-    * ``on_filtered`` processor опционально вызывается (если задан)
-    * Если ``stop_on_filter=True`` → exchange.stop() (default: True)
-
-    Args:
-        predicate: returns True → message проходит, False → filter.
-        stop_on_filter: True (default) — останавливает pipeline.
-        on_filtered: optional processor для обработки отфильтрованных.
-        name: имя процессора.
-    """
-
-    def __init__(
-        self,
-        predicate: Predicate,
-        *,
-        stop_on_filter: bool = True,
-        on_filtered: BaseProcessor | None = None,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "filter")
-        self._predicate = predicate
-        self._stop_on_filter = stop_on_filter
-        self._on_filtered = on_filtered
-
-    @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
-        try:
-            matched = self._predicate(exchange)
-        except Exception as e:
-            _log.warning("MessageFilter: predicate raised: %s — treating as no-match", e)
-            matched = False
-
-        if matched:
-            exchange.set_property("filter.matched", True)
-            return
-
-        exchange.set_property("filter.matched", False)
-        _log.debug("MessageFilter: message filtered out")
-
-        if self._on_filtered is not None:
-            await self._on_filtered.process(exchange, context)
-
-        if self._stop_on_filter:
-            exchange.stop()
-
-    def to_spec(self) -> dict[str, Any] | None:
-        return {
-            "type": "filter",
-            "stop_on_filter": self._stop_on_filter,
-        }
+# Message Filter — НЕ дублируем: существующий FilterProcessor в core.py
+# покрывает use case (predicate + exchange.stop on no-match). Для programmatic
+# использования — импортируйте из core.py.
+# (С55 W6 dedup: MessageFilter class удалён; см. core.py::FilterProcessor)
 
 
 # ── Sampling ────────────────────────────────────────────────────────

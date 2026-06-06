@@ -11,10 +11,15 @@ purge_channel / sample / reply_to / schema_validate / validate_schema;
 cdc / sse_source / protocol / transport.
 
 Stateless — см. контракт в ``base.py``.
-"""
 
+Apache Camel EIP patterns reference: https://camel.apache.org/components/latest/eips/patterns.html
+Apache Camel Routing Slip: https://camel.apache.org/components/latest/eips/routingSlip.html
+Apache Camel Content-Based Router: https://camel.apache.org/components/latest/eips/contentBasedRouter.html
+Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/sensors.html
+"""
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -276,6 +281,238 @@ class EIPMixin:
             method=method,
         )
         get_trigger_registry().register(trigger)
+        return self  # type: ignore
+
+    def from_file(
+        self,
+        path: str,
+        *,
+        pattern: str | None = None,
+        recursive: bool = False,
+        poll_interval_s: float = 1.0,
+    ) -> RouteBuilder:
+        """Camel-style ``from("file:directory?pattern=*")`` — file sensor trigger.
+
+        Apache Airflow FileSensor analogue. При появлении/изменении файла
+        (matching pattern) → dsl_service.dispatch(route_id, {}, headers).
+
+        Args:
+            path: директория для watching.
+            pattern: optional glob pattern (e.g., ``"*.csv"``).
+            recursive: watch recursively (default False).
+            poll_interval_s: debounce interval (default 1.0s).
+        """
+        from src.backend.core.orchestration.airflow_sensors import FileSensor
+        from src.backend.core.orchestration.sensor import SensorTrigger
+        from src.backend.dsl.orchestration.triggers import (
+            FileSensorTaskWrapper as _FileSensorWrapper,
+        )
+        from src.backend.dsl.orchestration.triggers import get_trigger_registry
+
+        sensor = FileSensor(
+            path=path,
+            pattern=pattern,
+            recursive=recursive,
+            poll_interval_s=poll_interval_s,
+        )
+        trigger_cfg = SensorTrigger(
+            sensor_id=f"file_{path.replace('/', '_').strip('_')}",
+            check=lambda d: asyncio.sleep(0, result=True),  # placeholder
+            poll_interval_s=poll_interval_s,
+        )
+
+        async def _runner() -> None:
+            from src.backend.dsl.service import get_dsl_service
+            route_id = getattr(self, "_route_id", "_pending_")
+            while True:
+                matched = await sensor.watch(
+                    trigger=trigger_cfg, input={}, namespace="default"
+                )
+                if matched:
+                    await get_dsl_service().dispatch(
+                        route_id=route_id,
+                        body={},
+                        headers={"x-sensor": "file", "x-sensor-path": path},
+                    )
+                await asyncio.sleep(poll_interval_s)
+
+        task = asyncio.create_task(_runner(), name=f"sensor:file:{path}")
+        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        return self  # type: ignore
+
+    def from_sql(
+        self,
+        dsn: str,
+        query: str,
+        *,
+        predicate: str | None = None,
+        poll_interval_s: float = 5.0,
+    ) -> RouteBuilder:
+        """Camel-style ``from("sql:...")`` — SQL sensor trigger.
+
+        Apache Airflow SqlSensor analogue. Polls query до match (any row
+        или JMESPath predicate). При match → dsl_service.dispatch.
+
+        Args:
+            dsn: PostgreSQL connection string (asyncpg DSN).
+            query: SQL query.
+            predicate: optional JMESPath (e.g., "length(@) > `0`").
+            poll_interval_s: interval between polls (default 5.0s).
+        """
+        from src.backend.core.orchestration.airflow_sensors import SqlSensor
+        from src.backend.core.orchestration.sensor import SensorTrigger
+        from src.backend.dsl.orchestration.triggers import (
+            FileSensorTaskWrapper as _FileSensorWrapper,
+        )
+        from src.backend.dsl.orchestration.triggers import get_trigger_registry
+
+        sensor = SqlSensor(
+            dsn=dsn, query=query, predicate=predicate, poll_interval_s=poll_interval_s
+        )
+        trigger_cfg = SensorTrigger(
+            sensor_id=f"sql_{id(self)}",
+            check=lambda d: asyncio.sleep(0, result=True),
+            poll_interval_s=poll_interval_s,
+        )
+
+        async def _runner() -> None:
+            from src.backend.dsl.service import get_dsl_service
+            route_id = getattr(self, "_route_id", "_pending_")
+            while True:
+                matched = await sensor.watch(
+                    trigger=trigger_cfg, input={}, namespace="default"
+                )
+                if matched:
+                    await get_dsl_service().dispatch(
+                        route_id=route_id, body={},
+                        headers={"x-sensor": "sql", "x-sensor-dsn": dsn.split("@")[-1]},
+                    )
+                await asyncio.sleep(poll_interval_s)
+
+        task = asyncio.create_task(_runner(), name=f"sensor:sql:{id(self)}")
+        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        return self  # type: ignore
+
+    def from_http(
+        self,
+        url: str,
+        *,
+        expected_status: int = 200,
+        method: str = "GET",
+        body_match: str | None = None,
+        poll_interval_s: float = 10.0,
+    ) -> RouteBuilder:
+        """Camel-style ``from("http:url")`` — HTTP sensor trigger.
+
+        Apache Airflow HttpSensor analogue. Polls endpoint до match.
+        При match → dsl_service.dispatch.
+
+        Args:
+            url: HTTP endpoint.
+            expected_status: status code для match (default 200).
+            method: HTTP method.
+            body_match: optional JMESPath для response body.
+            poll_interval_s: interval between polls (default 10.0s).
+        """
+        from src.backend.core.orchestration.airflow_sensors import HttpSensor
+        from src.backend.core.orchestration.sensor import SensorTrigger
+        from src.backend.dsl.orchestration.triggers import (
+            FileSensorTaskWrapper as _FileSensorWrapper,
+        )
+        from src.backend.dsl.orchestration.triggers import get_trigger_registry
+
+        sensor = HttpSensor(
+            url=url,
+            expected_status=expected_status,
+            method=method,
+            body_match=body_match,
+            poll_interval_s=poll_interval_s,
+        )
+        trigger_cfg = SensorTrigger(
+            sensor_id=f"http_{id(self)}",
+            check=lambda d: asyncio.sleep(0, result=True),
+            poll_interval_s=poll_interval_s,
+        )
+
+        async def _runner() -> None:
+            from src.backend.dsl.service import get_dsl_service
+            route_id = getattr(self, "_route_id", "_pending_")
+            while True:
+                matched = await sensor.watch(
+                    trigger=trigger_cfg, input={}, namespace="default"
+                )
+                if matched:
+                    await get_dsl_service().dispatch(
+                        route_id=route_id, body={},
+                        headers={"x-sensor": "http", "x-sensor-url": url},
+                    )
+                await asyncio.sleep(poll_interval_s)
+
+        task = asyncio.create_task(_runner(), name=f"sensor:http:{id(self)}")
+        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        return self  # type: ignore
+
+    def from_s3(
+        self,
+        bucket: str,
+        key: str,
+        *,
+        region: str = "us-east-1",
+        endpoint_url: str | None = None,
+        poll_interval_s: float = 30.0,
+    ) -> RouteBuilder:
+        """Camel-style ``from("aws-s3:bucket/key")`` — S3 sensor trigger.
+
+        Apache Airflow S3KeySensor analogue. Polls S3 head_object до match.
+        При match → dsl_service.dispatch.
+
+        Требует ``aioboto3`` (user-approved dep): ``uv pip install aioboto3``.
+        Raises ImportError при construction если не установлен.
+
+        Args:
+            bucket: S3 bucket name.
+            key: S3 object key.
+            region: AWS region (default ``"us-east-1"``).
+            endpoint_url: optional custom endpoint (MinIO, Ceph, Garage).
+            poll_interval_s: interval between polls (default 30.0s).
+        """
+        from src.backend.core.orchestration.airflow_sensors import S3Sensor
+        from src.backend.core.orchestration.sensor import SensorTrigger
+        from src.backend.dsl.orchestration.triggers import (
+            FileSensorTaskWrapper as _FileSensorWrapper,
+        )
+        from src.backend.dsl.orchestration.triggers import get_trigger_registry
+
+        sensor = S3Sensor(
+            bucket=bucket,
+            key=key,
+            region=region,
+            endpoint_url=endpoint_url,
+            poll_interval_s=poll_interval_s,
+        )
+        trigger_cfg = SensorTrigger(
+            sensor_id=f"s3_{bucket}",
+            check=lambda d: asyncio.sleep(0, result=True),
+            poll_interval_s=poll_interval_s,
+        )
+
+        async def _runner() -> None:
+            from src.backend.dsl.service import get_dsl_service
+            route_id = getattr(self, "_route_id", "_pending_")
+            while True:
+                matched = await sensor.watch(
+                    trigger=trigger_cfg, input={}, namespace="default"
+                )
+                if matched:
+                    await get_dsl_service().dispatch(
+                        route_id=route_id, body={},
+                        headers={"x-sensor": "s3", "x-sensor-bucket": bucket,
+                                 "x-sensor-key": key},
+                    )
+                await asyncio.sleep(poll_interval_s)
+
+        task = asyncio.create_task(_runner(), name=f"sensor:s3:{bucket}")
+        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
         return self  # type: ignore
 
     def content_based_router(

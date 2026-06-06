@@ -24,11 +24,39 @@ from typing import Any, Protocol
 
 __all__ = (
     "IntervalTrigger",
+    "FileSensorTaskWrapper",
     "Trigger",
     "TriggerRegistry",
     "WebhookTrigger",
     "get_trigger_registry",
 )
+
+
+class FileSensorTaskWrapper:
+    """Wrapper для background-task-based sensors (file/sql/http/s3).
+
+    Имплементирует Trigger Protocol для совместимости с TriggerRegistry.
+    """
+
+    def __init__(self, task: asyncio.Task) -> None:  # type: ignore[type-arg]
+        self.name = f"sensor_task_{id(task)}"
+        self._task = task
+
+    async def start(self) -> None:
+        # Task already started in DSL builder; this is no-op
+        pass
+
+    async def stop(self) -> None:
+        if self._task and not self._task.done():
+            self._task.cancel()
+            try:
+                await self._task
+            except (asyncio.CancelledError, Exception):
+                pass
+
+
+# Backward-compat alias (was used in eip.py before refactor)
+_FileSensorWrapper = FileSensorTaskWrapper
 
 _log = logging.getLogger(__name__)
 

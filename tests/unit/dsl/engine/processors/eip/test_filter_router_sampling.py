@@ -1,4 +1,4 @@
-"""Unit tests для ContentBasedRouter, MessageFilter, SamplingProcessor (S55 W2).
+"""Unit tests для ContentBasedRouter,  SamplingProcessor (S55 W2).
 
 Apache Camel references:
 - Content-Based Router: contentBasedRouter.html
@@ -13,7 +13,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
     ContentBasedRouter,
-    MessageFilter,
+    
     SamplingProcessor,
 )
 
@@ -100,54 +100,6 @@ class TestContentBasedRouter:
         }
 
 
-# ── MessageFilter ─────────────────────────────────────────────────────
-
-class TestMessageFilter:
-    @pytest.mark.asyncio
-    async def test_match_passes(self) -> None:
-        f = MessageFilter(predicate=lambda e: e.in_message.body.get("ok") is True)
-        ex = _ex({"ok": True})
-        await f.process(ex, _ctx())
-        assert ex.get_property("filter.matched") is True
-        assert ex.error is None
-
-    @pytest.mark.asyncio
-    async def test_no_match_stops(self) -> None:
-        f = MessageFilter(predicate=lambda e: e.in_message.body.get("ok") is True)
-        ex = _ex({"ok": False})
-        await f.process(ex, _ctx())
-        assert ex.get_property("filter.matched") is False
-
-    @pytest.mark.asyncio
-    async def test_no_match_no_stop(self) -> None:
-        f = MessageFilter(
-            predicate=lambda e: False,
-            stop_on_filter=False,
-        )
-        ex = _ex({})
-        await f.process(ex, _ctx())
-        assert ex.get_property("filter.matched") is False
-        # exchange should not be stopped (no easy check, but error remains None)
-
-    @pytest.mark.asyncio
-    async def test_predicate_exception_treated_as_no_match(self) -> None:
-        def bad_pred(e: Exchange) -> bool:
-            raise ValueError("boom")
-
-        f = MessageFilter(predicate=bad_pred)
-        ex = _ex({})
-        await f.process(ex, _ctx())
-        assert ex.get_property("filter.matched") is False
-
-    def test_to_spec(self) -> None:
-        f = MessageFilter(predicate=lambda e: True, stop_on_filter=False)
-        spec = f.to_spec()
-        assert spec == {"type": "filter", "stop_on_filter": False}
-
-
-# ── SamplingProcessor ────────────────────────────────────────────────
-
-class TestSamplingProcessor:
     def test_construction_validation(self) -> None:
         with pytest.raises(ValueError, match="rate OR fraction"):
             SamplingProcessor(rate=10, fraction=0.5)

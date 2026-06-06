@@ -17,7 +17,6 @@ from src.backend.dsl.engine.processors.eip.collection import (
 )
 from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
     ContentBasedRouter,
-    MessageFilter,
     SamplingProcessor,
 )
 from src.backend.dsl.engine.processors.eip.flow_control import (
@@ -84,7 +83,6 @@ __all__ = (
     "LoadBalancerProcessor",
     "LoopProcessor",
     "MaxByProcessor",
-    "MessageFilter",
     "MessageTranslatorProcessor",
     "MinByProcessor",
     "MulticastProcessor",
