@@ -357,7 +357,12 @@ def _resolve_annotation(
             try:
                 resolved = eval(annotation, module_ns)  # noqa: S307 — controlled namespace
                 if isinstance(resolved, str):
-                    resolved = resolved.strip("'\"")
+                    # Original was quoted ('Foo' or "Foo") — try resolving
+                    # the bare name again against the namespace.
+                    bare = resolved.strip("'\"")
+                    if bare in module_ns:
+                        resolved = module_ns[bare]
+                    # else fall through with the bare string
                 return _format_type_str(resolved)
             except Exception:
                 pass
@@ -719,6 +724,12 @@ def _collect_all_imports(
                     # Same module class
                     same_module_filtered.append(name)
                     continue
+            # Fallback: search all mixin modules in MRO for this name.
+            # Handles type aliases (DeferCondition = Callable[[Any], bool]) and
+            # forward refs that are not in the target module's namespace.
+            resolved = _resolve_in_mro(cls, name, target_module=module_name)
+            if resolved:
+                same_module_fq.append((resolved, name))
 
         # Add external imports for types from other modules
         # same_module_fq entries are (fq_name, short_name) where fq_name is 'module.ClassName'
@@ -738,6 +749,26 @@ def _collect_all_imports(
             )
 
     return deduped
+
+
+def _resolve_in_mro(cls: type, name: str, target_module: str | None = None) -> str | None:
+    """Look up a name in all modules of the class's MRO.
+
+    Returns FQ name like
+    "src.backend.dsl.builders.deferred_execution_mixin.DeferCondition"
+    if found, else None. Used to resolve type aliases and forward refs that
+    are not in the target class's own module namespace.
+
+    Skips ``target_module`` to prevent self-imports in the generated stub.
+    """
+    for parent in cls.__mro__:
+        mod_name = getattr(parent, "__module__", None)
+        if not mod_name or mod_name == target_module:
+            continue
+        ns = _get_module_namespace(mod_name)
+        if name in ns:
+            return f"{mod_name}.{name}"
+    return None
 
 
 # -------------------------------------------------------------------

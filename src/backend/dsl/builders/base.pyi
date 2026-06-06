@@ -19,17 +19,39 @@ from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 
 from src.backend.dsl.builders.data_store_mixin import DataStore
 
+from src.backend.dsl.engine.context import ExecutionContext
+
 from src.backend.dsl.engine.exchange import Exchange
 
 from src.backend.dsl.engine.pipeline import Pipeline
 
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, ProcessorCallable
 
 from src.backend.dsl.engine.processors.control_flow import ChoiceBranch, SagaStep
 
 from src.backend.dsl.processors.plan_execute_processor import PlanResult, PlanStep
 
 from src.backend.dsl.processors.router_specialist_processor import RoutingDecision, SpecialistAgent
+
+from src.backend.dsl.builders.deferred_execution_mixin import DeferCondition
+
+from src.backend.dsl.builders.deferred_execution_mixin import TimestampLike
+
+from src.backend.dsl.builders.template_engine_mixin import Context
+
+from src.backend.dsl.builders.template_engine_mixin import PathLike
+
+from src.backend.dsl.processors.plan_execute_processor import ExecutorFn
+
+from src.backend.dsl.processors.plan_execute_processor import PlannerFn
+
+from src.backend.dsl.processors.plan_execute_processor import VerifierFn
+
+from src.backend.dsl.processors.reflection_loop_processor import CriticFn
+
+from src.backend.dsl.processors.reflection_loop_processor import GeneratorFn
+
+from src.backend.dsl.processors.router_specialist_processor import LLMRouterFn
 
 
 
@@ -491,15 +513,15 @@ class RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder."""
         ...
 
-    def from_base64(self, b64_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_base64(self, b64_string: Union[str, None] = ...) -> RouteBuilder:
         """Decode base64 string → ``bytes`` (stdlib ``base64``)."""
         ...
 
-    def from_bencode(self, bcode_bytes: Union[bytes, None] = ...) -> 'RouteBuilder':
+    def from_bencode(self, bcode_bytes: Union[bytes, None] = ...) -> RouteBuilder:
         """Parse bencoded bytes → Python object (no external deps)."""
         ...
 
-    def from_csv(self, csv_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_csv(self, csv_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse CSV → ``list[dict]``."""
         ...
 
@@ -507,11 +529,11 @@ class RouteBuilder:
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW)."""
         ...
 
-    def from_excel(self, excel_bytes: Union[bytes, None] = ...) -> 'RouteBuilder':
+    def from_excel(self, excel_bytes: Union[bytes, None] = ...) -> RouteBuilder:
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         ...
 
-    def from_html_unescape(self, html_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_html_unescape(self, html_string: Union[str, None] = ...) -> RouteBuilder:
         """HTML-unescape string (entities → ``<>&"'`` chars)."""
         ...
 
@@ -519,23 +541,23 @@ class RouteBuilder:
         """Фабричный метод: маршрут с источником IMAP IDLE (K3 W5)."""
         ...
 
-    def from_ini(self, ini_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_ini(self, ini_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse INI → ``dict`` (stdlib ``configparser``)."""
         ...
 
-    def from_json(self, *, from_property: str = ...) -> 'RouteBuilder':
+    def from_json(self, *, from_property: str = ...) -> RouteBuilder:
         """Parse JSON string → ``dict``/``list`` в ``out_message.body``."""
         ...
 
-    def from_jwt(self, jwt_string: Union[str, None] = ..., *, secret: str, algorithm: str = ...) -> 'RouteBuilder':
+    def from_jwt(self, jwt_string: Union[str, None] = ..., *, secret: str, algorithm: str = ...) -> RouteBuilder:
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc)."""
         ...
 
-    def from_markdown(self, md_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_markdown(self, md_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse markdown → ``dict`` (extracts ``# heading`` → content)."""
         ...
 
-    def from_msgpack(self, msgpack_bytes: Union[bytes, None] = ...) -> 'RouteBuilder':
+    def from_msgpack(self, msgpack_bytes: Union[bytes, None] = ...) -> RouteBuilder:
         """Parse msgpack → ``dict``/``list`` (fallback: ``pickle``)."""
         ...
 
@@ -543,11 +565,11 @@ class RouteBuilder:
         """Точка входа: маршрут из NATS JetStream durable consumer."""
         ...
 
-    def from_parquet(self, parquet_bytes: Union[bytes, None] = ...) -> 'RouteBuilder':
+    def from_parquet(self, parquet_bytes: Union[bytes, None] = ...) -> RouteBuilder:
         """Parse parquet → ``list[dict]`` (pyarrow)."""
         ...
 
-    def from_protobuf_like(self, pb_bytes: Union[bytes, None] = ...) -> 'RouteBuilder':
+    def from_protobuf_like(self, pb_bytes: Union[bytes, None] = ...) -> RouteBuilder:
         """Decode base64-encoded JSON ``bytes`` → ``dict`` (inverse of to_protobuf_like)."""
         ...
 
@@ -555,11 +577,11 @@ class RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
         ...
 
-    def from_toml(self, toml_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_toml(self, toml_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse TOML → ``dict`` (``tomllib`` stdlib 3.11+)."""
         ...
 
-    def from_url_encoded(self, url_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_url_encoded(self, url_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse URL-encoded string → ``dict`` (multi-value → ``list``)."""
         ...
 
@@ -567,11 +589,11 @@ class RouteBuilder:
         """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8)."""
         ...
 
-    def from_xml(self, xml_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_xml(self, xml_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse XML → ``dict`` (через ``xmltodict`` если есть, иначе stdlib)."""
         ...
 
-    def from_yaml(self, yaml_string: Union[str, None] = ...) -> 'RouteBuilder':
+    def from_yaml(self, yaml_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse YAML → ``dict``/``list``."""
         ...
 
@@ -807,7 +829,7 @@ class RouteBuilder:
         """Plan-and-Execute agentic pattern с verification + replan (S39 W2)."""
         ...
 
-    def plan_execute_with_callbacks(self, *, planner: PlannerFn, executor: ExecutorFn, verifier: VerifierFn | None = ..., max_steps: int = ..., max_replans: int = ...) -> 'RouteBuilder':
+    def plan_execute_with_callbacks(self, *, planner: PlannerFn, executor: ExecutorFn, verifier: VerifierFn | None = ..., max_steps: int = ..., max_replans: int = ...) -> RouteBuilder:
         """Добавить :class:`PlanExecuteProcessor` в pipeline."""
         ...
 
@@ -819,7 +841,7 @@ class RouteBuilder:
         """Добавляет произвольный процессор в pipeline."""
         ...
 
-    def process_fn(self, func: Callable[[Exchange[Any], 'ExecutionContext'], Union[Any, Awaitable[Any]]], *, name: Union[str, None] = ...) -> RouteBuilder:
+    def process_fn(self, func: Callable[[Exchange[Any], ExecutionContext], Union[Any, Awaitable[Any]]], *, name: Union[str, None] = ...) -> RouteBuilder:
         """Добавляет обычную функцию или coroutine как процессор."""
         ...
 
@@ -879,7 +901,7 @@ class RouteBuilder:
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
         ...
 
-    def reflection_loop(self, *, generator: GeneratorFn, critic: CriticFn, max_refinements: int = ..., score_threshold: float = ...) -> 'RouteBuilder':
+    def reflection_loop(self, *, generator: GeneratorFn, critic: CriticFn, max_refinements: int = ..., score_threshold: float = ...) -> RouteBuilder:
         """Добавить :class:`ReflectionLoopProcessor` в pipeline."""
         ...
 
@@ -959,7 +981,7 @@ class RouteBuilder:
         """Retry с backoff: повторяет процессоры при ошибке. backoff: fixed|exponential."""
         ...
 
-    def router_specialist(self, *, llm_router: LLMRouterFn, specialists: list[SpecialistAgent], fallback_specialist: Union[str, None] = ..., min_confidence: float = ...) -> 'RouteBuilder':
+    def router_specialist(self, *, llm_router: LLMRouterFn, specialists: list[SpecialistAgent], fallback_specialist: Union[str, None] = ..., min_confidence: float = ...) -> RouteBuilder:
         """Добавить :class:`RouterSpecialistProcessor` в pipeline."""
         ...
 
@@ -1175,23 +1197,23 @@ class RouteBuilder:
         """Алиас для process() — fluent naming."""
         ...
 
-    def to_avro_like(self, schema: Union[dict[str, Any], None] = ...) -> 'RouteBuilder':
+    def to_avro_like(self, schema: Union[dict[str, Any], None] = ...) -> RouteBuilder:
         """Convert ``dict`` → JSON ``str`` c обёрткой ``{"schema": ..., "data": ...}``."""
         ...
 
-    def to_base64(self) -> 'RouteBuilder':
+    def to_base64(self) -> RouteBuilder:
         """Encode ``bytes``/``str`` → base64 string (stdlib ``base64``)."""
         ...
 
-    def to_bencode(self) -> 'RouteBuilder':
+    def to_bencode(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → bencoded bytes (bitTorrent metafile)."""
         ...
 
-    def to_compact_json(self) -> 'RouteBuilder':
+    def to_compact_json(self) -> RouteBuilder:
         """Convert ``dict`` → minified JSON ``str`` (no indent, no spaces)."""
         ...
 
-    def to_csv(self, *, headers: Union[list[str], None] = ...) -> 'RouteBuilder':
+    def to_csv(self, *, headers: Union[list[str], None] = ...) -> RouteBuilder:
         """Convert ``list[dict]`` → CSV string."""
         ...
 
@@ -1199,31 +1221,31 @@ class RouteBuilder:
         """Publish текущий exchange в EventBus topic (V22 NEW)."""
         ...
 
-    def to_excel(self, *, sheet_name: str = ...) -> 'RouteBuilder':
+    def to_excel(self, *, sheet_name: str = ...) -> RouteBuilder:
         """Convert ``list[dict]`` → Excel bytes (openpyxl)."""
         ...
 
-    def to_html_escape(self) -> 'RouteBuilder':
+    def to_html_escape(self) -> RouteBuilder:
         """HTML-escape string (``<>&"'`` → entities, ``quote=True``)."""
         ...
 
-    def to_ini(self) -> 'RouteBuilder':
+    def to_ini(self) -> RouteBuilder:
         """Convert ``dict`` → INI string (stdlib ``configparser``)."""
         ...
 
-    def to_json(self, *, indent: Union[int, None] = ...) -> 'RouteBuilder':
+    def to_json(self, *, indent: Union[int, None] = ...) -> RouteBuilder:
         """Serialize ``exchange.body`` → JSON string в ``out_message.body``."""
         ...
 
-    def to_jwt(self, *, secret: str, algorithm: str = ..., claims: Union[dict[str, Any], None] = ...) -> 'RouteBuilder':
+    def to_jwt(self, *, secret: str, algorithm: str = ..., claims: Union[dict[str, Any], None] = ...) -> RouteBuilder:
         """Encode ``exchange.body`` (dict) → JWT string (HS256 default)."""
         ...
 
-    def to_markdown(self) -> 'RouteBuilder':
+    def to_markdown(self) -> RouteBuilder:
         """Convert ``dict`` → markdown string (``# key`` per top-level key)."""
         ...
 
-    def to_msgpack(self) -> 'RouteBuilder':
+    def to_msgpack(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → msgpack bytes (fallback: ``pickle``)."""
         ...
 
@@ -1231,11 +1253,11 @@ class RouteBuilder:
         """Публикует payload в NATS JetStream (Sink step)."""
         ...
 
-    def to_parquet(self, *, compression: str = ...) -> 'RouteBuilder':
+    def to_parquet(self, *, compression: str = ...) -> RouteBuilder:
         """Convert ``list[dict]`` → parquet bytes (pyarrow)."""
         ...
 
-    def to_protobuf_like(self) -> 'RouteBuilder':
+    def to_protobuf_like(self) -> RouteBuilder:
         """Convert ``dict`` → base64-encoded JSON ``bytes`` (protobuf-like wire format)."""
         ...
 
@@ -1243,23 +1265,23 @@ class RouteBuilder:
         """Вызов другого зарегистрированного DSL-маршрута."""
         ...
 
-    def to_toml(self) -> 'RouteBuilder':
+    def to_toml(self) -> RouteBuilder:
         """Convert ``dict`` → TOML string (``tomli_w``)."""
         ...
 
-    def to_url_encoded(self) -> 'RouteBuilder':
+    def to_url_encoded(self) -> RouteBuilder:
         """Convert ``dict`` → URL-encoded string (application/x-www-form-urlencoded)."""
         ...
 
-    def to_uuid_string(self) -> 'RouteBuilder':
+    def to_uuid_string(self) -> RouteBuilder:
         """Generate UUID4 string (``body`` ignored, always fresh)."""
         ...
 
-    def to_xml(self, *, root_tag: str = ...) -> 'RouteBuilder':
+    def to_xml(self, *, root_tag: str = ...) -> RouteBuilder:
         """Convert ``dict`` → XML string (stdlib ``xml.etree.ElementTree``)."""
         ...
 
-    def to_yaml(self) -> 'RouteBuilder':
+    def to_yaml(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → YAML string."""
         ...
 
