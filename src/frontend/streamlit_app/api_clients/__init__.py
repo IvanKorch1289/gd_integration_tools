@@ -1,27 +1,35 @@
 """Domain-specific API клиенты.
 
-Каждый клиент отвечает за свою предметную область и использует BaseAPIClient.
+Sprint 45 W1 (TD-011 closure): APIClient split на 12 specialized domain
+classes. APIClient (generic.py) — thin facade с __getattr__ делегированием.
 
-Sprint 44 W7 (TD-010): удалены 9 unused domain clients (ai, api_caller,
-cron, route, workflow, workflow_version, action_bus_client,
-plugin_marketplace_client, schema_registry_client) — total 1047 LOC dead code.
-Все они imported by 0 pages и 0 tests.
+Hierarchy:
+- BaseAPIClient (base.py) — retry + JWT + 401/5xx, HTTP transport
+- 12 domain clients — каждый отвечает за свой домен
+- APIClient (generic.py) — back-compat facade для 44+ pages
 
-Re-exports kept:
-- ``APIClient`` / ``get_api_client`` (generic.py, 47+ domain methods)
-- ``K4APIClient`` (k4.py, AI Stack 2026 extension)
-- ``AdminClient`` (admin.py, used by 51_Healthcheck.py)
-- ``RAGClient`` (rag.py, used by 22_RAG_Console.py)
-- ``BaseAPIClient`` / ``get_base_client`` (base.py, source of truth)
+Re-exports ниже для удобства (`from .api_clients import MetricsClient`).
 """
 
 from __future__ import annotations
 
 from src.frontend.streamlit_app.api_clients.admin import AdminClient
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient, get_base_client
+from src.frontend.streamlit_app.api_clients.capability import CapabilityClient
+from src.frontend.streamlit_app.api_clients.chat import ChatClient
+from src.frontend.streamlit_app.api_clients.config import ConfigClient
+from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
+from src.frontend.streamlit_app.api_clients.feedback import FeedbackClient
+from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 from src.frontend.streamlit_app.api_clients.generic import APIClient, get_api_client
+from src.frontend.streamlit_app.api_clients.inventory import InventoryClient
 from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
+from src.frontend.streamlit_app.api_clients.logs import LogsClient
+from src.frontend.streamlit_app.api_clients.metrics import MetricsClient
+from src.frontend.streamlit_app.api_clients.orders import OrdersClient
 from src.frontend.streamlit_app.api_clients.rag import RAGClient
+from src.frontend.streamlit_app.api_clients.tenants import TenantsClient
+from src.frontend.streamlit_app.api_clients.workflows import WorkflowsClient
 
 __all__ = (
     "BaseAPIClient",
@@ -31,4 +39,16 @@ __all__ = (
     "K4APIClient",
     "AdminClient",
     "RAGClient",
+    "MetricsClient",
+    "TenantsClient",
+    "OrdersClient",
+    "ChatClient",
+    "FlagsClient",
+    "ConfigClient",
+    "WorkflowsClient",
+    "DSLRoutesClient",
+    "FeedbackClient",
+    "InventoryClient",
+    "CapabilityClient",
+    "LogsClient",
 )

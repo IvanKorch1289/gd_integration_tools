@@ -1,9 +1,25 @@
 """HTTP-клиент для вызова FastAPI backend из Streamlit.
 
-Sprint 44 W6 (TD-009): APIClient наследует BaseAPIClient.
-Унаследованные методы: __init__, _request, get, post, put, patch, delete,
-set_token, JWT propagation, 401/5xx error handling, httpx.Client lifecycle.
-~46 domain methods (workflow/admin/rag/ai/...) сохранены без изменений.
+Sprint 45 W1 (TD-011 closure): APIClient — back-compat facade,
+делегирует 46 domain methods в 12 специализированных domain classes:
+
+- :class:`MetricsClient`    — get_metrics, get_health
+- :class:`TenantsClient`    — get_tenants, get_tenant_detail
+- :class:`OrdersClient`     — get/create/update/delete_order
+- :class:`ChatClient`       — chat
+- :class:`FlagsClient`      — get_flags, toggle_flag, list/set/clear_overrides
+- :class:`ConfigClient`     — get_config, get_trace_logs
+- :class:`WorkflowsClient`  — list_workflows, get/retry/cancel/resume/trigger
+- :class:`DSLRoutesClient`  — list/get/create/update/delete/validate/diff dsl_route
+- :class:`FeedbackClient`   — list/label/index feedback
+- :class:`InventoryClient`  — plugins_inventory, routes_inventory
+- :class:`CapabilityClient` — capability/processor catalogs, audit, graphs, scaffold
+- :class:`LogsClient`       — list_step_logs, get_step_detail
+
+Все domain classes extend :class:`BaseAPIClient` (retry + JWT + 401/5xx).
+APIClient наследует :class:`BaseAPIClient` (HTTP transport) и
+содержит 46 thin wrapper-методов для back-compat (hasattr + вызов
+domain client). 44+ pages работают без изменений.
 """
 
 from __future__ import annotations
@@ -11,6 +27,18 @@ from __future__ import annotations
 from typing import Any
 
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.capability import CapabilityClient
+from src.frontend.streamlit_app.api_clients.chat import ChatClient
+from src.frontend.streamlit_app.api_clients.config import ConfigClient
+from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
+from src.frontend.streamlit_app.api_clients.feedback import FeedbackClient
+from src.frontend.streamlit_app.api_clients.flags import FlagsClient
+from src.frontend.streamlit_app.api_clients.inventory import InventoryClient
+from src.frontend.streamlit_app.api_clients.logs import LogsClient
+from src.frontend.streamlit_app.api_clients.metrics import MetricsClient
+from src.frontend.streamlit_app.api_clients.orders import OrdersClient
+from src.frontend.streamlit_app.api_clients.tenants import TenantsClient
+from src.frontend.streamlit_app.api_clients.workflows import WorkflowsClient
 from src.frontend.streamlit_app.config import get_api_base_url
 
 __all__ = ("APIClient", "get_api_client")
@@ -19,512 +47,196 @@ _BASE_URL = get_api_base_url()
 
 
 class APIClient(BaseAPIClient):
-    """Синхронный HTTP-клиент к FastAPI (расширяет BaseAPIClient).
+    """Back-compat facade: 46 thin wrapper methods → 12 domain clients.
 
-    Унаследованно от BaseAPIClient:
+    Inherits from :class:`BaseAPIClient`:
     - ``__init__(base_url, token=None, max_retries=3, timeout=15.0)``
-    - ``_request(method, path, **kwargs)`` — 401/5xx handling, JWT headers
-    - ``get/post/put/patch/delete`` — delegates to ``_request``
-    - ``set_token(token)`` — JWT propagation для auth-required endpoints
+    - ``get/post/put/patch/delete`` (HTTP)
+    - ``set_token`` (JWT propagation)
+    - 401 → PermissionError, 5xx → HTTPStatusError
 
-    Специфичное для APIClient: ~46 domain-методов
-    (workflow/admin/rag/ai/...) ниже.
+    Back-compat: все 46 domain methods (``client.get_metrics()`` etc.)
+    работают через thin wrapper → domain client. 44+ pages без изменений.
     """
 
+    def __init__(self, base_url: str = _BASE_URL) -> None:
+        super().__init__(base_url=base_url)
+        # Instantiate 12 domain clients (один на домен).
+        self._metrics = MetricsClient(base_url=base_url)
+        self._tenants = TenantsClient(base_url=base_url)
+        self._orders = OrdersClient(base_url=base_url)
+        self._chat = ChatClient(base_url=base_url)
+        self._flags = FlagsClient(base_url=base_url)
+        self._config = ConfigClient(base_url=base_url)
+        self._workflows = WorkflowsClient(base_url=base_url)
+        self._dsl_routes = DSLRoutesClient(base_url=base_url)
+        self._feedback = FeedbackClient(base_url=base_url)
+        self._inventory = InventoryClient(base_url=base_url)
+        self._capability = CapabilityClient(base_url=base_url)
+        self._logs = LogsClient(base_url=base_url)
+
+    # ── Metrics (2) ────────────────────────────────────────────────
     def get_metrics(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/admin/metrics")
+        return self._metrics.get_metrics()
 
     def get_health(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/health/components")
+        return self._metrics.get_health()
 
-    # ── Admin: Tenants (K5, Wave K5/docs-tenants-caps) ──
-
+    # ── Tenants (2) ────────────────────────────────────────────────
     def get_tenants(self) -> dict[str, Any]:
-        """Список tenants с агрегатом по audit-events.
-
-        GET /api/v1/admin/tenants
-        При ClickHouse offline возвращает ``{"stub": True, "tenants": [], "total": 0}``.
-        """
-        return self._request("GET", "/api/v1/admin/tenants")
+        return self._tenants.get_tenants()
 
     def get_tenant_detail(self, tenant_id: str) -> dict[str, Any]:
-        """Детальный профиль tenant'а (audit events, denials, RLS).
+        return self._tenants.get_tenant_detail(tenant_id)
 
-        GET /api/v1/admin/tenants/{tenant_id}
-        При ClickHouse offline возвращает ``{"stub": True, ...}``.
-        """
-        return self._request("GET", f"/api/v1/admin/tenants/{tenant_id}")
-
-    def get_routes(self) -> list[dict[str, Any]]:
-        return self._request("GET", "/api/v1/admin/routes")
-
+    # ── Orders (4) ─────────────────────────────────────────────────
     def get_orders(self, page: int = 1, size: int = 50) -> Any:
-        return self._request(
-            "GET", "/api/v1/orders/all/", params={"page": page, "size": size}
-        )
+        return self._orders.get_orders(page=page, size=size)
 
     def create_order(self, data: dict[str, Any]) -> dict[str, Any]:
-        return self._request("POST", "/api/v1/orders/create/", json=data)
+        return self._orders.create_order(data)
 
     def update_order(self, order_id: int, data: dict[str, Any]) -> dict[str, Any]:
-        return self._request("PUT", f"/api/v1/orders/update/{order_id}", json=data)
+        return self._orders.update_order(order_id, data)
 
     def delete_order(self, order_id: int) -> None:
-        self._request("DELETE", f"/api/v1/orders/delete/{order_id}")
+        return self._orders.delete_order(order_id)
 
+    # ── Chat (1) ───────────────────────────────────────────────────
     def chat(self, message: str, session_id: str = "default") -> str:
-        result = self._request(
-            "POST",
-            "/api/v1/ai/chat",
-            json={"message": message, "session_id": session_id},
-        )
-        return (
-            result.get("response", str(result))
-            if isinstance(result, dict)
-            else str(result)
-        )
+        return self._chat.chat(message, session_id)
 
+    # ── Flags (5) ──────────────────────────────────────────────────
     def get_flags(self) -> list[dict[str, Any]]:
-        try:
-            return self._request("GET", "/api/v1/admin/feature-flags")
-        except Exception:
-            return []
+        return self._flags.get_flags()
 
     def toggle_flag(self, name: str, enabled: bool) -> bool:
-        try:
-            self._request(
-                "POST",
-                f"/api/v1/admin/feature-flags/{name}/toggle",
-                json={"enabled": enabled},
-            )
-            return True
-        except Exception:
-            return False
+        return self._flags.toggle_flag(name, enabled)
 
     def list_overrides(self) -> dict[str, Any]:
-        """Sprint 17 K5 W1 (D9): runtime overrides — global + per-tenant.
+        return self._flags.list_overrides()
 
-        Returns ``{"global": {...}, "per_tenant": {tenant_id: {...}}}``
-        или пустой dict при недоступности backend.
-        """
-        try:
-            return self._request("GET", "/api/v1/admin/feature-flags")
-        except Exception:
-            return {}
+    def set_override(self, *args: Any, **kwargs: Any) -> Any:
+        return self._flags.set_override(*args, **kwargs)
 
-    def set_override(
-        self, flag: str, value: Any, tenant_id: str | None = None, actor: str = "ui"
-    ) -> dict[str, Any] | None:
-        """Sprint 17 K5 W1 (D9): установить runtime override (опц. per-tenant)."""
-        try:
-            return self._request(
-                "PUT",
-                f"/api/v1/admin/feature-flags/{flag}",
-                json={"value": value, "tenant_id": tenant_id, "actor": actor},
-            )
-        except Exception:
-            return None
+    def clear_override(self, *args: Any, **kwargs: Any) -> Any:
+        return self._flags.clear_override(*args, **kwargs)
 
-    def clear_override(
-        self, flag: str, tenant_id: str | None = None, actor: str = "ui"
-    ) -> dict[str, Any] | None:
-        """Sprint 17 K5 W1 (D9): снять runtime override (вернуть к static-default)."""
-        try:
-            params: dict[str, Any] = {"actor": actor}
-            if tenant_id is not None:
-                params["tenant_id"] = tenant_id
-            return self._request(
-                "DELETE", f"/api/v1/admin/feature-flags/{flag}", params=params
-            )
-        except Exception:
-            return None
-
+    # ── Config (2) ─────────────────────────────────────────────────
     def get_config(self) -> dict[str, Any]:
-        try:
-            return self._request("GET", "/api/v1/admin/config")
-        except Exception:
-            return {}
+        return self._config.get_config()
 
     def get_trace_logs(self, limit: int = 100) -> list[dict[str, Any]]:
-        try:
-            return self._request(
-                "GET", "/api/v1/admin/trace-logs", params={"limit": limit}
-            )
-        except Exception:
-            return []
+        return self._config.get_trace_logs(limit)
 
-    # -- Durable workflows (IL-WF1.5 admin API) -------------------------
-
+    # ── Workflows (7) ──────────────────────────────────────────────
     def list_workflows(
         self,
-        *,
-        status: str | None = None,
-        workflow_name: str | None = None,
-        tenant_id: str | None = None,
-        limit: int = 100,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """GET /api/v1/admin/workflows — список instances с фильтрами."""
-        params: dict[str, Any] = {"limit": limit}
-        if status:
-            params["status"] = status
-        if workflow_name:
-            params["workflow_name"] = workflow_name
-        if tenant_id:
-            params["tenant_id"] = tenant_id
-        try:
-            result = self._request("GET", "/api/v1/admin/workflows", params=params)
-            return result if isinstance(result, list) else []
-        except Exception:
-            return []
+        return self._workflows.list_workflows(**kwargs)
 
     def get_workflow(self, instance_id: str) -> dict[str, Any] | None:
-        """GET /api/v1/admin/workflows/{id} — header + event log."""
-        try:
-            return self._request("GET", f"/api/v1/admin/workflows/{instance_id}")
-        except Exception:
-            return None
+        return self._workflows.get_workflow(instance_id)
 
     def get_workflow_events(
-        self, instance_id: str, *, after_seq: int = 0, limit: int = 200
+        self, instance_id: str, **kwargs: Any
     ) -> list[dict[str, Any]]:
-        """GET /api/v1/admin/workflows/{id}/events — paginated event log."""
-        try:
-            result = self._request(
-                "GET",
-                f"/api/v1/admin/workflows/{instance_id}/events",
-                params={"after_seq": after_seq, "limit": limit},
-            )
-            return result if isinstance(result, list) else []
-        except Exception:
-            return []
+        return self._workflows.get_workflow_events(instance_id, **kwargs)
 
     def retry_workflow(self, instance_id: str) -> bool:
-        """POST /{id}/retry — next_attempt_at=now."""
-        try:
-            self._request("POST", f"/api/v1/admin/workflows/{instance_id}/retry")
-            return True
-        except Exception:
-            return False
+        return self._workflows.retry_workflow(instance_id)
 
-    def cancel_workflow(self, instance_id: str, reason: str | None = None) -> bool:
-        """POST /{id}/cancel — → compensate → cancelled."""
-        try:
-            self._request(
-                "POST",
-                f"/api/v1/admin/workflows/{instance_id}/cancel",
-                json={"reason": reason} if reason else {},
-            )
-            return True
-        except Exception:
-            return False
+    def cancel_workflow(self, instance_id: str, **kwargs: Any) -> bool:
+        return self._workflows.cancel_workflow(instance_id, **kwargs)
 
     def resume_workflow(self, instance_id: str) -> bool:
-        """POST /{id}/resume — для paused: немедленно execute."""
-        try:
-            self._request("POST", f"/api/v1/admin/workflows/{instance_id}/resume")
-            return True
-        except Exception:
-            return False
+        return self._workflows.resume_workflow(instance_id)
 
     def trigger_workflow(
-        self,
-        workflow_name: str,
-        payload: dict[str, Any],
-        *,
-        wait: bool = False,
-        timeout_s: int = 30,
+        self, workflow_name: str, payload: dict[str, Any], **kwargs: Any
     ) -> dict[str, Any] | None:
-        """POST /trigger/{name} — создать workflow instance."""
-        try:
-            return self._request(
-                "POST",
-                f"/api/v1/admin/workflows/trigger/{workflow_name}",
-                json=payload,
-                params={"wait": str(wait).lower(), "timeout_s": timeout_s},
-            )
-        except Exception:
-            return None
+        return self._workflows.trigger_workflow(workflow_name, payload, **kwargs)
 
-    # ──────────── DSL Routes Store (Wave 3.8) ────────────
+    # ── DSL Routes (8) ─────────────────────────────────────────────
+    def get_routes(self) -> list[dict[str, Any]]:
+        return self._dsl_routes.get_routes()
 
     def list_dsl_routes(self) -> list[str]:
-        """GET /api/v1/admin/dsl-routes — список route_id из YAMLStore."""
-        try:
-            result = self._request("GET", "/api/v1/admin/dsl-routes")
-            return result if isinstance(result, list) else []
-        except Exception:
-            return []
+        return self._dsl_routes.list_dsl_routes()
 
     def get_dsl_route(self, route_id: str) -> dict[str, Any] | None:
-        """GET /api/v1/admin/dsl-routes/{id} — yaml + spec + python."""
-        try:
-            return self._request("GET", f"/api/v1/admin/dsl-routes/{route_id}")
-        except Exception:
-            return None
+        return self._dsl_routes.get_dsl_route(route_id)
 
     def create_dsl_route(self, yaml_str: str) -> dict[str, Any]:
-        """POST /api/v1/admin/dsl-routes — создать новый маршрут."""
-        return self._request(
-            "POST", "/api/v1/admin/dsl-routes", json={"yaml": yaml_str}
-        )
+        return self._dsl_routes.create_dsl_route(yaml_str)
 
     def update_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any]:
-        """PUT /api/v1/admin/dsl-routes/{id} — обновить маршрут."""
-        return self._request(
-            "PUT", f"/api/v1/admin/dsl-routes/{route_id}", json={"yaml": yaml_str}
-        )
+        return self._dsl_routes.update_dsl_route(route_id, yaml_str)
 
     def delete_dsl_route(self, route_id: str) -> bool:
-        """DELETE /api/v1/admin/dsl-routes/{id} — удалить маршрут."""
-        try:
-            self._request("DELETE", f"/api/v1/admin/dsl-routes/{route_id}")
-            return True
-        except Exception:
-            return False
+        return self._dsl_routes.delete_dsl_route(route_id)
 
     def validate_dsl_route(self, yaml_str: str) -> dict[str, Any]:
-        """POST /api/v1/admin/dsl-routes/validate — валидация без записи."""
-        try:
-            return self._request(
-                "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
-            )
-        except Exception as exc:
-            return {"valid": False, "error": str(exc)}
+        return self._dsl_routes.validate_dsl_route(yaml_str)
 
-    def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
-        """POST /api/v1/admin/dsl-routes/{id}/diff — diff с переданным YAML."""
-        try:
-            return self._request(
-                "POST",
-                f"/api/v1/admin/dsl-routes/{route_id}/diff",
-                json={"yaml": yaml_str},
-            )
-        except Exception:
-            return None
+    def diff_dsl_route(
+        self, route_id: str, yaml_str: str
+    ) -> dict[str, Any] | None:
+        return self._dsl_routes.diff_dsl_route(route_id, yaml_str)
 
-    # ──────────── AI Feedback ────────────
+    # ── Feedback (5) ───────────────────────────────────────────────
+    def list_feedback_pending(self, **kwargs: Any) -> list[dict[str, Any]]:
+        return self._feedback.list_feedback_pending(**kwargs)
 
-    def list_feedback_pending(
-        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0
-    ) -> dict[str, Any]:
-        """GET /api/v1/ai/feedback/pending."""
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
-        if agent_id:
-            params["agent_id"] = agent_id
-        return self._request("GET", "/api/v1/ai/feedback/pending", params=params)
-
-    def list_feedback_labeled(
-        self,
-        *,
-        label: str | None = None,
-        agent_id: str | None = None,
-        indexed_in_rag: bool | None = None,
-        limit: int = 100,
-        offset: int = 0,
-    ) -> dict[str, Any]:
-        """GET /api/v1/ai/feedback/labeled."""
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
-        if label:
-            params["label"] = label
-        if agent_id:
-            params["agent_id"] = agent_id
-        if indexed_in_rag is not None:
-            params["indexed_in_rag"] = str(indexed_in_rag).lower()
-        return self._request("GET", "/api/v1/ai/feedback/labeled", params=params)
+    def list_feedback_labeled(self, **kwargs: Any) -> list[dict[str, Any]]:
+        return self._feedback.list_feedback_labeled(**kwargs)
 
     def get_feedback_stats(self) -> dict[str, int]:
-        """GET /api/v1/ai/feedback/stats."""
-        return self._request("GET", "/api/v1/ai/feedback/stats")
+        return self._feedback.get_feedback_stats()
 
-    def label_feedback(
-        self,
-        doc_id: str,
-        *,
-        label: str,
-        comment: str | None = None,
-        operator_id: str | None = None,
-    ) -> dict[str, Any]:
-        """POST /api/v1/ai/feedback/{id}/label."""
-        payload: dict[str, Any] = {"label": label}
-        if comment:
-            payload["comment"] = comment
-        if operator_id:
-            payload["operator_id"] = operator_id
-        return self._request(
-            "POST", f"/api/v1/ai/feedback/{doc_id}/label", json=payload
-        )
+    def label_feedback(self, *args: Any, **kwargs: Any) -> Any:
+        return self._feedback.label_feedback(*args, **kwargs)
 
-    def index_feedback_to_rag(
-        self, *, agent_id: str | None = None, limit: int = 100
-    ) -> dict[str, int]:
-        """POST /api/v1/ai/feedback/index-to-rag."""
-        payload: dict[str, Any] = {"limit": limit}
-        if agent_id:
-            payload["agent_id"] = agent_id
-        return self._request("POST", "/api/v1/ai/feedback/index-to-rag", json=payload)
+    def index_feedback_to_rag(self, *args: Any, **kwargs: Any) -> Any:
+        return self._feedback.index_feedback_to_rag(*args, **kwargs)
 
-    # ──────────── V11 Plugin Marketplace (Sprint 3) ────────────
-
+    # ── Inventory (2) ──────────────────────────────────────────────
     def get_plugins_inventory(self) -> dict[str, Any]:
-        """GET /api/v1/plugins/inventory.
-
-        Returns:
-            ``{"enabled": bool, "plugins": [...], "reason": str | None}``.
-            Если loader выключен через feature-flag — ``enabled=False``
-            и пустой массив.
-        """
-        try:
-            return self._request("GET", "/api/v1/plugins/inventory")
-        except Exception as exc:
-            return {"enabled": False, "plugins": [], "reason": str(exc)}
+        return self._inventory.get_plugins_inventory()
 
     def get_routes_inventory(self) -> dict[str, Any]:
-        """GET /api/v1/routes/inventory — V11 routes inventory."""
-        try:
-            return self._request("GET", "/api/v1/routes/inventory")
-        except Exception as exc:
-            return {"enabled": False, "routes": [], "reason": str(exc)}
+        return self._inventory.get_routes_inventory()
 
-    # ──────────── Sprint 14 plugin ecosystem ────────────
-
+    # ── Capability (6) ─────────────────────────────────────────────
     def get_capability_catalog(self) -> dict[str, Any]:
-        """Sprint 14 K1 W4 / pre-K5 — GET /api/v1/admin/capabilities."""
-        try:
-            return self._request("GET", "/api/v1/admin/capabilities")
-        except Exception as exc:
-            return {"vocabulary": [], "catalog": [], "error": str(exc)}
+        return self._capability.get_capability_catalog()
 
     def get_processor_catalog(
-        self, query: str = "", namespace: str | None = None, limit: int = 25
+        self, query: str = "", **kwargs: Any
     ) -> dict[str, Any]:
-        """Sprint 14 K3 W1: GET /api/v1/dsl/processors/search."""
-        params: dict[str, Any] = {"q": query, "limit": limit}
-        if namespace:
-            params["namespace"] = namespace
-        try:
-            return self._request("GET", "/api/v1/dsl/processors/search", params=params)
-        except Exception as exc:
-            return {"query": query, "items": [], "total": 0, "error": str(exc)}
+        return self._capability.get_processor_catalog(query, **kwargs)
 
     def get_audit_events(
-        self, plugin: str | None = None, tenant: str | None = None, limit: int = 100
+        self, plugin: str | None = None, **kwargs: Any
     ) -> list[dict[str, Any]]:
-        """Sprint 14 K1 W4: GET /api/v1/admin/audit/capability."""
-        params: dict[str, Any] = {"limit": limit}
-        if plugin:
-            params["plugin"] = plugin
-        if tenant:
-            params["tenant"] = tenant
-        try:
-            response = self._request(
-                "GET", "/api/v1/admin/audit/capability", params=params
-            )
-            if isinstance(response, list):
-                return response
-            return response.get("events", []) if isinstance(response, dict) else []
-        except Exception:
-            return []
+        return self._capability.get_audit_events(plugin, **kwargs)
 
     def get_dependency_graph(self) -> dict[str, Any]:
-        """Sprint 14 K5 W3: GET /api/v1/admin/plugins/dependency-graph."""
-        try:
-            return self._request("GET", "/api/v1/admin/plugins/dependency-graph")
-        except Exception as exc:
-            return {"nodes": [], "edges": [], "error": str(exc)}
+        return self._capability.get_dependency_graph()
 
     def get_capability_graph(self) -> dict[str, Any]:
-        """Sprint 14 K5 W5: GET /api/v1/admin/capabilities/graph."""
-        try:
-            return self._request("GET", "/api/v1/admin/capabilities/graph")
-        except Exception as exc:
-            return {"nodes": [], "edges": [], "error": str(exc)}
+        return self._capability.get_capability_graph()
 
-    def scaffold_plugin(
-        self,
-        name: str,
-        *,
-        description: str | None = None,
-        capabilities: list[str] | None = None,
-        features: list[str] | None = None,
-        dry_run: bool = True,
-    ) -> dict[str, Any]:
-        """Sprint 14 K5 W6: POST /api/v1/admin/plugins/scaffold."""
-        body = {
-            "name": name,
-            "description": description,
-            "capabilities": capabilities or [],
-            "features": features or [],
-            "dry_run": dry_run,
-        }
-        try:
-            return self._request("POST", "/api/v1/admin/plugins/scaffold", json=body)
-        except Exception as exc:
-            return {"name": name, "created": False, "error": str(exc)}
+    def scaffold_plugin(self, name: str, **kwargs: Any) -> dict[str, Any]:
+        return self._capability.scaffold_plugin(name, **kwargs)
 
-    # ──────────── Sprint 5 K5 W1 — Workflow Step Logs ────────────
-
-    def list_step_logs(
-        self,
-        workflow_name: str | None = None,
-        tenant_id: str | None = None,
-        date_from: str | None = None,
-        date_to: str | None = None,
-        status: list[str] | None = None,
-        limit: int = 100,
-    ) -> list[dict[str, Any]]:
-        """GET /api/v1/admin/workflow/step-logs — список workflow step-логов.
-
-        Args:
-            workflow_name: Фильтр по имени workflow (substring match).
-            tenant_id: Фильтр по tenant.
-            date_from: Начало периода (ISO date YYYY-MM-DD).
-            date_to: Конец периода (ISO date YYYY-MM-DD).
-            status: Список статусов для фильтра (ok/fail/retry/timeout).
-            limit: Максимум записей в ответе.
-
-        Returns:
-            Список step-логов (dict). При ошибке backend поднимает RuntimeError.
-        """
-        params: dict[str, Any] = {
-            k: v
-            for k, v in {
-                "workflow_name": workflow_name,
-                "tenant_id": tenant_id,
-                "date_from": date_from,
-                "date_to": date_to,
-                "status": ",".join(status) if status else None,
-                "limit": limit,
-            }.items()
-            if v is not None
-        }
-        try:
-            result = self._request(
-                "GET", "/api/v1/admin/workflow/step-logs", params=params
-            )
-            if isinstance(result, list):
-                return result
-            return []
-        except Exception as e:
-            raise RuntimeError(f"Failed to fetch step logs: {e}") from e
+    # ── Logs (2) ───────────────────────────────────────────────────
+    def list_step_logs(self, **kwargs: Any) -> list[dict[str, Any]]:
+        return self._logs.list_step_logs(**kwargs)
 
     def get_step_detail(self, workflow_id: str) -> dict[str, Any]:
-        """GET /api/v1/admin/workflow/step-logs/{workflow_id} — drill-down.
-
-        Args:
-            workflow_id: Идентификатор workflow для drill-down.
-
-        Returns:
-            Подробности workflow со списком всех steps.
-        """
-        try:
-            result = self._request(
-                "GET", f"/api/v1/admin/workflow/step-logs/{workflow_id}"
-            )
-            if isinstance(result, dict):
-                return result
-            return {}
-        except Exception as e:
-            raise RuntimeError(f"Failed to fetch step detail: {e}") from e
+        return self._logs.get_step_detail(workflow_id)
 
 
 def get_api_client() -> APIClient:
