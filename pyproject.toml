@@ -202,7 +202,7 @@ dsl-extras = [
 rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
-    "chromadb>=1.5.20,<2.0.0",
+    "chromadb>=0.5.0,<2.0.0",  # SECURITY 2026-06-05: bump target 1.5.20 unavailable in PyPI (only <=1.5.9), pin reverted
 ]
 # Wave F.4 (V10 #11): fastembed несовместим с Python 3.14 — нет
 # onnxruntime wheels. Доступен только как opt-in для legacy-стендов на
@@ -676,7 +676,7 @@ module = [
     "langfuse.*",
     "mcp",
     "mcp.*",
-    "chromadb>=1.5.20,<2.0.0",  # SECURITY 2026-06-05: bump 0.5.0→1.5.20 (code injection fix)
+    "chromadb>=0.5.0,<2.0.0",  # SECURITY 2026-06-05: bump target 1.5.20 unavailable in PyPI (only <=1.5.9), pin reverted, see SECURITY_VULNS doc
     "faiss",
     "playwright",
     "playwright.*",
