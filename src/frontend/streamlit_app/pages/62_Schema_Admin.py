@@ -13,9 +13,9 @@ from pathlib import Path
 
 import streamlit as st
 
-st.set_page_config(
-    page_title="Schema Admin", page_icon=":card_index_dividers:", layout="wide"
-)
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('Schema Admin', ':card_index_dividers:')
 st.header(":card_index_dividers: Schema Admin")
 
 tab_import, tab_registry, tab_viewer = st.tabs(

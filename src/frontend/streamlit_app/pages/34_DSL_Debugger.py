@@ -11,7 +11,9 @@ import json
 
 import streamlit as st
 
-st.set_page_config(page_title="DSL Debugger", page_icon="🐛", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('DSL Debugger', '🐛')
 st.title("🐛 DSL Debugger & Replay")
 
 mode = st.radio(

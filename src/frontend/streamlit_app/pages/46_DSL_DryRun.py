@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 
 import streamlit as st
+
+from src.frontend.streamlit_app.shared.components import setup_page
 import yaml as _yaml
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 from src.frontend.streamlit_app.shared.components import dataframe_view
 
-st.set_page_config(page_title="DSL Dry-Run", page_icon=":fast_forward:", layout="wide")
+setup_page('DSL Dry-Run', ':fast_forward:')
 st.header("DSL Dry-Run")
 st.caption(
     "Sprint 10 K3 W4: вставь YAML маршрута, sample JSON-payload и нажми "

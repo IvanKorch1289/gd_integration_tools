@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="Pipeline Parallelism", page_icon="🔀", layout="wide")
+setup_page('Pipeline Parallelism', '🔀')
 st.title("🔀 Pipeline Parallelism Analysis")
 st.caption("Sprint 13 K5 W3 — DAG analyzer для DSL-маршрутов (PERF-6.8).")
 

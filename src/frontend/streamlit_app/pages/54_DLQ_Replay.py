@@ -26,11 +26,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-import streamlit as st  # noqa: E402
+import streamlit as st
 
-st.set_page_config(
-    page_title="DLQ Replay", page_icon=":envelope_with_arrow:", layout="wide"
-)
+from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
+
+setup_page('DLQ Replay', ':envelope_with_arrow:')
 st.header("DLQ Replay")
 
 # ---------------------------------------------------------------------------

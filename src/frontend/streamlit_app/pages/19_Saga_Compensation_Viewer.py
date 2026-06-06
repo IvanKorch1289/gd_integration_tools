@@ -14,7 +14,9 @@ from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
-st.set_page_config(page_title="Saga Compensation Viewer", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('Saga Compensation Viewer', '')
 st.header("Saga Compensation Viewer — Sprint 12 K3 W6")
 st.caption(
     "Timeline saga compensation events (workflow.compensation_* из "

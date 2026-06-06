@@ -23,9 +23,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-import streamlit as st  # noqa: E402
+import streamlit as st
 
-st.set_page_config(page_title="Pool Monitor", page_icon=":swimmer:", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
+
+setup_page('Pool Monitor', ':swimmer:')
 st.header("Pool Monitor")
 
 # ---------------------------------------------------------------------------

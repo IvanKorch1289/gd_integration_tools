@@ -22,6 +22,8 @@ import sys
 from pathlib import Path
 
 import streamlit as st
+
+from src.frontend.streamlit_app.shared.components import setup_page
 import yaml as _yaml
 
 _root = Path(__file__).resolve().parents[4]
@@ -34,7 +36,7 @@ from src.backend.services.dsl_portal import (  # noqa: E402
 )
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
-st.set_page_config(page_title="DSL Editor", layout="wide")
+setup_page('DSL Editor', '')
 st.header("DSL Visual Editor")
 st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "

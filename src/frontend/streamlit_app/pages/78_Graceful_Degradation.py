@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="Graceful Degradation", page_icon="🛡️", layout="wide")
+setup_page('Graceful Degradation', '🛡️')
 st.title("🛡️ Graceful Degradation")
 st.caption("Sprint 13 K5 W1 — 5-уровневая система деградации (FULL → MAINTENANCE).")
 

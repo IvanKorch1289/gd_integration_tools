@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="AI Safety", page_icon=":shield:", layout="wide")
+setup_page('AI Safety', ':shield:')
 st.header(":shield: AI Safety / Guardrails")
 
 client = get_api_client()

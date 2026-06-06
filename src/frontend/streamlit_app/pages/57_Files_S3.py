@@ -9,9 +9,11 @@ from datetime import datetime, timezone
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
-st.set_page_config(page_title="Files S3", page_icon="📁", layout="wide")
+setup_page('Files S3', '📁')
 st.title("📁 Files S3 — Object Browser")
 st.caption("Sprint 7 K5 — S3/MinIO bucket файлы с preview/upload/download.")
 

@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 try:
     from src.frontend.streamlit_app.api_clients import APIClient
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
-st.set_page_config(page_title="Model Registry", page_icon="🧬", layout="wide")
+setup_page('Model Registry', '🧬')
 st.title("🧬 AI Model Registry")
 st.caption(
     "Composite MLflow + Hugging Face Hub. "

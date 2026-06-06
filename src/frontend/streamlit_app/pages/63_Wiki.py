@@ -14,8 +14,9 @@ from pathlib import Path
 
 import streamlit as st
 
-st.set_page_config(page_title="Wiki", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
 
+setup_page('Wiki', '')
 st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.

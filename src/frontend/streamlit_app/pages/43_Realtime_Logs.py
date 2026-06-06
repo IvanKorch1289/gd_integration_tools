@@ -16,9 +16,11 @@ from typing import Any
 import httpx
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 logger = logging.getLogger(__name__)
 
-st.set_page_config(page_title="Realtime Logs", page_icon=":memo:", layout="wide")
+setup_page('Realtime Logs', ':memo:')
 st.header(":memo: Realtime Logs (live tail)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(
-    page_title="HITL Panel", page_icon=":busts_in_silhouette:", layout="wide"
-)
+setup_page('HITL Panel', ':busts_in_silhouette:')
 st.header(":busts_in_silhouette: HITL Approval Panel")
 
 client = get_api_client()

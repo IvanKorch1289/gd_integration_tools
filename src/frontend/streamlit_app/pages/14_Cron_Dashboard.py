@@ -15,7 +15,9 @@ import asyncio
 
 import streamlit as st
 
-st.set_page_config(page_title="Cron Dashboard", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('Cron Dashboard', '')
 st.header("Cron Schedule Dashboard — Sprint 12 K5 W3")
 st.caption(
     "Все scheduled workflows: cron-expr, next/last run, success rate (7d). "

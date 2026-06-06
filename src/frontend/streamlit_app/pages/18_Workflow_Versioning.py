@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-st.set_page_config(page_title="Workflow Versioning", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('Workflow Versioning', '')
 st.header("Workflow Versioning — Sprint 12 K3 W8")
 st.caption(
     "Управление WorkflowVersionRegistry: pin default / rollback / "

@@ -16,6 +16,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 # Ensure project root is in path for imports
 ROOT = Path(__file__).resolve().parents[4]
 if str(ROOT) not in sys.path:
@@ -23,7 +25,7 @@ if str(ROOT) not in sys.path:
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="DSL Usage Audit", page_icon=":bar_chart:", layout="wide")
+setup_page('DSL Usage Audit', ':bar_chart:')
 st.header(":bar_chart: DSL Usage Audit")
 st.caption("K3 S19 W6 — статистика использования DSL процессоров")
 

@@ -2,9 +2,11 @@
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="Jobs", page_icon=":gear:", layout="wide")
+setup_page('Jobs', ':gear:')
 st.header("Background Jobs")
 
 client = get_api_client()

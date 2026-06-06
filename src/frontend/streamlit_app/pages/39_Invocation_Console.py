@@ -21,11 +21,13 @@ from typing import Any
 
 import httpx
 import streamlit as st
+
+from src.frontend.streamlit_app.shared.components import setup_page
 import websockets
 
 __all__: tuple[str, ...] = ()
 
-st.set_page_config(page_title="Invocation Console", page_icon=":zap:", layout="wide")
+setup_page('Invocation Console', ':zap:')
 st.header(":zap: Invocation Console (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

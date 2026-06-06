@@ -20,7 +20,9 @@ import json
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 import streamlit as st
 
-st.set_page_config(page_title="Action Bus", page_icon=":electric_plug:", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('Action Bus', ':electric_plug:')
 st.header("Action Bus")
 
 # ---------------------------------------------------------------------------

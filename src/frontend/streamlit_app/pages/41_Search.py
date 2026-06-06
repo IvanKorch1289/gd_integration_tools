@@ -12,6 +12,8 @@ from typing import Any
 import httpx
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.shared.components import dataframe_view
 
 API_BASE = st.session_state.get("api_base", "http://localhost:8000/api/v1")
@@ -34,7 +36,7 @@ async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any
         return []
 
 
-st.set_page_config(page_title="Search", page_icon="🔎", layout="wide")
+setup_page('Search', '🔎')
 st.title("🔎 Search")
 st.caption("Единый поиск по audit-логам, заказам и notebooks (Elasticsearch).")
 

@@ -12,9 +12,11 @@ from typing import Any
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.shared.components import dataframe_view
 
-st.set_page_config(page_title="Blueprint Gallery", page_icon=":art:", layout="wide")
+setup_page('Blueprint Gallery', ':art:')
 st.header(":art: Blueprint Gallery")
 st.caption(
     "Каталог шаблонов маршрутов R2/R2.5 — 3-column grid, фильтры, preview, copy."

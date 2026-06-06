@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 try:
     from src.frontend.streamlit_app.api_clients import APIClient
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
-st.set_page_config(page_title="Adaptive RAG", page_icon="🧠", layout="wide")
+setup_page('Adaptive RAG', '🧠')
 st.title("🧠 Adaptive RAG Strategy Dashboard")
 st.caption(
     "Распределение стратегий retrieval (`dense`/`hybrid`/`hyde`/`multi_query`). "

@@ -13,9 +13,9 @@ import time
 import httpx
 import streamlit as st
 
-st.set_page_config(
-    page_title="API Caller", page_icon=":satellite_antenna:", layout="wide"
-)
+from src.frontend.streamlit_app.shared.components import setup_page
+
+setup_page('API Caller', ':satellite_antenna:')
 st.header(":satellite_antenna: REST API Caller")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

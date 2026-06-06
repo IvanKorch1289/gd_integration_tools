@@ -20,8 +20,9 @@ from pathlib import Path
 
 import streamlit as st
 
-st.set_page_config(page_title="Codegen Wizard", layout="wide")
+from src.frontend.streamlit_app.shared.components import setup_page
 
+setup_page('Codegen Wizard', '')
 ROOT = Path(__file__).resolve().parents[4]
 
 

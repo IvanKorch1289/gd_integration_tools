@@ -16,6 +16,8 @@ from typing import Any
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get
 except Exception:  # noqa: BLE001
@@ -29,7 +31,7 @@ except Exception:  # noqa: BLE001
             return resp.json()
 
 
-st.set_page_config(page_title="AI Cost Tracking", page_icon="💸", layout="wide")
+setup_page('AI Cost Tracking', '💸')
 st.title("AI Cost Tracking")
 st.caption(
     "K4 Sprint 6 Wave 3 — финальный дашборд cost-аналитики "

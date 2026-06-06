@@ -12,9 +12,11 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="Prompt Lab", page_icon=":test_tube:", layout="wide")
+setup_page('Prompt Lab', ':test_tube:')
 st.header(":test_tube: Prompt Lab — A/B versioning")
 
 client = get_api_client()

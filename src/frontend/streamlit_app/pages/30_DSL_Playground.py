@@ -2,9 +2,11 @@
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(page_title="DSL Playground", page_icon=":test_tube:", layout="wide")
+setup_page('DSL Playground', ':test_tube:')
 st.header("DSL Playground")
 st.caption("Напиши код → Запусти → Посмотри результат. Dry-run доступен.")
 

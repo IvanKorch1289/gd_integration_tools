@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import K4APIClient, get_api_client
 
-st.set_page_config(page_title="Cache Admin", page_icon=":package:", layout="wide")
+setup_page('Cache Admin', ':package:')
 st.header(":package: Cache Admin")
 
 tab_redis, tab_rag = st.tabs(["Redis Cache", "RAG Cache"])

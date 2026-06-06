@@ -20,11 +20,11 @@ from typing import Any
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-st.set_page_config(
-    page_title="Tenant Feature Flags", page_icon=":busts_in_silhouette:", layout="wide"
-)
+setup_page('Tenant Feature Flags', ':busts_in_silhouette:')
 st.header("Tenant Feature Flags (per-tenant overrides)")
 st.caption(
     "Runtime overrides поверх статического реестра feature-flag. "

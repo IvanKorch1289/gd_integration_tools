@@ -17,9 +17,11 @@ from datetime import datetime
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
-st.set_page_config(page_title="Cron Builder", layout="wide")
+setup_page('Cron Builder', '')
 st.header("Cron Builder — Sprint 12 K3 W2")
 st.caption(
     "Постройте cron-выражение визуально или вручную, посмотрите Next 5 "

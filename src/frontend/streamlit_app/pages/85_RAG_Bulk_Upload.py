@@ -15,9 +15,11 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import K4APIClient
 
-st.set_page_config(page_title="RAG Bulk Upload", page_icon="📤", layout="wide")
+setup_page('RAG Bulk Upload', '📤')
 st.title("📤 RAG Bulk Upload")
 
 FEATURE_FLAG_NAME = "multipart_rag_ingest"

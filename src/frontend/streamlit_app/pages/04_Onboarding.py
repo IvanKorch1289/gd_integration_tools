@@ -8,9 +8,11 @@ from pathlib import Path
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 _root = Path(__file__).resolve().parents[4]
 
-st.set_page_config(page_title="Onboarding", page_icon=":sparkles:", layout="wide")
+setup_page('Onboarding', ':sparkles:')
 st.header("Onboarding Checklist")
 st.caption(
     "Sprint 10 K5 W5 — путь от чистого clone до первого route и плагина "

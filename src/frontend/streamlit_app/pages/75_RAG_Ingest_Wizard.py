@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.api_clients import K4APIClient
 
-st.set_page_config(page_title="RAG Ingest Wizard", page_icon="📥", layout="wide")
+setup_page('RAG Ingest Wizard', '📥')
 st.title("📥 RAG Ingest Wizard")
 
 if "ingest_step" not in st.session_state:

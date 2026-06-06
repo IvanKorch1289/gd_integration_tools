@@ -16,11 +16,11 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.components import setup_page
+
 from src.frontend.streamlit_app.shared.components import dataframe_view
 
-st.set_page_config(
-    page_title="Express Bots", page_icon=":speech_balloon:", layout="wide"
-)
+setup_page('Express Bots', ':speech_balloon:')
 st.header(":speech_balloon: Express Bots")
 
 try:
