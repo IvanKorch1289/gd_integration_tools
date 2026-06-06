@@ -41,6 +41,11 @@ from src.backend.dsl.engine.processors.eip.routing import (
     RecipientListProcessor,
     ScatterGatherProcessor,
 )
+from src.backend.dsl.engine.processors.eip.routing_slip import (
+    ProcessorRegistry,
+    RoutingSlipProcessor,
+    SimpleRegistry,
+)
 from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor
 from src.backend.dsl.engine.processors.eip.transformation import (
     ClaimCheckProcessor,
@@ -81,9 +86,12 @@ __all__ = (
     "OnCompletionProcessor",
     "OrElseProcessor",
     "PartitionProcessor",
+    "ProcessorRegistry",
     "RecipientListProcessor",
     "ResequencerProcessor",
+    "RoutingSlipProcessor",
     "ScatterGatherProcessor",
+    "SimpleRegistry",
     "SortByProcessor",
     "SortProcessor",
     "SplitterProcessor",
