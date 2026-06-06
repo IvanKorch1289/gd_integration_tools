@@ -326,9 +326,13 @@ def routes():
             continue
         flag = f" [FF:{pipeline.feature_flag}]" if pipeline.feature_flag else ""
         procs = len(pipeline.processors)
-        typer.echo(f"  {pipeline.route_id:<40} ({procs} processors){flag}")
+        route_name = typer.style(pipeline.route_id, fg=typer.colors.CYAN, bold=True)
+        procs_str = typer.style(f"({procs} processors)", fg=typer.colors.GREEN)
+        flag_str = typer.style(flag, fg=typer.colors.YELLOW) if flag else ""
+        typer.echo(f"  {route_name:<40} {procs_str}{flag_str}")
 
-    typer.echo(f"\nTotal: {len(route_ids)} routes")
+    total_str = typer.style(f"Total: {len(route_ids)} routes", fg=typer.colors.BLUE, bold=True)
+    typer.echo(f"\n{total_str}")
 
 
 @app.command()
@@ -387,9 +391,10 @@ def services():
 
     names = sorted(list_services())
     for name in names:
-        typer.echo(f"  {name}")
+        typer.echo(f"  {typer.style(name, fg=typer.colors.GREEN)}")
 
-    typer.echo(f"\nTotal: {len(names)} services")
+    total_str = typer.style(f"Total: {len(names)} services", fg=typer.colors.BLUE, bold=True)
+    typer.echo(f"\n{total_str}")
 
 
 @app.command()
