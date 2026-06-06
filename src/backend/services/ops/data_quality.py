@@ -414,7 +414,7 @@ class DataQualityMonitor:
             # Distinct count check: value should appear ≤ max_count times
             max_count = rule.params.get("max_count", 1)
             key = f"{dataset}:{rule.field}:{value}"
-            seen = getattr(self, "_cardinality_counts", None)
+            seen: defaultdict[str, int] = getattr(self, "_cardinality_counts", None)  # type: ignore[assignment]
             if seen is None:
                 seen = self._cardinality_counts = defaultdict(int)
             seen[key] += 1

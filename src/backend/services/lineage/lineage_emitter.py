@@ -10,7 +10,7 @@ Usage::
 
     emitter = get_lineage_emitter()
     emitter(LineageEvent(...))  # append к in-memory store
-    events = emitter.list()  # retrieve все events (для tests / audit export)
+    events = emitter.list_events()  # retrieve все events (для tests / audit export)
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ class LineageEmitterProtocol(Protocol):
     """Protocol для lineage emitter (sync — async-wrapping на caller)."""
 
     def __call__(self, event: Any) -> None: ...
-    def list(self) -> list[dict[str, Any]]: ...
+    def list_events(self) -> list[dict[str, Any]]: ...
     def clear(self) -> None: ...
     def to_openlineage(self) -> list[dict[str, Any]]: ...
 
@@ -73,7 +73,7 @@ class InMemoryLineageEmitter:
             data.get("node", {}).get("id"),
         )
 
-    def list(self) -> list[dict[str, Any]]:
+    def list_events(self) -> list[dict[str, Any]]:
         """Возвращает copy всех stored events."""
         with self._lock:
             return list(self._events)
@@ -90,7 +90,7 @@ class InMemoryLineageEmitter:
         Каждый event — RunEvent с inputs/outputs/job facets.
         """
         out: list[dict[str, Any]] = []
-        for ev in self.list():
+        for ev in self.list_events():
             node = ev.get("node", {})
             ol_event = {
                 "eventType": "COMPLETE",

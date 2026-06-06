@@ -25,7 +25,7 @@ class WorkflowBuilder:
         """Собрать и провалидировать :class:`WorkflowDeclaration`."""
         ...
 
-    def checkpoint(self, *, checkpoint_id: Union[str, None] = ..., include_steps: tuple[str, Ellipsis] = ..., metadata: Union[dict[str, Any], None] = ..., output_key: Union[str, None] = ...) -> Self:
+    def checkpoint(self, *, checkpoint_id: Union[str, None] = ..., include_steps: tuple[str, ...] = ..., metadata: Union[dict[str, Any], None] = ..., output_key: Union[str, None] = ...) -> Self:
         """Добавить checkpoint-шаг для workflow state persistence (S28 W3)."""
         ...
 

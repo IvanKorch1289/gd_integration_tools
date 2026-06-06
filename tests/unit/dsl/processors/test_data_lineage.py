@@ -230,7 +230,7 @@ async def test_process_uses_default_emitter() -> None:
     exchange = _ex(body={"x": 1})
     await proc.process(exchange, None)  # type: ignore[arg-type]
 
-    events = emitter.list()
+    events = emitter.list_events()
     assert len(events) == 1
     assert events[0]["node"]["name"] == "foo"
 
