@@ -48,12 +48,16 @@ class BaseAPIClient:
         max_retries: int = 3,
         timeout: float = 15.0,
         initial_backoff: float = _DEFAULT_INITIAL_BACKOFF,
+        retry_overrides: dict[str, int] | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._token = token
         self._max_retries = max_retries
         self._timeout = timeout
         self._initial_backoff = initial_backoff
+        # TD-012: per-path retry overrides. Keys = exact path; values = max_retries.
+        # Built-in defaults (health/ready → 0) are applied by _get_max_retries_for_path.
+        self._retry_overrides: dict[str, int] = dict(retry_overrides or {})
 
     def set_token(self, token: str | None) -> None:
         """Установить JWT token для последующих запросов."""
@@ -68,6 +72,26 @@ class BaseAPIClient:
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
+
+    def _get_max_retries_for_path(self, path: str) -> int:
+        """TD-012: per-path retry policy.
+
+        Returns the number of retries for a given URL path. Resolution order:
+        1. ``self._retry_overrides[path]`` (constructor arg, exact path match).
+        2. Built-in no-retry paths (``/health``, ``/ready``, health components).
+        3. ``self._max_retries`` (default).
+
+        Override this method in subclasses to add domain-specific policies
+        (e.g. RAG long-running endpoints, admin write endpoints). Built-in
+        defaults — это safe defaults, не safety constraint: явный
+        ``retry_overrides`` всегда выигрывает.
+        """
+        if path in self._retry_overrides:
+            return self._retry_overrides[path]
+        # Health/liveness probes: fail fast, no retry.
+        if path in ("/health", "/ready", "/api/v1/health/components"):
+            return 0
+        return self._max_retries
 
     def _sleep_backoff(self, attempt: int) -> None:
         """Sleep with exponential backoff (0.5, 1, 2, 4, 8s capped)."""
@@ -109,7 +133,8 @@ class BaseAPIClient:
         """
         headers = {**self._headers(), **kwargs.pop("headers", {})}
         last_exc: Exception | None = None
-        for attempt in range(self._max_retries + 1):
+        max_retries = self._get_max_retries_for_path(path)
+        for attempt in range(max_retries + 1):
             try:
                 with httpx.Client(timeout=self._timeout) as client:
                     response = client.request(
@@ -121,7 +146,7 @@ class BaseAPIClient:
                     raise PermissionError(msg)
                 # 5xx, 408, 429 = retryable
                 if response.status_code in _RETRYABLE_STATUS_CODES:
-                    if attempt < self._max_retries:
+                    if attempt < max_retries:
                         self._sleep_backoff(attempt)
                         continue
                     # Last attempt: raise
@@ -141,7 +166,7 @@ class BaseAPIClient:
                 httpx.NetworkError,
             ) as exc:
                 last_exc = exc
-                if attempt < self._max_retries:
+                if attempt < max_retries:
                     self._sleep_backoff(attempt)
                     continue
                 # Last attempt: re-raise
@@ -149,7 +174,7 @@ class BaseAPIClient:
         # Should not reach here, but for type safety
         if last_exc is not None:
             raise last_exc
-        msg = f"Request failed after {self._max_retries + 1} attempts: {path}"
+        msg = f"Request failed after {max_retries + 1} attempts: {path}"
         raise httpx.HTTPError(msg)
 
 
