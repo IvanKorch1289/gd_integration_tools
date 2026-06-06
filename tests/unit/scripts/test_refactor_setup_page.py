@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
 # Add scripts/ to path for direct import
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 
+import tempfile
+
 from refactor_setup_page import (  # type: ignore[import-not-found]
     RE_SET_PAGE_CONFIG,
     extract_kwargs,
     refactor_file,
 )
-
-import tempfile
 
 
 def test_extract_kwargs_basic() -> None:
@@ -139,7 +138,6 @@ def test_refactor_file_syntax_check_prevents_bad_writes() -> None:
 
 def test_real_page_refactor_preserves_content() -> None:
     """Apply refactor to a real page sample, verify content preserved."""
-    import shutil
 
     src = Path("src/frontend/streamlit_app/pages/12_Logs.py")
     if not src.exists():
