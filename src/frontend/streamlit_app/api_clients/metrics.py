@@ -1,4 +1,9 @@
-"""Метрики: health + admin metrics."""
+"""Метрики: health + admin metrics.
+
+Graceful: при недоступном backend'е возвращают ``{}`` — Streamlit-страница
+рендерит empty-state.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -12,7 +17,13 @@ class MetricsClient(BaseAPIClient):
     """Клиент для health-check + admin metrics endpoints."""
 
     def get_metrics(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/admin/metrics")
+        try:
+            return self._request("GET", "/api/v1/admin/metrics")
+        except Exception:  # noqa: BLE001
+            return {}
 
     def get_health(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/health/components")
+        try:
+            return self._request("GET", "/api/v1/health/components")
+        except Exception:  # noqa: BLE001
+            return {}
