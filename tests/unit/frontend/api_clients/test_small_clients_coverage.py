@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
 
 # ============================================================
 # ConfigClient tests
@@ -303,7 +304,7 @@ class TestTenantsClient:
 
         c = TenantsClient()
         with patch.object(c, "_request", side_effect=Exception("boom")):
-            with __import__("pytest").raises(Exception, match="boom"):
+            with pytest.raises(Exception, match="boom"):
                 c.get_tenants()
 
     def test_get_tenant_detail_happy(self) -> None:
@@ -323,5 +324,5 @@ class TestTenantsClient:
 
         c = TenantsClient()
         with patch.object(c, "_request", side_effect=Exception("boom")):
-            with __import__("pytest").raises(Exception, match="boom"):
+            with pytest.raises(Exception, match="boom"):
                 c.get_tenant_detail("missing")
