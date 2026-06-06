@@ -8,7 +8,13 @@
 * LiteLLM Gateway / Embedding Registry stubs.
 
 Все методы graceful: при недоступном backend'е возвращают пустой словарь
-или список — Streamlit-страница рендерит empty-state.
+или список — Streamlit-страница рендерит empty-state. Backend failures
+логируются на уровне WARNING (видны в production без DEBUG).
+
+Sprint 47 W4: log level повышен с DEBUG до WARNING — backend failures
+должны быть visible by default, не только при DEBUG mode. Также fix
+``getattr(f, "name", "file")`` edge case для file-like объектов без
+``name`` атрибута (используем index-based fallback ``file_{i}``).
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ class K4APIClient(APIClient):
         try:
             return self._request("GET", "/api/v1/admin/rag-cache/stats")
         except Exception as exc:  # noqa: BLE001
-            logger.debug("get_rag_cache_stats failed: %s", exc)
+            logger.warning("get_rag_cache_stats failed: %s", exc)
             return {}
 
     def flush_rag_cache_tier(self, tier: str | None = None) -> dict[str, Any]:
@@ -38,7 +44,7 @@ class K4APIClient(APIClient):
         try:
             return self._request("POST", "/api/v1/admin/rag-cache/flush", params=params)
         except Exception as exc:  # noqa: BLE001
-            logger.debug("flush_rag_cache_tier failed: %s", exc)
+            logger.warning("flush_rag_cache_tier(tier=%r) failed: %s", tier, exc)
             return {}
 
     def get_rag_invalidation_events(self, limit: int = 50) -> list[dict[str, Any]]:
@@ -47,14 +53,14 @@ class K4APIClient(APIClient):
                 "GET", "/api/v1/admin/rag-cache/events", params={"limit": limit}
             )
         except Exception as exc:  # noqa: BLE001
-            logger.debug("get_rag_invalidation_events failed: %s", exc)
+            logger.warning("get_rag_invalidation_events(limit=%d) failed: %s", limit, exc)
             return []
 
     def litellm_gateway_stats(self) -> dict[str, Any]:
         try:
             return self._request("GET", "/api/v1/admin/litellm-gateway/stats")
         except Exception as exc:  # noqa: BLE001
-            logger.debug("litellm_gateway_stats failed: %s", exc)
+            logger.warning("litellm_gateway_stats failed: %s", exc)
             return {}
 
     def list_embedding_providers(self) -> list[str]:
@@ -66,16 +72,19 @@ class K4APIClient(APIClient):
                 return [str(x) for x in payload.get("providers", [])]
             return []
         except Exception as exc:  # noqa: BLE001
-            logger.debug("list_embedding_providers failed: %s", exc)
+            logger.warning("list_embedding_providers failed: %s", exc)
             return []
 
     def rag_ingest_start(
         self, *, files: list[Any], collection: str = "default"
     ) -> dict[str, Any]:
         try:
-            file_payload = [
-                ("files", (getattr(f, "name", "file"), f.read())) for f in files
-            ]
+            # Index-based fallback для file-like объектов без .name
+            # (например, BytesIO wrapper, raw bytes). Sprint 47 W4 fix.
+            file_payload: list[tuple[str, tuple[str, bytes]]] = []
+            for i, f in enumerate(files):
+                name = getattr(f, "name", None) or f"file_{i}"
+                file_payload.append(("files", (name, f.read())))
             return self._request(
                 "POST",
                 "/api/v1/rag/ingest/start",
@@ -83,14 +92,14 @@ class K4APIClient(APIClient):
                 data={"collection": collection},
             )
         except Exception as exc:  # noqa: BLE001
-            logger.debug("rag_ingest_start failed: %s", exc)
+            logger.warning("rag_ingest_start(collection=%r) failed: %s", collection, exc)
             return {"task_id": None, "error": str(exc)}
 
     def rag_ingest_status(self, task_id: str) -> dict[str, Any]:
         try:
             return self._request("GET", f"/api/v1/rag/ingest/status/{task_id}")
         except Exception as exc:  # noqa: BLE001
-            logger.debug("rag_ingest_status failed: %s", exc)
+            logger.warning("rag_ingest_status(task_id=%r) failed: %s", task_id, exc)
             return {}
 
     def rag_search_preview(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
@@ -99,7 +108,7 @@ class K4APIClient(APIClient):
                 "GET", "/api/v1/rag/search", params={"query": query, "top_k": top_k}
             )
         except Exception as exc:  # noqa: BLE001
-            logger.debug("rag_search_preview failed: %s", exc)
+            logger.warning("rag_search_preview(query=%r) failed: %s", query, exc)
             return []
 
     def bulk_rag_ingest(
@@ -121,5 +130,10 @@ class K4APIClient(APIClient):
                 json={"documents": documents, "collection": collection},
             )
         except Exception as exc:  # noqa: BLE001
-            logger.debug("bulk_rag_ingest failed: %s", exc)
+            logger.warning(
+                "bulk_rag_ingest(collection=%r, %d docs) failed: %s",
+                collection,
+                len(documents),
+                exc,
+            )
             return {"task_id": None, "error": str(exc)}
