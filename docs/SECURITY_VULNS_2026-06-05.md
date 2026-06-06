@@ -106,10 +106,33 @@ rm -rf src/frontend/admin-react/ frontend/admin-react/
 
 | Vuln | Config patch | On-disk apply | Verified |
 |------|:------------:|:-------------:|:--------:|
-| 1. React Router | ✅ | ⏳ `npm install` needed | — |
-| 2. ChromaDB | ⚠️ best guess | ⏳ `uv sync` needed | user must verify 1.5.20 exists |
-| 3. Vite | ✅ | ⏳ `npm install` needed | — |
+| 1. React Router | ✅ | ✅ Sprint 42 W2 (package.json + lockfile) | npm audit clean |
+| 2. ChromaDB | ❌ **REVERTED** | n/a | **FIX VERSION DOESN'T EXIST** (verify-analysis-claims CAUGHT). Pin back to `>=0.5.0,<2.0.0`. |
+| 3. Vite | ❌ **REVERTED** | n/a | **FIX VERSION DOESN'T EXIST** (`^6.4.6` doesn't exist in npm; latest 6.x = 6.0.2, latest = 8.0.16). Pin back to `^5.2.0`. |
 | 4. DiskCache | ❌ **REVERTED** | n/a | **NO FIX available** (CVE-2025-69872). Project mitigates via JSONDisk (см. .github/workflows/security.yml, S30). |
+
+### Sprint 42 W2 attempts (2026-06-06)
+
+**Verify-analysis-claims skill WORKED TWICE** — caught phantom version numbers
+from the original vulns audit (AI confabulation):
+
+1. **chromadb 1.5.20**: не существует в PyPI (max = 1.5.9). `uv sync` FAILED.
+   Reverted to `>=0.5.0,<2.0.0`. CVE остаётся 1 CRITICAL для [rag] extra.
+
+2. **Vite 6.4.6**: не существует в npm (latest = 8.0.16, latest 6.x = 6.0.2).
+   Попытка bump до 8.0.16 сломала build (pre-existing bug: `src/vite-env.d.ts`
+   содержит HTML вместо TS types). Reverted to `^5.2.0`.
+   `npm audit`: 2 moderate vulns остаются (esbuild + vite ≤6.4.1).
+   Mitigation: admin-react — MVP, not deployed (per Sprint 19 K5 W5c).
+
+**Final state (Sprint 42 W2)**:
+- 1 CRITICAL (chromadb) — НЕ FIXED (нет fix version в PyPI)
+- 2 MODERATE (Vite/esbuild) — НЕ FIXED (admin-react не deployed)
+- 1 CRITICAL (DiskCache) — FALSE POSITIVE (mitigated via JSONDisk)
+
+**Уменьшение alert count не произошло** — все vulns остаются active.
+Mitigation path требует major migration (Vite 7+/8+ + fix vite-env.d.ts)
+или удаление admin-react. Оба варианта — out of scope Sprint 42.
 
 ### DiskCache коррекция (2026-06-05)
 
