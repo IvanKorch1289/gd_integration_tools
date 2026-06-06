@@ -61,6 +61,65 @@ _DEFAULT_TARGETS = (
     ),
 )
 
+
+# ── Manual class blocks ─────────────────────────────────────────────
+# When the generator emits bare class names in return types (e.g. ``saga()
+# -> SagaBuilder``) but the same-module class declaration is missing, the
+# class definition must be hand-added to the stub. These blocks are
+# preserved across regenerations so the manual work is not lost.
+#
+# Add an entry here whenever a same-module class is referenced but not
+# emitted by the generator. Format: (module_name, class_name) → stub block.
+_MANUAL_CLASS_BLOCKS: dict[tuple[str, str], str] = {
+    (
+        "src.backend.dsl.workflow.builder",
+        "SagaBuilder",
+    ): '''class SagaBuilder:
+    """Саб-builder saga-шага. Аккумулирует forward/compensate цепочки.
+
+    Manual stub — генератор пока не умеет emit-ить same-module classes.
+    Block сохранён через _MANUAL_CLASS_BLOCKS при regen.
+    """
+    def forward(
+        self,
+        name: str,
+        *,
+        args: dict[str, Any] | None = ...,
+        timeout_s: Union[float, None] = ...,
+        retry_policy: Union[RetryPolicy, None] = ...,
+        output_key: Union[str, None] = ...,
+    ) -> Self:
+        """Добавить forward-activity в saga-цепочку."""
+        ...
+
+    def compensate(
+        self,
+        name: str,
+        *,
+        args: dict[str, Any] | None = ...,
+        timeout_s: Union[float, None] = ...,
+        retry_policy: Union[RetryPolicy, None] = ...,
+    ) -> Self:
+        """Добавить compensate-activity (откат forward-шагов)."""
+        ...
+
+    def end_saga(self) -> "WorkflowBuilder":
+        """Завершить саб-chain и вернуть родительский ``WorkflowBuilder``."""
+        ...
+''',
+}
+
+
+def _append_manual_blocks(content: str, module_name: str) -> str:
+    """Append manual class blocks for ``module_name`` if any are registered."""
+    blocks: list[str] = []
+    for (mod, _cls_name), block in _MANUAL_CLASS_BLOCKS.items():
+        if mod == module_name:
+            blocks.append(block)
+    if not blocks:
+        return content
+    return content.rstrip() + "\n\n\n" + "\n\n".join(blocks).rstrip() + "\n"
+
 _logger = logging.getLogger("tools.gen_dsl_stubs")
 
 
@@ -343,11 +402,20 @@ def _build_signature(
         return "(*args: Any, **kwargs: Any)", "Any"
     parts: list[str] = []
     has_self = False
+    seen_keyword_only = False
     for p in sig.parameters.values():
         if p.name == "self" and not has_self:
             parts.append("self")
             has_self = True
             continue
+        # Insert '*' separator before the first KEYWORD_ONLY parameter
+        # (Python syntax: required params can't follow params with defaults).
+        if p.kind is inspect.Parameter.KEYWORD_ONLY and not seen_keyword_only:
+            parts.append("*")
+            seen_keyword_only = True
+        # VAR_POSITIONAL also marks start of keyword-only section
+        if p.kind is inspect.Parameter.VAR_POSITIONAL:
+            seen_keyword_only = True
         parts.append(_format_param(p, module_ns))
     return_type = _resolve_annotation(sig.return_annotation, module_ns)
     return f"({', '.join(parts)})", return_type
@@ -451,7 +519,7 @@ def _build_method_imports(
             merged_ns.update(mixin_ns)
             ns_to_use = merged_ns
 
-    # Try to get resolved hints
+    # Try to get resolved hints (for class type FQ names)
     if ns_to_use:
         try:
             hints = typing.get_type_hints(
@@ -459,13 +527,17 @@ def _build_method_imports(
             )
             for ann in hints.values():
                 names.update(_extract_fq_names_from_annotation(ann))
-            return names
         except Exception:
             pass
 
-    # Fallback: use raw string annotations
-    for ann in getattr(target, "__annotations__", {}).values():
-        names.update(_extract_fq_names_from_annotation(ann))
+    # Also scan raw __annotations__ for type ALIAS names that get_type_hints
+    # resolves away (e.g. ``DeferCondition = Callable[[Any], bool]`` — the alias
+    # name is lost after resolution). Bare names not in the resolved type tree
+    # are captured here so they can be imported.
+    if ns_to_use:
+        for raw_ann in getattr(target, "__annotations__", {}).values():
+            if isinstance(raw_ann, str):
+                names.update(_fq_names_from_string(raw_ann))
     return names
 
 
@@ -593,7 +665,17 @@ def _collect_all_imports(
 
     import_lines = sorted({_format_import_line(n) for n in external_fq_names})
     # Remove empty/None (from _TYPING_REEXPORTS)
-    import_lines = [l for l in import_lines if l]
+    import_lines = [line for line in import_lines if line]
+
+    # Drop self-imports: any 'from {module_name} import X' is invalid in a
+    # stub for module_name (the stub IS the definition of module_name's classes).
+    # Bare class names in annotations will be resolved by mypy from the
+    # underlying .py file when it can't find them in the .pyi.
+    if module_name:
+        import_lines = [
+            line for line in import_lines
+            if not line.startswith(f"from {module_name} import ")
+        ]
 
     # Deduplicate: merge 'from x import A' and 'from x import B' → 'from x import A, B'
     module_imports: dict[str, list[str]] = {}
@@ -645,8 +727,14 @@ def _collect_all_imports(
                 deduped.append(f"from {fq.rsplit('.', 1)[0]} import {short}")
 
         if same_module_filtered:
-            deduped.append(
-                f"from {module_name} import {', '.join(sorted(set(same_module_filtered)))}"
+            # Same-module types: do NOT add self-import (would be invalid in stub).
+            # Bare class names in annotations will be resolved by mypy from the
+            # underlying .py file when it can't find them in the .pyi.
+            # Logged for visibility — operator can add explicit forward refs if needed.
+            _logger.debug(
+                "Same-module types %s in %s — left as bare names (no self-import)",
+                same_module_filtered,
+                module_name,
             )
 
     return deduped
@@ -736,6 +824,8 @@ def main(argv: list[str] | None = None) -> int:
     drift_detected = False
     for module_name, class_name, output_path in _DEFAULT_TARGETS:
         content = generate_stub(module_name, class_name, output_path)
+        # Append manual class blocks (preserved across regenerations)
+        content = _append_manual_blocks(content, module_name)
         if args.check:
             existing = (
                 output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
