@@ -130,6 +130,11 @@ security = [
     # S11 carryover: версии синхронизированы с [dev-group] выше — `uv sync
     # --extra security` теперь даёт ту же версию, что `uv sync` (dev).
     "pip-audit>=2.7,<3",
+    # K4 Sprint 55 W5: user-approved performance libraries.
+    # rich: terminal UI (tables, progress bars, syntax highlighting).
+    "rich>=13.9.0,<14.0.0",
+    # aioboto3: async boto3 wrapper for AWS S3 sensor (Airflow-style).
+    "aioboto3>=13.0.0,<14.0.0",
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
 # presidio-anonymizer — replace/redact/hash операторы для PII;

@@ -25,12 +25,13 @@ Resilience:
 """
 from __future__ import annotations
 
-import json
 import logging
 import threading
 import urllib.error
 import urllib.request
 from typing import Any
+
+import orjson
 
 from src.backend.services.lineage.lineage_emitter import (
     InMemoryLineageEmitter,
@@ -152,7 +153,8 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
         """POST batch to {url}/api/v1/lineage. Returns True on 2xx."""
         endpoint = f"{self._config.url}/api/v1/lineage"
         try:
-            payload = json.dumps(batch, default=str).encode("utf-8")
+            # orjson: ~3x faster than stdlib json.dumps + .encode().
+            payload = orjson.dumps(batch, default=str)
         except (TypeError, ValueError) as e:
             _log.error("OpenLineage payload serialization failed: %s", e)
             return False

@@ -16,6 +16,7 @@ import pytest
 from src.backend.core.orchestration.airflow_sensors import (
     FileSensor,
     HttpSensor,
+    S3Sensor,
     SqlSensor,
 )
 from src.backend.core.orchestration.sensor import SensorTrigger
@@ -254,3 +255,76 @@ class TestHttpSensor:
                 input={},
             )
         assert result is False
+
+
+# ── S3Sensor ────────────────────────────────────────────────────────
+
+class TestS3Sensor:
+    def test_import_error_without_aioboto3(self, monkeypatch) -> None:
+        """Если aioboto3 не установлен, S3Sensor construction raises ImportError."""
+        import sys
+        monkeypatch.setitem(sys.modules, "aioboto3", None)  # type: ignore[arg-type]
+        with pytest.raises(ImportError, match="aioboto3"):
+            S3Sensor(bucket="b", key="k")
+
+    def test_construction_with_aioboto3(self) -> None:
+        try:
+            import aioboto3  # noqa: F401
+        except ImportError:
+            pytest.skip("aioboto3 not installed in this env")
+        s = S3Sensor(bucket="my-bucket", key="path/to/file.json", region="eu-west-1")
+        assert s._bucket == "my-bucket"
+        assert s._key == "path/to/file.json"
+        assert s._region == "eu-west-1"
+
+    @pytest.mark.asyncio
+    async def test_match_when_object_exists_v2(self) -> None:
+        try:
+            import aioboto3  # noqa: F401
+        except ImportError:
+            pytest.skip("aioboto3 not installed in this env")
+        sensor = S3Sensor(bucket="b", key="k", poll_interval_s=0.5)
+
+        # Build a fake aioboto3 module with required symbols
+        class FakeClient:
+            async def head_object(self, **kwargs):
+                return {"ResponseMetadata": {"HTTPStatusCode": 200}, "ContentLength": 1024}
+            async def __aenter__(self): return self
+            async def __aexit__(self, *a): return None
+        class FakeSession:
+            def client(self, *a, **kw): return FakeClient()
+        fake_mod = MagicMock()
+        fake_mod.Session = FakeSession
+
+        with patch.dict("sys.modules", {"aioboto3": fake_mod}):
+            result = await sensor.watch(
+                trigger=_trigger(timeout_s=2.0, poll=0.5),
+                input={},
+            )
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_404_timeout_v2(self) -> None:
+        try:
+            import aioboto3  # noqa: F401
+        except ImportError:
+            pytest.skip("aioboto3 not installed in this env")
+        sensor = S3Sensor(bucket="b", key="missing", poll_interval_s=0.5)
+
+        class FakeClient:
+            async def head_object(self, **kwargs):
+                raise Exception("NoSuchKey: 404 not found")
+            async def __aenter__(self): return self
+            async def __aexit__(self, *a): return None
+        class FakeSession:
+            def client(self, *a, **kw): return FakeClient()
+        fake_mod = MagicMock()
+        fake_mod.Session = FakeSession
+
+        with patch.dict("sys.modules", {"aioboto3": fake_mod}):
+            result = await sensor.watch(
+                trigger=_trigger(timeout_s=0.1, poll=0.5),
+                input={},
+            )
+        assert result is False
+

@@ -17,9 +17,7 @@ import asyncio
 import logging
 import os
 import time
-from collections.abc import Awaitable, Callable
-from datetime import timedelta
-from typing import Any, Protocol
+from typing import Any
 
 import asyncpg
 import httpx
@@ -28,9 +26,14 @@ from watchfiles import awatch
 
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
 
+# S3 sensor uses aioboto3 (user-approved dep, install via `uv pip install aioboto3`).
+# Lazy import: S3Sensor construction fails with ImportError if aioboto3 not installed,
+# so the rest of the module works on light installs.
+
 __all__ = (
     "FileSensor",
     "HttpSensor",
+    "S3Sensor",
     "Sensor",
     "SensorTrigger",
     "SqlSensor",
@@ -258,3 +261,97 @@ class HttpSensor:
 
                 backoff = min(self._poll_interval_s, (2 ** min(attempt - 1, 6)) * self._poll_interval_s)
                 await asyncio.sleep(backoff)
+
+
+# ── S3Sensor ────────────────────────────────────────────────────────
+
+class S3Sensor:
+    """Polls S3 object until it appears (or matches predicate).
+
+    Apache Airflow S3KeySensor analogue (async).
+
+    Args:
+        bucket: S3 bucket name.
+        key: S3 object key.
+        aws_access_key_id: optional AWS access key (default: from boto3
+            default credential chain).
+        aws_secret_access_key: optional AWS secret (default: from boto3 chain).
+        region: AWS region (default ``"us-east-1"``).
+        endpoint_url: optional custom endpoint (для S3-compatible storage
+            типа MinIO, Ceph, Garage).
+        poll_interval_s: interval between polls (default 30.0).
+
+    Raises:
+        ImportError: если ``aioboto3`` не установлен.
+            Установка: ``uv pip install aioboto3``.
+    """
+
+    def __init__(
+        self,
+        bucket: str,
+        key: str,
+        *,
+        aws_access_key_id: str | None = None,
+        aws_secret_access_key: str | None = None,
+        region: str = "us-east-1",
+        endpoint_url: str | None = None,
+        poll_interval_s: float = 30.0,
+    ) -> None:
+        try:
+            import aioboto3  # noqa: F401  (import check)
+        except ImportError as e:
+            raise ImportError(
+                "S3Sensor requires aioboto3. Install: uv pip install aioboto3"
+            ) from e
+        self._bucket = bucket
+        self._key = key
+        self._aws_access_key_id = aws_access_key_id
+        self._aws_secret_access_key = aws_secret_access_key
+        self._region = region
+        self._endpoint_url = endpoint_url
+        self._poll_interval_s = poll_interval_s
+
+    async def watch(
+        self,
+        *,
+        trigger: SensorTrigger,
+        input: dict[str, Any],
+        namespace: str = "default",
+    ) -> bool:
+        import aioboto3
+        start = time.monotonic()
+        timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
+        attempt = 0
+        _log.info("S3Sensor: polling s3://%s/%s", self._bucket, self._key)
+
+        session = aioboto3.Session()
+        while True:
+            attempt += 1
+            try:
+                async with session.client(
+                    "s3",
+                    aws_access_key_id=self._aws_access_key_id,
+                    aws_secret_access_key=self._aws_secret_access_key,
+                    region_name=self._region,
+                    endpoint_url=self._endpoint_url,
+                ) as s3:
+                    resp = await s3.head_object(Bucket=self._bucket, Key=self._key)
+                    if resp.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
+                        _log.info(
+                            "S3Sensor: match (attempt %d, size=%s)",
+                            attempt, resp.get("ContentLength"),
+                        )
+                        return True
+            except Exception as e:
+                # 404 (NotFound) → expected while waiting; other errors → warn
+                if "NoSuchKey" not in repr(e) and "404" not in repr(e):
+                    _log.warning("S3Sensor: head_object failed (attempt %d): %s", attempt, e)
+
+            elapsed = time.monotonic() - start
+            if timeout_s is not None and elapsed >= timeout_s:
+                _log.info("S3Sensor: timeout %ss reached", timeout_s)
+                return False
+
+            backoff = min(self._poll_interval_s, (2 ** min(attempt - 1, 6)) * self._poll_interval_s)
+            await asyncio.sleep(backoff)
+
