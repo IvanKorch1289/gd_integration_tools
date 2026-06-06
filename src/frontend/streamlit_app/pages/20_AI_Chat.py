@@ -3,8 +3,14 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="AI Chat", page_icon=":robot_face:", layout="wide")
+setup_page(
+    'AI Chat',
+    ':robot_face:',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 st.header("AI Assistant")
 
 client = get_api_client()

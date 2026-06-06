@@ -11,8 +11,14 @@ import time
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import AdminClient
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="Healthcheck", page_icon=":heart:", layout="wide")
+setup_page(
+    'Healthcheck',
+    ':heart:',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 st.header(":heart: Healthcheck Dashboard")
 
 auto = st.toggle("Авто-обновление (5s)", value=True)

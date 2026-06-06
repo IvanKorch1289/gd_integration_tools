@@ -9,9 +9,13 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(
-    page_title="Processes", page_icon=":arrows_clockwise:", layout="wide"
+setup_page(
+    'Processes',
+    ':arrows_clockwise:',
+    layout='wide',
+    initial_sidebar_state='expanded',
 )
 st.header(":arrows_clockwise: Выполняющиеся процессы")
 

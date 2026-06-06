@@ -13,8 +13,14 @@ import json
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients.rag import RAGClient
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="RAG Console", layout="wide")
+setup_page(
+    'RAG Console',
+    '📄',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 
 st.title("RAG Console")
 

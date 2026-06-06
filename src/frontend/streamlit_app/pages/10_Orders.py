@@ -3,8 +3,14 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="Orders", page_icon=":package:", layout="wide")
+setup_page(
+    'Orders',
+    ':package:',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 st.header("Orders")
 
 client = get_api_client()

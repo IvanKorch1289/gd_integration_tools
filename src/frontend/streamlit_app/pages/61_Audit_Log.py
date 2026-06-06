@@ -13,8 +13,14 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="Audit", page_icon=":mag:", layout="wide")
+setup_page(
+    'Audit',
+    ':mag:',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 st.header(":mag: Audit Log")
 
 client = get_api_client()

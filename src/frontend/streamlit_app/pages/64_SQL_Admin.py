@@ -10,8 +10,14 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="SQL", page_icon=":floppy_disk:", layout="wide")
+setup_page(
+    'SQL',
+    ':floppy_disk:',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 st.header(":floppy_disk: SQL Admin Console")
 
 st.warning(

@@ -3,9 +3,13 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(
-    page_title="Feature Flags", page_icon=":triangular_flag_on_post:", layout="wide"
+setup_page(
+    'Feature Flags',
+    ':triangular_flag_on_post:',
+    layout='wide',
+    initial_sidebar_state='expanded',
 )
 st.header("Feature Flags")
 
