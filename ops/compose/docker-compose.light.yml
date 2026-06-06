@@ -1,0 +1,69 @@
+# docker-compose.light.yml (Sprint 54 W2)
+#
+# Лёгкий dev-стек: только app + workflow-worker.
+# Без postgres/redis/clamav — работает с in-memory/SQLite backends (APP_PROFILE=dev_light).
+#
+# Запуск:
+#   docker compose -f docker-compose.light.yml up -d
+#   # или
+#   make up-light
+#
+# Остановка:
+#   make down-light
+#
+# Логи: docker compose -f docker-compose.light.yml logs -f
+#
+# Полная инфраструктура (postgres + redis + clamav): docker-compose.yml
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    image: gd-integration-tools:light
+    container_name: gd-app-light
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../.env
+    environment:
+      APP_PROFILE: dev_light
+      APP_SERVER: ${APP_SERVER:-granian}
+      APP_WORKERS: ${APP_WORKERS:-2}
+    volumes:
+      - ../../.run:/app/.run  # logs, sqlite, runtime state
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  workflow-worker:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    image: gd-integration-tools:light
+    container_name: gd-worker-light
+    command: ["python", "-m", "src.workflows.worker", "run"]
+    env_file:
+      - ../../.env
+    environment:
+      APP_PROFILE: dev_light
+      WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-lite}
+      SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-10}
+    volumes:
+      - ../../.run:/app/.run
+    restart: unless-stopped
+    deploy:
+      replicas: ${WORKER_COUNT:-1}
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'workflows.worker' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Нет postgres, redis, clamav, migration-runner — dev_light profile
+  # использует SQLite/in-memory backends.
