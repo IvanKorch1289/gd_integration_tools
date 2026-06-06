@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from src.backend.core.config.services.cache import CacheSettings, cache_settings
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
+from src.backend.infrastructure.cache.backends.memcached import MemcachedBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
@@ -71,8 +72,4 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
                     "Memcached-бэкенд требует пакет 'aiomcache'. "
                     "Добавьте его в pyproject.toml и переинициализируйте."
                 ) from exc
-            from src.backend.infrastructure.cache.backends.memcached import (
-                MemcachedBackend,
-            )
-
             return MemcachedBackend()
