@@ -9,33 +9,10 @@ stream,streamlit,webhook,websocket}/*``.
 
 Все Protocol помечены ``@runtime_checkable``.
 """
-
 from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from typing import Any, Protocol, runtime_checkable
-
-__all__ = (
-    "CDCClientProtocol",
-    "ExpressBotClientProtocol",
-    "ExpressMetricsRecorderProtocol",
-    "HealthCheckServiceProtocol",
-    "LoggerProtocol",
-    "MongoExpressDialogStoreProtocol",
-    "MongoExpressSessionStoreProtocol",
-    "RateLimiterProtocol",
-    "RedisCursorProtocol",
-    "RedisHashProtocol",
-    "RedisPubSubProtocol",
-    "RedisSetProtocol",
-    "SLOTrackerProtocol",
-    "StreamClientProtocol",
-    "VaultRefresherProtocol",
-)
-
-
-# ─────────────────────── Rate limiter ───────────────────────
-
+__all__ = ('CDCClientProtocol', 'ExpressBotClientProtocol', 'ExpressMetricsRecorderProtocol', 'HealthCheckServiceProtocol', 'LoggerProtocol', 'MongoExpressDialogStoreProtocol', 'MongoExpressSessionStoreProtocol', 'RateLimiterProtocol', 'RedisCursorProtocol', 'RedisHashProtocol', 'RedisPubSubProtocol', 'RedisSetProtocol', 'SLOTrackerProtocol', 'StreamClientProtocol', 'VaultRefresherProtocol')
 
 @runtime_checkable
 class RateLimiterProtocol(Protocol):
@@ -45,50 +22,73 @@ class RateLimiterProtocol(Protocol):
     .RedisRateLimiter`` (singleton ``get_rate_limiter()``).
     """
 
-    async def check(self, identifier: str, policy: Any) -> dict[str, Any]: ...
-
-
-# ─────────────────────── Redis coordinator primitives ───────────────────────
-
+    async def check(self, identifier: str, policy: Any) -> dict[str, Any]:
+        """Выполнить операцию check."""
+        ...
 
 @runtime_checkable
 class RedisHashProtocol(Protocol):
     """Контракт shared HASH-структуры (multi-instance webhook subs etc.)."""
 
-    async def set(self, field: str, value: Any) -> None: ...
-    async def get(self, field: str) -> Any: ...
-    async def delete(self, field: str) -> bool: ...
-    async def all(self) -> dict[str, Any]: ...
+    async def set(self, field: str, value: Any) -> None:
+        """Выполнить операцию set."""
+        ...
 
+    async def get(self, field: str) -> Any:
+        """Выполнить операцию get."""
+        ...
+
+    async def delete(self, field: str) -> bool:
+        """Выполнить операцию delete."""
+        ...
+
+    async def all(self) -> dict[str, Any]:
+        """Выполнить операцию all."""
+        ...
 
 @runtime_checkable
 class RedisSetProtocol(Protocol):
     """Контракт shared SET-структуры (group membership)."""
 
-    async def add(self, *members: str) -> int: ...
-    async def remove(self, *members: str) -> int: ...
-    async def members(self) -> set[str]: ...
-    async def contains(self, member: str) -> bool: ...
+    async def add(self, *members: str) -> int:
+        """Выполнить операцию add."""
+        ...
 
+    async def remove(self, *members: str) -> int:
+        """Выполнить операцию remove."""
+        ...
+
+    async def members(self) -> set[str]:
+        """Выполнить операцию members."""
+        ...
+
+    async def contains(self, member: str) -> bool:
+        """Выполнить операцию contains."""
+        ...
 
 @runtime_checkable
 class RedisCursorProtocol(Protocol):
     """Контракт CAS-cursor (CDC last_check etc.)."""
 
-    async def get(self) -> Any: ...
-    async def set(self, value: Any) -> bool: ...
+    async def get(self) -> Any:
+        """Выполнить операцию get."""
+        ...
 
+    async def set(self, value: Any) -> bool:
+        """Выполнить операцию set."""
+        ...
 
 @runtime_checkable
 class RedisPubSubProtocol(Protocol):
     """Контракт cross-instance pub/sub (WS broadcast, cache invalidation)."""
 
-    async def publish(self, message: Any) -> int: ...
-    def subscribe(self) -> AsyncIterator[Any]: ...
+    async def publish(self, message: Any) -> int:
+        """Выполнить операцию publish."""
+        ...
 
-
-# ─────────────────────── CDC client ───────────────────────
-
+    def subscribe(self) -> AsyncIterator[Any]:
+        """Выполнить операцию subscribe."""
+        ...
 
 @runtime_checkable
 class CDCClientProtocol(Protocol):
@@ -97,15 +97,17 @@ class CDCClientProtocol(Protocol):
     Реализация: ``infrastructure.clients.external.cdc.CDCClient``.
     """
 
-    async def subscribe(
-        self, *, profile: str, tables: list[str], target_action: str | None = None
-    ) -> str: ...
-    async def unsubscribe(self, subscription_id: str) -> bool: ...
-    def list_subscriptions(self) -> list[dict[str, Any]]: ...
+    async def subscribe(self, *, profile: str, tables: list[str], target_action: str | None=None) -> str:
+        """Выполнить операцию subscribe."""
+        ...
 
+    async def unsubscribe(self, subscription_id: str) -> bool:
+        """Выполнить операцию unsubscribe."""
+        ...
 
-# ─────────────────────── Vault refresher ───────────────────────
-
+    def list_subscriptions(self) -> list[dict[str, Any]]:
+        """Получить список subscriptions."""
+        ...
 
 @runtime_checkable
 class VaultRefresherProtocol(Protocol):
@@ -114,11 +116,9 @@ class VaultRefresherProtocol(Protocol):
     Реализация: ``infrastructure.application.vault_refresher.VaultSecretRefresher``.
     """
 
-    async def resolve(self, ref: str) -> str: ...
-
-
-# ─────────────────────── Logging service ───────────────────────
-
+    async def resolve(self, ref: str) -> str:
+        """Выполнить операцию resolve."""
+        ...
 
 @runtime_checkable
 class LoggerProtocol(Protocol):
@@ -129,14 +129,21 @@ class LoggerProtocol(Protocol):
     (``app_logger``, ``stream_logger``, ``grpc_logger`` и т.д.).
     """
 
-    def info(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
-    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию info."""
+        ...
 
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию warning."""
+        ...
 
-# ─────────────────────── Express Mongo stores ───────────────────────
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию error."""
+        ...
 
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию exception."""
+        ...
 
 @runtime_checkable
 class MongoExpressDialogStoreProtocol(Protocol):
@@ -146,18 +153,9 @@ class MongoExpressDialogStoreProtocol(Protocol):
     .MongoExpressDialogStore``.
     """
 
-    async def append_message(
-        self,
-        *,
-        session_id: str,
-        role: str,
-        body: str,
-        bot_id: str | None = None,
-        group_chat_id: str | None = None,
-        user_huid: str | None = None,
-        sync_id: str | None = None,
-    ) -> None: ...
-
+    async def append_message(self, *, session_id: str, role: str, body: str, bot_id: str | None=None, group_chat_id: str | None=None, user_huid: str | None=None, sync_id: str | None=None) -> None:
+        """Выполнить операцию append message."""
+        ...
 
 @runtime_checkable
 class MongoExpressSessionStoreProtocol(Protocol):
@@ -167,11 +165,9 @@ class MongoExpressSessionStoreProtocol(Protocol):
     .MongoExpressSessionStore``.
     """
 
-    async def ping(self, session_id: str) -> Any: ...
-
-
-# ─────────────────────── Express metrics recorder ───────────────────────
-
+    async def ping(self, session_id: str) -> Any:
+        """Выполнить операцию ping."""
+        ...
 
 @runtime_checkable
 class ExpressMetricsRecorderProtocol(Protocol):
@@ -180,11 +176,9 @@ class ExpressMetricsRecorderProtocol(Protocol):
     Реализация: ``infrastructure.observability.metrics.record_express_command_received``.
     """
 
-    def __call__(self, bot: str, command: str) -> None: ...
-
-
-# ─────────────────────── FastStream client ───────────────────────
-
+    def __call__(self, bot: str, command: str) -> None:
+        """Выполнить операцию   call  ."""
+        ...
 
 @runtime_checkable
 class StreamClientProtocol(Protocol):
@@ -195,13 +189,14 @@ class StreamClientProtocol(Protocol):
     """
 
     @property
-    def redis_router(self) -> Any: ...
+    def redis_router(self) -> Any:
+        """Выполнить операцию redis router."""
+        ...
+
     @property
-    def rabbit_router(self) -> Any: ...
-
-
-# ─────────────────────── Express BotX client ───────────────────────
-
+    def rabbit_router(self) -> Any:
+        """Выполнить операцию rabbit router."""
+        ...
 
 @runtime_checkable
 class ExpressBotClientProtocol(Protocol):
@@ -210,11 +205,9 @@ class ExpressBotClientProtocol(Protocol):
     Реализация: ``infrastructure.clients.external.express_bot.ExpressBotClient``.
     """
 
-    async def send_message(self, message: Any, sync: bool = False) -> str: ...
-
-
-# ─────────────────────── Health-check service ───────────────────────
-
+    async def send_message(self, message: Any, sync: bool=False) -> str:
+        """Выполнить операцию send message."""
+        ...
 
 @runtime_checkable
 class HealthCheckServiceProtocol(Protocol):
@@ -224,11 +217,9 @@ class HealthCheckServiceProtocol(Protocol):
     (singleton-фабрика ``get_healthcheck_service``).
     """
 
-    async def check_all_services(self) -> dict[str, Any]: ...
-
-
-# ─────────────────────── SLO tracker ───────────────────────
-
+    async def check_all_services(self) -> dict[str, Any]:
+        """Проверить all services."""
+        ...
 
 @runtime_checkable
 class SLOTrackerProtocol(Protocol):
@@ -237,4 +228,6 @@ class SLOTrackerProtocol(Protocol):
     Реализация: ``infrastructure.application.slo_tracker.SLOTracker``.
     """
 
-    def get_report(self) -> dict[str, Any]: ...
+    def get_report(self) -> dict[str, Any]:
+        """Получить report."""
+        ...
