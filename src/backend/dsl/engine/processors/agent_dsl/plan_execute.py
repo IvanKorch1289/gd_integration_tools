@@ -36,7 +36,6 @@ from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 
 if TYPE_CHECKING:
-    from src.backend.core.ai.gateway import AIRequest
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
