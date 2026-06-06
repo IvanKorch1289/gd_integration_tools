@@ -260,6 +260,173 @@ class DataQualityMonitor:
                 if len(history) > 1000:
                     self._numeric_history[key] = history[-500:]
 
+        elif rule.check == "regex_match":
+            pattern = rule.params.get("pattern", "")
+            if not pattern:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    DQSeverity.ERROR,
+                    f"regex_match rule {rule.name!r} missing 'pattern' param",
+                    value,
+                )
+            import re as _re
+
+            if value is not None and not _re.match(pattern, str(value)):
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Value {str(value)[:50]!r} does not match pattern {pattern!r}",
+                    value,
+                )
+
+        elif rule.check == "enum":
+            allowed = rule.params.get("values", [])
+            if value is not None and value not in allowed:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Value {value!r} not in allowed {list(allowed)[:5]}",
+                    value,
+                )
+
+        elif rule.check == "length":
+            if value is None:
+                return None
+            length = len(value) if hasattr(value, "__len__") else None
+            if length is None:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Value has no length: {type(value).__name__}",
+                    value,
+                )
+            min_len = rule.params.get("min")
+            max_len = rule.params.get("max")
+            if min_len is not None and length < min_len:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Length {length} < min {min_len}",
+                    value,
+                )
+            if max_len is not None and length > max_len:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Length {length} > max {max_len}",
+                    value,
+                )
+
+        elif rule.check == "date_format":
+            import datetime as _dt
+
+            fmt = rule.params.get("format", "%Y-%m-%d")
+            if value is None:
+                return None
+            try:
+                _dt.datetime.strptime(str(value), fmt)
+            except (ValueError, TypeError):
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Value {str(value)[:30]!r} does not match date format {fmt!r}",
+                    value,
+                )
+
+        elif rule.check == "cross_field":
+            other_field = rule.params.get("other_field")
+            operator = rule.params.get("operator", "eq")
+            if not other_field:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    DQSeverity.ERROR,
+                    f"cross_field rule {rule.name!r} missing 'other_field' param",
+                    value,
+                )
+            other_value = record.get(other_field)
+            ops = {
+                "eq": lambda a, b: a == b,
+                "ne": lambda a, b: a != b,
+                "lt": lambda a, b: a < b,
+                "le": lambda a, b: a <= b,
+                "gt": lambda a, b: a > b,
+                "ge": lambda a, b: a >= b,
+            }
+            fn = ops.get(operator)
+            if fn is None:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    DQSeverity.ERROR,
+                    f"Unknown cross_field operator {operator!r}",
+                    value,
+                )
+            if value is not None and other_value is not None and not fn(value, other_value):
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"cross_field {rule.field} {operator} {other_field} failed: "
+                    f"{value!r} vs {other_value!r}",
+                    value,
+                )
+
+        elif rule.check == "json_schema":
+            try:
+                import jsonschema  # type: ignore[import-untyped]
+            except ImportError:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    DQSeverity.WARNING,
+                    "jsonschema не установлен — пропуск json_schema check",
+                    value,
+                )
+            schema = rule.params.get("schema", {})
+            if not schema:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    DQSeverity.ERROR,
+                    f"json_schema rule {rule.name!r} missing 'schema' param",
+                    value,
+                )
+            try:
+                jsonschema.validate(instance=value, schema=schema)
+            except jsonschema.ValidationError as exc:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"json_schema failed: {exc.message[:100]}",
+                    value,
+                )
+
+        elif rule.check == "cardinality":
+            # Distinct count check: value should appear ≤ max_count times
+            max_count = rule.params.get("max_count", 1)
+            key = f"{dataset}:{rule.field}:{value}"
+            seen = getattr(self, "_cardinality_counts", None)
+            if seen is None:
+                seen = self._cardinality_counts = defaultdict(int)
+            seen[key] += 1
+            if seen[key] > max_count:
+                return DQViolation(
+                    rule.name,
+                    rule.field,
+                    rule.severity,
+                    f"Value {str(value)[:30]!r} seen {seen[key]} times > max_count {max_count}",
+                    value,
+                )
+
         return None
 
 
