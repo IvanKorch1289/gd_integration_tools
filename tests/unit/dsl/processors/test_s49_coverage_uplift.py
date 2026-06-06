@@ -218,9 +218,9 @@ def test_emitter_protocol_via_call() -> None:
     em = InMemoryLineageEmitter()
     # Protocol methods
     em({"event_id": "e1"})
-    assert isinstance(em.list(), list)
+    assert isinstance(em.list_events(), list)
     em.clear()
-    assert em.list() == []
+    assert em.list_events() == []
     assert isinstance(em.to_openlineage(), list)
 
 
