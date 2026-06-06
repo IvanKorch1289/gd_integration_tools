@@ -1,4 +1,4 @@
-# TECH_DEBT — gd_integration_tools (last update: 03.06.2026)
+# TECH_DEBT — gd_integration_tools (last update: 06.06.2026)
 
 Tracking для known issues, workarounds, и deferred work, который
 нельзя закрыть в текущем спринте, но нужно зафиксировать для
@@ -107,8 +107,136 @@ parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 | TD-001 | low | S39+ | 🟡 deferred | Decision on Python target |
 | TD-002 | medium | S38+ workaround | 🟡 partial | Per-module coverage active |
 | TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files |
+| TD-006 | medium | S43+ | 🟡 documented | Vite 6.4.6/chromadb 1.5.20 phantom versions |
+| TD-007 | low | S43+ | 🟡 documented | Pre-existing bug: vite-env.d.ts = HTML |
+| TD-008 | medium | S43 (W1) | 🟡 recommended | Streamlit groups 1+2+6 consolidation |
+| TD-009 | low | S44+ | 🟡 deferred | 31_DSL_Visual_Editor.py 1267 LOC outlier |
+| TD-010 | low | S43+ | 🟡 documented | 14 pages без st.set_page_config |
 
-**No new entries added in S38 closure (52 коммита, 0 new tech debt).**
+**Sprint 42 added 5 TECH_DEBT entries (TD-006 — TD-010).** Все либо
+documented, либо имеют low-risk workaround. Sprint 43 W1 рекомендован
+для groups 1+2+6 consolidation (~560 LOC, 4-6 hours).
 
-Все entries либо low (no production impact) либо имеют working workaround.
-S38 не ввёл нового technical debt — только зафиксировал существующий.
+---
+
+## TD-006: `verify-analysis-claims-saved-sprint-42` (medium, S43+)
+
+**Файл:** docs/SECURITY_VULNS_2026-06-05.md, pyproject.toml, frontend/admin-react/package.json
+
+**Проблема:** Original security vulns audit (2026-06-05) рекомендовал
+**phantom versions** которые НЕ существуют в реестрах:
+- `chromadb>=1.5.20,<2.0.0` — max в PyPI = 1.5.9
+- `vite@^6.4.6` — не существует в npm (latest 6.x = 6.0.2, latest = 8.0.16)
+
+`uv sync` и `npm install` оба FAILED на phantom versions. Sprint 42 W2
+reverted pins + documented в SECURITY_VULNS doc.
+
+**Lesson**: AI-генерированные security advisories могут содержать
+hallucinated version numbers. **Всегда verify через PyPI/npm registry
+ПЕРЕД applying patch.** Per skill `verify-analysis-claims`.
+
+**Workaround (active)**: chromadb pin `>=0.5.0,<2.0.0` (original),
+Vite pin `^5.2.0` (downgrade from 6.4.6 phantom). Vulns остаются active
+(1 critical chromadb, 2 moderate Vite/esbuild) — admin-react not deployed,
+mitigation per "Acceptable risk" classification.
+
+**Refs:** `docs/SECURITY_VULNS_2026-06-05.md` Sprint 42 W2 section,
+commits faad6e08 + 72ed6b0f.
+
+---
+
+## TD-007: `vite-env-dts-html-content` (low, S43+)
+
+**Файл:** `frontend/admin-react/src/vite-env.d.ts` (13 lines, **содержит HTML**)
+
+**Проблема:** Файл с расширением `.d.ts` (TypeScript declaration) содержит
+HTML-содержимое (index.html template). Это pre-existing bug, НЕ Sprint 42
+introduction. Build падает на TS step:
+```
+src/vite-env.d.ts(6,11): error TS1005: '>' expected.
+```
+
+**Root cause**: вероятно, при S19 K5 W5c (admin-react MVP) `index.html`
+был скопирован в неправильное место (должен быть `index.html` в root,
+`vite-env.d.ts` должен содержать только `/// <reference types="vite/client" />`).
+
+**Impact**: `npm run build` в admin-react падает. admin-react — MVP,
+not deployed (per Sprint 19), так что impact = 0 на production.
+
+**Workaround**: admin-react not in production build pipeline.
+
+**Fix (S43+)**:
+1. Move HTML content to `frontend/admin-react/index.html` (if not exists)
+2. Replace `vite-env.d.ts` с: `/// <reference types="vite/client" />`
+3. Verify `npm run build` passes
+
+**Refs:** Sprint 42 W2 attempt (Vite 8.0.16 build failed, identified
+this pre-existing bug). Commits 72ed6b0f body.
+
+---
+
+## TD-008: `streamlit-dup-groups-low-risk` (medium, S43 W1)
+
+**Файл:** `docs/architecture/STREAMLIT_AUDIT_2026-06-06.md` (Sprint 42 W3 deliverable)
+
+**Проблема:** Audit identified 6 dup groups across 80 streamlit pages
+(10 137 LOC), ~3000 LOC potential savings (29%).
+
+**Top-3 P1 groups (low risk, high LOC)**:
+1. API client imports (38 pages, ~152 LOC dup)
+2. Page setup boilerplate (66 pages, ~330 LOC dup)
+3. Chart widgets (36 pages, ~720 LOC dup)
+
+**Plus Group 6** (two parallel API client modules: `api_client` vs
+`api_client_k4` — minor cleanup).
+
+**Total Sprint 43 W1 scope**: ~560 LOC savings в 4-6 hours effort,
+LOW risk (helper functions + import consolidation).
+
+**Refs:** `docs/architecture/STREAMLIT_AUDIT_2026-06-06.md` (commit
+faaee303), Sprint 42 W3 B analysis.
+
+---
+
+## TD-009: `dsl-visual-editor-outlier` (low, S44+)
+
+**Файл:** `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` (1267 LOC)
+
+**Проблема:** 4x средней page size (~127 LOC). Possible causes:
+- Inline large YAML schema
+- Generated code (auto-builder)
+- Real complex editor с Monaco/CodeMirror интеграцией
+
+**Not a consolidation candidate** (likely has unique value). Separate
+audit needed для определения: legitimate complexity vs accidental
+bloat (e.g., 500 LOC inline schema that should be in shared/).
+
+**Workaround**: None — file is functional, just large.
+
+**Fix (S44+)**: dedicated audit pass для 31_DSL_Visual_Editor.py.
+Compare against DSL schema/blueprint files. Verify no dead code.
+
+**Refs:** Sprint 42 W3 B audit Outlier Analysis section.
+
+---
+
+## TD-010: `streamlit-pages-missing-page-config` (low, S43+)
+
+**Файл:** 14 pages в `src/frontend/streamlit_app/pages/` без `st.set_page_config`
+
+**Проблема:** Audit found 66/80 pages с `set_page_config`, остальные 14
+(18%) — без. Возможные причины:
+- Pages с minimal UI (e.g., debug/error pages)
+- Pre-existing inconsistency (Sprint 19-20 era)
+- Intentional (defer page metadata)
+
+**Impact**: без `set_page_config` Streamlit uses defaults (wide layout
+off, no page title, no icon). UX minor issue, не блокер.
+
+**Workaround**: None needed.
+
+**Fix (S43+)**: per-page audit для 14 missing-config pages. Either:
+- Add `set_page_config` per page convention
+- Document intentional minimalism (e.g., in audit follow-up)
+
+**Refs:** Sprint 42 W3 B audit data table (66 with config, 14 without).
