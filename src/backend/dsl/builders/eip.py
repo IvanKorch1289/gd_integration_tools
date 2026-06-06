@@ -181,9 +181,11 @@ class EIPMixin:
         # Resolve steps: list → constant, callable → wrap
         if isinstance(steps, list):
             _steps_list: list[str] = list(steps)  # capture by value
-            steps_resolver: Callable[[Exchange[Any]], Any] = (
-                lambda e: _steps_list  # type: ignore[misc]
-            )
+
+            def _const_resolver(e: Exchange[Any]) -> Any:
+                return _steps_list  # type: ignore[misc]
+
+            steps_resolver: Callable[[Exchange[Any]], Any] = _const_resolver
         else:
             steps_resolver = steps
 
@@ -211,6 +213,70 @@ class EIPMixin:
                 max_steps=max_steps,
             )
         )
+
+    def from_interval(
+        self,
+        interval_s: float,
+        *,
+        start_immediately: bool = False,
+        payload: dict[str, Any] | Callable[[], dict[str, Any]] | None = None,
+    ) -> RouteBuilder:
+        """Camel-style ``from("timer:foo?period=...")`` — periodic trigger.
+
+        Регистрирует IntervalTrigger в TriggerRegistry, который каждые
+        ``interval_s`` секунд запускает route. При register() / startup
+        приложения trigger.start() вызывается автоматически.
+
+        Args:
+            interval_s: interval в секундах.
+            start_immediately: запустить сразу (default — после первого interval).
+            payload: static dict или factory для payload (callable).
+        """
+        from src.backend.dsl.orchestration.triggers import (
+            IntervalTrigger,
+            get_trigger_registry,
+        )
+
+        # route_id: must be derived from builder. Use builder name or generated.
+        # The actual binding happens at register time; here we just enqueue.
+        trigger = IntervalTrigger(
+            name=f"interval_{id(self)}",
+            route_id=getattr(self, "_route_id", "_pending_"),
+            interval_s=interval_s,
+            start_immediately=start_immediately,
+            payload=payload,
+        )
+        get_trigger_registry().register(trigger)
+        return self  # type: ignore
+
+    def from_webhook(
+        self,
+        path: str,
+        *,
+        method: str = "POST",
+    ) -> RouteBuilder:
+        """Camel-style ``from("http:host/path")`` — HTTP webhook trigger.
+
+        Регистрирует FastAPI route на ``path``. При вызове (любой JSON body)
+        → dsl_service.dispatch(route_id, body, headers).
+
+        Args:
+            path: URL path, e.g. ``"/webhooks/orders"``.
+            method: HTTP method (default POST).
+        """
+        from src.backend.dsl.orchestration.triggers import (
+            WebhookTrigger,
+            get_trigger_registry,
+        )
+
+        trigger = WebhookTrigger(
+            name=f"webhook_{path.replace('/', '_').strip('_') or 'root'}",
+            route_id=getattr(self, "_route_id", "_pending_"),
+            path=path,
+            method=method,
+        )
+        get_trigger_registry().register(trigger)
+        return self  # type: ignore
 
     def content_based_router(
         self,
