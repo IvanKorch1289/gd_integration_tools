@@ -1,1 +1,1 @@
-"""Тесты для пакета src/backend/services/ai/rag/."""
+"""Test package for services.ai.rag (lineage test)."""
