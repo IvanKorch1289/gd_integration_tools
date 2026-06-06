@@ -6,6 +6,7 @@ Sprint 45 W2: добавлена реальная retry-логика с exponent
 
 from __future__ import annotations
 
+import random
 import time
 from typing import Any
 
@@ -49,6 +50,7 @@ class BaseAPIClient:
         timeout: float = 15.0,
         initial_backoff: float = _DEFAULT_INITIAL_BACKOFF,
         retry_overrides: dict[str, int] | None = None,
+        jitter_ratio: float = 0.0,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._token = token
@@ -58,6 +60,10 @@ class BaseAPIClient:
         # TD-012: per-path retry overrides. Keys = exact path; values = max_retries.
         # Built-in defaults (health/ready → 0) are applied by _get_max_retries_for_path.
         self._retry_overrides: dict[str, int] = dict(retry_overrides or {})
+        # TD-013: jitter — multiplicative randomisation of backoff, [1-r, 1+r].
+        # Reduces thundering herd when many clients retry simultaneously.
+        # 0.0 = deterministic (default, backward-compatible).
+        self._jitter_ratio: float = max(0.0, min(1.0, jitter_ratio))
 
     def set_token(self, token: str | None) -> None:
         """Установить JWT token для последующих запросов."""
@@ -94,10 +100,23 @@ class BaseAPIClient:
         return self._max_retries
 
     def _sleep_backoff(self, attempt: int) -> None:
-        """Sleep with exponential backoff (0.5, 1, 2, 4, 8s capped)."""
+        """Sleep with exponential backoff (0.5, 1, 2, 4, 8s capped) + optional jitter.
+
+        TD-013: when ``jitter_ratio > 0``, the backoff is multiplied by
+        ``random.uniform(1 - jitter_ratio, 1 + jitter_ratio)``. This breaks
+        synchronisation across many concurrent clients (thundering herd) by
+        spreading retries across a time window. ``jitter_ratio=0.0`` →
+        deterministic (default, backward-compatible).
+        """
         backoff = min(
             self._initial_backoff * (2 ** attempt), _MAX_BACKOFF
         )
+        if self._jitter_ratio > 0.0:
+            # S311: not for crypto; this is for backoff spread only.
+            factor = random.uniform(  # noqa: S311
+                1.0 - self._jitter_ratio, 1.0 + self._jitter_ratio
+            )
+            backoff = max(0.0, backoff * factor)
         time.sleep(backoff)
 
     def get(self, path: str, **kwargs: Any) -> Any:
