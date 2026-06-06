@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.frontend.streamlit_app.api_client import APIClient
+from src.frontend.streamlit_app.api_clients.generic import APIClient
 
 logger = logging.getLogger(__name__)
 

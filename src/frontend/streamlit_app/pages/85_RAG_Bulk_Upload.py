@@ -15,7 +15,7 @@ import json
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_client_k4 import K4APIClient
+from src.frontend.streamlit_app.api_clients import K4APIClient
 
 st.set_page_config(page_title="RAG Bulk Upload", page_icon="📤", layout="wide")
 st.title("📤 RAG Bulk Upload")

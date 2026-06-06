@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from src.backend.core.config.features import feature_flags  # noqa: E402
-from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="Workflow Logs", page_icon=":memo:", layout="wide")
 

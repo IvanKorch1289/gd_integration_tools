@@ -51,7 +51,7 @@ def test_workflow_replay_page_importable() -> None:
 
 def test_api_client_has_workflow_methods() -> None:
     """APIClient экспортирует list_workflows и get_workflow_events."""
-    from src.frontend.streamlit_app.api_client import APIClient
+    from src.frontend.streamlit_app.api_clients import APIClient
 
     assert hasattr(APIClient, "list_workflows")
     assert hasattr(APIClient, "get_workflow_events")

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="Files S3", page_icon="📁", layout="wide")
 st.title("📁 Files S3 — Object Browser")

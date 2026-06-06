@@ -133,7 +133,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         (snapshot, is_live). is_live=False означает fallback на mock.
     """
     try:
-        from src.frontend.streamlit_app.api_client import (  # noqa: PLC0415
+        from src.frontend.streamlit_app.api_clients import (  # noqa: PLC0415
             get_api_client,
         )
 

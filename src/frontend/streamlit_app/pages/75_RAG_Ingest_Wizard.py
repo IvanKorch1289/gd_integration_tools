@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_client_k4 import K4APIClient
+from src.frontend.streamlit_app.api_clients import K4APIClient
 
 st.set_page_config(page_title="RAG Ingest Wizard", page_icon="📥", layout="wide")
 st.title("📥 RAG Ingest Wizard")

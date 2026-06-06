@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="AI Feedback", page_icon=":brain:", layout="wide")
 st.header("AI Feedback Loop")

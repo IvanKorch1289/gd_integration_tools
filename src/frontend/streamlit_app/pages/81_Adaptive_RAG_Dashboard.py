@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 
 try:
-    from src.frontend.streamlit_app.api_client import APIClient
+    from src.frontend.streamlit_app.api_clients import APIClient
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 

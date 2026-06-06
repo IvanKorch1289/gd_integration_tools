@@ -47,7 +47,9 @@ else:
                     try:
                         import requests
 
-                        from src.frontend.streamlit_app.api_client import get_api_client
+                        from src.frontend.streamlit_app.api_clients import (
+                            get_api_client,
+                        )
 
                         client = get_api_client()
                         base_url = getattr(client, "base_url", "http://localhost:8000")
@@ -74,7 +76,7 @@ else:
                 try:
                     import requests
 
-                    from src.frontend.streamlit_app.api_client import get_api_client
+                    from src.frontend.streamlit_app.api_clients import get_api_client
 
                     client = get_api_client()
                     base_url = getattr(client, "base_url", "http://localhost:8000")
@@ -100,7 +102,7 @@ else:
     try:
         import requests
 
-        from src.frontend.streamlit_app.api_client import get_api_client
+        from src.frontend.streamlit_app.api_clients import get_api_client
 
         client = get_api_client()
         base_url = getattr(client, "base_url", "http://localhost:8000")

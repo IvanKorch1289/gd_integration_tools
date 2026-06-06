@@ -14,9 +14,10 @@ NOTE: K3 W11 stub-fallback удалён — backend errors теперь подн
 from __future__ import annotations
 
 import importlib.util
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 def _page_path() -> Path:
@@ -95,7 +96,7 @@ def test_filter_params_pass_to_api() -> None:
         mock_client.request.return_value = mock_response
         mock_client_cls.return_value = mock_client
 
-        from src.frontend.streamlit_app.api_client import APIClient
+        from src.frontend.streamlit_app.api_clients import APIClient
 
         client = APIClient(base_url="http://test")
         result = client.list_step_logs(
@@ -138,7 +139,7 @@ def test_table_renders_data() -> None:
         mock_client.request.side_effect = httpx.ConnectError("backend unreachable")
         mock_client_cls.return_value = mock_client
 
-        from src.frontend.streamlit_app.api_client import APIClient
+        from src.frontend.streamlit_app.api_clients import APIClient
 
         client = APIClient(base_url="http://test")
         with pytest.raises(RuntimeError, match="Failed to fetch step logs"):
@@ -172,7 +173,7 @@ def test_drilldown_returns_detail() -> None:
         mock_client.request.return_value = mock_response
         mock_client_cls.return_value = mock_client
 
-        from src.frontend.streamlit_app.api_client import APIClient
+        from src.frontend.streamlit_app.api_clients import APIClient
 
         client = APIClient(base_url="http://test")
         detail = client.get_step_detail("wf-007")
@@ -191,7 +192,7 @@ def test_drilldown_returns_detail() -> None:
         mock_client.request.side_effect = httpx.ConnectError("backend down")
         mock_client_cls.return_value = mock_client
 
-        from src.frontend.streamlit_app.api_client import APIClient
+        from src.frontend.streamlit_app.api_clients import APIClient
 
         client = APIClient(base_url="http://test")
         with pytest.raises(RuntimeError, match="Failed to fetch step detail"):
