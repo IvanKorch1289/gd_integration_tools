@@ -15,6 +15,13 @@ from src.backend.dsl.engine.processors.eip.collection import (
     SumByProcessor,
     UniqueProcessor,
 )
+from src.backend.dsl.engine.processors.eip.dict_ops import (
+    PydashGetProcessor,
+    PydashMergeProcessor,
+    PydashOmitProcessor,
+    PydashPickProcessor,
+    PydashSetProcessor,
+)
 from src.backend.dsl.engine.processors.eip.event_message import (
     EventMessageEnvelope,
     EventMessageProcessor,
@@ -126,6 +133,11 @@ __all__ = (
     "PickleDataFormat",
     "PipesAndFiltersProcessor",
     "ProcessorRegistry",
+    "PydashGetProcessor",
+    "PydashMergeProcessor",
+    "PydashOmitProcessor",
+    "PydashPickProcessor",
+    "PydashSetProcessor",
     "RecipientListProcessor",
     "RedeliveryPolicyProcessor",
     "ResequencerProcessor",
