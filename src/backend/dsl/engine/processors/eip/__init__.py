@@ -39,6 +39,11 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
     ThrottlerProcessor,
     WireTapProcessor,
 )
+from src.backend.dsl.engine.processors.eip.glom_ops import (
+    GlomExtractProcessor,
+    GlomFlattenProcessor,
+    GlomTransformProcessor,
+)
 from src.backend.dsl.engine.processors.eip.idempotency import (
     IdempotentConsumerProcessor,
 )
@@ -112,6 +117,9 @@ __all__ = (
     "FindAllProcessor",
     "FlattenProcessor",
     "ForEachProcessor",
+    "GlomExtractProcessor",
+    "GlomFlattenProcessor",
+    "GlomTransformProcessor",
     "GroupByProcessor",
     "IdempotentConsumerProcessor",
     "IntersectProcessor",
