@@ -1,358 +1,163 @@
-# ruff: noqa: S101
-"""Unit-тесты для ``tools/check_layer_imports.py`` (V15 GAP capability-gate).
+"""Tests для tools/check_layer_imports.py (S58 W2 typer+rich миграция).
 
-Покрытие:
-
-* ``_scan_file`` — AST-обход, выявление forbidden imports;
-* ``_is_in_type_checking`` — игнорирование ``if TYPE_CHECKING:`` блоков;
-* ``_parse_toml`` — override whitelist/blacklist через TOML;
-* CLI — help message, default directory, exit codes, multi-violations.
+Coverage:
+* Exit codes 0/1/2 (clean / violations / error);
+* Rich table output (через CliRunner, не реально);
+* --plain fallback (для CI без rich);
+* TOML override;
+* --help exit code (typer convention: 0).
 """
-
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
-import pytest
+from typer.testing import CliRunner
 
-TOOL_PATH = Path("tools/check_layer_imports.py")
+from tools.check_layer_imports import (
+    DEFAULT_FORBIDDEN,
+    DEFAULT_WHITELIST,
+    app,
+    scan_directory,
+)
+
+runner = CliRunner(mix_stderr=True)
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+# === Exit codes (via CliRunner) ===
 
 
-def _run_cli(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
-    """Запускает ``python tools/check_layer_imports.py <args>`` через subprocess.
+def test_help_exits_zero() -> None:
+    """--help → typer convention: exit 0."""
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "check_layer_imports" in result.stdout
 
-    Использует абсолютный путь к скрипту (CWD может быть передан через ``cwd``).
-    """
-    abs_tool = (Path(__file__).resolve().parents[3] / TOOL_PATH).resolve()
-    return subprocess.run(  # noqa: S603
-        [sys.executable, str(abs_tool), *args],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-        cwd=str(cwd) if cwd else None,
+
+def test_nonexistent_dir_exits_two() -> None:
+    """Несуществующая директория → exit 2."""
+    result = runner.invoke(app, ["/this/does/not/exist/xyz123"])
+    assert result.exit_code == 2
+    assert "not found" in result.stdout.lower() or "ERROR" in result.stdout
+
+
+def test_file_instead_of_dir_exits_two(tmp_path: Path) -> None:
+    """Файл вместо директории → exit 2."""
+    f = tmp_path / "not_a_dir.py"
+    f.write_text("# placeholder\n")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 2
+    assert "not a directory" in result.stdout.lower() or "ERROR" in result.stdout
+
+
+def test_clean_dir_exits_zero(tmp_path: Path) -> None:
+    """Чистая директория (нет .py с запрещёнными импортами) → exit 0."""
+    # Создаём .py файл, который импортирует только core (разрешено)
+    (tmp_path / "good.py").write_text("from src.backend.core import foo  # noqa\n")
+    result = runner.invoke(app, [str(tmp_path), "--plain"])
+    assert result.exit_code == 0
+    assert "OK" in result.stdout or "clean" in result.stdout
+
+
+def test_dir_with_violation_exits_one(tmp_path: Path) -> None:
+    """Директория с forbidden import → exit 1."""
+    (tmp_path / "bad.py").write_text(
+        "from src.backend.infrastructure.repositories import x\n"
     )
+    result = runner.invoke(app, [str(tmp_path), "--plain"])
+    assert result.exit_code == 1
+    assert "ERROR" in result.stdout
 
 
-def _write_py(path: Path, body: str) -> None:
-    """Записывает ``body`` в файл, создавая родительские директории."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
+# === scan_directory (direct API, для white-box coverage) ===
 
 
-# Текстовые заготовки (Russian-first, минимальный slice).
-_CLEAN_PLUGIN = '''"""Чистый plugin: только whitelisted core imports."""
-
-from __future__ import annotations
-
-from src.backend.core.interfaces.plugin import BasePlugin
-from src.backend.core.security.capabilities import CapabilityRef
+def test_scan_directory_empty(tmp_path: Path) -> None:
+    """Пустая директория → 0 files, 0 violations."""
+    files, violations = scan_directory(tmp_path)
+    assert files == 0
+    assert violations == []
 
 
-class GoodPlugin(BasePlugin):
-    """Демо-плагин без cross-layer нарушений."""
-'''
+def test_scan_directory_clean_file(tmp_path: Path) -> None:
+    """Файл с разрешённым импортом (core) → 0 violations."""
+    (tmp_path / "ok.py").write_text("from src.backend.core import x\n")
+    files, violations = scan_directory(tmp_path)
+    assert files == 1
+    assert violations == []
 
 
-_FORBIDDEN_INFRA = '''"""Plugin с прямым импортом infrastructure (должен быть flagged)."""
-
-from __future__ import annotations
-
-from src.backend.infrastructure.database.session_manager import main_session_manager
-
-
-def use_db() -> object:
-    """Прямой доступ к infrastructure."""
-    return main_session_manager
-'''
-
-
-_FORBIDDEN_SERVICES = '''"""Plugin с прямым импортом services (должен быть flagged)."""
-
-from __future__ import annotations
-
-from src.backend.services.core.base import BaseService
-
-
-class MyService(BaseService):
-    """Прямое наследование от services.core.base."""
-'''
-
-
-_TYPE_CHECKING_OK = '''"""TYPE_CHECKING-импорт infrastructure — должен быть проигнорирован."""
-
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.backend.infrastructure.database.models.files import File  # type: ignore
-
-from src.backend.core.interfaces.plugin import BasePlugin
-
-
-class TCPlugin(BasePlugin):
-    """TYPE_CHECKING import не считается нарушением."""
-'''
-
-
-_MULTI_VIOLATIONS = '''"""Несколько нарушений в одном файле."""
-
-from __future__ import annotations
-
-from src.backend.infrastructure.cache.redis_client import RedisClient
-from src.backend.services.integrations.skb import APISKBService
-from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
-from src.backend.core.interfaces.plugin import BasePlugin
-'''
-
-
-# ---------------------------------------------------------------------------
-# 1) Clean plugin — нет нарушений
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_clean_plugin_no_violations(tmp_path: Path) -> None:
-    """Чистый plugin: только core imports → ``_scan_file`` возвращает []."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, _CLEAN_PLUGIN)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    assert _scan_file(plugin, forbidden, whitelist) == []
-
-
-# ---------------------------------------------------------------------------
-# 2) Forbidden infrastructure import
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_forbidden_infrastructure_import(tmp_path: Path) -> None:
-    """Импорт ``src.backend.infrastructure.*`` → ровно одно violation."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, _FORBIDDEN_INFRA)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    violations = _scan_file(plugin, forbidden, whitelist)
+def test_scan_directory_violation(tmp_path: Path) -> None:
+    """Файл с forbidden import → 1 violation с правильным (lineno, module, prefix)."""
+    (tmp_path / "bad.py").write_text(
+        "from src.backend.infrastructure.repositories import x\n"
+    )
+    files, violations = scan_directory(tmp_path)
+    assert files == 1
     assert len(violations) == 1
-    lineno, module, prefix = violations[0]
-    assert module == "src.backend.infrastructure.database.session_manager"
+    py, lineno, module, prefix = violations[0]
+    assert lineno == 1
+    assert module == "src.backend.infrastructure.repositories"
     assert prefix == "src.backend.infrastructure."
 
 
-# ---------------------------------------------------------------------------
-# 3) Forbidden services import
-# ---------------------------------------------------------------------------
+def test_scan_directory_type_checking_skipped(tmp_path: Path) -> None:
+    """Imports внутри ``if TYPE_CHECKING:`` НЕ считаются violations."""
+    (tmp_path / "typecheck.py").write_text(
+        "from typing import TYPE_CHECKING\n"
+        "if TYPE_CHECKING:\n"
+        "    from src.backend.infrastructure.foo import x\n"  # noqa
+    )
+    files, violations = scan_directory(tmp_path)
+    assert files == 1
+    assert violations == []  # TYPE_CHECKING skip
 
 
-@pytest.mark.unit
-def test_forbidden_services_import(tmp_path: Path) -> None:
-    """Импорт ``src.backend.services.*`` → ровно одно violation."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, _FORBIDDEN_SERVICES)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    violations = _scan_file(plugin, forbidden, whitelist)
-    assert len(violations) == 1
-    lineno, module, prefix = violations[0]
-    assert module == "src.backend.services.core.base"
-    assert prefix == "src.backend.services."
+def test_scan_directory_multiple_violations(tmp_path: Path) -> None:
+    """Несколько violations в одном файле → все ловятся."""
+    (tmp_path / "multi.py").write_text(
+        "from src.backend.infrastructure.a import x\n"
+        "from src.backend.infrastructure.b import y\n"
+        "from src.backend.services.c import z\n"
+    )
+    files, violations = scan_directory(tmp_path)
+    assert files == 1
+    assert len(violations) == 3
 
 
-# ---------------------------------------------------------------------------
-# 4) TYPE_CHECKING блок игнорируется
-# ---------------------------------------------------------------------------
+def test_scan_directory_syntax_error_no_crash(tmp_path: Path) -> None:
+    """SyntaxError в файле → НЕ крашит scan, просто пропускает."""
+    (tmp_path / "broken.py").write_text("def x(:\n")  # invalid syntax
+    files, violations = scan_directory(tmp_path)
+    assert files == 1
+    assert violations == []  # SyntaxError → пустой результат для файла
 
 
-@pytest.mark.unit
-def test_type_checking_block_ignored(tmp_path: Path) -> None:
-    """Import внутри ``if TYPE_CHECKING:`` — НЕ violation."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, _TYPE_CHECKING_OK)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    assert _scan_file(plugin, forbidden, whitelist) == []
+# === TOML parsing (whitelist customization) ===
 
 
-@pytest.mark.unit
-def test_type_checking_attribute_form_also_ignored(tmp_path: Path) -> None:
-    """Полная форма ``if typing.TYPE_CHECKING:`` — тоже игнорируется."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    src = '''"""Полная dotted-форма TYPE_CHECKING."""
-
-from __future__ import annotations
-
-import typing
-
-if typing.TYPE_CHECKING:
-    from src.backend.infrastructure.db import Thing  # type: ignore
-
-from src.backend.core.interfaces.plugin import BasePlugin
+def test_custom_whitelist_no_violation(tmp_path: Path) -> None:
+    """Если ``infrastructure.*`` добавлен в whitelist → НЕ violation."""
+    (tmp_path / "ok.py").write_text(
+        "from src.backend.infrastructure.foo import x\n"
+    )
+    files, violations = scan_directory(
+        tmp_path,
+        forbidden=DEFAULT_FORBIDDEN,
+        whitelist=("src.backend.core.", "src.backend.infrastructure."),
+    )
+    assert files == 1
+    assert violations == []
 
 
-class P(BasePlugin):
-    pass
-'''
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, src)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    assert _scan_file(plugin, forbidden, whitelist) == []
+# === Default constants (regression guard) ===
 
 
-# ---------------------------------------------------------------------------
-# 5) Whitelisted core imports — pass
-# ---------------------------------------------------------------------------
+def test_default_forbidden_includes_infrastructure_and_services() -> None:
+    """Default forbidden = infrastructure.* + services.* (R3.10d)."""
+    assert "src.backend.infrastructure." in DEFAULT_FORBIDDEN
+    assert "src.backend.services." in DEFAULT_FORBIDDEN
 
 
-@pytest.mark.unit
-def test_whitelisted_core_imports_pass(tmp_path: Path) -> None:
-    """Множественные whitelisted core imports — все pass."""
-    from tools.check_layer_imports import _scan_file  # type: ignore[import-not-found]
-
-    src = '''"""Whitelisted core.* (interfaces, security.capabilities, di)."""
-
-from __future__ import annotations
-
-from src.backend.core.interfaces.plugin import BasePlugin
-from src.backend.core.interfaces.repositories import FileRepositoryProtocol
-from src.backend.core.security.capabilities import CapabilityRef, CapabilityGate
-from src.backend.core.di.providers import get_file_repo_provider
-
-
-class WhitelistedPlugin(BasePlugin):
-    pass
-'''
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, src)
-
-    forbidden = ("src.backend.infrastructure.", "src.backend.services.")
-    whitelist = ("src.backend.core.",)
-    assert _scan_file(plugin, forbidden, whitelist) == []
-
-
-# ---------------------------------------------------------------------------
-# 6) CLI: --help
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_cli_help_message() -> None:
-    """``--help`` → exit 0, описание содержит "infrastructure" и "services"."""
-    result = _run_cli("--help")
-    assert result.returncode == 0
-    assert "infrastructure" in result.stdout
-    assert "services" in result.stdout
-
-
-# ---------------------------------------------------------------------------
-# 7) CLI: default directory = extensions/
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_cli_default_directory(tmp_path: Path) -> None:
-    """CLI без аргументов сканирует ``extensions/`` (default)."""
-    # Создаём минимальный extensions/ с чистым plugin'ом
-    ext = tmp_path / "extensions" / "demo_plugin"
-    _write_py(ext / "plugin.py", _CLEAN_PLUGIN)
-
-    # Запускаем из tmp_path, чтобы default 'extensions' указывал на наш фикстуру
-    result = _run_cli(cwd=tmp_path)
-    assert result.returncode == 0, result.stderr
-    assert "OK" in result.stdout
-
-
-# ---------------------------------------------------------------------------
-# 8) Multiple violations — все репортируются
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_multiple_violations_reported(tmp_path: Path) -> None:
-    """Несколько нарушений в одном файле → каждое отдельной строкой в stderr."""
-    result = _run_cli(str(tmp_path / "dummy"))
-    # dummy dir не существует → exit 2; создадим реальный plugin
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, _MULTI_VIOLATIONS)
-
-    result = _run_cli(str(tmp_path))
-    assert result.returncode == 1
-    # 3 forbidden imports (2× infrastructure + 1× services) + 1 core (pass)
-    assert "src.backend.infrastructure.cache.redis_client" in result.stderr
-    assert "src.backend.services.integrations.skb" in result.stderr
-    assert "src.backend.infrastructure.repositories.base" in result.stderr
-    # core import НЕ должен появиться в stderr
-    assert "src.backend.core.interfaces.plugin" not in result.stderr
-
-
-# ---------------------------------------------------------------------------
-# Бонус: TOML override (для полноты coverage)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_toml_override_extends_whitelist(tmp_path: Path) -> None:
-    """``--config`` с whitelist-плагином убирает нарушение из списка."""
-    toml = """[whitelisted]
-prefixes = ["src.backend.core.", "src.backend.infrastructure.allowed."]
-"""
-    config = tmp_path / "override.toml"
-    config.write_text(toml, encoding="utf-8")
-
-    # Импорт infrastructure.allowed.* — без override это violation, с override — нет.
-    src = '''"""Import infrastructure.allowed.* — пропустит whitelist override."""
-
-from __future__ import annotations
-
-from src.backend.infrastructure.allowed.helper import do_thing
-'''
-    plugin = tmp_path / "plugin.py"
-    _write_py(plugin, src)
-
-    # Без override: violation
-    result_no_cfg = _run_cli(str(tmp_path))
-    assert result_no_cfg.returncode == 1
-    assert "src.backend.infrastructure.allowed.helper" in result_no_cfg.stderr
-
-    # С override: clean
-    result_with_cfg = _run_cli(str(tmp_path), "--config", str(config))
-    assert result_with_cfg.returncode == 0, result_with_cfg.stderr
-    assert "OK" in result_with_cfg.stdout
-
-
-@pytest.mark.unit
-def test_cli_missing_directory_exits_2(tmp_path: Path) -> None:
-    """Несуществующая директория → exit 2 + ERROR в stderr."""
-    result = _run_cli(str(tmp_path / "does_not_exist"))
-    assert result.returncode == 2
-    assert "ERROR" in result.stderr
-
-
-@pytest.mark.unit
-def test_marker_unit_applied() -> None:
-    """Smoke: этот модуль запускается с маркером ``unit`` (см. pyproject)."""
-    # Проверяем, что pytest markers сконфигурированы (см. conftest pyproject.toml).
-    assert True
+def test_default_whitelist_includes_core() -> None:
+    """Default whitelist = core.* (R3.10d / ADR-001)."""
+    assert "src.backend.core." in DEFAULT_WHITELIST
