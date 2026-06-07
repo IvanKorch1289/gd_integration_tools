@@ -23,25 +23,58 @@ __all__ = ("StructlogGraylogBackend",)
 
 
 class StructlogLogger(LoggerProtocol):
-    """Обёртка structlog.BoundLogger под LoggerProtocol."""
+    """Обёртка structlog.BoundLogger под LoggerProtocol.
+
+    Sprint 60 W1 — compat shim: поддерживает **и** kwargs-only API structlog
+    (``logger.info("msg", key=val)``), **и** stdlib-style позиционные args
+    (``logger.info("msg %s", arg)``). При наличии ``*args`` — выполняется
+    ``msg % args`` форматирование (как в stdlib ``logging``), результат
+    передаётся в structlog как plain message.
+
+    Также корректно обрабатывает ``exc_info=True`` (через structlog kwarg).
+    """
 
     def __init__(self, inner: Any) -> None:
         self._inner = inner
 
-    def debug(self, msg: str, **kwargs: Any) -> None:
-        self._inner.debug(msg, **kwargs)
+    @staticmethod
+    def _format(msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        """Compat shim: stdlib-style ``%`` formatting → structlog kwargs.
 
-    def info(self, msg: str, **kwargs: Any) -> None:
-        self._inner.info(msg, **kwargs)
+        Returns:
+            (formatted_message, merged_kwargs) — готово к передаче в structlog.
+        """
+        if not args:
+            return msg, kwargs
+        try:
+            formatted = msg % args
+            return formatted, kwargs
+        except (TypeError, ValueError):
+            # msg не содержит %-placeholders ИЛИ args не подходят — отдаём как есть
+            # (structlog не упадёт; при рендере JSON просто увидит str)
+            return msg, {**kwargs, "args": list(args)}
 
-    def warning(self, msg: str, **kwargs: Any) -> None:
-        self._inner.warning(msg, **kwargs)
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.debug(formatted, **merged)
 
-    def error(self, msg: str, **kwargs: Any) -> None:
-        self._inner.error(msg, **kwargs)
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.info(formatted, **merged)
 
-    def exception(self, msg: str, **kwargs: Any) -> None:
-        self._inner.exception(msg, **kwargs)
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.warning(formatted, **merged)
+
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.error(formatted, **merged)
+
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        # stdlib-семантика: exception() по умолчанию exc_info=True
+        merged.setdefault("exc_info", True)
+        self._inner.exception(formatted, **merged)
 
     def bind(self, **kwargs: Any) -> "StructlogLogger":
         return StructlogLogger(self._inner.bind(**kwargs))
@@ -252,9 +285,41 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         return logger
 
     def shutdown(self) -> None:
-        """Завершает работу — flush всех handler'ов."""
+        """Завершает работу — flush всех handler'ов + sync-close GELF sink'ов.
+
+        Sprint 60 W1 — fix S-L7-3 (GELF FD leak): вызывает
+        :meth:`GraylogGelfLogSink.close_sync` для всех активных sink'ов,
+        зарегистрированных в :class:`SinkRouter` (без event loop, sync
+        path). Это гарантирует закрытие persistent UDP/TCP сокетов
+        даже при вызове из ``atexit`` / signal-handler / sync-контекста,
+        когда ``asyncio.to_thread`` уже не сработает.
+        """
+        # 1) sync-close GELF sinks (если router инициализирован)
+        try:
+            from src.backend.infrastructure.logging.router import (
+                get_router,
+                is_router_configured,
+            )
+
+            if is_router_configured():
+                router = get_router()
+                for sink in router._sinks:  # noqa: SLF001 — internal access
+                    if hasattr(sink, "close_sync"):
+                        try:
+                            sink.close_sync()
+                        except Exception:  # noqa: BLE001 — best-effort cleanup
+                            pass
+        except Exception:  # noqa: BLE001
+            # router может быть ещё не инициализирован — no-op
+            pass
+
+        # 2) flush + close stdlib handlers
         for handler in logging.root.handlers[:]:
-            handler.flush()
-            handler.close()
+            try:
+                handler.flush()
+                handler.close()
+            except Exception:  # noqa: BLE001
+                pass
+
         self._loggers.clear()
         self._configured = False

@@ -225,6 +225,26 @@ class GraylogGelfLogSink(LogSink):
                 pass
         await asyncio.to_thread(self._close_sockets)
 
+    def close_sync(self) -> None:
+        """Sync-закрытие сокетов без event loop.
+
+        Sprint 60 W1 — fix S-L7-3 (GELF FD leak ≥10K RPS).
+        Вызывается из ``atexit`` / signal-handler / sync-контекста,
+        когда ``asyncio.to_thread`` уже не сработает (loop остановлен
+        или недоступен). Гарантирует, что persistent UDP/TCP сокеты
+        закрываются даже при жёстком завершении процесса.
+
+        Idempotent: можно вызывать повторно после ``close()`` —
+        ``_close_sockets`` уже сбросил ссылки, повторный close
+        пройдёт no-op через ``_udp_socket is None`` / ``_tcp_socket is None``.
+        """
+        self._closed = True
+        self._close_sockets()
+        # worker_task тоже отменяем, но без await — в sync-контексте
+        # отмена не дождётся, но event loop уберёт task при остановке
+        if self._worker_task is not None and not self._worker_task.done():
+            self._worker_task.cancel()
+
     # ------------------------------------------------------------------ private: worker
     def _ensure_worker(self) -> None:
         """Запустить drain-worker, если ещё не запущен."""

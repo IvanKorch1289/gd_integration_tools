@@ -52,16 +52,23 @@ def _create_backend(name: str) -> BaseLoggerBackend:
     return StdlibLoggingBackend()
 
 
-def configure_logging(backend: str = "auto", **settings: Any) -> BaseLoggerBackend:
+def configure_logging(backend: str = "structlog", **settings: Any) -> BaseLoggerBackend:
     """Настраивает систему логирования.
 
     Args:
-        backend: ``"structlog"``, ``"stdlib"`` или ``"auto"``
-            (structlog если установлен, иначе stdlib).
+        backend: ``"structlog"`` (default если установлен), ``"stdlib"``
+            или ``"auto"`` (structlog если установлен, иначе stdlib).
         **settings: Передаются в backend.configure().
 
     Returns:
         Настроенный бэкенд.
+
+    Notes:
+        Sprint 60 W1 — default изменён на ``"structlog"``: structlog теперь
+        primary backend (Graylog + console + disk + correlation/trace/tenant
+        binding). Stdlib остаётся fallback если structlog не установлен.
+        Compat shim в :class:`StructlogLogger` обеспечивает обратную
+        совместимость со stdlib-style ``logger.warning("msg %s", arg)``.
     """
     global _backend
 
