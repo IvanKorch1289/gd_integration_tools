@@ -42,6 +42,10 @@ dependencies = [
     "opentelemetry-instrumentation-grpc>=0.51b0",
     "opentelemetry-instrumentation-asyncpg>=0.51b0",
     "purgatory>=3.0.0,<4.0.0",
+    # S57 W1: pendulum — drop-in datetime replacement with IANA tz, humanize,
+    # period arithmetic. Adopting incrementally in S57+ new code; stdlib datetime
+    # остаётся backward-compat (pendulum.DateTime — subclass of datetime.datetime).
+    "pendulum>=3.2.0,<4.0.0",
     "apscheduler>=3.11.0,<4.0.0",
     "croniter>=2.0.0,<3.0.0",
     "faststream[kafka]>=0.6.7,<1.0.0",
@@ -99,6 +103,7 @@ dependencies = [
     "pydash>=8.0,<9.0",
     "glom>=25.12.0",
     "presidio-analyzer>=2.2.362",
+    "pendulum",
 ]
 
 [project.optional-dependencies]
