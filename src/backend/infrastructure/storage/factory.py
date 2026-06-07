@@ -1,26 +1,23 @@
-"""Factory + S3→LocalFS fallback chain для :class:`ObjectStorage` (Wave F.5a/b).
+"""Factory + S3→LocalFS fallback chain для :class:`ObjectStorage` (S61 W1).
 
 Унифицированный способ получить ``ObjectStorage`` instance:
 
 * :func:`get_object_storage` — primary backend по
-  ``settings.storage.provider`` (``"local"`` → LocalFS, иначе → пытается
-  поднять S3-обёртку; при недоступности — fallback на LocalFS с warning,
-  чтобы dev_light не падал на свежей инсталляции без aiobotocore).
+  ``settings.storage.provider``: ``"local"`` → LocalFS, любой другой
+  (``"s3"`` / ``"minio"`` / ``"aws"``) → :class:`S3ObjectStorage` поверх
+  aioboto3 (Wave 2.4 закрыт, S61 W1). При недоступности S3 — fallback
+  на LocalFS с warning, чтобы dev_light не падал без aioboto3.
 * :func:`get_local_fs_storage` — singleton LocalFS-backend
   (``var/storage`` по умолчанию или ``settings.storage.local_storage_path``).
-
-Дальнейшие шаги (Wave 2.4): реальная S3-обёртка ``S3ObjectStorage``
-поверх ``S3Client`` с retry/CB; интеграция с :class:`ResilienceCoordinator`.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from functools import lru_cache
 from pathlib import Path
 
 from src.backend.core.interfaces.storage import ObjectStorage
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("get_local_fs_storage", "get_object_storage")
 
@@ -51,10 +48,11 @@ def get_local_fs_storage() -> ObjectStorage:
 def get_object_storage() -> ObjectStorage:
     """Возвращает primary ``ObjectStorage`` по ``settings.storage.provider``.
 
-    * ``"local"`` → LocalFS.
-    * любой другой (``"s3"`` / ``"minio"`` / ...) — попытка поднять
-      S3-обёртку. Полноценная реализация придёт в Wave 2.4; до того при
-      ``provider != "local"`` возвращаем LocalFS с предупреждением.
+    * ``"local"`` → :class:`LocalFSStorage`.
+    * любой другой (``"s3"`` / ``"minio"`` / ``"aws"``) →
+      :class:`S3ObjectStorage` поверх aioboto3. При отсутствии aioboto3
+      или ошибке инициализации — fallback на LocalFS с warning
+      (чтобы dev_light не падал на свежей инсталляции без [sources-cdc]).
     """
     try:
         from src.backend.core.config.settings import settings
@@ -66,11 +64,23 @@ def get_object_storage() -> ObjectStorage:
     if provider == "local":
         return get_local_fs_storage()
 
-    # Wave 2.4 — здесь будет реальный S3ObjectStorage поверх S3Client.
-    logger.warning(
-        "ObjectStorage provider=%r — полноценная реализация ждёт Wave 2.4; "
-        "временно используется LocalFS fallback (var/storage). "
-        "Для prod установите [sources-cdc] и реализуйте S3ObjectStorage.",
-        provider,
-    )
-    return get_local_fs_storage()
+    try:
+        from src.backend.core.config.services.storage import fs_settings
+        from src.backend.infrastructure.storage.s3 import S3ObjectStorage
+
+        return S3ObjectStorage(fs_settings)
+    except ImportError as exc:
+        logger.warning(
+            "ObjectStorage provider=%r требует aioboto3 (S61 W1, install "
+            "[sources-cdc]); fallback на LocalFS. cause=%s",
+            provider,
+            exc,
+        )
+        return get_local_fs_storage()
+    except Exception as exc:
+        logger.warning(
+            "S3ObjectStorage init failed provider=%r; fallback на LocalFS. cause=%s",
+            provider,
+            exc,
+        )
+        return get_local_fs_storage()
