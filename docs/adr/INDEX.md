@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **36**; уникальных слотов: **36**.
+Всего ADR-файлов: **37**; уникальных слотов: **37**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -40,5 +40,6 @@
 | 0083 | ADR-0083 — Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | — | [0083-versioning-dsl-continuum-wrapper.md](0083-versioning-dsl-continuum-wrapper.md) |
 | 0084 | ADR-0084 — Library Adoption Migration Plan (structlog, typer, rich, aiocache) | — | [0084-library-adoption-migration-plan.md](0084-library-adoption-migration-plan.md) |
 | 0085 | ADR-0085 — User Auth: LDAP as Primary, Password Deprecated | — | [0085-user-auth-ldap-integration.md](0085-user-auth-ldap-integration.md) |
+| 0086 | ADR-0086 — aiocache Migration Plan (S60+) | — | [0086-aiocache-migration-plan.md](0086-aiocache-migration-plan.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
