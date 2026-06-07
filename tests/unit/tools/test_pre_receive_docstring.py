@@ -235,7 +235,8 @@ def test_cli_files_mode_fails_for_missing_docstring(tmp_path: Path) -> None:
         check=False,
     )
     assert proc.returncode == 1
-    assert "public_function" in proc.stdout
+    # S59 W1: typer+rich uses stderr (console_err) for violations.
+    assert "public_function" in proc.stderr or "public_function" in proc.stdout
 
 
 def test_cli_files_mode_reads_stdin(tmp_path: Path) -> None:

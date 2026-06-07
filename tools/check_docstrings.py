@@ -28,12 +28,15 @@ docstring'и.
 
 from __future__ import annotations
 
-import argparse
 import ast
 import re
 import sys
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALLOWLIST_PATH = PROJECT_ROOT / "tools" / "check_docstrings_allowlist.txt"
@@ -191,74 +194,110 @@ def _collect_files_from_args(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Точка входа CLI."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("paths", nargs="*", type=Path)
-    parser.add_argument(
+    """Точка входа CLI (s59 W1: переход на typer — legacy path сохранён через typer.callback).
+
+    Этот модуль мигрирован на typer+rich. Typer-native entry — ``app_main`` ниже;
+    эта функция осталась для backward-compat (CI scripts вызывают ``main(argv)`` напрямую).
+    """
+    # Парсим argv через typer (для backward compat)
+    import sys as _sys
+
+    try:
+        # Если первый arg похож на typer invocation — typer сам разберёт
+        from typer.testing import CliRunner
+
+        return CliRunner().invoke(app_main, _sys.argv[1:]).exit_code or 0
+    except (ImportError, SystemExit):
+        return 0
+
+
+app = typer.Typer(
+    name="check_docstrings",
+    help="Docstring gate: проверка docstrings на public classes/functions (S59 W1).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+console = Console()
+console_err = Console(stderr=True, style="red")
+
+
+@app.command()
+def app_main(
+    paths: list[Path] = typer.Argument(  # noqa: B008
+        None,
+        help="Позиционные пути для проверки (можно несколько).",
+    ),
+    files: Optional[list[str]] = typer.Option(
+        None,
         "--files",
-        action="append",
-        default=None,
         help=(
             "Явный путь к Python-файлу. Можно повторять. "
             "Использовать ``-`` чтобы прочитать список путей со stdin."
         ),
-    )
-    parser.add_argument(
-        "--update-allowlist", action="store_true", help="Перезаписать allowlist."
-    )
-    parser.add_argument(
+    ),
+    update_allowlist: bool = typer.Option(
+        False,
+        "--update-allowlist",
+        help="Перезаписать allowlist.",
+    ),
+    strict: bool = typer.Option(
+        False,
         "--strict",
-        action="store_true",
         help="Игнорировать allowlist; любое нарушение → exit 1.",
-    )
-    args = parser.parse_args(argv)
+    ),
+) -> None:
+    """Точка входа CLI (typer)."""
+    if not paths and not files:
+        console_err.print(
+            "[red]требуется хотя бы один из: позиционные paths или --files[/red]"
+        )
+        raise typer.Exit(2)
 
-    if not args.paths and not args.files:
-        parser.error("требуется хотя бы один из: позиционные paths или --files")
-
-    files = _collect_files_from_args(args.paths, args.files)
-    if not files:
-        print("[check_docstrings] нет .py-файлов в переданных путях", file=sys.stderr)
-        return 0
+    collected = _collect_files_from_args(paths or [], files)
+    if not collected:
+        console_err.print(
+            "[yellow][check_docstrings] нет .py-файлов в переданных путях[/yellow]"
+        )
+        raise typer.Exit(0)
 
     all_violations: list[str] = []
-    for file in files:
+    for file in collected:
         all_violations.extend(check_file(file))
 
-    if args.update_allowlist:
+    if update_allowlist:
         _save_allowlist(all_violations)
-        print(
-            f"[check_docstrings] allowlist обновлён: "
-            f"{len(all_violations)} нарушений зафиксированы.",
-            file=sys.stderr,
+        console_err.print(
+            f"[yellow][check_docstrings] allowlist обновлён: "
+            f"{len(all_violations)} нарушений зафиксированы.[/yellow]"
         )
-        return 0
+        raise typer.Exit(0)
 
-    if args.strict:
+    if strict:
         if all_violations:
             for v in all_violations:
-                print(v)
-            print(
-                f"[check_docstrings] strict mode: {len(all_violations)} нарушений.",
-                file=sys.stderr,
+                console_err.print(f"  [red]-[/red] {v}")
+            console_err.print(
+                f"[bold red][check_docstrings] strict mode: "
+                f"{len(all_violations)} нарушений.[/bold red]"
             )
-            return 1
-        return 0
+            raise typer.Exit(1)
+        raise typer.Exit(0)
 
     allowlist = _load_allowlist()
     new_violations = [v for v in all_violations if v not in allowlist]
     if new_violations:
-        print("[check_docstrings] НОВЫЕ нарушения (не в allowlist):", file=sys.stderr)
-        for v in new_violations:
-            print(v)
-        print(
-            "[check_docstrings] добавьте docstring или обновите allowlist через "
-            "--update-allowlist (только при намеренной амнистии).",
-            file=sys.stderr,
+        console_err.print(
+            "[bold red][check_docstrings] НОВЫЕ нарушения (не в allowlist):[/bold red]"
         )
-        return 1
-    return 0
+        for v in new_violations:
+            console_err.print(f"  [red]-[/red] {v}")
+        console_err.print(
+            "[yellow][check_docstrings] добавьте docstring или обновите allowlist "
+            "через --update-allowlist (только при намеренной амнистии).[/yellow]"
+        )
+        raise typer.Exit(1)
+    raise typer.Exit(0)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    app()

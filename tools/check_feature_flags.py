@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Аудит ``src/backend/core/config/features.py`` (K10 Sprint 2 platform gate).
 
+S59 W1 (libraries > custom, v22 п.5): мигрирован с ``argparse`` на
+``typer`` + ``rich`` (template — ``check_layer_imports`` в S58 W2).
+
 Назначение:
     Проверяет default-OFF политику реестра feature-flag:
     - все поля FeatureFlags имеют default=False;
@@ -13,11 +16,12 @@
 
     python tools/check_feature_flags.py [--allow-non-off NAME1,NAME2]
 """
-
 from __future__ import annotations
 
-import argparse
 import sys
+
+import typer
+from rich.console import Console
 
 try:
     from src.backend.core.config.features import FeatureFlags
@@ -25,8 +29,17 @@ except ImportError as exc:
     print(f"✗ Импорт FeatureFlags провалился: {exc}", file=sys.stderr)
     sys.exit(2)
 
+app = typer.Typer(
+    name="check_feature_flags",
+    help="Audit FeatureFlags registry: default-OFF policy + description + title.",
+    no_args_is_help=True,
+    add_completion=False,
+)
+console = Console()
+console_err = Console(stderr=True, style="red")
 
-def audit(allow_non_off: set[str]) -> list[str]:
+
+def _audit(allow_non_off: set[str]) -> list[str]:
     """Возвращает список ошибок аудита (пустой → всё ОК)."""
     errors: list[str] = []
     for name, field in FeatureFlags.model_fields.items():
@@ -46,32 +59,35 @@ def audit(allow_non_off: set[str]) -> list[str]:
     return errors
 
 
-def main() -> int:
-    """CLI-entrypoint."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+@app.command()
+def main(
+    allow_non_off: str = typer.Option(
+        "",
         "--allow-non-off",
-        default="",
         help="Список flag-name через запятую, которые разрешено иметь "
         "default!=False (исключения из default-OFF policy).",
-    )
-    args = parser.parse_args()
-    allow = {n.strip() for n in args.allow_non_off.split(",") if n.strip()}
+    ),
+) -> None:
+    """CLI-entrypoint (typer)."""
+    allow = {n.strip() for n in allow_non_off.split(",") if n.strip()}
+    errors = _audit(allow)
 
-    errors = audit(allow)
     if errors:
-        print("✗ feature-flag audit FAILED:", file=sys.stderr)
+        console_err.print(
+            f"[bold red]✗ feature-flag audit FAILED:[/bold red] "
+            f"{len(errors)} нарушений"
+        )
         for err in errors:
-            print(f"  - {err}", file=sys.stderr)
-        return 1
+            console_err.print(f"  [red]-[/red] {err}")
+        raise typer.Exit(1)
 
     total = len(FeatureFlags.model_fields)
-    print(
-        f"✓ feature-flag audit OK: {total} flag, все default-OFF, "
-        f"все имеют title + description."
+    console.print(
+        f"[bold green]✓[/bold green] feature-flag audit OK: {total} flag, "
+        f"все default-OFF, все имеют title + description."
     )
-    return 0
+    raise typer.Exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

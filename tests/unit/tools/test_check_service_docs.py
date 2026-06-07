@@ -37,7 +37,7 @@ def test_script_returns_zero_on_good_fixture(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(_SCRIPT), "--target", str(tmp_path)],
         capture_output=True,
         text=True,
@@ -59,19 +59,25 @@ def test_script_returns_one_on_bad_fixture(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(_SCRIPT), "--target", str(tmp_path)],
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 1, result.stdout + result.stderr
-    assert "TODO" in result.stdout or "FAIL" in result.stdout
+    # S59 W1: typer+rich routes violations to stderr (console_err).
+    assert (
+        "TODO" in result.stdout
+        or "FAIL" in result.stdout
+        or "TODO" in result.stderr
+        or "BadService" in result.stderr
+    )
 
 
 def test_script_runs_against_real_codebase() -> None:
     """Smoke: скрипт запускается на src/backend/services без crash."""
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [
             sys.executable,
             str(_SCRIPT),

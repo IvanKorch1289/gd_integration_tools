@@ -2,6 +2,9 @@
 
 Wave ``[wave:s6/k3-coverage-gate-70]`` + ``[wave:s19/k2-w4-coverage-ratchet-75]``.
 
+S59 W1 (libraries > custom, v22 п.5): мигрирован с ``argparse`` на
+``typer`` + ``rich``.
+
 Назначение: blocking-проверка покрытия тестами модулей ``src/backend``.
 Целевой порог — **75%** (S19 K2 W4 ratchet: 70% → 75% per PLAN.md V22 Sprint 19 DoD).
 
@@ -29,20 +32,19 @@ Baseline-snapshot хранится в ``.baselines/coverage.json``.
 запись ``next_wave_todo: "raise threshold to 75"``.
 
 Exit-codes:
-
 * ``0`` — coverage >= threshold;
 * ``1`` — coverage < threshold OR drop > 0.5% от baseline;
 * ``2`` — error (нет coverage.xml / parse-fail).
 """
-
 from __future__ import annotations
 
-import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
+
+import typer
+from rich.console import Console
 
 EXIT_OK = 0
 EXIT_THRESHOLD_FAIL = 1
@@ -50,6 +52,15 @@ EXIT_ERROR = 2
 
 _DEFAULT_THRESHOLD = 75.0
 _BASELINE_DROP_TOLERANCE = 0.5  # допустимое снижение от baseline (в %)
+
+app = typer.Typer(
+    name="check_coverage_gate",
+    help="Sprint 6 K3 coverage gate (≥75% blocking).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+console = Console()
+console_err = Console(stderr=True, style="red")
 
 
 def _parse_coverage_xml(path: Path) -> float:
@@ -98,94 +109,92 @@ def _check_drop(current: float, baseline: float) -> bool:
     return baseline - current > _BASELINE_DROP_TOLERANCE
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Sprint 6 K3 coverage gate (≥70% blocking)."
-    )
-    parser.add_argument(
+@app.command()
+def main(
+    coverage_xml: str = typer.Option(
+        "coverage.xml",
         "--coverage-xml",
-        default="coverage.xml",
         help="Путь к coverage.xml (cobertura формат).",
-    )
-    parser.add_argument(
+    ),
+    baseline: str = typer.Option(
+        ".baselines/coverage.json",
         "--baseline",
-        default=".baselines/coverage.json",
         help="Путь к baseline-snapshot.",
-    )
-    parser.add_argument(
+    ),
+    threshold: float = typer.Option(
+        _DEFAULT_THRESHOLD,
         "--threshold",
-        type=float,
-        default=_DEFAULT_THRESHOLD,
         help=f"Минимальный coverage в %% (default: {_DEFAULT_THRESHOLD}).",
-    )
-    parser.add_argument(
+    ),
+    update_baseline: bool = typer.Option(
+        False,
         "--update-baseline",
-        action="store_true",
         help="Обновить baseline текущим значением (только при первой настройке).",
-    )
-    parser.add_argument(
+    ),
+    strict: bool = typer.Option(
+        False,
         "--strict",
-        action="store_true",
         help="Жёсткий режим: падать при coverage < threshold ИЛИ "
         "drop > 0.5%% от baseline.",
-    )
-    args = parser.parse_args()
-
-    coverage_path = Path(args.coverage_xml)
-    baseline_path = Path(args.baseline)
+    ),
+) -> None:
+    """CLI-entrypoint (typer)."""
+    coverage_path = Path(coverage_xml)
+    baseline_path = Path(baseline)
 
     try:
         current = _parse_coverage_xml(coverage_path)
     except (FileNotFoundError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return EXIT_ERROR
+        console_err.print(f"[red]ERROR: {exc}[/red]")
+        raise typer.Exit(EXIT_ERROR) from exc
 
-    print(f"Coverage: {current:.2f}%")
-    print(f"Threshold: {args.threshold:.2f}%")
+    console.print(f"Coverage: [bold]{current:.2f}%[/bold]")
+    console.print(f"Threshold: [bold]{threshold:.2f}%[/bold]")
 
-    baseline = _load_baseline(baseline_path)
-    baseline_value = baseline.get("coverage_percent")
+    baseline_data = _load_baseline(baseline_path)
+    baseline_value = baseline_data.get("coverage_percent")
     if baseline_value is not None:
-        print(f"Baseline: {baseline_value:.2f}%")
+        console.print(f"Baseline: [bold]{baseline_value:.2f}%[/bold]")
 
-    if args.update_baseline:
-        baseline["coverage_percent"] = current
-        baseline["threshold"] = args.threshold
-        baseline.setdefault("notes", [])
+    if update_baseline:
+        baseline_data["coverage_percent"] = current
+        baseline_data["threshold"] = threshold
+        baseline_data.setdefault("notes", [])
         if current < _DEFAULT_THRESHOLD:
             todo = (
-                f"raise threshold from {args.threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
+                f"raise threshold from {threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
             )
-            if todo not in baseline.get("next_wave_todo", []):
-                baseline.setdefault("next_wave_todo", []).append(todo)
-        _save_baseline(baseline_path, baseline)
-        print(f"baseline обновлён: {baseline_path}")
-        return EXIT_OK
+            if todo not in baseline_data.get("next_wave_todo", []):
+                baseline_data.setdefault("next_wave_todo", []).append(todo)
+        _save_baseline(baseline_path, baseline_data)
+        console.print(f"[green]baseline обновлён: {baseline_path}[/green]")
+        raise typer.Exit(EXIT_OK)
 
     # Гейт: текущий coverage ниже порога — fail.
-    if current < args.threshold:
-        print(
-            f"FAIL: coverage {current:.2f}% < threshold {args.threshold:.2f}%",
-            file=sys.stderr,
+    if current < threshold:
+        console_err.print(
+            f"[bold red]FAIL:[/bold red] coverage {current:.2f}% < threshold {threshold:.2f}%"
         )
-        return EXIT_THRESHOLD_FAIL
+        raise typer.Exit(EXIT_THRESHOLD_FAIL)
 
     # Strict: drop от baseline > 0.5% — fail.
     if (
-        args.strict
+        strict
         and baseline_value is not None
         and _check_drop(current, baseline_value)
     ):
-        print(
-            f"FAIL: coverage drop > {_BASELINE_DROP_TOLERANCE}% "
-            f"(baseline={baseline_value:.2f}%, current={current:.2f}%)",
-            file=sys.stderr,
+        console_err.print(
+            f"[bold red]FAIL:[/bold red] coverage drop > {_BASELINE_DROP_TOLERANCE}% "
+            f"(baseline={baseline_value:.2f}%, current={current:.2f}%)"
         )
-        return EXIT_THRESHOLD_FAIL
+        raise typer.Exit(EXIT_THRESHOLD_FAIL)
 
-    print(f"OK: coverage gate passed ({current:.2f}% >= {args.threshold:.2f}%)")
-    return EXIT_OK
+    console.print(
+        f"[bold green]OK[/bold green]: coverage gate passed "
+        f"({current:.2f}% >= {threshold:.2f}%)"
+    )
+    raise typer.Exit(EXIT_OK)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    app()
