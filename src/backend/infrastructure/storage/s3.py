@@ -1,4 +1,4 @@
-"""S3/MinIO/AWS реализация :class:`ObjectStorage` (Wave 2.4, S61 W1).
+"""S3/MinIO/AWS реализация :class:`ObjectStorage` (S61 W3 refactor).
 
 Закрывает stub из :mod:`src.backend.infrastructure.storage.factory`,
 который при ``provider != "local"`` падал в LocalFS-fallback.
@@ -10,8 +10,15 @@ lifecycle-issues (``aclose``, idle connections, retry state).
 
 Для горячих путей ingestion (миллионы объектов в час) — :class:`S3Client`
 из ``infrastructure/clients/storage/s3_pool.py`` с aiobotocore long-lived
-pool. Здесь (admin/blueprint/extension deployment) — aioboto3 проще
-и совместим с moto-mock без отдельного MinIO.
+pool. Здесь (admin/blueprint/extension deployment, DSL processors) —
+aioboto3 проще и совместим с moto-mock без отдельного MinIO.
+
+S61 W3 refactor: введён :class:`_S3Session` (proper async context manager)
+вместо ручного ``(s3, aexit)`` tuple + per-method ``try/finally``.
+Каждая операция теперь::
+
+    async with self._session() as s3:
+        await s3.put_object(...)
 
 Безопасность:
 * ``key`` валидируется на path-traversal (mirror LocalFSStorage):
@@ -23,6 +30,7 @@ pool. Здесь (admin/blueprint/extension deployment) — aioboto3 проще
 
 from __future__ import annotations
 
+from contextlib import AbstractAsyncContextManager
 from typing import Any
 
 import aioboto3
@@ -35,6 +43,50 @@ from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("S3ObjectStorage",)
+
+
+# ── internal session helper ──────────────────────────────────────────────
+
+
+class _S3Session(AbstractAsyncContextManager[Any]):
+    """Async context manager для aioboto3 client + lazy bucket init.
+
+    Используется через :meth:`S3ObjectStorage._session`::
+
+        async with storage._session() as s3:
+            await s3.put_object(...)
+
+    На выходе из ``__aexit__`` корректно закрывает underlying client
+    (важно для hot-path: idle connection leak prevention).
+    """
+
+    def __init__(self, storage: "S3ObjectStorage") -> None:
+        self._storage = storage
+        self._cm: Any = None
+        self._s3: Any = None
+
+    async def __aenter__(self) -> Any:
+        self._cm = self._storage._session.client(**self._storage._client_kwargs)
+        self._s3 = await self._cm.__aenter__()
+        try:
+            await self._storage._ensure_bucket(self._s3)
+        except BaseException:
+            await self._cm.__aexit__(None, None, None)
+            self._cm = None
+            self._s3 = None
+            raise
+        return self._s3
+
+    async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
+        if self._cm is not None:
+            try:
+                await self._cm.__aexit__(exc_type, exc, tb)
+            finally:
+                self._cm = None
+                self._s3 = None
+
+
+# ── public class ─────────────────────────────────────────────────────────
 
 
 class S3ObjectStorage(ObjectStorage):
@@ -91,6 +143,16 @@ class S3ObjectStorage(ObjectStorage):
             verify=self._settings.verify,
         )
 
+    def _open(self) -> _S3Session:
+        """Вернуть async context manager для s3 client (для ``async with``)."""
+        return _S3Session(self)
+
+    @staticmethod
+    def _is_not_found(exc: ClientError) -> bool:
+        """True если ``exc`` указывает на 404 / NoSuchKey / NotFound."""
+        code = exc.response.get("Error", {}).get("Code", "")
+        return code in ("404", "NoSuchKey", "NotFound")
+
     def _safe_key(self, key: str) -> str:
         """Валидация + применение prefix; ``..``/absolute/empty → ValueError."""
         if not key:
@@ -104,33 +166,10 @@ class S3ObjectStorage(ObjectStorage):
         return key
 
     def _strip_prefix(self, full_key: str) -> str:
+        """Убирает ``_prefix/`` из полного ключа (для list_keys output)."""
         if self._prefix and full_key.startswith(self._prefix + "/"):
             return full_key[len(self._prefix) + 1 :]
         return full_key
-
-    async def _acquire(self) -> tuple[Any, Any]:
-        """Открыть aioboto3 client + lazy bucket init.
-
-        Возвращает ``(s3, aexit_fn)`` — caller обязан вызвать
-        ``await aexit_fn(exc_type, exc, tb)`` в finally.
-        """
-        cm = self._session.client(**self._client_kwargs)
-        s3 = await cm.__aenter__()
-        try:
-            await self._ensure_bucket(s3)
-        except BaseException:
-            await cm.__aexit__(None, None, None)
-            raise
-
-        async def _aexit(exc_type: object, exc: object, tb: object) -> None:
-            await cm.__aexit__(exc_type, exc, tb)
-
-        return s3, _aexit
-
-    @staticmethod
-    def _is_not_found(exc: ClientError) -> bool:
-        code = exc.response.get("Error", {}).get("Code", "")
-        return code in ("404", "NoSuchKey", "NotFound")
 
     async def _ensure_bucket(self, s3: Any) -> None:
         """Lazy-инициализация bucket (idempotent, один раз на инстанс)."""
@@ -160,6 +199,12 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 head_bucket failed: {exc}") from exc
         self._bucket_ready = True
 
+    def _wrap_boto(self, op: str, full_key: str) -> "ServiceError":
+        """Вернуть ServiceError-обёртку для boto-исключений (helper)."""
+        return ServiceError(f"S3 {op} failed: {{}}").__class__(  # type: ignore[arg-type]
+            f"S3 {op} failed for key={full_key}"
+        )
+
     # ── ObjectStorage interface ──────────────────────────────────────────
 
     async def upload(
@@ -173,22 +218,19 @@ class S3ObjectStorage(ObjectStorage):
         }
         if content_type:
             params["ContentType"] = content_type
-        s3, aexit = await self._acquire()
-        try:
-            await s3.put_object(**params)
-        except (BotoCoreError, ClientError) as exc:
-            self.logger.error(
-                "S3ObjectStorage.upload failed key=%s err=%s", full_key, exc
-            )
-            raise ServiceError(f"S3 upload failed: {exc}") from exc
-        finally:
-            await aexit(None, None, None)
+        async with self._open() as s3:
+            try:
+                await s3.put_object(**params)
+            except (BotoCoreError, ClientError) as exc:
+                self.logger.error(
+                    "S3ObjectStorage.upload failed key=%s err=%s", full_key, exc
+                )
+                raise ServiceError(f"S3 upload failed: {exc}") from exc
         return full_key
 
     async def download(self, key: str) -> bytes:
         full_key = self._safe_key(key)
-        s3, aexit = await self._acquire()
-        try:
+        async with self._open() as s3:
             try:
                 resp = await s3.get_object(Bucket=self._bucket, Key=full_key)
             except ClientError as exc:
@@ -200,26 +242,21 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 download failed: {exc}") from exc
             async with resp["Body"] as stream:
                 return await stream.read()
-        finally:
-            await aexit(None, None, None)
 
     async def delete(self, key: str) -> None:
         full_key = self._safe_key(key)
-        s3, aexit = await self._acquire()
-        try:
-            await s3.delete_object(Bucket=self._bucket, Key=full_key)
-        except (BotoCoreError, ClientError) as exc:
-            self.logger.error(
-                "S3ObjectStorage.delete failed key=%s err=%s", full_key, exc
-            )
-            raise ServiceError(f"S3 delete failed: {exc}") from exc
-        finally:
-            await aexit(None, None, None)
+        async with self._open() as s3:
+            try:
+                await s3.delete_object(Bucket=self._bucket, Key=full_key)
+            except (BotoCoreError, ClientError) as exc:
+                self.logger.error(
+                    "S3ObjectStorage.delete failed key=%s err=%s", full_key, exc
+                )
+                raise ServiceError(f"S3 delete failed: {exc}") from exc
 
     async def exists(self, key: str) -> bool:
         full_key = self._safe_key(key)
-        s3, aexit = await self._acquire()
-        try:
+        async with self._open() as s3:
             try:
                 await s3.head_object(Bucket=self._bucket, Key=full_key)
                 return True
@@ -230,14 +267,11 @@ class S3ObjectStorage(ObjectStorage):
                     "S3ObjectStorage.exists failed key=%s err=%s", full_key, exc
                 )
                 raise ServiceError(f"S3 head failed: {exc}") from exc
-        finally:
-            await aexit(None, None, None)
 
     async def list_keys(self, prefix: str = "") -> list[str]:
         full_prefix = self._safe_key(prefix) if prefix else (self._prefix or "")
         keys: list[str] = []
-        s3, aexit = await self._acquire()
-        try:
+        async with self._open() as s3:
             try:
                 paginator = s3.get_paginator("list_objects_v2")
                 async for page in paginator.paginate(
@@ -252,31 +286,27 @@ class S3ObjectStorage(ObjectStorage):
                     exc,
                 )
                 raise ServiceError(f"S3 list failed: {exc}") from exc
-        finally:
-            await aexit(None, None, None)
         return sorted(keys)
 
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
         full_key = self._safe_key(key)
-        s3, aexit = await self._acquire()
-        try:
-            url = await s3.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self._bucket, "Key": full_key},
-                ExpiresIn=expires_in,
-            )
-        except (BotoCoreError, ClientError) as exc:
-            self.logger.error(
-                "S3ObjectStorage.presigned_url failed key=%s err=%s",
-                full_key,
-                exc,
-            )
-            raise ServiceError(f"S3 presign failed: {exc}") from exc
-        finally:
-            await aexit(None, None, None)
+        async with self._open() as s3:
+            try:
+                url = await s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": self._bucket, "Key": full_key},
+                    ExpiresIn=expires_in,
+                )
+            except (BotoCoreError, ClientError) as exc:
+                self.logger.error(
+                    "S3ObjectStorage.presigned_url failed key=%s err=%s",
+                    full_key,
+                    exc,
+                )
+                raise ServiceError(f"S3 presign failed: {exc}") from exc
         # aioboto3 может вернуть корутину или строку в зависимости от версии
         if hasattr(url, "__await__"):
-            url = await url
+            url = await url  # type: ignore[unreachable]
         return str(url)
 
     def supports_presigned(self) -> bool:
@@ -287,11 +317,8 @@ class S3ObjectStorage(ObjectStorage):
     async def healthcheck(self) -> bool:
         """Лёгкая проверка доступности bucket (для /healthz)."""
         try:
-            s3, aexit = await self._acquire()
-            try:
+            async with self._open() as s3:
                 await s3.head_bucket(Bucket=self._bucket)
-            finally:
-                await aexit(None, None, None)
             return True
         except (BotoCoreError, ClientError, OSError) as exc:
             self.logger.warning("S3ObjectStorage.healthcheck failed: %s", exc)

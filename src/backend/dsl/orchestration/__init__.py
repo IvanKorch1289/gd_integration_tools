@@ -15,7 +15,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
@@ -131,10 +131,10 @@ class HumanApproval:
 
     def approve(self) -> None:
         self.decision = "approved"
-        self.decided_at = datetime.utcnow()
+        self.decided_at = datetime.now(UTC)
         self.approved.set()
 
     def reject(self) -> None:
         self.decision = "rejected"
-        self.decided_at = datetime.utcnow()
+        self.decided_at = datetime.now(UTC)
         self.approved.set()

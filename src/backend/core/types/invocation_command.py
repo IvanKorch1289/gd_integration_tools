@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -98,7 +98,8 @@ class ActionCommandMetaSchema(_CoreBaseModel):
         default=None, description="HTTP path, с которого была сформирована команда."
     )
     requested_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Время формирования команды."
+        default_factory=lambda: datetime.now(UTC),
+        description="Время формирования команды.",
     )
 
 
