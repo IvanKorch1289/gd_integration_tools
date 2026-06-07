@@ -48,6 +48,12 @@ from src.backend.dsl.engine.processors.eip.marshal import (
 from src.backend.dsl.engine.processors.eip.pipes_and_filters import (
     PipesAndFiltersProcessor,
 )
+from src.backend.dsl.engine.processors.eip.reliability import (
+    CorrelationIdentifierProcessor,
+    MessageExpirationProcessor,
+    RedeliveryPolicyProcessor,
+    ReturnAddressProcessor,
+)
 from src.backend.dsl.engine.processors.eip.resilience import (
     CircuitBreakerProcessor,
     DeadLetterProcessor,
@@ -86,6 +92,7 @@ __all__ = (
     "ClaimCheckProcessor",
     "CollectProcessor",
     "ContentBasedRouter",
+    "CorrelationIdentifierProcessor",
     "CsvDataFormat",
     "DataFormat",
     "DeadLetterProcessor",
@@ -106,6 +113,7 @@ __all__ = (
     "LoopProcessor",
     "MarshalProcessor",
     "MaxByProcessor",
+    "MessageExpirationProcessor",
     "MessagePackDataFormat",
     "MessageTranslatorProcessor",
     "MinByProcessor",
@@ -119,7 +127,9 @@ __all__ = (
     "PipesAndFiltersProcessor",
     "ProcessorRegistry",
     "RecipientListProcessor",
+    "RedeliveryPolicyProcessor",
     "ResequencerProcessor",
+    "ReturnAddressProcessor",
     "RoutingSlipProcessor",
     "SamplingProcessor",
     "ScatterGatherProcessor",
