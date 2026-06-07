@@ -42,11 +42,12 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+
+from src.backend.core.util.json_utils import dumps_str
 
 __all__ = (
     "WorkflowAuditSink",
@@ -147,7 +148,7 @@ class WorkflowAuditSink:
             "event_type": event_type,
             "workflow_id": workflow_id,
             "tenant_id": tenant_id,
-            "payload": json.dumps(payload or {}, ensure_ascii=False),
+            "payload": dumps_str(payload or {}, default=str),
             "trace_id": trace_id,
             "created_at": (created_at or datetime.now(UTC)).astimezone(UTC),
             "actor": actor,
@@ -184,7 +185,7 @@ class WorkflowAuditSink:
                     "event_type": raw["event_type"],
                     "workflow_id": raw["workflow_id"],
                     "tenant_id": raw.get("tenant_id"),
-                    "payload": json.dumps(raw.get("payload") or {}, ensure_ascii=False),
+                    "payload": dumps_str(raw.get("payload") or {}, default=str),
                     "trace_id": raw.get("trace_id"),
                     "created_at": (raw.get("created_at") or now).astimezone(UTC),
                 }

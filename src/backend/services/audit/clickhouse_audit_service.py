@@ -14,7 +14,8 @@ ClickHouse с lazy-импортом клиента и default-OFF через fea
     * При flag=OFF все вызовы emit/emit_batch возвращают без ошибки.
     * event_id использует UUID4 из stdlib (UUID7 требует внешней зависимости
       uuid-utils, которая не добавлена в pyproject.toml).
-    * payload сериализуется в JSON-строку через ``json.dumps``.
+    * payload сериализуется в JSON-строку через :func:`dumps_str`
+      (orjson wrapper, ~3-5x faster than stdlib json).
 
 Использование::
 
@@ -35,13 +36,14 @@ ClickHouse с lazy-импортом клиента и default-OFF через fea
 
 from __future__ import annotations
 
-import json
 import logging
 import threading
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
+
+from src.backend.core.util.json_utils import dumps_str
 
 if TYPE_CHECKING:
     pass
@@ -88,7 +90,7 @@ class AuditEvent:
             "tenant_id": self.tenant_id,
             "user_id": self.user_id,
             "route_name": self.route_name,
-            "payload": json.dumps(self.payload, ensure_ascii=False),
+            "payload": dumps_str(self.payload, default=str),
             "severity": self.severity,
         }
 
