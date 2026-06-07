@@ -11,11 +11,29 @@
 TTL уважается на стороне Mongo (см. ``AgentMemoryService``).
 """
 from __future__ import annotations
+
 from typing import Any
+
 from fastapi import APIRouter
-from src.backend.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.backend.schemas.agent_memory import FactCreate, FactKeyPath, FactRead, FactsResponse, MessageCreate, MessagesResponse, ScratchpadResponse, ScratchpadValue, SessionListQuery, SessionPath
+
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.schemas.agent_memory import (
+    FactCreate,
+    FactKeyPath,
+    FactRead,
+    FactsResponse,
+    MessageCreate,
+    MessagesResponse,
+    ScratchpadResponse,
+    ScratchpadValue,
+    SessionListQuery,
+    SessionPath,
+)
 from src.backend.services.ai.agent_memory import get_agent_memory_service
+
 __all__ = ('router',)
 
 class _AgentMemoryFacade:

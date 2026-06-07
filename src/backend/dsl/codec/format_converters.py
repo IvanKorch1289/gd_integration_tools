@@ -20,16 +20,19 @@
   чтение/запись NDJSON через stdlib ``json``.
 """
 from __future__ import annotations
+
 import datetime as _dt
 import importlib
 import io
 import json
 import logging
 from typing import Any, ClassVar
+
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+
 __all__ = ('AvroDecodeProcessor', 'AvroEncodeProcessor', 'HtmlToMarkdownProcessor', 'JsonLinesDecodeProcessor', 'JsonLinesEncodeProcessor', 'MarkdownToHtmlProcessor', 'ProtobufDecodeProcessor', 'ProtobufEncodeProcessor', 'TomlDecodeProcessor', 'TomlEncodeProcessor')
 _logger = logging.getLogger('dsl.format_converters')
 

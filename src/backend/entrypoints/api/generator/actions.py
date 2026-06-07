@@ -3,19 +3,44 @@ import os
 from collections.abc import Awaitable, Callable, Sequence
 from inspect import Parameter, Signature
 from typing import Any
+
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 from pydantic import BaseModel
+
 from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata
 from src.backend.core.enums.ordering import OrderingTypeChoices
 from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint, extract_invocation_kwargs, prepare_call_kwargs
-from src.backend.entrypoints.api.generator.reflection import body_parameter, build_invocation_parameters, build_model_parameters, make_signature, path_parameter, query_parameter, request_parameter, required_query_parameter
-from src.backend.entrypoints.api.generator.specs import ActionSpec, CrudSpec, HttpMethod, RouteDecorator
-from src.backend.schemas.invocation import InvocationOptionsSchema, InvocationResultSchema, InvokeMode
+from src.backend.entrypoints.api.generator.marshaller import (
+    decorate_endpoint,
+    extract_invocation_kwargs,
+    prepare_call_kwargs,
+)
+from src.backend.entrypoints.api.generator.reflection import (
+    body_parameter,
+    build_invocation_parameters,
+    build_model_parameters,
+    make_signature,
+    path_parameter,
+    query_parameter,
+    request_parameter,
+    required_query_parameter,
+)
+from src.backend.entrypoints.api.generator.specs import (
+    ActionSpec,
+    CrudSpec,
+    HttpMethod,
+    RouteDecorator,
+)
+from src.backend.schemas.invocation import (
+    InvocationOptionsSchema,
+    InvocationResultSchema,
+    InvokeMode,
+)
+
 __all__ = ('ActionRouterBuilder', 'ActionSpec', 'CrudSpec')
 
 def _resolve_action_bus_service():

@@ -159,7 +159,9 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             _log.error("OpenLineage payload serialization failed: %s", e)
             return False
 
-        req = urllib.request.Request(
+        # SECURITY: endpoint — config-controlled (lineage.url в Settings),
+        # не user input. Production MUST validate https:// schema + restrict egress.
+        req = urllib.request.Request(  # noqa: S310
             endpoint,
             data=payload,
             method="POST",
@@ -175,7 +177,12 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             },
         )
         try:
-            with urllib.request.urlopen(req, timeout=self._config.timeout_s) as resp:
+            # SECURITY: endpoint — config-controlled (lineage.url в Settings),
+            # не user input. Production deployments MUST validate endpoint schema
+            # (https://) и restrict network egress. См. ADR-NEW-12 (RLS для outbound).
+            with urllib.request.urlopen(  # noqa: S310
+                req, timeout=self._config.timeout_s
+            ) as resp:
                 if 200 <= resp.status < 300:
                     return True
                 _log.warning(

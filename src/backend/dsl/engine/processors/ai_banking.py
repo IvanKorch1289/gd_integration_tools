@@ -15,13 +15,17 @@
 - Francotyping (текст → язык/регион/классификация)
 """
 from __future__ import annotations
+
 import logging
 from typing import Any, Literal, TypeVar
+
 import orjson
 from pydantic import BaseModel, Field
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 __all__ = ('AntiFraudScoreProcessor', 'AppealProcessorAI', 'CreditScoringRagProcessor', 'CustomerChatbotProcessor', 'DocumentClassifierProcessor', 'FinDocOcrLlmProcessor', 'FrancotypingProcessor', 'KycAmlVerifyProcessor', 'TransactionCategorizerProcessor')
 _logger = logging.getLogger('dsl.engine.processors.ai_banking')
 _T = TypeVar('_T', bound=BaseModel)

@@ -16,15 +16,18 @@
   Exchange для downstream-audit и DLP.
 """
 from __future__ import annotations
+
 import asyncio
 import logging
 import re
 import time
 import uuid
 from typing import Any
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 __all__ = ('ComplianceLabelProcessor', 'CostTrackerProcessor', 'DataMaskingProcessor', 'HumanApprovalProcessor', 'OutboxProcessor', 'TenantScopeProcessor')
 logger = logging.getLogger('dsl.business')
 
@@ -157,7 +160,9 @@ class OutboxProcessor(BaseProcessor):
         headers = dict(exchange.in_message.headers)
         writer = self._writer
         if writer is None:
-            from src.backend.infrastructure.repositories.outbox import write as default_writer
+            from src.backend.infrastructure.repositories.outbox import (
+                write as default_writer,
+            )
             writer = default_writer
         try:
             await writer(topic=self._topic, payload=payload, headers=headers)

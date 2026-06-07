@@ -10,11 +10,14 @@ import logging
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from typing import Any
+
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
 from strawberry.types import Info
+
 from src.backend.dsl.service import get_dsl_service
+
 __all__ = ('graphql_router',)
 logger = logging.getLogger(__name__)
 
@@ -341,7 +344,9 @@ class Subscription:
         from datetime import UTC, datetime
         while True:
             try:
-                from src.backend.core.di.providers import get_healthcheck_session_provider
+                from src.backend.core.di.providers import (
+                    get_healthcheck_session_provider,
+                )
                 hc_factory = get_healthcheck_session_provider()
                 async with hc_factory() as hc:
                     result = await hc.check_all_services()

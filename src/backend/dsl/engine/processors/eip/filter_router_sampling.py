@@ -26,10 +26,7 @@ from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-    handle_processor_error,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = (
     "ContentBasedRouter",
@@ -186,7 +183,9 @@ class SamplingProcessor(BaseProcessor):
         self._fraction = fraction
         self._time_window_ms = time_window_ms
         self._max_in_window = max_in_window
-        self._rng = random.Random(seed)
+        # SECURITY: random.Random — non-cryptographic, fine для sampling/test filtering
+        # (не используется для security tokens, IDs, или auth).
+        self._rng = random.Random(seed)  # noqa: S311
         self._counter = 0
         self._window_start_ms: float = 0.0
         self._window_count = 0

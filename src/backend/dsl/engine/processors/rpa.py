@@ -11,11 +11,14 @@ Categories:
 - System: shell exec, email compose+send
 """
 from __future__ import annotations
+
 import logging
 from typing import Any
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 __all__ = ('ArchiveProcessor', 'DecryptProcessor', 'EmailComposeProcessor', 'EncryptProcessor', 'ExcelReadProcessor', 'FileMoveProcessor', 'HashProcessor', 'ImageOcrProcessor', 'ImageResizeProcessor', 'PdfMergeProcessor', 'PdfReadProcessor', 'RegexProcessor', 'ShellExecProcessor', 'TemplateRenderProcessor', 'WordReadProcessor', 'WordWriteProcessor')
 _rpa_logger = logging.getLogger('dsl.rpa')
 
@@ -37,6 +40,7 @@ class PdfReadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
         import io
+
         from src.backend.utilities.pdf_reader import read_pdf
         body = exchange.in_message.body
         try:

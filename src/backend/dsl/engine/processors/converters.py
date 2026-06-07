@@ -6,13 +6,17 @@ Adding a new format = 1 class + 1 line in the registry.
 Supported: JSON, YAML, XML, CSV, MessagePack, Parquet, HTML→JSON, BSON.
 """
 from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
+
 import orjson
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 __all__ = ('ConvertProcessor',)
 _conv_logger = logging.getLogger('dsl.converters')
 
@@ -87,6 +91,7 @@ class CsvToParquet(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import io
+
         import polars as pl
         if isinstance(data, str):
             df = pl.read_csv(io.StringIO(data))
@@ -103,6 +108,7 @@ class ParquetToCsv(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import io
+
         import polars as pl
         if isinstance(data, bytes):
             df = pl.read_parquet(io.BytesIO(data))
@@ -181,6 +187,7 @@ class CsvToDict(ConversionStrategy):
             return data
         try:
             import io
+
             import polars as pl
             df = pl.read_csv(io.StringIO(data))
             return df.to_dicts()

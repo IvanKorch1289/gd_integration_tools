@@ -3,12 +3,15 @@
 Все процессоры с graceful fallback при отсутствии библиотек.
 """
 from __future__ import annotations
+
 import logging
 import time
 from typing import Any
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 __all__ = ('CompressProcessor', 'DeadlineProcessor', 'DecompressProcessor', 'GeoIpProcessor', 'JwtSignProcessor', 'JwtVerifyProcessor', 'WebhookSignProcessor', 'WebhookSignVerifyProcessor')
 logger = logging.getLogger('dsl.enrichment')
 
@@ -284,6 +287,7 @@ class WebhookSignProcessor(BaseProcessor):
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         import hashlib
         import hmac
+
         import orjson
         body = exchange.in_message.body
         if isinstance(body, str):
@@ -341,6 +345,7 @@ class WebhookSignVerifyProcessor(BaseProcessor):
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         import hashlib
         import hmac
+
         import orjson
         received = exchange.in_message.get_header(self._header)
         if not received:
