@@ -48,6 +48,18 @@ __all__ = (
     "VersioningError",
 )
 
+
+def _count_remaining(session: Any, Transaction: type, cutoff: Any) -> int:
+    """Helper: сколько transactions осталось до cutoff (для next-batch)."""
+    from sqlalchemy import func
+
+    return (
+        session.query(func.count(Transaction.id))
+        .filter(Transaction.issued_at < cutoff)
+        .scalar()
+        or 0
+    )
+
 # Continuum operation types (sentinel ints из ``sqlalchemy_continuum.operation``).
 # Явно пронумерованы для тестов и DSL-валидации (вместо магических чисел).
 OP_INSERT = 0
@@ -250,3 +262,109 @@ class Versioning:
         return {OP_INSERT: "INSERT", OP_UPDATE: "UPDATE", OP_DELETE: "DELETE"}.get(
             op_type, f"UNKNOWN({op_type})"
         )
+
+    @staticmethod
+    def purge_old_versions(
+        session: Any,
+        retention_days: int = 90,
+        batch_size: int = 1000,
+        dry_run: bool = False,
+    ) -> dict[str, int]:
+        """Удаляет version rows старше ``retention_days`` (S61 W2 retention policy).
+
+        Закрывает S58 W1 LESSON: continuum по умолчанию хранит ВСЕ версии
+        вечно. Для production это недопустимо (рост таблиц, GDPR/152-ФЗ
+        требования, производительность). Данный метод — единственный
+        штатный способ удалить старые version rows, не ломая
+        referential integrity с таблицей ``transaction``.
+
+        Поведение:
+        1. Находит ``transaction`` rows с ``issued_at < now() - retention_days``.
+        2. Для каждой найденной transaction — удаляет version rows во ВСЕХ
+           version tables (``<model>_version``) с соответствующим
+           ``transaction_id``.
+        3. Удаляет сами transactions.
+        4. Возвращает счётчики: ``{"scanned", "deleted_transactions",
+           "deleted_versions", "remaining"}``.
+
+        Args:
+            session: Открытая SQLAlchemy session (caller owns commit/rollback).
+            retention_days: Хранить версии не старше N дней. Должен быть > 0.
+            batch_size: Максимум transactions за один вызов (пагинация,
+                чтобы не заблокировать DB на миллионах строк).
+            dry_run: Если True — только подсчёт, без DELETE.
+
+        Returns:
+            dict с метриками выполнения.
+
+        Raises:
+            VersioningError: При ``retention_days <= 0`` или DB errors.
+        """
+        if retention_days <= 0:
+            raise VersioningError(
+                f"retention_days должен быть > 0, получено {retention_days}"
+            )
+        if batch_size <= 0:
+            raise VersioningError(f"batch_size должен быть > 0, получено {batch_size}")
+
+        from datetime import datetime, timedelta, timezone
+
+        from sqlalchemy_continuum import version_class, versioning_manager
+        from sqlalchemy_continuum.exc import ClassNotVersioned
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        Transaction = versioning_manager.transaction_cls
+
+        # 1. Найти ID старых transactions (пагинированно)
+        old_tx_query = (
+            session.query(Transaction.id)
+            .filter(Transaction.issued_at < cutoff)
+            .order_by(Transaction.id)
+            .limit(batch_size)
+        )
+        old_tx_ids: list[int] = [row[0] for row in old_tx_query.all()]
+        scanned = len(old_tx_ids)
+
+        if not old_tx_ids:
+            return {
+                "scanned": 0,
+                "deleted_transactions": 0,
+                "deleted_versions": 0,
+                "remaining": _count_remaining(session, Transaction, cutoff),
+            }
+
+        if dry_run:
+            return {
+                "scanned": scanned,
+                "deleted_transactions": 0,
+                "deleted_versions": 0,
+                "remaining": _count_remaining(session, Transaction, cutoff),
+            }
+
+        # 2. Удалить version rows по всем version tables
+        deleted_versions = 0
+        for model in list(versioning_manager.version_class_map.keys()):
+            try:
+                VersionModel = version_class(model)
+            except ClassNotVersioned:
+                continue
+            n = (
+                session.query(VersionModel)
+                .filter(VersionModel.transaction_id.in_(old_tx_ids))
+                .delete(synchronize_session=False)
+            )
+            deleted_versions += n
+
+        # 3. Удалить сами transactions
+        deleted_tx = (
+            session.query(Transaction)
+            .filter(Transaction.id.in_(old_tx_ids))
+            .delete(synchronize_session=False)
+        )
+
+        return {
+            "scanned": scanned,
+            "deleted_transactions": deleted_tx,
+            "deleted_versions": deleted_versions,
+            "remaining": _count_remaining(session, Transaction, cutoff),
+        }
