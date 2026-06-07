@@ -15,6 +15,10 @@ from src.backend.dsl.engine.processors.eip.collection import (
     SumByProcessor,
     UniqueProcessor,
 )
+from src.backend.dsl.engine.processors.eip.event_message import (
+    EventMessageEnvelope,
+    EventMessageProcessor,
+)
 from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
     ContentBasedRouter,
     SamplingProcessor,
@@ -30,6 +34,19 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
 )
 from src.backend.dsl.engine.processors.eip.idempotency import (
     IdempotentConsumerProcessor,
+)
+from src.backend.dsl.engine.processors.eip.marshal import (
+    CsvDataFormat,
+    DataFormat,
+    JsonDataFormat,
+    MarshalProcessor,
+    MessagePackDataFormat,
+    PickleDataFormat,
+    UnmarshalProcessor,
+    XmlDataFormat,
+)
+from src.backend.dsl.engine.processors.eip.pipes_and_filters import (
+    PipesAndFiltersProcessor,
 )
 from src.backend.dsl.engine.processors.eip.resilience import (
     CircuitBreakerProcessor,
@@ -69,10 +86,14 @@ __all__ = (
     "ClaimCheckProcessor",
     "CollectProcessor",
     "ContentBasedRouter",
+    "CsvDataFormat",
+    "DataFormat",
     "DeadLetterProcessor",
     "DelayProcessor",
     "DiffProcessor",
     "DynamicRouterProcessor",
+    "EventMessageEnvelope",
+    "EventMessageProcessor",
     "FallbackChainProcessor",
     "FindAllProcessor",
     "FlattenProcessor",
@@ -80,9 +101,12 @@ __all__ = (
     "GroupByProcessor",
     "IdempotentConsumerProcessor",
     "IntersectProcessor",
+    "JsonDataFormat",
     "LoadBalancerProcessor",
     "LoopProcessor",
+    "MarshalProcessor",
     "MaxByProcessor",
+    "MessagePackDataFormat",
     "MessageTranslatorProcessor",
     "MinByProcessor",
     "MulticastProcessor",
@@ -91,6 +115,8 @@ __all__ = (
     "OnCompletionProcessor",
     "OrElseProcessor",
     "PartitionProcessor",
+    "PickleDataFormat",
+    "PipesAndFiltersProcessor",
     "ProcessorRegistry",
     "RecipientListProcessor",
     "ResequencerProcessor",
@@ -105,7 +131,9 @@ __all__ = (
     "ThrottlerProcessor",
     "TimeoutProcessor",
     "UniqueProcessor",
+    "UnmarshalProcessor",
     "WindowedCollectProcessor",
     "WindowedDedupProcessor",
     "WireTapProcessor",
+    "XmlDataFormat",
 )
