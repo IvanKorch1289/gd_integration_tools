@@ -71,7 +71,9 @@ def mock_table() -> MagicMock:
 
 
 @pytest.fixture
-def mock_engines(mock_table: MagicMock) -> tuple[MagicMock, MagicMock, MagicMock, MagicMock]:
+def mock_engines(
+    mock_table: MagicMock,
+) -> tuple[MagicMock, MagicMock, MagicMock, MagicMock]:
     """Возвращает (pg_engine, pg_conn, sqlite_engine, sqlite_conn)."""
     pg_conn = MagicMock()
     pg_conn.execute.return_value.mappings.return_value.all.return_value = [
@@ -283,8 +285,9 @@ def test_run_snapshot_now_success(
 
     # Фиксируем время для предсказуемости.
     fixed_ts = 1_700_000_000.0
-    with patch("time.time", return_value=fixed_ts), patch(
-        "time.perf_counter", side_effect=[0.0, 1.23]
+    with (
+        patch("time.time", return_value=fixed_ts),
+        patch("time.perf_counter", side_effect=[0.0, 1.23]),
     ):
         result = sj.run_snapshot_now()
 
@@ -307,7 +310,9 @@ def test_run_snapshot_now_disabled(mock_settings: MagicMock) -> None:
 
 @pytest.mark.unit
 @patch("src.backend.core.config.settings.settings")
-def test_run_snapshot_now_empty_tables(mock_settings: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_run_snapshot_now_empty_tables(
+    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Пустой список tables → skip с warning."""
     mock_settings.snapshot = MagicMock(enabled=True, tables=[])
     assert sj.run_snapshot_now() == {}
@@ -409,7 +414,9 @@ def test_publish_metrics_no_sync_skips(mock_metrics: Any) -> None:
 
 @pytest.mark.unit
 @patch("src.backend.core.config.settings.settings")
-def test_register_snapshot_job_disabled(mock_settings: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_register_snapshot_job_disabled(
+    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """enabled=False → job не регистрируется."""
     mock_settings.snapshot = MagicMock(enabled=False)
     scheduler = MagicMock()
@@ -422,9 +429,7 @@ def test_register_snapshot_job_disabled(mock_settings: MagicMock, caplog: pytest
 def test_register_snapshot_job_enabled(mock_settings: MagicMock) -> None:
     """enabled=True → add_job с корректными параметрами."""
     mock_settings.snapshot = MagicMock(
-        enabled=True,
-        interval_minutes=5,
-        tables=["users", "orders"],
+        enabled=True, interval_minutes=5, tables=["users", "orders"]
     )
     mock_settings.scheduler.default_jobstore_name = "default"
     scheduler = MagicMock()

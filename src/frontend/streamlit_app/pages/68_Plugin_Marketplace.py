@@ -20,7 +20,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Plugin Marketplace', ':electric_plug:')
+setup_page("Plugin Marketplace", ":electric_plug:")
 st.header("Plugin Marketplace (V11)")
 st.caption(
     "Inventory загруженных в-tree плагинов из ``extensions/<name>/`` "

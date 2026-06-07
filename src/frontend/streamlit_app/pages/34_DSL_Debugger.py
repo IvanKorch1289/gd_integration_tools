@@ -13,7 +13,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('DSL Debugger', '🐛')
+setup_page("DSL Debugger", "🐛")
 st.title("🐛 DSL Debugger & Replay")
 
 mode = st.radio(

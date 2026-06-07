@@ -1,4 +1,5 @@
 """Tenants: список + детальный профиль (admin/tenants)."""
+
 from __future__ import annotations
 
 from typing import Any

@@ -21,7 +21,9 @@ from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 class TestLoggingLevel:
     """Backend failures логируются на WARNING (production-visible)."""
 
-    def test_get_rag_cache_stats_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_get_rag_cache_stats_logs_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
             with patch.object(c, "_request", side_effect=Exception("boom")):
@@ -55,8 +57,7 @@ class TestLoggingLevel:
             with patch.object(c, "_request", side_effect=Exception("boom")):
                 c.litellm_gateway_stats()
         assert any(
-            rec.levelno == logging.WARNING
-            and "litellm_gateway_stats" in rec.message
+            rec.levelno == logging.WARNING and "litellm_gateway_stats" in rec.message
             for rec in caplog.records
         )
 
@@ -68,8 +69,7 @@ class TestLoggingLevel:
             with patch.object(c, "_request", side_effect=Exception("boom")):
                 c.rag_ingest_status("task-42")
         assert any(
-            rec.levelno == logging.WARNING
-            and "task-42" in rec.message
+            rec.levelno == logging.WARNING and "task-42" in rec.message
             for rec in caplog.records
         )
 
@@ -96,8 +96,7 @@ class TestLoggingLevel:
             with patch.object(c, "_request", side_effect=Exception("boom")):
                 c.rag_ingest_start(files=[f], collection="mycol")
         assert any(
-            rec.levelno == logging.WARNING
-            and "mycol" in rec.message
+            rec.levelno == logging.WARNING and "mycol" in rec.message
             for rec in caplog.records
         )
 

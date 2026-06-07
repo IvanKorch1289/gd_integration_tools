@@ -28,6 +28,7 @@ def service() -> AdminService:
 
 # ── config ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_config_returns_settings_dump(service: AdminService) -> None:
     with patch("src.backend.services.core.admin.settings") as mock_settings:
@@ -37,6 +38,7 @@ async def test_get_config_returns_settings_dump(service: AdminService) -> None:
 
 
 # ── toggle route ────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_toggle_route_enables(service: AdminService) -> None:
@@ -68,6 +70,7 @@ async def test_toggle_route_raises_404_when_missing(service: AdminService) -> No
 
 
 # ── cache ───────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_list_cache_keys(service: AdminService) -> None:
@@ -131,6 +134,7 @@ async def test_invalidate_table(service: AdminService) -> None:
 
 # ── introspection ───────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_services(service: AdminService) -> None:
     with patch("src.backend.services.core.admin._list_services", return_value=["svc"]):
@@ -183,7 +187,9 @@ async def test_toggle_feature_flag(service: AdminService) -> None:
         result = await service.toggle_feature_flag("flag_a", enable=False)
         assert result["flag"] == "flag_a"
         assert result["enabled"] is False
-        mock_registry.toggle_feature_flag.assert_called_once_with("flag_a", enable=False)
+        mock_registry.toggle_feature_flag.assert_called_once_with(
+            "flag_a", enable=False
+        )
 
 
 @pytest.mark.asyncio
@@ -202,7 +208,8 @@ async def test_system_info(service: AdminService) -> None:
                 "src.backend.services.core.admin.disabled_feature_flags", {"f1"}
             ):
                 with patch(
-                    "src.backend.services.core.admin._list_services", return_value=["svc"]
+                    "src.backend.services.core.admin._list_services",
+                    return_value=["svc"],
                 ):
                     result = await service.system_info()
                     assert result["routes_total"] == 1
@@ -212,6 +219,7 @@ async def test_system_info(service: AdminService) -> None:
 
 
 # ── slo report ──────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_slo_report(service: AdminService) -> None:
@@ -224,6 +232,7 @@ async def test_slo_report(service: AdminService) -> None:
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_admin_service_singleton() -> None:
     s1 = get_admin_service()

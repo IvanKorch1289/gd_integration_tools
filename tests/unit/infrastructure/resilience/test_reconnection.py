@@ -104,9 +104,7 @@ async def test_no_reconnect_failure(mock_sleep, _patch_metrics):
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_reconnect_n_success_after_failures(mock_sleep, _patch_metrics):
-    dial = AsyncMock(
-        side_effect=[ConnectionError("e1"), ConnectionError("e2"), "ok"]
-    )
+    dial = AsyncMock(side_effect=[ConnectionError("e1"), ConnectionError("e2"), "ok"])
     strategy = ReconnectN(attempts=3, initial_delay=1.0, multiplier=2.0)
     result = await strategy.run("test-client", dial)
 
@@ -162,9 +160,7 @@ async def test_reconnect_forever_success_after_failures(mock_sleep, _patch_metri
             "success",
         ]
     )
-    strategy = ReconnectForever(
-        initial_delay=1.0, max_delay=5.0, multiplier=2.0
-    )
+    strategy = ReconnectForever(initial_delay=1.0, max_delay=5.0, multiplier=2.0)
     result = await strategy.run("test-client", dial)
 
     assert result == "success"
@@ -194,9 +190,7 @@ async def test_reconnect_forever_backoff_capped_at_max_delay(mock_sleep):
             "success",
         ]
     )
-    strategy = ReconnectForever(
-        initial_delay=1.0, max_delay=3.0, multiplier=2.0
-    )
+    strategy = ReconnectForever(initial_delay=1.0, max_delay=3.0, multiplier=2.0)
     result = await strategy.run("test-client", dial)
 
     assert result == "success"

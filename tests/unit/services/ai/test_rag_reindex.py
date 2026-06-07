@@ -31,6 +31,7 @@ def service() -> RagReindexService:
 
 # ── ReindexReport ───────────────────────────────────────────────
 
+
 def test_reindex_report_to_dict() -> None:
     report = ReindexReport(
         namespace="docs",
@@ -47,13 +48,15 @@ def test_reindex_report_to_dict() -> None:
 
 # ── reindex_namespace with injected rag ─────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_reindex_namespace_no_store_skips(service: RagReindexService) -> None:
     mock_rag = MagicMock()
     mock_rag._store = None
     svc = RagReindexService(rag_service=mock_rag)
     with patch(
-        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint", return_value="fp1"
+        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint",
+        return_value="fp1",
     ):
         report = await svc.reindex_namespace("ns1")
     assert report.namespace == "ns1"
@@ -62,13 +65,16 @@ async def test_reindex_namespace_no_store_skips(service: RagReindexService) -> N
 
 
 @pytest.mark.asyncio
-async def test_reindex_namespace_store_without_scroll_where(service: RagReindexService) -> None:
+async def test_reindex_namespace_store_without_scroll_where(
+    service: RagReindexService,
+) -> None:
     mock_rag = MagicMock()
     mock_rag._store = MagicMock()
     del mock_rag._store.scroll_where
     svc = RagReindexService(rag_service=mock_rag)
     with patch(
-        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint", return_value="fp1"
+        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint",
+        return_value="fp1",
     ):
         report = await svc.reindex_namespace("ns1")
     assert report.total_scanned == 0
@@ -86,7 +92,8 @@ async def test_reindex_namespace_detects_stale(service: RagReindexService) -> No
     mock_rag._store = mock_store
     svc = RagReindexService(rag_service=mock_rag)
     with patch(
-        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint", return_value="fp1"
+        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint",
+        return_value="fp1",
     ):
         report = await svc.reindex_namespace("ns1")
     assert report.total_scanned == 3
@@ -95,7 +102,9 @@ async def test_reindex_namespace_detects_stale(service: RagReindexService) -> No
 
 
 @pytest.mark.asyncio
-async def test_reindex_namespace_ignores_missing_metadata(service: RagReindexService) -> None:
+async def test_reindex_namespace_ignores_missing_metadata(
+    service: RagReindexService,
+) -> None:
     mock_store = AsyncMock()
     mock_store.scroll_where.return_value = [
         {"metadata": None},
@@ -106,7 +115,8 @@ async def test_reindex_namespace_ignores_missing_metadata(service: RagReindexSer
     mock_rag._store = mock_store
     svc = RagReindexService(rag_service=mock_rag)
     with patch(
-        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint", return_value="fp1"
+        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint",
+        return_value="fp1",
     ):
         report = await svc.reindex_namespace("ns1")
     assert report.total_scanned == 3
@@ -114,14 +124,17 @@ async def test_reindex_namespace_ignores_missing_metadata(service: RagReindexSer
 
 
 @pytest.mark.asyncio
-async def test_reindex_namespace_scroll_where_raises(service: RagReindexService) -> None:
+async def test_reindex_namespace_scroll_where_raises(
+    service: RagReindexService,
+) -> None:
     mock_store = AsyncMock()
     mock_store.scroll_where.side_effect = RuntimeError("db down")
     mock_rag = MagicMock()
     mock_rag._store = mock_store
     svc = RagReindexService(rag_service=mock_rag)
     with patch(
-        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint", return_value="fp1"
+        "src.backend.services.ai.rag_ingest_service._chunker_fingerprint",
+        return_value="fp1",
     ):
         report = await svc.reindex_namespace("ns1")
     assert report.total_scanned == 0
@@ -140,29 +153,27 @@ async def test_reindex_namespace_uses_provided_hash(service: RagReindexService) 
 
 # ── _ensure_rag via app state ───────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_ensure_rag_from_app_state() -> None:
     mock_rag = MagicMock()
     mock_app = MagicMock()
     mock_app.state.rag_service = mock_rag
-    with patch(
-        "src.backend.core.di.app_state.get_app_ref", return_value=mock_app
-    ):
+    with patch("src.backend.core.di.app_state.get_app_ref", return_value=mock_app):
         svc = RagReindexService()
         rag = svc._ensure_rag()
         assert rag is mock_rag
 
 
 def test_ensure_rag_raises_when_missing() -> None:
-    with patch(
-        "src.backend.core.di.app_state.get_app_ref", return_value=None
-    ):
+    with patch("src.backend.core.di.app_state.get_app_ref", return_value=None):
         svc = RagReindexService()
         with pytest.raises(RuntimeError, match="rag_service не зарегистрирован"):
             svc._ensure_rag()
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_rag_reindex_service_singleton() -> None:
     s1 = get_rag_reindex_service()

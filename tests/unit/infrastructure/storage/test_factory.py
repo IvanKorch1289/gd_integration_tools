@@ -29,7 +29,9 @@ class _FakeSettingsNoStorage:
     pass
 
 
-def test_get_local_fs_storage_uses_settings_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_local_fs_storage_uses_settings_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", _FakeSettings(), raising=False
     )
@@ -40,7 +42,9 @@ def test_get_local_fs_storage_uses_settings_path(monkeypatch: pytest.MonkeyPatch
     assert storage._base == Path("/tmp/fake_storage")
 
 
-def test_get_local_fs_storage_fallback_on_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_local_fs_storage_fallback_on_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", object(), raising=False
     )
@@ -73,7 +77,9 @@ def test_get_object_storage_non_local_fallback_and_warns(
 
 def test_get_object_storage_exception_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettingsNoStorage(), raising=False
+        "src.backend.core.config.settings.settings",
+        _FakeSettingsNoStorage(),
+        raising=False,
     )
     get_object_storage.cache_clear()
     storage = get_object_storage()

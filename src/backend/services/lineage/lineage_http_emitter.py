@@ -23,6 +23,7 @@ Resilience:
 * Thread-safe (lock для buffer).
 * Lazy HTTP: import urllib внутри метода (избегаем import-time side effects).
 """
+
 from __future__ import annotations
 
 import logging
@@ -46,7 +47,14 @@ _log = logging.getLogger(__name__)
 class OpenLineageHttpConfig:
     """Immutable config для HTTP emitter."""
 
-    __slots__ = ("url", "namespace", "timeout_s", "batch_size", "max_queue", "auth_token")
+    __slots__ = (
+        "url",
+        "namespace",
+        "timeout_s",
+        "batch_size",
+        "max_queue",
+        "auth_token",
+    )
 
     def __init__(
         self,
@@ -115,8 +123,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
                 del self._pending[:drop]
                 self._dropped_count += drop
                 _log.warning(
-                    "OpenLineage emitter queue overflow: dropped %d oldest events",
-                    drop,
+                    "OpenLineage emitter queue overflow: dropped %d oldest events", drop
                 )
             self._pending.append(ol_event)
             should_flush = len(self._pending) >= self._config.batch_size
@@ -189,7 +196,12 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
                     "OpenLineage HTTP %d for %d events", resp.status, len(batch)
                 )
                 return False
-        except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError) as e:
+        except (
+            urllib.error.URLError,
+            urllib.error.HTTPError,
+            OSError,
+            TimeoutError,
+        ) as e:
             _log.warning("OpenLineage POST failed: %s", e)
             return False
 

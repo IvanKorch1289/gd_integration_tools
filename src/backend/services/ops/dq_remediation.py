@@ -30,6 +30,7 @@ Design:
 * Returns original value if no remediation applies (idempotent).
 * Logs WARNING on each remediation для observability.
 """
+
 from __future__ import annotations
 
 import logging
@@ -67,6 +68,7 @@ class Remediator(ABC):
 
 # ── Null / Empty replacement ──────────────────────────────────────────
 
+
 class NullDefaultRemediator(Remediator):
     """Replace ``None`` / empty-string / empty-collection с ``params['default']``."""
 
@@ -84,6 +86,7 @@ class NullDefaultRemediator(Remediator):
 
 
 # ── Numeric range clipping ────────────────────────────────────────────
+
 
 class RangeClipRemediator(Remediator):
     """Clip numeric value в [min, max] range.
@@ -113,6 +116,7 @@ class RangeClipRemediator(Remediator):
 
 # ── Regex mask for non-matching strings ───────────────────────────────
 
+
 class RegexMaskRemediator(Remediator):
     """Replace strings not matching ``params['pattern']`` с ``params['mask']``.
 
@@ -138,14 +142,13 @@ class RegexMaskRemediator(Remediator):
             return value
         if not match or (not match.group() and not params.get("allow_empty", False)):
             mask = params.get("mask", self.mask)
-            _log.debug(
-                "DQ remediator: masking non-matching %r → %r", value, mask
-            )
+            _log.debug("DQ remediator: masking non-matching %r → %r", value, mask)
             return mask
         return value
 
 
 # ── Enum fallback ────────────────────────────────────────────────────
+
 
 class EnumFallbackRemediator(Remediator):
     """Replace values not in ``params['allowed']`` с ``params['fallback']``."""
@@ -171,6 +174,7 @@ class EnumFallbackRemediator(Remediator):
 
 # ── Type coercion ────────────────────────────────────────────────────
 
+
 class TypeCoerceRemediator(Remediator):
     """Convert value в ``params['target_type']`` (int/float/str/bool).
 
@@ -184,7 +188,13 @@ class TypeCoerceRemediator(Remediator):
         "int": int,
         "float": float,
         "str": str,
-        "bool": lambda v: v if isinstance(v, bool) else bool(v) if isinstance(v, (int, float, str)) else v,
+        "bool": lambda v: (
+            v
+            if isinstance(v, bool)
+            else bool(v)
+            if isinstance(v, (int, float, str))
+            else v
+        ),
     }
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
@@ -195,18 +205,22 @@ class TypeCoerceRemediator(Remediator):
         if converter is None:
             _log.warning("DQ remediator: unknown target_type %r", target)
             return value
-        if isinstance(value, {"int": int, "float": float, "str": str, "bool": bool}.get(target, type(value))):
+        if isinstance(
+            value,
+            {"int": int, "float": float, "str": str, "bool": bool}.get(
+                target, type(value)
+            ),
+        ):
             return value
         try:
             return converter(value)
         except (ValueError, TypeError) as e:
-            _log.debug(
-                "DQ remediator: failed to coerce %r → %s: %s", value, target, e
-            )
+            _log.debug("DQ remediator: failed to coerce %r → %s: %s", value, target, e)
             return value
 
 
 # ── Composite ───────────────────────────────────────────────────────
+
 
 class CompositeRemediator(Remediator):
     """Chain of remediators. Применяются в порядке, каждый видит output предыдущего.
@@ -233,6 +247,7 @@ class CompositeRemediator(Remediator):
 
 
 # ── Factory ──────────────────────────────────────────────────────────
+
 
 def build_remediator(check: str, params: dict[str, Any]) -> Remediator | None:
     """Build remediator по check type (mirrors DataQualityMonitor check names).

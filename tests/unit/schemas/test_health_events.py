@@ -11,7 +11,9 @@ from src.backend.schemas.health_events import HealthTransitionEvent
 @pytest.mark.unit
 class TestHealthTransitionEvent:
     def test_create_minimal(self) -> None:
-        event = HealthTransitionEvent(previous_status="degraded", current_status="healthy")
+        event = HealthTransitionEvent(
+            previous_status="degraded", current_status="healthy"
+        )
         assert event.previous_status == "degraded"
         assert event.current_status == "healthy"
         assert event.components == {}
@@ -22,9 +24,7 @@ class TestHealthTransitionEvent:
             "queue": {"status": "degraded", "message": "backpressure"},
         }
         event = HealthTransitionEvent(
-            previous_status="healthy",
-            current_status="degraded",
-            components=components,
+            previous_status="healthy", current_status="degraded", components=components
         )
         assert event.components == components
 

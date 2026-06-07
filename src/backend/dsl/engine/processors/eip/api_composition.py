@@ -85,11 +85,7 @@ def _default_http_fetcher() -> HTTPFetcher:
     """Lazy HTTP fetcher provider — imports только на actual call, не at __init__."""
 
     async def fetcher(
-        url: str,
-        method: str,
-        headers: dict[str, str],
-        body: Any,
-        timeout: float,
+        url: str, method: str, headers: dict[str, str], body: Any, timeout: float
     ) -> Any:
         from src.backend.infrastructure.external_apis.http_client import get_http_client
 
@@ -249,9 +245,7 @@ class APICompositionProcessor(BaseProcessor):
         self._cache = cache_store or get_cache_store()
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         tasks = [self._fetch_source(s) for s in self._sources]
         raw_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -273,7 +267,8 @@ class APICompositionProcessor(BaseProcessor):
 
         # If any source failed without fallback → fail exchange
         failed_sources = [
-            s.name for s in self._sources
+            s.name
+            for s in self._sources
             if s.name in errors and s.fallback_value is None
         ]
         if failed_sources:
@@ -323,11 +318,7 @@ class APICompositionProcessor(BaseProcessor):
             url = f"{url}{sep}{query}"
 
         response = await self._fetcher(
-            url,
-            source.method,
-            source.headers,
-            source.body,
-            per_source_timeout,
+            url, source.method, source.headers, source.body, per_source_timeout
         )
 
         # Transform

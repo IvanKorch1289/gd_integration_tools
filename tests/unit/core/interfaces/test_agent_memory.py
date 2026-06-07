@@ -66,9 +66,7 @@ class _FakeAgentMemory:
     ) -> str:
         self.call_log.append(("save_message", tenant_id, session_id, role))
         mid = self._id("m")
-        msg = MemoryMessage(
-            role=role, content=content, ts=0.0, metadata=metadata or {}
-        )
+        msg = MemoryMessage(role=role, content=content, ts=0.0, metadata=metadata or {})
         self.messages.setdefault((tenant_id, session_id), []).append(msg)
         return mid
 
@@ -240,10 +238,7 @@ async def test_save_message_then_get_messages() -> None:
     """``save_message`` followed by ``get_messages`` returns the saved message."""
     backend = _FakeAgentMemory()
     mid = await backend.save_message(
-        tenant_id="acme",
-        session_id="s1",
-        role="user",
-        content="hello",
+        tenant_id="acme", session_id="s1", role="user", content="hello"
     )
     assert mid.startswith("m_")
     msgs = await backend.get_messages(tenant_id="acme", session_id="s1")
@@ -263,9 +258,7 @@ async def test_recall_semantic_top_k_respected() -> None:
             confidence=0.8,
             source_session_id="s1",
         )
-    found = await backend.recall_semantic(
-        tenant_id="acme", query="cat", top_k=3
-    )
+    found = await backend.recall_semantic(tenant_id="acme", query="cat", top_k=3)
     assert len(found) == 3
     assert all("cat" in f.content for f in found)
 
@@ -276,11 +269,7 @@ async def test_metadata_propagation() -> None:
     backend = _FakeAgentMemory()
     meta = {"model": "gpt-4", "cost_usd": 0.002, "tenant_tag": "acme"}
     await backend.save_message(
-        tenant_id="acme",
-        session_id="s1",
-        role="assistant",
-        content="ok",
-        metadata=meta,
+        tenant_id="acme", session_id="s1", role="assistant", content="ok", metadata=meta
     )
     msgs = await backend.get_messages(tenant_id="acme", session_id="s1")
     assert msgs[0].metadata == meta

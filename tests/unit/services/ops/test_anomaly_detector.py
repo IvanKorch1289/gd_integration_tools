@@ -21,6 +21,7 @@ def detector() -> AnomalyDetector:
 
 # ── observe: not enough samples ─────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_observe_returns_none_until_10_samples(detector: AnomalyDetector) -> None:
     for i in range(9):
@@ -30,8 +31,11 @@ async def test_observe_returns_none_until_10_samples(detector: AnomalyDetector) 
 
 # ── observe: normal values after warmup ─────────────────────────
 
+
 @pytest.mark.asyncio
-async def test_observe_returns_none_for_normal_values(detector: AnomalyDetector) -> None:
+async def test_observe_returns_none_for_normal_values(
+    detector: AnomalyDetector,
+) -> None:
     for i in range(10):
         await detector.observe("cpu", float(i))
     result = await detector.observe("cpu", 5.0)
@@ -39,6 +43,7 @@ async def test_observe_returns_none_for_normal_values(detector: AnomalyDetector)
 
 
 # ── observe: anomaly detected ───────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_observe_detects_anomaly(detector: AnomalyDetector) -> None:
@@ -62,6 +67,7 @@ async def test_observe_critical_at_z5(detector: AnomalyDetector) -> None:
 
 # ── observe: zero stddev ────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_observe_no_anomaly_when_zero_stddev(detector: AnomalyDetector) -> None:
     for _ in range(10):
@@ -71,6 +77,7 @@ async def test_observe_no_anomaly_when_zero_stddev(detector: AnomalyDetector) ->
 
 
 # ── observe: per-metric isolation ───────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_observe_isolates_metrics(detector: AnomalyDetector) -> None:
@@ -82,6 +89,7 @@ async def test_observe_isolates_metrics(detector: AnomalyDetector) -> None:
 
 
 # ── get_stats ───────────────────────────────────────────────────
+
 
 def test_get_stats_empty_metric(detector: AnomalyDetector) -> None:
     stats = detector.get_stats("cpu")
@@ -102,6 +110,7 @@ async def test_get_stats_with_samples(detector: AnomalyDetector) -> None:
 
 # ── list_metrics ────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_metrics(detector: AnomalyDetector) -> None:
     await detector.observe("cpu", 1.0)
@@ -111,6 +120,7 @@ async def test_list_metrics(detector: AnomalyDetector) -> None:
 
 # ── set_notification_channels ───────────────────────────────────
 
+
 def test_set_notification_channels(detector: AnomalyDetector) -> None:
     channels = [{"channel": "email", "to": "ops@bank.ru"}]
     detector.set_notification_channels(channels)
@@ -118,6 +128,7 @@ def test_set_notification_channels(detector: AnomalyDetector) -> None:
 
 
 # ── _notify integration ─────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_notify_called_on_anomaly(detector: AnomalyDetector) -> None:
@@ -164,6 +175,7 @@ async def test_notify_skips_when_no_channels(detector: AnomalyDetector) -> None:
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_anomaly_detector_singleton() -> None:
     d1 = get_anomaly_detector()

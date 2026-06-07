@@ -1,4 +1,5 @@
 """Chat: AI chat endpoint (ai/chat)."""
+
 from __future__ import annotations
 
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient

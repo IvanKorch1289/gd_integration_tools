@@ -200,9 +200,7 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
 
     async def stream() -> Any:
         """Генератор SSE-событий: start → result|error → end."""
-        yield (
-            f"event: start\ndata: {encode_json_str({'action': body.action})}\n\n"
-        )
+        yield (f"event: start\ndata: {encode_json_str({'action': body.action})}\n\n")
         try:
             bridge = await dispatch_action_or_dsl(
                 action_id=body.action,

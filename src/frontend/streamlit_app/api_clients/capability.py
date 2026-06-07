@@ -1,4 +1,5 @@
 """Capability catalog: catalog + processors + audit + graphs + scaffold (Sprint 14)."""
+
 from __future__ import annotations
 
 from typing import Any

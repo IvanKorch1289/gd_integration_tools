@@ -5,6 +5,7 @@ Apache Camel references:
 - Message Filter: filter.html
 - Sampling: sampling.html
 """
+
 from __future__ import annotations
 
 import pytest
@@ -13,7 +14,6 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
     ContentBasedRouter,
-    
     SamplingProcessor,
 )
 
@@ -28,13 +28,16 @@ def _ctx() -> ExecutionContext:
 
 # ── ContentBasedRouter ───────────────────────────────────────────────
 
+
 class TestContentBasedRouter:
     @pytest.mark.asyncio
     async def test_first_matching_route_wins(self) -> None:
-        router = ContentBasedRouter(routes=[
-            (lambda e: e.in_message.body.get("x") == 1, "route_a"),
-            (lambda e: e.in_message.body.get("x") == 2, "route_b"),
-        ])
+        router = ContentBasedRouter(
+            routes=[
+                (lambda e: e.in_message.body.get("x") == 1, "route_a"),
+                (lambda e: e.in_message.body.get("x") == 2, "route_b"),
+            ]
+        )
         ex = _ex({"x": 2})
         await router.process(ex, _ctx())
         assert ex.get_property("routing.choice.endpoint") == "route_b"
@@ -42,10 +45,12 @@ class TestContentBasedRouter:
 
     @pytest.mark.asyncio
     async def test_first_route_matched_even_if_later_matches(self) -> None:
-        router = ContentBasedRouter(routes=[
-            (lambda e: True, "first"),  # always matches
-            (lambda e: True, "second"),
-        ])
+        router = ContentBasedRouter(
+            routes=[
+                (lambda e: True, "first"),  # always matches
+                (lambda e: True, "second"),
+            ]
+        )
         ex = _ex({})
         await router.process(ex, _ctx())
         assert ex.get_property("routing.choice.endpoint") == "first"
@@ -76,8 +81,7 @@ class TestContentBasedRouter:
             raise ValueError("boom")
 
         router = ContentBasedRouter(
-            routes=[(bad_pred, "x")],
-            default_endpoint="fallback",
+            routes=[(bad_pred, "x")], default_endpoint="fallback"
         )
         ex = _ex({})
         await router.process(ex, _ctx())
@@ -89,8 +93,7 @@ class TestContentBasedRouter:
 
     def test_to_spec(self) -> None:
         router = ContentBasedRouter(
-            routes=[(lambda e: True, "a"), (lambda e: False, "b")],
-            default_endpoint="d",
+            routes=[(lambda e: True, "a"), (lambda e: False, "b")], default_endpoint="d"
         )
         spec = router.to_spec()
         assert spec == {
@@ -98,7 +101,6 @@ class TestContentBasedRouter:
             "routes": 2,
             "default_endpoint": "d",
         }
-
 
     def test_construction_validation(self) -> None:
         with pytest.raises(ValueError, match="rate OR fraction"):
@@ -137,6 +139,7 @@ class TestContentBasedRouter:
     @pytest.mark.asyncio
     async def test_time_window_bucketing(self) -> None:
         import asyncio
+
         s = SamplingProcessor(time_window_ms=100, max_in_window=2, seed=42)
         passed = 0
         for _ in range(10):
@@ -157,16 +160,11 @@ class TestContentBasedRouter:
         assert ex.get_property("sampling.sampled_out") is True
 
     def test_to_spec_all_modes(self) -> None:
-        assert SamplingProcessor(rate=10).to_spec() == {
-            "type": "sampling", "rate": 10
-        }
+        assert SamplingProcessor(rate=10).to_spec() == {"type": "sampling", "rate": 10}
         assert SamplingProcessor(fraction=0.1).to_spec() == {
-            "type": "sampling", "fraction": 0.1
+            "type": "sampling",
+            "fraction": 0.1,
         }
         sp = SamplingProcessor(time_window_ms=1000, max_in_window=5)
         spec = sp.to_spec()
-        assert spec == {
-            "type": "sampling",
-            "time_window_ms": 1000,
-            "max_in_window": 5,
-        }
+        assert spec == {"type": "sampling", "time_window_ms": 1000, "max_in_window": 5}

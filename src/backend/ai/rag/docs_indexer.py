@@ -42,7 +42,9 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
     """Hash-based embedder (offline/unit). Не ML-grade, но стабильный + детерминированный."""
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
-        vec[int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim] += 1.0  # noqa: S324
+        vec[
+            int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim
+        ] += 1.0  # noqa: S324
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 
@@ -61,10 +63,17 @@ def _hit(r: Any) -> dict[str, Any]:
     if isinstance(r, dict):
         pid, score, payload = r.get("id"), r.get("score"), r.get("payload", {})
     else:
-        pid, score, payload = getattr(r, "id", None), getattr(r, "score", None), getattr(r, "payload", None) or {}
-    return {"id": str(pid), "score": float(score or 0.0),
-            "document": (payload or {}).get("document", ""),
-            "metadata": {k: v for k, v in (payload or {}).items() if k != "document"}}
+        pid, score, payload = (
+            getattr(r, "id", None),
+            getattr(r, "score", None),
+            getattr(r, "payload", None) or {},
+        )
+    return {
+        "id": str(pid),
+        "score": float(score or 0.0),
+        "document": (payload or {}).get("document", ""),
+        "metadata": {k: v for k, v in (payload or {}).items() if k != "document"},
+    }
 
 
 class InMemoryQdrantFallback:
@@ -105,7 +114,8 @@ class InMemoryQdrantFallback:
             return []
         scored = sorted(
             ((p, _cosine(query_vector, v)) for p, v in vecs.items()),
-            key=lambda x: x[1], reverse=True,
+            key=lambda x: x[1],
+            reverse=True,
         )
 
         class _Hit:
@@ -126,7 +136,8 @@ class DocsIndexer:
     """
 
     def __init__(
-        self, *,
+        self,
+        *,
         qdrant_client: Any = None,
         embedding_model: str = "text-embedding-3-small",
         collection_name: str = "project_docs",
@@ -163,9 +174,12 @@ class DocsIndexer:
         except Exception:  # noqa: BLE001 — collection may not exist yet
             try:
                 from qdrant_client.models import Distance, VectorParams
+
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
-                    vectors_config=VectorParams(size=_EMBED_DIM, distance=Distance.COSINE),
+                    vectors_config=VectorParams(
+                        size=_EMBED_DIM, distance=Distance.COSINE
+                    ),
                 )
             except Exception:  # noqa: BLE001 — fallback API
                 self._qdrant.create_collection(self._collection_name)
@@ -199,11 +213,18 @@ class DocsIndexer:
         while offset < len(text):
             piece = text[offset : offset + self._chunk_size]
             if piece.strip():
-                chunks.append({
-                    "id": _h(piece), "text": piece,
-                    "metadata": {**metadata, "line": text.count("\n", 0, offset) + 1,
-                                 "chunk_index": idx, "hash": _h(piece)},
-                })
+                chunks.append(
+                    {
+                        "id": _h(piece),
+                        "text": piece,
+                        "metadata": {
+                            **metadata,
+                            "line": text.count("\n", 0, offset) + 1,
+                            "chunk_index": idx,
+                            "hash": _h(piece),
+                        },
+                    }
+                )
                 idx += 1
             offset += step
         return chunks
@@ -222,13 +243,25 @@ class DocsIndexer:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
             from qdrant_client.models import PointStruct
-            return [PointStruct(id=chunks[i]["id"], vector=vecs[i],
-                                payload={"document": chunks[i]["text"], **chunks[i]["metadata"]})
-                    for i in range(len(chunks))]
+
+            return [
+                PointStruct(
+                    id=chunks[i]["id"],
+                    vector=vecs[i],
+                    payload={"document": chunks[i]["text"], **chunks[i]["metadata"]},
+                )
+                for i in range(len(chunks))
+            ]
         except Exception:  # noqa: BLE001 — fallback path
-            return [{"id": chunks[i]["id"], "vector": vecs[i],
-                     "payload": {"document": chunks[i]["text"], **chunks[i]["metadata"]}}
-                    for i in range(len(chunks))]
+            return [
+                {
+                    "id": chunks[i]["id"],
+                    "vector": vecs[i],
+                    "payload": {"document": chunks[i]["text"], **chunks[i]["metadata"]},
+                }
+                for i in range(len(chunks))
+            ]
+
     async def index_docs(self, docs: list[Path] | None = None) -> int:
         """Discover + chunk + embed + upsert. Returns N chunks (idempotent)."""
         paths = docs if docs is not None else self.discover_docs()
@@ -242,10 +275,16 @@ class DocsIndexer:
             except OSError as exc:
                 logger.warning("docs_indexer.read_failed path=%s err=%s", path, exc)
                 continue
-            all_chunks.extend(self.chunk_text(
-                raw,
-                metadata={"source_path": str(path), "file": path.name, "file_hash": _h(raw)},
-            ))
+            all_chunks.extend(
+                self.chunk_text(
+                    raw,
+                    metadata={
+                        "source_path": str(path),
+                        "file": path.name,
+                        "file_hash": _h(raw),
+                    },
+                )
+            )
         if not all_chunks:
             return 0
         vecs = await self._embed([c["text"] for c in all_chunks])

@@ -71,13 +71,19 @@ def test_to_jsonable_list_tuple_set_frozenset() -> None:
 @pytest.mark.unit
 def test_to_jsonable_uuid() -> None:
     uid = UUID("12345678-1234-5678-1234-567812345678")
-    assert to_jsonable(uid) == {"__type__": "uuid", "value": "12345678-1234-5678-1234-567812345678"}
+    assert to_jsonable(uid) == {
+        "__type__": "uuid",
+        "value": "12345678-1234-5678-1234-567812345678",
+    }
 
 
 @pytest.mark.unit
 def test_to_jsonable_datetime() -> None:
     dt = datetime(2024, 1, 2, 3, 4, 5, 123456)
-    assert to_jsonable(dt) == {"__type__": "datetime", "value": "2024-01-02T03:04:05.123456"}
+    assert to_jsonable(dt) == {
+        "__type__": "datetime",
+        "value": "2024-01-02T03:04:05.123456",
+    }
 
 
 @pytest.mark.unit
@@ -118,20 +124,25 @@ def test_from_jsonable_list() -> None:
 
 @pytest.mark.unit
 def test_from_jsonable_uuid() -> None:
-    assert from_jsonable({"__type__": "uuid", "value": "12345678-1234-5678-1234-567812345678"}) == UUID(
-        "12345678-1234-5678-1234-567812345678"
-    )
+    assert from_jsonable(
+        {"__type__": "uuid", "value": "12345678-1234-5678-1234-567812345678"}
+    ) == UUID("12345678-1234-5678-1234-567812345678")
 
 
 @pytest.mark.unit
 def test_from_jsonable_datetime() -> None:
     dt = datetime(2024, 1, 2, 3, 4, 5, 123456)
-    assert from_jsonable({"__type__": "datetime", "value": "2024-01-02T03:04:05.123456"}) == dt
+    assert (
+        from_jsonable({"__type__": "datetime", "value": "2024-01-02T03:04:05.123456"})
+        == dt
+    )
 
 
 @pytest.mark.unit
 def test_from_jsonable_date() -> None:
-    assert from_jsonable({"__type__": "date", "value": "2024-06-05"}) == date(2024, 6, 5)
+    assert from_jsonable({"__type__": "date", "value": "2024-06-05"}) == date(
+        2024, 6, 5
+    )
 
 
 @pytest.mark.unit

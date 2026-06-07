@@ -131,9 +131,7 @@ class TestGetMaxRetriesForPath:
         assert c._get_max_retries_for_path("/api/v1/admin/feature-flags") == 7
 
     def test_override_path_can_disable(self) -> None:
-        c = BaseAPIClient(
-            max_retries=3, retry_overrides={"/api/v1/admin/audit": 0}
-        )
+        c = BaseAPIClient(max_retries=3, retry_overrides={"/api/v1/admin/audit": 0})
         assert c._get_max_retries_for_path("/api/v1/admin/audit") == 0
 
     def test_override_does_not_apply_to_unrelated_path(self) -> None:
@@ -150,9 +148,7 @@ class TestGetMaxRetriesForPath:
         (например, для flaky liveness probe retry помогает). Built-in 0
         срабатывает только если path не указан в ``retry_overrides``.
         """
-        c = BaseAPIClient(
-            max_retries=3, retry_overrides={"/health": 10}
-        )
+        c = BaseAPIClient(max_retries=3, retry_overrides={"/health": 10})
         # Explicit override выигрывает над built-in default
         assert c._get_max_retries_for_path("/health") == 10
         # Other health paths сохраняют built-in 0
@@ -208,9 +204,7 @@ class TestRetryBehaviorWithPathPolicy:
     def test_override_5_makes_6_calls(self) -> None:
         """``retry_overrides={path: 5}`` + 503 → 6 calls (1 + 5)."""
         path = "/api/v1/admin/feature-flags/x"
-        c = BaseAPIClient(
-            max_retries=3, retry_overrides={path: 5}
-        )
+        c = BaseAPIClient(max_retries=3, retry_overrides={path: 5})
         resp_503 = _make_503_response()
         mock_client = _make_context_mock(resp_503)
         with patch.object(httpx, "Client", return_value=mock_client):
@@ -222,9 +216,7 @@ class TestRetryBehaviorWithPathPolicy:
     def test_override_0_makes_single_call(self) -> None:
         """``retry_overrides={path: 0}`` + 503 → 1 call (no retry)."""
         path = "/api/v1/admin/audit"
-        c = BaseAPIClient(
-            max_retries=3, retry_overrides={path: 0}
-        )
+        c = BaseAPIClient(max_retries=3, retry_overrides={path: 0})
         resp_503 = _make_503_response()
         mock_client = _make_context_mock(resp_503)
         with patch.object(httpx, "Client", return_value=mock_client):

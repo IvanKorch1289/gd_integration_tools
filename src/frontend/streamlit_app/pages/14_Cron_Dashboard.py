@@ -17,7 +17,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Cron Dashboard', '')
+setup_page("Cron Dashboard", "")
 st.header("Cron Schedule Dashboard — Sprint 12 K5 W3")
 st.caption(
     "Все scheduled workflows: cron-expr, next/last run, success rate (7d). "

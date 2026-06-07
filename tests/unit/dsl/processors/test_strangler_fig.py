@@ -91,13 +91,9 @@ def test_processor_validates_split_pct() -> None:
         return b
 
     with pytest.raises(ValueError, match="traffic_split_pct должен быть 0-100"):
-        StranglerFigProcessor(
-            old_handler=h, new_handler=h, traffic_split_pct=150.0
-        )
+        StranglerFigProcessor(old_handler=h, new_handler=h, traffic_split_pct=150.0)
     with pytest.raises(ValueError, match="traffic_split_pct должен быть 0-100"):
-        StranglerFigProcessor(
-            old_handler=h, new_handler=h, traffic_split_pct=-1.0
-        )
+        StranglerFigProcessor(old_handler=h, new_handler=h, traffic_split_pct=-1.0)
 
 
 def test_processor_validates_handlers() -> None:

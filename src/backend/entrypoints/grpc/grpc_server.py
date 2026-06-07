@@ -396,9 +396,7 @@ class AuthInterceptor:
         self._expected_key = expected_key
 
     async def intercept_service(
-        self,
-        continuation: Any,
-        handler_call_details: Any,
+        self, continuation: Any, handler_call_details: Any
     ) -> Any:
         from grpc import StatusCode
         from grpc.aio import AbortError
@@ -412,10 +410,7 @@ class AuthInterceptor:
                 "gRPC unauthenticated request: method=%s", handler_call_details.method
             )
 
-            async def _abort(
-                _request_or_iterator: Any,
-                context: Any,
-            ) -> None:
+            async def _abort(_request_or_iterator: Any, context: Any) -> None:
                 try:
                     await context.abort(
                         StatusCode.UNAUTHENTICATED, "invalid or missing API key"

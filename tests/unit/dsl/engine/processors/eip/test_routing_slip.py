@@ -2,6 +2,7 @@
 
 Apache Camel Routing Slip: https://camel.apache.org/components/latest/eips/routingSlip.html
 """
+
 from __future__ import annotations
 
 import pytest
@@ -34,6 +35,7 @@ class _TagProcessor(BaseProcessor):
 
 def _exchange(body: str = "", headers: dict | None = None) -> Exchange:
     from src.backend.dsl.engine.exchange import Message
+
     msg = Message(body=body, headers=headers or {})
     return Exchange(in_message=msg)
 
@@ -43,6 +45,7 @@ def _ctx() -> ExecutionContext:
 
 
 # ── SimpleRegistry ─────────────────────────────────────────────────────
+
 
 class TestSimpleRegistry:
     def test_register_and_get(self) -> None:
@@ -73,6 +76,7 @@ class TestSimpleRegistry:
 
 # ── RoutingSlipProcessor ──────────────────────────────────────────────
 
+
 class TestRoutingSlip:
     @pytest.mark.asyncio
     async def test_executes_steps_in_order(self) -> None:
@@ -83,8 +87,7 @@ class TestRoutingSlip:
 
         ex = _exchange("start")
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "b", "c"],
-            registry=reg,
+            steps_resolver=lambda e: ["a", "b", "c"], registry=reg
         )
         await slip.process(ex, _ctx())
         # Last processor wins
@@ -95,10 +98,7 @@ class TestRoutingSlip:
     @pytest.mark.asyncio
     async def test_empty_steps_skips(self) -> None:
         reg = SimpleRegistry()
-        slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: [],
-            registry=reg,
-        )
+        slip = RoutingSlipProcessor(steps_resolver=lambda e: [], registry=reg)
         ex = _exchange("body")
         await slip.process(ex, _ctx())
         assert ex.in_message.body == "body"  # unchanged
@@ -108,9 +108,7 @@ class TestRoutingSlip:
         reg = SimpleRegistry()
         reg.register("a", _TagProcessor("a"))  # 'a' present, 'missing' absent
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "missing"],
-            registry=reg,
-            strict=True,
+            steps_resolver=lambda e: ["a", "missing"], registry=reg, strict=True
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -122,9 +120,7 @@ class TestRoutingSlip:
         reg = SimpleRegistry()
         reg.register("a", _TagProcessor("a"))
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "missing", "a"],
-            registry=reg,
-            strict=False,
+            steps_resolver=lambda e: ["a", "missing", "a"], registry=reg, strict=False
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -135,9 +131,7 @@ class TestRoutingSlip:
     async def test_max_steps_exceeded(self) -> None:
         reg = SimpleRegistry()
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a"] * 100,
-            registry=reg,
-            max_steps=50,
+            steps_resolver=lambda e: ["a"] * 100, registry=reg, max_steps=50
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -177,8 +171,7 @@ class TestRoutingSlip:
         for t in ["a", "b", "c"]:
             reg.register(t, _TagProcessor(t))
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "b", "c"],
-            registry=reg,
+            steps_resolver=lambda e: ["a", "b", "c"], registry=reg
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -202,6 +195,7 @@ class TestRoutingSlip:
 
 
 # ── to_spec serialization ─────────────────────────────────────────────
+
 
 class TestToSpec:
     def test_to_spec_includes_config(self) -> None:

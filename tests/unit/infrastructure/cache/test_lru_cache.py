@@ -14,15 +14,11 @@ def _reset_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.lru_cache._metrics_initialized", False
     )
-    monkeypatch.setattr(
-        "src.backend.infrastructure.cache.lru_cache._metric_hits", None
-    )
+    monkeypatch.setattr("src.backend.infrastructure.cache.lru_cache._metric_hits", None)
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.lru_cache._metric_misses", None
     )
-    monkeypatch.setattr(
-        "src.backend.infrastructure.cache.lru_cache._metric_sets", None
-    )
+    monkeypatch.setattr("src.backend.infrastructure.cache.lru_cache._metric_sets", None)
 
 
 def test_init_validates_max_size() -> None:

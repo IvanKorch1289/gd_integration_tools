@@ -2,6 +2,7 @@
 
 v21 §2.1 production transport. Tests use stdlib mock для urllib.request.urlopen.
 """
+
 from __future__ import annotations
 
 import json
@@ -14,10 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.backend.services.lineage import (
-    OpenLineageHttpConfig,
-    OpenLineageHttpEmitter,
-)
+from src.backend.services.lineage import OpenLineageHttpConfig, OpenLineageHttpEmitter
 
 
 @contextmanager
@@ -52,13 +50,19 @@ def _event(name: str = "test", run_id: str = "run-1", **attrs: Any) -> dict[str,
         "run_id": run_id,
         "event_type": "node.create",
         "timestamp": 1_700_000_000.0,
-        "node": {"id": f"id-{name}", "name": name, "type": "dataset", "attributes": attrs},
+        "node": {
+            "id": f"id-{name}",
+            "name": name,
+            "type": "dataset",
+            "attributes": attrs,
+        },
         "parent_ids": [],
         "payload": {},
     }
 
 
 # ── Config validation ──────────────────────────────────────────────────
+
 
 class TestOpenLineageHttpConfig:
     def test_valid_http(self) -> None:
@@ -93,6 +97,7 @@ class TestOpenLineageHttpConfig:
 
 
 # ── HTTP behavior ──────────────────────────────────────────────────────
+
 
 class TestOpenLineageHttpEmitter:
     def test_sends_event_on_batch_size_reached(self) -> None:
@@ -194,7 +199,9 @@ class TestOpenLineageHttpEmitter:
         assert ev["outputs"][0]["name"] == "id-orders.create"
 
     def test_auth_token_in_header(self) -> None:
-        cfg = OpenLineageHttpConfig("http://marquez:5000", auth_token="secret-123", batch_size=1)
+        cfg = OpenLineageHttpConfig(
+            "http://marquez:5000", auth_token="secret-123", batch_size=1
+        )
         em = OpenLineageHttpEmitter(cfg)
 
         sent_headers: dict[str, str] = {}
@@ -234,11 +241,10 @@ class TestOpenLineageHttpEmitter:
 
 # ── Drop-oldest on overflow ────────────────────────────────────────────
 
+
 class TestOverflow:
     def test_drop_oldest_on_queue_overflow(self) -> None:
-        cfg = OpenLineageHttpConfig(
-            "http://marquez:5000", batch_size=10, max_queue=10
-        )
+        cfg = OpenLineageHttpConfig("http://marquez:5000", batch_size=10, max_queue=10)
         em = OpenLineageHttpEmitter(cfg)
         # All POSTs fail → events stay in buffer → overflow drops oldest
         with _mock_urlopen([urllib.error.URLError("fail")] * 20):
@@ -252,6 +258,7 @@ class TestOverflow:
 
 
 # ── Thread safety ──────────────────────────────────────────────────────
+
 
 class TestThreadSafety:
     def test_concurrent_appends_dont_corrupt_buffer(self) -> None:
@@ -274,6 +281,7 @@ class TestThreadSafety:
 
 
 # ── InMemoryLineageEmitter compatibility ──────────────────────────────
+
 
 class TestInMemoryCompatibility:
     def test_list_events_still_works(self) -> None:

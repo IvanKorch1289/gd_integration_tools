@@ -22,7 +22,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Codegen Wizard', '')
+setup_page("Codegen Wizard", "")
 ROOT = Path(__file__).resolve().parents[4]
 
 

@@ -17,6 +17,7 @@ from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
 
 def _make_exchange(body: Any = None) -> Exchange[Any]:
     from src.backend.dsl.engine.exchange import ExchangeMeta
+
     msg = Message(body=body if body is not None else {}, headers={})
     return Exchange(in_message=msg, meta=ExchangeMeta())
 
@@ -97,9 +98,7 @@ class TestPlanExecuteSuccess:
         gateway = AsyncMock()
         gateway.invoke.side_effect = [planner_resp, executor_resp, verifier_resp]
 
-        with patch.object(
-            proc, "_resolve_gateway", return_value=gateway
-        ):
+        with patch.object(proc, "_resolve_gateway", return_value=gateway):
             await proc._run(exchange, AsyncMock())
 
         assert exchange.error is None
@@ -160,11 +159,11 @@ class TestPlanExecuteReplan:
 
         gateway = AsyncMock()
         gateway.invoke.side_effect = [
-            _mock_response(structured=plan1),   # plan 1
-            _mock_response(content="r1"),        # exec 1
+            _mock_response(structured=plan1),  # plan 1
+            _mock_response(content="r1"),  # exec 1
             _mock_response(structured={"verdict": "fail", "reason": "bad"}),  # verify 1
-            _mock_response(structured=plan2),   # replan
-            _mock_response(content="r2"),        # exec 2
+            _mock_response(structured=plan2),  # replan
+            _mock_response(content="r2"),  # exec 2
             _mock_response(structured={"verdict": "ok"}),  # verify 2
         ]
 
@@ -259,9 +258,7 @@ class TestPlanExecuteEdgeCases:
 class TestPlanExecuteToSpec:
     def test_to_spec_defaults(self) -> None:
         proc = PlanExecuteProcessor(
-            planner_workflow_id="p",
-            executor_workflow_id="e",
-            verifier_workflow_id="v",
+            planner_workflow_id="p", executor_workflow_id="e", verifier_workflow_id="v"
         )
         assert proc.to_spec() == {
             "plan_execute": {
@@ -289,6 +286,7 @@ class TestPlanExecuteToSpec:
 
 
 # ── helpers ──
+
 
 def _mock_response(
     *, content: str = "", structured: dict[str, Any] | None = None

@@ -17,6 +17,7 @@ Apache Camel Routing Slip: https://camel.apache.org/components/latest/eips/routi
 Apache Camel Content-Based Router: https://camel.apache.org/components/latest/eips/contentBasedRouter.html
 Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/sensors.html
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -254,12 +255,7 @@ class EIPMixin:
         get_trigger_registry().register(trigger)
         return self  # type: ignore
 
-    def from_webhook(
-        self,
-        path: str,
-        *,
-        method: str = "POST",
-    ) -> RouteBuilder:
+    def from_webhook(self, path: str, *, method: str = "POST") -> RouteBuilder:
         """Camel-style ``from("http:host/path")`` — HTTP webhook trigger.
 
         Регистрирует FastAPI route на ``path``. При вызове (любой JSON body)
@@ -323,6 +319,7 @@ class EIPMixin:
 
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
+
             route_id = getattr(self, "_route_id", "_pending_")
             while True:
                 matched = await sensor.watch(
@@ -377,6 +374,7 @@ class EIPMixin:
 
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
+
             route_id = getattr(self, "_route_id", "_pending_")
             while True:
                 matched = await sensor.watch(
@@ -384,7 +382,8 @@ class EIPMixin:
                 )
                 if matched:
                     await get_dsl_service().dispatch(
-                        route_id=route_id, body={},
+                        route_id=route_id,
+                        body={},
                         headers={"x-sensor": "sql", "x-sensor-dsn": dsn.split("@")[-1]},
                     )
                 await asyncio.sleep(poll_interval_s)
@@ -436,6 +435,7 @@ class EIPMixin:
 
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
+
             route_id = getattr(self, "_route_id", "_pending_")
             while True:
                 matched = await sensor.watch(
@@ -443,7 +443,8 @@ class EIPMixin:
                 )
                 if matched:
                     await get_dsl_service().dispatch(
-                        route_id=route_id, body={},
+                        route_id=route_id,
+                        body={},
                         headers={"x-sensor": "http", "x-sensor-url": url},
                     )
                 await asyncio.sleep(poll_interval_s)
@@ -498,6 +499,7 @@ class EIPMixin:
 
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
+
             route_id = getattr(self, "_route_id", "_pending_")
             while True:
                 matched = await sensor.watch(
@@ -505,9 +507,13 @@ class EIPMixin:
                 )
                 if matched:
                     await get_dsl_service().dispatch(
-                        route_id=route_id, body={},
-                        headers={"x-sensor": "s3", "x-sensor-bucket": bucket,
-                                 "x-sensor-key": key},
+                        route_id=route_id,
+                        body={},
+                        headers={
+                            "x-sensor": "s3",
+                            "x-sensor-bucket": bucket,
+                            "x-sensor-key": key,
+                        },
                     )
                 await asyncio.sleep(poll_interval_s)
 
@@ -538,6 +544,7 @@ class EIPMixin:
         from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
             ContentBasedRouter as _CBR,
         )
+
         return self._add(  # type: ignore[attr-defined]
             _CBR(routes=routes, default_endpoint=default_endpoint)
         )
@@ -569,6 +576,7 @@ class EIPMixin:
         from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
             SamplingProcessor as _SP,
         )
+
         return self._add(  # type: ignore[attr-defined]
             _SP(
                 rate=rate,

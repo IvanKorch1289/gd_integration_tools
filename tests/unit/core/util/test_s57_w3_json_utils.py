@@ -5,6 +5,7 @@ Coverage:
 * dumps_bytes — basic, HTTP body
 * loads — bytes/str/bytearray input, malformed JSON
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -54,6 +55,7 @@ class TestDumpsStr:
 
     def test_default_fallback(self) -> None:
         """default=str → non-serializable types converted via str()."""
+
         class Custom:
             def __str__(self) -> str:
                 return "custom_repr"

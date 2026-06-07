@@ -20,7 +20,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Cron Builder', '')
+setup_page("Cron Builder", "")
 st.header("Cron Builder — Sprint 12 K3 W2")
 st.caption(
     "Постройте cron-выражение визуально или вручную, посмотрите Next 5 "
@@ -105,7 +105,7 @@ if st.button("Preview Next executions", type="primary"):
                     dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
                     weekday_name = dt.strftime("%A")
                     st.write(f"{idx}. **{dt.isoformat()}** ({weekday_name})")
-                except (ValueError, AttributeError):
+                except ValueError, AttributeError:
                     st.write(f"{idx}. {dt_str}")
         else:
             st.error(f"Невалидное выражение: {body.get('error', 'unknown')}")

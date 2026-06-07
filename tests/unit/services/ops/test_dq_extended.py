@@ -52,9 +52,7 @@ async def test_regex_match_fails(monitor: DataQualityMonitor) -> None:
 
 @pytest.mark.asyncio
 async def test_regex_match_missing_pattern(monitor: DataQualityMonitor) -> None:
-    monitor.add_rule(
-        DQRule(name="r", field="x", check="regex_match", params={})
-    )
+    monitor.add_rule(DQRule(name="r", field="x", check="regex_match", params={}))
     result = await monitor.check({"x": "anything"}, dataset="d")
     assert result["is_clean"] is False
     assert "missing 'pattern'" in result["violations"][0]["message"]
@@ -111,12 +109,7 @@ async def test_length_min_max_passes(monitor: DataQualityMonitor) -> None:
 @pytest.mark.asyncio
 async def test_length_min_fails(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(
-            name="name_length",
-            field="name",
-            check="length",
-            params={"min": 5},
-        )
+        DQRule(name="name_length", field="name", check="length", params={"min": 5})
     )
     result = await monitor.check({"name": "Bob"}, dataset="users")
     assert result["is_clean"] is False
@@ -126,12 +119,7 @@ async def test_length_min_fails(monitor: DataQualityMonitor) -> None:
 @pytest.mark.asyncio
 async def test_length_max_fails(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(
-            name="bio_length",
-            field="bio",
-            check="length",
-            params={"max": 10},
-        )
+        DQRule(name="bio_length", field="bio", check="length", params={"max": 10})
     )
     result = await monitor.check({"bio": "x" * 20}, dataset="users")
     assert result["is_clean"] is False
@@ -223,8 +211,7 @@ async def test_cross_field_lt_passes(monitor: DataQualityMonitor) -> None:
         )
     )
     result = await monitor.check(
-        {"start_date": "2026-01-01", "end_date": "2026-12-31"},
-        dataset="events",
+        {"start_date": "2026-01-01", "end_date": "2026-12-31"}, dataset="events"
     )
     assert result["is_clean"] is True
 
@@ -305,9 +292,7 @@ async def test_json_schema_fails(monitor: DataQualityMonitor) -> None:
 
 @pytest.mark.asyncio
 async def test_json_schema_missing_schema_param(monitor: DataQualityMonitor) -> None:
-    monitor.add_rule(
-        DQRule(name="r", field="x", check="json_schema", params={})
-    )
+    monitor.add_rule(DQRule(name="r", field="x", check="json_schema", params={}))
     result = await monitor.check({"x": {}}, dataset="d")
     assert result["is_clean"] is False
     assert "missing 'schema'" in result["violations"][0]["message"]

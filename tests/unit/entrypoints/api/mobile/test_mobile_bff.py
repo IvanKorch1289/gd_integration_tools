@@ -46,9 +46,7 @@ def _auth(user_id: str = "user_test") -> dict[str, str]:
 
 
 def test_login_returns_tokens(client: TestClient) -> None:
-    resp = client.post(
-        "/mobile/v1/auth/login?device_id=abc12345&tenant_id=acme"
-    )
+    resp = client.post("/mobile/v1/auth/login?device_id=abc12345&tenant_id=acme")
     assert resp.status_code == 200
     data = resp.json()
     # device_id[:8] = "abc12345" → user_id = "user_abc12345"
@@ -86,9 +84,7 @@ def test_profile_default_user(client: TestClient) -> None:
 
 
 def test_notifications_empty(client: TestClient) -> None:
-    resp = client.get(
-        "/mobile/v1/notifications", headers=_auth()
-    )
+    resp = client.get("/mobile/v1/notifications", headers=_auth())
     assert resp.status_code == 200
     body = resp.json()
     assert body["data"]["items"] == []
@@ -111,9 +107,7 @@ def test_notifications_paginated(client: TestClient) -> None:
             ),
         )
     # First page
-    resp = client.get(
-        "/mobile/v1/notifications?limit=2", headers=_auth(user_id)
-    )
+    resp = client.get("/mobile/v1/notifications?limit=2", headers=_auth(user_id))
     body = resp.json()
     assert len(body["data"]["items"]) == 2
     # next_cursor IS present (non-None) when has_more
@@ -140,9 +134,7 @@ def test_notifications_paginated(client: TestClient) -> None:
 
 def test_notifications_limit_bounds(client: TestClient) -> None:
     # limit > 100 → 422
-    resp = client.get(
-        "/mobile/v1/notifications?limit=200", headers=_auth()
-    )
+    resp = client.get("/mobile/v1/notifications?limit=200", headers=_auth())
     assert resp.status_code == 422
 
 
@@ -153,11 +145,7 @@ def test_register_push_token(client: TestClient) -> None:
     resp = client.post(
         "/mobile/v1/push-token",
         headers=_auth(),
-        json={
-            "token": "fcm_token_abc",
-            "platform": "android",
-            "device_id": "device-1",
-        },
+        json={"token": "fcm_token_abc", "platform": "android", "device_id": "device-1"},
     )
     assert resp.status_code == 200
     assert resp.json()["data"]["registered"] is True
@@ -267,9 +255,7 @@ def test_cursor_page_defaults() -> None:
 
 def test_compressed_response_metadata() -> None:
     cr = CompressedResponse(
-        data={"x": 1},
-        timestamp=datetime.now(tz=timezone.utc),
-        request_id="abc",
+        data={"x": 1}, timestamp=datetime.now(tz=timezone.utc), request_id="abc"
     )
     assert cr.compressed is False  # default — router sets True explicitly
     assert cr.schema_version == 1  # default

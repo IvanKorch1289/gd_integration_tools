@@ -12,9 +12,7 @@ from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProt
 class _BaseFake:
     """Минимальный fake — только 3 базовых метода."""
 
-    def check(
-        self, plugin: str, capability: str, scope: str | None = None
-    ) -> None:
+    def check(self, plugin: str, capability: str, scope: str | None = None) -> None:
         pass
 
     def declare(self, plugin: str, capabilities: list[object]) -> None:
@@ -28,11 +26,7 @@ class _TenantAwareFake(_BaseFake):
     """Полный fake с tenant-aware методами (Sprint 36 V15 GAP)."""
 
     def check_tenant(
-        self,
-        capability: str,
-        tenant: str,
-        principal: str,
-        scope: str | None = None,
+        self, capability: str, tenant: str, principal: str, scope: str | None = None
     ) -> bool:
         return True
 
@@ -49,9 +43,7 @@ class _TenantAwareFake(_BaseFake):
 class _Bad:
     """Без метода ``declare`` — не удовлетворяет Protocol."""
 
-    def check(
-        self, plugin: str, capability: str, scope: str | None = None
-    ) -> None:
+    def check(self, plugin: str, capability: str, scope: str | None = None) -> None:
         pass
 
 

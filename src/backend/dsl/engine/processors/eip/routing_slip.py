@@ -25,6 +25,7 @@ names, через которые message должен пройти. Порядо
 Thread-safe: lock для current_index (по exchange не нужен — каждый exchange
 имеет свой RoutingSlipContext через property).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -112,9 +113,7 @@ class RoutingSlipProcessor(BaseProcessor):
         self._lock = threading.Lock()  # для shared stats
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         steps = self._steps_resolver(exchange)
         if asyncio.iscoroutine(steps):
             steps = await steps
@@ -140,11 +139,11 @@ class RoutingSlipProcessor(BaseProcessor):
                 _log.warning("%s — skipping", msg)
                 continue
 
-            _log.debug("RoutingSlip[%d/%d]: executing %s", idx + 1, len(steps), step_name)
-            await processor.process(exchange, context)
-            exchange.set_property(
-                "routing_slip.remaining", list(steps[idx + 1 :])
+            _log.debug(
+                "RoutingSlip[%d/%d]: executing %s", idx + 1, len(steps), step_name
             )
+            await processor.process(exchange, context)
+            exchange.set_property("routing_slip.remaining", list(steps[idx + 1 :]))
             exchange.set_property("routing_slip.current_step", step_name)
 
         _log.debug("RoutingSlip: completed all %d steps", len(steps))

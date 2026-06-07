@@ -28,9 +28,7 @@ def workflows_client() -> Any:
 
 class TestWorkflowsClient:
     def test_list_workflows(self, workflows_client: Any) -> None:
-        mock = _mock_response(
-            payload=[{"instance_id": "wf-1", "status": "ok"}]
-        )
+        mock = _mock_response(payload=[{"instance_id": "wf-1", "status": "ok"}])
         with patch("httpx.Client") as patched:
             patched.return_value.__enter__.return_value.request.return_value = mock
             result = workflows_client.list_workflows()

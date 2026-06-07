@@ -20,7 +20,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Plugin Onboarding', '🧪')
+setup_page("Plugin Onboarding", "🧪")
 st.title("🧪 Plugin Onboarding Wizard")
 st.caption("Sprint 14 K5 W6 — пошаговый scaffold V11 плагина.")
 

@@ -57,7 +57,7 @@ class RedisHash:
             value = value.decode()
         try:
             return orjson.loads(value)
-        except (orjson.JSONDecodeError, ValueError):
+        except orjson.JSONDecodeError, ValueError:
             return value
 
     async def delete(self, field: str) -> bool:
@@ -74,7 +74,7 @@ class RedisHash:
             val_str = v.decode() if isinstance(v, bytes) else v
             try:
                 result[key_str] = orjson.loads(val_str)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 result[key_str] = val_str
         return result
 
@@ -197,7 +197,7 @@ class RedisPubSub:
                     data = data.decode()
                 try:
                     yield orjson.loads(data)
-                except (orjson.JSONDecodeError, ValueError, TypeError):
+                except orjson.JSONDecodeError, ValueError, TypeError:
                     yield data
         finally:
             await pubsub.unsubscribe(self._channel)

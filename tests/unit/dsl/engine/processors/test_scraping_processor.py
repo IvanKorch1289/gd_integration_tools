@@ -84,15 +84,7 @@ def test_is_blocked_host_raises(host: str, expected_msg: str) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "host",
-    [
-        "example.com",
-        "8.8.8.8",
-        "2001:4860:4860::8888",
-        "",
-    ],
-)
+@pytest.mark.parametrize("host", ["example.com", "8.8.8.8", "2001:4860:4860::8888", ""])
 def test_is_blocked_host_allows(host: str) -> None:
     # should not raise
     _is_blocked_host(host)
@@ -131,10 +123,7 @@ def test_scrape_processor_to_spec_full() -> None:
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_scrape_processor_process_success() -> None:
-    proc = ScrapeProcessor(
-        url="https://example.com",
-        selectors={"title": "h1"},
-    )
+    proc = ScrapeProcessor(url="https://example.com", selectors={"title": "h1"})
     ex = _ex()
 
     fake_node = MagicMock()
@@ -150,8 +139,7 @@ async def test_scrape_processor_process_success() -> None:
         return_value=fake_response,
     ):
         with patch.dict(
-            "sys.modules",
-            {"selectolax": MagicMock(), "selectolax.parser": MagicMock()},
+            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
         ):
             with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
                 await proc.process(ex, AsyncMock())
@@ -201,8 +189,7 @@ async def test_scrape_processor_url_from_property() -> None:
         return_value=fake_response,
     ):
         with patch.dict(
-            "sys.modules",
-            {"selectolax": MagicMock(), "selectolax.parser": MagicMock()},
+            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
         ):
             with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
                 await proc.process(ex, AsyncMock())
@@ -301,12 +288,10 @@ async def test_paginate_processor_process_success() -> None:
         side_effect=responses,
     ):
         with patch.dict(
-            "sys.modules",
-            {"selectolax": MagicMock(), "selectolax.parser": MagicMock()},
+            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
         ):
             with patch(
-                "selectolax.parser.HTMLParser",
-                side_effect=[fake_tree1, fake_tree2],
+                "selectolax.parser.HTMLParser", side_effect=[fake_tree1, fake_tree2]
             ):
                 with patch(
                     "src.backend.dsl.engine.processors.scraping._random_delay",
@@ -373,9 +358,7 @@ def test_api_proxy_processor_to_spec_full() -> None:
 @pytest.mark.unit
 async def test_api_proxy_processor_process_success() -> None:
     proc = ApiProxyProcessor(
-        base_url="https://api.example.com",
-        method="GET",
-        path="/items",
+        base_url="https://api.example.com", method="GET", path="/items"
     )
     ex = _ex({"id": 1})
     ex.in_message.headers["Authorization"] = "Bearer tok"
@@ -407,9 +390,7 @@ async def test_api_proxy_processor_process_success() -> None:
 @pytest.mark.unit
 async def test_api_proxy_processor_path_formatting() -> None:
     proc = ApiProxyProcessor(
-        base_url="https://api.example.com",
-        method="GET",
-        path="/items/{id}",
+        base_url="https://api.example.com", method="GET", path="/items/{id}"
     )
     ex = _ex({"id": 42})
 
@@ -435,8 +416,7 @@ async def test_api_proxy_processor_path_formatting() -> None:
 @pytest.mark.unit
 async def test_api_proxy_processor_headers_mapping() -> None:
     proc = ApiProxyProcessor(
-        base_url="https://api.example.com",
-        headers_mapping={"X-Custom": "X-Source"},
+        base_url="https://api.example.com", headers_mapping={"X-Custom": "X-Source"}
     )
     ex = _ex({})
     ex.in_message.headers["X-Source"] = "value"
@@ -463,9 +443,7 @@ async def test_api_proxy_processor_headers_mapping() -> None:
 @pytest.mark.unit
 async def test_api_proxy_processor_post_json_body() -> None:
     proc = ApiProxyProcessor(
-        base_url="https://api.example.com",
-        method="POST",
-        path="/create",
+        base_url="https://api.example.com", method="POST", path="/create"
     )
     ex = _ex({"name": "test"})
 

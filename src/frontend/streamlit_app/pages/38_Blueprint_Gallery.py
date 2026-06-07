@@ -14,7 +14,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page('Blueprint Gallery', ':art:')
+setup_page("Blueprint Gallery", ":art:")
 st.header(":art: Blueprint Gallery")
 st.caption(
     "Каталог шаблонов маршрутов R2/R2.5 — 3-column grid, фильтры, preview, copy."

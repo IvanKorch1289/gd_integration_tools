@@ -74,7 +74,9 @@ class TestEventSchemaValidationError:
 @pytest.mark.unit
 class TestEventBusLifecycle:
     @pytest.mark.asyncio
-    async def test_start_sets_broker_and_started(self, fake_redis_broker_module: Any) -> None:
+    async def test_start_sets_broker_and_started(
+        self, fake_redis_broker_module: Any
+    ) -> None:
         bus = EventBus()
         await bus.start("redis://localhost:6379")
         assert bus._started is True
@@ -98,9 +100,7 @@ class TestEventBusLifecycle:
 @pytest.mark.unit
 class TestEventBusPublish:
     @pytest.mark.asyncio
-    async def test_publish_when_not_started_logs_warning(
-        self, caplog: Any
-    ) -> None:
+    async def test_publish_when_not_started_logs_warning(self, caplog: Any) -> None:
         bus = EventBus()
         with caplog.at_level("WARNING"):
             await bus.publish("events.orders", OrderEvent(order_id=1, action="created"))
@@ -182,7 +182,9 @@ class TestEventBusSubscribe:
         bus._broker.subscriber.assert_called_once_with("events.orders")  # type: ignore[attr-defined]
 
     @pytest.mark.asyncio
-    async def test_subscribe_exception_returns_none(self, fake_redis_broker_module: Any) -> None:
+    async def test_subscribe_exception_returns_none(
+        self, fake_redis_broker_module: Any
+    ) -> None:
         bus = EventBus()
         await bus.start()
         bus._broker.subscriber.side_effect = RuntimeError("boom")  # type: ignore[attr-defined]
@@ -201,12 +203,15 @@ class TestEventBusRequest:
         fake_reply_channel = MagicMock()
         fake_reply_channel.instance = MagicMock(return_value=fake_instance)
 
-        fake_mod = type(sys)("src.backend.infrastructure.clients.messaging.reply_channel")
+        fake_mod = type(sys)(
+            "src.backend.infrastructure.clients.messaging.reply_channel"
+        )
         fake_mod.ReplyChannel = fake_reply_channel  # type: ignore[attr-defined]
 
-        with patch.dict(sys.modules, {
-            "src.backend.infrastructure.clients.messaging.reply_channel": fake_mod
-        }):
+        with patch.dict(
+            sys.modules,
+            {"src.backend.infrastructure.clients.messaging.reply_channel": fake_mod},
+        ):
             result = await bus.request(
                 "target", {"data": 1}, timeout=5.0, correlation_id="cid"
             )

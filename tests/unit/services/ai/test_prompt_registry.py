@@ -27,6 +27,7 @@ def _reset_singleton() -> Any:
 
 # ── fallback register / get ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_register_and_get_fallback() -> None:
     reg = PromptRegistry()
@@ -42,12 +43,7 @@ async def test_register_and_get_fallback() -> None:
 @pytest.mark.asyncio
 async def test_register_with_version_and_labels() -> None:
     reg = PromptRegistry()
-    reg.register(
-        "greet",
-        template="Hi {name}",
-        version=2,
-        labels={"lang": "en"},
-    )
+    reg.register("greet", template="Hi {name}", version=2, labels={"lang": "en"})
     pv = await reg.get("greet", version=2)
     assert pv.version == 2
     assert pv.labels == {"lang": "en"}
@@ -73,6 +69,7 @@ async def test_get_async_compiles_with_variables() -> None:
 
 # ── missing variable handling ───────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_uses_template_when_variable_missing() -> None:
     reg = PromptRegistry()
@@ -83,6 +80,7 @@ async def test_get_uses_template_when_variable_missing() -> None:
 
 # ── key error on unknown prompt ─────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_raises_when_prompt_not_found() -> None:
     reg = PromptRegistry()
@@ -91,6 +89,7 @@ async def test_get_raises_when_prompt_not_found() -> None:
 
 
 # ── langfuse path ───────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_langfuse_path_compiles_and_returns_version() -> None:
@@ -107,7 +106,9 @@ async def test_langfuse_path_compiles_and_returns_version() -> None:
     assert pv.compiled == "compiled text"
     assert pv.version == 5
     assert pv.labels["source"] == "langfuse"
-    mock_lf.get_prompt.assert_called_once_with("my_prompt", label="production", version=None)
+    mock_lf.get_prompt.assert_called_once_with(
+        "my_prompt", label="production", version=None
+    )
 
 
 @pytest.mark.asyncio
@@ -141,6 +142,7 @@ async def test_langfuse_fallback_on_exception() -> None:
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_prompt_registry_singleton() -> None:
     r1 = get_prompt_registry()

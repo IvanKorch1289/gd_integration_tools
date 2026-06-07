@@ -27,7 +27,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page('Pool Monitor', ':swimmer:')
+setup_page("Pool Monitor", ":swimmer:")
 st.header("Pool Monitor")
 
 # ---------------------------------------------------------------------------

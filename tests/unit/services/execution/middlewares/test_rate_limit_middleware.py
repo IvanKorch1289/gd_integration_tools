@@ -183,9 +183,7 @@ class TestRateLimitMiddleware:
         assert ctx.correlation_id is None
 
         # Identifier should fall back to "global"
-        with patch.object(
-            mw, "_resolve_limiter", return_value=AsyncMock()
-        ):
+        with patch.object(mw, "_resolve_limiter", return_value=AsyncMock()):
             with patch.object(
                 mw,
                 "_resolve_limiter_module",

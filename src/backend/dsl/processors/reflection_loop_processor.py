@@ -83,8 +83,7 @@ class ReflectionLoopProcessor(BaseProcessor):
             )
         if not 0.0 <= score_threshold <= 1.0:
             raise ValueError(
-                f"score_threshold должен быть в [0.0, 1.0], "
-                f"получено {score_threshold}"
+                f"score_threshold должен быть в [0.0, 1.0], получено {score_threshold}"
             )
         super().__init__(name=name or "reflection_loop")
         self._generator = generator
@@ -176,8 +175,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         exchange.set_property("reflection_iterations", result.iterations)
         exchange.set_property("reflection_final_score", result.score)
         exchange.set_out(
-            body=result.final_output,
-            headers=dict(exchange.in_message.headers),
+            body=result.final_output, headers=dict(exchange.in_message.headers)
         )
 
     @staticmethod

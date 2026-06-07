@@ -33,9 +33,7 @@ class TestToolDescription:
     """Tests for _tool_description."""
 
     def test_with_description_and_tags(self) -> None:
-        desc = WorkflowDescriptor(
-            name="wf1", description="Do thing", tags=("a", "b")
-        )
+        desc = WorkflowDescriptor(name="wf1", description="Do thing", tags=("a", "b"))
         result = _tool_description(desc)
         assert "Do thing" in result
         assert "a" in result
@@ -145,10 +143,7 @@ class TestTriggerAndMaybeWait:
                     "src.backend.dsl.commands.registry.action_handler_registry.is_registered",
                     return_value=False,
                 ):
-                    with patch(
-                        "asyncio.sleep",
-                        AsyncMock(),
-                    ):
+                    with patch("asyncio.sleep", AsyncMock()):
                         result = await _trigger_and_maybe_wait(
                             workflow_name="wf1",
                             route_id="r1",

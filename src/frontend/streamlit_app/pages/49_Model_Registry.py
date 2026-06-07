@@ -15,7 +15,7 @@ try:
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
-setup_page('Model Registry', '🧬')
+setup_page("Model Registry", "🧬")
 st.title("🧬 AI Model Registry")
 st.caption(
     "Composite MLflow + Hugging Face Hub. "

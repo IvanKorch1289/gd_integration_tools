@@ -36,7 +36,13 @@ WRAPPER_MAPPING: list[tuple[str, str, str, tuple, dict[str, Any]]] = [
     ("get_flags", "_flags", "get_flags", (), {}),
     ("toggle_flag", "_flags", "toggle_flag", ("flag_x", True), {}),
     ("list_overrides", "_flags", "list_overrides", (), {}),
-    ("set_override", "_flags", "set_override", ("f", "v"), {"tenant_id": "t1", "actor": "a1"}),
+    (
+        "set_override",
+        "_flags",
+        "set_override",
+        ("f", "v"),
+        {"tenant_id": "t1", "actor": "a1"},
+    ),
     ("clear_override", "_flags", "clear_override", ("f",), {"tenant_id": "t1"}),
     # Config (2)
     ("get_config", "_config", "get_config", (), {}),
@@ -44,7 +50,13 @@ WRAPPER_MAPPING: list[tuple[str, str, str, tuple, dict[str, Any]]] = [
     # Workflows (7)
     ("list_workflows", "_workflows", "list_workflows", (), {"limit": 10}),
     ("get_workflow", "_workflows", "get_workflow", ("wf-1",), {}),
-    ("get_workflow_events", "_workflows", "get_workflow_events", ("wf-1",), {"limit": 100}),
+    (
+        "get_workflow_events",
+        "_workflows",
+        "get_workflow_events",
+        ("wf-1",),
+        {"limit": 100},
+    ),
     ("retry_workflow", "_workflows", "retry_workflow", ("wf-1",), {}),
     ("cancel_workflow", "_workflows", "cancel_workflow", ("wf-1",), {"reason": "user"}),
     ("resume_workflow", "_workflows", "resume_workflow", ("wf-1",), {}),
@@ -60,7 +72,13 @@ WRAPPER_MAPPING: list[tuple[str, str, str, tuple, dict[str, Any]]] = [
     ("diff_dsl_route", "_dsl_routes", "diff_dsl_route", ("route-1", "yaml: new"), {}),
     # Feedback (5)
     ("list_feedback_pending", "_feedback", "list_feedback_pending", (), {"limit": 10}),
-    ("list_feedback_labeled", "_feedback", "list_feedback_labeled", (), {"label": "good"}),
+    (
+        "list_feedback_labeled",
+        "_feedback",
+        "list_feedback_labeled",
+        (),
+        {"label": "good"},
+    ),
     ("get_feedback_stats", "_feedback", "get_feedback_stats", (), {}),
     ("label_feedback", "_feedback", "label_feedback", ("doc-1",), {"label": "good"}),
     ("index_feedback_to_rag", "_feedback", "index_feedback_to_rag", (), {"limit": 50}),
@@ -69,7 +87,13 @@ WRAPPER_MAPPING: list[tuple[str, str, str, tuple, dict[str, Any]]] = [
     ("get_routes_inventory", "_inventory", "get_routes_inventory", (), {}),
     # Capability (6)
     ("get_capability_catalog", "_capability", "get_capability_catalog", (), {}),
-    ("get_processor_catalog", "_capability", "get_processor_catalog", (), {"query": "x", "limit": 5}),
+    (
+        "get_processor_catalog",
+        "_capability",
+        "get_processor_catalog",
+        (),
+        {"query": "x", "limit": 5},
+    ),
     ("get_audit_events", "_capability", "get_audit_events", (), {"plugin": "p1"}),
     ("get_dependency_graph", "_capability", "get_dependency_graph", (), {}),
     ("get_capability_graph", "_capability", "get_capability_graph", (), {}),
@@ -105,9 +129,18 @@ class TestAPIClientConstruction:
     def test_domain_clients_share_base_url(self) -> None:
         c = APIClient(base_url="http://test")
         for attr in [
-            "_metrics", "_tenants", "_orders", "_chat", "_flags", "_config",
-            "_workflows", "_dsl_routes", "_feedback", "_inventory",
-            "_capability", "_logs",
+            "_metrics",
+            "_tenants",
+            "_orders",
+            "_chat",
+            "_flags",
+            "_config",
+            "_workflows",
+            "_dsl_routes",
+            "_feedback",
+            "_inventory",
+            "_capability",
+            "_logs",
         ]:
             assert getattr(c, attr)._base_url == "http://test"
 

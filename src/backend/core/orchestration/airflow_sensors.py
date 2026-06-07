@@ -11,6 +11,7 @@ backoff до match или deadline. На match → SensorTrigger.on_match_action
 * SqlSensor — asyncpg (raw SQL query) + jmespath (result predicate)
 * HttpSensor — httpx async client
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -43,6 +44,7 @@ _log = logging.getLogger(__name__)
 
 
 # ── FileSensor ──────────────────────────────────────────────────────
+
 
 class FileSensor:
     """Watches file/glob path, triggers action on appearance/modification.
@@ -84,13 +86,16 @@ class FileSensor:
 
         try:
             async for changes in awatch(
-                self._path, recursive=self._recursive, step=max(50, int(self._poll_interval_s * 1000))
+                self._path,
+                recursive=self._recursive,
+                step=max(50, int(self._poll_interval_s * 1000)),
             ):
                 # changes = set of (change_type, path) tuples
                 if not changes:
                     continue
                 if self._pattern is not None:
                     import fnmatch
+
                     matched = any(
                         fnmatch.fnmatch(os.path.basename(p), self._pattern)
                         for _, p in changes
@@ -114,6 +119,7 @@ class FileSensor:
 
 
 # ── SqlSensor ───────────────────────────────────────────────────────
+
 
 class SqlSensor:
     """Polls SQL query until it returns rows (or matches predicate).
@@ -169,7 +175,11 @@ class SqlSensor:
                     matched = len(rows_dicts) > 0
 
                 if matched:
-                    _log.info("SqlSensor: match (attempt %d, %d rows)", attempt, len(rows_dicts))
+                    _log.info(
+                        "SqlSensor: match (attempt %d, %d rows)",
+                        attempt,
+                        len(rows_dicts),
+                    )
                     return True
             except Exception as e:
                 _log.warning("SqlSensor: query failed (attempt %d): %s", attempt, e)
@@ -181,11 +191,15 @@ class SqlSensor:
                 return False
 
             # Exponential backoff: min(poll, 2^(attempt-1) * poll)
-            backoff = min(self._poll_interval_s, (2 ** min(attempt - 1, 6)) * self._poll_interval_s)
+            backoff = min(
+                self._poll_interval_s,
+                (2 ** min(attempt - 1, 6)) * self._poll_interval_s,
+            )
             await asyncio.sleep(backoff)
 
 
 # ── HttpSensor ──────────────────────────────────────────────────────
+
 
 class HttpSensor:
     """Polls HTTP endpoint until status matches expected.
@@ -242,28 +256,40 @@ class HttpSensor:
                     )
                     if resp.status_code == self._expected_status:
                         if self._body_match is None:
-                            _log.info("HttpSensor: match (attempt %d, status=%d)", attempt, resp.status_code)
+                            _log.info(
+                                "HttpSensor: match (attempt %d, status=%d)",
+                                attempt,
+                                resp.status_code,
+                            )
                             return True
                         try:
                             data = resp.json()
                         except Exception:
                             data = resp.text
                         if jmespath.search(self._body_match, data):
-                            _log.info("HttpSensor: match (attempt %d, body matched)", attempt)
+                            _log.info(
+                                "HttpSensor: match (attempt %d, body matched)", attempt
+                            )
                             return True
                 except Exception as e:
-                    _log.warning("HttpSensor: request failed (attempt %d): %s", attempt, e)
+                    _log.warning(
+                        "HttpSensor: request failed (attempt %d): %s", attempt, e
+                    )
 
                 elapsed = time.monotonic() - start
                 if timeout_s is not None and elapsed >= timeout_s:
                     _log.info("HttpSensor: timeout %ss reached", timeout_s)
                     return False
 
-                backoff = min(self._poll_interval_s, (2 ** min(attempt - 1, 6)) * self._poll_interval_s)
+                backoff = min(
+                    self._poll_interval_s,
+                    (2 ** min(attempt - 1, 6)) * self._poll_interval_s,
+                )
                 await asyncio.sleep(backoff)
 
 
 # ── S3Sensor ────────────────────────────────────────────────────────
+
 
 class S3Sensor:
     """Polls S3 object until it appears (or matches predicate).
@@ -319,6 +345,7 @@ class S3Sensor:
         namespace: str = "default",
     ) -> bool:
         import aioboto3
+
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
         attempt = 0
@@ -339,19 +366,24 @@ class S3Sensor:
                     if resp.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
                         _log.info(
                             "S3Sensor: match (attempt %d, size=%s)",
-                            attempt, resp.get("ContentLength"),
+                            attempt,
+                            resp.get("ContentLength"),
                         )
                         return True
             except Exception as e:
                 # 404 (NotFound) → expected while waiting; other errors → warn
                 if "NoSuchKey" not in repr(e) and "404" not in repr(e):
-                    _log.warning("S3Sensor: head_object failed (attempt %d): %s", attempt, e)
+                    _log.warning(
+                        "S3Sensor: head_object failed (attempt %d): %s", attempt, e
+                    )
 
             elapsed = time.monotonic() - start
             if timeout_s is not None and elapsed >= timeout_s:
                 _log.info("S3Sensor: timeout %ss reached", timeout_s)
                 return False
 
-            backoff = min(self._poll_interval_s, (2 ** min(attempt - 1, 6)) * self._poll_interval_s)
+            backoff = min(
+                self._poll_interval_s,
+                (2 ** min(attempt - 1, 6)) * self._poll_interval_s,
+            )
             await asyncio.sleep(backoff)
-

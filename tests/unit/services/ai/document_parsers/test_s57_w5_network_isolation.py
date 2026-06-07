@@ -7,6 +7,7 @@
 * nested contexts — restore chain integrity
 * concurrent / sequential: original NOT polluted между calls
 """
+
 from __future__ import annotations
 
 import urllib.request

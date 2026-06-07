@@ -17,7 +17,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('AI Safety', ':shield:')
+setup_page("AI Safety", ":shield:")
 st.header(":shield: AI Safety / Guardrails")
 
 client = get_api_client()

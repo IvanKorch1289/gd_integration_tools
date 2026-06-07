@@ -27,7 +27,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 __all__: tuple[str, ...] = ()
 
-setup_page('Invocation Console', ':zap:')
+setup_page("Invocation Console", ":zap:")
 st.header(":zap: Invocation Console (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

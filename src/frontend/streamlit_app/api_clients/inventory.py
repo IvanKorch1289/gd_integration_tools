@@ -1,4 +1,5 @@
 """Inventory: plugins + routes (V11 Plugin Marketplace, Sprint 3)."""
+
 from __future__ import annotations
 
 from typing import Any

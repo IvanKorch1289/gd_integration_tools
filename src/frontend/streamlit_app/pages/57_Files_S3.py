@@ -12,7 +12,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Files S3', '📁')
+setup_page("Files S3", "📁")
 st.title("📁 Files S3 — Object Browser")
 st.caption("Sprint 7 K5 — S3/MinIO bucket файлы с preview/upload/download.")
 

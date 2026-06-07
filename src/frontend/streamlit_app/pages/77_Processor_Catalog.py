@@ -13,7 +13,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Processor Catalog', '🔍')
+setup_page("Processor Catalog", "🔍")
 st.title("🔍 Processor Catalog Search")
 st.caption("Sprint 14 K3 W1 — fuzzy search across DSL processors (rapidfuzz).")
 

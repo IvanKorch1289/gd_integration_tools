@@ -27,9 +27,7 @@ def _page_path(filename: str) -> Path:
     )
 
 
-@pytest.mark.parametrize(
-    "filename", ["45_admin.py"]
-)
+@pytest.mark.parametrize("filename", ["45_admin.py"])
 def test_streamlit_page_is_valid_python(filename: str) -> None:
     """Страница парсится как валидный Python-модуль.
 
@@ -43,9 +41,7 @@ def test_streamlit_page_is_valid_python(filename: str) -> None:
     compile(source, str(page), "exec")  # AST-валидация
 
 
-@pytest.mark.parametrize(
-    "filename", ["45_admin.py"]
-)
+@pytest.mark.parametrize("filename", ["45_admin.py"])
 def test_streamlit_page_spec_loadable(filename: str) -> None:
     """``importlib.util.spec_from_file_location`` возвращает spec.
 

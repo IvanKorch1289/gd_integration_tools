@@ -53,7 +53,9 @@ class K4APIClient(APIClient):
                 "GET", "/api/v1/admin/rag-cache/events", params={"limit": limit}
             )
         except Exception as exc:  # noqa: BLE001
-            logger.warning("get_rag_invalidation_events(limit=%d) failed: %s", limit, exc)
+            logger.warning(
+                "get_rag_invalidation_events(limit=%d) failed: %s", limit, exc
+            )
             return []
 
     def litellm_gateway_stats(self) -> dict[str, Any]:
@@ -92,7 +94,9 @@ class K4APIClient(APIClient):
                 data={"collection": collection},
             )
         except Exception as exc:  # noqa: BLE001
-            logger.warning("rag_ingest_start(collection=%r) failed: %s", collection, exc)
+            logger.warning(
+                "rag_ingest_start(collection=%r) failed: %s", collection, exc
+            )
             return {"task_id": None, "error": str(exc)}
 
     def rag_ingest_status(self, task_id: str) -> dict[str, Any]:

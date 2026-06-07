@@ -18,9 +18,14 @@ version = "0.0.0"
 
 # Читаем версию из pyproject.toml регекспом (без сторонних зависимостей).
 import re
+
 _PYPROJECT = Path(__file__).resolve().parents[2] / "pyproject.toml"
 if _PYPROJECT.is_file():
-    m = re.search(r"""^version\s*=\s*["']([^"']+)["']""", _PYPROJECT.read_text(encoding="utf-8"), re.MULTILINE)
+    m = re.search(
+        r"""^version\s*=\s*["']([^"']+)["']""",
+        _PYPROJECT.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
     if m:
         release = m.group(1)
         version = release.split("+", 1)[0]
@@ -88,7 +93,9 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
 # Output: docs/api/_build/html/autoapi/index.html
 # Note: paths are relative to conf.py (which lives in docs/api/).
 #       We need ../../ to reach project root.
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]  # /home/user/.../gd_integration_tools
+_PROJECT_ROOT = (
+    Path(__file__).resolve().parents[2]
+)  # /home/user/.../gd_integration_tools
 autoapi_type = "python"
 autoapi_dirs = [
     str(_PROJECT_ROOT / "src" / "backend" / "dsl"),

@@ -147,13 +147,23 @@ class PayloadOptimizer:
     def compact(cls, data: Any) -> Any:
         """Recursively compact a dict/list/value."""
         if isinstance(data, dict):
-            return {k: cls.compact(v) for k, v in data.items() if v is not None or k == "data"}
+            return {
+                k: cls.compact(v)
+                for k, v in data.items()
+                if v is not None or k == "data"
+            }
         if isinstance(data, list):
             return [cls.compact(item) for item in data]
         if isinstance(data, datetime):
-            return int(data.timestamp()) if cls.DATETIME_AS_TIMESTAMP else data.isoformat()
+            return (
+                int(data.timestamp()) if cls.DATETIME_AS_TIMESTAMP else data.isoformat()
+            )
         if isinstance(data, str):
-            return data[: cls.MAX_STRING_LENGTH] if len(data) > cls.MAX_STRING_LENGTH else data
+            return (
+                data[: cls.MAX_STRING_LENGTH]
+                if len(data) > cls.MAX_STRING_LENGTH
+                else data
+            )
         return data
 
     @classmethod
@@ -163,7 +173,7 @@ class PayloadOptimizer:
 
         try:
             return len(json.dumps(data, default=str))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return 0
 
     @classmethod

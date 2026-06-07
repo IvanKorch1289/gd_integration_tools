@@ -12,10 +12,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page(
-    'Processes',
-    ':arrows_clockwise:',
-    layout='wide',
-    initial_sidebar_state='expanded',
+    "Processes", ":arrows_clockwise:", layout="wide", initial_sidebar_state="expanded"
 )
 st.header(":arrows_clockwise: Выполняющиеся процессы")
 

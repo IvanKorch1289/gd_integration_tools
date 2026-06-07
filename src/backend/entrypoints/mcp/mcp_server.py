@@ -149,7 +149,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -170,7 +170,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -286,11 +286,13 @@ def _register_route_tools(mcp: Any) -> None:
         try:
             pipeline = route_registry.get(route_id)
         except KeyError:
-            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode(
+                "utf-8"
+            )
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()
@@ -311,7 +313,7 @@ def _register_route_tools(mcp: Any) -> None:
                     for k, v in exchange.properties.items()
                     if not k.startswith("_")
                 },
-            },
+            }
         ).decode("utf-8")
 
     @mcp.tool(
@@ -323,7 +325,9 @@ def _register_route_tools(mcp: Any) -> None:
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
-            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode(
+                "utf-8"
+            )
 
         return encode_json(
             {
@@ -366,13 +370,13 @@ def _register_template_tools(mcp: Any) -> None:
 
         tmpl = templates.get(template_id)
         if not tmpl:
-            return encode_json(
-                {"error": f"Template '{template_id}' not found"}
-            ).decode("utf-8")
+            return encode_json({"error": f"Template '{template_id}' not found"}).decode(
+                "utf-8"
+            )
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:
@@ -458,7 +462,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except (orjson.JSONDecodeError, TypeError):
+                except orjson.JSONDecodeError, TypeError:
                     pass
 
             result = strategy.convert(input_data)
@@ -564,7 +568,9 @@ def _register_system_tools(mcp: Any) -> None:
     async def system_feature_flags() -> str:
         from src.backend.core.state.runtime import disabled_feature_flags
 
-        return encode_json({"disabled_flags": list(disabled_feature_flags)}).decode("utf-8")
+        return encode_json({"disabled_flags": list(disabled_feature_flags)}).decode(
+            "utf-8"
+        )
 
 
 # ── YAML Pipeline Tools ──
@@ -588,7 +594,9 @@ def _register_yaml_tools(mcp: Any) -> None:
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
-            return encode_json({"error": f"Route '{route_id}' not found"}).decode("utf-8")
+            return encode_json({"error": f"Route '{route_id}' not found"}).decode(
+                "utf-8"
+            )
 
         spec = {
             "route_id": pipeline.route_id,

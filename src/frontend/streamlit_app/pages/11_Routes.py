@@ -6,10 +6,10 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page(
-    'Routes',
-    ':twisted_rightwards_arrows:',
-    layout='wide',
-    initial_sidebar_state='expanded',
+    "Routes",
+    ":twisted_rightwards_arrows:",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 st.header("DSL Routes")
 

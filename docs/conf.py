@@ -59,27 +59,20 @@ language = "ru"
 master_doc = "index"
 
 # MyST позволяет .md рядом с .rst (Diátaxis-контент в Markdown)
-source_suffix = {
-    ".rst": "restructuredtext",
-    ".md": "markdown",
-}
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # Napoleon: только Google-style (V15 docstring policy)
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
 # intersphinx: cross-reference Python stdlib
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-}
+intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
 
 # MyST: разрешить заголовки в Markdown для корректного toctree
 myst_heading_anchors = 3
 
 # pydata-sphinx-theme: минимальная настройка
-html_theme_options = {
-    "navigation_with_keys": True,
-}
+html_theme_options = {"navigation_with_keys": True}
 
 # S34 W1: autoapi configuration (narrow scope: core/ + dsl/engine/ + core/interfaces/)
 autoapi_type = "python"

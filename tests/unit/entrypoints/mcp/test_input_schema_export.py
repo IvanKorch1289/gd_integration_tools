@@ -53,7 +53,6 @@ async def test_register_single_tool_passes_native_input_schema() -> None:
     class _FakeMeta:
         input_model = _DemoModel
 
-
     original_get_metadata = action_handler_registry.get_metadata
     action_handler_registry.get_metadata = lambda name: (  # type: ignore[assignment]
         _FakeMeta() if name == captured_action else None

@@ -23,18 +23,24 @@ def _isolate_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     temp_metrics = MetricsRegistry(default_labels=(), registry=temp_registry)
 
     monkeypatch.setattr(
-        wp, "WORKER_UP", temp_metrics.gauge("workflow_worker_up", "Worker up.", labels=("worker_id",))
+        wp,
+        "WORKER_UP",
+        temp_metrics.gauge("workflow_worker_up", "Worker up.", labels=("worker_id",)),
     )
     monkeypatch.setattr(
         wp,
         "WORKER_QUEUE_DEPTH",
-        temp_metrics.gauge("workflow_worker_queue_depth", "Queue depth.", labels=("worker_id",)),
+        temp_metrics.gauge(
+            "workflow_worker_queue_depth", "Queue depth.", labels=("worker_id",)
+        ),
     )
     monkeypatch.setattr(
         wp,
         "WORKER_ACTIVE_EXECUTIONS",
         temp_metrics.gauge(
-            "workflow_worker_active_executions", "Active executions.", labels=("worker_id",)
+            "workflow_worker_active_executions",
+            "Active executions.",
+            labels=("worker_id",),
         ),
     )
     monkeypatch.setattr(wp, "REGISTRY", temp_registry)
@@ -88,7 +94,9 @@ def test_healthz_draining() -> None:
 def test_readyz_ready() -> None:
     runner = MagicMock()
     runner._running = True
-    client, _ = _make_client(runner=runner, readiness_check=AsyncMock(return_value=True))
+    client, _ = _make_client(
+        runner=runner, readiness_check=AsyncMock(return_value=True)
+    )
     response = client.get("/readyz")
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
@@ -109,7 +117,9 @@ def test_readyz_not_ready_runner() -> None:
 def test_readyz_not_ready_check() -> None:
     runner = MagicMock()
     runner._running = True
-    client, _ = _make_client(runner=runner, readiness_check=AsyncMock(return_value=False))
+    client, _ = _make_client(
+        runner=runner, readiness_check=AsyncMock(return_value=False)
+    )
     response = client.get("/readyz")
     assert response.status_code == 503
     assert response.json()["status"] == "not_ready"
@@ -120,7 +130,9 @@ def test_readyz_not_ready_check() -> None:
 def test_readyz_draining() -> None:
     runner = MagicMock()
     runner._running = True
-    client, _ = _make_client(runner=runner, readiness_check=AsyncMock(return_value=True), draining=True)
+    client, _ = _make_client(
+        runner=runner, readiness_check=AsyncMock(return_value=True), draining=True
+    )
     response = client.get("/readyz")
     assert response.status_code == 503
     assert response.json()["status"] == "not_ready"
@@ -131,7 +143,9 @@ def test_readyz_draining() -> None:
 def test_readyz_check_error() -> None:
     runner = MagicMock()
     runner._running = True
-    client, _ = _make_client(runner=runner, readiness_check=AsyncMock(side_effect=RuntimeError("boom")))
+    client, _ = _make_client(
+        runner=runner, readiness_check=AsyncMock(side_effect=RuntimeError("boom"))
+    )
     response = client.get("/readyz")
     assert response.status_code == 503
     assert response.json()["status"] == "not_ready"

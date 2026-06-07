@@ -11,7 +11,9 @@ from src.backend.infrastructure.resilience.supervisor import BackoffPolicy, Supe
 
 
 def test_backoff_delay_increases() -> None:
-    policy = BackoffPolicy(initial_seconds=1.0, multiplier=2.0, max_seconds=10.0, jitter=0.0)
+    policy = BackoffPolicy(
+        initial_seconds=1.0, multiplier=2.0, max_seconds=10.0, jitter=0.0
+    )
     d0 = policy.delay_for(0)
     d1 = policy.delay_for(1)
     d2 = policy.delay_for(2)
@@ -21,7 +23,9 @@ def test_backoff_delay_increases() -> None:
 
 
 def test_backoff_delay_capped() -> None:
-    policy = BackoffPolicy(initial_seconds=1.0, multiplier=10.0, max_seconds=5.0, jitter=0.0)
+    policy = BackoffPolicy(
+        initial_seconds=1.0, multiplier=10.0, max_seconds=5.0, jitter=0.0
+    )
     d = policy.delay_for(10)
     assert d == 5.0
 

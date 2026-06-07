@@ -113,9 +113,7 @@ class PlanExecuteProcessor(BaseProcessor):
         if max_steps <= 0:
             raise ValueError(f"max_steps должен быть > 0, получено {max_steps}")
         if max_replans < 0:
-            raise ValueError(
-                f"max_replans должен быть >= 0, получено {max_replans}"
-            )
+            raise ValueError(f"max_replans должен быть >= 0, получено {max_replans}")
         super().__init__(name=name or "plan_execute")
         self._planner = planner
         self._executor = executor
@@ -192,8 +190,7 @@ class PlanExecuteProcessor(BaseProcessor):
             if ok or attempt >= self._max_replans:
                 if not ok:
                     _log.warning(
-                        "Plan exhausted replans (max_replans=%d)",
-                        self._max_replans,
+                        "Plan exhausted replans (max_replans=%d)", self._max_replans
                     )
                 break
             # Replan
@@ -230,9 +227,7 @@ class PlanExecuteProcessor(BaseProcessor):
     @staticmethod
     def _build_replan_prompt(original: str, result: PlanResult) -> str:
         failed = [s for s in result.steps_executed if not s["ok"]]
-        failed_summary = "; ".join(
-            f"{s['step_id']}={s['error']}" for s in failed
-        )
+        failed_summary = "; ".join(f"{s['step_id']}={s['error']}" for s in failed)
         return (
             f"{original}\n\n"
             f"[Replan attempt {result.replans + 1}] "

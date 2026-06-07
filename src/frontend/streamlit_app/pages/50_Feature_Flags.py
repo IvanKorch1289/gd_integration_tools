@@ -6,10 +6,10 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page(
-    'Feature Flags',
-    ':triangular_flag_on_post:',
-    layout='wide',
-    initial_sidebar_state='expanded',
+    "Feature Flags",
+    ":triangular_flag_on_post:",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 st.header("Feature Flags")
 

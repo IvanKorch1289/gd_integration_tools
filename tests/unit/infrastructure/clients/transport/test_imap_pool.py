@@ -3,6 +3,7 @@
 Per v17 §1.1: IMAP client pool (252 LOC) "не анализировался в 16
 предыдущих итерациях". Coverage gap → add tests.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -14,8 +15,9 @@ try:
     from src.backend.infrastructure.clients.transport.imap_pool import (
         ImapPool,  # noqa: F401
     )
+
     HAS_IMAP_POOL = True
-except (ImportError, ModuleNotFoundError, AttributeError):
+except ImportError, ModuleNotFoundError, AttributeError:
     HAS_IMAP_POOL = False
 
 
@@ -41,6 +43,7 @@ def mock_imap_conn() -> AsyncMock:
 @pytest.mark.skipif(not HAS_IMAP_POOL, reason="imap_pool not importable")
 def test_imap_pool_imports() -> None:
     from src.backend.infrastructure.clients.transport import imap_pool
+
     assert imap_pool is not None
 
 
@@ -71,7 +74,9 @@ async def test_acquire_connection(
     pool_settings: dict, mock_imap_conn: AsyncMock
 ) -> None:
     pool = ImapPool(**pool_settings)
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         conn = await pool.acquire()
         assert conn is not None
 
@@ -82,7 +87,9 @@ async def test_release_connection(
     pool_settings: dict, mock_imap_conn: AsyncMock
 ) -> None:
     pool = ImapPool(**pool_settings)
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         conn = await pool.acquire()
         await pool.release(conn)
 
@@ -93,7 +100,9 @@ async def test_pool_context_manager(
     pool_settings: dict, mock_imap_conn: AsyncMock
 ) -> None:
     pool = ImapPool(**pool_settings)
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         async with pool.connection() as conn:
             assert conn is not None
 
@@ -116,7 +125,9 @@ async def test_pool_connection_health(
     pool_settings: dict, mock_imap_conn: AsyncMock
 ) -> None:
     pool = ImapPool(**pool_settings)
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         conn = await pool.acquire()
         if hasattr(pool, "is_healthy"):
             healthy = await pool.is_healthy(conn)
@@ -130,7 +141,9 @@ async def test_pool_recycle_on_failure(
 ) -> None:
     pool = ImapPool(**pool_settings)
     mock_imap_conn.is_closed = True
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         await pool.acquire()
 
 
@@ -150,10 +163,10 @@ def test_pool_max_lifetime(pool_settings: dict) -> None:
 
 @pytest.mark.skipif(not HAS_IMAP_POOL, reason="imap_pool not importable")
 @pytest.mark.asyncio
-async def test_pool_close_all(
-    pool_settings: dict, mock_imap_conn: AsyncMock
-) -> None:
+async def test_pool_close_all(pool_settings: dict, mock_imap_conn: AsyncMock) -> None:
     pool = ImapPool(**pool_settings)
-    with patch.object(pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)):
+    with patch.object(
+        pool, "_create_connection", AsyncMock(return_value=mock_imap_conn)
+    ):
         await pool.acquire()
         await pool.close_all()

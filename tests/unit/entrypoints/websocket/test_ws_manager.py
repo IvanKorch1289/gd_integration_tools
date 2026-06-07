@@ -47,7 +47,9 @@ class TestConnectionManager:
         assert "client1" not in manager._groups["g1"]
 
     @pytest.mark.asyncio
-    async def test_send_json_to_connected_client(self, manager: ConnectionManager) -> None:
+    async def test_send_json_to_connected_client(
+        self, manager: ConnectionManager
+    ) -> None:
         ws = MagicMock()
         ws.client_state = WebSocketState.CONNECTED
         ws.send_json = AsyncMock()
@@ -56,7 +58,9 @@ class TestConnectionManager:
         ws.send_json.assert_awaited_once_with({"msg": "hello"})
 
     @pytest.mark.asyncio
-    async def test_send_json_skips_disconnected(self, manager: ConnectionManager) -> None:
+    async def test_send_json_skips_disconnected(
+        self, manager: ConnectionManager
+    ) -> None:
         ws = MagicMock()
         ws.client_state = WebSocketState.DISCONNECTED
         ws.send_json = AsyncMock()
@@ -94,7 +98,9 @@ class TestConnectionManager:
         ws2.send_json.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_broadcast_disconnects_on_failure(self, manager: ConnectionManager) -> None:
+    async def test_broadcast_disconnects_on_failure(
+        self, manager: ConnectionManager
+    ) -> None:
         ws1 = MagicMock()
         ws1.client_state = WebSocketState.CONNECTED
         ws1.send_json = AsyncMock(side_effect=RuntimeError("boom"))
@@ -103,7 +109,9 @@ class TestConnectionManager:
         assert "c1" not in manager._connections
 
     @pytest.mark.asyncio
-    async def test_broadcast_cleans_missing_ws(self, manager: ConnectionManager) -> None:
+    async def test_broadcast_cleans_missing_ws(
+        self, manager: ConnectionManager
+    ) -> None:
         manager._groups["g1"] = {"c1"}
         manager._connections.clear()
         await manager.broadcast({"msg": "x"}, group="g1")

@@ -23,8 +23,7 @@ class TestDiscoverServices:
         fake_dir = MagicMock()
         fake_dir.exists.return_value = False
         with patch(
-            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR",
-            new=fake_dir,
+            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir
         ):
             assert _discover_services() == []
 
@@ -46,8 +45,7 @@ class TestDiscoverServices:
 
         fake_dir.__truediv__ = MagicMock(side_effect=_truediv)
         with patch(
-            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR",
-            new=fake_dir,
+            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir
         ):
             result = _discover_services()
         assert result == ["orders"]

@@ -43,6 +43,7 @@ def service(stub_settings: SimpleNamespace) -> APIDADATAService:
 
 # ── get_geolocate ───────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_geolocate_builds_payload_and_calls_request(
     service: APIDADATAService, stub_settings: SimpleNamespace
@@ -74,9 +75,7 @@ async def test_get_geolocate_includes_optional_params(
 async def test_get_geolocate_uses_waf_when_configured(
     stub_settings: SimpleNamespace,
 ) -> None:
-    with patch(
-        "src.backend.services.integrations.dadata.settings"
-    ) as mock_settings:
+    with patch("src.backend.services.integrations.dadata.settings") as mock_settings:
         mock_settings.http_base_settings.waf_url = "https://waf.bank.ru/"
         svc = APIDADATAService(dadata_settings=stub_settings)
         with patch.object(svc, "_request", new_callable=AsyncMock) as mock_req:
@@ -101,10 +100,9 @@ async def test_get_geolocate_wraps_exception_as_service_error(
 
 # ── singleton ───────────────────────────────────────────────────
 
+
 def test_get_dadata_service_singleton(stub_settings: SimpleNamespace) -> None:
-    with patch(
-        "src.backend.services.integrations.dadata.settings"
-    ) as mock_settings:
+    with patch("src.backend.services.integrations.dadata.settings") as mock_settings:
         mock_settings.dadata_api = stub_settings
         s1 = get_dadata_service()
         s2 = get_dadata_service()

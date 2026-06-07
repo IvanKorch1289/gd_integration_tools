@@ -41,7 +41,8 @@ class TestFilesShim:
             x
             for x in w
             if issubclass(x.category, DeprecationWarning)
-            and "src.backend.infrastructure.repositories.files устарел" in str(x.message)
+            and "src.backend.infrastructure.repositories.files устарел"
+            in str(x.message)
         ]
         assert relevant, "expected DeprecationWarning from backward-compat shim"
 

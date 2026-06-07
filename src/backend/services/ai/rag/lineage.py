@@ -22,11 +22,7 @@ from typing import Any
 
 from src.backend.services.lineage import get_lineage_emitter
 
-__all__ = (
-    "RAGChunkSource",
-    "RAGLineageTracker",
-    "RAGResponseLineage",
-)
+__all__ = ("RAGChunkSource", "RAGLineageTracker", "RAGResponseLineage")
 
 _log = logging.getLogger(__name__)
 
@@ -89,9 +85,7 @@ class RAGResponseLineage:
                     "response_id": self.response_id,
                 },
             },
-            "parent_ids": tuple(
-                f"chunk:{cs.chunk_id}" for cs in self.chunk_sources
-            ),
+            "parent_ids": tuple(f"chunk:{cs.chunk_id}" for cs in self.chunk_sources),
             "timestamp": self.timestamp,
             "payload": {
                 "user_query": self.user_query,

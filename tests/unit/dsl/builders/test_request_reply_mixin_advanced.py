@@ -84,7 +84,9 @@ async def test_backend_request_reply_round_trip() -> None:
         await backend.reply("cid-123", {"result": "ok"})
 
     asyncio.create_task(replier())
-    result = await backend.request("endpoint", {"action": "test"}, correlation_id="cid-123")
+    result = await backend.request(
+        "endpoint", {"action": "test"}, correlation_id="cid-123"
+    )
 
     assert result == {"result": "ok"}
     assert backend.pending_count == 0

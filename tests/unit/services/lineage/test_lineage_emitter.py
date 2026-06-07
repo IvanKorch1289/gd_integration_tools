@@ -44,12 +44,8 @@ def test_emitter_accepts_lineage_event_with_to_dict() -> None:
     )
 
     em = InMemoryLineageEmitter()
-    node = LineageNode(
-        id="dataset:foo", type=LineageNodeType.DATASET, name="foo"
-    )
-    event = LineageEvent(
-        event_id="e1", run_id="r1", event_type="input", node=node
-    )
+    node = LineageNode(id="dataset:foo", type=LineageNodeType.DATASET, name="foo")
+    event = LineageEvent(event_id="e1", run_id="r1", event_type="input", node=node)
     em(event)
     stored = em.list_events()
     assert len(stored) == 1
@@ -98,10 +94,7 @@ def test_emitter_thread_safe() -> None:
         for i in range(100):
             em({"event_id": f"e{start + i}"})
 
-    threads = [
-        threading.Thread(target=append_many, args=(i * 100,))
-        for i in range(5)
-    ]
+    threads = [threading.Thread(target=append_many, args=(i * 100,)) for i in range(5)]
     for t in threads:
         t.start()
     for t in threads:

@@ -171,9 +171,7 @@ async def test_out_message_set() -> None:
 async def test_critique_failure_uses_prior() -> None:
     """If critic raises, keep prior output (no crash)."""
     gen = AsyncMock(return_value="v1")
-    critic = AsyncMock(
-        side_effect=[RuntimeError("critic fail"), ("ok", 0.9)]
-    )
+    critic = AsyncMock(side_effect=[RuntimeError("critic fail"), ("ok", 0.9)])
 
     p = ReflectionLoopProcessor(generator=gen, critic=critic, max_refinements=3)
     ex = _make_exchange("input")
@@ -215,9 +213,7 @@ def test_threshold_default() -> None:
 def test_mixin_in_mro() -> None:
     """ReflectionLoopMixin в MRO RouteBuilder."""
     mro = [c.__name__ for c in RouteBuilder.__mro__]
-    assert "ReflectionLoopMixin" in mro, (
-        f"ReflectionLoopMixin not in MRO: {mro}"
-    )
+    assert "ReflectionLoopMixin" in mro, f"ReflectionLoopMixin not in MRO: {mro}"
 
 
 # ── Extra coverage (beyond spec) ────────────────────────────────────────

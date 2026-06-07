@@ -43,7 +43,9 @@ async def test_make_async_retry_exhausted() -> None:
 @pytest.mark.asyncio
 async def test_make_async_retry_respects_on_tuple() -> None:
     fn = AsyncMock(side_effect=[ValueError("v"), "ok"])
-    decorated = make_async_retry(max_attempts=3, initial_backoff=0.01, on=(ValueError,))(fn)
+    decorated = make_async_retry(
+        max_attempts=3, initial_backoff=0.01, on=(ValueError,)
+    )(fn)
     result = await decorated()
     assert result == "ok"
 
@@ -51,7 +53,9 @@ async def test_make_async_retry_respects_on_tuple() -> None:
 @pytest.mark.asyncio
 async def test_make_async_retry_does_not_retry_on_unmatched() -> None:
     fn = AsyncMock(side_effect=[ValueError("v")])
-    decorated = make_async_retry(max_attempts=3, initial_backoff=0.01, on=(RuntimeError,))(fn)
+    decorated = make_async_retry(
+        max_attempts=3, initial_backoff=0.01, on=(RuntimeError,)
+    )(fn)
     with pytest.raises(ValueError, match="v"):
         await decorated()
     assert fn.await_count == 1

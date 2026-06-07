@@ -14,7 +14,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Workflow Cost', '')
+setup_page("Workflow Cost", "")
 st.header("Workflow Cost Estimation — Sprint 12 K3 W3 + K4 W2")
 
 st.caption(

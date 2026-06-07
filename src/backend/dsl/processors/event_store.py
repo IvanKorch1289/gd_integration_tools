@@ -184,10 +184,7 @@ class InMemoryEventStore:
             return list(self._events)
 
     def replay(
-        self,
-        projection: "Projection",
-        *,
-        since_timestamp: float | None = None,
+        self, projection: "Projection", *, since_timestamp: float | None = None
     ) -> None:
         """Replay all events через projection (для rebuild read model)."""
         with self._lock:
@@ -255,9 +252,7 @@ class CommandBus:
             )
         self._handlers[command_type] = handler
 
-    async def dispatch(
-        self, command_type: str, payload: dict[str, Any]
-    ) -> list[Event]:
+    async def dispatch(self, command_type: str, payload: dict[str, Any]) -> list[Event]:
         handler = self._handlers.get(command_type)
         if handler is None:
             raise KeyError(
@@ -331,22 +326,17 @@ class EventStoreProcessor(BaseProcessor):
     ) -> None:
         if isinstance(stream, str) and stream not in [s.value for s in EventStream]:
             raise ValueError(
-                f"stream должен быть EventStream или known value, "
-                f"получено {stream!r}"
+                f"stream должен быть EventStream или known value, получено {stream!r}"
             )
         super().__init__(name=name or f"event_store_{stream}")
-        self._stream = (
-            EventStream(stream) if isinstance(stream, str) else stream
-        )
+        self._stream = EventStream(stream) if isinstance(stream, str) else stream
         self._store: EventStore = event_store or get_event_store()
         self._aggregate_id_field = aggregate_id_field
         self._events_field = events_field
         self._event_type_field = event_type_field
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Capture events из body[events_field] или properties[events_field]."""
         # Source 1: exchange.properties['events']
         events_raw = exchange.properties.get(self._events_field)
@@ -370,9 +360,7 @@ class EventStoreProcessor(BaseProcessor):
                 self._store.append(ev_raw)
             elif isinstance(ev_raw, dict):
                 # Auto-convert dict → Event
-                aggregate_id = ev_raw.get(
-                    self._aggregate_id_field, str(uuid.uuid4())
-                )
+                aggregate_id = ev_raw.get(self._aggregate_id_field, str(uuid.uuid4()))
                 event_type = ev_raw.get(self._event_type_field, "unknown")
                 payload = {
                     k: v

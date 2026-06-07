@@ -60,7 +60,10 @@ class TestCertRecord:
         fetched = db_session.query(CertRecord).filter_by(service_id="svc-1").first()
         assert fetched is not None
         assert fetched.service_id == "svc-1"
-        assert fetched.pem == "-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----"
+        assert (
+            fetched.pem
+            == "-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----"
+        )
         assert fetched.fingerprint == "aa:bb:cc"
         assert fetched.expires_at is not None
         assert fetched.uploaded_at is not None
@@ -83,7 +86,9 @@ class TestCertRecord:
         db_session.add(cert)
         db_session.commit()
 
-        fetched = db_session.query(CertRecord).filter_by(service_id="svc-no-desc").first()
+        fetched = (
+            db_session.query(CertRecord).filter_by(service_id="svc-no-desc").first()
+        )
         assert fetched is not None
         assert fetched.description is None
 
@@ -101,7 +106,11 @@ class TestCertRecord:
         db_session.add(cert)
         db_session.commit()
 
-        fetched = db_session.query(CertRecord).filter_by(service_id="svc-default-version").first()
+        fetched = (
+            db_session.query(CertRecord)
+            .filter_by(service_id="svc-default-version")
+            .first()
+        )
         assert fetched is not None
         assert fetched.version == 1
 
@@ -179,7 +188,9 @@ class TestCertHistory:
         db_session.add(record)
         db_session.commit()
 
-        fetched = db_session.query(CertHistory).filter_by(service_id="svc-null-user").first()
+        fetched = (
+            db_session.query(CertHistory).filter_by(service_id="svc-null-user").first()
+        )
         assert fetched is not None
         assert fetched.uploaded_by is None
 
@@ -189,10 +200,7 @@ class TestCertHistory:
         now = datetime.now(timezone.utc)
         for i in range(3):
             record = CertHistory(
-                service_id=f"svc-{i}",
-                version=i,
-                pem="pem",
-                uploaded_at=now,
+                service_id=f"svc-{i}", version=i, pem="pem", uploaded_at=now
             )
             db_session.add(record)
         db_session.commit()

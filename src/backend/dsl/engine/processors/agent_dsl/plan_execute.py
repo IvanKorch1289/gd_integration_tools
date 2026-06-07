@@ -104,9 +104,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
 
         while replan_count <= self.max_replans:
             # ── 1. Plan ──
-            plan = await self._generate_plan(
-                gateway, exchange, previous_errors
-            )
+            plan = await self._generate_plan(gateway, exchange, previous_errors)
             if plan is None:
                 exchange.set_error(f"{self.name}: не удалось сгенерировать план")
                 exchange.stop()
@@ -128,9 +126,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
                     gateway, exchange, step_id, step_description, step
                 )
                 if exec_result is None:
-                    exchange.set_error(
-                        f"{self.name}: step {step_id} execution failed"
-                    )
+                    exchange.set_error(f"{self.name}: step {step_id} execution failed")
                     exchange.stop()
                     return
 
@@ -194,16 +190,11 @@ class PlanExecuteProcessor(BaseAIProcessor):
     # ── internal helpers ──
 
     async def _generate_plan(
-        self,
-        gateway: Any,
-        exchange: Exchange[Any],
-        previous_errors: list[str],
+        self, gateway: Any, exchange: Exchange[Any], previous_errors: list[str]
     ) -> list[dict[str, Any]] | None:
         """Вызвать planner_workflow_id и распарсить JSON-план."""
         context = self._build_context(exchange, previous_errors)
-        response = await self._call_workflow(
-            gateway, self.planner_workflow_id, context
-        )
+        response = await self._call_workflow(gateway, self.planner_workflow_id, context)
         if response is None:
             return None
         return self._parse_plan(response)
@@ -262,16 +253,11 @@ class PlanExecuteProcessor(BaseAIProcessor):
         try:
             return json.loads(content) if content else {"verdict": "fail"}
         except json.JSONDecodeError:
-            _logger.warning(
-                "%s: verifier returned non-JSON: %r", self.name, content
-            )
+            _logger.warning("%s: verifier returned non-JSON: %r", self.name, content)
             return {"verdict": "ok" if "ok" in content.lower() else "fail"}
 
     async def _call_workflow(
-        self,
-        gateway: Any,
-        workflow_id: str,
-        context: dict[str, Any],
+        self, gateway: Any, workflow_id: str, context: dict[str, Any]
     ) -> Any | None:
         """Один LLM-вызов через AIGateway."""
         from src.backend.core.ai.gateway import AIRequest

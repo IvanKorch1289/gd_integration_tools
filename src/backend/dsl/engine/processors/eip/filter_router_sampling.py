@@ -16,6 +16,7 @@ Sampling: probabilistic subset — пропускает каждый N-й messag
 или fraction-based (e.g., 10% of messages). Полезно для sampling production
 traffic в test environment или для метрик.
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,10 +29,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
-__all__ = (
-    "ContentBasedRouter",
-    "SamplingProcessor",
-)
+__all__ = ("ContentBasedRouter", "SamplingProcessor")
 
 _log = logging.getLogger(__name__)
 
@@ -42,6 +40,7 @@ RouteResolver = Callable[[Exchange[Any]], str | None]
 
 
 # ── Content-Based Router ─────────────────────────────────────────────
+
 
 class ContentBasedRouter(BaseProcessor):
     """Routes message к one из N endpoints based on predicates.
@@ -80,9 +79,7 @@ class ContentBasedRouter(BaseProcessor):
         self._default_endpoint = default_endpoint
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         for idx, (predicate, endpoint) in enumerate(self._routes):
             try:
                 if predicate(exchange):
@@ -93,9 +90,7 @@ class ContentBasedRouter(BaseProcessor):
                     exchange.set_property("routing.choice.index", idx)
                     return
             except Exception as e:
-                _log.warning(
-                    "ContentBasedRouter: predicate %d raised: %s", idx, e
-                )
+                _log.warning("ContentBasedRouter: predicate %d raised: %s", idx, e)
                 continue
 
         # No match
@@ -104,9 +99,7 @@ class ContentBasedRouter(BaseProcessor):
                 "ContentBasedRouter: no match, using default → %s",
                 self._default_endpoint,
             )
-            exchange.set_property(
-                "routing.choice.endpoint", self._default_endpoint
-            )
+            exchange.set_property("routing.choice.endpoint", self._default_endpoint)
             exchange.set_property("routing.choice.index", -1)
         else:
             _log.warning("ContentBasedRouter: no match, no default — message dropped")
@@ -129,6 +122,7 @@ class ContentBasedRouter(BaseProcessor):
 
 
 # ── Sampling ────────────────────────────────────────────────────────
+
 
 class SamplingProcessor(BaseProcessor):
     """Probabilistic subset: пропускает N-ую часть messages.
@@ -192,9 +186,7 @@ class SamplingProcessor(BaseProcessor):
         self._lock = threading.Lock()
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         passed = self._should_pass()
         exchange.set_property("sampling.passed", passed)
         if not passed:
@@ -211,6 +203,7 @@ class SamplingProcessor(BaseProcessor):
             return self._rng.random() < self._fraction
         # Token-bucket by time window
         import time
+
         now_ms = time.monotonic() * 1000.0
         with self._lock:
             if now_ms - self._window_start_ms >= (self._time_window_ms or 0):

@@ -31,11 +31,10 @@ def actions() -> NotifyGatewayActions:
 
 # ── send channels ───────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_send_delegates_to_gateway(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         result = await actions.send(channel="email", to="a@b.com")
@@ -45,20 +44,18 @@ async def test_send_delegates_to_gateway(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_email_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.email(subject="hi", body="hello")
-        gateway.send.assert_awaited_once_with(channel="email", subject="hi", body="hello")
+        gateway.send.assert_awaited_once_with(
+            channel="email", subject="hi", body="hello"
+        )
 
 
 @pytest.mark.asyncio
 async def test_telegram_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.telegram(chat_id="123")
@@ -67,9 +64,7 @@ async def test_telegram_channel(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_slack_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.slack(text="msg")
@@ -78,9 +73,7 @@ async def test_slack_channel(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_teams_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.teams(text="msg")
@@ -89,9 +82,7 @@ async def test_teams_channel(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_sms_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.sms(phone="+7999")
@@ -100,9 +91,7 @@ async def test_sms_channel(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_webhook_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.webhook(url="http://hook")
@@ -111,9 +100,7 @@ async def test_webhook_channel(actions: NotifyGatewayActions) -> None:
 
 @pytest.mark.asyncio
 async def test_express_channel(actions: NotifyGatewayActions) -> None:
-    with patch(
-        "src.backend.core.providers_registry.get_provider"
-    ) as mock_get_provider:
+    with patch("src.backend.core.providers_registry.get_provider") as mock_get_provider:
         gateway = AsyncMock()
         mock_get_provider.return_value = gateway
         await actions.express(chat_id="c1")
@@ -121,6 +108,7 @@ async def test_express_channel(actions: NotifyGatewayActions) -> None:
 
 
 # ── register_notify_actions ─────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_register_notify_actions_default_prefix() -> None:
@@ -146,6 +134,7 @@ async def test_register_notify_actions_override() -> None:
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_notify_gateway_actions_singleton() -> None:
     a1 = get_notify_gateway_actions()

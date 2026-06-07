@@ -184,7 +184,6 @@ def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured == ["runtime_error"]
 
 
-
 @pytest.mark.unit
 def test_reranker_unavailable_early_return(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает early return при _reranker_unavailable=True (line 44)."""
@@ -236,10 +235,7 @@ def test_reranker_cache_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_mod.FlagReranker = _CountedReranker  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_mod)
 
-    example = {
-        "query": "q",
-        "candidates": [{"id": "a", "text": "x"}],
-    }
+    example = {"query": "q", "candidates": [{"id": "a", "text": "x"}]}
     rag_reranker_pipeline.forward(example)
     rag_reranker_pipeline.forward(example)
     assert init_calls == 1
@@ -352,10 +348,7 @@ def test_forward_compute_score_returns_scalar(monkeypatch: pytest.MonkeyPatch) -
     fake_mod.FlagReranker = _ScalarReranker  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_mod)
 
-    example = {
-        "query": "q",
-        "candidates": [{"id": "a", "text": "x"}],
-    }
+    example = {"query": "q", "candidates": [{"id": "a", "text": "x"}]}
     output = rag_reranker_pipeline.forward(example)
     ranked = json.loads(output)
     assert ranked == ["a"]
@@ -445,8 +438,7 @@ def test_metric_ndcg() -> None:
 
     # empty expected_ranking
     score = rag_reranker_pipeline.metric(
-        {"query": "q", "candidates": [], "expected_ranking": []},
-        json.dumps(["a"]),
+        {"query": "q", "candidates": [], "expected_ranking": []}, json.dumps(["a"])
     )
     assert score == 0.0
 

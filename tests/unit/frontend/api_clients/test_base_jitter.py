@@ -176,11 +176,13 @@ class TestJitterRealRandom:
         """100 реальных случайных jittered backoffs — все в ожидаемом диапазоне."""
         c = BaseAPIClient(jitter_ratio=0.3, initial_backoff=1.0)
         for attempt in range(5):
-            with patch("src.frontend.streamlit_app.api_clients.base.time.sleep") as sleep:
+            with patch(
+                "src.frontend.streamlit_app.api_clients.base.time.sleep"
+            ) as sleep:
                 c._sleep_backoff(attempt)
             called_with = sleep.call_args[0][0]
             # base=1.0*2^attempt (capped at 8), factor ∈ [0.7, 1.3]
-            base = min(1.0 * (2 ** attempt), 8.0)
+            base = min(1.0 * (2**attempt), 8.0)
             assert base * 0.7 <= called_with <= base * 1.3
 
     def test_seeded_random_is_deterministic(self) -> None:

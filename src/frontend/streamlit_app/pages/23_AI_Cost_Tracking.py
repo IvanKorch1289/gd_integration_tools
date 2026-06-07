@@ -31,7 +31,7 @@ except Exception:  # noqa: BLE001
             return resp.json()
 
 
-setup_page('AI Cost Tracking', '💸')
+setup_page("AI Cost Tracking", "💸")
 st.title("AI Cost Tracking")
 st.caption(
     "K4 Sprint 6 Wave 3 — финальный дашборд cost-аналитики "

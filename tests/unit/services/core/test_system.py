@@ -37,6 +37,7 @@ def mock_tech() -> AsyncMock:
 
 # ── health ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_health_uses_aggregator_when_available(service: SystemService) -> None:
     with patch(
@@ -81,6 +82,7 @@ async def test_component_health_delegates_to_aggregator(service: SystemService) 
 
 # ── config / feature flags ──────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_config_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
@@ -120,6 +122,7 @@ async def test_toggle_feature_flag_delegates_to_admin(
 
 # ── introspection ───────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_services_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
@@ -158,6 +161,7 @@ async def test_list_routes_delegates_to_admin(
 
 # ── cache management ────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_cache_keys_delegates_to_admin(
     service: SystemService, mock_admin: AsyncMock
@@ -185,6 +189,7 @@ async def test_invalidate_cache_delegates_to_admin(
 
 # ── slo report ──────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_slo_report_uses_tracker(service: SystemService) -> None:
     with patch(
@@ -209,6 +214,7 @@ async def test_slo_report_returns_empty_on_import_error(service: SystemService) 
 
 # ── notifications ───────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_send_email_delegates_to_tech(
     service: SystemService, mock_tech: AsyncMock
@@ -224,12 +230,11 @@ async def test_send_email_delegates_to_tech(
 
 # ── lazy properties ─────────────────────────────────────────────
 
+
 def test_tech_property_lazy_loads() -> None:
     svc = SystemService()
     assert svc._tech is None
-    with patch(
-        "src.backend.services.core.tech.get_tech_service"
-    ) as mock_get_tech:
+    with patch("src.backend.services.core.tech.get_tech_service") as mock_get_tech:
         mock_tech = MagicMock()
         mock_get_tech.return_value = mock_tech
         t = svc.tech
@@ -241,9 +246,7 @@ def test_tech_property_lazy_loads() -> None:
 def test_admin_property_lazy_loads() -> None:
     svc = SystemService()
     assert svc._admin is None
-    with patch(
-        "src.backend.services.core.admin.get_admin_service"
-    ) as mock_get_admin:
+    with patch("src.backend.services.core.admin.get_admin_service") as mock_get_admin:
         mock_admin = MagicMock()
         mock_get_admin.return_value = mock_admin
         a = svc.admin
@@ -253,6 +256,7 @@ def test_admin_property_lazy_loads() -> None:
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_system_service_singleton() -> None:
     s1 = get_system_service()

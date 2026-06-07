@@ -22,7 +22,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Action Bus', ':electric_plug:')
+setup_page("Action Bus", ":electric_plug:")
 st.header("Action Bus")
 
 # ---------------------------------------------------------------------------

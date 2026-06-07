@@ -32,9 +32,7 @@ st_tenant = st.text(
     max_size=20,
 )
 st_value = st.one_of(
-    st.booleans(),
-    st.integers(min_value=-1000, max_value=1000),
-    st.text(max_size=20),
+    st.booleans(), st.integers(min_value=-1000, max_value=1000), st.text(max_size=20)
 )
 
 PROP = settings(
@@ -155,9 +153,7 @@ def test_has_override_false_when_unset() -> None:
 
 @given(flag=st_flag, value=st_value, tenant=st_tenant)
 @PROP
-def test_has_override_tenant_scoped(
-    flag: str, value: object, tenant: str
-) -> None:
+def test_has_override_tenant_scoped(flag: str, value: object, tenant: str) -> None:
     """has_override(flag, tenant_id=A) doesn't leak to tenant_id=None."""
     store = RuntimeFeatureFlagOverrides()
     store.set(flag, value, tenant_id=tenant)
@@ -175,9 +171,7 @@ def test_has_override_tenant_scoped(
     tenant=st_tenant,
 )
 @PROP20
-def test_list_overrides_snapshot(
-    flags: list[str], value: object, tenant: str
-) -> None:
+def test_list_overrides_snapshot(flags: list[str], value: object, tenant: str) -> None:
     """list_overrides returns deep copy: mutating snapshot doesn't affect store."""
     store = RuntimeFeatureFlagOverrides()
     for f in flags:
@@ -199,9 +193,7 @@ def test_list_overrides_snapshot(
 
 @given(flag=st_flag, value=st_value, tenant=st_tenant)
 @PROP20
-def test_reset_clears_all_overrides(
-    flag: str, value: object, tenant: str
-) -> None:
+def test_reset_clears_all_overrides(flag: str, value: object, tenant: str) -> None:
     """reset() clears both global and per-tenant overrides."""
     store = RuntimeFeatureFlagOverrides()
     store.set(flag, value)

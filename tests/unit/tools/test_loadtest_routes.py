@@ -1,16 +1,12 @@
 """Tests для load test scaffold (S55 W5)."""
+
 from __future__ import annotations
 
 import asyncio
 
 import pytest
 
-from tools.loadtest.routes import (
-    LoadGenerator,
-    LoadStats,
-    loadtest,
-    _percentile,
-)
+from tools.loadtest.routes import LoadGenerator, LoadStats, loadtest, _percentile
 
 
 @pytest.mark.asyncio

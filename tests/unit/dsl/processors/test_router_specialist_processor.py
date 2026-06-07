@@ -80,9 +80,7 @@ async def test_basic_routing() -> None:
     specialists = [_billing_agent("billing_result")]
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="billing",
-            confidence=0.9,
-            reasoning="matches billing keywords",
+            chosen_agent="billing", confidence=0.9, reasoning="matches billing keywords"
         )
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
@@ -101,14 +99,10 @@ async def test_llm_router_selects_specialist() -> None:
     support = _support_agent("s")
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="support",
-            confidence=0.85,
-            reasoning="user mentions error",
+            chosen_agent="support", confidence=0.85, reasoning="user mentions error"
         )
     )
-    p = RouterSpecialistProcessor(
-        llm_router=router, specialists=[billing, support]
-    )
+    p = RouterSpecialistProcessor(llm_router=router, specialists=[billing, support])
     ex = _make_exchange("I have an error")
 
     await p.process(ex, MagicMock())
@@ -152,9 +146,7 @@ async def test_low_confidence_no_fallback() -> None:
         )
     )
     p = RouterSpecialistProcessor(
-        llm_router=router,
-        specialists=specialists,
-        min_confidence=0.6,
+        llm_router=router, specialists=specialists, min_confidence=0.6
     )
     ex = _make_exchange("ambiguous")
 
@@ -169,8 +161,12 @@ async def test_low_confidence_no_fallback() -> None:
 async def test_specialists_registration() -> None:
     """Specialists list is preserved on the processor."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock()),
-        SpecialistAgent(name="b", capability="y", description="...", handler=AsyncMock()),
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        ),
+        SpecialistAgent(
+            name="b", capability="y", description="...", handler=AsyncMock()
+        ),
     ]
     p = RouterSpecialistProcessor(llm_router=AsyncMock(), specialists=specialists)
     assert len(p._specialists) == 2
@@ -187,7 +183,9 @@ async def test_empty_specialists_raises() -> None:
 def test_invalid_min_confidence_raises() -> None:
     """min_confidence outside [0, 1] raises ValueError."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock())
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        )
     ]
     with pytest.raises(ValueError, match="min_confidence"):
         RouterSpecialistProcessor(
@@ -198,7 +196,9 @@ def test_invalid_min_confidence_raises() -> None:
 def test_invalid_min_confidence_negative_raises() -> None:
     """min_confidence < 0 raises ValueError."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock())
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        )
     ]
     with pytest.raises(ValueError, match="min_confidence"):
         RouterSpecialistProcessor(
@@ -209,13 +209,13 @@ def test_invalid_min_confidence_negative_raises() -> None:
 def test_chainable() -> None:
     """RouteBuilder.router_specialist() returns self (RouteBuilder)."""
 
-    async def router(
-        _input: str, _specs: list[SpecialistAgent]
-    ) -> RoutingDecision:
+    async def router(_input: str, _specs: list[SpecialistAgent]) -> RoutingDecision:
         return RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="...")
 
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock())
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        )
     ]
     b = RouteBuilder(route_id="t", source="t")
     result = b.router_specialist(llm_router=router, specialists=specialists)
@@ -229,7 +229,9 @@ async def test_async_routing() -> None:
     """Async LLM router supported end-to-end."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -249,7 +251,9 @@ async def test_exchange_in_message() -> None:
     """in_message.body becomes router input (first positional arg)."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -268,7 +272,9 @@ async def test_out_message_set() -> None:
     """out_message.body = specialist handler output."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="final"),
         )
     ]
@@ -287,7 +293,9 @@ async def test_routing_history() -> None:
     """RoutingDecision (with alternatives) saved to exchange properties."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -317,11 +325,12 @@ async def test_routing_history() -> None:
 async def test_specialist_not_found_uses_fallback() -> None:
     """LLM chooses non-existent specialist → fallback (if configured)."""
     billing = SpecialistAgent(
-        name="billing", capability="b", description="...",
-        handler=AsyncMock(),
+        name="billing", capability="b", description="...", handler=AsyncMock()
     )
     default = SpecialistAgent(
-        name="default", capability="d", description="...",
+        name="default",
+        capability="d",
+        description="...",
         handler=AsyncMock(return_value="d"),
     )
     router = AsyncMock(
@@ -330,9 +339,7 @@ async def test_specialist_not_found_uses_fallback() -> None:
         )
     )
     p = RouterSpecialistProcessor(
-        llm_router=router,
-        specialists=[billing, default],
-        fallback_specialist="default",
+        llm_router=router, specialists=[billing, default], fallback_specialist="default"
     )
     ex = _make_exchange("input")
 
@@ -365,9 +372,7 @@ async def test_specialist_not_found_no_fallback_fails() -> None:
 def test_mixin_in_mro() -> None:
     """RouterSpecialistMixin в MRO RouteBuilder."""
     mro = [c.__name__ for c in RouteBuilder.__mro__]
-    assert "RouterSpecialistMixin" in mro, (
-        f"RouterSpecialistMixin not in MRO: {mro}"
-    )
+    assert "RouterSpecialistMixin" in mro, f"RouterSpecialistMixin not in MRO: {mro}"
 
 
 def test_router_specialist_method_exists() -> None:
@@ -379,8 +384,12 @@ def test_router_specialist_method_exists() -> None:
 def test_to_spec() -> None:
     """to_spec returns router_specialist config dict."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="desc-a", handler=AsyncMock()),
-        SpecialistAgent(name="b", capability="y", description="desc-b", handler=AsyncMock()),
+        SpecialistAgent(
+            name="a", capability="x", description="desc-a", handler=AsyncMock()
+        ),
+        SpecialistAgent(
+            name="b", capability="y", description="desc-b", handler=AsyncMock()
+        ),
     ]
     p = RouterSpecialistProcessor(
         llm_router=AsyncMock(),
@@ -403,7 +412,9 @@ def test_to_spec() -> None:
 def test_invalid_fallback_specialist_raises() -> None:
     """fallback_specialist не в списке → ValueError."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock())
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        )
     ]
     with pytest.raises(ValueError, match="fallback_specialist"):
         RouterSpecialistProcessor(
@@ -416,7 +427,9 @@ def test_invalid_fallback_specialist_raises() -> None:
 def test_non_callable_llm_router_raises() -> None:
     """llm_router не callable → TypeError."""
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=AsyncMock())
+        SpecialistAgent(
+            name="a", capability="x", description="...", handler=AsyncMock()
+        )
     ]
     with pytest.raises(TypeError, match="llm_router"):
         RouterSpecialistProcessor(  # type: ignore[arg-type]
@@ -428,7 +441,9 @@ def test_non_callable_specialist_handler_raises() -> None:
     """SpecialistAgent.handler не callable → TypeError."""
     with pytest.raises(TypeError, match="handler"):
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler="not callable",  # type: ignore[arg-type]
         )
 
@@ -437,9 +452,7 @@ async def test_specialist_handler_raises_fails_exchange() -> None:
     """Если specialist.handler бросает → exchange.fail()."""
     handler = AsyncMock(side_effect=RuntimeError("boom"))
     specialists = [
-        SpecialistAgent(
-            name="a", capability="x", description="...", handler=handler
-        )
+        SpecialistAgent(name="a", capability="x", description="...", handler=handler)
     ]
     router = AsyncMock(
         return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
@@ -458,7 +471,9 @@ async def test_llm_router_raises_fails_exchange() -> None:
     router = AsyncMock(side_effect=RuntimeError("router down"))
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -477,7 +492,9 @@ async def test_headers_preserved_on_out_message() -> None:
     """in_message.headers пробрасываются в out_message."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -497,7 +514,9 @@ async def test_non_string_body_converted() -> None:
     """Non-str body (dict, int) конвертируется в str для LLM router."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...",
+            name="a",
+            capability="x",
+            description="...",
             handler=AsyncMock(return_value="r"),
         )
     ]
@@ -524,19 +543,14 @@ def test_routing_decision_confidence_validation() -> None:
 def test_specialist_agent_empty_name_raises() -> None:
     """SpecialistAgent с пустым name → ValueError."""
     with pytest.raises(ValueError, match="name"):
-        SpecialistAgent(
-            name="", capability="x", description="...",
-            handler=AsyncMock(),
-        )
+        SpecialistAgent(name="", capability="x", description="...", handler=AsyncMock())
 
 
 async def test_chainable_with_min_confidence() -> None:
     """Chainable с fallback + min_confidence работает."""
     specialists = [_billing_agent("b"), _support_agent("s")]
 
-    async def router(
-        _input: str, _specs: list[SpecialistAgent]
-    ) -> RoutingDecision:
+    async def router(_input: str, _specs: list[SpecialistAgent]) -> RoutingDecision:
         return RoutingDecision(chosen_agent="billing", confidence=0.5, reasoning="...")
 
     b = RouteBuilder(route_id="t2", source="t2")

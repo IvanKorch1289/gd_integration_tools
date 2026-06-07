@@ -212,7 +212,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):
+                except asyncio.CancelledError, Exception:
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )

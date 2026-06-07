@@ -28,12 +28,11 @@ def service() -> TechService:
 
 # ── link generators ─────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_log_storage_link(service: TechService) -> None:
     with patch("src.backend.services.core.tech.settings") as mock_settings:
-        with patch(
-            "src.backend.services.core.tech.generate_link_page"
-        ) as mock_gen:
+        with patch("src.backend.services.core.tech.generate_link_page") as mock_gen:
             mock_settings.logging.host = "http://logs"
             mock_settings.logging.port = 8080
             await service.get_log_storage_link()
@@ -43,9 +42,7 @@ async def test_get_log_storage_link(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_get_file_storage_link(service: TechService) -> None:
     with patch("src.backend.services.core.tech.settings") as mock_settings:
-        with patch(
-            "src.backend.services.core.tech.generate_link_page"
-        ) as mock_gen:
+        with patch("src.backend.services.core.tech.generate_link_page") as mock_gen:
             mock_settings.storage.interface_endpoint = "http://storage"
             await service.get_file_storage_link()
             mock_gen.assert_called_once_with("http://storage", "Файловое хранилище")
@@ -54,9 +51,7 @@ async def test_get_file_storage_link(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_get_queue_monitor_link(service: TechService) -> None:
     with patch("src.backend.services.core.tech.settings") as mock_settings:
-        with patch(
-            "src.backend.services.core.tech.generate_link_page"
-        ) as mock_gen:
+        with patch("src.backend.services.core.tech.generate_link_page") as mock_gen:
             mock_settings.queue.queue_ui_url = "http://queue"
             await service.get_queue_monitor_link()
             mock_gen.assert_called_once_with("http://queue", "Мониторинг очередей")
@@ -65,20 +60,18 @@ async def test_get_queue_monitor_link(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_get_langfuse_link(service: TechService) -> None:
     with patch("src.backend.services.core.tech.settings") as mock_settings:
-        with patch(
-            "src.backend.services.core.tech.generate_link_page"
-        ) as mock_gen:
+        with patch("src.backend.services.core.tech.generate_link_page") as mock_gen:
             mock_settings.app.langfuse_url = "http://lf"
             await service.get_langfuse_link()
-            mock_gen.assert_called_once_with("http://lf", "LangFuse — LLM Observability")
+            mock_gen.assert_called_once_with(
+                "http://lf", "LangFuse — LLM Observability"
+            )
 
 
 @pytest.mark.asyncio
 async def test_get_langgraph_link(service: TechService) -> None:
     with patch("src.backend.services.core.tech.settings") as mock_settings:
-        with patch(
-            "src.backend.services.core.tech.generate_link_page"
-        ) as mock_gen:
+        with patch("src.backend.services.core.tech.generate_link_page") as mock_gen:
             mock_settings.app.langgraph_url = "http://lg"
             await service.get_langgraph_link()
             mock_gen.assert_called_once_with(
@@ -87,6 +80,7 @@ async def test_get_langgraph_link(service: TechService) -> None:
 
 
 # ── health checks ───────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_check_database(service: TechService) -> None:
@@ -142,6 +136,7 @@ async def test_check_all_services(service: TechService) -> None:
 
 # ── degradation snapshot ────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_degradation_snapshot(service: TechService) -> None:
     with patch(
@@ -153,6 +148,7 @@ async def test_get_degradation_snapshot(service: TechService) -> None:
 
 
 # ── custom tables ───────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_all_custom_tables(service: TechService) -> None:
@@ -171,6 +167,7 @@ async def test_get_all_custom_tables(service: TechService) -> None:
 
 
 # ── upload excel ────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_upload_excel_for_mass_create(service: TechService) -> None:
@@ -196,14 +193,17 @@ async def test_upload_excel_for_mass_create(service: TechService) -> None:
     fake_service.get_or_add.return_value = {"id": 1}
 
     with patch(
-        "src.backend.services.core.tech.get_service_for_model", return_value=fake_service
+        "src.backend.services.core.tech.get_service_for_model",
+        return_value=fake_service,
     ):
         with patch(
             "polars.read_excel",
             return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
         ):
             result = await service.upload_excel_for_mass_create(
-                b"", "ORDERS", FakeEnum  # type: ignore[arg-type]
+                b"",
+                "ORDERS",
+                FakeEnum,  # type: ignore[arg-type]
             )
             assert len(result) == 1
             assert result[0] == {"id": 1}
@@ -219,6 +219,7 @@ async def test_upload_excel_raises_on_unknown_table(service: TechService) -> Non
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_tech_service_singleton() -> None:
     s1 = get_tech_service()

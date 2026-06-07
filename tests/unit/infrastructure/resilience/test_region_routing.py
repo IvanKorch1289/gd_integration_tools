@@ -134,7 +134,13 @@ class TestRegionRegistry:
     @pytest.mark.unit
     def test_get_region_status_registered(self) -> None:
         """Status of registered region reflects its initial status."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         assert get_region_status("ru-1") is RegionStatus.HEALTHY
 
     @pytest.mark.unit
@@ -145,7 +151,13 @@ class TestRegionRegistry:
     @pytest.mark.unit
     def test_set_region_status_updates_health_and_registry(self) -> None:
         """set_region_status updates both _REGION_HEALTH and the registry entry."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         set_region_status("ru-1", RegionStatus.DEGRADED)
         assert get_region_status("ru-1") is RegionStatus.DEGRADED
         reg = get_region("ru-1")
@@ -178,7 +190,13 @@ class TestRegionRouter:
     def test_route_url_selects_preferred_region(self) -> None:
         """Preferred region from tenant_ctx is selected when healthy."""
         register_region(Region(code="ru-1", primary_url="https://ru-1.example.com"))
-        register_region(Region(code="eu-1", primary_url="https://eu-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="eu-1",
+                primary_url="https://eu-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="eu-1")
         url = router.route_url(ctx)
@@ -188,8 +206,20 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_route_url_skips_unhealthy_preferred(self) -> None:
         """If preferred region is unhealthy, fallback to next healthy region."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
-        register_region(Region(code="eu-1", primary_url="https://eu-1.example.com", status=RegionStatus.UNHEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
+        register_region(
+            Region(
+                code="eu-1",
+                primary_url="https://eu-1.example.com",
+                status=RegionStatus.UNHEALTHY,
+            )
+        )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="eu-1")
         url = router.route_url(ctx)
@@ -199,8 +229,22 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_route_url_weighted_fallback(self) -> None:
         """Without preferred region, selects healthy region with highest weight."""
-        register_region(Region(code="aa", primary_url="https://aa.example.com", weight=10, status=RegionStatus.HEALTHY))
-        register_region(Region(code="bb", primary_url="https://bb.example.com", weight=50, status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="aa",
+                primary_url="https://aa.example.com",
+                weight=10,
+                status=RegionStatus.HEALTHY,
+            )
+        )
+        register_region(
+            Region(
+                code="bb",
+                primary_url="https://bb.example.com",
+                weight=50,
+                status=RegionStatus.HEALTHY,
+            )
+        )
         router = RegionRouter()
         url = router.route_url()
         assert url == "https://bb.example.com"
@@ -209,7 +253,13 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_route_url_degraded_accepted(self) -> None:
         """Degraded region is accepted as viable target."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.DEGRADED))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.DEGRADED,
+            )
+        )
         router = RegionRouter()
         url = router.route_url()
         assert url == "https://ru-1.example.com"
@@ -218,7 +268,13 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_route_url_unknown_region_fallback(self) -> None:
         """Unknown-status region is not chosen as healthy; falls back to first registered."""
-        register_region(Region(code="aa", primary_url="https://aa.example.com", status=RegionStatus.UNKNOWN))
+        register_region(
+            Region(
+                code="aa",
+                primary_url="https://aa.example.com",
+                status=RegionStatus.UNKNOWN,
+            )
+        )
         router = RegionRouter()
         url = router.route_url()
         # Fallback to first registered regardless of status
@@ -228,8 +284,20 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_route_url_fallback_to_first_registered(self) -> None:
         """If no healthy regions exist, fallback to first registered region."""
-        register_region(Region(code="bb", primary_url="https://bb.example.com", status=RegionStatus.UNHEALTHY))
-        register_region(Region(code="aa", primary_url="https://aa.example.com", status=RegionStatus.UNHEALTHY))
+        register_region(
+            Region(
+                code="bb",
+                primary_url="https://bb.example.com",
+                status=RegionStatus.UNHEALTHY,
+            )
+        )
+        register_region(
+            Region(
+                code="aa",
+                primary_url="https://aa.example.com",
+                status=RegionStatus.UNHEALTHY,
+            )
+        )
         router = RegionRouter()
         url = router.route_url()
         # list_regions sorts by code, so "aa" is first
@@ -239,10 +307,34 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_is_healthy(self) -> None:
         """is_healthy returns True for healthy/degraded/unknown and False for unhealthy."""
-        register_region(Region(code="h", primary_url="https://h.example.com", status=RegionStatus.HEALTHY))
-        register_region(Region(code="d", primary_url="https://d.example.com", status=RegionStatus.DEGRADED))
-        register_region(Region(code="u", primary_url="https://u.example.com", status=RegionStatus.UNHEALTHY))
-        register_region(Region(code="n", primary_url="https://n.example.com", status=RegionStatus.UNKNOWN))
+        register_region(
+            Region(
+                code="h",
+                primary_url="https://h.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
+        register_region(
+            Region(
+                code="d",
+                primary_url="https://d.example.com",
+                status=RegionStatus.DEGRADED,
+            )
+        )
+        register_region(
+            Region(
+                code="u",
+                primary_url="https://u.example.com",
+                status=RegionStatus.UNHEALTHY,
+            )
+        )
+        register_region(
+            Region(
+                code="n",
+                primary_url="https://n.example.com",
+                status=RegionStatus.UNKNOWN,
+            )
+        )
         router = RegionRouter()
         assert router.is_healthy("h") is True
         assert router.is_healthy("d") is True
@@ -253,8 +345,12 @@ class TestRegionRouter:
     @pytest.mark.unit
     def test_build_candidate_list(self) -> None:
         """_build_candidate_list orders: tenant preference first, then by weight desc."""
-        register_region(Region(code="low", primary_url="https://low.example.com", weight=1))
-        register_region(Region(code="high", primary_url="https://high.example.com", weight=100))
+        register_region(
+            Region(code="low", primary_url="https://low.example.com", weight=1)
+        )
+        register_region(
+            Region(code="high", primary_url="https://high.example.com", weight=100)
+        )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="low")
         candidates = router._build_candidate_list(ctx)
@@ -301,7 +397,13 @@ class TestRegionHealthChecker:
     @pytest.mark.asyncio
     async def test_record_ok_sets_healthy(self) -> None:
         """_record with ok=True sets region to HEALTHY."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.UNKNOWN))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.UNKNOWN,
+            )
+        )
         checker = RegionHealthChecker()
         await checker._record("ru-1", ok=True)
         assert get_region_status("ru-1") is RegionStatus.HEALTHY
@@ -311,7 +413,13 @@ class TestRegionHealthChecker:
     @pytest.mark.asyncio
     async def test_record_failure_degraded_then_unhealthy(self) -> None:
         """Consecutive failures transition region to DEGRADED then UNHEALTHY."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         checker = RegionHealthChecker(unhealth_threshold=3)
         await checker._record("ru-1", ok=False)
         assert get_region_status("ru-1") is RegionStatus.DEGRADED
@@ -324,7 +432,13 @@ class TestRegionHealthChecker:
     @pytest.mark.asyncio
     async def test_record_no_change_when_status_same(self) -> None:
         """Repeated ok=True when already HEALTHY does not trigger extra updates."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         checker = RegionHealthChecker()
         with patch("region_routing.set_region_status") as mock_set:
             await checker._record("ru-1", ok=True)
@@ -341,7 +455,9 @@ class TestRegionHealthChecker:
         register_region(Region(code="a", primary_url="https://a.example.com"))
         register_region(Region(code="b", primary_url="https://b.example.com"))
         checker = RegionHealthChecker()
-        with patch.object(checker, "probe", new=AsyncMock(return_value=True)) as mock_probe:
+        with patch.object(
+            checker, "probe", new=AsyncMock(return_value=True)
+        ) as mock_probe:
             await checker.check_all()
         assert mock_probe.call_count == 2
 
@@ -349,19 +465,29 @@ class TestRegionHealthChecker:
     @pytest.mark.asyncio
     async def test_on_status_change_callback(self) -> None:
         """on_status_change callback is invoked when status transitions."""
-        register_region(Region(code="ru-1", primary_url="https://ru-1.example.com", status=RegionStatus.HEALTHY))
+        register_region(
+            Region(
+                code="ru-1",
+                primary_url="https://ru-1.example.com",
+                status=RegionStatus.HEALTHY,
+            )
+        )
         checker = RegionHealthChecker(unhealth_threshold=1)
         callback = MagicMock()
         checker.on_status_change = callback
         await checker._record("ru-1", ok=False)
-        callback.assert_called_once_with("ru-1", RegionStatus.HEALTHY, RegionStatus.UNHEALTHY)
+        callback.assert_called_once_with(
+            "ru-1", RegionStatus.HEALTHY, RegionStatus.UNHEALTHY
+        )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_start_stop(self) -> None:
         """start runs check_all periodically; stop terminates the loop."""
         checker = RegionHealthChecker()
-        with patch.object(checker, "check_all", new_callable=AsyncMock) as mock_check_all:
+        with patch.object(
+            checker, "check_all", new_callable=AsyncMock
+        ) as mock_check_all:
             task = asyncio.create_task(checker.start(interval=0.01))
             await asyncio.sleep(0.05)
             checker.stop()

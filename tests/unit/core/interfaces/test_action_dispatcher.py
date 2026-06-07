@@ -87,10 +87,7 @@ class _FakeGatewayDispatcher:
         }
 
     async def dispatch(
-        self,
-        action: str,
-        payload: Mapping[str, Any],
-        context: DispatchContext,
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         # Naive "routing": pass through middlewares in order, then succeed.
         if not self._actions:
@@ -103,16 +100,12 @@ class _FakeGatewayDispatcher:
     def get_metadata(self, action: str) -> ActionMetadata | None:
         return self._actions.get(action)
 
-    def list_actions(
-        self, transport: TransportName | None = None
-    ) -> tuple[str, ...]:
+    def list_actions(self, transport: TransportName | None = None) -> tuple[str, ...]:
         if transport is None:
             return tuple(sorted(self._actions))
         return tuple(
             sorted(
-                name
-                for name, md in self._actions.items()
-                if transport in md.transports
+                name for name, md in self._actions.items() if transport in md.transports
             )
         )
 
@@ -120,9 +113,7 @@ class _FakeGatewayDispatcher:
         self, transport: TransportName | None = None
     ) -> tuple[ActionMetadata, ...]:
         if transport is None:
-            return tuple(
-                self._actions[a] for a in sorted(self._actions)
-            )
+            return tuple(self._actions[a] for a in sorted(self._actions))
         return tuple(
             md
             for name in sorted(self._actions)
@@ -297,6 +288,7 @@ def test_abc_protocols_cannot_instantiate() -> None:
 
 def test_concrete_implementation_required() -> None:
     """A subclass providing no methods fails isinstance for the Protocol."""
+
     class _Empty:
         pass
 
@@ -343,9 +335,7 @@ async def test_gateway_dispatch_returns_envelope() -> None:
     dispatcher = _FakeGatewayDispatcher()
     ctx = DispatchContext(tenant_id="acme", source="http")
     result = await dispatcher.dispatch(
-        action="orders.create",
-        payload={"sku": "ABC"},
-        context=ctx,
+        action="orders.create", payload={"sku": "ABC"}, context=ctx
     )
     assert isinstance(result, ActionResult)
     assert result.success is True

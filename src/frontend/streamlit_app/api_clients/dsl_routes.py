@@ -1,4 +1,5 @@
 """DSL Routes Store: CRUD + validate + diff (Wave 3.8)."""
+
 from __future__ import annotations
 
 from typing import Any

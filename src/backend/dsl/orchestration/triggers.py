@@ -14,6 +14,7 @@ trigger к route.
 предоставляет start_all/stop_all. Каждый trigger при match вызывает
 ``dsl_service.dispatch(route_id, body, headers)``.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -51,7 +52,7 @@ class FileSensorTaskWrapper:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
 
@@ -76,6 +77,7 @@ class Trigger(Protocol):
 
 
 # ── IntervalTrigger ────────────────────────────────────────────────
+
 
 class IntervalTrigger:
     """Периодический запуск route каждые ``interval_s`` секунд.
@@ -114,9 +116,7 @@ class IntervalTrigger:
                 await self._dispatch()
             while not self._stop.is_set():
                 try:
-                    await asyncio.wait_for(
-                        self._stop.wait(), timeout=self.interval_s
-                    )
+                    await asyncio.wait_for(self._stop.wait(), timeout=self.interval_s)
                 except asyncio.TimeoutError:
                     pass
                 if self._stop.is_set():
@@ -124,7 +124,12 @@ class IntervalTrigger:
                 await self._dispatch()
 
         self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")
-        _log.info("IntervalTrigger: %s started (route=%s, interval=%.1fs)", self.name, self.route_id, self.interval_s)
+        _log.info(
+            "IntervalTrigger: %s started (route=%s, interval=%.1fs)",
+            self.name,
+            self.route_id,
+            self.interval_s,
+        )
 
     async def stop(self) -> None:
         self._stop.set()
@@ -132,7 +137,7 @@ class IntervalTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
         _log.info("IntervalTrigger: %s stopped", self.name)
@@ -150,6 +155,7 @@ class IntervalTrigger:
 
 
 # ── WebhookTrigger ─────────────────────────────────────────────────
+
 
 class WebhookTrigger:
     """HTTP webhook trigger: POST /<path> → route.
@@ -189,13 +195,17 @@ class WebhookTrigger:
         if app is None:
             try:
                 from src.backend.entrypoints.api.app import get_app
+
                 app = get_app()
             except Exception:
-                _log.warning("WebhookTrigger %s: no FastAPI app found, deferring", self.name)
+                _log.warning(
+                    "WebhookTrigger %s: no FastAPI app found, deferring", self.name
+                )
                 return
 
         async def _handler(body: dict[str, Any] | None = None) -> dict[str, str]:
             from src.backend.dsl.service import get_dsl_service
+
             try:
                 await get_dsl_service().dispatch(
                     route_id=self.route_id,
@@ -208,19 +218,23 @@ class WebhookTrigger:
                 return {"status": "error", "error": str(e)}
 
         app.add_api_route(
-            self.path,
-            _handler,
-            methods=[self.method],
-            name=f"webhook_{self.name}",
+            self.path, _handler, methods=[self.method], name=f"webhook_{self.name}"
         )
         self._route_added = True
-        _log.info("WebhookTrigger: %s registered %s %s → %s", self.name, self.method, self.path, self.route_id)
+        _log.info(
+            "WebhookTrigger: %s registered %s %s → %s",
+            self.name,
+            self.method,
+            self.path,
+            self.route_id,
+        )
 
     async def stop(self) -> None:
         if self._app is not None and self._route_added:
             try:
                 self._app.router.routes = [
-                    r for r in self._app.router.routes
+                    r
+                    for r in self._app.router.routes
                     if getattr(r, "name", "") != f"webhook_{self.name}"
                 ]
             except Exception:
@@ -230,6 +244,7 @@ class WebhookTrigger:
 
 
 # ── TriggerRegistry ────────────────────────────────────────────────
+
 
 class TriggerRegistry:
     """Singleton registry для всех активных triggers.

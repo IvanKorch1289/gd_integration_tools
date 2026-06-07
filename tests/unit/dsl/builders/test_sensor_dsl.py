@@ -3,6 +3,7 @@
 Verifies that all S55 EIP + sensor + trigger DSL methods are exposed
 on RouteBuilder через EIPMixin.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -62,11 +63,16 @@ class TestDSLCoverage:
 
     def test_dsl_methods_count(self) -> None:
         """Sanity check: minimum expected DSL method count."""
-        dsl_methods = [m for m in dir(EIPMixin) if m.startswith(("from_", "routing_", "content_", "sampling"))]
+        dsl_methods = [
+            m
+            for m in dir(EIPMixin)
+            if m.startswith(("from_", "routing_", "content_", "sampling"))
+        ]
         assert len(dsl_methods) >= 9, f"Only {len(dsl_methods)} DSL methods found"
 
 
 # ── Trigger registration smoke tests ─────────────────────────────
+
 
 class TestTriggerRegistration:
     """Smoke tests: DSL methods register triggers correctly."""

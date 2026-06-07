@@ -233,12 +233,14 @@ class StranglerFigProcessor(BaseProcessor):
         self._seed = deterministic_seed
         # Per-instance random для deterministic routing
         # S311: random для traffic split, не crypto (комментарий явно)
-        self._rng = random.Random(deterministic_seed) if deterministic_seed is not None else None  # noqa: S311
+        self._rng = (
+            random.Random(deterministic_seed)
+            if deterministic_seed is not None
+            else None
+        )  # noqa: S311
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         # 1. Check rollback
         if self._rollback.is_active:
@@ -265,9 +267,7 @@ class StranglerFigProcessor(BaseProcessor):
             self._stats.record_error(target)
             if target == RouteTarget.NEW and self._on_new_error:
                 # Fallback to old
-                _log.warning(
-                    "new system failed (%s), falling back to old", exc
-                )
+                _log.warning("new system failed (%s), falling back to old", exc)
                 result = await self._old_handler(body)
                 self._stats.record_route(RouteTarget.OLD)
                 target = RouteTarget.OLD  # update for properties below

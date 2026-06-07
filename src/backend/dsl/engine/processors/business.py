@@ -15,6 +15,7 @@
 * :class:`ComplianceLabelProcessor` — проставляет метки (PII/FIN/PCI) на
   Exchange для downstream-audit и DLP.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,8 +29,16 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ('ComplianceLabelProcessor', 'CostTrackerProcessor', 'DataMaskingProcessor', 'HumanApprovalProcessor', 'OutboxProcessor', 'TenantScopeProcessor')
-logger = logging.getLogger('dsl.business')
+__all__ = (
+    "ComplianceLabelProcessor",
+    "CostTrackerProcessor",
+    "DataMaskingProcessor",
+    "HumanApprovalProcessor",
+    "OutboxProcessor",
+    "TenantScopeProcessor",
+)
+logger = logging.getLogger("dsl.business")
+
 
 class TenantScopeProcessor(BaseProcessor):
     """Проставляет ``tenant_id`` в :class:`Exchange` из заголовка или body-field.
@@ -38,8 +47,15 @@ class TenantScopeProcessor(BaseProcessor):
     row-level фильтрации. По-умолчанию читает из заголовка ``x-tenant-id``.
     """
 
-    def __init__(self, *, header: str='x-tenant-id', body_path: str | None=None, required: bool=True, name: str | None=None) -> None:
-        super().__init__(name=name or 'tenant-scope')
+    def __init__(
+        self,
+        *,
+        header: str = "x-tenant-id",
+        body_path: str | None = None,
+        required: bool = True,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "tenant-scope")
         self._header = header
         self._body_path = body_path
         self._required = required
@@ -50,25 +66,27 @@ class TenantScopeProcessor(BaseProcessor):
         if tenant_id is None and self._body_path:
             try:
                 import jmespath
+
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
             except Exception as _:
                 tenant_id = None
         if tenant_id is None:
             if self._required:
-                exchange.fail(f'Отсутствует tenant_id (header={self._header!r})')
+                exchange.fail(f"Отсутствует tenant_id (header={self._header!r})")
             return
-        exchange.properties['tenant_id'] = str(tenant_id)
+        exchange.properties["tenant_id"] = str(tenant_id)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         spec: dict[str, Any] = {}
-        if self._header != 'x-tenant-id':
-            spec['header'] = self._header
+        if self._header != "x-tenant-id":
+            spec["header"] = self._header
         if self._body_path is not None:
-            spec['body_path'] = self._body_path
+            spec["body_path"] = self._body_path
         if self._required is not True:
-            spec['required'] = self._required
-        return {'tenant_scope': spec}
+            spec["required"] = self._required
+        return {"tenant_scope": spec}
+
 
 class CostTrackerProcessor(BaseProcessor):
     """Учёт стоимости pipeline-инстанса в ``Exchange.properties['cost']``.
@@ -83,16 +101,27 @@ class CostTrackerProcessor(BaseProcessor):
     инкрементируют соответствующие поля через ``context`` (тут — заготовка).
     """
 
-    def __init__(self, *, name: str | None=None) -> None:
-        super().__init__(name=name or 'cost-tracker')
+    def __init__(self, *, name: str | None = None) -> None:
+        super().__init__(name=name or "cost-tracker")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
-        exchange.properties.setdefault('cost', {'llm_tokens_in': 0, 'llm_tokens_out': 0, 'http_calls': 0, 'db_ops': 0, 'usd': 0.0, 'started_at': time.time()})
+        exchange.properties.setdefault(
+            "cost",
+            {
+                "llm_tokens_in": 0,
+                "llm_tokens_out": 0,
+                "http_calls": 0,
+                "db_ops": 0,
+                "usd": 0.0,
+                "started_at": time.time(),
+            },
+        )
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'cost_tracker': {}}
+        return {"cost_tracker": {}}
+
 
 class HumanApprovalProcessor(BaseProcessor):
     """Останавливает pipeline, публикует запрос approval, ожидает ответа.
@@ -108,8 +137,16 @@ class HumanApprovalProcessor(BaseProcessor):
         approvers: Список получателей уведомления.
     """
 
-    def __init__(self, *, approval_store: Any, notifier: Any=None, timeout_seconds: float=86400.0, approvers: list[str] | None=None, name: str | None=None) -> None:
-        super().__init__(name=name or 'human-approval')
+    def __init__(
+        self,
+        *,
+        approval_store: Any,
+        notifier: Any = None,
+        timeout_seconds: float = 86400.0,
+        approvers: list[str] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "human-approval")
         self._store = approval_store
         self._notifier = notifier
         self._timeout = timeout_seconds
@@ -118,7 +155,13 @@ class HumanApprovalProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         request_id = str(uuid.uuid4())
-        payload = {'request_id': request_id, 'route_id': context.route_id if hasattr(context, 'route_id') else None, 'body': exchange.in_message.body, 'approvers': self._approvers, 'expires_at': time.time() + self._timeout}
+        payload = {
+            "request_id": request_id,
+            "route_id": context.route_id if hasattr(context, "route_id") else None,
+            "body": exchange.in_message.body,
+            "approvers": self._approvers,
+            "expires_at": time.time() + self._timeout,
+        }
         await self._store.request(request_id, payload)
         if self._notifier is not None and self._approvers:
             try:
@@ -126,11 +169,12 @@ class HumanApprovalProcessor(BaseProcessor):
                 if asyncio.iscoroutine(result):
                     await result
             except Exception as exc:
-                logger.warning('Approval notify failed: %s', exc)
+                logger.warning("Approval notify failed: %s", exc)
         decision = await self._store.wait(request_id, timeout=self._timeout)
-        exchange.properties['approval'] = decision
-        if not decision or decision.get('status') != 'approved':
-            exchange.fail(f'Approval отклонён/истёк: {decision}')
+        exchange.properties["approval"] = decision
+        if not decision or decision.get("status") != "approved":
+            exchange.fail(f"Approval отклонён/истёк: {decision}")
+
 
 class OutboxProcessor(BaseProcessor):
     """Записывает событие в outbox-таблицу для надёжной публикации.
@@ -149,32 +193,51 @@ class OutboxProcessor(BaseProcessor):
             сохраняет запись в таблицу ``outbox_messages``.
     """
 
-    def __init__(self, *, topic: str, outbox_writer: Any=None, name: str | None=None) -> None:
-        super().__init__(name=name or f'outbox:{topic}')
+    def __init__(
+        self, *, topic: str, outbox_writer: Any = None, name: str | None = None
+    ) -> None:
+        super().__init__(name=name or f"outbox:{topic}")
         self._topic = topic
         self._writer = outbox_writer
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
-        payload = exchange.out_message.body if exchange.out_message else exchange.in_message.body
+        payload = (
+            exchange.out_message.body
+            if exchange.out_message
+            else exchange.in_message.body
+        )
         headers = dict(exchange.in_message.headers)
         writer = self._writer
         if writer is None:
             from src.backend.infrastructure.repositories.outbox import (
                 write as default_writer,
             )
+
             writer = default_writer
         try:
             await writer(topic=self._topic, payload=payload, headers=headers)
         except Exception as exc:
-            exchange.fail(f'Outbox write failed: {exc}')
+            exchange.fail(f"Outbox write failed: {exc}")
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         if self._writer is not None:
             return None
-        return {'outbox': {'topic': self._topic}}
-_DEFAULT_PATTERNS = {'inn': re.compile('\\b\\d{10}(?:\\d{2})?\\b'), 'snils': re.compile('\\b\\d{3}-\\d{3}-\\d{3} \\d{2}\\b'), 'card': re.compile('\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b'), 'passport_ru': re.compile('\\b\\d{4} \\d{6}\\b'), 'email': re.compile('\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b'), 'phone': re.compile('\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b')}
+        return {"outbox": {"topic": self._topic}}
+
+
+_DEFAULT_PATTERNS = {
+    "inn": re.compile("\\b\\d{10}(?:\\d{2})?\\b"),
+    "snils": re.compile("\\b\\d{3}-\\d{3}-\\d{3} \\d{2}\\b"),
+    "card": re.compile("\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b"),
+    "passport_ru": re.compile("\\b\\d{4} \\d{6}\\b"),
+    "email": re.compile("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"),
+    "phone": re.compile(
+        "\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b"
+    ),
+}
+
 
 class DataMaskingProcessor(BaseProcessor):
     """Маскирует PII/PCI в теле сообщения перед логированием или передачей наружу.
@@ -183,11 +246,19 @@ class DataMaskingProcessor(BaseProcessor):
     Модифицирует ``in_message.body`` (если строка или JSON) in-place.
     """
 
-    def __init__(self, *, patterns: list[str] | None=None, replacement: str='***', name: str | None=None) -> None:
-        super().__init__(name=name or 'mask')
+    def __init__(
+        self,
+        *,
+        patterns: list[str] | None = None,
+        replacement: str = "***",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "mask")
         chosen = patterns or list(_DEFAULT_PATTERNS.keys())
         self._patterns_arg = patterns
-        self._patterns = [_DEFAULT_PATTERNS[p] for p in chosen if p in _DEFAULT_PATTERNS]
+        self._patterns = [
+            _DEFAULT_PATTERNS[p] for p in chosen if p in _DEFAULT_PATTERNS
+        ]
         self._replacement = replacement
 
     def _mask_str(self, text: str) -> str:
@@ -212,10 +283,11 @@ class DataMaskingProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         spec: dict[str, Any] = {}
         if self._patterns_arg is not None:
-            spec['patterns'] = list(self._patterns_arg)
-        if self._replacement != '***':
-            spec['replacement'] = self._replacement
-        return {'mask': spec}
+            spec["patterns"] = list(self._patterns_arg)
+        if self._replacement != "***":
+            spec["replacement"] = self._replacement
+        return {"mask": spec}
+
 
 class ComplianceLabelProcessor(BaseProcessor):
     """Проставляет метки compliance на Exchange.
@@ -225,16 +297,16 @@ class ComplianceLabelProcessor(BaseProcessor):
     middleware'ами (DLP, audit, masking) для условного поведения.
     """
 
-    def __init__(self, *, labels: list[str], name: str | None=None) -> None:
+    def __init__(self, *, labels: list[str], name: str | None = None) -> None:
         super().__init__(name=name or f"labels:{','.join(labels)}")
         self._labels = labels
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
-        existing = set(exchange.properties.get('compliance_labels', []))
+        existing = set(exchange.properties.get("compliance_labels", []))
         existing.update(self._labels)
-        exchange.properties['compliance_labels'] = sorted(existing)
+        exchange.properties["compliance_labels"] = sorted(existing)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'compliance_labels': {'labels': list(self._labels)}}
+        return {"compliance_labels": {"labels": list(self._labels)}}

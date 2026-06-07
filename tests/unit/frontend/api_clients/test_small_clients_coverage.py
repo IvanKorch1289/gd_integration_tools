@@ -161,12 +161,12 @@ class TestOrdersClient:
 
         c = OrdersClient()
         data = {"name": "Updated"}
-        with patch.object(c, "_request", return_value={"id": 1, "name": "Updated"}) as req:
+        with patch.object(
+            c, "_request", return_value={"id": 1, "name": "Updated"}
+        ) as req:
             result = c.update_order(42, data)
         assert result == {"id": 1, "name": "Updated"}
-        req.assert_called_once_with(
-            "PUT", "/api/v1/orders/update/42", json=data
-        )
+        req.assert_called_once_with("PUT", "/api/v1/orders/update/42", json=data)
 
     def test_delete_order(self) -> None:
         from src.frontend.streamlit_app.api_clients.orders import OrdersClient
@@ -232,9 +232,7 @@ class TestChatClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.chat("hi")
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/ai/chat",
-            json={"message": "hi", "session_id": "default"},
+            "POST", "/api/v1/ai/chat", json={"message": "hi", "session_id": "default"}
         )
 
 
@@ -311,9 +309,7 @@ class TestTenantsClient:
         from src.frontend.streamlit_app.api_clients.tenants import TenantsClient
 
         c = TenantsClient()
-        with patch.object(
-            c, "_request", return_value={"id": "t1", "audit": []}
-        ) as req:
+        with patch.object(c, "_request", return_value={"id": "t1", "audit": []}) as req:
             result = c.get_tenant_detail("t1")
         assert result == {"id": "t1", "audit": []}
         req.assert_called_once_with("GET", "/api/v1/admin/tenants/t1")

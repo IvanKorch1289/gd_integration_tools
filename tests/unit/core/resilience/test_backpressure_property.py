@@ -60,9 +60,7 @@ def test_utilization_negative_limit_returns_zero() -> None:
     assert state.utilization == 0.0
 
 
-@given(
-    queue_size=st.integers(min_value=0, max_value=10_000),
-)
+@given(queue_size=st.integers(min_value=0, max_value=10_000))
 @settings(max_examples=20)
 def test_utilization_under_default_limit(queue_size: int) -> None:
     """With default limit (1000), utilization scales linearly with queue_size."""
@@ -85,9 +83,7 @@ def test_constructor_accepts_valid_watermarks(high: float, low: float) -> None:
         return
     if low <= 0:
         return
-    controller = StreamingBackpressureController(
-        high_watermark=high, low_watermark=low
-    )
+    controller = StreamingBackpressureController(high_watermark=high, low_watermark=low)
     assert controller.state.is_paused is False
 
 
@@ -110,9 +106,7 @@ def test_constructor_rejects_low_eq_high(high: float, low: float) -> None:
 def test_constructor_rejects_high_over_one(high: float) -> None:
     """high_watermark > 1.0 should raise ValueError."""
     with pytest.raises(ValueError, match="0 < low_watermark"):
-        StreamingBackpressureController(
-            high_watermark=high, low_watermark=0.5
-        )
+        StreamingBackpressureController(high_watermark=high, low_watermark=0.5)
 
 
 @given(low=st.floats(max_value=0.0, allow_nan=False))
@@ -134,9 +128,7 @@ def test_constructor_rejects_non_positive_low(low: float) -> None:
     queue_limit=st.integers(min_value=1, max_value=10_000),
 )
 @settings(max_examples=50)
-def test_update_queue_size_reflects_in_state(
-    queue_size: int, queue_limit: int
-) -> None:
+def test_update_queue_size_reflects_in_state(queue_size: int, queue_limit: int) -> None:
     """After update_queue_size, state.queue_size matches."""
     controller = StreamingBackpressureController()
     controller.update_queue_size(queue_size, queue_limit=queue_limit)

@@ -36,7 +36,7 @@ from src.backend.services.dsl_portal import (  # noqa: E402
 )
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 
-setup_page('DSL Editor', '')
+setup_page("DSL Editor", "")
 st.header("DSL Visual Editor")
 st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "

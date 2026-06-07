@@ -29,10 +29,7 @@ class _FakeRegistry:
 
 @pytest.fixture
 def fake_registry() -> _FakeRegistry:
-    return _FakeRegistry([
-        _FakePolicy("class_a", 7),
-        _FakePolicy("class_b", 30),
-    ])
+    return _FakeRegistry([_FakePolicy("class_a", 7), _FakePolicy("class_b", 30)])
 
 
 @pytest.fixture
@@ -50,7 +47,9 @@ async def test_cleanup_stats_total_deleted() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_deletes_per_policy(fake_registry: _FakeRegistry, fake_client: MagicMock) -> None:
+async def test_run_deletes_per_policy(
+    fake_registry: _FakeRegistry, fake_client: MagicMock
+) -> None:
     job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry)
     stats = await job.run()
     assert stats.total_deleted >= 0
@@ -58,7 +57,9 @@ async def test_run_deletes_per_policy(fake_registry: _FakeRegistry, fake_client:
 
 
 @pytest.mark.asyncio
-async def test_run_handles_exception(fake_registry: _FakeRegistry, fake_client: MagicMock) -> None:
+async def test_run_handles_exception(
+    fake_registry: _FakeRegistry, fake_client: MagicMock
+) -> None:
     fake_client.execute = AsyncMock(side_effect=RuntimeError("ch down"))
     job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry)
     stats = await job.run()
@@ -83,7 +84,9 @@ async def test_count_deleted_approx_list_row(fake_client: MagicMock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_count_deleted_approx_returns_zero_on_error(fake_client: MagicMock) -> None:
+async def test_count_deleted_approx_returns_zero_on_error(
+    fake_client: MagicMock,
+) -> None:
     fake_client.execute = AsyncMock(side_effect=Exception("fail"))
     job = DLQCleanupJob(ch_client=fake_client, registry=_FakeRegistry())
     result = await job._count_deleted_approx("cls", datetime.now(UTC))
@@ -91,11 +94,17 @@ async def test_count_deleted_approx_returns_zero_on_error(fake_client: MagicMock
 
 
 @pytest.mark.asyncio
-async def test_run_uses_custom_clock(fake_registry: _FakeRegistry, fake_client: MagicMock) -> None:
+async def test_run_uses_custom_clock(
+    fake_registry: _FakeRegistry, fake_client: MagicMock
+) -> None:
     now = datetime(2024, 1, 1, tzinfo=UTC)
-    job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry, clock=lambda: now)
+    job = DLQCleanupJob(
+        ch_client=fake_client, registry=fake_registry, clock=lambda: now
+    )
     await job.run()
-    params_list = [call.kwargs.get("params", []) for call in fake_client.execute.call_args_list]
+    params_list = [
+        call.kwargs.get("params", []) for call in fake_client.execute.call_args_list
+    ]
     flat = [p for sub in params_list for p in sub]
     # cutoff for class_a (7 days) and class_b (30 days)
     assert "2023-12-25T00:00:00+00:00" in flat

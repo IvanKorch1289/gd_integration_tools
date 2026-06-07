@@ -69,9 +69,7 @@ async def test_process_appends_to_non_list_existing() -> None:
 async def test_process_capture_missing_field() -> None:
     """capture_field not in body/headers → not in payload."""
     proc = DataLineageProcessor(
-        dataset="foo",
-        capture_fields=["nonexistent"],
-        lineage_emitter=lambda e: None,
+        dataset="foo", capture_fields=["nonexistent"], lineage_emitter=lambda e: None
     )
     ex = _ex(body={"other": 1})
     await proc.process(ex, None)  # type: ignore[arg-type]
@@ -98,6 +96,7 @@ def test_event_store_processor_captures_from_body_dict_path() -> None:
     ex = _ex(body={"events": [{"aggregate_id": "o-1", "event_type": "x", "data": 1}]})
     # Manually call since this is sync test
     import asyncio
+
     asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
     events = get_event_store().load("o-1")
     assert len(events) == 1
@@ -110,6 +109,7 @@ def test_event_store_processor_no_body_no_properties() -> None:
     proc = EventStoreProcessor()
     ex = _ex(body="not a dict")
     import asyncio
+
     asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
     assert get_event_store().list_all() == []
 
@@ -120,6 +120,7 @@ def test_event_store_processor_body_with_none_events() -> None:
     proc = EventStoreProcessor()
     ex = _ex(body={"other": 1})
     import asyncio
+
     asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
     assert get_event_store().list_all() == []
 
@@ -199,12 +200,7 @@ def test_emitter_to_openlineage_no_parent_ids() -> None:
             "event_id": "e1",
             "run_id": "r1",
             "event_type": "output",
-            "node": {
-                "id": "d:foo",
-                "type": "dataset",
-                "name": "foo",
-                "attributes": {},
-            },
+            "node": {"id": "d:foo", "type": "dataset", "name": "foo", "attributes": {}},
             "timestamp": 1700000000.0,
             "payload": {},
         }

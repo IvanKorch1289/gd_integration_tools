@@ -36,7 +36,9 @@ def producer() -> AsyncMock:
 class TestKafkaDLQWriter:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_success(self, producer: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_success(
+        self, producer: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         writer = KafkaDLQWriter(producer=producer)
         await writer.write(envelope)
 
@@ -51,7 +53,9 @@ class TestKafkaDLQWriter:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_custom_topic_prefix(self, producer: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_custom_topic_prefix(
+        self, producer: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         writer = KafkaDLQWriter(producer=producer, topic_prefix="dead.")
         envelope.transport = "soap"
         await writer.write(envelope)
@@ -61,7 +65,9 @@ class TestKafkaDLQWriter:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_propagates_exception(self, producer: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_propagates_exception(
+        self, producer: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         producer.send_and_wait.side_effect = RuntimeError("kafka down")
         writer = KafkaDLQWriter(producer=producer)
 
@@ -80,7 +86,9 @@ class TestKafkaDLQWriter:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_custom_serializer(self, producer: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_custom_serializer(
+        self, producer: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         custom = MagicMock(return_value=b"custom-payload")
         writer = KafkaDLQWriter(producer=producer, serializer=custom)
         await writer.write(envelope)

@@ -48,7 +48,9 @@ from src.backend.dsl.processors.plan_execute_processor import (
 # ── Helpers ────────────────────────────────────────────────────────────
 
 
-def _make_exchange(body: Any = "hello", headers: dict[str, Any] | None = None) -> Exchange:
+def _make_exchange(
+    body: Any = "hello", headers: dict[str, Any] | None = None
+) -> Exchange:
     msg = Message(body=body, headers=headers or {})
     return Exchange(in_message=msg, out_message=msg)
 
@@ -119,7 +121,10 @@ class TestPlanStepDataclass:
 
     def test_step_with_params(self) -> None:
         s = PlanStep(
-            step_id="s1", action="call_tool", params={"url": "http://x"}, depends_on=["s0"]
+            step_id="s1",
+            action="call_tool",
+            params={"url": "http://x"},
+            depends_on=["s0"],
         )
         assert s.params == {"url": "http://x"}
         assert s.depends_on == ["s0"]
@@ -151,8 +156,7 @@ class TestPlanExecuteInit:
 
     async def test_init_minimal(self) -> None:
         p = PlanExecuteProcessor(
-            planner=_identity_planner([]),
-            executor=_identity_executor(),
+            planner=_identity_planner([]), executor=_identity_executor()
         )
         assert p._max_steps == 10
         assert p._max_replans == 2
@@ -307,9 +311,7 @@ class TestPlanVerifier:
         verifier_results = [False, True]
         verifier = AsyncMock(side_effect=verifier_results)
 
-        p = PlanExecuteProcessor(
-            planner=planner, executor=executor, verifier=verifier
-        )
+        p = PlanExecuteProcessor(planner=planner, executor=executor, verifier=verifier)
         ex = _make_exchange("go")
         await p.process(ex, _make_context())
         result = ex.get_property("plan_result")
@@ -352,9 +354,7 @@ class TestPlanLimits:
         planner = AsyncMock(return_value=steps)
         executor = AsyncMock(return_value="ok")
 
-        p = PlanExecuteProcessor(
-            planner=planner, executor=executor, max_steps=3
-        )
+        p = PlanExecuteProcessor(planner=planner, executor=executor, max_steps=3)
         ex = _make_exchange("x")
         await p.process(ex, _make_context())
         # Only 3 steps executed
@@ -489,9 +489,7 @@ class TestPlanAsyncSupport:
             await asyncio.sleep(0)
             return result.steps_failed == 0
 
-        p = PlanExecuteProcessor(
-            planner=llm, executor=exec_tool, verifier=verifier
-        )
+        p = PlanExecuteProcessor(planner=llm, executor=exec_tool, verifier=verifier)
         ex = _make_exchange("go")
         await p.process(ex, _make_context())
         result = ex.get_property("plan_result")
@@ -508,10 +506,7 @@ class TestPlanAsyncSupport:
             raise RuntimeError("verifier crash")
 
         p = PlanExecuteProcessor(
-            planner=llm,
-            executor=exec_tool,
-            verifier=broken_verifier,
-            max_replans=0,
+            planner=llm, executor=exec_tool, verifier=broken_verifier, max_replans=0
         )
         ex = _make_exchange("go")
         await p.process(ex, _make_context())

@@ -149,9 +149,7 @@ def test_memcached_backend_raises_when_aiomcache_missing(
         sys.modules["aiomcache"] = saved
 
 
-def test_memcached_runtime_error_message_helpful(
-    cfg_memcached: CacheSettings,
-) -> None:
+def test_memcached_runtime_error_message_helpful(cfg_memcached: CacheSettings) -> None:
     """RuntimeError message includes 'aiomcache' and 'pyproject.toml' hints."""
     saved = sys.modules.pop("aiomcache", None)
     with patch.dict(sys.modules, {"aiomcache": None}):
@@ -173,8 +171,7 @@ def test_redis_client_uses_raw_client_attribute() -> None:
     fake_singleton = MagicMock(spec=["_raw_client"])
     fake_singleton._raw_client = fake_raw
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
-        fake_singleton,
+        "src.backend.infrastructure.clients.storage.redis.redis_client", fake_singleton
     ):
         result = factory._redis_client()
     assert result is fake_raw
@@ -187,8 +184,7 @@ def test_redis_client_falls_back_to_client_attribute() -> None:
     fake_singleton._raw_client = None  # first lookup yields None
     fake_singleton.client = fake_raw
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
-        fake_singleton,
+        "src.backend.infrastructure.clients.storage.redis.redis_client", fake_singleton
     ):
         result = factory._redis_client()
     assert result is fake_raw
@@ -198,8 +194,7 @@ def test_redis_client_raises_if_not_initialized() -> None:
     """_redis_client raises RuntimeError if neither _raw_client nor client set."""
     fake_singleton = MagicMock(spec=[])  # no attributes
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
-        fake_singleton,
+        "src.backend.infrastructure.clients.storage.redis.redis_client", fake_singleton
     ):
         with pytest.raises(RuntimeError, match="redis_client не инициализирован"):
             factory._redis_client()

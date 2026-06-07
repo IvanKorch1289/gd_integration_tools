@@ -32,7 +32,9 @@ def jetstream() -> AsyncMock:
 class TestNATSDLQWriter:
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_success(self, jetstream: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_success(
+        self, jetstream: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         writer = NATSDLQWriter(jetstream=jetstream)
         await writer.write(envelope)
 
@@ -45,7 +47,9 @@ class TestNATSDLQWriter:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_custom_prefix(self, jetstream: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_custom_prefix(
+        self, jetstream: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         writer = NATSDLQWriter(jetstream=jetstream, subject_prefix="dead.")
         envelope.transport = "grpc"
         await writer.write(envelope)
@@ -54,7 +58,9 @@ class TestNATSDLQWriter:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_write_propagates_exception(self, jetstream: AsyncMock, envelope: DLQEnvelope) -> None:
+    async def test_write_propagates_exception(
+        self, jetstream: AsyncMock, envelope: DLQEnvelope
+    ) -> None:
         jetstream.publish.side_effect = RuntimeError("nats down")
         writer = NATSDLQWriter(jetstream=jetstream)
 

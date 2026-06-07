@@ -18,7 +18,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Capabilities', '🔐')
+setup_page("Capabilities", "🔐")
 st.header("Capability Matrix")
 st.caption(
     "Каталог capabilities (ADR-044) + plugin × capability heatmap. "

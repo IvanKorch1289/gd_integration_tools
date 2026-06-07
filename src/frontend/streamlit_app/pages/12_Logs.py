@@ -5,12 +5,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page(
-    'Logs',
-    ':scroll:',
-    layout='wide',
-    initial_sidebar_state='expanded',
-)
+setup_page("Logs", ":scroll:", layout="wide", initial_sidebar_state="expanded")
 st.header("Trace Logs")
 
 client = get_api_client()

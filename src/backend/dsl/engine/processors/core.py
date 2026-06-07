@@ -10,7 +10,17 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 from src.backend.schemas.invocation import ActionCommandSchema
 
-__all__ = ('DispatchActionProcessor', 'EnrichProcessor', 'FilterProcessor', 'LogProcessor', 'SetHeaderProcessor', 'SetPropertyProcessor', 'TransformProcessor', 'ValidateProcessor')
+__all__ = (
+    "DispatchActionProcessor",
+    "EnrichProcessor",
+    "FilterProcessor",
+    "LogProcessor",
+    "SetHeaderProcessor",
+    "SetPropertyProcessor",
+    "TransformProcessor",
+    "ValidateProcessor",
+)
+
 
 class SetHeaderProcessor(BaseProcessor):
     """Устанавливает заголовок в in_message Exchange.
@@ -20,7 +30,7 @@ class SetHeaderProcessor(BaseProcessor):
     """
 
     def __init__(self, key: str, value: Any) -> None:
-        super().__init__(name=f'set_header:{key}')
+        super().__init__(name=f"set_header:{key}")
         self.key = key
         self.value = value
 
@@ -30,7 +40,8 @@ class SetHeaderProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'set_header': {'key': self.key, 'value': self.value}}
+        return {"set_header": {"key": self.key, "value": self.value}}
+
 
 class SetPropertyProcessor(BaseProcessor):
     """Устанавливает runtime-свойство Exchange.
@@ -40,7 +51,7 @@ class SetPropertyProcessor(BaseProcessor):
     """
 
     def __init__(self, key: str, value: Any) -> None:
-        super().__init__(name=f'set_property:{key}')
+        super().__init__(name=f"set_property:{key}")
         self.key = key
         self.value = value
 
@@ -50,9 +61,22 @@ class SetPropertyProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'set_property': {'key': self.key, 'value': self.value}}
+        return {"set_property": {"key": self.key, "value": self.value}}
 
-@processor('dispatch_action', namespace='core', spec_schema={'type': 'object', 'properties': {'action': {'type': 'string'}, 'result_property': {'type': 'string'}}, 'required': ['action']}, meta={'tier': 1, 'category': 'core'})
+
+@processor(
+    "dispatch_action",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "action": {"type": "string"},
+            "result_property": {"type": "string"},
+        },
+        "required": ["action"],
+    },
+    meta={"tier": 1, "category": "core"},
+)
 class DispatchActionProcessor(BaseProcessor):
     """Camel Service Activator — вызывает зарегистрированный action.
 
@@ -63,8 +87,14 @@ class DispatchActionProcessor(BaseProcessor):
     Результат сохраняется в out_message и в property.
     """
 
-    def __init__(self, action: str, *, payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None=None, result_property: str='action_result') -> None:
-        super().__init__(name=f'dispatch_action:{action}')
+    def __init__(
+        self,
+        action: str,
+        *,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        result_property: str = "action_result",
+    ) -> None:
+        super().__init__(name=f"dispatch_action:{action}")
         self.action = action
         self.payload_factory = payload_factory
         self.result_property = result_property
@@ -85,10 +115,11 @@ class DispatchActionProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         if self.payload_factory is not None:
             return None
-        spec: dict[str, Any] = {'action': self.action}
-        if self.result_property != 'action_result':
-            spec['result_property'] = self.result_property
-        return {'dispatch_action': spec}
+        spec: dict[str, Any] = {"action": self.action}
+        if self.result_property != "action_result":
+            spec["result_property"] = self.result_property
+        return {"dispatch_action": spec}
+
 
 class TransformProcessor(BaseProcessor):
     """Трансформирует body через JMESPath-выражение.
@@ -99,20 +130,22 @@ class TransformProcessor(BaseProcessor):
     Пример: expression="orders[?status=='active'].{id: id, total: amount}"
     """
 
-    def __init__(self, expression: str, *, name: str | None=None) -> None:
-        super().__init__(name=name or f'transform:{expression[:30]}')
+    def __init__(self, expression: str, *, name: str | None = None) -> None:
+        super().__init__(name=name or f"transform:{expression[:30]}")
         self.expression = expression
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         import jmespath
+
         body = exchange.in_message.body
         result = jmespath.search(self.expression, body)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'transform': {'expression': self.expression}}
+        return {"transform": {"expression": self.expression}}
+
 
 class FilterProcessor(BaseProcessor):
     """Camel Message Filter — пропускает Exchange только если predicate=True.
@@ -121,15 +154,18 @@ class FilterProcessor(BaseProcessor):
     (property "filtered"=True). Последующие процессоры не выполняются.
     """
 
-    def __init__(self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None=None) -> None:
-        super().__init__(name=name or 'filter')
+    def __init__(
+        self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None
+    ) -> None:
+        super().__init__(name=name or "filter")
         self._predicate = predicate
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         if not self._predicate(exchange):
-            exchange.set_property('filtered', True)
+            exchange.set_property("filtered", True)
             exchange.stop()
+
 
 class EnrichProcessor(BaseProcessor):
     """Camel Content Enricher — обогащает Exchange данными из внешнего action.
@@ -138,8 +174,15 @@ class EnrichProcessor(BaseProcessor):
     Полезно для добавления справочных данных, обогащения из внешних API.
     """
 
-    def __init__(self, action: str, *, payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None=None, result_property: str='enrichment', name: str | None=None) -> None:
-        super().__init__(name=name or f'enrich:{action}')
+    def __init__(
+        self,
+        action: str,
+        *,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        result_property: str = "enrichment",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"enrich:{action}")
         self.action = action
         self.payload_factory = payload_factory
         self.result_property = result_property
@@ -155,31 +198,49 @@ class EnrichProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         if self.payload_factory is not None:
             return None
-        spec: dict[str, Any] = {'action': self.action}
-        if self.result_property != 'enrichment':
-            spec['result_property'] = self.result_property
-        return {'enrich': spec}
+        spec: dict[str, Any] = {"action": self.action}
+        if self.result_property != "enrichment":
+            spec["result_property"] = self.result_property
+        return {"enrich": spec}
 
-@processor('log', namespace='core', spec_schema={'type': 'object', 'properties': {'level': {'type': 'string', 'enum': ['DEBUG', 'INFO', 'WARNING', 'ERROR']}, 'message': {'type': 'string'}}}, meta={'tier': 1, 'category': 'observability'})
+
+@processor(
+    "log",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]},
+            "message": {"type": "string"},
+        },
+    },
+    meta={"tier": 1, "category": "observability"},
+)
 class LogProcessor(BaseProcessor):
     """Логирует текущее состояние Exchange (тип body, список properties).
 
     Полезен для отладки pipeline. Не изменяет данные.
     """
 
-    def __init__(self, *, level: str='info', name: str | None=None) -> None:
-        super().__init__(name=name or 'log')
+    def __init__(self, *, level: str = "info", name: str | None = None) -> None:
+        super().__init__(name=name or "log")
         self._level = level
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
-        logger = logging.getLogger('dsl.pipeline')
+        logger = logging.getLogger("dsl.pipeline")
         log_fn = getattr(logger, self._level, logger.info)
-        log_fn('Exchange[route=%s]: body=%s, properties=%s', context.route_id, type(exchange.in_message.body).__name__, list(exchange.properties.keys()))
+        log_fn(
+            "Exchange[route=%s]: body=%s, properties=%s",
+            context.route_id,
+            type(exchange.in_message.body).__name__,
+            list(exchange.properties.keys()),
+        )
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {'log': {'level': self._level}}
+        return {"log": {"level": self._level}}
+
 
 class ValidateProcessor(BaseProcessor):
     """Валидирует body через Pydantic-модель.
@@ -189,21 +250,22 @@ class ValidateProcessor(BaseProcessor):
     сохраняется в property "validated_payload".
     """
 
-    def __init__(self, model: type[BaseModel], *, name: str | None=None) -> None:
-        super().__init__(name=name or f'validate:{model.__name__}')
+    def __init__(self, model: type[BaseModel], *, name: str | None = None) -> None:
+        super().__init__(name=name or f"validate:{model.__name__}")
         self._model = model
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         from pydantic import ValidationError
+
         body = exchange.in_message.body
         if not isinstance(body, dict):
-            exchange.set_error(f'Ожидался dict, получен {type(body).__name__}')
+            exchange.set_error(f"Ожидался dict, получен {type(body).__name__}")
             exchange.stop()
             return
         try:
             validated = self._model.model_validate(body)
-            exchange.set_property('validated_payload', validated)
+            exchange.set_property("validated_payload", validated)
         except ValidationError as exc:
             exchange.set_error(str(exc))
             exchange.stop()

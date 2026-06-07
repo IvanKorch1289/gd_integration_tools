@@ -123,7 +123,7 @@ class AIWorkspaceCleaner:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
     def cleanup_expired(self, now: datetime, ttl_days: int | None = None) -> int:

@@ -79,9 +79,7 @@ def test_percent_hundred_returns_max(samples: list[float]) -> None:
     p2=st.floats(min_value=50.0, max_value=100.0, allow_nan=False),
 )
 @settings(max_examples=50)
-def test_percentile_monotonic(
-    samples: list[float], p1: float, p2: float
-) -> None:
+def test_percentile_monotonic(samples: list[float], p1: float, p2: float) -> None:
     """For p1 < p2, percentile(p1) <= percentile(p2) (monotonic)."""
     # Ensure p1 < p2 (hypothesis can generate equal boundaries)
     if p1 >= p2:
@@ -109,9 +107,7 @@ def test_percentile_within_bounds(samples: list[float], p: float) -> None:
 
 @given(samples=st_samples, p=st_percent)
 @settings(max_examples=50)
-def test_percentile_matches_nearest_rank(
-    samples: list[float], p: float
-) -> None:
+def test_percentile_matches_nearest_rank(samples: list[float], p: float) -> None:
     """Result equals sorted_samples[rank] where rank = ceil(p/100*N) - 1."""
     sorted_samples = sorted(samples)
     expected_rank = max(0, math.ceil(p / 100.0 * len(sorted_samples)) - 1)

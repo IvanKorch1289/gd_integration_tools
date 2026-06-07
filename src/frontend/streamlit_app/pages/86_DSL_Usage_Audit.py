@@ -25,7 +25,7 @@ if str(ROOT) not in sys.path:
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 
-setup_page('DSL Usage Audit', ':bar_chart:')
+setup_page("DSL Usage Audit", ":bar_chart:")
 st.header(":bar_chart: DSL Usage Audit")
 st.caption("K3 S19 W6 — статистика использования DSL процессоров")
 

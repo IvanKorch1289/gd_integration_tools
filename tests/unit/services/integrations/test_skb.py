@@ -47,6 +47,7 @@ def service(stub_settings: SimpleNamespace) -> APISKBService:
 
 # ── request injects api-key ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_request_merges_api_key(service: APISKBService) -> None:
     from src.backend.services.core.base_external_api import BaseExternalAPIClient
@@ -61,6 +62,7 @@ async def test_request_merges_api_key(service: APISKBService) -> None:
 
 
 # ── get_request_kinds ───────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_request_kinds_returns_data(service: APISKBService) -> None:
@@ -86,6 +88,7 @@ async def test_get_request_kinds_uses_waf_in_production(
 
 # ── add_request ─────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_add_request_posts_json(service: APISKBService) -> None:
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
@@ -97,8 +100,11 @@ async def test_add_request_posts_json(service: APISKBService) -> None:
 
 # ── get_response_by_order ───────────────────────────────────────
 
+
 @pytest.mark.asyncio
-async def test_get_response_by_order_returns_json_by_default(service: APISKBService) -> None:
+async def test_get_response_by_order_returns_json_by_default(
+    service: APISKBService,
+) -> None:
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"data": {"status": "ok"}}
         result = await service.get_response_by_order(
@@ -109,7 +115,9 @@ async def test_get_response_by_order_returns_json_by_default(service: APISKBServ
 
 
 @pytest.mark.asyncio
-async def test_get_response_by_order_returns_bytes_for_pdf(service: APISKBService) -> None:
+async def test_get_response_by_order_returns_bytes_for_pdf(
+    service: APISKBService,
+) -> None:
     # код делает response.get("data") даже при response_type="bytes"
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"data": b"pdf-content"}
@@ -121,6 +129,7 @@ async def test_get_response_by_order_returns_bytes_for_pdf(service: APISKBServic
 
 
 # ── get_orders_list ─────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_orders_list_with_pagination(service: APISKBService) -> None:
@@ -140,16 +149,21 @@ async def test_get_orders_list_without_pagination(service: APISKBService) -> Non
 
 # ── get_objects_by_address ──────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_objects_by_address_posts_with_query(service: APISKBService) -> None:
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"objects": []}
         result = await service.get_objects_by_address("Moscow", comment="test")
         assert result == {"objects": []}
-        assert mock_req.await_args.kwargs["params"] == {"query": "Moscow", "comment": "test"}
+        assert mock_req.await_args.kwargs["params"] == {
+            "query": "Moscow",
+            "comment": "test",
+        }
 
 
 # ── singleton ───────────────────────────────────────────────────
+
 
 def test_get_skb_service_singleton(stub_settings: SimpleNamespace) -> None:
     with patch("src.backend.services.integrations.skb.settings") as mock_settings:

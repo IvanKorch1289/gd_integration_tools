@@ -1,4 +1,5 @@
 """Unit tests for src.backend.workflows.worker."""
+
 from __future__ import annotations
 
 import asyncio
@@ -70,18 +71,15 @@ def test_resolve_executor_noop() -> None:
 
 @pytest.mark.asyncio
 async def test_noop_executor_returns_done() -> None:
-    with patch(
-        "src.backend.infrastructure.workflow.runner.StepOutcome"
-    ) as MockOutcome, patch(
-        "src.backend.infrastructure.workflow.runner.StepResult"
-    ) as MockResult:
+    with (
+        patch("src.backend.infrastructure.workflow.runner.StepOutcome") as MockOutcome,
+        patch("src.backend.infrastructure.workflow.runner.StepResult") as MockResult,
+    ):
         MockOutcome.DONE = "DONE"
         exc = NoOpStepExecutor()
         instance = MagicMock(id="wf-1")
         result = await exc.execute_next(instance=instance, state=None)
-        MockResult.assert_called_once_with(
-            outcome="DONE", events=[], output_state=None
-        )
+        MockResult.assert_called_once_with(outcome="DONE", events=[], output_state=None)
         assert result is MockResult.return_value
 
 
@@ -94,9 +92,7 @@ async def test_bootstrap_calls_registrations() -> None:
         patch(
             "src.backend.plugins.composition.service_setup.register_all_services"
         ) as reg_svc,
-        patch(
-            "src.backend.dsl.commands.setup.register_action_handlers"
-        ) as reg_act,
+        patch("src.backend.dsl.commands.setup.register_action_handlers") as reg_act,
         patch("src.backend.dsl.routes.register_dsl_routes") as reg_routes,
         patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg,
     ):
@@ -112,9 +108,7 @@ async def test_bootstrap_calls_registrations() -> None:
 @pytest.mark.asyncio
 async def test_bootstrap_graceful_on_connector_failure() -> None:
     with (
-        patch(
-            "src.backend.plugins.composition.service_setup.register_all_services"
-        ),
+        patch("src.backend.plugins.composition.service_setup.register_all_services"),
         patch("src.backend.dsl.commands.setup.register_action_handlers"),
         patch("src.backend.dsl.routes.register_dsl_routes"),
         patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg,
@@ -212,13 +206,13 @@ async def test_run_worker_full_lifecycle() -> None:
     event_mock.wait = AsyncMock()
     with (
         patch("src.backend.workflows.worker.asyncio.Event", return_value=event_mock),
-        patch("src.backend.workflows.worker._bootstrap", new_callable=AsyncMock) as boot,
+        patch(
+            "src.backend.workflows.worker._bootstrap", new_callable=AsyncMock
+        ) as boot,
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch(
-            "src.backend.workflows.worker_probes.WorkerProbesServer"
-        ) as Probes,
+        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ) as shut,
@@ -257,9 +251,7 @@ async def test_run_worker_with_listen() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch(
-            "src.backend.workflows.worker_probes.WorkerProbesServer"
-        ) as Probes,
+        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),
@@ -295,9 +287,7 @@ async def test_run_worker_runner_stop_timeout() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch(
-            "src.backend.workflows.worker_probes.WorkerProbesServer"
-        ) as Probes,
+        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),
@@ -330,9 +320,7 @@ async def test_run_worker_runner_stop_error() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch(
-            "src.backend.workflows.worker_probes.WorkerProbesServer"
-        ) as Probes,
+        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),

@@ -18,7 +18,9 @@ def mock_engine() -> MagicMock:
 
 
 def test_listener_registers_handlers(mock_engine: MagicMock) -> None:
-    with patch("src.backend.infrastructure.database.listeners.event.listens_for") as mock_listen:
+    with patch(
+        "src.backend.infrastructure.database.listeners.event.listens_for"
+    ) as mock_listen:
         DatabaseListener(mock_engine, "test_db", 0.5)
         assert mock_listen.call_count == 3
 
@@ -30,9 +32,13 @@ def test_before_cursor_execute_sets_start_time() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.listeners.event.listens_for", fake_listens_for):
+    with patch(
+        "src.backend.infrastructure.database.listeners.event.listens_for",
+        fake_listens_for,
+    ):
         DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 0.5)
 
     context = SimpleNamespace()
@@ -47,9 +53,13 @@ def test_after_cursor_execute_logs_slow_query() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.listeners.event.listens_for", fake_listens_for):
+    with patch(
+        "src.backend.infrastructure.database.listeners.event.listens_for",
+        fake_listens_for,
+    ):
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 0.1)
 
     context = SimpleNamespace(_query_start_time=0.0)
@@ -71,9 +81,13 @@ def test_after_cursor_execute_logs_debug() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.listeners.event.listens_for", fake_listens_for):
+    with patch(
+        "src.backend.infrastructure.database.listeners.event.listens_for",
+        fake_listens_for,
+    ):
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 10.0)
 
     context = SimpleNamespace(_query_start_time=0.0)
@@ -93,9 +107,13 @@ def test_handle_error_logs_exception() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.listeners.event.listens_for", fake_listens_for):
+    with patch(
+        "src.backend.infrastructure.database.listeners.event.listens_for",
+        fake_listens_for,
+    ):
         listener = DatabaseListener(MagicMock(sync_engine=MagicMock()), "db", 1.0)
 
     exc_ctx = SimpleNamespace(

@@ -64,7 +64,9 @@ class TestAdminClientFlagsDelegation:
         assert result is True
         mock.assert_called_once_with("f1", True)
 
-    def test_set_override_delegates_with_kwargs(self, admin_client: AdminClient) -> None:
+    def test_set_override_delegates_with_kwargs(
+        self, admin_client: AdminClient
+    ) -> None:
         with patch.object(
             admin_client._flags, "set_override", return_value={"ok": True}
         ) as mock:
@@ -72,7 +74,9 @@ class TestAdminClientFlagsDelegation:
         assert result == {"ok": True}
         mock.assert_called_once_with("f1", "v", tenant_id="t1", actor="a1")
 
-    def test_clear_override_delegates_with_kwargs(self, admin_client: AdminClient) -> None:
+    def test_clear_override_delegates_with_kwargs(
+        self, admin_client: AdminClient
+    ) -> None:
         with patch.object(
             admin_client._flags, "clear_override", return_value={"ok": True}
         ) as mock:
@@ -113,7 +117,9 @@ class TestAdminClientConfigDelegation:
         assert result == {"version": "1.0"}
         mock.assert_called_once_with()
 
-    def test_get_trace_logs_delegates_with_limit(self, admin_client: AdminClient) -> None:
+    def test_get_trace_logs_delegates_with_limit(
+        self, admin_client: AdminClient
+    ) -> None:
         with patch.object(
             admin_client._config, "get_trace_logs", return_value=[{"trace": "x"}]
         ) as mock:
@@ -136,9 +142,7 @@ class TestAdminClientAdminOnlyMethods:
         assert result["components"] == {}
 
     def test_get_capability_catalog_happy(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value={"vocabulary": ["x"]}
-        ):
+        with patch.object(admin_client, "get", return_value={"vocabulary": ["x"]}):
             assert admin_client.get_capability_catalog() == {"vocabulary": ["x"]}
 
     def test_get_capability_catalog_exception(self, admin_client: AdminClient) -> None:
@@ -147,22 +151,20 @@ class TestAdminClientAdminOnlyMethods:
         assert result["vocabulary"] == []
         assert "boom" in result["error"]
 
-    def test_get_processor_catalog_no_namespace(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value={"items": []}
-        ) as get:
+    def test_get_processor_catalog_no_namespace(
+        self, admin_client: AdminClient
+    ) -> None:
+        with patch.object(admin_client, "get", return_value={"items": []}) as get:
             admin_client.get_processor_catalog(query="q", limit=10)
         get.assert_called_once_with(
             "/api/v1/dsl/processors/search", params={"q": "q", "limit": 10}
         )
 
-    def test_get_processor_catalog_with_namespace(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value={"items": []}
-        ) as get:
-            admin_client.get_processor_catalog(
-                query="q", namespace="ns1", limit=20
-            )
+    def test_get_processor_catalog_with_namespace(
+        self, admin_client: AdminClient
+    ) -> None:
+        with patch.object(admin_client, "get", return_value={"items": []}) as get:
+            admin_client.get_processor_catalog(query="q", namespace="ns1", limit=20)
         get.assert_called_once_with(
             "/api/v1/dsl/processors/search",
             params={"q": "q", "limit": 20, "namespace": "ns1"},
@@ -176,9 +178,7 @@ class TestAdminClientAdminOnlyMethods:
         assert "boom" in result["error"]
 
     def test_get_audit_events_list_response(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value=[{"event": "x"}]
-        ):
+        with patch.object(admin_client, "get", return_value=[{"event": "x"}]):
             assert admin_client.get_audit_events() == [{"event": "x"}]
 
     def test_get_audit_events_dict_with_events(self, admin_client: AdminClient) -> None:
@@ -187,14 +187,14 @@ class TestAdminClientAdminOnlyMethods:
         ):
             assert admin_client.get_audit_events() == [{"event": "y"}]
 
-    def test_get_audit_events_dict_without_events(self, admin_client: AdminClient) -> None:
+    def test_get_audit_events_dict_without_events(
+        self, admin_client: AdminClient
+    ) -> None:
         with patch.object(admin_client, "get", return_value={"other": "key"}):
             assert admin_client.get_audit_events() == []
 
     def test_get_audit_events_with_filters(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value=[]
-        ) as get:
+        with patch.object(admin_client, "get", return_value=[]) as get:
             admin_client.get_audit_events(plugin="p1", tenant="t1", limit=50)
         get.assert_called_once_with(
             "/api/v1/admin/audit/capability",
@@ -209,10 +209,7 @@ class TestAdminClientAdminOnlyMethods:
         with patch.object(
             admin_client, "get", return_value={"nodes": ["a"], "edges": []}
         ):
-            assert admin_client.get_dependency_graph() == {
-                "nodes": ["a"],
-                "edges": [],
-            }
+            assert admin_client.get_dependency_graph() == {"nodes": ["a"], "edges": []}
 
     def test_get_dependency_graph_exception(self, admin_client: AdminClient) -> None:
         with patch.object(admin_client, "get", side_effect=Exception("boom")):
@@ -221,9 +218,7 @@ class TestAdminClientAdminOnlyMethods:
         assert "boom" in result["error"]
 
     def test_get_capability_graph_happy(self, admin_client: AdminClient) -> None:
-        with patch.object(
-            admin_client, "get", return_value={"nodes": ["x"]}
-        ):
+        with patch.object(admin_client, "get", return_value={"nodes": ["x"]}):
             assert admin_client.get_capability_graph() == {"nodes": ["x"]}
 
     def test_get_capability_graph_exception(self, admin_client: AdminClient) -> None:
@@ -286,8 +281,7 @@ class TestAdminClientAdminOnlyMethods:
             result = admin_client.get_langgraph_sessions(limit=10, offset=5)
         assert result == {"sessions": ["s1"], "count": 1}
         get.assert_called_once_with(
-            "/api/v1/admin/langgraph/checkpoints",
-            params={"limit": 10, "offset": 5},
+            "/api/v1/admin/langgraph/checkpoints", params={"limit": 10, "offset": 5}
         )
 
     def test_get_langgraph_sessions_exception(self, admin_client: AdminClient) -> None:
@@ -315,8 +309,7 @@ class TestAdminClientKwargPropagation:
 
     def test_retry_overrides_propagated(self) -> None:
         c = AdminClient(
-            base_url="http://test",
-            retry_overrides={"/api/v1/admin/feature-flags": 7},
+            base_url="http://test", retry_overrides={"/api/v1/admin/feature-flags": 7}
         )
         assert c._flags._retry_overrides == {"/api/v1/admin/feature-flags": 7}
         assert c._metrics._retry_overrides == {"/api/v1/admin/feature-flags": 7}

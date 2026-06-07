@@ -161,8 +161,7 @@ class RouterSpecialistProcessor(BaseProcessor):
             raise ValueError("specialists должен быть непустым списком")
         if not 0.0 <= min_confidence <= 1.0:
             raise ValueError(
-                f"min_confidence должен быть в [0.0, 1.0], "
-                f"получено {min_confidence}"
+                f"min_confidence должен быть в [0.0, 1.0], получено {min_confidence}"
             )
         names = {s.name for s in specialists}
         if fallback_specialist is not None and fallback_specialist not in names:
@@ -268,8 +267,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         except Exception as exc:  # noqa: BLE001
             _log.error("Specialist %r failed: %s", specialist.name, exc)
             exchange.fail(
-                f"router_specialist: specialist {specialist.name!r} "
-                f"failed: {exc}"
+                f"router_specialist: specialist {specialist.name!r} failed: {exc}"
             )
             return
 
@@ -281,10 +279,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         exchange.set_property("routing_fallback_used", decision.fallback_used)
         exchange.set_property("routing_duration_ms", duration_ms)
         exchange.set_property("routing_specialist_capability", specialist.capability)
-        exchange.set_out(
-            body=output,
-            headers=dict(exchange.in_message.headers),
-        )
+        exchange.set_out(body=output, headers=dict(exchange.in_message.headers))
 
     @staticmethod
     def _extract_input(exchange: "Exchange[Any]") -> str:

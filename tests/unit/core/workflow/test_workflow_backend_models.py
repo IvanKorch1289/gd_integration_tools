@@ -9,7 +9,11 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from src.backend.core.workflow.backend import WorkflowBackend, WorkflowHandle, WorkflowResult
+from src.backend.core.workflow.backend import (
+    WorkflowBackend,
+    WorkflowHandle,
+    WorkflowResult,
+)
 
 
 class TestWorkflowHandle:
@@ -99,13 +103,15 @@ class TestWorkflowBackendProtocol:
                 namespace: str,
                 task_queue: str,
                 execution_timeout: timedelta | None = None,
-            ) -> WorkflowHandle:
-                ...
+            ) -> WorkflowHandle: ...
 
             async def signal_workflow(
-                self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
-            ) -> None:
-                ...
+                self,
+                *,
+                handle: WorkflowHandle,
+                signal_name: str,
+                payload: dict[str, Any],
+            ) -> None: ...
 
             async def query_workflow(
                 self,
@@ -113,19 +119,15 @@ class TestWorkflowBackendProtocol:
                 handle: WorkflowHandle,
                 query_name: str,
                 args: dict[str, Any] | None = None,
-            ) -> dict[str, Any]:
-                ...
+            ) -> dict[str, Any]: ...
 
-            async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
-                ...
+            async def cancel_workflow(self, *, handle: WorkflowHandle) -> None: ...
 
             async def await_completion(
                 self, *, handle: WorkflowHandle, timeout: timedelta | None = None
-            ) -> WorkflowResult:
-                ...
+            ) -> WorkflowResult: ...
 
-            async def replay(self, *, workflow_name: str, history: bytes) -> None:
-                ...
+            async def replay(self, *, workflow_name: str, history: bytes) -> None: ...
 
         assert issubclass(FakeBackend, WorkflowBackend)
         assert isinstance(FakeBackend(), WorkflowBackend)

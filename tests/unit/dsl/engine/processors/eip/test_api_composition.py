@@ -84,7 +84,9 @@ async def test_merge_dicts_strategy() -> None:
     proc = APICompositionProcessor(
         sources=[
             APISource(name="user", url="https://api/users", transform_fn=lambda r: r),
-            APISource(name="orders", url="https://api/orders", transform_fn=lambda r: r),
+            APISource(
+                name="orders", url="https://api/orders", transform_fn=lambda r: r
+            ),
         ],
         http_fetcher=fetcher,
     )
@@ -231,9 +233,7 @@ async def test_fallback_value_on_error() -> None:
         sources=[
             APISource(name="ok", url="https://api/ok"),
             APISource(
-                name="fail",
-                url="https://api/fail",
-                fallback_value={"degraded": True},
+                name="fail", url="https://api/fail", fallback_value={"degraded": True}
             ),
         ],
         http_fetcher=fetcher,

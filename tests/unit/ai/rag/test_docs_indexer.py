@@ -162,7 +162,7 @@ async def test_index_docs_returns_count(tmp_path: Path) -> None:
     a = tmp_path / "a.md"
     b = tmp_path / "b.md"
     a.write_text("alpha " * 50)  # 300 chars
-    b.write_text("beta " * 10)   # 50 chars
+    b.write_text("beta " * 10)  # 50 chars
     idx = DocsIndexer(chunk_size=100, chunk_overlap=0)
     n = await idx.index_docs(docs=[a, b])
     assert n == 4

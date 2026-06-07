@@ -201,9 +201,7 @@ class DataLineageProcessor(BaseProcessor):
         self._event_type = event_type
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Capture lineage event для текущего exchange.
 
         1. Extract capture_fields из body/headers

@@ -11,7 +11,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Resilience Profile Editor', '⚙️')
+setup_page("Resilience Profile Editor", "⚙️")
 st.title("⚙️ Resilience Profile Editor")
 st.caption("Sprint 13 K5 W2 — per-tenant override CB/RL/Retry/Bulkhead.")
 

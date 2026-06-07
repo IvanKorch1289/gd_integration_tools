@@ -17,7 +17,9 @@ def test_tenant_mixin_has_column() -> None:
 
 def test_apply_tenant_filter_registers_listeners() -> None:
     session_factory = MagicMock()
-    with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for") as mock_listen:
+    with patch(
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for"
+    ) as mock_listen:
         apply_tenant_filter(session_factory)
         assert mock_listen.call_count == 2
 
@@ -29,10 +31,17 @@ def test_filter_by_tenant_skips_non_select() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
-        with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value="t1"):
+    with patch(
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        fake_listens_for,
+    ):
+        with patch(
+            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+            return_value="t1",
+        ):
             apply_tenant_filter(MagicMock())
 
     orm_state = SimpleNamespace(is_select=False)
@@ -47,10 +56,17 @@ def test_filter_by_tenant_no_tenant_returns() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
-        with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value=None):
+    with patch(
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        fake_listens_for,
+    ):
+        with patch(
+            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+            return_value=None,
+        ):
             apply_tenant_filter(MagicMock())
 
     stmt = MagicMock(froms=[MagicMock(entity_namespace=MagicMock(tenant_id="col"))])
@@ -66,10 +82,17 @@ def test_set_tenant_on_new_sets_when_empty() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
-        with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value="t1"):
+    with patch(
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        fake_listens_for,
+    ):
+        with patch(
+            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+            return_value="t1",
+        ):
             apply_tenant_filter(MagicMock())
             obj = SimpleNamespace(tenant_id="")
             session = SimpleNamespace(new=[obj])
@@ -84,10 +107,17 @@ def test_set_tenant_on_new_preserves_existing() -> None:
         def decorator(fn):
             captured[identifier] = fn
             return fn
+
         return decorator
 
-    with patch("src.backend.infrastructure.database.tenant_filter.event.listens_for", fake_listens_for):
-        with patch("src.backend.infrastructure.database.tenant_filter.get_tenant_id", return_value="t1"):
+    with patch(
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        fake_listens_for,
+    ):
+        with patch(
+            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+            return_value="t1",
+        ):
             apply_tenant_filter(MagicMock())
             obj = SimpleNamespace(tenant_id="existing")
             session = SimpleNamespace(new=[obj])

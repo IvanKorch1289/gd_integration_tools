@@ -11,12 +11,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page(
-    'Queues',
-    ':inbox_tray:',
-    layout='wide',
-    initial_sidebar_state='expanded',
-)
+setup_page("Queues", ":inbox_tray:", layout="wide", initial_sidebar_state="expanded")
 st.header(":inbox_tray: Queue Monitor")
 
 client = get_api_client()

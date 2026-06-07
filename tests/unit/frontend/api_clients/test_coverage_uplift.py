@@ -49,9 +49,7 @@ class TestFlagsClient:
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             assert c.toggle_flag("my_flag", True) is True
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/admin/feature-flags/my_flag/toggle",
-            json={"enabled": True},
+            "POST", "/api/v1/admin/feature-flags/my_flag/toggle", json={"enabled": True}
         )
 
     def test_toggle_flag_false(self) -> None:
@@ -158,9 +156,7 @@ class TestFeedbackClient:
             result = c.list_feedback_pending()
         assert result == {"items": []}
         req.assert_called_once_with(
-            "GET",
-            "/api/v1/ai/feedback/pending",
-            params={"limit": 50, "offset": 0},
+            "GET", "/api/v1/ai/feedback/pending", params={"limit": 50, "offset": 0}
         )
 
     def test_list_feedback_pending_with_agent_id(self) -> None:
@@ -214,16 +210,16 @@ class TestFeedbackClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.list_feedback_labeled()
         req.assert_called_once_with(
-            "GET",
-            "/api/v1/ai/feedback/labeled",
-            params={"limit": 100, "offset": 0},
+            "GET", "/api/v1/ai/feedback/labeled", params={"limit": 100, "offset": 0}
         )
 
     def test_get_feedback_stats(self) -> None:
         from src.frontend.streamlit_app.api_clients.feedback import FeedbackClient
 
         c = FeedbackClient()
-        with patch.object(c, "_request", return_value={"pending": 5, "labeled": 100}) as req:
+        with patch.object(
+            c, "_request", return_value={"pending": 5, "labeled": 100}
+        ) as req:
             result = c.get_feedback_stats()
         assert result == {"pending": 5, "labeled": 100}
         req.assert_called_once_with("GET", "/api/v1/ai/feedback/stats")
@@ -235,9 +231,7 @@ class TestFeedbackClient:
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             c.label_feedback("doc_1", label="good")
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/ai/feedback/doc_1/label",
-            json={"label": "good"},
+            "POST", "/api/v1/ai/feedback/doc_1/label", json={"label": "good"}
         )
 
     def test_label_feedback_full(self) -> None:
@@ -262,9 +256,7 @@ class TestFeedbackClient:
             result = c.index_feedback_to_rag()
         assert result == {"indexed": 50}
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/ai/feedback/index-to-rag",
-            json={"limit": 100},
+            "POST", "/api/v1/ai/feedback/index-to-rag", json={"limit": 100}
         )
 
     def test_index_feedback_to_rag_with_agent_id(self) -> None:
@@ -353,9 +345,7 @@ class TestDSLRoutesClient:
             result = c.update_dsl_route("r1", "new_yaml")
         assert result == {"ok": True}
         req.assert_called_once_with(
-            "PUT",
-            "/api/v1/admin/dsl-routes/r1",
-            json={"yaml": "new_yaml"},
+            "PUT", "/api/v1/admin/dsl-routes/r1", json={"yaml": "new_yaml"}
         )
 
     def test_delete_dsl_route_happy_path(self) -> None:
@@ -377,13 +367,13 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", return_value={"valid": True, "errors": []}) as req:
+        with patch.object(
+            c, "_request", return_value={"valid": True, "errors": []}
+        ) as req:
             result = c.validate_dsl_route("yaml: x")
         assert result == {"valid": True, "errors": []}
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/admin/dsl-routes/validate",
-            json={"yaml": "yaml: x"},
+            "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": "yaml: x"}
         )
 
     def test_validate_dsl_route_exception_returns_invalid(self) -> None:
@@ -403,9 +393,7 @@ class TestDSLRoutesClient:
             result = c.diff_dsl_route("r1", "new_yaml")
         assert result == {"diff": "..."}
         req.assert_called_once_with(
-            "POST",
-            "/api/v1/admin/dsl-routes/r1/diff",
-            json={"yaml": "new_yaml"},
+            "POST", "/api/v1/admin/dsl-routes/r1/diff", json={"yaml": "new_yaml"}
         )
 
     def test_diff_dsl_route_exception_returns_none(self) -> None:
@@ -440,7 +428,9 @@ class TestRAGClient:
         with patch.object(c, "get", return_value={"docs": 50}) as get:
             result = c.get_stats(collection="my_col")
         assert result == {"docs": 50}
-        get.assert_called_once_with("/api/v1/rag/stats", params={"collection": "my_col"})
+        get.assert_called_once_with(
+            "/api/v1/rag/stats", params={"collection": "my_col"}
+        )
 
     def test_get_stats_non_dict_returns_empty(self) -> None:
         from src.frontend.streamlit_app.api_clients.rag import RAGClient
@@ -503,7 +493,11 @@ class TestRAGClient:
         c = RAGClient()
         with patch.object(c, "_multipart_post", return_value={}) as mp:
             c.upload(
-                b"data", "doc.pdf", "application/pdf", namespace="ns", metadata_json='{"k":1}'
+                b"data",
+                "doc.pdf",
+                "application/pdf",
+                namespace="ns",
+                metadata_json='{"k":1}',
             )
         assert mp.call_args.kwargs["data"] == {
             "namespace": "ns",
@@ -581,9 +575,7 @@ class TestK4APIClient:
         with patch.object(c, "_request", return_value={"flushed": 10}) as req:
             result = c.flush_rag_cache_tier()
         assert result == {"flushed": 10}
-        req.assert_called_once_with(
-            "POST", "/api/v1/admin/rag-cache/flush", params={}
-        )
+        req.assert_called_once_with("POST", "/api/v1/admin/rag-cache/flush", params={})
 
     def test_flush_rag_cache_tier_with_tier(self) -> None:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient

@@ -47,7 +47,9 @@ class TestRedisRateLimitChecker:
         return RedisRateLimitChecker(redis, max_per_window=5, window_seconds=10.0)
 
     @pytest.mark.asyncio
-    async def test_allowed(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_allowed(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         redis.incr.return_value = 1
         allowed, remaining, retry = await checker.check("ip1")
         assert allowed is True
@@ -55,7 +57,9 @@ class TestRedisRateLimitChecker:
         redis.expire.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_denied(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_denied(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         redis.incr.return_value = 6
         allowed, remaining, retry = await checker.check("ip1")
         assert allowed is False
@@ -63,14 +67,18 @@ class TestRedisRateLimitChecker:
         assert retry == 10
 
     @pytest.mark.asyncio
-    async def test_fail_open(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_fail_open(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         redis.incr.side_effect = RuntimeError("redis down")
         allowed, remaining, retry = await checker.check("ip1")
         assert allowed is True
         assert remaining == 5
 
     @pytest.mark.asyncio
-    async def test_route_override_found(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_route_override_found(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.return_value = {b"/api": b"10:60"}
         result = await checker.check_route_override("/api/v1/users")
@@ -83,13 +91,17 @@ class TestRedisRateLimitChecker:
         assert await checker.check_route_override("/any") is None
 
     @pytest.mark.asyncio
-    async def test_route_override_invalid_format(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_route_override_invalid_format(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.return_value = {b"/api": b"bad"}
         assert await checker.check_route_override("/api") is None
 
     @pytest.mark.asyncio
-    async def test_route_override_fail_open(self, checker: RedisRateLimitChecker, redis: MagicMock) -> None:
+    async def test_route_override_fail_open(
+        self, checker: RedisRateLimitChecker, redis: MagicMock
+    ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.side_effect = RuntimeError("redis down")
         assert await checker.check_route_override("/api") is None
@@ -125,10 +137,19 @@ class TestGlobalRateLimitMiddlewareExtra:
         )
         send = AsyncMock()
         await mw(
-            {"type": "http", "path": "/api/v1", "headers": [], "client": ("1.2.3.4", 0)},
+            {
+                "type": "http",
+                "path": "/api/v1",
+                "headers": [],
+                "client": ("1.2.3.4", 0),
+            },
             _empty_receive,
             send,
         )
         assert inner.called is False
-        start_call = [c for c in send.await_args_list if c.args[0]["type"] == "http.response.start"][0]
+        start_call = [
+            c
+            for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.start"
+        ][0]
         assert start_call.args[0]["status"] == 429

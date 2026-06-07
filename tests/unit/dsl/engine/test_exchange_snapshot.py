@@ -1,4 +1,5 @@
 """Tests for src.backend.dsl.engine.exchange_snapshot."""
+
 from __future__ import annotations
 
 import time
@@ -87,8 +88,8 @@ class TestToDictMsgspec:
         # msgspec должен быть минимум в 2x быстрее orjson.
         # Если нет — regress в msgspec или шумное окружение.
         assert t_msgspec <= t_orjson * 0.5, (
-            f"msgspec encode speedup < 2x: msgspec={t_msgspec*1e6:.1f}µs, "
-            f"orjson={t_orjson*1e6:.1f}µs"
+            f"msgspec encode speedup < 2x: msgspec={t_msgspec * 1e6:.1f}µs, "
+            f"orjson={t_orjson * 1e6:.1f}µs"
         )
 
     def test_to_dict_orjson_fallback(self) -> None:
@@ -146,7 +147,9 @@ class TestFromDictMsgspec:
         assert result.qty == 25.0
         assert result.note == "x"
 
-    def test_msgspec_not_available_falls_back(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_msgspec_not_available_falls_back(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Когда msgspec недоступен — обе функции идут через orjson/cls(**data).
 
         Эмулируем отсутствие: ставим ``_HAS_MSGSPEC = False`` и заменяем
@@ -189,8 +192,14 @@ class TestFromDictMsgspec:
         Это поведение (отличающееся от pydantic) лучше зафиксировать тестом.
         Проверяем, что лишний ключ не поднимает исключение, а просто отбрасывается.
         """
-        data = {"id": 1, "symbol": "A", "qty": 1.0, "price": 1.0, "note": "",
-                "extra_unknown": 999}
+        data = {
+            "id": 1,
+            "symbol": "A",
+            "qty": 1.0,
+            "price": 1.0,
+            "note": "",
+            "extra_unknown": 999,
+        }
         result = es.from_dict_fast(OrderStruct, data)
         assert isinstance(result, OrderStruct)
         assert result.id == 1
@@ -203,7 +212,9 @@ class TestFromDictMsgspec:
         with pytest.raises(NotImplementedError):
             es._msgspec_enc_hook(object())
 
-    def test_to_dict_fallback_on_msgspec_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_to_dict_fallback_on_msgspec_exception(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Если _encode_msgspec бросает — to_dict_fast fallback'ит на orjson."""
         calls: list[str] = []
 
@@ -235,6 +246,7 @@ class TestFromDictMsgspec:
 
     def test_orjson_default_handles_unsupported_type(self) -> None:
         """_orjson_default бросает TypeError на полностью неподдерживаемый тип."""
+
         class Unserialisable:
             pass
 
@@ -292,13 +304,13 @@ class TestRealWorldBenchmarks:
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
         print(
-            f"\n[real_exchange] msgspec={t_msgspec*1e3:.2f}ms "
-            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x"
+            f"\n[real_exchange] msgspec={t_msgspec * 1e3:.2f}ms "
+            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x"
         )
         # Fallback path не должен стоить дороже 1.5x от чистого orjson.
         assert t_msgspec <= t_orjson * 1.5, (
             f"msgspec fallback regressed on real Exchange: "
-            f"msgspec={t_msgspec*1e6:.1f}µs, orjson={t_orjson*1e6:.1f}µs"
+            f"msgspec={t_msgspec * 1e6:.1f}µs, orjson={t_orjson * 1e6:.1f}µs"
         )
 
     def test_msgspec_speedup_nested_dict(self) -> None:
@@ -326,13 +338,13 @@ class TestRealWorldBenchmarks:
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
         print(
-            f"\n[nested_dict] msgspec={t_msgspec*1e3:.2f}ms "
-            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x"
+            f"\n[nested_dict] msgspec={t_msgspec * 1e3:.2f}ms "
+            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x"
         )
         # msgspec как минимум не медленнее orjson на чистых dict'ах.
         assert t_msgspec <= t_orjson, (
             f"msgspec slower than orjson on nested dict: "
-            f"msgspec={t_msgspec*1e6:.1f}µs, orjson={t_orjson*1e6:.1f}µs"
+            f"msgspec={t_msgspec * 1e6:.1f}µs, orjson={t_orjson * 1e6:.1f}µs"
         )
 
     def test_msgspec_speedup_large_payload(self) -> None:
@@ -374,12 +386,12 @@ class TestRealWorldBenchmarks:
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
         print(
-            f"\n[1mb_payload] msgspec={t_msgspec*1e3:.2f}ms "
-            f"orjson={t_orjson*1e3:.2f}ms ratio={ratio:.2f}x "
-            f"payload={size_bytes/1024:.0f}KB"
+            f"\n[1mb_payload] msgspec={t_msgspec * 1e3:.2f}ms "
+            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x "
+            f"payload={size_bytes / 1024:.0f}KB"
         )
         # На 1MB payload msgspec должен быть минимум в 1.5x быстрее.
         assert t_msgspec <= t_orjson / 1.5, (
             f"msgspec throughput < 1.5x on 1MB payload: "
-            f"msgspec={t_msgspec*1e3:.2f}ms, orjson={t_orjson*1e3:.2f}ms"
+            f"msgspec={t_msgspec * 1e3:.2f}ms, orjson={t_orjson * 1e3:.2f}ms"
         )

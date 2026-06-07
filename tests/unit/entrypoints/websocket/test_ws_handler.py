@@ -30,7 +30,9 @@ class TestWebsocketEndpoint:
     async def test_disconnect_closes_cleanly(self, websocket: MagicMock) -> None:
         websocket.receive_json.side_effect = WebSocketDisconnect()
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(ws_handler.ws_manager, "disconnect", MagicMock()) as mock_dc:
+            with patch.object(
+                ws_handler.ws_manager, "disconnect", MagicMock()
+            ) as mock_dc:
                 await ws_handler.websocket_endpoint(websocket)
         mock_dc.assert_called_once()
 
@@ -41,7 +43,9 @@ class TestWebsocketEndpoint:
             WebSocketDisconnect(),
         ]
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()) as mock_send:
+            with patch.object(
+                ws_handler.ws_manager, "send_json", AsyncMock()
+            ) as mock_send:
                 await ws_handler.websocket_endpoint(websocket)
         mock_send.assert_awaited_once()
         args = mock_send.await_args
@@ -57,10 +61,18 @@ class TestWebsocketEndpoint:
         bridge = MagicMock()
         bridge.error_code = "action_not_found"
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)):
-                with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()) as mock_send:
+            with patch.object(
+                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
+            ):
+                with patch.object(
+                    ws_handler.ws_manager, "send_json", AsyncMock()
+                ) as mock_send:
                     await ws_handler.websocket_endpoint(websocket)
-        calls = [c for c in mock_send.await_args_list if "не найден" in str(c[0][1].get("error", ""))]
+        calls = [
+            c
+            for c in mock_send.await_args_list
+            if "не найден" in str(c[0][1].get("error", ""))
+        ]
         assert len(calls) == 1
 
     @pytest.mark.asyncio
@@ -74,10 +86,18 @@ class TestWebsocketEndpoint:
         bridge.data = {"items": []}
         bridge.error = None
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)):
-                with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()) as mock_send:
+            with patch.object(
+                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
+            ):
+                with patch.object(
+                    ws_handler.ws_manager, "send_json", AsyncMock()
+                ) as mock_send:
                     await ws_handler.websocket_endpoint(websocket)
-        calls = [c for c in mock_send.await_args_list if c[0][1].get("action") == "orders.list"]
+        calls = [
+            c
+            for c in mock_send.await_args_list
+            if c[0][1].get("action") == "orders.list"
+        ]
         assert len(calls) == 1
         assert calls[0][0][1]["result"] == {"items": []}
 
@@ -88,8 +108,18 @@ class TestWebsocketEndpoint:
             WebSocketDisconnect(),
         ]
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(ws_handler, "dispatch_action_or_dsl", AsyncMock(side_effect=RuntimeError("boom"))):
-                with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()) as mock_send:
+            with patch.object(
+                ws_handler,
+                "dispatch_action_or_dsl",
+                AsyncMock(side_effect=RuntimeError("boom")),
+            ):
+                with patch.object(
+                    ws_handler.ws_manager, "send_json", AsyncMock()
+                ) as mock_send:
                     await ws_handler.websocket_endpoint(websocket)
-        calls = [c for c in mock_send.await_args_list if "boom" in str(c[0][1].get("error", ""))]
+        calls = [
+            c
+            for c in mock_send.await_args_list
+            if "boom" in str(c[0][1].get("error", ""))
+        ]
         assert len(calls) == 1

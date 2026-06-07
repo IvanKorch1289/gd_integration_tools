@@ -193,9 +193,7 @@ async def test_aggregate_saga_stats_with_tenant_id() -> None:
     async def factory() -> Any:
         return client
 
-    stats = await aggregate_saga_stats(
-        tenant_id="tenant-42", client_factory=factory
-    )
+    stats = await aggregate_saga_stats(tenant_id="tenant-42", client_factory=factory)
     assert stats["succeeded"] == 10
     assert stats["failed"] == 2
     assert stats["total_sagas"] == 12

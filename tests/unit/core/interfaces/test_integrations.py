@@ -48,27 +48,20 @@ class _FakeBrowser:
         return {"url": url, "selector": selector, "clicked": True}
 
     async def fill_form(
-        self,
-        url: str,
-        fields: dict[str, str],
-        submit: str | None = None,
+        self, url: str, fields: dict[str, str], submit: str | None = None
     ) -> dict[str, Any]:
         return {"url": url, "fields": fields, "submit": submit}
 
     async def extract_text(self, url: str, selector: str) -> list[str]:
         return [f"text-from-{url}"]
 
-    async def extract_table(
-        self, url: str, selector: str
-    ) -> list[dict[str, str]]:
+    async def extract_table(self, url: str, selector: str) -> list[dict[str, str]]:
         return [{"col1": "v1", "col2": "v2"}]
 
     async def screenshot(self, url: str) -> bytes:
         return b"\x89PNG\r\n\x1a\n-fake-screenshot-"
 
-    async def run_scenario(
-        self, steps: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    async def run_scenario(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [{"step": i, "ok": True} for i, _ in enumerate(steps)]
 
 
@@ -376,6 +369,7 @@ def test_abc_protocols_cannot_instantiate() -> None:
 
 def test_concrete_implementation_required() -> None:
     """A bare subclass with no methods fails isinstance for every Protocol."""
+
     class _Empty:
         pass
 
@@ -423,10 +417,7 @@ async def test_smtp_send_email_records_message() -> None:
     """``send_email`` records the message; ``test_connection`` returns True."""
     smtp = _FakeSmtp()
     result = await smtp.send_email(
-        to=["a@example.com"],
-        subject="hi",
-        body="hello",
-        content_type="text/html",
+        to=["a@example.com"], subject="hi", body="hello", content_type="text/html"
     )
     assert result["msg_id"] == "smtp-1"
     assert smtp.sent[0]["subject"] == "hi"

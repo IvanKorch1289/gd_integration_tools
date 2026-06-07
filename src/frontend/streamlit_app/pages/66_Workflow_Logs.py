@@ -16,7 +16,7 @@ from src.backend.core.config.features import feature_flags  # noqa: E402
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page('Workflow Logs', ':memo:')
+setup_page("Workflow Logs", ":memo:")
 if not feature_flags.frontend_workflow_logs_page:
     st.warning(
         ":warning: Страница отключена "

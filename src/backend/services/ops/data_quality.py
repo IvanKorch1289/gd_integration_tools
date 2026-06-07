@@ -64,6 +64,7 @@ class DQRemediationResult:
         violations: list of violations detected (до remediation).
         fixes_applied: number of values that were actually changed.
     """
+
     data: Any
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     fixes_applied: int = 0
@@ -116,10 +117,7 @@ class DataQualityMonitor:
         ]
 
     def remediate(
-        self,
-        data: dict[str, Any] | list[dict[str, Any]],
-        *,
-        dataset: str = "default",
+        self, data: dict[str, Any] | list[dict[str, Any]], *, dataset: str = "default"
     ) -> DQRemediationResult:
         """Detect violations и apply auto-remediation per configured rules.
 
@@ -154,7 +152,9 @@ class DataQualityMonitor:
             if not rule.enabled:
                 continue
             for record in records:
-                field_value = record.get(rule.field) if isinstance(record, dict) else None
+                field_value = (
+                    record.get(rule.field) if isinstance(record, dict) else None
+                )
                 violations = self._check_rule(rule, field_value, dataset)
                 all_violations.extend(violations)
 
@@ -180,20 +180,21 @@ class DataQualityMonitor:
                     total_fixes += 1
                     logger.info(
                         "DQ auto-remediation: rule=%s field=%s %r → %r",
-                        rule.name, rule.field, old_value, new_value,
+                        rule.name,
+                        rule.field,
+                        old_value,
+                        new_value,
                     )
             remediated_records.append(new_record)
 
-        result_data = remediated_records if isinstance(data, list) else remediated_records[0]
+        result_data = (
+            remediated_records if isinstance(data, list) else remediated_records[0]
+        )
         return DQRemediationResult(
-            data=result_data,
-            violations=all_violations,
-            fixes_applied=total_fixes,
+            data=result_data, violations=all_violations, fixes_applied=total_fixes
         )
 
-    def _check_rule(
-        self, rule: DQRule, value: Any, dataset: str
-    ) -> list[DQViolation]:
+    def _check_rule(self, rule: DQRule, value: Any, dataset: str) -> list[DQViolation]:
         """Check single rule against single value. Returns violations (may be empty)."""
         # Reuse the existing check logic by running through the full check path.
         # For simplicity we re-use monitor.check() per record — but to avoid
@@ -203,19 +204,27 @@ class DataQualityMonitor:
         if rule.check == "not_null" and (value is None or value == ""):
             violations.append(
                 DQViolation(
-                    rule=rule.name, field=rule.field, severity=rule.severity,
+                    rule=rule.name,
+                    field=rule.field,
+                    severity=rule.severity,
                     message=f"Field {rule.field!r} is null/empty (value={value!r})",
                     value=value,
                 )
             )
         # range
-        elif rule.check == "range" and isinstance(value, (int, float)) and not isinstance(value, bool):
+        elif (
+            rule.check == "range"
+            and isinstance(value, (int, float))
+            and not isinstance(value, bool)
+        ):
             lo = rule.params.get("min")
             hi = rule.params.get("max")
             if (lo is not None and value < lo) or (hi is not None and value > hi):
                 violations.append(
                     DQViolation(
-                        rule=rule.name, field=rule.field, severity=rule.severity,
+                        rule=rule.name,
+                        field=rule.field,
+                        severity=rule.severity,
                         message=f"Value {value!r} out of range [{lo}, {hi}]",
                         value=value,
                     )
@@ -223,11 +232,14 @@ class DataQualityMonitor:
         # regex
         elif rule.check == "regex" and isinstance(value, str):
             import re as _re
+
             pattern = rule.params.get("pattern")
             if pattern and not _re.match(pattern, value):
                 violations.append(
                     DQViolation(
-                        rule=rule.name, field=rule.field, severity=rule.severity,
+                        rule=rule.name,
+                        field=rule.field,
+                        severity=rule.severity,
                         message=f"Value {value!r} does not match pattern {pattern!r}",
                         value=value,
                     )
@@ -238,7 +250,9 @@ class DataQualityMonitor:
             if allowed and value not in allowed:
                 violations.append(
                     DQViolation(
-                        rule=rule.name, field=rule.field, severity=rule.severity,
+                        rule=rule.name,
+                        field=rule.field,
+                        severity=rule.severity,
                         message=f"Value {value!r} not in allowed {allowed!r}",
                         value=value,
                     )
@@ -253,7 +267,9 @@ class DataQualityMonitor:
                 if not (expected_py is float and isinstance(value, int)):
                     violations.append(
                         DQViolation(
-                            rule=rule.name, field=rule.field, severity=rule.severity,
+                            rule=rule.name,
+                            field=rule.field,
+                            severity=rule.severity,
                             message=f"Value {value!r} is not {expected}",
                             value=value,
                         )
@@ -494,7 +510,7 @@ class DataQualityMonitor:
                 return None
             try:
                 _dt.datetime.strptime(str(value), fmt)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return DQViolation(
                     rule.name,
                     rule.field,
@@ -532,7 +548,11 @@ class DataQualityMonitor:
                     f"Unknown cross_field operator {operator!r}",
                     value,
                 )
-            if value is not None and other_value is not None and not fn(value, other_value):
+            if (
+                value is not None
+                and other_value is not None
+                and not fn(value, other_value)
+            ):
                 return DQViolation(
                     rule.name,
                     rule.field,

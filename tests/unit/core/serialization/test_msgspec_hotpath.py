@@ -89,9 +89,7 @@ def test_msgspec_available_constant() -> None:
     assert MSGSPEC_AVAILABLE is True
 
 
-def test_orjson_fallback_when_msgspec_disabled(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_orjson_fallback_when_msgspec_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     """Когда msgspec недоступен — encode/decode fallback на orjson."""
     import src.backend.core.serialization.msgspec_hotpath as mh
 

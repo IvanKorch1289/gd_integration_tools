@@ -2,6 +2,7 @@
 
 Camel-style ``from(...)`` builders: from_interval, from_webhook, TriggerRegistry.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,17 +21,14 @@ from src.backend.dsl.orchestration.triggers import (
 
 # ── IntervalTrigger ────────────────────────────────────────────────
 
+
 class TestIntervalTrigger:
     @pytest.mark.asyncio
     async def test_fires_after_interval(self) -> None:
         trigger = IntervalTrigger(
-            name="test_interval",
-            route_id="test_route",
-            interval_s=0.1,
+            name="test_interval", route_id="test_route", interval_s=0.1
         )
-        with patch(
-            "src.backend.dsl.service.get_dsl_service"
-        ) as mock_get_svc:
+        with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
             mock_svc.dispatch = AsyncMock()
             mock_get_svc.return_value = mock_svc
@@ -55,9 +53,7 @@ class TestIntervalTrigger:
             start_immediately=True,
             payload={"x": 1},
         )
-        with patch(
-            "src.backend.dsl.service.get_dsl_service"
-        ) as mock_get_svc:
+        with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
             mock_svc.dispatch = AsyncMock()
             mock_get_svc.return_value = mock_svc
@@ -85,9 +81,7 @@ class TestIntervalTrigger:
             start_immediately=True,
             payload=factory,
         )
-        with patch(
-            "src.backend.dsl.service.get_dsl_service"
-        ) as mock_get_svc:
+        with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
             mock_svc.dispatch = AsyncMock()
             mock_get_svc.return_value = mock_svc
@@ -104,14 +98,9 @@ class TestIntervalTrigger:
     @pytest.mark.asyncio
     async def test_dispatch_exception_logged_not_raised(self) -> None:
         trigger = IntervalTrigger(
-            name="fail",
-            route_id="r1",
-            interval_s=0.05,
-            start_immediately=True,
+            name="fail", route_id="r1", interval_s=0.05, start_immediately=True
         )
-        with patch(
-            "src.backend.dsl.service.get_dsl_service"
-        ) as mock_get_svc:
+        with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
             mock_svc.dispatch = AsyncMock(side_effect=RuntimeError("boom"))
             mock_get_svc.return_value = mock_svc
@@ -122,6 +111,7 @@ class TestIntervalTrigger:
 
 
 # ── TriggerRegistry ────────────────────────────────────────────────
+
 
 class TestTriggerRegistry:
     def test_register_and_get(self) -> None:
@@ -184,10 +174,12 @@ class TestTriggerRegistry:
 
 # ── WebhookTrigger ─────────────────────────────────────────────────
 
+
 class TestWebhookTrigger:
     @pytest.mark.asyncio
     async def test_registers_route_on_app(self) -> None:
         from fastapi import FastAPI
+
         app = FastAPI()
         trigger = WebhookTrigger(
             name="orders_hook",
@@ -207,9 +199,7 @@ class TestWebhookTrigger:
         from httpx import ASGITransport, AsyncClient
 
         app = FastAPI()
-        with patch(
-            "src.backend.dsl.service.get_dsl_service"
-        ) as mock_get_svc:
+        with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
             mock_svc.dispatch = AsyncMock()
             mock_get_svc.return_value = mock_svc
@@ -225,9 +215,7 @@ class TestWebhookTrigger:
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"
             ) as client:
-                resp = await client.post(
-                    "/webhooks/orders", json={"order_id": 123}
-                )
+                resp = await client.post("/webhooks/orders", json={"order_id": 123})
             assert resp.status_code == 200
             data = resp.json()
             assert data["status"] == "dispatched"
@@ -241,6 +229,7 @@ class TestWebhookTrigger:
 
 
 # ── Singleton accessor ───────────────────────────────────────────
+
 
 def test_singleton_accessor() -> None:
     reg1 = get_trigger_registry()

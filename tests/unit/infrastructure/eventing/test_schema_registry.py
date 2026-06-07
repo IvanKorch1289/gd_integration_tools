@@ -90,13 +90,13 @@ class TestSchemaRegistryValidateAvro:
 
     def test_validate_avro_success(self) -> None:
         registry = SchemaRegistry()
-        schema = json.dumps({
-            "type": "record",
-            "name": "User",
-            "fields": [
-                {"name": "id", "type": "long"},
-            ],
-        })
+        schema = json.dumps(
+            {
+                "type": "record",
+                "name": "User",
+                "fields": [{"name": "id", "type": "long"}],
+            }
+        )
         registry.register_avro("user", schema)
 
         fake_fastavro = MagicMock()
@@ -113,7 +113,9 @@ class TestSchemaRegistryValidateAvro:
 
         assert result == fake_record
         fake_fastavro.parse_schema.assert_called_once()
-        fake_fastavro.schemaless_reader.assert_called_once_with(fake_bytesio, parsed_schema)
+        fake_fastavro.schemaless_reader.assert_called_once_with(
+            fake_bytesio, parsed_schema
+        )
 
 
 @pytest.mark.unit

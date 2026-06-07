@@ -22,7 +22,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page('Admin Console', ':wrench:')
+setup_page("Admin Console", ":wrench:")
 st.header(":wrench: Admin Console")
 st.caption(
     "Управление плагинами, пользователями и feature-flags. Все операции "

@@ -108,9 +108,7 @@ class BaseAPIClient:
         spreading retries across a time window. ``jitter_ratio=0.0`` →
         deterministic (default, backward-compatible).
         """
-        backoff = min(
-            self._initial_backoff * (2 ** attempt), _MAX_BACKOFF
-        )
+        backoff = min(self._initial_backoff * (2**attempt), _MAX_BACKOFF)
         if self._jitter_ratio > 0.0:
             # S311: not for crypto; this is for backoff spread only.
             factor = random.uniform(  # noqa: S311

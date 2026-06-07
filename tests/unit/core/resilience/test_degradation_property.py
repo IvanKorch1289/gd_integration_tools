@@ -78,9 +78,7 @@ def test_total_order(a: DegradationMode, b: DegradationMode) -> None:
 
 @given(a=st_mode, b=st_mode)
 @settings(max_examples=50)
-def test_strict_inequality(
-    a: DegradationMode, b: DegradationMode
-) -> None:
+def test_strict_inequality(a: DegradationMode, b: DegradationMode) -> None:
     """If STRICTNESS[a] > STRICTNESS[b], then a≥b True, b≥a False."""
     if STRICTNESS[a] > STRICTNESS[b]:
         assert mode_at_least(a, b) is True

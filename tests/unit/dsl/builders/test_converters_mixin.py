@@ -1054,7 +1054,9 @@ class TestToUuidString:
         assert ex.out_message.body is not None
         assert len(ex.out_message.body) == 36
 
-    @pytest.mark.skip(reason="to_uuid_string early-returns on None body - separate test fix needed")
+    @pytest.mark.skip(
+        reason="to_uuid_string early-returns on None body - separate test fix needed"
+    )
     def test_to_uuid_string_unique(self, builder: RouteBuilder) -> None:
         b = builder.to_uuid_string()
         ex1 = _make_exchange()
@@ -1086,7 +1088,9 @@ class TestToJwt:
         assert isinstance(result, RouteBuilder)
         assert len(result._processors) == 2
 
-    @pytest.mark.skip(reason="to_jwt requires non-None data; tested in test_to_jwt_basic")
+    @pytest.mark.skip(
+        reason="to_jwt requires non-None data; tested in test_to_jwt_basic"
+    )
     def test_to_jwt_empty(self, builder: RouteBuilder) -> None:
         b = builder.to_jwt(secret="this-is-a-very-long-test-secret-key-1234")
         ex = _make_exchange(body=None)
@@ -1179,7 +1183,11 @@ class TestFromBencode:
         ex2 = _make_exchange(body=ex.out_message.body)
         _run(b2._processors[-1].process(ex2, context=MagicMock()))
         # keys become bytes after round-trip
-        assert ex2.out_message.body == {b"name": b"alice", b"age": 30, b"tags": [b"admin", b"user"]}
+        assert ex2.out_message.body == {
+            b"name": b"alice",
+            b"age": 30,
+            b"tags": [b"admin", b"user"],
+        }
 
 
 # ─── S40 W4 FINAL: from_jwt / to_compact_json / to|from_protobuf_like / to_avro_like ──
@@ -1233,11 +1241,7 @@ class TestFromJwt:
 
         # Sign with one secret, verify with another → must fail
         key_a = OctKey.import_key("this-is-a-very-long-test-secret-A-1234")
-        token = _jwt.encode(
-            {"alg": "HS256", "typ": "JWT"},
-            {"sub": "x"},
-            key_a,
-        )
+        token = _jwt.encode({"alg": "HS256", "typ": "JWT"}, {"sub": "x"}, key_a)
         b = builder.from_jwt(token, secret="this-is-a-very-long-test-secret-B-5678")
         ex = _make_exchange()
         _run(b._processors[-1].process(ex, context=MagicMock()))
@@ -1362,7 +1366,11 @@ class TestFromProtobufLike:
 
 class TestToAvroLike:
     def test_to_avro_like_basic(self, builder: RouteBuilder) -> None:
-        schema = {"type": "record", "name": "User", "fields": [{"name": "id", "type": "int"}]}
+        schema = {
+            "type": "record",
+            "name": "User",
+            "fields": [{"name": "id", "type": "int"}],
+        }
         b = builder.to_avro_like(schema=schema)
         last = b._processors[-1]
         assert last.direction == "to_avro_like"

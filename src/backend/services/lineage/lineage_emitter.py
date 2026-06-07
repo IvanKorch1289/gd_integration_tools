@@ -95,9 +95,7 @@ class InMemoryLineageEmitter:
             ol_event = {
                 "eventType": "COMPLETE",
                 "eventTime": _iso_timestamp(ev.get("timestamp", 0.0)),
-                "run": {
-                    "runId": str(ev.get("run_id", "")),
-                },
+                "run": {"runId": str(ev.get("run_id", ""))},
                 "job": {
                     "namespace": node.get("type", "dataset"),
                     "name": node.get("name", "unknown"),

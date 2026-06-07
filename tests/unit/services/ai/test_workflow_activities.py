@@ -147,8 +147,7 @@ def test_resolve_gateway_raises_runtime(monkeypatch: pytest.MonkeyPatch) -> None
         raise ImportError("no module")
 
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway.client.get_litellm_gateway",
-        _boom,
+        "src.backend.services.ai.gateway.client.get_litellm_gateway", _boom
     )
     with pytest.raises(RuntimeError, match="LiteLLMGateway недоступен"):
         from src.backend.services.ai.workflow_activities import _resolve_gateway
@@ -167,7 +166,9 @@ def test_heartbeat_async_exception_suppressed(monkeypatch: pytest.MonkeyPatch) -
         raise RuntimeError("hb boom")
 
     # Не должно упасть
-    out = asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x"), heartbeat=_bad_hb))
+    out = asyncio.run(
+        _execute_llm_call(LLMActivityInput(prompt="x"), heartbeat=_bad_hb)
+    )
     assert out.content == "hello"
 
 
@@ -193,30 +194,26 @@ def test_llm_activity_with_heartbeat(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_activity_mod = MagicMock()
     fake_activity_mod.heartbeat = hb_mock
     monkeypatch.setitem(
-        __import__("sys").modules,
-        "temporalio.activity",
-        fake_activity_mod,
+        __import__("sys").modules, "temporalio.activity", fake_activity_mod
     )
     out = asyncio.run(llm_activity(LLMActivityInput(prompt="x")))
     assert out.content == "hello"
 
 
-def test_register_llm_activity_flag_import_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_llm_activity_flag_import_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Если импорт feature_flags падает — register возвращает False (NoOp)."""
-    monkeypatch.setattr(
-        "src.backend.core.config.features.feature_flags",
-        None,
-    )
+    monkeypatch.setattr("src.backend.core.config.features.feature_flags", None)
     # Удалим атрибут чтобы getattr упал
-    monkeypatch.delattr(
-        "src.backend.core.config.features.feature_flags",
-        raising=False,
-    )
+    monkeypatch.delattr("src.backend.core.config.features.feature_flags", raising=False)
     worker = MagicMock()
     assert register_llm_activity(worker) is False
 
 
-def test_register_llm_activity_via_activities_list(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_llm_activity_via_activities_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Fallback регистрация через worker.activities.append."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",
@@ -228,7 +225,9 @@ def test_register_llm_activity_via_activities_list(monkeypatch: pytest.MonkeyPat
     assert len(worker.activities) == 1
 
 
-def test_register_llm_activity_activities_not_mutable(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_llm_activity_activities_not_mutable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """worker.activities не mutable → возвращает False."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",
@@ -239,7 +238,9 @@ def test_register_llm_activity_activities_not_mutable(monkeypatch: pytest.Monkey
     assert register_llm_activity(worker) is False
 
 
-def test_register_llm_activity_no_registration_method(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_llm_activity_no_registration_method(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Worker без register_activity и activities → False."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.ai_workflow_activity_enabled",

@@ -134,10 +134,7 @@ class APIClient(BaseAPIClient):
         return self._config.get_trace_logs(limit)
 
     # ── Workflows (7) ──────────────────────────────────────────────
-    def list_workflows(
-        self,
-        **kwargs: Any,
-    ) -> list[dict[str, Any]]:
+    def list_workflows(self, **kwargs: Any) -> list[dict[str, Any]]:
         return self._workflows.list_workflows(**kwargs)
 
     def get_workflow(self, instance_id: str) -> dict[str, Any] | None:
@@ -184,20 +181,14 @@ class APIClient(BaseAPIClient):
     def validate_dsl_route(self, yaml_str: str) -> dict[str, Any]:
         return self._dsl_routes.validate_dsl_route(yaml_str)
 
-    def diff_dsl_route(
-        self, route_id: str, yaml_str: str
-    ) -> dict[str, Any] | None:
+    def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
         return self._dsl_routes.diff_dsl_route(route_id, yaml_str)
 
     # ── Feedback (5) ───────────────────────────────────────────────
-    def list_feedback_pending(
-        self, **kwargs: Any
-    ) -> dict[str, Any]:
+    def list_feedback_pending(self, **kwargs: Any) -> dict[str, Any]:
         return self._feedback.list_feedback_pending(**kwargs)
 
-    def list_feedback_labeled(
-        self, **kwargs: Any
-    ) -> dict[str, Any]:
+    def list_feedback_labeled(self, **kwargs: Any) -> dict[str, Any]:
         return self._feedback.list_feedback_labeled(**kwargs)
 
     def get_feedback_stats(self) -> dict[str, int]:
@@ -220,9 +211,7 @@ class APIClient(BaseAPIClient):
     def get_capability_catalog(self) -> dict[str, Any]:
         return self._capability.get_capability_catalog()
 
-    def get_processor_catalog(
-        self, query: str = "", **kwargs: Any
-    ) -> dict[str, Any]:
+    def get_processor_catalog(self, query: str = "", **kwargs: Any) -> dict[str, Any]:
         return self._capability.get_processor_catalog(query, **kwargs)
 
     def get_audit_events(
