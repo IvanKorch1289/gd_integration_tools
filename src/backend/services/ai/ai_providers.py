@@ -52,7 +52,7 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except AttributeError, IndexError, TypeError:
+        except (AttributeError, IndexError, TypeError):
             pass
         return ""
 
@@ -137,7 +137,7 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except AttributeError, IndexError, TypeError:
+        except (AttributeError, IndexError, TypeError):
             pass
         return ""
 
@@ -256,7 +256,7 @@ class OllamaProvider:
             return response.get("message", {}).get("content", "") or response.get(
                 "response", ""
             )
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             return ""
 
     async def embeddings(
@@ -335,7 +335,7 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except AttributeError, IndexError, TypeError:
+        except (AttributeError, IndexError, TypeError):
             pass
         return ""
 

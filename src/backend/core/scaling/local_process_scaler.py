@@ -60,7 +60,7 @@ class LocalProcessScaler:
             return None
         try:
             return int(self.master_pid_file.read_text().strip())
-        except OSError, ValueError:
+        except (OSError, ValueError):
             return None
 
     def scale_up(self, by: int = 1) -> bool:

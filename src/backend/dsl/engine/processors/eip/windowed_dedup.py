@@ -61,7 +61,7 @@ def _serialize(body: Any) -> str:
     """Канонический JSON для in-memory dedup-key (через codecs.json helper)."""
     try:
         return canonical_json_bytes(body).decode("utf-8")
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return str(body)
 
 

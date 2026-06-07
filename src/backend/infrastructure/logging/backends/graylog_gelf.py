@@ -181,7 +181,7 @@ class GraylogGelfLogSink(LogSink):
 
         try:
             payload = self._serialize(record)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             # fallback: всё неизвестное → str
             payload = self._serialize({k: _coerce(v) for k, v in record.items()})
 
@@ -221,7 +221,7 @@ class GraylogGelfLogSink(LogSink):
             self._worker_task.cancel()
             try:
                 await self._worker_task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
         await asyncio.to_thread(self._close_sockets)
 

@@ -114,7 +114,7 @@ class BrowserCookieStore:
             raw = raw.decode("utf-8")
         try:
             return json.loads(raw)
-        except TypeError, json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             _logger.warning("BrowserCookieStore.restore: malformed JSON key=%s", key)
             return []
 

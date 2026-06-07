@@ -196,7 +196,7 @@ class GlomTransformProcessor(BaseProcessor):
                     # НЕ pass default — glom raises PathAccessError для
                     # missing → skip output key.
                     value = glom.glom(body, source_path)
-            except glom.PathAccessError, glom.CheckError, glom.CoalesceError:
+            except (glom.PathAccessError, glom.CheckError, glom.CoalesceError):
                 if self._skip_missing:
                     value = self._default
                 else:

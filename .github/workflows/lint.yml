@@ -46,6 +46,20 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check src tests
 
+      - name: Compatibility gate (check_compat)
+        # Sprint 60 W3 — фикс v25 CI gap: check_compat.py только в pre-commit,
+        # CI его не запускал. Теперь блокирующий шаг в lint.yml.
+        # Ловит: syntax errors (ast.parse), removed stdlib modules (imp, distutils,
+        # asyncore, asynchat, collections.MutableMapping), deprecated typing (Text, io),
+        # голые except: — ДО того как ruff начнёт анализ.
+        run: uv run python scripts/check_compat.py
+
+      - name: Python compileall gate
+        # Sprint 60 W3 — дополнительная защита: python -m compileall ловит
+        # syntax errors которые ast.parse/check_compat могли пропустить
+        # (например, dynamic exec, type comments).
+        run: uv run python -m compileall -q src scripts tools
+
       - name: isort check (best-effort)
         # isort может отсутствовать в окружении — не блокировать PR при этом.
         run: |
