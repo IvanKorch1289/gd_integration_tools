@@ -39,6 +39,10 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.backend.entrypoints.api.v1.dependencies.login_ratelimit import (
+    check_ip_rate_limit,
+    check_username_rate_limit,
+)
 from src.backend.services.auth.ad_directory_client import AdAuthError
 
 _logger = logging.getLogger(__name__)
@@ -75,7 +79,7 @@ class LoginResponse(BaseModel):
     """Success response с JWT token."""
 
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105 (OAuth2 token type literal, не password)
     auth_method: AuthMethodLiteral
     username: str
     is_superuser: bool
@@ -110,13 +114,21 @@ async def _get_jwt_backend() -> Any:
         "Аутентификация по ``method`` (front выбирает). "
         "Возвращает JWT для последующих запросов."
     ),
+    dependencies=[Depends(check_ip_rate_limit)],
 )
 async def login(payload: LoginRequest) -> LoginResponse:
     """Единый login endpoint (S58 W6d).
 
     Вызывает :meth:`UserService.login_with_method` с dispatch по ``payload.method``.
     На успехе выпускает JWT через ``jwt_backend_joserfc.encode``.
+
+    Rate limiting (S59 W3):
+    * per-IP (5/min) — анти-brute-force на IP-level (FastAPI dependency);
+    * per-username (3/5min) — анти-targeted attacks (вызов в handler).
     """
+    # S59 W3: per-username rate limit (вызываем ПОСЛЕ парсинга body).
+    await check_username_rate_limit(payload.username)
+
     service = await _get_user_service()
     jwt_encode = await _get_jwt_backend()
 
