@@ -11,8 +11,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -29,7 +30,7 @@ __all__ = (
     "set_app_ref",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Ссылка на FastAPI-приложение, сохраняется при первой инициализации
 # (см. plugins.composition.di.register_app_state) и используется

@@ -10,9 +10,10 @@ corutine-функциями из коробки. Fallback на простой ``
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Callable
 from typing import Any
 
@@ -21,7 +22,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("SelfHealer", "get_self_healer")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SelfHealer:

@@ -22,8 +22,9 @@ ADR: Templates загружаются с feature-flag для сохранени�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -34,7 +35,7 @@ import yaml as _yaml
 
 __all__ = ("WorkflowTemplate", "WorkflowTemplateRegistry", "get_template_registry")
 
-_logger = logging.getLogger("services.workflows.template_registry")
+_logger = get_logger("services.workflows.template_registry")
 
 _TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "dsl" / "workflow" / "templates"
 

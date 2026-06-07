@@ -37,6 +37,17 @@ class StructlogLogger(LoggerProtocol):
     def __init__(self, inner: Any) -> None:
         self._inner = inner
 
+    @property
+    def name(self) -> str:
+        """Sprint 60 W2 — обратная совместимость: ``logger.name`` → structlog logger name."""
+        # structlog.BoundLogger хранит имя в self._inner._logger.name (stdlib обёртка)
+        inner = self._inner
+        if hasattr(inner, "_logger"):
+            return getattr(inner._logger, "name", inner.__class__.__name__)
+        if hasattr(inner, "name"):
+            return inner.name
+        return inner.__class__.__name__
+
     @staticmethod
     def _format(msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         """Compat shim: stdlib-style ``%`` formatting → structlog kwargs.
@@ -75,6 +86,17 @@ class StructlogLogger(LoggerProtocol):
         # stdlib-семантика: exception() по умолчанию exc_info=True
         merged.setdefault("exc_info", True)
         self._inner.exception(formatted, **merged)
+
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.critical(formatted, **merged)
+
+    def log(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+        formatted, merged = self._format(msg, args, kwargs)
+        self._inner.log(level, formatted, **merged)
+
+    def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+        return self._inner.isEnabledFor(level)
 
     def bind(self, **kwargs: Any) -> "StructlogLogger":
         return StructlogLogger(self._inner.bind(**kwargs))

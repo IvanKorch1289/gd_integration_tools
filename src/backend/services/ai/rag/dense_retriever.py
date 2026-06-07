@@ -12,14 +12,15 @@ Standard vector embedding retrieval for RAG pipelines.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any, TypedDict
 
 __all__ = ("DenseResult", "DenseRetriever")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DenseResult(TypedDict):

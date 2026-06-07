@@ -15,8 +15,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
@@ -24,7 +25,7 @@ from packaging.version import Version
 
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class WorkflowResolutionError(ValueError):

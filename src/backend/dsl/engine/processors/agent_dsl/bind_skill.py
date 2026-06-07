@@ -25,8 +25,9 @@ Python::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = ("BindSkillProcessor",)
 
-_logger = logging.getLogger("workflow.processors.bind_skill")
+_logger = get_logger("workflow.processors.bind_skill")
 
 
 class BindSkillProcessor(BaseAIProcessor):

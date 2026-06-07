@@ -43,14 +43,15 @@ Wiring в Kafka/RabbitMQ producer/consumer — carryover S19+ (требует
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Mapping
 from typing import Any
 
 __all__ = ("extract_from_headers", "inject_into_headers")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 def _bytes_to_str(value: Any) -> str:

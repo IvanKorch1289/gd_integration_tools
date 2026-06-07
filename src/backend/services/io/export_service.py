@@ -14,11 +14,12 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import csv
 import io
 import json
-import logging
+
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
@@ -33,7 +34,7 @@ __all__ = (
     "list_formats",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class CsvExporter:

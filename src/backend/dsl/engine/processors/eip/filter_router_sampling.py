@@ -18,8 +18,9 @@ traffic в test environment или для метрик.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import random
 import threading
 from collections.abc import Callable
@@ -31,7 +32,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 __all__ = ("ContentBasedRouter", "SamplingProcessor")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # Type aliases

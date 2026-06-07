@@ -18,15 +18,16 @@ W26.5: маршруты регистрируются через ``router.add_api
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 __all__ = ("router",)
 
-logger = logging.getLogger("imports")
+logger = get_logger("imports")
 
 router = APIRouter()
 

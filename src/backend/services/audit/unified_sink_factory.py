@@ -10,15 +10,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
 
 from src.backend.core.audit.sinks.ai_unified_sink import (
     UnifiedAISink,
     register_emit_ai_invocation_event,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _create_emit_ai_invocation_event() -> None:

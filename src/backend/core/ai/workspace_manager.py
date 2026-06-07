@@ -13,9 +13,10 @@ Layout::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import shutil
 import time
 import uuid
@@ -30,7 +31,7 @@ from src.backend.core.ai.errors import (
 
 __all__ = ("AIWorkspaceManager", "WorkspaceHandle")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 DEFAULT_TTL_SECONDS: float = 7 * 24 * 3600
 DEFAULT_QUOTA_BYTES: int = 500 * 1024 * 1024

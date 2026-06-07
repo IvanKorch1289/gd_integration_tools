@@ -12,9 +12,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ def __getattr__(name: str) -> Any:
 
 __all__ = ("BulkheadScaler",)
 
-_logger = logging.getLogger("core.scaling.bulkhead_scaler")
+_logger = get_logger("core.scaling.bulkhead_scaler")
 
 
 def _utilization(bulkhead: Bulkhead) -> float:

@@ -11,15 +11,16 @@ Multi-instance safety: все токены в Redis (atomic INCR/EXPIRE).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter")
 
-logger = logging.getLogger("entrypoints.rate_limiter")
+logger = get_logger("entrypoints.rate_limiter")
 
 
 class RateLimitExceeded(Exception):

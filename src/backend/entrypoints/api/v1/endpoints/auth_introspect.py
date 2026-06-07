@@ -12,8 +12,9 @@ RFC: https://datatracker.ietf.org/doc/html/rfc7662
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import APIRouter, Form, HTTPException, status
@@ -23,7 +24,7 @@ from src.backend.core.di.providers import get_jwt_backend_provider
 
 __all__ = ("router",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 router = APIRouter()
 
 _INTROSPECT_FIELDS = (

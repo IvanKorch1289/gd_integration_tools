@@ -18,8 +18,9 @@ Endpoints (под /api/v1/admin):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -65,7 +66,7 @@ WorkflowStatus: Any = _bind_workflow_status()
 
 __all__ = ("router",)
 
-_logger = logging.getLogger("admin.workflows")
+_logger = get_logger("admin.workflows")
 
 
 # --- Lazy singletons (Wave 6.5a — через core.di.providers) ----------------

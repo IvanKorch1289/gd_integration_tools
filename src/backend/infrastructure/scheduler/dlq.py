@@ -27,8 +27,9 @@ Feature-flag:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import traceback
 import uuid
@@ -50,7 +51,7 @@ __all__ = (
     "set_scheduler_dlq_store",
 )
 
-_logger = logging.getLogger("infrastructure.scheduler.dlq")
+_logger = get_logger("infrastructure.scheduler.dlq")
 
 
 class SchedulerDLQEntry:

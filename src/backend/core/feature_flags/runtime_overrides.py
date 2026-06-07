@@ -25,8 +25,9 @@ channel ``feature-flags:toggle`` (carryover: B-6 finale).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -39,7 +40,7 @@ __all__ = (
     "reset_runtime_overrides",
 )
 
-_logger = logging.getLogger("core.feature_flags.runtime_overrides")
+_logger = get_logger("core.feature_flags.runtime_overrides")
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,8 +1,9 @@
 """Webhook Scheduler — планирование отправки webhooks по cron/delay."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from typing import Any
 
@@ -13,7 +14,7 @@ from src.backend.core.di.providers import get_redis_kv_client_provider
 
 __all__ = ("WebhookScheduler", "get_webhook_scheduler")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _PREFIX = "webhook:scheduled"
 

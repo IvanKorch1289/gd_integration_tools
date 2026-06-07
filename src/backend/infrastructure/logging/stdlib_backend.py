@@ -14,10 +14,42 @@ __all__ = ("StdlibLoggingBackend",)
 
 
 class StdlibLogger(LoggerProtocol):
-    """Обёртка stdlib logging.Logger под LoggerProtocol."""
+    """Обёртка stdlib logging.Logger под LoggerProtocol.
+
+    Sprint 60 W2 — добавлен ``.name`` property для обратной совместимости
+    с callers, которые обращаются к ``logger.name`` напрямую (ожидая
+    stdlib ``logging.Logger.name``). Также добавлены ``.level``/``.handlers``
+    /``.parent``/propagation controls — минимальный API surface для
+    миграции существующего кода.
+    """
 
     def __init__(self, inner: logging.Logger) -> None:
         self._inner = inner
+
+    @property
+    def name(self) -> str:
+        return self._inner.name
+
+    @property
+    def level(self) -> int:
+        return self._inner.level
+
+    @property
+    def handlers(self) -> list[logging.Handler]:
+        return self._inner.handlers
+
+    @property
+    def parent(self) -> logging.Logger | None:
+        return self._inner.parent
+
+    def setLevel(self, level: int) -> None:  # noqa: N802 — stdlib API
+        self._inner.setLevel(level)
+
+    def addHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+        self._inner.addHandler(handler)
+
+    def removeHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+        self._inner.removeHandler(handler)
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self._inner.debug(msg, *args, **kwargs)
@@ -33,6 +65,15 @@ class StdlibLogger(LoggerProtocol):
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self._inner.exception(msg, *args, **kwargs)
+
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._inner.critical(msg, *args, **kwargs)
+
+    def log(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._inner.log(level, msg, *args, **kwargs)
+
+    def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+        return self._inner.isEnabledFor(level)
 
     def bind(self, **kwargs: Any) -> "StdlibLogger":
         adapter = logging.LoggerAdapter(self._inner, kwargs)

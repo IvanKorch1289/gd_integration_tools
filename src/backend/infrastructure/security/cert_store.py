@@ -27,10 +27,11 @@ Hot-reload механизм:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-import logging
+
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
@@ -54,7 +55,7 @@ __all__ = (
     "create_cert_store",
 )
 
-logger = logging.getLogger("infrastructure.cert_store")
+logger = get_logger("infrastructure.cert_store")
 
 
 @dataclass(slots=True)

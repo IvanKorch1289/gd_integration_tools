@@ -16,14 +16,15 @@ Usage::
             return await self._request("GET", self._url("list_items"))
 """
 
-import logging
+
 import time
 from typing import Any
 from urllib.parse import urljoin, urlparse
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BaseExternalAPIClient",)
 
-logger = logging.getLogger("services.external_api")
+logger = get_logger("services.external_api")
 
 
 class BaseExternalAPIClient:
@@ -75,7 +76,7 @@ class BaseExternalAPIClient:
             or ""
         )
         self.endpoints = getattr(settings, "endpoints", {}) or {}
-        self._logger = logging.getLogger(f"services.{self._name.lower()}")
+        self._logger = get_logger(f"services.{self._name.lower()}")
 
     def _resolve_outbound_facade(self) -> Any | None:
         """Lazy-резолв ``OutboundHttpClient`` из svcs (если включён feature-flag)."""

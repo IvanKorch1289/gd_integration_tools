@@ -5,8 +5,9 @@ and compensation tracking via :class:`WorkflowStateRepository`.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 __all__ = ("SagaLRAProcessor",)
 
-_lra_logger = logging.getLogger("dsl.saga_lra")
+_lra_logger = get_logger("dsl.saga_lra")
 
 # lazy-evaluated at module level for testability
 _get_smart_session_manager = None

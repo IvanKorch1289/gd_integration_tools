@@ -11,8 +11,9 @@ Python 3.14, нет C-extensions.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -22,7 +23,7 @@ from src.backend.core.di import app_state_singleton
 
 __all__ = ("Hit", "WhooshIndex", "get_wiki_index")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # parents[4] = <repo_root> (whoosh_index.py живёт в
 # <root>/src/backend/services/wiki/). Wave 10.2 scaffold ошибочно

@@ -6,8 +6,9 @@ list, soft-delete. Конкретный backend (in-memory / Mongo) подмен
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
@@ -19,7 +20,7 @@ from src.backend.services.notebooks.repository import (
 
 __all__ = ("NotebookService", "get_notebook_service")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NotebookService:

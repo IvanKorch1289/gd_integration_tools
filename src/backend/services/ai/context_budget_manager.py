@@ -28,8 +28,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -48,7 +49,7 @@ __all__ = (
     "get_context_budget_manager",
 )
 
-logger = logging.getLogger("services.ai.context_budget")
+logger = get_logger("services.ai.context_budget")
 
 
 class ContextStrategyType(Enum):

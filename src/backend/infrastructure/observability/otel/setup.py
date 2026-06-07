@@ -26,13 +26,14 @@ Sprint 16 K2 W3 (L3-P0-1, 2026-05-20): добавлен ``MeterProvider`` +
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("configure_otel", "setup_otel_metrics", "shutdown_otel_metrics")
 
-logger = logging.getLogger("infra.otel.setup")
+logger = get_logger("infra.otel.setup")
 
 _meter_provider_ref: Any | None = None
 

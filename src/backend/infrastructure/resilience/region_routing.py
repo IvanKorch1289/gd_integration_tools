@@ -9,14 +9,15 @@ Provides:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RegionStatus(str, Enum):

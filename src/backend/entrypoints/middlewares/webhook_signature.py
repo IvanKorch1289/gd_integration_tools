@@ -14,8 +14,9 @@ Wave [s2/k1-4-webhook-sig]: консолидирует верификацию п
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Mapping
 
 from fastapi import Request
@@ -30,7 +31,7 @@ from src.backend.infrastructure.security.signatures import (
 
 __all__ = ("WebhookSignatureMiddleware",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class WebhookSignatureMiddleware(BaseHTTPMiddleware):

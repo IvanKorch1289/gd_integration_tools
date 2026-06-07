@@ -13,9 +13,10 @@ RFC 4918 (PROPFIND/GET/PUT).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
@@ -24,7 +25,7 @@ from src.backend.infrastructure.sources.file_watcher import FileEvent
 
 __all__ = ("WebDAVSource", "WebDAVSourceConfig")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True, frozen=True)

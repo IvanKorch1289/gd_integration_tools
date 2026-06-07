@@ -30,8 +30,9 @@ Health-check: ``is_snapshot_fresh(threshold)`` — для интеграции �
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from pathlib import Path
 from typing import Any
@@ -46,7 +47,7 @@ __all__ = (
     "sync_pg_to_sqlite",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 #: Время последнего успешного sync (monotonic-aware: wall-clock UNIX timestamp).

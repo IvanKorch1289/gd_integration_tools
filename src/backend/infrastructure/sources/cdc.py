@@ -13,9 +13,10 @@ Slot и publication должны существовать. Их создание
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -25,7 +26,7 @@ from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("CDCSource",)
 
-logger = logging.getLogger("infrastructure.sources.cdc")
+logger = get_logger("infrastructure.sources.cdc")
 
 
 class CDCSource:

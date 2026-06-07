@@ -13,8 +13,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -28,7 +29,7 @@ from src.backend.dsl.engine.processors.express._common import (
 
 __all__ = ("ExpressSendFileProcessor",)
 
-_logger = logging.getLogger("dsl.express.send_file")
+_logger = get_logger("dsl.express.send_file")
 
 
 class ExpressSendFileProcessor(BaseProcessor):

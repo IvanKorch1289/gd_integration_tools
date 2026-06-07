@@ -19,12 +19,13 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import builtins
 import importlib.util
 import inspect
-import logging
+
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -35,7 +36,7 @@ from src.backend.core.di import app_state_singleton
 
 __all__ = ("AgentTool", "ToolRegistry", "agent_tool", "get_tool_registry")
 
-logger = logging.getLogger("services.ai.tools")
+logger = get_logger("services.ai.tools")
 
 
 _AGENT_TOOL_FLAG = "__agent_tool__"

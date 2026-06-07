@@ -47,8 +47,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 from src.backend.core.tenancy import current_tenant
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
 __all__ = ("TenantScopedCasbin",)
 
 
-logger = logging.getLogger("policy.casbin_tenant")
+logger = get_logger("policy.casbin_tenant")
 
 
 class TenantScopedCasbin:

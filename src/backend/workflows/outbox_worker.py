@@ -16,13 +16,14 @@ Retry с экспоненциальным backoff управляется из :m
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("start_outbox_worker", "stop_outbox_worker", "run_once")
 
-logger = logging.getLogger("workflows.outbox")
+logger = get_logger("workflows.outbox")
 
 _scheduler: Any = None
 

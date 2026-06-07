@@ -17,8 +17,9 @@ State machine:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Final
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
     from src.backend.core.config.pooling import PoolingProfile
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class ClientCircuitBreaker:

@@ -20,8 +20,9 @@ feature_flag:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 
 __all__ = ("FlagsmithClient", "FlagsmithFlag", "FlagsmithUnavailableError")
 
-_logger = logging.getLogger("core.feature_flags.flagsmith_client")
+_logger = get_logger("core.feature_flags.flagsmith_client")
 _DEFAULT_API_URL = "https://edge.api.flagsmith.com/api/v1/"
 _DEFAULT_TIMEOUT_SECONDS = 2.0
 

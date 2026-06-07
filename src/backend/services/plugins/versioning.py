@@ -29,8 +29,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -51,7 +52,7 @@ __all__ = (
     "RollbackResult",
 )
 
-_logger = logging.getLogger("services.plugins.versioning")
+_logger = get_logger("services.plugins.versioning")
 
 
 class PluginVersionError(RuntimeError):

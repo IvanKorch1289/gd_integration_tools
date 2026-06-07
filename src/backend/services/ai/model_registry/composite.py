@@ -8,8 +8,8 @@ priority read-only backend.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
 
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
@@ -18,7 +18,7 @@ from src.backend.services.ai.model_registry.adapter import (
 
 __all__ = ("CompositeModelRegistry",)
 
-logger = logging.getLogger("services.ai.model_registry.composite")
+logger = get_logger("services.ai.model_registry.composite")
 
 
 class CompositeModelRegistry:

@@ -1,14 +1,15 @@
 """Per-tenant quotas — monthly/daily limits поверх Redis."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass
 
 __all__ = ("QuotaExceeded", "QuotaTracker")
 
-logger = logging.getLogger("api_mgmt.quotas")
+logger = get_logger("api_mgmt.quotas")
 
 
 class QuotaExceeded(Exception):

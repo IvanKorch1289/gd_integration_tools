@@ -5,7 +5,8 @@ equivalent to Apache Camel's Component model.
 """
 
 import contextlib
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from collections.abc import Callable
 from typing import Any
 
@@ -27,7 +28,7 @@ __all__ = (
     "TimerProcessor",
 )
 
-_comp_logger = logging.getLogger("dsl.components")
+_comp_logger = get_logger("dsl.components")
 
 
 @processor(

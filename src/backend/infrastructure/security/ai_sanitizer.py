@@ -14,13 +14,14 @@
 - API-ключи/токены → [REDACTED]
 """
 
-import logging
+
 import re
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.interfaces.sanitization import MaskingEvent, SanitizationResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Re-export `MaskingEvent` / `SanitizationResult` для backward-compat:
 # S11+ callers ожидают этот модуль источником DTO. Canonical source

@@ -16,9 +16,10 @@ trigger к route.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import threading
 from collections.abc import Callable
 from typing import Any, Protocol
@@ -59,7 +60,7 @@ class FileSensorTaskWrapper:
 # Backward-compat alias (was used in eip.py before refactor)
 _FileSensorWrapper = FileSensorTaskWrapper
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class Trigger(Protocol):

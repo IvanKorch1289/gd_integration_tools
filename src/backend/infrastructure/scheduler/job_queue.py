@@ -5,17 +5,18 @@
 Интегрируется с DSL через ``TransportType.DEFERRED``.
 """
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
+from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.settings import settings
 
 __all__ = ("JobQueue", "get_job_queue")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class JobQueue:

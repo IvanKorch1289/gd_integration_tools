@@ -19,14 +19,15 @@ Usage::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("PromptRegistry", "PromptVersion", "get_prompt_registry")
 
-logger = logging.getLogger("services.prompts")
+logger = get_logger("services.prompts")
 
 
 @dataclass(slots=True)

@@ -22,9 +22,10 @@ Wave D.1 / ADR-045 §«PgRunnerWorkflowBackend (legacy fallback)».
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from datetime import timedelta
 from typing import Any
 from uuid import UUID
@@ -45,7 +46,7 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
 __all__ = ("PgRunnerWorkflowBackend",)
 
 
-_logger = logging.getLogger("workflow.pg_runner_backend")
+_logger = get_logger("workflow.pg_runner_backend")
 
 
 _TERMINAL_STATUSES = frozenset(

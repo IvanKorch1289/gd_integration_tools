@@ -26,8 +26,9 @@ Lazy-init pattern:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.sanitization import SanitizationResult
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 
 __all__ = ("PresidioSanitizerAdapter", "get_presidio_sanitizer_adapter")
 
-logger = logging.getLogger("services.ai.pii.presidio")
+logger = get_logger("services.ai.pii.presidio")
 
 
 def _resolve_legacy_sanitizer() -> Any:

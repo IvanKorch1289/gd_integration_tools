@@ -23,8 +23,9 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai.errors import GuardResult
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 __all__ = ("PipelineStepsMixin",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PipelineStepsMixin:

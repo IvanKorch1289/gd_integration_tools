@@ -28,9 +28,10 @@ Layout ожидаемой структуры workspace::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import shutil
 import time
 from datetime import UTC, datetime
@@ -38,7 +39,7 @@ from pathlib import Path
 
 __all__ = ("AIWorkspaceCleaner",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 # Значения по умолчанию.
 DEFAULT_TTL_DAYS: int = 7

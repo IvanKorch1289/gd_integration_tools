@@ -20,8 +20,9 @@ Endpoints, которые safe для write в fallback-режиме (напри
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Final
 
 from fastapi.responses import JSONResponse
@@ -31,7 +32,7 @@ from starlette.types import ASGIApp
 
 __all__ = ("DegradationMiddleware",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 _WRITE_METHODS: Final[frozenset[str]] = frozenset({"POST", "PUT", "PATCH", "DELETE"})

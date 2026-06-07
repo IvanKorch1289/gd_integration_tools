@@ -5,8 +5,9 @@
 сквозной трассировки.
 """
 
-import logging
+
 import traceback
+from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -16,7 +17,7 @@ from src.backend.core.errors import BaseError
 
 __all__ = ("ExceptionHandlerMiddleware",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ExceptionHandlerMiddleware(BaseHTTPMiddleware):

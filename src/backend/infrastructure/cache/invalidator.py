@@ -24,10 +24,11 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import fnmatch
-import logging
+
 from typing import Protocol, runtime_checkable
 
 __all__ = (
@@ -38,7 +39,7 @@ __all__ = (
     "set_cache_invalidator",
 )
 
-logger = logging.getLogger("cache.invalidator")
+logger = get_logger("cache.invalidator")
 
 
 @runtime_checkable

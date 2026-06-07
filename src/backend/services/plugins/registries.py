@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
@@ -35,7 +36,7 @@ __all__ = (
     "get_repository_hook_registry",
 )
 
-logger = logging.getLogger("services.plugins")
+logger = get_logger("services.plugins")
 
 # Стандартные события репозитория (V10 #3 + ADR-011).
 KNOWN_REPO_EVENTS = frozenset(

@@ -8,8 +8,9 @@ Telegram Bot API, в отличие от Express BotX, не предоставл
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -19,7 +20,7 @@ from src.backend.dsl.engine.processors.telegram._common import get_telegram_clie
 
 __all__ = ("TelegramStatusProcessor",)
 
-_logger = logging.getLogger("dsl.telegram.status")
+_logger = get_logger("dsl.telegram.status")
 
 
 class TelegramStatusProcessor(BaseProcessor):

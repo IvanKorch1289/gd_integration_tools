@@ -10,10 +10,11 @@ Processors added:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
-import logging
+
 import time
 from collections.abc import Callable
 from typing import Any
@@ -31,7 +32,7 @@ __all__ = (
     "SwitchProcessor",
 )
 
-_patterns_logger = logging.getLogger("dsl.patterns")
+_patterns_logger = get_logger("dsl.patterns")
 
 
 class SwitchProcessor(BaseProcessor):

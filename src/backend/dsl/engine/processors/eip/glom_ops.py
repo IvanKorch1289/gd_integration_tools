@@ -46,8 +46,9 @@ Thread-safe: glom pure functions; processor instances immutable post-constructio
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Sequence
 from typing import Any, ClassVar
 
@@ -61,7 +62,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 __all__ = ("GlomExtractProcessor", "GlomFlattenProcessor", "GlomTransformProcessor")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── GlomExtractProcessor ────────────────────────────────────────────

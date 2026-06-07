@@ -12,9 +12,10 @@ JSON либо raw bytes; metadata — топик/offset/headers (зависит 
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("MQSource", "MQTransport")
 
-logger = logging.getLogger("infrastructure.sources.mq")
+logger = get_logger("infrastructure.sources.mq")
 
 MQTransport = Literal["redis_streams", "kafka", "rabbitmq", "nats"]
 

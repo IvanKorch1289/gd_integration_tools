@@ -24,8 +24,8 @@ Downstream middleware (audit_log, request_log, audit_replay) первым
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -33,7 +33,7 @@ from starlette.types import ASGIApp, Message
 
 __all__ = ("RequestBodyCacheMiddleware",)
 
-logger = logging.getLogger("infra.middleware.body_cache")
+logger = get_logger("infra.middleware.body_cache")
 
 _DEFAULT_MAX_BODY_SIZE = 10 * 1024 * 1024  # 10 МБ safety limit
 _BODYLESS_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "DELETE", "TRACE"})

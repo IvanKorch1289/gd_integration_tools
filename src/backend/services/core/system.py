@@ -18,8 +18,9 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.di.providers import (
@@ -29,7 +30,7 @@ from src.backend.core.di.providers import (
 
 __all__ = ("SystemService", "get_system_service")
 
-logger = logging.getLogger("services.system")
+logger = get_logger("services.system")
 
 
 class SystemService:

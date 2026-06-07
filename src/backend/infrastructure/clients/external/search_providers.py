@@ -1,8 +1,9 @@
 """Search providers — Perplexity, Tavily, SearXNG с fallback chain."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from abc import ABC, abstractmethod
 from typing import Any
@@ -16,7 +17,7 @@ __all__ = (
     "get_web_search_service",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BaseSearchProvider(ABC):

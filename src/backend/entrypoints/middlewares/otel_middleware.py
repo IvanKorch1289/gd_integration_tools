@@ -21,8 +21,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import Request, Response
@@ -31,7 +32,7 @@ from starlette.types import ASGIApp
 
 __all__ = ("OtelMiddleware",)
 
-logger = logging.getLogger("infra.otel.middleware")
+logger = get_logger("infra.otel.middleware")
 
 
 class OtelMiddleware(BaseHTTPMiddleware):

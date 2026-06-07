@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections import deque
 from typing import Any, Protocol, runtime_checkable
 
@@ -31,7 +32,7 @@ __all__ = (
     "default_registry",
 )
 
-logger = logging.getLogger("dsl.versioning")
+logger = get_logger("dsl.versioning")
 
 CURRENT_VERSION: str = "v2"
 """Целевая (актуальная) apiVersion для всех новых spec'ов."""

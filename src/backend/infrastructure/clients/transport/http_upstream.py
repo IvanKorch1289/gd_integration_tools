@@ -22,8 +22,9 @@ limits из `PoolingProfile.max_size` + keepalive из `idle_timeout_s`. При
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final
 
@@ -41,7 +42,7 @@ from src.backend.infrastructure.resilience.client_breaker import (
     ClientCircuitBreaker,
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

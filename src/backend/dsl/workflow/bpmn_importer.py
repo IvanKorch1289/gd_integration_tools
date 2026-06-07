@@ -46,8 +46,9 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import xml.etree.ElementTree as ET
 from typing import Any, Final
 
@@ -62,7 +63,7 @@ __all__ = (
     "import_bpmn",
 )
 
-_logger = logging.getLogger("workflow.bpmn_importer")
+_logger = get_logger("workflow.bpmn_importer")
 
 #: Стандартный namespace BPMN 2.0 (OMG spec 2010-05-24).
 BPMN_NAMESPACE: Final[str] = "http://www.omg.org/spec/BPMN/20100524/MODEL"

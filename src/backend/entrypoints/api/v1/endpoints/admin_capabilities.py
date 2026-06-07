@@ -12,15 +12,16 @@ Endpoints (под ``/api/v1/admin``):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import APIRouter
 
 __all__ = ("router",)
 
-logger = logging.getLogger("entrypoints.admin_capabilities")
+logger = get_logger("entrypoints.admin_capabilities")
 
 router = APIRouter()
 

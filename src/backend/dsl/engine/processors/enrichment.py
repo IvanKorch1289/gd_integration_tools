@@ -4,8 +4,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import Any
 
@@ -23,7 +24,7 @@ __all__ = (
     "WebhookSignProcessor",
     "WebhookSignVerifyProcessor",
 )
-logger = logging.getLogger("dsl.enrichment")
+logger = get_logger("dsl.enrichment")
 
 
 class GeoIpProcessor(BaseProcessor):

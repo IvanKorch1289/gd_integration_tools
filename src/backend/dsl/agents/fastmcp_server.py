@@ -22,9 +22,10 @@ S35 GAP-AI-1
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -35,7 +36,7 @@ from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
 
 __all__ = ("FastMCPserver",)
 
-logger = logging.getLogger("dsl.agents.fastmcp_server")
+logger = get_logger("dsl.agents.fastmcp_server")
 
 
 # ── Workflow prompts ──────────────────────────────────────────────────────────

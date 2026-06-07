@@ -12,8 +12,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -26,7 +27,7 @@ from src.backend.services.ai.feedback.repository import (
 
 __all__ = ("AIFeedbackService", "get_ai_feedback_service")
 
-logger = logging.getLogger("services.ai.feedback")
+logger = get_logger("services.ai.feedback")
 
 
 def _utc_now() -> datetime:

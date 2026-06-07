@@ -13,8 +13,9 @@ No-op при отсутствии необязательных полей в :cl
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Mapping
 from typing import Any
@@ -31,13 +32,13 @@ __all__ = ("AuditMiddleware",)
 # (StreamHandler + Graylog) подключаются в composition root через
 # ``LoggerManager``, а здесь — только чистый ``logging``-интерфейс,
 # чтобы services-слой не зависел от ``infrastructure``.
-_logger = logging.getLogger("application")
+_logger = get_logger("application")
 
 
 class AuditMiddleware:
     """Структурированное логирование dispatch action.
 
-    Использует стандартный ``logging.getLogger("application")``;
+    Использует стандартный ``get_logger("application")``;
     конкретные handlers (StreamHandler / Graylog) добавляются в
     composition root и применяются ко всему дереву логгеров.
     """

@@ -12,8 +12,9 @@ Pydantic-валидация ``response_body`` (по умолчанию — ``out
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -30,7 +31,7 @@ __all__ = ("ResponseValidatorProcessor",)
 
 
 _ALLOWED_ON_ERROR = frozenset({"fail", "dlq", "warn"})
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @processor(

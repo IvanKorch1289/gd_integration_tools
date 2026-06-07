@@ -32,8 +32,9 @@ Per-tenant identifier (S18 W7):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
@@ -47,7 +48,7 @@ __all__ = (
     "tenant_aware_identifier",
 )
 
-_logger = logging.getLogger("entrypoints.middlewares.global_ratelimit")
+_logger = get_logger("entrypoints.middlewares.global_ratelimit")
 
 
 @dataclass(frozen=True, slots=True)

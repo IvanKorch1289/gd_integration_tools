@@ -12,8 +12,9 @@ RagasEvaluation:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 import re
 from dataclasses import dataclass
@@ -30,7 +31,7 @@ __all__ = (
     "get_ragas",
 )
 
-logger = logging.getLogger("services.ai_moderation")
+logger = get_logger("services.ai_moderation")
 
 
 @dataclass(slots=True)

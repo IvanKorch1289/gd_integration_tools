@@ -10,8 +10,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -20,7 +21,7 @@ from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("apply_late_policy",)
 
-logger = logging.getLogger("dsl.watermark.late")
+logger = get_logger("dsl.watermark.late")
 
 SideOutputCallable = Callable[[Exchange[Any]], Awaitable[None] | None]
 

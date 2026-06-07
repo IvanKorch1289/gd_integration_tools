@@ -23,8 +23,9 @@ YAML::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AIRpaProcessor",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 _VALID_ACTIONS = frozenset({"click", "type", "screenshot", "hover", "scroll", "wait"})
 

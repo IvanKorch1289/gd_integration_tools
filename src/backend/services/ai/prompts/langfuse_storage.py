@@ -22,8 +22,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -32,7 +33,7 @@ from src.backend.core.config.features import feature_flags
 
 __all__ = ("LangfusePromptStorage", "PromptEntry", "get_prompt_storage")
 
-logger = logging.getLogger("services.ai.prompts.langfuse_storage")
+logger = get_logger("services.ai.prompts.langfuse_storage")
 
 
 @dataclass(slots=True)

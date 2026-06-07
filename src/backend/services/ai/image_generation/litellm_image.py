@@ -17,15 +17,16 @@ Capability (V11.1): ``image.generate.<provider>``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = ("ImageGenerationUnavailable", "ImageResult", "LiteLLMImageGenerationService")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ImageGenerationUnavailable(RuntimeError):

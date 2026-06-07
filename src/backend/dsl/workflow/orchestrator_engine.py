@@ -24,8 +24,9 @@ Usage::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 __all__ = ("OrchestratorEngine", "RoutingResult")
 
-logger = logging.getLogger("workflow.orchestrator")
+logger = get_logger("workflow.orchestrator")
 
 
 @dataclass(frozen=True, slots=True)

@@ -34,10 +34,11 @@ Pattern (Apache Camel Saga EIP / MicroProfile LRA, simplified)::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-import logging
+
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -59,7 +60,7 @@ __all__ = (
     "SagaStepSpec",
 )
 
-_lra_logger = logging.getLogger("dsl.saga_lra_processor")
+_lra_logger = get_logger("dsl.saga_lra_processor")
 
 # ── State machine constants ────────────────────────────────────────────
 

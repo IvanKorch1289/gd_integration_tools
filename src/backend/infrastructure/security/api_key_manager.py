@@ -10,7 +10,8 @@
 """
 
 import hashlib
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 import secrets
 import time
 from dataclasses import dataclass
@@ -18,7 +19,7 @@ from typing import Any
 
 __all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
 
-logger = logging.getLogger("security.api_keys")
+logger = get_logger("security.api_keys")
 
 _KEY_PREFIX = "apikey:"
 _AUDIT_PREFIX = "apikey_audit:"

@@ -20,9 +20,10 @@ Exchange/ExecutionContext.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import random
 import uuid
 from collections import defaultdict, deque
@@ -53,7 +54,7 @@ __all__ = (
     "TumblingWindowProcessor",
 )
 
-logger = logging.getLogger("dsl.streaming")
+logger = get_logger("dsl.streaming")
 
 
 # ──────────────────── Message Expiration ────────────────────

@@ -7,9 +7,10 @@ Provides web scraping capabilities within DSL routes:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import contextlib
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -18,7 +19,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ApiProxyProcessor", "PaginateProcessor", "ScrapeProcessor")
 
-_scrape_logger = logging.getLogger("dsl.scraping")
+_scrape_logger = get_logger("dsl.scraping")
 
 _BLOCKED_IP_PREFIXES = (
     "127.",

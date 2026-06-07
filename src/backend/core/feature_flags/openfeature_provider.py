@@ -24,8 +24,9 @@ feature_flag:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
@@ -40,7 +41,7 @@ __all__ = (
     "is_flagsmith_backend_enabled",
 )
 
-_logger = logging.getLogger("core.feature_flags.openfeature")
+_logger = get_logger("core.feature_flags.openfeature")
 _ENV_BACKEND = "FEATURE_FLAG_BACKEND"
 _FLAGSMITH_BACKEND_VALUE = "flagsmith"
 

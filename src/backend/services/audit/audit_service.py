@@ -28,8 +28,9 @@ async-контексте (lifespan/workflow activity/CLI).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AuditService", "get_unified_audit_service")
 
-_logger = logging.getLogger("services.audit.unified")
+_logger = get_logger("services.audit.unified")
 
 _AuditSeverity = Literal["info", "warning", "error"]
 

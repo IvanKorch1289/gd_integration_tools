@@ -7,15 +7,16 @@ API:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("SagaHistoryRecord", "aggregate_saga_stats", "get_saga_history")
 
-_logger = logging.getLogger("services.workflows.saga_history")
+_logger = get_logger("services.workflows.saga_history")
 
 
 @dataclass(frozen=True, slots=True)

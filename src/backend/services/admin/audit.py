@@ -5,14 +5,15 @@ Emits ``admin.action`` events through the shared audit_callback pattern
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Re-export AuditCallback type for consumers
 AuditCallback = Callable[[dict[str, Any]], None]

@@ -28,11 +28,12 @@ L3 retrieval-graph cache (S5 W1):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
 import hashlib
-import logging
+
 import time
 from typing import Any
 
@@ -44,7 +45,7 @@ __all__ = (
     "get_semantic_cache",
 )
 
-logger = logging.getLogger("services.semantic_cache")
+logger = get_logger("services.semantic_cache")
 
 #: Redis pub/sub канал для cross-instance invalidation L3-кеша.
 RAG_CACHE_INVALIDATE_CHANNEL = "rag-cache-invalidate"

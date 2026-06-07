@@ -6,14 +6,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("CostRow", "LangFuseReader")
 

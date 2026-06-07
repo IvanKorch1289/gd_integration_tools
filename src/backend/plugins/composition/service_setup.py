@@ -9,8 +9,9 @@ Architecture: composition root должен знать о всех слоях п
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 
 from src.backend.core.svcs_registry import has_service, register_factory
@@ -21,7 +22,7 @@ __all__ = (
     "register_secrets_backend",
 )
 
-_logger = logging.getLogger("composition.service_setup")
+_logger = get_logger("composition.service_setup")
 
 
 def register_default_action_middlewares() -> None:

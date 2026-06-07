@@ -37,9 +37,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 import sys
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
 
 __all__ = ("HotSwapError", "HotSwapResult", "PluginLoaderProtocol", "hot_swap")
 
-_logger = logging.getLogger("core.plugin_runtime.hot_swap")
+_logger = get_logger("core.plugin_runtime.hot_swap")
 
 
 class HotSwapError(RuntimeError):

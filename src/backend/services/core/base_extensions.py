@@ -11,9 +11,10 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import functools
-import logging
+
 from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -27,7 +28,7 @@ __all__ = (
     "with_audit_timestamps",
 )
 
-logger = logging.getLogger("services.extensions")
+logger = get_logger("services.extensions")
 
 F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 

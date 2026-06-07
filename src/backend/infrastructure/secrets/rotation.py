@@ -9,9 +9,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Callable
 from typing import Any
 
@@ -19,7 +20,7 @@ from src.backend.infrastructure.secrets.broker import SecretBrokerImpl
 
 __all__ = ("RotationScheduler",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 DEFAULT_POLL_INTERVAL_SECONDS: float = 60.0
 

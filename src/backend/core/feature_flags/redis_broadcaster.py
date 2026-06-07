@@ -25,9 +25,10 @@ DoD S17 #11 — propagation latency p95 ≤ 100ms (carryover к perf-wave).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import os
 import uuid
 from dataclasses import dataclass
@@ -54,7 +55,7 @@ __all__ = (
     "serialize_change",
 )
 
-_logger = logging.getLogger("core.feature_flags.redis_broadcaster")
+_logger = get_logger("core.feature_flags.redis_broadcaster")
 
 #: Redis pub/sub channel для broadcast feature-flag changes.
 BROADCAST_CHANNEL = "feature-flags:toggle"

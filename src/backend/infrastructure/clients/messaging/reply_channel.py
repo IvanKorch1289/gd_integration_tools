@@ -20,9 +20,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import uuid
 from typing import TYPE_CHECKING, Any
 
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DEFAULT_REPLY_TIMEOUT_S", "ReplyChannel", "ReplyTimeoutError")
 
-logger = logging.getLogger("eventing.reply_channel")
+logger = get_logger("eventing.reply_channel")
 
 #: Таймаут по умолчанию для ``await_reply`` — 30 секунд.
 DEFAULT_REPLY_TIMEOUT_S: float = 30.0

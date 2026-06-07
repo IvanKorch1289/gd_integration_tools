@@ -15,9 +15,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 import time as _time
 from datetime import UTC, datetime
 
@@ -29,7 +30,7 @@ from src.backend.core.auth.admin_roles import extract_admin_roles
 
 __all__ = ("AdminAuditMiddleware",)
 
-_admin_logger = logging.getLogger("audit_log.admin")
+_admin_logger = get_logger("audit_log.admin")
 
 _ADMIN_PATH_PREFIXES: tuple[str, ...] = ("/api/v1/admin/", "/tech/", "/api/v1/tech/")
 _AUDITED_METHODS: frozenset[str] = frozenset({"PATCH", "PUT", "POST", "DELETE"})

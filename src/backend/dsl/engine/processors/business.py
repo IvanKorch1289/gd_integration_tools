@@ -17,9 +17,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import re
 import time
 import uuid
@@ -37,7 +38,7 @@ __all__ = (
     "OutboxProcessor",
     "TenantScopeProcessor",
 )
-logger = logging.getLogger("dsl.business")
+logger = get_logger("dsl.business")
 
 
 class TenantScopeProcessor(BaseProcessor):

@@ -22,9 +22,10 @@ Registry **не заменяет** svcs DI (ADR-002) — он дополняет
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
     )
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

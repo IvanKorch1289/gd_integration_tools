@@ -17,8 +17,9 @@ Warn-лог при ``on_block="warn"``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
 
 __all__ = ("AIPolicyEnforcer",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AIPolicyEnforcer:

@@ -35,8 +35,9 @@ Production Hardening (Schema Registry V2):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
@@ -46,7 +47,7 @@ if TYPE_CHECKING:
 
 __all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SchemaKind(StrEnum):

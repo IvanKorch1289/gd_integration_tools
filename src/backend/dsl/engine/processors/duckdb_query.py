@@ -18,8 +18,9 @@ DuckDB соединение — in-process (default). Опция ``persistent_pa
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DuckDbQueryProcessor",)
 
-_logger = logging.getLogger("dsl.duckdb")
+_logger = get_logger("dsl.duckdb")
 
 
 class DuckDbQueryProcessor(BaseProcessor):

@@ -7,15 +7,16 @@ http.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Iterable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("ChainedAntivirusBackend", "create_antivirus_backend")
 
-logger = logging.getLogger("infrastructure.antivirus.factory")
+logger = get_logger("infrastructure.antivirus.factory")
 
 
 class ChainedAntivirusBackend(AntivirusBackend):

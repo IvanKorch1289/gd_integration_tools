@@ -45,9 +45,10 @@ Usage::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -72,7 +73,7 @@ __all__ = (
     "MergeStrategy",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── HTTP fetcher (DI-friendly) ────────────────────────────────────────

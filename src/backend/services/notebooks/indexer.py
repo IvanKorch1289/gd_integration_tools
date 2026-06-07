@@ -8,8 +8,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 __all__ = ("NotebookIndexer", "get_notebook_indexer")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _NAMESPACE = "notebooks"
 

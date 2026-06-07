@@ -26,8 +26,9 @@ Builder::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -37,7 +38,7 @@ from src.backend.dsl.engine.processors.entity import _resolve
 
 __all__ = ("FeedbackProcessor",)
 
-_logger = logging.getLogger("dsl.feedback")
+_logger = get_logger("dsl.feedback")
 
 _VALID_LABELS = frozenset({"positive", "negative", "neutral", "skip"})
 

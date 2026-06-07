@@ -9,8 +9,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import math
 from dataclasses import dataclass
 from datetime import timedelta
@@ -18,7 +19,7 @@ from typing import Any, Literal
 
 from src.backend.services.ai.costs.langfuse_reader import CostRow, LangFuseReader
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("CostAlert", "CostAlertService")
 

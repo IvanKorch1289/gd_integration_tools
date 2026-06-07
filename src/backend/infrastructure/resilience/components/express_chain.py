@@ -11,14 +11,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 __all__ = ("NotificationCallable", "build_express_fallbacks", "build_express_primary")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 NotificationCallable = Callable[[dict[str, Any]], Awaitable[None]]
 

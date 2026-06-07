@@ -10,6 +10,7 @@ infrastructure/, dsl/) работают без миграции.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 from abc import ABC, abstractmethod

@@ -21,13 +21,14 @@ RPA-сценариев, аудита документов, контракт-ва
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from pathlib import Path
 
 __all__ = ("PdfReaderUnavailable", "read_pdf")
 
-_logger = logging.getLogger("utilities.pdf_reader")
+_logger = get_logger("utilities.pdf_reader")
 
 _PAGE_SEP = "\n\n"
 

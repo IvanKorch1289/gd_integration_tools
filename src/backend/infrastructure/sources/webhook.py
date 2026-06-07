@@ -15,9 +15,10 @@ HTTP-source с проверкой HMAC и timestamp-window против replay-�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = ("WebhookSource", "WebhookVerificationError")
 
-logger = logging.getLogger("infrastructure.sources.webhook")
+logger = get_logger("infrastructure.sources.webhook")
 
 
 class WebhookVerificationError(Exception):

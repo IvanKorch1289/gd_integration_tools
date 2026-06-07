@@ -14,8 +14,9 @@ for spec in load_sources_spec().sources:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.source import Source, SourceKind
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("build_source",)
 
-logger = logging.getLogger("services.sources.factory")
+logger = get_logger("services.sources.factory")
 
 
 def build_source(spec: SourceSpec) -> Source:

@@ -1,7 +1,8 @@
-import logging
+
 import re
 from dataclasses import dataclass
 from typing import Any, Final
+from src.backend.infrastructure.logging.factory import get_logger
 
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -74,7 +75,7 @@ class ExternalDatabaseService:
     """
 
     def __init__(self) -> None:
-        self.logger = logging.getLogger("services.io.external_database")
+        self.logger = get_logger("services.io.external_database")
 
     async def execute(
         self,

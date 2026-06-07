@@ -18,15 +18,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import datetime as _dt
-import logging
+
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 __all__ = ("CapabilityAuditEvent", "CapabilityAuditEventKind", "log_capability_event")
 
-_logger = logging.getLogger("core.security.capabilities.audit")
+_logger = get_logger("core.security.capabilities.audit")
 
 CapabilityAuditEventKind = Literal["capability_grant", "capability_deny"]
 

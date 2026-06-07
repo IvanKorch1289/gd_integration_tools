@@ -25,8 +25,9 @@ Feature flag: ``feature_flags.db_call_procedure_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 __all__ = ("DbCallProcedureProcessor",)
 
 
-_logger = logging.getLogger("dsl.processors.db_call_procedure")
+_logger = get_logger("dsl.processors.db_call_procedure")
 _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
 
 

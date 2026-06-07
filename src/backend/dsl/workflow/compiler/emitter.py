@@ -20,8 +20,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -31,7 +32,7 @@ from src.backend.dsl.workflow.spec import SignalWaitDeclaration, WorkflowDeclara
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
 
 
-_logger = logging.getLogger("workflow.compiler.emitter")
+_logger = get_logger("workflow.compiler.emitter")
 
 
 @dataclass(frozen=True, slots=True)

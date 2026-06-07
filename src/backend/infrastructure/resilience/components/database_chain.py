@@ -11,15 +11,16 @@ Write-операции в fallback-режиме блокируются на Fast
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
 __all__ = ("DBQueryCallable", "build_database_fallbacks", "build_database_primary")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 DBQueryCallable = Callable[
     [str, dict[str, Any] | None], Awaitable[list[dict[str, Any]]]

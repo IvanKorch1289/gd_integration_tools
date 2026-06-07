@@ -38,8 +38,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -52,7 +53,7 @@ __all__ = (
     "get_connection_reuse_manager",
 )
 
-logger = logging.getLogger("infrastructure.clients.connection_reuse")
+logger = get_logger("infrastructure.clients.connection_reuse")
 
 
 # ---------------------------------------------------------------------------

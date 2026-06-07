@@ -20,9 +20,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from src.backend.dsl.registry.processor import ProcessorSpec, get_processor_regi
 
 __all__ = ("export_processors_schema",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _schema_filename(spec: ProcessorSpec) -> str:

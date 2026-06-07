@@ -14,7 +14,8 @@ Usage::
 """
 
 import io
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from collections.abc import Iterable
 from typing import Any
 
@@ -30,7 +31,7 @@ __all__ = (
     "write_excel",
 )
 
-logger = logging.getLogger("services.dataframe")
+logger = get_logger("services.dataframe")
 
 DataFrame = pl.DataFrame
 

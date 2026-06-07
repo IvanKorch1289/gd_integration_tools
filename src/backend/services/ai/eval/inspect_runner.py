@@ -13,9 +13,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -24,7 +25,7 @@ from typing import Any, Protocol
 
 __all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "EvalSuite")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class EvalSuite(Protocol):

@@ -14,12 +14,13 @@ Capability ``mcp.tool.call`` проверяется здесь на уровне
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("McpAuthMiddleware",)
 

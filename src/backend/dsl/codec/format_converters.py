@@ -21,12 +21,13 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import datetime as _dt
 import importlib
 import io
 import json
-import logging
+
 from typing import Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -46,7 +47,7 @@ __all__ = (
     "TomlDecodeProcessor",
     "TomlEncodeProcessor",
 )
-_logger = logging.getLogger("dsl.format_converters")
+_logger = get_logger("dsl.format_converters")
 
 
 class AvroEncodeProcessor(BaseProcessor):

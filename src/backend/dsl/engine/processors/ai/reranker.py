@@ -12,8 +12,9 @@ Sprint 19 K4 W2: latency budget tracking — model.predict() is timed and stored
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 __all__ = ("RerankerProcessor",)
 
-logger = logging.getLogger("dsl.ai.reranker")
+logger = get_logger("dsl.ai.reranker")
 
 
 class RerankerProcessor(BaseProcessor):

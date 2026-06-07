@@ -14,16 +14,17 @@ DI-friendly, graceful degradation (no-qdrant → in-memory fallback).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 import re
 from pathlib import Path
 from typing import Any
 
 __all__ = ("DocsIndexer", "InMemoryQdrantFallback")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _DEFAULT_ROOTS: tuple[str, ...] = (
     "CLAUDE.md",

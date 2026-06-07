@@ -16,6 +16,7 @@ distributed-pool. Используется DSL-процессором ``DaskComp
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import logging
 import threading
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DaskBackend", "get_dask_backend", "reset_dask_backend")
 
-_logger = logging.getLogger("infrastructure.execution.dask")
+_logger = get_logger("infrastructure.execution.dask")
 
 
 class DaskBackend:

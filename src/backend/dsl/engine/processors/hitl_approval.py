@@ -33,9 +33,10 @@ YAML (blueprint)::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 __all__ = ("HitlApprovalProcessor",)
 
-_logger = logging.getLogger("dsl.hitl_approval")
+_logger = get_logger("dsl.hitl_approval")
 
 
 class HitlApprovalProcessor(BaseProcessor):

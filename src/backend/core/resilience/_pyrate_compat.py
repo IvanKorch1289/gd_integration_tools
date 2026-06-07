@@ -22,9 +22,10 @@ Sprint 1 V16 Single-Entry (Step 3.4):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from pyrate_limiter import InMemoryBucket, Rate
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 __all__ = ("BoundedInMemoryBucket", "shutdown_pyrate_leaker")
 
-_logger = logging.getLogger("resilience.pyrate_compat")
+_logger = get_logger("resilience.pyrate_compat")
 
 
 async def shutdown_pyrate_leaker(limiter: Limiter) -> None:

@@ -14,8 +14,9 @@ Layer policy: entrypoints → core/interfaces (Protocol) + services/sources
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 import orjson
@@ -26,7 +27,7 @@ from src.backend.services.sources import get_source_registry
 
 __all__ = ("sources_router",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 sources_router = APIRouter(prefix="/webhooks/sources", tags=["Webhooks · W23 Sources"])
 

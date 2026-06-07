@@ -24,8 +24,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = ("register_admin",)
 
-_logger = logging.getLogger("services.admin.sqladmin_setup")
+_logger = get_logger("services.admin.sqladmin_setup")
 
 
 def register_admin(

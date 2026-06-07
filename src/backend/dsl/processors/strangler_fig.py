@@ -26,8 +26,9 @@ Components:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import random
 import threading
 from collections.abc import Awaitable, Callable
@@ -53,7 +54,7 @@ __all__ = (
     "reset_strangler_stats",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class RouteTarget(str, Enum):

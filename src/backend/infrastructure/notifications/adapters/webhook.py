@@ -15,18 +15,19 @@ HMAC-подпись (SHA-256) передаётся в заголовке `X-Sign
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
 import hmac
 import ipaddress
-import logging
+
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlparse
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class WebhookAdapter:

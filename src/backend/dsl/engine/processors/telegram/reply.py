@@ -1,8 +1,9 @@
 """TelegramReplyProcessor — ответ на сообщение (reply_to_message_id)."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -15,7 +16,7 @@ from src.backend.dsl.engine.processors.telegram._common import (
 
 __all__ = ("TelegramReplyProcessor",)
 
-_logger = logging.getLogger("dsl.telegram.reply")
+_logger = get_logger("dsl.telegram.reply")
 
 
 class TelegramReplyProcessor(BaseProcessor):

@@ -9,9 +9,10 @@ Hash-кэш безопасен потому, что любой даже мале
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from typing import TYPE_CHECKING
 
 import orjson
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AntivirusHashCache",)
 
-logger = logging.getLogger("infrastructure.antivirus.hash_cache")
+logger = get_logger("infrastructure.antivirus.hash_cache")
 
 _PREFIX = "antivirus:hash:"
 

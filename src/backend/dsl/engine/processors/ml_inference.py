@@ -5,8 +5,9 @@ CPU-only inference через ONNX Runtime. Graceful fallback если onnxrunti
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections import OrderedDict
 from threading import Lock
 from typing import Any, ClassVar
@@ -22,7 +23,7 @@ __all__ = (
     "StreamingLLMProcessor",
 )
 
-logger = logging.getLogger("dsl.ml_inference")
+logger = get_logger("dsl.ml_inference")
 
 
 class OnnxInferenceProcessor(BaseProcessor):

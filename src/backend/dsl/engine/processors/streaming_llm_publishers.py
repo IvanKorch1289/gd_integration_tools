@@ -1,14 +1,15 @@
 """Publisher'ы для :class:`TokenStreamLLMProcessor` (SSE / WS / Webhook)."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 import orjson
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("SSEPublisher", "WSPublisher", "WebhookChunkedPublisher")
 

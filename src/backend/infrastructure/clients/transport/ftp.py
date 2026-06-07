@@ -1,15 +1,16 @@
 """Async FTP/FTPS client — upload, download, list, delete."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import ssl
 from pathlib import PurePosixPath
 from typing import Any
 
 __all__ = ("FTPClient", "get_ftp_client")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FTPClient:

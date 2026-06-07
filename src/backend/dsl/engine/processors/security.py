@@ -12,9 +12,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
@@ -26,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = ("AuthValidateProcessor",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Путь модуля с verifier-реестром. Импортируется через importlib, чтобы
 # не нарушать архитектурную границу dsl→entrypoints (verifier'ы держат

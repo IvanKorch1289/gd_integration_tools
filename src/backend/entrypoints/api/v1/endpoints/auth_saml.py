@@ -13,8 +13,9 @@ Feature-flag: ``feature_flags.saml_sp_initiated_enabled`` (Sprint 9 backbone).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import urllib.parse
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -24,7 +25,7 @@ from src.backend.core.auth.saml import SamlError, SamlSpHandler
 
 __all__ = ("router",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

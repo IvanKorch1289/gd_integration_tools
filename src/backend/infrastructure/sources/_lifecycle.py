@@ -6,11 +6,11 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
 
-logger = logging.getLogger("infrastructure.sources.lifecycle")
+logger = get_logger("infrastructure.sources.lifecycle")
 
 __all__ = ("graceful_cancel",)
 

@@ -15,9 +15,10 @@ Marketing (рассылки, уведомления о новых фичах) �
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Final, Literal
@@ -25,7 +26,7 @@ from typing import Any, Final, Literal
 from src.backend.core.config.pooling import PoolingProfile
 from src.backend.core.utils.task_registry import get_task_registry
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 Priority = Literal["tx", "marketing"]

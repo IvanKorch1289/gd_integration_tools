@@ -13,10 +13,11 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import builtins
 import difflib
-import logging
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("YAMLStore",)
 
-_logger = logging.getLogger("dsl.yaml_store")
+_logger = get_logger("dsl.yaml_store")
 
 
 def _route_to_filename(route_id: str) -> str:

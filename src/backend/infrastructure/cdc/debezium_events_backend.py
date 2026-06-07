@@ -21,9 +21,10 @@ Backend парсит это в `CDCEvent` и поддерживает Kafka offs
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
@@ -33,7 +34,7 @@ from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCOperation, CDCSo
 __all__ = ("DebeziumEventsCDCBackend", "parse_debezium_event")
 
 
-_logger = logging.getLogger("cdc.debezium_events_backend")
+_logger = get_logger("cdc.debezium_events_backend")
 
 
 _DEBEZIUM_OP_MAP: dict[str, CDCOperation] = {

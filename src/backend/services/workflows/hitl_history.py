@@ -6,15 +6,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("HitlHistoryRecord", "HitlHistoryService")
 
-_logger = logging.getLogger("services.workflows.hitl_history")
+_logger = get_logger("services.workflows.hitl_history")
 
 
 _HITL_EVENT_TYPES = frozenset({"hitl.approved", "hitl.rejected", "hitl.requested_info"})

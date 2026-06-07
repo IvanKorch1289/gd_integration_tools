@@ -7,11 +7,12 @@ Thin wrapper который делегирует в `src/infrastructure/clients/
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class EmailAdapter:

@@ -12,9 +12,10 @@ Recipient ``group_chat_id`` берётся из ``response.metadata["express_cha
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
@@ -26,7 +27,7 @@ from src.backend.core.interfaces.invoker import InvocationResponse, InvocationSt
 
 __all__ = ("ExpressNotifier", "ExpressReplyChannel")
 
-logger = logging.getLogger("messaging.invocation_replies.express")
+logger = get_logger("messaging.invocation_replies.express")
 
 
 @runtime_checkable

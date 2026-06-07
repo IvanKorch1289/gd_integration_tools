@@ -9,12 +9,13 @@ Lazy-загрузка ``BGEM3FlagModel`` и ``FlagReranker`` — модели ~2
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("BGEM3EmbeddingProvider", "BGERerankerV2M3", "BGEUnavailable")
 

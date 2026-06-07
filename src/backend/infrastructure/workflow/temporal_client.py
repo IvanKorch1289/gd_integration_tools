@@ -16,9 +16,10 @@ Lazy-import temporalio SDK (~15-20MB) — отсутствие пакета не
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -30,7 +31,7 @@ __all__ = (
     "TemporalWorkerPool",
 )
 
-_logger = logging.getLogger("workflow.temporal_client")
+_logger = get_logger("workflow.temporal_client")
 
 
 @dataclass(slots=True)

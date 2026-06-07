@@ -5,8 +5,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from typing import Any
 
@@ -14,7 +15,7 @@ import orjson
 
 from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("L2SemanticRagCache",)
 

@@ -10,11 +10,12 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import contextlib
 import importlib
 import inspect
-import logging
+
 import pkgutil
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
@@ -30,7 +31,7 @@ __all__ = (
     "service_dsl",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

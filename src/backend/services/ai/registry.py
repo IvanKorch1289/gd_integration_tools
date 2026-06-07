@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AIPluginRegistry", "get_ai_plugin_registry")
 
-_logger = logging.getLogger("services.ai.registry")
+_logger = get_logger("services.ai.registry")
 
 
 class AIPluginRegistry:

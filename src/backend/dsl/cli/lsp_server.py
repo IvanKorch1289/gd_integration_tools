@@ -28,14 +28,15 @@ Feature flags:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from pathlib import Path
 from typing import Any
 
 __all__ = ("create_server", "main")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 def _try_import_pygls() -> Any | None:

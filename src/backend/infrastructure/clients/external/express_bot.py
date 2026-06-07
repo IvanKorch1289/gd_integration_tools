@@ -24,8 +24,9 @@ Payload JWT::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -36,7 +37,7 @@ import jwt
 
 __all__ = ("BotConfig", "BotxButton", "BotxMention", "BotxMessage", "ExpressBotClient")
 
-_logger = logging.getLogger("infrastructure.express_bot")
+_logger = get_logger("infrastructure.express_bot")
 
 
 @dataclass(slots=True)

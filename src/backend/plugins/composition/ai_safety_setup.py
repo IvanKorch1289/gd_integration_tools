@@ -13,8 +13,9 @@ AI-плагины получают:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from typing import TYPE_CHECKING
 
@@ -33,7 +34,7 @@ __all__ = (
     "stop_ai_safety",
 )
 
-_logger = logging.getLogger("ai_safety.setup")
+_logger = get_logger("ai_safety.setup")
 
 
 def _build_workspace_manager() -> AIWorkspaceManager:

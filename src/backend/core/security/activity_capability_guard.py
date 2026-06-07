@@ -37,9 +37,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import functools
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
 
@@ -53,7 +54,7 @@ __all__ = (
     "set_active_capability_context",
 )
 
-_logger = logging.getLogger("core.security.activity_capability_guard")
+_logger = get_logger("core.security.activity_capability_guard")
 
 F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 

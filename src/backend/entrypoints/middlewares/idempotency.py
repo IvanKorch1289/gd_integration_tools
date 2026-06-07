@@ -14,8 +14,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi.responses import JSONResponse
@@ -34,7 +35,7 @@ __all__ = (
 
 IDEMPOTENCY_HEADER = "Idempotency-Key"
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class RedisNxBackend(Backend):

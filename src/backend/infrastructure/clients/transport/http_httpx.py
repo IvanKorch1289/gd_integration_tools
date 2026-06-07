@@ -14,6 +14,7 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import logging
@@ -59,7 +60,7 @@ __all__ = (
     "is_httpx_retries_available",
 )
 
-logger = logging.getLogger("transport.httpx")
+logger = get_logger("transport.httpx")
 
 
 def is_httpx_retries_available() -> bool:

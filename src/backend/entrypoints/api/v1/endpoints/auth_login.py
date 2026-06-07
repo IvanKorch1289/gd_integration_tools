@@ -31,8 +31,9 @@ Errors:
 JWT через :mod:`core.auth.jwt_backend` (уже реализован).
 """
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import Any, Literal
 
@@ -45,7 +46,7 @@ from src.backend.entrypoints.api.v1.dependencies.login_ratelimit import (
 )
 from src.backend.services.auth.ad_directory_client import AdAuthError
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

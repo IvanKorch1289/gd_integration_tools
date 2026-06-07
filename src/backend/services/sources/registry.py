@@ -12,8 +12,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("SinkRegistry", "SourceRegistry", "get_sink_registry", "get_source_registry")
 
-logger = logging.getLogger("services.sources.registry")
+logger = get_logger("services.sources.registry")
 
 
 class SourceRegistry:

@@ -1,8 +1,9 @@
 """ExpressReplyProcessor — ответ на сообщение в Express (reply-thread)."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -16,7 +17,7 @@ from src.backend.dsl.engine.processors.express._common import (
 
 __all__ = ("ExpressReplyProcessor",)
 
-_logger = logging.getLogger("dsl.express.reply")
+_logger = get_logger("dsl.express.reply")
 
 
 class ExpressReplyProcessor(BaseProcessor):

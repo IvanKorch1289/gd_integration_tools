@@ -6,8 +6,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.infrastructure.workflow.temporal_backend import (
@@ -19,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from temporalio.testing import WorkflowEnvironment
 
 __all__ = ("LiteTemporalBackend",)
-_logger = logging.getLogger("workflow.lite_temporal_backend")
+_logger = get_logger("workflow.lite_temporal_backend")
 
 
 class LiteTemporalBackend(TemporalWorkflowBackend):

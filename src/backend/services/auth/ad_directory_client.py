@@ -43,16 +43,17 @@ Feature-flag:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class AdAuthError(Exception):

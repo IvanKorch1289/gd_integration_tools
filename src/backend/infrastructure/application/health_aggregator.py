@@ -24,10 +24,11 @@ aggregator пробросит его через inspect. Клиенты ABC (``I
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-import logging
+
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = ("HealthAggregator", "get_health_aggregator")
 
-logger = logging.getLogger("infra.health")
+logger = get_logger("infra.health")
 
 #: Legacy-сигнатура (backward-compat): функция без аргументов, возвращает dict.
 #: Новая сигнатура может принимать kwarg ``mode`` — aggregator прокинет его

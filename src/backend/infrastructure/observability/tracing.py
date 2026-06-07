@@ -4,8 +4,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -15,7 +16,7 @@ from src.backend.infrastructure.observability.correlation import get_correlation
 
 __all__ = ("TracingMiddleware", "get_tracer")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _tracer = None
 

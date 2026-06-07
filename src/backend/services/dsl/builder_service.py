@@ -10,8 +10,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
 
-_logger = logging.getLogger("services.dsl.builder")
+_logger = get_logger("services.dsl.builder")
 
 _DEV_ENVIRONMENT = "development"
 

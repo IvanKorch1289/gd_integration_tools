@@ -34,8 +34,9 @@ Feature-flag:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
@@ -50,7 +51,7 @@ __all__ = (
     "PolicyDecider",
 )
 
-_logger = logging.getLogger("core.security.authorization_gateway")
+_logger = get_logger("core.security.authorization_gateway")
 
 
 @dataclass(frozen=True, slots=True)

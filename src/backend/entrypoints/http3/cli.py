@@ -6,14 +6,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from pathlib import Path
 
 from src.backend.entrypoints.http3.config import Http3ServerConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("run_from_settings",)
 

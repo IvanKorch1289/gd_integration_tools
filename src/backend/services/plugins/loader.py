@@ -9,8 +9,9 @@ Loader идемпотентен: повторный вызов `discover_and_loa
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import sys
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -42,7 +43,7 @@ __all__ = ("ENTRY_POINT_GROUP", "PluginLoader", "get_plugin_loader")
 
 ENTRY_POINT_GROUP = "gd_integration_tools.plugins"
 
-logger = logging.getLogger("services.plugins.loader")
+logger = get_logger("services.plugins.loader")
 
 
 class PluginLoader:

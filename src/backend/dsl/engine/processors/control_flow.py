@@ -1,5 +1,6 @@
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -9,7 +10,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
-_cf_logger = logging.getLogger("dsl.control_flow")
+_cf_logger = get_logger("dsl.control_flow")
 
 
 async def _emit_saga_audit(

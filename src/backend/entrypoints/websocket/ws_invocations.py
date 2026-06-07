@@ -31,8 +31,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 from uuid import uuid4
 
@@ -42,7 +43,7 @@ from src.backend.core.interfaces.invoker import InvocationMode, InvocationReques
 
 __all__ = ("ws_invocations_router",)
 
-logger = logging.getLogger("entrypoints.websocket.invocations")
+logger = get_logger("entrypoints.websocket.invocations")
 
 ws_invocations_router = APIRouter(tags=["WebSocket · Invocations"])
 

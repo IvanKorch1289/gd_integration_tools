@@ -1,6 +1,7 @@
 import asyncio
 from logging.config import fileConfig
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from alembic import context
 from sqlalchemy import pool
@@ -131,7 +132,7 @@ async def run_async_migrations() -> None:
         if not acquired:
             import logging
 
-            logging.getLogger("alembic").warning(
+            get_logger("alembic").warning(
                 "Could not acquire migration lock — another instance is running migrations"
             )
             return

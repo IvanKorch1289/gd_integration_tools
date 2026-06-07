@@ -37,8 +37,9 @@ Default: :func:`src.backend.services.lineage.get_lineage_emitter` (in-memory sto
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 import uuid
 from collections.abc import Callable
@@ -63,7 +64,7 @@ __all__ = (
     "LineageNodeType",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class LineageNodeType(str, Enum):

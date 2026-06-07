@@ -17,8 +17,9 @@ API:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal
@@ -26,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 __all__ = ("CostEstimate", "LLMCostBreakdown", "WorkflowCostEstimator")
 
-_logger = logging.getLogger("services.workflows.cost_estimator")
+_logger = get_logger("services.workflows.cost_estimator")
 
 
 if TYPE_CHECKING:  # pragma: no cover

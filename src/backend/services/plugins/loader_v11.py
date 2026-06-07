@@ -12,9 +12,10 @@ V11.1 фиксирует: плагины поставляются ТОЛЬКО i
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -47,7 +48,7 @@ from src.backend.services.plugins.manifest_v11 import (
 
 __all__ = ("LoadedPluginV11", "PluginInventoryConflictError", "PluginLoaderV11")
 
-_logger = logging.getLogger("services.plugins.loader_v11")
+_logger = get_logger("services.plugins.loader_v11")
 
 
 class PluginInventoryConflictError(RuntimeError):

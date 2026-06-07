@@ -35,8 +35,9 @@ ClickHouse с lazy-импортом клиента и default-OFF через fea
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import uuid
 from dataclasses import dataclass
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AuditEvent", "ClickHouseAuditService", "get_audit_service")
 
-_logger = logging.getLogger("services.audit.clickhouse")
+_logger = get_logger("services.audit.clickhouse")
 
 
 @dataclass(frozen=True, slots=True)

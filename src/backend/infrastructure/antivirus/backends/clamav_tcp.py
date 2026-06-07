@@ -5,9 +5,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import struct
 import time
 
@@ -18,7 +19,7 @@ from src.backend.infrastructure.antivirus.backends.clamav_unix import (
 
 __all__ = ("ClamAVTcpBackend",)
 
-logger = logging.getLogger("infrastructure.antivirus.clamav_tcp")
+logger = get_logger("infrastructure.antivirus.clamav_tcp")
 
 _CHUNK_SIZE = 64 * 1024
 

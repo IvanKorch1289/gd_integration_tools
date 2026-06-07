@@ -23,9 +23,10 @@ Wave: ``[wave:s8/k2-w2-outbox-dispatcher-impl]``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
@@ -39,7 +40,7 @@ from src.backend.core.utils.task_registry import TaskRegistry, get_task_registry
 
 __all__ = ("DLQHandler", "OutboxDispatcher")
 
-_logger = logging.getLogger("infrastructure.messaging.outbox")
+_logger = get_logger("infrastructure.messaging.outbox")
 
 #: Тип callable для pull-источника pending событий. Принимает ``batch_size``,
 #: возвращает упорядоченную последовательность ``OutboxEvent`` со статусом

@@ -17,8 +17,9 @@ control: capability denied → исключение, попытка фиксир
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
 
 __all__ = ("WorkflowFacade",)
 
-_logger = logging.getLogger("services.workflows.facade")
+_logger = get_logger("services.workflows.facade")
 
 
 class WorkflowFacade:

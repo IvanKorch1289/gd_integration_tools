@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any, Literal, TypeVar
 
 import orjson
@@ -38,7 +39,7 @@ __all__ = (
     "KycAmlVerifyProcessor",
     "TransactionCategorizerProcessor",
 )
-_logger = logging.getLogger("dsl.engine.processors.ai_banking")
+_logger = get_logger("dsl.engine.processors.ai_banking")
 _T = TypeVar("_T", bound=BaseModel)
 
 

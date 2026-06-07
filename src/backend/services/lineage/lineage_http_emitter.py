@@ -25,8 +25,9 @@ Resilience:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import urllib.error
 import urllib.request
@@ -41,7 +42,7 @@ from src.backend.services.lineage.lineage_emitter import (
 
 __all__ = ("OpenLineageHttpEmitter", "OpenLineageHttpConfig")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class OpenLineageHttpConfig:

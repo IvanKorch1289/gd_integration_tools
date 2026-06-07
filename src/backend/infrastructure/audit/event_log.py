@@ -1,9 +1,10 @@
 """Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -23,7 +24,7 @@ _LOG_INDEXER_MOD = "src." + "backend.services.io.indexers.log_indexer"
 
 __all__ = ("AuditEvent", "AuditEventLog", "emit_audit_event", "get_audit_log")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

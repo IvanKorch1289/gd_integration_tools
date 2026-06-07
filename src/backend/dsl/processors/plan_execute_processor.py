@@ -16,8 +16,9 @@ Workflow::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = ("PlanExecuteMixin", "PlanExecuteProcessor", "PlanResult", "PlanStep")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 PlannerFn = Callable[[str], Awaitable[list["PlanStep"]]]
 ExecutorFn = Callable[["PlanStep"], Awaitable[Any]]

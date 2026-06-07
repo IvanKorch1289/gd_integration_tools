@@ -27,9 +27,10 @@ Thread-safe: lock для current_index (по exchange не нужен — каж
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import threading
 from collections.abc import Callable
 from typing import Any, Protocol
@@ -40,7 +41,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 __all__ = ("ProcessorRegistry", "RoutingSlipProcessor", "SimpleRegistry")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class ProcessorRegistry(Protocol):

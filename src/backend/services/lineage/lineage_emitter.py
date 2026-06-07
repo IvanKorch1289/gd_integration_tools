@@ -14,8 +14,9 @@ Usage::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 from collections.abc import Callable
 from typing import Any, Protocol
@@ -27,7 +28,7 @@ __all__ = (
     "set_lineage_emitter",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class LineageEmitterProtocol(Protocol):

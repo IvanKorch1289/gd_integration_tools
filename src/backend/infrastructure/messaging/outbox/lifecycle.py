@@ -19,8 +19,9 @@ Wave: ``[wave:s8/k2-w2-outbox-lifecycle]``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.services.outbox import outbox_settings
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 __all__ = ("start_outbox_dispatcher", "stop_outbox_dispatcher")
 
-_logger = logging.getLogger("infrastructure.messaging.outbox.lifecycle")
+_logger = get_logger("infrastructure.messaging.outbox.lifecycle")
 
 _STATE_KEY = "outbox_dispatcher"
 

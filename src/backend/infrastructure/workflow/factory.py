@@ -15,8 +15,9 @@ Factory сознательно использует lazy-import конкретн
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Literal
 
 from src.backend.core.workflow.backend import WorkflowBackend
@@ -25,7 +26,7 @@ from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
 __all__ = ("BackendKind", "create_workflow_backend")
 
 
-_logger = logging.getLogger("workflow.factory")
+_logger = get_logger("workflow.factory")
 
 
 BackendKind = Literal["temporal", "pg_runner", "fake", "auto"]

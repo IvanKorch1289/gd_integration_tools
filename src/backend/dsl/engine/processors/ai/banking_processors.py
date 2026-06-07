@@ -16,8 +16,9 @@ Feature flag: ``feature_flags.banking_ai_processors_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field
@@ -40,7 +41,7 @@ __all__ = (
 )
 
 
-_logger = logging.getLogger("dsl.processors.ai.banking")
+_logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
 

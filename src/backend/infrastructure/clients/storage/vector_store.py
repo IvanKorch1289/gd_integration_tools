@@ -5,8 +5,9 @@ ABC ``BaseVectorStore`` вынесен в ``core/interfaces/vector_store.py``
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
@@ -19,7 +20,7 @@ __all__ = (
     "get_vector_store",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QdrantVectorStore(BaseVectorStore):

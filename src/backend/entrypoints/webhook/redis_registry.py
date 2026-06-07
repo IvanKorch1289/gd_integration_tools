@@ -5,8 +5,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
@@ -19,7 +20,7 @@ from src.backend.core.di.providers import (
 
 __all__ = ("RedisWebhookRegistry", "WebhookSubscription", "redis_webhook_registry")
 
-logger = logging.getLogger("entrypoints.webhook.redis_registry")
+logger = get_logger("entrypoints.webhook.redis_registry")
 
 
 @dataclass

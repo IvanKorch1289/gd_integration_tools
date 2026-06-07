@@ -27,13 +27,14 @@ Usage в settings classes::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("AwsSecretsManagerSource", "VaultSettingsSource")
 
-logger = logging.getLogger("core.secrets")
+logger = get_logger("core.secrets")
 
 
 class VaultSettingsSource:

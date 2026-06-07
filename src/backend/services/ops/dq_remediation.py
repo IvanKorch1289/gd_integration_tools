@@ -32,8 +32,9 @@ Design:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -50,7 +51,7 @@ __all__ = (
     "build_remediator",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class Remediator(ABC):

@@ -25,9 +25,10 @@ V15 R-V15-10 — auto-scaling 3 уровня (этот модуль — task-lev
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
@@ -41,7 +42,7 @@ __all__ = (
     "get_streaming_controller",
 )
 
-logger = logging.getLogger("core.resilience.backpressure")
+logger = get_logger("core.resilience.backpressure")
 
 
 # ---------------------------------------------------------------------------

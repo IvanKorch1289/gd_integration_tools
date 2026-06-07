@@ -26,15 +26,16 @@ HyDE-алгоритм:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
 __all__ = ("HyDEConfig", "HyDEResult", "HyDERetriever")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Максимальная длина гипотетического документа в токенах.
 DEFAULT_MAX_TOKENS_HYPOTHETICAL = 256

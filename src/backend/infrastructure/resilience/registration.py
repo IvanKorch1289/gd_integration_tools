@@ -11,8 +11,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any, Final
 
 from src.backend.core.config.services.resilience import ResilienceSettings
@@ -20,7 +21,7 @@ from src.backend.infrastructure.resilience.coordinator import ResilienceCoordina
 
 __all__ = ("RESILIENCE_COMPONENTS", "register_all_components")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 #: Канонический список 11 компонентов W26. Совпадает с ключами

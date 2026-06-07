@@ -16,9 +16,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DaskComputeProcessor",)
 
-_logger = logging.getLogger("dsl.dask")
+_logger = get_logger("dsl.dask")
 
 
 def _resolve_callable(dotted: str) -> Callable[..., Any]:

@@ -10,8 +10,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -19,7 +20,7 @@ import orjson
 
 __all__ = ("RedisCursor", "RedisHash", "RedisPubSub", "RedisSet")
 
-logger = logging.getLogger("core.redis_coordinator")
+logger = get_logger("core.redis_coordinator")
 
 
 def _get_raw_redis() -> Any:

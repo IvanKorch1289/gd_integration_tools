@@ -20,9 +20,10 @@ Pydantic-``RetryPolicy`` для durable workflow-шагов (с ``compensate``).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import functools
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import ParamSpec, TypeVar
@@ -42,7 +43,7 @@ from src.backend.core.resilience.retry_budget import RetryBudget, RetryBudgetExh
 
 __all__ = ("Retry", "RetryBudgetExhausted", "RetryPolicy", "with_retry")
 
-logger = logging.getLogger("resilience.retry")
+logger = get_logger("resilience.retry")
 
 P = ParamSpec("P")
 R = TypeVar("R")

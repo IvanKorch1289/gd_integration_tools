@@ -14,8 +14,9 @@ per-process. Подключение Redis pub/sub channel ``feature-flags:toggle
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -29,7 +30,7 @@ from src.backend.services.audit import get_unified_audit_service
 
 __all__ = ("router",)
 
-_logger = logging.getLogger("entrypoints.api.v1.admin.feature_flags")
+_logger = get_logger("entrypoints.api.v1.admin.feature_flags")
 
 router = APIRouter()
 

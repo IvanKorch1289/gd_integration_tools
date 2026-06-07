@@ -9,9 +9,10 @@ fts5). Стриминг-индексирование документов — о
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import sqlite3
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -19,7 +20,7 @@ from typing import Any
 
 __all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SearchCallable = Callable[..., Awaitable[list[dict[str, Any]]]]
 

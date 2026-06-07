@@ -37,8 +37,9 @@ Audit-event
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import re
 import uuid
 from dataclasses import dataclass
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 __all__ = ("EncryptedValue", "PIIPolicy", "PIITokenizer", "TokenMap")
 
-_logger = logging.getLogger("core.security.pii_tokenizer")
+_logger = get_logger("core.security.pii_tokenizer")
 
 # Presidio выдаёт placeholders формата ``[PERSON_1]`` / ``[INN_3]``;
 # extract TYPE для перезаписи в UUIDv7-token ``<PERSON_a8f3>``.

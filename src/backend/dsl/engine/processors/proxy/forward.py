@@ -10,8 +10,9 @@ Wave 3.5. Полагается на уже существующие клиент
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -22,7 +23,7 @@ from src.backend.dsl.engine.processors.proxy.headers import HeaderMapPolicy
 
 __all__ = ("ForwardToProcessor", "ProxyOutboundSpec")
 
-_logger = logging.getLogger("dsl.proxy.forward")
+_logger = get_logger("dsl.proxy.forward")
 
 
 @dataclass(slots=True)

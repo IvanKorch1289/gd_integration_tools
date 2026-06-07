@@ -11,10 +11,11 @@ correlation ID → return reply. Return address = ``reply:<cid>``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
-import logging
+
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, runtime_checkable
@@ -29,7 +30,7 @@ __all__ = (
     "RequestReplyTransport",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 REPLY_CHANNEL_PREFIX: str = "reply:"
 DEFAULT_TIMEOUT_S: float = 30.0

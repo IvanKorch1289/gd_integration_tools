@@ -9,8 +9,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -22,7 +23,7 @@ from src.backend.infrastructure.database.session_manager import main_session_man
 
 __all__ = ("PipelineSnapshot", "PipelineVersionManager", "get_pipeline_version_manager")
 
-logger = logging.getLogger("dsl.versioning")
+logger = get_logger("dsl.versioning")
 
 
 @dataclass(slots=True)

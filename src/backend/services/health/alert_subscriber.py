@@ -7,12 +7,13 @@
 ``HealthAlertSubscriber.start()``.
 """
 
-import logging
+
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("HealthAlertSubscriber",)
 
-logger = logging.getLogger("services.health.alert")
+logger = get_logger("services.health.alert")
 
 
 class HealthAlertSubscriber:

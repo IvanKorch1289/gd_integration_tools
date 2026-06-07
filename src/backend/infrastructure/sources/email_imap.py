@@ -21,11 +21,12 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import email
 import email.policy
-import logging
+
 import ssl
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
@@ -37,7 +38,7 @@ __all__ = ("EmailIMAPSource", "EmailMessage")
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger("infrastructure.sources.email_imap")
+logger = get_logger("infrastructure.sources.email_imap")
 
 
 @dataclass(slots=True)

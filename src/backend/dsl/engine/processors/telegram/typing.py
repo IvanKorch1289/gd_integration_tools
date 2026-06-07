@@ -1,8 +1,9 @@
 """TelegramTypingProcessor — индикатор chat-action в Telegram."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -15,7 +16,7 @@ from src.backend.dsl.engine.processors.telegram._common import (
 
 __all__ = ("TelegramTypingProcessor",)
 
-_logger = logging.getLogger("dsl.telegram.typing")
+_logger = get_logger("dsl.telegram.typing")
 
 # Допустимые actions Telegram Bot API.
 _VALID_ACTIONS = frozenset(

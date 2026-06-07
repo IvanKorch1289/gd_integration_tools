@@ -26,9 +26,10 @@ time resolve, поэтому performance-cost ничтожен.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps
 from typing import Any, Literal
@@ -37,7 +38,7 @@ from src.backend.core.utils.cache_keys import build_cache_key
 
 __all__ = ("cached", "invalidate", "multi_cached")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 Backend = Literal["redis", "memory", "disk", "multi"]

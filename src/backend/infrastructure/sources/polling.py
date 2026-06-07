@@ -8,10 +8,11 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -24,7 +25,7 @@ from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("PollingSource",)
 
-logger = logging.getLogger("infrastructure.sources.polling")
+logger = get_logger("infrastructure.sources.polling")
 
 
 class PollingSource:

@@ -11,9 +11,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -28,7 +29,7 @@ __all__ = (
     "evaluate_sla",
 )
 
-_logger = logging.getLogger("workflow.sla_alerting")
+_logger = get_logger("workflow.sla_alerting")
 
 
 class SlaBreachLevel(StrEnum):

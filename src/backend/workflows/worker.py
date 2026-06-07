@@ -36,6 +36,7 @@ lifecycle без реальных spec'ов).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import logging
@@ -51,7 +52,7 @@ import typer
 
 __all__ = ("app", "NoOpStepExecutor", "main", "build_spec_loader")
 
-_logger = logging.getLogger("workflow.worker")
+_logger = get_logger("workflow.worker")
 
 app = typer.Typer(
     name="workflow-worker",

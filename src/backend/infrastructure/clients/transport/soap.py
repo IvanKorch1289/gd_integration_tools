@@ -8,7 +8,8 @@
 """
 
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 import warnings
 from typing import Any
 
@@ -27,7 +28,7 @@ warnings.warn(
     stacklevel=2,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SoapClient:

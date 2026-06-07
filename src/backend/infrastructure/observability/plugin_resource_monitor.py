@@ -33,9 +33,10 @@ feature_flag: ``plugin_resource_monitor_enabled`` (default-OFF до
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import tracemalloc
 from collections import defaultdict
 from collections.abc import Iterable
@@ -46,7 +47,7 @@ from src.backend.infrastructure.observability.metrics_registry import metrics_re
 
 __all__ = ("PluginResourceMetrics", "PluginResourceMonitor")
 
-_logger = logging.getLogger("infrastructure.observability.plugin_resource_monitor")
+_logger = get_logger("infrastructure.observability.plugin_resource_monitor")
 
 # ── Prometheus метрики (через MetricsRegistry, idempotent) ──────────
 

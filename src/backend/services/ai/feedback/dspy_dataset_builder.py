@@ -6,14 +6,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("DSPyDatasetBuilder", "DSPyExampleRecord")
 
-logger = logging.getLogger("services.ai.feedback.dspy_dataset")
+logger = get_logger("services.ai.feedback.dspy_dataset")
 
 
 @dataclass(frozen=True, slots=True)

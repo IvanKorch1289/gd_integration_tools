@@ -23,8 +23,9 @@ Colang flows (banking topics + jailbreak detection) live in
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -38,7 +39,7 @@ __all__ = (
     "has_gpu",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NeMoGuardrailsUnavailable(RuntimeError):

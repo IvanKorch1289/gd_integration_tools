@@ -15,9 +15,10 @@ Redis). См. :func:`get_default_bulkhead`.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -34,7 +35,7 @@ __all__ = (
     "get_default_bulkhead",
 )
 
-logger = logging.getLogger("resilience.bulkhead")
+logger = get_logger("resilience.bulkhead")
 
 
 class BulkheadExhausted(Exception):

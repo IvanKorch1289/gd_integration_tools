@@ -13,8 +13,9 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from typing import Any
 
@@ -24,7 +25,7 @@ from src.backend.core.net import OutboundHttpClient
 
 __all__ = ("ClaudeProvider", "GeminiProvider", "OllamaProvider", "OpenAIProvider")
 
-logger = logging.getLogger("services.ai_providers")
+logger = get_logger("services.ai_providers")
 
 
 class ClaudeProvider:

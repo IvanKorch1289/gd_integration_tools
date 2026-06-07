@@ -21,8 +21,9 @@ workflow) и эмитит соответствующий ``temporalio.workflow.*
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from datetime import UTC, timedelta
 from typing import Any
@@ -54,7 +55,7 @@ __all__ = (
 )
 
 
-_logger = logging.getLogger("workflow.compiler.step_compilers")
+_logger = get_logger("workflow.compiler.step_compilers")
 
 # Сигнатура компилятора шага: декларация + рантайм-контекст → coroutine.
 # ``ctx`` — словарь в котором workflow держит output_key значения,

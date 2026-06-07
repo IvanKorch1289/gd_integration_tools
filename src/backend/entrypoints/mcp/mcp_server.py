@@ -13,8 +13,9 @@
 - System tools: health check, metrics, feature flags
 """
 
-import logging
+
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 import orjson
 
@@ -22,7 +23,7 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 
 __all__ = ("create_mcp_server", "register_mcp_tools")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_mcp_server() -> Any:

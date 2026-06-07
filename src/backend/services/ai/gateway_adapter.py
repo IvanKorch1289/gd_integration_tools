@@ -39,8 +39,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai import AIGateway, AIRequest
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 __all__ = ("AIGatewayAdapter", "invoke_via_gateway")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def invoke_via_gateway(

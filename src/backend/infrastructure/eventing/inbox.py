@@ -16,13 +16,14 @@ Sprint 8 K2 W4 — добавлен ``fail_mode`` параметр:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Literal
 
 __all__ = ("Inbox", "InboxFailMode", "InboxUnavailableError")
 
-logger = logging.getLogger("eventing.inbox")
+logger = get_logger("eventing.inbox")
 
 InboxFailMode = Literal["open", "closed"]
 

@@ -18,8 +18,9 @@ Lazy-resolve dependencies: ``AgentMemoryService`` и ``LangMemService``
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from collections.abc import Mapping
 from typing import Any
@@ -33,7 +34,7 @@ from src.backend.core.interfaces.agent_memory import (
 
 __all__ = ("UnifiedMemoryGateway", "get_memory_gateway")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _scope(tenant_id: str, session_id: str) -> str:

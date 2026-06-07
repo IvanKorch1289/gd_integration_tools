@@ -14,9 +14,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -24,7 +25,7 @@ from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
 __all__ = ("SemanticCache", "TierRouter")
 
-logger = logging.getLogger("ai.semantic_cache")
+logger = get_logger("ai.semantic_cache")
 
 
 # ---------------------------------------------------------------------------

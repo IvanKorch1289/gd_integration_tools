@@ -20,16 +20,17 @@ fake), который инжектируется в конструктор. Ко
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from typing import Any
 
 from src.backend.core.utils.pybreaker_adapter import BreakerState
 
 __all__ = ("RedisBreakerStateStorage",)
 
-_logger = logging.getLogger("infrastructure.resilience.redis_breaker_storage")
+_logger = get_logger("infrastructure.resilience.redis_breaker_storage")
 
 _KEY_TEMPLATE = "cb:state:{name}"
 

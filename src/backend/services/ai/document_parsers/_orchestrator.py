@@ -23,9 +23,10 @@ Wave 8.2 + Sprint S5: ``parse_document(content, mime)`` — единая точ�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 from src.backend.core.config.ai import markitdown_settings
@@ -38,7 +39,7 @@ from src.backend.services.ai.document_parsers._sniffer import sniff_mime
 
 __all__ = ("SUPPORTED_MIME_TYPES", "parse_document")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 SUPPORTED_MIME_TYPES: frozenset[str] = frozenset(

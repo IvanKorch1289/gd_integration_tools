@@ -5,8 +5,9 @@ verdict branch) → full coverage. Per Beam.ai [^240^] / Tricentis [^241^].
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 __all__ = ("ReflectionLoopMixin", "ReflectionLoopProcessor", "ReflectionResult")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 GeneratorFn = Callable[[str], Awaitable[Any]]
 CriticFn = Callable[[Any], Awaitable[tuple[str, float]]]

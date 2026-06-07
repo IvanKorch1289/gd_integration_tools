@@ -6,14 +6,15 @@ Lazy-import transformers/BLIP2 — heavy ML stack (~5GB веса) включае
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("BLIP2Captioner", "CaptionResult")
 
-logger = logging.getLogger("services.ai.rag.multimodal.blip2")
+logger = get_logger("services.ai.rag.multimodal.blip2")
 
 
 @dataclass(frozen=True, slots=True)

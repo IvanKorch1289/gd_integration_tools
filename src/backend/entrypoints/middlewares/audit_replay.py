@@ -12,8 +12,9 @@ Replay UI: Streamlit page (планируется).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import Any
 
@@ -23,7 +24,7 @@ from starlette.responses import Response
 
 __all__ = ("AuditReplayMiddleware",)
 
-logger = logging.getLogger("infra.audit_replay")
+logger = get_logger("infra.audit_replay")
 
 _STREAM_NAME = "audit:requests"
 _MAX_BODY_SIZE = 8192  # truncate bodies > 8KB

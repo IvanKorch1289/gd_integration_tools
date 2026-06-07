@@ -7,8 +7,9 @@ redis-py реализует SET NX EX + token verification + auto-extend чер�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 __all__ = ("RedisLock", "acquire_lock", "distributed_lock")
 
-logger = logging.getLogger("core.redis_lock")
+logger = get_logger("core.redis_lock")
 
 
 class RedisLock:

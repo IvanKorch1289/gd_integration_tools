@@ -11,8 +11,9 @@ Sprint 1 V16 Single-Entry: модуль вынесен из ``core/resilience.py
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections import deque
 from collections.abc import Callable
@@ -30,7 +31,7 @@ __all__ = (
     "mode_at_least",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DegradationMode(Enum):

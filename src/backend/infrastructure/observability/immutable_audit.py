@@ -45,10 +45,11 @@ HMAC-секрет хранится в ``settings.secure.audit_secret_key`` (env
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
 import hmac
-import logging
+
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -64,7 +65,7 @@ if TYPE_CHECKING:
 __all__ = ("AuditIntegrityError", "ImmutableAuditStore", "VerifyResult")
 
 
-logger = logging.getLogger("observability.immutable_audit")
+logger = get_logger("observability.immutable_audit")
 
 _TABLE = "audit_log_immutable"
 _GENESIS_HASH = "0" * 64  # prev_hash для первого события цепи

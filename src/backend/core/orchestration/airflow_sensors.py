@@ -13,9 +13,10 @@ backoff до match или deadline. На match → SensorTrigger.on_match_action
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import os
 import time
 from typing import Any
@@ -40,7 +41,7 @@ __all__ = (
     "SqlSensor",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── FileSensor ──────────────────────────────────────────────────────

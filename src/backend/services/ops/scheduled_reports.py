@@ -7,8 +7,9 @@ Actions: reports.schedule, reports.list, reports.run_now, reports.history
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -18,7 +19,7 @@ from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("ReportSchedule", "ScheduledReportsService", "get_reports_service")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

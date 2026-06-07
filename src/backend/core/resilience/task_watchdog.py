@@ -23,15 +23,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from dataclasses import dataclass, field
 
 __all__ = ("TaskWatchdog", "get_task_watchdog")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 # Период между итерациями tick() в секундах.
 DEFAULT_TICK_INTERVAL: float = 5.0

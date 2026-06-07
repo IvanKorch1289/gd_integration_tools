@@ -47,9 +47,10 @@ Use-case::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -58,7 +59,7 @@ from typing import Any, Final
 
 __all__ = ("DegradationFeature", "FeatureState", "GracefulDegradationRegistry")
 
-_logger = logging.getLogger("core.resilience.graceful_degradation")
+_logger = get_logger("core.resilience.graceful_degradation")
 
 # Размер sliding-window для расчёта error rate (см. record_outcome).
 _DEFAULT_WINDOW_SIZE: Final[int] = 100

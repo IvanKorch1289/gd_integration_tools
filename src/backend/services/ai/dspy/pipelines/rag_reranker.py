@@ -18,16 +18,17 @@ Block 3.1 (gap-ai-3.1) реализация:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 import math
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("rag_reranker_pipeline",)
 
-logger = logging.getLogger("services.ai.dspy.rag_reranker")
+logger = get_logger("services.ai.dspy.rag_reranker")
 
 _reranker_cache: Any = None
 _reranker_unavailable: bool = False

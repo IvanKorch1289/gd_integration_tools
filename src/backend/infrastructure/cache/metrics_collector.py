@@ -5,15 +5,16 @@ for the admin API endpoint.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.infrastructure.cache.rag.metrics import (
     get_metrics_snapshot as get_rag_metrics_snapshot,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("get_cache_metrics_snapshot",)
 

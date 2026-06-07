@@ -32,8 +32,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -47,7 +48,7 @@ if TYPE_CHECKING:
 
 __all__ = ("PluginSandboxAdapter", "PluginSandboxError", "ResourceLimitsExceeded")
 
-_logger = logging.getLogger("core.plugin_runtime.sandbox")
+_logger = get_logger("core.plugin_runtime.sandbox")
 
 CapabilityChecker = "Callable[[str, str, str | None], None]"
 

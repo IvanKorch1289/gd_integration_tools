@@ -19,9 +19,10 @@ side-effects, asynchronous post-processing).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 from src.backend.core.interfaces.action_dispatcher import (
@@ -36,7 +37,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 __all__ = ("InvokeAsyncProcessor",)
 
 
-_logger = logging.getLogger("dsl.invoke_async")
+_logger = get_logger("dsl.invoke_async")
 
 
 class InvokeAsyncProcessor(BaseProcessor):

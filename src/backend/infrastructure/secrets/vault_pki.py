@@ -15,8 +15,9 @@ production-mTLS workers с автоматическим cert rotation.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import time
 from dataclasses import dataclass
@@ -25,7 +26,7 @@ from typing import Any
 
 __all__ = ("CertificateBundle", "VaultPkiClient")
 
-_logger = logging.getLogger("infrastructure.secrets.vault_pki")
+_logger = get_logger("infrastructure.secrets.vault_pki")
 
 
 @dataclass(frozen=True, slots=True)

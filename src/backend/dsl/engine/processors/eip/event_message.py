@@ -35,8 +35,9 @@ custom ID strategy (e.g., ULID, snowflake). Lock для counters.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import time
 import uuid
@@ -50,7 +51,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 __all__ = ("EventMessageEnvelope", "EventMessageProcessor")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # Header constants — стандартные имена (CloudEvents-like).

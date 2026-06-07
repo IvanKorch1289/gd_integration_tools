@@ -6,8 +6,9 @@ Postgres остаётся source-of-truth; ES — secondary search index для
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 __all__ = ("OrderIndexer", "get_order_indexer")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _ORDERS_INDEX = "orders"
 

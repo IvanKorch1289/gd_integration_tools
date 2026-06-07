@@ -1,9 +1,10 @@
 """RAG Service — Retrieval-Augmented Generation."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -52,7 +53,7 @@ class RAGCitation:
     namespace: str | None
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RAGService:

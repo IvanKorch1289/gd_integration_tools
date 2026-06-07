@@ -15,8 +15,9 @@ actions: ``<entity>.create``, ``<entity>.get``, ``<entity>.update``,
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -33,7 +34,7 @@ __all__ = (
     "EntityUpdateProcessor",
 )
 
-_logger = logging.getLogger("dsl.entity")
+_logger = get_logger("dsl.entity")
 
 
 def _walk(node: Any, parts: list[str]) -> Any:

@@ -34,17 +34,18 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
 
 __all__ = ("HeartbeatCallback", "LongRunningSecretRotator", "SecretBackendLike")
 
-_logger = logging.getLogger("infrastructure.secrets.long_running_rotation")
+_logger = get_logger("infrastructure.secrets.long_running_rotation")
 
 HeartbeatCallback = Callable[..., Any]
 """Callable-сигнатура heartbeat'а Temporal.activity (sync или async)."""

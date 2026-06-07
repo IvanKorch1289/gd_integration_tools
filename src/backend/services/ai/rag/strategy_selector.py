@@ -9,16 +9,17 @@ graceful fallback на ``dense`` (default).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 __all__ = ("STRATEGIES", "AdaptiveStrategySelector", "StrategyDecision")
 
-logger = logging.getLogger("services.ai.rag.strategy_selector")
+logger = get_logger("services.ai.rag.strategy_selector")
 
 # Поддерживаемые стратегии — должны совпадать с RagQueryProcessor _RAG_STRATEGIES.
 STRATEGIES: tuple[str, ...] = ("dense", "hybrid", "hyde", "multi_query")

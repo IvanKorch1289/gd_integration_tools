@@ -15,9 +15,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any, Awaitable, Callable
 
 import uvicorn
@@ -37,7 +38,7 @@ __all__ = (
     "WORKER_UP",
 )
 
-_logger = logging.getLogger("workflow.worker.probes")
+_logger = get_logger("workflow.worker.probes")
 
 
 WORKER_ACTIVE_EXECUTIONS = metrics_registry.gauge(

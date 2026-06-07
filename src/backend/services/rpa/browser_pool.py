@@ -16,9 +16,10 @@ Threading:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
 
 __all__ = ("PlaywrightBrowserPool",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass

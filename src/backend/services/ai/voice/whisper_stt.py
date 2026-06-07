@@ -15,16 +15,17 @@ Capabilities (V11.1):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 __all__ = ("STTResult", "VoiceServiceUnavailable", "WhisperSTTService")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class VoiceServiceUnavailable(RuntimeError):

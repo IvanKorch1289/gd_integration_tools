@@ -30,9 +30,10 @@ Python контракт через :meth:`AgentDSLMixin.reflection_loop`::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
@@ -44,7 +45,7 @@ if TYPE_CHECKING:
 
 __all__ = ("ReflectionLoopProcessor",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class ReflectionLoopProcessor(BaseAIProcessor):

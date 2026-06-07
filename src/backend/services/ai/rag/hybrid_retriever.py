@@ -20,15 +20,16 @@ Use case:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("HybridRetriever", "rrf_merge")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

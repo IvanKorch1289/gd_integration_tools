@@ -11,10 +11,11 @@ Lazy-import тяжёлых библиотек (torch, sklearn, catboost, lightgb
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import json
-import logging
+
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
 
 __all__ = ("LocalFSModelRegistry",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class LocalFSModelRegistry(ModelRegistryAdapter):

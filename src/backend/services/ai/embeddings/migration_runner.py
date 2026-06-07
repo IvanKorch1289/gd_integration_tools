@@ -6,15 +6,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("EmbeddingMigrationRunner", "MigrationProgress")
 
-logger = logging.getLogger("services.ai.embeddings.migration")
+logger = get_logger("services.ai.embeddings.migration")
 
 
 @dataclass(slots=True)

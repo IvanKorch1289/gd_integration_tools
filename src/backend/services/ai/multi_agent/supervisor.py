@@ -32,8 +32,9 @@ Lazy-import:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -45,7 +46,7 @@ __all__ = (
     "get_credit_pipeline_supervisor",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MultiAgentSupervisorUnavailable(RuntimeError):

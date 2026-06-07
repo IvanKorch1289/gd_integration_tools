@@ -15,14 +15,15 @@ images, mention @user). Интеграция провайдер-специфич
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from typing import Any
 
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class TeamsAdapter:

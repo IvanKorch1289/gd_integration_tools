@@ -1,8 +1,9 @@
 """Pre-registered breakers для всех внешних I/O клиентов (поверх фасада)."""
 
-import logging
+
 from functools import lru_cache
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.constants import consts
 from src.backend.core.resilience.breaker import (
@@ -13,7 +14,7 @@ from src.backend.core.resilience.breaker import (
 
 __all__ = ("CircuitBreakerRegistry", "breaker_registry", "get_circuit_breaker_registry")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class CircuitBreakerRegistry:

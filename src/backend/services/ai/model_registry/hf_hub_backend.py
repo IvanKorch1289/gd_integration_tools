@@ -10,9 +10,10 @@ Hugging Face Hub не имеет понятия stage (Production/Staging) — �
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 from src.backend.services.ai.model_registry.adapter import (
@@ -22,7 +23,7 @@ from src.backend.services.ai.model_registry.adapter import (
 
 __all__ = ("HuggingFaceModelRegistry",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class HuggingFaceModelRegistry(ModelRegistryAdapter):

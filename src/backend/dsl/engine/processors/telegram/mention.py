@@ -11,8 +11,9 @@ Telegram не имеет отдельного поля ``mentions`` в API: уп
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -22,7 +23,7 @@ from src.backend.dsl.engine.processors.telegram._common import resolve_value
 
 __all__ = ("TelegramMentionProcessor",)
 
-_logger = logging.getLogger("dsl.telegram.mention")
+_logger = get_logger("dsl.telegram.mention")
 
 
 class TelegramMentionProcessor(BaseProcessor):

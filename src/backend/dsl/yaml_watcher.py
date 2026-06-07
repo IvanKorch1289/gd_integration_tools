@@ -19,10 +19,11 @@ ADR-041 ``fs-watcher-unification``).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
-import logging
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DSLYamlWatcher", "PipelineLoader")
 
-logger = logging.getLogger("dsl.yaml_watcher")
+logger = get_logger("dsl.yaml_watcher")
 
 PipelineLoader = Callable[[Path], "Pipeline"]
 """Функция загрузки YAML-файла в Pipeline. Default: load_pipeline_from_file."""

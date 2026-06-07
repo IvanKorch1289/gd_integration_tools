@@ -21,9 +21,10 @@ Usage (пример)::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
@@ -46,7 +47,7 @@ class ManagedAsyncClient(ABC, Generic[T]):
         self._lock = asyncio.Lock()
         self._closed = False
         self._name = name or self.__class__.__name__
-        self._logger = logging.getLogger(f"clients.{self._name.lower()}")
+        self._logger = get_logger(f"clients.{self._name.lower()}")
 
     @abstractmethod
     async def _create_connection(self) -> T:

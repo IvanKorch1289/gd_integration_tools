@@ -27,8 +27,9 @@ OpenFeature provider interface (минимальный сабсет):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -39,7 +40,7 @@ __all__ = (
     "is_external_provider_enabled",
 )
 
-_logger = logging.getLogger("core.feature_flags.flagsmith")
+_logger = get_logger("core.feature_flags.flagsmith")
 
 
 class ProviderError(RuntimeError):

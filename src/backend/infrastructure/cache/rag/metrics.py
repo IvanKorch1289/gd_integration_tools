@@ -1,11 +1,12 @@
 """Prometheus-метрики 3-tier RAG cache (К4 MVP, Шаг 2)."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("get_metrics_snapshot", "record_hit", "record_miss")
 

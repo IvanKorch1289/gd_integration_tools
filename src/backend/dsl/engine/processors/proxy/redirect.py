@@ -36,8 +36,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 from urllib.parse import urlparse
 
@@ -47,7 +48,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("RedirectProcessor",)
 
-_logger = logging.getLogger("dsl.proxy.redirect")
+_logger = get_logger("dsl.proxy.redirect")
 
 _ALLOWED_STATUS_CODES = frozenset({301, 302, 303, 307, 308})
 _URL_SOURCES = frozenset({"header", "body_field", "exchange_var", "query_param"})

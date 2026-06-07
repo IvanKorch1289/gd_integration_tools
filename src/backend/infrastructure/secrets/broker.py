@@ -13,8 +13,9 @@ Backend pluggable: :class:`VaultBackend` (KV v2 через ``hvac``) или
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
@@ -27,7 +28,7 @@ __all__ = (
     "SubscriberCallback",
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

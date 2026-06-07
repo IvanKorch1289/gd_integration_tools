@@ -9,8 +9,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import statistics
 from collections import deque
 from dataclasses import dataclass, field
@@ -20,7 +21,7 @@ from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("Anomaly", "AnomalyDetector", "get_anomaly_detector")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

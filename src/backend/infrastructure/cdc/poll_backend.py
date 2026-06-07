@@ -13,9 +13,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
@@ -24,7 +25,7 @@ from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 __all__ = ("PollCDCBackend",)
 
 
-_logger = logging.getLogger("cdc.poll_backend")
+_logger = get_logger("cdc.poll_backend")
 
 
 class PollCDCBackend(CDCSource):

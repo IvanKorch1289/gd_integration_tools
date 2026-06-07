@@ -20,8 +20,9 @@ Feature flag: ``feature_flags.cdc_postgres_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -35,7 +36,7 @@ __all__ = (
     "CdcPostgresLogicalSource",
 )
 
-_logger = logging.getLogger("infrastructure.sources.cdc.postgres_logical")
+_logger = get_logger("infrastructure.sources.cdc.postgres_logical")
 
 
 PG_CDC_CURSORS_DDL = """

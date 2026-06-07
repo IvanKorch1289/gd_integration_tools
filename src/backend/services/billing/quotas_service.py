@@ -25,15 +25,16 @@ Default-OFF:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("QuotaCheckResult", "QuotaUsage", "QuotaWindow", "QuotasService")
 
-_logger = logging.getLogger("services.billing.quotas")
+_logger = get_logger("services.billing.quotas")
 
 # Длительности окон (секунды).
 _MINUTE_SECONDS = 60

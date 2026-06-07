@@ -12,7 +12,8 @@ Security (v17):
 
 import hashlib
 import hmac
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -26,7 +27,7 @@ from src.backend.entrypoints.webhook.registry import (
 
 __all__ = ("webhook_router",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 webhook_router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 

@@ -19,9 +19,10 @@ Usage::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
 
@@ -32,7 +33,7 @@ __all__ = (
     "task_group_tolerant",
 )
 
-logger = logging.getLogger("core.utils.async_utils")
+logger = get_logger("core.utils.async_utils")
 
 T = TypeVar("T")
 

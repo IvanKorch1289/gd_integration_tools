@@ -33,8 +33,9 @@ CB OPEN без fallback=down):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -49,7 +50,7 @@ __all__ = (
     "resilience_components_report",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 _STATUS_MAP: dict[str, str] = {"normal": "ok", "degraded": "degraded", "down": "error"}

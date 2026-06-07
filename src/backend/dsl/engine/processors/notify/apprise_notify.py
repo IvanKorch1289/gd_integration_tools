@@ -14,8 +14,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
@@ -28,7 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = ("AppriseNotifyProcessor",)
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class AppriseNotifyParams(BaseModel):

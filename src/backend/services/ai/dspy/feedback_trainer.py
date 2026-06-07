@@ -6,14 +6,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("FeedbackTrainResult", "FeedbackTrainer")
 
-logger = logging.getLogger("services.ai.dspy.feedback_trainer")
+logger = get_logger("services.ai.dspy.feedback_trainer")
 
 
 @dataclass(frozen=True, slots=True)

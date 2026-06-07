@@ -4,14 +4,15 @@
 предоставляет CRUD-операции для управления ими.
 """
 
-import logging
+
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WebhookRegistry", "WebhookSubscription", "webhook_registry")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

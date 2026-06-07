@@ -27,8 +27,9 @@ recipient = ``chat_id`` (числовой ID или ``@channelname``).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from typing import Any
 
@@ -36,7 +37,7 @@ from src.backend.infrastructure.notifications.adapters.base import NotificationC
 
 __all__ = ("TelegramAdapter",)
 
-_logger = logging.getLogger("notifications.telegram")
+_logger = get_logger("notifications.telegram")
 
 
 class TelegramAdapter:

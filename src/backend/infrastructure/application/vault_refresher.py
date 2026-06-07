@@ -15,7 +15,8 @@ env-based callback (``on_refresh``), теперь поддерживаются:
 """
 
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from os import getenv
@@ -25,7 +26,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("VaultSecretRefresher", "get_vault_refresher")
 
-logger = logging.getLogger("vault.refresher")
+logger = get_logger("vault.refresher")
 
 
 RotationCallback = Callable[[str, dict[str, Any]], Awaitable[None] | None]

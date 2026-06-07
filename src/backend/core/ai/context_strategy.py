@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
@@ -33,7 +34,7 @@ __all__ = (
     "get_context_strategy",
 )
 
-logger = logging.getLogger("core.ai.context_strategy")
+logger = get_logger("core.ai.context_strategy")
 
 
 class ContextStrategyType(StrEnum):

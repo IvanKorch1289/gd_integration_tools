@@ -6,8 +6,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 import queue
 import threading
@@ -18,7 +19,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 setup_page("Realtime Logs", ":memo:")
 st.header(":memo: Realtime Logs (live tail)")

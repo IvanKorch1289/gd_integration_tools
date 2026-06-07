@@ -18,8 +18,9 @@ slot-routing на основе CRC16(key) MOD 16384.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import AsyncIterator, Sequence
 from typing import TYPE_CHECKING, Any
 
@@ -28,7 +29,7 @@ __all__ = ("RedisClusterAdapter",)
 if TYPE_CHECKING:  # pragma: no cover — только для типов
     from redis.asyncio.cluster import ClusterNode, RedisCluster
 
-logger = logging.getLogger("infra.cache.redis_cluster")
+logger = get_logger("infra.cache.redis_cluster")
 
 
 class RedisClusterAdapter:

@@ -1,6 +1,7 @@
-import logging
+
 from contextlib import asynccontextmanager
 from typing import Any, cast
+from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
@@ -13,7 +14,7 @@ from src.backend.core.interfaces.repositories import RepositoryProtocol
 from src.backend.dsl.codec.converters import transfer_model_to_schema
 from src.backend.schemas.base import BaseSchema, PaginatedResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("BaseService", "create_service_class", "get_service_for_model")
 

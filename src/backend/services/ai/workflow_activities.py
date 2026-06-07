@@ -25,8 +25,9 @@ Public API:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -38,7 +39,7 @@ __all__ = (
     "register_llm_activity",
 )
 
-_logger = logging.getLogger("services.ai.workflow_activities")
+_logger = get_logger("services.ai.workflow_activities")
 
 
 class LLMActivityInput(BaseModel):

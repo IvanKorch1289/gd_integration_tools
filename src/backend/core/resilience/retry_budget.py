@@ -12,16 +12,17 @@ Sprint 1 V16 Single-Entry: единая реализация ``RetryBudget``, о
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections import deque
 from typing import Any
 
 __all__ = ("RetryBudget", "RetryBudgetExhausted", "get_retry_budget")
 
-logger = logging.getLogger("resilience.retry_budget")
+logger = get_logger("resilience.retry_budget")
 
 
 class RetryBudgetExhausted(Exception):

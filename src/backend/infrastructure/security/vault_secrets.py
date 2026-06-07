@@ -16,9 +16,10 @@ Wave 1.2 (S3): убирает stub ``NotImplementedError`` в
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 __all__ = ("VaultBackendConfig", "VaultSecretsBackend")
 
-_logger = logging.getLogger("infrastructure.security.vault_secrets")
+_logger = get_logger("infrastructure.security.vault_secrets")
 
 ClientFactory = Callable[[], "hvac.Client"]
 """Фабрика hvac-клиентов; вызывается при первом обращении и при re-auth."""

@@ -34,9 +34,10 @@ Thread-safe: pydash функции pure; processor instances immutable post-cons
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import copy
-import logging
+
 from collections.abc import Sequence
 from typing import Any, ClassVar
 
@@ -56,7 +57,7 @@ __all__ = (
     "PydashSetProcessor",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── PydashGetProcessor ──────────────────────────────────────────────

@@ -23,9 +23,10 @@ V15 R-V15-15: НЕ создавать ``.from_health_check()`` или ``HealthCh
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -37,7 +38,7 @@ __all__ = (
     "get_processor_health_service",
 )
 
-logger = logging.getLogger("services.ops.health")
+logger = get_logger("services.ops.health")
 
 
 @dataclass

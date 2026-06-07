@@ -6,15 +6,16 @@ Anti-detection: stealth mode, user-agent rotation.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import random
 from typing import Any
 
 __all__ = ("BrowserClient", "get_browser_client")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

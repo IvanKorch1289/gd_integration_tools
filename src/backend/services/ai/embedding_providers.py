@@ -19,9 +19,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import sys
 from typing import Any, Protocol, runtime_checkable
 
@@ -35,7 +36,7 @@ __all__ = (
     "get_embedding_provider",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class EmbeddingProviderUnavailable(RuntimeError):

@@ -1,15 +1,16 @@
 """Pub/Sub-канал invalidation для 3-tier RAG cache."""
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 import orjson
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("RagInvalidationBus",)
 

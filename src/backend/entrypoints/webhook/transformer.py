@@ -21,8 +21,9 @@ Actions: webhook.relay, webhook.transform, webhook.dlq_list, webhook.dlq_retry.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
@@ -32,7 +33,7 @@ import orjson
 
 __all__ = ("DLQEntry", "RelayRule", "WebhookRelay", "get_webhook_relay")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Redis-ключ DLQ. Список: LPUSH на добавление, LRANGE на чтение, LREM на удаление.
 _DLQ_KEY = "webhook:dlq"

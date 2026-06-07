@@ -26,9 +26,9 @@ ADR-0085 Open Item: rate limiting для login endpoint (anti-brute-force).
         ...
 """
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
 
 from fastapi import HTTPException, Request, status
 
@@ -50,7 +50,7 @@ USERNAME_LIMIT = 3  # attempts per window
 USERNAME_WINDOW_SECONDS = 300  # 5 min
 TARPIT_DELAY_SECONDS = 1.0  # при exceeded (tarpit)
 
-_logger = logging.getLogger("security.auth.ratelimit")
+_logger = get_logger("security.auth.ratelimit")
 
 
 class LoginRateLimitExceeded(HTTPException):

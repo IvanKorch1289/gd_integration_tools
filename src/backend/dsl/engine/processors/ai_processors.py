@@ -3,6 +3,7 @@
 import re
 from collections.abc import Callable
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 import orjson
 
@@ -108,7 +109,6 @@ class LLMCallProcessor(BaseProcessor):
         self._retry_delay = retry_delay
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import logging
 
         from src.backend.infrastructure.resilience.retry import make_async_retry
 
@@ -123,7 +123,7 @@ class LLMCallProcessor(BaseProcessor):
         # S30 w4: сохраняем prompt для NeMo output guardrails
         exchange.set_property("llm.original_prompt", prompt)
 
-        _log = logging.getLogger("dsl.ai")
+        _log = get_logger("dsl.ai")
 
         try:
             from src.backend.services.ai.ai_agent import get_ai_agent_service

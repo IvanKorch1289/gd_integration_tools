@@ -29,10 +29,11 @@ Feature flag: ``feature_flags.workflow_step_log_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-import logging
+
 import time
 import uuid
 from collections.abc import AsyncIterator
@@ -47,7 +48,7 @@ __all__ = (
 )
 
 
-_logger = logging.getLogger("infrastructure.workflow.middlewares.step_audit")
+_logger = get_logger("infrastructure.workflow.middlewares.step_audit")
 
 
 # DDL для ClickHouse-таблицы workflow_step_log.

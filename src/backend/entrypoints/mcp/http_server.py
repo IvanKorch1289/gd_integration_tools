@@ -10,11 +10,12 @@ FastMCP API различается между версиями (0.x → ``asgi_a
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("create_mcp_http_app",)
 

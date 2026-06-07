@@ -20,13 +20,14 @@ Lazy-import:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("build_and_run_agent", "build_chat_model")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _make_action_tool(action_name: str) -> Any:

@@ -7,8 +7,9 @@
 затем fallback на DSL-маршрут (Tier 3).
 """
 
-import logging
+
 from uuid import uuid4
+from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -17,7 +18,7 @@ from src.backend.entrypoints.websocket.ws_manager import ws_manager
 
 __all__ = ("ws_router",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 ws_router = APIRouter(tags=["WebSocket"])
 

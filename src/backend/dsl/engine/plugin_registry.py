@@ -17,9 +17,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 import warnings
 from typing import Any
 
@@ -33,7 +34,7 @@ from src.backend.dsl.registry import (
 
 __all__ = ("ProcessorPluginRegistry", "get_processor_plugin_registry")
 
-logger = logging.getLogger("dsl.plugins")
+logger = get_logger("dsl.plugins")
 
 _DEPRECATION_NAMESPACE = "legacy_plugin"
 _DEPRECATION_MSG = (

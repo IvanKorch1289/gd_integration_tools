@@ -15,13 +15,14 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("HybridRAGSearch", "get_hybrid_rag")
 
-logger = logging.getLogger("services.hybrid_rag")
+logger = get_logger("services.hybrid_rag")
 
 
 class HybridRAGSearch:

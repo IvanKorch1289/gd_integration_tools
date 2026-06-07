@@ -38,8 +38,9 @@ Cycle detection: RuntimeError raised if include/extends chain creates a cycle.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,7 @@ __all__ = (
     "load_pipeline_from_yaml",
 )
 
-logger = logging.getLogger("dsl.yaml_loader")
+logger = get_logger("dsl.yaml_loader")
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()

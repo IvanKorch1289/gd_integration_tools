@@ -22,8 +22,9 @@ namespace после ``":"`` или ``"*"``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 __all__ = ("MemoryRecallProcessor",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class MemoryRecallProcessor(BaseAIProcessor):

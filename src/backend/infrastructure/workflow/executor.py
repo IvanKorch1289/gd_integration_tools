@@ -33,8 +33,9 @@ step'е. Старые уже-состоявшиеся events неизменны.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -59,7 +60,7 @@ __all__ = (
     "WorkflowStep",
 )
 
-_logger = logging.getLogger("workflow.executor")
+_logger = get_logger("workflow.executor")
 
 
 # -- Declarative spec types (serializable, hot-reloadable) --------------

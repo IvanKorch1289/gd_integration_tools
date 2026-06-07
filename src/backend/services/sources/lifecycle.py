@@ -19,9 +19,10 @@ await stop_all_sources(get_source_registry())
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import TYPE_CHECKING
 
 from src.backend.services.sources.adapter import SourceToInvokerAdapter
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
 
 __all__ = ("start_all_sources", "stop_all_sources")
 
-logger = logging.getLogger("services.sources.lifecycle")
+logger = get_logger("services.sources.lifecycle")
 
 
 async def start_all_sources(

@@ -31,8 +31,9 @@ legacy, локальные regex), этот middleware использует ед
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import re
 from collections.abc import Iterable
 from typing import Any
@@ -46,7 +47,7 @@ from src.backend.core.utils.async_helpers import AsyncChunkIterator
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):

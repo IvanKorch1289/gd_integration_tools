@@ -46,11 +46,12 @@ Thread-safe: DataFormat инстансы immutable, lock только для cou
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import csv
 import io
 import json
-import logging
+
 import pickle
 import threading
 import xml.etree.ElementTree as ET  # safe: used only for marshal (we generate XML)
@@ -83,7 +84,7 @@ __all__ = (
     "XmlDataFormat",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── DataFormat abstract + concrete impls ─────────────────────────────

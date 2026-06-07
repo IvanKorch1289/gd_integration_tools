@@ -20,9 +20,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -51,7 +52,7 @@ from src.backend.services.execution.action_dispatcher import get_action_dispatch
 
 __all__ = ("InvocationMode", "Invoker", "get_invoker")
 
-logger = logging.getLogger("services.execution.invoker")
+logger = get_logger("services.execution.invoker")
 
 
 class Invoker(InvokerProtocol):

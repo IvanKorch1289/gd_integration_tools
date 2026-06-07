@@ -1,6 +1,7 @@
-import logging
+
 from collections.abc import Callable
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from pydantic import BaseModel
 
@@ -228,7 +229,7 @@ class LogProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
-        logger = logging.getLogger("dsl.pipeline")
+        logger = get_logger("dsl.pipeline")
         log_fn = getattr(logger, self._level, logger.info)
         log_fn(
             "Exchange[route=%s]: body=%s, properties=%s",

@@ -11,9 +11,10 @@ Prometheus exporter (``guardrails_metrics``).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -25,7 +26,7 @@ __all__ = (
     "GuardrailsMetricsService",
 )
 
-logger = logging.getLogger("services.ai.guardrails_metrics")
+logger = get_logger("services.ai.guardrails_metrics")
 
 
 class GuardrailVerdict(StrEnum):

@@ -6,15 +6,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from collections import Counter
 from typing import Any
 
 __all__ = ("RagQueryStatsCollector",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RagQueryStatsCollector:

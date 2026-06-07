@@ -16,8 +16,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.codec.base64 import decode_base64, encode_base64
@@ -59,7 +60,7 @@ __all__ = (
     "transfer_model_to_schema",
 )
 
-logger = logging.getLogger("dsl.codec")
+logger = get_logger("dsl.codec")
 
 _TEXT_FORMATS = {"json", "csv", "xml", "yaml", "excel", "pdf"}
 _BINARY_FORMATS = {"avro", "protobuf", "msgpack", "cbor", "parquet"}

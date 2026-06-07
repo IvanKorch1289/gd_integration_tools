@@ -13,8 +13,9 @@ fail при OPEN-breaker'е.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -22,7 +23,7 @@ import orjson
 
 __all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MongoFindCallable = Callable[[str, dict[str, Any]], Awaitable[dict[str, Any] | None]]
 

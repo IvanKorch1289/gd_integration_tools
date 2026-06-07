@@ -6,8 +6,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import Any
 
@@ -15,7 +16,7 @@ from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusSca
 
 __all__ = ("HttpAntivirusBackend",)
 
-logger = logging.getLogger("infrastructure.antivirus.http")
+logger = get_logger("infrastructure.antivirus.http")
 
 
 class HttpAntivirusBackend(AntivirusBackend):

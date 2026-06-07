@@ -16,8 +16,9 @@ ExpressBotClient` — единый bot-channel контракт через
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -31,7 +32,7 @@ __all__ = (
     "TelegramMessage",
 )
 
-_logger = logging.getLogger("infrastructure.telegram_bot")
+_logger = get_logger("infrastructure.telegram_bot")
 
 # Допустимые значения parse_mode Telegram.
 ParseMode = Literal["HTML", "MarkdownV2", "Markdown", ""]

@@ -30,14 +30,15 @@ Front integration:
 Не требует auth (вызывается до login).
 """
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

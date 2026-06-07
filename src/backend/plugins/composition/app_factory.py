@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.settings import settings
 from src.backend.entrypoints.api.v1.routers import get_v1_routers
@@ -83,9 +84,8 @@ def _configure_application_components(app: FastAPI) -> None:
         try:
             setup_tracing(app=app)
         except Exception as exc:
-            import logging
 
-            logging.getLogger("app_factory").warning(
+            get_logger("app_factory").warning(
                 "OpenTelemetry setup failed: %s (приложение продолжит работу без трейсинга)",
                 exc,
             )
@@ -206,7 +206,6 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     отсутствующих опциональных зависимостей (dev_light) — log + skip,
     стартап приложения не блокируем.
     """
-    import logging
 
     from src.backend.entrypoints.api.generator.auto_register import (
         auto_register_unrouted_actions,
@@ -217,7 +216,7 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
 
         register_action_handlers()
     except Exception as exc:
-        logging.getLogger("app_factory").warning(
+        get_logger("app_factory").warning(
             "register_action_handlers пропущен: %s "
             "(action auto-loop пройдёт по уже существующим handler'ам)",
             exc,
@@ -226,13 +225,13 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     try:
         added = auto_register_unrouted_actions(app)
     except Exception as exc:
-        logging.getLogger("app_factory").warning(
+        get_logger("app_factory").warning(
             "auto_register_unrouted_actions упал: %s — пропускаем", exc
         )
         return
 
     if added:
-        logging.getLogger("app_factory").info(
+        get_logger("app_factory").info(
             "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added
         )
 
@@ -245,7 +244,6 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
     существующий ``graphql_router`` (``/graphql`` остаётся живым).
     Любые ошибки сборки логгируются и не блокируют старт приложения.
     """
-    import logging
 
     try:
         from src.backend.entrypoints.graphql.auto_schema import (
@@ -254,7 +252,7 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
 
         auto_register_strawberry_schema(app, path="/api/v1/graphql")
     except Exception as exc:
-        logging.getLogger("app_factory").warning(
+        get_logger("app_factory").warning(
             "Wave 1.4 auto-schema пропущена: %s", exc
         )
 

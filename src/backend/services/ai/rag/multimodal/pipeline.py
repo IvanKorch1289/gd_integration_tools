@@ -15,15 +15,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 __all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
 
-logger = logging.getLogger("services.ai.rag.multimodal.pipeline")
+logger = get_logger("services.ai.rag.multimodal.pipeline")
 
 ModalKind = str  # ``text|image|audio|video``
 

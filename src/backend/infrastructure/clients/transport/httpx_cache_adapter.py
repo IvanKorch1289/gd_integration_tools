@@ -17,15 +17,16 @@ K2 Sprint 7 — httpx unified transport stack. Реализует ленивый
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import httpx
 
-logger = logging.getLogger("transport.httpx.cache")
+logger = get_logger("transport.httpx.cache")
 
 __all__ = ("build_cache_transport", "is_hishel_available")
 

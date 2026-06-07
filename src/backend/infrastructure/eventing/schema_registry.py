@@ -8,16 +8,17 @@ Confluent-совместимый endpoint.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
 __all__ = ("SchemaRegistry", "SchemaRegistryError", "get_schema_registry")
 
-logger = logging.getLogger("eventing.schema_registry")
+logger = get_logger("eventing.schema_registry")
 
 
 class SchemaRegistryError(RuntimeError):

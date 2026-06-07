@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.dsl.commands.registry import (
     ActionHandlerRegistry,

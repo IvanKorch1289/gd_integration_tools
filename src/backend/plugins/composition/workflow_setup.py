@@ -18,8 +18,9 @@ Default-OFF feature-flag принцип (V11.1a, V15): ядро не дикту�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any, Iterable
 
 from src.backend.core.config.settings import settings
@@ -33,7 +34,7 @@ __all__ = (
 )
 
 
-_logger = logging.getLogger("workflow.setup")
+_logger = get_logger("workflow.setup")
 
 
 workflow_compiler_registry: WorkflowCompilerRegistry = WorkflowCompilerRegistry()

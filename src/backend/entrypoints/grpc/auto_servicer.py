@@ -25,14 +25,15 @@ Servicer-классы НЕ перекрывают существующие hand-
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("AutoServicerBundle", "build_auto_servicers", "register_auto_servicers")
 

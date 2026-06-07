@@ -17,15 +17,16 @@ Lua-скрипт минималистичен (без CL.THROTTLE-зависим
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("DistributedRedisRateLimiter", "TokenBucketResult")
 
-logger = logging.getLogger("infra.resilience.distributed_rl")
+logger = get_logger("infra.resilience.distributed_rl")
 
 # Lua-скрипт: атомарный token-bucket per-key.
 # KEYS[1] = bucket-key (e.g. ``rl:{tenant_id}``)

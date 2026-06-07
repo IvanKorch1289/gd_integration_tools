@@ -21,8 +21,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -41,7 +42,7 @@ from src.backend.schemas.invocation import ActionCommandSchema
 __all__ = ("ActivityBridge", "bridge_action_handler", "get_activity_callables")
 
 
-_logger = logging.getLogger("workflow.compiler.activity_bridge")
+_logger = get_logger("workflow.compiler.activity_bridge")
 
 
 def bridge_action_handler(

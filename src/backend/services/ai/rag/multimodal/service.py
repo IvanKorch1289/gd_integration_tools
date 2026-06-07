@@ -12,8 +12,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import math
 import mimetypes
 from pathlib import Path
@@ -33,7 +34,7 @@ from src.backend.services.ai.rag.multimodal.types import (
     SearchResult,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("MultimodalRAGService", "get_multimodal_rag")
 

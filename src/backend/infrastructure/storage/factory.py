@@ -14,8 +14,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from functools import lru_cache
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from src.backend.core.interfaces.storage import ObjectStorage
 
 __all__ = ("get_local_fs_storage", "get_object_storage")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @lru_cache(maxsize=1)

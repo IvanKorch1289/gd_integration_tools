@@ -18,9 +18,10 @@ native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallba
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -48,7 +49,7 @@ __all__ = (
 )
 
 
-_logger = logging.getLogger("workflow.pg_runner_internals")
+_logger = get_logger("workflow.pg_runner_internals")
 
 
 # ─────────────────────────────── DTO ───────────────────────────────

@@ -10,15 +10,16 @@ API:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from datetime import UTC
 from typing import Any
 
 __all__ = ("CronDashboardService", "ScheduledWorkflowSummary")
 
-_logger = logging.getLogger("services.scheduler.dashboard")
+_logger = get_logger("services.scheduler.dashboard")
 
 
 @dataclass(frozen=True, slots=True)

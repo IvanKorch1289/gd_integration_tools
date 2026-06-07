@@ -9,9 +9,10 @@ extra ``http3`` (ImportError возникает только при вызове
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
@@ -24,7 +25,7 @@ from src.backend.entrypoints.http3.config import Http3ServerConfig
 if TYPE_CHECKING:  # pragma: no cover
     from aioquic.asyncio.protocol import QuicConnectionProtocol  # noqa: F401
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 ASGIApp = Callable[
     [

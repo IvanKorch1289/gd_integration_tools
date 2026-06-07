@@ -17,15 +17,16 @@ Audit:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.config.features import feature_flags
 
 __all__ = ("LangfusePIICallback", "anonymize_trace_payload")
 
-logger = logging.getLogger("services.ai.gateway.langfuse_pii")
+logger = get_logger("services.ai.gateway.langfuse_pii")
 
 
 def anonymize_trace_payload(

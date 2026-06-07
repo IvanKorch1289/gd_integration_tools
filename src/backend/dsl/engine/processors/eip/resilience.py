@@ -1,5 +1,6 @@
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from typing import Any
 
 import orjson
@@ -8,8 +9,8 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-_eip_logger = logging.getLogger("dsl.eip")
-_camel_logger = logging.getLogger("dsl.camel")
+_eip_logger = get_logger("dsl.eip")
+_camel_logger = get_logger("dsl.camel")
 
 __all__ = (
     "CircuitBreakerProcessor",

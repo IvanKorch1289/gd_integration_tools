@@ -10,14 +10,15 @@ Usage в main.py::
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from typing import Any
 
 __all__ = ("init_sentry",)
 
-logger = logging.getLogger("infra.sentry")
+logger = get_logger("infra.sentry")
 
 
 def init_sentry(

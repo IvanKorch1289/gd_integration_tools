@@ -34,9 +34,10 @@ configurable split (например 0.7 / 0.3) и трекает выбранн
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 import random
 from typing import Any
 
@@ -46,7 +47,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ABTestProcessor", "select_variant")
 
-_logger = logging.getLogger("dsl.ab_test")
+_logger = get_logger("dsl.ab_test")
 
 
 def select_variant(*, correlation_id: str | None, split: tuple[float, float]) -> str:

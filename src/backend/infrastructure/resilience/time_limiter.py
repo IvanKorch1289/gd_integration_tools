@@ -10,16 +10,17 @@ timeout под текущие условия.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections import deque
 from dataclasses import dataclass, field
 
 __all__ = ("TimeLimiter",)
 
-logger = logging.getLogger("resilience.time_limiter")
+logger = get_logger("resilience.time_limiter")
 
 
 @dataclass(slots=True)

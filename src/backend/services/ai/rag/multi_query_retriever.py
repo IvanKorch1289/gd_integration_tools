@@ -26,8 +26,9 @@ terminology mismatch.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypedDict
@@ -36,7 +37,7 @@ from src.backend.services.ai.rag.hybrid_retriever import rrf_merge
 
 __all__ = ("MultiQueryConfig", "MultiQueryResult", "MultiQueryRetriever")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 DEFAULT_NUM_REFORMULATIONS = 5
 DEFAULT_RRF_K = 60

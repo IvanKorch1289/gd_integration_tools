@@ -10,8 +10,9 @@ Metrics:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = (
@@ -21,7 +22,7 @@ __all__ = (
     "set_workers_active",
 )
 
-_logger = logging.getLogger("infrastructure.observability.temporal_exporter")
+_logger = get_logger("infrastructure.observability.temporal_exporter")
 
 _metrics: dict[str, Any] = {}
 

@@ -7,14 +7,15 @@ extras гуманитарно).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("AsyncSoapClient",)
 
-logger = logging.getLogger("transport.soap_async")
+logger = get_logger("transport.soap_async")
 
 
 @dataclass(slots=True)

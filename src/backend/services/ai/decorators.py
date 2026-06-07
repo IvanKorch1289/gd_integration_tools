@@ -29,9 +29,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import inspect
-import logging
+
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from functools import wraps
@@ -41,7 +42,7 @@ from src.backend.services.ai.registry import AIPluginRegistry, get_ai_plugin_reg
 
 __all__ = ("AIServiceSpec", "ai_service")
 
-_logger = logging.getLogger("services.ai.decorators")
+_logger = get_logger("services.ai.decorators")
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")

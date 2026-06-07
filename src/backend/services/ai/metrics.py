@@ -17,8 +17,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -28,7 +29,7 @@ from src.backend.core.di import app_state_singleton
 
 __all__ = ("AgentMetricsService", "get_agent_metrics_service")
 
-logger = logging.getLogger("services.ai.metrics")
+logger = get_logger("services.ai.metrics")
 
 
 _NO_PROMETHEUS = "prometheus_client недоступен — AgentMetricsService работает в no-op"

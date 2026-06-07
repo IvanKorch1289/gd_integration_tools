@@ -21,9 +21,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-import logging
+
 import threading
 from dataclasses import dataclass
 from functools import lru_cache
@@ -33,7 +34,7 @@ from src.backend.dsl.registry.errors import ProcessorNotFoundError
 
 __all__ = ("LazyProcessorRef", "LazyProcessorRegistry", "load_processor_class")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

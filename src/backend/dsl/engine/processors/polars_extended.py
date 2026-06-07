@@ -17,8 +17,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -36,7 +37,7 @@ __all__ = (
     "PolarsWindowProcessor",
 )
 
-_logger = logging.getLogger("dsl.polars")
+_logger = get_logger("dsl.polars")
 
 JoinHow = Literal["inner", "left", "right", "outer", "semi", "anti", "cross"]
 

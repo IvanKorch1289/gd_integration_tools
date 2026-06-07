@@ -10,14 +10,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 from cachetools import TTLCache
 
-logger = logging.getLogger("infrastructure.cache.lru")
+logger = get_logger("infrastructure.cache.lru")
 
 __all__ = ("LruMemoryCache",)
 

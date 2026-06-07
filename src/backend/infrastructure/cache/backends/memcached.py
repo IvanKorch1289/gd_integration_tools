@@ -11,8 +11,9 @@ Memcached не поддерживает pattern-удаление (нет KEYS/SC
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.cache import CacheBackend
@@ -22,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = ("MemcachedBackend",)
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class MemcachedBackend(CacheBackend):

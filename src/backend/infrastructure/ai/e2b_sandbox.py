@@ -10,8 +10,9 @@ sandbox-инфраструктуре e2b.dev. Capability ``code.execute`` про
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = ("E2BSandbox",)
 
-_logger = logging.getLogger("infrastructure.ai.e2b_sandbox")
+_logger = get_logger("infrastructure.ai.e2b_sandbox")
 
 CapabilityChecker = Callable[[str, str, str | None], None]
 

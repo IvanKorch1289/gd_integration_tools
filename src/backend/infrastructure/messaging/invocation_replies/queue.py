@@ -15,8 +15,9 @@ Topic/queue и backend-name берутся из ``response.metadata``:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import asdict
 from typing import Any, Literal, Protocol, runtime_checkable
@@ -29,7 +30,7 @@ from src.backend.core.interfaces.invoker import InvocationResponse
 
 __all__ = ("QueueBackend", "QueuePublisher", "QueueReplyChannel")
 
-logger = logging.getLogger("messaging.invocation_replies.queue")
+logger = get_logger("messaging.invocation_replies.queue")
 
 QueueBackend = Literal["redis", "rabbit", "kafka"]
 

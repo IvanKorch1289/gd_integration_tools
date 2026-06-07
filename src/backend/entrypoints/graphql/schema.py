@@ -7,10 +7,11 @@ DSL-dispatch как fallback для произвольных actions.
 Резолверы вызывают бизнес-логику через ActionHandlerRegistry.dispatch().
 """
 
-import logging
+
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
@@ -20,7 +21,7 @@ from strawberry.types import Info
 from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("graphql_router",)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @strawberry.type

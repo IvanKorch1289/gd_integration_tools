@@ -14,8 +14,9 @@ Discovery + lifecycle V11-маршрутов:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -49,7 +50,7 @@ __all__ = (
 AuditCallback = Callable[[dict[str, Any]], None]
 """Подпись audit-callback'а RouteLoader: принимает event dict."""
 
-_logger = logging.getLogger("services.routes.loader")
+_logger = get_logger("services.routes.loader")
 
 
 PipelineRegistrar = Callable[[str, Path, RouteManifestV11], None]

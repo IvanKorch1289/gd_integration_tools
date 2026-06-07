@@ -13,9 +13,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -24,7 +25,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     import dspy
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("BaselineDataset", "CompileReport", "DSPyOptimizer", "DSPyPipeline")
 

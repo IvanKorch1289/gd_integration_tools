@@ -14,8 +14,9 @@ Feature-flag: ``feature_flags.tenant_token_budget_enabled`` (default-OFF
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.tenancy.budget_enforcer import enforce_post_call, enforce_pre_call
@@ -28,7 +29,7 @@ from src.backend.services.ai.usage_meter import (
 
 __all__ = ("BudgetEnforcementError", "LiteLLMBudgetFacade")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BudgetEnforcementError(Exception):

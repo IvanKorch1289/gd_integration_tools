@@ -24,9 +24,10 @@ Application() каждый запрос — массивный overhead).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -44,7 +45,7 @@ __all__ = (
     "set_desktop_rpa_pool",
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

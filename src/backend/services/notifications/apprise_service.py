@@ -19,13 +19,14 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Literal
 
 __all__ = ("AppriseNotificationService", "get_notification_service")
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 # Глобальный singleton
 _instance: AppriseNotificationService | None = None

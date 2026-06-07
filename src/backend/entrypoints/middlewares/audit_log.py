@@ -14,7 +14,8 @@
 """
 
 import hashlib
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 import time as _time
 from datetime import UTC, datetime
 
@@ -24,7 +25,7 @@ from starlette.types import ASGIApp
 
 __all__ = ("AuditLogMiddleware",)
 
-_clickhouse_logger = logging.getLogger("audit_log.clickhouse")
+_clickhouse_logger = get_logger("audit_log.clickhouse")
 
 
 class AuditLogMiddleware(BaseHTTPMiddleware):

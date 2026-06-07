@@ -17,9 +17,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import re
 import ssl
 from dataclasses import dataclass
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 __all__ = ("EmailSource", "EmailSourceConfig")
 
-logger = logging.getLogger("infrastructure.sources.email")
+logger = get_logger("infrastructure.sources.email")
 
 
 @dataclass(slots=True)

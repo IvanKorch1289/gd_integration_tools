@@ -21,8 +21,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -33,7 +34,7 @@ from src.backend.dsl.registry.processor import processor
 
 __all__ = ("IngestFileProcessor",)
 
-_logger = logging.getLogger("dsl.ingest_file")
+_logger = get_logger("dsl.ingest_file")
 
 _VALID_ON_UNSUPPORTED = frozenset({"fail", "warn"})
 _VALID_ENGINE = frozenset({"auto", "markitdown", "legacy"})

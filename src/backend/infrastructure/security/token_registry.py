@@ -33,10 +33,11 @@ Decisions (S25 W4, advisor 2026-05-25)
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
 import fnmatch
-import logging
+
 import os
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -54,7 +55,7 @@ __all__ = (
     "TokenRegistryProtocol",
 )
 
-_logger = logging.getLogger("infrastructure.security.token_registry")
+_logger = get_logger("infrastructure.security.token_registry")
 
 
 # ─── Protocols ────────────────────────────────────────────────────────────────

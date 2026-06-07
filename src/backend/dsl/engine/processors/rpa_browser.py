@@ -18,8 +18,9 @@ tracing-on-failure: при exception пишется screenshot + page.content()
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
@@ -44,7 +45,7 @@ __all__ = (
     "WaitForProcessor",
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 def _extract_domain(url: str) -> str:

@@ -6,10 +6,11 @@ lineage, SSE, schema validation, A/B test router, feature flag guard.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-import logging
+
 from collections.abc import Callable
 from typing import Any, ClassVar
 
@@ -27,7 +28,7 @@ __all__ = (
     "SseSourceProcessor",
 )
 
-logger = logging.getLogger("dsl.generic")
+logger = get_logger("dsl.generic")
 
 
 class ShadowModeProcessor(BaseProcessor):

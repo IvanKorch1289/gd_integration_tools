@@ -24,9 +24,10 @@ Carryover S17:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -41,7 +42,7 @@ __all__ = (
     "SecretRotator",
 )
 
-_logger = logging.getLogger("core.security.secret_rotation")
+_logger = get_logger("core.security.secret_rotation")
 
 #: Async callable для записи audit-event. Получает событие как dict.
 AuditSink = Callable[["RotationAuditEvent"], Awaitable[None]]

@@ -28,9 +28,10 @@ MulticastRoutesProcessor:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-import logging
+
 from typing import Any
 
 from src.backend.dsl.codec.json import canonical_json_bytes
@@ -41,7 +42,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("WindowedCollectProcessor", "WindowedDedupProcessor")
 
-_logger = logging.getLogger("dsl.eip.windowed")
+_logger = get_logger("dsl.eip.windowed")
 
 _MODES = frozenset({"first", "last", "unique"})
 

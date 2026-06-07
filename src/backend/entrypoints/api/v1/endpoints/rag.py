@@ -14,8 +14,9 @@ W26.5: маршруты регистрируются декларативно ч
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Annotated, Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
@@ -29,7 +30,7 @@ from src.backend.entrypoints.api.generator.actions import (
 from src.backend.services.ai.document_parsers import parse_document, sniff_mime
 from src.backend.services.ai.rag_service import get_rag_service
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("router",)
 

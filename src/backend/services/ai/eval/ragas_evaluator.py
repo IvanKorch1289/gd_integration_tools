@@ -30,9 +30,10 @@ ragas требует :mod:`datasets` (HuggingFace) для построения �
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final
 
@@ -47,7 +48,7 @@ __all__ = (
     "RAGASReport",
 )
 
-logger = logging.getLogger("services.ai.eval.ragas")
+logger = get_logger("services.ai.eval.ragas")
 
 
 DEFAULT_THRESHOLDS: Final[dict[str, float]] = {

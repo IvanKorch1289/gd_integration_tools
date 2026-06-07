@@ -8,9 +8,10 @@ durable consumers (pull-модель). Lazy-import ``nats`` — библиоте
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = ("NATSJetStreamSource", "NATSMessage")
 
-logger = logging.getLogger("infrastructure.sources.nats_jetstream")
+logger = get_logger("infrastructure.sources.nats_jetstream")
 
 
 @dataclass(slots=True)

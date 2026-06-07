@@ -26,8 +26,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 
 __all__ = ("register_workflow_tools",)
 
-_logger = logging.getLogger("mcp.workflow_tools")
+_logger = get_logger("mcp.workflow_tools")
 
 
 def register_workflow_tools(mcp: Any) -> None:

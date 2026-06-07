@@ -14,9 +14,10 @@ V15 R-V15-11 (leak prevention): asyncio.Task создаётся через
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import Any
 
 from src.backend.core.interfaces.observability import TemporalMetricsExporter
@@ -26,7 +27,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("AutoScaler",)
 
-_logger = logging.getLogger("core.scaling.auto_scaler")
+_logger = get_logger("core.scaling.auto_scaler")
 
 
 class AutoScaler:

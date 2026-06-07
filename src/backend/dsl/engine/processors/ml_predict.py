@@ -18,8 +18,9 @@ Capabilities required: ``ml.predict``.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.core.types.side_effect import SideEffectKind
@@ -29,7 +30,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("MLPredictProcessor",)
 
-_logger = logging.getLogger("dsl.processors.ml_predict")
+_logger = get_logger("dsl.processors.ml_predict")
 
 
 class MLPredictProcessor(BaseProcessor):

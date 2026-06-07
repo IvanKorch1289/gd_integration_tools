@@ -12,15 +12,16 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("AntivirusCallable", "build_antivirus_fallbacks", "build_antivirus_primary")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 AntivirusCallable = Callable[[bytes], Awaitable[AntivirusScanResult]]
 

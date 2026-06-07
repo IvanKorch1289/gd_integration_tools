@@ -24,8 +24,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any, Protocol
 
 from src.backend.core.tenancy import current_tenant
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 __all__ = ("FeatureFlagProvider", "TenantFeatureFlagResolver")
 
-_logger = logging.getLogger("core.tenancy.feature_flag_scope")
+_logger = get_logger("core.tenancy.feature_flag_scope")
 
 
 class FeatureFlagProvider(Protocol):

@@ -41,9 +41,10 @@ encrypt/decrypt point-ы в коде (код-ревью проще).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-import logging
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -54,7 +55,7 @@ if TYPE_CHECKING:
 __all__ = ("decrypt_field", "decrypt_mapping", "encrypt_field", "encrypt_mapping")
 
 
-logger = logging.getLogger("security.vault_cipher_sa")
+logger = get_logger("security.vault_cipher_sa")
 
 
 # По умолчанию сериализуем через JSON; bytes/str пропускаем как есть.

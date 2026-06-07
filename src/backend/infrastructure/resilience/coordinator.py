@@ -30,8 +30,9 @@ overhead без преимуществ (см. Правило 13 в PLAN.md).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -57,7 +58,7 @@ __all__ = (
     "set_resilience_coordinator",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 FallbackMode = Literal["auto", "forced", "off"]
 DegradationLabel = Literal["normal", "degraded", "down"]

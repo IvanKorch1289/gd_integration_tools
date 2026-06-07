@@ -10,8 +10,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 __all__ = ("build_clamav_scanner_if_enabled",)
 
-_logger = logging.getLogger("infrastructure.antivirus.setup")
+_logger = get_logger("infrastructure.antivirus.setup")
 
 
 def build_clamav_scanner_if_enabled() -> ClamAVPayloadScanner | None:

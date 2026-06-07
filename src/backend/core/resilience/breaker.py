@@ -18,8 +18,9 @@ API:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ __all__ = (
     "get_breaker_registry",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Re-export исключения purgatory под удобным именем — callsite'ы могут
 # ловить ``CircuitOpen`` без импорта внутренних модулей purgatory.

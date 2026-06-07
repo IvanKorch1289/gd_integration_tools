@@ -12,7 +12,8 @@
 
 import asyncio
 import datetime
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 from enum import Enum
 from typing import Any
 
@@ -25,7 +26,7 @@ from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 
 __all__ = ("event_bus", "sse_router")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 sse_router = APIRouter(prefix="/events", tags=["SSE"])
 

@@ -10,6 +10,7 @@ Scaffold для операционных примитивов оркестрац
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 from collections.abc import Awaitable, Callable
@@ -50,9 +51,8 @@ class Sensor:
                             route_id=self.route_id, body={}, headers={}
                         )
                 except Exception as _:
-                    import logging
 
-                    logging.getLogger("dsl.sensor").exception(
+                    get_logger("dsl.sensor").exception(
                         "Sensor '%s' failed", self.name
                     )
                 await asyncio.sleep(self.interval_seconds)

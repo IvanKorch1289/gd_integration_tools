@@ -67,8 +67,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -80,7 +81,7 @@ from src.backend.infrastructure.workflow.executor import (
 
 __all__ = ("WorkflowBuilder",)
 
-_logger = logging.getLogger("workflow.builder")
+_logger = get_logger("workflow.builder")
 
 
 class WorkflowBuilder:

@@ -24,13 +24,14 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any, Protocol
 
 __all__ = ("CacheClientProtocol", "S3CacheAdapter", "S3ClientProtocol")
 
-logger = logging.getLogger("storage.s3_cache")
+logger = get_logger("storage.s3_cache")
 
 
 class S3ClientProtocol(Protocol):

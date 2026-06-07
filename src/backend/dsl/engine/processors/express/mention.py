@@ -11,8 +11,9 @@ property ``express_mentions`` (списком), который читается 
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from typing import Any
 
@@ -23,7 +24,7 @@ from src.backend.dsl.engine.processors.express._common import resolve_value
 
 __all__ = ("ExpressMentionProcessor",)
 
-_logger = logging.getLogger("dsl.express.mention")
+_logger = get_logger("dsl.express.mention")
 
 _VALID_TYPES = frozenset({"user", "chat", "channel", "contact", "all"})
 

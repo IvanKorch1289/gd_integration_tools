@@ -15,7 +15,8 @@
 """
 
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -24,7 +25,7 @@ from src.backend.core.config.constants import consts
 
 __all__ = ("BackoffPolicy", "Supervisor")
 
-logger = logging.getLogger("resilience.supervisor")
+logger = get_logger("resilience.supervisor")
 
 
 @dataclass(slots=True, frozen=True)

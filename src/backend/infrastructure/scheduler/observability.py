@@ -18,8 +18,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from typing import TYPE_CHECKING, Any, Final
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 
 __all__ = ("attach_scheduler_metrics", "report_jobstore_type")
 
-_logger = logging.getLogger("infrastructure.scheduler.observability")
+_logger = get_logger("infrastructure.scheduler.observability")
 
 _JOB_EXECUTIONS: Any | None = None
 _JOBSTORE_TYPE: Any | None = None

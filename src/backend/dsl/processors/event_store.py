@@ -33,8 +33,9 @@ Outbox pattern (668 LOC в существующем коде) — partial event 
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 import time
 import uuid
@@ -67,7 +68,7 @@ __all__ = (
     "set_event_store",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # ── Event dataclass ─────────────────────────────────────────────────────

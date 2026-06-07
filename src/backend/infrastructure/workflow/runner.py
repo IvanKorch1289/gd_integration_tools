@@ -33,9 +33,10 @@ Unit-testable без Postgres: pluggable `InstanceSource` + `StateStore` +
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import os
 import random
 import uuid
@@ -57,7 +58,7 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
 __all__ = ("DurableWorkflowRunner", "RunnerConfig", "StepExecutor", "StepResult")
 
 
-_logger = logging.getLogger("workflow.runner")
+_logger = get_logger("workflow.runner")
 
 
 # -- Типы для step-executor контракта ----------------------------------

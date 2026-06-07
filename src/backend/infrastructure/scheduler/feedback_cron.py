@@ -5,13 +5,14 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("register_feedback_cron",)
 
-logger = logging.getLogger("infra.scheduler.feedback_cron")
+logger = get_logger("infra.scheduler.feedback_cron")
 
 
 def register_feedback_cron(

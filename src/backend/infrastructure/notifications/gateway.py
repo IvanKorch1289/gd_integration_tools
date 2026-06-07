@@ -23,8 +23,9 @@ Sugar: `send_tx(...)` / `send_marketing(...)` эквивалентны `send(pri
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -40,7 +41,7 @@ from src.backend.infrastructure.notifications.templates import (
     get_template_registry,
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 ChannelKind = Literal[

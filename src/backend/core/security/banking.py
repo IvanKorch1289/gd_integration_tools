@@ -8,17 +8,18 @@ DI (Vault для ключей, HSM через PKCS#11, ФЗ-63 криптопр�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
 import hmac
-import logging
+
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 __all__ = (
     "AntiFraudEngine",
     "AntiFraudRule",

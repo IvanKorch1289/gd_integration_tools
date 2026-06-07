@@ -15,15 +15,16 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("JudgeVerdict", "LLMJudge", "get_llm_judge")
 
-logger = logging.getLogger("services.llm_judge")
+logger = get_logger("services.llm_judge")
 
 
 @dataclass(slots=True)

@@ -17,9 +17,10 @@ health + reload + metrics (IL1 foundation).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
@@ -34,7 +35,7 @@ from src.backend.infrastructure.clients.base_connector import (
 )
 from src.backend.infrastructure.observability.client_metrics import ClientMetricsMixin
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):

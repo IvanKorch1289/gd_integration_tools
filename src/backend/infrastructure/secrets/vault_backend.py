@@ -11,9 +11,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -22,7 +23,7 @@ from src.backend.infrastructure.secrets.broker import SecretValue
 
 __all__ = ("VaultBackend", "VaultConfig")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

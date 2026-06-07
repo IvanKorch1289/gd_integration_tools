@@ -4,15 +4,16 @@
 broadcast и отправку сообщений по группам.
 """
 
-import logging
+
 from typing import Any
+from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 
 __all__ = ("ConnectionManager", "ws_manager")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ConnectionManager:

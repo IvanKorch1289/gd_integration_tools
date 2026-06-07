@@ -22,9 +22,10 @@ Apache Camel EIP catalog (reliability / routing-metadata):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import threading
 import uuid
 from collections.abc import Awaitable, Callable
@@ -43,7 +44,7 @@ __all__ = (
     "ReturnAddressProcessor",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 # Header constants — стандартные имена (JMS-style / Camel conventions).

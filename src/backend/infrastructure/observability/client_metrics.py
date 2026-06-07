@@ -21,8 +21,9 @@ TIBCO EMS per-topic statistics.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     pass
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 Outcome = Literal["success", "error", "timeout", "circuit_open"]

@@ -9,7 +9,8 @@
 """
 
 import asyncio
-import logging
+from src.backend.infrastructure.logging.factory import get_logger
+
 import time
 from typing import Any
 
@@ -17,7 +18,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("PoolMonitor", "get_pool_monitor")
 
-logger = logging.getLogger("db.pool_monitor")
+logger = get_logger("db.pool_monitor")
 
 
 class PoolMonitor:

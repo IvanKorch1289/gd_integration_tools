@@ -19,8 +19,9 @@ D11 (S17 K2-W2 sweep):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -49,7 +50,7 @@ __all__ = (
     "record_queue_dlq_depth",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ── DSL pipeline / processor ────────────────────────────────────────────
 _processor_histogram = metrics_registry.histogram(

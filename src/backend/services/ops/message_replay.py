@@ -7,8 +7,9 @@ Actions: replay.list, replay.one, replay.bulk, replay.stats
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -24,7 +25,7 @@ __all__ = (
     "get_replay_service",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ReplayStatus(str, Enum):

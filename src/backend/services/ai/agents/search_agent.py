@@ -7,8 +7,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,7 @@ from src.backend.services.ai.tools import AgentTool, ToolRegistry
 
 __all__ = ("SearchAgent", "get_search_agent")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _PLUGIN_FILE = (
     Path(__file__).resolve().parents[3].parent

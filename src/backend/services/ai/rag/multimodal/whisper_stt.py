@@ -6,8 +6,9 @@ Lazy-import openai-whisper + librosa (resample 16kHz mono). Без extras
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 import tempfile
 from dataclasses import dataclass
@@ -15,7 +16,7 @@ from typing import Any
 
 __all__ = ("WhisperSTT", "TranscriptionResult")
 
-logger = logging.getLogger("services.ai.rag.multimodal.whisper")
+logger = get_logger("services.ai.rag.multimodal.whisper")
 
 
 @dataclass(frozen=True, slots=True)

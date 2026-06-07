@@ -23,9 +23,10 @@ Usage:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
-import logging
+
 from collections.abc import Callable
 from typing import Any
 
@@ -35,7 +36,7 @@ from src.backend.core.auth import AuthContext, AuthMethod
 
 __all__ = ("AuthContext", "AuthMethod", "require_auth", "set_default_auth")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 _default_auth: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY

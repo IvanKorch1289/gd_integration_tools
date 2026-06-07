@@ -5,14 +5,15 @@ Episodic = эпизоды диалога / сессии (role + content + meta +
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("EpisodicMemory",)
 

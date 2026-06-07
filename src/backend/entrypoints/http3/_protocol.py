@@ -10,9 +10,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -33,7 +34,7 @@ from src.backend.entrypoints.http3.asgi_bridge import (
 )
 from src.backend.entrypoints.http3.config import Http3ServerConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 ASGIApp = Callable[
     [

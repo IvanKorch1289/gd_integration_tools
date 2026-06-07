@@ -14,8 +14,9 @@ Wave F.5a: ранее использовались устаревшие имен
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Awaitable, Callable
 
 __all__ = (
@@ -24,7 +25,7 @@ __all__ = (
     "build_object_storage_primary",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 StorageGetCallable = Callable[[str], Awaitable[bytes]]
 

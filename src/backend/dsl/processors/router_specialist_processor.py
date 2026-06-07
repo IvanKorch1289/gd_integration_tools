@@ -33,8 +33,9 @@ Per Beam.ai [^240^] / Tricentis [^241^] pattern #8.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -55,7 +56,7 @@ __all__ = (
     "SpecialistAgent",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 LLMRouterFn = Callable[[str, list["SpecialistAgent"]], Awaitable["RoutingDecision"]]
 SpecialistHandler = Callable[[Any], Awaitable[Any]]

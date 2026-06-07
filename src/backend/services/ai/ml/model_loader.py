@@ -9,9 +9,10 @@ Graceful fallback если библиотека не установлена.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections import OrderedDict
 from pathlib import Path
 from threading import Lock
@@ -24,7 +25,7 @@ from src.backend.core.interfaces.ml_model_loader import (
 
 __all__ = ("MLModelLoader",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Module-level singleton instance for process lifetime
 _loader_instance: MLModelLoaderProtocol | None = None

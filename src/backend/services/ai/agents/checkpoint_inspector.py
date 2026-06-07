@@ -11,14 +11,15 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = ("CheckpointInspector", "CheckpointSnapshot", "SessionInfo")
 
-logger = logging.getLogger("services.ai.agents.checkpoint_inspector")
+logger = get_logger("services.ai.agents.checkpoint_inspector")
 
 
 @dataclass(frozen=True, slots=True)

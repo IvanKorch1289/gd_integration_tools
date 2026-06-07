@@ -5,13 +5,14 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 __all__ = ("CasbinAdapter",)
 
-logger = logging.getLogger("policy.casbin")
+logger = get_logger("policy.casbin")
 
 
 class CasbinAdapter:

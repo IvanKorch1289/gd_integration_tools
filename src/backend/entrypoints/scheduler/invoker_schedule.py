@@ -35,8 +35,9 @@ Job-id формируется из ``f"scheduled_invocation_{action}"``; пов�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
@@ -47,7 +48,7 @@ __all__ = (
     "register_scheduled_invocations",
 )
 
-logger = logging.getLogger("entrypoints.scheduler.invoker_schedule")
+logger = get_logger("entrypoints.scheduler.invoker_schedule")
 
 
 @dataclass(slots=True)

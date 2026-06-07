@@ -19,11 +19,12 @@ JSON traffic ~60% (Brotli vs GZIP +20-30% при quality=4).
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
-logger = logging.getLogger("middleware.brotli")
+logger = get_logger("middleware.brotli")
 
 _JSON_TYPES = ("application/json", "+json")
 

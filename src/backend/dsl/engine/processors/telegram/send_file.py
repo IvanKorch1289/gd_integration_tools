@@ -10,8 +10,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -24,7 +25,7 @@ from src.backend.dsl.engine.processors.telegram._common import (
 
 __all__ = ("TelegramSendFileProcessor",)
 
-_logger = logging.getLogger("dsl.telegram.send_file")
+_logger = get_logger("dsl.telegram.send_file")
 
 
 class TelegramSendFileProcessor(BaseProcessor):

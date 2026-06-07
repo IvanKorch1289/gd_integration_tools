@@ -37,9 +37,10 @@ Thread-safe: branch decisions изолированы per-exchange (через ``
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import threading
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
@@ -61,7 +62,7 @@ __all__ = (
     "ShortCircuitOperator",
 )
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 # Property name для branch decision (consumed by BranchSelector / routing logic).
 BRANCH_DECISION_PROPERTY = "branch.decision"

@@ -22,8 +22,9 @@ Connection restart; WSO2 Secret Vault с Dynamic Endpoint refresh.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.registry import ConnectorRegistry
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 def wire_vault_rotations(

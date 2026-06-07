@@ -41,8 +41,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -56,7 +57,7 @@ __all__ = (
     "set_workflow_audit_sink",
 )
 
-_logger = logging.getLogger("services.audit.workflow")
+_logger = get_logger("services.audit.workflow")
 
 _TABLE = "workflow_audit"
 

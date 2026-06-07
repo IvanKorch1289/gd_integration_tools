@@ -10,9 +10,10 @@ Throttled (1 query / 100ms по умолчанию) чтобы не положи
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 __all__ = ("RagCachePrewarmer",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 try:  # pragma: no cover
     from prometheus_client import Counter as _PromCounter

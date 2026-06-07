@@ -22,10 +22,11 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextvars
-import logging
+
 from collections.abc import Awaitable, Coroutine
 from typing import Any, TypeVar
 
@@ -34,7 +35,7 @@ from src.backend.core.utils.watchdog import Watchdog
 __all__ = ("TaskRegistry", "get_task_registry", "reset_task_registry")
 
 _T = TypeVar("_T")
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class TaskRegistry:

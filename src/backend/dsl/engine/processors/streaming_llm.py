@@ -10,9 +10,10 @@ output_mode = ``sse | ws | webhook``. На отмене (CancelledError) кор�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -20,7 +21,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = ("TokenStreamLLMProcessor",)
 

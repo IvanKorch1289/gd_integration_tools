@@ -12,8 +12,9 @@ Categories:
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -38,7 +39,7 @@ __all__ = (
     "WordReadProcessor",
     "WordWriteProcessor",
 )
-_rpa_logger = logging.getLogger("dsl.rpa")
+_rpa_logger = get_logger("dsl.rpa")
 
 
 class PdfReadProcessor(BaseProcessor):

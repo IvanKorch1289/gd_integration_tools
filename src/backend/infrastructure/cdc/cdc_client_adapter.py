@@ -6,9 +6,10 @@ logminer) как ``CDCSource`` для DSL-процессоров и других
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
@@ -18,7 +19,7 @@ from src.backend.infrastructure.clients.external.cdc import CDCClient, get_cdc_c
 
 __all__ = ("CDCClientAdapter",)
 
-logger = logging.getLogger("cdc.cdc_client_adapter")
+logger = get_logger("cdc.cdc_client_adapter")
 
 
 class CDCClientAdapter(CDCSource):

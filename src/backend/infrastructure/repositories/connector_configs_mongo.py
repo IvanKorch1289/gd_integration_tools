@@ -4,8 +4,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -18,7 +19,7 @@ from src.backend.infrastructure.clients.storage.mongodb import (
 
 __all__ = ("MongoConnectorConfigStore", "get_connector_config_store")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _COLLECTION = "connector_configs"
 

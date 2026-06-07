@@ -23,8 +23,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import threading
 from collections.abc import Callable, Hashable
 from typing import Any, TypeVar
@@ -40,7 +41,7 @@ __all__ = (
     "registry",
 )
 
-logger = logging.getLogger("core.svcs_registry")
+logger = get_logger("core.svcs_registry")
 
 T = TypeVar("T")
 

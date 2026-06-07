@@ -9,9 +9,10 @@ W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точк
 его в :class:`Invoker` (тот же Gateway, что и REST/WS адаптеры).
 """
 
-import logging
+
 from typing import TYPE_CHECKING, Any
 from xml.etree import ElementTree as ET
+from src.backend.infrastructure.logging.factory import get_logger
 
 import orjson
 from fastapi import APIRouter, Depends, Request, Response
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 __all__ = ("soap_router",)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 soap_router = APIRouter(prefix="/soap", tags=["SOAP"])
 

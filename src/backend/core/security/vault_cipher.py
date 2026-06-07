@@ -25,9 +25,10 @@ Compliance покрытие: GDPR Art. 32, 152-ФЗ ст. 19, PCI DSS 3.5/3.6.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
-import logging
+
 import os
 from typing import TYPE_CHECKING
 
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 __all__ = ("VaultCipherError", "VaultTransitCipher")
 
 
-logger = logging.getLogger("security.vault_cipher")
+logger = get_logger("security.vault_cipher")
 
 
 class VaultCipherError(RuntimeError):

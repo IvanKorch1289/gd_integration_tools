@@ -13,9 +13,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from cachetools import TTLCache
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ("DedupeStore", "MemoryDedupeStore", "RedisDedupeStore")
 
-logger = logging.getLogger("services.sources.idempotency")
+logger = get_logger("services.sources.idempotency")
 
 
 @runtime_checkable

@@ -17,8 +17,9 @@ service-слоя; backend знает только client API.
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -35,7 +36,7 @@ if TYPE_CHECKING:  # pragma: no cover
 __all__ = ("TemporalWorkflowBackend", "build_temporal_data_converter")
 
 
-_logger = logging.getLogger("workflow.temporal_backend")
+_logger = get_logger("workflow.temporal_backend")
 
 
 def build_temporal_data_converter() -> Any:

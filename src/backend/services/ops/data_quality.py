@@ -12,8 +12,9 @@ Actions: dq.check, dq.schema_infer, dq.stats, dq.rules
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
@@ -25,7 +26,7 @@ from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("DQCheckResult", "DQRule", "DataQualityMonitor", "get_dq_monitor")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DQSeverity(str, Enum):

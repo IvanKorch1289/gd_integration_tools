@@ -14,9 +14,10 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import logging
+
 import struct
 import time
 from pathlib import Path
@@ -25,7 +26,7 @@ from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusSca
 
 __all__ = ("ClamAVUnixBackend",)
 
-logger = logging.getLogger("infrastructure.antivirus.clamav_unix")
+logger = get_logger("infrastructure.antivirus.clamav_unix")
 
 _CHUNK_SIZE = 64 * 1024  # 64 KiB
 

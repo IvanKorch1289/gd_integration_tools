@@ -26,8 +26,9 @@ ClamAV unix → TCP → HTTP fallback. Hash-кэш (Redis) применяетс�
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -37,7 +38,7 @@ from src.backend.dsl.engine.processors.entity import _resolve
 
 __all__ = ("ScanFileProcessor",)
 
-_logger = logging.getLogger("dsl.scan_file")
+_logger = get_logger("dsl.scan_file")
 
 _VALID_ON_THREAT = frozenset({"fail", "warn"})
 

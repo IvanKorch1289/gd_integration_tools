@@ -14,15 +14,16 @@ V15 R-V15-10 — auto-scaling 3 уровня (этот уровень — proces
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 import os
 import signal
 from pathlib import Path
 
 __all__ = ("LocalProcessScaler",)
 
-_logger = logging.getLogger("core.scaling.local_process_scaler")
+_logger = get_logger("core.scaling.local_process_scaler")
 
 
 class LocalProcessScaler:

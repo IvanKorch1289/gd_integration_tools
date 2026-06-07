@@ -14,8 +14,9 @@
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -24,7 +25,7 @@ from typing import Any
 from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService
 from src.backend.services.ai.costs.langfuse_reader import CostRow, LangFuseReader
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = (
     "AICostDashboard",

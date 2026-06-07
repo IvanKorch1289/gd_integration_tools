@@ -20,8 +20,9 @@ Hot-reload (`rule_engine_hot_reload=True`):
 """
 
 from __future__ import annotations
+from src.backend.infrastructure.logging.factory import get_logger
 
-import logging
+
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 __all__ = ("RuleEngineRegistry", "RulesetCacheEntry")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 # Период hot-reload опроса; держим коротким (60с) — для credit-scoring
 # ruleset'ов изменения должны разъезжаться по подам быстро.
