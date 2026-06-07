@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **33**; уникальных слотов: **33**.
+Всего ADR-файлов: **35**; уникальных слотов: **35**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -37,5 +37,7 @@
 | 0080 | ADR-0080 — Single Entry Policy Naming Convention | — | [0080-single-entry-policy-naming.md](0080-single-entry-policy-naming.md) |
 | 0081 | ADR-0081 — Event Bus Production Backend: FastStream + Redis | — | [0081-eventbus-production-backend-faststream-redis.md](0081-eventbus-production-backend-faststream-redis.md) |
 | 0082 | ADR-0082 — Network isolation для markitdown через monkey-patch urllib.request | Accepted (Sprint 57 W5, 2026-06-07) | [0082-markitdown-network-isolation.md](0082-markitdown-network-isolation.md) |
+| 0083 | ADR-0083 — Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | — | [0083-versioning-dsl-continuum-wrapper.md](0083-versioning-dsl-continuum-wrapper.md) |
+| 0084 | ADR-0084 — Library Adoption Migration Plan (structlog, typer, rich, aiocache) | — | [0084-library-adoption-migration-plan.md](0084-library-adoption-migration-plan.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
