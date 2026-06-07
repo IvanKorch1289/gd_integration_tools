@@ -113,7 +113,7 @@ async def test_l3_publish_invalidate_calls_redis(
     class _FakeRaw:
         def __init__(self) -> None:
             self.calls: list[tuple[str, bytes]] = []
-            self._raw_client = None  # noqa: явное None → fallback на self
+            self._raw_client = None  # fallback на self (lazy init raw_client)
 
         async def publish(self, channel: str, payload: bytes) -> int:
             self.calls.append((channel, payload))
