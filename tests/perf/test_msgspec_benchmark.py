@@ -27,7 +27,6 @@ import msgspec
 import pytest
 from pydantic import BaseModel
 
-
 # ── Pydantic-модели ──
 
 

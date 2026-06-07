@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from src.backend.core.net.outbound_http import OutboundHttpClient

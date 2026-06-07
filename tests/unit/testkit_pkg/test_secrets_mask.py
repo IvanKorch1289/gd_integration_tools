@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from testkit.recorder.secrets_mask import (
     MASKED_VALUE,
     mask_request_body,

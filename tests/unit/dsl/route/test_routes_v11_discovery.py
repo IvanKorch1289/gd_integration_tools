@@ -10,7 +10,6 @@ import tomllib
 from pathlib import Path
 
 import yaml
-import pytest
 
 # Корень проекта — три уровня вверх от этого файла (tests/unit/dsl/route/)
 _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent

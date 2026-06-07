@@ -18,11 +18,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.core.resilience.self_healer import (
-    SelfHealer,
-    _self_healer,
-    get_self_healer,
-)
+from src.backend.core.resilience.self_healer import SelfHealer, get_self_healer
 
 
 @pytest.fixture(autouse=True)

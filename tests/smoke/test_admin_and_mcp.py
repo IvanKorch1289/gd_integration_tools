@@ -6,17 +6,15 @@ and key admin routers are included in the API.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
-    router as schemas_router,
-)
 from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
     router as admin_capabilities_router,
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
+    router as schemas_router,
 )
 
 

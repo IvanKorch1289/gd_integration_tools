@@ -1,6 +1,5 @@
 """Tests for backpressure module (E.3)."""
 
-import asyncio
 import pytest
 
 

@@ -18,7 +18,6 @@ from src.backend.dsl.orchestration.triggers import (
     get_trigger_registry,
 )
 
-
 # ── IntervalTrigger ────────────────────────────────────────────────
 
 

@@ -1,8 +1,6 @@
 """Tests for cache_decorators module (E.6)."""
 
-import asyncio
 import json
-import pytest
 
 
 class TestCacheDecorators:

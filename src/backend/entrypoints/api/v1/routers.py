@@ -65,6 +65,12 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.auth_introspect import (
         router as auth_introspect_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.auth_login import (
+        router as auth_login_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.auth_methods import (
+        router as auth_methods_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
         router as auth_saml_router,
     )
@@ -253,6 +259,13 @@ def get_v1_routers() -> APIRouter:
     # Sprint 16 DoD-7: OAuth2 Token Introspection (RFC 7662).
     api_router_v1.include_router(
         auth_introspect_router, prefix="/auth", tags=["Auth · Introspect"]
+    )
+    # S58 W6: Unified login (POST /auth/login) + methods listing (GET /auth/methods).
+    api_router_v1.include_router(
+        auth_login_router, tags=["Auth · Login (S58 W6)"]
+    )
+    api_router_v1.include_router(
+        auth_methods_router, tags=["Auth · Methods (S58 W6)"]
     )
     # Sprint 9 K3 W2: HITL (Human-in-the-Loop) panel API.
     api_router_v1.include_router(hitl_router, prefix="/hitl", tags=["HITL"])

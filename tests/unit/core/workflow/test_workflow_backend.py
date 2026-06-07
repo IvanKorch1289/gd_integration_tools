@@ -4,19 +4,14 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 import pytest
 
 from src.backend.core.workflow import (
     FakeWorkflowBackend,
-    WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,
-    WorkflowStatus,
 )
 from src.backend.core.workflow.backend import WorkflowBackend as WBProtocol
-
 
 # ─── Protocol conformance ───────────────────────────────────────────────────
 

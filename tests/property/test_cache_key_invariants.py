@@ -11,12 +11,9 @@ Requires: hypothesis>=6.0
 
 from __future__ import annotations
 
-import asyncio
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
 import pytest
-
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 st_json_value = st.one_of(
     st.none(),

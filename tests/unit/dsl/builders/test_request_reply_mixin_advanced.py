@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+
 import pytest
 
 from src.backend.dsl.builders.request_reply_mixin import (
     DEFAULT_TIMEOUT_S,
-    REPLY_CHANNEL_PREFIX,
     InMemoryTransport,
     RequestReplyBackend,
     RequestReplyMixin,
     RequestReplyTimeoutError,
 )
-
 
 # ============================================================================
 # InMemoryTransport

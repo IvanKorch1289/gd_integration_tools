@@ -13,15 +13,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.backend.services.ai.memory.langmem_service import (
-    LangMemService,
-    MemoryEntry,
-    get_langmem_service,
-)
+from src.backend.services.ai.memory.langmem_service import LangMemService, MemoryEntry
 
 
 def _make_entry(

@@ -19,8 +19,6 @@ Marker: ``chaos`` + ``backpressure``. CI: warn-only (continue-on-error).
 from __future__ import annotations
 
 import asyncio
-import gc
-import sys
 
 import pytest
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 # Корень проекта: поднимаемся на 4 уровня от tests/unit/docs/
 _PROJECT_ROOT = Path(__file__).parents[3]
 _DOCS_DIR = _PROJECT_ROOT / "docs"

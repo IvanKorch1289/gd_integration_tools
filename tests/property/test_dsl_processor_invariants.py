@@ -10,10 +10,9 @@ Requires: hypothesis>=6.0
 
 from __future__ import annotations
 
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 # ── Strategies ──────────────────────────────────────────────────────────────
 
@@ -63,7 +62,6 @@ class TestProcessorIdempotency:
         """Applying any processor twice should yield same result as applying once."""
         # Import here to avoid import errors at collection time for processors
         # that may have optional dependencies
-        import sys
         from importlib import import_module
 
         # Try to import the processor class
@@ -73,7 +71,7 @@ class TestProcessorIdempotency:
             if processor_cls is None:
                 pytest.skip(f"{processor_name} not found in ai module")
         except ImportError:
-            pytest.skip(f"Cannot import ai processors module")
+            pytest.skip("Cannot import ai processors module")
 
         # Create processor instance
         try:
@@ -125,8 +123,8 @@ class TestProcessorDeterminism:
         self, processor_name: str, context: object
     ) -> None:
         """Two calls with same inputs should produce identical outputs."""
-        import sys
         from importlib import import_module
+
         from src.backend.dsl.engine.exchange import Exchange
 
         try:

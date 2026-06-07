@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from tools.loadtest.routes import LoadGenerator, LoadStats, loadtest, _percentile
+from tools.loadtest.routes import LoadGenerator, LoadStats, _percentile, loadtest
 
 
 @pytest.mark.asyncio

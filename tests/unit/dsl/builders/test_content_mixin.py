@@ -16,7 +16,6 @@ Target: 18+ tests, ≥95% line coverage of content_mixin.py.
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -31,7 +30,6 @@ from src.backend.dsl.builders.content_mixin import (
     WireTapEIPProcessor,
 )
 from src.backend.dsl.engine.exchange import Exchange, Message
-
 
 # ─── Fixtures & helpers ───────────────────────────────────────────────
 

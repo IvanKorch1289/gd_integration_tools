@@ -58,7 +58,7 @@ def main(paths: list[str]) -> int:
                     new_line = re.sub(r"#\s*type: ignore(?:\[[^\]]*\])?", "", new_line)
                 else:
                     # Remove exact code from ignore list
-                    pattern = rf"# type: ignore\[([^\]]*)\]"
+                    pattern = r"# type: ignore\[([^\]]*)\]"
 
                     def repl(m: re.Match) -> str:
                         parts = [c.strip() for c in m.group(1).split(",")]

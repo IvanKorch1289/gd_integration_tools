@@ -11,9 +11,6 @@
 
 from __future__ import annotations
 
-from contextvars import ContextVar
-from typing import Callable
-
 import pytest
 
 from src.backend.core.tenancy import TenantContext, tenant_scope

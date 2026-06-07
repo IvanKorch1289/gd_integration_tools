@@ -5,9 +5,6 @@ Wave: [tech-debt/coverage].
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 import pytest
 
 from src.backend.dsl.engine.processors._path_safety import (

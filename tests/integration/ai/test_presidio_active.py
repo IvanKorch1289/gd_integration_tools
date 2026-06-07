@@ -79,10 +79,7 @@ def test_fallback_counter_increments_on_import_error(
 
     Алерт `rate(presidio_fallback_total[5m]) > 0` сразу page on-call.
     """
-    from src.backend.services.ai.pii.presidio_analyzer import (
-        PresidioSanitizerAdapter,
-        _record_presidio_fallback,
-    )
+    from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
     captured: list[str] = []
 

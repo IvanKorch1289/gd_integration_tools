@@ -11,11 +11,11 @@ import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.scraping import (
-    _is_blocked_host,
-    _validate_url,
     ApiProxyProcessor,
     PaginateProcessor,
     ScrapeProcessor,
+    _is_blocked_host,
+    _validate_url,
 )
 
 

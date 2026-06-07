@@ -1,7 +1,5 @@
 """Tests for graceful_degradation module (E.5)."""
 
-import asyncio
-import pytest
 from collections import deque
 
 

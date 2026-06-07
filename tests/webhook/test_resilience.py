@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
+from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason
 from src.backend.core.resilience.rpa_policy import RPACallPolicy, set_rpa_policy
 
 pytestmark = pytest.mark.asyncio

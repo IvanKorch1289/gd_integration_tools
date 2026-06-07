@@ -17,7 +17,6 @@ from src.backend.core.observability.baggage import (
     MissingBaggageError,
     ensure_required_baggage,
     get_baggage,
-    set_baggage,
     with_baggage,
 )
 

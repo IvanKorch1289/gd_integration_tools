@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import warnings
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,7 +14,6 @@ from src.backend.dsl.engine.plugin_registry import (
     get_processor_plugin_registry,
 )
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.registry import ProcessorNotFoundError
 
 
 class DummyProcessor(BaseProcessor):

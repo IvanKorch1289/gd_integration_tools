@@ -34,8 +34,6 @@ from __future__ import annotations
 
 import sys
 import threading
-import traceback
-from pathlib import Path
 from typing import Optional
 
 # Lazy import для feature flag (избегаем тяжёлых зависимостей при старте)

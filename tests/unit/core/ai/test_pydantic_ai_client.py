@@ -15,12 +15,12 @@ from typing import Any
 
 import pytest
 
+from src.backend.core.ai.policy.spec import ModelRouterSpec
 from src.backend.core.ai.pydantic_ai_client import (
     LLMDependencies,
     LLMResult,
     PydanticAIClient,
 )
-from src.backend.core.ai.policy.spec import ModelRouterSpec
 from src.backend.services.ai.gateway.exceptions import (
     GatewayRateLimited,
     GatewayUnavailable,

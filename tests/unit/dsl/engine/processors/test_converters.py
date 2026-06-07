@@ -9,17 +9,17 @@ import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.converters import (
-    ConvertProcessor,
-    register_conversion,
     ConversionStrategy,
-    JsonToYaml,
-    YamlToJson,
-    JsonToMsgpack,
-    MsgpackToJson,
-    JsonToXml,
-    XmlToJson,
-    DictToCsv,
+    ConvertProcessor,
     CsvToDict,
+    DictToCsv,
+    JsonToMsgpack,
+    JsonToXml,
+    JsonToYaml,
+    MsgpackToJson,
+    XmlToJson,
+    YamlToJson,
+    register_conversion,
 )
 
 
@@ -154,7 +154,6 @@ class TestRegisterConversion:
                 return f"custom: {data}"
 
         register_conversion("custom", "output", CustomStrategy())
-        from src.backend.dsl.engine.processors import converters
 
         proc = ConvertProcessor(from_format="custom", to_format="output")
         ex = _make_exchange(body="test")

@@ -4,13 +4,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.backend.core.messaging.dlq_policy import (
-    DLQPolicy,
     DLQPolicyRegistry,
     default_policy_registry,
 )
@@ -19,7 +18,7 @@ from src.backend.infrastructure.messaging.dlq.policy_resolver import (
     resolve_class_for_envelope,
     resolve_policy_for,
 )
-from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope, DLQReason
+from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 
 def _make_env(**kwargs):

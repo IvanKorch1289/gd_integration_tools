@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
-
 from src.backend.core.config.features import feature_flags
 from src.backend.core.config.features.security import SecurityFlags
 

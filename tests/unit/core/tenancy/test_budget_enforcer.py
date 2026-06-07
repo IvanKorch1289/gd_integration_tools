@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from src.backend.core.tenancy.budget_enforcer import (
-    enforce_pre_call,
     enforce_post_call,
+    enforce_pre_call,
     render_429,
     tenant_from_saml_attributes,
 )

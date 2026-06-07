@@ -6,7 +6,6 @@ import pytest
 
 from src.backend.dsl.registry.errors import ProcessorNotFoundError
 from src.backend.dsl.registry.lazy_processor import (
-    LazyProcessorRef,
     LazyProcessorRegistry,
     load_processor_class,
 )

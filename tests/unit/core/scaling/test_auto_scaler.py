@@ -14,7 +14,6 @@ from src.backend.core.scaling.bulkhead_scaler import BulkheadScaler, _utilizatio
 from src.backend.core.scaling.local_process_scaler import LocalProcessScaler
 from src.backend.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
 
-
 # ── BulkheadScaler ──
 
 

@@ -6,9 +6,6 @@ Tests generate_openapi(Pipeline) -> dict functionality.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
-
-import pytest
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.engine.openapi_generator import generate_openapi

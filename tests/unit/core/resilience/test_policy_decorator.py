@@ -122,7 +122,7 @@ async def test_policy_with_breaker_spec_uses_named_breaker() -> None:
 
 @pytest.mark.asyncio
 async def test_policy_breaker_open_raises_circuit_open() -> None:
-    from src.backend.core.resilience.breaker import Breaker, get_breaker_registry
+    from src.backend.core.resilience.breaker import get_breaker_registry
 
     registry = get_breaker_registry()
     breaker = registry.get_or_create(

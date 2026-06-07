@@ -11,14 +11,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processor_pool import (
     PoolMetrics,
     ProcessorPool,
     get_processor_pool,
     set_processor_pool,
 )
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
 class DummyProcessor(BaseProcessor):

@@ -1,8 +1,6 @@
 """Tests for retry_budget module (E.4)."""
 
-import asyncio
 import pytest
-from unittest.mock import patch
 
 
 class TestRetryBudget:
@@ -16,7 +14,7 @@ class TestRetryBudget:
         when the budget is exhausted, RetryBudgetExhausted propagates immediately
         without retry delay.
         """
-        from src.backend.core.resilience.retry import with_retry, RetryPolicy
+        from src.backend.core.resilience.retry import RetryPolicy, with_retry
         from src.backend.core.resilience.retry_budget import (
             RetryBudget,
             RetryBudgetExhausted,

@@ -8,10 +8,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.dsl.engine.processors.cdc_capture import (
-    CDCCaptureProcessor,
     _ALLOWED_STRATEGIES,
+    CDCCaptureProcessor,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Stubs (matching pattern from test_ai_processors_unit.py)

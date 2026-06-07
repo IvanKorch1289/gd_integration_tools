@@ -23,7 +23,6 @@ from src.backend.infrastructure.sources.webhook import (
     WebhookVerificationError,
 )
 
-
 SECRET = "supersecret_key_with_enough_entropy_aaaa"
 
 

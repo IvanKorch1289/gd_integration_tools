@@ -9,8 +9,6 @@ Verifies:
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.config.features import feature_flags
 from src.backend.core.config.features.auth import AuthFlags
 

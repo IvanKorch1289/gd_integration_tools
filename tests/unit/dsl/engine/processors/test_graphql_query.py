@@ -9,7 +9,6 @@ import pytest
 
 from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcessor
 
-
 # --------------------------------------------------------------------------- #
 # Stubs
 # --------------------------------------------------------------------------- #

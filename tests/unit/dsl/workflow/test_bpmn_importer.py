@@ -15,7 +15,6 @@ from src.backend.dsl.workflow.bpmn_importer import (
 )
 from src.backend.dsl.workflow.spec import ActivityDeclaration, WorkflowDeclaration
 
-
 _CREDIT_SCORING_PATH = (
     Path(__file__).resolve().parents[4] / "docs" / "bpmn" / "credit_scoring_sample.bpmn"
 )

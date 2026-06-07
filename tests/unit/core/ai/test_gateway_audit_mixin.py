@@ -5,14 +5,13 @@ Covers: construction, _emit, _emit_guard, _emit_final with/without audit_service
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.backend.core.ai.errors import GuardResult
 from src.backend.core.ai.gateway_audit_mixin import _AuditContext, _emit_wrapper
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-from src.backend.core.ai.errors import GuardResult
 
 
 class TestAuditContext:

@@ -24,9 +24,9 @@ def _get_run_granian():
     af_module.create_app = lambda *a, **k: fake_app
 
     try:
-        import src.backend.main as main_module
-
         import importlib
+
+        import src.backend.main as main_module
 
         importlib.reload(main_module)
         return main_module._run_granian

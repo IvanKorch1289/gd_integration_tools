@@ -17,9 +17,8 @@ class TestMCPNamespace:
     def test_namespace_dataclass_fields(self) -> None:
         """MCPNamespace has required fields."""
         from src.backend.entrypoints.mcp.namespaces import (
-            MCPNamespace,
-            CREDIT_NAMESPACE,
             ANALYTICS_NAMESPACE,
+            CREDIT_NAMESPACE,
             SYSTEM_NAMESPACE,
         )
 
@@ -44,8 +43,8 @@ class TestMCPNamespace:
     def test_get_namespace_for_credit_action(self) -> None:
         """credit.* actions map to CREDIT_NAMESPACE."""
         from src.backend.entrypoints.mcp.namespaces import (
-            get_namespace_for_action,
             CREDIT_NAMESPACE,
+            get_namespace_for_action,
         )
 
         ns = get_namespace_for_action("credit.score.calculate")
@@ -60,8 +59,8 @@ class TestMCPNamespace:
     def test_get_namespace_for_analytics_action(self) -> None:
         """analytics.* and metrics.* actions map to ANALYTICS_NAMESPACE."""
         from src.backend.entrypoints.mcp.namespaces import (
-            get_namespace_for_action,
             ANALYTICS_NAMESPACE,
+            get_namespace_for_action,
         )
 
         ns = get_namespace_for_action("analytics.report.generate")
@@ -73,8 +72,8 @@ class TestMCPNamespace:
     def test_get_namespace_for_system_action(self) -> None:
         """system.*, tech.*, health.*, admin.* actions map to SYSTEM_NAMESPACE."""
         from src.backend.entrypoints.mcp.namespaces import (
-            get_namespace_for_action,
             SYSTEM_NAMESPACE,
+            get_namespace_for_action,
         )
 
         for prefix in ("system.", "tech.", "health.", "admin."):
@@ -94,11 +93,11 @@ class TestMCPNamespace:
     def test_list_namespaces_returns_all_three(self) -> None:
         """list_namespaces returns credit, analytics, system."""
         from src.backend.entrypoints.mcp.namespaces import (
-            list_namespaces,
-            CREDIT_NAMESPACE,
-            ANALYTICS_NAMESPACE,
-            SYSTEM_NAMESPACE,
             AI_NAMESPACE,
+            ANALYTICS_NAMESPACE,
+            CREDIT_NAMESPACE,
+            SYSTEM_NAMESPACE,
+            list_namespaces,
         )
 
         namespaces = list_namespaces()

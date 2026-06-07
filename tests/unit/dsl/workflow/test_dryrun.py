@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.dsl.workflow.dryrun import run_workflow_dryrun
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,

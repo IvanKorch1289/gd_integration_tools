@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from src.backend.core.resilience.cache_decorators import (

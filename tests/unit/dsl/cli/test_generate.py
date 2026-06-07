@@ -5,12 +5,6 @@ Wave [wave:h1-cli-generate]
 
 from __future__ import annotations
 
-import os
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from src.backend.dsl.cli.generate import (
     _build_processor_code,
     _build_route_template,

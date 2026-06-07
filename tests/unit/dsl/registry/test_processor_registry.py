@@ -60,7 +60,9 @@ class _StubBase:
 # ---------------------------------------------------------------------------
 
 try:
-    from src.backend.dsl.engine.processors.base import BaseProcessor as _BaseProcessor  # noqa: E501
+    from src.backend.dsl.engine.processors.base import (
+        BaseProcessor as _BaseProcessor,  # noqa: E501
+    )
 
     _HAVE_BASE_PROCESSOR = True
 except Exception:  # noqa: BLE001

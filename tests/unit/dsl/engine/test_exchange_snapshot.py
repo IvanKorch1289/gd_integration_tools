@@ -5,11 +5,12 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import msgspec
 import pytest
 
-from src.backend.dsl.engine import exchange_snapshot as es
+import src.backend.dsl.engine.exchange_snapshot as es
 
 # ---------------------------------------------------------------------------
 # Test fixtures — два типа: msgspec.Struct (fast path) и @dataclass (fast path)

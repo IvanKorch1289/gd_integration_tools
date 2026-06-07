@@ -9,11 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.backend.core.config.features import feature_flags
-from src.backend.dsl.builders.policy_mixin import (
-    PolicyChain,
-    PolicyMarkerProcessor,
-    PolicyMixin,
-)
+from src.backend.dsl.builders.policy_mixin import PolicyMarkerProcessor, PolicyMixin
 
 
 class _FakeBuilder(PolicyMixin):

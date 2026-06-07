@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.dsl.engine.pipeline import CompiledPipeline, Pipeline, PipelineCompiler
 from src.backend.dsl.engine.processors.base import BaseProcessor
 

@@ -5,8 +5,6 @@ Wave [wave:h2-cli-debug]
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from src.backend.dsl.cli.debug import (

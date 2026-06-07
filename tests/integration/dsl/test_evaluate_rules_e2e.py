@@ -21,7 +21,6 @@ from src.backend.dsl.engine.processors.rule_engine import (
     Rule,
 )
 
-
 _EXAMPLE_YAML = Path(__file__).parents[3] / "docs" / "dsl" / "rule-engine-example.yaml"
 
 

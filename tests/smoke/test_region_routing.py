@@ -6,6 +6,8 @@ import pytest
 
 from src.backend.core.tenancy import TenantContext
 from src.backend.infrastructure.resilience.region_routing import (
+    _REGION_HEALTH,
+    _REGION_REGISTRY,
     Region,
     RegionRouter,
     RegionStatus,
@@ -14,8 +16,6 @@ from src.backend.infrastructure.resilience.region_routing import (
     list_regions,
     register_region,
     set_region_status,
-    _REGION_REGISTRY,
-    _REGION_HEALTH,
 )
 
 

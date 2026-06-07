@@ -14,8 +14,6 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.codec.format_converters import (
     AvroDecodeProcessor,
     AvroEncodeProcessor,
@@ -28,6 +26,8 @@ from src.backend.dsl.codec.format_converters import (
     TomlDecodeProcessor,
     TomlEncodeProcessor,
 )
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 
 
 def _make_exchange(body: Any) -> Exchange[Any]:

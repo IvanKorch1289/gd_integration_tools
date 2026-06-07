@@ -9,8 +9,6 @@ from pathlib import Path
 import pytest
 
 from src.backend.dsl.blueprint_loader import (
-    BlueprintParam,
-    BlueprintSpec,
     DEFAULT_BLUEPRINTS_DIR,
     discover_blueprints,
     load_blueprint,

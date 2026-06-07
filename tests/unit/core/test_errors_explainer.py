@@ -9,8 +9,8 @@ from __future__ import annotations
 from src.backend.core.errors_explainer import (
     ErrorExplainer,
     ExplainedError,
-    explain_error,
     error_explainer,
+    explain_error,
 )
 
 

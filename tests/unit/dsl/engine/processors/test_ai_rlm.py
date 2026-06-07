@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.ai_rlm import (
     AIRLMProcessor,
     RLMConfig,

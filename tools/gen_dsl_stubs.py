@@ -33,7 +33,6 @@ import re
 import sys
 import types
 import typing
-from collections.abc import Callable as ABCCallable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ForwardRef, get_args, get_origin
@@ -41,7 +40,7 @@ from typing import TYPE_CHECKING, Any, ForwardRef, get_args, get_origin
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 if TYPE_CHECKING:
-    from jinja2 import Template
+    pass
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 _TEMPLATE_NAME = "dsl_stub.pyi.j2"

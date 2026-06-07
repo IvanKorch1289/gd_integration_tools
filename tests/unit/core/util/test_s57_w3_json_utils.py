@@ -15,7 +15,6 @@ import pytest
 
 from src.backend.core.util.json_utils import dumps_bytes, dumps_str, loads
 
-
 # ── dumps_str ───────────────────────────────────────────────────────
 
 

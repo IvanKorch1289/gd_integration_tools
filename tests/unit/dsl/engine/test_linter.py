@@ -6,7 +6,6 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 

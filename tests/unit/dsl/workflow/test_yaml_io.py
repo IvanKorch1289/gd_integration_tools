@@ -18,6 +18,12 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
+from extensions.core_entities.orders.workflows.orders_saga import (
+    build_orders_saga_workflow,
+)
+from extensions.credit_pipeline.workflows.payments_saga import (
+    build_payments_saga_workflow,
+)
 from src.backend.dsl.workflow import (
     FeatureDisabledError,
     WorkflowBuilder,
@@ -26,12 +32,6 @@ from src.backend.dsl.workflow import (
     diff,
     from_yaml,
     to_yaml,
-)
-from extensions.core_entities.orders.workflows.orders_saga import (
-    build_orders_saga_workflow,
-)
-from extensions.credit_pipeline.workflows.payments_saga import (
-    build_payments_saga_workflow,
 )
 
 

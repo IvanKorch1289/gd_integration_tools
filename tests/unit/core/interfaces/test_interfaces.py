@@ -15,40 +15,27 @@ Covers:
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
-from src.backend.core.interfaces.cache import CacheBackend
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
-from src.backend.core.interfaces.doc_store import DocStoreBackend
-from src.backend.core.interfaces.metrics import MetricsBackend
-from src.backend.core.interfaces.notification import (
-    NotificationAdapter,
-    NotificationMessage,
-)
-from src.backend.core.interfaces.secrets import SecretsBackend
-from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.interfaces import (
     AsyncBatcher,
-    AsyncLifecycle,
-    AuthProvider,
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerOpenError,
     CircuitState,
     HealthReport,
     HealthStatus,
-    Healthcheck,
-    ManagedResource,
-    MessageBroker,
     PoolMetrics,
     PoolMetricsCollector,
     pool_metrics,
 )
-
+from src.backend.core.interfaces.antivirus import AntivirusScanResult
+from src.backend.core.interfaces.audit import AuditRecord
+from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
+from src.backend.core.interfaces.notification import NotificationMessage
+from src.backend.core.interfaces.storage import ObjectStorage
 
 # ─── Antivirus ──────────────────────────────────────────────────────────────
 

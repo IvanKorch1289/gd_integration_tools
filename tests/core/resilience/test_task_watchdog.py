@@ -1,8 +1,9 @@
 """Tests for task_watchdog module (E.1)."""
 
 import asyncio
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 
 
 class TestTaskWatchdog:
@@ -12,7 +13,6 @@ class TestTaskWatchdog:
         """Module imports without SyntaxError (bug A.1 fixed)."""
         from src.backend.core.resilience.task_watchdog import (
             TaskWatchdog,
-            get_task_watchdog,
             _reset_task_watchdog,
         )
 

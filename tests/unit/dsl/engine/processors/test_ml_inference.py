@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import numpy
 import pytest
 
 from src.backend.dsl.engine.processors.ml_inference import (

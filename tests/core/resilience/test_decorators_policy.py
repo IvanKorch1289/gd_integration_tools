@@ -1,8 +1,6 @@
 """Tests for @policy decorator (E.2)."""
 
-import asyncio
 import pytest
-from unittest.mock import patch
 
 
 class TestPolicyDecorator:
@@ -51,8 +49,8 @@ class TestPolicyDecorator:
     @pytest.mark.asyncio
     async def test_policy_with_retry(self):
         """@policy(retry=RetryPolicy(max_attempts=3)) retries on failure."""
-        from src.backend.core.resilience.retry import RetryPolicy
         from src.backend.core.resilience.decorators import policy
+        from src.backend.core.resilience.retry import RetryPolicy
 
         call_count = 0
 

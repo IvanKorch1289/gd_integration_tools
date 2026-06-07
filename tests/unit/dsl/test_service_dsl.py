@@ -16,7 +16,6 @@ from src.backend.dsl.service_dsl import (
     register_action,
     scan_and_register_actions,
     service_dsl,
-    service_dsl_registry,
 )
 
 

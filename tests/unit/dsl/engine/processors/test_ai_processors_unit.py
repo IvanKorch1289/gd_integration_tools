@@ -18,7 +18,6 @@ from src.backend.dsl.engine.processors.ai import (
     TokenBudgetProcessor,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Stubs (same pattern as test_rag_pii_redaction.py)
 # --------------------------------------------------------------------------- #

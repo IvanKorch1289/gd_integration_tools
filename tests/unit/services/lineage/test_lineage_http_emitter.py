@@ -9,7 +9,6 @@ import json
 import threading
 import urllib.error
 from contextlib import contextmanager
-from io import BytesIO
 from typing import Any
 from unittest.mock import MagicMock, patch
 

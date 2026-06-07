@@ -9,7 +9,6 @@ Coverage: flagsmith_provider.py 53% → 95%+ через тестирование
 from __future__ import annotations
 
 import sys
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest

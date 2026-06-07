@@ -12,13 +12,12 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.core.ai import AIGateway, AIRequest, AIResponse
-from src.backend.core.ai.policy.spec import AIPolicySpec, AuditSpec, ModelRouterSpec
+from src.backend.core.ai import AIGateway
+from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec
 
 
 def _make_policy(
