@@ -5,6 +5,10 @@
 * :func:`write` — добавление нового сообщения (вызывается бизнес-логикой
   в той же транзакции, что и бизнес-изменения).
 * :func:`fetch_pending` — выборка сообщений для публикации worker'ом.
+* :func:`fetch_stuck_pending` — выборка "застрявших" pending-сообщений
+  (created_at < now - threshold_seconds) для stuck-detection алертов.
+* :func:`count_stuck_pending` — быстрый подсчёт stuck-сообщений для
+  Prometheus gauge.
 * :func:`mark_sent` / :func:`mark_failed` — обновление статуса после
   попытки публикации.
 """
@@ -14,13 +18,21 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.infrastructure.database.models.outbox import OutboxMessage
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
-__all__ = ("fetch_pending", "mark_failed", "mark_sent", "write", "write_within_session")
+__all__ = (
+    "count_stuck_pending",
+    "fetch_pending",
+    "fetch_stuck_pending",
+    "mark_failed",
+    "mark_sent",
+    "write",
+    "write_within_session",
+)
 
 
 async def write_within_session(
@@ -75,6 +87,66 @@ async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
         )
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+
+async def fetch_stuck_pending(
+    *, threshold_seconds: int, limit: int = 100
+) -> list[OutboxMessage]:
+    """Возвращает pending-сообщения, которые "застряли" дольше threshold.
+
+    Stuck-сообщение = ``status='pending'`` AND ``created_at < now() - threshold_seconds``
+    AND ``retry_count == 0`` (т.е. ни разу не был обработан worker'ом).
+
+    Используется для:
+    * Алертов (Grafana: outbox_stuck_pending_count gauge)
+    * Investigation dashboard (что именно застряло, по каким topics)
+    * Manual replay после fix worker'а
+
+    Args:
+        threshold_seconds: Минимальный возраст "застрявшего" сообщения.
+            Рекомендация: ``2 * poll_interval`` (т.е. 2x периода worker'а).
+        limit: Защита от OOM при большом backlog'е.
+
+    Returns:
+        Список :class:`OutboxMessage` отсортированный по ``created_at`` ASC.
+    """
+    cutoff = datetime.now(UTC) - timedelta(seconds=threshold_seconds)
+    async with main_session_manager.create_session() as session:
+        stmt = (
+            select(OutboxMessage)
+            .where(OutboxMessage.status == "pending")
+            .where(OutboxMessage.created_at < cutoff)
+            .where(OutboxMessage.retry_count == 0)
+            .order_by(OutboxMessage.created_at)
+            .limit(limit)
+        )
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+
+async def count_stuck_pending(*, threshold_seconds: int) -> int:
+    """Подсчитывает количество "застрявших" pending-сообщений.
+
+    Дешёвый COUNT(*) запрос — используется для Prometheus gauge
+    ``outbox_stuck_pending_count`` (sampled раз в N секунд).
+
+    Args:
+        threshold_seconds: см. :func:`fetch_stuck_pending`.
+
+    Returns:
+        Количество stuck-сообщений. 0 если ни одного.
+    """
+    cutoff = datetime.now(UTC) - timedelta(seconds=threshold_seconds)
+    async with main_session_manager.create_session() as session:
+        stmt = (
+            select(func.count())
+            .select_from(OutboxMessage)
+            .where(OutboxMessage.status == "pending")
+            .where(OutboxMessage.created_at < cutoff)
+            .where(OutboxMessage.retry_count == 0)
+        )
+        result = await session.execute(stmt)
+        return int(result.scalar_one())
 
 
 async def mark_sent(message_id: int) -> None:
