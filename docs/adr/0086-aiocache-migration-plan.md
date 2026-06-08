@@ -128,3 +128,62 @@ Total: ~1000 LOC migration (out of 1778 custom cache LOC). Остальные
 * aiocache docs: https://aiocache.readthedocs.io/
 * S59 W4 inventory: ``src/backend/infrastructure/decorators/caching/`` +
   ``src/backend/infrastructure/cache/`` (~1778 LOC total).
+
+---
+
+## S62 W1 Closure: Scope Reduction Rationale (2026-06-08)
+
+**Decision**: Full Phase 1-4 migration **DEFERRED** to S63+ with major scope
+reduction. aiocache POC proven работает (S59 W4 ``aiocache_poc.py`` + 47
+cache tests pass), но **feature parity gap** слишком большой для
+одно-волновой миграции.
+
+### Что НЕ мигрировано (S62 W1 verify)
+
+| Cache concern | Custom impl | aiocache support | Migration? |
+|---|---|---|---|
+| Per-key TTL envelope | ✅ ``CacheEnvelope`` | ✅ ``aiocache.cached(ttl=...)`` | trivial, but **already in @cached backend=memory** |
+| Stampede protection (KeyLockManager) | ✅ custom lock | ❌ (нет в core) | ❌ DEFERRED (perf critical, не drop-in) |
+| Tag-based invalidation | ✅ ``invalidator.py`` | ❌ (нет в core) | ❌ DEFERRED (out-of-scope feature) |
+| Disk backend | ✅ ``DiskTTLCache`` | ⚠️ ``aiocache.backends.DiskCache`` (contrib) | ⚠️ possible, not in core |
+| Multi-tier (Redis → Memory → Disk) | ✅ ``CachingDecorator`` | ❌ (нет multi-tier) | ❌ DEFERRED (architectural) |
+| Tenant-namespaced keys | ✅ ``tenant_wrapper.py`` | ⚠️ через key_builder | ⚠️ possible, not drop-in |
+| Prometheus metrics hooks | ✅ встроенные в MemoryBackend | ❌ (нет out-of-box) | ❌ DEFERRED (Phase 3 plugin) |
+| Renew TTL on access | ✅ ``renew_ttl=True`` | ❌ (нет) | ❌ DEFERRED (не стандарт) |
+| Exclude self from cache (recursion) | ✅ ``exclude_self=True`` | ❌ (нет) | ❌ DEFERRED (edge case) |
+
+**Conclusion**: aiocache = good library, но **не drop-in replacement** для
+``CachingDecorator``. **6 из 9 features** — отсутствуют или требуют
+non-trivial плагинов. Phase 4 ("Multi-tier chain поверх aiocache") — это
+**essentially rewriting CachingDecorator**, ~405 LOC.
+
+### Что РЕАЛЬНО сделано (S59 W4 → S62 W1)
+
+1. ✅ ``aiocache>=0.12`` в ``pyproject.toml`` (core dep)
+2. ✅ ``src/backend/infrastructure/cache/aiocache_poc.py`` — POC доказывает
+   что aiocache работает в pytest-async среде проекта
+3. ✅ 47 cache tests pass (regression baseline)
+4. ✅ ADR-0086 написан и согласован
+
+### Forward path (S63+ candidates)
+
+* **aiocache 1.0** (когда выйдет stable) — может иметь multi-tier / stampede
+  из коробки
+* **Per-feature ad-hoc migration** — НЕ глобально, а по 1 use-case, когда
+  бизнес-требование действительно простое (memory-only, no envelope, no
+  stampede). На текущий момент таких use-cases в проекте не обнаружено.
+* **New code only** — для будущих фич использовать ``@aiocache.cached``
+  напрямую вместо ``@cached`` если фича simple. ADR-0084 уже это
+  рекомендует (libraries > custom).
+
+### Bottom line
+
+S62 W1 = **close aiocache migration backlog как RESOLVED-WITH-NO-ACTION**.
+aiocache available + POC proven + ADR documented. Full migration не
+оправдан — feature parity gap + small scope = poor ROI.
+
+References:
+* S59 W4: ``93e8bdfa [verified] feat(cache): S59 W4 — aiocache dep + POC + ADR-0086 migration plan``
+* S62 W1 (this closure): scope-reduce justification.
+
+Status: **CLOSED — DEFERRED to per-feature ad-hoc (no global migration)**.
