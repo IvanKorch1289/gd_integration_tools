@@ -17,22 +17,29 @@ __all__ = ("BaseLoggerBackend", "LoggerProtocol")
 
 
 class LoggerProtocol(ABC):
-    """Протокол логгера — минимальный интерфейс для бизнес-кода."""
+    """Протокол логгера — минимальный интерфейс для бизнес-кода.
+
+    Сигнатура ``info/debug/...`` повторяет stdlib ``logging.Logger``:
+    позиционные ``*args`` для printf-style formatting (``logger.info("x %s", y)``)
+    и keyword ``**kwargs`` для structlog binding (``logger.info("x", key=value)``).
+    Без ``*args`` статические анализаторы (pyright) блокируют широко
+    используемый printf-style в 60+ call-sites проекта.
+    """
 
     @abstractmethod
-    def debug(self, msg: str, **kwargs: Any) -> None: ...
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
-    def info(self, msg: str, **kwargs: Any) -> None: ...
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
-    def warning(self, msg: str, **kwargs: Any) -> None: ...
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
-    def error(self, msg: str, **kwargs: Any) -> None: ...
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
-    def exception(self, msg: str, **kwargs: Any) -> None: ...
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
     def bind(self, **kwargs: Any) -> "LoggerProtocol":

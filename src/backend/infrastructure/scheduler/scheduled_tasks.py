@@ -1,8 +1,10 @@
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.external_apis.logging_service import scheduler_logger
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.schemas.base import EmailSchema
 
 __all__ = ("check_all_services", "consolidate_idle_sessions")
+
+scheduler_logger = get_logger("scheduler")
 
 
 async def check_all_services():

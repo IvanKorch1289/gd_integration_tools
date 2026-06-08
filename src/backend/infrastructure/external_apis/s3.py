@@ -19,10 +19,10 @@ class S3Service:
 
     def __init__(self, client: BaseS3Client):
         """Выполнить операцию   init  ."""
-        from src.backend.infrastructure.external_apis.logging_service import fs_logger
+        from src.backend.infrastructure.logging.factory import get_logger
 
         self.client = client
-        self.logger = fs_logger
+        self.logger = get_logger("storage")
         self._cache_handlers = {
             "metadata": metadata_cache,
             "existence": existence_cache,

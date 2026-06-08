@@ -54,13 +54,11 @@ class AntivirusService:
     """
 
     def __init__(self, http_client: HttpClient, s3_service: S3Service):
-        from src.backend.infrastructure.external_apis.logging_service import (
-            request_logger,
-        )
+        from src.backend.infrastructure.logging.factory import get_logger
 
         self.http_client = http_client
         self.s3_service = s3_service
-        self.logger = request_logger
+        self.logger = get_logger("request")
 
     async def scan_s3_file(
         self, key: str, multipart_field_name: str | None = None
