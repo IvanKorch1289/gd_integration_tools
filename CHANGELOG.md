@@ -5,6 +5,52 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 63 (2026-06-08)
+
+### Fixed
+
+#### s63/w1-mypy-regressions
+- LoggerProtocol.critical() добавлен в оба протокола (ABC + typing.Protocol)
+  — закрыто 7 mypy attr-defined errors (S60 W2 structlog migration leftover)
+- audit_versioning.py:57-58 type attrs (Transaction.id/issued_at) — `type` → `type[Any]`
+- workflows/worker.py:312 NameError UTC — `from datetime import UTC, datetime`
+- admin_parallelism.py:25 import-not-found — `# type: ignore[import-not-found]`
+- generator/actions.py:675 spec.schema_in — local var workaround
+- test_factory.py::test_get_object_storage_non_local_fallback_and_warns (S61 W1 bug)
+  — monkeypatch `builtins.__import__` форсирует ImportError → fallback path
+- **mypy 37 → 26 errors (-30%)** measured на чистом .mypy_cache
+
+#### s63/w1-streamlit-td008
+- 12 страниц с `# noqa: E402` на `get_api_client` импорте — noqa удалён (не нужен)
+- 32_DSL_Builder и 83_Tenant_Inspection — `st.set_page_config` → `setup_page()` (S43 W1 helper)
+- 43_Realtime_Logs — I001 (unsorted imports) auto-fixed
+- **TD-008 PARTIAL CLOSURE**: groups 1+2+6 done (3/3 P1+P3); groups 3-5 (P2) deferred
+
+### Changed
+
+#### s63/w2-claim-check-dedup
+- `src.backend.dsl.processors.claim_check_processor` (S38 W1, SLIM S3-only) удалён
+- `src.backend.dsl.engine.processors.eip.transformation.ClaimCheckProcessor`
+  (Redis + S3 composite, mode-based) — каноническая реализация
+- `dsl/processors/__init__.py` — убран ClaimCheckProcessor из __all__,
+  добавлен deprecation note в docstring
+- -337 LOC (1 source + 1 test удалены)
+
+#### s63/w2-ruff-autofix
+- ruff --fix (637 auto-fixes: 602 I001 + 35 F401)
+- 645 → 5 errors (-99.2%)
+- F401 removals: 35 unused `get_logger` imports (S60 W2 structlog migration leftover)
+- Net: -364 LOC across 600 files
+
+#### s63/w3-perf-gate-typer
+- `tools/perf_gate.py` — argparse → typer @app.callback (preserve 12 flag names)
+- print() → rich.Console (out_console / err_console)
+- main() entry: typer.Exit(code=...) вместо return code
+- Helpers UNCHANGED (loose duck-typed .attr contract → SimpleNamespace bridge)
+- Test backward compat: test_perf_gate_strict_mode_env принимает argparse.Namespace
+  без изменений (helper не зависит от конкретного Namespace type)
+- Pre-existing ruff: S108 (/tmp/) и S603 (subprocess) silenced с rationale
+
 ## [0.20.0] — 2026-05-26 — Sprint 28
 
 ### Added

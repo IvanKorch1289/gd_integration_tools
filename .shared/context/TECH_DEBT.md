@@ -109,9 +109,15 @@ parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 | TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files |
 | TD-006 | medium | S43+ | 🟡 documented | Vite 6.4.6/chromadb 1.5.20 phantom versions |
 | TD-007 | low | S43+ | 🟡 documented | Pre-existing bug: vite-env.d.ts = HTML |
-| TD-008 | medium | S43 (W1) | 🟡 recommended | Streamlit groups 1+2+6 consolidation |
+| TD-008 | medium | S63 W1 | ✅ partial closure | Groups 1+2+6 done; Groups 3-5 (P2) deferred |
 | TD-009 | low | S44+ | 🟡 deferred | 31_DSL_Visual_Editor.py 1267 LOC outlier |
 | TD-010 | low | S43+ | 🟡 documented | 14 pages без st.set_page_config |
+
+**S63 added/changed entries (1 closed, 0 new):**
+- TD-008: 🟡 recommended → ✅ partial closure (S63 W1).
+
+**Active carryover (unchanged from S62):**
+- TD-001/002/003/006/007/009/010 — все либо documented, либо deferred.
 
 **Sprint 42 added 5 TECH_DEBT entries (TD-006 — TD-010).** Все либо
 documented, либо имеют low-risk workaround. Sprint 43 W1 рекомендован
