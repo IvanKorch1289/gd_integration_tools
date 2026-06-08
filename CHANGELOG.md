@@ -62,12 +62,35 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - eip.transformation.py: 12% (whole file, 230 stmts, не только ClaimCheck).
   - ClaimCheckProcessor: 4 dedicated tests в test_transformation.py (store/retrieve × redis/s3).
   - infrastructure/storage: 81 passed (test_factory fix verified).
-  - dsl/processors: 262 passed.
-- Coverage baseline **unchanged**: 32.2% overall (S62 measurement, 87416 lines, 29721 covered).
-- Target: 75% per S19 K2 W4 ratchet. Gap: 32% → 75% = +43pp = ~200+ unit tests.
-- **Out of S63 W5 scope** (per "вначале фичи, в конце coverage" pattern):
-  - 200+ tests to close coverage gap (multi-sprint effort)
-  - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active = per-module)
+
+## [Unreleased] — Sprint 64
+
+### Fixed
+
+#### s64/w1-waf-coverage-typer
+- `tools/check_waf_coverage.py` — argparse → typer @app.callback
+- print() → rich.Console (out_console / err_console)
+- main() entry: typer.Exit(code=...)
+- Pre-existing ruff: S108 (/tmp/) silenced с rationale
+- Closes S62 W3 deferred carryover (S62 rationale: "low value для migration" — закрыт за 1 commit)
+
+#### s64/w3-mypy-26-to-16
+- **typo fix**: `src.backend.workfolws.workflows_service` → `src.backend.workflows.workflows_service`
+  (3 sites: setup.py, test_setup.py:32, test_setup.py:64)
+- **dead code removal**: 10 sites в agent_dsl/ (memory_recall, memory_store, reflection_loop,
+  plan_execute, agent_run, pii_mask, pii_unmask, _base, guardrails_apply, skill_invoke)
+  с try/except fallback на `get_container()` (aspirational DI pattern, never implemented)
+- Each `_resolve_*()` упрощён до `return None` (primary paths unaffected)
+- setup.py: добавлен `# type: ignore[import-not-found]` (legacy workflow_service path
+  отсутствует, real refactor требует S65+ scope)
+- **mypy 26 → 16 errors** (-10, 38% reduction from S63 W1 baseline)
+
+### Known issues
+
+- aioboto3>=13 vs pydantic-ai>=1.99 conflict (per 784298a8) — requires PyPI registry
+  check (S64 W2 deferred, no network access available)
+- TD-002 pre-prod-check coverage timeout — workaround active (per-module pytest)
+- 16 mypy errors remaining — все import-not-found, требуют module structure audit (S65+)
 - Honored carryover for S64+: coverage lift + TD-002 fix.
 
 ## [0.20.0] — 2026-05-26 — Sprint 28

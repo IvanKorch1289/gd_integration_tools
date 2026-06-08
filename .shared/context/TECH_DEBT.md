@@ -211,6 +211,36 @@ Estimated ~560 LOC savings в Sprint 42 W3 audit сократилось до ~16
 
 ---
 
+## TD-NEW: `mypy-import-not-found-residual` (medium, S64 W3 PARTIAL CLOSURE)
+
+**Файлы:** 16 errors в ~12 files (S64 W3 closeout baseline).
+
+**Проблема:** Mypy import-not-found errors на отсутствующие модули
+(`src.backend.core.di.container`, `src.backend.infrastructure.service_locator`,
+`src.backend.infrastructure.database.session`, `chromadb`, и т.д.).
+Все либо dead code (aspirational DI), либо missing modules (post-V22 era),
+либо third-party type stub issues.
+
+**S64 W3 closure scope:**
+- ✅ Закрыто 10 errors: `get_container` dead fallback removal в agent_dsl/
+  (10 sites, ~86 LOC removed; `get_container` нигде не определён)
+- ✅ Закрыто 1 error: typo `workfolws` → `workflows` в generator/setup.py +
+  test_setup.py (3 sites)
+- ⏳ Осталось 16 errors: requires module structure audit (S65+ scope)
+  - `chromadb` — third-party type stub (TD-006 phantom version, locked)
+  - `src.backend.core.plugin_runtime.registry` — missing module
+  - `src.backend.infrastructure.service_locator` — missing module
+  - `src.backend.infrastructure.database.session` — missing module
+  - `src.backend.infrastructure.external_apis.http_client` — missing
+  - `src.backend.dsl.workflow.template_registry_compat` — missing
+  - 11 другие — distributed across services/dsl/agent_dsl areas
+
+**Рекомендация (S65+):** per-module audit каждой из 16 ошибок.
+Некоторые могут быть simple `noqa`, некоторые — real missing modules,
+некоторые — superseded imports (как `get_container` в S64 W3).
+
+---
+
 ## TD-009: `dsl-visual-editor-outlier` (low, S44+)
 
 **Файл:** `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` (1267 LOC)
