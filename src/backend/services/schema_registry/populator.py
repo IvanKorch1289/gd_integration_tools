@@ -159,7 +159,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
     """
     reg = registry or get_schema_registry()
     try:
-        from src.backend.core.plugin_runtime.registry import get_plugin_registry  # type: ignore[import-not-found]
+        from src.backend.core.plugin_runtime.registry import get_plugin_registry  # type: ignore[import-not-found]  # noqa: I001
     except ImportError:
         return 0
 

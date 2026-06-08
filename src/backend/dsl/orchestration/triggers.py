@@ -195,7 +195,7 @@ class WebhookTrigger:
         app = self._app
         if app is None:
             try:
-                from src.backend.entrypoints.api.app import get_app  # type: ignore[import-not-found]
+                from src.backend.entrypoints.api.app import get_app  # type: ignore[import-not-found]  # noqa: I001
 
                 app = get_app()
             except Exception:

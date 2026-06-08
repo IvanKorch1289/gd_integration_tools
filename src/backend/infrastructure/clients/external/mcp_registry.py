@@ -283,7 +283,7 @@ def _check_capability(capability: str, client_name: str) -> None:
         PermissionError: Если capability denied.
     """
     try:
-        from src.backend.core.security.capability_gate import CapabilityGate  # type: ignore[import-not-found]
+        from src.backend.core.security.capability_gate import CapabilityGate  # type: ignore[import-not-found]  # noqa: I001
 
         gate = CapabilityGate.get_instance()
         plugin = "mcp_client_registry"

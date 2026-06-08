@@ -87,7 +87,7 @@ class LangGraphPostgresSaverWrapper:
         if self._dsn:
             return self._dsn
         try:
-            from src.backend.core.config.application_settings import settings  # type: ignore[import-not-found]
+            from src.backend.core.config.application_settings import settings  # type: ignore[import-not-found]  # noqa: I001
 
             db = getattr(settings, "database", None)
             if db is not None:

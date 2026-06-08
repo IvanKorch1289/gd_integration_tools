@@ -26,7 +26,7 @@ NotificationCallable = Callable[[dict[str, Any]], Awaitable[None]]
 
 async def _express_send(payload: dict[str, Any]) -> None:
     """Primary: BotX через ``ExpressBotClient``."""
-    from src.backend.infrastructure.clients.transport.express import get_express_client  # type: ignore[import-not-found]
+    from src.backend.infrastructure.clients.transport.express import get_express_client  # type: ignore[import-not-found]  # noqa: I001
 
     client = get_express_client()
     await client.send_message(chat_id=payload["recipient"], text=payload["message"])
