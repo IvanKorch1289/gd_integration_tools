@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **39**; уникальных слотов: **39**.
+Всего ADR-файлов: **40**; уникальных слотов: **40**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -43,5 +43,6 @@
 | 0086 | ADR-0086 — aiocache Migration Plan (S60+) | CLOSED — DEFERRED to per-feature ad-hoc (no global migration | [0086-aiocache-migration-plan.md](0086-aiocache-migration-plan.md) |
 | 0087 | ADR-0087 — ClaimCheckProcessor Dedup (S63 W2.1) | — | [0087-claimcheck-dedup.md](0087-claimcheck-dedup.md) |
 | 0088 | ADR-0088 — EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | — | [0088-eip-10of10-coverage.md](0088-eip-10of10-coverage.md) |
+| 0089 | ADR-0089: Multi-agent supervisor — LangGraph-based architecture | — | [0089-multi-agent-supervisor-architecture.md](0089-multi-agent-supervisor-architecture.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
