@@ -31,7 +31,7 @@ def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "extensions.core_entities.orders",
         "extensions.core_entities.orders.services",
         "extensions.core_entities.orders.services.orders",
-        "src.backend.workfolws",
+        "src.backend.workflows",
         "src.backend.workfolws.workflows_service",
     ]
     mods: dict[str, Any] = {}
