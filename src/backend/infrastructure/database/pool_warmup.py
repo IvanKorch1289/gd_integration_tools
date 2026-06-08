@@ -27,24 +27,52 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.backend.core.tenancy import current_tenant
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PoolReconnectMonitor", "PoolWarmup", "WarmupResult")
 
 logger = get_logger(__name__)
 
+#: Sentinel tenant label для startup-метрик (lifespan) когда TenantContext
+#: ещё не установлен (нет request handler). Отличается от tenant_id=None для
+#: Prometheus dashboards: '_global_' = shared/system, None = unknown/missing.
+_TENANT_GLOBAL: str = "_global_"
+
+
+def _current_tenant_label() -> str:
+    """Возвращает tenant_id из TenantContext contextvar или ``_global_``.
+
+    Используется как Prometheus label value. Sentinel ``_global_`` для
+    lifespan/warmup-операций, которые происходят до request handler
+    (нет tenant context).
+    """
+    try:
+        ctx = current_tenant()
+    except Exception:  # noqa: BLE001 — best-effort metric label
+        return _TENANT_GLOBAL
+    if ctx is None or not getattr(ctx, "tenant_id", None):
+        return _TENANT_GLOBAL
+    return str(ctx.tenant_id)
+
 try:  # pragma: no cover - prometheus_client optional
     from prometheus_client import Counter as _PromCounter
     from prometheus_client import Histogram as _PromHistogram
 
     _WARMUP_DURATION = _PromHistogram(
-        "pool_warmup_duration_ms", "Pool warmup duration in milliseconds", ("pool",)
+        "pool_warmup_duration_ms",
+        "Pool warmup duration in milliseconds",
+        ("pool", "tenant_id"),
     )
     _WARMUP_FAILURES = _PromCounter(
-        "pool_warmup_failures_total", "Pool warmup failures", ("pool",)
+        "pool_warmup_failures_total",
+        "Pool warmup failures",
+        ("pool", "tenant_id"),
     )
     _POOL_RECONNECTS = _PromCounter(
-        "pool_reconnects_total", "Pool reconnect events", ("pool",)
+        "pool_reconnects_total",
+        "Pool reconnect events",
+        ("pool", "tenant_id"),
     )
 except Exception as _:
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
@@ -53,22 +81,26 @@ except Exception as _:
 
 
 def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
+    tenant_label = _current_tenant_label()
     if _WARMUP_DURATION is not None:
         try:
-            _WARMUP_DURATION.labels(pool=pool).observe(duration_ms)
+            _WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label).observe(
+                duration_ms
+            )
         except Exception:
             pass
     if not success and _WARMUP_FAILURES is not None:
         try:
-            _WARMUP_FAILURES.labels(pool=pool).inc()
+            _WARMUP_FAILURES.labels(pool=pool, tenant_id=tenant_label).inc()
         except Exception:
             pass
 
 
 def _record_reconnect(pool: str) -> None:
+    tenant_label = _current_tenant_label()
     if _POOL_RECONNECTS is not None:
         try:
-            _POOL_RECONNECTS.labels(pool=pool).inc()
+            _POOL_RECONNECTS.labels(pool=pool, tenant_id=tenant_label).inc()
         except Exception:
             pass
 
