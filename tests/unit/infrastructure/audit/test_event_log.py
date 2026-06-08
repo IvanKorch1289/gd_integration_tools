@@ -199,6 +199,55 @@ async def test_query_escapes_quotes(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("malicious_who", "expected_substring"),
+    [
+        # classic quote-escape (already covered, but parametrized for clarity)
+        ("O'Brien", "O''Brien"),
+        # single quote injection attempt — must be escaped, never terminated.
+        # Input `'; DROP TABLE ...` (1 quote) → escaped `''; DROP TABLE ...` (2 quotes).
+        ("'; DROP TABLE audit_events; --", "''; DROP TABLE audit_events; --"),
+        # backslash injection — ClickHouse treats \ as escape in strings
+        ("path\\to\\file", "path\\\\to\\\\file"),
+        # combined: backslash-then-quote (worst case)
+        ("x\\'; DROP TABLE", "x\\\\''; DROP TABLE"),
+        # newline / control char — passed through, _escape doesn't strip
+        ("line1\nline2", "line1\nline2"),
+    ],
+)
+async def test_query_escapes_injection_attempts(
+    fresh_audit_log: AuditEventLog,
+    fake_clickhouse: MagicMock,
+    malicious_who: str,
+    expected_substring: str,
+) -> None:
+    """S61 W4: defense-in-depth — _escape must neutralize classic SQLi vectors.
+
+    Note: this is NOT parameterized query protection. ClickHouse HTTP API
+    does not support `?` placeholders in SELECT; parametrization would
+    require {name:Type} syntax + client.get(..., params={...}) and is
+    out of scope for a single query() method. Defense layers:
+    1. _safe_ident allowlist (table name) — ValueError on unknown.
+    2. _escape (single quote → double, backslash → double).
+    3. safe_limit int-bounded.
+    All string values flow through _escape; verify here that injection
+    attempts cannot terminate the string literal.
+    """
+    await fresh_audit_log.query(who=malicious_who)
+    sql = fake_clickhouse.query.call_args[0][0]
+    assert expected_substring in sql
+    # Sanity: `who = '...'` literal must contain an even number of single
+    # quotes (escaped pairs + closing). If `_escape` ever forgot to double
+    # a quote, the literal would terminate early → odd count.
+    start = sql.find("who = '")
+    assert start >= 0, f"who clause not found in SQL: {sql!r}"
+    end = sql.find("' ORDER BY", start)
+    assert end > start, f"closing quote not found: {sql!r}"
+    inner = sql[start + len("who = '") : end]
+    assert inner.count("'") % 2 == 0, f"Odd quote count in literal: {inner!r}"
+
+
+@pytest.mark.asyncio
 async def test_emit_audit_event_helper(monkeypatch: pytest.MonkeyPatch) -> None:
     log = AuditEventLog(table="audit_events", batch_size=2)
     monkeypatch.setattr(

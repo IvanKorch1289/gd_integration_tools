@@ -114,6 +114,24 @@ class AuditEventLog:
         who: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
+        """SELECT с фильтрами для audit_events / audit_log.
+
+        S61 W4: defense-in-depth pattern для защиты от SQL injection.
+        ClickHouse HTTP API не поддерживает ``?`` placeholders в SELECT
+        (в отличие от PostgreSQL asyncpg), поэтому bound parameters
+        требуют перехода на ``{name:Type}`` syntax + отдельный query.
+        Здесь — три уровня защиты (см. ``tests/unit/infrastructure/audit/
+        test_event_log.py::test_query_escapes_injection_attempts``):
+
+        1. ``_safe_ident`` — allowlist для table name (``audit_events`` /
+           ``audit_log``). Любое другое значение → ``ValueError``.
+        2. ``_escape`` — single quote → double quote, backslash → double
+           backslash (стандарт ClickHouse string-literal escaping).
+        3. ``safe_limit`` — ``int(limit)`` bounded к [1, 10000].
+
+        Bound parameters на HTTP-уровне — out of scope (S62+ candidate,
+        требует refactor ``clickhouse.py::query()`` для передачи params).
+        """
         from src.backend.infrastructure.clients.storage.clickhouse import (
             get_clickhouse_client,
         )
@@ -122,7 +140,14 @@ class AuditEventLog:
 
         # SQL injection protection: sanitize identifiers + escape string values
         def _escape(value: str) -> str:
-            """Escape single quotes for ClickHouse string literals."""
+            """Escape single quotes for ClickHouse string literals.
+
+            ClickHouse string escaping rules (https://clickhouse.com/docs/en/sql-reference/syntax#string):
+            * single quote (') — escape as double quote ('')
+            * backslash (\\) — escape as double backslash (\\\\)
+            Другие символы (newline, control chars) — passed through,
+            так как _safe_ident не пускает table name из user input.
+            """
             return str(value).replace("'", "''").replace("\\", "\\\\")
 
         def _safe_ident(name: str, allowed: set[str]) -> str:
