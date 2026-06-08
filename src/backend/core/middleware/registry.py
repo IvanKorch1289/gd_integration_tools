@@ -1,28 +1,30 @@
-"""MiddlewareRegistry + RouteMiddlewareConfig scaffold (ADR-A-01).
+"""MiddlewareRegistry + RouteMiddlewareConfig (S17 K3 W2 scaffold + S70 W1 build_chain).
 
 Контекст:
-    Текущая ASGI-цепочка собирается жёстко в
-    ``entrypoints/middlewares/setup_middlewares.py``. Per-route override
-    невозможен без edit ядра. ADR-A-01 вводит декларативный путь через
-    ``route.toml::[middleware]`` + :class:`MiddlewareRegistry`.
+    Глобальная ASGI-цепочка собирается через
+    :class:`entrypoints.middlewares.registry.MiddlewareRegistry` (322 LOC,
+    4 layers + per-route gate через ``enabled_routes``/``disabled_routes``).
+    Этот модуль добавляет :class:`RouteMiddlewareConfig` — declarative
+    per-route override через ``route.toml::[middleware]``.
 
-Scaffold-only:
-    Полная реализация (диспетчеризация, runtime mount, capability-gate,
-    overrides resolution) — Sprint 18 K3 W2. В этом scaffold:
+Sprint 17 (scaffold):
+    * :class:`RouteMiddlewareConfig` — frozen-dataclass с ``include``/``exclude``/``overrides``.
+    * :meth:`MiddlewareRegistry.register` / :meth:`has` / :meth:`list_registered`.
 
-    * :class:`RouteMiddlewareConfig` — frozen-dataclass с тремя полями.
-    * :class:`MiddlewareRegistry` — заготовка с
-      :meth:`register` / :meth:`build_chain` (NotImplementedError).
-    * smoke-тест из :mod:`tests.unit.core.middleware.test_registry_stub`
-      проверяет публичный контракт без runtime-mount.
+Sprint 70 W1 (этот commit):
+    * :meth:`MiddlewareRegistry.build_chain` — минимальная реализация
+      без capability-gate, без audit, без runtime-mount.
+      Diff между глобальными defaults и per-route ``include``/``exclude``,
+      apply ``overrides`` через partial-apply builder'а.
 
-Wave: ``[wave:s17/k3-w2-middleware-registry]``.
+Wave: ``[wave:s17/k3-w2-middleware-registry]`` + ``[wave:s70/w1-per-route-middleware]``.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import reduce
 from typing import Any
 
 __all__ = ("MiddlewareRegistry", "RouteMiddlewareConfig")
@@ -35,7 +37,7 @@ class RouteMiddlewareConfig:
     Поля:
         include: Имена middleware (по ключу регистрации) для включения
             в цепочку для конкретного route. Если пустой — применяются
-            глобальные default'ы.
+            глобальные default'ы (все зарегистрированные).
         exclude: Имена middleware для исключения из глобальной цепочки.
         overrides: Per-middleware параметры (``{name: {param: value}}``),
             переопределяющие глобальные настройки.
@@ -60,18 +62,18 @@ class RouteMiddlewareConfig:
 class MiddlewareRegistry:
     """Реестр middleware-builder'ов для декларативной композиции chain.
 
-    Контракт V22.2 scaffold:
+    Контракт:
         * :meth:`register(name, builder)` — сохранить factory.
         * :meth:`build_chain(app, config)` — построить chain для route
-          (TODO S18: реализация согласно ADR-A-01).
+          на основе :class:`RouteMiddlewareConfig`.
 
-    Полная реализация (Sprint 18 K3 W2) предусматривает:
-        * Diff между глобальными default-middleware и
-          ``RouteMiddlewareConfig.include``/``exclude``.
-        * Применение ``overrides`` через partial-application builder'а.
-        * Capability-gate: middleware ``audit``/``rate_limit`` требуют
-          declared capability в plugin.toml.
-        * Audit-event на построение chain для каждого route.
+    Минимальная реализация (S70 W1):
+        * Diff между глобальными defaults и ``include``/``exclude``.
+        * Apply ``overrides`` через partial-apply builder'а.
+        * БЕЗ capability-gate (out of scope: route-level auth policy).
+        * БЕЗ runtime-mount (только :class:`FastAPI` ``app.add_middleware``
+          в ``setup_middlewares.py``).
+        * БЕЗ audit-event (out of scope).
     """
 
     def __init__(self) -> None:
@@ -81,7 +83,7 @@ class MiddlewareRegistry:
         """Зарегистрировать builder для middleware по имени.
 
         Args:
-            name: Уникальный ключ (используется в ``RouteMiddlewareConfig``).
+            name: Уникальный ключ (используется в ``RouteMiddlewareConfig.include``).
             builder: Factory вида ``(app, **kwargs) -> ASGIApp``.
 
         Raises:
@@ -99,22 +101,67 @@ class MiddlewareRegistry:
         """Список всех зарегистрированных middleware (для admin endpoint)."""
         return sorted(self._builders)
 
-    def build_chain(self, app: Any, config: RouteMiddlewareConfig) -> Any:
-        """Построить per-route middleware chain (TODO S18).
+    def _resolve_chain_order(self, config: RouteMiddlewareConfig) -> list[str]:
+        """Diff между global defaults и per-route include/exclude.
 
-        Сигнатура зафиксирована для будущей реализации. Сейчас
-        возвращает ``NotImplementedError`` — scaffold не предназначен
-        для runtime-mount.
-
-        Args:
-            app: ASGI-приложение / sub-router.
-            config: Декларативная конфигурация route.
+        Returns:
+            Имена middleware в порядке применения (outer → inner).
 
         Raises:
-            NotImplementedError: Полная реализация — Sprint 18 K3 W2.
+            ValueError: Если ``include`` ссылается на незарегистрированный
+                middleware.
         """
-        del app, config  # сохранены для будущей сигнатуры
-        raise NotImplementedError(
-            "MiddlewareRegistry.build_chain — scaffold-only (ADR-A-01); "
-            "полная реализация запланирована на Sprint 18 K3 W2."
-        )
+        if config.include:
+            selected = list(config.include)
+            unknown = [name for name in selected if name not in self._builders]
+            if unknown:
+                raise ValueError(
+                    f"Middleware в include не зарегистрированы: {unknown}"
+                )
+        else:
+            selected = self.list_registered()
+        return [name for name in selected if name not in config.exclude]
+
+    def build_chain(self, app: Any, config: RouteMiddlewareConfig) -> Any:
+        """Построить per-route middleware chain из declarative config.
+
+        Алгоритм:
+            1. Diff: вычислить effective middleware list (include ∩ registered) − exclude.
+            2. Apply overrides: для каждого middleware передать ``**overrides``
+               в builder (partial-apply).
+            3. Compose: ``functools.reduce`` по selected (outer → inner).
+
+        Args:
+            app: ASGI-приложение / sub-router (то, что оборачиваем).
+            config: :class:`RouteMiddlewareConfig` с include/exclude/overrides.
+
+        Returns:
+            Wrapped ASGI-приложение с применённой цепочкой middleware.
+
+        Raises:
+            ValueError: Если ``include`` ссылается на незарегистрированный
+                middleware.
+
+        Example::
+
+            registry = MiddlewareRegistry()
+            registry.register("rate_limit", lambda app, **kw: RateLimitMiddleware(app, **kw))
+            registry.register("audit", lambda app, **kw: AuditMiddleware(app, **kw))
+
+            config = RouteMiddlewareConfig(
+                include=["rate_limit", "audit"],
+                overrides={"rate_limit": {"limit": 1000}},
+            )
+            wrapped = registry.build_chain(app, config)
+        """
+        selected = self._resolve_chain_order(config)
+        if not selected:
+            return app
+
+        def wrap(current_app: Any, name: str) -> Any:
+            builder = self._builders[name]
+            overrides = config.overrides.get(name, {})
+            return builder(current_app, **overrides)
+
+        # Outer → inner: первый в selected = самый внешний (Starlette LIFO).
+        return reduce(wrap, selected, app)
