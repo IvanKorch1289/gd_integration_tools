@@ -22,7 +22,6 @@ import sys
 from pathlib import Path
 
 import streamlit as st
-import yaml as _yaml
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
@@ -30,11 +29,24 @@ _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from src.backend.services.dsl_portal import (  # noqa: E402
-    Pipeline,
-    load_pipeline_from_yaml,
-)
+from src.backend.services.dsl_portal import load_pipeline_from_yaml  # noqa: E402
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.pages._editor import (
+    PROCESSOR_ICONS,
+    STEP_PALETTE,
+    VISUAL_PROCESSORS,
+    build_yaml_from_steps,
+    can_redo,
+    can_undo,
+    default_yaml,
+    init_history,
+    push_history,
+    redo,
+    sync_yaml,
+    try_load,
+    undo,
+    yaml_to_steps,
+)
 
 setup_page("DSL Editor", "")
 st.header("DSL Visual Editor")
@@ -42,125 +54,6 @@ st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "
     "Сохранение в YAMLStore через Admin API."
 )
-
-# ──────────────────────── Undo/Redo History Stack ───────────────────────────
-_MAX_HISTORY = 50
-
-
-def _push_history():
-    """Push current yaml state to history stack."""
-    if "yaml_history" not in st.session_state:
-        st.session_state.yaml_history = []
-    if "yaml_history_index" not in st.session_state:
-        st.session_state.yaml_history_index = -1
-
-    # Truncate forward history if we're not at the end
-    if st.session_state.yaml_history_index < len(st.session_state.yaml_history) - 1:
-        st.session_state.yaml_history = st.session_state.yaml_history[
-            : st.session_state.yaml_history_index + 1
-        ]
-
-    # Add current state
-    st.session_state.yaml_history.append(st.session_state.yaml)
-    if len(st.session_state.yaml_history) > _MAX_HISTORY:
-        st.session_state.yaml_history.pop(0)
-    st.session_state.yaml_history_index = len(st.session_state.yaml_history) - 1
-
-
-def _can_undo():
-    return st.session_state.get("yaml_history_index", -1) > 0
-
-
-def _can_redo():
-    hist = st.session_state.get("yaml_history", [])
-    idx = st.session_state.get("yaml_history_index", -1)
-    return idx >= 0 and idx < len(hist) - 1
-
-
-def _undo():
-    if _can_undo():
-        st.session_state.yaml_history_index -= 1
-        st.session_state.yaml = st.session_state.yaml_history[
-            st.session_state.yaml_history_index
-        ]
-        st.rerun()
-
-
-def _redo():
-    if _can_redo():
-        st.session_state.yaml_history_index += 1
-        st.session_state.yaml = st.session_state.yaml_history[
-            st.session_state.yaml_history_index
-        ]
-        st.rerun()
-
-
-# Initialize history with current yaml
-if "yaml_history" not in st.session_state:
-    st.session_state.yaml_history = [st.session_state.yaml]
-    st.session_state.yaml_history_index = 0
-
-
-# ──────────────────────── Processor Step Palette ─────────────────────────────
-STEP_PALETTE: dict[str, dict[str, str]] = {
-    "log": {
-        "title": "Log",
-        "desc": "Логирование сообщений на указанном уровне (debug/info/warning/error)",
-    },
-    "validate": {
-        "title": "Validate",
-        "desc": "Валидация входных данных по JSON Schema",
-    },
-    "transform": {
-        "title": "Transform",
-        "desc": "Трансформация данных через expression (JQ-подобный синтаксис)",
-    },
-    "dispatch_action": {
-        "title": "Dispatch Action",
-        "desc": "Диспетчеризация действия по условию",
-    },
-    "retry": {
-        "title": "Retry",
-        "desc": "Повтор выполнения при ошибках с max_attempts и delay",
-    },
-    "redirect": {
-        "title": "Redirect",
-        "desc": "Редирект запроса на другой URL или endpoint",
-    },
-    "windowed_dedup": {
-        "title": "Windowed Dedup",
-        "desc": "Дедупликация по ключу в скользящем окне",
-    },
-    "windowed_collect": {
-        "title": "Windowed Collect",
-        "desc": "Сбор событий в окне с опциональной дедупликацией",
-    },
-    "multicast_routes": {
-        "title": "Multicast Routes",
-        "desc": "Отправка события в несколько маршрутов параллельно",
-    },
-    "express_send": {
-        "title": "Express Send",
-        "desc": "Отправка сообщения в Telegram бот",
-    },
-    "express_reply": {"title": "Express Reply", "desc": "Ответ на Telegram сообщение"},
-    "notify": {"title": "Notify", "desc": "Уведомление в канал (email/slack/telegram)"},
-}
-
-PROCESSOR_ICONS: dict[str, str] = {
-    "log": "📋",
-    "validate": "✅",
-    "transform": "🔄",
-    "dispatch_action": "🎯",
-    "retry": "🔁",
-    "redirect": "↗️",
-    "windowed_dedup": "🗂️",
-    "windowed_collect": "📥",
-    "multicast_routes": "📡",
-    "express_send": "📨",
-    "express_reply": "📩",
-    "notify": "🔔",
-}
 
 
 def _render_step_palette():
@@ -467,25 +360,17 @@ def _render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | No
     return None
 
 
-def _default_yaml() -> str:
-    """YAML-шаблон по умолчанию для нового маршрута."""
-    return (
-        "route_id: my.route\n"
-        "source: internal:my\n"
-        "description: Новый маршрут\n"
-        "processors:\n"
-        "  - log:\n"
-        "      level: info\n"
-    )
+# ─── Undo/redo history init (extracted в _editor/history.py) ──────────────
+init_history()
 
-
+# ─── Default yaml + session state init ───────────────────────────────────
 if "yaml" not in st.session_state:
-    st.session_state.yaml = _default_yaml()
+    st.session_state.yaml = default_yaml()
 
 if "last_load_route" not in st.session_state:
     st.session_state.last_load_route = None
 
-# ─── Canvas session state (from 40_dsl_visual_editor) ─────────────────────────
+# ─── Canvas session state (from 40_dsl_visual_editor) ────────────────────
 if "canvas_steps" not in st.session_state:
     st.session_state.canvas_steps = []
 
@@ -503,62 +388,6 @@ if "meta_route" not in st.session_state:
     }
 
 
-def _sync_yaml():
-    """Re-serialize session state to YAML."""
-    st.session_state.yaml_output = _build_yaml_from_steps(
-        st.session_state.meta_route, st.session_state.canvas_steps
-    )
-
-
-def _try_load(yaml_str: str) -> tuple[Pipeline | None, str | None]:
-    """Локально парсит YAML в Pipeline.
-
-    Returns:
-        Pipeline или None и текст ошибки.
-    """
-    try:
-        return load_pipeline_from_yaml(yaml_str), None
-    except Exception as exc:  # noqa: BLE001 — UI должен показать любую ошибку.
-        return None, str(exc)
-
-
-def _yaml_to_steps(yaml_str: str) -> tuple[dict, list[dict]]:
-    """Извлекает meta (route_id/source/description) и список шагов из YAML."""
-    try:
-        data = _yaml.safe_load(yaml_str) or {}
-    except _yaml.YAMLError:
-        return {}, []
-    if not isinstance(data, dict):
-        return {}, []
-    meta = {
-        "route_id": data.get("route_id", ""),
-        "source": data.get("source", ""),
-        "description": data.get("description", ""),
-    }
-    raw = data.get("processors", []) or []
-    steps: list[dict] = []
-    for item in raw:
-        if isinstance(item, str):
-            steps.append({"type": item, "params": {}})
-        elif isinstance(item, dict) and len(item) == 1:
-            name = next(iter(item))
-            params = item[name] if isinstance(item[name], dict) else {}
-            steps.append({"type": name, "params": params})
-    return meta, steps
-
-
-def _build_yaml_from_steps(meta: dict, steps: list[dict]) -> str:
-    """Собирает YAML из meta и шагов (формат, понятный yaml_loader)."""
-    out: dict = {"route_id": meta.get("route_id") or "my.route"}
-    if meta.get("source"):
-        out["source"] = meta["source"]
-    if meta.get("description"):
-        out["description"] = meta["description"]
-    if steps:
-        out["processors"] = [{s["type"]: s.get("params") or {}} for s in steps]
-    return _yaml.dump(out, allow_unicode=True, sort_keys=False)
-
-
 client = get_api_client()
 
 
@@ -571,10 +400,10 @@ with st.sidebar:
     st.subheader("↩️ История изменений")
     hist_cols = st.columns([1, 1])
     hist_cols[0].button(
-        "↩️ Undo", use_container_width=True, disabled=not _can_undo(), on_click=_undo
+        "↩️ Undo", use_container_width=True, disabled=not can_undo(), on_click=undo
     )
     hist_cols[1].button(
-        "↪️ Redo", use_container_width=True, disabled=not _can_redo(), on_click=_redo
+        "↪️ Redo", use_container_width=True, disabled=not can_redo(), on_click=redo
     )
     if st.session_state.get("yaml_history"):
         idx = st.session_state.get("yaml_history_index", 0)
@@ -597,14 +426,14 @@ with st.sidebar:
         else:
             st.error("Не удалось загрузить маршрут")
     if cols[1].button("Новый", use_container_width=True):
-        st.session_state.yaml = _default_yaml()
+        st.session_state.yaml = default_yaml()
         st.session_state.last_load_route = None
         st.rerun()
 
     st.divider()
 
     st.subheader("Сохранение")
-    pipeline_check, err_check = _try_load(st.session_state.yaml)
+    pipeline_check, err_check = try_load(st.session_state.yaml)
     if err_check:
         st.error(f"YAML невалиден: {err_check}")
     else:
@@ -628,7 +457,7 @@ with st.sidebar:
         ):
             if client.delete_dsl_route(st.session_state.last_load_route):
                 st.success(f"Удалён {st.session_state.last_load_route!r}")
-                st.session_state.yaml = _default_yaml()
+                st.session_state.yaml = default_yaml()
                 st.session_state.last_load_route = None
                 st.rerun()
             else:
@@ -640,27 +469,6 @@ tab_visual, tab_yaml, tab_python, tab_diff, tab_canvas = st.tabs(
 )
 
 
-VISUAL_PROCESSORS: dict[str, list[str]] = {
-    "log": ["level", "message"],
-    "validate": ["schema"],
-    "transform": ["expression"],
-    "dispatch_action": ["action"],
-    "retry": ["max_attempts", "delay"],
-    "redirect": ["mode", "status_code", "target_url", "url_source", "source_key"],
-    "windowed_dedup": ["key_from", "window_seconds", "mode"],
-    "windowed_collect": [
-        "key_from",
-        "window_seconds",
-        "dedup_by",
-        "dedup_mode",
-        "inject_as",
-    ],
-    "multicast_routes": ["route_ids", "strategy", "on_error", "timeout"],
-    "express_send": ["bot", "chat_id_from", "body_from"],
-    "express_reply": ["bot", "body_from"],
-    "notify": ["channel", "to", "template"],
-}
-
 with tab_visual:
     # Handle reorder from drag-drop via query params
     import json as _json
@@ -670,19 +478,17 @@ with tab_visual:
         try:
             reordered_steps = _json.loads(query_params["reorder"])
             if isinstance(reordered_steps, list):
-                meta, current_steps = _yaml_to_steps(st.session_state.yaml)
+                meta, current_steps = yaml_to_steps(st.session_state.yaml)
                 if len(reordered_steps) == len(current_steps):
-                    st.session_state.yaml = _build_yaml_from_steps(
-                        meta, reordered_steps
-                    )
-                    _push_history()
+                    st.session_state.yaml = build_yaml_from_steps(meta, reordered_steps)
+                    push_history()
         except Exception:  # noqa: BLE001,S110
             pass
         # Clear the query param
         query_params.clear()
         st.rerun()
 
-    meta, steps = _yaml_to_steps(st.session_state.yaml)
+    meta, steps = yaml_to_steps(st.session_state.yaml)
 
     col_left, col_right = st.columns([1, 2])
 
@@ -712,7 +518,7 @@ with tab_visual:
         if st.button("+ Добавить процессор", use_container_width=True):
             params_clean = {k: v for k, v in new_params.items() if v != ""}
             steps.append({"type": proc_type, "params": params_clean})
-            st.session_state.yaml = _build_yaml_from_steps(
+            st.session_state.yaml = build_yaml_from_steps(
                 {
                     "route_id": new_route_id,
                     "source": new_source,
@@ -720,7 +526,7 @@ with tab_visual:
                 },
                 steps,
             )
-            _push_history()
+            push_history()
             st.rerun()
 
     with col_right:
@@ -741,7 +547,7 @@ with tab_visual:
             c1.write(f"**{i + 1}. {step['type']}** ({params_str})")
             if c2.button("↑", key=f"up_{i}", disabled=i == 0):
                 steps[i - 1], steps[i] = steps[i], steps[i - 1]
-                st.session_state.yaml = _build_yaml_from_steps(
+                st.session_state.yaml = build_yaml_from_steps(
                     {
                         "route_id": new_route_id,
                         "source": new_source,
@@ -749,11 +555,11 @@ with tab_visual:
                     },
                     steps,
                 )
-                _push_history()
+                push_history()
                 st.rerun()
             if c3.button("↓", key=f"down_{i}", disabled=i == len(steps) - 1):
                 steps[i], steps[i + 1] = steps[i + 1], steps[i]
-                st.session_state.yaml = _build_yaml_from_steps(
+                st.session_state.yaml = build_yaml_from_steps(
                     {
                         "route_id": new_route_id,
                         "source": new_source,
@@ -761,11 +567,11 @@ with tab_visual:
                     },
                     steps,
                 )
-                _push_history()
+                push_history()
                 st.rerun()
             if c4.button("✕", key=f"del_{i}"):
                 steps.pop(i)
-                st.session_state.yaml = _build_yaml_from_steps(
+                st.session_state.yaml = build_yaml_from_steps(
                     {
                         "route_id": new_route_id,
                         "source": new_source,
@@ -773,10 +579,10 @@ with tab_visual:
                     },
                     steps,
                 )
-                _push_history()
+                push_history()
                 st.rerun()
 
-        rebuilt = _build_yaml_from_steps(
+        rebuilt = build_yaml_from_steps(
             {"route_id": new_route_id, "source": new_source, "description": new_desc},
             steps,
         )
@@ -794,7 +600,7 @@ with tab_yaml:
     )
     if new_yaml != st.session_state.yaml:
         st.session_state.yaml = new_yaml
-        _push_history()
+        push_history()
 
     cols = st.columns([1, 1, 4])
     if cols[0].button("Validate (server)", use_container_width=True):
@@ -819,7 +625,7 @@ with tab_yaml:
         else:
             st.info("Изменений нет.")
 
-    pipeline, err = _try_load(st.session_state.yaml)
+    pipeline, err = try_load(st.session_state.yaml)
     if err:
         st.error(f"Локальная валидация: {err}")
     else:
@@ -828,7 +634,7 @@ with tab_yaml:
 
 
 with tab_python:
-    pipeline, err = _try_load(st.session_state.yaml)
+    pipeline, err = try_load(st.session_state.yaml)
     if err:
         st.error(f"Невалидный YAML: {err}")
         st.caption("Исправьте YAML — Python-код сгенерируется автоматически.")
@@ -963,7 +769,7 @@ with tab_canvas:
                         st.session_state.selected_step_index = (
                             len(st.session_state.canvas_steps) - 1
                         )
-                        _sync_yaml()
+                        sync_yaml()
                         st.rerun()
 
         st.divider()
@@ -980,11 +786,11 @@ with tab_canvas:
             try:
                 detail = client.get_dsl_route(selected_route)
                 if detail and "yaml" in detail:
-                    meta, steps = _yaml_to_steps(detail["yaml"])
+                    meta, steps = yaml_to_steps(detail["yaml"])
                     st.session_state.meta_route = meta
                     st.session_state.canvas_steps = steps
                     st.session_state.selected_step_index = None
-                    _sync_yaml()
+                    sync_yaml()
                     st.success(f"Loaded: {selected_route}")
                     st.rerun()
             except Exception as exc:  # noqa: BLE001
@@ -998,7 +804,7 @@ with tab_canvas:
             }
             st.session_state.canvas_steps = []
             st.session_state.selected_step_index = None
-            _sync_yaml()
+            sync_yaml()
             st.rerun()
 
     with col_canvas:
@@ -1033,7 +839,7 @@ with tab_canvas:
                 "source": new_source,
                 "description": new_desc,
             }
-            _sync_yaml()
+            sync_yaml()
 
         st.divider()
 
@@ -1118,7 +924,7 @@ with tab_canvas:
                                 st.session_state.canvas_steps[i],
                                 st.session_state.canvas_steps[i - 1],
                             )
-                            _sync_yaml()
+                            sync_yaml()
                             st.rerun()
                         if col_down.button(
                             "⬇️",
@@ -1133,7 +939,7 @@ with tab_canvas:
                                 st.session_state.canvas_steps[i],
                                 st.session_state.canvas_steps[i + 1],
                             )
-                            _sync_yaml()
+                            sync_yaml()
                             st.rerun()
                         if col_del.button("🗑️", key=f"del_{i}", help="Delete"):
                             st.session_state.canvas_steps.pop(i)
@@ -1144,7 +950,7 @@ with tab_canvas:
                                 and st.session_state.selected_step_index > i
                             ):
                                 st.session_state.selected_step_index -= 1
-                            _sync_yaml()
+                            sync_yaml()
                             st.rerun()
 
         st.divider()
@@ -1214,7 +1020,7 @@ with tab_canvas:
 
             if params_changed:
                 st.session_state.canvas_steps[idx]["params"] = new_params
-                _sync_yaml()
+                sync_yaml()
 
             st.divider()
 
@@ -1223,14 +1029,14 @@ with tab_canvas:
                 if st.button("🗑️ Delete Step", use_container_width=True):
                     st.session_state.canvas_steps.pop(idx)
                     st.session_state.selected_step_index = None
-                    _sync_yaml()
+                    sync_yaml()
                     st.rerun()
             with c_clr:
                 if st.button("Clear Params", use_container_width=True):
                     st.session_state.canvas_steps[idx]["params"] = {
                         p: "" for p in available_params
                     }
-                    _sync_yaml()
+                    sync_yaml()
                     st.rerun()
 
         st.divider()
