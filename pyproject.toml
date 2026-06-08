@@ -353,10 +353,14 @@ dsl-extras-3 = [
 result-monad = [
     "result>=0.17.0,<1.0.0",
 ]
-# Sprint 5 — Web Search providers: Tavily + Perplexity SDK (optional).
+# Sprint 5 — Web Search providers: Tavily + DuckDuckGo SDK (optional).
 # httpx-based clients, lazy-import; SearXNG уже доступен через httpx-сырой клиент.
+# Reserved для будущих search-agents: perplexity/pplx SDK (если потребуется).
+# Зарезервированы по требованию пользователя: для будущих поисковых агентов
+# или иных интеграций. Не удалять.
 search-providers = [
     "tavily-python>=0.5.0,<1.0.0",
+    "duckduckgo-search>=6.0.0,<7.0.0",
 ]
 # Sprint 10 K2 W2 [wave:s10/backbone]: Brotli compression middleware.
 # brotli — C-extension с pure-Python fallback; cp314 wheels доступны.
@@ -365,6 +369,19 @@ search-providers = [
 compression = [
     "brotli>=1.1.0,<2.0.0",
 ]
+# Sprint 63 [wave:fix/streamlit-missing-extra]: Streamlit frontend extra.
+# Раньше streamlit был только в [tool.ruff.lint] mypy-overrides (L636), но
+# НЕ в extras — 75 top-level imports в src/frontend/streamlit_app/ ломали
+# `uv sync` без --all-extras. Теперь объявлен явно.
+# activate via: `uv pip install gd_advanced_tools[frontend]`
+# или полная установка: `[ai,ai-2026,rag,rpa,frontend,search-providers,...]`
+frontend = [
+    "streamlit>=1.30.0,<2.0.0",
+    "streamlit-autorefresh>=1.0.0,<2.0.0",
+    "altair>=5.0.0,<6.0.0",
+    "plotly>=5.18.0,<6.0.0",
+]
+
 # Sprint 5 — DOCX template engine (Word reports с подстановкой контекста).
 # python-docx уже в основных deps; docxtpl расширяет шаблонизацией Jinja2.
 doc-templates = [
