@@ -55,32 +55,32 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
 ## Архитектура — слои и их границы
 
 ```
-frontend/streamlit_app/  ─►  src/entrypoints/  ─►  src/services/
-        │                       (REST/SOAP/gRPC/    (core[5-7],
-        │                        GraphQL/WS/SSE/     ai, integrations,
-        │                        MQTT/MCP/CDC/...)  ops, execution,
-        │                                            plugins, ...)
-        │                                            │
-        ▼                                            ▼
-    public API only                            src/core/ (Protocols,
-                                                interfaces, di, tenancy,
-                                                plugin_runtime, auth, ai,
-                                                net[WAF], messaging, scaling)
-                                                       ▲
-                                                       │ контракты
-                                                       ▼
-                                            src/infrastructure/ (db, cache,
-                                                storage, messaging, search,
-                                                audit, sources, sinks, repos,
-                                                resilience, observability,
-                                                secrets[Vault],
-                                                workflow[Temporal+Lite])
-                                                       ▲
-                                                       │ (через registries)
-                                                       ▼
-                                            src/dsl/ (route/, workflow/,
-                                                service/, contracts/, engine,
-                                                blueprints/[10 patterns R2])
+src/frontend/streamlit_app/  ─►  src/backend/entrypoints/  ─►  src/backend/services/
+        │                              (REST/SOAP/gRPC/         (core[5-7],
+        │                               GraphQL/WS/SSE/          ai, integrations,
+        │                               MQTT/MCP/CDC/...)       ops, execution,
+        │                                                        plugins, ...)
+        │                                                        │
+        ▼                                                        ▼
+    public API only                                     src/backend/core/ (Protocols,
+                                                         interfaces, di, tenancy,
+                                                         plugin_runtime, auth, ai,
+                                                         net[WAF], messaging, scaling)
+                                                                ▲
+                                                                │ контракты
+                                                                ▼
+                                                 src/backend/infrastructure/ (db, cache,
+                                                         storage, messaging, search,
+                                                         audit, sources, sinks, repos,
+                                                         resilience, observability,
+                                                         secrets[Vault],
+                                                         workflow[Temporal+Lite])
+                                                                ▲
+                                                                │ (через registries)
+                                                                ▼
+                                                 src/backend/dsl/ (route/, workflow/,
+                                                         service/, contracts/, engine,
+                                                         blueprints/[10 patterns R2])
 ```
 
 **Бизнес-логика** — `extensions/<name>/` (отдельные плагины с `plugin.toml`).

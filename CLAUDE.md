@@ -68,34 +68,38 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│  frontend/streamlit_app/  (36+ pages)                               │
+│  src/frontend/streamlit_app/  (36+ pages)                            │
 │                          │                                          │
 │                          ▼  REST/gRPC/WS                            │
 ├─────────────────────────────────────────────────────────────────────┤
-│  src/entrypoints/   (REST, SOAP, gRPC, GraphQL, WebSocket, SSE,     │
-│                      MQTT, MCP[FastMCP], CDC, FileWatcher, Email,   │
-│                      Scheduler, Stream, Webhook)                    │
+│  src/backend/entrypoints/   (REST, SOAP, gRPC, GraphQL, WebSocket,  │
+│                              SSE, MQTT, MCP[FastMCP], CDC,          │
+│                              FileWatcher, Email, Scheduler, Stream, │
+│                              Webhook)                               │
 │      │  middlewares (pure ASGI: idempotency, rate-limit,            │
 │      │   correlation-id, error-envelope, tenant-context, audit, waf)│
 │      ▼                                                              │
-│  src/services/      (core[5-7 universal], ai, integrations, ops,    │
-│                      execution, plugins, schema_registry, notebooks)│
+│  src/backend/services/      (core[5-7 universal], ai, integrations,│
+│                              ops, execution, plugins,               │
+│                              schema_registry, notebooks)            │
 │      │  ActionHandlerRegistry, ServiceDSLRegistry, RouteRegistry    │
 │      ▼                                                              │
-│  src/core/          (config, interfaces[11 доменов], di, tenancy,   │
-│                      plugin_runtime, workflow protocols, actions,   │
-│                      auth, ai[AIWorkspaceManager], net[WAF],        │
-│                      messaging[outbox], scaling, utils)             │
+│  src/backend/core/          (config, interfaces[11 доменов], di,    │
+│                              tenancy, plugin_runtime, workflow      │
+│                              protocols, actions, auth,              │
+│                              ai[AIWorkspaceManager], net[WAF],      │
+│                              messaging[outbox], scaling, utils)     │
 │      ▲                                                              │
 │      │ (контракты/Protocols)                                        │
-│  src/infrastructure/ (db, cache, storage, messaging, search, audit, │
-│                       logging[Graylog pool], sources, sinks,        │
-│                       repositories, resilience, observability       │
-│                       [Watchdog], secrets[Vault], workflow          │
-│                       [Temporal+Lite], execution[Dask], scheduler,  │
-│                       clients[ClickHouse pool])                     │
+│  src/backend/infrastructure/ (db, cache, storage, messaging,       │
+│                               search, audit, logging[Graylog pool],│
+│                               sources, sinks, repositories,        │
+│                               resilience, observability[Watchdog],  │
+│                               secrets[Vault], workflow              │
+│                               [Temporal+Lite], execution[Dask],     │
+│                               scheduler, clients[ClickHouse pool])  │
 │                                                                     │
-│  src/dsl/           (route/, workflow/, service/, contracts/,       │
+│  src/backend/dsl/    (route/, workflow/, service/, contracts/,       │
 │                      engine/processors/{ai,rpa,eip,streaming,…},    │
 │                      blueprints/[10 паттернов R2], cli/)            │
 └─────────────────────────────────────────────────────────────────────┘
@@ -128,7 +132,7 @@
     core не импортирует код из src/ (только stdlib + Protocols)
     dsl импортирует core (контракты) + infrastructure через registries
     extensions/<name>/ импортирует только gd_integration_tools.core.* + gd_integration_tools.testkit.* + capability-checked фасады. Прямой импорт из infrastructure//services/ запрещён.
-    frontend/streamlit_app/ импортирует только публичный API + REST через api_client.py.
+    src/frontend/streamlit_app/ импортирует только публичный API + REST через api_client.py.
 
 Капитальные структурные элементы V15
 Элемент	Где	Назначение
