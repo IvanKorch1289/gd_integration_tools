@@ -51,6 +51,25 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   без изменений (helper не зависит от конкретного Namespace type)
 - Pre-existing ruff: S108 (/tmp/) и S603 (subprocess) silenced с rationale
 
+### Documentation
+
+#### s63/w4-changelog-techdebt
+- CHANGELOG.md: добавлен [Unreleased] — Sprint 63 секция (3 fixed, 3 changed)
+- TECH_DEBT.md status summary: TD-008 🟡 recommended → ✅ partial closure
+
+#### s63/w5-coverage-baseline
+- Measured (sample, per TD-002 workaround): S63-changed modules не регрессировали.
+  - eip.transformation.py: 12% (whole file, 230 stmts, не только ClaimCheck).
+  - ClaimCheckProcessor: 4 dedicated tests в test_transformation.py (store/retrieve × redis/s3).
+  - infrastructure/storage: 81 passed (test_factory fix verified).
+  - dsl/processors: 262 passed.
+- Coverage baseline **unchanged**: 32.2% overall (S62 measurement, 87416 lines, 29721 covered).
+- Target: 75% per S19 K2 W4 ratchet. Gap: 32% → 75% = +43pp = ~200+ unit tests.
+- **Out of S63 W5 scope** (per "вначале фичи, в конце coverage" pattern):
+  - 200+ tests to close coverage gap (multi-sprint effort)
+  - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active = per-module)
+- Honored carryover for S64+: coverage lift + TD-002 fix.
+
 ## [0.20.0] — 2026-05-26 — Sprint 28
 
 ### Added
