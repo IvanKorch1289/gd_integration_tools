@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **48**; уникальных слотов: **48**.
+Всего ADR-файлов: **49**; уникальных слотов: **49**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -52,5 +52,6 @@
 | 0096 | ADR-0096: Correlation→OTel trace_id binding (formalize S18 W7 + S-L7-2/6) | — | [0096-correlation-otel-traceid-binding.md](0096-correlation-otel-traceid-binding.md) |
 | 0097 | ADR-0097: Fallback logging sink (formalize existing production-ready implementation) | — | [0097-fallback-logging-sink.md](0097-fallback-logging-sink.md) |
 | 0098 | ADR-0098: Outbox per-transport stuck breakdown (defer implementation) | — | [0098-outbox-per-transport-stuck-breakdown.md](0098-outbox-per-transport-stuck-breakdown.md) |
+| 0099 | ADR-0099: v28 ro-analysis reconciliation — fabricated claims + Sprint 0 closeout | — | [0099-v28-reconciliation-fabricated-claims.md](0099-v28-reconciliation-fabricated-claims.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
