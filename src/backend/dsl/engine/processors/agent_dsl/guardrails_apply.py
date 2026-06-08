@@ -182,16 +182,6 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
     @staticmethod
     def _resolve_runtime() -> Any | None:
         """Lazy-резолв :class:`LlamaGuardRuntime` (S24 W2 partial)."""
-        try:
-            from src.backend.core.di.container import get_container
-
-            container = get_container()
-            if container is not None:
-                runtime = container.resolve_optional("llama_guard_runtime")
-                if runtime is not None:
-                    return runtime
-        except Exception as exc:
-            _logger.debug("DI container resolve failed: %s", exc)
         return None
 
     def to_spec(self) -> dict[str, Any]:

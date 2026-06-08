@@ -151,14 +151,6 @@ class MemoryRecallProcessor(BaseAIProcessor):
     @staticmethod
     def _resolve_backend() -> Any | None:
         """Lazy-резолв :class:`MemoryProtocol` backend через DI."""
-        try:
-            from src.backend.core.di.container import get_container
-
-            container = get_container()
-            if container is not None:
-                return container.resolve_optional("memory_backend")
-        except Exception as exc:
-            _logger.debug("DI container resolve failed: %s", exc)
         return None
 
     def to_spec(self) -> dict[str, Any]:

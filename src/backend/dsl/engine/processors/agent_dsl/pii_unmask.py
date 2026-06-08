@@ -164,14 +164,6 @@ class PIIUnmaskProcessor(BaseAIProcessor):
     @staticmethod
     def _resolve_tokenizer() -> Any | None:
         """Lazy-резолв :class:`PIITokenizer`."""
-        try:
-            from src.backend.core.di.container import get_container
-
-            container = get_container()
-            if container is not None:
-                return container.resolve_optional("pii_tokenizer")
-        except Exception as exc:
-            _logger.debug("DI container resolve failed: %s", exc)
         return None
 
     def to_spec(self) -> dict[str, Any]:

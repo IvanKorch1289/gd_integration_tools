@@ -236,16 +236,7 @@ class AgentRunProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception as _:
-            try:
-                from src.backend.core.di.container import get_container
-
-                container = get_container()
-                if container is not None:
-                    return container.resolve_optional("ai_gateway")
-            except Exception as exc:
-                _logger.debug("AgentRunProcessor: DI container resolve failed: %s", exc)
-        return None
+        except Exception as _:        return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

@@ -205,16 +205,7 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_capability_gate()
-        except Exception as _:
-            try:
-                from src.backend.core.di.container import get_container
-
-                container = get_container()
-                if container is not None:
-                    return container.resolve_optional("capability_gate")
-            except Exception as exc:
-                _logger.debug("CapabilityGate DI resolve failed: %s", exc)
-        return None
+        except Exception as _:        return None
 
     async def _emit_audit_safe(
         self,

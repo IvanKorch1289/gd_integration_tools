@@ -328,16 +328,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception:
-            try:
-                from src.backend.core.di.container import get_container
-
-                container = get_container()
-                if container is not None:
-                    return container.resolve_optional("ai_gateway")
-            except Exception:
-                pass
-        return None
+        except Exception:        return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML DSL."""

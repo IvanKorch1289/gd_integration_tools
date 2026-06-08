@@ -123,14 +123,6 @@ class SkillInvokeProcessor(BaseAIProcessor):
     @staticmethod
     def _resolve_registry() -> Any | None:
         """Lazy-резолв :class:`SkillRegistry` через DI singleton."""
-        try:
-            from src.backend.core.di.container import get_container
-
-            container = get_container()
-            if container is not None:
-                return container.resolve_optional("skill_registry")
-        except Exception as exc:
-            _logger.debug("DI container resolve failed: %s", exc)
         return None
 
     def to_spec(self) -> dict[str, Any]:
