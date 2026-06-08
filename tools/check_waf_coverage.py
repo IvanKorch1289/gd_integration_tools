@@ -17,15 +17,19 @@ Allowlist живёт в ``tools/check_waf_coverage_allowlist.txt`` —
 
 * exit-code 1 если найдены violations не из allowlist;
 * ``--strict`` игнорирует allowlist (CI/release-gate).
+
+S64 W1: миграция argparse → typer+rich. CLI interface (имена флагов,
+exit-коды) preserved для backward compat.
 """
 
 from __future__ import annotations
 
-import argparse
 import ast
-import sys
 from collections.abc import Iterable
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 ROOT_DEFAULT = Path("src/backend")
 ALLOWLIST_FILE = Path("tools/check_waf_coverage_allowlist.txt")
@@ -39,6 +43,14 @@ _INTERNAL_EXEMPT_PREFIXES: tuple[str, ...] = (
     "src/backend/core/net/",
     "src/backend/infrastructure/clients/transport/",
 )
+
+app = typer.Typer(
+    name="check-waf-coverage",
+    help="WAF coverage check (V15 S1) — сканирует src/backend на прямые httpx.AsyncClient/Client usage.",
+    add_completion=False,
+)
+_err_console = Console(stderr=True, style="red")
+_out_console = Console()
 
 
 def _iter_python_files(root: Path) -> Iterable[Path]:
@@ -141,26 +153,29 @@ def _is_internal_exempt(rel_path: str) -> bool:
     return rel_path.startswith(_INTERNAL_EXEMPT_PREFIXES)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="WAF coverage check (V15 S1).")
-    parser.add_argument(
-        "--root", default=str(ROOT_DEFAULT), help="Каталог сканирования"
-    )
-    parser.add_argument(
-        "--strict", action="store_true", help="Игнорировать allowlist (CI/release-gate)"
-    )
-    args = parser.parse_args(argv)
+@app.callback(invoke_without_command=True)
+def main(
+    root_path: Path = typer.Option(
+        ROOT_DEFAULT,
+        "--root",
+        help="Каталог сканирования",
+    ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="Игнорировать allowlist (CI/release-gate)",
+    ),
+) -> None:
+    """Entry-point: typer callback с теми же флагами что и старый argparse."""
+    if not root_path.is_dir():
+        _err_console.print(f"WAF check: директория не найдена: {root_path}")
+        raise typer.Exit(code=2)
 
-    root = Path(args.root)
-    if not root.is_dir():
-        print(f"WAF check: директория не найдена: {root}", file=sys.stderr)
-        return 2
-
-    allowlist = set() if args.strict else _load_allowlist()
+    allowlist = set() if strict else _load_allowlist()
 
     repo_root = Path.cwd().resolve()
     violations: list[tuple[str, int, str]] = []
-    for path in _iter_python_files(root):
+    for path in _iter_python_files(root_path):
         try:
             rel = path.resolve().relative_to(repo_root).as_posix()
         except ValueError:
@@ -173,20 +188,22 @@ def main(argv: list[str] | None = None) -> int:
             violations.append((rel, line, snippet))
 
     if violations:
-        print("WAF coverage violations (direct httpx.AsyncClient/Client usage):")
+        _err_console.print(
+            "WAF coverage violations (direct httpx.AsyncClient/Client usage):"
+        )
         for rel, line, snippet in violations:
-            print(f"  {rel}:{line}: {snippet}")
-        print()
-        print(
+            _err_console.print(f"  {rel}:{line}: {snippet}")
+        _err_console.print()
+        _err_console.print(
             "Эти callsite'ы обязаны идти через "
             "src.backend.core.net.OutboundHttpClient или быть добавлены в "
             f"{ALLOWLIST_FILE} с обоснованием :internal."
         )
-        return 1
+        raise typer.Exit(code=1)
 
-    print("WAF coverage OK: 0 violations")
-    return 0
+    _out_console.print("WAF coverage OK: 0 violations")
+    raise typer.Exit(code=0)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    app()
