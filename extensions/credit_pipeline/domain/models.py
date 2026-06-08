@@ -6,15 +6,11 @@ Wave: ``[wave:s7/team-03-credit-1st-client]``. Pydantic-модели
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-__all__ = (
-    "CreditApplication",
-    "CreditReport",
-    "CreditDecision",
-)
+__all__ = ("CreditApplication", "CreditReport", "CreditDecision")
 
 
 class CreditApplication(BaseModel):
@@ -44,7 +40,7 @@ class CreditReport(BaseModel):
 
     provider: Literal["SKB", "NBKI", "CBR"]
     score: int = Field(ge=0, le=1000)
-    raw: dict | None = None
+    raw: dict[str, Any] | None = None
 
 
 class CreditDecision(BaseModel):
