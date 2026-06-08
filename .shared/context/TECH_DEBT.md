@@ -175,26 +175,33 @@ this pre-existing bug). Commits 72ed6b0f body.
 
 ---
 
-## TD-008: `streamlit-dup-groups-low-risk` (medium, S43 W1)
+## TD-008: `streamlit-dup-groups-low-risk` (medium, S43 W1) ✅ S63 W1 PARTIAL CLOSURE
 
 **Файл:** `docs/architecture/STREAMLIT_AUDIT_2026-06-06.md` (Sprint 42 W3 deliverable)
 
 **Проблема:** Audit identified 6 dup groups across 80 streamlit pages
 (10 137 LOC), ~3000 LOC potential savings (29%).
 
-**Top-3 P1 groups (low risk, high LOC)**:
-1. API client imports (38 pages, ~152 LOC dup)
-2. Page setup boilerplate (66 pages, ~330 LOC dup)
-3. Chart widgets (36 pages, ~720 LOC dup)
+**S63 W1 actual state (S43 W1 уже закрыл основную работу):**
+- Group 1 (API client imports, P1 ~152 LOC): DONE S43 W1 через
+  `from src.frontend.streamlit_app.api_clients import get_api_client`
+  (re-exports через `__init__.py`). S62 W4 дополнительно requests → httpx.
+  Остаток: 12 страниц имели `# noqa: E402` — С63 W1 удалил (noqa не нужен,
+  imports в правильном порядке).
+- Group 2 (Page setup boilerplate, P1 ~330 LOC): DONE S43 W1 через
+  `setup_page()` в `shared/components.py`. Остаток: 2 страницы
+  (32_DSL_Builder, 83_Tenant_Inspection) использовали `st.set_page_config`
+  напрямую — S63 W1 конвертировал в `setup_page()`.
+- Group 6 (api_client_k4, P3 ~80 LOC): DONE S45 W1 (TD-011 closure).
+  `K4APIClient` перенесён в `api_clients/k4.py` + re-exported через
+  `__init__.py`. Параллельный `api_client_k4.py` модуль удалён.
+- Groups 3-5 (P2): не начаты — TD-008 sub-entry для будущих спринтов.
 
-**Plus Group 6** (two parallel API client modules: `api_client` vs
-`api_client_k4` — minor cleanup).
-
-**Total Sprint 43 W1 scope**: ~560 LOC savings в 4-6 hours effort,
-LOW risk (helper functions + import consolidation).
-
-**Refs:** `docs/architecture/STREAMLIT_AUDIT_2026-06-06.md` (commit
-faaee303), Sprint 42 W3 B analysis.
+**S63 W1 net effect**: -12 noqa comments, -2 set_page_config calls,
++2 setup_page() calls, -1 I001. Total ~16 LOC cleaned, 14 files touched.
+Estimated ~560 LOC savings в Sprint 42 W3 audit сократилось до ~16 LOC
+после Sprint 43 W1 + Sprint 45 W1 closures. Group 1+2+6 полностью
+закрыты (3/3 P1+P3). Groups 3-5 — отдельная задача (P2, не блокер).
 
 ---
 

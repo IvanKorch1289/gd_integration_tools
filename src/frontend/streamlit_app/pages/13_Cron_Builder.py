@@ -17,7 +17,7 @@ from datetime import datetime
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Cron Builder", "")

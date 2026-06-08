@@ -19,8 +19,9 @@ from src.backend.services.dsl.builder_service import (  # noqa: E402
     DSLBuilderService,
     get_dsl_builder_service,
 )
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="DSL Builder (write-back)", layout="wide")
+setup_page("DSL Builder (write-back)", "📐")
 st.header("DSL Builder — write-back YAML")
 st.caption(
     "Сохраняет runtime-Pipeline (RouteRegistry) в YAMLStore. "

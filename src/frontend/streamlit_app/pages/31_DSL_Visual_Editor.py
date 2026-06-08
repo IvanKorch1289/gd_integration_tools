@@ -34,7 +34,7 @@ from src.backend.services.dsl_portal import (  # noqa: E402
     Pipeline,
     load_pipeline_from_yaml,
 )
-from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client
 
 setup_page("DSL Editor", "")
 st.header("DSL Visual Editor")

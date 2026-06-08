@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
-st.set_page_config(page_title="Tenant Inspection (S21)", page_icon="🛡️", layout="wide")
+setup_page("Tenant Inspection (S21)", "🛡️")
 st.header("Tenant Inspection — Sprint 21 multi-tenancy + resilience")
 st.caption(
     "Read-only dashboard: cache hit-rates per tenant + RLS policy status + "
