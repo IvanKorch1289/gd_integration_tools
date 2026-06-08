@@ -12,7 +12,9 @@ from src.backend.infrastructure.database.database import (
     get_external_db_registry,
 )
 from src.backend.infrastructure.decorators.caching import close_caches
-from src.backend.infrastructure.external_apis.logging_service import get_log_manager
+from src.backend.infrastructure.logging.factory import get_logger
+
+app_logger = get_logger("application")
 from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 __all__ = ("starting", "ending")
@@ -96,7 +98,7 @@ async def _register_health_checks() -> None:
     aggregator.register("redis", _redis_health)
     aggregator.register("database", _db_health)
     aggregator.register("s3", _s3_health)
-    get_log_manager().application_logger.info(  # type: ignore[attr-defined]
+    app_logger.info(  # S62 W5: was get_log_manager().application_logger
         "Health checks registered: redis, database, s3"
     )
 
@@ -153,7 +155,7 @@ async def _init_workflow_audit_sink() -> None:
         set_workflow_audit_sink,
     )
 
-    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
+    app_logger = get_logger("application")  # S62 W5: was get_log_manager()
     try:
         client = get_clickhouse_client()
         migrations_dir = (
@@ -186,7 +188,7 @@ def _register_default_degradation_features() -> None:
     )
 
     registry = get_graceful_degradation_registry()
-    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
+    app_logger = get_logger("application")  # S62 W5: was get_log_manager()
 
     async def _unsupported_full(*_: Any, **__: Any) -> None:
         # Заглушка — owner feature'а обязан явно зарегистрировать
@@ -340,7 +342,7 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
     - при первой критической ошибке выполнение прерывается;
     - подробности ошибки логируются в app_logger.
     """
-    app_logger = get_log_manager().application_logger  # type: ignore[attr-defined]
+    app_logger = get_logger("application")  # S62 W5: was get_log_manager()
     for name, operation, enabled_check in components:
         if enabled_check is not None and not enabled_check():
             app_logger.info(

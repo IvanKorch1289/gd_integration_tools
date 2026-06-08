@@ -89,12 +89,10 @@ class HttpClient(BaseHttpClient):
     """
 
     def __init__(self) -> None:
-        from src.backend.infrastructure.external_apis.logging_service import (
-            request_logger,
-        )
+        from src.backend.infrastructure.logging.factory import get_logger
 
         self.settings = settings.http_base_settings
-        self.logger = request_logger
+        self.logger = get_logger("request")
 
         self.client: httpx.AsyncClient | None = None
 

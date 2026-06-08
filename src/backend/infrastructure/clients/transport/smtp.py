@@ -50,13 +50,13 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
-        from src.backend.infrastructure.external_apis.logging_service import smtp_logger
+        from src.backend.infrastructure.logging.factory import get_logger
 
         if not all([settings.host, settings.port]):
             raise ValueError("Неверная конфигурация SMTP")
 
         self.settings = settings
-        self.logger = smtp_logger
+        self.logger = get_logger("smtp")
         self._pool_size = self.settings.connection_pool_size
         self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(
             maxsize=self._pool_size

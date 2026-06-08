@@ -3,7 +3,9 @@ from time import monotonic
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from src.backend.infrastructure.external_apis.logging_service import db_logger
+from src.backend.infrastructure.logging.factory import get_logger
+
+db_logger = get_logger("database")
 
 __all__ = ("DatabaseListener",)
 
