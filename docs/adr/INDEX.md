@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **44**; уникальных слотов: **44**.
+Всего ADR-файлов: **45**; уникальных слотов: **45**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -48,5 +48,6 @@
 | 0091 | ADR-0091: DLQ retention strategy (formalize existing unified implementation) | — | [0091-dlq-retention-strategy.md](0091-dlq-retention-strategy.md) |
 | 0092 | ADR-0092: Vault zero-downtime rotation (formalize K1 S19 W1) | — | [0092-vault-zero-downtime-rotation.md](0092-vault-zero-downtime-rotation.md) |
 | 0093 | ADR-0093: Global rate-limit (formalize existing production-ready implementation) | — | [0093-global-rate-limit.md](0093-global-rate-limit.md) |
+| 0094 | ADR-0094: Global PII response middleware (formalize S18 W3 + S-L8-4) | — | [0094-global-pii-response-middleware.md](0094-global-pii-response-middleware.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
