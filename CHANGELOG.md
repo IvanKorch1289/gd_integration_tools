@@ -107,7 +107,6 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - 200+ tests to close coverage gap (multi-sprint effort, S65+)
   - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active)
 - Honored carryover for S65+: coverage lift + TD-002 fix.
-- Honored carryover for S64+: coverage lift + TD-002 fix.
 
 ## [0.20.0] — 2026-05-26 — Sprint 28
 
