@@ -108,7 +108,7 @@ async def test_policy_rate_limit_allows_when_under_limit(
 async def test_policy_with_breaker_spec_uses_named_breaker() -> None:
     from src.backend.core.resilience.breaker import get_breaker_registry
 
-    spec = BreakerSpec(failure_threshold=10, recovery_timeout=30.0)
+    BreakerSpec(failure_threshold=10, recovery_timeout=30.0)
 
     @policy(circuit_breaker="test_policy_breaker")
     async def fn() -> int:

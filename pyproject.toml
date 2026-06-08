@@ -796,6 +796,7 @@ ignore = [
 "src/backend/infrastructure/clients/messaging/stream.py" = ["F822"]
 "src/backend/infrastructure/clients/storage/redis.py" = ["F822"]
 "src/backend/infrastructure/clients/storage/s3_pool.py" = ["F822"]
+"tests/unit/infrastructure/secrets/test_vault_client.py" = ["F821"]  # F821: VaultClient импортируется локально в fixtures, не нужен на module-level
 "src/backend/infrastructure/clients/transport/smtp.py" = ["F822"]
 "src/backend/infrastructure/database/database.py" = ["F822"]
 "src/backend/infrastructure/database/session_manager.py" = ["F822"]

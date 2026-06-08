@@ -115,7 +115,7 @@ async def test_cancel_audit_failure_is_swallowed(backend_mock: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_cancel_empty_ref_raises(backend_mock: Any) -> None:
-    proc = CancelWorkflowProcessor("${body.missing}", backend=backend_mock)
+    CancelWorkflowProcessor("${body.missing}", backend=backend_mock)
     exchange = _ex(body={})
     with pytest.raises(ValueError, match="workflow_id"):
         # Ref остаётся литеральной строкой "${body.missing}" если ключа нет —

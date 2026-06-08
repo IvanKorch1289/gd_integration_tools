@@ -207,7 +207,8 @@ class TestRegister:
 
     def test_with_fallback(self) -> None:
         m = DegradationManager()
-        fallback = lambda: "in-memory"
+        def fallback():
+            return "in-memory"
         m.register("redis", fallback=fallback)
         assert m._fallbacks["redis"] is fallback
 
@@ -288,7 +289,8 @@ class TestGetFallback:
 
     def test_fallback_when_degraded(self) -> None:
         m = DegradationManager()
-        fb = lambda: "in-mem"
+        def fb():
+            return "in-mem"
         m.register("db", fallback=fb)
         for _ in range(3):
             m.report_failure("db")
@@ -296,7 +298,8 @@ class TestGetFallback:
 
     def test_fallback_not_active_when_available(self) -> None:
         m = DegradationManager()
-        fb = lambda: "in-mem"
+        def fb():
+            return "in-mem"
         m.register("db", fallback=fb)
         # Не degraded → None
         assert m.get_fallback("db") is None

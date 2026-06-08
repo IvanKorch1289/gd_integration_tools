@@ -42,7 +42,7 @@ def test_help_runs() -> None:
     """python tools/api_fuzz_runner.py --help возвращает exit 0."""
     import subprocess
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(API_FUZZ_PATH), "--help"],
         capture_output=True,
         text=True,

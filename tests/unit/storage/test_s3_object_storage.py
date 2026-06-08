@@ -123,20 +123,21 @@ async def test_upload_wraps_boto_error_as_service_error(
     """``ServiceError`` оборачивает boto-исключения из ``upload``."""
     from botocore.exceptions import ClientError
 
-    async def _fake_acquire() -> Any:
-        class _FakeS3:
-            async def put_object(self, **kwargs: Any) -> None:
-                raise ClientError(
-                    {"Error": {"Code": "InternalError", "Message": "boom"}},
-                    "PutObject",
-                )
+    class _FakeS3:
+        async def put_object(self, **kwargs: Any) -> None:
+            raise ClientError(
+                {"Error": {"Code": "InternalError", "Message": "boom"}},
+                "PutObject",
+            )
 
-        async def _aexit(*_a: object) -> None:
+    class _FakeS3Session:
+        async def __aenter__(self) -> _FakeS3:
+            return _FakeS3()
+
+        async def __aexit__(self, *exc: object) -> None:
             return None
 
-        return _FakeS3(), _aexit
-
-    storage._acquire = _fake_acquire  # type: ignore[method-assign]
+    storage._open = lambda: _FakeS3Session()  # type: ignore[method-assign]
     with pytest.raises(ServiceError, match="S3 upload failed"):
         await storage.upload("k", b"v")
 

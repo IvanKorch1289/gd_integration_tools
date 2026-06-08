@@ -145,7 +145,6 @@ def test_components_fast_mode_returns_200() -> None:
 
     original_agg = di_providers.get_health_aggregator_provider
     original_res = di_providers.get_resilience_components_report_provider
-    original_check = mock_aggregator.check_all
 
     try:
         di_providers.get_health_aggregator_provider = lambda: mock_aggregator

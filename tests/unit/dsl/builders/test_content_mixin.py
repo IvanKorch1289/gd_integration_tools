@@ -269,7 +269,6 @@ class TestChaining:
             .build()
         )
         ex = _make_exchange(body={"input": "data"})
-        engine = route
         # Manually walk the pipeline to verify state propagation.
         for proc in route.processors:  # type: ignore[attr-defined]
             _run(proc.process(ex, context=MagicMock()))

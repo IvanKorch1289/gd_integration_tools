@@ -68,7 +68,7 @@ def test_set_and_get_region_status() -> None:
     # Initial status is UNKNOWN since register_region seeds _REGION_HEALTH but
     # get_region_status falls back to UNKNOWN for fresh keys; register_region
     # should set it — verify the function sets it correctly
-    initial = get_region_status("st1")
+    get_region_status("st1")
     set_region_status("st1", RegionStatus.UNHEALTHY)
     assert get_region_status("st1") == RegionStatus.UNHEALTHY
     # Also verify it didn't stay at the seed value after reset

@@ -131,7 +131,7 @@ async def test_invoke_llm_policy_none_uses_none_model() -> None:
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 
     gateway = AIGateway(llm_gateway=mock_gateway)
-    response = await gateway._invoke_llm("hello", policy=None, stream=False)
+    await gateway._invoke_llm("hello", policy=None, stream=False)
 
     call_kwargs = mock_gateway.acompletion.call_args.kwargs
     assert call_kwargs.get("model") is None

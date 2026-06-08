@@ -167,7 +167,7 @@ class TestGenerateOpenapi:
             route_id="flagged-route", feature_flag="new_feature_enabled"
         )
 
-        spec = generate_openapi(pipeline)
+        generate_openapi(pipeline)
 
         # Feature flag info is in the pipeline but not directly in OpenAPI output
         # It's available in the Pipeline object itself

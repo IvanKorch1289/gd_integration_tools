@@ -81,7 +81,7 @@ async def test_different_apps_different_clients(pool: DesktopRPASessionPool) -> 
 async def test_reconnect_on_stale_handle(pool: DesktopRPASessionPool) -> None:
     """ConnectError внутри acquire-блока — session удалена для reconnect."""
     with pytest.raises(httpx.ConnectError):
-        async with pool.acquire("notepad") as client:
+        async with pool.acquire("notepad"):
             # Симулируем stale handle
             raise httpx.ConnectError("connection refused")
 

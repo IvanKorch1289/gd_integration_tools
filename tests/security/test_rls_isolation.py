@@ -99,18 +99,18 @@ async def populated_table(
             text("SELECT set_config('app.tenant_id', :t, false)"), {"t": tenant_a}
         )
         await session.execute(
-            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'A1')"),
+            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'A1')"),  # noqa: S608
             {"t": tenant_a},
         )
         await session.execute(
-            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'A2')"),
+            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'A2')"),  # noqa: S608
             {"t": tenant_a},
         )
         await session.execute(
             text("SELECT set_config('app.tenant_id', :t, false)"), {"t": tenant_b}
         )
         await session.execute(
-            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'B1')"),
+            text(f"INSERT INTO {table} (tenant_id, payload) VALUES (:t, 'B1')"),  # noqa: S608
             {"t": tenant_b},
         )
         await session.commit()
@@ -139,7 +139,7 @@ async def test_rls_blocks_explicit_other_tenant_select(
             text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a}
         )
         result = await session.execute(
-            text(f"SELECT payload FROM {table} WHERE tenant_id = :other"),
+            text(f"SELECT payload FROM {table} WHERE tenant_id = :other"),  # noqa: S608
             {"other": tenant_b},
         )
         rows = result.scalars().all()
@@ -157,7 +157,7 @@ async def test_rls_filters_cross_bu_select_without_where(
         await session.execute(
             text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a}
         )
-        result = await session.execute(text(f"SELECT payload FROM {table}"))
+        result = await session.execute(text(f"SELECT payload FROM {table}"))  # noqa: S608
         rows = sorted(result.scalars().all())
         assert rows == ["A1", "A2"], (
             f"RLS должен вернуть только tenant A строки, получено: {rows}"
@@ -177,7 +177,7 @@ async def test_rls_handles_union_bypass_attempt(
         )
         result = await session.execute(
             text(
-                f"SELECT payload FROM {table} WHERE id = 1 "
+                f"SELECT payload FROM {table} WHERE id = 1 "  # noqa: S608
                 f"UNION ALL SELECT payload FROM {table} WHERE id IN (2, 3)"
             )
         )
@@ -201,7 +201,7 @@ async def test_rls_blocks_when_set_local_missing(
     _tenant_a, _tenant_b, table = populated_table
     async with pg_session_factory() as session:
         # Не вызываем set_config — namespace `app.tenant_id` не определён
-        result = await session.execute(text(f"SELECT payload FROM {table}"))
+        result = await session.execute(text(f"SELECT payload FROM {table}"))  # noqa: S608
         rows = result.scalars().all()
         assert rows == [], (
             f"Без SET LOCAL RLS должен блокировать все строки, получено: {rows}"
@@ -223,6 +223,6 @@ async def test_rls_superuser_bypass(
     """
     _tenant_a, _tenant_b, table = populated_table
     async with pg_session_factory() as session:
-        result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
+        result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))  # noqa: S608
         count = result.scalar_one()
         assert count == 3, "SUPERUSER должен видеть все 3 строки"

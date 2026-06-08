@@ -137,7 +137,7 @@ class TestWithContext:
         reg = TaskRegistry()
 
         # Token-less var: var.set() без аргумента LookupError
-        var = contextvars.ContextVar("test", default=0)
+        contextvars.ContextVar("test", default=0)
 
         captured: list[int] = []
 

@@ -145,7 +145,7 @@ async def test_execute_parallel_concurrency_bounded() -> None:
 
     start = asyncio.get_event_loop().time()
     results = await pool.execute_parallel(processors, exc, ctx, timeout=5.0)
-    elapsed = asyncio.get_event_loop().time() - start
+    asyncio.get_event_loop().time() - start
 
     assert len(results) == 4
     assert all(r["status"] == "ok" for r in results)
@@ -197,7 +197,7 @@ async def test_shutdown_cancels_pending() -> None:
     proc.process = slow_process  # type: ignore
 
     # Start execution
-    task = asyncio.create_task(pool.execute_parallel([proc], exc, ctx))
+    asyncio.create_task(pool.execute_parallel([proc], exc, ctx))
 
     # Give it a moment to start
     await asyncio.sleep(0.1)

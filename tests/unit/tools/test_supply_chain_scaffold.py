@@ -26,7 +26,7 @@ def test_generate_sbom_module_importable() -> None:
     """tools/checks/generate_sbom.py синтаксически корректен и компилируется без ошибок."""
     assert _GENERATE_SBOM.exists(), f"generate_sbom.py не найден: {_GENERATE_SBOM}"
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "py_compile", str(_GENERATE_SBOM)],
         capture_output=True,
         text=True,
@@ -42,7 +42,7 @@ def test_run_pip_audit_module_importable() -> None:
     """tools/checks/run_pip_audit.py синтаксически корректен и компилируется без ошибок."""
     assert _RUN_PIP_AUDIT.exists(), f"run_pip_audit.py не найден: {_RUN_PIP_AUDIT}"
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "py_compile", str(_RUN_PIP_AUDIT)],
         capture_output=True,
         text=True,
@@ -58,7 +58,7 @@ def test_cosign_sign_module_importable() -> None:
     """tools/checks/cosign_sign.py синтаксически корректен и компилируется без ошибок."""
     assert _COSIGN_SIGN.exists(), f"cosign_sign.py не найден: {_COSIGN_SIGN}"
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "py_compile", str(_COSIGN_SIGN)],
         capture_output=True,
         text=True,

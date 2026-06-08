@@ -23,7 +23,6 @@ from fastapi.testclient import TestClient
 
 from src.backend.services.auth.ad_directory_client import AdAuthError, AdSearchEntry
 
-
 # === LdapSettings ===
 
 
@@ -270,8 +269,9 @@ async def test_login_emits_deprecation_warning() -> None:
 @pytest.fixture
 def client() -> TestClient:
     """FastAPI TestClient для endpoint tests."""
-    from src.backend.entrypoints.api.v1.routers import get_v1_routers
     from fastapi import FastAPI
+
+    from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
     app = FastAPI()
     app.include_router(get_v1_routers(), prefix="/api/v1")

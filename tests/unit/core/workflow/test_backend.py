@@ -86,7 +86,7 @@ class TestWorkflowStatus:
     """WorkflowStatus — alias для str."""
 
     def test_is_str(self) -> None:
-        assert WorkflowStatus == str  # type: ignore[misc]
+        assert WorkflowStatus == str  # type: ignore[misc]  # noqa: E721
 
 
 class _FakeBackend:

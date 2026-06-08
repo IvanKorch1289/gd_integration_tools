@@ -35,8 +35,7 @@ class TestExecutionTracer:
 
     @pytest.mark.asyncio
     async def test_trace_emits_start_and_end(self, tracer: ExecutionTracer) -> None:
-        events: list[TraceEvent] = []
-        async with tracer.trace("r1", "p1", "T") as td:
+        async with tracer.trace("r1", "p1", "T"):
             pass
 
         # subscribe and collect
@@ -46,7 +45,7 @@ class TestExecutionTracer:
     @pytest.mark.asyncio
     async def test_trace_emits_error(self, tracer: ExecutionTracer) -> None:
         with pytest.raises(RuntimeError, match="boom"):
-            async with tracer.trace("r1", "p1", "T") as td:
+            async with tracer.trace("r1", "p1", "T"):
                 raise RuntimeError("boom")
 
     @pytest.mark.asyncio

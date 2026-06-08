@@ -37,7 +37,7 @@ def _write_coverage_xml(path: Path, line_rate: float) -> None:
 
 def _run_gate(*args: str) -> subprocess.CompletedProcess:
     """Запускает CLI gate с заданными аргументами."""
-    return subprocess.run(
+    return subprocess.run(  # noqa: S603
         [sys.executable, str(TOOL_PATH), *args],
         capture_output=True,
         text=True,

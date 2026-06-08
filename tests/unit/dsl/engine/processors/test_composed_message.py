@@ -9,11 +9,7 @@ import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.engine.processors.composed_message import (
-    AggregatorCallable,
-    ComposedMessageProcessor,
-    SplitterCallable,
-)
+from src.backend.dsl.engine.processors.composed_message import ComposedMessageProcessor
 
 
 def _make_exchange(body: Any = None) -> Exchange[Any]:
@@ -38,21 +34,27 @@ class DummyProcessor(BaseProcessor):
 
 class TestComposedMessageProcessor:
     def test_name_default(self) -> None:
-        splitter: SplitterCallable = lambda ex: [ex]
-        agg: AggregatorCallable = lambda parts: parts[0] if parts else _make_exchange()
+        def splitter(ex):
+            return [ex]
+        def agg(parts):
+            return parts[0] if parts else _make_exchange()
         proc = ComposedMessageProcessor(splitter, [], agg)
         assert proc.name == "composed_message"
 
     def test_name_custom(self) -> None:
-        splitter: SplitterCallable = lambda ex: [ex]
-        agg: AggregatorCallable = lambda parts: parts[0] if parts else _make_exchange()
+        def splitter(ex):
+            return [ex]
+        def agg(parts):
+            return parts[0] if parts else _make_exchange()
         proc = ComposedMessageProcessor(splitter, [], agg, name="custom")
         assert proc.name == "custom"
 
     def test_processors_list_copied(self) -> None:
         procs = [DummyProcessor()]
-        splitter: SplitterCallable = lambda ex: [ex]
-        agg: AggregatorCallable = lambda parts: parts[0] if parts else _make_exchange()
+        def splitter(ex):
+            return [ex]
+        def agg(parts):
+            return parts[0] if parts else _make_exchange()
         proc = ComposedMessageProcessor(splitter, procs, agg)
         assert proc._processors == procs
         assert proc._processors is not procs  # Should be a copy
@@ -83,7 +85,6 @@ class TestComposedMessageProcessorProcess:
 
     @pytest.mark.asyncio
     async def test_empty_parts_calls_aggregator_with_empty_list(self) -> None:
-        empty_parts: list[Exchange[Any]] = []
 
         def splitter(ex: Exchange[Any]) -> list[Exchange[Any]]:
             return []
@@ -103,7 +104,8 @@ class TestComposedMessageProcessorProcess:
         def bad_splitter(ex: Exchange[Any]) -> list[Exchange[Any]]:
             raise RuntimeError("Split failed")
 
-        agg: AggregatorCallable = lambda parts: _make_exchange()
+        def agg(parts):
+            return _make_exchange()
 
         proc = ComposedMessageProcessor(bad_splitter, [], agg)
         ex = _make_exchange(body="test")
@@ -118,7 +120,8 @@ class TestComposedMessageProcessorProcess:
         def not_list_splitter(ex: Exchange[Any]) -> Any:
             return "not a list"
 
-        agg: AggregatorCallable = lambda parts: _make_exchange()
+        def agg(parts):
+            return _make_exchange()
 
         proc = ComposedMessageProcessor(not_list_splitter, [], agg)
         ex = _make_exchange(body="test")
@@ -244,7 +247,9 @@ class TestComposedMessageProcessorProcess:
 
     @pytest.mark.asyncio
     async def test_to_spec_returns_none(self) -> None:
-        splitter: SplitterCallable = lambda ex: [ex]
-        agg: AggregatorCallable = lambda parts: parts[0] if parts else _make_exchange()
+        def splitter(ex):
+            return [ex]
+        def agg(parts):
+            return parts[0] if parts else _make_exchange()
         proc = ComposedMessageProcessor(splitter, [], agg)
         assert proc.to_spec() is None

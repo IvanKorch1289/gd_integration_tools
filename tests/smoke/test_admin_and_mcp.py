@@ -63,7 +63,7 @@ def test_mcp_http_app_created_when_enabled(monkeypatch) -> None:
 
 def test_mcp_http_app_routes_exist() -> None:
     """FastMCP HTTP app has a /tools route (MCP protocol)."""
-    fastmcp = pytest.importorskip("fastmcp")
+    pytest.importorskip("fastmcp")
     from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
     app = create_mcp_http_app()

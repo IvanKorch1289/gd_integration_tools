@@ -139,7 +139,7 @@ class TestConversionStrategies:
     def test_csv_to_dict_fallback(self) -> None:
         # When polars is not available
         pytest.importorskip("polars", reason="polars required")
-        strategy = CsvToDict()
+        CsvToDict()
 
     def test_csv_to_dict_single_line(self) -> None:
         strategy = CsvToDict()
@@ -155,8 +155,8 @@ class TestRegisterConversion:
 
         register_conversion("custom", "output", CustomStrategy())
 
-        proc = ConvertProcessor(from_format="custom", to_format="output")
-        ex = _make_exchange(body="test")
+        ConvertProcessor(from_format="custom", to_format="output")
+        _make_exchange(body="test")
         # This would work if the registry was properly updated
 
 

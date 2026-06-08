@@ -48,7 +48,8 @@ class TestInit:
 class TestRegisterHealer:
     def test_register(self) -> None:
         h = SelfHealer()
-        check = lambda: True
+        def check():
+            return True
         h.register_healer("db", check)
         assert h._healers == {"db": check}
 

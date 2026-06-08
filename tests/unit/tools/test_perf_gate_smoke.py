@@ -45,7 +45,7 @@ def test_perf_gate_module_importable() -> None:
     """tools/perf_gate.py запускается с --help и возвращает код 0."""
     assert PERF_GATE_PATH.exists(), f"perf_gate.py не найден: {PERF_GATE_PATH}"
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(PERF_GATE_PATH), "--help"],
         capture_output=True,
         text=True,

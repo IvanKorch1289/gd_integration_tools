@@ -145,7 +145,7 @@ class TestOpenLineageHttpEmitter:
     def test_http_error_does_not_remove_from_buffer(self) -> None:
         cfg = OpenLineageHttpConfig("http://marquez:5000", batch_size=2)
         em = OpenLineageHttpEmitter(cfg)
-        with _mock_urlopen([urllib.error.URLError("connection refused")]) as calls:
+        with _mock_urlopen([urllib.error.URLError("connection refused")]):
             for i in range(2):
                 em(_event(name=f"e{i}"))
         # Failed → events stay in buffer for retry
@@ -156,7 +156,7 @@ class TestOpenLineageHttpEmitter:
     def test_http_5xx_treated_as_failure(self) -> None:
         cfg = OpenLineageHttpConfig("http://marquez:5000", batch_size=1)
         em = OpenLineageHttpEmitter(cfg)
-        with _mock_urlopen([(500, "internal")]) as calls:
+        with _mock_urlopen([(500, "internal")]):
             em(_event(name="e1"))
         assert em.stats["sent"] == 0
         assert em.stats["failed"] == 1
@@ -165,7 +165,7 @@ class TestOpenLineageHttpEmitter:
     def test_http_2xx_treated_as_success(self) -> None:
         cfg = OpenLineageHttpConfig("http://marquez:5000", batch_size=1)
         em = OpenLineageHttpEmitter(cfg)
-        with _mock_urlopen([(201, "created")]) as calls:
+        with _mock_urlopen([(201, "created")]):
             em(_event(name="e1"))
         assert em.stats["sent"] == 1
         assert em.stats["pending"] == 0

@@ -309,7 +309,7 @@ async def _print_status() -> None:
         typer.echo("(no workflow instances)")
         return
 
-    typer.echo(f"Workflow instances ({datetime.utcnow().isoformat()}Z):")
+    typer.echo(f"Workflow instances ({datetime.now(UTC).isoformat()}Z):")
     total = 0
     for status, count in rows:
         total += int(count)

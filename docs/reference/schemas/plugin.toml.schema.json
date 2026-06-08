@@ -162,6 +162,30 @@
       },
       "title": "PluginSandbox",
       "type": "object"
+    },
+    "PluginTenantDecl": {
+      "additionalProperties": false,
+      "description": "V15 GAP Gap 4 (Sprint 36) — декларация tenant-aware capabilities.\n\nМинимальный slice: перечисляет **только имена** capabilities, которые\nплагин регистрирует для конкретного tenant'а. ``scope`` в этой\nверсии НЕ поддерживается (см. Open Question Q1 в KIMI-плане\n``/tmp/kimi-gap4-plan.md``) — будет добавлен в следующем slice как\ninline-таблица ``[[tenants.capabilities]] name=… scope=…``.\n\nИспользуется :class:`PluginLoaderV11` для вызова\n:meth:`CapabilityGate.declare_tenant` после парсинга манифеста.\nВалидация против :data:`DEFAULT_CAPABILITY_CATALOG` гарантирует, что\nв манифесте не появятся имена, отсутствующие в vocabulary (fail-fast\nпри load, а не при первом runtime-обращении).\n\nAttributes:\n    name: Tenant id (например, ``\"tenant_a\"`` или\n        :data:`SYSTEM_TENANT_ID`).\n    capabilities: Имена capabilities (только ``<resource>.<verb>``,\n        без scope).",
+      "properties": {
+        "capabilities": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "PluginTenantDecl",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -241,6 +265,14 @@
       "default": false,
       "title": "Tenant Aware",
       "type": "boolean"
+    },
+    "tenants": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PluginTenantDecl"
+      },
+      "title": "Tenants",
+      "type": "array"
     },
     "trust_tier": {
       "default": "B",

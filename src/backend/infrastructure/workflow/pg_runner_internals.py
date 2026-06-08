@@ -379,7 +379,7 @@ class WorkflowEventStore:
         await session.execute(
             update(WorkflowInstance)
             .where(WorkflowInstance.id == workflow_id)
-            .values(last_event_seq=seq, updated_at=datetime.utcnow())
+            .values(last_event_seq=seq, updated_at=datetime.now(UTC))
         )
         return seq
 

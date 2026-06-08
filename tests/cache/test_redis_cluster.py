@@ -19,7 +19,9 @@ import pytest
 # redis 5.x обязателен; skip — если случайно отсутствует.
 redis_mod = pytest.importorskip("redis.asyncio.cluster")
 
-from src.backend.infrastructure.cache.redis_cluster import RedisClusterAdapter
+from src.backend.infrastructure.cache.redis_cluster import (  # noqa: E402
+    RedisClusterAdapter,
+)
 
 
 def _make_adapter_with_mock_cluster() -> tuple[RedisClusterAdapter, MagicMock]:

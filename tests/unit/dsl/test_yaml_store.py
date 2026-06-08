@@ -29,7 +29,7 @@ class TestYAMLStore:
         return YAMLStore(tmp_path)
 
     def test_init_creates_dir(self, tmp_path: Path) -> None:
-        store = YAMLStore(tmp_path / "sub")
+        YAMLStore(tmp_path / "sub")
         assert (tmp_path / "sub").exists()
 
     def test_save(self, tmp_store: YAMLStore, tmp_path: Path) -> None:

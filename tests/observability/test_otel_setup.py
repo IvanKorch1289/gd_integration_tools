@@ -30,7 +30,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (  # noqa: E4
     InMemorySpanExporter,
 )
 
-from src.backend.infrastructure.observability.otel import configure_otel
+from src.backend.infrastructure.observability.otel import configure_otel  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
