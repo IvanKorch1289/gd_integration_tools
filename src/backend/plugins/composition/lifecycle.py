@@ -887,6 +887,36 @@ async def lifespan(app: FastAPI):
             # (например, dev_light без RabbitMQ) — startup продолжается.
             app_logger.warning("Outbox worker registration skipped: %s", exc)
 
+        # S72 W2 / S74 W1: outbox stuck-monitor — periodic Prometheus
+        # gauge update (60s sample, 300s threshold). Default-OFF через
+        # feature flag stuck_monitor_enabled.
+        try:
+            from src.backend.core.config.features import feature_flags
+            from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+                start_outbox_stuck_monitor,
+            )
+
+            if getattr(feature_flags, "stuck_monitor_enabled", False):
+                threshold = int(
+                    getattr(feature_flags, "stuck_monitor_threshold_seconds", 300)
+                )
+                sample_interval = int(
+                    getattr(
+                        feature_flags, "stuck_monitor_sample_interval_seconds", 60
+                    )
+                )
+                await start_outbox_stuck_monitor(
+                    threshold_seconds=threshold,
+                    sample_interval_seconds=sample_interval,
+                )
+                app_logger.info(
+                    "OutboxStuckMonitor started (threshold=%ds, sample=%ds)",
+                    threshold,
+                    sample_interval,
+                )
+        except Exception as exc:
+            app_logger.warning("OutboxStuckMonitor registration skipped: %s", exc)
+
         # К3 (Sprint 4 V16.1): bootstrap workflow runtime — LiteTemporal
         # для dev_light, реальный Temporal для staging/prod. Не блокирует
         # startup при отсутствии SDK или ошибке backend'а.
@@ -997,6 +1027,16 @@ async def lifespan(app: FastAPI):
             await stop_outbox_worker()
         except Exception as wf_stop_exc:
             app_logger.warning("Workflow runtime shutdown error: %s", wf_stop_exc)
+
+        # S74 W1: stop outbox stuck-monitor (graceful drain).
+        try:
+            from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+                stop_outbox_stuck_monitor,
+            )
+
+            await stop_outbox_stuck_monitor()
+        except Exception as exc:
+            app_logger.debug("OutboxStuckMonitor stop skipped: %s", exc)
 
         await _stop_dsl_yaml_watcher(app)
 
