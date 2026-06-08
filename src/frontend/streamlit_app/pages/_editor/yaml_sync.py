@@ -14,24 +14,11 @@ Wave: ``[wave:s77/w3-dsl-editor-split]``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import yaml as _yaml
 
 from src.backend.services.dsl_portal import Pipeline, load_pipeline_from_yaml
 
-if TYPE_CHECKING:
-    pass
-
-__all__ = (
-    "build_yaml_from_steps",
-    "sync_yaml",
-    "try_load",
-    "yaml_to_steps",
-)
-
-# Re-export default_yaml из constants.py для backward-compat с
-# местами, которые импортировали его из yaml_sync.
+__all__ = ("build_yaml_from_steps", "sync_yaml", "try_load", "yaml_to_steps")
 
 
 def yaml_to_steps(yaml_str: str) -> tuple[dict, list[dict]]:

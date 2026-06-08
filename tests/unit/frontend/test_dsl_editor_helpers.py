@@ -23,6 +23,7 @@ from src.frontend.streamlit_app.pages._editor.constants import (  # noqa: E402
 )
 from src.frontend.streamlit_app.pages._editor.yaml_sync import (  # noqa: E402
     build_yaml_from_steps,
+    try_load,
     yaml_to_steps,
 )
 
@@ -229,3 +230,27 @@ def test_yaml_round_trip_lossless() -> None:
     # Re-build → должен совпадать с yaml1.
     yaml2 = build_yaml_from_steps(meta2, steps2)
     assert yaml2 == yaml1
+
+
+# ──────────────────────────── try_load ────────────────────────────
+
+
+def test_try_load_valid_yaml_returns_pipeline() -> None:
+    """``try_load(valid_yaml)`` → ``(Pipeline, None)`` без ошибки."""
+    yaml_str = build_yaml_from_steps(
+        {"route_id": "test.try_load", "source": "internal:test"},
+        [{"type": "log", "params": {"level": "info"}}],
+    )
+    pipeline, err = try_load(yaml_str)
+    assert err is None
+    assert pipeline is not None
+    assert pipeline.route_id == "test.try_load"
+
+
+def test_try_load_invalid_yaml_returns_error() -> None:
+    """``try_load(invalid_yaml)`` → ``(None, error_str)`` без exception."""
+    pipeline, err = try_load("this: is: not: valid: yaml: :\n  - [unclosed")
+    assert pipeline is None
+    assert err is not None
+    assert isinstance(err, str)
+    assert err  # Non-empty error message.

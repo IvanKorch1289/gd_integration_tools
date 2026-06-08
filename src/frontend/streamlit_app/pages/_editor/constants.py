@@ -8,12 +8,7 @@ Wave: ``[wave:s77/w3-dsl-editor-split]``.
 
 from __future__ import annotations
 
-__all__ = (
-    "PROCESSOR_ICONS",
-    "STEP_PALETTE",
-    "VISUAL_PROCESSORS",
-    "default_yaml",
-)
+__all__ = ("PROCESSOR_ICONS", "STEP_PALETTE", "VISUAL_PROCESSORS", "default_yaml")
 
 
 # Палитра процессоров для drag-drop sidebar (legacy, до Canvas-режима).
@@ -58,14 +53,8 @@ STEP_PALETTE: dict[str, dict[str, str]] = {
         "title": "Express Send",
         "desc": "Отправка сообщения в Telegram бот",
     },
-    "express_reply": {
-        "title": "Express Reply",
-        "desc": "Ответ на Telegram сообщение",
-    },
-    "notify": {
-        "title": "Notify",
-        "desc": "Уведомление в канал (email/slack/telegram)",
-    },
+    "express_reply": {"title": "Express Reply", "desc": "Ответ на Telegram сообщение"},
+    "notify": {"title": "Notify", "desc": "Уведомление в канал (email/slack/telegram)"},
 }
 
 # Иконки для UI (Emoji).

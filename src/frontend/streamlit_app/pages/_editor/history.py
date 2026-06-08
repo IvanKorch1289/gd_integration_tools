@@ -14,26 +14,20 @@ Wave: ``[wave:s77/w3-dsl-editor-split]``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import streamlit as st
-
-__all__ = (
-    "can_redo",
-    "can_undo",
-    "init_history",
-    "push_history",
-    "redo",
-    "undo",
-)
+__all__ = ("can_redo", "can_undo", "init_history", "push_history", "redo", "undo")
 
 # Максимальный размер undo-стека.
 _MAX_HISTORY: int = 50
 
 
-def _require_streamlit() -> "st":  # type: ignore[type-arg]
-    """Lazy import streamlit (module-level импорт ломает тесты без [frontend])."""
+def _require_streamlit():
+    """Lazy import streamlit (module-level импорт ломает тесты без [frontend]).
+
+    Returns runtime-imported ``streamlit`` module. Annotation
+    intentionally untyped: TYPE_CHECKING импорт был бы flag'нут F401,
+    а string-quoted ``"st"`` requires explicit forward-ref management.
+    Plain ``-> object`` is honest: callers treat result as namespace.
+    """
     import streamlit as st
 
     return st

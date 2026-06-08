@@ -360,12 +360,16 @@ def _render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | No
     return None
 
 
-# ─── Undo/redo history init (extracted в _editor/history.py) ──────────────
-init_history()
-
-# ─── Default yaml + session state init ───────────────────────────────────
+# ─── Default yaml + session state init (BEFORE history!) ─────────────────
+# Порядок важен: init_history() читает st.session_state.yaml, поэтому
+# сначала инициализируем yaml, потом — history stack.
+# P0 баг был: history init шло до yaml init → AttributeError на первой
+# загрузке. (S77 W3 followup roe-agent review).
 if "yaml" not in st.session_state:
     st.session_state.yaml = default_yaml()
+
+# ─── Undo/redo history init (extracted в _editor/history.py) ──────────────
+init_history()
 
 if "last_load_route" not in st.session_state:
     st.session_state.last_load_route = None

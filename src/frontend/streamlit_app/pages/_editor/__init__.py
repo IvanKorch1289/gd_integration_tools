@@ -3,10 +3,12 @@
 Streamlit page ``31_DSL_Visual_Editor.py`` был 1269 LOC god-file
 (S77 W2 backlog от v28 ro-аудита). Чистая логика вынесена сюда:
 
-* :mod:`._constants` — STEP_PALETTE, PROCESSOR_ICONS, VISUAL_PROCESSORS
-  (метаданные процессоров), ``_default_yaml()`` шаблон.
-* :mod:`._history` — undo/redo (5 функций + state init).
-* :mod:`._yaml_sync` — YAML ↔ steps (5 функций).
+* :mod:`.constants` — STEP_PALETTE, PROCESSOR_ICONS, VISUAL_PROCESSORS
+  (метаданные процессоров), ``default_yaml()`` шаблон.
+* :mod:`.history` — undo/redo (6 функций: ``init_history``,
+  ``push_history``, ``can_undo``, ``can_redo``, ``undo``, ``redo``).
+* :mod:`.yaml_sync` — YAML ↔ steps (4 функции: ``yaml_to_steps``,
+  ``build_yaml_from_steps``, ``try_load``, ``sync_yaml``).
 
 Rendering (Streamlit UI) остаётся в самой странице — render-функции
 тесно связаны с ``st.session_state`` / ``st.sidebar`` / ``st.tabs``
