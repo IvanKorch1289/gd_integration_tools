@@ -122,3 +122,57 @@ async def test_action_handles_missing_payload() -> None:
     result = await handler()
     assert result["agent"] == "scoring_agent"
     assert result["stub"] is False
+
+
+@pytest.mark.asyncio
+async def test_action_handles_explicit_none_payload() -> None:
+    """``payload=None`` явно → handler подставляет ``{}`` (не TypeError)."""
+    plugin = CreditPipelinePlugin()
+    registry: ActionRegistryProtocol = _RecordingRegistry()  # type: ignore[assignment]
+    await plugin.on_register_actions(registry)
+    handler = registry.registered["credit_pipeline.score"]  # type: ignore[attr-defined]
+    result = await handler(payload=None)
+    assert result["agent"] == "scoring_agent"
+    assert result["stub"] is False
+
+
+@pytest.mark.asyncio
+async def test_action_propagates_agent_exception() -> None:
+    """Если agent падает, exception propagation контракт фиксирован.
+
+    Сейчас scoring_agent / decision_agent не падают на well-formed
+    input. Этот тест фиксирует контракт: если упадёт — caller получит
+    exception (не silent failure). Это позволяет DSL/Supervisor решать,
+    retry/fallback policy.
+
+    Test case: ``amount="not_a_number"`` → ``int("not_a_number")`` →
+    ValueError. Wrapper НЕ должен swallow'ить — propagate as-is.
+    """
+    plugin = CreditPipelinePlugin()
+    registry: ActionRegistryProtocol = _RecordingRegistry()  # type: ignore[assignment]
+    await plugin.on_register_actions(registry)
+    handler = registry.registered["credit_pipeline.score"]  # type: ignore[attr-defined]
+
+    with pytest.raises(ValueError, match="invalid literal for int"):
+        await handler(payload={"amount": "not_a_number"})
+
+
+@pytest.mark.asyncio
+async def test_double_registration_is_idempotent_or_raises() -> None:
+    """Reentrancy: повторный ``on_register_actions`` либо идемпотентен,
+    либо raise. Фиксирует контракт для PluginLoaderV11 hot-reload.
+
+    Текущая реализация: каждый вызов ``on_register_actions`` создаёт
+    fresh handlers (closures) и re-registers. Поведение зависит от
+    ActionHandlerRegistry (mock не enforce'ит коллизии). Smoke-проверка:
+    повторный вызов не падает.
+    """
+    plugin = CreditPipelinePlugin()
+    registry: ActionRegistryProtocol = _RecordingRegistry()  # type: ignore[assignment]
+    await plugin.on_register_actions(registry)
+    first_count = len(registry.registered)  # type: ignore[attr-defined]
+    # Повторный вызов — mock registry просто перезаписывает (не enforce'ит).
+    await plugin.on_register_actions(registry)
+    second_count = len(registry.registered)  # type: ignore[attr-defined]
+    # Action count не увеличился (mock перезаписал, не append).
+    assert first_count == second_count == 3
