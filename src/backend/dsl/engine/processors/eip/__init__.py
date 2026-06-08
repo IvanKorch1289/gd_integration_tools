@@ -86,6 +86,10 @@ from src.backend.dsl.engine.processors.eip.routing_slip import (
     SimpleRegistry,
 )
 from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor
+from src.backend.dsl.engine.processors.eip.transactional import (
+    ProcessManagerProcessor,
+    TransactionalClientProcessor,
+)
 from src.backend.dsl.engine.processors.eip.transformation import (
     ClaimCheckProcessor,
     MessageTranslatorProcessor,
@@ -146,6 +150,7 @@ __all__ = (
     "PydashOmitProcessor",
     "PydashPickProcessor",
     "PydashSetProcessor",
+    "ProcessManagerProcessor",
     "RecipientListProcessor",
     "RedeliveryPolicyProcessor",
     "ResequencerProcessor",
@@ -160,6 +165,7 @@ __all__ = (
     "SumByProcessor",
     "ThrottlerProcessor",
     "TimeoutProcessor",
+    "TransactionalClientProcessor",
     "UniqueProcessor",
     "UnmarshalProcessor",
     "WindowedCollectProcessor",
