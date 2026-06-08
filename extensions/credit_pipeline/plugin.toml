@@ -13,11 +13,11 @@
 #   * actions/ + processors/ + frontend/pages/ при необходимости.
 
 name = "credit_pipeline"
-version = "0.0.1"
+version = "0.1.0"
 requires_core = ">=0.2,<0.3"
 entry_class = "extensions.credit_pipeline.plugin.CreditPipelinePlugin"
 tenant_aware = true
-description = "Credit pipeline plugin (scaffold; Team T3 будет наполнять Sprint 8+)"
+description = "Credit pipeline plugin (S76 — real agents: score/parse/decide)"
 # S18 W12 (ADR-NEW-6): internal banking-critical plugin → Tier-A.
 trust_tier = "A"
 
@@ -54,9 +54,13 @@ name = "mq.publish"
 scope = "credit.events.*"
 
 # ─── Декларативный inventory ──────────────────────────────────────
-# Пусто — Team T3 заполнит при добавлении actions/repositories/processors.
+# S76 W2: 3 real actions (scoring, document_parser, decision agents).
 [provides]
-actions = []
+actions = [
+    "credit_pipeline.score",
+    "credit_pipeline.parse",
+    "credit_pipeline.decide",
+]
 repositories = []
 processors = []
 sources = []
