@@ -668,11 +668,12 @@ class ActionRouterBuilder:
 
         endpoint.__name__ = f"{spec.name}_create_many"
         endpoint.__doc__ = f"Создаёт несколько объектов ресурса '{spec.name}'."
+        schema_in = spec.schema_in
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             body_parameter(
                 "payloads",
-                list[spec.schema_in],
+                list[schema_in],
                 f"Список объектов ресурса '{spec.name}'.",
             ),
         )  # type: ignore[name-defined]

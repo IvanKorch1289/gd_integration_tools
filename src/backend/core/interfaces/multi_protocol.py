@@ -170,6 +170,10 @@ class LoggerProtocol(Protocol):
         """Выполнить операцию error."""
         ...
 
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию critical."""
+        ...
+
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Выполнить операцию exception."""
         ...

@@ -36,7 +36,6 @@ lifecycle без реальных spec'ов).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import logging
@@ -45,10 +44,12 @@ import signal
 import sys
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Callable
 
 import typer
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("app", "NoOpStepExecutor", "main", "build_spec_loader")
 

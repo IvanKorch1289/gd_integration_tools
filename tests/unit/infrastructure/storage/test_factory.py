@@ -66,13 +66,30 @@ def test_get_object_storage_local(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_get_object_storage_non_local_fallback_and_warns(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
+    """S61 W1 regression: provider='s3' + missing aioboto3 → fallback на LocalFS.
+
+    В dev-окружении aioboto3 установлен, поэтому ImportError нужно
+    форсировать через monkeypatch на factory-импорт.
+    """
+    import builtins
+    from typing import Any
+
+    real_import = builtins.__import__
+
+    def fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "src.backend.infrastructure.storage.s3":
+            raise ImportError("forced for test (aioboto3 missing)")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )
     get_object_storage.cache_clear()
-    storage = get_object_storage()
+    with caplog.at_level("WARNING"):
+        storage = get_object_storage()
     assert isinstance(storage, LocalFSStorage)
-    assert "Wave 2.4" in caplog.text or "fallback" in caplog.text
+    assert "fallback" in caplog.text.lower() or "Wave 2.4" in caplog.text
 
 
 def test_get_object_storage_exception_fallback(monkeypatch: pytest.MonkeyPatch) -> None:

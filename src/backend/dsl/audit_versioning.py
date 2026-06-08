@@ -49,7 +49,7 @@ __all__ = (
 )
 
 
-def _count_remaining(session: Any, Transaction: type, cutoff: Any) -> int:
+def _count_remaining(session: Any, Transaction: type[Any], cutoff: Any) -> int:
     """Helper: сколько transactions осталось до cutoff (для next-batch)."""
     from sqlalchemy import func
 

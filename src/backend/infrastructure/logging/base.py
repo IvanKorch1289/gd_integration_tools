@@ -39,6 +39,9 @@ class LoggerProtocol(ABC):
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+
+    @abstractmethod
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
 
     @abstractmethod
