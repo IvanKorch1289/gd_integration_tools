@@ -22,7 +22,7 @@ async def parallelism_report(name: str) -> dict[str, Any]:
     from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
 
     try:
-        from src.backend.dsl.route_loader.registry import (
+        from src.backend.dsl.route_loader.registry import (  # type: ignore[import-not-found]
             route_registry,  # type: ignore[import-not-found]
         )
     except ImportError:

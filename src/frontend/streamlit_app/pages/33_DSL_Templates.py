@@ -77,7 +77,7 @@ def _render_route_blueprints() -> None:
 def _render_workflow_templates() -> None:
     """Sprint 12 K3 W5 + K5 W1 — workflow templates с Mermaid preview."""
     try:
-        from src.backend.dsl.workflow.template_registry_compat import (  # noqa: E501
+        from src.backend.dsl.workflow.template_registry_compat import (  # type: ignore[import-not-found]  # noqa: E501
             get_template_registry,
         )
     except ImportError:

@@ -97,7 +97,7 @@ def _get_registry() -> Any:
     используют mock-данные (placeholder).
     """
     try:
-        from src.backend.core.actions.registry import (
+        from src.backend.core.actions.registry import (  # type: ignore[import-not-found]
             ActionHandlerRegistry,  # lazy import
         )
 

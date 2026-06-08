@@ -203,7 +203,7 @@ class ChromaVectorStore(BaseVectorStore):
 
         import asyncio
 
-        import chromadb
+        import chromadb  # type: ignore[import-not-found]
 
         self._client = await asyncio.to_thread(
             chromadb.HttpClient, host=self._host, port=self._port

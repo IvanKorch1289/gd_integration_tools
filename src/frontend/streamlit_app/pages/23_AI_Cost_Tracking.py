@@ -19,7 +19,7 @@ import streamlit as st
 from src.frontend.streamlit_app.shared.components import setup_page
 
 try:
-    from src.frontend.streamlit_app.utils.api_client import api_get
+    from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]
 except Exception:  # noqa: BLE001
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:

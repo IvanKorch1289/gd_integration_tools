@@ -113,7 +113,7 @@ async def _emit_audit(
         from src.backend.services.audit.audit_service import AuditService
 
         try:
-            from src.backend.infrastructure.service_locator import locator
+            from src.backend.infrastructure.service_locator import locator  # type: ignore[import-not-found]
 
             audit = locator.resolve(AuditService)
         except Exception as _:

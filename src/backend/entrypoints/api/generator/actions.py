@@ -673,7 +673,7 @@ class ActionRouterBuilder:
             request_parameter(),
             body_parameter(
                 "payloads",
-                list[schema_in],
+                list[schema_in],  # type: ignore[valid-type]
                 f"Список объектов ресурса '{spec.name}'.",
             ),
         )  # type: ignore[name-defined]
