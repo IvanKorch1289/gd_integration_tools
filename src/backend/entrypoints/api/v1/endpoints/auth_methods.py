@@ -113,7 +113,7 @@ async def get_auth_methods() -> AuthMethodsResponse:
     deprecations: dict[str, str] = {}
     if "password" in methods:
         deprecations["password"] = (
-            "Password auth is deprecated; LDAP preferred. "
+            "Password auth is deprecated; LDAP preferred. "  # noqa: S105  # key string, не password literal
             "Will be removed when front fully migrates (S59+). "
             "See ADR-0085 (S58 W6)."
         )

@@ -11,12 +11,12 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-
-redis_logger = get_logger("redis")
 from src.backend.infrastructure.resilience.client_breaker import (
     CircuitOpen,
     ClientCircuitBreaker,
 )
+
+redis_logger = get_logger("redis")
 
 __all__ = ("RedisClient", "get_redis_client", "redis_client")
 

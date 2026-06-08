@@ -13,9 +13,9 @@ from src.backend.infrastructure.database.database import (
 )
 from src.backend.infrastructure.decorators.caching import close_caches
 from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")
-from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 __all__ = ("starting", "ending")
 

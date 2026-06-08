@@ -234,7 +234,7 @@ class StranglerFigProcessor(BaseProcessor):
         # Per-instance random для deterministic routing
         # S311: random для traffic split, не crypto (комментарий явно)
         self._rng = (
-            random.Random(deterministic_seed)
+            random.Random(deterministic_seed)  # noqa: S311
             if deterministic_seed is not None
             else None
         )  # noqa: S311
