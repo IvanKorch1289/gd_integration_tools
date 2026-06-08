@@ -6,13 +6,12 @@ Wave: ``[wave:s8/k4-model-registry]``. Lazy-import ``mlflow``: модуль
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,

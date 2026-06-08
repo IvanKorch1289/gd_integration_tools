@@ -13,13 +13,13 @@ fail при OPEN-breaker'е.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 import orjson
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 

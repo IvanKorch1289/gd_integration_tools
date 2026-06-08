@@ -19,12 +19,11 @@ await stop_all_sources(get_source_registry())
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import TYPE_CHECKING
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.sources.adapter import SourceToInvokerAdapter
 
 if TYPE_CHECKING:

@@ -9,14 +9,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import math
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Literal
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.costs.langfuse_reader import CostRow, LangFuseReader
 
 logger = get_logger(__name__)

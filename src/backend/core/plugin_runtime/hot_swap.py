@@ -37,12 +37,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-
 import sys
 from typing import TYPE_CHECKING, Any, Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from pathlib import Path

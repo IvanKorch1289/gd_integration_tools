@@ -10,13 +10,12 @@ sandbox-инфраструктуре e2b.dev. Capability ``code.execute`` про
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai.sandbox import CodeSandbox, SandboxResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.fs_facade import AIFsFacade

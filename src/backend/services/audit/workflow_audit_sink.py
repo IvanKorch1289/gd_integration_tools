@@ -41,14 +41,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.util.json_utils import dumps_str
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "WorkflowAuditSink",

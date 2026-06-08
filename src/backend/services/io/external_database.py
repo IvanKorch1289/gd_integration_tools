@@ -2,7 +2,6 @@
 import re
 from dataclasses import dataclass
 from typing import Any, Final
-from src.backend.infrastructure.logging.factory import get_logger
 
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -20,6 +19,7 @@ from src.backend.core.enums.external_db import (
     ExternalDBParameterModeChoices,
 )
 from src.backend.core.errors import DatabaseError
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExternalDatabaseService", "external_db_service", "get_external_db_service")
 

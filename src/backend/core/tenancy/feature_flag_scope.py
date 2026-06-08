@@ -24,12 +24,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any, Protocol
 
 from src.backend.core.tenancy import current_tenant
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.feature_flags.flagsmith_provider import EvaluationContext

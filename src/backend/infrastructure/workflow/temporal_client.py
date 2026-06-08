@@ -16,13 +16,13 @@ Lazy-import temporalio SDK (~15-20MB) — отсутствие пакета не
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ActivityHeartbeatMonitor",

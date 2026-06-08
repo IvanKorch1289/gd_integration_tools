@@ -25,8 +25,6 @@ YAML::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
 
@@ -34,6 +32,7 @@ import orjson
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

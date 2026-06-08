@@ -29,15 +29,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import inspect
-
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.registry import AIPluginRegistry, get_ai_plugin_registry
 
 __all__ = ("AIServiceSpec", "ai_service")

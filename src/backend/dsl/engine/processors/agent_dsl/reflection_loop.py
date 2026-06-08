@@ -30,13 +30,12 @@ Python контракт через :meth:`AgentDSLMixin.reflection_loop`::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 
 if TYPE_CHECKING:

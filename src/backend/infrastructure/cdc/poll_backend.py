@@ -13,14 +13,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PollCDCBackend",)
 

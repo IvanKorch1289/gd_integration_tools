@@ -18,11 +18,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from typing import TYPE_CHECKING, Any, Final
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler

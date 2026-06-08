@@ -12,8 +12,6 @@
 
 import asyncio
 import datetime
-from src.backend.infrastructure.logging.factory import get_logger
-
 from enum import Enum
 from typing import Any
 
@@ -23,6 +21,7 @@ from starlette.responses import StreamingResponse
 
 from src.backend.core.serialization.msgspec_hotpath import encode_json_str
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("event_bus", "sse_router")
 

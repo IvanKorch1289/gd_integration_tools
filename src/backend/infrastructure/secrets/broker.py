@@ -13,12 +13,12 @@ Backend pluggable: :class:`VaultBackend` (KV v2 через ``hvac``) или
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "SecretBackend",

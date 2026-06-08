@@ -21,17 +21,17 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import email
 import email.policy
-
 import ssl
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("EmailIMAPSource", "EmailMessage")
 

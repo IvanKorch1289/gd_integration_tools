@@ -35,8 +35,6 @@ ClickHouse с lazy-импортом клиента и default-OFF через fea
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 import uuid
@@ -45,6 +43,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.util.json_utils import dumps_str
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     pass

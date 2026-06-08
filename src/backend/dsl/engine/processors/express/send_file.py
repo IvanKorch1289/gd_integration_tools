@@ -13,8 +13,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -26,6 +24,7 @@ from src.backend.dsl.engine.processors.express._common import (
     log_outgoing_message,
     resolve_value,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExpressSendFileProcessor",)
 

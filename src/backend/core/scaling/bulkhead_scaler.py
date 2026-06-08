@@ -12,11 +12,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     # Lazy import: Bulkhead и BulkheadRegistry используются только для типов.

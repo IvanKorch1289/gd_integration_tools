@@ -10,8 +10,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +18,7 @@ from typing import TYPE_CHECKING
 from src.backend.core.config.settings import settings as app_settings
 from src.backend.dsl.commands.registry import route_registry
 from src.backend.dsl.yaml_store import YAMLStore
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline

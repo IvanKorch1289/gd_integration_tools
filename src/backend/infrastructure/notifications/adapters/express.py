@@ -14,11 +14,10 @@ recipient = ``group_chat_id`` (UUID чата Express) или ``user_huid``
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("ExpressAdapter",)

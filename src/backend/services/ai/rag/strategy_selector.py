@@ -9,13 +9,13 @@ graceful fallback на ``dense`` (default).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("STRATEGIES", "AdaptiveStrategySelector", "StrategyDecision")
 

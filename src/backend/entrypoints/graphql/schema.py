@@ -11,7 +11,6 @@ DSL-dispatch как fallback для произвольных actions.
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
@@ -19,6 +18,7 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from src.backend.dsl.service import get_dsl_service
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("graphql_router",)
 logger = get_logger(__name__)

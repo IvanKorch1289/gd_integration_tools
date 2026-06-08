@@ -6,13 +6,13 @@ Lazy-import openai-whisper + librosa (resample 16kHz mono). Без extras
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 import tempfile
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WhisperSTT", "TranscriptionResult")
 

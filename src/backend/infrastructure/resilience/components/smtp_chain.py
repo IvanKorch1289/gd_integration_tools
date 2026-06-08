@@ -11,15 +11,15 @@ File-mailer fallback пишет EML-файлы в директорию ``var/mai
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SmtpSendCallable", "build_smtp_fallbacks", "build_smtp_primary")
 

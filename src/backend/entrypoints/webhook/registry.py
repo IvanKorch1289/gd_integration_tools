@@ -8,6 +8,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
+
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WebhookRegistry", "WebhookSubscription", "webhook_registry")

@@ -28,12 +28,11 @@ Capability ``mcp.call`` обязательна.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 try:
     from fastmcp import Client

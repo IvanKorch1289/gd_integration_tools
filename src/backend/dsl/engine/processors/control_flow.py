@@ -1,6 +1,4 @@
 import asyncio
-from src.backend.infrastructure.logging.factory import get_logger
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -9,6 +7,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.infrastructure.logging.factory import get_logger
 
 _cf_logger = get_logger("dsl.control_flow")
 

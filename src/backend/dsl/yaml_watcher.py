@@ -19,11 +19,9 @@ ADR-041 ``fs-watcher-unification``).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
-
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -31,6 +29,7 @@ from typing import TYPE_CHECKING, Any
 from watchfiles import awatch
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.commands.registry import RouteRegistry

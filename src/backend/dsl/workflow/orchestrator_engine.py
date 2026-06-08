@@ -24,11 +24,11 @@ Usage::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.agent_registry import AgentRegistry

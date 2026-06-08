@@ -13,8 +13,6 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from typing import Any
@@ -22,6 +20,7 @@ from typing import Any
 import httpx
 
 from src.backend.core.net import OutboundHttpClient
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ClaudeProvider", "GeminiProvider", "OllamaProvider", "OpenAIProvider")
 

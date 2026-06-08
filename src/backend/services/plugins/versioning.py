@@ -29,14 +29,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from tools.plugin_migration_diff import MigrationDiffer
 
 if TYPE_CHECKING:

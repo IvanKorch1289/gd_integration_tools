@@ -8,13 +8,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.services.ai.rag_service import RAGService

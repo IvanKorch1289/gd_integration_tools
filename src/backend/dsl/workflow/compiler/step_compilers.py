@@ -21,8 +21,6 @@ workflow) и эмитит соответствующий ``temporalio.workflow.*
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from datetime import UTC, timedelta
@@ -40,6 +38,7 @@ from src.backend.dsl.workflow.spec import (
     SleepDeclaration,
     WorkflowStep,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "StepCompiler",

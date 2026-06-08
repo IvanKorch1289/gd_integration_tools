@@ -11,11 +11,11 @@ ASGI-сервером. Поддерживаются два бэкенда:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import FastAPI
 
 from src.backend.core.config.settings import settings
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.plugins.composition.app_factory import create_app
 
 app: FastAPI = create_app()

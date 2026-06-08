@@ -20,13 +20,12 @@ Feature flag: ``feature_flags.cdc_postgres_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "PG_CDC_CURSORS_DDL",

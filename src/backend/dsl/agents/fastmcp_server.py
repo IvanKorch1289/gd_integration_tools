@@ -22,16 +22,15 @@ S35 GAP-AI-1
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.prompts.base import Prompt, PromptArgument
 
 from src.backend.core.ai.skill_registry import SkillRegistry, SkillSpec
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
 
 __all__ = ("FastMCPserver",)

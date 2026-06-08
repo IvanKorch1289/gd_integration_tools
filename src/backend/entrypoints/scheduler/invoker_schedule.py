@@ -35,12 +35,12 @@ Job-id формируется из ``f"scheduled_invocation_{action}"``; пов�
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ScheduleSpec",

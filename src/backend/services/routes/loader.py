@@ -14,8 +14,6 @@ Discovery + lifecycle V11-маршрутов:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from collections.abc import Callable
@@ -31,6 +29,7 @@ from src.backend.core.security.capabilities import (
     CapabilityVocabulary,
     check_capabilities_subset,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.routes.manifest_v11 import (
     RouteManifestError,
     RouteManifestV11,

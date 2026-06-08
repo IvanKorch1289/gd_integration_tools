@@ -8,12 +8,11 @@ import-cost в startup если Kafka не используется).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from src.backend.core.serialization.msgspec_hotpath import encode_json
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("KafkaDLQWriter",)

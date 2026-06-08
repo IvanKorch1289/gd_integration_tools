@@ -18,12 +18,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from src.backend.core.security.authorization_gateway import AuthorizationGateway
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("check_route_permission",)
 

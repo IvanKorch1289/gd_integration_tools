@@ -17,8 +17,6 @@ State machine:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -26,6 +24,7 @@ from typing import TYPE_CHECKING, Final
 
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.resilience.breaker import CircuitOpen as CircuitOpen
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.config.pooling import PoolingProfile

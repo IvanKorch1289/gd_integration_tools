@@ -25,12 +25,12 @@ Public API:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "LLMActivityInput",

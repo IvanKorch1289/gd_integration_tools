@@ -8,8 +8,6 @@
 """
 
 import asyncio
-from src.backend.infrastructure.logging.factory import get_logger
-
 import warnings
 from typing import Any
 
@@ -18,6 +16,7 @@ from zeep.exceptions import Error as ZeepError
 from zeep.exceptions import Fault as ZeepFault
 
 from src.backend.core.errors import ServiceError
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SoapClient", "get_soap_client")
 

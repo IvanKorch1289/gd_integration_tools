@@ -5,8 +5,6 @@ CPU-only inference через ONNX Runtime. Graceful fallback если onnxrunti
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections import OrderedDict
 from threading import Lock
@@ -15,6 +13,7 @@ from typing import Any, ClassVar
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "EmbeddingProcessor",

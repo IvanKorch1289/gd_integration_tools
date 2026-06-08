@@ -15,14 +15,14 @@ production-mTLS workers с автоматическим cert rotation.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CertificateBundle", "VaultPkiClient")
 

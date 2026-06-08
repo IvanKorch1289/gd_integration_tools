@@ -38,14 +38,13 @@ Cycle detection: RuntimeError raised if include/extends chain creates a cycle.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from pathlib import Path
 from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "load_all_from_directory",

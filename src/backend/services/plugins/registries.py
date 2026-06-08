@@ -16,12 +16,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterable

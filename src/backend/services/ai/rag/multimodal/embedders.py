@@ -11,12 +11,12 @@ Lazy-import гарантирует, что unit-тесты без torch/sentence
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import io
-
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

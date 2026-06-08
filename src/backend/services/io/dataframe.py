@@ -14,12 +14,12 @@ Usage::
 """
 
 import io
-from src.backend.infrastructure.logging.factory import get_logger
-
 from collections.abc import Iterable
 from typing import Any
 
 import polars as pl
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "DataFrame",

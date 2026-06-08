@@ -14,10 +14,10 @@ Wave F.5a: ранее использовались устаревшие имен
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "StorageGetCallable",

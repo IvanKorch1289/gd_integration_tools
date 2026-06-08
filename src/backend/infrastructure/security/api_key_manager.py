@@ -10,12 +10,12 @@
 """
 
 import hashlib
-from src.backend.infrastructure.logging.factory import get_logger
-
 import secrets
 import time
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
 

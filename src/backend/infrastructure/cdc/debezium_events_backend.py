@@ -21,16 +21,16 @@ Backend парсит это в `CDCEvent` и поддерживает Kafka offs
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-import orjson
-
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
 
+import orjson
+
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCOperation, CDCSource
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DebeziumEventsCDCBackend", "parse_debezium_event")
 
@@ -233,7 +233,10 @@ class DebeziumEventsCDCBackend(CDCSource):
             _logger.warning("ack() called before consumer started — cursor=%s", cursor)
             return
         try:
-            from aiokafka import OffsetAndMetadata, TopicPartition  # type: ignore[import-not-found]
+            from aiokafka import (  # type: ignore[import-not-found]
+                OffsetAndMetadata,
+                TopicPartition,
+            )
 
             partition_str, offset_str = cursor.value.split(":")
             tp = TopicPartition(cursor.backend, int(partition_str))

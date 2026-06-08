@@ -10,7 +10,6 @@ infrastructure/, dsl/) работают без миграции.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -36,6 +35,7 @@ from src.backend.core.config.settings import settings
 from src.backend.core.utils.circuit_breaker import get_circuit_breaker
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.codec.json import json_dumps
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "BaseHttpClient",
@@ -89,7 +89,6 @@ class HttpClient(BaseHttpClient):
     """
 
     def __init__(self) -> None:
-        from src.backend.infrastructure.logging.factory import get_logger
 
         self.settings = settings.http_base_settings
         self.logger = get_logger("request")

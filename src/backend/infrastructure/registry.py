@@ -22,14 +22,14 @@ Registry **не заменяет** svcs DI (ADR-002) — он дополняет
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import (

@@ -20,8 +20,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import asdict
 from typing import Any
@@ -29,6 +27,7 @@ from typing import Any
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.import_gateway import ImportSource
 from src.backend.core.models.connector_spec import ConnectorSpec
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ImportService", "get_import_service")
 

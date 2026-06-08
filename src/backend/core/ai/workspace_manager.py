@@ -13,10 +13,8 @@ Layout::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import shutil
 import time
 import uuid
@@ -28,6 +26,7 @@ from src.backend.core.ai.errors import (
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AIWorkspaceManager", "WorkspaceHandle")
 

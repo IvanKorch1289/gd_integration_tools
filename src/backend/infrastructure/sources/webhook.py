@@ -15,15 +15,14 @@ HTTP-source с проверкой HMAC и timestamp-window против replay-�
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,

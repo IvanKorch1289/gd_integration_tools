@@ -26,11 +26,12 @@ ADR-0085 Open Item: rate limiting для login endpoint (anti-brute-force).
         ...
 """
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 
 from fastapi import HTTPException, Request, status
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "check_ip_rate_limit",

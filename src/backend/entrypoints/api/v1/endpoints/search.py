@@ -8,8 +8,6 @@ notebooks. Если индекс отсутствует или ES недосту
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from datetime import datetime
 from typing import Any
@@ -21,6 +19,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.io.search import get_search_service
 
 __all__ = ("router",)

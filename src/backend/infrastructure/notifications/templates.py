@@ -14,13 +14,13 @@ WSO2 Template Mediator, TIBCO NotifyMessage templates.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any, Final
 
 from jinja2 import Environment, StrictUndefined, select_autoescape
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger(__name__)
 

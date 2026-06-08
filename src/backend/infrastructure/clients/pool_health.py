@@ -29,14 +29,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PoolEntry", "PoolHealthMonitor", "get_pool_monitor")
 

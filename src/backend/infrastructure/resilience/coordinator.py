@@ -30,8 +30,6 @@ overhead без преимуществ (см. Правило 13 в PLAN.md).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -50,6 +48,7 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     breaker_registry,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ComponentStatus",

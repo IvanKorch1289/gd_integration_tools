@@ -23,16 +23,15 @@ Usage:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
-
 from collections.abc import Callable
 from typing import Any
 
 from fastapi import HTTPException, Request
 
 from src.backend.core.auth import AuthContext, AuthMethod
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AuthContext", "AuthMethod", "require_auth", "set_default_auth")
 

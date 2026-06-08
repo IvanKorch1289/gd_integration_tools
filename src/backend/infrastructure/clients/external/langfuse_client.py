@@ -6,6 +6,7 @@
 
 
 from typing import Any
+
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("LangFuseClient", "get_langfuse_client")

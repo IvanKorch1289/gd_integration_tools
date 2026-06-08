@@ -33,8 +33,6 @@ step'е. Старые уже-состоявшиеся events неизменны.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -42,6 +40,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,

@@ -12,12 +12,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AntivirusCallable", "build_antivirus_fallbacks", "build_antivirus_primary")
 

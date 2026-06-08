@@ -24,14 +24,14 @@ aggregator пробросит его через inspect. Клиенты ABC (``I
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import HealthMode

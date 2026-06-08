@@ -11,13 +11,13 @@ Prometheus exporter (``guardrails_metrics``).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "GuardrailMetrics",

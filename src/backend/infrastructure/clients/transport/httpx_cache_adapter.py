@@ -17,11 +17,11 @@ K2 Sprint 7 — httpx unified transport stack. Реализует ленивый
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     import httpx

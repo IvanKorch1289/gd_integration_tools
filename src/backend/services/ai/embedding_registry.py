@@ -7,11 +7,10 @@ Sprint 1 рефакторит ``services/ai/embedding_providers.py`` целик�
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.embedding_providers import EmbeddingProvider
 
 logger = get_logger(__name__)

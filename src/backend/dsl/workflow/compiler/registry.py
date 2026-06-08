@@ -15,14 +15,13 @@ hot-reload'ами, чтобы `register_workflows_with_temporal` не
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 from collections.abc import Iterable
 
 from src.backend.dsl.workflow.compiler.emitter import CompiledWorkflow, compile_workflow
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WorkflowCompilerRegistry",)
 

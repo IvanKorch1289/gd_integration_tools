@@ -37,14 +37,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import functools
-
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
 
 from src.backend.core.security.capabilities import CapabilityDeniedError, CapabilityGate
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "CapabilityContext",

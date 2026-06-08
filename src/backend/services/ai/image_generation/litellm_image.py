@@ -17,12 +17,12 @@ Capability (V11.1): ``image.generate.<provider>``.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ImageGenerationUnavailable", "ImageResult", "LiteLLMImageGenerationService")
 

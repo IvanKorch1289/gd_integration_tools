@@ -7,10 +7,10 @@ Thin wrapper который делегирует в `src/infrastructure/clients/
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger(__name__)
 

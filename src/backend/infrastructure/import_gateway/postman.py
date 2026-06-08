@@ -10,10 +10,8 @@ Folders → tags + dot-prefix в operation_id. Auth (Bearer/Basic/API-key)
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import re
 from typing import Any
 
@@ -27,6 +25,7 @@ from src.backend.core.models.connector_spec import (
     EndpointSpec,
     SecretRef,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PostmanImportGateway",)
 

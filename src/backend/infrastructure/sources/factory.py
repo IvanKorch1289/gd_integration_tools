@@ -14,12 +14,11 @@ for spec in load_sources_spec().sources:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.source import Source, SourceKind
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.config.source_spec import SourceSpec

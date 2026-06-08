@@ -1,8 +1,6 @@
 """Фасад 3-tier RAG cache: lookup L1 → L2 → L3 + store."""
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -11,6 +9,7 @@ from src.backend.infrastructure.cache.rag.invalidation import RagInvalidationBus
 from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 from src.backend.infrastructure.cache.rag.retrieval import L3RetrievalCache
 from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

@@ -16,14 +16,14 @@ Heavy ``temporalio.activity.defn`` декоратор подключается l
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import functools
 import inspect
-
 from collections.abc import Callable
 from typing import Any, TypeVar
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("TemporalActivityWrapper", "wrap_as_temporal_activity")
 

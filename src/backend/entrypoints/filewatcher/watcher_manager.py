@@ -12,8 +12,6 @@ Wave B: устранён polling-цикл ``os.scandir``; используетс
 
 import asyncio
 import fnmatch
-from src.backend.infrastructure.logging.factory import get_logger
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -23,6 +21,7 @@ from watchfiles import Change, awatch
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.service import get_dsl_service
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WatcherManager", "WatcherSpec", "watcher_manager")
 

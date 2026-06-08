@@ -26,8 +26,8 @@ from __future__ import annotations
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.builders.eip.core import CoreEIPsMixin
-from src.backend.dsl.builders.eip.messengers import MessengersEIPsMixin
 from src.backend.dsl.builders.eip.messaging import MessagingEIPsMixin
+from src.backend.dsl.builders.eip.messengers import MessengersEIPsMixin
 from src.backend.dsl.builders.eip.protocols import ProtocolsEIPsMixin
 from src.backend.dsl.builders.eip.routing import RoutingEIPsMixin
 from src.backend.dsl.builders.eip.sources import SourcesEIPsMixin

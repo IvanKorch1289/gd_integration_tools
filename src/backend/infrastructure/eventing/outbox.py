@@ -17,13 +17,13 @@ KafkaRouter. Прежний прямой ``aiokafka`` через ``get_kafka_pro
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("OutboxEvent", "OutboxPublisher")
 

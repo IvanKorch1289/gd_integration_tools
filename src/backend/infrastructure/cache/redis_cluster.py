@@ -18,11 +18,11 @@ slot-routing на основе CRC16(key) MOD 16384.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import AsyncIterator, Sequence
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("RedisClusterAdapter",)
 

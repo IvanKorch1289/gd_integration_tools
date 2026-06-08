@@ -26,8 +26,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from datetime import UTC
 from typing import TYPE_CHECKING, Any
@@ -35,6 +33,7 @@ from uuid import UUID
 
 import orjson
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
 
 if TYPE_CHECKING:

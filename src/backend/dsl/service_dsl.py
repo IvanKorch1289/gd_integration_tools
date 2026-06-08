@@ -10,18 +10,18 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import contextlib
 import importlib
 import inspect
-
 import pkgutil
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ServiceDSLRegistry",

@@ -12,13 +12,12 @@ Pydantic-валидация ``response_body`` (по умолчанию — ``out
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from pydantic import BaseModel

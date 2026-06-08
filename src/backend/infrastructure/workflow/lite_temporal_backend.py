@@ -6,11 +6,10 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.temporal_backend import (
     TemporalWorkflowBackend,
     build_temporal_data_converter,

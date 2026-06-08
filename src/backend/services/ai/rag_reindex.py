@@ -7,11 +7,11 @@ out-of-scope D.2 (часовой объём работ). Сервис скани
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

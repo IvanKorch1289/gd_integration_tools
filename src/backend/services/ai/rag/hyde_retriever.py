@@ -26,12 +26,12 @@ HyDE-алгоритм:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypedDict
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("HyDEConfig", "HyDEResult", "HyDERetriever")
 

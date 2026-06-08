@@ -15,13 +15,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
 

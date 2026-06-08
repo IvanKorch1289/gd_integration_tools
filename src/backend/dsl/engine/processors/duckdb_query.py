@@ -18,13 +18,12 @@ DuckDB соединение — in-process (default). Опция ``persistent_pa
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

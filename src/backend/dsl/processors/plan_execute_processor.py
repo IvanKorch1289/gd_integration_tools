@@ -16,8 +16,6 @@ Workflow::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections.abc import Awaitable, Callable
@@ -26,6 +24,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder

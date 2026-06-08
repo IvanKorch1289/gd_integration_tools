@@ -6,12 +6,11 @@ list, soft-delete. Конкретный backend (in-memory / Mongo) подмен
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.notebooks.models import Notebook, NotebookVersion
 from src.backend.services.notebooks.repository import (
     InMemoryNotebookRepository,

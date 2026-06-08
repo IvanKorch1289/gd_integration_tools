@@ -20,6 +20,7 @@ Usage::
 import time
 from typing import Any
 from urllib.parse import urljoin, urlparse
+
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BaseExternalAPIClient",)

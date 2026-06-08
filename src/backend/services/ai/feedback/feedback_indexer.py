@@ -11,13 +11,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.feedback.models import AIFeedbackDoc
 from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,

@@ -32,12 +32,12 @@ Per-tenant identifier (S18 W7):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "FakeRateLimitChecker",

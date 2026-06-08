@@ -28,14 +28,14 @@ Layout ожидаемой структуры workspace::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import shutil
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AIWorkspaceCleaner",)
 

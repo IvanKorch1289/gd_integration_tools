@@ -24,15 +24,15 @@ Carryover S17:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "AuditableRotator",

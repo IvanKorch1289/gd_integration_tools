@@ -14,12 +14,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Coroutine
 from typing import Any, TypeVar
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("Watchdog",)
 

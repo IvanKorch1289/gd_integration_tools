@@ -18,8 +18,6 @@ Multi-instance safety:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -27,6 +25,7 @@ from src.backend.core.di.providers import (
     get_health_aggregator_provider,
     get_slo_tracker_provider,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SystemService", "get_system_service")
 

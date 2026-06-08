@@ -7,8 +7,6 @@ Actions: replay.list, replay.one, replay.bulk, replay.stats
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from dataclasses import dataclass, field
@@ -17,6 +15,7 @@ from typing import Any
 from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "MessageReplayService",

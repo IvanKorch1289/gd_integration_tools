@@ -23,10 +23,8 @@ Wave: ``[wave:s8/k2-w2-outbox-dispatcher-impl]``.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
@@ -37,6 +35,7 @@ from src.backend.core.messaging.outbox import (
     OutboxEventStatus,
 )
 from src.backend.core.utils.task_registry import TaskRegistry, get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DLQHandler", "OutboxDispatcher")
 

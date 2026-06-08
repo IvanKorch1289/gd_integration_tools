@@ -25,12 +25,12 @@ Compliance покрытие: GDPR Art. 32, 152-ФЗ ст. 19, PCI DSS 3.5/3.6.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
-
 import os
 from typing import TYPE_CHECKING
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     import httpx

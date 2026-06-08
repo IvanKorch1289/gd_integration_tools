@@ -15,15 +15,14 @@ Capabilities (V11.1):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.voice.whisper_stt import VoiceServiceUnavailable
 
 __all__ = ("CoquiTTSService", "TTSResult")

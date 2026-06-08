@@ -25,13 +25,13 @@ channel ``feature-flags:toggle`` (carryover: B-6 finale).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "FeatureFlagChange",

@@ -4,14 +4,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.observability.correlation import get_correlation_id
 
 __all__ = ("TracingMiddleware", "get_tracer")

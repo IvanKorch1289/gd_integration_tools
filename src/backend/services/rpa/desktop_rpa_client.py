@@ -8,12 +8,12 @@ Wave: ``[wave:s8/k3-rpa-windows-desktop]``. Обращается к sidecar'у
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 import httpx
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DesktopRpaClient", "DesktopRpaError")
 

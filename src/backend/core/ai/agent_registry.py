@@ -51,10 +51,10 @@ Scaffold S28 W1: model + methods; full implementation loader — S28 W2.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from pathlib import Path

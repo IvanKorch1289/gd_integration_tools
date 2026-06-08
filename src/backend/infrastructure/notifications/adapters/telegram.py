@@ -27,12 +27,11 @@ recipient = ``chat_id`` (числовой ID или ``@channelname``).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from typing import Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("TelegramAdapter",)

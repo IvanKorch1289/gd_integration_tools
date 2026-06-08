@@ -13,13 +13,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from cachetools import TTLCache
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

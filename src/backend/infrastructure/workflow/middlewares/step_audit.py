@@ -29,17 +29,17 @@ Feature flag: ``feature_flags.workflow_step_log_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-
 import time
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "PG_CLICKHOUSE_WORKFLOW_STEP_LOG_DDL",

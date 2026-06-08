@@ -16,13 +16,13 @@ trigger к route.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import threading
 from collections.abc import Callable
 from typing import Any, Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "IntervalTrigger",

@@ -7,16 +7,15 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
 import io
-
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.rag.multimodal.types import ChunkDoc
 
 logger = get_logger(__name__)

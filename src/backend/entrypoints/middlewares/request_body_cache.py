@@ -24,12 +24,12 @@ Downstream middleware (audit_log, request_log, audit_replay) первым
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp, Message
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("RequestBodyCacheMiddleware",)
 

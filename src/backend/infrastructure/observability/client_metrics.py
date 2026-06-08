@@ -21,14 +21,13 @@ TIBCO EMS per-topic statistics.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncContextManager, Final, Literal
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 if TYPE_CHECKING:

@@ -6,13 +6,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from typing import Any
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("HttpAntivirusBackend",)
 

@@ -9,13 +9,13 @@ Provides:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

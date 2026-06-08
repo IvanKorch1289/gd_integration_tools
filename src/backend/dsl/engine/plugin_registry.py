@@ -17,10 +17,8 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-
 import warnings
 from typing import Any
 
@@ -31,6 +29,7 @@ from src.backend.dsl.registry import (
     ProcessorSpec,
     get_processor_registry,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ProcessorPluginRegistry", "get_processor_plugin_registry")
 

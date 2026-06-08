@@ -9,14 +9,14 @@ fts5). Стриминг-индексирование документов — о
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import sqlite3
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 

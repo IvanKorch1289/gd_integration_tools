@@ -14,8 +14,6 @@ Wave [s2/k1-4-webhook-sig]: консолидирует верификацию п
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Mapping
 
@@ -24,6 +22,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,

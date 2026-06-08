@@ -22,14 +22,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.config.features import feature_flags
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("LangfusePromptStorage", "PromptEntry", "get_prompt_storage")
 

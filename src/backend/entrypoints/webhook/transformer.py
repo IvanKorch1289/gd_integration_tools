@@ -21,8 +21,6 @@ Actions: webhook.relay, webhook.transform, webhook.dlq_list, webhook.dlq_retry.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from dataclasses import asdict, dataclass, field
@@ -30,6 +28,8 @@ from typing import Any
 from uuid import uuid4
 
 import orjson
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DLQEntry", "RelayRule", "WebhookRelay", "get_webhook_relay")
 

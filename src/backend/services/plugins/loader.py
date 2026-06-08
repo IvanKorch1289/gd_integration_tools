@@ -9,8 +9,6 @@ Loader идемпотентен: повторный вызов `discover_and_loa
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import sys
 from importlib.metadata import entry_points
@@ -19,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.plugin import BasePlugin, PluginContext, PluginInfo
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.plugins.decorators import (
     collect_hook_methods,
     collect_override_methods,

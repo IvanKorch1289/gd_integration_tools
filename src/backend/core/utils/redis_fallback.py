@@ -19,12 +19,12 @@ Wave: ``[wave:s16/k2-w5-redis-graceful-degrade]`` — DoD partial Sprint 16
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any, Protocol, runtime_checkable
 
 from cachetools import TTLCache
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("FallbackCache", "RedisErrorCategory", "RedisLike")
 

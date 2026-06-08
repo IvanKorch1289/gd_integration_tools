@@ -20,8 +20,6 @@ Hot-reload (`rule_engine_hot_reload=True`):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -29,6 +27,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import yaml
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.config.features import FeatureFlags

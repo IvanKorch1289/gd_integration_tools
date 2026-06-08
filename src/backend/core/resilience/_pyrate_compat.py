@@ -22,13 +22,13 @@ Sprint 1 V16 Single-Entry (Step 3.4):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import TYPE_CHECKING, Any
 
 from pyrate_limiter import InMemoryBucket, Rate
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from pyrate_limiter import Limiter

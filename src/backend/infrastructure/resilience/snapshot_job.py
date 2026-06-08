@@ -30,8 +30,6 @@ Health-check: ``is_snapshot_fresh(threshold)`` — для интеграции �
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from pathlib import Path
@@ -39,6 +37,8 @@ from typing import Any
 
 from sqlalchemy import Engine, Table, create_engine, delete, insert, select
 from sqlalchemy.engine import Connection
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "is_snapshot_fresh",

@@ -12,11 +12,11 @@ Standard vector embedding retrieval for RAG pipelines.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any, TypedDict
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DenseResult", "DenseRetriever")
 

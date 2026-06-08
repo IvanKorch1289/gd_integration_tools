@@ -15,11 +15,11 @@
 
 
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 import orjson
 
 from src.backend.core.serialization.msgspec_hotpath import encode_json
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("create_mcp_server", "register_mcp_tools")
 

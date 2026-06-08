@@ -12,14 +12,13 @@ JSON либо raw bytes; metadata — топик/offset/headers (зависит 
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     pass

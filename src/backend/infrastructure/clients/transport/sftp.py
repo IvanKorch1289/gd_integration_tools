@@ -9,13 +9,12 @@ Sprint 17 W1 (b2 partial closure): SFTP-вызовы используют
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from abc import ABC, abstractmethod
 from typing import Any
 
 from src.backend.core.config.profile import AppProfileChoices, get_active_profile
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BaseSftpClient", "SftpClient", "_resolve_known_hosts", "get_sftp_client")
 

@@ -6,13 +6,13 @@ PydanticAI 0.5.x — внутренний API ``Agent.run`` не изменён.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ValidationError
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

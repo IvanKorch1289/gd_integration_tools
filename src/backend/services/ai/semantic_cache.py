@@ -28,14 +28,14 @@ L3 retrieval-graph cache (S5 W1):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
 import hashlib
-
 import time
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "RAG_CACHE_INVALIDATE_CHANNEL",

@@ -13,14 +13,13 @@ Per-tracked fields:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.lineage import get_lineage_emitter
 
 __all__ = ("RAGChunkSource", "RAGLineageTracker", "RAGResponseLineage")

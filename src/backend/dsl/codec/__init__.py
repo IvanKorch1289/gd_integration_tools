@@ -16,8 +16,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -37,6 +35,7 @@ from src.backend.dsl.codec.json import (
     loads,
     to_jsonable,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     # json

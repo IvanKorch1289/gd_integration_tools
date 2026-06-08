@@ -8,13 +8,12 @@ analytics_tools.py`` и предоставляет единый ``invoke(prompt,
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from pathlib import Path
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.tools import AgentTool, ToolRegistry
 
 __all__ = ("AnalyticsAgent", "get_analytics_agent")

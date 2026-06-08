@@ -22,11 +22,11 @@ limits из `PoolingProfile.max_size` + keepalive из `idle_timeout_s`. При
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     import httpx  # только для type-hints; runtime-импорт в `start()`.

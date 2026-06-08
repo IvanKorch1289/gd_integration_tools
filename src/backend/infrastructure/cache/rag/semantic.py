@@ -5,8 +5,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import uuid
 from typing import Any
@@ -14,6 +12,7 @@ from typing import Any
 import orjson
 
 from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

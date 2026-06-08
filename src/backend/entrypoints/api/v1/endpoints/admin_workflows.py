@@ -18,8 +18,6 @@ Endpoints (под /api/v1/admin):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from datetime import UTC, datetime
 from typing import Any
@@ -33,6 +31,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionSpec,
 )
 from src.backend.entrypoints.base import dispatch_action
+from src.backend.infrastructure.logging.factory import get_logger
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).

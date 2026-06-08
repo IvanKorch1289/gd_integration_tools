@@ -9,12 +9,12 @@
 
 
 from uuid import uuid4
-from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.backend.entrypoints.websocket.ws_manager import ws_manager
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ws_router",)
 

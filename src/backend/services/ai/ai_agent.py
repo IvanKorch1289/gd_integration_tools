@@ -7,7 +7,6 @@
 
 
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.di.providers import (
@@ -18,6 +17,7 @@ from src.backend.core.interfaces.ai_clients import (
     AISanitizerProtocol,
     HttpClientProtocol,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 

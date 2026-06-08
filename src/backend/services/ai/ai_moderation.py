@@ -12,8 +12,6 @@ RagasEvaluation:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 import re
@@ -22,6 +20,7 @@ from dataclasses import dataclass
 import httpx
 
 from src.backend.core.net import OutboundHttpClient
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ContentModeration",

@@ -16,11 +16,12 @@ distributed-pool. Используется DSL-процессором ``DaskComp
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import logging
 import threading
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable

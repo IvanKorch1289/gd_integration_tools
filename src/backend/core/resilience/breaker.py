@@ -18,8 +18,6 @@ API:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -33,6 +31,7 @@ from purgatory.domain.messages.events import ContextChanged
 from purgatory.domain.model import OpenedState
 
 from src.backend.core.config.constants import consts
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "Breaker",

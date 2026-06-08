@@ -14,8 +14,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -25,6 +23,7 @@ from idempotency_header_middleware.backends.base import Backend
 from idempotency_header_middleware.backends.memory import MemoryBackend
 
 from src.backend.core.serialization.msgspec_hotpath import decode_json, encode_json
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "IDEMPOTENCY_HEADER",

@@ -18,11 +18,11 @@ Sprint 1 V16: добавлен asyncpg instrumentor (detail-level db spans
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("init_otel", "instrument_asyncpg_if_enabled")
 

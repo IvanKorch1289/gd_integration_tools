@@ -24,8 +24,6 @@ Payload JWT::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import uuid
 from dataclasses import dataclass, field
@@ -34,6 +32,8 @@ from typing import Any
 
 import httpx
 import jwt
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BotConfig", "BotxButton", "BotxMention", "BotxMessage", "ExpressBotClient")
 

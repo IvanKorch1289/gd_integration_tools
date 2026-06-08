@@ -34,14 +34,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("HeartbeatCallback", "LongRunningSecretRotator", "SecretBackendLike")
 

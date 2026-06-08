@@ -12,8 +12,6 @@ All endpoints return CompressedResponse (uniform shape).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import uuid
 from datetime import datetime, timezone
@@ -31,6 +29,7 @@ from src.backend.entrypoints.api.mobile.schemas import (
     PayloadOptimizer,
     PushTokenRequest,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("get_mobile_router", "mobile_router")
 

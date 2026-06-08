@@ -16,13 +16,13 @@ Event-driven triggers без polling:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ReactiveTrigger", "ReactiveWorkflowDispatcher")
 

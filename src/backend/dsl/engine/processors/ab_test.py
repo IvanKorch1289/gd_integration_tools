@@ -34,16 +34,15 @@ configurable split (например 0.7 / 0.3) и трекает выбранн
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import random
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ABTestProcessor", "select_variant")
 

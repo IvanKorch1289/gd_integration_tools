@@ -34,13 +34,12 @@ Python контракт через :meth:`AgentDSLMixin.agent_loop`::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

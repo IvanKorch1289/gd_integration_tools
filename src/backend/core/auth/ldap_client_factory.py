@@ -25,7 +25,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.core.config.services.ldap import ldap_settings
 from src.backend.services.auth.ad_directory_client import (
     AdDirectoryClient,
     AdServerConfig,

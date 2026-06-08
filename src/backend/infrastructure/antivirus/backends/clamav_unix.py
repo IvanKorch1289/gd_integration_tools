@@ -14,15 +14,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import struct
 import time
 from pathlib import Path
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ClamAVUnixBackend",)
 

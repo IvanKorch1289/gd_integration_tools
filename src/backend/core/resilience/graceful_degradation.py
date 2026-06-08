@@ -47,15 +47,15 @@ Use-case::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Final
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DegradationFeature", "FeatureState", "GracefulDegradationRegistry")
 

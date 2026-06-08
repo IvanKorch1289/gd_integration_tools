@@ -10,9 +10,9 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
-from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.settings import settings
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("JobQueue", "get_job_queue")
 

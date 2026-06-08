@@ -15,12 +15,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
 

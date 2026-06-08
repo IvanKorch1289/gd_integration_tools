@@ -16,16 +16,15 @@ Wave 1.2 (S3): убирает stub ``NotImplementedError`` в
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.secrets import SecretsBackend
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     import hvac

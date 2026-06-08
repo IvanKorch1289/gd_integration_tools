@@ -46,14 +46,13 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import xml.etree.ElementTree as ET
 from typing import Any, Final
 
 from src.backend.dsl.workflow.gateways import BranchSpec, GatewaySpec
 from src.backend.dsl.workflow.spec import ActivityDeclaration, WorkflowDeclaration
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "BPMN_NAMESPACE",

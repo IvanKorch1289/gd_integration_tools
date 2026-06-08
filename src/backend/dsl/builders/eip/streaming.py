@@ -10,14 +10,13 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
+from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.processors.streaming import (
     GroupByKeyProcessor,
     SessionWindowProcessor,
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
-
-from src.backend.dsl.builders.eip._base import EIPMixinBase
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder

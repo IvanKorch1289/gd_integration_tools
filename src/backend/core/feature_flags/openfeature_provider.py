@@ -24,12 +24,12 @@ feature_flag:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "EvaluationContext",

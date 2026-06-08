@@ -21,10 +21,10 @@ RPA-сценариев, аудита документов, контракт-ва
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from pathlib import Path
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PdfReaderUnavailable", "read_pdf")
 

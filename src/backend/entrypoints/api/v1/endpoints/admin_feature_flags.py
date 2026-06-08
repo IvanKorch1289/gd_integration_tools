@@ -14,8 +14,6 @@ per-process. Подключение Redis pub/sub channel ``feature-flags:toggle
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -26,6 +24,7 @@ from src.backend.core.feature_flags.runtime_overrides import (
     FeatureFlagChange,
     get_runtime_overrides,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.audit import get_unified_audit_service
 
 __all__ = ("router",)

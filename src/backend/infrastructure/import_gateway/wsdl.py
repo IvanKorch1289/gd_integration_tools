@@ -11,16 +11,15 @@ schemas (XSD types) экспортируются как best-effort dict.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
 import io
-
 import tempfile
 from pathlib import Path
 
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
 from src.backend.core.models.connector_spec import ConnectorSpec, EndpointSpec
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WsdlImportGateway",)
 

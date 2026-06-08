@@ -15,13 +15,12 @@
 """
 
 import asyncio
-from src.backend.infrastructure.logging.factory import get_logger
-
 import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from src.backend.core.config.constants import consts
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BackoffPolicy", "Supervisor")
 

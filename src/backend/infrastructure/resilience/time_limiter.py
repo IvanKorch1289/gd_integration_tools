@@ -10,13 +10,13 @@ timeout под текущие условия.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from collections import deque
 from dataclasses import dataclass, field
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("TimeLimiter",)
 

@@ -26,12 +26,11 @@ Lazy-init pattern:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.sanitization import SanitizationResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from presidio_analyzer import AnalyzerEngine, EntityRecognizer

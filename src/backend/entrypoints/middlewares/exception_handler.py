@@ -7,13 +7,13 @@
 
 
 import traceback
-from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.backend.core.errors import BaseError
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExceptionHandlerMiddleware",)
 

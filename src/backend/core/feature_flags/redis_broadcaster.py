@@ -25,10 +25,8 @@ DoD S17 #11 — propagation latency p95 ≤ 100ms (carryover к perf-wave).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import os
 import uuid
 from dataclasses import dataclass
@@ -36,6 +34,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import orjson
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable

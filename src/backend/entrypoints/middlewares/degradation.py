@@ -20,8 +20,6 @@ Endpoints, которые safe для write в fallback-режиме (напри
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Final
 
@@ -29,6 +27,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DegradationMiddleware",)
 

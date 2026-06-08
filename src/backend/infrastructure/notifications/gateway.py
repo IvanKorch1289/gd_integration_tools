@@ -23,14 +23,13 @@ Sugar: `send_tx(...)` / `send_marketing(...)` эквивалентны `send(pri
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.notifications.priority import (
     NotificationBacklogError,
     Priority,

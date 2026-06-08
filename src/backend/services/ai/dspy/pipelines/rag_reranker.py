@@ -18,13 +18,13 @@ Block 3.1 (gap-ai-3.1) реализация:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 import math
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("rag_reranker_pipeline",)
 

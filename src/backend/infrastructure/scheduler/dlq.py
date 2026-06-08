@@ -27,8 +27,6 @@ Feature-flag:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 import traceback
@@ -39,6 +37,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler

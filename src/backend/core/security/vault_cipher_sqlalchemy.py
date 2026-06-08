@@ -41,12 +41,12 @@ encrypt/decrypt point-ы в коде (код-ревью проще).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.security.vault_cipher import VaultTransitCipher

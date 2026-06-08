@@ -22,8 +22,6 @@ Endpoints (под ``/api/v1/admin/dsl-routes``):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from functools import lru_cache
@@ -39,6 +37,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("router",)
 

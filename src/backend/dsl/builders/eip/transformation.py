@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import (
     AggregatorProcessor,
@@ -16,8 +17,6 @@ from src.backend.dsl.engine.processors import (
     ResequencerProcessor,
     SplitterProcessor,
 )
-
-from src.backend.dsl.builders.eip._base import EIPMixinBase
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder

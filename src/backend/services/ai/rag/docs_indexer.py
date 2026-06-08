@@ -14,13 +14,13 @@ DI-friendly, graceful degradation (no-qdrant → in-memory fallback).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import re
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DocsIndexer", "InMemoryQdrantFallback")
 

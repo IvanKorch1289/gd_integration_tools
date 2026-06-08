@@ -1,8 +1,6 @@
 """TelegramEditProcessor — редактирование Telegram-сообщения."""
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -13,6 +11,7 @@ from src.backend.dsl.engine.processors.telegram._common import (
     get_telegram_client,
     resolve_value,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("TelegramEditProcessor",)
 

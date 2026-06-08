@@ -34,14 +34,13 @@ Python контракт::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

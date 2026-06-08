@@ -13,15 +13,15 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "EvalSuite")
 

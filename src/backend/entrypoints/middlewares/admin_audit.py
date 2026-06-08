@@ -15,10 +15,8 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import time as _time
 from datetime import UTC, datetime
 
@@ -27,6 +25,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 
 from src.backend.core.auth.admin_roles import extract_admin_roles
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AdminAuditMiddleware",)
 

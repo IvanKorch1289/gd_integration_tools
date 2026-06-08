@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
-
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 
 if TYPE_CHECKING:

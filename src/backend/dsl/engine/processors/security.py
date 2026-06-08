@@ -12,15 +12,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.dsl.engine.context import ExecutionContext

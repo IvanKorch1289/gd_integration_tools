@@ -6,17 +6,16 @@ lineage, SSE, schema validation, A/B test router, feature flag guard.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-
 from collections.abc import Callable
 from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "AbTestRouterProcessor",

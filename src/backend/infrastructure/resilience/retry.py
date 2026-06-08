@@ -29,8 +29,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
 from typing import ParamSpec, TypeVar
@@ -41,6 +39,8 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("async_retry", "make_async_retry")
 

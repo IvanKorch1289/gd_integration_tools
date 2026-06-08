@@ -12,10 +12,8 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -28,6 +26,7 @@ from src.backend.entrypoints.api.dependencies.auth_selector import (
     AuthMethod,
     require_auth,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

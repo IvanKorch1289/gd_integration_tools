@@ -11,14 +11,14 @@ correlation ID → return reply. Return address = ``reply:<cid>``.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextlib
-
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "DEFAULT_TIMEOUT_S",

@@ -11,8 +11,6 @@ Sprint 1 V16 Single-Entry: модуль вынесен из ``core/resilience.py
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections import deque
@@ -21,6 +19,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ComponentState",

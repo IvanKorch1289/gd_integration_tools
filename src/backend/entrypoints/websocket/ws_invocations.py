@@ -31,8 +31,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 from uuid import uuid4
@@ -40,6 +38,7 @@ from uuid import uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from src.backend.core.interfaces.invoker import InvocationMode, InvocationRequest
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ws_invocations_router",)
 

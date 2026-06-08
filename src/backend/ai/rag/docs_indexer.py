@@ -13,13 +13,13 @@ Idempotent (sha256 chunk id). Graceful: qdrant_client=None → InMemoryQdrantFal
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 import re
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DocsIndexer", "InMemoryQdrantFallback")
 

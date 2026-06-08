@@ -10,10 +10,8 @@ Group membership: Redis SET (shared между инстансами), cache per-
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from typing import Any
 
 from src.backend.core.di.providers import (
@@ -21,6 +19,7 @@ from src.backend.core.di.providers import (
     get_redis_set_factory_provider,
 )
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WSBroadcast", "ws_broadcast")
 

@@ -21,14 +21,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("OtelMiddleware",)
 

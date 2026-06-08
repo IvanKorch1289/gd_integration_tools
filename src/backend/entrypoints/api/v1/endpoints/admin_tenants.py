@@ -15,13 +15,13 @@ Endpoints (под ``/api/v1/admin``):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections import Counter as CollectionsCounter
 from typing import Any
 
 from fastapi import APIRouter
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("router",)
 

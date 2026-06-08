@@ -19,12 +19,12 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import sys
 from typing import Any, Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "EmbeddingProvider",

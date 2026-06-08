@@ -45,11 +45,9 @@ HMAC-секрет хранится в ``settings.secure.audit_secret_key`` (env
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
 import hmac
-
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -57,6 +55,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.codec.json import canonical_json_bytes, dumps_str
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

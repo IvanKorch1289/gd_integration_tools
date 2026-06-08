@@ -19,13 +19,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import builtins
 import importlib.util
 import inspect
-
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -33,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AgentTool", "ToolRegistry", "agent_tool", "get_tool_registry")
 

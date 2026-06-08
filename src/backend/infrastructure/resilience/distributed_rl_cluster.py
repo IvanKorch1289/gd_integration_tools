@@ -17,12 +17,12 @@ Lua-скрипт минималистичен (без CL.THROTTLE-зависим
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("DistributedRedisRateLimiter", "TokenBucketResult")
 

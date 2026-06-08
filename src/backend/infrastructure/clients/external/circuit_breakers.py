@@ -3,7 +3,6 @@
 
 from functools import lru_cache
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.constants import consts
 from src.backend.core.resilience.breaker import (
@@ -11,6 +10,7 @@ from src.backend.core.resilience.breaker import (
     BreakerSpec,
     get_breaker_registry,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CircuitBreakerRegistry", "breaker_registry", "get_circuit_breaker_registry")
 

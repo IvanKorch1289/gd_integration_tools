@@ -9,12 +9,11 @@ Architecture: composition root должен знать о всех слоях п
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 
 from src.backend.core.svcs_registry import has_service, register_factory
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "register_all_services",

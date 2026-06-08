@@ -18,11 +18,11 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import os
 from collections.abc import Awaitable, Callable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SecretResolveCallable", "build_secrets_fallbacks", "build_secrets_primary")
 

@@ -18,14 +18,13 @@ Default-OFF feature-flag принцип (V11.1a, V15): ядро не дикту�
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any, Iterable
 
 from src.backend.core.config.settings import settings
 from src.backend.dsl.workflow.compiler import CompiledWorkflow, WorkflowCompilerRegistry
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "register_workflow_declarations",

@@ -5,12 +5,11 @@ ABC ``BaseVectorStore`` вынесен в ``core/interfaces/vector_store.py``
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "BaseVectorStore",

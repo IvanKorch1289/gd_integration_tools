@@ -1,7 +1,6 @@
 import asyncio
 from logging.config import fileConfig
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 from alembic import context
 from sqlalchemy import pool
@@ -25,6 +24,7 @@ from src.backend.infrastructure.database.models.orderkinds import (
 )
 from src.backend.infrastructure.database.models.orders import Order  # noqa: F401
 from src.backend.infrastructure.database.models.users import User  # noqa: F401
+from src.backend.infrastructure.logging.factory import get_logger
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -130,7 +130,6 @@ async def run_async_migrations() -> None:
 
     async with lock_ctx as acquired:
         if not acquired:
-            import logging
 
             get_logger("alembic").warning(
                 "Could not acquire migration lock — another instance is running migrations"

@@ -10,15 +10,14 @@ corutine-функциями из коробки. Fallback на простой ``
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.resilience.degradation import degradation_manager
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SelfHealer", "get_self_healer")
 

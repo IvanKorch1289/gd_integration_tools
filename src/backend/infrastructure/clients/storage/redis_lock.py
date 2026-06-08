@@ -7,12 +7,12 @@ redis-py реализует SET NX EX + token verification + auto-extend чер�
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from redis.asyncio.lock import Lock as RedisAsyncLock

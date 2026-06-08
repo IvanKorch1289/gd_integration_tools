@@ -27,11 +27,9 @@ Hot-reload механизм:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import hashlib
-
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
@@ -43,6 +41,7 @@ from sqlalchemy import select
 from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
 from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
 from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "CertBackend",

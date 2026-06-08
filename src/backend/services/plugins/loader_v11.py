@@ -12,10 +12,8 @@ V11.1 фиксирует: плагины поставляются ТОЛЬКО i
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -40,6 +38,7 @@ from src.backend.core.security.capabilities import (
     CapabilityGate,
     CapabilityRef,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,

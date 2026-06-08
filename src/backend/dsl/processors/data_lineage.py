@@ -37,8 +37,6 @@ Default: :func:`src.backend.services.lineage.get_lineage_emitter` (in-memory sto
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 import uuid
@@ -49,6 +47,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder

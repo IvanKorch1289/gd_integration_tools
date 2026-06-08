@@ -20,13 +20,13 @@ Feature-flag: ``feature_flags.route_loader_hot_reload``
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ReloadEvent", "RouteHotReloader")
 

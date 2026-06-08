@@ -11,8 +11,6 @@ Python 3.14, нет C-extensions.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections.abc import Iterable
@@ -20,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("Hit", "WhooshIndex", "get_wiki_index")
 

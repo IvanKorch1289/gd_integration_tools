@@ -11,8 +11,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -20,6 +18,8 @@ from datetime import datetime
 from typing import Any
 
 import orjson
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

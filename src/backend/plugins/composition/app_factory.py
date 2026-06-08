@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from src.backend.infrastructure.logging.factory import get_logger
 
 from src.backend.core.config.settings import settings
 from src.backend.entrypoints.api.v1.routers import get_v1_routers
@@ -19,6 +18,7 @@ from src.backend.infrastructure.application.index import root_page
 from src.backend.infrastructure.application.monitoring import setup_monitoring
 from src.backend.infrastructure.application.telemetry import setup_tracing
 from src.backend.infrastructure.clients.messaging.stream import get_stream_client
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.plugins.composition.lifecycle import lifespan
 from src.backend.utilities.admin_panel.setup_admin import setup_admin
 

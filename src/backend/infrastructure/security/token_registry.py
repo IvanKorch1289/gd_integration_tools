@@ -33,11 +33,9 @@ Decisions (S25 W4, advisor 2026-05-25)
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import base64
 import fnmatch
-
 import os
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -46,6 +44,7 @@ from typing import Any, Protocol, runtime_checkable
 import orjson
 
 from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "AESGCMKeyProvider",

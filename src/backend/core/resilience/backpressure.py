@@ -25,13 +25,13 @@ V15 R-V15-10 — auto-scaling 3 уровня (этот модуль — task-lev
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "AdaptiveBulkhead",

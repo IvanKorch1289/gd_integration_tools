@@ -15,13 +15,13 @@ Capabilities (V11.1):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("STTResult", "VoiceServiceUnavailable", "WhisperSTTService")
 

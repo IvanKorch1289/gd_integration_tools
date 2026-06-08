@@ -10,12 +10,12 @@ Throttled (1 query / 100ms по умолчанию) чтобы не положи
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.services.ai.rag_query_stats import RagQueryStatsCollector

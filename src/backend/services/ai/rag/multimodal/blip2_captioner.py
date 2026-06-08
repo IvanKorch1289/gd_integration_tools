@@ -6,11 +6,11 @@ Lazy-import transformers/BLIP2 — heavy ML stack (~5GB веса) включае
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BLIP2Captioner", "CaptionResult")
 

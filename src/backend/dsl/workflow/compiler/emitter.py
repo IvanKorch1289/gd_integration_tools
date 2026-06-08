@@ -20,14 +20,13 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass
 from typing import Any
 
 from src.backend.dsl.workflow.compiler.step_compilers import dispatch_step_compile
 from src.backend.dsl.workflow.spec import SignalWaitDeclaration, WorkflowDeclaration
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
 

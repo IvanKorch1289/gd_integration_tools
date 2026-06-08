@@ -34,11 +34,9 @@ Pattern (Apache Camel Saga EIP / MicroProfile LRA, simplified)::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import inspect
-
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -47,6 +45,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

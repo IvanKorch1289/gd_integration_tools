@@ -5,43 +5,10 @@ Sprint 60 W4 — split god-file eip.py (1354 LOC) на 8 per-domain модуле
 """
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
-
-from src.backend.core.di.dependencies import get_watermark_store_optional
-from src.backend.core.interfaces.watermark_store import WatermarkStore
-from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
-    AggregatorProcessor,
-    BaseProcessor,
-    CDCProcessor,
-    ClaimCheckProcessor,
-    DynamicRouterProcessor,
-    FilterProcessor,
-    LoadBalancerProcessor,
-    NormalizerProcessor,
-    ResequencerProcessor,
-    ScatterGatherProcessor,
-    SplitterProcessor,
-    TransformProcessor,
-)
-from src.backend.dsl.engine.processors.streaming import (
-    ChannelPurgerProcessor,
-    DurableSubscriberProcessor,
-    ExactlyOnceProcessor,
-    GroupByKeyProcessor,
-    ReplyToProcessor,
-    SamplingProcessor,
-    SchemaRegistryValidator,
-    SessionWindowProcessor,
-    SlidingWindowProcessor,
-    TumblingWindowProcessor,
-)
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builder import RouteBuilder
+    pass
 
 __all__ = ("EIPMixinBase",)
 

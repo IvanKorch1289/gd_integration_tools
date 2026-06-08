@@ -15,16 +15,15 @@ Marketing (рассылки, уведомления о новых фичах) �
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Final, Literal
 
 from src.backend.core.config.pooling import PoolingProfile
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger(__name__)
 

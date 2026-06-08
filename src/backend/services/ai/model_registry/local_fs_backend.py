@@ -11,15 +11,14 @@ Lazy-import тяжёлых библиотек (torch, sklearn, catboost, lightgb
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import json
-
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,

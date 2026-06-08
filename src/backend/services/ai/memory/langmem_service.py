@@ -24,13 +24,13 @@ Backend-зависимости (psycopg, qdrant_client) подключаются
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger(__name__)
 

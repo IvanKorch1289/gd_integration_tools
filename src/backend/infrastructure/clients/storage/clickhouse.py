@@ -15,14 +15,13 @@ Wave Sprint 0 (V16, ClickHouse pool hotfix):
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import time
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ClickHouseClient", "get_clickhouse_client")
 

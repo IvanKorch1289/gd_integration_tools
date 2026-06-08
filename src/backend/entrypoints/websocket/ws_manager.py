@@ -6,10 +6,11 @@ broadcast и отправку сообщений по группам.
 
 
 from typing import Any
-from src.backend.infrastructure.logging.factory import get_logger
 
 from fastapi import WebSocket
 from starlette.websockets import WebSocketState
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ConnectionManager", "ws_manager")
 

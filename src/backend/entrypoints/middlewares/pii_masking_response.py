@@ -31,8 +31,6 @@ legacy, локальные regex), этот middleware использует ед
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import re
 from collections.abc import Iterable
@@ -44,6 +42,7 @@ from starlette.types import ASGIApp
 
 from src.backend.core.security.pii_masker import default_masker
 from src.backend.core.utils.async_helpers import AsyncChunkIterator
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 

@@ -8,10 +8,10 @@ encoding'а (по умолчанию ``cl100k_base``, совпадающий с 
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("TokenChunker",)
 

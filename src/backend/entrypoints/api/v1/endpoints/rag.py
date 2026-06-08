@@ -14,8 +14,6 @@ W26.5: маршруты регистрируются декларативно ч
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Annotated, Any
 
@@ -27,6 +25,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.document_parsers import parse_document, sniff_mime
 from src.backend.services.ai.rag_service import get_rag_service
 

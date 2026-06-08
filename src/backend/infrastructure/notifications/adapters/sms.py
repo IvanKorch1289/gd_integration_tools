@@ -22,12 +22,11 @@ Scaffolding-реализация: URL и payload-форматы помечены
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Callable
 from typing import Any, Final, Literal
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = get_logger(__name__)

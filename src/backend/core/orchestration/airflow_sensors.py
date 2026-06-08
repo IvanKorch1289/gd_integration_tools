@@ -13,10 +13,8 @@ backoff до match или deadline. На match → SensorTrigger.on_match_action
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import os
 import time
 from typing import Any
@@ -27,6 +25,7 @@ import jmespath
 from watchfiles import awatch
 
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
+from src.backend.infrastructure.logging.factory import get_logger
 
 # S3 sensor uses aioboto3 (user-approved dep, install via `uv pip install aioboto3`).
 # Lazy import: S3Sensor construction fails with ImportError if aioboto3 not installed,

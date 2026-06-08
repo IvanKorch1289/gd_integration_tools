@@ -14,8 +14,6 @@
 """
 
 import asyncio
-from src.backend.infrastructure.logging.factory import get_logger
-
 from typing import Any, ClassVar
 
 from pydantic import Field
@@ -23,6 +21,7 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("MqttHandler", "MqttSettings", "get_mqtt_handler")
 

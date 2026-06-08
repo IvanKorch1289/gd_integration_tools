@@ -17,10 +17,8 @@ CDC события стандартизованы:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -29,6 +27,7 @@ from typing import Any
 from uuid import uuid4
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CDCClient", "CDCEvent", "CDCSubscription", "get_cdc_client")
 

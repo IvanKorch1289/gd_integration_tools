@@ -11,12 +11,12 @@ Multi-instance safety: все токены в Redis (atomic INCR/EXPIRE).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from dataclasses import dataclass
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter")
 

@@ -12,12 +12,12 @@ HTML/RSS-документов.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import contextlib
-
 import urllib.request
 from collections.abc import Iterator
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("markitdown_network_disabled",)
 

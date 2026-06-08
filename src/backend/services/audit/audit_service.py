@@ -28,10 +28,10 @@ async-контексте (lifespan/workflow activity/CLI).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import TYPE_CHECKING, Any, Literal
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.services.audit.clickhouse_audit_service import (

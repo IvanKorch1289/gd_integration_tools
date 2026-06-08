@@ -12,8 +12,6 @@ Replay UI: Streamlit page (планируется).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from typing import Any
@@ -21,6 +19,8 @@ from typing import Any
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AuditReplayMiddleware",)
 

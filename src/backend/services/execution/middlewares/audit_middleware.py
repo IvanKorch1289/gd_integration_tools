@@ -13,8 +13,6 @@ No-op при отсутствии необязательных полей в :cl
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections.abc import Mapping
@@ -25,6 +23,7 @@ from src.backend.core.interfaces.action_dispatcher import (
     DispatchContext,
     MiddlewareNextHandler,
 )
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AuditMiddleware",)
 

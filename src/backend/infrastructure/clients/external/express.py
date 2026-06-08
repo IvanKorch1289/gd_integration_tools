@@ -17,11 +17,11 @@ Docs:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 from uuid import UUID
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExpressClient", "get_express_client")
 

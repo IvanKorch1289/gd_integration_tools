@@ -13,14 +13,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     import dspy

@@ -14,14 +14,14 @@
 """
 
 import hashlib
-from src.backend.infrastructure.logging.factory import get_logger
-
 import time as _time
 from datetime import UTC, datetime
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AuditLogMiddleware",)
 

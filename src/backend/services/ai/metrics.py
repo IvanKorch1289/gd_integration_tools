@@ -17,8 +17,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from collections.abc import Iterator
@@ -26,6 +24,7 @@ from contextlib import contextmanager
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AgentMetricsService", "get_agent_metrics_service")
 

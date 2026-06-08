@@ -26,15 +26,14 @@ time resolve, поэтому performance-cost ничтожен.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps
 from typing import Any, Literal
 
 from src.backend.core.utils.cache_keys import build_cache_key
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("cached", "invalidate", "multi_cached")
 

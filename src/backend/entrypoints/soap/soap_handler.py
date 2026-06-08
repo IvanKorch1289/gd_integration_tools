@@ -12,7 +12,6 @@ W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точк
 
 from typing import TYPE_CHECKING, Any
 from xml.etree import ElementTree as ET
-from src.backend.infrastructure.logging.factory import get_logger
 
 import orjson
 from fastapi import APIRouter, Depends, Request, Response
@@ -26,6 +25,7 @@ from src.backend.core.interfaces.invoker import (
 )
 from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.service import get_dsl_service
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.invoker import Invoker

@@ -7,14 +7,13 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from pydantic import BaseModel
 
 from src.backend.core.errors import BaseError
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "EventBus",

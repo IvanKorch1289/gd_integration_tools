@@ -25,8 +25,6 @@ Resilience:
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import threading
 import urllib.error
@@ -35,6 +33,7 @@ from typing import Any
 
 import orjson
 
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.lineage.lineage_emitter import (
     InMemoryLineageEmitter,
     _iso_timestamp,

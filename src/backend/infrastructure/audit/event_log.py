@@ -1,15 +1,14 @@
 """Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher."""
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import importlib
-
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces import AsyncBatcher
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.observability.correlation import (
     get_correlation_id,
     get_tenant_id,

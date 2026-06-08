@@ -9,15 +9,14 @@ Hash-кэш безопасен потому, что любой даже мале
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import hashlib
-
 from typing import TYPE_CHECKING
 
 import orjson
 
 from src.backend.core.interfaces.antivirus import AntivirusScanResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

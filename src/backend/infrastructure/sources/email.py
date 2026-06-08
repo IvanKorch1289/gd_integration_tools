@@ -17,10 +17,8 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import re
 import ssl
 from dataclasses import dataclass
@@ -29,6 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 from src.backend.infrastructure.sources.email_utils import parse_email
 

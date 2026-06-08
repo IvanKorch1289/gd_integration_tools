@@ -15,12 +15,12 @@ Config через ``mcp_clients.yaml``::
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if __name__ == "__main__":
     raise SystemExit("Import-only module")

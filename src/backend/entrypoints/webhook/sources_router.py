@@ -14,8 +14,6 @@ Layer policy: entrypoints → core/interfaces (Protocol) + services/sources
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from typing import Any
 
@@ -23,6 +21,7 @@ import orjson
 from fastapi import APIRouter, HTTPException, Request
 
 from src.backend.core.interfaces.source import SourceKind
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.sources import get_source_registry
 
 __all__ = ("sources_router",)

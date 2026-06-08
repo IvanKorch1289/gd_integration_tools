@@ -10,8 +10,6 @@ Wave 3.5. Полагается на уже существующие клиент
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -20,6 +18,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ForwardToProcessor", "ProxyOutboundSpec")
 

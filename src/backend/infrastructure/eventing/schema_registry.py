@@ -8,13 +8,13 @@ Confluent-совместимый endpoint.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import json
-
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("SchemaRegistry", "SchemaRegistryError", "get_schema_registry")
 

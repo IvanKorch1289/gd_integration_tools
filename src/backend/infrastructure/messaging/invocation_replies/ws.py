@@ -12,10 +12,8 @@ Invoker по завершении task'а вызывает ``send`` — сооб
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
@@ -24,6 +22,7 @@ from src.backend.core.interfaces.invocation_reply import (
     ReplyChannelKind,
 )
 from src.backend.core.interfaces.invoker import InvocationResponse
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WsConnection", "WsReplyChannel")
 

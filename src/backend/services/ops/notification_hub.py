@@ -35,8 +35,6 @@ Actions: notify.email, notify.express, notify.webhook, notify.telegram,
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import warnings
 from dataclasses import dataclass, field
@@ -44,6 +42,7 @@ from enum import Enum
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("Channel", "NotificationHub", "NotificationRequest", "get_notification_hub")
 

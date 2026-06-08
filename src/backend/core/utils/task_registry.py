@@ -22,15 +22,14 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
 import contextvars
-
 from collections.abc import Awaitable, Coroutine
 from typing import Any, TypeVar
 
 from src.backend.core.utils.watchdog import Watchdog
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("TaskRegistry", "get_task_registry", "reset_task_registry")
 

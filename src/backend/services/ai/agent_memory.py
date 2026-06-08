@@ -18,8 +18,6 @@ DSL-actions (``src/dsl/commands/setup.py``).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from typing import Any
@@ -27,6 +25,7 @@ from typing import Any
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.di.providers import get_mongo_client_provider
 from src.backend.core.interfaces.ai_clients import MongoClientProtocol
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AgentMemoryService", "get_agent_memory_service")
 

@@ -9,12 +9,12 @@ delete где ``created_at + retention_days < now()`` per ``dlq_class``.
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.messaging.dlq_policy import DLQPolicyRegistry

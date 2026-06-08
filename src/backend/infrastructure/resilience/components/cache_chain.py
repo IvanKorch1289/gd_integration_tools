@@ -8,10 +8,10 @@ Write-операции в fallback-режиме отдельно — write-throu
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from collections.abc import Awaitable, Callable
+
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("CacheGetCallable", "build_cache_fallbacks", "build_cache_primary")
 

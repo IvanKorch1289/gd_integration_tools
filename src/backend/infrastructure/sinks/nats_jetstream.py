@@ -9,8 +9,6 @@ cutover (Wave 3). Без установленной библиотеки ``publi
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -18,6 +16,7 @@ from typing import Any
 import orjson
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("NATSJetStreamSink",)
 

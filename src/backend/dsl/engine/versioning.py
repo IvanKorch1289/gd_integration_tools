@@ -9,8 +9,6 @@
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 from dataclasses import dataclass
@@ -20,6 +18,7 @@ from sqlalchemy import desc, select
 
 from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
 from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PipelineSnapshot", "PipelineVersionManager", "get_pipeline_version_manager")
 

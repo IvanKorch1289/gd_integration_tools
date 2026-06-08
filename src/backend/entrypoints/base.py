@@ -22,8 +22,6 @@ tenant propagation).
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
-
 
 import time
 import uuid
@@ -31,6 +29,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("BaseEntrypoint", "dispatch_action")

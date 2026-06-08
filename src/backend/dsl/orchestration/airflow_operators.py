@@ -37,10 +37,8 @@ Thread-safe: branch decisions изолированы per-exchange (через ``
 """
 
 from __future__ import annotations
-from src.backend.infrastructure.logging.factory import get_logger
 
 import asyncio
-
 import threading
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
@@ -50,6 +48,7 @@ from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "BRANCH_DECISION_PROPERTY",
