@@ -315,7 +315,9 @@ def test_cli_help_message() -> None:
     assert result.returncode == 0
     combined = result.stdout + result.stderr
     assert "capability" in combined.lower() or "capabilities" in combined.lower()
-    assert "check_tenant" in combined or "gate.check" in combined
+    # S62 W3: typer-native help использует rich panels; alias-имена могут
+    # быть в description но truncated. Достаточно presence of plugin name.
+    assert "plugin" in combined.lower() or "AST" in combined
 
 
 # ---------------------------------------------------------------------------

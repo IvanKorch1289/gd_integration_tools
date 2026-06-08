@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """AST-сканер для авто-обнаружения capabilities в plugin-коде (V15 GAP Gap 4).
 
+S62 W3: мигрирован с ``argparse`` на ``typer`` + ``rich`` (libraries > custom,
+per v22 п.5). Сохранены: typer-native entry ``app_main`` + legacy
+``main()`` callback для backward-compat.
+
 Сканирует ``<plugin>/plugin.py`` (и опц. все ``.py`` в каталоге плагина) и
 извлекает строковые литералы, передаваемые в capability-gate вызовы:
 
@@ -8,6 +12,10 @@
 * ``gate.check_tenant(capability, tenant, ...)`` — 1-й позиционный аргумент;
 * ``gate.declare_tenant(capability, tenant, principal)`` — 1-й позиционный;
 * ``self.requires_capability(capability)`` — 1-й позиционный аргумент.
+
+Поведение::
+
+    python tools/discover_plugin_capabilities.py <plugin_path> [--recursive]
 
 Поведение::
 
@@ -36,11 +44,26 @@
 
 from __future__ import annotations
 
-import argparse
 import ast
 import sys
 from collections.abc import Iterable
 from pathlib import Path
+
+import typer
+from rich.console import Console
+
+app = typer.Typer(
+    name="discover-plugin-capabilities",
+    help=(
+        "AST-сканер capability-вызовов в plugin-коде. Извлекает строковые литералы "
+        "из gate.check / gate.check_tenant / gate.declare_tenant / requires_capability "
+        "и печатает рекомендацию для plugin.toml."
+    ),
+    no_args_is_help=True,
+    add_completion=False,
+)
+_console = Console()
+_err_console = Console(file=sys.stderr)
 
 # Методы capability-gate, которые нас интересуют. Первое значение в
 # кортеже — позиция аргумента с capability (0-indexed).
@@ -138,7 +161,7 @@ def discover_capabilities(path: Path) -> list[str]:
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except OSError, SyntaxError:
+    except (OSError, SyntaxError):
         return []
     seen: set[str] = set()
     for lineno, _method, cap_name in _iter_capability_calls(tree):
@@ -166,50 +189,52 @@ def _plugin_name(path: Path) -> str:
     return path.stem
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI entry-point. Возвращает exit code (0/2)."""
-    parser = argparse.ArgumentParser(
-        prog="discover_plugin_capabilities",
-        description=(
-            "AST-сканер capability-вызовов в plugin-коде. "
-            "Извлекает строковые литералы из gate.check / gate.check_tenant "
-            "/ gate.declare_tenant / requires_capability и печатает "
-            "рекомендацию для plugin.toml."
-        ),
-    )
-    parser.add_argument(
-        "plugin_path",
-        nargs="?",
-        default="extensions/example_plugin",
+@app.command(name="discover")
+def app_main(
+    plugin_path: str = typer.Argument(
+        "extensions/example_plugin",
         help="путь к плагину (директория с plugin.py или прямой путь к .py)",
-    )
-    parser.add_argument(
+    ),
+    recursive: bool = typer.Option(
+        False,
         "--recursive",
-        action="store_true",
         help=(
             "TODO: рекурсивно сканировать все .py в директории плагина. "
             "На текущем slice флаг принят, но игнорируется — сканируется "
             "только plugin.py."
         ),
-    )
-    args = parser.parse_args(argv)
+    ),
+) -> None:
+    """Typer-native entry для AST capability discovery."""
+    _ = recursive  # accepted but ignored (TODO S62+)
 
-    plugin_file = _resolve_plugin_path(args.plugin_path)
+    plugin_file = _resolve_plugin_path(plugin_path)
     if plugin_file is None:
-        print(
-            f"ERROR: '{args.plugin_path}' не содержит plugin.py "
-            "или не является .py файлом",
-            file=sys.stderr,
+        _err_console.print(
+            f"[bold red]ERROR:[/bold red] '{plugin_path}' не содержит plugin.py "
+            "или не является .py файлом"
         )
-        return 2
+        raise typer.Exit(code=2)
 
     capabilities = discover_capabilities(plugin_file)
     name = _plugin_name(plugin_file)
     if capabilities:
-        print(f"Plugin {name}: discovered capabilities: {', '.join(capabilities)}")
+        _console.print(
+            f"Plugin {name}: discovered capabilities: {', '.join(capabilities)}"
+        )
     else:
-        print(f"Plugin {name}: no capabilities discovered")
-    return 0
+        _console.print(f"Plugin {name}: no capabilities discovered")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Backward-compat CLI entry (S58 W2 pattern)."""
+    if argv is None:
+        argv = sys.argv[1:]
+    try:
+        app(args=argv)
+        return 0
+    except SystemExit as exc:
+        return int(exc.code or 0)
 
 
 if __name__ == "__main__":

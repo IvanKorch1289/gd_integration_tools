@@ -1,5 +1,9 @@
 """Pipeline diff — структурное сравнение двух YAML-определений pipeline.
 
+S62 W3: мигрирован с ``argparse`` на ``typer`` + ``rich`` (libraries > custom,
+per v22 п.5). Сохранены: typer-native entry ``app_main`` + legacy
+``main()`` callback для backward-compat.
+
 Использование::
 
     python tools/dsl_diff.py before.yaml after.yaml
@@ -19,11 +23,22 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+import typer
+from rich.console import Console
+
+Format = Literal["text", "json"]
+app = typer.Typer(
+    name="dsl-diff",
+    help="Pipeline diff для YAML-DSL (структурное сравнение двух pipelines).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+_console = Console()
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -109,24 +124,34 @@ def _render_text(diff: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
-    """CLI-точка входа."""
-    parser = argparse.ArgumentParser(description="Pipeline diff для YAML-DSL")
-    parser.add_argument("before", type=Path, help="Исходный YAML-файл")
-    parser.add_argument("after", type=Path, help="Новый YAML-файл")
-    parser.add_argument("--format", choices=["text", "json"], default="text")
-    args = parser.parse_args()
+@app.command(name="diff")
+def app_main(
+    before: Path = typer.Argument(..., help="Исходный YAML-файл"),
+    after: Path = typer.Argument(..., help="Новый YAML-файл"),
+    format: Format = typer.Option("text", "--format", help="text | json"),
+) -> None:
+    """Typer-native entry для pipeline diff."""
+    diff = _diff_pipelines(_load_yaml(before), _load_yaml(after))
 
-    diff = _diff_pipelines(_load_yaml(args.before), _load_yaml(args.after))
-
-    if args.format == "json":
+    if format == "json":
         json.dump(diff, sys.stdout, ensure_ascii=False, indent=2)
     else:
-        print(_render_text(diff))
+        _console.print(_render_text(diff))
 
     # Exit-код 1 если есть различия — удобно в CI.
     has_changes = bool(diff["added"] or diff["removed"] or diff["changed"])
-    sys.exit(1 if has_changes else 0)
+    raise typer.Exit(code=1 if has_changes else 0)
+
+
+def main() -> None:
+    """Backward-compat CLI entry (S58 W2 pattern)."""
+    try:
+        app()
+    except SystemExit:
+        raise
+    except Exception as exc:
+        _console.print(f"[bold red][dsl-diff] error:[/bold red] {exc}")
+        raise SystemExit(2) from exc
 
 
 if __name__ == "__main__":

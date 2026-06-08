@@ -1,5 +1,9 @@
 """Wave 5.1 — CLI для генерации service+repo+schema+action скелета.
 
+S62 W3: мигрирован с ``argparse`` на ``typer`` + ``rich`` (libraries > custom,
+per v22 п.5). Сохранены: typer-native entry ``app_main`` + legacy
+``main()`` callback для backward-compat (sиmple argv parse).
+
 Запуск::
 
     uv run python tools/codegen_service.py \\
@@ -17,14 +21,25 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
+
+import typer
+from rich.console import Console
 
 from tools.codegen_engine import CodegenEngine
 
 ROOT = Path(__file__).resolve().parents[1]
+
+app = typer.Typer(
+    name="codegen-service",
+    help="Codegen service+repo+schema+action skeleton (Wave 5.1).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+_console = Console()
 
 
 def _to_pascal(name: str) -> str:
@@ -43,34 +58,18 @@ def _to_singular(name: str) -> str:
     return name
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Точка входа CLI."""
-    parser = argparse.ArgumentParser(description="Codegen service skeleton (Wave 5.1).")
-    parser.add_argument("--name", required=True, help="snake_case имя сервиса (мн.ч.)")
-    parser.add_argument(
-        "--domain", required=True, help="core | ai | integrations | ..."
-    )
-    parser.add_argument("--crud", action="store_true", help="включить CRUD-методы")
-    parser.add_argument(
-        "--fields", default="{}", help='JSON {"field":"py_type"} для Create/Update схем'
-    )
-    parser.add_argument(
-        "--model-class",
-        default=None,
-        help="имя SQLAlchemy-модели (default: PascalCase singular)",
-    )
-    parser.add_argument(
-        "--overwrite", action="store_true", help="разрешить перезапись существующих"
-    )
-    args = parser.parse_args(argv)
-
-    name = args.name
-    domain = args.domain
+def _render_and_write(
+    name: str,
+    domain: str,
+    crud: bool,
+    fields: dict[str, str],
+    model_class: str,
+    overwrite: bool,
+) -> None:
+    """Render Jinja templates and write generated files (shared core)."""
     singular = _to_singular(name)
     pascal_singular = _to_pascal(singular)
     pascal_plural = _to_pascal(name)
-    fields = json.loads(args.fields) or {"name": "str"}
-    model_class = args.model_class or pascal_singular
 
     eng = CodegenEngine()
     paths = {
@@ -83,8 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema": ROOT / "src" / "schemas" / f"{name}.py",
         "action": ROOT / "src" / "dsl" / "commands" / f"{name}_actions.py",
     }
-
-    common = {
+    common: dict[str, Any] = {
         "name": name,
         "domain": domain,
         "entity": pascal_singular,
@@ -93,9 +91,8 @@ def main(argv: list[str] | None = None) -> int:
         "model_class": model_class,
         "fields": fields,
     }
-
     for kind, target in paths.items():
-        ctx = {
+        ctx: dict[str, Any] = {
             **common,
             "class_name": (
                 f"{pascal_plural}Service"
@@ -104,16 +101,57 @@ def main(argv: list[str] | None = None) -> int:
                 if kind == "repository"
                 else f"{pascal_singular}Schemas"
             ),
-            "crud": args.crud if kind == "service" else False,
+            "crud": crud if kind == "service" else False,
         }
         template = f"{kind}.py.j2"
         code = eng.render(template, **ctx)
-        eng.write(target, code, overwrite=args.overwrite)
-        sys.stdout.write(f"[codegen] wrote {target.relative_to(ROOT)}\n")
+        eng.write(target, code, overwrite=overwrite)
+        _console.print(f"[green][codegen][/green] wrote {target.relative_to(ROOT)}")
 
-    sys.stdout.write(
-        f"[codegen] OK {name} (domain={domain}, crud={args.crud}, fields={list(fields)})\n"
+    _console.print(
+        f"[bold green][codegen] OK[/bold green] {name} "
+        f"(domain={domain}, crud={crud}, fields={list(fields)})"
     )
+
+
+@app.command(name="generate")
+def app_main(
+    name: str = typer.Option(..., "--name", help="snake_case имя сервиса (мн.ч.)"),
+    domain: str = typer.Option(..., "--domain", help="core | ai | integrations | ..."),
+    crud: bool = typer.Option(False, "--crud", help="включить CRUD-методы"),
+    fields: str = typer.Option(
+        "{}", "--fields", help='JSON {"field":"py_type"} для Create/Update схем'
+    ),
+    model_class: str | None = typer.Option(
+        None, "--model-class", help="имя SQLAlchemy-модели (default: PascalCase singular)"
+    ),
+    overwrite: bool = typer.Option(
+        False, "--overwrite", help="разрешить перезапись существующих"
+    ),
+) -> None:
+    """Typer-native entry point для codegen service skeleton."""
+    parsed_fields = json.loads(fields) or {"name": "str"}
+    _render_and_write(
+        name=name,
+        domain=domain,
+        crud=crud,
+        fields=parsed_fields,
+        model_class=model_class or _to_pascal(_to_singular(name)),
+        overwrite=overwrite,
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Backward-compat CLI entry (S58 W2 pattern).
+
+    S62 W3: legacy argv parse делегирует в typer app для единой реализации.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+    try:
+        app(args=argv)
+    except SystemExit as exc:
+        return int(exc.code or 0)
     return 0
 
 
