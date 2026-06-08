@@ -7,7 +7,9 @@ from src.backend.entrypoints.api.generator.registry import (
     action_handler_registry,
 )
 from src.backend.schemas.route_schemas.orders import OrderIdPathSchema
-from src.backend.workfolws.workflows_service import get_workflows_service
+from src.backend.workflows.workflows_service import (  # type: ignore[import-not-found]  # legacy module path; not yet implemented, см. TD-NEW
+    get_workflows_service,
+)
 
 __all__ = ("register_action_handlers",)
 

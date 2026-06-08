@@ -32,7 +32,7 @@ def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "extensions.core_entities.orders.services",
         "extensions.core_entities.orders.services.orders",
         "src.backend.workflows",
-        "src.backend.workfolws.workflows_service",
+        "src.backend.workflows.workflows_service",
     ]
     mods: dict[str, Any] = {}
     for name in names:
@@ -61,7 +61,7 @@ def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     mods[
         "extensions.core_entities.orders.services.orders"
     ].get_order_service = MagicMock()
-    mods["src.backend.workfolws.workflows_service"].get_workflows_service = MagicMock()
+    mods["src.backend.workflows.workflows_service"].get_workflows_service = MagicMock()
 
     return mods
 
