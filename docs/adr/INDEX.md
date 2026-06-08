@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **41**; уникальных слотов: **41**.
+Всего ADR-файлов: **42**; уникальных слотов: **42**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -45,5 +45,6 @@
 | 0088 | ADR-0088 — EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | — | [0088-eip-10of10-coverage.md](0088-eip-10of10-coverage.md) |
 | 0089 | ADR-0089: Multi-agent supervisor — LangGraph-based architecture | — | [0089-multi-agent-supervisor-architecture.md](0089-multi-agent-supervisor-architecture.md) |
 | 0090 | ADR-0090: aiocache hot-path strategy (audit + defer) | — | [0090-aiocache-hotpath-strategy.md](0090-aiocache-hotpath-strategy.md) |
+| 0091 | ADR-0091: DLQ retention strategy (formalize existing unified implementation) | — | [0091-dlq-retention-strategy.md](0091-dlq-retention-strategy.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
