@@ -91,6 +91,22 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   check (S64 W2 deferred, no network access available)
 - TD-002 pre-prod-check coverage timeout — workaround active (per-module pytest)
 - 16 mypy errors remaining — все import-not-found, требуют module structure audit (S65+)
+
+#### s64/w5-coverage-baseline
+- Measured (sample, per TD-002 workaround): S64-touched modules
+  **улучшились** относительно S62 baseline (overall 32.2%):
+  - `dsl/engine/processors/agent_dsl/` (после W3 dead code removal): **68%**
+    (1498 stmts, 408 missed, 122 tests passed)
+  - `entrypoints/api/generator/setup.py`: **100%** (12 stmts, 0 missed,
+    3 tests passed)
+- Coverage lift source: dead code removal (90 LOC) + import-not-found fixes
+- Overall coverage **unchanged** (~32.2%, S62 measurement, S63/S64 work
+  in narrow scope не сдвигает project-wide baseline)
+- Target: 75% per S19 K2 W4 ratchet. Gap: 32% → 75% = +43pp.
+- **Out of S64 W5 scope** (per "вначале фичи, в конце coverage" pattern):
+  - 200+ tests to close coverage gap (multi-sprint effort, S65+)
+  - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active)
+- Honored carryover for S65+: coverage lift + TD-002 fix.
 - Honored carryover for S64+: coverage lift + TD-002 fix.
 
 ## [0.20.0] — 2026-05-26 — Sprint 28
