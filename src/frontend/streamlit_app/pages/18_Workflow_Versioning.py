@@ -47,7 +47,7 @@ else:
             if not v.default_version:
                 if cols[1].button("Pin as default", key=f"pin_{v.semver}"):
                     try:
-                        import requests
+                        import httpx as requests
 
                         from src.frontend.streamlit_app.api_clients import (
                             get_api_client,
@@ -76,7 +76,7 @@ else:
             st.divider()
             if st.button("Rollback to previous version", type="primary"):
                 try:
-                    import requests
+                    import httpx as requests
 
                     from src.frontend.streamlit_app.api_clients import get_api_client
 
@@ -102,7 +102,7 @@ else:
     st.divider()
     st.subheader("Running executions per version")
     try:
-        import requests
+        import httpx as requests
 
         from src.frontend.streamlit_app.api_clients import get_api_client
 

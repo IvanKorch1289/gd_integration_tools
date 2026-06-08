@@ -89,7 +89,7 @@ else:
 
             actions = st.columns(4)
             try:
-                import requests
+                import httpx as requests
 
                 from src.frontend.streamlit_app.api_clients import get_api_client
 

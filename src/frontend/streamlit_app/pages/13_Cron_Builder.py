@@ -79,7 +79,7 @@ if st.button("Preview Next executions", type="primary"):
         body = resp.json() if hasattr(resp, "json") else resp
     except AttributeError:
         # Fallback: api_client не имеет _request — собираем вручную через requests
-        import requests
+        import httpx as requests
 
         base_url = getattr(client, "base_url", "http://localhost:8000")
         body = requests.post(
@@ -121,7 +121,7 @@ with st.expander("Зарегистрировать задачу"):
     )
     if st.button("Save"):
         try:
-            import requests
+            import httpx as requests
 
             base_url = getattr(client, "base_url", "http://localhost:8000")
             resp = requests.post(

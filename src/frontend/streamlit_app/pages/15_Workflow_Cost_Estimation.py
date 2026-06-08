@@ -50,7 +50,7 @@ sample_period_days = st.slider(
 
 if st.button("Estimate", type="primary", disabled=not workflow_id):
     try:
-        import requests
+        import httpx as requests
 
         base_url = getattr(client, "base_url", "http://localhost:8000")
         payload = {
