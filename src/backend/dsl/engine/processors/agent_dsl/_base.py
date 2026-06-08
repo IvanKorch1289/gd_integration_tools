@@ -205,7 +205,8 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_capability_gate()
-        except Exception as _:        return None
+        except Exception as _:
+            return None
 
     async def _emit_audit_safe(
         self,

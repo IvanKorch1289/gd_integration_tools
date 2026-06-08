@@ -317,7 +317,8 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception:        return None
+        except Exception:
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML DSL."""

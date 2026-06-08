@@ -236,7 +236,8 @@ class AgentRunProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception as _:        return None
+        except Exception as _:
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""
