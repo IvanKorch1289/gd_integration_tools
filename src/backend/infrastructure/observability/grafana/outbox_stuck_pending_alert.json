@@ -21,7 +21,7 @@
               "relativeTimeRange": {"from": 600, "to": 0},
               "datasourceUid": "prometheus",
               "model": {
-                "expr": "outbox_stuck_pending_count",
+                "expr": "outbox_stuck_pending_count{transport=\"_aggregate_\"}",
                 "intervalMs": 1000,
                 "maxDataPoints": 43200,
                 "refId": "A"
@@ -63,7 +63,7 @@
           "labels": {
             "severity": "warning",
             "service": "outbox-dispatcher",
-            "sprint": "S72-W2",
+            "sprint": "S72-W2+S81-W3",
             "team": "platform"
           },
           "annotations": {
@@ -138,6 +138,72 @@
             "runbook_url": "https://wiki.internal/runbooks/outbox-stuck-pending",
             "dashboard": "/d/gd-outbox-stuck-pending"
           }
+        },
+        {
+          "uid": "outbox-stuck-pending-by-transport-high",
+          "title": "OutboxStuckPendingByTransportHigh (S81 W3, ND-001 step 7)",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": {"from": 600, "to": 0},
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "outbox_stuck_pending_count{transport!=\"_aggregate_\"}",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "queryType": "",
+              "relativeTimeRange": {"from": 0, "to": 0},
+              "datasourceUid": "__expr__",
+              "model": {
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "max",
+                "refId": "B"
+              }
+            },
+            {
+              "refId": "C",
+              "queryType": "",
+              "relativeTimeRange": {"from": 0, "to": 0},
+              "datasourceUid": "__expr__",
+              "model": {
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {"type": "gt", "params": [50]},
+                    "operator": {"type": "and"},
+                    "query": {"params": ["B"]},
+                    "reducer": {"type": "last", "params": []}
+                  }
+                ],
+                "refId": "C"
+              }
+            }
+          ],
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "for": "10m",
+          "annotations": {
+            "summary": "Single transport stuck — per-transport outbox_stuck_pending_count > 50",
+            "description": "outbox_stuck_pending_count{transport!='_aggregate_'} max(10m) > 50. Один transport имеет bottleneck. Проверить transport-specific health (kafka broker, s3 credentials, clickhouse connection pool, etc.). См. per-transport panel #5 на dashboard.",
+            "runbook_url": "https://wiki.internal/runbooks/outbox-stuck-pending-by-transport"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "outbox-dispatcher",
+            "sprint": "S81-W3",
+            "team": "platform"
+          },
+          "isPaused": false
         }
       ]
     }

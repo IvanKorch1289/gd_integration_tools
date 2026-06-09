@@ -26,15 +26,15 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Stuck-pending count (current)",
-      "description": "Pending outbox messages older than threshold_seconds (default 300s = 5min). Worker не забирает = deadlock/crash/CPU starvation. S72 W2 metric: outbox_stuck_pending_count.",
+      "title": "Stuck-pending count (aggregate, S81 W2 gauge label)",
+      "description": "Pending outbox messages older than threshold_seconds (default 300s = 5min). Worker не забирает = deadlock/crash/CPU starvation. S81 W2: per-transport gauge label — этот panel показывает aggregate (transport=_aggregate_). Для per-transport см. panel #4 (by-transport breakdown).",
       "datasource": "Prometheus",
       "gridPos": {"x": 0, "y": 0, "w": 8, "h": 6},
       "targets": [
         {
-          "expr": "outbox_stuck_pending_count",
+          "expr": "outbox_stuck_pending_count{transport=\"_aggregate_\"}",
           "refId": "A",
-          "legendFormat": "stuck count"
+          "legendFormat": "stuck count (aggregate)"
         }
       ],
       "fieldConfig": {
@@ -67,15 +67,15 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Stuck-pending trend (last 6h)",
-      "description": "Time-series outbox_stuck_pending_count. Должен быть 0 в normal operation. Любой non-zero spike = worker problem.",
+      "title": "Stuck-pending trend (last 6h, aggregate)",
+      "description": "Time-series outbox_stuck_pending_count{transport=_aggregate_}. Должен быть 0 в normal operation. Любой non-zero spike = worker problem. Для per-transport см. panel #4 (by-transport).",
       "datasource": "Prometheus",
       "gridPos": {"x": 8, "y": 0, "w": 16, "h": 6},
       "targets": [
         {
-          "expr": "outbox_stuck_pending_count",
+          "expr": "outbox_stuck_pending_count{transport=\"_aggregate_\"}",
           "refId": "A",
-          "legendFormat": "stuck count"
+          "legendFormat": "stuck count (aggregate)"
         }
       ],
       "fieldConfig": {
@@ -129,12 +129,66 @@
       "id": 4,
       "type": "text",
       "title": "Runbook",
-      "description": "Operator runbook для OutboxStuckPendingHigh alert.",
+      "description": "Operator runbook для OutboxStuckPending alerts.",
       "gridPos": {"x": 4, "y": 6, "w": 20, "h": 6},
       "options": {
         "mode": "markdown",
-        "content": "# OutboxStuckPendingHigh — Runbook\n\n## Что значит\nPending outbox messages старше `threshold_seconds` (default 300s = 5 min).\nWorker dispatcher (см. `src/backend/infrastructure/messaging/outbox/dispatcher.py`)\nне забирает их из БД. Возможные причины:\n\n1. **Worker crashed** — `OutboxDispatcher._task.done() == True`.\n   Fix: restart dispatcher (auto-recovery через TaskRegistry).\n2. **DB lock contention** — другая транзакция держит lock на outbox_messages.\n   Fix: проверить `pg_locks` на таблице `outbox_messages`.\n3. **Dispatcher poll loop deadlock** — bug в fetch_pending / mark_failed.\n   Fix: проверить логи dispatcher (`infrastructure.messaging.outbox`).\n4. **Network partition** — dispatcher не может подключиться к Kafka/Rabbit/NATS.\n   Fix: проверить broker connectivity.\n\n## Как реагировать\n1. Открыть [Outbox / DLQ depth dashboard](../d/gd-outbox-dlq-depth).\n2. Проверить `outbox_pending_total` (не stuck, а вообще pending).\n3. Если pending total ~0 а stuck > 0 — worker точно crashed.\n4. Если pending total > 0 и stuck > 0 — worker не успевает (backpressure).\n5. Manual replay через `extensions/outbox_replay` blueprint.\n\n## Recovery\n```bash\n# 1. Проверить worker state\ncurl -s http://localhost:8000/admin/outbox/status | jq .worker_state\n\n# 2. Если dead — restart (auto-recovery через lifespan)\nsystemctl restart gd-integration-tools\n\n# 3. Manual replay stuck events (восстановить из БД)\nmake outbox-replay-stuck\n```\n"
+        "content": "# OutboxStuckPending — Runbook\n\n## Что значат алерты (S81 W3)\n- **OutboxStuckPendingHigh** (warning, S73 W1): aggregate > 0 за 5 min\n- **OutboxStuckPendingCritical** (P0, S73 W1): aggregate > 100 за 15 min\n- **OutboxStuckPendingByTransportHigh** (warning, S81 W3): any single transport > 50 за 10 min\n\n## Quick checks\n1. ps aux | grep outbox (worker running?)\n2. psql -c SELECT transport, COUNT(*) FROM outbox_messages WHERE status='pending' AND created_at < now() - interval '5 min' GROUP BY 1\n3. journalctl -u gd-integration-tools --since '5 minutes ago' | grep -i outbox\n4. См. per-transport panel #5 — где bottleneck (kafka/s3/etc.)\n\n## Common causes (per-transport)\n- **kafka**: broker down / network partition / consumer group rebalance\n- **s3**: rate limit / network / credentials expired\n- **clickhouse**: connection pool exhausted / slow disk\n- **rabbitmq**: queue full / consumer dead\n\n## Recovery\n1. Restart worker: systemctl restart gd-integration-tools\n2. Если transport-specific — проверить transport-specific health\n3. Если persistent — manual flush (DANGEROUS, только с ops approval)\n"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Stuck-pending BY transport (S81 W3, ND-001 step 6)",
+      "description": "Per-transport breakdown outbox_stuck_pending_count{transport!=_aggregate_}. Каждая line = один transport (kafka/s3/rabbitmq/etc.). Позволяет быстро определить какой transport имеет bottleneck. Aggregate суммируются на panel #2.",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "outbox_stuck_pending_count{transport!=\"_aggregate_\"}",
+          "refId": "A",
+          "legendFormat": "{{transport}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"mode": "none", "group": "A"}
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
       }
     }
-  ]
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "transport",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(outbox_stuck_pending_count, transport)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {"selected": false, "text": "All", "value": "$__all"},
+        "options": []
+      }
+    ]
+  }
 }
