@@ -12,6 +12,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.filters import text_search  # S44 W2 (TD-008)
 
 setup_page("Processor Catalog", "🔍")
 st.title("🔍 Processor Catalog Search")
@@ -22,7 +23,7 @@ client = get_api_client()
 
 with st.sidebar:
     st.header("Filters")
-    query = st.text_input("Search query", placeholder="например: 'split aggregate'")
+    query = text_search("Search query", placeholder="например: 'split aggregate'")
     namespace = st.selectbox(
         "Namespace",
         options=[

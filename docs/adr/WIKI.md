@@ -11,6 +11,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 
 | # | Title | Status | Date | Sprint |
 |---|-------|--------|------|--------|
+| 0117 | Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | 2026-06-09 | S44 W5 |
 | 0116 | Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | 2026-06-09 | S43 W5 |
 | 0115 | Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | 2026-06-09 | S42 W5 |
 | 0114 | DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | 2026-06-09 | S42 W1 |
@@ -60,9 +61,8 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | 0068 | PIITokenizer — reversible PII tokenization layer | * | 2026-05-25 | — |
 | 0067 | AIPolicySpec — декларативная политика AI per-workflow | * | 2026-05-22 | — |
 | 0066 | AIGateway — единая точка входа в AI | * | 2026-05-26 | — |
-| 0065 | LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | * | 2026-05-26 | — |
 
-*Всего: 65 ADR-файлов. Показано топ-50 (newest first).*
+*Всего: 66 ADR-файлов. Показано топ-50 (newest first).*
 
 <!-- adr_wiki:end -->
 
@@ -82,6 +82,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | Sprint | ADRs added |
 |--------|-----------|
 | S57 | 1 |
+| S44 | 1 |
 | S43 | 1 |
 | S42 | 2 |
 | S41 | 5 |

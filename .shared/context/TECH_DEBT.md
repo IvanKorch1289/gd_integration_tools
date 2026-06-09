@@ -545,46 +545,47 @@ clarification.
 **Severity: medium** (feature request, not bug; не блокирует
 production). **Fix**: S43 sprint plan с user scope decision.
 
-## TD-025: `admin-react-tsconfig-node-missing` (low, S43+ spawned by W1)
+## TD-025: `admin-react-tsconfig-node-missing` (low, S44 W4 ✅ CLOSED)
 
-**Файл:** `frontend/admin-react/tsconfig.json` (line 24 references missing
-`tsconfig.node.json`).
+**Файл:** `frontend/admin-react/tsconfig.node.json` (FIXED, NEW).
 
-**Проблема:** `tsconfig.json` содержит:
-```json
-"references": [{ "path": "./tsconfig.node.json" }]
-```
-но `tsconfig.node.json` не существует. `npm run build` fails:
+**Проблема:** `tsconfig.json` содержал reference на missing
+`tsconfig.node.json`. `npm run build` fails:
 ```
 tsconfig.json(24,18): error TS6053: File 'tsconfig.node.json' not found.
 ```
 
-**Root cause**: pre-existing, S19 K5 W5c (admin-react MVP creation).
-Скорее всего `tsconfig.node.json` был нужен для Vite config typing
-(`vite.config.ts`), но не закоммичен.
+**S44 W4 fix**: создан `frontend/admin-react/tsconfig.node.json` —
+Vite-recommended composite config (composite + bundler + strict).
 
-**Impact**: admin-react `npm run build` падает. admin-react — MVP,
-not deployed (per Sprint 19), impact = 0 на production.
+**Verification**: `npm run build` PASSES (29 modules, 637ms, 148 KB JS).
+TD-025 CLOSED.
 
-**Fix (S43+ D)**:
-1. Create `frontend/admin-react/tsconfig.node.json`:
-   ```json
-   {
-     "compilerOptions": {
-       "composite": true,
-       "skipLibCheck": true,
-       "module": "ESNext",
-       "moduleResolution": "bundler",
-       "allowSyntheticDefaultImports": true
-     },
-     "include": ["vite.config.ts"]
-   }
-   ```
-2. Verify `npm run build` passes.
-3. Optional: integrate в CI как required gate.
+---
 
-**Refs:** TD-007 fix (S43 W1) выявил этот отдельный issue. Sprint 43 W1
-commit message.
+## TD-026: `tracer-persistent-storage` (medium, S45+ D, spawned by S44 W1)
+
+**Файлы:** `src/backend/dsl/engine/tracer.py::_trace_buffer`,
+`src/backend/entrypoints/api/v1/endpoints/dsl_routes.py::get_dsl_route_traces`.
+
+**Проблема:** S44 W1 добавил in-memory ring buffer (maxlen=1000 per route)
+в `ExecutionTracer`. После restart данные теряются. Persistent storage
+нужен для cross-restart trace history + audit trail.
+
+**Fix (S45+ D)**:
+1. Storage backend: Redis (low-latency, TTL) vs PostgreSQL (durable,
+   queryable). Trade-off: Redis быстрее, не durable; PG durable, но
+   добавляет DB load.
+2. Append events на `_emit` (S44 W1 уже append в in-memory buffer —
+   добавить second write в storage).
+3. Query path: load из storage + merge с in-memory buffer.
+4. Retention policy: TTL (Redis) или periodic prune job (PG).
+5. Indexing: `route_id` + `timestamp` для efficient range queries.
+
+**Estimated effort**: 1-2 sprints (1 wave PoC, 1 wave production hardening).
+
+**Severity: medium** (functional gap, не bug; in-memory buffer sufficient
+для dev/single-restart). **Refs**: S44 W1, ADR-0117.
 
 Следующая сессия (S85+) должна:
 1. Address **TD-016** (airflow_sensors test refresh)

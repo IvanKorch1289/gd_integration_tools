@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **65**; уникальных слотов: **65**.
+Всего ADR-файлов: **66**; уникальных слотов: **66**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -69,5 +69,6 @@
 | 0114 | ADR-0114 — DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | [0114-dsl-lsp-server-formalize.md](0114-dsl-lsp-server-formalize.md) |
 | 0115 | ADR-0115 — Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | [0115-sprint-42-dx-closure.md](0115-sprint-42-dx-closure.md) |
 | 0116 | ADR-0116 — Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | [0116-sprint-43-closure.md](0116-sprint-43-closure.md) |
+| 0117 | ADR-0117 — Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | [0117-sprint-44-closure.md](0117-sprint-44-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

@@ -69,3 +69,21 @@ class DSLRoutesClient(BaseAPIClient):
             )
         except Exception:  # noqa: BLE001
             return None
+
+    def get_dsl_route_traces(
+        self, route_id: str, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        """S44 W1: GET /admin/dsl-routes/{id}/traces — последние N trace events.
+
+        Возвращает empty list если маршрут ещё не выполнялся или buffer
+        пуст (post-restart). Persistent storage = TD-026 (S45+ D).
+        """
+        try:
+            result = self._request(
+                "GET",
+                f"/api/v1/admin/dsl-routes/{route_id}/traces",
+                params={"limit": limit},
+            )
+            return result if isinstance(result, list) else []
+        except Exception:  # noqa: BLE001
+            return []

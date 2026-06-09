@@ -11,6 +11,7 @@
 
 import asyncio
 import time
+from collections import deque
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -18,6 +19,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 __all__ = ("ExecutionTracer", "TraceEvent", "get_tracer")
+
+# Sprint 44 W1: in-memory ring buffer для replay API.
+# Per route_id хранит maxlen=1000 последних end/error events.
+# Persistent storage = TD-026 (S45+ D).
+_TRACE_BUFFER_MAXLEN = 1000
 
 
 @dataclass(slots=True)
@@ -54,6 +60,8 @@ class ExecutionTracer:
 
     def __init__(self) -> None:
         self._subscribers: dict[str, list[asyncio.Queue[TraceEvent]]] = {}
+        # S44 W1: per-route ring buffer для replay. key=route_id, value=deque.
+        self._trace_buffer: dict[str, deque[TraceEvent]] = {}
 
     @asynccontextmanager
     async def trace(
@@ -103,7 +111,17 @@ class ExecutionTracer:
             await self._emit(route_id, end_event)
 
     async def _emit(self, route_id: str, event: TraceEvent) -> None:
-        """Отправляет событие подписчикам (lock-free, drop oldest при backpressure)."""
+        """Отправляет событие подписчикам (lock-free, drop oldest при backpressure).
+
+        S44 W1: также сохраняет end/error events в in-memory ring buffer
+        для replay API.
+        """
+        # S44 W1: ring buffer append для end/error events.
+        if event.phase in ("end", "error"):
+            buf = self._trace_buffer.setdefault(
+                route_id, deque(maxlen=_TRACE_BUFFER_MAXLEN)
+            )
+            buf.append(event)
         for target in (route_id, "__all__"):
             queues = self._subscribers.get(target)
             if not queues:
@@ -147,6 +165,35 @@ class ExecutionTracer:
             subs = self._subscribers.get("__all__", [])
             if queue in subs:
                 subs.remove(queue)
+
+    def get_recent_traces(
+        self, route_id: str, limit: int = 100
+    ) -> list[TraceEvent]:
+        """S44 W1: возвращает последние N end/error events для route_id.
+
+        Args:
+            route_id: ID маршрута.
+            limit: Max events to return (default 100, hard cap 1000).
+
+        Returns:
+            List of TraceEvent в chronological order (oldest first).
+            Empty list если route_id не встречался или buffer пуст.
+
+        Notes:
+            - In-memory only — после restart данные теряются.
+            - Persistent storage = TD-026 (S45+ D).
+            - Используется endpoint ``GET /admin/dsl-routes/{route_id}/traces``.
+        """
+        buf = self._trace_buffer.get(route_id)
+        if not buf:
+            return []
+        capped = min(limit, _TRACE_BUFFER_MAXLEN)
+        # Возвращаем хвост буфера (последние N) в chronological order.
+        return list(buf)[-capped:]
+
+    def list_traced_routes(self) -> list[str]:
+        """S44 W1: возвращает список route_id с активным buffer."""
+        return sorted(self._trace_buffer.keys())
 
 
 from src.backend.core.di import app_state_singleton

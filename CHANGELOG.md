@@ -5,6 +5,60 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 44 (2026-06-09) — Backend Wiring + Admin Build Fix (5/5 DoD)
+
+### Added
+
+#### s44/w1-route-debugger-backend-wiring
+- `src/backend/dsl/engine/tracer.py` — in-memory ring buffer для replay:
+  `_trace_buffer: dict[route_id → deque[TraceEvent]]` (maxlen=1000),
+  append на `_emit` для phase ∈ {"end", "error"}. New methods:
+  `get_recent_traces(route_id, limit)` + `list_traced_routes()`.
+- `src/backend/entrypoints/api/v1/endpoints/dsl_routes.py` — new
+  endpoint `GET /api/v1/admin/dsl-routes/{route_id}/traces?limit=N`
+  via ActionSpec pattern (W26.5). Facade method `get_route_traces`.
+- `src/frontend/streamlit_app/api_clients/dsl_routes.py` — new client
+  method `get_dsl_route_traces(route_id, limit)` с timeout-safe fallback.
+- `src/frontend/streamlit_app/pages/35_Route_Debugger.py` — rewrite
+  159 → 211 LOC: demo data → real fetch через
+  `DSLRoutesClient.get_dsl_route_traces()`. Backend unavailable → demo
+  fallback с warning.
+- **Closes S42 W4a TODO** (Route Debugger backend integration).
+- **TD-026 spawned**: persistent trace storage (Redis/PostgreSQL) — S45+ D.
+
+#### s44/w3-td-006-phantom-version-verify
+- `tools/verify_pypi_versions.py` (NEW, 188 LOC) — PyPI JSON API client
+  (urllib stdlib, 5s timeout). Парсит pyproject.toml → проверяет все
+  upper-bound pins против PyPI max version. Phantom version
+  (`chromadb>=1.5.20,<2.0.0` style) → WARNING + exit 1 в `--strict` mode.
+- Lesson applied: 2026-06-05 security audit рекомендовал phantom versions
+  (chromadb 1.5.20, vite 6.4.6), `uv sync` / `npm install` оба FAILED.
+- **TD-006 partial closure** (PyPI side done, npm side deferred S45+ D).
+
+#### s44/w4-td-025-tsconfig-node
+- `frontend/admin-react/tsconfig.node.json` (NEW, 11 LOC) — Vite-recommended
+  composite config (composite + bundler module resolution + strict).
+- **Verification**: `npm run build` PASSES (29 modules, 637ms, 148 KB JS).
+- **TD-025 CLOSED** (admin-react build chain рабочий).
+
+### Refactored
+
+#### s44/w2-td-008-second-poc
+- `src/frontend/streamlit_app/pages/77_Processor_Catalog.py` — 1-LOC swap:
+  `st.text_input("Search query")` → `text_search("Search query", ...)`
+  (shared/filters.py, S43 W2). Trim + type-safe default.
+- **TD-008 Group 3 second PoC** (2 / 48 pages migrated total: 17 + 77).
+- Honest scope: 48-page migration = multi-sprint work; pattern first,
+  mass adoption later.
+
+### Documentation
+
+#### s44/w5-adr-0117-sprint-44-closure
+- ADR-0117 (Accepted) — Sprint 44 closure: 5/5 DoD в **single commit**
+  per user instruction. Decisions: tracer ring buffer (TD-026 spawned),
+  phantom-version verify (TD-006 partial), admin-react build fix (TD-025
+  closed).
+
 ## [Unreleased] — Sprint 43 (2026-06-09) — DX continuation: filters + Vite cleanup (2/5 DoD closed)
 
 ### Fixed

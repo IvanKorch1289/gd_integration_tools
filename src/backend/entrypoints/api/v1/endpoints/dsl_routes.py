@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.tracer import TraceEvent, get_tracer  # Sprint 44 W1
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 from src.backend.dsl.yaml_store import YAMLStore
 from src.backend.entrypoints.api.generator.actions import (
@@ -215,6 +216,24 @@ class _DSLRoutesFacade:
         proposed = _parse_yaml_or_400(yaml)
         return RouteDiffOut(route_id=route_id, diff=store.diff(current, proposed))
 
+    async def get_route_traces(
+        self, *, route_id: str, limit: int = 100
+    ) -> list[dict[str, object]]:
+        """S44 W1: возвращает последние N trace events из in-memory ring buffer.
+
+        Args:
+            route_id: ID маршрута (path param).
+            limit: Max events (query param, default 100, hard cap 1000).
+
+        Returns:
+            List of dicts (TraceEvent.to_dict() output). Empty list если
+            маршрут ещё не выполнялся или buffer пуст.
+        """
+        capped = max(1, min(int(limit), 1000))
+        tracer = get_tracer()
+        events: list[TraceEvent] = tracer.get_recent_traces(route_id, capped)
+        return [e.to_dict() for e in events]
+
 
 _FACADE = _DSLRoutesFacade()
 
@@ -360,6 +379,21 @@ builder.add_actions(
             path_model=RouteIdPath,
             body_model=YamlPayload,
             response_model=RouteDiffOut,
+            tags=common_tags,
+        ),
+        ActionSpec(  # Sprint 44 W1: trace replay endpoint
+            name="get_dsl_route_traces",
+            method="GET",
+            path="/dsl-routes/{route_id}/traces",
+            summary="Последние N trace events для маршрута (S44 W1)",
+            description=(
+                "Возвращает последние N end/error events из in-memory ring buffer "
+                "ExecutionTracer. Empty list если маршрут ещё не выполнялся или "
+                "buffer был очищен (post-restart). Persistent storage = TD-026."
+            ),
+            service_getter=_get_facade,
+            service_method="get_route_traces",
+            path_model=RouteIdPath,
             tags=common_tags,
         ),
     ]
