@@ -14,6 +14,8 @@ Wave: ``[wave:s77/w3-dsl-editor-split]``.
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import yaml as _yaml
 
 from src.backend.services.dsl_portal import Pipeline, load_pipeline_from_yaml
@@ -21,7 +23,7 @@ from src.backend.services.dsl_portal import Pipeline, load_pipeline_from_yaml
 __all__ = ("build_yaml_from_steps", "sync_yaml", "try_load", "yaml_to_steps")
 
 
-def yaml_to_steps(yaml_str: str) -> tuple[dict, list[dict]]:
+def yaml_to_steps(yaml_str: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Извлекает meta (route_id/source/description) и список шагов из YAML.
 
     Args:
@@ -46,7 +48,7 @@ def yaml_to_steps(yaml_str: str) -> tuple[dict, list[dict]]:
         "description": data.get("description", ""),
     }
     raw = data.get("processors", []) or []
-    steps: list[dict] = []
+    steps: list[dict[str, Any]] = []
     for item in raw:
         if isinstance(item, str):
             steps.append({"type": item, "params": {}})
@@ -57,7 +59,7 @@ def yaml_to_steps(yaml_str: str) -> tuple[dict, list[dict]]:
     return meta, steps
 
 
-def build_yaml_from_steps(meta: dict, steps: list[dict]) -> str:
+def build_yaml_from_steps(meta: dict[str, Any], steps: list[dict[str, Any]]) -> str:
     """Собирает YAML из meta и шагов (формат, понятный ``yaml_loader``).
 
     Args:
@@ -68,14 +70,14 @@ def build_yaml_from_steps(meta: dict, steps: list[dict]) -> str:
         YAML-строка с UTF-8 unicode и sort_keys=False (порядок полей
         сохраняется: route_id → source → description → processors).
     """
-    out: dict = {"route_id": meta.get("route_id") or "my.route"}
+    out: dict[str, Any] = {"route_id": meta.get("route_id") or "my.route"}
     if meta.get("source"):
         out["source"] = meta["source"]
     if meta.get("description"):
         out["description"] = meta["description"]
     if steps:
         out["processors"] = [{s["type"]: s.get("params") or {}} for s in steps]
-    return _yaml.dump(out, allow_unicode=True, sort_keys=False)
+    return cast(str, _yaml.dump(out, allow_unicode=True, sort_keys=False))
 
 
 def try_load(yaml_str: str) -> tuple[Pipeline | None, str | None]:
