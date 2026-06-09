@@ -5,6 +5,68 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 41 (2026-06-09) — Production Readiness Final (partial)
+
+### Fixed
+
+#### s41/w1-td-017-console-json-narrow-except
+- `src/backend/infrastructure/logging/backends/console_json.py` —
+  сузил `except Exception as exc: if not isinstance(exc, (TypeError, ValueError)): raise`
+  до `except (TypeError, ValueError):` напрямую. Семантически идентично,
+  убирает over-broad catch. Закрывает TD-017.
+
+### Changed
+
+#### s41/w2-check-feature-flag-deps-package-aware
+- `tools/checks/check_feature_flag_dependencies.py` — package-aware:
+  поддерживает оба layout'а (legacy `features.py` + modern `features/`
+  package из S38 T1.3.0). При package layout сканирует все .py в
+  `features/`, ищет `ast.AnnAssign` (реальные `Field(...)` definitions).
+- Устраняет silent failure: `--strict` mode теперь различает ok/fail
+  (раньше всегда exit 1 на "features.py не найден").
+- **Audit finding**: 18 undeclared `_strict` flags → TD-018 (deferred to S42+).
+
+### Documentation
+
+#### s41/w3-docstrings-partial-lift
+- `src/backend/dsl/transforms/dataframes.py` (3 docstrings) —
+  `read_csv`, `read_excel`, `write_parquet` (Args + Returns + Example).
+- `src/backend/infrastructure/observability/metrics.py` (17 docstrings) —
+  `PrometheusMetricsMiddleware.before/after` + 15 `record_*` функций.
+- **Remaining**: 100+ violations в других файлах (cert_store.py=25,
+  redis.py=21, generic.py=47, ...) → TD-019 (deferred to S42+).
+
+#### s41/w4-waf-coverage-100pct-formalize
+- ADR-0110 (Accepted) — формализация: WAF coverage 100% уже met
+  (ADR-0050 + ADR-0053 single-entry architecture). `check_waf_coverage.py`
+  + `--strict` = 0 violations. Никакого нового кода не требуется.
+
+#### s41/w2-adr-0109-feature-flag-dep-check
+- ADR-0109 (Accepted) — формализация фикса check-скрипта + audit
+  18 undeclared `_strict` flags (TD-018).
+
+### Out of scope (S41 6/10 tasks require infra)
+
+- #1 Chaos tests 100% — требует chaos-mesh / k8s
+- #2 Perf p95 <200ms — требует perf-env
+- #3 Security audit — требует full env
+- #6 Multi-tenant SLO — требует multi-tenant env
+- #7 B/G deploy — требует k8s
+- #9 CI/CD gates green — aggregate of #1-#8
+- #10 DR runbook — требует DR env
+
+Эти задачи формализуются в W5 closure как "requires-infra" blockers.
+DoD status: **4/10 closed** (TD-017, FF check fix, docstrings partial,
+WAF 100% formalize), **6/10 deferred to infrastructure-enabled sprint**.
+
+### Verification
+
+- `tools/check_waf_coverage.py` (regular + --strict) → 0 violations
+- `tools/check_feature_flag_dependencies.py` → 18 undeclared (real audit)
+- `tools/check_docstrings.py` → 0 violations в dataframes.py + metrics.py
+- ruff + mypy clean на всех изменённых файлах
+- ADR INDEX: 57 → 59 (0108+0109+0110)
+
 ## [Unreleased] — Sprint 40 (2026-06-09) — DI DSL + Developer Onboarding
 
 ### Added

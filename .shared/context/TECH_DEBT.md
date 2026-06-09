@@ -468,6 +468,33 @@ housekeeping). 7 моих commits + 1 sibling commit (Sprint 38) = 8 total.
   либо добавить в `_FEATURE_FLAG_DEPENDENCIES`, либо `# no dependency required`
   комментарий рядом с Field definition. ~18 однострочных правок.
 
+* **TD-019**: 100+ docstring violations в `src/backend/` (после S41 W3
+  partial lift: 20/100+ закрыто). Top offenders:
+  `src/frontend/streamlit_app/api_clients/generic.py` (47),
+  `src/backend/infrastructure/security/cert_store.py` (25),
+  `src/backend/infrastructure/clients/storage/redis.py` (21),
+  `src/backend/services/ai/prompt_versioning.py` (19),
+  `src/backend/infrastructure/logging/stdlib_backend.py` (19).
+  **Severity: low** (Sprint 41 DoD #8 = 100% — multi-sprint effort,
+  S41 W3 закрыл только 2 файла). **Fix**: S42+ W2 — pick 5-10 файлов за
+  волну, top-down по violations count. ~5-10 однострочных правок на файл.
+
+### S41 6/10 requires-infra (S42+ D)
+
+Sprint 41 DoD имеет 10 задач, 6 из которых требуют infrastructure
+недоступную в dev-light окружении. Список для S42+ D (requires-infra):
+
+- **S41 #1**: Chaos tests 100% — chaos-mesh / k8s
+- **S41 #2**: Perf p95 <200ms — perf-env (k8s + load gen)
+- **S41 #3**: Security audit (final) — full env (SBOM + pip-audit + bandit)
+- **S41 #6**: Multi-tenant SLO validation — multi-tenant env
+- **S41 #7**: B/G deploy smoke test — k8s + dual deployment
+- **S41 #9**: CI/CD gates green — aggregate of #1-#8
+- **S41 #10**: DR runbook validated — DR env (separate region/zone)
+
+**Mitigation**: S41 W5 closure formalize через ADR-0110 (WAF 100%
+already met); W2-W3 partial closure остальных (TD-018, TD-019).
+
 ### S84 entry point: S85+ backlog
 
 Следующая сессия (S85+) должна:

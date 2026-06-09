@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **57**; уникальных слотов: **57**.
+Всего ADR-файлов: **59**; уникальных слотов: **59**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -61,5 +61,7 @@
 | 0106 | ADR-0106: S27 closure — AIGateway enforce + WorkflowBuilder.invoke_agent() as Temporal activity | — | [0106-s27-closure.md](0106-s27-closure.md) |
 | 0107 | ADR-0107: transport.py god-object decomposition (990 LOC → 6 modules) | — | [0107-transport-py-decomposition.md](0107-transport-py-decomposition.md) |
 | 0108 | ADR-0108 — DI DSL для RouteBuilder / call_function / process_fn | Accepted (Sprint 40 W1–W5, 2026-06-09) | [0108-di-dsl-for-routes.md](0108-di-dsl-for-routes.md) |
+| 0109 | ADR-0109 — Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted (Sprint 41 W2, 2026-06-09) | [0109-feature-flag-dependency-check-fix.md](0109-feature-flag-dependency-check-fix.md) |
+| 0110 | ADR-0110 — WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted (Sprint 41 W4, 2026-06-09) | [0110-waf-coverage-100pct-formalize.md](0110-waf-coverage-100pct-formalize.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
