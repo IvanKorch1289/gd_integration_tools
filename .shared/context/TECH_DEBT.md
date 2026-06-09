@@ -487,13 +487,35 @@ Sprint 41 DoD имеет 10 задач, 6 из которых требуют inf
 - **S41 #1**: Chaos tests 100% — chaos-mesh / k8s
 - **S41 #2**: Perf p95 <200ms — perf-env (k8s + load gen)
 - **S41 #3**: Security audit (final) — full env (SBOM + pip-audit + bandit)
-- **S41 #6**: Multi-tenant SLO validation — multi-tenant env
-- **S41 #7**: B/G deploy smoke test — k8s + dual deployment
+- **S41 #6**: Multi-tenant SLO — multi-tenant env
+- **S41 #7**: B/G deploy — k8s + dual deployment
 - **S41 #9**: CI/CD gates green — aggregate of #1-#8
-- **S41 #10**: DR runbook validated — DR env (separate region/zone)
+- **S41 #10**: DR runbook — DR env (separate region/zone)
 
 **Mitigation**: S41 W5 closure formalize через ADR-0110 (WAF 100%
 already met); W2-W3 partial closure остальных (TD-018, TD-019).
+
+### New tech debt from S41 W6-W7 (S42+ D, partial closure)
+
+* **TD-020**: 33 chaos tests skip'нуты из-за отсутствия toxiproxy daemon.
+  36/69 (52%) pass в dev-light; полное покрытие требует toxiproxy-server
+  + sidecar per external dep. **Severity: medium** (resilience regression
+  risk в dev). **Fix**: S42+ D — установить toxiproxy-server в dev env
+  (или docker-compose sidecar). После этого 69/69 должны проходить.
+
+* **TD-021**: 20 B608 (hardcoded_sql_expressions) MEDIUM findings в bandit
+  — все known false positives (per v28 reconcile, ADR-0099). Используют
+  `_safe_ident()` для identifiers + `_escape()` для literals + `int()`
+  для numerics. **Severity: low** (false positive, не реальная SQLi).
+  **Fix**: S42+ W3 — добавить `# nosec B608` к каждой строке (20 правок)
+  ИЛИ настроить bandit per-file config. Шум уменьшится, coverage bandit
+  останется 0 HIGH.
+
+* **TD-022**: pip-audit не установлен в dev venv. `[security]` extra
+  содержит `pip-audit>=2.7,<3`, но не активирован. **Severity: medium**
+  (supply-chain gate FAIL без extra). **Fix**: S42+ W1 — добавить
+  `make install-security` target или document `uv sync --extra security`
+  в README. **Operator action** (не agent — запрет pip install).
 
 ### S84 entry point: S85+ backlog
 
