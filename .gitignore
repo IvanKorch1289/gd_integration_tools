@@ -163,6 +163,7 @@ node_modules/
 
 # Coverage artifacts
 coverage.xml
+coverage.json
 *.cover
 
 # Sprint 8B additions (2026-05-18)
