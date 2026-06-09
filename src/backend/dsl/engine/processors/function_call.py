@@ -41,6 +41,20 @@ __all__ = ("CallFunctionProcessor",)
             },
             "payload_from": {"type": "string"},
             "result_property": {"type": "string"},
+            "inject": {
+                "type": "array",
+                "items": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 2,
+                            "maxItems": 2,
+                        },
+                    ]
+                },
+            },
         },
         "required": ["ref"],
     },
@@ -66,6 +80,7 @@ class CallFunctionProcessor(BaseProcessor):
         *,
         payload_from: str = "body",
         result_property: str = "function_result",
+        inject: list[str] | None = None,
     ) -> None:
         super().__init__(name=f"call_function:{ref}")
         if ":" not in ref:
@@ -80,6 +95,7 @@ class CallFunctionProcessor(BaseProcessor):
         self.fn_name = fn_name
         self.payload_from = payload_from
         self.result_property = result_property
+        self._inject = inject or []
 
     @staticmethod
     def _is_strict_whitelist() -> bool:
@@ -213,7 +229,24 @@ class CallFunctionProcessor(BaseProcessor):
             )
 
         payload = self._resolve_payload(exchange)
-        result = fn(payload)
+
+        # Sprint 40 W2: DI support via @inject or explicit inject list
+        if getattr(fn, "__inject_markers__", False) or self._inject:
+            from src.backend.dsl.di.container import Container
+
+            kwargs = Container.resolve_signature(fn, exchange=exchange, context=context)
+            # Override with payload if function has single positional arg
+            sig = __import__("inspect").signature(fn)
+            params = list(sig.parameters.items())
+            if len(params) >= 1 and params[0][0] not in kwargs:
+                kwargs[params[0][0]] = payload
+            elif len(params) >= 2 and params[1][0] not in kwargs:
+                kwargs[params[1][0]] = payload
+            else:
+                kwargs.setdefault("payload", payload)
+            result = fn(**kwargs)
+        else:
+            result = fn(payload)
         if hasattr(result, "__await__"):
             result = await result
         exchange.set_property(self.result_property, result)
@@ -225,4 +258,6 @@ class CallFunctionProcessor(BaseProcessor):
             spec["payload_from"] = self.payload_from
         if self.result_property != "function_result":
             spec["result_property"] = self.result_property
+        if self._inject:
+            spec["inject"] = self._inject
         return {"call_function": spec}

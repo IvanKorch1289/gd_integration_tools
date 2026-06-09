@@ -299,6 +299,52 @@ class RouteBuilder(  # type: ignore[misc]
             )
         return self
 
+    def depends(self, *deps: str | tuple[str, str]) -> RouteBuilder:
+        """Добавляет DI-зависимости к последнему processor (call_function/process_fn).
+
+        Применимо к процессорам, имеющим атрибут ``_inject``
+        (``CallFunctionProcessor``, ``ProcessFnProcessor`` и др.).
+
+        Args:
+            *deps: Имена параметров для инъекции (строки) или кортежи
+                ``(param_name, container_key)`` для явного маппинга.
+
+        Raises:
+            ValueError: если предыдущий processor не поддерживает inject.
+            TypeError: если аргумент имеет неверный тип.
+
+        Example::
+
+            builder.call_function("my.module:handler").depends(
+                "db", ("logger", "logging.logger")
+            )
+        """
+        last = self._last_processor_or_raise()
+        if not hasattr(last, "_inject"):
+            raise ValueError(
+                f"depends: processor {type(last).__name__} "
+                f"не поддерживает DI-инъекцию (_inject)"
+            )
+        flat: list[str | tuple[str, str]] = []
+        for dep in deps:
+            if isinstance(dep, str):
+                flat.append(dep)
+            elif (
+                isinstance(dep, (list, tuple))
+                and len(dep) == 2
+                and all(isinstance(x, str) for x in dep)
+            ):
+                flat.append(tuple(dep))
+            else:
+                raise TypeError(
+                    f"depends: ожидается str или tuple[str, str], получено {dep!r}"
+                )
+        if last._inject is None:
+            last._inject = flat
+        else:
+            last._inject.extend(flat)
+        return self
+
     def with_headers(
         self, headers: dict[str, str], *, mode: str = "merge"
     ) -> RouteBuilder:

@@ -233,6 +233,7 @@ class IntegrationCoreMixin:
         *,
         payload_from: str = "body",
         result_property: str = "function_result",
+        inject: list[str] | None = None,
     ) -> RouteBuilder:
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security).
 
@@ -252,7 +253,10 @@ class IntegrationCoreMixin:
 
         return self._add(  # type: ignore[attr-defined]
             CallFunctionProcessor(
-                ref=ref, payload_from=payload_from, result_property=result_property
+                ref=ref,
+                payload_from=payload_from,
+                result_property=result_property,
+                inject=inject,
             )
         )
 

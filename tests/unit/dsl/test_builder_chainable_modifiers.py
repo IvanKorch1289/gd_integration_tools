@@ -18,6 +18,7 @@ from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.components import HttpCallProcessor
 from src.backend.dsl.engine.processors.control_flow import RetryProcessor
+from src.backend.dsl.engine.processors.function_call import CallFunctionProcessor
 
 
 class _NoopProcessor(BaseProcessor):
@@ -168,3 +169,43 @@ def test_modifiers_chain_in_sequence() -> None:
     assert last._timeout == 15.0
     assert last._headers == {"X-Initial": "1", "X-Added": "2"}
     assert last._auth_token == "tok"
+
+
+# ── depends (Sprint 40 W1) ──
+
+
+def test_depends_adds_inject_to_call_function() -> None:
+    b = _builder().call_function("my.mod:fn").depends("db")
+    last = b._processors[-1]
+    assert isinstance(last, CallFunctionProcessor)
+    assert last._inject == ["db"]
+
+
+def test_depends_chains_multiple_deps_and_tuples() -> None:
+    b = _builder().call_function("my.mod:fn").depends("db", ("logger", "logsvc"))
+    last = b._processors[-1]
+    assert isinstance(last, CallFunctionProcessor)
+    assert last._inject == ["db", ("logger", "logsvc")]
+
+
+def test_depends_appends_to_existing_inject() -> None:
+    b = _builder().call_function("my.mod:fn", inject=["cache"]).depends("db")
+    last = b._processors[-1]
+    assert last._inject == ["cache", "db"]
+
+
+def test_depends_raises_on_empty_pipeline() -> None:
+    with pytest.raises(ValueError, match="до первого step"):
+        _builder().depends("db")
+
+
+def test_depends_raises_on_unsupported_processor() -> None:
+    b = _builder().set_property("foo", "bar")
+    with pytest.raises(ValueError, match="не поддерживает DI-инъекцию"):
+        b.depends("db")
+
+
+def test_depends_invalid_type_raises() -> None:
+    b = _builder().call_function("my.mod:fn")
+    with pytest.raises(TypeError, match="ожидается str или tuple"):
+        b.depends(123)  # type: ignore[arg-type]
