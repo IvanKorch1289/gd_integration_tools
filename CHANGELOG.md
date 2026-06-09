@@ -5,6 +5,40 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 43 (2026-06-09) — DX continuation: filters + Vite cleanup (2/5 DoD closed)
+
+### Fixed
+
+#### s43/w1-td-007-vite-env-dts-html
+- `frontend/admin-react/src/vite-env.d.ts` — replaced 12-line HTML template
+  (copy-paste bug из S19 K5 W5c) на canonical `/// <reference types="vite/client" />`.
+- `index.html` уже содержит правильный HTML, не требует изменений.
+- Verification: `npm run build` всё ещё fails на **отдельной** проблеме
+  (TD-025 — `tsconfig.node.json` missing, не блокирует production).
+- **TD-007 CLOSED**, **TD-025 spawned** (S44+ D).
+
+### Refactored
+
+#### s43/w2-td-008-group-3-filters
+- `src/frontend/streamlit_app/shared/filters.py` (NEW, 191 LOC) — 5 light
+  wrappers around streamlit primitives: `text_search`, `multiselect_filter`,
+  `date_range_filter`, `selectbox_filter`, `slider_filter`. Russian-first
+  labels, type-safe defaults, optional `key=`.
+- `src/frontend/streamlit_app/shared/__init__.py` — re-export новых helpers.
+- `src/frontend/streamlit_app/pages/17_Workflow_Replay.py` — PoC migration:
+  `_render_event_filters` использует `multiselect_filter` + `date_range_filter`
+  (-11 LOC inline boilerplate → +2 LOC helper calls).
+- **TD-008 Group 3 partial closure** (1 / 48 pages migrated). Полная
+  миграция = multi-sprint work (~10 waves).
+- Validation: ruff All checks passed (после I001 auto-fix), AST 3/3 OK.
+
+### Documentation
+
+#### s43/w5-adr-0116-sprint-43-closure
+- ADR-0116 (Accepted) — Sprint 43 closure: 2/5 waves closed, 3 deferred
+  to S44+ (honest scope reduction: W3 Route Debugger backend + W4 TD-006
+  phantom-version verify).
+
 ## [Unreleased] — Sprint 42 (2026-06-09) — Developer Experience Polish (5/5 DoD closed)
 
 ### Added
