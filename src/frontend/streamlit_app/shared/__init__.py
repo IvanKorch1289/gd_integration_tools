@@ -12,6 +12,13 @@ from src.frontend.streamlit_app.shared.constants import (
     PROCESSOR_ICONS,
     VISUAL_PROCESSORS,
 )
+from src.frontend.streamlit_app.shared.filters import (  # Sprint 43 W2 (TD-008)
+    date_range_filter,
+    multiselect_filter,
+    selectbox_filter,
+    slider_filter,
+    text_search,
+)
 from src.frontend.streamlit_app.shared.utils import (
     chunked,
     format_bytes,
@@ -30,4 +37,10 @@ __all__ = [
     "setup_page",
     "metric_row",
     "dataframe_view",
+    # Sprint 43 W2 (TD-008 Group 3)
+    "text_search",
+    "multiselect_filter",
+    "date_range_filter",
+    "selectbox_filter",
+    "slider_filter",
 ]

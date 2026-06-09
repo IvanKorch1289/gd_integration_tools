@@ -29,7 +29,12 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
+    dataframe_view,
+    date_range_filter,
+    multiselect_filter,
+    setup_page,
+)
 
 setup_page("Workflow Replay · gd_integration_tools", "⏯️")
 client = get_api_client()
@@ -65,7 +70,12 @@ def _fetch_events(workflow_id: str, page: int, size: int) -> list[dict[str, Any]
 
 
 def _render_event_filters(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Отрендерить фильтры event-type / date и вернуть отфильтрованный список."""
+    """Отрендерить фильтры event-type / date и вернуть отфильтрованный список.
+
+    Sprint 43 W2 (TD-008 Group 3): использует `multiselect_filter` +
+    `date_range_filter` из `shared.filters` вместо inline `st.columns` +
+    `st.multiselect` + 2× `st.date_input` boilerplate.
+    """
     if not events:
         return events
 
@@ -73,15 +83,10 @@ def _render_event_filters(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         {str(e.get("event_type") or e.get("type") or "?") for e in events}
     )
 
-    cols = st.columns([2, 2, 2])
-    with cols[0]:
-        selected_types = st.multiselect(
-            "Типы событий", options=event_types, default=event_types
-        )
-    with cols[1]:
-        from_date = st.date_input("С даты", value=None)
-    with cols[2]:
-        to_date = st.date_input("До даты", value=None)
+    selected_types = multiselect_filter(
+        "Типы событий", options=event_types, default=event_types
+    )
+    from_date, to_date = date_range_filter("Период", key_prefix="wf_replay")
 
     def _matches(event: dict[str, Any]) -> bool:
         if selected_types and (
