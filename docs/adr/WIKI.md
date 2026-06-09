@@ -11,6 +11,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 
 | # | Title | Status | Date | Sprint |
 |---|-------|--------|------|--------|
+| 0115 | Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | 2026-06-09 | S42 W5 |
 | 0114 | DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | 2026-06-09 | S42 W1 |
 | 0113 | Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted (Sprint 41 W8, 2026-06-09) | 2026-06-09 | S41 W8 |
 | 0112 | Security Audit status (Sprint 41 #3) | Accepted (Sprint 41 W7, 2026-06-09) | 2026-06-09 | S41 W7 |
@@ -60,9 +61,8 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | 0066 | AIGateway — единая точка входа в AI | * | 2026-05-26 | — |
 | 0065 | LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | * | 2026-05-26 | — |
 | 0064 | NeMo Guardrails + Llama Guard 3 defense-in-depth | * | 2026-05-26 | — |
-| 0063 | Presidio + ru NER как обязательный AI Safety layer (PII) | * | 2026-05-22 | — |
 
-*Всего: 63 ADR-файлов. Показано топ-50 (newest first).*
+*Всего: 64 ADR-файлов. Показано топ-50 (newest first).*
 
 <!-- adr_wiki:end -->
 
@@ -82,7 +82,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | Sprint | ADRs added |
 |--------|-----------|
 | S57 | 1 |
-| S42 | 1 |
+| S42 | 2 |
 | S41 | 5 |
 | S40 | 1 |
 

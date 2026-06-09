@@ -5,6 +5,74 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 42 (2026-06-09) — Developer Experience Polish (5/5 DoD closed)
+
+### Added
+
+#### s42/w1-lsp-server-formalize
+- `src/backend/dsl/cli/lsp_server.py` (236 LOC, S6/K3) — formalize + integration:
+  - `Makefile` — `make lsp-server` target (запуск stdio LSP).
+  - `docs/lsp/vscode-config.example.json` — drop-in config для VS Code
+    (заменить `<repo-root>` на абсолютный путь).
+- ADR-0114 (Accepted) — formalize решение: не rewrite, достаточно
+  `pygls>=1.3` + Makefile glue.
+- Закрывает Sprint 42 #1.
+
+#### s42/w2-onboarding-wizard
+- `tools/wizards/onboarding_wizard.py` (270 LOC) — 5-step interactive
+  setup: preflight → uv sync → doctor → precommit → sample plugin.
+  - Typer + questionary + rich (тот же паттерн что `plugin_wizard.py` S33 W2).
+  - `--non-interactive` mode для CI.
+  - `--dry-run` mode для тестирования без побочных эффектов.
+- `Makefile` — `make onboarding` + `make onboarding-non-interactive` targets.
+- Закрывает Sprint 42 #2.
+
+#### s42/w3-adr-wiki-sync
+- `tools/build_adr_wiki.py` (158 LOC) — парсит ADR frontmatter, генерирует
+  `docs/adr/WIKI.md` с chronological summary + sprint tags.
+  Regex `S(?:print)?\s*(\d+)\s*W(\d+)` для парсинга "Sprint 40 W1" и "S40 W1".
+- `.github/workflows/adr-sync.yml` — lightweight GitHub Action (~5 sec):
+  при изменении `docs/adr/*.md` → regen WIKI.md → auto-commit.
+  (Full Sphinx build `docs.yml` занимает ~5 min, поэтому выбран
+  lightweight подход.)
+- `docs/adr/WIKI.md` — auto-generated, 65 entries с sprint tags.
+- Закрывает Sprint 42 #3.
+
+#### s42/w4-route-debugger-streamlit
+- `src/frontend/streamlit_app/pages/35_Route_Debugger.py` (159 LOC) —
+  visual trace: timeline + step list + summary metrics (3× cols) +
+  filters (route_id, time range, status). Demo data fallback для
+  offline view.
+- Backend integration TODO: wire к `src/backend/dsl/engine/tracer.py`
+  (S10/K3/W8, DSL-1.9).
+- ruff + mypy clean (4× `# type: ignore[union-attr]` на `cols[].metric`
+  per streamlit stubs).
+- Закрывает Sprint 42 #4.
+
+#### s42/w4-interactive-codegen
+- `tools/codegen_plugin.py` (+87 LOC) — `--interactive` flag → questionary
+  prompts (name, description, features, capabilities, with_frontend, overwrite).
+- `--name` теперь optional (required только в non-interactive mode).
+- Backward compat: argparse flows неизменны, CI scripts работают.
+- Закрывает Sprint 42 #5.
+
+### Documentation
+
+#### s42/w5-adr-0115-sprint-42-closure
+- ADR-0115 (Accepted) — Sprint 42 closure: 5/5 DoD closed, deferred
+  backlog (TD-018, 019, 020, 021, 022, 023, 024).
+
+#### s42/w5-tech-debt-td-024
+- `.shared/context/TECH_DEBT.md` — TD-024 добавлен: Jupyter DSL + routes
+  (deferred to S43+, требует scope clarification).
+
+### Validation
+
+- ruff: All checks passed на всех новых/modified файлах (4 waves).
+- mypy: 0 issues (4 waves).
+- pytest DSL suite: 3366+ passed (regression check).
+- LSP server: 6/6 tests pass.
+
 ## [Unreleased] — Sprint 41 (2026-06-09) — Production Readiness Final (9/10 closed)
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **62**; уникальных слотов: **62**.
+Всего ADR-файлов: **64**; уникальных слотов: **64**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -66,5 +66,7 @@
 | 0111 | ADR-0111 — Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted (Sprint 41 W6, 2026-06-09) | [0111-chaos-multitenant-formalize.md](0111-chaos-multitenant-formalize.md) |
 | 0112 | ADR-0112 — Security Audit status (Sprint 41 #3) | Accepted (Sprint 41 W7, 2026-06-09) | [0112-security-audit-status.md](0112-security-audit-status.md) |
 | 0113 | ADR-0113 — Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted (Sprint 41 W8, 2026-06-09) | [0113-perf-bg-dr-formalize.md](0113-perf-bg-dr-formalize.md) |
+| 0114 | ADR-0114 — DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | [0114-dsl-lsp-server-formalize.md](0114-dsl-lsp-server-formalize.md) |
+| 0115 | ADR-0115 — Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | [0115-sprint-42-dx-closure.md](0115-sprint-42-dx-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

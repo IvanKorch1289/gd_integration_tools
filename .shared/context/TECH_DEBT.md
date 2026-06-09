@@ -524,7 +524,33 @@ already met); W2-W3 partial closure остальных (TD-018, TD-019).
   below threshold). **Fix**: S42+ D — настроить perf-env (k8s + load
   gen); integrate в CI как required gate перед release.
 
-### S84 entry point: S85+ backlog
+## TD-024: Jupyter DSL + routes (medium, S43+ candidate)
+
+**Контекст:** user request 2026-06-09 — "Дополнительно реализуй DSL для
+выполнения Jupyter ноутбуков и роуты для подключения к Jupyter hub и
+выполнению операций". Решение: deferred до S43+, требует scope
+clarification.
+
+**Open questions** (3 clarify questions posted, user ответил
+"Продолжай s42, к Jupyter вернёмся позже"):
+
+1. **Scope**: minimal (1 DSL builder + 1 route) / standard (+ kernel
+   management) / full (+ JupyterHub + WebSocket streaming + nbconvert)
+   / DSL-only.
+2. **Transport**: LocalKernelManager / JupyterHub REST / hybrid через
+   feature flag / papermill-style.
+3. **Storage + auth**: local FS / S3+MinIO+JWT / git-backed / full
+   enterprise.
+
+**Estimated effort** (rough, по domain knowledge):
+- Minimal: 1-2 waves (~150 LOC DSL + 80 LOC routes + 20 tests).
+- Standard: 3-4 waves (~400 LOC + 50 tests).
+- Full: 5+ waves, multi-sprint (JupyterHub deploy отдельно).
+
+**Severity: medium** (feature request, not bug; не блокирует
+production). **Fix**: S43 sprint plan с user scope decision.
+
+### S85+ entry point: S86+ backlog
 
 Следующая сессия (S85+) должна:
 1. Address **TD-016** (airflow_sensors test refresh)
