@@ -116,3 +116,49 @@ def test_resolve_signature_skips_missing_exchange_context() -> None:
 def test_di_error_is_runtime_error() -> None:
     exc = DIError("boom")
     assert isinstance(exc, RuntimeError)
+
+
+# ── InjectMarker __call__ hack (type-checker friendliness) ──
+
+
+def test_inject_marker_is_callable_returns_self() -> None:
+    """``Container.depends()`` returns InjectMarker; marker() is identity (no-op callable)."""
+    marker = InjectMarker(key="foo")
+    assert marker() is marker  # identity
+    assert callable(marker)  # used as default value in some type-hint patterns
+
+
+# ── fallback paths (coverage) ──
+
+
+def test_resolve_falls_back_to_type_name_when_no_key_no_map(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Hint has __name__ but no _type_map entry → type_name → fallback_ok=True → DIError."""
+
+    class UnregisteredType:
+        pass
+
+    # No _type_map entry, no module_registry, no app_state
+    monkeypatch.setattr(
+        "src.backend.core.di.module_registry.resolve_module",
+        MagicMock(side_effect=ImportError("nope")),
+    )
+    monkeypatch.setattr("src.backend.core.di.app_state.get_app_ref", lambda: None)
+    marker = InjectMarker()  # no key, no factory
+    # type_name="UnregisteredType" → _resolve_by_key(fallback_ok=True) → DIError at line 118
+    with pytest.raises(DIError, match="Dependency key 'UnregisteredType' not found"):
+        Container.resolve(marker, hint=UnregisteredType)
+
+
+def test_resolve_by_key_raises_when_fallback_not_ok(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Direct _resolve_by_key call with fallback_ok=False and missing key → DIError."""
+    monkeypatch.setattr(
+        "src.backend.core.di.module_registry.resolve_module",
+        MagicMock(side_effect=ImportError("nope")),
+    )
+    monkeypatch.setattr("src.backend.core.di.app_state.get_app_ref", lambda: None)
+    with pytest.raises(DIError, match="Dependency key 'missing.key' not found"):
+        Container._resolve_by_key("missing.key")  # fallback_ok defaults to False
