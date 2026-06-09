@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **55**; уникальных слотов: **55**.
+Всего ADR-файлов: **56**; уникальных слотов: **56**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -59,5 +59,6 @@
 | 0103 | ADR-0103: Per-transport cardinality protection (ND-001 step 8) | — | [0103-per-transport-cardinality-protection.md](0103-per-transport-cardinality-protection.md) |
 | 0105 | ADR-0105: lifecycle.py god-object decomposition (1142→5 files, ~200 LOC avg) | — | [0105-lifecycle-py-decomposition.md](0105-lifecycle-py-decomposition.md) |
 | 0106 | ADR-0106: S27 closure — AIGateway enforce + WorkflowBuilder.invoke_agent() as Temporal activity | — | [0106-s27-closure.md](0106-s27-closure.md) |
+| 0107 | ADR-0107: transport.py god-object decomposition (990 LOC → 6 modules) | — | [0107-transport-py-decomposition.md](0107-transport-py-decomposition.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
