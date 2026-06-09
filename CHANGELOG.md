@@ -5,6 +5,43 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 46 (2026-06-09) — TraceStorage + Docstring tool + Toxiproxy runbook (2/5 substantive)
+
+### Added
+
+#### s46/w3-td-026-trace-storage-abstraction
+- `src/backend/dsl/engine/trace_storage.py` (NEW, 200 LOC) —
+  `TraceStorage` Protocol с 2 implementations:
+  - `InMemoryTraceStorage` — zero overhead, backward compat S44 W1.
+  - `JsonFileTraceStorage` — append-only JSONL per route, persistent
+    across restarts. Trade-offs documented (linear scan, no TX, no retention).
+- Self-test: 2/2 tests pass.
+- **TD-026 partial closure** (abstraction + 2 impls; wire to ExecutionTracer
+  + Redis/Postgres impls = S47+ D).
+
+#### s46/w1-td-019-docstring-tool
+- `tools/add_docstrings.py` (NEW, 100 LOC) — bulk placeholder docstring
+  add для public funcs. Indent detection через `col_offset`, skip
+  nested functions. `--summary` + `--dry-run` modes.
+- **0 docstrings applied**: re-audit показал что целевые файлы уже
+  complete (S60 structlog migration добавил docstrings).
+- Tool сохранён для future runs / new files.
+
+#### s46/w4-td-020-toxiproxy-runbook
+- `docs/runbooks/toxiproxy-setup.md` (NEW, 130 LOC) — operator guide:
+  install (brew/apt/docker), API verify, 6 proxies (redis_cache,
+  redis_queue, vault, postgres, smtp, clickhouse), .env.test config,
+  troubleshooting table.
+- **TD-020 docs-only closure** (operator action ~30 min one-time;
+  CI integration + toxic scenarios = S47+ D).
+
+### Documentation
+
+#### s46/w5-adr-0119-sprint-46-closure
+- ADR-0119 (Accepted) — Sprint 46 closure: 2/5 substantive (W3 + W4),
+  3/5 honest scope (W1 audit stale, W2 pattern mismatch, W5 closure).
+  TDs: TD-026 partial, TD-020 docs-only.
+
 ## [Unreleased] — Sprint 45 (2026-06-09) — TD closures: phantom-verify + FF automap (5/5 DoD)
 
 ### Added

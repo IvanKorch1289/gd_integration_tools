@@ -11,6 +11,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 
 | # | Title | Status | Date | Sprint |
 |---|-------|--------|------|--------|
+| 0119 | Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted (Sprint 46 W5, 2026-06-09) | 2026-06-09 | S46 W5 |
 | 0118 | Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted (Sprint 45 W5, 2026-06-09) | 2026-06-09 | S45 W5 |
 | 0117 | Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | 2026-06-09 | S44 W5 |
 | 0116 | Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | 2026-06-09 | S43 W5 |
@@ -60,9 +61,8 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | 0070 | MCP Gateway — domain namespaces + trusted external registry | * | 2026-05-22 | — |
 | 0069 | SkillRegistry V11.2 — TOML-манифест для AI-tools | * | 2026-05-22 | — |
 | 0068 | PIITokenizer — reversible PII tokenization layer | * | 2026-05-25 | — |
-| 0067 | AIPolicySpec — декларативная политика AI per-workflow | * | 2026-05-22 | — |
 
-*Всего: 67 ADR-файлов. Показано топ-50 (newest first).*
+*Всего: 68 ADR-файлов. Показано топ-50 (newest first).*
 
 <!-- adr_wiki:end -->
 
@@ -82,6 +82,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | Sprint | ADRs added |
 |--------|-----------|
 | S57 | 1 |
+| S46 | 1 |
 | S45 | 1 |
 | S44 | 1 |
 | S43 | 1 |

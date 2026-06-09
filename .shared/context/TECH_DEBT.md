@@ -605,32 +605,56 @@ TD-025 CLOSED.
 
 ---
 
-## TD-026: `tracer-persistent-storage` (medium, S45+ D, spawned by S44 W1)
+## TD-020: `toxiproxy-setup-required` (low, S46 W4 docs-only)
 
-**Файлы:** `src/backend/dsl/engine/tracer.py::_trace_buffer`,
-`src/backend/entrypoints/api/v1/endpoints/dsl_routes.py::get_dsl_route_traces`.
+**Файлы:** `tests/chaos/`, `docs/runbooks/toxiproxy-setup.md` (NEW, S46 W4).
 
-**Проблема:** S44 W1 добавил in-memory ring buffer (maxlen=1000 per route)
-в `ExecutionTracer`. После restart данные теряются. Persistent storage
-нужен для cross-restart trace history + audit trail.
+**S41 W6 audit**: 36/69 chaos tests pass (dev-light), 33 skipped —
+требуют running toxiproxy daemon.
 
-**Fix (S45+ D)**:
-1. Storage backend: Redis (low-latency, TTL) vs PostgreSQL (durable,
-   queryable). Trade-off: Redis быстрее, не durable; PG durable, но
-   добавляет DB load.
-2. Append events на `_emit` (S44 W1 уже append в in-memory buffer —
-   добавить second write в storage).
-3. Query path: load из storage + merge с in-memory buffer.
-4. Retention policy: TTL (Redis) или periodic prune job (PG).
-5. Indexing: `route_id` + `timestamp` для efficient range queries.
+**S46 W4 fix**: создан `docs/runbooks/toxiproxy-setup.md` —
+operator guide с шагами:
+1. Install toxiproxy (brew/apt/docker).
+2. Verify API (curl :8474/version).
+3. Bootstrap 6 proxies (redis_cache, redis_queue, vault, postgres,
+   smtp, clickhouse).
+4. Configure .env.test для использования proxy ports.
+5. Run `uv run pytest tests/chaos/ -v`.
 
-**Estimated effort**: 1-2 sprints (1 wave PoC, 1 wave production hardening).
+**Operator action**: setup ~30 min, one-time. CI integration + full
+toxic scenarios = S47+ D.
+
+**Refs**: ADR-0111 (S41 chaos formalize), TD-020 closure approach.
+
+---
+
+## TD-026: `tracer-persistent-storage` (medium, S46 W3 partial → S47+ D)
+
+**Файлы:** `src/backend/dsl/engine/trace_storage.py` (NEW, S46 W3),
+`src/backend/dsl/engine/tracer.py::_trace_buffer`.
+
+**S46 W3 fix**: добавлен `TraceStorage` Protocol + 2 implementations:
+- `InMemoryTraceStorage` — re-export `_trace_buffer` (zero overhead,
+  backward compat с S44 W1).
+- `JsonFileTraceStorage` — append-only JSONL per route, persistent
+  across restarts. Trade-off: linear scan, no transactions, no retention.
+
+Self-test passes (2/2 tests OK).
+
+**Remaining (S47+ D)**:
+- Wire `ExecutionTracer.__init__` к `storage` param (currently in-memory only).
+- `RedisTraceStorage` (low-latency, TTL) — production-grade.
+- `PostgresTraceStorage` (durable, queryable) — full audit trail.
+- Retention policy (TTL / prune job).
+- Indexing: `route_id` + `timestamp` для efficient range queries.
 
 **Severity: medium** (functional gap, не bug; in-memory buffer sufficient
-для dev/single-restart). **Refs**: S44 W1, ADR-0117.
+для dev/single-restart). **Refs**: S44 W1, S46 W3, ADR-0117.
+
+### S85+ entry point: S86+ backlog
 
 Следующая сессия (S85+) должна:
-1. Address **TD-016** (airflow_sensors test refresh)
+ 1. Address **TD-016** (airflow_sensors test refresh)
 2. **B3**: extract `transport/proxy.py` + `transport/scheduling.py` (~165 LOC)
 3. **B4**: extract `transport/external.py` + `transport/sources.py` (~225 LOC)
 4. **B5**: closure + ADR-0107 status update (Accepted)

@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **67**; уникальных слотов: **67**.
+Всего ADR-файлов: **68**; уникальных слотов: **68**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -71,5 +71,6 @@
 | 0116 | ADR-0116 — Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | [0116-sprint-43-closure.md](0116-sprint-43-closure.md) |
 | 0117 | ADR-0117 — Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | [0117-sprint-44-closure.md](0117-sprint-44-closure.md) |
 | 0118 | ADR-0118 — Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted (Sprint 45 W5, 2026-06-09) | [0118-sprint-45-closure.md](0118-sprint-45-closure.md) |
+| 0119 | ADR-0119 — Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted (Sprint 46 W5, 2026-06-09) | [0119-sprint-46-closure.md](0119-sprint-46-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
