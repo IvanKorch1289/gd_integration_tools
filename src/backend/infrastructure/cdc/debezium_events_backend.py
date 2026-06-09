@@ -217,9 +217,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             for tp, messages in result.items():
                 for msg in messages:
                     event = parse_debezium_event(
-                        msg.value,
-                        kafka_offset=msg.offset,
-                        kafka_partition=tp.partition,
+                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition
                     )
                     if event is not None:
                         yield event
@@ -241,7 +239,9 @@ class DebeziumEventsCDCBackend(CDCSource):
             partition_str, offset_str = cursor.value.split(":")
             tp = TopicPartition(cursor.backend, int(partition_str))
             # commit offset+1 (next message to read)
-            await self._consumer.commit({tp: OffsetAndMetadata(int(offset_str) + 1, "")})
+            await self._consumer.commit(
+                {tp: OffsetAndMetadata(int(offset_str) + 1, "")}
+            )
         except (ValueError, KeyError) as exc:
             _logger.warning("Invalid cursor for commit %r: %s", cursor.value, exc)
 
@@ -281,7 +281,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             try:
                 _, end_offset_str = end_cursor.value.split(":")
                 end_offset = int(end_offset_str)
-            except (ValueError, KeyError):
+            except ValueError, KeyError:
                 _logger.warning("Invalid end_cursor for replay: %s", end_cursor.value)
 
         _logger.info(
@@ -299,9 +299,7 @@ class DebeziumEventsCDCBackend(CDCSource):
                     if end_offset is not None and msg.offset >= end_offset:
                         return
                     event = parse_debezium_event(
-                        msg.value,
-                        kafka_offset=msg.offset,
-                        kafka_partition=tp.partition,
+                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition
                     )
                     if event is not None:
                         yield event

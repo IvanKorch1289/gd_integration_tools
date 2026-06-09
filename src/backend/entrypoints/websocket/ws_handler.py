@@ -7,7 +7,6 @@
 затем fallback на DSL-маршрут (Tier 3).
 """
 
-
 from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect

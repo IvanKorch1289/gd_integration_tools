@@ -20,6 +20,7 @@ Singleton wrapper над :class:`AdDirectoryClient` который:
 process (per-env). Это соответствует pattern других core clients
 (см. ``core/auth/jwt_backend.py``, ``core/auth/api_key_backend.py``).
 """
+
 from __future__ import annotations
 
 import logging
@@ -53,9 +54,7 @@ def reset_ad_client() -> None:
 
 
 def get_ad_client(
-    *,
-    feature_flag_enabled: bool | None = None,
-    connection_factory: Any | None = None,
+    *, feature_flag_enabled: bool | None = None, connection_factory: Any | None = None
 ) -> AdDirectoryClient | None:
     """Возвращает singleton :class:`AdDirectoryClient` или ``None``.
 
@@ -114,7 +113,6 @@ def get_ad_client(
     client = AdDirectoryClient(config=config, connection_factory=connection_factory)
     _ad_client_instance = client
     _logger.info(
-        "get_ad_client: instantiated AdDirectoryClient for %s",
-        settings.server_uri,
+        "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri
     )
     return client

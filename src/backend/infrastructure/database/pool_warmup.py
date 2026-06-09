@@ -55,6 +55,7 @@ def _current_tenant_label() -> str:
         return _TENANT_GLOBAL
     return str(ctx.tenant_id)
 
+
 try:  # pragma: no cover - prometheus_client optional
     from prometheus_client import Counter as _PromCounter
     from prometheus_client import Histogram as _PromHistogram
@@ -65,14 +66,10 @@ try:  # pragma: no cover - prometheus_client optional
         ("pool", "tenant_id"),
     )
     _WARMUP_FAILURES = _PromCounter(
-        "pool_warmup_failures_total",
-        "Pool warmup failures",
-        ("pool", "tenant_id"),
+        "pool_warmup_failures_total", "Pool warmup failures", ("pool", "tenant_id")
     )
     _POOL_RECONNECTS = _PromCounter(
-        "pool_reconnects_total",
-        "Pool reconnect events",
-        ("pool", "tenant_id"),
+        "pool_reconnects_total", "Pool reconnect events", ("pool", "tenant_id")
     )
 except Exception as _:
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
@@ -366,7 +363,7 @@ class PoolReconnectMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
 

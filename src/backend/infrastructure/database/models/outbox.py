@@ -51,9 +51,7 @@ class OutboxMessage(BaseModel):
     # S80 W3 (ND-001 step 1): transport tag для per-transport breakdown.
     # Values: "kafka" | "rabbitmq" | "nats" | "clickhouse" | "s3" | "webhook" | "other".
     # Default='other' для backwards-compat с existing rows (pre-migration).
-    transport: Mapped[str] = mapped_column(
-        String(32), default="other", index=True
-    )
+    transport: Mapped[str] = mapped_column(String(32), default="other", index=True)
 
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

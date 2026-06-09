@@ -17,10 +17,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 
 app_logger = get_logger("application")
 
-__all__ = (
-    "start_dsl_yaml_watcher",
-    "stop_dsl_yaml_watcher",
-)
+__all__ = ("start_dsl_yaml_watcher", "stop_dsl_yaml_watcher")
 
 
 async def start_dsl_yaml_watcher(app: FastAPI) -> None:

@@ -261,12 +261,8 @@ def get_v1_routers() -> APIRouter:
         auth_introspect_router, prefix="/auth", tags=["Auth · Introspect"]
     )
     # S58 W6: Unified login (POST /auth/login) + methods listing (GET /auth/methods).
-    api_router_v1.include_router(
-        auth_login_router, tags=["Auth · Login (S58 W6)"]
-    )
-    api_router_v1.include_router(
-        auth_methods_router, tags=["Auth · Methods (S58 W6)"]
-    )
+    api_router_v1.include_router(auth_login_router, tags=["Auth · Login (S58 W6)"])
+    api_router_v1.include_router(auth_methods_router, tags=["Auth · Methods (S58 W6)"])
     # Sprint 9 K3 W2: HITL (Human-in-the-Loop) panel API.
     api_router_v1.include_router(hitl_router, prefix="/hitl", tags=["HITL"])
 

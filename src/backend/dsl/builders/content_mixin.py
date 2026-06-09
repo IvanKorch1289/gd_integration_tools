@@ -82,7 +82,7 @@ class EnrichEIPProcessor(BaseProcessor):
                 raw = r.read().decode("utf-8")
             try:
                 return json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return {"_raw": raw}
         if self.strategy == "static":
             return self.value

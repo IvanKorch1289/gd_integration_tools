@@ -34,7 +34,6 @@ def _mount_mcp_http() -> None:
 
         app.mount(mcp_settings.bind_path, create_mcp_http_app())
     except Exception as exc:
-
         get_logger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)
 
 

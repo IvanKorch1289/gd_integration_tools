@@ -5,7 +5,6 @@
 используется следующий по приоритету.
 """
 
-
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton

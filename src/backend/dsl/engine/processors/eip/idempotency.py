@@ -1,4 +1,3 @@
-
 from collections.abc import Callable
 from typing import Any
 
@@ -32,6 +31,7 @@ class IdempotentConsumerProcessor(BaseProcessor):
         self._ttl = ttl_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Filter duplicate messages using Redis deduplication."""
         try:
             from src.backend.infrastructure.clients.storage.redis import redis_client
 

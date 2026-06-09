@@ -84,7 +84,6 @@ def _configure_application_components(app: FastAPI) -> None:
         try:
             setup_tracing(app=app)
         except Exception as exc:
-
             get_logger("app_factory").warning(
                 "OpenTelemetry setup failed: %s (приложение продолжит работу без трейсинга)",
                 exc,
@@ -252,9 +251,7 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
 
         auto_register_strawberry_schema(app, path="/api/v1/graphql")
     except Exception as exc:
-        get_logger("app_factory").warning(
-            "Wave 1.4 auto-schema пропущена: %s", exc
-        )
+        get_logger("app_factory").warning("Wave 1.4 auto-schema пропущена: %s", exc)
 
 
 def _configure_root_endpoint(app: FastAPI) -> None:

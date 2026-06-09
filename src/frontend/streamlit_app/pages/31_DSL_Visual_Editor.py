@@ -57,8 +57,6 @@ st.caption(
 )
 
 
-
-
 # ─── Default yaml + session state init (BEFORE history!) ─────────────────
 # Порядок важен: init_history() читает st.session_state.yaml, поэтому
 # сначала инициализируем yaml, потом — history stack.

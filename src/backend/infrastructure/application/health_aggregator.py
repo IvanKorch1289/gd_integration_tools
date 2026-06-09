@@ -98,7 +98,7 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return "mode" in sig.parameters
 

@@ -9,7 +9,6 @@ W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точк
 его в :class:`Invoker` (тот же Gateway, что и REST/WS адаптеры).
 """
 
-
 from typing import TYPE_CHECKING, Any
 from xml.etree import ElementTree as ET
 
@@ -377,7 +376,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:

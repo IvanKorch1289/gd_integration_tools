@@ -33,7 +33,6 @@ from __future__ import annotations
 from contextlib import AbstractAsyncContextManager
 from typing import Any
 
-import aioboto3
 from botocore.config import Config as BotoConfig
 from botocore.exceptions import BotoCoreError, ClientError
 
@@ -43,6 +42,17 @@ from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("S3ObjectStorage",)
+
+
+def _import_aioboto3() -> Any:
+    """Lazy-import aioboto3; raises ImportError с инструкцией по установке."""
+    try:
+        import aioboto3
+    except ImportError as exc:
+        raise ImportError(
+            "S3ObjectStorage requires aioboto3. Install: uv pip install aioboto3"
+        ) from exc
+    return aioboto3
 
 
 # ── internal session helper ──────────────────────────────────────────────
@@ -103,17 +113,14 @@ class S3ObjectStorage(ObjectStorage):
     """
 
     def __init__(
-        self,
-        settings: FileStorageSettings,
-        *,
-        key_prefix: str | None = None,
+        self, settings: FileStorageSettings, *, key_prefix: str | None = None
     ) -> None:
         self._settings = settings
         self._bucket = settings.bucket
         self._prefix = (
             key_prefix if key_prefix is not None else settings.key_prefix
         ).rstrip("/")
-        self._session = aioboto3.Session()
+        self._session = _import_aioboto3().Session()
         self._bucket_ready: bool = False
         self.logger = get_logger(__name__)
 
@@ -123,10 +130,7 @@ class S3ObjectStorage(ObjectStorage):
         return BotoConfig(
             connect_timeout=self._settings.timeout,
             read_timeout=self._settings.read_timeout,
-            retries={
-                "max_attempts": self._settings.retries or 3,
-                "mode": "adaptive",
-            },
+            retries={"max_attempts": self._settings.retries or 3, "mode": "adaptive"},
             max_pool_connections=self._settings.max_pool_connections,
             user_agent_extra="gd-integration-tools/S3ObjectStorage",
         )
@@ -218,11 +222,7 @@ class S3ObjectStorage(ObjectStorage):
         self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
         full_key = self._safe_key(key)
-        params: dict[str, Any] = {
-            "Bucket": self._bucket,
-            "Key": full_key,
-            "Body": data,
-        }
+        params: dict[str, Any] = {"Bucket": self._bucket, "Key": full_key, "Body": data}
         if content_type:
             params["ContentType"] = content_type
         async with self._open() as s3:
@@ -306,9 +306,7 @@ class S3ObjectStorage(ObjectStorage):
                 )
             except (BotoCoreError, ClientError) as exc:
                 self.logger.error(
-                    "S3ObjectStorage.presigned_url failed key=%s err=%s",
-                    full_key,
-                    exc,
+                    "S3ObjectStorage.presigned_url failed key=%s err=%s", full_key, exc
                 )
                 raise ServiceError(f"S3 presign failed: {exc}") from exc
         # aioboto3 может вернуть корутину или строку в зависимости от версии

@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar
@@ -23,7 +24,12 @@ def _resolve_repo_root() -> Path:
     нужен родитель (где лежит ``config_profiles/``). Поиск идёт вверх от
     текущего файла; при провале возвращается родитель ``ROOT_DIR`` как
     лучший доступный fallback.
+
+    Sprint 39: поддержка ``GD_REPO_ROOT`` env-override для инструментов,
+    запускающих тесты из поддиректории (mutmut использует ``mutants/``).
     """
+    if env_root := os.environ.get("GD_REPO_ROOT"):
+        return Path(env_root)
     current = Path(__file__).resolve()
     for parent in (current, *current.parents):
         if (parent / "pyproject.toml").is_file():
@@ -95,6 +101,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
     def get_field_value(
         self, field: FieldInfo, field_name: str
     ) -> tuple[Any, str, bool]:
+        """Return default empty value for a field (placeholder for subclasses)."""
         return (None, field_name, False)
 
     def __call__(self) -> dict[str, Any]:

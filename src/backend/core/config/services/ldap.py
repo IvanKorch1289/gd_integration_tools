@@ -17,6 +17,7 @@
 * Feature-flag ``feature_flags.saml_ad_login_enabled`` (default OFF) —
   caller обязан проверять ПЕРЕД инстанцированием client (см. ADR-0085).
 """
+
 from __future__ import annotations
 
 from typing import ClassVar
@@ -100,7 +101,9 @@ class LdapSettings(BaseSettingsWithLoader):
 
     def is_configured(self) -> bool:
         """Все 4 обязательных параметра заданы (server_uri/bind_dn/password/base)."""
-        return bool(self.server_uri and self.bind_dn and self.bind_password and self.search_base)
+        return bool(
+            self.server_uri and self.bind_dn and self.bind_password and self.search_base
+        )
 
 
 ldap_settings = LdapSettings()  # type: ignore[call-arg]

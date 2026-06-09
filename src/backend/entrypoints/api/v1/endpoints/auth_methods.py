@@ -29,6 +29,7 @@ Front integration:
 
 Не требует auth (вызывается до login).
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter
@@ -45,8 +46,7 @@ class AuthMethodsResponse(BaseModel):
     """Response для GET /auth/methods (S58 W6e)."""
 
     methods: list[str] = Field(
-        ...,
-        description="Список enabled auth methods ('password', 'ldap').",
+        ..., description="Список enabled auth methods ('password', 'ldap')."
     )
     ldap_enabled: bool = Field(
         ...,

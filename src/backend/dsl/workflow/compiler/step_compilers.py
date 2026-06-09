@@ -339,9 +339,7 @@ async def compile_agent_invoke_step(
     }
 
     result = await workflow.execute_activity(
-        "_agent_invoke",
-        payload,
-        start_to_close_timeout=timedelta(seconds=timeout_s),
+        "_agent_invoke", payload, start_to_close_timeout=timedelta(seconds=timeout_s)
     )
 
     if decl.output_key:

@@ -138,9 +138,7 @@ security = [
     "pip-audit>=2.7,<3",
     # K4 Sprint 55 W5: user-approved performance libraries.
     # rich: terminal UI (tables, progress bars, syntax highlighting).
-    "rich>=13.9.0,<14.0.0",
-    # aioboto3: async boto3 wrapper for AWS S3 sensor (Airflow-style).
-    "aioboto3>=13.0.0,<14.0.0",
+    "rich>=14.0.0,<15.0.0",
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
 # presidio-anonymizer — replace/redact/hash операторы для PII;
@@ -478,6 +476,7 @@ dev = [
     "aiosqlite>=0.20.0,<1.0.0",
     "python-consul2>=0.1.5",
     "pytest-xdist>=3.8.0",
+    "mutmut>=3.6.0",
 ]
 
 [build-system]
@@ -958,15 +957,32 @@ ignore_names = [
 #     конфига; их выставляет scripts/run_mutation_tests.sh через CLI/env.
 #   - .coverage файл жёстко зашит; используем общий .coverage + --use-coverage.
 [tool.mutmut]
-paths_to_mutate = [
+source_paths = [
     "src/backend/core/config/features/__init__.py",
     "src/backend/dsl/builders/base.py",
     "src/backend/core/resilience/breaker.py",
 ]
 backup = false
 runner = "pytest"
-# mutmut split_paths() делит по ',' или ':' — передаём одной строкой.
-tests_dir = "tests/unit/core/config:tests/unit/dsl/builders:tests/unit/core/resilience"
+# mutmut 2.x: tests_dir deprecated → передаём через pytest_add_cli_args_test_selection.
+# split_paths() делит по ',' или ':' — передаём списком.
+pytest_add_cli_args_test_selection = [
+    "tests/unit/core/config",
+    "tests/unit/dsl/builders",
+    "tests/unit/core/resilience",
+]
+# Отключаем testkit pytest-плагины: при запуске из mutants/ директория
+# mutants/src/ перекрывает editable-install src через sys.path, и импорт
+# src.testkit падает с ModuleNotFoundError (mutants/src/ неполная копия).
+pytest_add_cli_args = [
+    "-p", "no:testkit",
+    "-p", "no:src_testkit",
+    "--ignore=tests/unit/core/config/test_features_sprints_24_27.py",
+]
+# Дополнительные файлы/директории, которые mutmut копирует в mutants/.
+# Нужны для корректного запуска тестов из-под mutmut (config loader,
+# pydantic-settings ищут конфиги относительно repo root).
+also_copy = ["config_profiles", ".env"]
 # dict_synonyms — comma-separated string, по дефолту пусто (мутируем dict.get
 # штатно, см. MUTATION_OPERATORS в mutmut/__init__.py).
 dict_synonyms = ""

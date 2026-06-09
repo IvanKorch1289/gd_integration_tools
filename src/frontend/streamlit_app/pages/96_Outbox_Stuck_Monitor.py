@@ -76,9 +76,7 @@ if prometheus_url:
 
         query_url = f"{prometheus_url}/api/v1/query"
         response = httpx.get(
-            query_url,
-            params={"query": "outbox_stuck_pending_count"},
-            timeout=5.0,
+            query_url, params={"query": "outbox_stuck_pending_count"}, timeout=5.0
         )
         if response.status_code == 200:
             data = response.json()
@@ -185,9 +183,7 @@ if prometheus_url:
                     )
                 # Sort descending по count
                 transport_data.sort(key=lambda x: x["stuck_count"], reverse=True)
-                st.dataframe(
-                    transport_data, use_container_width=True, hide_index=True
-                )
+                st.dataframe(transport_data, use_container_width=True, hide_index=True)
                 # Top transport highlight
                 if transport_data:
                     top = transport_data[0]

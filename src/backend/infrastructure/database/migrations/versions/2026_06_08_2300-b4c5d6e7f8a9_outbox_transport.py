@@ -10,6 +10,7 @@ Schema migration для per-transport stuck-detection (ADR-0098):
 * Index на transport для per-transport GROUP BY queries.
 * Backfill существующих rows: 'other' (default).
 """
+
 # flake8: noqa
 from typing import Sequence, Union
 
@@ -45,11 +46,7 @@ def upgrade() -> None:
 
     # 3. Index для per-transport GROUP BY queries (count_stuck_pending_by_transport).
     # Concurrently=False — small table at migration time, OK to lock briefly.
-    op.create_index(
-        "ix_outbox_messages_transport",
-        "outbox_messages",
-        ["transport"],
-    )
+    op.create_index("ix_outbox_messages_transport", "outbox_messages", ["transport"])
 
     # 4. Composite index для самой частой query: status + transport + created_at.
     # Оптимизирует fetch_stuck_pending (status='pending' AND created_at < ...).

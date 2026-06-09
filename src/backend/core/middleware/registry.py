@@ -115,9 +115,7 @@ class MiddlewareRegistry:
             selected = list(config.include)
             unknown = [name for name in selected if name not in self._builders]
             if unknown:
-                raise ValueError(
-                    f"Middleware в include не зарегистрированы: {unknown}"
-                )
+                raise ValueError(f"Middleware в include не зарегистрированы: {unknown}")
         else:
             selected = self.list_registered()
         return [name for name in selected if name not in config.exclude]

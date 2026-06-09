@@ -128,7 +128,7 @@ class TemporalClientFactory:
             _logger.warning(
                 "temporal.otel.interceptor.unavailable",
                 extra={
-                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal",
+                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal"
                 },
             )
 

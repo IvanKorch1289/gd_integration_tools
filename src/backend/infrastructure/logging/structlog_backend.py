@@ -49,7 +49,9 @@ class StructlogLogger(LoggerProtocol):
         return inner.__class__.__name__
 
     @staticmethod
-    def _format(msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    def _format(
+        msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> tuple[str, dict[str, Any]]:
         """Compat shim: stdlib-style ``%`` formatting → structlog kwargs.
 
         Returns:
@@ -60,7 +62,7 @@ class StructlogLogger(LoggerProtocol):
         try:
             formatted = msg % args
             return formatted, kwargs
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             # msg не содержит %-placeholders ИЛИ args не подходят — отдаём как есть
             # (structlog не упадёт; при рендере JSON просто увидит str)
             return msg, {**kwargs, "args": list(args)}
@@ -223,7 +225,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                     event_dict.setdefault("request_id", rid)
                 if tid := get_tenant_id():
                     event_dict.setdefault("tenant_id", tid)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 pass
             return event_dict
 

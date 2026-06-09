@@ -35,10 +35,7 @@ from typing import Protocol, runtime_checkable
 
 from src.backend.core.security.capabilities.models import CapabilityRef
 
-__all__ = (
-    "CapabilityGatewayProtocol",
-    "TenantAwareCapabilityGatewayProtocol",
-)
+__all__ = ("CapabilityGatewayProtocol", "TenantAwareCapabilityGatewayProtocol")
 
 
 @runtime_checkable

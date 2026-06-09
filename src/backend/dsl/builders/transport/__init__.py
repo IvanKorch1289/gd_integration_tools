@@ -29,9 +29,6 @@ class TransportMixin(PersistenceMixin, SinksMixin):
 
     __slots__ = ()
 
-
-
-
     def directory_scan(
         self,
         path: str,
@@ -99,7 +96,6 @@ class TransportMixin(PersistenceMixin, SinksMixin):
                 header_policy=HeaderMapPolicy.from_dict(header_map),
             )
         )
-
 
     def forward_to(
         self,
@@ -298,7 +294,6 @@ class TransportMixin(PersistenceMixin, SinksMixin):
             result_property=result_property,
         )
 
-
     def poll(
         self,
         source_action: str,
@@ -336,8 +331,6 @@ class TransportMixin(PersistenceMixin, SinksMixin):
             rewrite_path=rewrite_path,
             timeout=timeout,
         )
-
-
 
     def redirect(
         self,
@@ -480,6 +473,3 @@ class TransportMixin(PersistenceMixin, SinksMixin):
             to=to,
             deep_research=deep_research,
         )
-
-
-

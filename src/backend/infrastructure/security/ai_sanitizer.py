@@ -14,7 +14,6 @@
 - API-ключи/токены → [REDACTED]
 """
 
-
 import re
 from typing import Any
 

@@ -1,6 +1,5 @@
 """Pre-registered breakers для всех внешних I/O клиентов (поверх фасада)."""
 
-
 from functools import lru_cache
 from typing import Any
 

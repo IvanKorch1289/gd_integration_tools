@@ -16,6 +16,9 @@ __pycache__/
 htmlcov/
 .benchmarks/
 
+# Mutation testing (mutmut)
+mutants/
+
 # Virtual environments
 .venv/
 venv/

@@ -7,7 +7,6 @@ DSL-dispatch как fallback для произвольных actions.
 Резолверы вызывают бизнес-логику через ActionHandlerRegistry.dispatch().
 """
 
-
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from typing import Any

@@ -68,7 +68,7 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             data = orjson.loads(text)
             masked = self._mask_value(data)
             return orjson.dumps(masked)
-        except (orjson.JSONDecodeError, UnicodeDecodeError):
+        except orjson.JSONDecodeError, UnicodeDecodeError:
             return raw
 
     def _mask_value(self, obj: Any) -> Any:

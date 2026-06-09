@@ -4,7 +4,6 @@
 broadcast и отправку сообщений по группам.
 """
 
-
 from typing import Any
 
 from fastapi import WebSocket

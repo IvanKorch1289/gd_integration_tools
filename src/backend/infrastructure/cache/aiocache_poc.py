@@ -13,6 +13,7 @@
 * 1778 LOC custom cache → aiocache (не 1:1, требует feature-by-feature
   evaluation — см. ADR-0086).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -34,8 +35,4 @@ async def fetch_with_aiocache(key: str) -> dict[str, Any]:
     """
     import time
 
-    return {
-        "key": key,
-        "fetched_at": time.time(),
-        "result": f"computed_for_{key}",
-    }
+    return {"key": key, "fetched_at": time.time(), "result": f"computed_for_{key}"}

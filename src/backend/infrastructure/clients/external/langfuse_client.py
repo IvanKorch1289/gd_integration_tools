@@ -4,7 +4,6 @@
 Интегрируется с LangChain через callbacks.
 """
 
-
 from typing import Any
 
 from src.backend.infrastructure.logging.factory import get_logger

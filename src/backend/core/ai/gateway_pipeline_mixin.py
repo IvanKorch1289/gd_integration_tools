@@ -309,10 +309,7 @@ class PipelineStepsMixin:
                 tenant_id=getattr(self, "_tenant_id", "default"), correlation_id=""
             )
             result = await client.run(
-                prompt=rendered,
-                deps=deps,
-                stream=stream,
-                _internal_gateway_call=True,
+                prompt=rendered, deps=deps, stream=stream, _internal_gateway_call=True
             )
 
             return AIResponse(

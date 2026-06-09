@@ -347,13 +347,10 @@ async def lifespan(app: FastAPI):
                     getattr(feature_flags, "stuck_monitor_threshold_seconds", 300)
                 )
                 sample_interval = int(
-                    getattr(
-                        feature_flags, "stuck_monitor_sample_interval_seconds", 60
-                    )
+                    getattr(feature_flags, "stuck_monitor_sample_interval_seconds", 60)
                 )
                 await start_outbox_stuck_monitor(
-                    threshold_seconds=threshold,
-                    sample_interval_seconds=sample_interval,
+                    threshold_seconds=threshold, sample_interval_seconds=sample_interval
                 )
                 app_logger.info(
                     "OutboxStuckMonitor started (threshold=%ds, sample=%ds)",

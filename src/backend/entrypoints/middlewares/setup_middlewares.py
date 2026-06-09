@@ -193,9 +193,7 @@ def build_default_registry() -> MiddlewareRegistry:
         {"group_paths": True, "app_name": settings.app.title},
         order=840,
     )
-    registry.register_builtin(
-        "security_headers", SecurityHeadersMiddleware, order=860
-    )
+    registry.register_builtin("security_headers", SecurityHeadersMiddleware, order=860)
 
     return registry
 

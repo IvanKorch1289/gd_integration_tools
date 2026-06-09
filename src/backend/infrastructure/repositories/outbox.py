@@ -64,9 +64,7 @@ def validate_transport(transport: str) -> str:
     2 разных label'а.
     """
     if not isinstance(transport, str):
-        raise ValueError(
-            f"transport должен быть str, got {type(transport).__name__}"
-        )
+        raise ValueError(f"transport должен быть str, got {type(transport).__name__}")
     transport = transport.strip().lower()
     if transport not in ALLOWED_TRANSPORTS:
         raise ValueError(
@@ -122,11 +120,7 @@ async def write(
     """
     async with main_session_manager.transaction() as session:
         return await write_within_session(
-            session,
-            topic=topic,
-            payload=payload,
-            headers=headers,
-            transport=transport,
+            session, topic=topic, payload=payload, headers=headers, transport=transport
         )
 
 
@@ -212,9 +206,7 @@ async def count_stuck_pending(*, threshold_seconds: int) -> int:
         return int(result.scalar_one())
 
 
-async def count_stuck_pending_by_transport(
-    *, threshold_seconds: int
-) -> dict[str, int]:
+async def count_stuck_pending_by_transport(*, threshold_seconds: int) -> dict[str, int]:
     """Per-transport breakdown stuck-pending counts (S80 W3, ND-001 step 3).
 
     Returns:

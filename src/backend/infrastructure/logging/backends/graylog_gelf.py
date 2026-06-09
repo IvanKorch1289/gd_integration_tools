@@ -56,19 +56,44 @@ import logging
 import socket
 import time
 import zlib
-from typing import Any, Final, Literal
+from typing import TYPE_CHECKING, Any, Final, Literal
 
 import orjson
 
 from src.backend.core.interfaces.log_sink import LogSink
-from src.backend.core.resilience.breaker import (
-    Breaker,
-    BreakerSpec,
-    CircuitOpen,
-    get_breaker_registry,
-)
 
-breaker_registry = get_breaker_registry()
+if TYPE_CHECKING:
+    from src.backend.core.resilience.breaker import Breaker, BreakerSpec, CircuitOpen
+
+    _CircuitOpen: type[Exception] = CircuitOpen
+    _Breaker: Any = Breaker
+    _BreakerSpec: Any = BreakerSpec
+    _get_breaker_registry_fn: Any
+else:
+    _CircuitOpen = None  # type: ignore[assignment]
+    _Breaker = None  # type: ignore[assignment]
+    _BreakerSpec = None  # type: ignore[assignment]
+    _get_breaker_registry_fn = None  # type: ignore[assignment]
+
+
+# Lazy-import breaker-зависимостей, чтобы разорвать circular import:
+# breaker.py → logging → factory → router → backends → graylog_gelf → breaker.py
+# (Sprint 39, mutmut baseline).
+def _lazy_breaker_imports() -> None:
+    global _CircuitOpen, _Breaker, _BreakerSpec, _get_breaker_registry_fn
+    if _CircuitOpen is None:
+        from src.backend.core.resilience.breaker import (
+            Breaker,
+            BreakerSpec,
+            CircuitOpen,
+            get_breaker_registry,
+        )
+
+        globals()["_CircuitOpen"] = CircuitOpen
+        globals()["_Breaker"] = Breaker
+        globals()["_BreakerSpec"] = BreakerSpec
+        globals()["_get_breaker_registry_fn"] = get_breaker_registry
+
 
 __all__ = ("GelfProtocol", "GraylogGelfLogSink")
 
@@ -135,8 +160,11 @@ class GraylogGelfLogSink(LogSink):
         self._protocol: GelfProtocol = protocol
         self._compress = compress
         self._connect_timeout = connect_timeout
-        self._breaker: Breaker = breaker_registry.get_or_create(
-            f"log_sink:{name}", breaker_spec or BreakerSpec(), host=host
+        _lazy_breaker_imports()
+        self._breaker = _get_breaker_registry_fn().get_or_create(
+            f"log_sink:{name}",
+            breaker_spec or _BreakerSpec(),
+            host=host,  # type: ignore[call-arg]
         )
         self._tcp_socket: socket.socket | None = None
         self._udp_socket: socket.socket | None = None
@@ -181,7 +209,7 @@ class GraylogGelfLogSink(LogSink):
 
         try:
             payload = self._serialize(record)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             # fallback: всё неизвестное → str
             payload = self._serialize({k: _coerce(v) for k, v in record.items()})
 
@@ -221,7 +249,7 @@ class GraylogGelfLogSink(LogSink):
             self._worker_task.cancel()
             try:
                 await self._worker_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
         await asyncio.to_thread(self._close_sockets)
 
@@ -274,18 +302,19 @@ class GraylogGelfLogSink(LogSink):
                 async with self._breaker.guard():
                     await asyncio.to_thread(self._send, payload)
                     self.is_healthy = True
-            except CircuitOpen:
-                # breaker открыт — sink unhealthy; payload теряется
-                # (router переключился на disk-fallback задолго до этого)
-                self.is_healthy = False
-            except OSError:
-                # purgatory увеличил failure-counter; sink остаётся "живым",
-                # но текущая запись потеряна; reconnect — на следующей итерации
-                self.is_healthy = False
-            except Exception as _:
-                # любой неожиданный сбой не должен ронять worker
-                self.is_healthy = False
-                _INTERNAL_LOG.exception("graylog drain unexpected error")
+            except Exception as exc:
+                _lazy_breaker_imports()
+                if isinstance(exc, (_CircuitOpen, OSError)):
+                    # breaker открыт — sink unhealthy; payload теряется
+                    # (router переключился на disk-fallback задолго до этого)
+                    # OSError: purgatory увеличил failure-counter; sink остаётся
+                    # "живым", но текущая запись потеряна; reconnect — на
+                    # следующей итерации
+                    self.is_healthy = False
+                else:
+                    # любой неожиданный сбой не должен ронять worker
+                    self.is_healthy = False
+                    _INTERNAL_LOG.exception("graylog drain unexpected error")
             finally:
                 self._queue.task_done()
 

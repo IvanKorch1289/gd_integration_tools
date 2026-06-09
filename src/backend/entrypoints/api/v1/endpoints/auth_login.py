@@ -30,6 +30,7 @@ Errors:
 Использует :class:`UserService.login_with_method` (S58 W6c).
 JWT через :mod:`core.auth.jwt_backend` (уже реализован).
 """
+
 from __future__ import annotations
 
 import time
@@ -84,12 +85,12 @@ class LoginResponse(BaseModel):
     username: str
     is_superuser: bool
     expires_in: int = Field(
-        default=3600,
-        description="Token lifetime в секундах (default 1h).",
+        default=3600, description="Token lifetime в секундах (default 1h)."
     )
 
 
 # === Endpoint ===
+
 
 async def _get_user_service() -> Any:
     """Lazy import UserService (избегаем circular)."""
@@ -135,9 +136,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
     start = time.monotonic()
     try:
         user = await service.login_with_method(
-            method=payload.method,
-            username=payload.username,
-            password=payload.password,
+            method=payload.method, username=payload.username, password=payload.password
         )
     except AdAuthError as exc:
         _logger.warning(
@@ -154,15 +153,12 @@ async def login(payload: LoginRequest) -> LoginResponse:
     except ValueError as exc:
         # Неизвестный method (защита на случай bypass через прямой POST)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
         ) from exc
 
     if user is None:
         _logger.info(
-            "auth.login.failed username=%s method=%s",
-            payload.username,
-            payload.method,
+            "auth.login.failed username=%s method=%s", payload.username, payload.method
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -176,10 +172,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
         # encode() returns (token_str, expires_in_seconds) — см. jwt_backend_joserfc
         result = jwt_encode(
             subject=user.username,
-            claims={
-                "auth_method": payload.method,
-                "is_superuser": is_superuser,
-            },
+            claims={"auth_method": payload.method, "is_superuser": is_superuser},
         )
         if isinstance(result, tuple) and len(result) == 2:
             token, expires_in = result

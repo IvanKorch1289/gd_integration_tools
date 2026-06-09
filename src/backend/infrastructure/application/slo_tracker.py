@@ -116,7 +116,7 @@ class SLOTracker:
             record_pipeline_execution(
                 route_id=route_id, status="error" if is_error else "success"
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     def get_report(self) -> dict[str, Any]:
@@ -185,9 +185,7 @@ def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):
             tracker = get_slo_tracker()
             if not tracker.check_budget(route_id, max_error_rate):
                 stats = tracker.get_route_stats(route_id)
-                raise SLOBudgetExceeded(
-                    route_id, stats["error_rate"], max_error_rate
-                )
+                raise SLOBudgetExceeded(route_id, stats["error_rate"], max_error_rate)
             return await func(*args, **kwargs)
 
         return async_wrapper

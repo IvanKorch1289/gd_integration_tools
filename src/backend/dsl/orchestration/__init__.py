@@ -51,10 +51,7 @@ class Sensor:
                             route_id=self.route_id, body={}, headers={}
                         )
                 except Exception as _:
-
-                    get_logger("dsl.sensor").exception(
-                        "Sensor '%s' failed", self.name
-                    )
+                    get_logger("dsl.sensor").exception("Sensor '%s' failed", self.name)
                 await asyncio.sleep(self.interval_seconds)
 
         self._task = get_task_registry().create_task(

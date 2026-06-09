@@ -130,7 +130,6 @@ async def run_async_migrations() -> None:
 
     async with lock_ctx as acquired:
         if not acquired:
-
             get_logger("alembic").warning(
                 "Could not acquire migration lock — another instance is running migrations"
             )

@@ -63,11 +63,7 @@ def _get_storage() -> Any:
 # ── to_s3 ─────────────────────────────────────────────────────────────────
 
 
-@processor(
-    "to_s3",
-    namespace="core",
-    capabilities=("storage.write",),
-)
+@processor("to_s3", namespace="core", capabilities=("storage.write",))
 class ToS3Processor(BaseProcessor):
     """Загружает байты из exchange-property в S3/MinIO/LocalFS.
 
@@ -97,9 +93,7 @@ class ToS3Processor(BaseProcessor):
         self._content_type_from = content_type_from
         self._result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         data = _resolve(exchange, self._data_property)
         key = _resolve(exchange, self._key_from)
         content_type = (
@@ -113,15 +107,11 @@ class ToS3Processor(BaseProcessor):
         if isinstance(data, str):
             data = data.encode("utf-8")
         if not isinstance(data, (bytes, bytearray)):
-            exchange.fail(
-                f"to_s3: data must be bytes/str, got {type(data).__name__}"
-            )
+            exchange.fail(f"to_s3: data must be bytes/str, got {type(data).__name__}")
             return
         try:
             storage = _get_storage()
-            full_key = await storage.upload(
-                key, bytes(data), content_type=content_type
-            )
+            full_key = await storage.upload(key, bytes(data), content_type=content_type)
         except (ValueError, OSError) as exc:
             exchange.fail(f"to_s3: {exc}")
             return
@@ -145,11 +135,7 @@ class ToS3Processor(BaseProcessor):
 # ── from_s3 ───────────────────────────────────────────────────────────────
 
 
-@processor(
-    "from_s3",
-    namespace="core",
-    capabilities=("storage.read",),
-)
+@processor("from_s3", namespace="core", capabilities=("storage.read",))
 class FromS3Processor(BaseProcessor):
     """Скачивает байты из S3/MinIO/LocalFS в exchange-property.
 
@@ -171,9 +157,7 @@ class FromS3Processor(BaseProcessor):
         self._key_from = key_from
         self._result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"from_s3: key must be str, got {type(key).__name__}")
@@ -205,11 +189,7 @@ class FromS3Processor(BaseProcessor):
 # ── s3_presign ────────────────────────────────────────────────────────────
 
 
-@processor(
-    "s3_presign",
-    namespace="core",
-    capabilities=("storage.read",),
-)
+@processor("s3_presign", namespace="core", capabilities=("storage.read",))
 class S3PresignProcessor(BaseProcessor):
     """Генерирует presigned URL для S3/MinIO (LocalFS возвращает ``file://``).
 
@@ -238,9 +218,7 @@ class S3PresignProcessor(BaseProcessor):
         self._expires_in = expires_in
         self._result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"s3_presign: key must be str, got {type(key).__name__}")
@@ -248,9 +226,7 @@ class S3PresignProcessor(BaseProcessor):
         try:
             storage = _get_storage()
             if not storage.supports_presigned():
-                exchange.fail(
-                    "s3_presign: backend не поддерживает presigned URLs"
-                )
+                exchange.fail("s3_presign: backend не поддерживает presigned URLs")
                 return
             url = await storage.presigned_url(key, expires_in=self._expires_in)
         except (ValueError, OSError) as exc:
@@ -275,11 +251,7 @@ class S3PresignProcessor(BaseProcessor):
 # ── s3_delete ─────────────────────────────────────────────────────────────
 
 
-@processor(
-    "s3_delete",
-    namespace="core",
-    capabilities=("storage.write",),
-)
+@processor("s3_delete", namespace="core", capabilities=("storage.write",))
 class S3DeleteProcessor(BaseProcessor):
     """Удаляет объект из S3/MinIO/LocalFS (idempotent: missing → no-op).
 
@@ -290,18 +262,11 @@ class S3DeleteProcessor(BaseProcessor):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
     compensatable: ClassVar[bool] = False  # delete нельзя «откатить»
 
-    def __init__(
-        self,
-        *,
-        key_from: str = "s3_key",
-        name: str | None = None,
-    ) -> None:
+    def __init__(self, *, key_from: str = "s3_key", name: str | None = None) -> None:
         super().__init__(name=name or "s3_delete")
         self._key_from = key_from
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"s3_delete: key must be str, got {type(key).__name__}")
@@ -324,11 +289,7 @@ class S3DeleteProcessor(BaseProcessor):
 # ── s3_list ───────────────────────────────────────────────────────────────
 
 
-@processor(
-    "s3_list",
-    namespace="core",
-    capabilities=("storage.read",),
-)
+@processor("s3_list", namespace="core", capabilities=("storage.read",))
 class S3ListProcessor(BaseProcessor):
     """Возвращает список ключей в S3/MinIO/LocalFS bucket (с пагинацией).
 
@@ -351,9 +312,7 @@ class S3ListProcessor(BaseProcessor):
         self._prefix_from = prefix_from
         self._result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         prefix: str = ""
         if self._prefix_from is not None:
             resolved = _resolve(exchange, self._prefix_from)

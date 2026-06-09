@@ -375,4 +375,3 @@ class SinksMixin:
                 result_property=result_property,
             )
         )
-

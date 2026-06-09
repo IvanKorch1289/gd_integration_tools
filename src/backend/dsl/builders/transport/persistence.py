@@ -191,4 +191,3 @@ class PersistenceMixin:
             params_from=params_from,
             result_property=result_property,
         )
-

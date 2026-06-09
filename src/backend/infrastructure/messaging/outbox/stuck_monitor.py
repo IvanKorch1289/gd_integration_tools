@@ -95,10 +95,7 @@ class OutboxStuckMonitor:
     """
 
     def __init__(
-        self,
-        *,
-        threshold_seconds: int = 300,
-        sample_interval_seconds: int = 60,
+        self, *, threshold_seconds: int = 300, sample_interval_seconds: int = 60
     ) -> None:
         if threshold_seconds <= 0:
             raise ValueError("threshold_seconds должен быть > 0")
@@ -210,9 +207,7 @@ default_stuck_monitor: OutboxStuckMonitor = OutboxStuckMonitor()
 
 
 async def start_outbox_stuck_monitor(
-    *,
-    threshold_seconds: int = 300,
-    sample_interval_seconds: int = 60,
+    *, threshold_seconds: int = 300, sample_interval_seconds: int = 60
 ) -> None:
     """Запустить default stuck-monitor (idempotent)."""
     global default_stuck_monitor

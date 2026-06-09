@@ -111,7 +111,7 @@ class TaskRegistry:
         for var, value in ctx.items():
             try:
                 var.set(value)
-            except (LookupError, RuntimeError, TypeError):
+            except LookupError, RuntimeError, TypeError:
                 continue
         return await coro
 
