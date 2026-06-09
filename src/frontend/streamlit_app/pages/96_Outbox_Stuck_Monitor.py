@@ -157,21 +157,77 @@ systemctl restart gd-integration-tools
 """
     )
 
+# Per-transport breakdown (S81 W4, ND-001 step 9)
+st.subheader("📊 Per-Transport Breakdown (S81 W4)")
+
+if PROMETHEUS_URL:
+    # Query per-transport gauges (S81 W2: label-based)
+    per_transport_query = 'outbox_stuck_pending_count{transport!="_aggregate_"}'
+    try:
+        response = httpx.get(
+            f"{PROMETHEUS_URL}/api/v1/query",
+            params={"query": per_transport_query},
+            timeout=5.0,
+        )
+        if response.status_code == 200:
+            data = response.json()
+            results = data.get("data", {}).get("result", [])
+            if results:
+                transport_data: list[dict[str, Any]] = []
+                for r in results:
+                    metric = r.get("metric", {})
+                    value = r.get("value", [None, "0"])[1]
+                    transport_data.append(
+                        {
+                            "transport": metric.get("transport", "unknown"),
+                            "stuck_count": int(float(value)),
+                        }
+                    )
+                # Sort descending по count
+                transport_data.sort(key=lambda x: x["stuck_count"], reverse=True)
+                st.dataframe(
+                    transport_data, use_container_width=True, hide_index=True
+                )
+                # Top transport highlight
+                if transport_data:
+                    top = transport_data[0]
+                    if top["stuck_count"] > 0:
+                        st.warning(
+                            f"⚠️ Top transport: **{top['transport']}** "
+                            f"с **{top['stuck_count']}** stuck messages. "
+                            f"См. Grafana panel #5 (per-transport breakdown)."
+                        )
+            else:
+                st.success("✅ No stuck messages ни в одном transport.")
+    except Exception as exc:
+        st.error(f"Per-transport query failed: {exc}")
+else:
+    st.info(
+        "Set `PROMETHEUS_URL` для per-transport breakdown. "
+        "В-memory fallback показывает только aggregate."
+    )
+
 # Alert rules summary
-st.subheader("🚨 Alert Rules (S73 W1)")
+st.subheader("🚨 Alert Rules (S73 W1 + S81 W3)")
 
 alert_rules: list[dict[str, Any]] = [
     {
         "name": "OutboxStuckPendingHigh",
         "severity": "warning",
-        "condition": "count > 0 для 5 min",
+        "condition": "aggregate > 0 для 5 min",
         "action": "Slack #platform-alerts",
     },
     {
         "name": "OutboxStuckPendingCritical",
         "severity": "critical (P0)",
-        "condition": "count > 100 для 15 min",
+        "condition": "aggregate > 100 для 15 min",
         "action": "PagerDuty + Slack #incidents",
+    },
+    {
+        "name": "OutboxStuckPendingByTransportHigh",
+        "severity": "warning",
+        "condition": "max(per-transport) > 50 для 10 min",
+        "action": "Slack #platform-alerts (with transport label)",
     },
 ]
 
@@ -208,6 +264,8 @@ st.markdown(
 # Footer
 st.divider()
 st.caption(
-    "S75 W1 — Streamlit page для S72 W2 (gauge) + S73 W1 (alerts). "
-    "Chain: count_stuck_pending() → Prometheus gauge → Grafana alerts → this page."
+    "S75 W1 + S80 W2 + S81 W4 — Streamlit page для S72 W2 (gauge) + "
+    "S73 W1 (alerts) + S81 W2 (per-transport label) + S81 W4 (per-transport section). "
+    "Chain: count_stuck_pending() → Prometheus gauge (per-transport) → "
+    "Grafana alerts (3 rules) → this page."
 )
