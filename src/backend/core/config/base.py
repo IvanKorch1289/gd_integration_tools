@@ -117,6 +117,17 @@ class AppBaseSettings(BaseSettingsWithLoader):
         description="Таймаут keep-alive соединений в секундах.",
     )
 
+    graceful_shutdown_timeout: int = Field(
+        default=30,
+        title="Graceful shutdown timeout (сек)",
+        ge=1,
+        le=300,
+        description=(
+            "Время на завершение активных запросов перед принудительным "
+            "закрытием соединений (uvicorn timeout_graceful_shutdown)."
+        ),
+    )
+
     granian_http: Literal["1", "2", "auto"] = Field(
         default="auto",
         title="Granian HTTP-режим",

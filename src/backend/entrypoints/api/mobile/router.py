@@ -19,6 +19,7 @@ from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.mobile.schemas import (
     CompressedResponse,
     CursorPage,
@@ -29,7 +30,6 @@ from src.backend.entrypoints.api.mobile.schemas import (
     PayloadOptimizer,
     PushTokenRequest,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("get_mobile_router", "mobile_router")
 

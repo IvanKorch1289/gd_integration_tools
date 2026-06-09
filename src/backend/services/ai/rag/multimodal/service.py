@@ -20,7 +20,7 @@ from typing import Any
 from uuid import uuid4
 
 from src.backend.core.di import app_state_singleton
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.rag.multimodal._legacy import (
     MultimodalRAGService as _LegacyMultimodalRAGService,
 )

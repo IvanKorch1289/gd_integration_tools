@@ -33,7 +33,7 @@ from typing import Any
 
 import orjson
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.lineage.lineage_emitter import (
     InMemoryLineageEmitter,
     _iso_timestamp,

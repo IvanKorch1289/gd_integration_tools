@@ -22,8 +22,8 @@ from idempotency_header_middleware import IdempotencyHeaderMiddleware
 from idempotency_header_middleware.backends.base import Backend
 from idempotency_header_middleware.backends.memory import MemoryBackend
 
+from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import decode_json, encode_json
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "IDEMPOTENCY_HEADER",

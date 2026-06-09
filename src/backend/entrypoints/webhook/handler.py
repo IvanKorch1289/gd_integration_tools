@@ -17,12 +17,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.backend.entrypoints.webhook.registry import (
     WebhookSubscription,
     webhook_registry,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("webhook_router",)
 

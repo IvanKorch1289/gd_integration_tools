@@ -37,8 +37,8 @@ from tenacity import (
 )
 
 from src.backend.core.config.constants import consts
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.retry_budget import RetryBudget, RetryBudgetExhausted
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("Retry", "RetryBudgetExhausted", "RetryPolicy", "with_retry")
 

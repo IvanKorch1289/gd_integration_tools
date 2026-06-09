@@ -26,7 +26,7 @@ from src.backend.core.ai.errors import (
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("AIWorkspaceManager", "WorkspaceHandle")
 

@@ -19,7 +19,7 @@ from src.backend.core.enums.external_db import (
     ExternalDBParameterModeChoices,
 )
 from src.backend.core.errors import DatabaseError
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("ExternalDatabaseService", "external_db_service", "get_external_db_service")
 

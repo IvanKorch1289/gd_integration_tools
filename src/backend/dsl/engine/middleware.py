@@ -14,9 +14,9 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ErrorNormalizerMiddleware",

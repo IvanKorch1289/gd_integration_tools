@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.plugins.composition.app_factory import create_app
 
 app: FastAPI = create_app()
@@ -59,6 +59,7 @@ def _run_uvicorn() -> None:
         "use_colors": settings.app.environment != "production",
         "limit_concurrency": 1000,
         "timeout_keep_alive": settings.app.keep_alive_timeout,
+        "timeout_graceful_shutdown": settings.app.graceful_shutdown_timeout,
         "backlog": settings.app.listen_backlog,
         "loop": "uvloop" if not is_dev else "auto",
     }

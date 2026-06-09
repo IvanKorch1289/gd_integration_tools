@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.rag.multimodal.types import ChunkDoc
 
 logger = get_logger(__name__)

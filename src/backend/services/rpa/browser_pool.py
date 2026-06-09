@@ -22,7 +22,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

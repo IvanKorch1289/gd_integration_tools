@@ -10,7 +10,7 @@ from typing import Any
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.di.providers import get_browser_client_provider
 from src.backend.core.interfaces.integrations import BrowserClientProtocol
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("WebAutomationService", "get_web_automation_service")
 

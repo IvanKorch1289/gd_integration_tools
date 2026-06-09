@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     import dspy

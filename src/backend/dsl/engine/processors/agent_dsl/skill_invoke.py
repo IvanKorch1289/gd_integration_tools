@@ -24,8 +24,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -74,13 +74,21 @@ class SkillInvokeProcessor(BaseAIProcessor):
         return self.skill_id
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
         registry = self._resolve_registry()
         if registry is None:
             _logger.warning(
                 "%s: SkillRegistry недоступен — pass-through skip", self.name
             )
             return
+
+        # Проброс tenant/correlation в shared state и exchange properties
+        # для downstream процессоров и аудита (V2 fix)
+        if exchange.meta.tenant_id:
+            context.set("_skill_tenant_id", exchange.meta.tenant_id)
+            exchange.set_property("_skill_tenant_id", exchange.meta.tenant_id)
+        if exchange.meta.correlation_id:
+            context.set("_skill_correlation_id", exchange.meta.correlation_id)
+            exchange.set_property("_skill_correlation_id", exchange.meta.correlation_id)
 
         params = self._extract_params(exchange)
         try:

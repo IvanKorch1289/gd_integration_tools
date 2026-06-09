@@ -4,11 +4,11 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (

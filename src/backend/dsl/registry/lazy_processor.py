@@ -28,8 +28,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.registry.errors import ProcessorNotFoundError
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("LazyProcessorRef", "LazyProcessorRegistry", "load_processor_class")
 

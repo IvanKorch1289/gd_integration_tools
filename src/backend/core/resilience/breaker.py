@@ -31,7 +31,7 @@ from purgatory.domain.messages.events import ContextChanged
 from purgatory.domain.model import OpenedState
 
 from src.backend.core.config.constants import consts
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "Breaker",

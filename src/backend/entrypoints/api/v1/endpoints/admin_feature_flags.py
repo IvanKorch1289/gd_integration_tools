@@ -24,7 +24,7 @@ from src.backend.core.feature_flags.runtime_overrides import (
     FeatureFlagChange,
     get_runtime_overrides,
 )
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.audit import get_unified_audit_service
 
 __all__ = ("router",)

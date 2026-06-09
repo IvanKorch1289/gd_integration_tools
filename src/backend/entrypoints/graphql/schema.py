@@ -17,8 +17,8 @@ from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.service import get_dsl_service
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("graphql_router",)
 logger = get_logger(__name__)

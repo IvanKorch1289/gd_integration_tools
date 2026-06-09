@@ -24,7 +24,7 @@ import asyncio
 import sys
 from typing import Any, Protocol, runtime_checkable
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "EmbeddingProvider",

@@ -19,7 +19,7 @@ from fastapi import APIRouter, Form, HTTPException, status
 
 from src.backend.core.auth.jwt_backend_joserfc import JwtVerificationError
 from src.backend.core.di.providers import get_jwt_backend_provider
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("router",)
 

@@ -17,8 +17,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("Backfill", "DryRun", "HumanApproval", "Sensor")
 

@@ -25,6 +25,7 @@ from src.backend.core.interfaces.plugin import (
     ProcessorRegistryProtocol,
     RepositoryRegistryProtocol,
 )
+from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.compat_checker import (
     CompatViolation,
     check_compatibility,
@@ -38,7 +39,6 @@ from src.backend.core.security.capabilities import (
     CapabilityGate,
     CapabilityRef,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,

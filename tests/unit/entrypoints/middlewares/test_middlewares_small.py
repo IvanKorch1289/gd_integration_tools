@@ -86,6 +86,22 @@ async def test_blocked_routes_allowed() -> None:
     assert result is response
 
 
+@pytest.mark.asyncio
+async def test_blocked_routes_glob_pattern() -> None:
+    app = AsyncMock()
+    mw = BlockedRoutesMiddleware(app)
+    request = MagicMock()
+    request.url.path = "/api/v1/admin/users"
+    blocked_routes.add("/api/v1/admin/*")
+    call_next = AsyncMock()
+    try:
+        with pytest.raises(HTTPException) as exc_info:
+            await mw.dispatch(request, call_next)
+        assert exc_info.value.status_code == 403
+    finally:
+        blocked_routes.discard("/api/v1/admin/*")
+
+
 # ─── CorrelationIdMiddleware re-export ──────────────────────────────────────
 
 

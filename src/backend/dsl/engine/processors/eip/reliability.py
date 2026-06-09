@@ -30,11 +30,11 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta, timezone
 from typing import Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "CorrelationIdentifierProcessor",

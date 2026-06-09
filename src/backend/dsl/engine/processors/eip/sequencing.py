@@ -2,10 +2,10 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.infrastructure.logging.factory import get_logger
 
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")

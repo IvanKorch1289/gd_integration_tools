@@ -26,8 +26,8 @@ from typing import Any
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.import_gateway import ImportSource
+from src.backend.core.logging import get_logger
 from src.backend.core.models.connector_spec import ConnectorSpec
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ImportService", "get_import_service")
 

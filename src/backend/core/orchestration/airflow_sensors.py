@@ -24,8 +24,8 @@ import httpx
 import jmespath
 from watchfiles import awatch
 
+from src.backend.core.logging import get_logger
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
-from src.backend.infrastructure.logging.factory import get_logger
 
 # S3 sensor uses aioboto3 (user-approved dep, install via `uv pip install aioboto3`).
 # Lazy import: S3Sensor construction fails with ImportError if aioboto3 not installed,

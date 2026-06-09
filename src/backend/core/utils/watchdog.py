@@ -19,7 +19,7 @@ import asyncio
 from collections.abc import Awaitable, Coroutine
 from typing import Any, TypeVar
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("Watchdog",)
 

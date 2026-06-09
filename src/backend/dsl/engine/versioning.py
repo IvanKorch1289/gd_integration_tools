@@ -16,9 +16,9 @@ from typing import Any
 
 from sqlalchemy import desc, select
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
 from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PipelineSnapshot", "PipelineVersionManager", "get_pipeline_version_manager")
 

@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("AgentTool", "ToolRegistry", "agent_tool", "get_tool_registry")
 

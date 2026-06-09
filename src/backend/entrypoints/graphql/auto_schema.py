@@ -29,7 +29,7 @@ from typing import Any
 
 from strawberry.scalars import JSON
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

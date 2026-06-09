@@ -29,7 +29,7 @@ from uuid import uuid4
 
 import orjson
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("DLQEntry", "RelayRule", "WebhookRelay", "get_webhook_relay")
 

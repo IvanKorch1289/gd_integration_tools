@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Literal
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.costs.langfuse_reader import CostRow, LangFuseReader
 
 logger = get_logger(__name__)

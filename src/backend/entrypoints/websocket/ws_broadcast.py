@@ -18,8 +18,8 @@ from src.backend.core.di.providers import (
     get_redis_pubsub_factory_provider,
     get_redis_set_factory_provider,
 )
+from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("WSBroadcast", "ws_broadcast")
 

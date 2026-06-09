@@ -59,6 +59,10 @@ def build_default_registry() -> MiddlewareRegistry:
     from src.backend.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
+    from src.backend.entrypoints.middlewares.global_ratelimit import (
+        GlobalRateLimitMiddleware,
+        build_rate_limit_checker,
+    )
     from src.backend.entrypoints.middlewares.idempotency import (
         IdempotencyHeaderMiddleware,
         build_idempotency_backend,
@@ -78,6 +82,9 @@ def build_default_registry() -> MiddlewareRegistry:
     from src.backend.entrypoints.middlewares.response_cache import (
         ResponseCacheMiddleware,
     )
+    from src.backend.entrypoints.middlewares.security_headers import (
+        SecurityHeadersMiddleware,
+    )
     from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
     from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
 
@@ -85,6 +92,12 @@ def build_default_registry() -> MiddlewareRegistry:
 
     # Layer 1: early exit (0-249) ------------------------------------------ #
     registry.register_builtin("exception_handler", ExceptionHandlerMiddleware, order=10)
+    registry.register_builtin(
+        "global_ratelimit",
+        GlobalRateLimitMiddleware,
+        {"checker": build_rate_limit_checker()},
+        order=20,
+    )
     registry.register_builtin(
         "cors",
         CORSMiddleware,
@@ -179,6 +192,9 @@ def build_default_registry() -> MiddlewareRegistry:
         PrometheusMiddleware,
         {"group_paths": True, "app_name": settings.app.title},
         order=840,
+    )
+    registry.register_builtin(
+        "security_headers", SecurityHeadersMiddleware, order=860
     )
 
     return registry

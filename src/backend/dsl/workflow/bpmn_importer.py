@@ -50,9 +50,9 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any, Final
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.gateways import BranchSpec, GatewaySpec
 from src.backend.dsl.workflow.spec import ActivityDeclaration, WorkflowDeclaration
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "BPMN_NAMESPACE",

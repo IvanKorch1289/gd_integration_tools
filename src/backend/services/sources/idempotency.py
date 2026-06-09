@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from cachetools import TTLCache
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService
 from src.backend.services.ai.costs.langfuse_reader import CostRow, LangFuseReader
 

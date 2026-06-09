@@ -11,7 +11,7 @@ import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.vector_store import BaseVectorStore
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,

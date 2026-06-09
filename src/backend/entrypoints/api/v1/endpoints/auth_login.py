@@ -38,11 +38,11 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.v1.dependencies.login_ratelimit import (
     check_ip_rate_limit,
     check_username_rate_limit,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.auth.ad_directory_client import AdAuthError
 
 _logger = get_logger(__name__)

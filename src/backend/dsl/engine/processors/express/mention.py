@@ -15,11 +15,11 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.express._common import resolve_value
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExpressMentionProcessor",)
 

@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.registry import AIPluginRegistry, get_ai_plugin_registry
 
 __all__ = ("AIServiceSpec", "ai_service")

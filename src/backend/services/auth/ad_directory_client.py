@@ -49,7 +49,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")
 

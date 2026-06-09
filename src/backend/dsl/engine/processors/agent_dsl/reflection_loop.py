@@ -34,8 +34,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 
 if TYPE_CHECKING:

@@ -35,7 +35,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from tools.plugin_migration_diff import MigrationDiffer
 
 if TYPE_CHECKING:

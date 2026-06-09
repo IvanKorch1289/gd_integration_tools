@@ -40,9 +40,9 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
+from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import default_masker
 from src.backend.core.utils.async_helpers import AsyncChunkIterator
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 

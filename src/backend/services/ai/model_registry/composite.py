@@ -9,7 +9,7 @@ priority read-only backend.
 
 from __future__ import annotations
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,

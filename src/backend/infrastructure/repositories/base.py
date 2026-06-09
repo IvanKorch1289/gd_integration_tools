@@ -377,9 +377,12 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param ignore_none: Игнорировать пустые значения (True) или нет (False).
         :return: Обновленный объект.
         """
-        existing_object = await self.get(
-            key=key, value=value
-        )  # Получаем существующий объект
+        query = (
+            select(self.model)
+            .where(getattr(self.model, key) == value)
+        )
+        result = await session.execute(query)
+        existing_object = result.scalar_one_or_none()
         if not existing_object:
             raise NotFoundError(message="Object not found")
 

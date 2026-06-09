@@ -20,10 +20,10 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.infrastructure.execution.dask_backend import get_dask_backend
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable

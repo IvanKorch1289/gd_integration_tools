@@ -27,8 +27,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol
 
+from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import current_tenant
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.feature_flags.flagsmith_provider import EvaluationContext

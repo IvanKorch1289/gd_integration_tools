@@ -27,9 +27,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

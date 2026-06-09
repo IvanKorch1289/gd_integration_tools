@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.voice.whisper_stt import VoiceServiceUnavailable
 
 __all__ = ("CoquiTTSService", "TTSResult")

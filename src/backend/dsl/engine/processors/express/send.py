@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -12,7 +13,6 @@ from src.backend.dsl.engine.processors.express._common import (
     log_outgoing_message,
     resolve_value,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ExpressSendProcessor",)
 

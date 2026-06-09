@@ -39,8 +39,8 @@ from datetime import UTC
 from typing import Any, TypeVar
 
 from src.backend.core.config.features import feature_flags
+from src.backend.core.logging import get_logger
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "RPACallContext",

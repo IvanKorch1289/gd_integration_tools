@@ -26,12 +26,12 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, TypeAdapter
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
 from src.backend.entrypoints.base import dispatch_action
-from src.backend.infrastructure.logging.factory import get_logger
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).

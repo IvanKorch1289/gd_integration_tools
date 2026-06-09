@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 
 from src.backend.core.auth.saml import SamlError, SamlSpHandler
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("router",)
 

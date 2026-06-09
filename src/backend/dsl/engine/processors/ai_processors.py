@@ -44,10 +44,10 @@ from src.backend.dsl.engine.processors.ai.llmparser_processor import LLMParserPr
 from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (
     PromptComposerProcessor,
 )
+from src.backend.dsl.engine.processors.ai.ragingest_processor import RagIngestProcessor
 from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (
     RagPIIRedactionProcessor,
 )
-from src.backend.dsl.engine.processors.ai.ragingest_processor import RagIngestProcessor
 from src.backend.dsl.engine.processors.ai.ragquery_processor import RagQueryProcessor
 from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
 from src.backend.dsl.engine.processors.ai.restorepii_processor import (

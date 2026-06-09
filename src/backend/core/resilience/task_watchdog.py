@@ -28,7 +28,7 @@ import asyncio
 import time
 from dataclasses import dataclass, field
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("TaskWatchdog", "get_task_watchdog")
 

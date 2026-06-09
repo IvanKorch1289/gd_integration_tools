@@ -37,7 +37,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "FakeRateLimitChecker",
@@ -45,6 +45,7 @@ __all__ = (
     "RateLimitChecker",
     "RateLimitConfig",
     "RedisRateLimitChecker",
+    "build_rate_limit_checker",
     "tenant_aware_identifier",
 )
 
@@ -283,6 +284,58 @@ class RedisRateLimitChecker:
                 exc,
             )
             return None
+
+
+class _LazyRedisProxy:
+    """Ленивый прокси к redis-клиенту для rate-limit backend.
+
+    Аналогичен ``_LazyRedisProxy`` в idempotency.py (S17 ADR-NEW-2):
+    резолвит ``redis.asyncio.Redis`` при первом async-вызове,
+    чтобы избежать циклической зависимости на старте приложения.
+    """
+
+    def __init__(self, resolver: Callable[[], Any]) -> None:
+        self._resolver = resolver
+
+    def _client(self) -> Any:
+        client = self._resolver()
+        if client is None:
+            raise RuntimeError("Redis client not available for rate limiting")
+        return client
+
+    async def incr(self, key: str) -> int:
+        return await self._client().incr(key)
+
+    async def expire(self, key: str, seconds: int) -> bool:
+        return await self._client().expire(key, seconds)
+
+    async def hgetall(self, key: str) -> dict[Any, Any]:
+        return await self._client().hgetall(key)
+
+
+def build_rate_limit_checker(
+    *, max_per_window: int = 100, window_seconds: float = 60.0
+) -> RateLimitChecker:
+    """Фабрика rate-limit checker'а на основе профиля приложения.
+
+    * Production / staging: :class:`RedisRateLimitChecker` поверх
+      ``get_redis_kv_client_provider`` (lazy-резолв).
+    * Test / dev_light: :class:`FakeRateLimitChecker` (in-memory),
+      без Redis-зависимости.
+    """
+    try:
+        from src.backend.core.di.providers.cache import get_redis_kv_client_provider
+    except Exception as exc:  # pragma: no cover
+        _logger.warning("RateLimit: DI redis-provider недоступен: %s", exc)
+        return FakeRateLimitChecker(
+            max_per_window=max_per_window, window_seconds=window_seconds
+        )
+
+    return RedisRateLimitChecker(
+        _LazyRedisProxy(get_redis_kv_client_provider),
+        max_per_window=max_per_window,
+        window_seconds=window_seconds,
+    )
 
 
 class GlobalRateLimitMiddleware:

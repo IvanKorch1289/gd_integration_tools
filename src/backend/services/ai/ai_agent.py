@@ -17,7 +17,7 @@ from src.backend.core.interfaces.ai_clients import (
     AISanitizerProtocol,
     HttpClientProtocol,
 )
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 

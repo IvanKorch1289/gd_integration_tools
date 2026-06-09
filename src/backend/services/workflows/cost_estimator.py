@@ -23,7 +23,7 @@ from datetime import UTC
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("CostEstimate", "LLMCostBreakdown", "WorkflowCostEstimator")
 

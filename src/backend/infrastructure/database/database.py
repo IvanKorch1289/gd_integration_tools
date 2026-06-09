@@ -196,6 +196,7 @@ class DatabaseInitializer:
                     "pool_recycle": self.settings.pool_recycle,
                     "pool_timeout": self.settings.pool_timeout,
                     "pool_pre_ping": True,
+                    "pool_use_lifo": self.settings.pool_use_lifo,
                 }
             )
         return kwargs

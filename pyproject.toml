@@ -865,7 +865,7 @@ skip-magic-trailing-comma = true
 version_toml = [
     "pyproject.toml:project.version"
 ]
-branch = "main"
+branch = "master"
 upload_to_pypi = false
 upload_to_release = false
 commit_author = "Korch Ivan <cards25kk.bank>"

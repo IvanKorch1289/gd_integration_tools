@@ -23,13 +23,13 @@ import warnings
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors import BaseProcessor
 from src.backend.dsl.registry import (
     ProcessorNotFoundError,
     ProcessorSpec,
     get_processor_registry,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("ProcessorPluginRegistry", "get_processor_plugin_registry")
 

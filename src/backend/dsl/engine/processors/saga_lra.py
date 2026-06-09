@@ -9,11 +9,11 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.control_flow import SagaStep, _emit_saga_audit
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

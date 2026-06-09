@@ -30,6 +30,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 from src.backend.dsl.yaml_store import YAMLStore
@@ -37,7 +38,6 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("router",)
 

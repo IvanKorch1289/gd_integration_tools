@@ -25,8 +25,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.registry.processor import ProcessorSpec, get_processor_registry
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("export_processors_schema",)
 

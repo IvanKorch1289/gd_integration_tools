@@ -44,9 +44,9 @@ from src.backend.core.interfaces.invoker import (
     InvocationStatus,
 )
 from src.backend.core.interfaces.invoker import Invoker as InvokerProtocol
+from src.backend.core.logging import get_logger
 from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.execution.action_dispatcher import get_action_dispatcher
 
 __all__ = ("InvocationMode", "Invoker", "get_invoker")

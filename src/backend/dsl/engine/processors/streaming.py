@@ -30,13 +30,13 @@ from typing import Any, ClassVar
 from src.backend.core.clock import RealClock
 from src.backend.core.interfaces.clock import Clock
 from src.backend.core.interfaces.watermark_store import WatermarkStore
+from src.backend.core.logging import get_logger
 from src.backend.core.types.watermark import LatePolicy, WatermarkState
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.late_event_policy import apply_late_policy
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "ChannelPurgerProcessor",

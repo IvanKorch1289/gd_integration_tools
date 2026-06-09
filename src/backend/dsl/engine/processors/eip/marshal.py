@@ -56,8 +56,8 @@ import xml.etree.ElementTree as ET  # safe: used only for marshal (we generate X
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.infrastructure.logging.factory import get_logger
 
 # Security: defusedxml guards against XXE / billion-laughs in XML unmarshal.
 # ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for

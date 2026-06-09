@@ -34,7 +34,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
 

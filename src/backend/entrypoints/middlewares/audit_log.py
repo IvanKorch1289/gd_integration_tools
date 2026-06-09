@@ -21,7 +21,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("AuditLogMiddleware",)
 
@@ -60,7 +60,8 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         duration_ms = (_time.monotonic() - start) * 1000
 
         # WHO
-        client_id = getattr(request.state, "client_id", None) or "anonymous"
+        auth = getattr(request.state, "auth", None)
+        client_id = getattr(auth, "principal", None) or "anonymous"
         client_ip = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "")[:200]
 

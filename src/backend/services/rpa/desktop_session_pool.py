@@ -34,8 +34,8 @@ from typing import Any
 
 import httpx
 
+from src.backend.core.logging import get_logger
 from src.backend.core.net.migration_helper import make_http_client
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = (
     "DesktopRPASessionPool",

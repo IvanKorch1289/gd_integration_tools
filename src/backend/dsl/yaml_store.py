@@ -19,7 +19,7 @@ import difflib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline

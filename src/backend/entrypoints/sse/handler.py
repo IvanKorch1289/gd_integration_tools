@@ -19,9 +19,9 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
+from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import encode_json_str
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("event_bus", "sse_router")
 

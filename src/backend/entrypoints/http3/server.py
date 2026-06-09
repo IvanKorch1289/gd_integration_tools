@@ -14,12 +14,12 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.http3.asgi_bridge import (
     HttpStreamHandler,
     build_http_scope,
 )
 from src.backend.entrypoints.http3.config import Http3ServerConfig
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:  # pragma: no cover
     from aioquic.asyncio.protocol import QuicConnectionProtocol  # noqa: F401

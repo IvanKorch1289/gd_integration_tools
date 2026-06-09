@@ -23,9 +23,9 @@ from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationStatus,
 )
+from src.backend.core.logging import get_logger
 from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.service import get_dsl_service
-from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.invoker import Invoker

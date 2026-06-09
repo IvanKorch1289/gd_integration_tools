@@ -15,7 +15,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.services.ai.rag_query_stats import RagQueryStatsCollector

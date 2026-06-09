@@ -21,11 +21,11 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.config.rag import rag_settings
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.ai.document_parsers import parse_document, sniff_mime
 from src.backend.services.ai.rag_service import get_rag_service
 

@@ -22,9 +22,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.rpa.browser_cookies_store import BrowserCookieStore
 
 if TYPE_CHECKING:

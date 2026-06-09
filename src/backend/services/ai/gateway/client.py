@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any, AsyncIterator
 
 from src.backend.core.di.app_state import app_state_singleton
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.gateway.callbacks import (
     CostTrackingCallback,
     FallbackTrackingCallback,

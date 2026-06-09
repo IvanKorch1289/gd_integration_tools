@@ -29,7 +29,7 @@ from src.backend.core.interfaces.agent_memory import (
     MemoryFact,
     MemoryMessage,
 )
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 __all__ = ("UnifiedMemoryGateway", "get_memory_gateway")
 

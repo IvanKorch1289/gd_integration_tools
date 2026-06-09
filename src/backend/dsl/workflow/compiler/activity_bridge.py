@@ -25,6 +25,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.security.activity_capability_guard import (
     capability_guarded_activity,
 )
@@ -35,7 +36,6 @@ from src.backend.dsl.workflow.spec import (
     WorkflowDeclaration,
     WorkflowStep,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("ActivityBridge", "bridge_action_handler", "get_activity_callables")

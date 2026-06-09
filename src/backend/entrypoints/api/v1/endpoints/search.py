@@ -15,11 +15,11 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.services.io.search import get_search_service
 
 __all__ = ("router",)

@@ -26,8 +26,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
+from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 __all__ = (
