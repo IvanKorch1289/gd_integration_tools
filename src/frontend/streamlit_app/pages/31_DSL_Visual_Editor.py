@@ -33,7 +33,6 @@ from src.backend.services.dsl_portal import load_pipeline_from_yaml  # noqa: E40
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.pages._editor import (
     PROCESSOR_ICONS,
-    STEP_PALETTE,
     VISUAL_PROCESSORS,
     build_yaml_from_steps,
     can_redo,
@@ -47,6 +46,8 @@ from src.frontend.streamlit_app.pages._editor import (
     undo,
     yaml_to_steps,
 )
+from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pipeline
+from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
 
 setup_page("DSL Editor", "")
 st.header("DSL Visual Editor")
@@ -56,308 +57,6 @@ st.caption(
 )
 
 
-def _render_step_palette():
-    """Render draggable step palette items using HTML/JS."""
-    html = """
-    <style>
-    .step-palette-item {
-        background: #2b3a4a;
-        border: 1px solid #4a5a6a;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin: 4px 0;
-        cursor: grab;
-        color: #e0e0e0;
-        font-size: 13px;
-        transition: background 0.2s, transform 0.1s;
-        user-select: none;
-    }
-    .step-palette-item:hover {
-        background: #3a4a5a;
-        transform: translateX(4px);
-    }
-    .step-palette-item:active {
-        cursor: grabbing;
-    }
-    .step-palette-item .title {
-        font-weight: 600;
-        color: #7dd3fc;
-    }
-    .step-palette-item .desc {
-        font-size: 11px;
-        color: #a0a0a0;
-        margin-top: 2px;
-    }
-    .palette-header {
-        font-size: 14px;
-        font-weight: 600;
-        color: #f0f0f0;
-        margin-bottom: 8px;
-    }
-    </style>
-    <div class="palette-header">📦 Step Palette (drag to add)</div>
-    <div id="palette-container">
-    """
-    for key, info in STEP_PALETTE.items():
-        html += f"""
-        <div class="step-palette-item" draggable="true" data-processor="{key}">
-            <div class="title">▶ {info["title"]}</div>
-            <div class="desc">{info["desc"]}</div>
-        </div>
-        """
-    html += """
-    </div>
-    <script>
-    const items = document.querySelectorAll('.step-palette-item');
-    let draggedItem = null;
-
-    items.forEach(item => {
-        item.addEventListener('dragstart', (e) => {
-            draggedItem = item;
-            item.style.opacity = '0.5';
-            e.dataTransfer.setData('text/plain', item.dataset.processor);
-        });
-        item.addEventListener('dragend', () => {
-            item.style.opacity = '1';
-            draggedItem = null;
-        });
-    });
-    </script>
-    """
-
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("📦 Step Palette")
-    st.sidebar.markdown("Drag a processor to the pipeline area below, or click to add:")
-    st.components.v1.html(html, height=400, scrolling=True)
-
-    # Show clickable buttons as alternative to drag
-    selected_palette_proc = st.sidebar.selectbox(
-        "Или выберите процессор:",
-        ["—"] + list(STEP_PALETTE.keys()),
-        key="palette_select",
-    )
-    if selected_palette_proc != "—":
-        st.sidebar.info(
-            f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже или добавьте через форму слева."
-        )
-        # Auto-select in the visual editor form
-        st.session_state.vis_proc_type = selected_palette_proc
-
-
-def _render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | None:
-    """Render the pipeline with drag-drop reordering using HTML/JS interop.
-
-    Returns the reordered steps list if changed, otherwise None.
-    """
-    import json
-
-    steps_json = json.dumps(steps)
-
-    html = f"""
-    <style>
-    .pipeline-container {{
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }}
-    .pipeline-item {{
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border: 1px solid #0f3460;
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 8px 0;
-        cursor: grab;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }}
-    .pipeline-item:hover {{
-        background: linear-gradient(135deg, #1f1f3a 0%, #1a2744 100%);
-        border-color: #7dd3fc;
-        transform: translateX(4px);
-    }}
-    .pipeline-item.dragging {{
-        opacity: 0.5;
-        transform: scale(1.02);
-    }}
-    .pipeline-item .handle {{
-        color: #7dd3fc;
-        font-size: 18px;
-        cursor: grab;
-    }}
-    .pipeline-item .step-num {{
-        background: #7dd3fc;
-        color: #1a1a2e;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 12px;
-        flex-shrink: 0;
-    }}
-    .pipeline-item .step-content {{
-        flex: 1;
-    }}
-    .pipeline-item .step-type {{
-        font-weight: 600;
-        color: #7dd3fc;
-        font-size: 14px;
-    }}
-    .pipeline-item .step-params {{
-        font-size: 11px;
-        color: #a0a0a0;
-        margin-top: 2px;
-    }}
-    .pipeline-empty {{
-        text-align: center;
-        padding: 40px;
-        color: #6b7280;
-        border: 2px dashed #374151;
-        border-radius: 8px;
-        margin: 16px 0;
-    }}
-    .drop-zone {{
-        min-height: 60px;
-        border: 2px dashed #374151;
-        border-radius: 8px;
-        padding: 8px;
-        transition: border-color 0.2s, background 0.2s;
-    }}
-    .drop-zone.drag-over {{
-        border-color: #7dd3fc;
-        background: rgba(125, 211, 252, 0.1);
-    }}
-    </style>
-
-    <div class="pipeline-container">
-        <div id="drop-zone" class="drop-zone">
-            <div id="pipeline-list">
-            </div>
-        </div>
-        <div id="empty-msg" class="pipeline-empty" style="display: none;">
-            �_empty_placeholder😐 Перетащите процессор из палитры или добавьте через форму слева
-        </div>
-    </div>
-
-    <script>
-    const stepsData = {steps_json};
-
-    function renderSteps(steps) {{
-        const list = document.getElementById('pipeline-list');
-        const emptyMsg = document.getElementById('empty-msg');
-        const dropZone = document.getElementById('drop-zone');
-
-        if (!steps || steps.length === 0) {{
-            list.innerHTML = '';
-            emptyMsg.style.display = 'block';
-            dropZone.style.display = 'block';
-            return;
-        }}
-
-        emptyMsg.style.display = 'none';
-        list.innerHTML = steps.map((step, i) => `
-            <div class="pipeline-item" draggable="true" data-index="${{i}}">
-                <span class="handle">☰</span>
-                <span class="step-num">${{i + 1}}</span>
-                <div class="step-content">
-                    <div class="step-type">▶ ${{step.type}}</div>
-                    <div class="step-params">${{Object.keys(step.params || {{}}).length > 0
-                        ? Object.entries(step.params || {{}}).map(([k,v]) => `${{k}}=${{v}}`).join(', ')
-                        : 'без параметров'}}</div>
-                </div>
-            </div>
-        `).join('');
-
-        // Attach drag events
-        const items = list.querySelectorAll('.pipeline-item');
-        items.forEach(item => {{
-            item.addEventListener('dragstart', handleDragStart);
-            item.addEventListener('dragend', handleDragEnd);
-        }});
-
-        dropZone.style.display = 'block';
-    }}
-
-    let draggedIndex = null;
-
-    function handleDragStart(e) {{
-        draggedIndex = parseInt(e.target.dataset.index);
-        e.target.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', e.target.dataset.index);
-        e.dataTransfer.effectAllowed = 'move';
-    }}
-
-    function handleDragEnd(e) {{
-        e.target.classList.remove('dragging');
-        draggedIndex = null;
-        // Remove drag-over from all zones
-        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    }}
-
-    // Drop zone events
-    const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('dragover', (e) => {{
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        dropZone.classList.add('drag-over');
-    }});
-    dropZone.addEventListener('dragleave', () => {{
-        dropZone.classList.remove('drag-over');
-    }});
-    dropZone.addEventListener('drop', (e) => {{
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-
-        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-        const toIndex = draggedIndex;
-
-        if (!isNaN(fromIndex) && fromIndex !== toIndex) {{
-            // Reorder steps
-            const newSteps = [...stepsData];
-            const [moved] = newSteps.splice(fromIndex, 1);
-            newSteps.splice(toIndex, 0, moved);
-
-            // Dispatch custom event for Streamlit
-            const event = new CustomEvent('reorder-steps', {{
-                detail: {{ steps: newSteps }},
-                bubbles: true
-            }});
-            window.parent.document.dispatchEvent(event);
-        }}
-    }});
-
-    // Handle reordering within the list
-    function handleDragOver(e) {{
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }}
-
-    renderSteps(stepsData);
-    </script>
-    """
-
-    st.components.v1.html(html, height=max(200, len(steps) * 70 + 80), scrolling=False)
-
-    # Handle reorder events via JavaScript interop using a hidden element
-    # We use query_params to communicate the new order
-    st.markdown(
-        """
-    <script>
-    window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'reorder-steps') {
-            const params = new URLSearchParams();
-            params.set('reorder', JSON.stringify(e.data.steps));
-            window.parent.location.search = params.toString();
-        }
-    });
-    </script>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    return None
 
 
 # ─── Default yaml + session state init (BEFORE history!) ─────────────────
@@ -396,7 +95,7 @@ client = get_api_client()
 
 
 # ──────────────────────── Render Step Palette in Sidebar ─────────────────────
-_render_step_palette()
+render_step_palette()
 
 
 with st.sidebar:
@@ -538,7 +237,7 @@ with tab_visual:
         st.caption("Перетащите процессоры для изменения порядка")
 
         # Render drag-drop pipeline
-        _render_drag_drop_pipeline(steps, meta)
+        render_drag_drop_pipeline(steps, meta)
 
         st.divider()
         st.subheader("📝 Список процессоров")
