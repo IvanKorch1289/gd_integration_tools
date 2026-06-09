@@ -1,4 +1,4 @@
-# TECH_DEBT — gd_integration_tools (last update: 06.06.2026)
+# TECH_DEBT — gd_integration_tools (last update: 09.06.2026)
 
 Tracking для known issues, workarounds, и deferred work, который
 нельзя закрыть в текущем спринте, но нужно зафиксировать для
@@ -346,4 +346,64 @@ off, no page title, no icon). UX minor issue, не блокер.
 2. Address ND-001 (outbox per-transport) — 1 wave per schema migration
 3. Continue 31_DSL_Visual_Editor split (1082 → ~600 LOC target)
 4. Defer TD-007, TD-010 (frontend, low priority)
+
+---
+
+## S80-S82 TECH DEBT CLOSURE SUMMARY (2026-06-08)
+
+**S80-S82** закрыли 100% v28 ro-анализ work + 4 god-object decomp:
+
+| ID | Status | Closure commit | Verified |
+|----|--------|----------------|----------|
+| **ND-001** (outbox per-transport, 9-step chain S68→S81) | ✅ **CLOSED S80+S81** (3 waves: schema migration + per-transport gauge + Streamlit section) | S80 W3 + S81 W2 + S81 W4 | ✅ per-transport breakdown active |
+| **ND-002** (Streamlit 96 env-var-free) | ✅ **CLOSED S80 W2** | S80 W2 | ✅ CLI helpers added |
+| **ND-003** (eip/ ruff format) | ✅ **CLOSED S79 W4** | S79 W4 | ✅ ruff 0 |
+| **lifecycle.py 1142 LOC** (4th of 4 god-objects) | ✅ **CLOSED S82** (1142→5 files, 1274 LOC, 1.9x reduction) | S82 W1-W4 + ADR-0105 | ✅ file LOC verified |
+
+### S82 entry point: S83 S27 closure
+
+---
+
+## S83 TECH DEBT CLOSURE SUMMARY (2026-06-09) — S27 closure
+
+**S83** закрыл S27 (AIGateway + WorkflowBuilder.invoke_agent) + 3 quality
+фикса. Single closure commit `d42c550d` (17 files, +624 / -129).
+
+| ID | Status | Closure commit / scope | Verified |
+|----|--------|------------------------|----------|
+| **S27 W6** (WorkflowBuilder.invoke_agent Temporal activity) | ✅ **CLOSED S83 W1** | `d42c550d` (sandbox-safe via `workflow.execute_activity('_agent_invoke')`) | ✅ 10 smoke-tests |
+| **S27 closure audit** (100% LLM-callsite coverage + bypass protection) | ✅ **CLOSED S83 W2** | `d42c550d` (`PydanticAIClient` guard + `LLMCallProcessor` gateway path + flip `ai_gateway_enforce=True`) | ✅ mypy/ruff + 4 unit-tests |
+| **S3 key spec compliance** | ✅ **CLOSED S83 W3** | `d42c550d` (1024B limit + control-chars + double-slash) | ✅ 3 unit-tests |
+| **Temporal OTel observability** | ✅ **CLOSED S83 W3** | `d42c550d` (`OpenTelemetryTracingInterceptor` для client + worker) | ✅ lazy-import no-op |
+| **SLO budget enforcer** | ✅ **CLOSED S83 W4** | `d42c550d` (`check_budget()` + `@enforce_slo` + `SLOBudgetExceeded`) | ✅ 6 unit-tests |
+| **Feature-flag CI-gate** | ✅ **CLOSED S83 W4** | `d42c550d` (`tools/checks/check_feature_flag_usage.py`) | ✅ AST-based, warn-only / `--strict` |
+
+### New tech debt from S83 (to track S84+)
+
+* **TD-011**: `compile_agent_invoke_step` returns `AIResponse` instead of
+  `str` — backward-incompatible behavior change. Existing callers of
+  `WorkflowBuilder.invoke_agent()` need audit. **Severity: medium**.
+  **Fix**: per-callsite audit + selective `gateway_adapter.return_full_response`
+  adoption. Defer to S84+ workflow-usage sprint.
+
+* **TD-012**: `PydanticAIClient.run()` requires `_internal_gateway_call=True`
+  marker при `ai_gateway_enforce=True`. Future 3rd-party integrations
+  must remember the flag. **Severity: low** (audit-traceable).
+  **Fix**: add `ai_safety_audit_warning` log при bypass-guard raise.
+
+* **TD-013**: `temporal_client.OpenTelemetryTracingInterceptor` is
+  silent no-op если `temporalio[opentelemetry]` не установлен.
+  No health-check signal. **Severity: low** (observability gap).
+  **Fix**: add `_logger.warning` at startup if interceptor expected but
+  not installed.
+
+### S83 entry point: S84+ backlog
+
+Следующая сессия (S84+) должна:
+1. Address **TD-011** (compile_agent_invoke_step behavior change audit)
+2. Address **TD-012** (bypass-guard log warning)
+3. Continue 31_DSL_Visual_Editor split (1082 → ~600 LOC)
+4. Consider next god-object decomp (transport.py 990 LOC, actions.py 986 LOC)
+5. Defer TD-007, TD-010 (frontend, low priority)
+
 

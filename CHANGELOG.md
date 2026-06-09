@@ -5,6 +5,102 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 83 (2026-06-09) — S27 closure
+
+### Fixed
+
+#### s83/w1-s27-w6-agent-invoke-temporal-activity
+- `src/backend/dsl/workflow/compiler/activity_bridge.py` — новая
+  `_agent_invoke_activity` (async-обёртка для `AIGateway.invoke` вне
+  workflow-sandbox), `ActivityBridge.get()` для `'_agent_invoke'` возвращает
+  её напрямую, `_iter_activity_specs` обрабатывает `AgentInvokeDeclaration`.
+- `src/backend/dsl/workflow/compiler/step_compilers.py` —
+  `compile_agent_invoke_step` → `workflow.execute_activity('_agent_invoke', ...)`
+  вместо прямого `AIGateway().invoke()` (sandbox-safe).
+- `src/backend/services/ai/gateway_adapter.py` — `invoke_via_gateway()`
+  получил параметр `return_full_response: bool = False`.
+
+#### s83/w2-s27-closure-call-site-protection
+- `src/backend/core/ai/pydantic_ai_client.py` — guard: при
+  `ai_gateway_enforce=True` прямой `.run()` raise `RuntimeError`
+  (защита от bypass AIGateway). Внутренние вызовы из
+  `gateway_pipeline_mixin` помечаются `_internal_gateway_call=True`.
+- `src/backend/core/ai/gateway_pipeline_mixin.py` — передаёт
+  `_internal_gateway_call=True` в `PydanticAIClient.run()`.
+- `src/backend/dsl/engine/processors/ai/llmcall_processor.py` — при
+  `ai_gateway_enforce=True` маршрутизирует вызов через
+  `AIGateway().invoke()` (вместо legacy `ai_agent_service`).
+- `src/backend/core/config/features/sprints_24_27.py` —
+  `ai_gateway_enforce` default: `False` → `True` (S27 closure:
+  100% callsites обёрнуты, `make ai-gateway-coverage` strict zero).
+
+#### s83/w3-quality-fixes
+- `src/backend/infrastructure/storage/s3.py` — S3 key validation:
+  лимит 1024 байт (S3 spec), запрет control-символов, запрет
+  `//` (двойной слэш) в ключе.
+- `src/backend/infrastructure/workflow/temporal_client.py` —
+  `OpenTelemetryTracingInterceptor` для `Client.connect()` и
+  `Worker()` (observability; lazy import — no-op если
+  `temporalio[opentelemetry]` не установлен).
+
+#### s83/w4-slo-budget-enforcer
+- `src/backend/infrastructure/application/slo_tracker.py` —
+  `SLOTracker.check_budget()`, `SLOBudgetExceeded` exception,
+  `@enforce_slo` decorator (отклоняет вызов при error-rate >
+  max_error_rate).
+
+### Added
+
+#### s83/w4-feature-flag-usage-ci-gate
+- `tools/checks/check_feature_flag_usage.py` — CI-gate: анализ
+  использования feature-flags в `src/backend/core/config/features/`,
+  поиск dead flags (определены, но не используются). Режимы
+  `--strict` (exit 1) и default warn-only.
+
+#### s83/w4-slo-tracker-tests
+- `tests/unit/infrastructure/application/test_slo_tracker.py` —
+  6 unit-тестов: `record_and_percentiles`, `error_rate`,
+  `check_budget` (healthy / exceeded / no_data), `enforce_slo`
+  (allows / rejects).
+
+### Documentation
+
+#### s83/w5-adr-0106-s27-closure
+- `docs/adr/0106-s27-closure.md` — формализует S27 closure:
+  `AIGateway` как единая точка входа в AI (R-V15-9,
+  ADR-NEW-19) + `WorkflowBuilder.invoke_agent()` как Temporal
+  activity (sandbox-safe). 17 файлов, 624 insertions, 129 deletions
+  в одном closure commit (`d42c550d`).
+
+### Tests
+
+- `tests/unit/dsl/workflow/compiler/test_step_compilers.py` — 4 теста
+  `compile_agent_invoke_step` обновлены под Temporal-flow
+  (`execute_activity_return` вместо `AIGateway` mock), +1 новый
+  тест (`decl.timeout_s` priority).
+- `tests/unit/dsl/workflow/compiler/test_activity_bridge.py` — +3
+  теста: `ActivityBridge.get('_agent_invoke')` direct binding +
+  `collect_activities` discovery + mixed activity + invoke_agent.
+- `tests/unit/core/ai/test_pydantic_ai_client.py` — autouse
+  `_disable_ai_gateway_enforce` fixture, +1 тест
+  `test_run_without_internal_marker_raises` (при
+  `ai_gateway_enforce=True` и без `_internal_gateway_call` →
+  `RuntimeError`).
+- `tests/unit/dsl/engine/processors/test_llmcall_processor.py` —
+  +1 тест `test_gateway_enforce_uses_aigateway` (при
+  `ai_gateway_enforce=True` вызов идёт через `AIGateway()`).
+- `tests/unit/storage/test_s3_object_storage.py` — +3 теста:
+  `test_key_too_long_rejected`, `test_key_with_control_chars_rejected`,
+  `test_key_with_double_slash_rejected`.
+
+### Verification
+
+- mypy clean на 17 файлах
+- ruff clean на 17 файлах
+- 10 smoke-тестов `compile_agent_invoke_step` + `ActivityBridge`
+  (через `sys.modules` temporalio mock) пройдены
+- S83 closure commit: `d42c550d` (17 files, +624 / -129)
+
 ## [Unreleased] — Sprint 78 (2026-06-09)
 
 ### Fixed
