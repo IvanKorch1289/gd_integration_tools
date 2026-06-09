@@ -22,7 +22,6 @@ Idempotent: detects already-parenthesized tuples and skips.
 from __future__ import annotations
 
 import argparse
-import ast
 import re
 import sys
 from pathlib import Path

@@ -59,7 +59,7 @@ def measure_import(module: str) -> float:
         f"import {module}\n"
         "sys.stdout.write(f'{time.monotonic() - start:.4f}')\n"
     )
-    proc = subprocess.run(
+    proc = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
         [sys.executable, "-c", script], capture_output=True, text=True, timeout=30
     )
     if proc.returncode != 0:

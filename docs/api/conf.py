@@ -6,6 +6,7 @@ Sub-Sphinx-проект для автогенерации API reference из ``s
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -17,7 +18,6 @@ release = "0.0.0+unknown"  # переопределяется в _read_version()
 version = "0.0.0"
 
 # Читаем версию из pyproject.toml регекспом (без сторонних зависимостей).
-import re
 
 _PYPROJECT = Path(__file__).resolve().parents[2] / "pyproject.toml"
 if _PYPROJECT.is_file():

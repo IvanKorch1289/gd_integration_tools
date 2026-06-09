@@ -76,7 +76,7 @@ def snapshot_pg_to_sqlite(
             )
             for row in rows
         ]
-        cursor.executemany(f"INSERT INTO pg_{table} VALUES ({placeholders})", values)
+        cursor.executemany(f"INSERT INTO pg_{table} VALUES ({placeholders})", values)  # noqa: S608  # admin tool: identifier from CLI args, not user input
         counts[table] = len(rows)
 
     conn.commit()
@@ -134,7 +134,7 @@ def _select_all(pg_engine: object, table: str) -> list[dict]:
     from sqlalchemy import text
 
     with pg_engine.connect() as conn:
-        result = conn.execute(text(f"SELECT * FROM {table} LIMIT 10000"))
+        result = conn.execute(text(f"SELECT * FROM {table} LIMIT 10000"))  # noqa: S608  # admin tool: identifier from CLI args, not user input
         return [dict(row._mapping) for row in result]
 
 

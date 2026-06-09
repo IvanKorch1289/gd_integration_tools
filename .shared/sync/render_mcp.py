@@ -133,16 +133,16 @@ def main() -> int:
     # Validate source first
     source_issues = check_source()
     if source_issues:
-        print(f"[ERROR] SOURCE проблемы (НЕ пересоздаю symlinks):")
+        print("[ERROR] SOURCE проблемы (НЕ пересоздаю symlinks):")
         for i in source_issues:
             print(f"  - {i}")
         return 1
 
     create_symlink(TARGET_CLAUDE, ".shared/mcp-servers.json")
     create_symlink(TARGET_KIMI, "../.shared/mcp-servers.json")
-    print(f"[SYNC] Created symlinks:")
-    print(f"  - .mcp.json -> .shared/mcp-servers.json")
-    print(f"  - .kimi-code/mcp.json -> ../.shared/mcp-servers.json")
+    print("[SYNC] Created symlinks:")
+    print("  - .mcp.json -> .shared/mcp-servers.json")
+    print("  - .kimi-code/mcp.json -> ../.shared/mcp-servers.json")
     return 0
 
 

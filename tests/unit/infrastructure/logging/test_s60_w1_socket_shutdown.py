@@ -11,9 +11,7 @@ atexit / SIGTERM сокеты оставались открытыми → FD lea
 
 from __future__ import annotations
 
-import asyncio
 import socket
-from unittest.mock import patch
 
 import pytest
 
@@ -126,12 +124,9 @@ def test_structlog_backend_shutdown_closes_gelf_sinks() -> None:
 
     Проверяем, что shutdown правильно вызывает close_sync через SinkRouter.
     """
+    from src.backend.infrastructure.logging.router import configure_router, reset_router
     from src.backend.infrastructure.logging.structlog_backend import (
         StructlogGraylogBackend,
-    )
-    from src.backend.infrastructure.logging.router import (
-        configure_router,
-        reset_router,
     )
 
     reset_router()  # clean state
@@ -151,10 +146,10 @@ def test_structlog_backend_shutdown_closes_gelf_sinks() -> None:
 
 def test_structlog_backend_shutdown_no_router() -> None:
     """shutdown() работает даже если router не инициализирован (no-op)."""
+    from src.backend.infrastructure.logging.router import reset_router
     from src.backend.infrastructure.logging.structlog_backend import (
         StructlogGraylogBackend,
     )
-    from src.backend.infrastructure.logging.router import reset_router
 
     reset_router()
     backend = StructlogGraylogBackend()

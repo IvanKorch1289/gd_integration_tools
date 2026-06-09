@@ -38,14 +38,14 @@ def _compose_up() -> int:
         return 2
     cmd = ["docker", "compose", "-f", str(COMPOSE_FILE), "up", "-d"]
     print(f"$ {' '.join(cmd)}")
-    proc = subprocess.run(cmd)
+    proc = subprocess.run(cmd)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     return proc.returncode
 
 
 def _compose_down() -> int:
     cmd = ["docker", "compose", "-f", str(COMPOSE_FILE), "down"]
     print(f"$ {' '.join(cmd)}")
-    return subprocess.run(cmd).returncode
+    return subprocess.run(cmd).returncode  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
 
 
 def _ensure_extension(name: str) -> Path:
@@ -120,11 +120,11 @@ def main(argv: list[str] | None = None) -> int:
     test_proc: subprocess.Popen | None = None
     if args.auto_test:
         print("Starting tests in background…")
-        test_proc = subprocess.Popen(test_cmd, env=env)
+        test_proc = subprocess.Popen(test_cmd, env=env)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
 
     print("Starting backend (foreground; Ctrl+C — stop)…")
     try:
-        return subprocess.run(backend_cmd, env=env).returncode
+        return subprocess.run(backend_cmd, env=env).returncode  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     finally:
         if test_proc is not None:
             test_proc.terminate()

@@ -20,20 +20,16 @@ from typing import Any
 
 import pytest
 
-from src.backend.infrastructure.logging.structlog_backend import (
-    StructlogGraylogBackend,
-    StructlogLogger,
-)
-from src.backend.infrastructure.logging.router import (
-    configure_router,
-    reset_router,
-)
 from src.backend.infrastructure.logging.factory import (
     configure_logging,
     get_logger,
     shutdown_logging,
 )
-
+from src.backend.infrastructure.logging.router import configure_router, reset_router
+from src.backend.infrastructure.logging.structlog_backend import (
+    StructlogGraylogBackend,
+    StructlogLogger,
+)
 
 # ---------------------------------------------------------------------- helper: UDP server
 

@@ -245,18 +245,8 @@ def _is_processor_spec(value: dict) -> bool:
     """Проверяет, похож ли dict на спецификацию процессора DSL."""
     if not isinstance(value, dict):
         return False
-    # Спецификация процессора обычно содержит параметры, но не другие вложенные процессоры
-    # Это упрощенная эвристика
-    known_processor_keys = {
-        "type",
-        "class",
-        "processor",
-        "name",
-        "timeout",
-        "retry",
-        "on_error",
-    }
-    # Если dict содержит только известные параметры конфигурации — это может быть спецификация
+    # Упрощенная эвристика: любое непустое dict считается потенциальной спецификацией.
+    # TODO: проверка через known_processor_keys (S78+ backlog).
     return bool(value)
 
 

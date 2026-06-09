@@ -35,7 +35,6 @@ import logging
 import sys as _sys
 
 from fastapi import FastAPI
-
 from windows_worker.handlers.com_handler import router as com_router
 from windows_worker.handlers.desktop_rpa_handler import router as rpa_router
 

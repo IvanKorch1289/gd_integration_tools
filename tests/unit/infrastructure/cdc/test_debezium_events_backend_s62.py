@@ -16,9 +16,8 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import AsyncIterator
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 

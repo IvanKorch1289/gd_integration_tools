@@ -16,7 +16,7 @@ from pathlib import Path
 
 def main(paths: list[str]) -> int:
     cmd = [sys.executable, "-m", "mypy", "--cache-dir=/dev/null", *paths]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     unused_re = re.compile(
         r"^(?P<path>.+?):(?P<line>\d+):\s*(?:\d+:\s*)?error:\s*"
         r'Unused "type: ignore(?:\[(?P<code>[^\]]+)\])?" comment'

@@ -86,7 +86,7 @@ def _classify(filename: str) -> str:
 
 def _parse(path: Path) -> dict[str, _LayerStats]:
     """Парсит cobertura XML и собирает stats по слоям."""
-    tree = ET.parse(path)
+    tree = ET.parse(path)  # noqa: S314  # trusted input: coverage report from our own tool
     root = tree.getroot()
     stats: dict[str, _LayerStats] = {layer: _LayerStats() for layer in _LAYER_ORDER}
 

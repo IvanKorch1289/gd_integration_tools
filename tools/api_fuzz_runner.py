@@ -145,7 +145,7 @@ def _run_schemathesis(args: argparse.Namespace) -> tuple[int, str, str]:
         "--exitfirst",  # выходим после первой ошибки для скорости
     ]
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
             cmd, capture_output=True, text=True, timeout=600, check=False
         )
         return result.returncode, result.stdout, result.stderr

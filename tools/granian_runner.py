@@ -114,7 +114,7 @@ def main() -> int:
             argv = granian_cmd.split() + cmd[1:]
         else:
             argv = cmd
-        return subprocess.call(argv)
+        return subprocess.call(argv)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     except FileNotFoundError:
         print(
             f"ERROR: granian не найден ({granian_cmd}). "

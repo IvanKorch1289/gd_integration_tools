@@ -151,7 +151,6 @@ def check_deadlock() -> int:
         # Собираем информацию о потоках
         print(f"\n[INFO] Found {len(frames)} thread(s) with stack frames:\n")
 
-        deadlock_suspected = False
         for thread_id, frame in frames.items():
             thread_name = "Unknown"
             for t in threading.enumerate():

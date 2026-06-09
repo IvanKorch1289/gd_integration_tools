@@ -234,7 +234,7 @@ def _get_module_namespace(module_name: str) -> dict[str, Any]:
                         i += 1
                     break  # Only handle first TYPE_CHECKING block
                 i += 1
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     ns.pop("TYPE_CHECKING", None)
@@ -363,7 +363,7 @@ def _resolve_annotation(
                         resolved = module_ns[bare]
                     # else fall through with the bare string
                 return _format_type_str(resolved)
-            except Exception:
+            except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
                 pass
         return annotation
     if isinstance(annotation, ForwardRef):
@@ -373,7 +373,7 @@ def _resolve_annotation(
                     globalns=module_ns, localns=module_ns
                 )
                 return _format_type_str(resolved)
-            except Exception:
+            except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
                 pass
         return annotation.__forward_arg__
     return _format_type_str(annotation)
@@ -531,7 +531,7 @@ def _build_method_imports(
             )
             for ann in hints.values():
                 names.update(_extract_fq_names_from_annotation(ann))
-        except Exception:
+        except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
             pass
 
     # Also scan raw __annotations__ for type ALIAS names that get_type_hints

@@ -71,7 +71,7 @@ def proofread_docs(
     finally:
         try:
             tool.close()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110  # silent fallback (best-effort cleanup, non-critical)
             pass
     return issues
 

@@ -87,7 +87,7 @@ class CheckResult:
 
 
 def _run_cmd(cmd: list[str], *, cwd: Path = ROOT) -> tuple[int, str, str]:
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=600)
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=600)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     return proc.returncode, proc.stdout, proc.stderr
 
 

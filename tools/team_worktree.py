@@ -61,8 +61,8 @@ def cmd_create(team_id: str) -> int:
         return 0
 
     branch_exists = (
-        subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],
+        subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
+            ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],  # noqa: S607  # PATH-managed executable (partial path intentional)
             check=False,
         ).returncode
         == 0
@@ -75,7 +75,7 @@ def cmd_create(team_id: str) -> int:
         cmd.extend([str(worktree_path), branch])
 
     print(f"Creating worktree: {' '.join(cmd)}")
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
     if result.returncode != 0:
         return result.returncode
     print(f"✓ Worktree created: {worktree_path} (branch: {branch})")
@@ -87,7 +87,7 @@ def cmd_list() -> int:
     """Список активных worktree (включая master)."""
     print("Active git worktrees:")
     result = subprocess.run(
-        ["git", "worktree", "list"], check=False, capture_output=True, text=True
+        ["git", "worktree", "list"], check=False, capture_output=True, text=True  # noqa: S607  # PATH-managed executable (partial path intentional)
     )
     print(result.stdout)
 

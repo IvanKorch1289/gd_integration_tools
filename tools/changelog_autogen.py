@@ -45,7 +45,7 @@ def _parse_git_log(from_ref: str | None = None, to_ref: str = "HEAD") -> list[Co
         cmd.append(to_ref)
 
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
             cmd, cwd=ROOT, capture_output=True, text=True, check=True
         )
     except subprocess.CalledProcessError as exc:

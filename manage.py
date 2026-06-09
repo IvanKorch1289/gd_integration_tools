@@ -503,14 +503,14 @@ def diagnose(
             breaker_registry,
         )
         diagnostics["breakers"] = breaker_registry.get_all_status()
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Services
     try:
         from src.backend.core.svcs_registry import list_services
         diagnostics["services"] = sorted(list_services())
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Routes count
@@ -522,14 +522,14 @@ def diagnose(
             diagnostics["routes"] = [
                 {"name": r.name, "source": r.source} for r in routes
             ]
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Actions count
     try:
         from src.backend.core.actions import ActionHandlerRegistry
         diagnostics["actions_count"] = len(ActionHandlerRegistry.get_all_actions())
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Feature flags
@@ -540,7 +540,7 @@ def diagnose(
             # In non-verbose mode, only show flags that are ON
             flags = {k: v for k, v in flags.items() if v}
         diagnostics["feature_flags"] = flags
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     if json_output:
@@ -1240,7 +1240,7 @@ def workflow_dryrun(
                 "выполняется в read-only режиме (без записи trace).",
                 err=True,
             )
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     if not file.exists():
@@ -1382,9 +1382,7 @@ def workflow_cancel(
 
     async def _run() -> int:
         from src.backend.core.workflow.backend import WorkflowHandle
-        from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         backend = await create_workflow_backend(kind="auto")
         handle = WorkflowHandle(
@@ -1415,7 +1413,7 @@ def workflow_cancel(
                         "namespace": namespace,
                     },
                 )
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110  # silent fallback (best-effort cleanup, non-critical)
             pass
 
         typer.echo(f"OK: cancelled workflow {workflow_id!r} (reason={reason!r})")
@@ -1452,10 +1450,7 @@ def plugin_hot_swap(
     async def _run() -> int:
         try:
             # Lazy-import, чтобы CLI стартовал быстро.
-            from src.backend.core.plugin_runtime.hot_swap import (
-                HotSwapError,
-                hot_swap,
-            )
+            from src.backend.core.plugin_runtime.hot_swap import HotSwapError, hot_swap
         except ImportError as exc:
             typer.echo(f"ERR: hot_swap unavailable: {exc}", err=True)
             return 1
@@ -1531,7 +1526,6 @@ def plugin_serve(
     watch: bool = typer.Option(False, "--watch", help="Hot-reload через watchfiles"),
 ) -> None:
     """Sprint 14 K5 W4: запуск local dev-сервера с одним плагином."""
-    import sys as _sys  # noqa: PLC0415
     from importlib import util as _util  # noqa: PLC0415
 
     pds_path = Path(__file__).resolve().parent / "tools" / "plugin_dev_server.py"
@@ -1563,7 +1557,8 @@ def plugin_publish(
     skip_upload: bool = typer.Option(False, "--skip-upload"),
 ) -> None:
     """Sprint 14 W3: bundle + SBOM + cosign + upload плагина."""
-    from tools.publish_plugin import PublishConfig, run as publish_run  # noqa: PLC0415
+    from tools.publish_plugin import PublishConfig  # noqa: PLC0415
+    from tools.publish_plugin import run as publish_run
 
     plugin_dir = Path("extensions") / name
     cfg = PublishConfig(

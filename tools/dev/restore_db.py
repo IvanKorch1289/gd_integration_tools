@@ -55,7 +55,7 @@ def restore_pg_from_sqlite(
                 continue
             if truncate_first:
                 pg_conn.execute(text(f"TRUNCATE TABLE {table} CASCADE"))
-            sqlite_cur.execute(f"SELECT * FROM pg_{table}")
+            sqlite_cur.execute(f"SELECT * FROM pg_{table}")  # noqa: S608  # admin tool: identifier from CLI args, not user input
             rows = sqlite_cur.fetchall()
             if not rows:
                 counts[table] = 0
@@ -72,7 +72,7 @@ def restore_pg_from_sqlite(
                             pass
                 pg_conn.execute(
                     text(
-                        f"INSERT INTO {table} ({', '.join(cols)}) "
+                        f"INSERT INTO {table} ({', '.join(cols)}) "  # noqa: S608  # admin tool: identifier from CLI args, not user input
                         f"VALUES ({placeholders})"
                     ),
                     params,

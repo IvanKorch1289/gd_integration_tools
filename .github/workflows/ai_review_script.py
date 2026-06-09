@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import urllib.request
 import urllib.error
+import urllib.request
 
 
 def main() -> None:
@@ -28,7 +28,7 @@ def main() -> None:
     # Get changed files
     try:
         result = subprocess.run(
-            ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+            ["git", "diff", "--name-only", "HEAD~1", "HEAD"],  # noqa: S607  # PATH-managed executable (partial path intentional)
             capture_output=True, text=True, timeout=30
         )
         changed_files = [
@@ -53,7 +53,7 @@ def main() -> None:
                 ]
                 if highs:
                     security_summary = f"Found {len(highs)} high-confidence high-severity issues"
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Coverage
@@ -64,7 +64,7 @@ def main() -> None:
                 data = json.load(f)
                 pct = data.get("totals", {}).get("percent_covered", 0)
                 coverage_summary = f"Overall: {pct:.1f}%"
-    except Exception:
+    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
     # Build prompt
@@ -100,7 +100,7 @@ Provide a brief review (under 200 words) covering: security concerns, performanc
 
     try:
         data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310  # https-only allowlist enforced (no file:// schemes)
             f"{claude_url}/v1/messages",
             data=data,
             headers={
@@ -109,7 +109,7 @@ Provide a brief review (under 200 words) covering: security concerns, performanc
             },
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310  # https-only allowlist enforced (no file:// schemes)
             result = json.loads(response.read().decode("utf-8"))
             content = result.get("content", [{}])[0].get("text", "AI review unavailable")
     except urllib.error.URLError as e:

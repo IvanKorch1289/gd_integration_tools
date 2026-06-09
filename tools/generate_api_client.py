@@ -504,10 +504,10 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
 
         if qp_lines:
             method_code.append("            params: dict[str, Any] = {}")
-            method_code.extend(["    " + l for l in qp_lines])
+            method_code.extend(["    " + line for line in qp_lines])
 
         if json_lines:
-            method_code.extend(["    " + l for l in json_lines])
+            method_code.extend(["    " + line for line in json_lines])
 
         # URL
         if ep.path_params:

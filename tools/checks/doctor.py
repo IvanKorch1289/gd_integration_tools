@@ -74,7 +74,7 @@ def check_uv_available(report: DoctorReport) -> None:
     """uv установлен в PATH."""
     try:
         proc = subprocess.run(
-            ["uv", "--version"], capture_output=True, text=True, timeout=5
+            ["uv", "--version"], capture_output=True, text=True, timeout=5  # noqa: S607  # PATH-managed executable (partial path intentional)
         )
         report.add("uv-binary", proc.returncode == 0, proc.stdout.strip())
     except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
@@ -147,7 +147,7 @@ def check_taskiq_zero(report: DoctorReport) -> None:
 
 def _run_tool(cmd: list[str]) -> tuple[bool, str]:
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
         return proc.returncode == 0, proc.stdout.splitlines()[-1] if proc.stdout else ""
     except subprocess.TimeoutExpired:
         return False, "TIMEOUT"
