@@ -9,6 +9,8 @@
   (created_at < now - threshold_seconds) для stuck-detection алертов.
 * :func:`count_stuck_pending` — быстрый подсчёт stuck-сообщений для
   Prometheus gauge.
+* :func:`count_stuck_pending_by_transport` — per-transport breakdown
+  для per-transport Grafana panels (S80 W3, ND-001 step 3).
 * :func:`mark_sent` / :func:`mark_failed` — обновление статуса после
   попытки публикации.
 """
@@ -26,6 +28,7 @@ from src.backend.infrastructure.database.session_manager import main_session_man
 
 __all__ = (
     "count_stuck_pending",
+    "count_stuck_pending_by_transport",
     "fetch_pending",
     "fetch_stuck_pending",
     "mark_failed",
@@ -136,6 +139,8 @@ async def count_stuck_pending(*, threshold_seconds: int) -> int:
     Returns:
         Количество stuck-сообщений. 0 если ни одного.
     """
+    if threshold_seconds <= 0:
+        raise ValueError("threshold_seconds должен быть > 0")
     cutoff = datetime.now(UTC) - timedelta(seconds=threshold_seconds)
     async with main_session_manager.create_session() as session:
         stmt = (
@@ -147,6 +152,36 @@ async def count_stuck_pending(*, threshold_seconds: int) -> int:
         )
         result = await session.execute(stmt)
         return int(result.scalar_one())
+
+
+async def count_stuck_pending_by_transport(
+    *, threshold_seconds: int
+) -> dict[str, int]:
+    """Per-transport breakdown stuck-pending counts (S80 W3, ND-001 step 3).
+
+    Returns:
+        dict {transport: stuck_count} для всех transports с non-zero stuck.
+        Транспорты с 0 stuck excluded (Prometheus label cardinality reduction).
+
+    Example:
+        {"kafka": 42, "s3": 7}  # только non-zero
+
+    Note: возвращает только non-zero для уменьшения label cardinality.
+    Use :func:`count_stuck_pending` для aggregate.
+    """
+    if threshold_seconds <= 0:
+        raise ValueError("threshold_seconds должен быть > 0")
+    cutoff = datetime.now(UTC) - timedelta(seconds=threshold_seconds)
+    async with main_session_manager.create_session() as session:
+        stmt = (
+            select(OutboxMessage.transport, func.count())
+            .where(OutboxMessage.status == "pending")
+            .where(OutboxMessage.created_at < cutoff)
+            .where(OutboxMessage.retry_count == 0)
+            .group_by(OutboxMessage.transport)
+        )
+        result = await session.execute(stmt)
+        return {transport: int(count) for transport, count in result.all()}
 
 
 async def mark_sent(message_id: int) -> None:

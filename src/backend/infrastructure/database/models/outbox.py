@@ -48,6 +48,13 @@ class OutboxMessage(BaseModel):
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     last_error: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
+    # S80 W3 (ND-001 step 1): transport tag для per-transport breakdown.
+    # Values: "kafka" | "rabbitmq" | "nats" | "clickhouse" | "s3" | "webhook" | "other".
+    # Default='other' для backwards-compat с existing rows (pre-migration).
+    transport: Mapped[str] = mapped_column(
+        String(32), default="other", index=True
+    )
+
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
