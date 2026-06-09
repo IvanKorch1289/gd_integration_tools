@@ -5,8 +5,10 @@
 default_yaml) — те, что не зависят от Streamlit runtime.
 
 Streamlit-зависимые функции (``push_history``, ``undo``, ``redo``,
-``sync_yaml``) покрываются integration-тестами когда streamlit
-установлен (требует ``uv pip install gd_advanced_tools[frontend]``).
+``sync_yaml``) покрываются в
+``tests/unit/frontend/test_dsl_editor_helpers_integration.py`` (S78 W3)
+через ``_MockSessionState`` + monkeypatch инжект mock streamlit модуля.
+Real streamlit install НЕ требуется.
 
 Wave: ``[wave:s77/w3-dsl-editor-split]``.
 """
