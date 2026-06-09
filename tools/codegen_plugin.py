@@ -340,10 +340,79 @@ class PluginCodegen:
         )
 
 
+def _interactive_prompts() -> dict[str, object] | None:
+    """Collect args via questionary prompts. Returns None if user cancels.
+
+    S42 W4 (Sprint 42 #5): interactive prompts для `make new-plugin`.
+    Паттерн из tools/wizards/plugin_wizard.py (S33 W2) + tools/wizards/onboarding_wizard.py (S42 W2).
+    """
+    try:
+        import questionary
+    except ImportError:
+        print(
+            "[ERROR] questionary not installed. Run: uv sync --extra dev",
+            file=sys.stderr,
+        )
+        return None
+
+    try:
+        name = questionary.text(
+            "Plugin name (snake_case):",
+            validate=lambda t: bool(
+                re.fullmatch(r"[a-z][a-z0-9_]{1,63}", t)
+            )
+            or "Use snake_case (2-64 chars, start with letter)",
+        ).ask()
+        if not name:
+            return None
+
+        description = questionary.text(
+            "Short description:", default="TODO: plugin description"
+        ).ask()
+
+        features_raw = questionary.text(
+            "Features (comma-separated, e.g. 'ping,echo'):",
+            default="",
+        ).ask()
+        features = [f.strip() for f in (features_raw or "").split(",") if f.strip()]
+
+        capabilities_raw = questionary.text(
+            "Capabilities (comma-separated, e.g. 'mq.publish:topic.*,http.outbound'):",
+            default="",
+        ).ask()
+        capabilities = [
+            c.strip() for c in (capabilities_raw or "").split(",") if c.strip()
+        ]
+
+        with_frontend = questionary.confirm(
+            "Include Streamlit frontend (frontend/pages/)?", default=True
+        ).ask()
+
+        overwrite = questionary.confirm(
+            "Overwrite existing plugin dir (if any)?", default=False
+        ).ask()
+
+        return {
+            "name": name,
+            "description": description or "",
+            "features": features,
+            "capabilities": capabilities,
+            "with_frontend": with_frontend,
+            "overwrite": overwrite,
+        }
+    except (KeyboardInterrupt, EOFError):
+        return None
+
+
 def main(argv: list[str] | None = None) -> int:
     """Точка входа CLI."""
     parser = argparse.ArgumentParser(description="Codegen V11 plugin skeleton.")
-    parser.add_argument("--name", required=True, help="snake_case имя плагина")
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="интерактивный режим (questionary prompts)",
+    )
+    parser.add_argument("--name", required=False, help="snake_case имя плагина")
     parser.add_argument(
         "--features",
         default="",
@@ -365,6 +434,23 @@ def main(argv: list[str] | None = None) -> int:
         help="перезаписать существующий каталог плагина",
     )
     args = parser.parse_args(argv)
+
+    # Interactive mode: collect via questionary, override args.
+    if args.interactive:
+        answers = _interactive_prompts()
+        if answers is None:
+            print("[ABORTED] interactive mode cancelled", file=sys.stderr)
+            return 130  # SIGINT convention
+        args.name = str(answers["name"])
+        args.features = ",".join(answers["features"])  # type: ignore[arg-type]
+        args.capabilities = ",".join(answers["capabilities"])  # type: ignore[arg-type]
+        args.with_frontend = bool(answers["with_frontend"])
+        args.overwrite = bool(answers["overwrite"])
+        # description используется только в interactive — store as attribute
+        args.description = str(answers["description"])  # type: ignore[attr-defined]
+    else:
+        if not args.name:
+            parser.error("--name required (или --interactive)")
 
     features = [f.strip() for f in args.features.split(",") if f.strip()]
     capabilities = [c.strip() for c in args.capabilities.split(",") if c.strip()]
