@@ -131,9 +131,11 @@ class _DSLRoutesFacade:
     """Адаптер над :class:`YAMLStore` для action-маршрутов."""
 
     async def list_routes(self) -> list[str]:
+        """Возвращает отсортированный список route_id из YAMLStore."""
         return _yaml_store().list()
 
     async def get_route(self, *, route_id: str) -> RouteDetailOut:
+        """Загружает YAML + spec + python для маршрута. 404 если не найден."""
         store = _yaml_store()
         if not store.exists(route_id):
             raise HTTPException(
@@ -150,6 +152,7 @@ class _DSLRoutesFacade:
         return _to_detail(pipeline)
 
     async def create_route(self, *, yaml: str) -> RouteDetailOut:
+        """Создаёт новый маршрут из YAML. 409 если route_id уже существует."""
         pipeline = _parse_yaml_or_400(yaml)
         store = _yaml_store()
         if store.exists(pipeline.route_id):
@@ -165,6 +168,7 @@ class _DSLRoutesFacade:
         return _to_detail(pipeline)
 
     async def update_route(self, *, route_id: str, yaml: str) -> RouteDetailOut:
+        """Обновляет существующий маршрут. 404 если нет, 400 если route_id mismatch."""
         store = _yaml_store()
         if not store.exists(route_id):
             raise HTTPException(
@@ -185,6 +189,7 @@ class _DSLRoutesFacade:
         return _to_detail(pipeline)
 
     async def delete_route(self, *, route_id: str) -> Response:
+        """Удаляет маршрут. 204 на успех, 404 если не найден."""
         store = _yaml_store()
         if not store.delete(route_id):
             raise HTTPException(
@@ -195,6 +200,7 @@ class _DSLRoutesFacade:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     async def validate_route(self, *, yaml: str) -> RouteValidationOut:
+        """Валидирует YAML без записи. Возвращает valid=True/False + details."""
         try:
             pipeline = load_pipeline_from_yaml(yaml)
         except (ValueError, ImportError) as exc:

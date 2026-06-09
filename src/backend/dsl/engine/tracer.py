@@ -39,6 +39,12 @@ class TraceEvent:
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация в dict для JSON API responses.
+
+        Returns:
+            JSON-safe dict с rounded duration (2 знака после запятой).
+            Используется endpoint'ом ``GET /admin/dsl-routes/{id}/traces``.
+        """
         return {
             "route_id": self.route_id,
             "processor_name": self.processor_name,

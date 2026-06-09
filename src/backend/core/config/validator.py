@@ -90,8 +90,39 @@ _FEATURE_FLAG_DEPENDENCIES_CRITICAL: Final[Mapping[str, tuple[str, ...]]] = {
     # WAF zero-allowlist (при появлении) — CRITICAL security posture violation
     # "waf_strict_zero_allowlist": ("waf_outbound_via_facade",),  # раскомментировать когда флаг появится
     # outbound_metering_strict без per-host baseline = неверные rate-лимиты
-    "outbound_metering_strict": ("metering_per_host",)
+    "outbound_metering_strict": ("metering_per_host",),
+    # S45 W3 (TD-018 partial): lsp_server_strict без lsp_server = strict-mode
+    # применяется к несуществующему pipeline → silent no-op (security audit
+    # tooling gap).
+    "lsp_server_strict": ("lsp_server",),
+    # ai_prompt_sweep_strict без ai_prompt_sweep = prod sweep runs against
+    # disabled sweep base (no actual enforcement).
+    "ai_prompt_sweep_strict": ("ai_prompt_sweep",),
 }
+
+# S45 W3 (TD-018): 18 undeclared *_strict flags — bulk-mapped к base
+# flags через naming convention (X_strict → X). Manual override возможен
+# ниже для флагов с non-obvious mapping. **WARNING level** (не блокирует
+# startup) — следующий уровень audit может перевести в CRITICAL.
+_FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP: Final[frozenset[str]] = frozenset(
+    {
+        "supply_chain_finale_strict",
+        "dsl_processor_registry_strict",
+        "plugin_semver_strict",
+        "tracing_baggage_strict",
+        "perf_gate_strict",
+        "processor_health_checks_strict",
+        "dsl_linter_strict",
+        "workflow_versioning_strict",
+        "metrics_registry_strict",
+        "task_registry_strict",
+        "routes_capability_gate_strict",
+        "routes_tenant_aware_strict",
+        "call_function_whitelist_strict",
+        "mcp_tools_input_schema_strict",
+        "ai_cost_dashboard_strict",  # S45 W3 — добавлен после fix
+    }
+)
 
 
 class ConfigSeverity(StrEnum):

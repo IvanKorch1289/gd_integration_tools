@@ -392,7 +392,49 @@ off, no page title, no icon). UX minor issue, не блокер.
   **Fix**: add `_logger.warning` at startup if interceptor expected but
   not installed.
 
-### S83 entry point: S84+ backlog
+## TD-018: `feature-flag-strict-undeclared` (medium, S45 W3 ✅ CLOSED)
+
+**Файл:** `src/backend/core/config/features/` (package, S38 T1.3.0+),
+`src/backend/core/config/validator.py`,
+`tools/checks/check_feature_flag_dependencies.py`.
+
+**S45 W3 fix**:
+- 2 CRITICAL pairs добавлены: `lsp_server_strict → lsp_server`,
+  `ai_prompt_sweep_strict → ai_prompt_sweep` (security audit).
+- 17 WARNING pairs через `_FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP`
+  (frozenset): naming convention `X_strict → X`.
+- Check script updated: regex `frozenset(\s*\{([^}]+)\}` для automap scan.
+- **Verification**: `python tools/checks/check_feature_flag_dependencies.py --strict`
+  → **0 violations** (было 18).
+
+**Caveat**: automap = WARNING level (не блокирует startup). Ручной
+review нужен для CRITICAL promotion. Trade-off: bulk-mapping быстрее,
+но менее точен чем per-flag manual review.
+
+**Refs**: S41 W2 audit, S45 W3 bulk-fix.
+
+---
+
+## TD-006: `phantom-version-security-audit` (medium, S45 W1 ✅ CLOSED)
+
+**Файлы:** `docs/SECURITY_VULNS_2026-06-05.md`, `tools/verify_pypi_versions.py`,
+`tools/verify_npm_versions.py`, `frontend/admin-react/package.json`,
+`pyproject.toml`.
+
+**Проблема**: AI-generated security advisories могут hallucinate version
+numbers (chromadb 1.5.20, vite 6.4.6). `uv sync` / `npm install` FAILED.
+
+**S44 W3 + S45 W1 fix**:
+- `tools/verify_pypi_versions.py` (174 LOC) — PyPI JSON API check.
+- `tools/verify_npm_versions.py` (175 LOC) — npm Registry API check.
+- Оба с `--strict` mode для CI integration.
+
+**Verification**: live run не находит phantom versions в текущих
+pyproject.toml / package.json. **TD-006 CLOSED** (PyPI + npm sides).
+
+**Refs**: S44 W3, S45 W1, ADR-0117, ADR-0118.
+
+### S85+ entry point: S86+ backlog
 
 Следующая сессия (S84+) должна:
 1. Address **TD-011** (compile_agent_invoke_step behavior change audit)

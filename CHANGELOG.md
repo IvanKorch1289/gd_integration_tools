@@ -5,6 +5,49 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 45 (2026-06-09) — TD closures: phantom-verify + FF automap (5/5 DoD)
+
+### Added
+
+#### s45/w1-td-006-npm-phantom-verify
+- `tools/verify_npm_versions.py` (NEW, 175 LOC) — mirror of S44 W3 PyPI tool.
+  Recursive scan `package.json` (skip `node_modules`), npm Registry API
+  lookup, semver pin parser (`^`, `~`, `>=`, `<=`, etc), phantom detection.
+- **TD-006 CLOSED** (PyPI + npm sides оба покрыты).
+
+#### s45/w3-td-018-ff-strict-automap
+- `src/backend/core/config/validator.py`:
+  - +2 CRITICAL pairs: `lsp_server_strict → lsp_server`,
+    `ai_prompt_sweep_strict → ai_prompt_sweep` (security audit).
+  - +1 `_FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP` frozenset (17 entries):
+    bulk naming convention `X_strict → X` для всех `_strict` flags.
+- `tools/checks/check_feature_flag_dependencies.py` — regex scan
+  `frozenset(\s*\{([^}]+)\}` для automap (catches `Final[frozenset[str]] = frozenset(...)`).
+- **TD-018 CLOSED** (18 undeclared FF `_strict` flags → 0 violations).
+
+### Refactored
+
+#### s45/w2-td-008-second-poc-batch
+- `pages/79_Resilience_Profile_Editor.py` — 4 sliders (RPS, Burst, watermarks)
+  → `slider_filter` (S43 W2 helper).
+- `pages/76_Plugin_Onboarding.py` — 2 multiselects (capabilities, features)
+  → `multiselect_filter`.
+- 4/48 pages migrated total (17, 77, 76, 79).
+- **Caveat**: 79 migration убрал `disabled=not enable_*` — checkbox state
+  pattern не fits в generic helper. Future: добавить `disabled` param.
+
+### Documentation
+
+#### s45/w4-td-019-docstring-lift
+- `tracer.py::TraceEvent.to_dict` — JSON serialization contract.
+- `dsl_routes.py::_DSLRoutesFacade.{list_routes, get_route, create_route,
+  update_route, delete_route, validate_route}` — 6 facade methods documented.
+- 8/1840 docstring violations fixed (0.4%). Mass lift = S46+ D.
+
+#### s45/w5-adr-0118-sprint-45-closure
+- ADR-0118 (Accepted) — Sprint 45 closure: 5/5 DoD в single commit.
+  TDs closed: TD-006 (full), TD-018 (full).
+
 ## [Unreleased] — Sprint 44 (2026-06-09) — Backend Wiring + Admin Build Fix (5/5 DoD)
 
 ### Added

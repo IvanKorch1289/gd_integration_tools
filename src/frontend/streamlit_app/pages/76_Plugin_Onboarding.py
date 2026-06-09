@@ -19,6 +19,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.filters import multiselect_filter  # S45 W2
 
 setup_page("Plugin Onboarding", "🧪")
 st.title("🧪 Plugin Onboarding Wizard")
@@ -94,7 +95,7 @@ elif step == 2:
         "fs.create_new",
         "ai.llm.openai",
     ]
-    data["capabilities"] = st.multiselect(
+    data["capabilities"] = multiselect_filter(
         "Какие ресурсы плагин будет использовать?",
         options=sorted(set(options)),
         default=data["capabilities"],
@@ -120,7 +121,7 @@ elif step == 3:
         "repository",
         "frontend_page",
     ]
-    data["features"] = st.multiselect(
+    data["features"] = multiselect_filter(
         "Какие шаблоны сгенерировать сразу?",
         options=feature_options,
         default=data["features"],

@@ -10,6 +10,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (TD-008)
 
 setup_page("Resilience Profile Editor", "⚙️")
 st.title("⚙️ Resilience Profile Editor")
@@ -58,13 +59,19 @@ with tab_edit:
 
     st.markdown("### Rate Limit (optional)")
     enable_rl = st.checkbox("Enable rate limit")
-    rl_rps = st.slider("RPS", 1, 10000, 100, disabled=not enable_rl)
-    rl_burst = st.slider("Burst", 1, 100, 20, disabled=not enable_rl)
+    rl_rps = slider_filter("RPS", min_value=1, max_value=10000, default=100, key="rl_rps")
+    rl_burst = slider_filter(
+        "Burst", min_value=1, max_value=100, default=20, key="rl_burst"
+    )
 
     st.markdown("### Bulkhead (optional)")
     enable_bh = st.checkbox("Enable bulkhead")
-    bh_high = st.slider("High watermark", 10, 1000, 100, disabled=not enable_bh)
-    bh_low = st.slider("Low watermark", 5, 500, 50, disabled=not enable_bh)
+    bh_high = slider_filter(
+        "High watermark", min_value=10, max_value=1000, default=100, key="bh_high"
+    )
+    bh_low = slider_filter(
+        "Low watermark", min_value=5, max_value=500, default=50, key="bh_low"
+    )
 
     if st.button("💾 Save Profile", type="primary"):
         if not name.strip():

@@ -100,6 +100,20 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
     for key in critical_match:
         critical_deps.add(key.strip())
 
+    # S45 W3 (TD-018): _FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP — bulk
+    # mapping для *X_strict → X (naming convention). Каждый ключ в
+    # automap уже considered WARNING-declared (X_strict requires X).
+    # Ищем сначала type-annotated `Final[frozenset[str]] = frozenset(`,
+    # затем plain `frozenset(` (для back-compat).
+    automap_match = re.findall(
+        r"frozenset\(\s*\{([^}]+)\}",
+        validator_py,
+    )
+    if automap_match:
+        for entry in automap_match:
+            for key_match in re.findall(r'"([^"]+)"', entry):
+                warning_deps.add(key_match.strip())
+
     return warning_deps, critical_deps
 
 
