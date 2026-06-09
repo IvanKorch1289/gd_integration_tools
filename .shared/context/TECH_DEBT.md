@@ -517,6 +517,13 @@ already met); W2-W3 partial closure остальных (TD-018, TD-019).
   `make install-security` target или document `uv sync --extra security`
   в README. **Operator action** (не agent — запрет pip install).
 
+* **TD-023**: full perf benchmark (k6 1000 RPS sustained + 5000 RPS spike)
+  не выполняется в dev-light. Smoke tests 5/5 pass, baseline.json valid,
+  per-endpoint p95 targets существуют (напр. /api/v1/health p95=50ms,
+  target <200ms). **Severity: low** (smoke pass; baseline ratio far
+  below threshold). **Fix**: S42+ D — настроить perf-env (k8s + load
+  gen); integrate в CI как required gate перед release.
+
 ### S84 entry point: S85+ backlog
 
 Следующая сессия (S85+) должна:
