@@ -5,6 +5,42 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 40 (2026-06-09) — DI DSL + Developer Onboarding
+
+### Added
+
+#### s40/w1+w2-di-dsl-foundation
+- `src/backend/dsl/di/` package — lightweight DI container для DSL-процессоров:
+  - `types.py` (30 LOC) — `InjectMarker` (frozen dataclass, `__call__` hack для type-checker)
+  - `container.py` (178 LOC) — `Container` static class с резолвом через factory → module_registry → app.state
+  - `decorators.py` (65 LOC) — `@inject` декоратор (auto-резолв параметров с `InjectMarker` default)
+  - `__init__.py` (20 LOC) — public API: `Container`, `inject`, `DIError`, `InjectMarker`
+- `src/backend/dsl/builders/base.py::RouteBuilder.depends(*deps)` — chainable метод для DI
+  (`str` → param_name, `tuple[str, str]` → (param, key))
+- `src/backend/dsl/engine/processors/function_call.py::CallFunctionProcessor.inject` —
+  list[str | tuple[str, str]] в JSON-Schema + runtime resolve через `Container.resolve_signature()`
+- `tests/unit/dsl/di/` — 16 tests: 8 container + 5 decorators + 3 coverage-lift (96% coverage на DI module)
+- `tests/unit/dsl/test_builder_chainable_modifiers.py` +41 LOC — 5 тестов для `depends()`
+- `docs/adr/0108-di-dsl-for-routes.md` (Accepted) — формализация решения, альтернативы
+  (FastAPI `Depends` не работает вне HTTP; `dependency-injector` overkill)
+- `docs/tutorials/15_dependency_injection.md` (295 LOC, Tutorial 15) — basic → advanced → testing
+- ADR INDEX регенерирован через `tools/build_adr_index.py` (56 → 57 ADR-файлов)
+
+### Fixed
+
+#### s40/w0-console-json-py2-except
+- `src/backend/infrastructure/logging/backends/console_json.py` —
+  `except TypeError, ValueError:` (Python 2 syntax → SyntaxError на 3.14)
+  → `except (TypeError, ValueError):` (Python 3 compatible).
+  Промежуточный `except Exception + re-raise` помечен как follow-up (TD-017).
+
+### Verification
+
+- `pytest tests/unit/dsl/` → 3369 passed, 0 failed
+- `ruff check` → All checks passed (DI module + 5 modified + tests)
+- `mypy src/backend/dsl/di/` → 0 issues (4 source files)
+- coverage DI module: 90% → 96% (DoD ≥95%)
+
 ## [Unreleased] — Sprint 84 (2026-06-09) — transport decomp + Visual Editor + S83 backlog
 
 ### Fixed

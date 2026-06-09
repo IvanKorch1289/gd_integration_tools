@@ -440,6 +440,15 @@ housekeeping). 7 моих commits + 1 sibling commit (Sprint 38) = 8 total.
   (functional but tests use older pattern).
   **Fix**: S85+ W1 — update tests под новый pattern.
 
+### New tech debt from S40 (to track S41+)
+
+* **TD-017**: `console_json.py` antipattern — `except Exception as exc:`
+  + re-raise не-целевых. Сузить до `except (TypeError, ValueError)`
+  напрямую (минуя промежуточный `Exception`). **Severity: low**
+  (functional, не блокер для S40 W1 DoD; зафиксировано в commit body).
+  **Fix**: S41 W1 — replace `except Exception as exc: if not isinstance(...): raise`
+  на `except (TypeError, ValueError):` напрямую (~5 LOC).
+
 ### S84 entry point: S85+ backlog
 
 Следующая сессия (S85+) должна:
