@@ -5,6 +5,75 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 78 (2026-06-09)
+
+### Fixed
+
+#### s78/w1.1-mypy-strict-yaml-sync
+- `src/frontend/streamlit_app/pages/_editor/yaml_sync.py` — mypy --strict cleanup
+  (5 → 0 errors):
+  - L24: `tuple[dict, list[dict]]` → `tuple[dict[str, Any], list[dict[str, Any]]]`
+  - L49: `list[dict]` → `list[dict[str, Any]]`
+  - L60: `meta: dict, steps: list[dict]` → `dict[str, Any]` for both
+  - L71: `out: dict` → `out: dict[str, Any]`
+  - L78: `return _yaml.dump(out, ...)` → `return cast(str, _yaml.dump(out, ...))`
+  - Import: `from typing import Any, cast`
+- Closes S77 W3 followup known issue (mypy --strict errors в _editor/).
+
+#### s78/w1.2-ruff-baseline-zero
+- `ruff check .`: **61 → 0 errors** (full code quality baseline restored
+  после S77 накопления baseline drift).
+- 38 S-code violations (S110/S603/S607/S608/S310/S314): inline
+  `# noqa: SXXX  # <rationale>` — каждый suppression локальный,
+  документирован. Rationales: silent fallback / trusted argv /
+  PATH-managed / admin tool / https-only / trusted input.
+- 5 F/E-code violations (real fixes):
+  - F841 (unused var) × 2: dead TODO vars removed
+    (`known_processor_keys` в dsl_usage_audit.py, `deadlock_suspected`
+    в check_deadlock.py) + comments обновлены с cross-ref на backlog
+  - E741 (ambiguous `l`) × 2: renamed `l` → `line` в generate_api_client.py
+  - E402 (import not at top) × 1: moved `import re` в docs/api/conf.py
+- 3 multiple-`# noqa:` sites (manage.py + ru_proofread.py):
+  combined в один marker `# noqa: BLE001, S110  # rationale`
+  (стандартный ruff format, comma-separated)
+- 18 auto-fixable (I001/F401/F541) — auto-applied через `ruff --fix`
+- **MILESTONE: ruff 0 (full code quality baseline restored)**
+
+### Documentation
+
+#### s78/w2-changelog-audit-s66-s76
+- CHANGELOG.md backfill: 11 sprint sections (S66-S76) + 23 commit entries
+  — все коммиты за 2026-06-08 (v28 fallout catch-up blitz 16:14-23:05 MSK).
+- Captured ADRs: 0089 (multi-agent), 0090 (aiocache audit), 0091 (DLQ),
+  0092 (Vault rotation), 0093 (rate-limit), 0094 (PII middleware),
+  0096 (correlation-OTel), 0097 (fallback logging), 0098 (outbox defer),
+  0099 (v28 reconciliation).
+- Captured features: outbox stuck-detection → Prometheus → Grafana →
+  lifecycle → Streamlit UI vertical slice (S68-S75); MiddlewareRegistry
+  (S70); per-tenant pool metrics (S72); real credit agents (S76).
+
+#### s78/w3-integration-tests-streamlit-helpers
+- `tests/unit/frontend/test_dsl_editor_helpers_integration.py` (new,
+  259 LOC, 9 tests) — closes S77 W3 known issue.
+- `_MockSessionState` class: dict + attribute access (mimics real streamlit).
+- `_install_streamlit_mock` helper: monkeypatch injects mock
+  `streamlit` модуль в `sys.modules` → lazy import возвращает mock.
+- Coverage: `init_history` (2), `push_history` (3), `can_undo/redo` (1),
+  `undo/redo round-trip` (1), `sync_yaml` (2).
+- Real streamlit install НЕ требуется — tests запускаются в
+  dev-light venv без `[frontend]` extra.
+- ADR-0101 (S77 W4) lazy-import pattern теперь имеет test coverage.
+
+### Known issues
+
+- Project-wide mypy --strict всё ещё показывает ~360 errors в
+  transitively imported files (eip/core.py × 2 + другие) — pre-existing
+  baseline, out of S78 W1.1 scope. S79+ candidate.
+- Real streamlit AppTest-based integration (streamlit-testing package)
+  deferred S79+ — mock-based покрытие достаточно для unit-тестов.
+- TD-002 pre-prod-check coverage timeout (workaround active) —
+  multi-sprint effort, S79+ backlog.
+
 ## [Unreleased] — Sprint 63 (2026-06-08)
 
 ### Fixed
