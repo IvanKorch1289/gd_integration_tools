@@ -123,7 +123,14 @@ class TemporalClientFactory:
             interceptors.append(OpenTelemetryTracingInterceptor())
             _logger.debug("temporal.otel.interceptor.enabled")
         except ImportError:
-            pass
+            # TD-013: surface silent no-op — operators need to know OTel
+            # spans не эмитятся, иначе observability gap невидим.
+            _logger.warning(
+                "temporal.otel.interceptor.unavailable",
+                extra={
+                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal",
+                },
+            )
 
         return await Client.connect(
             self._target,
@@ -231,7 +238,14 @@ class TemporalWorkerPool:
 
                 interceptors.append(OpenTelemetryTracingInterceptor())
             except ImportError:
-                pass
+                # TD-013: surface silent no-op (worker side).
+                _logger.warning(
+                    "temporal.otel.interceptor.unavailable",
+                    extra={
+                        "task_queue": task_queue,
+                        "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов",
+                    },
+                )
 
             worker = Worker(
                 client,
