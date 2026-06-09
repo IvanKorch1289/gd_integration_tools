@@ -29,9 +29,10 @@ from __future__ import annotations
 import json
 from collections import deque
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from src.backend.dsl.engine.tracer import TraceEvent
+if TYPE_CHECKING:
+    from src.backend.dsl.engine.tracer import TraceEvent
 
 __all__ = (
     "TraceStorage",
@@ -128,6 +129,9 @@ class JsonFileTraceStorage:
         except OSError:
             return []
         tail = lines[-min(limit, 1000):]
+        # S47 W1: lazy import to avoid circular dep (tracer → trace_storage).
+        from src.backend.dsl.engine.tracer import TraceEvent
+
         events: list[TraceEvent] = []
         for raw in tail:
             try:

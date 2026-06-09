@@ -5,6 +5,31 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 47 (2026-06-09) — ExecutionTracer storage wiring (1/5 substantive)
+
+### Changed
+
+#### s47/w1-td-026-tracer-storage-wiring
+- `src/backend/dsl/engine/tracer.py`:
+  - `__init__(storage: TraceStorage | None = None)` — pluggable storage,
+    default `InMemoryTraceStorage()` (backward compat S44 W1).
+  - `_emit` убрал inline deque logic → `self._storage.append(event)`.
+  - `get_recent_traces` / `list_traced_routes` → pass-through к storage.
+- `src/backend/dsl/engine/trace_storage.py`:
+  - `TYPE_CHECKING` block для `TraceEvent` (avoid circular import).
+  - `JsonFileTraceStorage.read_recent` — lazy import `TraceEvent` inside method.
+- **Verification**: live test passes:
+  - InMemory: 1 event → 1 event returned, 1 route in list.
+  - JsonFile: 2 events → `r2.jsonl` file (JSONL format), 2 events deserialized.
+- **TD-026 partial → wire done**; Redis/Postgres impls = S48+ D.
+
+### Documentation
+
+#### s47/w5-adr-0120-sprint-47-closure
+- ADR-0120 (Accepted) — Sprint 47 closure: 1/5 substantive (W1),
+  4/5 deferred (W2 Redis/PG, W3 TD-008 mass, W4 TD-020 CI, W5 closure).
+  Continuous execution per user instruction; honest scope reduction.
+
 ## [Unreleased] — Sprint 46 (2026-06-09) — TraceStorage + Docstring tool + Toxiproxy runbook (2/5 substantive)
 
 ### Added

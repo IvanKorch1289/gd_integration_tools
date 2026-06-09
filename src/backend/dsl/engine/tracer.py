@@ -18,6 +18,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from src.backend.dsl.engine.trace_storage import (  # Sprint 47 W1 (TD-026)
+    InMemoryTraceStorage,
+    TraceStorage,
+)
+
 __all__ = ("ExecutionTracer", "TraceEvent", "get_tracer")
 
 # Sprint 44 W1: in-memory ring buffer для replay API.
@@ -64,10 +69,15 @@ class ExecutionTracer:
     2. SSE — стримит события подписчикам через asyncio.Queue
     """
 
-    def __init__(self) -> None:
+    def __init__(self, storage: TraceStorage | None = None) -> None:
+        """S47 W1 (TD-026): storage param позволяет plug external storage.
+
+        Args:
+            storage: TraceStorage impl (default InMemoryTraceStorage).
+                Production: pass JsonFileTraceStorage / Redis (S47+ D).
+        """
         self._subscribers: dict[str, list[asyncio.Queue[TraceEvent]]] = {}
-        # S44 W1: per-route ring buffer для replay. key=route_id, value=deque.
-        self._trace_buffer: dict[str, deque[TraceEvent]] = {}
+        self._storage: TraceStorage = storage or InMemoryTraceStorage()
 
     @asynccontextmanager
     async def trace(
@@ -119,15 +129,13 @@ class ExecutionTracer:
     async def _emit(self, route_id: str, event: TraceEvent) -> None:
         """Отправляет событие подписчикам (lock-free, drop oldest при backpressure).
 
-        S44 W1: также сохраняет end/error events в in-memory ring buffer
-        для replay API.
+        S44 W1: ring buffer append для end/error events.
+        S47 W1 (TD-026): также append в storage (in-memory по default,
+        pluggable: JsonFile / Redis / Postgres).
         """
-        # S44 W1: ring buffer append для end/error events.
+        # S44 W1 + S47 W1: storage append для end/error events.
         if event.phase in ("end", "error"):
-            buf = self._trace_buffer.setdefault(
-                route_id, deque(maxlen=_TRACE_BUFFER_MAXLEN)
-            )
-            buf.append(event)
+            self._storage.append(event)
         for target in (route_id, "__all__"):
             queues = self._subscribers.get(target)
             if not queues:
@@ -175,7 +183,7 @@ class ExecutionTracer:
     def get_recent_traces(
         self, route_id: str, limit: int = 100
     ) -> list[TraceEvent]:
-        """S44 W1: возвращает последние N end/error events для route_id.
+        """S44 W1 + S47 W1 (TD-026): возвращает последние N events.
 
         Args:
             route_id: ID маршрута.
@@ -183,22 +191,19 @@ class ExecutionTracer:
 
         Returns:
             List of TraceEvent в chronological order (oldest first).
-            Empty list если route_id не встречался или buffer пуст.
+            Empty list если route_id не встречался или storage пуст.
 
         Notes:
-            - In-memory only — после restart данные теряются.
-            - Persistent storage = TD-026 (S45+ D).
+            - Backed by TraceStorage (S46 W3 abstraction).
+            - InMemory: post-restart loses data.
+            - JsonFile / Redis / Postgres: persistent.
             - Используется endpoint ``GET /admin/dsl-routes/{route_id}/traces``.
         """
-        buf = self._trace_buffer.get(route_id)
-        if not buf:
-            return []
-        capped = min(limit, _TRACE_BUFFER_MAXLEN)
-        # Возвращаем хвост буфера (последние N) в chronological order.
-        return list(buf)[-capped:]
+        return self._storage.read_recent(route_id, limit)
 
     def list_traced_routes(self) -> list[str]:
-        """S44 W1: возвращает список route_id с активным buffer."""
+        """S44 W1 + S47 W1: возвращает список route_id с events в storage."""
+        return self._storage.list_routes()
         return sorted(self._trace_buffer.keys())
 
 
