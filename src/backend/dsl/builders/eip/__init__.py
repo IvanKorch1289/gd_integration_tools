@@ -22,6 +22,7 @@ Apache Camel Routing Slip: https://camel.apache.org/components/latest/eips/routi
 Apache Camel Content-Based Router: https://camel.apache.org/components/latest/eips/contentBasedRouter.html
 Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/sensors.html
 """
+
 from __future__ import annotations
 
 from src.backend.dsl.builders.eip.core import CoreEIPsMixin

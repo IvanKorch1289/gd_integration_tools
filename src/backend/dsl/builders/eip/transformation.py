@@ -2,10 +2,11 @@
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
@@ -29,8 +30,11 @@ class TransformationEIPsMixin(EIPMixinBase):
 
     def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
-        return self._add(  # type: ignore[attr-defined]
-            SplitterProcessor(expression=expression, processors=processors)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                SplitterProcessor(expression=expression, processors=processors)
+            ),
         )
 
     def aggregate(
@@ -41,12 +45,15 @@ class TransformationEIPsMixin(EIPMixinBase):
         timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
         """Aggregator: собирает N Exchange по correlation_key в batch."""
-        return self._add(  # type: ignore[attr-defined]
-            AggregatorProcessor(
-                correlation_key=correlation_key,
-                batch_size=batch_size,
-                timeout_seconds=timeout_seconds,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                AggregatorProcessor(
+                    correlation_key=correlation_key,
+                    batch_size=batch_size,
+                    timeout_seconds=timeout_seconds,
+                )
+            ),
         )
 
     def sort(
@@ -57,12 +64,15 @@ class TransformationEIPsMixin(EIPMixinBase):
         reverse: bool = False,
     ) -> "RouteBuilder":
         """Sort — сортировка list body по функции ключа или имени поля."""
-        return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.eip",
-            "SortProcessor",
-            key_fn=key_fn,
-            key_field=key_field,
-            reverse=reverse,
+        return cast(
+            "RouteBuilder",
+            self._add_lazy(  # type: ignore[attr-defined]
+                "src.backend.dsl.engine.processors.eip",
+                "SortProcessor",
+                key_fn=key_fn,
+                key_field=key_field,
+                reverse=reverse,
+            ),
         )
 
     def claim_check_in(
@@ -79,22 +89,27 @@ class TransformationEIPsMixin(EIPMixinBase):
             ttl_seconds: Время жизни токена.
             threshold_bytes: Порог в байтах для переключения на S3 (по умолчанию 256 KB).
         """
-        return self._add(  # type: ignore[attr-defined]
-            ClaimCheckProcessor(
-                mode="store",
-                store=store,
-                ttl_seconds=ttl_seconds,
-                threshold_bytes=threshold_bytes,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ClaimCheckProcessor(
+                    mode="store",
+                    store=store,
+                    ttl_seconds=ttl_seconds,
+                    threshold_bytes=threshold_bytes,
+                )
+            ),
         )
 
     def claim_check_out(self) -> "RouteBuilder":
         """Claim Check (retrieve): восстанавливает body по _claim_token."""
-        return self._add(ClaimCheckProcessor(mode="retrieve"))  # type: ignore[attr-defined]
+        return cast("RouteBuilder", self._add(ClaimCheckProcessor(mode="retrieve")))  # type: ignore[attr-defined]
 
     def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
-        return self._add(NormalizerProcessor(target_schema=target_schema))  # type: ignore[attr-defined]
+        return cast(
+            "RouteBuilder", self._add(NormalizerProcessor(target_schema=target_schema))
+        )  # type: ignore[attr-defined]
 
     def resequence(
         self,
@@ -105,11 +120,14 @@ class TransformationEIPsMixin(EIPMixinBase):
         timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
         """Resequencer: восстановление порядка сообщений по sequence_field."""
-        return self._add(  # type: ignore[attr-defined]
-            ResequencerProcessor(
-                correlation_key=correlation_key,
-                sequence_field=sequence_field,
-                batch_size=batch_size,
-                timeout_seconds=timeout_seconds,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ResequencerProcessor(
+                    correlation_key=correlation_key,
+                    sequence_field=sequence_field,
+                    batch_size=batch_size,
+                    timeout_seconds=timeout_seconds,
+                )
+            ),
         )

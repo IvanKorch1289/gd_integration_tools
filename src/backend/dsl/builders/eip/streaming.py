@@ -3,10 +3,11 @@ tumbling_window / sliding_window / session_window / group_by_key.
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
@@ -47,13 +48,16 @@ class StreamingEIPsMixin(EIPMixinBase):
             WindowedDedupProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined]
-            WindowedDedupProcessor(
-                key_from=key_from,
-                key_prefix=key_prefix,
-                window_seconds=window_seconds,
-                mode=mode,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                WindowedDedupProcessor(
+                    key_from=key_from,
+                    key_prefix=key_prefix,
+                    window_seconds=window_seconds,
+                    mode=mode,
+                )
+            ),
         )
 
     def batch(
@@ -68,10 +72,13 @@ class StreamingEIPsMixin(EIPMixinBase):
         """
         from src.backend.dsl.engine.processors.patterns import BatchWindowProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            BatchWindowProcessor(
-                window_seconds=timeout_ms / 1000.0, max_size=size, group_by=group_by
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                BatchWindowProcessor(
+                    window_seconds=timeout_ms / 1000.0, max_size=size, group_by=group_by
+                )
+            ),
         )
 
     def windowed_collect(
@@ -96,14 +103,17 @@ class StreamingEIPsMixin(EIPMixinBase):
             WindowedCollectProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined]
-            WindowedCollectProcessor(
-                key_from=key_from,
-                window_seconds=window_seconds,
-                dedup_by=dedup_by,
-                dedup_mode=dedup_mode,
-                inject_as=inject_as,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                WindowedCollectProcessor(
+                    key_from=key_from,
+                    window_seconds=window_seconds,
+                    dedup_by=dedup_by,
+                    dedup_mode=dedup_mode,
+                    inject_as=inject_as,
+                )
+            ),
         )
 
     def tumbling_window(
@@ -120,14 +130,17 @@ class StreamingEIPsMixin(EIPMixinBase):
         зарегистрирован durable store, он подхватывается автоматически.
         """
         store = watermark_store or get_watermark_store_optional()
-        return self._add(  # type: ignore[attr-defined]
-            TumblingWindowProcessor(
-                sink=sink,
-                size=size,
-                interval_seconds=interval_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TumblingWindowProcessor(
+                    sink=sink,
+                    size=size,
+                    interval_seconds=interval_seconds,
+                    watermark_store=store,
+                    route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
+                )
+            ),
         )
 
     def sliding_window(
@@ -140,14 +153,17 @@ class StreamingEIPsMixin(EIPMixinBase):
     ) -> "RouteBuilder":
         """Streaming sliding-окно с перекрытием."""
         store = watermark_store or get_watermark_store_optional()
-        return self._add(  # type: ignore[attr-defined]
-            SlidingWindowProcessor(
-                sink=sink,
-                window_seconds=window_seconds,
-                step_seconds=step_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                SlidingWindowProcessor(
+                    sink=sink,
+                    window_seconds=window_seconds,
+                    step_seconds=step_seconds,
+                    watermark_store=store,
+                    route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
+                )
+            ),
         )
 
     def session_window(
@@ -159,13 +175,16 @@ class StreamingEIPsMixin(EIPMixinBase):
     ) -> "RouteBuilder":
         """Streaming session-окно (закрывается по паузе)."""
         store = watermark_store or get_watermark_store_optional()
-        return self._add(  # type: ignore[attr-defined]
-            SessionWindowProcessor(
-                sink=sink,
-                gap_seconds=gap_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                SessionWindowProcessor(
+                    sink=sink,
+                    gap_seconds=gap_seconds,
+                    watermark_store=store,
+                    route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
+                )
+            ),
         )
 
     def group_by_key(
@@ -176,8 +195,11 @@ class StreamingEIPsMixin(EIPMixinBase):
         window_seconds: float = 60.0,
     ) -> "RouteBuilder":
         """Группировка по ключу (jmespath) в пределах окна."""
-        return self._add(  # type: ignore[attr-defined]
-            GroupByKeyProcessor(
-                sink=sink, key_path=key_path, window_seconds=window_seconds
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                GroupByKeyProcessor(
+                    sink=sink, key_path=key_path, window_seconds=window_seconds
+                )
+            ),
         )

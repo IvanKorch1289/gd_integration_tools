@@ -3,6 +3,7 @@
 Sprint 60 W4 — split god-file eip.py (1354 LOC) на 8 per-domain модулей:
   core / routing / sources / transformation / protocols / streaming / messaging / messengers
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -3,10 +3,11 @@ content_based_router / sampling / load_balance / multicast_routes.
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
@@ -33,7 +34,10 @@ class RoutingEIPsMixin(EIPMixinBase):
         self, route_expression: Callable[[Exchange[Any]], str]
     ) -> "RouteBuilder":
         """Dynamic Router: runtime-вычисление route_id."""
-        return self._add(DynamicRouterProcessor(route_expression=route_expression))  # type: ignore[attr-defined]
+        return cast(
+            "RouteBuilder",
+            self._add(DynamicRouterProcessor(route_expression=route_expression)),
+        )  # type: ignore[attr-defined]
 
     def scatter_gather(
         self,
@@ -43,12 +47,15 @@ class RoutingEIPsMixin(EIPMixinBase):
         timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
         """Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
-        return self._add(  # type: ignore[attr-defined]
-            ScatterGatherProcessor(
-                route_ids=route_ids,
-                aggregation=aggregation,
-                timeout_seconds=timeout_seconds,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ScatterGatherProcessor(
+                    route_ids=route_ids,
+                    aggregation=aggregation,
+                    timeout_seconds=timeout_seconds,
+                )
+            ),
         )
 
     def routing_slip(
@@ -123,13 +130,16 @@ class RoutingEIPsMixin(EIPMixinBase):
 
         registry: ProcessorRegistry = get_processor_registry()
 
-        return self._add(  # type: ignore[attr-defined]
-            RoutingSlipProcessor(
-                steps_resolver=steps_resolver,
-                registry=registry,
-                strict=strict,
-                max_steps=max_steps,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                RoutingSlipProcessor(
+                    steps_resolver=steps_resolver,
+                    registry=registry,
+                    strict=strict,
+                    max_steps=max_steps,
+                )
+            ),
         )
 
     def content_based_router(
@@ -156,8 +166,11 @@ class RoutingEIPsMixin(EIPMixinBase):
             ContentBasedRouter as _CBR,
         )
 
-        return self._add(  # type: ignore[attr-defined]
-            _CBR(routes=routes, default_endpoint=default_endpoint)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                _CBR(routes=routes, default_endpoint=default_endpoint)
+            ),
         )
 
     def sampling(
@@ -188,14 +201,17 @@ class RoutingEIPsMixin(EIPMixinBase):
             SamplingProcessor as _SP,
         )
 
-        return self._add(  # type: ignore[attr-defined]
-            _SP(
-                rate=rate,
-                fraction=fraction,
-                time_window_ms=time_window_ms,
-                max_in_window=max_in_window,
-                seed=seed,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                _SP(
+                    rate=rate,
+                    fraction=fraction,
+                    time_window_ms=time_window_ms,
+                    max_in_window=max_in_window,
+                    seed=seed,
+                )
+            ),
         )
 
     def load_balance(
@@ -207,13 +223,16 @@ class RoutingEIPsMixin(EIPMixinBase):
         sticky_header: str | None = None,
     ) -> "RouteBuilder":
         """Load Balancer: round_robin/random/weighted/sticky распределение."""
-        return self._add(  # type: ignore[attr-defined]
-            LoadBalancerProcessor(
-                targets=targets,
-                strategy=strategy,
-                weights=weights,
-                sticky_header=sticky_header,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                LoadBalancerProcessor(
+                    targets=targets,
+                    strategy=strategy,
+                    weights=weights,
+                    sticky_header=sticky_header,
+                )
+            ),
         )
 
     def multicast_routes(
@@ -236,11 +255,14 @@ class RoutingEIPsMixin(EIPMixinBase):
             MulticastRoutesProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined]
-            MulticastRoutesProcessor(
-                route_ids=route_ids,
-                strategy=strategy,
-                on_error=on_error,
-                timeout=timeout,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                MulticastRoutesProcessor(
+                    route_ids=route_ids,
+                    strategy=strategy,
+                    on_error=on_error,
+                    timeout=timeout,
+                )
+            ),
         )

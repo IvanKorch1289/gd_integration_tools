@@ -2,9 +2,10 @@
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 
@@ -36,19 +37,22 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить сообщение в Express чат через BotX API."""
         from src.backend.dsl.engine.processors.express import ExpressSendProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressSendProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                bubble=bubble,
-                keyboard=keyboard,
-                status=status,
-                silent_response=silent_response,
-                sync=sync,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressSendProcessor(
+                    bot=bot,
+                    chat_id_from=chat_id_from,
+                    body=body,
+                    body_from=body_from,
+                    bubble=bubble,
+                    keyboard=keyboard,
+                    status=status,
+                    silent_response=silent_response,
+                    sync=sync,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def express_reply(
@@ -64,15 +68,18 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Ответить на исходное сообщение Express (reply-thread)."""
         from src.backend.dsl.engine.processors.express import ExpressReplyProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressReplyProcessor(
-                bot=bot,
-                source_sync_id_from=source_sync_id_from,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressReplyProcessor(
+                    bot=bot,
+                    source_sync_id_from=source_sync_id_from,
+                    chat_id_from=chat_id_from,
+                    body=body,
+                    body_from=body_from,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def express_edit(
@@ -89,16 +96,19 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Редактировать ранее отправленное Express сообщение."""
         from src.backend.dsl.engine.processors.express import ExpressEditProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressEditProcessor(
-                bot=bot,
-                sync_id_from=sync_id_from,
-                body=body,
-                body_from=body_from,
-                bubble=bubble,
-                keyboard=keyboard,
-                status=status,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressEditProcessor(
+                    bot=bot,
+                    sync_id_from=sync_id_from,
+                    body=body,
+                    body_from=body_from,
+                    bubble=bubble,
+                    keyboard=keyboard,
+                    status=status,
+                )
+            ),
         )
 
     def express_typing(
@@ -111,8 +121,13 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить/остановить индикатор набора в Express чате."""
         from src.backend.dsl.engine.processors.express import ExpressTypingProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressTypingProcessor(
+                    bot=bot, chat_id_from=chat_id_from, action=action
+                )
+            ),
         )
 
     def express_send_file(
@@ -131,18 +146,21 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
         from src.backend.dsl.engine.processors.express import ExpressSendFileProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressSendFileProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                s3_key_from=s3_key_from,
-                file_data_property=file_data_property,
-                file_name=file_name,
-                file_name_from=file_name_from,
-                body=body,
-                body_from=body_from,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressSendFileProcessor(
+                    bot=bot,
+                    chat_id_from=chat_id_from,
+                    s3_key_from=s3_key_from,
+                    file_data_property=file_data_property,
+                    file_name=file_name,
+                    file_name_from=file_name_from,
+                    body=body,
+                    body_from=body_from,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def express_mention(
@@ -157,14 +175,17 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
         from src.backend.dsl.engine.processors.express import ExpressMentionProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressMentionProcessor(
-                mention_type=mention_type,
-                target_from=target_from,
-                mention_id=mention_id,
-                name_from=name_from,
-                property_name=property_name,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressMentionProcessor(
+                    mention_type=mention_type,
+                    target_from=target_from,
+                    mention_id=mention_id,
+                    name_from=name_from,
+                    property_name=property_name,
+                )
+            ),
         )
 
     def express_status(
@@ -177,10 +198,13 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Запросить статус доставки сообщения по sync_id."""
         from src.backend.dsl.engine.processors.express import ExpressStatusProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            ExpressStatusProcessor(
-                bot=bot, sync_id_from=sync_id_from, result_property=result_property
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                ExpressStatusProcessor(
+                    bot=bot, sync_id_from=sync_id_from, result_property=result_property
+                )
+            ),
         )
 
     # ── Telegram Bot API ──
@@ -202,19 +226,22 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить сообщение в Telegram чат через Bot API."""
         from src.backend.dsl.engine.processors.telegram import TelegramSendProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramSendProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                inline_keyboard=inline_keyboard,
-                reply_keyboard=reply_keyboard,
-                disable_notification=disable_notification,
-                disable_web_page_preview=disable_web_page_preview,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramSendProcessor(
+                    bot=bot,
+                    chat_id_from=chat_id_from,
+                    body=body,
+                    body_from=body_from,
+                    parse_mode=parse_mode,
+                    inline_keyboard=inline_keyboard,
+                    reply_keyboard=reply_keyboard,
+                    disable_notification=disable_notification,
+                    disable_web_page_preview=disable_web_page_preview,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def telegram_reply(
@@ -231,16 +258,19 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Ответить на сообщение Telegram (reply_to_message_id)."""
         from src.backend.dsl.engine.processors.telegram import TelegramReplyProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramReplyProcessor(
-                bot=bot,
-                source_message_id_from=source_message_id_from,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramReplyProcessor(
+                    bot=bot,
+                    source_message_id_from=source_message_id_from,
+                    chat_id_from=chat_id_from,
+                    body=body,
+                    body_from=body_from,
+                    parse_mode=parse_mode,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def telegram_edit(
@@ -257,16 +287,19 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Редактировать ранее отправленное Telegram-сообщение."""
         from src.backend.dsl.engine.processors.telegram import TelegramEditProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramEditProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                message_id_from=message_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                inline_keyboard=inline_keyboard,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramEditProcessor(
+                    bot=bot,
+                    chat_id_from=chat_id_from,
+                    message_id_from=message_id_from,
+                    body=body,
+                    body_from=body_from,
+                    parse_mode=parse_mode,
+                    inline_keyboard=inline_keyboard,
+                )
+            ),
         )
 
     def telegram_typing(
@@ -279,8 +312,13 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить chat-action (typing / upload_photo / …) в Telegram."""
         from src.backend.dsl.engine.processors.telegram import TelegramTypingProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramTypingProcessor(
+                    bot=bot, chat_id_from=chat_id_from, action=action
+                )
+            ),
         )
 
     def telegram_send_file(
@@ -301,20 +339,23 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Отправить файл (документ) в Telegram чат."""
         from src.backend.dsl.engine.processors.telegram import TelegramSendFileProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramSendFileProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                s3_key_from=s3_key_from,
-                file_data_property=file_data_property,
-                file_name=file_name,
-                file_name_from=file_name_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                disable_notification=disable_notification,
-                result_property=result_property,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramSendFileProcessor(
+                    bot=bot,
+                    chat_id_from=chat_id_from,
+                    s3_key_from=s3_key_from,
+                    file_data_property=file_data_property,
+                    file_name=file_name,
+                    file_name_from=file_name_from,
+                    body=body,
+                    body_from=body_from,
+                    parse_mode=parse_mode,
+                    disable_notification=disable_notification,
+                    result_property=result_property,
+                )
+            ),
         )
 
     def telegram_mention(
@@ -329,14 +370,17 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Создать фрагмент-упоминание пользователя для вставки в текст."""
         from src.backend.dsl.engine.processors.telegram import TelegramMentionProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramMentionProcessor(
-                user_id_from=user_id_from,
-                display_name_from=display_name_from,
-                parse_mode=parse_mode,
-                property_name=property_name,
-                append=append,
-            )
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramMentionProcessor(
+                    user_id_from=user_id_from,
+                    display_name_from=display_name_from,
+                    parse_mode=parse_mode,
+                    property_name=property_name,
+                    append=append,
+                )
+            ),
         )
 
     def telegram_status(
@@ -345,6 +389,9 @@ class MessengersEIPsMixin(EIPMixinBase):
         """Запросить профиль бота (getMe) — health-check Telegram."""
         from src.backend.dsl.engine.processors.telegram import TelegramStatusProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            TelegramStatusProcessor(bot=bot, result_property=result_property)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                TelegramStatusProcessor(bot=bot, result_property=result_property)
+            ),
         )

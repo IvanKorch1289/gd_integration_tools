@@ -2,6 +2,7 @@
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast

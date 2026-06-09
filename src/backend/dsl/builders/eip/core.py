@@ -27,7 +27,9 @@ class CoreEIPsMixin(EIPMixinBase):
 
     def transform(self, expression: str) -> "RouteBuilder":
         """Трансформирует body через JMESPath-выражение."""
-        return cast("RouteBuilder", self._add(TransformProcessor(expression=expression)))  # type: ignore[attr-defined]
+        return cast(
+            "RouteBuilder", self._add(TransformProcessor(expression=expression))
+        )  # type: ignore[attr-defined]
 
     def filter(self, predicate: Callable[[Exchange[Any]], bool]) -> "RouteBuilder":
         """Фильтрует Exchange — останавливает, если predicate=False."""

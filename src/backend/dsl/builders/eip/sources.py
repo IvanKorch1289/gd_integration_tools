@@ -3,10 +3,11 @@ from_http / from_s3 / sse_source.
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
+
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 
@@ -294,6 +295,9 @@ class SourcesEIPsMixin(EIPMixinBase):
         """Source-процессор для Server-Sent Events."""
         from src.backend.dsl.engine.processors.generic import SseSourceProcessor
 
-        return self._add(  # type: ignore[attr-defined]
-            SseSourceProcessor(url=url, event_types=event_types)
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                SseSourceProcessor(url=url, event_types=event_types)
+            ),
         )
