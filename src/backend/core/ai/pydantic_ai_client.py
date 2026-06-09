@@ -186,6 +186,23 @@ class PydanticAIClient:
             except ImportError:
                 feature_flags = None  # type: ignore[assignment]
             if feature_flags is not None and feature_flags.ai_gateway_enforce:
+                # TD-012: log audit-trail warning перед raise — operators
+                # need to know о bypass-попытке (кто-то забыл marker).
+                try:
+                    from src.backend.core.logging import get_logger as _gl
+
+                    _audit_log = _gl("ai.safety.audit")
+                    _audit_log.warning(
+                        "ai_gateway_bypass_blocked",
+                        extra={
+                            "client": "PydanticAIClient",
+                            "method": "run",
+                            "hint": "pass _internal_gateway_call=True "
+                            "для вызовов из AIGateway-pipeline",
+                        },
+                    )
+                except Exception:  # noqa: BLE001
+                    pass  # audit-log — best-effort, не должен блокировать raise
                 raise RuntimeError(
                     "PydanticAIClient.run() bypasses AIGateway; "
                     "use AIGateway.invoke() instead"
