@@ -28,7 +28,9 @@ class RoutingEIPsMixin(EIPMixinBase):
 
     def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
         """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
-        return self.convert(from_format=from_format, to_format=to_format)  # type: ignore[attr-defined]
+        return cast(
+            "RouteBuilder", self.convert(from_format=from_format, to_format=to_format)
+        )  # type: ignore[attr-defined]
 
     def dynamic_route(
         self, route_expression: Callable[[Exchange[Any]], str]
@@ -108,7 +110,7 @@ class RoutingEIPsMixin(EIPMixinBase):
             _steps_list: list[str] = list(steps)  # capture by value
 
             def _const_resolver(e: Exchange[Any]) -> Any:
-                return _steps_list  # type: ignore[misc]
+                return _steps_list
 
             steps_resolver: Callable[[Exchange[Any]], Any] = _const_resolver
         else:

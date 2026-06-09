@@ -122,7 +122,7 @@ class SourcesEIPsMixin(EIPMixinBase):
                 await asyncio.sleep(poll_interval_s)
 
         task = asyncio.create_task(_runner(), name=f"sensor:file:{path}")
-        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        get_trigger_registry().register(_FileSensorWrapper(task))
         return self  # type: ignore
 
     def from_sql(
@@ -171,7 +171,7 @@ class SourcesEIPsMixin(EIPMixinBase):
                 await asyncio.sleep(poll_interval_s)
 
         task = asyncio.create_task(_runner(), name=f"sensor:sql:{id(self)}")
-        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        get_trigger_registry().register(_FileSensorWrapper(task))
         return self  # type: ignore
 
     def from_http(
@@ -225,7 +225,7 @@ class SourcesEIPsMixin(EIPMixinBase):
                 await asyncio.sleep(poll_interval_s)
 
         task = asyncio.create_task(_runner(), name=f"sensor:http:{url}")
-        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        get_trigger_registry().register(_FileSensorWrapper(task))
         return self  # type: ignore
 
     def from_s3(
@@ -286,7 +286,7 @@ class SourcesEIPsMixin(EIPMixinBase):
                 await asyncio.sleep(poll_interval_s)
 
         task = asyncio.create_task(_runner(), name=f"sensor:s3:{bucket}")
-        get_trigger_registry().register(_FileSensorWrapper(task))  # type: ignore[arg-type]
+        get_trigger_registry().register(_FileSensorWrapper(task))
         return self  # type: ignore
 
     def sse_source(
