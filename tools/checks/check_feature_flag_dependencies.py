@@ -1,13 +1,16 @@
 """Check feature flag dependencies — lint для *_strict flags без declared dependencies.
 
 Назначение:
-    Проверяет что все *_strict feature flags в features.py объявлены либо:
+    Проверяет что все *_strict feature flags в features.py (или в
+    features/ package) объявлены либо:
     - в ``_FEATURE_FLAG_DEPENDENCIES`` (WARNING-level);
     - в ``_FEATURE_FLAG_DEPENDENCIES_CRITICAL`` (CRITICAL-level);
     - с явным комментарием ``# no dependency required`` рядом с полем.
 
-    Парсит features.py через AST и сверяет с validator.py константами.
-    Соответствует S31 w1 Фаза D.
+    Парсит features.py (или все .py в features/ package) через AST и
+    сверяет с validator.py константами. Соответствует S31 w1 Фаза D.
+    Package-aware с S38 T1.3.0 (Sprint 38 разделил monolithic features.py
+    в features/ package с per-domain sub-modules).
 
 Использование:
     python tools/checks/check_feature_flag_dependencies.py
@@ -25,17 +28,55 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 _VALIDATOR_PATH = _ROOT / "src/backend/core/config/validator.py"
-_FEATURES_PATH = _ROOT / "src/backend/core/config/features.py"
+_FEATURES_FILE = _ROOT / "src/backend/core/config/features.py"
+_FEATURES_PKG = _ROOT / "src/backend/core/config/features"
 
 
-def _parse_strict_flags(features_py: str) -> dict[str, int]:
-    """Находит все Field(...) с именем *_strict в features.py. Возвращает name → lineno."""
-    tree = ast.parse(features_py)
+def _find_features_source() -> tuple[dict[str, int], str] | None:
+    """Найти source для feature flag definitions.
+
+    Поддерживает два layout'а:
+    - Legacy: src/backend/core/config/features.py (single file)
+    - Modern (S38 T1.3.0+): src/backend/core/config/features/__init__.py + sub-modules
+
+    Returns:
+        (strict_flags_dict, concatenated_source) или None если ничего не найдено.
+        strict_flags_dict: name → lineno (в source-файле где определён).
+    """
     strict_flags: dict[str, int] = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Name) and node.id.endswith("_strict"):
-            strict_flags[node.id] = node.lineno
-    return strict_flags
+    sources: list[str] = []
+
+    if _FEATURES_FILE.exists():
+        # Legacy single-file layout
+        src = _FEATURES_FILE.read_text()
+        sources.append(f"# === {_FEATURES_FILE.name} ===\n{src}")
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and node.id.endswith("_strict"):
+                strict_flags[node.id] = node.lineno
+        return strict_flags, "\n".join(sources)
+
+    if _FEATURES_PKG.is_dir():
+        # Modern package layout (S38+)
+        for py_file in sorted(_FEATURES_PKG.glob("*.py")):
+            if py_file.name == "__init__.py" and not list(_FEATURES_PKG.glob("[a-z]*.py")):
+                # No sub-modules — only __init__.py
+                pass
+            src = py_file.read_text()
+            sources.append(f"# === {py_file.relative_to(_ROOT)} ===\n{src}")
+            tree = ast.parse(src)
+            # ast.AnnAssign: target=Name, annotation, value (Field(...)).
+            # Ищем `name_strict: Type = Field(...)` — реальное определение флага.
+            for node in ast.walk(tree):
+                if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                    if node.target.id.endswith("_strict"):
+                        strict_flags[node.target.id] = (
+                            node.target.lineno
+                            + sum(s.count("\n") for s in sources[:-1])
+                        )
+        return strict_flags, "\n".join(sources)
+
+    return None
 
 
 def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]:
@@ -62,12 +103,12 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
     return warning_deps, critical_deps
 
 
-def _check_no_dep_required_comments(features_py: str) -> set[str]:
+def _check_no_dep_required_comments(features_src: str) -> set[str]:
     """Находит strict flags с комментарием # no dependency required."""
     pattern = re.compile(
         r"^\s*(\w*_strict\w*)\s*:\s*[^#]*#.*no dependency required", re.MULTILINE
     )
-    return {m.group(1) for m in pattern.finditer(features_py)}
+    return {m.group(1) for m in pattern.finditer(features_src)}
 
 
 def run_check(strict_mode: bool = False) -> int:
@@ -75,14 +116,18 @@ def run_check(strict_mode: bool = False) -> int:
     if not _VALIDATOR_PATH.exists():
         print(f"[ERROR] validator.py не найден: {_VALIDATOR_PATH}", file=sys.stderr)
         return 1
-    if not _FEATURES_PATH.exists():
-        print(f"[ERROR] features.py не найден: {_FEATURES_PATH}", file=sys.stderr)
+
+    features_result = _find_features_source()
+    if features_result is None:
+        print(
+            f"[ERROR] features source не найден: ни {_FEATURES_FILE}, ни {_FEATURES_PKG}/",
+            file=sys.stderr,
+        )
         return 1
 
+    strict_flags, features_src = features_result
     validator_src = _VALIDATOR_PATH.read_text()
-    features_src = _FEATURES_PATH.read_text()
 
-    strict_flags = _parse_strict_flags(features_src)
     warning_deps, critical_deps = _parse_declared_dependencies(validator_src)
     no_dep_required = _check_no_dep_required_comments(features_src)
 
@@ -91,7 +136,7 @@ def run_check(strict_mode: bool = False) -> int:
 
     if not undeclared:
         print(
-            "[OK] Все *_strict flags объявлены в dependencies или have no-dep comment."
+            f"[OK] Все {len(strict_flags)} *_strict flags объявлены в dependencies или have no-dep comment."
         )
         return 0
 

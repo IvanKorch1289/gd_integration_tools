@@ -449,6 +449,25 @@ housekeeping). 7 моих commits + 1 sibling commit (Sprint 38) = 8 total.
   **Fix**: S41 W1 — replace `except Exception as exc: if not isinstance(...): raise`
   на `except (TypeError, ValueError):` напрямую (~5 LOC).
 
+### New tech debt from S41 (to track S42+)
+
+* **TD-018**: 18 undeclared `_strict` feature flags в `features/` package.
+  После фикса `check_feature_flag_dependencies` (S41 W2, ADR-0109) check
+  обнаружил 18 `_strict` флагов без declared dependency в
+  `_FEATURE_FLAG_DEPENDENCIES` или без `# no dependency required` комментария:
+  `mcp_tools_input_schema_strict`, `supply_chain_finale_strict`,
+  `dsl_processor_registry_strict`, `plugin_semver_strict`,
+  `tracing_baggage_strict`, `lsp_server_strict`, `perf_gate_strict`,
+  `processor_health_checks_strict`, `dsl_linter_strict`,
+  `ai_cost_dashboard_strict`, `workflow_versioning_strict`,
+  `metrics_registry_strict`, `task_registry_strict`,
+  `routes_capability_gate_strict`, `routes_tenant_aware_strict`,
+  `call_function_whitelist_strict`, `ai_prompt_sweep_strict`.
+  **Severity: medium** (CI gate `--strict` не блокирует, но `--strict` без
+  фикса = always-1 silent failure). **Fix**: S42+ W1 — для каждого флага
+  либо добавить в `_FEATURE_FLAG_DEPENDENCIES`, либо `# no dependency required`
+  комментарий рядом с Field definition. ~18 однострочных правок.
+
 ### S84 entry point: S85+ backlog
 
 Следующая сессия (S85+) должна:
