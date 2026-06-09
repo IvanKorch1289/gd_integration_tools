@@ -592,6 +592,10 @@ perf-gate-py: ## К3/S2: python perf-gate — проверяет locust-метр
 		--report dist/perf-report.json \
 		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (будет block в S3)"
 
+lsp-server: check-env ## S42 W1: запуск DSL LSP сервера (stdio) для VS Code / JetBrains / Neovim
+	@$(INFO) "Starting DSL LSP server (stdio) — wire up в IDE см. docs/lsp/vscode-config.example.json"
+	@$(UV_RUN) python -m src.backend.dsl.cli.lsp_server
+
 perf-gate-py-strict: check-env ## Sprint 9 K2 W7: blocking perf-gate (p95<200ms, RPS>1000, ratchet baseline)
 	@$(INFO) "Running BLOCKING python perf-gate against baseline tests/perf/baseline.json..."
 	@mkdir -p dist

@@ -1,0 +1,18 @@
+{
+  "comment": "VS Code LSP client config для gd_integration_tools DSL. Скопируйте в .vscode/settings.json вашего workspace (или user settings).",
+
+  "yaml.schemas": {
+    "fileMatch": ["*.dsl.yaml", "route.toml"],
+    "url": "./tools/dsl_lsp/schemas/dsl.schema.json"
+  },
+
+  "comment_lsp": "LSP client для DSL — wires up S6/K3 lsp_server.py. Запустите 'make lsp-server' в отдельном терминале.",
+
+  "files.associations": {
+    "*.dsl.yaml": "yaml",
+    "route.toml": "toml"
+  },
+
+  "yaml.validate": true,
+  "yaml.format.enable": false
+}
