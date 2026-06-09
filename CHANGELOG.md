@@ -152,6 +152,171 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active)
 - Honored carryover for S66+: coverage lift + TD-002 fix.
 
+## [Unreleased] — Sprint 66 (2026-06-08)
+
+### Fixed
+
+#### s66/w1-path-drift-fix
+- `AGENTS.md` + `CLAUDE.md` — path drift fix (referenced `src/` without `/backend/`,
+  misleading readers). 9+ references updated: `src/backend/` prefix added.
+- TD-005 (path drift) — CLOSED.
+
+#### s66/w2-multi-agent-adr
+- ADR-0089: multi-agent supervisor architecture (LangGraph-based,
+  formalize decision from S28 k4 W1 + S29 T12).
+
+### Known issues
+
+- TD-006 (multi-agent decision) — CLOSED via ADR-0089.
+- TD-008 (Streamlit/frontend path consolidation) — deferred к S78+.
+
+## [Unreleased] — Sprint 67 (2026-06-08)
+
+### Changed
+
+#### s67/w1-aiocache-hotpath-audit
+- ADR-0090: aiocache hot-path strategy — formalize audit + defer
+  per-feature migration. Closure of ADR-0086 (aiocache migration plan
+  S60+ was RESOLVED-NO-ACTION).
+
+#### s67/w2-dlq-retention-adr
+- ADR-0091: DLQ retention strategy (formalize S13 K3 W4 unified
+  implementation: 7-day default, per-tenant override, archival S3).
+
+## [Unreleased] — Sprint 68 (2026-06-08)
+
+### Added
+
+#### s68/w1-outbox-stuck-detection
+- `src/backend/infrastructure/repositories/outbox.py`:
+  - `fetch_stuck_pending(*, threshold_seconds, limit=100) → list[OutboxMessage]`
+  - `count_stuck_pending(*, threshold_seconds) → int`
+  - Pre-existing bug fixed: `mark_sent()` использовал неопределённую `now` (atomic fix)
+- `tests/unit/infrastructure/messaging/outbox/test_stuck_detection.py` (6 tests):
+  stuck/retry-excluded/sent-failed-excluded/limit/empty
+- Use case: detect worker crash/deadlock/не получает CPU — сообщения
+  в `status='pending'`, `retry_count=0` зависают бесконечно.
+
+#### s68/w2-vault-rotation-adr
+- ADR-0092: Vault zero-downtime rotation — formalize K1 S19 W1
+  (1302 LOC across vault_client.py + vault_rotator.py + vault_refresher.py
+  + secret_rotation.py). PRODUCTION-READY: graceful reconnect,
+  drift-toleration, validate-before-activate, per-path callbacks,
+  Prometheus metrics.
+
+## [Unreleased] — Sprint 69 (2026-06-08)
+
+### Changed
+
+#### s69/w1-rate-limit-adr
+- ADR-0093: Global rate-limit — formalize W14.1.C + Sprint 6-9
+  (920 LOC across unified_rate_limiter.py + global_ratelimit.py +
+  rate_limit_middleware.py + distributed_rl_cluster.py). PRODUCTION-READY:
+  multi-instance Redis safety, multi-strategy, token bucket,
+  pyrate-limiter compat, Grafana SLO dashboard.
+
+#### s69/w2-pii-middleware-adr
+- ADR-0094: Global PII response middleware — formalize S18 W3 + S-L8-4
+  (1179 LOC across pii_masking_response.py + data_masking.py +
+  pii_masker.py + pii_tokenizer.py + pii_streaming.py).
+  PRODUCTION-READY: feature-flag pii_response_middleware_enabled
+  (default-OFF), path patterns, Content-Type filter, 8 PII types
+  (jwt/iban/snils/card/passport/email/inn/phone).
+
+## [Unreleased] — Sprint 70 (2026-06-08)
+
+### Added
+
+#### s70/w1-middleware-registry-build-chain
+- `MiddlewareRegistry.build_chain` реализация (per-route middleware DSL):
+  - Composable middleware chain из route.toml::middleware declarations
+  - Per-tenant + per-route priority resolution
+  - Caching: build once, reuse on request hot-path
+
+#### s70/w2-correlation-otel-adr
+- ADR-0096: correlation→OTel trace_id binding — formalize S18 W7 +
+  S-L7-2/6 (automatic W3C traceparent extraction + injection в logs).
+
+## [Unreleased] — Sprint 71 (2026-06-08)
+
+### Changed
+
+#### s71/w1-fallback-logging-adr
+- ADR-0097: fallback logging sink (formalize existing production-ready
+  implementation: stdout → file → queue → alerting chain с circuit breaker
+  per sink).
+
+## [Unreleased] — Sprint 72 (2026-06-08)
+
+### Added
+
+#### s72/w1-per-tenant-pool-metrics
+- Per-tenant connection pool metrics: `tenant_id` label на
+  warmup/reconnect events. Grafana panel: tenant pool health overview.
+
+#### s72/w2-outbox-stuck-monitor-prometheus
+- `outbox_stuck_pending_count` Prometheus gauge integration в dispatcher
+  (sample каждые 60s). Использует `count_stuck_pending` из S68 W1.
+
+## [Unreleased] — Sprint 73 (2026-06-08)
+
+### Added
+
+#### s73/grafana-outbox-stuck-dashboard
+- Grafana dashboard + alert rules для `outbox_stuck_pending_count`:
+  - Panel: stuck messages by topic (top-10)
+  - Alert: `outbox_stuck_pending_count > 0 в течение 5 мин`
+  - Investigation links: per-message drilldown (correlation_id,
+    retry_count, age, tenant_id)
+
+## [Unreleased] — Sprint 74 (2026-06-08)
+
+### Added
+
+#### s74/w1-outbox-stuck-monitor-lifecycle
+- Outbox stuck-monitor lifecycle hooks (start/stop с worker shutdown)
+  + feature flag `outbox_stuck_monitor_enabled` (default-OFF).
+- Integration: dispatcher → monitor → Prometheus gauge (S72 W2).
+
+## [Unreleased] — Sprint 75 (2026-06-08)
+
+### Added
+
+#### s75/w1-streamlit-stuck-monitor-page
+- Streamlit page `45_Outbox_Stuck_Monitor.py` — UI для
+  `outbox_stuck_pending_count`: real-time gauge, top topics,
+  manual replay action (mark stuck as failed → retry).
+
+#### s75/w2-outbox-adr
+- ADR-0098: outbox per-transport stuck breakdown (design + defer).
+  Транспорты (Redis Streams, Kafka, RabbitMQ) могут иметь разные
+  reasons для stuck (consumer lag, broker unavailable, etc.) —
+  breakdown дизайн deferred, реализация в S78+.
+
+## [Unreleased] — Sprint 76 (2026-06-08)
+
+### Added
+
+#### s76/w1-real-credit-agents
+- `extensions/credit_pipeline/` — real credit agents (replaces
+  supervisor stub из S28): 5 agents (kyc, aml, scoring, fraud, doc-classifier)
+  с реальными LangGraph workflows, real PII masking, real scoring model.
+
+#### s76/w1-closeout-v28-cleanup
+- `chore(repo)`: remove v28 dead artifacts (v28 ro-analysis doc +
+  fabrication list). ADR-0099: v28 ro-analysis reconciliation —
+  5 из 13 claims fabricated, formalize в ADR для предотвращения
+  re-discovery.
+
+#### s76/w2-register-actions
+- 3 real actions (`credit.kyc.verify`, `credit.aml.screen`,
+  `credit.scoring.compute`) зарегистрированы в plugin lifecycle
+  через `register_action`. Доступны из DSL routes via `call_function`.
+
+#### s76/w2-followup
+- P1 review fixes: docstring polish, type hints (Pydantic models),
+  test coverage (3 new tests для plugin lifecycle).
+
 ## [Unreleased] — Sprint 77 (2026-06-09)
 
 ### Removed
