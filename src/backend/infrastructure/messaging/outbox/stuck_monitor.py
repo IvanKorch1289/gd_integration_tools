@@ -39,7 +39,10 @@ from dataclasses import dataclass
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.repositories.outbox import count_stuck_pending
+from src.backend.infrastructure.repositories.outbox import (
+    count_stuck_pending,
+    count_stuck_pending_by_transport,
+)
 
 __all__ = (
     "OutboxStuckMonitor",
@@ -59,7 +62,9 @@ try:  # pragma: no cover - prometheus_client optional
     _STUCK_PENDING_GAUGE = _PromGauge(
         "outbox_stuck_pending_count",
         "Number of pending outbox messages older than threshold_seconds "
-        "(worker not picking up = stuck).",
+        "(worker not picking up = stuck). S81 W2 (ND-001 step 5): per-transport "
+        "breakdown via label.",
+        ["transport"],
     )
 except Exception as _:
     _STUCK_PENDING_GAUGE = None  # type: ignore[assignment,unused-ignore]
@@ -148,11 +153,10 @@ class OutboxStuckMonitor:
         _logger.info("OutboxStuckMonitor stopped")
 
     async def _sample_loop(self) -> None:
-        """Periodic gauge update loop."""
+        """Periodic gauge update loop (S81 W2: per-transport)."""
         while self._running:
             try:
-                count = await self._sample_once()
-                self._last_count = count
+                await self._sample_once()
                 self._samples_total += 1
             except asyncio.CancelledError:
                 break
@@ -161,15 +165,44 @@ class OutboxStuckMonitor:
                 _logger.warning("OutboxStuckMonitor sample failed: %s", exc)
             await asyncio.sleep(self._sample_interval)
 
-    async def _sample_once(self) -> int:
-        """Один sample: count_stuck_pending → gauge.set()."""
-        count = await count_stuck_pending(threshold_seconds=self._threshold)
+    async def _sample_once(self) -> None:
+        """Один sample (S81 W2, ND-001 step 5): per-transport breakdown.
+
+        Calls:
+          * count_stuck_pending → aggregate gauge (label=transport='_aggregate_')
+          * count_stuck_pending_by_transport → per-transport gauge
+
+        Prometheus convention: aggregate label uses "_aggregate_" sentinel
+        (not 'all' или 'total') чтобы избежать collision с реальными
+        transport names.
+        """
+        # 1. Aggregate count (backwards compat с S72 W2 single-value gauge)
+        total = await count_stuck_pending(threshold_seconds=self._threshold)
+        self._last_count = total
         if _STUCK_PENDING_GAUGE is not None:
             try:
-                _STUCK_PENDING_GAUGE.set(count)
-            except Exception as exc:  # noqa: BLE001 — best-effort metric
-                _logger.debug("gauge.set failed: %s", exc)
-        return count
+                _STUCK_PENDING_GAUGE.labels(transport="_aggregate_").set(total)
+            except Exception as exc:
+                _logger.debug("Aggregate gauge set failed: %s", exc)
+
+        # 2. Per-transport breakdown (ND-001 step 5)
+        try:
+            by_transport = await count_stuck_pending_by_transport(
+                threshold_seconds=self._threshold
+            )
+        except Exception as exc:
+            _logger.debug("Per-transport count failed: %s", exc)
+            return
+
+        if _STUCK_PENDING_GAUGE is None:
+            return
+        for transport, count in by_transport.items():
+            try:
+                _STUCK_PENDING_GAUGE.labels(transport=transport).set(count)
+            except Exception as exc:
+                _logger.debug(
+                    "Per-transport gauge set failed for %s: %s", transport, exc
+                )
 
 
 #: Default singleton — используется в lifecycle.py hooks.

@@ -101,22 +101,26 @@ def test_stop_clears_running() -> None:
 
 @pytest.mark.asyncio
 async def test_sample_once_calls_count_stuck_pending() -> None:
-    """_sample_once() вызывает count_stuck_pending с threshold."""
+    """_sample_once() вызывает count_stuck_pending + by_transport с threshold (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
         threshold_seconds=300, sample_interval_seconds=60
     )
     with patch(
         "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
         new=AsyncMock(return_value=42),
-    ) as mock:
-        count = await m._sample_once()
-    assert count == 42
+    ) as mock, patch(
+        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+        new=AsyncMock(return_value={"kafka": 42}),
+    ) as mock_by:
+        await m._sample_once()
     mock.assert_awaited_once_with(threshold_seconds=300)
+    mock_by.assert_awaited_once_with(threshold_seconds=300)
+    assert m.last_count == 42
 
 
 @pytest.mark.asyncio
 async def test_sample_once_updates_gauge() -> None:
-    """_sample_once() обновляет gauge если prometheus_client доступен."""
+    """_sample_once() обновляет aggregate + per-transport gauges (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
         threshold_seconds=300, sample_interval_seconds=60
     )
@@ -126,16 +130,32 @@ async def test_sample_once_updates_gauge() -> None:
     with patch(
         "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
         new=AsyncMock(return_value=7),
+    ), patch(
+        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+        new=AsyncMock(return_value={"kafka": 5, "s3": 2}),
     ):
-        # Меняем поведение gauge: проверяем что .set() вызван.
-        original_set = stuck_monitor._STUCK_PENDING_GAUGE.set
-        calls: list[float] = []
-        stuck_monitor._STUCK_PENDING_GAUGE.set = lambda v: calls.append(v)  # type: ignore[method-assign]
+        # Capture .labels(...).set(...) calls.
+        # After S81 W2, gauge is a labeled metric; .set() called via .labels().
+        labels_calls: list[tuple[str, float]] = []
+
+        class _FakeGauge:
+            def labels(self, transport: str) -> "_FakeGauge":
+                self._last_transport = transport
+                return self
+
+            def set(self, v: float) -> None:
+                labels_calls.append((self._last_transport, v))  # type: ignore[attr-defined]
+
+        stuck_monitor._STUCK_PENDING_GAUGE = _FakeGauge()  # type: ignore[assignment]
         try:
             await m._sample_once()
-            assert calls == [7]
+            # Should have set: _aggregate_=7, kafka=5, s3=2
+            assert ("_aggregate_", 7) in labels_calls
+            assert ("kafka", 5) in labels_calls
+            assert ("s3", 2) in labels_calls
+            assert m.last_count == 7
         finally:
-            stuck_monitor._STUCK_PENDING_GAUGE.set = original_set  # type: ignore[method-assign]
+            pass  # singleton test, no cleanup needed
 
 
 @pytest.mark.asyncio
@@ -176,7 +196,7 @@ async def test_sample_loop_handles_exceptions() -> None:
 
 @pytest.mark.asyncio
 async def test_last_count_and_samples_total_updated() -> None:
-    """После sample — last_count и samples_total обновляются."""
+    """После sample — last_count и samples_total обновляются (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
         threshold_seconds=300, sample_interval_seconds=60
     )
@@ -184,13 +204,14 @@ async def test_last_count_and_samples_total_updated() -> None:
     with patch(
         "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
         new=AsyncMock(return_value=15),
+    ), patch(
+        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+        new=AsyncMock(return_value={}),
     ):
-        count = await m._sample_once()
-        # Прямой вызов: last_count обновляется в _sample_loop, не _sample_once.
-        # Но мы можем проверить что sample succeeded.
-        assert count == 15
+        # S81 W2: _sample_once() returns None, sets _last_count internally.
+        await m._sample_once()
+        assert m.last_count == 15
         # _sample_loop: simulate one iteration manually.
-        m._last_count = count
         m._samples_total += 1
         assert m.last_count == 15
         assert m.samples_total == 1

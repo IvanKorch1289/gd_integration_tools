@@ -27,15 +27,54 @@ from src.backend.infrastructure.database.models.outbox import OutboxMessage
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = (
+    "ALLOWED_TRANSPORTS",
     "count_stuck_pending",
     "count_stuck_pending_by_transport",
     "fetch_pending",
     "fetch_stuck_pending",
     "mark_failed",
     "mark_sent",
+    "validate_transport",
     "write",
     "write_within_session",
 )
+
+#: S81 W2 (ND-001 step 4). Allowed values для ``OutboxMessage.transport``.
+#: "other" — fallback для existing rows (pre-migration) и unknown transports.
+#: Adding a new transport: extend this set + add OutboxBackend writer для него.
+ALLOWED_TRANSPORTS: frozenset[str] = frozenset(
+    {"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"}
+)
+
+
+def validate_transport(transport: str) -> str:
+    """Валидирует значение transport field (S81 W2, ND-001 step 4).
+
+    Args:
+        transport: имя транспорта для проверки.
+
+    Returns:
+        Same transport (lowercased) если валидно.
+
+    Raises:
+        ValueError: если transport не в ALLOWED_TRANSPORTS.
+
+    Note: normalization (lowercase) обеспечивает consistent label values
+    для Prometheus (per-transport gauge), иначе "Kafka" и "kafka" дают
+    2 разных label'а.
+    """
+    if not isinstance(transport, str):
+        raise ValueError(
+            f"transport должен быть str, got {type(transport).__name__}"
+        )
+    transport = transport.strip().lower()
+    if transport not in ALLOWED_TRANSPORTS:
+        raise ValueError(
+            f"Unknown transport: {transport!r}. "
+            f"Allowed: {sorted(ALLOWED_TRANSPORTS)}. "
+            f"Add to ALLOWED_TRANSPORTS если нужен новый transport."
+        )
+    return transport
 
 
 async def write_within_session(
@@ -44,23 +83,38 @@ async def write_within_session(
     topic: str,
     payload: dict[str, Any],
     headers: dict[str, Any] | None = None,
+    transport: str = "other",
 ) -> int:
     """Записывает outbox-сообщение в уже открытой сессии.
 
     Предназначено для вызова из бизнес-логики, которая управляет
     транзакцией сама — гарантирует atomic-запись с бизнес-данными.
 
+    Args:
+        topic: имя топика/очереди.
+        payload: сериализуемый payload (dict).
+        headers: optional headers (trace, auth, etc.).
+        transport: имя транспорта для per-transport breakdown
+            (S81 W2, ND-001 step 4). Default='other' для backwards compat.
+
     Returns:
         ID созданной записи.
     """
-    msg = OutboxMessage(topic=topic, payload=payload, headers=headers or {})
+    transport = validate_transport(transport)
+    msg = OutboxMessage(
+        topic=topic, payload=payload, headers=headers or {}, transport=transport
+    )
     session.add(msg)
     await session.flush()  # чтобы получить id без commit
     return msg.id
 
 
 async def write(
-    *, topic: str, payload: dict[str, Any], headers: dict[str, Any] | None = None
+    *,
+    topic: str,
+    payload: dict[str, Any],
+    headers: dict[str, Any] | None = None,
+    transport: str = "other",
 ) -> int:
     """Автономная запись в outbox (если у вызывающего кода нет своей сессии).
 
@@ -68,7 +122,11 @@ async def write(
     """
     async with main_session_manager.transaction() as session:
         return await write_within_session(
-            session, topic=topic, payload=payload, headers=headers
+            session,
+            topic=topic,
+            payload=payload,
+            headers=headers,
+            transport=transport,
         )
 
 
