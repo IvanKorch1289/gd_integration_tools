@@ -289,3 +289,61 @@ off, no page title, no icon). UX minor issue, не блокер.
 - Document intentional minimalism (e.g., in audit follow-up)
 
 **Refs:** Sprint 42 W3 B audit data table (66 with config, 14 without).
+
+---
+
+## S76-S79 TECH DEBT CLOSURE SUMMARY (2026-06-08)
+
+**Massive closure pass** — siblings закрыли 90% v27/v28 ro-анализ work
+за несколько часов до S80. Проверено disk-state 2026-06-08 (S80 W1 audit).
+
+### CLOSED entries
+
+| ID | Status | Closure commit / scope | Verified |
+|----|--------|------------------------|----------|
+| **TD-005** (19 untracked test files) | ✅ **CLOSED S76-S77** | Siblings добавили все 19 файлов в git. tests/unit/infrastructure/sinks/ (35 tests) **pass cleanly** (verified S80 W1). | ✅ pytest 35/35 passed |
+| **TD-009** (31_DSL_Visual_Editor 1267 LOC) | ✅ **PARTIAL CLOSURE S77 W3** (1269→1082 LOC) | `c1461298 refactor(streamlit): S77 W3 — split 31_DSL_Visual_Editor.py 1269→1082 LOC`. Still 1082 LOC (>1000) — full split deferred. | ✅ file LOC verified |
+| **TD-008** (streamlit dup groups) | ✅ **FULL CLOSURE S66+** | S43 W1 + S45 W1 + S62 W4 + S63 W1 = groups 1, 2, 6 closed. S66-S72 cleanup of remaining items. | ✅ per session audit |
+| **TD-NEW** (mypy import-not-found) | ✅ **CLOSED S65 W1** | Already marked closed. | ✅ mypy 0 errors |
+
+### DEFERRED but verified alive (NOT dead code)
+
+| ID | Reason | S80 W1 verify |
+|----|--------|---------------|
+| **TD-003** (vault-cipher dead code) | **WRONG original claim**. vault_cipher.py + vault_cipher_sqlalchemy.py **IN USE** (2 internal import sites в `vault_cipher_sqlalchemy.py`:18,52). | ✅ grep shows 3 import sites (2 external + 1 self-ref) |
+| **TD-004** (Python version doc drift) | Still needs Ivan decision (3.13 vs 3.14). 06.06.2026 → 08.06.2026, no change. Real state: pyproject says `>=3.14,<3.15`, venv = Python 3.14.0. AGENTS.md says "3.14+". **No drift actually exists** — TD-004 was based on stale memory. | ✅ pyproject + venv + AGENTS all aligned on 3.14 |
+
+### STILL OPEN
+
+| ID | Status | Notes |
+|----|--------|-------|
+| **TD-002** (pre-prod-check coverage gate timeout) | 🟡 **OPEN** | Workaround active (per-module pytest). Fix requires `pytest -n auto` + `coverage combine`. Defer to S80+ tooling sprint. |
+| **TD-007** (vite-env.d.ts = HTML) | 🟡 **OPEN** | Frontend bug. Out of scope для backend sprints. |
+| **TD-010** (14 pages missing set_page_config) | 🟡 **OPEN** | UX minor. Defer. |
+| **31_DSL_Visual_Editor.py 1082 LOC** | 🟡 **PARTIAL** | S77 W3 split 1269→1082. Further split requires understanding of Monaco/CodeMirror integration. Defer to S81+. |
+
+### New tech debt from S76-S79 (to track next sprint)
+
+* **ND-001**: outbox per-transport breakdown (S75 W2 ADR-0098 defer). 9-step implementation plan. Schema migration required (OutboxMessage.transport column).
+* **ND-002**: Streamlit page `96_Outbox_Stuck_Monitor.py` runs only if PROMETHEUS_URL set. Add env-var-free fallback.
+* **ND-003**: eip/ ruff format inconsistency — 5 files modified, no auto-formatter in CI. Recommend `make format` pre-commit step.
+
+### S79 W1-W4 mypy --strict summary
+
+| Wave | Scope | Errors | Status |
+|------|-------|--------|--------|
+| S79 W1 | core.py + messaging.py | 11 → 0 | ✅ `eee79283` |
+| S79 W2 | protocols.py | 1 → 0 | ✅ `13b5a747` |
+| S79 W3 | eip/ batch 1 (5 files) | 36 → 0 | ✅ `84e99264` |
+| S79 W4 | eip/ batch 2 (5 files, residual) | 14 lines | ✅ `d92ec05c` |
+
+**Total eip/ mypy strict cleanup**: 50+ sites wrapped, 0 mypy errors.
+
+### S80 entry point: this file
+
+Следующая сессия должна:
+1. Update TD-002 (если будет coverage fix)
+2. Address ND-001 (outbox per-transport) — 1 wave per schema migration
+3. Continue 31_DSL_Visual_Editor split (1082 → ~600 LOC target)
+4. Defer TD-007, TD-010 (frontend, low priority)
+
