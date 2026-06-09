@@ -85,7 +85,7 @@
 | "166 god-файлов" | **166 ✅** | Точно |
 | "1 502 noqa" | **1 677** | v9 занизил на 175 |
 | "9 анализов (65+ агентов)" | Не воспроизводимо | Считать black-box |
-| "V23 backlog, 26 недель" | Подтверждается: `post-v22-backlog/` уже создано | Корректно |
+| "V23 backlog, 26 недель" | Подтверждается: tracked inline в `.claude/DECISIONS.md` + `.shared/context/P1_2_actions_audit.md` (отдельная dir `post-v22-backlog/` удалена S85 W1) | Корректно |
 
 ## Список задач V23 (приоритезировано, без выдумок)
 
@@ -114,7 +114,7 @@
 **Подход:**
 - Аудит: какой API реально используется (callsite count)
 - Выбор канонического: `core/resilience/decorators.py` (v22.10.2 wave 1 зафиксировал API)
-- Deprecation остальных: `DeprecationWarning` + `post-v22-backlog/`
+- Deprecation остальных: `DeprecationWarning` + inline-ссылки в `.claude/DECISIONS.md`
 - **Объём:** 3-5 дней
 
 ### 🟡 P2.4 — Rate Limit консолидация (4+ → 1)
@@ -162,6 +162,6 @@
 
 ## Куда положить артефакты
 
-- `post-v22-backlog/` — V23+ removal ledger (S19 ADR-NEW-10)
+- Inline в `.claude/DECISIONS.md` — V23+ removal ledger (S19 ADR-NEW-10; отдельная dir `post-v22-backlog/` удалена S85 W1)
 - `.shared/context/V9_VS_V22_GAP.md` — этот файл
 - `TECH_DEBT.md` — append-only ledger для найденных проблем

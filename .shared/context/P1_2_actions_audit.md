@@ -126,7 +126,7 @@ providers.py (T-P1.2c done), actions.py (audited, deferred to V23).
 **V23 backlog:** добавить Phase 1+2 actions.py split как W2 task.
 
 **Tracking:** add `.hermes/plans/S38_P1_2_actions_audit.md` reference,
-update V23 backlog (post-v22-backlog/) после S38 closure.
+update V23 backlog (inline в `.claude/DECISIONS.md`) после S38 closure.
 
 Refs: v9 §V P1.1, `.hermes/plans/S38_P1_1_gateway_split_plan.md` (precedent
 для audit+plan+commit pattern), T-P1.1c closure (44 коммита в S38).

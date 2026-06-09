@@ -151,10 +151,11 @@ cryptographic isolation отложена до M-C use case (см. revert-path).
 
 ### Revert-path
 
-См. `post-v22-backlog/m-c-encryption.md` для детального плана M-C:
+План M-C (если появится в V23+ roadmap):
 - Per-tenant DEK через Vault Transit.
 - pgcrypto + DEK wrapper.
 - Triggers: 152-ФЗ КЗ-1, business SLA per-tenant KMS, audit findings.
+- Tracked inline в `.claude/DECISIONS.md:238` (M-B scope reduction).
 
 ---
 
