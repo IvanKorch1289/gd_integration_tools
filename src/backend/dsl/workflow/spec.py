@@ -228,6 +228,15 @@ class AgentInvokeDeclaration(BaseModel):
     S28 W2 расширения: memory_scope, write_episode, namespace_template,
     inject_memory, recall_on.
 
+    **Return value (TD-011, S84 W1)**: ``compile_agent_invoke_step`` (и его
+    Temporal activity ``_agent_invoke``) возвращает :class:`AIResponse`
+    объект, **не** ``str``. Caller извлекает ``.content`` для текста,
+    ``.tokens_prompt``/``.tokens_completion`` для usage,
+    ``.model_used`` для observability. Backward-incompatible с pre-S83
+    поведением (где возвращался ``str`` напрямую через legacy path).
+    Митигация: ``gateway_adapter.invoke_via_gateway(return_full_response=True)``
+    для selective adoption в non-workflow callers.
+
     YAML::
 
         steps:
