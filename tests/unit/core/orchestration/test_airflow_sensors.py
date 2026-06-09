@@ -157,7 +157,7 @@ class TestHttpSensor:
     async def test_match_on_status_200(self) -> None:
         sensor = HttpSensor("http://api.example.com/health", poll_interval_s=0.01)
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.httpx.AsyncClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -180,7 +180,7 @@ class TestHttpSensor:
             poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.httpx.AsyncClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -205,7 +205,7 @@ class TestHttpSensor:
             poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.httpx.AsyncClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -226,7 +226,7 @@ class TestHttpSensor:
             "http://api.example.com/health", expected_status=204, poll_interval_s=0.01
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.httpx.AsyncClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -244,7 +244,7 @@ class TestHttpSensor:
     async def test_request_error_retries(self) -> None:
         sensor = HttpSensor("http://api.example.com/health", poll_interval_s=0.01)
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.httpx.AsyncClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
         ) as MockClient:
             mock_client = AsyncMock()
             mock_client.request = AsyncMock(side_effect=Exception("connect failed"))

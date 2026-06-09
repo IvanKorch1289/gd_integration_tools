@@ -140,6 +140,9 @@ class TestLoggerProtocol:
             def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
                 pass
 
+            def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+                pass
+
             def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
                 pass
 

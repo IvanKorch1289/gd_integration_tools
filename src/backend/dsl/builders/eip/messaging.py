@@ -104,14 +104,18 @@ class MessagingEIPsMixin(EIPMixinBase):
     def sample(self, probability: float = 0.1) -> "RouteBuilder":
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
         return cast(
-            "RouteBuilder", self._add(SamplingProcessor(probability=probability))
-        )  # type: ignore[attr-defined]
+            "RouteBuilder",
+            self._add(SamplingProcessor(probability=probability)),  # type: ignore[attr-defined]
+        )
 
     def schema_validate(self, schema: dict[str, Any]) -> "RouteBuilder":
         """Валидация body по JSON Schema (Draft 2020-12)."""
         from src.backend.dsl.engine.processors.generic import SchemaValidateProcessor
 
-        return cast("RouteBuilder", self._add(SchemaValidateProcessor(schema=schema)))  # type: ignore[attr-defined]
+        return cast(
+            "RouteBuilder",
+            self._add(SchemaValidateProcessor(schema=schema)),  # type: ignore[attr-defined]
+        )
 
     def composed_message(
         self,

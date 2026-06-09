@@ -108,8 +108,9 @@ class TransformationEIPsMixin(EIPMixinBase):
     def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         return cast(
-            "RouteBuilder", self._add(NormalizerProcessor(target_schema=target_schema))
-        )  # type: ignore[attr-defined]
+            "RouteBuilder",
+            self._add(NormalizerProcessor(target_schema=target_schema)),  # type: ignore[attr-defined]
+        )
 
     def resequence(
         self,

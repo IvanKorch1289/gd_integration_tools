@@ -38,13 +38,10 @@ def test_stdlib_logger_supports_exc_info(backend: StdlibLoggingBackend) -> None:
         logger.error("Ошибка: %s", "msg", exc_info=True)
 
 
-def test_get_logger_uses_legacy_manager_for_known_names(
+def test_get_logger_returns_stdlib_logger_directly(
     backend: StdlibLoggingBackend,
 ) -> None:
-    """Для известных имён get_logger должен вернуть logger из LoggerManager."""
+    """Sprint 38: get_logger возвращает stdlib logger напрямую без legacy manager."""
     logger = backend.get_logger("database")
-    # inner должен быть тем же объектом, что и legacy db_logger.
-    from src.backend.infrastructure.external_apis.logging_service import get_log_manager
-
-    legacy = get_log_manager().database_logger
-    assert logger._inner is legacy
+    assert isinstance(logger._inner, logging.Logger)
+    assert logger._inner.name == "database"

@@ -15,11 +15,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 import pytest_asyncio
-from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.backend.infrastructure.database.models.base import mapper_registry

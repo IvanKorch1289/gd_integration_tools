@@ -2,11 +2,18 @@
 
 Sprint 36 (V15 GAP, Subagent A): добавлен fake-класс с tenant-aware
 методами для проверки расширенного протокола.
+
+Sprint 37.X: Protocol разделён на базовый ``CapabilityGatewayProtocol``
+(3 метода) и ``TenantAwareCapabilityGatewayProtocol`` (+4 tenant-aware
+метода). Тесты отражают новую иерархию.
 """
 
 from __future__ import annotations
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
+from src.backend.core.interfaces.capability_gateway import (
+    CapabilityGatewayProtocol,
+    TenantAwareCapabilityGatewayProtocol,
+)
 
 
 class _BaseFake:
@@ -49,14 +56,18 @@ class _Bad:
 
 class TestCapabilityGatewayProtocol:
     def test_is_runtime_checkable(self) -> None:
+        assert isinstance(_BaseFake(), CapabilityGatewayProtocol)
         assert isinstance(_TenantAwareFake(), CapabilityGatewayProtocol)
 
     def test_minimal_fake_passes_runtime_check(self) -> None:
-        # Subagent A: Protocol эволюционировал — добавлены 4 tenant-aware
-        # метода. Минимальный fake (_BaseFake) уже **не** удовлетворяет
-        # Protocol; тест ниже документирует это поведение.
-        assert not isinstance(_BaseFake(), CapabilityGatewayProtocol)
-        assert isinstance(_TenantAwareFake(), CapabilityGatewayProtocol)
+        # Sprint 37.X: базовый Protocol требует только 3 метода.
+        assert isinstance(_BaseFake(), CapabilityGatewayProtocol)
+
+    def test_tenant_aware_protocol_requires_extra_methods(self) -> None:
+        # Базовый fake без tenant-aware методов не удовлетворяет
+        # расширенному Protocol'у.
+        assert not isinstance(_BaseFake(), TenantAwareCapabilityGatewayProtocol)
+        assert isinstance(_TenantAwareFake(), TenantAwareCapabilityGatewayProtocol)
 
     def test_missing_method_fails(self) -> None:
         assert not isinstance(_Bad(), CapabilityGatewayProtocol)

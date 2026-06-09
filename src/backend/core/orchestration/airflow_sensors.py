@@ -25,6 +25,7 @@ import jmespath
 from watchfiles import awatch
 
 from src.backend.core.logging import get_logger
+from src.backend.core.net import OutboundHttpClient
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
 
 # S3 sensor uses aioboto3 (user-approved dep, install via `uv pip install aioboto3`).
@@ -247,7 +248,7 @@ class HttpSensor:
         attempt = 0
         _log.info("HttpSensor: polling %s %s", self._method, self._url)
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(10.0)) as client:
             while True:
                 attempt += 1
                 try:

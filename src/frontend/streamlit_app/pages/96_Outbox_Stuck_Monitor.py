@@ -160,12 +160,12 @@ systemctl restart gd-integration-tools
 # Per-transport breakdown (S81 W4, ND-001 step 9)
 st.subheader("📊 Per-Transport Breakdown (S81 W4)")
 
-if PROMETHEUS_URL:
+if prometheus_url:
     # Query per-transport gauges (S81 W2: label-based)
     per_transport_query = 'outbox_stuck_pending_count{transport!="_aggregate_"}'
     try:
         response = httpx.get(
-            f"{PROMETHEUS_URL}/api/v1/query",
+            f"{prometheus_url}/api/v1/query",
             params={"query": per_transport_query},
             timeout=5.0,
         )

@@ -3,6 +3,10 @@
 Обеспечивает обратную совместимость: все существующие логгеры
 (app_logger, db_logger и др.) продолжают работать без изменений.
 Используется по умолчанию, если structlog не установлен.
+
+Sprint 38: get_logger больше не делегирует в logging_service — это
+устраняет import-time regression из-за загрузки settings/Vault при
+первом вызове get_logger() в холодном процессе.
 """
 
 import logging
@@ -85,47 +89,19 @@ class StdlibLogger(LoggerProtocol):
 class StdlibLoggingBackend(BaseLoggerBackend):
     """Бэкенд на stdlib logging.
 
-    Делегирует LoggerManager из logging_service.py для legacy-имён,
-    чтобы сохранить настроенные handlers (QueueListener, ContextFilter).
-    Используется как fallback, если structlog недоступен.
+    Используется как fallback, если structlog недоступен или не
+    сконфигурирован явно. Не тянет legacy :mod:`logging_service`
+    при получении логгера — это критично для ``import time``
+    (Sprint 38 startup-time regression fix).
     """
 
     def __init__(self) -> None:
         self._configured = False
-        self._manager: Any | None = None
 
     def configure(self, **settings: Any) -> None:
         self._configured = True
 
-    def _get_manager(self) -> Any:
-        if self._manager is None:
-            from src.backend.infrastructure.external_apis.logging_service import (
-                get_log_manager,
-            )
-
-            self._manager = get_log_manager()
-        return self._manager
-
     def get_logger(self, name: str) -> StdlibLogger:
-        manager = self._get_manager()
-        # Сопоставление canonical name → attribute name в LoggerManager.
-        attr_map = {
-            "application": "application_logger",
-            "database": "database_logger",
-            "storage": "storage_logger",
-            "smtp": "smtp_logger",
-            "scheduler": "scheduler_logger",
-            "request": "request_logger",
-            "tasks": "tasks_logger",
-            "redis": "redis_logger",
-            "stream": "stream_logger",
-            "grpc": "grpc_logger",
-        }
-        attr = attr_map.get(name)
-        if attr is not None:
-            legacy = getattr(manager, attr, None)
-            if legacy is not None:
-                return StdlibLogger(legacy)
         return StdlibLogger(logging.getLogger(name))
 
     def shutdown(self) -> None:

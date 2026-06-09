@@ -29,8 +29,9 @@ class RoutingEIPsMixin(EIPMixinBase):
     def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
         """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
         return cast(
-            "RouteBuilder", self.convert(from_format=from_format, to_format=to_format)
-        )  # type: ignore[attr-defined]
+            "RouteBuilder",
+            self.convert(from_format=from_format, to_format=to_format),  # type: ignore[attr-defined]
+        )
 
     def dynamic_route(
         self, route_expression: Callable[[Exchange[Any]], str]
@@ -38,8 +39,8 @@ class RoutingEIPsMixin(EIPMixinBase):
         """Dynamic Router: runtime-вычисление route_id."""
         return cast(
             "RouteBuilder",
-            self._add(DynamicRouterProcessor(route_expression=route_expression)),
-        )  # type: ignore[attr-defined]
+            self._add(DynamicRouterProcessor(route_expression=route_expression)),  # type: ignore[attr-defined]
+        )
 
     def scatter_gather(
         self,
