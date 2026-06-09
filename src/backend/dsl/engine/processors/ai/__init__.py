@@ -1,10 +1,11 @@
 """AI processors — reranker, cross-encoder pipeline + banking AI processors.
 
-Re-exports all processors from ai_processors.py for backward compatibility,
-plus the new RerankerProcessor and banking AI processors.
+Re-exports all processors from the per-class files in this package.
+Sibling's split (S77+) extracted each class to its own file; S81 W1
+completes the migration by switching __init__.py to import from the
+per-class files (not from ai_processors.py).
 """
 
-# Original AI processors from ai_processors.py (sibling file)
 # Banking AI processors
 from src.backend.dsl.engine.processors.ai.banking_processors import (
     CreditScoreProcessor,
@@ -14,32 +15,52 @@ from src.backend.dsl.engine.processors.ai.banking_processors import (
     RiskAssessmentProcessor,
 )
 
-# Reranker processor
-from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
-from src.backend.dsl.engine.processors.ai_processors import (
-    CacheProcessor,
+# Per-class AI processors (extracted from ai_processors.py, ADR-0102)
+from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
+from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
     CacheWriteProcessor,
+)
+from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (
     GetFeedbackExamplesProcessor,
+)
+from src.backend.dsl.engine.processors.ai.guardrails_processor import (
     GuardrailsProcessor,
-    LLMCallProcessor,
+)
+from src.backend.dsl.engine.processors.ai.llmcall_processor import LLMCallProcessor
+from src.backend.dsl.engine.processors.ai.llmfallback_processor import (
     LLMFallbackProcessor,
-    LLMParserProcessor,
+)
+from src.backend.dsl.engine.processors.ai.llmparser_processor import LLMParserProcessor
+from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (
     PromptComposerProcessor,
-    RagIngestProcessor,
+)
+from src.backend.dsl.engine.processors.ai.ragingest_processor import RagIngestProcessor
+from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (
     RagPIIRedactionProcessor,
-    RagQueryProcessor,
+)
+from src.backend.dsl.engine.processors.ai.ragquery_processor import RagQueryProcessor
+
+# Reranker processor (separately added in sibling split)
+from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
+from src.backend.dsl.engine.processors.ai.restorepii_processor import (
     RestorePIIProcessor,
+)
+from src.backend.dsl.engine.processors.ai.sanitizepii_processor import (
     SanitizePIIProcessor,
+)
+from src.backend.dsl.engine.processors.ai.semanticrouter_processor import (
     SemanticRouterProcessor,
+)
+from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (
     TokenBudgetProcessor,
+)
+from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (
     VectorSearchProcessor,
 )
 
 __all__ = (
-    # From ai_processors.py
     "CacheProcessor",
     "CacheWriteProcessor",
-    # Banking AI processors
     "CreditScoreProcessor",
     "CustomerSegmentationProcessor",
     "FraudDetectionProcessor",
@@ -53,7 +74,6 @@ __all__ = (
     "RagIngestProcessor",
     "RagPIIRedactionProcessor",
     "RagQueryProcessor",
-    # From reranker.py
     "RerankerProcessor",
     "RestorePIIProcessor",
     "RiskAssessmentProcessor",

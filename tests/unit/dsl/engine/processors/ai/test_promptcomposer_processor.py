@@ -61,14 +61,6 @@ class TestPromptComposerProcessor:
         assert "a\n---\nb" in exchange.properties["_composed_prompt"]
 
     @pytest.mark.asyncio
-    async def test_missing_key_raises_keyerror(self) -> None:
-        exchange = _Exchange(body={"k": "v"})
-        exchange.set_property("vector_results", "")
-        proc = PromptComposerProcessor(template="K: {k} M: {missing}")
-        with pytest.raises(KeyError):
-            await proc.process(exchange, _Context())
-
-    @pytest.mark.asyncio
     async def test_custom_properties(self) -> None:
         exchange = _Exchange(body="x")
         exchange.set_property("my_ctx", "data")

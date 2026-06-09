@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -39,9 +40,15 @@ class PromptComposerProcessor(BaseProcessor):
         try:
             prompt = self._template.format(**variables)
         except KeyError:
-            prompt = self._template.format_map(
-                {**variables, **{k: "" for k in self._template.split("{") if "}" in k}}
+            # Extract variable names from template using regex
+            vars_in_template = re.findall(
+                r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template
             )
+            # Fill missing template vars with empty string (setdefault keeps real values)
+            fill = {**variables}
+            for k in vars_in_template:
+                fill.setdefault(k, "")
+            prompt = self._template.format_map(fill)
         exchange.set_property(self._output_property, prompt)
 
     def to_spec(self) -> dict[str, Any] | None:
