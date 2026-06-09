@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **50**; уникальных слотов: **50**.
+Всего ADR-файлов: **51**; уникальных слотов: **51**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -54,5 +54,6 @@
 | 0098 | ADR-0098: Outbox per-transport stuck breakdown (defer implementation) | — | [0098-outbox-per-transport-stuck-breakdown.md](0098-outbox-per-transport-stuck-breakdown.md) |
 | 0099 | ADR-0099: v28 ro-analysis reconciliation — fabricated claims + Sprint 0 closeout | — | [0099-v28-reconciliation-fabricated-claims.md](0099-v28-reconciliation-fabricated-claims.md) |
 | 0100 | ADR-0100: Remove dead `dsl/builders/eip.py` (1354 LOC) — S60 W4 split superseded | — | [0100-remove-dead-eip-py.md](0100-remove-dead-eip-py.md) |
+| 0101 | ADR-0101: Lazy-import pattern для streamlit-dependent helpers (testability boundary) | — | [0101-lazy-streamlit-import-pattern.md](0101-lazy-streamlit-import-pattern.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

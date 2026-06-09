@@ -152,6 +152,60 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - TD-002 fix: pre-prod-check coverage-gate timeout (workaround active)
 - Honored carryover for S66+: coverage lift + TD-002 fix.
 
+## [Unreleased] — Sprint 77 (2026-06-09)
+
+### Removed
+
+#### s77/w2-remove-dead-eip-py
+- `src/backend/dsl/builders/eip.py` (1354 LOC) — DEAD code из v28 ro-анализ fabrication.
+  Split был сделан в S60 W4 (commit `ee6b4b57`), но файл-артефакт оставался на диске.
+  528/528 tests passed identically (with vs without file) = proof of dead code.
+- `src/backend/dsl/builders/__pycache__/eip.cpython-*.pyc` — stale bytecode.
+- ADR-0100: remove dead `eip.py` (formalize S60 W4 split + v28-redux pattern).
+
+### Refactored
+
+#### s77/w3-dsl-editor-split
+- `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` 1269 → 1082 LOC (-14.7%)
+  через pure-logic extraction в `pages/_editor/` package:
+  - `constants.py` (145 LOC) — STEP_PALETTE, PROCESSOR_ICONS, VISUAL_PROCESSORS, default_yaml
+  - `history.py` (110 LOC) — push_history/can_undo/can_redo/undo/redo/init_history
+  - `yaml_sync.py` (135 LOC) — yaml_to_steps/build_yaml_from_steps/try_load/sync_yaml
+  - `__init__.py` (88 LOC) — re-exports + back-compat shims
+- Streamlit rendering (sidebar, canvas, tabs) остаётся inline — тесно связан с
+  `st.session_state` / `st.sidebar` / `st.tabs` и не извлекается без overhead.
+- **Lazy-import pattern**: `streamlit` импортируется ТОЛЬКО внутри функций через
+  `_require_streamlit()` helper → unit-тесты запускаются без `[frontend]` extra.
+- Тесты: 19/19 в `tests/unit/frontend/test_dsl_editor_helpers.py` (mypy strict pass,
+  ruff pass, ast.parse OK).
+
+### Fixed
+
+#### s77/w3-followup-review-fixes
+- **P0-1 init order bug**: `init_history()` читал `st.session_state.yaml` ДО его
+  инициализации → `AttributeError` на первой загрузке. Pre-existed в original
+  (c1461298^, lines 99-101), рефактор сохранил ошибочный порядок. Fix: блоки
+  переставлены + комментарий с cross-ref для будущих рефакторов.
+- **P1-1 docstring `:mod:` refs**: `_editor/__init__.py` ссылался на
+  `:mod:`._constants``` (не существует) → `:mod:`.constants```.
+- **P1-2 счётчики функций**: docstring говорил "5 undo/redo" (реально 6) и
+  "5 yaml_sync" (реально 4) → счётчики + явные имена.
+- **P2-1 empty `TYPE_CHECKING` block**: `yaml_sync.py` имел пустой guard +
+  неиспользуемый `from typing import TYPE_CHECKING` → удалены (также в `history.py`).
+- **P2-2 `_require_streamlit()` return-type**: убран `-> "st"  # type: ignore[...]`
+  + добавлен docstring объясняющий untyped.
+- **P2-3 `try_load` coverage**: 2 новых теста (`test_try_load_valid_yaml_returns_pipeline`,
+  `test_try_load_invalid_yaml_returns_error`) → 21/21 passed (was 19/19).
+- Тесты: 21/21 passed в 0.47s, ruff pass, mypy --no-incremental pass (4 source files).
+
+### Known issues
+
+- DEBT: Streamlit-зависимые хелперы (push_history, undo, redo, sync_yaml) без
+  integration-тестов — требуют `[frontend]` extra. Backlog S78+.
+- DEBT: `st_aggrid` optional import в main 31_DSL_Visual_Editor.py — вне scope S77.
+- CHANGELOG backlog: S66-S76 не задокументированы (W4 scope = S77 only).
+  Backlog: separate audit task (multi-sprint effort).
+
 ## [0.20.0] — 2026-05-26 — Sprint 28
 
 ### Added
