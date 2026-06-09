@@ -107,20 +107,55 @@ if prometheus_url:
 else:
     st.info(
         "Set `PROMETHEUS_URL` env var для live queries. "
-        "Showing in-memory state (best-effort)."
+        "Showing in-memory state (best-effort, same-process only)."
     )
     # In-memory fallback: try to read from default_stuck_monitor.
+    # Только работает если streamlit запущен в ТОМ ЖЕ process что и stuck_monitor.
+    # Production deploy: используйте PROMETHEUS_URL или см. CLI helper ниже.
+    in_memory_available = False
     try:
         from src.backend.infrastructure.messaging.outbox import stuck_monitor
 
         monitor = stuck_monitor.default_stuck_monitor
+        in_memory_available = True
         st.metric(
             label="Stuck-pending count (in-memory)",
             value=monitor.last_count if monitor.last_count >= 0 else "—",
             delta=f"{monitor.samples_total} samples taken",
         )
     except ImportError:
-        st.warning("OutboxStuckMonitor not importable. Process not running?")
+        st.warning(
+            "⚠️ StuckStuckMonitor module not importable в этом process. "
+            "Streamlit app запущен в отдельном worker — нужен PROMETHEUS_URL."
+        )
+    except Exception as exc:
+        st.error(f"In-memory read error: {exc}")
+
+# CLI helper reference (для ops)
+with st.expander("🔧 CLI helpers (без UI)"):
+    st.markdown(
+        """
+Для production мониторинга без Streamlit/Prometheus:
+
+```bash
+# Read stuck-monitor state from JSON file (если monitor
+# пишет в /tmp/stuck_monitor_state.json)
+cat /tmp/stuck_monitor_state.json | jq .
+
+# Direct database query (manual fallback)
+psql -h <host> -U <user> -d <db> -c "
+  SELECT COUNT(*) AS stuck_count
+  FROM outbox_messages
+  WHERE status = 'pending'
+    AND created_at < now() - interval '5 minutes'
+    AND retry_count = 0;
+"
+
+# Restart stuck-monitor если он dead
+systemctl restart gd-integration-tools
+```
+"""
+    )
 
 # Alert rules summary
 st.subheader("🚨 Alert Rules (S73 W1)")
