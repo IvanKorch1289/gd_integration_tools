@@ -94,6 +94,13 @@ init: ## Initialize project with uv
 	uv sync --all-extras
 	@$(SUCCESS) "Project initialized!"
 
+onboarding: check-env ## S42 W2: интерактивный onboarding wizard (5 шагов: preflight → uv sync → doctor → precommit → sample)
+	@$(INFO) "Запуск onboarding wizard (Typer + questionary + rich)..."
+	@$(UV_RUN) python tools/wizards/onboarding_wizard.py
+
+onboarding-non-interactive: check-env ## S42 W2: non-interactive onboarding (для CI / scripted setup)
+	@$(UV_RUN) python tools/wizards/onboarding_wizard.py --non-interactive
+
 install: ## Install dependencies
 	uv sync --all-extras
 
