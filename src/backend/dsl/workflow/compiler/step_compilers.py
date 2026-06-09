@@ -326,29 +326,27 @@ async def compile_agent_invoke_step(
         except Exception as exc:
             _logger.debug("LangGraph saver unavailable: %s", exc)
 
-    # Stateless call via AIGateway
-    try:
-        from src.backend.core.ai.gateway import AIGateway, AIRequest
+    # Stateless call via AIGateway as Temporal activity (sandbox-safe)
+    from temporalio import workflow
 
-        gateway = AIGateway()
-        # Build prompt from raw_input (single user message)
-        prompt_text = str(raw_input) if raw_input else ""
-        request = AIRequest(
-            workflow_id=decl.agent_id,
-            tenant_id=ctx.get("_tenant_id", "unknown"),
-            correlation_id=ctx.get("_correlation_id", "n/a"),
-            prompt_inline=prompt_text,
-            context={"max_turns": decl.max_turns, "timeout_s": timeout_s},
-        )
-        result = await gateway.invoke(request)
+    prompt_text = str(raw_input) if raw_input else ""
+    payload = {
+        "workflow_id": decl.agent_id,
+        "tenant_id": ctx.get("_tenant_id", "unknown"),
+        "correlation_id": ctx.get("_correlation_id", "n/a"),
+        "prompt_inline": prompt_text,
+        "context": {"max_turns": decl.max_turns, "timeout_s": timeout_s},
+    }
 
-        if decl.output_key:
-            ctx.setdefault("_outputs", {})[decl.output_key] = result
-        return result
-    except ImportError as exc:
-        raise ImportError(
-            f"AIGateway not available for AgentInvoke {decl.agent_id}: {exc}"
-        ) from exc
+    result = await workflow.execute_activity(
+        "_agent_invoke",
+        payload,
+        start_to_close_timeout=timedelta(seconds=timeout_s),
+    )
+
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = result
+    return result
 
 
 _STEP_DISPATCH: dict[type, StepCompiler] = {

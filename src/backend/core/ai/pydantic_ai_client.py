@@ -160,6 +160,7 @@ class PydanticAIClient:
         output_type: type[BaseModel] | None = None,
         deps: LLMDependencies | None = None,
         stream: bool = False,
+        _internal_gateway_call: bool = False,
     ) -> LLMResult:
         """Выполняет LLM-вызов через LiteLLMGateway с fallback chain.
 
@@ -179,6 +180,17 @@ class PydanticAIClient:
             GatewayUnavailable: Все модели в fallback chain недоступны.
             GatewayRateLimited: Rate-limit на всех моделях.
         """
+        if not _internal_gateway_call:
+            try:
+                from src.backend.core.config.features import feature_flags
+            except ImportError:
+                feature_flags = None  # type: ignore[assignment]
+            if feature_flags is not None and feature_flags.ai_gateway_enforce:
+                raise RuntimeError(
+                    "PydanticAIClient.run() bypasses AIGateway; "
+                    "use AIGateway.invoke() instead"
+                )
+
         if stream:
             raise NotImplementedError("Streaming support planned for S32 W2+")
 

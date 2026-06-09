@@ -240,6 +240,22 @@ async def test_empty_exists_rejected(storage: S3ObjectStorage) -> None:
         await storage.exists("")
 
 
+async def test_key_too_long_rejected(storage: S3ObjectStorage) -> None:
+    long_key = "a" * 1025
+    with pytest.raises(ValueError, match="превышает 1024 байт"):
+        await storage.upload(long_key, b"x")
+
+
+async def test_key_with_control_chars_rejected(storage: S3ObjectStorage) -> None:
+    with pytest.raises(ValueError, match="Control-символы"):
+        await storage.upload("file\x00.bin", b"x")
+
+
+async def test_key_with_double_slash_rejected(storage: S3ObjectStorage) -> None:
+    with pytest.raises(ValueError, match="Двойной слэш"):
+        await storage.upload("dir//file.bin", b"x")
+
+
 # ── factory integration ─────────────────────────────────────────────────
 
 

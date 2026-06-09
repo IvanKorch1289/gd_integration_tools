@@ -161,6 +161,13 @@ class S3ObjectStorage(ObjectStorage):
             raise ValueError(f"Абсолютный ключ запрещён: {key!r}")
         if ".." in key.split("/"):
             raise ValueError(f"Path-traversal в ключе: {key!r}")
+        # S3 hard limit: 1024 bytes for key; control chars and double-slash are unsafe.
+        if len(key.encode("utf-8")) > 1024:
+            raise ValueError(f"Ключ превышает 1024 байт: {key!r}")
+        if any(ord(ch) < 32 for ch in key):
+            raise ValueError(f"Control-символы в ключе запрещены: {key!r}")
+        if "//" in key:
+            raise ValueError(f"Двойной слэш в ключе запрещён: {key!r}")
         if self._prefix:
             return f"{self._prefix}/{key.lstrip('/')}"
         return key

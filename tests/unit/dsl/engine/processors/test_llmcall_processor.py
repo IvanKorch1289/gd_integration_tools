@@ -1,13 +1,13 @@
 """Unit tests for LLMCallProcessor.
 
 Covers: prompt from property, fallback to body, success with usage,
-rate-limit failure, retry failure, to_spec.
+rate-limit failure, retry failure, to_spec, gateway-enforce path.
 """
 
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -38,6 +38,12 @@ class _Context:
     pass
 
 
+def _mock_flags(enforce: bool = False) -> MagicMock:
+    flags = MagicMock()
+    flags.ai_gateway_enforce = enforce
+    return flags
+
+
 class TestLLMCallProcessor:
     """Tests for :class:`LLMCallProcessor`."""
 
@@ -55,10 +61,14 @@ class TestLLMCallProcessor:
         }
 
         with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=False),
         ):
-            await proc.process(exchange, _Context())
+            with patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ):
+                await proc.process(exchange, _Context())
 
         assert exchange.properties.get("llm.provider") == "openai"
         assert exchange.properties.get("llm.model") == "gpt-4-0613"
@@ -81,10 +91,14 @@ class TestLLMCallProcessor:
         mock_agent.chat.return_value = "ok"
 
         with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=False),
         ):
-            await proc.process(exchange, _Context())
+            with patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ):
+                await proc.process(exchange, _Context())
 
         messages = mock_agent.chat.await_args.kwargs["messages"]
         assert messages[0]["content"] == "real prompt"
@@ -99,10 +113,14 @@ class TestLLMCallProcessor:
         mock_agent.chat.side_effect = RuntimeError("rate limit 429")
 
         with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=False),
         ):
-            await proc.process(exchange, _Context())
+            with patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ):
+                await proc.process(exchange, _Context())
 
         assert "LLM rate limit" in exchange.properties.get("_error", "")
 
@@ -116,10 +134,14 @@ class TestLLMCallProcessor:
         mock_agent.chat.side_effect = TimeoutError("timeout")
 
         with patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=False),
         ):
-            await proc.process(exchange, _Context())
+            with patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ):
+                await proc.process(exchange, _Context())
 
         assert "LLM call failed after 2 attempts" in exchange.properties.get(
             "_error", ""
@@ -142,14 +164,54 @@ class TestLLMCallProcessor:
                 raise ImportError("no module")
             return real_import(name, *args, **kwargs)
 
-        with patch.dict("sys.modules", {}, clear=False):
-            for k in list(sys.modules.keys()):
-                if k == "src.backend.services.ai.ai_agent":
-                    del sys.modules[k]
-            with patch.object(builtins, "__import__", fake_import):
-                await proc.process(exchange, _Context())
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=False),
+        ):
+            with patch.dict("sys.modules", {}, clear=False):
+                for k in list(sys.modules.keys()):
+                    if k == "src.backend.services.ai.ai_agent":
+                        del sys.modules[k]
+                with patch.object(builtins, "__import__", fake_import):
+                    await proc.process(exchange, _Context())
 
         assert "AI agent service unavailable" in exchange.properties.get("_error", "")
+
+    @pytest.mark.asyncio
+    async def test_gateway_enforce_uses_aigateway(self) -> None:
+        """When ai_gateway_enforce=True, call routes through AIGateway."""
+        proc = LLMCallProcessor(provider="openai", model="gpt-4")
+        exchange = _Exchange(body="hi")
+
+        mock_response = MagicMock()
+        mock_response.content = "ok"
+        mock_response.tokens_prompt = 50
+        mock_response.tokens_completion = 50
+        mock_response.model_used = "gpt-4-0613"
+
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            _mock_flags(enforce=True),
+        ):
+            with patch(
+                "src.backend.core.ai.gateway.AIGateway"
+            ) as MockGW:
+                MockGW.return_value.invoke = AsyncMock(return_value=mock_response)
+                await proc.process(exchange, _Context())
+
+        assert exchange.properties.get("llm.provider") == "gateway"
+        assert exchange.properties.get("llm.model") == "gpt-4-0613"
+        assert exchange.properties.get("llm.tokens_used") == 100
+        assert exchange.properties.get("llm.cost_usd") == round(100 * 0.00002, 6)
+        assert exchange.in_message.body == {
+            "content": "ok",
+            "usage": {
+                "total_tokens": 100,
+                "prompt_tokens": 50,
+                "completion_tokens": 50,
+            },
+            "model": "gpt-4-0613",
+        }
 
     def test_to_spec_with_values(self) -> None:
         """to_spec returns dict with provider/model when set."""

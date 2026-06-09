@@ -84,16 +84,15 @@ class Sprints2427Flags(BaseSettings):
 
     # ─── K4 — Sprint 25 AI Gateway + Policy DSL (ADR-NEW-19/20/21) ────────
     ai_gateway_enforce: bool = Field(
-        default=False,
+        default=True,
         title="K4 S25 W1: AIGateway единая точка входа в AI (ADR-NEW-19)",
         description=(
             "K4 Sprint 25 Wave 1 (ADR-NEW-19, PLAN.md V22.4 §S25). Owner: K4 AI/Data + К1 Security. "
             "При True все LLM-вызовы проходят через AIGateway.invoke() pipeline "
             "(policy_resolve → sanitize → guards → render → invoke_llm → "
             "output_guards → output_sanitize → audit → cost). При False — "
-            "scaffold-pass-through через _legacy_invoke (3 кодопути сохраняют интерфейс). "
-            "default-OFF до S27 closure: 100% callsites обёрнуты, "
-            "`make ai-gateway-coverage` strict zero violations."
+            "legacy fallback для экстренных отключений. "
+            "default-ON начиная с S27 closure: все callsites обёрнуты."
         ),
     )
 

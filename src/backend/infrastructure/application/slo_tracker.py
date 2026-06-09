@@ -135,6 +135,65 @@ class SLOTracker:
         """Сбрасывает всю статистику."""
         self._stats.clear()
 
+    def check_budget(self, route_id: str, max_error_rate: float = 5.0) -> bool:
+        """Проверяет, не превышен ли error-budget для маршрута.
+
+        Args:
+            route_id: Идентификатор маршрута.
+            max_error_rate: Максимально допустимый error-rate в процентах.
+
+        Returns:
+            True если бюджет не превышен (маршрут healthy).
+            False если error-rate > max_error_rate.
+        """
+        stats = self._stats.get(route_id)
+        if stats is None or stats.total_count == 0:
+            return True
+        error_rate = stats.error_count / stats.total_count * 100
+        return error_rate <= max_error_rate
+
+
+class SLOBudgetExceeded(Exception):
+    """Исключение при превышении SLO error-budget."""
+
+    def __init__(self, route_id: str, error_rate: float, max_error_rate: float) -> None:
+        super().__init__(
+            f"SLO budget exceeded for route {route_id}: "
+            f"error_rate={error_rate:.2f}% > max={max_error_rate:.2f}%"
+        )
+        self.route_id = route_id
+        self.error_rate = error_rate
+        self.max_error_rate = max_error_rate
+
+
+def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):
+    """Decorator: отклоняет вызов, если SLO error-budget превышен.
+
+    Args:
+        route_id: Идентификатор маршрута для проверки бюджета.
+        max_error_rate: Максимально допустимый error-rate в процентах.
+
+    Raises:
+        SLOBudgetExceeded: Если error-rate > max_error_rate.
+    """
+
+    def decorator(func: Any) -> Any:
+        import functools
+
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            tracker = get_slo_tracker()
+            if not tracker.check_budget(route_id, max_error_rate):
+                stats = tracker.get_route_stats(route_id)
+                raise SLOBudgetExceeded(
+                    route_id, stats["error_rate"], max_error_rate
+                )
+            return await func(*args, **kwargs)
+
+        return async_wrapper
+
+    return decorator
+
 
 from src.backend.core.di import app_state_singleton
 

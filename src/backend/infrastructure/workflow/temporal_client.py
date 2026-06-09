@@ -116,11 +116,21 @@ class TemporalClientFactory:
             "temporal.client.connecting",
             extra={"namespace": namespace, "target": self._target},
         )
+        interceptors: list[Any] = []
+        try:
+            from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
+
+            interceptors.append(OpenTelemetryTracingInterceptor())
+            _logger.debug("temporal.otel.interceptor.enabled")
+        except ImportError:
+            pass
+
         return await Client.connect(
             self._target,
             namespace=namespace,
             tls=tls,
             data_converter=build_temporal_data_converter(),
+            interceptors=interceptors,
         )
 
     async def aclose(self) -> None:
@@ -215,11 +225,20 @@ class TemporalWorkerPool:
                     extra={"task_queue": task_queue},
                 )
                 return
+            interceptors: list[Any] = []
+            try:
+                from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
+
+                interceptors.append(OpenTelemetryTracingInterceptor())
+            except ImportError:
+                pass
+
             worker = Worker(
                 client,
                 task_queue=task_queue,
                 workflows=workflows,
                 activities=activities,
+                interceptors=interceptors,
             )
             self._workers[task_queue] = worker
             from src.backend.core.utils.task_registry import get_task_registry

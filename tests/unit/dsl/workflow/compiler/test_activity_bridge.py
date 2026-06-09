@@ -20,6 +20,7 @@ pytest.importorskip(
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.activity_bridge import (
     ActivityBridge,
+    _agent_invoke_activity,
     bridge_action_handler,
     get_activity_callables,
 )
@@ -148,3 +149,48 @@ def test_get_activity_callables_with_shared_bridge() -> None:
     # Bridge возвращает уже-собранный список второго вызова (включает foo) —
     # реализация collect возвращает все уникальные за вызов.
     assert list_a[0] is list_b[0]  # cache shared
+
+
+# ---------- S27 W6: _agent_invoke direct binding ----------
+
+
+def test_activity_bridge_returns_agent_invoke_activity_directly() -> None:
+    """S27 W6: ``ActivityBridge.get("_agent_invoke")`` возвращает
+    ``_agent_invoke_activity`` напрямую (без ``bridge_action_handler`` wrapper)
+    и проставляет ``__activity_name__`` для Temporal-lookup.
+    """
+    import inspect
+
+    bridge = ActivityBridge()
+    fn = bridge.get("_agent_invoke")
+    assert fn is _agent_invoke_activity
+    assert fn.__activity_name__ == "_agent_invoke"  # type: ignore[attr-defined]
+    assert inspect.iscoroutinefunction(fn)
+
+
+def test_activity_bridge_collects_agent_invoke_from_invoke_agent_step() -> None:
+    """S27 W6: ``ActivityBridge.collect_activities`` обнаруживает ``_agent_invoke``
+    из ``AgentInvokeDeclaration`` (создаваемой через ``WorkflowBuilder.invoke_agent()``).
+    """
+    bridge = ActivityBridge()
+    decl = WorkflowBuilder("ai.wf").invoke_agent(agent_id="advisor").build()
+    activities = bridge.collect_activities([decl])
+    names = [getattr(fn, "__activity_name__") for fn in activities]
+    assert names == ["_agent_invoke"]
+
+
+def test_activity_bridge_mixes_activity_and_agent_invoke() -> None:
+    """S27 W6: workflow со смешанными activity- и invoke_agent-шагами
+    собирает оба типа в ``collect_activities``.
+    """
+    bridge = ActivityBridge()
+    decl = (
+        WorkflowBuilder("mixed.wf")
+        .activity("orders.create")
+        .invoke_agent(agent_id="advisor")
+        .activity("orders.notify")
+        .build()
+    )
+    activities = bridge.collect_activities([decl])
+    names = [getattr(fn, "__activity_name__") for fn in activities]
+    assert names == ["orders.create", "_agent_invoke", "orders.notify"]

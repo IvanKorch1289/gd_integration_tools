@@ -64,6 +64,7 @@ async def invoke_via_gateway(
     legacy_kwargs: dict[str, Any] | None = None,
     gateway: AIGateway | None = None,
     stream: bool = False,
+    return_full_response: bool = False,
 ) -> Any:
     """Hybrid вызов: ``AIGateway.invoke`` при flag=ON или legacy_callable при OFF.
 
@@ -87,10 +88,13 @@ async def invoke_via_gateway(
             инжектирует gateway через DI.
         stream: Передаётся в :class:`AIRequest.stream`; при ``True`` —
             streaming chunks (SSE/WebSocket).
+        return_full_response: При ``True`` возвращает :class:`AIResponse`
+            вместо ``str`` (для callers, которым нужны tokens/cost/model).
 
     Returns:
-        При ``feature_flags.ai_gateway_enforce=True`` — :class:`str`
-        (``AIResponse.content``).
+        При ``feature_flags.ai_gateway_enforce=True`` и
+        ``return_full_response=False`` — :class:`str` (``AIResponse.content``).
+        При ``return_full_response=True`` — :class:`AIResponse`.
         При ``False`` — результат ``legacy_callable(...)`` (тип определяет
         caller).
 
@@ -99,10 +103,6 @@ async def invoke_via_gateway(
             недокомплектованной установке).
         Любые исключения, поднятые ``legacy_callable`` или
         :meth:`AIGateway.invoke`.
-
-    Notes:
-        Flag-резолюция через :mod:`core.config.features` (env-prefix
-        ``FEATURE_``, поле ``ai_gateway_enforce`` — default-OFF).
     """
     from src.backend.core.config.features import feature_flags
 
@@ -118,6 +118,8 @@ async def invoke_via_gateway(
         stream=stream,
     )
     response = await gw.invoke(request)
+    if return_full_response:
+        return response
     return response.content
 
 

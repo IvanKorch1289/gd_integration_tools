@@ -42,8 +42,6 @@ class LLMCallProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
 
-        from src.backend.infrastructure.resilience.retry import make_async_retry
-
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             prompt = (
@@ -56,6 +54,69 @@ class LLMCallProcessor(BaseProcessor):
         exchange.set_property("llm.original_prompt", prompt)
 
         _log = get_logger("dsl.ai")
+
+        # S27 closure: при ai_gateway_enforce=True — все LLM-вызовы через AIGateway.
+        try:
+            from src.backend.core.config.features import feature_flags
+        except ImportError:
+            feature_flags = None  # type: ignore[assignment]
+
+        if feature_flags is not None and feature_flags.ai_gateway_enforce:
+            try:
+                from src.backend.core.ai.gateway import AIGateway
+                from src.backend.core.ai.gateway_models import AIRequest
+            except ImportError as exc:
+                exchange.fail(f"AIGateway unavailable: {exc}")
+                return
+
+            meta = getattr(exchange, "meta", None)
+            request = AIRequest(
+                workflow_id="llm_call",
+                tenant_id=(
+                    getattr(meta, "tenant_id", None)
+                    or exchange.properties.get("_tenant_id", "unknown")
+                ),
+                correlation_id=(
+                    getattr(meta, "correlation_id", None)
+                    or exchange.properties.get("_correlation_id", "n/a")
+                ),
+                prompt_inline=prompt,
+            )
+
+            try:
+                response = await AIGateway().invoke(request)
+            except Exception as exc:
+                exchange.fail(f"LLM gateway call failed: {exc}")
+                return
+
+            total_tokens = response.tokens_prompt + response.tokens_completion
+            result: dict[str, Any] = {
+                "content": response.content,
+                "usage": {
+                    "total_tokens": total_tokens,
+                    "prompt_tokens": response.tokens_prompt,
+                    "completion_tokens": response.tokens_completion,
+                },
+                "model": response.model_used,
+            }
+            exchange.set_property("llm.tokens_used", total_tokens)
+            exchange.set_property("llm.cost_usd", round(total_tokens * 0.00002, 6))
+            if response.model_used:
+                exchange.set_property("llm.model", response.model_used)
+            exchange.set_property("llm.provider", "gateway")
+            exchange.in_message.set_body(result)
+            _log.info(
+                "llm_call_ok",
+                extra={
+                    "provider": "gateway",
+                    "model": response.model_used,
+                    "tokens": total_tokens,
+                },
+            )
+            return
+
+        # Legacy path (ai_gateway_enforce=False)
+        from src.backend.infrastructure.resilience.retry import make_async_retry
 
         try:
             from src.backend.services.ai.ai_agent import get_ai_agent_service

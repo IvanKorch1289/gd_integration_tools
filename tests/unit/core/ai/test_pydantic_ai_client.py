@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -25,6 +26,21 @@ from src.backend.services.ai.gateway.exceptions import (
     GatewayRateLimited,
     GatewayUnavailable,
 )
+
+
+def _mock_flags(enforce: bool = False) -> MagicMock:
+    flags = MagicMock()
+    flags.ai_gateway_enforce = enforce
+    return flags
+
+
+@pytest.fixture(autouse=True)
+def _disable_ai_gateway_enforce() -> None:
+    with patch(
+        "src.backend.core.config.features.feature_flags",
+        _mock_flags(enforce=False),
+    ):
+        yield
 
 
 class _FakeLLMGateway:

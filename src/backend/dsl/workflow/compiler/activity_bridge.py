@@ -32,6 +32,7 @@ from src.backend.core.security.activity_capability_guard import (
 from src.backend.dsl.commands.action_registry import action_handler_registry
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
+    AgentInvokeDeclaration,
     SagaDeclaration,
     WorkflowDeclaration,
     WorkflowStep,
@@ -42,6 +43,22 @@ __all__ = ("ActivityBridge", "bridge_action_handler", "get_activity_callables")
 
 
 _logger = get_logger("workflow.compiler.activity_bridge")
+
+
+async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
+    """Temporal activity-обёртка для вызова AIGateway.invoke (S27 W6).
+
+    Выполняет stateless AI-инвокацию вне workflow-sandbox'а.
+    Payload содержит сериализованный :class:`AIRequest` как dict.
+    """
+
+    from src.backend.core.ai.gateway import AIGateway
+    from src.backend.core.ai.gateway_models import AIRequest
+
+    # Reconstruct AIRequest from dict (dataclass)
+    request = AIRequest(**payload)
+    gateway = AIGateway()
+    return await gateway.invoke(request)
 
 
 def bridge_action_handler(
@@ -117,9 +134,13 @@ class ActivityBridge:
         """
         wrapper = self._cache.get(action_id)
         if wrapper is None:
-            wrapper = bridge_action_handler(
-                action_id, required_capabilities=required_capabilities
-            )
+            if action_id == "_agent_invoke":
+                wrapper = _agent_invoke_activity
+                wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            else:
+                wrapper = bridge_action_handler(
+                    action_id, required_capabilities=required_capabilities
+                )
             self._cache[action_id] = wrapper
         return wrapper
 
@@ -181,7 +202,7 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
     """Извлечь ``(action_id, required_capabilities)`` всех activity-шагов.
 
     Args:
-        step: Workflow-step (activity / saga / иной).
+        step: Workflow-step (activity / saga / agent_invoke / иной).
 
     Returns:
         Список пар ``(action_id, capabilities-tuple)`` в порядке
@@ -195,6 +216,8 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
         ]
         specs.extend((a.name, tuple(a.required_capabilities)) for a in step.compensate)
         return specs
+    if isinstance(step, AgentInvokeDeclaration):
+        return [("_agent_invoke", ())]
     return []
 
 
