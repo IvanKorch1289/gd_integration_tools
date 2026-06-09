@@ -5,6 +5,77 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 84 (2026-06-09) — transport decomp + Visual Editor + S83 backlog
+
+### Fixed
+
+#### s84/w1-td-013-otel-interceptor-warning
+- `src/backend/infrastructure/workflow/temporal_client.py` —
+  surface silent no-op: при отсутствии `temporalio[opentelemetry]`
+  `_logger.warning("temporal.otel.interceptor.unavailable")` с подсказкой.
+  Применено к Client.connect + Worker.
+
+#### s84/w1-td-012-bypass-guard-audit-log
+- `src/backend/core/ai/pydantic_ai_client.py` — при `ai_gateway_enforce=True`
+  и `_internal_gateway_call=False` (bypass attempt) — `_logger.warning`
+  `"ai_gateway_bypass_blocked"` ПЕРЕД `RuntimeError`. Audit-traceable.
+
+### Documentation
+
+#### s84/w1-td-011-agent-invoke-return-type
+- `src/backend/dsl/workflow/spec.py` — добавлен Return Value блок в
+  `AgentInvokeDeclaration` docstring: возвращает `AIResponse` объект
+  (не `str`), backward-incompatible с pre-S83. Митигация через
+  `gateway_adapter.invoke_via_gateway(return_full_response=True)`.
+
+#### s84/w2-adr-0107-transport-decomp-plan
+- `docs/adr/0107-transport-py-decomposition.md` — формализует план
+  декомпозиции `transport.py` (990 LOC, 32 methods) → `transport/`
+  package с 6 sub-модулями (per S82 lifecycle pattern). S84 W2 B1+B2
+  landed (19/32 methods extracted, 60%); B3-B5 deferred to S85+.
+
+### Changed
+
+#### s84/w2-b1-transport-sinks-extraction
+- `src/backend/dsl/builders/transport.py` → `transport/` package:
+  - `__init__.py` (647 LOC) — `TransportMixin` с MRO composition
+  - `sinks.py` (379 LOC) — `SinksMixin` с 10 `sink_*` методами
+    (grpc, soap, mq, ws, mqtt, email, webhook, file, http, s3)
+- 1.4x file-LOC reduction: 990 → 647 LOC в main module.
+
+#### s84/w2-b2-transport-persistence-extraction
+- `src/backend/dsl/builders/transport/persistence.py` (162 LOC) —
+  `PersistenceMixin` с 9 db/file/storage методами (db_query,
+  db_query_external, jdbc_query, db_call_procedure, read_file,
+  write_file, read_s3, write_s3, file_move).
+- 1.9x file-LOC reduction: 990 → 518 LOC (после B1+B2).
+- MRO: `TransportMixin → PersistenceMixin → SinksMixin → object`.
+
+#### s84/w3-c1-dsl-visual-editor-split
+- `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` —
+  extract `_render_step_palette` + `_render_drag_drop_pipeline`:
+  - `_editor/palette.py` (98 LOC) — `render_step_palette()`
+  - `_editor/canvas.py` (224 LOC) — `render_drag_drop_pipeline()`
+- 1.4x file-LOC reduction: 1079 → 779 LOC (300 LOC extracted).
+- S77 W3 followup complete: full Visual Editor split plan landed
+  (4 sub-modules: history, yaml_sync, constants, palette, canvas).
+
+### Housekeeping (Sprint 38 sibling, S84 D)
+
+- `.vale/styles/Accessibility.yml_REMOVE` + `.vale/styles/Google.yml_REMOVE`
+  удалены (stale _REMOVE суффикс).
+- 10 sibling-modified файлов закоммичены в Sprint 38 (eip/ type-ignore,
+  stdlib_backend bridge, airflow_sensors mocks, startup-time regression
+  fix 15.7s → 1.3s, WAF fix в HttpSensor, docstring allowlist refresh).
+
+### Verification
+
+- mypy clean на 7 modified + 4 created файлах
+- ruff clean на всех
+- 32 TransportMixin methods preserved (MRO composition)
+- 5 _editor/ sub-modules: constants, history, yaml_sync, palette, canvas
+- ADR-0107 plan documented (S85+ backlog: B3-B5 transport + 31_DSL_Visual_Editor target 600 LOC)
+
 ## [Unreleased] — Sprint 83 (2026-06-09) — S27 closure
 
 ### Fixed

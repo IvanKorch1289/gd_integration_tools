@@ -1,4 +1,4 @@
-# TECH_DEBT — gd_integration_tools (last update: 09.06.2026)
+# TECH_DEBT — gd_integration_tools (last update: 09.06.2026 14:50)
 
 Tracking для known issues, workarounds, и deferred work, который
 нельзя закрыть в текущем спринте, но нужно зафиксировать для
@@ -405,5 +405,50 @@ off, no page title, no icon). UX minor issue, не блокер.
 3. Continue 31_DSL_Visual_Editor split (1082 → ~600 LOC)
 4. Consider next god-object decomp (transport.py 990 LOC, actions.py 986 LOC)
 5. Defer TD-007, TD-010 (frontend, low priority)
+
+---
+
+## S84 TECH DEBT CLOSURE SUMMARY (2026-06-09) — transport decomp + Visual Editor split
+
+**S84** = A (close S83 backlog: TD-011/012/013) + B (transport.py 990→518,
+19/32 methods extracted) + C (Visual Editor 1079→779) + D (sibling Sprint 38
+housekeeping). 7 моих commits + 1 sibling commit (Sprint 38) = 8 total.
+
+| ID | Status | Closure commit / scope | Verified |
+|----|--------|------------------------|----------|
+| **TD-011** (compile_agent_invoke_step behavior change) | ✅ **DOCUMENTED S84 W1** | `2d696a10` (Return Value блок в AgentInvokeDeclaration docstring) | ✅ spec.py updated |
+| **TD-012** (bypass-guard marker audit) | ✅ **FIXED S84 W1** | `cec51177` (`_logger.warning("ai_gateway_bypass_blocked")` ПЕРЕД `RuntimeError`) | ✅ mypy/ruff clean |
+| **TD-013** (OTel no-op silent) | ✅ **FIXED S84 W1** | `9b14a43d` (`_logger.warning` в Client.connect + Worker при ImportError) | ✅ mypy/ruff clean |
+| **transport.py god-object** (32 methods, 990 LOC) | 🟡 **PARTIAL S84 W2** (60% — 19/32 methods extracted) | `a696bc35` (B1: SinksMixin, 10 sink_*) + `19c9054e` (B2: PersistenceMixin, 9 db/file/storage + ADR-0107) | ✅ 1.9x LOC reduction в main file |
+| **31_DSL_Visual_Editor split** (1079 → 779 LOC) | 🟡 **PARTIAL S84 W3** (palette+canvas extracted) | `8b3d67fa` (`_editor/palette.py` 98 + `_editor/canvas.py` 224) | ✅ 1.4x file-LOC reduction |
+| **Vale _REMOVE cleanup** (sibling D) | ✅ **CLOSED Sprint 38** | `38d108c5` (`.vale/styles/Accessibility.yml_REMOVE` + `Google.yml_REMOVE` удалены + 10 sibling files) | ✅ git clean |
+
+### New tech debt from S84 (to track S85+)
+
+* **TD-014**: `transport.py` decomp incomplete — 13/32 methods still
+  в `__init__.py` (proxy/external/scheduling/sources = 4 sub-modules).
+  **Severity: low** (decomp plan formalize в ADR-0107, B3-B5 scope).
+  **Fix**: S85+ W2 B3-B5 (3 волны, ~300 LOC extraction).
+
+* **TD-015**: `31_DSL_Visual_Editor.py` 779 LOC still > 600 target.
+  ~180 LOC extraction needed (likely workflow diff section, lines 653-1079).
+  **Severity: low** (1.4x reduction уже landed).
+  **Fix**: S85+ W3 C2 — extract `workflow_diff.py` в `_editor/`.
+
+* **TD-016**: `airflow_sensors` mock-pattern mismatch с реальным
+  OutboundHttpClient (после Sprint 38 WAF fix). **Severity: low**
+  (functional but tests use older pattern).
+  **Fix**: S85+ W1 — update tests под новый pattern.
+
+### S84 entry point: S85+ backlog
+
+Следующая сессия (S85+) должна:
+1. Address **TD-016** (airflow_sensors test refresh)
+2. **B3**: extract `transport/proxy.py` + `transport/scheduling.py` (~165 LOC)
+3. **B4**: extract `transport/external.py` + `transport/sources.py` (~225 LOC)
+4. **B5**: closure + ADR-0107 status update (Accepted)
+5. **C2**: extract `transport/__init__.py` → `workflow_diff.py` (~180 LOC, target 600)
+6. Continue next god-object decomp (actions.py 986 LOC, ai_banking.py 828 LOC)
+
 
 
