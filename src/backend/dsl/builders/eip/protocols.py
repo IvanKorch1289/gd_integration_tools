@@ -4,7 +4,7 @@ Sprint 60 W4 — split из eip.py (1354 LOC).
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.builders.eip._base import EIPMixinBase
@@ -37,10 +37,13 @@ class ProtocolsEIPsMixin(EIPMixinBase):
         on_failure_only: bool = False,
     ) -> "RouteBuilder":
         """OnCompletion — запуск callback после окончания pipeline (как finally)."""
-        return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.eip",
-            "OnCompletionProcessor",
-            processors=processors,
-            on_success_only=on_success_only,
-            on_failure_only=on_failure_only,
+        return cast(
+            "RouteBuilder",
+            self._add_lazy(  # type: ignore[attr-defined]
+                "src.backend.dsl.engine.processors.eip",
+                "OnCompletionProcessor",
+                processors=processors,
+                on_success_only=on_success_only,
+                on_failure_only=on_failure_only,
+            ),
         )
