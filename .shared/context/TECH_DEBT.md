@@ -151,33 +151,28 @@ commits faad6e08 + 72ed6b0f.
 
 ---
 
-## TD-007: `vite-env-dts-html-content` (low, S43+)
+## TD-007: `vite-env-dts-html-content` (low, S43 W1 ✅ CLOSED + TD-025 spawned)
 
-**Файл:** `frontend/admin-react/src/vite-env.d.ts` (13 lines, **содержит HTML**)
+**Файл:** `frontend/admin-react/src/vite-env.d.ts` (FIXED) → `/// <reference types="vite/client" />`
 
-**Проблема:** Файл с расширением `.d.ts` (TypeScript declaration) содержит
-HTML-содержимое (index.html template). Это pre-existing bug, НЕ Sprint 42
-introduction. Build падает на TS step:
-```
-src/vite-env.d.ts(6,11): error TS1005: '>' expected.
-```
+**Проблема:** Файл с расширением `.d.ts` (TypeScript declaration) содержал
+HTML-содержимое (index.html template copy-paste). Это pre-existing bug, НЕ
+Sprint 42 introduction.
 
-**Root cause**: вероятно, при S19 K5 W5c (admin-react MVP) `index.html`
-был скопирован в неправильное место (должен быть `index.html` в root,
-`vite-env.d.ts` должен содержать только `/// <reference types="vite/client" />`).
+**Root cause**: при S19 K5 W5c (admin-react MVP) `index.html` template был
+скопирован в `vite-env.d.ts` (вероятно file picker error в IDE).
 
-**Impact**: `npm run build` в admin-react падает. admin-react — MVP,
-not deployed (per Sprint 19), так что impact = 0 на production.
+**S43 W1 fix**:
+- `frontend/admin-react/src/vite-env.d.ts` → `/// <reference types="vite/client" />`
+  (canonical Vite client types reference).
+- `frontend/admin-react/index.html` остаётся без изменений (уже содержит
+  правильный HTML template).
 
-**Workaround**: admin-react not in production build pipeline.
+**Verification**: TD-007 fix устраняет root cause. Однако `npm run build`
+всё ещё fails на **отдельной** проблеме: `tsconfig.node.json` missing.
+Это **TD-025** (см. ниже), не часть TD-007.
 
-**Fix (S43+)**:
-1. Move HTML content to `frontend/admin-react/index.html` (if not exists)
-2. Replace `vite-env.d.ts` с: `/// <reference types="vite/client" />`
-3. Verify `npm run build` passes
-
-**Refs:** Sprint 42 W2 attempt (Vite 8.0.16 build failed, identified
-this pre-existing bug). Commits 72ed6b0f body.
+**Refs:** Sprint 43 W1 commit. Закрывает TD-007.
 
 ---
 
@@ -550,7 +545,46 @@ clarification.
 **Severity: medium** (feature request, not bug; не блокирует
 production). **Fix**: S43 sprint plan с user scope decision.
 
-### S85+ entry point: S86+ backlog
+## TD-025: `admin-react-tsconfig-node-missing` (low, S43+ spawned by W1)
+
+**Файл:** `frontend/admin-react/tsconfig.json` (line 24 references missing
+`tsconfig.node.json`).
+
+**Проблема:** `tsconfig.json` содержит:
+```json
+"references": [{ "path": "./tsconfig.node.json" }]
+```
+но `tsconfig.node.json` не существует. `npm run build` fails:
+```
+tsconfig.json(24,18): error TS6053: File 'tsconfig.node.json' not found.
+```
+
+**Root cause**: pre-existing, S19 K5 W5c (admin-react MVP creation).
+Скорее всего `tsconfig.node.json` был нужен для Vite config typing
+(`vite.config.ts`), но не закоммичен.
+
+**Impact**: admin-react `npm run build` падает. admin-react — MVP,
+not deployed (per Sprint 19), impact = 0 на production.
+
+**Fix (S43+ D)**:
+1. Create `frontend/admin-react/tsconfig.node.json`:
+   ```json
+   {
+     "compilerOptions": {
+       "composite": true,
+       "skipLibCheck": true,
+       "module": "ESNext",
+       "moduleResolution": "bundler",
+       "allowSyntheticDefaultImports": true
+     },
+     "include": ["vite.config.ts"]
+   }
+   ```
+2. Verify `npm run build` passes.
+3. Optional: integrate в CI как required gate.
+
+**Refs:** TD-007 fix (S43 W1) выявил этот отдельный issue. Sprint 43 W1
+commit message.
 
 Следующая сессия (S85+) должна:
 1. Address **TD-016** (airflow_sensors test refresh)
