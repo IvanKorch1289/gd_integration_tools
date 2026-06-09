@@ -50,9 +50,7 @@ class ConsoleJsonLogSink(LogSink):
             payload = orjson.dumps(
                 record, default=_default_serializer, option=_ORJSON_OPTS
             )
-        except Exception as exc:
-            if not isinstance(exc, (TypeError, ValueError)):
-                raise
+        except (TypeError, ValueError):
             # повторная попытка с агрессивным fallback: всё неподдержанное → str
             payload = orjson.dumps(
                 {k: _coerce(v) for k, v in record.items()}, option=_ORJSON_OPTS
