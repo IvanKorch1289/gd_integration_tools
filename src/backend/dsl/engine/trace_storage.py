@@ -34,11 +34,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 if TYPE_CHECKING:
     from src.backend.dsl.engine.tracer import TraceEvent
 
-__all__ = (
-    "TraceStorage",
-    "InMemoryTraceStorage",
-    "JsonFileTraceStorage",
-)
+__all__ = ("TraceStorage", "InMemoryTraceStorage", "JsonFileTraceStorage")
 
 
 @runtime_checkable
@@ -76,16 +72,19 @@ class InMemoryTraceStorage:
         self._buffer: dict[str, deque[TraceEvent]] = {}
 
     def append(self, event: TraceEvent) -> None:
+        """Добавить событие в in-memory buffer маршрута."""
         buf = self._buffer.setdefault(event.route_id, deque(maxlen=1000))
         buf.append(event)
 
     def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
+        """Вернуть последние ``limit`` событий для маршрута."""
         buf = self._buffer.get(route_id)
         if not buf:
             return []
-        return list(buf)[-min(limit, 1000):]
+        return list(buf)[-min(limit, 1000) :]
 
     def list_routes(self) -> list[str]:
+        """Список route_id, для которых есть события в buffer."""
         return sorted(self._buffer.keys())
 
 
@@ -112,6 +111,7 @@ class JsonFileTraceStorage:
         return self._dir / f"{safe}.jsonl"
 
     def append(self, event: TraceEvent) -> None:
+        """Добавить событие в JSONL-файл маршрута."""
         path = self._file_for(event.route_id)
         line = json.dumps(event.to_dict(), ensure_ascii=False) + "\n"
         # Append mode: O_APPEND atomic для small writes на POSIX.
@@ -119,6 +119,7 @@ class JsonFileTraceStorage:
             f.write(line)
 
     def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
+        """Вернуть последние ``limit`` событий из JSONL-файла маршрута."""
         path = self._file_for(route_id)
         if not path.exists():
             return []
@@ -128,7 +129,7 @@ class JsonFileTraceStorage:
                 lines = f.readlines()
         except OSError:
             return []
-        tail = lines[-min(limit, 1000):]
+        tail = lines[-min(limit, 1000) :]
         # S47 W1: lazy import to avoid circular dep (tracer → trace_storage).
         from src.backend.dsl.engine.tracer import TraceEvent
 
@@ -147,18 +148,17 @@ class JsonFileTraceStorage:
                         error=d.get("error"),
                     )
                 )
-            except (json.JSONDecodeError, KeyError):
+            except Exception as exc:  # noqa: BLE001
+                if not isinstance(exc, (json.JSONDecodeError, KeyError)):
+                    raise
                 continue
         return events
 
     def list_routes(self) -> list[str]:
+        """Список route_id, для которых есть JSONL-файлы."""
         if not self._dir.exists():
             return []
-        return sorted(
-            p.stem
-            for p in self._dir.glob("*.jsonl")
-            if p.is_file()
-        )
+        return sorted(p.stem for p in self._dir.glob("*.jsonl") if p.is_file())
 
 
 # Self-test (run: uv run python src/backend/dsl/engine/trace_storage.py).

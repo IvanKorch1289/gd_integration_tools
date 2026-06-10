@@ -50,6 +50,14 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+      # Wave P0 — Python 3 syntax gate: блокирует commit при except A, B:
+      - id: check-python3-syntax
+        name: "Python 3 syntax gate (except-tuple-no-paren)"
+        entry: uv run python tools/checks/check_python3_syntax.py --root src
+        language: system
+        types: [python]
+        pass_filenames: false
+
       # TODO (V15 GAP Gap 4 follow-up): добавить hook `discover-plugin-caps`,
       # который будет рекомендовать (НЕ блокировать) capabilities для
       # `extensions/*/plugin.py` через `tools/discover_plugin_capabilities.py`.

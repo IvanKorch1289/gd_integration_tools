@@ -116,7 +116,7 @@ class SLOTracker:
             record_pipeline_execution(
                 route_id=route_id, status="error" if is_error else "success"
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
     def get_report(self) -> dict[str, Any]:

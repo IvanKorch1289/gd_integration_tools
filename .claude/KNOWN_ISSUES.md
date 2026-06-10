@@ -23,6 +23,23 @@
 | coverage 50% → 75%+ | MEDIUM | Требует ~200+ unit-тестов, per-layer audit |
 | Vault gates (feature-flags, semantic-cache) | LOW | Dev-окружение limitation; production CI имеет Vault |
 
+---
+
+## Sprint 36 P0 Emergency Syntax Cleanup — 2026-06-09 ✅ CLOSED
+
+**Контекст**: В ходе dev-сеанса выявлено, что Python 2-style `except A, B:` остался в **132 местах** (94 уникальных файла) несмотря на Sprint 17 closure. Причина — `tools/codemods/fix_except_clause.py` (libcst) не покрывал случаи с dotted-именами (`httpx.HTTPError`) и многострочными `except`; новый код после S17 также вносил регрессии.
+
+**Выполнено**:
+- ✅ Mass-fix `except A, B:` → `except (A, B):` в 132 местах (94 файла) через `tools/scripts/fix_except_syntax.py` (regex-based, AST-verified).
+- ✅ `python -m compileall src` — 0 ошибок.
+- ✅ `ruff check src` — 0 новых ошибок (pre-existing 52 не связаны).
+- ✅ `pytest tests/smoke/` — 17 passed.
+- ✅ Pre-commit hook `check-python3-syntax` добавлен в `.pre-commit-config.yaml` (gate `tools/checks/check_python3_syntax.py`).
+
+**Commit**: `[wave:s36/p0-except-syntax-sweep]`
+
+---
+
 ### Verify
 
 ```bash
@@ -672,7 +689,7 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 
 **Финальная DoD-матрица:**
 - ✅ 1: backbone (`b08c974d`)
-- ✅ 2: K-SYN — except A,B: = 0 (`6b822ab3` + `b49526dc`)
+- ✅ 2: K-SYN — except A,B: = 0 (`6b822ab3` + `b49526dc`) — *Примечание 2026-06-09: closure был преждевременным; фактический residual = 132 вхождения (94 файла), закрыто в `[wave:s36/p0-except-syntax-sweep]`*
 - ✅ 3: K-TLS — CERT_NONE = 0 (`0ce57673` + `8cacb47b`)
 - ✅ 4: K-ARCH-1+2 AuthorizationGateway + Protocol (`bd49a53c`)
 - ✅ 5: K-ARCH-3 routes capability-gate (`970b655b`)

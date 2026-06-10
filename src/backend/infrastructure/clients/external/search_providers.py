@@ -238,7 +238,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         pass
 
     # SearXNG registration через env var (без отдельного Settings класса).
@@ -253,7 +253,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(
                 SearXNGProvider(base_url=searxng_url, engines=engines)
             )
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         pass
 
     return _web_search

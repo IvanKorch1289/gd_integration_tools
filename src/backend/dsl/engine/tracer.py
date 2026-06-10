@@ -146,7 +146,7 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except asyncio.QueueEmpty, asyncio.QueueFull:
+                    except (asyncio.QueueEmpty, asyncio.QueueFull):
                         pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent]:
@@ -201,7 +201,6 @@ class ExecutionTracer:
     def list_traced_routes(self) -> list[str]:
         """S44 W1 + S47 W1: возвращает список route_id с events в storage."""
         return self._storage.list_routes()
-        return sorted(self._trace_buffer.keys())
 
 
 from src.backend.core.di import app_state_singleton

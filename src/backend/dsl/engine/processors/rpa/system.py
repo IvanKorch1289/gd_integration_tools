@@ -92,7 +92,6 @@ class ShellExecProcessor(BaseProcessor):
         return {"shell": spec}
 
 
-
 class EmailComposeProcessor(BaseProcessor):
     """Compose и отправка email через SMTP.
 
@@ -114,7 +113,7 @@ class EmailComposeProcessor(BaseProcessor):
         variables = body if isinstance(body, dict) else {"body": body}
         try:
             email_body = self._body_template.format(**variables)
-        except KeyError, IndexError:
+        except (KeyError, IndexError):
             email_body = self._body_template
         try:
             from src.backend.infrastructure.clients.transport.smtp import smtp_client
@@ -136,4 +135,3 @@ class EmailComposeProcessor(BaseProcessor):
                 "body_template": self._body_template,
             }
         }
-
