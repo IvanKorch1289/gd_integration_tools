@@ -22,10 +22,8 @@ Exchange/ExecutionContext.
 from __future__ import annotations
 
 import asyncio
-import random
-import uuid
 from collections import defaultdict, deque
-from typing import Any, ClassVar
+from typing import Any
 
 from src.backend.core.clock import RealClock
 from src.backend.core.interfaces.clock import Clock
@@ -38,110 +36,15 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.late_event_policy import apply_late_policy
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = (
-    "ChannelPurgerProcessor",
-    "CorrelationIdProcessor",
-    "DurableSubscriberProcessor",
-    "ExactlyOnceProcessor",
-    "GroupByKeyProcessor",
-    "MessageExpirationProcessor",
-    "ReplyToProcessor",
-    "SamplingProcessor",
-    "SchemaRegistryValidator",
-    "SessionWindowProcessor",
-    "SlidingWindowProcessor",
-    "TumblingWindowProcessor",
-)
-
 logger = get_logger("dsl.streaming")
 
 
 # ──────────────────── Message Expiration ────────────────────
 
 
-class MessageExpirationProcessor(BaseProcessor):
-    """Отбрасывает сообщения старше заданного TTL.
-
-    Использует заголовок ``x-created-at`` (unix timestamp float) или
-    свойство Exchange ``created_at``. Если заголовок отсутствует —
-    сообщение считается свежим.
-
-    Args:
-        ttl_seconds: Максимальный возраст сообщения в секундах.
-        header_name: Имя заголовка с timestamp (default ``x-created-at``).
-        drop_action: Что делать с просроченным сообщением:
-            ``fail`` (default), ``skip``, ``log``.
-    """
-
-    def __init__(
-        self,
-        *,
-        ttl_seconds: float,
-        header_name: str = "x-created-at",
-        drop_action: str = "fail",
-        name: str | None = None,
-        clock: Clock | None = None,
-    ) -> None:
-        super().__init__(name=name or "expiration")
-        self._ttl = ttl_seconds
-        self._header = header_name
-        self._drop = drop_action
-        self._clock: Clock = clock or RealClock()
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        created_at = exchange.in_message.headers.get(self._header)
-        if created_at is None:
-            created_at = exchange.properties.get("created_at")
-        if created_at is None:
-            return  # Нет данных о возрасте — считаем сообщение свежим
-
-        try:
-            age = self._clock.time() - float(created_at)
-        except (TypeError, ValueError):
-            return
-
-        if age <= self._ttl:
-            return
-
-        msg = f"Сообщение просрочено: age={age:.1f}s > ttl={self._ttl}s"
-        match self._drop:
-            case "fail":
-                exchange.fail(msg)
-            case "skip":
-                exchange.properties["_expired"] = True
-                logger.info(msg)
-            case "log":
-                logger.warning(msg)
 
 
-# ──────────────────── Correlation ID ────────────────────
-
-
-class CorrelationIdProcessor(BaseProcessor):
-    """Проставляет correlation-id в заголовки сообщения.
-
-    Если заголовок уже присутствует — пропускает (идемпотентно).
-    Иначе генерирует UUID4.
-
-    Полезно для трейсинга цепочки вызовов между сервисами и очередями.
-    """
-
-    def __init__(
-        self, *, header: str = "x-correlation-id", name: str | None = None
-    ) -> None:
-        super().__init__(name=name or "correlation-id")
-        self._header = header
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        if self._header in exchange.in_message.headers:
-            return
-        new_id = str(uuid.uuid4())
-        exchange.in_message.headers[self._header] = new_id
-        exchange.properties["correlation_id"] = new_id
-
-
-# ──────────────────── Streaming Windows ────────────────────
-
+# ── windowing (Tumbling/Sliding/Session/GroupBy) — _BaseWindow + 4 window processors ──
 
 class _BaseWindow(BaseProcessor):
     """Общая логика для оконных процессоров.
@@ -271,6 +174,7 @@ class _BaseWindow(BaseProcessor):
             logger.error("Window sink failed: %s", exc)
 
 
+
 class TumblingWindowProcessor(_BaseWindow):
     """Tumbling-окно: фиксированный размер, без перекрытия.
 
@@ -328,6 +232,7 @@ class TumblingWindowProcessor(_BaseWindow):
             bucket = list(self._buffer)
             self._buffer.clear()
         await self._emit(bucket)
+
 
 
 class SlidingWindowProcessor(_BaseWindow):
@@ -394,6 +299,7 @@ class SlidingWindowProcessor(_BaseWindow):
             await self._emit(bucket)
 
 
+
 class SessionWindowProcessor(_BaseWindow):
     """Session-окно: окно закрывается после паузы ``gap_seconds``.
 
@@ -457,8 +363,6 @@ class SessionWindowProcessor(_BaseWindow):
             return
 
 
-# ──────────────────── Group By Key ────────────────────
-
 
 class GroupByKeyProcessor(_BaseWindow):
     """Группирует события по ключу в пределах окна.
@@ -510,228 +414,3 @@ class GroupByKeyProcessor(_BaseWindow):
             except Exception as exc:
                 logger.error("GroupBy sink failed: %s", exc)
 
-
-# ──────────────────── Schema Registry ────────────────────
-
-
-class SchemaRegistryValidator(BaseProcessor):
-    """Валидация сообщения по схеме из реестра.
-
-    Поддерживает JSON Schema (через ``jsonschema``), в будущем — Avro/Protobuf.
-    Схема загружается по ``subject`` и кешируется.
-    """
-
-    _cache: ClassVar[dict[str, Any]] = {}
-
-    def __init__(
-        self, *, subject: str, schema_loader: Any = None, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"schema:{subject}")
-        self._subject = subject
-        self._loader = schema_loader
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        schema = self._cache.get(self._subject)
-        if schema is None and self._loader is not None:
-            loaded = self._loader(self._subject)
-            if asyncio.iscoroutine(loaded):
-                loaded = await loaded
-            schema = loaded
-            self._cache[self._subject] = schema
-
-        if schema is None:
-            exchange.fail(f"Schema '{self._subject}' не найдена в реестре")
-            return
-
-        try:
-            import jsonschema
-
-            jsonschema.validate(instance=exchange.in_message.body, schema=schema)
-        except ImportError:
-            logger.warning("jsonschema не установлен, валидация пропущена")
-        except Exception as exc:
-            exchange.fail(f"Schema validation failed: {exc}")
-
-
-# ──────────────────── Reply-To (request-reply over queue) ────────────────────
-
-
-class ReplyToProcessor(BaseProcessor):
-    """Публикует ответ в очередь указанную в заголовке ``reply-to``.
-
-    Реализация паттерна request-reply поверх асинхронных очередей.
-    Использует broker из context (Kafka/RabbitMQ/Redis Streams).
-    """
-
-    def __init__(
-        self,
-        *,
-        broker: Any,
-        reply_to_header: str = "reply-to",
-        correlation_header: str = "x-correlation-id",
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "reply-to")
-        self._broker = broker
-        self._reply_header = reply_to_header
-        self._correlation_header = correlation_header
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        reply_to = exchange.in_message.headers.get(self._reply_header)
-        if not reply_to:
-            return  # Нет адреса ответа — не reply-сообщение
-
-        correlation = exchange.in_message.headers.get(self._correlation_header)
-        headers = {self._correlation_header: correlation} if correlation else {}
-        body = (
-            exchange.out_message.body
-            if exchange.out_message
-            else exchange.in_message.body
-        )
-
-        try:
-            await self._broker.publish(reply_to, body, headers=headers)
-        except Exception as exc:
-            logger.error("Reply publish failed: %s", exc)
-            exchange.fail(f"Reply publish failed: {exc}")
-
-
-# ──────────────────── Exactly-Once ────────────────────
-
-
-class ExactlyOnceProcessor(BaseProcessor):
-    """Dedup по message-id через внешний storage.
-
-    Реализует exactly-once семантику: если ``message-id`` уже видели —
-    сообщение отбрасывается. Использует pluggable storage (Redis, БД).
-    """
-
-    def __init__(
-        self,
-        *,
-        storage: Any,
-        id_header: str = "x-message-id",
-        ttl_seconds: int = 86_400,
-        namespace: str = "exactly-once",
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "exactly-once")
-        self._storage = storage
-        self._id_header = id_header
-        self._ttl = ttl_seconds
-        self._namespace = namespace
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        msg_id = exchange.in_message.headers.get(self._id_header)
-        if not msg_id:
-            exchange.fail(f"Missing {self._id_header} header for exactly-once")
-            return
-
-        key = f"{self._namespace}:{msg_id}"
-        # set NX — первая запись побеждает; если ключ уже есть — это дубль.
-        added = await self._storage.set_nx(key, b"1", ttl=self._ttl)
-        if not added:
-            exchange.properties["_duplicate"] = True
-            exchange.fail(f"Duplicate message-id: {msg_id}")
-
-
-# ──────────────────── Durable Subscriber ────────────────────
-
-
-class DurableSubscriberProcessor(BaseProcessor):
-    """Fan-out к нескольким подписчикам с гарантией доставки.
-
-    Для каждого subscriber публикует копию сообщения в его персональную
-    очередь. Offset/ack хранится на стороне брокера (durable).
-    """
-
-    def __init__(
-        self, *, broker: Any, subscribers: list[str], name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"durable-fanout:{len(subscribers)}")
-        self._broker = broker
-        self._subscribers = subscribers
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        body = exchange.in_message.body
-        headers = dict(exchange.in_message.headers)
-        results = await asyncio.gather(
-            *(
-                self._broker.publish(sub, body, headers=headers)
-                for sub in self._subscribers
-            ),
-            return_exceptions=True,
-        )
-        failed = [
-            sub
-            for sub, res in zip(self._subscribers, results, strict=True)
-            if isinstance(res, Exception)
-        ]
-        if failed:
-            exchange.fail(f"Durable publish failed for: {failed}")
-
-
-# ──────────────────── Channel Purger ────────────────────
-
-
-class ChannelPurgerProcessor(BaseProcessor):
-    """Очистка очереди/стрима (admin-операция для DLQ, устаревших потоков).
-
-    Вызывает ``broker.purge(channel)``. Опасно в production —
-    обычно используется вручную через админ-UI.
-    """
-
-    def __init__(
-        self,
-        *,
-        broker: Any,
-        channel: str,
-        dry_run: bool = True,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or f"purge:{channel}")
-        self._broker = broker
-        self._channel = channel
-        self._dry_run = dry_run
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        if self._dry_run:
-            logger.warning(
-                "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel
-            )
-            exchange.out_message.body = {
-                "purged": False,
-                "dry_run": True,
-                "channel": self._channel,
-            }
-            return
-        deleted = await self._broker.purge(self._channel)
-        exchange.out_message.body = {
-            "purged": True,
-            "deleted": deleted,
-            "channel": self._channel,
-        }
-
-
-# ──────────────────── Sampling ────────────────────
-
-
-class SamplingProcessor(BaseProcessor):
-    """Вероятностный сэмплинг — пропускает сообщение с вероятностью ``probability``.
-
-    Используется для A/B-тестирования, canary-деплоев, отладки нагруженных
-    pipeline'ов без обработки каждого сообщения.
-    """
-
-    def __init__(self, *, probability: float = 0.1, name: str | None = None) -> None:
-        if not 0.0 <= probability <= 1.0:
-            raise ValueError("probability должен быть в [0.0, 1.0]")
-        super().__init__(name=name or f"sample:{probability:.2f}")
-        self._p = probability
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        # random.random() < p — эквивалентно Bernoulli trial (sampling, не крипто).
-        if random.random() >= self._p:  # noqa: S311  # non-cryptographic use
-            exchange.properties["_sampled_out"] = True
-            # Помечаем как завершённое без ошибки, но downstream должен фильтровать.
-            exchange.properties["_skip_downstream"] = True
