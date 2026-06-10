@@ -20,247 +20,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = (
-    "ArchiveProcessor",
-    "DecryptProcessor",
-    "EmailComposeProcessor",
-    "EncryptProcessor",
-    "ExcelReadProcessor",
-    "FileMoveProcessor",
-    "HashProcessor",
-    "ImageOcrProcessor",
-    "ImageResizeProcessor",
-    "PdfMergeProcessor",
-    "PdfReadProcessor",
-    "RegexProcessor",
-    "ShellExecProcessor",
-    "TemplateRenderProcessor",
-    "WordReadProcessor",
-    "WordWriteProcessor",
-)
 _rpa_logger = get_logger("dsl.rpa")
-
-
-class PdfReadProcessor(BaseProcessor):
-    """Извлекает текст и таблицы из PDF файла.
-
-    Body на входе: bytes (содержимое PDF) или str (путь к файлу).
-    Результат: {"text": "...", "pages": [...], "tables": [...]}
-
-    Usage::
-
-        .pdf_read(extract_tables=True)
-    """
-
-    def __init__(
-        self, *, extract_tables: bool = False, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or "pdf_read")
-        self._tables = extract_tables
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import io
-
-        from src.backend.utilities.pdf_reader import read_pdf
-
-        body = exchange.in_message.body
-        try:
-            text = read_pdf(body)
-        except Exception as exc:
-            exchange.fail(f"pdf_read failed: {exc}")
-            return
-        pages = text.split("\n\n")
-        result: dict[str, Any] = {
-            "text": text,
-            "pages": pages,
-            "page_count": len(pages),
-        }
-        if self._tables:
-            try:
-                import pdfplumber
-
-                with pdfplumber.open(
-                    io.BytesIO(body) if isinstance(body, bytes) else body
-                ) as pdf:
-                    tables = []
-                    for page in pdf.pages:
-                        for table in page.extract_tables():
-                            tables.append(table)
-                    result["tables"] = tables
-            except ImportError:
-                result["tables"] = []
-        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        spec: dict[str, Any] = {}
-        if self._tables:
-            spec["extract_tables"] = True
-        return {"pdf_read": spec}
-
-
-class PdfMergeProcessor(BaseProcessor):
-    """Объединяет несколько PDF в один.
-
-    Body: list[bytes] — список PDF-файлов. Результат: bytes (merged PDF).
-    """
-
-    def __init__(self, *, name: str | None = None) -> None:
-        super().__init__(name=name or "pdf_merge")
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import io
-
-        try:
-            from pypdf import PdfReader, PdfWriter
-        except ImportError:
-            exchange.fail("pypdf not installed: pip install pypdf")
-            return
-        body = exchange.in_message.body
-        if not isinstance(body, list):
-            exchange.fail("pdf_merge expects list of PDF bytes")
-            return
-        writer = PdfWriter()
-        for pdf_bytes in body:
-            if isinstance(pdf_bytes, bytes):
-                reader = PdfReader(io.BytesIO(pdf_bytes))
-                for page in reader.pages:
-                    writer.add_page(page)
-        output = io.BytesIO()
-        writer.write(output)
-        exchange.set_out(
-            body=output.getvalue(), headers=dict(exchange.in_message.headers)
-        )
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        return {"pdf_merge": {}}
-
-
-class WordReadProcessor(BaseProcessor):
-    """Извлекает текст из .docx файла.
-
-    Body: bytes или str (путь). Результат: {"text": "...", "paragraphs": [...]}
-    """
-
-    def __init__(self, *, name: str | None = None) -> None:
-        super().__init__(name=name or "word_read")
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import io
-
-        try:
-            from docx import Document
-        except ImportError:
-            exchange.fail("python-docx not installed: pip install python-docx")
-            return
-        body = exchange.in_message.body
-        if isinstance(body, bytes):
-            doc = Document(io.BytesIO(body))
-        elif isinstance(body, str):
-            doc = Document(body)
-        else:
-            exchange.fail("word_read expects bytes or file path")
-            return
-        paragraphs = [p.text for p in doc.paragraphs]
-        exchange.set_out(
-            body={"text": "\n".join(paragraphs), "paragraphs": paragraphs},
-            headers=dict(exchange.in_message.headers),
-        )
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        return {"word_read": {}}
-
-
-class WordWriteProcessor(BaseProcessor):
-    """Генерирует .docx документ из текста.
-
-    Body: dict с ключами "paragraphs" (list[str]) или "text" (str).
-    Результат: bytes (.docx файл).
-    """
-
-    def __init__(self, *, name: str | None = None) -> None:
-        super().__init__(name=name or "word_write")
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import io
-
-        try:
-            from docx import Document
-        except ImportError:
-            exchange.fail("python-docx not installed: pip install python-docx")
-            return
-        body = exchange.in_message.body
-        doc = Document()
-        if isinstance(body, dict):
-            for p in body.get("paragraphs", []):
-                doc.add_paragraph(str(p))
-            if "text" in body and "paragraphs" not in body:
-                doc.add_paragraph(body["text"])
-        elif isinstance(body, str):
-            doc.add_paragraph(body)
-        else:
-            exchange.fail("word_write expects dict or str body")
-            return
-        buf = io.BytesIO()
-        doc.save(buf)
-        exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        return {"word_write": {}}
-
-
-class ExcelReadProcessor(BaseProcessor):
-    """Читает Excel файл в list[dict].
-
-    Body: bytes или str (путь). Результат: list[dict] (rows).
-    """
-
-    def __init__(
-        self, *, sheet_name: str | None = None, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or "excel_read")
-        self._sheet = sheet_name
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import io
-
-        try:
-            from openpyxl import load_workbook
-        except ImportError:
-            exchange.fail("openpyxl not installed: pip install openpyxl")
-            return
-        body = exchange.in_message.body
-        if isinstance(body, bytes):
-            wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
-        elif isinstance(body, str):
-            wb = load_workbook(body, read_only=True, data_only=True)
-        else:
-            exchange.fail("excel_read expects bytes or file path")
-            return
-        ws = wb[self._sheet] if self._sheet else wb.active
-        rows = list(ws.iter_rows(values_only=True))
-        wb.close()
-        if not rows:
-            exchange.set_out(body=[], headers=dict(exchange.in_message.headers))
-            return
-        headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
-        data = [dict(zip(headers, row, strict=False)) for row in rows[1:]]
-        exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        spec: dict[str, Any] = {}
-        if self._sheet is not None:
-            spec["sheet_name"] = self._sheet
-        return {"excel_read": spec}
 
 
 class FileMoveProcessor(BaseProcessor):
@@ -318,6 +78,7 @@ class FileMoveProcessor(BaseProcessor):
         if self._mode != "copy":
             spec["mode"] = self._mode
         return {"file_move": spec}
+
 
 
 class ArchiveProcessor(BaseProcessor):
@@ -422,6 +183,7 @@ class ArchiveProcessor(BaseProcessor):
         return {"archive": spec}
 
 
+
 class ImageOcrProcessor(BaseProcessor):
     """OCR — извлечение текста с изображений через Tesseract.
 
@@ -461,6 +223,7 @@ class ImageOcrProcessor(BaseProcessor):
         if self._lang != "eng+rus":
             spec["lang"] = self._lang
         return {"ocr": spec}
+
 
 
 class ImageResizeProcessor(BaseProcessor):
@@ -520,6 +283,7 @@ class ImageResizeProcessor(BaseProcessor):
         return {"image_resize": spec}
 
 
+
 class RegexProcessor(BaseProcessor):
     """Regex операции: extract, replace, match.
 
@@ -570,6 +334,7 @@ class RegexProcessor(BaseProcessor):
         return {"regex": spec}
 
 
+
 class TemplateRenderProcessor(BaseProcessor):
     """Рендеринг Jinja2 шаблонов.
 
@@ -599,6 +364,7 @@ class TemplateRenderProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         return {"render_template": {"template": self._template}}
+
 
 
 class HashProcessor(BaseProcessor):
@@ -634,6 +400,7 @@ class HashProcessor(BaseProcessor):
         if self._algorithm != "sha256":
             spec["algorithm"] = self._algorithm
         return {"hash": spec}
+
 
 
 class EncryptProcessor(BaseProcessor):
@@ -675,6 +442,7 @@ class EncryptProcessor(BaseProcessor):
         return {"encrypt": {"key": self._key}}
 
 
+
 class DecryptProcessor(BaseProcessor):
     """AES расшифровка body через Fernet.
 
@@ -708,116 +476,3 @@ class DecryptProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         return {"decrypt": {"key": self._key}}
 
-
-class ShellExecProcessor(BaseProcessor):
-    """Выполнение shell-команд с whitelist и sandbox.
-
-    БЕЗОПАСНОСТЬ: только команды из whitelist, timeout, без shell=True.
-
-    Usage::
-
-        .shell("ls", args=["-la", "/data"], allowed_commands=["ls", "cat", "wc"])
-    """
-
-    def __init__(
-        self,
-        command: str,
-        *,
-        args: list[str] | None = None,
-        allowed_commands: list[str] | None = None,
-        timeout_seconds: float = 30.0,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or f"shell:{command}")
-        self._command = command
-        self._args = args or []
-        self._allowed = set(allowed_commands) if allowed_commands else None
-        self._timeout = timeout_seconds
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        import asyncio
-
-        if self._allowed and self._command not in self._allowed:
-            exchange.fail(
-                f"Command '{self._command}' not in whitelist: {self._allowed}"
-            )
-            return
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                self._command,
-                *self._args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
-            )
-            exchange.set_out(
-                body={
-                    "stdout": stdout.decode("utf-8", errors="replace"),
-                    "stderr": stderr.decode("utf-8", errors="replace"),
-                    "exit_code": proc.returncode,
-                },
-                headers=dict(exchange.in_message.headers),
-            )
-            if proc.returncode != 0:
-                exchange.set_property("shell_error", True)
-        except TimeoutError:
-            exchange.fail(f"Shell command timed out after {self._timeout}s")
-        except (FileNotFoundError, PermissionError) as exc:
-            exchange.fail(f"Shell exec failed: {exc}")
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        spec: dict[str, Any] = {"command": self._command}
-        if self._args:
-            spec["args"] = list(self._args)
-        if self._allowed:
-            spec["allowed_commands"] = sorted(self._allowed)
-        return {"shell": spec}
-
-
-class EmailComposeProcessor(BaseProcessor):
-    """Compose и отправка email через SMTP.
-
-    Использует существующий SmtpClient приложения.
-    body_template поддерживает {variable} подстановки из exchange body.
-    """
-
-    def __init__(
-        self, to: str, subject: str, body_template: str, *, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"email:{to[:20]}")
-        self._to = to
-        self._subject = subject
-        self._body_template = body_template
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
-        body = exchange.in_message.body
-        variables = body if isinstance(body, dict) else {"body": body}
-        try:
-            email_body = self._body_template.format(**variables)
-        except KeyError, IndexError:
-            email_body = self._body_template
-        try:
-            from src.backend.infrastructure.clients.transport.smtp import smtp_client
-
-            await smtp_client.send_email(
-                to=self._to, subject=self._subject, body=email_body
-            )
-            exchange.set_property("email_sent", True)
-            exchange.set_property("email_to", self._to)
-        except Exception as exc:
-            exchange.fail(f"Email send failed: {exc}")
-
-    def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        return {
-            "email": {
-                "to": self._to,
-                "subject": self._subject,
-                "body_template": self._body_template,
-            }
-        }
