@@ -1,4 +1,4 @@
-# TECH_DEBT — gd_integration_tools (last update: 09.06.2026 14:50)
+# TECH_DEBT — gd_integration_tools (last update: 10.06.2026 — S50 W1)
 
 Tracking для known issues, workarounds, и deferred work, который
 нельзя закрыть в текущем спринте, но нужно зафиксировать для
@@ -104,14 +104,14 @@ parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 
 | ID | Severity | Sprint | Status | Action |
 |----|----------|--------|--------|--------|
-| TD-001 | low | S39+ | 🟡 deferred | Decision on Python target |
-| TD-002 | medium | S38+ workaround | 🟡 partial | Per-module coverage active |
-| TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files |
-| TD-006 | medium | S43+ | 🟡 documented | Vite 6.4.6/chromadb 1.5.20 phantom versions |
-| TD-007 | low | S43+ | 🟡 documented | Pre-existing bug: vite-env.d.ts = HTML |
-| TD-008 | medium | S63 W1 | ✅ partial closure | Groups 1+2+6 done; Groups 3-5 (P2) deferred |
-| TD-009 | low | S44+ | 🟡 deferred | 31_DSL_Visual_Editor.py 1267 LOC outlier |
-| TD-010 | low | S43+ | 🟡 documented | 14 pages без st.set_page_config |
+| TD-001 | low | S39+ | ✅ closed S50 W1 | Python target locked at 3.14 (`requires-python = ">=3.14,<3.15"`) — decision made, pydantic-core PyO3 0.25+ migration done |
+| TD-002 | medium | S38+ workaround | 🟡 partial | Per-module coverage active; full pytest --cov still >90min (S50 W1 re-scope: defer to S52 if S51+ priorities shift) |
+| TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files (2 files, 0 external usage, 363 LOC tests preserved); S50 W1 re-scope: S51 W2 candidate |
+| TD-006 | medium | S43+ | 🟡 documented | Vite 6.4.6/chromadb 1.5.20 phantom versions — no impact (both not used in build chain); S50 W1 re-scope: low risk, S51+ if needed |
+| TD-007 | low | S43+ | ✅ closed S50 W1 | vite-env.d.ts is `/// <reference types="vite/client" />` (correct), NOT HTML — TD-007 description was wrong from start |
+| TD-008 | medium | S63 W1 | ✅ partial closure | Groups 1+2+6 done; Groups 3-5 (P2) deferred to V24 |
+| TD-009 | low | S44+ | ✅ closed S49 W2 | 31_DSL_Visual_Editor.py 1267 → 616 LOC (TD-009 target was 600, overshoot 16; workflow_diff.py + properties.py extraction) |
+| TD-010 | low | S43+ | 🟡 documented | 14 pages без st.set_page_config — low UX impact (Streamlit auto-defaults); S50 W1 re-scope: 69 files affected, batch add needed (S51+ candidate) |
 
 **S63 added/changed entries (1 closed, 0 new):**
 - TD-008: 🟡 recommended → ✅ partial closure (S63 W1).
