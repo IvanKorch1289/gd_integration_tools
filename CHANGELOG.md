@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 58 (2026-06-10) — crud/saga_lra/format_converters/workflow_builder god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: crud.py 669 → 5 files** — CrudMixin 14 methods → 4 mixins (read/write/versioning/query) + 1 core (MRO 6-level).
+- **W2: saga_lra_processor.py 587 → 6 files** — SagaLRAProcessor 9 methods + 3 small classes → 4 mixins + state.py (MRO 6-level).
+- **W3: format_converters.py 555 → 6 files** — 10 processor classes + 6 helpers → 5 codec files (avro/protobuf/toml/markdown/jsonlines).
+- **W4: workflow/builder.py 554 → 7 files** — WorkflowBuilder 21 methods → 6 mixins + 4 core (MRO 8-level, SagaBuilder preserved).
+- **W5: closure** — ADR-0132 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 57 (2026-06-10) — base/sources_mixin/collection/sink_publish god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
