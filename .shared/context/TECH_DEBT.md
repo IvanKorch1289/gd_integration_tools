@@ -111,7 +111,7 @@ parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 | TD-007 | low | S43+ | ✅ closed S50 W1 | vite-env.d.ts is `/// <reference types="vite/client" />` (correct), NOT HTML — TD-007 description was wrong from start |
 | TD-008 | medium | S63 W1 | ✅ partial closure | Groups 1+2+6 done; Groups 3-5 (P2) deferred to V24 |
 | TD-009 | low | S44+ | ✅ closed S49 W2 | 31_DSL_Visual_Editor.py 1267 → 616 LOC (TD-009 target was 600, overshoot 16; workflow_diff.py + properties.py extraction) |
-| TD-010 | low | S43+ | 🟡 documented | 14 pages без st.set_page_config — low UX impact (Streamlit auto-defaults); S50 W1 re-scope: 69 files affected, batch add needed (S51+ candidate) |
+| TD-010 | low | S43+ | ✅ closed S52 W4 (stale) | 14 pages без st.set_page_config — superseded by setup_page() helper (Sprint 12 K3 W2); all 69 affected files use the helper, which internally calls st.set_page_config. TD entry stale. |
 
 **S63 added/changed entries (1 closed, 0 new):**
 - TD-008: 🟡 recommended → ✅ partial closure (S63 W1).
