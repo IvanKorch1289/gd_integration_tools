@@ -86,8 +86,11 @@ def test_waf_setup_module_all_contains_expected_symbols() -> None:
 
 def test_waf_setup_module_logger_is_named_waf_audit() -> None:
     """Локальный логгер модуля использует ``waf.audit`` namespace."""
-    assert isinstance(waf_setup._logger, logging.Logger)
+    from src.backend.infrastructure.logging.stdlib_backend import StdlibLogger
+
+    assert isinstance(waf_setup._logger, StdlibLogger)
     assert waf_setup._logger.name == "waf.audit"
+    assert callable(waf_setup._logger.info)
 
 
 def test_waf_setup_module_has_docstring() -> None:

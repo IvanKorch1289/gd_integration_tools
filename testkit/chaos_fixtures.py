@@ -26,7 +26,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import socket
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -96,6 +98,56 @@ class ChaosScenario:
     kind: str
     latency_ms: int = 500
     toxicity: float = 1.0
+
+
+class ProxyController:
+    """Тонкая обёртка над toxiproxy admin API для совместимости со старыми
+    helper-функциями (``.add_toxic()`` / ``.disable()``).
+
+    Не зависит от ``toxiproxy-python`` SDK — использует httpx напрямую,
+    как и ``testkit/fixtures/toxiproxy.py``.
+    """
+
+    def __init__(self, client: Any, name: str, listen: str) -> None:
+        self._client = client
+        self.name = name
+        self.listen = listen
+
+    def add_toxic(
+        self,
+        name: str,
+        type: str,
+        stream: str,
+        toxicity: float,
+        attributes: dict[str, Any],
+    ) -> None:
+        """Добавить toxic к proxy через toxiproxy admin API.
+
+        Args:
+            name: Имя toxic'а.
+            type: Тип toxic (``latency`` / ``bandwidth`` / ``slicer`` и т.п.).
+            stream: Поток (``upstream`` / ``downstream``).
+            toxicity: Вероятность применения (0..1).
+            attributes: Параметры toxic'а (задержка, размер slice и т.п.).
+        """
+        payload = {
+            "name": name,
+            "type": type,
+            "stream": stream,
+            "toxicity": toxicity,
+            "attributes": attributes,
+        }
+        resp = self._client.post(
+            f"/proxies/{self.name}/toxics", content=json.dumps(payload).encode()
+        )
+        resp.raise_for_status()
+
+    def disable(self) -> None:
+        """Отключить proxy (эмуляция disconnect)."""
+        resp = self._client.post(
+            f"/proxies/{self.name}", content=json.dumps({"enabled": False}).encode()
+        )
+        resp.raise_for_status()
 
 
 # ---------------------------------------------------------------------------
@@ -187,8 +239,8 @@ def apply_random_drop(target: ChaosTarget, toxicity: float = 0.3) -> None:
 def _can_open_port(host: str, port: int, timeout: float = 0.5) -> bool:
     """Быстрая проверка доступности TCP-порта (без зависимостей).
 
-    Используется как fallback-detector «у нас НЕТ docker / нет sidecar»,
-    чтобы избежать долгого pulling testcontainers wheel.
+    Сейчас используется только для диагностики; chaos-тесты не требуют
+    открытого upstream — они работают на уровне TCP-handshake с proxy.
     """
     try:
         with socket.create_connection((host, port), timeout=timeout):
@@ -198,72 +250,132 @@ def _can_open_port(host: str, port: int, timeout: float = 0.5) -> bool:
 
 
 def _make_toxiproxy_target(
-    name: str,
-    upstream_host: str,
-    upstream_port: int,
+    name: str, upstream_host: str, upstream_port: int
 ) -> ChaosTarget:
     """Поднимает Toxiproxy и создаёт proxy → upstream.
 
-    При отсутствии testcontainers/Docker — возвращает ``ChaosTarget`` с
-    ``proxy=None``, что приведёт к ``pytest.skip`` в любой helper-функции.
-    Это сохраняет green-suite в окружениях без Docker (CI dev_light /
-    локальный без toxiproxy образа).
+    Поддерживает два режима:
+    1. **Standalone toxiproxy** — через env ``TOXIPROXY_URL`` (CI).
+    2. **Docker-контейнер** — запускает ``ghcr.io/shopify/toxiproxy:2.9.0``
+       через ``testcontainers`` локально.
+
+    При отсутствии обоих — возвращает ``ChaosTarget`` с ``proxy=None``,
+    helper-функции сделают ``pytest.skip`` (warn-only режим).
     """
+    proxy_name = f"{name}_proxy"
+    upstream = f"{upstream_host}:{upstream_port}"
+
+    degraded = ChaosTarget(
+        name=name,
+        proxy_host=upstream_host,
+        proxy_port=upstream_port,
+        upstream_host=upstream_host,
+        upstream_port=upstream_port,
+        proxy=None,
+    )
+
+    toxiproxy_url = os.environ.get("TOXIPROXY_URL")
+    if toxiproxy_url:
+        try:
+            import httpx  # noqa: PLC0415
+        except ImportError:
+            logger.warning(
+                "TOXIPROXY_URL задан, но httpx не установлен — "
+                "chaos-фикстура %s вернёт degraded target.",
+                name,
+            )
+            return degraded
+
+        try:
+            client = httpx.Client(base_url=toxiproxy_url, timeout=5.0)
+            # Проверяем, не существует ли proxy уже (из предыдущего прогона)
+            resp = client.get(f"/proxies/{proxy_name}")
+            if resp.status_code == 200:
+                proxy_data = resp.json()
+            else:
+                resp = client.post(
+                    "/proxies",
+                    content=json.dumps(
+                        {
+                            "name": proxy_name,
+                            "listen": "0.0.0.0:0",
+                            "upstream": upstream,
+                            "enabled": True,
+                        }
+                    ).encode(),
+                )
+                resp.raise_for_status()
+                proxy_data = resp.json()
+
+            listen = proxy_data["listen"]
+            proxy_port = int(listen.split(":")[-1])
+            proxy_host = toxiproxy_url.split("://")[1].split(":")[0]
+            return ChaosTarget(
+                name=name,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                upstream_host=upstream_host,
+                upstream_port=upstream_port,
+                proxy=ProxyController(client, proxy_name, listen),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Standalone toxiproxy (%s) failed для %s: %s", toxiproxy_url, name, exc
+            )
+            return degraded
+
+    # Fallback: поднимаем Docker-контейнер через testcontainers
     try:
-        from testcontainers.toxiproxy import (
-            ToxiproxyContainer,  # type: ignore[import-untyped]
-        )
+        import httpx  # noqa: PLC0415
+        from testcontainers.core.container import DockerContainer  # noqa: PLC0415
     except ImportError:
         logger.warning(
-            "testcontainers[toxiproxy] не установлен — chaos-фикстура %s "
+            "testcontainers/httpx не установлен — chaos-фикстура %s "
             "вернёт degraded target (proxy=None, тесты будут skipped).",
             name,
         )
-        return ChaosTarget(
-            name=name,
-            proxy_host=upstream_host,
-            proxy_port=upstream_port,
-            upstream_host=upstream_host,
-            upstream_port=upstream_port,
-            proxy=None,
-        )
-
-    # Docker недоступен → degraded target, skip
-    if not _can_open_port(upstream_host, upstream_port):
-        return ChaosTarget(
-            name=name,
-            proxy_host=upstream_host,
-            proxy_port=upstream_port,
-            upstream_host=upstream_host,
-            upstream_port=upstream_port,
-            proxy=None,
-        )
+        return degraded
 
     try:
-        container = ToxiproxyContainer().with_name(f"toxiproxy-{name}")
-        container.start()
-        proxy = container.add_proxy(
-            name=f"{name}_proxy",
-            upstream=f"{upstream_host}:{upstream_port}",
+        container = (
+            DockerContainer("ghcr.io/shopify/toxiproxy:2.9.0")
+            .with_exposed_ports(8474)
+            .with_command("-host=0.0.0.0")
+            .with_name(f"toxiproxy-{name}")
         )
+        container.start()
+        admin_host = container.get_container_host_ip()
+        admin_port = int(container.get_exposed_port(8474))
+        admin_url = f"http://{admin_host}:{admin_port}"
+        client = httpx.Client(base_url=admin_url, timeout=5.0)
+
+        resp = client.post(
+            "/proxies",
+            content=json.dumps(
+                {
+                    "name": proxy_name,
+                    "listen": "0.0.0.0:0",
+                    "upstream": upstream,
+                    "enabled": True,
+                }
+            ).encode(),
+        )
+        resp.raise_for_status()
+        proxy_data = resp.json()
+        listen = proxy_data["listen"]
+        proxy_port = int(listen.split(":")[-1])
+
         return ChaosTarget(
             name=name,
-            proxy_host=container.get_container_host_ip(),
-            proxy_port=container.get_exposed_port(proxy.listen.split(":")[1]),
+            proxy_host=admin_host,
+            proxy_port=proxy_port,
             upstream_host=upstream_host,
             upstream_port=upstream_port,
-            proxy=proxy,
+            proxy=ProxyController(client, proxy_name, listen),
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("Toxiproxy bootstrap failed для %s: %s", name, exc)
-        return ChaosTarget(
-            name=name,
-            proxy_host=upstream_host,
-            proxy_port=upstream_port,
-            upstream_host=upstream_host,
-            upstream_port=upstream_port,
-            proxy=None,
-        )
+        return degraded
 
 
 # ---------------------------------------------------------------------------

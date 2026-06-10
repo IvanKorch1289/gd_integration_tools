@@ -37,11 +37,11 @@ src/backend/services/scheduler/cron_dashboard_service.py	services	src.backend.in
 src/frontend/streamlit_app/api_clients/k4.py	frontend	src.backend.infrastructure.logging.factory
 src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/18_Workflow_Versioning.py	frontend	src.backend.dsl.workflow.versioning
-src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.workflow.versioning
-src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.workflow.visualize
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.spec
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.template_registry_compat
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.visualize
 src/frontend/streamlit_app/pages/43_Realtime_Logs.py	frontend	src.backend.infrastructure.logging.factory
 src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engine.dry_run
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
+src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
+src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
