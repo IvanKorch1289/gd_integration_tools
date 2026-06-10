@@ -694,10 +694,62 @@ in get_type_hints).
 **S48 W2 audit (2026-06-10):**
 - `mypy src/` = `Success: no issues found in 1656 source files` (0 errors).
 - `tools/gen_dsl_stubs.py --check` = exit 0 (no drift, byte-equal content).
-- Manual byte-level compare: `builders/base.pyi` 71700 chars equal, `workflow/builder.pyi` 5599 chars equal.
+- Manual byte-equal test: `builders/base.pyi` 71700 chars equal, `workflow/builder.pyi` 5599 chars equal.
 
 **Outcome**: Closed (ad-hoc, между sprint48 reference и S48 W2 audit). ADR-0121
 документирует verification.
+
+### TD-S48-W3: `test-main-collection-error-invocations-in` (low, S48 W3 ✅ CLOSED)
+
+**Файлы:** `config_profiles/dev.yml`, `config_profiles/dev_light.yml`.
+
+**Проблема:** `tests/unit/test_main.py` collection падал с
+`RuntimeError: Ошибка конфигурации приложения: Не настроен поток для ключа:
+invocations-in` (cascade: `invocations-in` → `dsl-events` → `dsl-actions`).
+
+**Root cause**: `src/backend/entrypoints/stream/invoker_subscribers.py:37,49` и
+`src/backend/entrypoints/stream/subscribers.py:19,37` module-level decorators
+вызывают `get_stream_name()` / `get_queue_name()` на import. Default streams
+(5 names) и queues (2 names) в `cache.py` НЕ включают "invocations-in",
+"dsl-events", "dsl-actions". При активном `APP_PROFILE=dev` (`dev.yml` не имел
+streams/queues override) ValueError на module load.
+
+**S48 W3 fix**: добавлены `invocations-in`, `dsl-events`, `dsl-actions` в
+`streams` + `queues` секции `dev.yml` и `dev_light.yml` (cascade discovered
+через progressive test runs).
+
+**Verification**:
+- `pytest tests/unit/test_main.py --co` = 6 tests collected (was: 1 error).
+- `pytest tests/unit/ --co` = 10875 tests collected (was: 1 error).
+- `mypy src/` = 0 errors (no regression).
+- Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
+  unrelated.
+
+### TD-S48-W4: `ast-silent-except-pass-audit` (low, S48 W4 ✅ CLOSED)
+
+**Файлы:** `tools/audit_silent_excepts.py` (NEW, S48 W4).
+
+**S48 W4 audit (2026-06-10)**:
+- CRITICAL findings (bare except: pass): **0**
+- MEDIUM findings (except Exception: pass): **81**
+- All 81 verified as legitimate best-effort patterns:
+  - `services/ai/workflow_activities.py:213` — optional `temporalio` import
+  - `services/ai/rag_cache_prewarmer.py:88,93` — cache miss is expected
+  - `services/ai/model_registry/mlflow_backend.py:116` — MLflow unavailable в dev
+  - `services/schema_registry/registry.py:132,150,172` — metrics best-effort
+    (`# pragma: no cover - metrics best-effort` comment explicit)
+  - 73 more в `infrastructure/observability/`, `dsl/orchestration/triggers.py`,
+    `core/ai/pydantic_ai_client.py` etc.
+
+**Decision**: no fixes required. All 81 patterns either:
+- (a) Have `# pragma: no cover` or `metrics best-effort` комментарии;
+- (b) Catch optional-import failures (temporalio, joblib);
+- (c) Operate in code paths where failure = "feature disabled" (legitimate).
+
+**Tool**: `tools/audit_silent_excepts.py` сохранён для re-audit в future sprints.
+`--json` output для CI integration.
+
+**Outcome**: Closed. No TD required.
 
 
 
