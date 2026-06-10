@@ -11,7 +11,6 @@
 
 import asyncio
 import time
-from collections import deque
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -180,9 +179,7 @@ class ExecutionTracer:
             if queue in subs:
                 subs.remove(queue)
 
-    def get_recent_traces(
-        self, route_id: str, limit: int = 100
-    ) -> list[TraceEvent]:
+    def get_recent_traces(self, route_id: str, limit: int = 100) -> list[TraceEvent]:
         """S44 W1 + S47 W1 (TD-026): возвращает последние N events.
 
         Args:
