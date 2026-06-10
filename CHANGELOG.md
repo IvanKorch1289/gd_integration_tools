@@ -5,6 +5,17 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 56 (2026-06-10) — spec/gateway_pipeline_mixin/s3_pool/admin_workflows god-file decomp (5+1 commits, 5/5 substantive)
+
+### Changed (5+1 commits, 4 working + 1 fixup + closure)
+
+- **W1: spec 636 → 4 files** — 15 Pydantic schemas + WorkflowStep type alias split per category (policies/activity/advanced/workflow).
+- **W2: gateway_pipeline_mixin 620 → 6 files** — PipelineStepsMixin 15 methods → 5 mixins (Policy/Input/LLM/Output/Observability) + MRO 6-level.
+- **W3: s3_pool 591 → 2 files** — BaseS3Client(15) + S3Client(20) → base + client (ABC + impl pattern).
+- **W4: admin_workflows 639 → 5 files** — 6 Pydantic schemas + 1 facade + 9 helpers + router → schemas/facade/helpers/input_schema/init.
+- **W4 fixup: admin_workflows** — router + builder.add_actions preserved in __init__.py.
+- **W5: closure** — ADR-0130 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 55 (2026-06-10) — cert_store/control_flow/pg_runner_internals/data_quality god-file decomp (5 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
