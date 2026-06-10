@@ -5,6 +5,50 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 53 (2026-06-10) — format_convert/streaming/setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive)
+
+### Refactored
+
+#### s53/w1-format-convert
+- `src/backend/dsl/engine/processors/format_convert.py` (744 LOC, FormatConvertProcessor god-class, 38 methods) → `format_convert/` package:
+  - `__init__.py` (207 LOC): FormatConvertProcessor (`__init__`, `process`, `_convert`, `_to_json`, `_from_json`) + state attrs + MRO
+  - `data_formats.py` (340 LOC): DataFormatsMixin (16 methods — CSV, XML, YAML, Excel, Parquet, Msgpack, TOML, INI)
+  - `encodings.py` (187 LOC): EncodingsMixin (8 methods — Base64, URL, HTML, Markdown)
+  - `specialized.py` (211 LOC): SpecializedFormatsMixin (9 methods — UUID, JWT, Bencode, compact JSON, Protobuf-like, Avro-like)
+  - `_helpers.py` (15 LOC): `_to_text()` shared helper (avoids duplication across 3 mixins)
+- **MRO:** `FormatConvertProcessor → DataFormatsMixin → EncodingsMixin → SpecializedFormatsMixin → object` (4-level)
+- **State attrs (S52 W3 pattern re-used):** class-level `root_tag`, `sheet_name`, `compression`, `headers`, `secret`, `algorithm`, `claims`, `schema` declared on root
+- Commit `42c80d19`.
+
+#### s53/w2-streaming
+- `src/backend/dsl/engine/processors/streaming.py` (737 LOC, 13 small classes) → `streaming/` package (rpa.py S50 W4 pattern):
+  - `windows.py` (419 LOC): _BaseWindow + TumblingWindowProcessor + SlidingWindowProcessor + SessionWindowProcessor + GroupByKeyProcessor (5 classes)
+  - `message_meta.py` (162 LOC): MessageExpirationProcessor + CorrelationIdProcessor + SchemaRegistryValidator (3 classes)
+  - `reliability.py` (151 LOC): ReplyToProcessor + ExactlyOnceProcessor + DurableSubscriberProcessor (3 classes)
+  - `operations.py` (101 LOC): ChannelPurgerProcessor + SamplingProcessor (2 classes)
+  - `__init__.py` (50 LOC): re-exports all 13 classes
+- **__all__ fix (S53 W2 lesson):** explicit tuple of strings, not set (F401 compliance)
+- Commit `6cd6e113`.
+
+#### s53/w3-setup
+- `src/backend/dsl/commands/setup.py` (756 LOC, 1 function `register_action_handlers` 731 LOC) → 25 `_register_xxx()` helpers + 25-call orchestrator:
+  - Helper extraction pattern: section boundaries via `# ── X ──` comments → wrap each in `def _register_xxx():`
+  - **New pattern:** per-service lazy imports in each helper (preserves original runtime semantics)
+  - `register_action_handlers()`: 731 LOC → 25 LOC (orchestrator)
+  - Each helper: 5-50 LOC, independently testable
+  - File grew 756 → 1222 LOC (helpers add +466 = duplicated imports + function wrappers)
+- Commit `4b76a836`.
+
+### Changed
+
+#### s53/w4-td002-closure
+- TD-002 (`pre-prod-check-coverage-timeout`, S38+ workaround) closed:
+  - `Makefile` `coverage-gate` + `coverage-gate-strict` now use `pytest -n auto` (xdist) + `coverage combine` + `coverage report`
+  - `pyproject.toml [tool.coverage.run]`: `parallel = true`, `concurrency = ["thread", "multiprocessing"]`, `sigterm = true`
+  - Per-module workaround retained as fallback (per-module `pytest --cov=src.backend.X.Y` still 0.5-2s)
+  - **Expected speedup:** coverage time 7+ min → ~2-3 min on multi-core
+- Commit `2710fcbb`.
+
 ## [Unreleased] — Sprint 52 (2026-06-10) — ai_rpa W3 + validator + loader_v11 god-file decomp + TD-010 closure (5 commits, 5/5 substantive)
 
 ### Refactored
