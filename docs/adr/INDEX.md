@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **69**; уникальных слотов: **69**.
+Всего ADR-файлов: **70**; уникальных слотов: **70**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -73,5 +73,6 @@
 | 0118 | ADR-0118 — Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted (Sprint 45 W5, 2026-06-09) | [0118-sprint-45-closure.md](0118-sprint-45-closure.md) |
 | 0119 | ADR-0119 — Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted (Sprint 46 W5, 2026-06-09) | [0119-sprint-46-closure.md](0119-sprint-46-closure.md) |
 | 0120 | ADR-0120 — Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted (Sprint 47 W5, 2026-06-09) | [0120-sprint-47-closure.md](0120-sprint-47-closure.md) |
+| 0121 | ADR-0121 — Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted (Sprint 48 W2, 2026-06-10) | [0121-sprint-48-partial-closure.md](0121-sprint-48-partial-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

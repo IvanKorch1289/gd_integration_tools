@@ -661,5 +661,43 @@ Self-test passes (2/2 tests OK).
 5. **C2**: extract `transport/__init__.py` → `workflow_diff.py` (~180 LOC, target 600)
 6. Continue next god-object decomp (actions.py 986 LOC, ai_banking.py 828 LOC)
 
+---
+
+## Sprint-local TD entries (S48 closure) — НЕ путать с TECH_DEBT TD-015..TD-018
+
+> **Important**: Sprint 48 reference (`sprint48-tech-debt-waves-2026-06-06.md`)
+> использовал TD-015..TD-018 номера в **sprint-local контексте**. Эти номера
+> НЕ соответствуют одноимённым TECH_DEBT entries выше (TD-015 = 31_DSL_Visual_Editor,
+> TD-016 = airflow_sensors, TD-017 = console_json, TD-018 = feature flag strict).
+> Sprint-local outcomes документированы в `docs/adr/0121-sprint-48-partial-closure.md`.
+
+### TD-S48-W1: `plan_execute-dead-type-checking-import` (low, S48 W1 ✅ CLOSED)
+
+**Файл:** `src/backend/dsl/engine/processors/agent_dsl/plan_execute.py:39`.
+
+**Проблема:** `if TYPE_CHECKING: from ..ai_types import AIRequest` — dead import
+(flagged as ruff F401). Runtime re-import на line 278 был единственным использованием.
+
+**S48 W1 fix** (commit `0438bafb`): удалён TYPE_CHECKING блок.
+
+**Verification**: 122/122 tests pass в `tests/unit/dsl/engine/processors/agent_dsl/`.
+Ruff clean.
+
+### TD-S48-W2: `mypy-strict-26-errors-and-stub-regen` (low, S48 W2 ✅ CLOSED)
+
+**Файлы:** `tools/gen_dsl_stubs.py`, `src/backend/dsl/**/*.pyi`.
+
+**Проблема (sprint ref 2026-06-06):** 26 mypy errors + 3 root-cause bugs в stub
+generator (KEYWORD_ONLY separator lost, self-imports in stub, type aliases lost
+in get_type_hints).
+
+**S48 W2 audit (2026-06-10):**
+- `mypy src/` = `Success: no issues found in 1656 source files` (0 errors).
+- `tools/gen_dsl_stubs.py --check` = exit 0 (no drift, byte-equal content).
+- Manual byte-level compare: `builders/base.pyi` 71700 chars equal, `workflow/builder.pyi` 5599 chars equal.
+
+**Outcome**: Closed (ad-hoc, между sprint48 reference и S48 W2 audit). ADR-0121
+документирует verification.
+
 
 
