@@ -45,9 +45,14 @@ from src.backend.core.feature_flags.openfeature_provider import (
     get_openfeature_backend,
     is_flagsmith_backend_enabled,
 )
+from src.backend.core.feature_flags.service import (
+    FeatureFlagService,
+    get_feature_flag_service,
+)
 
 __all__ = (
     "EvaluationContext",
+    "FeatureFlagService",
     "FlagsmithBackend",
     "FlagsmithClient",
     "FlagsmithFlag",
@@ -56,6 +61,7 @@ __all__ = (
     "InMemoryProvider",
     "OpenFeatureBackend",
     "create_inmemory_backend",
+    "get_feature_flag_service",
     "get_openfeature_backend",
     "is_external_provider_enabled",
     "is_flagsmith_backend_enabled",

@@ -20,6 +20,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from src.backend.core.config.features import feature_flags
+from src.backend.core.feature_flags.openfeature_provider import (
+    FlagsmithBackend,
+    get_openfeature_backend,
+)
 from src.backend.core.feature_flags.runtime_overrides import (
     FeatureFlagChange,
     get_runtime_overrides,
@@ -92,6 +97,23 @@ def _to_response(change: FeatureFlagChange) -> OverrideResponse:
         new_value=change.new_value,
         actor=change.actor,
     )
+
+
+@router.get("/feature-flags/backend-status", tags=["Admin · Feature Flags"])
+async def backend_status() -> dict[str, Any]:
+    """Статус активного feature-flag backend'а.
+
+    Возвращает имя backend'а (``in-memory`` / ``flagsmith``),
+    признак готовности и количество флагов в static-реестре.
+    """
+    backend = get_openfeature_backend()
+    backend_name = "flagsmith" if isinstance(backend, FlagsmithBackend) else "in-memory"
+    ready = True
+    if isinstance(backend, FlagsmithBackend):
+        ready = getattr(backend, "_provider", None) is not None
+
+    flag_count = len(type(feature_flags).model_fields)
+    return {"backend": backend_name, "ready": ready, "flag_count": flag_count}
 
 
 @router.get("/feature-flags", tags=["Admin · Feature Flags"])
