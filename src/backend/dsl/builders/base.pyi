@@ -216,7 +216,7 @@ class RouteBuilder:
         timeout_ms: int = ...,
         group_by: Union[str, None] = ...,
     ) -> RouteBuilder:
-        """Накопление сообщений в окно с flush по N ИЛИ по таймауту (S13 K3 W1)."""
+        """Накопление сообщений в окно с flush по N ИЛИ по таймауту."""
         ...
 
     def batch_delete(
@@ -280,7 +280,12 @@ class RouteBuilder:
         ...
 
     def call_function(
-        self, ref: str, *, payload_from: str = ..., result_property: str = ...
+        self,
+        ref: str,
+        *,
+        payload_from: str = ...,
+        result_property: str = ...,
+        inject: Union[list[str], None] = ...,
     ) -> RouteBuilder:
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security)."""
         ...
@@ -404,6 +409,15 @@ class RouteBuilder:
 
     def compress(self, *, algorithm: str = ..., level: int = ...) -> RouteBuilder:
         """Сжатие body (gzip/brotli/zstd)."""
+        ...
+
+    def content_based_router(
+        self,
+        routes: list[tuple[Callable[[Exchange[Any]], bool], str]],
+        *,
+        default_endpoint: Union[str, None] = ...,
+    ) -> RouteBuilder:
+        """Content-Based Router EIP: route по predicate."""
         ...
 
     def content_enrich(
@@ -572,6 +586,10 @@ class RouteBuilder:
         scheduled_time_fn: Union[Callable[[Exchange[Any]], float], None] = ...,
     ) -> RouteBuilder:
         """Delay: задержка на N миллисекунд или до timestamp."""
+        ...
+
+    def depends(self, *deps: Union[str, tuple[str, str]]) -> RouteBuilder:
+        """Добавляет DI-зависимости к последнему processor (call_function/process_fn)."""
         ...
 
     def diff(self, other: list[Any]) -> RouteBuilder:
@@ -938,8 +956,31 @@ class RouteBuilder:
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         ...
 
+    def from_file(
+        self,
+        path: str,
+        *,
+        pattern: Union[str, None] = ...,
+        recursive: bool = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from("file:directory?pattern=*")`` — file sensor trigger."""
+        ...
+
     def from_html_unescape(self, html_string: Union[str, None] = ...) -> RouteBuilder:
         """HTML-unescape string (entities → ``<>&"'`` chars)."""
+        ...
+
+    def from_http(
+        self,
+        url: str,
+        *,
+        expected_status: int = ...,
+        method: str = ...,
+        body_match: Union[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from("http:url")`` — HTTP sensor trigger."""
         ...
 
     def from_imap(
@@ -960,6 +1001,16 @@ class RouteBuilder:
 
     def from_ini(self, ini_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse INI → ``dict`` (stdlib ``configparser``)."""
+        ...
+
+    def from_interval(
+        self,
+        interval_s: float,
+        *,
+        start_immediately: bool = ...,
+        payload: Union[dict[str, Any], None] = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from("timer:foo?period=...")`` — periodic trigger."""
         ...
 
     def from_json(self, *, from_property: str = ...) -> RouteBuilder:
@@ -1007,6 +1058,29 @@ class RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
         ...
 
+    def from_s3(
+        self,
+        bucket: str,
+        key: str,
+        *,
+        region: str = ...,
+        endpoint_url: Union[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from("aws-s3:bucket/key")`` — S3 sensor trigger."""
+        ...
+
+    def from_sql(
+        self,
+        dsn: str,
+        query: str,
+        *,
+        predicate: Union[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from("sql:...")`` — SQL sensor trigger."""
+        ...
+
     def from_toml(self, toml_string: Union[str, None] = ...) -> RouteBuilder:
         """Parse TOML → ``dict`` (``tomllib`` stdlib 3.11+)."""
         ...
@@ -1030,6 +1104,10 @@ class RouteBuilder:
         description: Union[str, None] = ...,
     ) -> RouteBuilder:
         """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8)."""
+        ...
+
+    def from_webhook(self, path: str, *, method: str = ...) -> RouteBuilder:
+        """Camel-style ``from("http:host/path")`` — HTTP webhook trigger."""
         ...
 
     def from_xml(self, xml_string: Union[str, None] = ...) -> RouteBuilder:
@@ -1431,7 +1509,7 @@ class RouteBuilder:
 
     def on_completion(
         self,
-        processors: list[BaseProcessor],
+        processors: list["BaseProcessor"],
         *,
         on_success_only: bool = ...,
         on_failure_only: bool = ...,
@@ -1560,7 +1638,7 @@ class RouteBuilder:
 
     def process_fn(
         self,
-        func: Callable[[Exchange[Any], ExecutionContext], Union[Any, Awaitable[Any]]],
+        func: Callable[[Exchange[Any], "ExecutionContext"], Union[Any, Awaitable[Any]]],
         *,
         name: Union[str, None] = ...,
     ) -> RouteBuilder:
@@ -1840,6 +1918,17 @@ class RouteBuilder:
         """Добавить :class:`RouterSpecialistProcessor` в pipeline."""
         ...
 
+    def routing_slip(
+        self,
+        steps: Union[Callable[[Exchange[Any]], Any], list[str]],
+        *,
+        header: Union[str, None] = ...,
+        strict: bool = ...,
+        max_steps: int = ...,
+    ) -> RouteBuilder:
+        """Routing Slip EIP: динамическая цепочка processors per-message."""
+        ...
+
     def run_scenario(self, steps: Union[list[dict], None] = ...) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         ...
@@ -1864,6 +1953,18 @@ class RouteBuilder:
 
     def sample(self, probability: float = ...) -> RouteBuilder:
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
+        ...
+
+    def sampling(
+        self,
+        *,
+        rate: Union[int, None] = ...,
+        fraction: Union[float, None] = ...,
+        time_window_ms: Union[int, None] = ...,
+        max_in_window: Union[int, None] = ...,
+        seed: Union[int, None] = ...,
+    ) -> RouteBuilder:
+        """Sampling EIP: probabilistic subset of messages."""
         ...
 
     def sanitize_pii(self) -> RouteBuilder:
@@ -1915,6 +2016,50 @@ class RouteBuilder:
 
     def screenshot(self, url: Union[str, None] = ...) -> RouteBuilder:
         """Скриншот страницы как bytes."""
+        ...
+
+    def script_node(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: Union[dict[str, str], None] = ...,
+        allowed_languages: Union[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
+        ...
+
+    def script_python(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: Union[dict[str, str], None] = ...,
+        allowed_languages: Union[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Python-код через текущий интерпретатор."""
+        ...
+
+    def script_ruby(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: Union[dict[str, str], None] = ...,
+        allowed_languages: Union[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Ruby-код (требует ``ruby`` в PATH)."""
+        ...
+
+    def script_shell(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: Union[dict[str, str], None] = ...,
+        allowed_languages: Union[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить shell-скрипт через ``/bin/sh`` (whitelist рекомендуется)."""
         ...
 
     def semantic_route(

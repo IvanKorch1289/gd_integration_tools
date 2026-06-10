@@ -724,3 +724,101 @@ class AIRPAMixin:
         return self._add(  # type: ignore[attr-defined]
             FinDocOcrLlmProcessor(doc_type=doc_type)
         )
+
+    # ── Script Runner DSL (Sprint 42) ──
+
+    def script_python(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = 30.0,
+        env: dict[str, str] | None = None,
+        allowed_languages: list[str] | None = None,
+    ) -> RouteBuilder:
+        """Выполнить inline Python-код через текущий интерпретатор.
+
+        Результат пишется в exchange body как
+        ``{"stdout", "stderr", "exit_code", "language"}``.
+        """
+        from src.backend.dsl.engine.processors.script_runner import (
+            ScriptRunnerProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            ScriptRunnerProcessor(
+                language="python",
+                code=code,
+                timeout_seconds=timeout_seconds,
+                env=env,
+                allowed_languages=allowed_languages,
+            )
+        )
+
+    def script_node(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = 30.0,
+        env: dict[str, str] | None = None,
+        allowed_languages: list[str] | None = None,
+    ) -> RouteBuilder:
+        """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
+        from src.backend.dsl.engine.processors.script_runner import (
+            ScriptRunnerProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            ScriptRunnerProcessor(
+                language="node",
+                code=code,
+                timeout_seconds=timeout_seconds,
+                env=env,
+                allowed_languages=allowed_languages,
+            )
+        )
+
+    def script_ruby(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = 30.0,
+        env: dict[str, str] | None = None,
+        allowed_languages: list[str] | None = None,
+    ) -> RouteBuilder:
+        """Выполнить inline Ruby-код (требует ``ruby`` в PATH)."""
+        from src.backend.dsl.engine.processors.script_runner import (
+            ScriptRunnerProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            ScriptRunnerProcessor(
+                language="ruby",
+                code=code,
+                timeout_seconds=timeout_seconds,
+                env=env,
+                allowed_languages=allowed_languages,
+            )
+        )
+
+    def script_shell(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = 30.0,
+        env: dict[str, str] | None = None,
+        allowed_languages: list[str] | None = None,
+    ) -> RouteBuilder:
+        """Выполнить shell-скрипт через ``/bin/sh`` (whitelist рекомендуется)."""
+        from src.backend.dsl.engine.processors.script_runner import (
+            ScriptRunnerProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            ScriptRunnerProcessor(
+                language="shell",
+                code=code,
+                timeout_seconds=timeout_seconds,
+                env=env,
+                allowed_languages=allowed_languages,
+            )
+        )

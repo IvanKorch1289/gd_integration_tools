@@ -45,7 +45,6 @@ class KycAmlResult(BaseModel):
     kyc_jurisdiction: str | None = Field(default=None, description="Jurisdiction code")
 
 
-
 class KycAmlVerifyProcessor(_BankingAIProcessor):
     """KYC/AML верификация клиента.
 
@@ -157,7 +156,6 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
         return {"kyc_aml_verify": spec}
 
 
-
 class AntiFraudResult(BaseModel):
     """Результат anti-fraud скоринга."""
 
@@ -165,7 +163,6 @@ class AntiFraudResult(BaseModel):
     risk_level: str = Field(description="low|medium|high|critical")
     explanation: str = Field(description="Human-readable explanation")
     triggered_rules: list[str] = Field(default_factory=list)
-
 
 
 class AntiFraudScoreProcessor(_BankingAIProcessor):
@@ -280,4 +277,3 @@ class AntiFraudScoreProcessor(_BankingAIProcessor):
         if self.model != "default":
             spec["model"] = self.model
         return {"antifraud_score": spec}
-

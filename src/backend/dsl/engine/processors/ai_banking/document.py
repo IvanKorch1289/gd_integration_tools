@@ -48,7 +48,6 @@ class DocumentClassifierResult(BaseModel):
     extracted_fields: dict[str, str] = Field(default_factory=dict)
 
 
-
 class DocumentClassifierProcessor(_BankingAIProcessor):
     """Классификация документа (паспорт, счёт, договор, etc.).
 
@@ -139,7 +138,6 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
             return False
 
 
-
 class FrancotypingResult(BaseModel):
     """Результат франкотипирования текста."""
 
@@ -148,7 +146,6 @@ class FrancotypingResult(BaseModel):
     script: str = Field(description="Latin|Cyrillic|Arabic|Han|etc.")
     classification: str = Field(description="top-level classification")
     confidence: float = Field(ge=0.0, le=1.0)
-
 
 
 class FrancotypingProcessor(_BankingAIProcessor):
@@ -241,7 +238,6 @@ class FrancotypingProcessor(_BankingAIProcessor):
             return False
 
 
-
 class TransactionCategorizerProcessor(BaseProcessor):
     """Категоризация транзакций (MCC + subcategory + merchant normalization)."""
 
@@ -262,7 +258,6 @@ class TransactionCategorizerProcessor(BaseProcessor):
         return {"tx_categorize": spec}
 
 
-
 class FinDocOcrLlmProcessor(BaseProcessor):
     """OCR + LLM для финансовых документов (счета, договоры, выписки)."""
 
@@ -281,4 +276,3 @@ class FinDocOcrLlmProcessor(BaseProcessor):
         if self.doc_type != "invoice":
             spec["doc_type"] = self.doc_type
         return {"findoc_ocr_llm": spec}
-

@@ -46,7 +46,6 @@ class CreditScoringResult(BaseModel):
     reasons: list[str] = Field(default_factory=list, description="Decision reasons")
 
 
-
 class CreditScoringRagProcessor(_BankingAIProcessor):
     """Кредитный скоринг через RAG: клиент + история + policy-документы.
 
@@ -168,7 +167,6 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
         return {"credit_scoring_rag": spec}
 
 
-
 class CustomerChatbotProcessor(BaseProcessor):
     """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
 
@@ -189,7 +187,6 @@ class CustomerChatbotProcessor(BaseProcessor):
         return {"customer_chatbot": spec}
 
 
-
 class AppealProcessorAI(BaseProcessor):
     """Автоматическая обработка клиентских обращений."""
 
@@ -203,4 +200,3 @@ class AppealProcessorAI(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"appeal_ai": {}}
-
