@@ -5,6 +5,46 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 51 (2026-06-10) — ai_rpa/agent_dsl god-file decomp + TD-003 vault_cipher removal (5 commits, 5/5 substantive)
+
+### Refactored
+
+#### s51/w1-ai-rpa-ailmmixin
+- `src/backend/dsl/builders/ai_rpa.py` (824 LOC, 61-method god-class) → `ai_rpa/` package:
+  - `ai_llm.py` (307 LOC): 18 AI/LLM methods (mcp_tool, agent_graph, scrape, paginate, api_proxy, rag_*, compose_prompt, call_llm, parse_llm_output, token_budget, sanitize_pii, restore_pii, get_feedback_examples, publish_event, load_memory, save_memory)
+  - `__init__.py` (663 LOC): MRO composition + 43 remaining methods
+- **MRO:** `AIRPAMixin → AILlMMixin → object` (2-level)
+- Commit `a21b1427`.
+
+#### s51/w2-ai-rpa-rpaminix
+- `src/backend/dsl/builders/ai_rpa/rpa.py` (310 LOC, new): 20 RPA methods
+  (navigate, click, fill_form, extract, screenshot, run_scenario, call_llm_with_fallback,
+  cache, cache_write, guardrails, semantic_route, pdf_read, pdf_merge, word_read,
+  word_write, excel_read, file_move, archive, ocr, image_resize)
+- `ai_rpa/__init__.py`: 663 → 394 LOC (MRO + 23 remaining methods)
+- **MRO:** `AIRPAMixin → RPAMixin → AILlMMixin → object` (3-level)
+- Fixup commit `a89f0cc3`: removed unused imports (Callable, Any, Exchange) from `__init__.py`
+- Commits `b9b3d502` + `a89f0cc3`.
+
+#### s51/w3-agent-dsl-decomp
+- `src/backend/dsl/builders/agent_dsl.py` (771 LOC, 17-method god-class) → `agent_dsl/` package:
+  - `orchestration.py` (391 LOC): 8 methods (agent_run, ai_invoke, agent_branch, agent_loop, agent_parallel, plan_execute, reflection_loop_workflow, hitl_approval)
+  - `infra.py` (431 LOC): 9 methods (guardrails_apply, pii_mask, pii_unmask, agent_graph, skill_invoke, ai_memory_recall, ai_memory_store, ai_rpa, mcp_tool)
+  - `__init__.py` (18 LOC): MRO composition only
+- **MRO:** `AgentDSLMixin → OrchestrationMixin → InfraMixin → object` (3-level)
+- Commit `0b252cd3`.
+
+### Removed
+
+#### s51/w4-td003-vault-cipher
+- Deleted 2 files (430 LOC total):
+  - `src/backend/core/security/vault_cipher.py` (150 LOC, 11430 bytes)
+  - `src/backend/core/security/vault_cipher_sqlalchemy.py` (75 LOC, 6871 bytes)
+- 0 external usage verified (3 docstring/comment references only, not imports)
+- Tests preserved (S38): `tests/unit/core/security/test_vault_cipher{,_sqlalchemy}.py` (522 tests)
+- **TD-003 closed**: vault_cipher removal per S50 W1 re-scope
+- Commit `e801d9ce`.
+
 ## [Unreleased] — Sprint 50 (2026-06-10) — TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive)
 
 ### Fixed

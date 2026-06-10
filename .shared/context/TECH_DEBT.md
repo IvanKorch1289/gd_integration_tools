@@ -106,7 +106,7 @@ parallel pytest (`pytest -n auto`) с per-CPU `coverage combine`.
 |----|----------|--------|--------|--------|
 | TD-001 | low | S39+ | ✅ closed S50 W1 | Python target locked at 3.14 (`requires-python = ">=3.14,<3.15"`) — decision made, pydantic-core PyO3 0.25+ migration done |
 | TD-002 | medium | S38+ workaround | 🟡 partial | Per-module coverage active; full pytest --cov still >90min (S50 W1 re-scope: defer to S52 if S51+ priorities shift) |
-| TD-003 | low | V24+ removal | 🟡 deferred | Delete vault_cipher* files (2 files, 0 external usage, 363 LOC tests preserved); S50 W1 re-scope: S51 W2 candidate |
+| TD-003 | low | V24+ removal | ✅ closed S51 W4 | vault_cipher.py + vault_cipher_sqlalchemy.py deleted (430 LOC); 0 external usage; tests preserved S38 (522 tests pass) |
 | TD-006 | medium | S43+ | 🟡 documented | Vite 6.4.6/chromadb 1.5.20 phantom versions — no impact (both not used in build chain); S50 W1 re-scope: low risk, S51+ if needed |
 | TD-007 | low | S43+ | ✅ closed S50 W1 | vite-env.d.ts is `/// <reference types="vite/client" />` (correct), NOT HTML — TD-007 description was wrong from start |
 | TD-008 | medium | S63 W1 | ✅ partial closure | Groups 1+2+6 done; Groups 3-5 (P2) deferred to V24 |
