@@ -13,7 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builder import RouteBuilder  # noqa: F401  # S52 W1: forward ref only
+    from src.backend.dsl.builder import (
+        RouteBuilder,  # noqa: F401  # S52 W1: forward ref only
+    )
 
 from src.backend.dsl.builders.ai_rpa.ai_llm import AILlMMixin  # S51 W1: MRO
 from src.backend.dsl.builders.ai_rpa.banking_scripts import (
