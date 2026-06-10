@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 55 (2026-06-10) — cert_store/control_flow/pg_runner_internals/data_quality god-file decomp (5 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: cert_store 628 → 8 files** — 7 classes split per-backend (models + backend_base + 4 backends + store + init).
+- **W2: control_flow 628 → 5 files** — 8 classes + 4 helpers split per concept (choice/flow/parallel/saga).
+- **W3: pg_runner_internals 618 → 5 files** — 4 classes + 2 helpers split per domain (rows/state/event_store/instance_store).
+- **W4: data_quality 618 → 5 files** — DataQualityMonitor 10 methods → 4 mixins (rule_mgmt/check/schema/apply) + 2 core; `_apply_rule` (263 LOC) isolated.
+- **W5: closure** — ADR-0129 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 53 (2026-06-10) — format_convert/streaming/setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive)
 
 ### Refactored
