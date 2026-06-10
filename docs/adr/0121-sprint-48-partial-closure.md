@@ -92,21 +92,36 @@ Bug воспроизводится при regen → regresses stubs. **Revert в
 - ⚠️ `tools/gen_dsl_stubs.py` known bug — regen **regresses** mypy.
 - 📌 0438bafb (S48 W1) + ADR-0121 (this file) — formal closure за sprint48 reference.
 
-## W3 + W4: deferred to S48 W3-W4 (next waves)
+## W3 + W4: closed in S48 W3-W4 (post-ADR-0121 creation)
 
-- **W3 (TD-017 sprint ref)**: coverage uplift с fresh scope — top-5 worst-covered
-  modules после re-audit (не reference list). Требует fix `tests/unit/test_main.py`
-  collection error (root cause: `app_factory.py:71` "Не настроен поток для ключа:
-  invocations-in") для разблокировки coverage run.
-- **W4 (TD-018 sprint ref)**: AST real bugs audit с fresh scope (TECH_DEBT TD-018
-  уже CLOSED S45 W3, поэтому audit не дублирует closed work).
+- **W3 (test_main.py collection fix)**: добавлены `invocations-in`, `dsl-events`,
+  `dsl-actions` streams/queues в `config_profiles/dev.yml` и `dev_light.yml`.
+  Cascade discovered через progressive test runs (3 module-level decorators:
+  `invoker_subscribers.py:37,49` + `subscribers.py:19,37`). Commit `46aed33b`.
+  Result: `pytest tests/unit/test_main.py --co` 1 error → 6 tests collected.
+- **W4 (AST silent except: pass audit)**: новый `tools/audit_silent_excepts.py`
+  нашёл 0 CRITICAL + 81 MEDIUM candidates. Все 81 verified как legitimate
+  best-effort patterns (optional imports, metrics best-effort, expected cache
+  misses). 0 fixes required. Commit `026c38c6`. TD-S48-W4 entry в TECH_DEBT.
+- **Coverage baseline uplift (TD-017 sprint ref)**: full coverage run timeout
+  (300s, >90 min реально). Tool сохранён для re-audit в S48+ D; coverage uplift
+  deferred до operator action (run coverage в CI with proper infra).
 
-## Sprint 48 metrics (W1 + W2)
+## Sprint 48 metrics (W1-W4)
 
-- W1 commit: 0438bafb (1 file, -3 LOC).
-- W2 ADR: this file + TECH_DEBT update.
-- LOC delta: net zero.
-- TDs (sprint-local): TD-015 closed (W1), TD-016 closed (W2 ad-hoc).
+| Wave | Commit | Type | LOC | Outcome |
+|------|--------|------|-----|---------|
+| W1 | 0438bafb | fix (pre-flight, in master) | -3 | TD-015 ruff F401 closed |
+| W2 | 5188d732 | docs (ADR-0121 + INDEX/WIKI + TECH_DEBT) | +168/-4 | TD-016 ad-hoc closed |
+| W3 | 46aed33b | fix (config profiles) | +47 | TD-S48-W3 closed |
+| W4 | 026c38c6 | chore (audit tool + TECH_DEBT) | +176/-1 | TD-S48-W4 closed |
+| W5 | (this closure) | docs (CHANGELOG + ADR-0122) | TBD | Sprint 48 closure |
+
+**Total**: 4 new commits (W2-W4 + W5; W1 was pre-existing), 4 files created,
+3 files modified, +391/-8 LOC net.
+
+**TDs (sprint-local, все closed)**: TD-015 (W1), TD-016 (W2), TD-S48-W3 (W3),
+TD-S48-W4 (W4). None открыты в TECH_DEBT.md.
 
 ## Решения
 

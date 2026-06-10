@@ -5,6 +5,58 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 48 (2026-06-10) — Audit + re-scope + 5/5 substantive (TD-015..TD-S48-W4 closed)
+
+### Fixed
+
+#### s48/w1-td-015-ruff-f401-plan-execute
+- `src/backend/dsl/engine/processors/agent_dsl/plan_execute.py`:
+  - Удалён dead `if TYPE_CHECKING: from ..ai_types import AIRequest` блок
+    (line 39). Runtime re-import на line 278 был единственным использованием.
+- Commit `0438bafb` (2026-06-06, pre-existing в master) — ruff F401 closed.
+- **TD-015 (sprint ref) closed**.
+
+#### s48/w3-test-main-collection-fix
+- `config_profiles/dev.yml`, `config_profiles/dev_light.yml`:
+  - Добавлены `invocations-in`, `dsl-events`, `dsl-actions` в `streams` +
+    `queues` секции.
+- **Root cause**: `src/backend/entrypoints/stream/invoker_subscribers.py:37,49`
+  и `src/backend/stream/subscribers.py:19,37` module-level decorators вызывают
+  `get_stream_name()` / `get_queue_name()` на import. Default streams/queues в
+  `cache.py` НЕ включают production-only names → ValueError cascade при
+  `APP_PROFILE=dev`.
+- Commit `46aed33b`.
+- **Verification**: `pytest tests/unit/test_main.py --co` 1 error → 6 tests
+  collected. `pytest tests/unit/ --co` 1 error → 10875 tests collected.
+- **TD-S48-W3 closed**.
+
+### Added
+
+#### s48/w4-audit-silent-excepts-tool
+- `tools/audit_silent_excepts.py` (NEW, 123 LOC) — AST walker для suspicious
+  except: pass patterns. Distinguishes CRITICAL (bare except) / MEDIUM
+  (except Exception) / OK (specific exception). `--json` output для CI gate.
+- **Audit findings (2026-06-10)**: 0 CRITICAL + 81 MEDIUM. Все 81 verified как
+  legitimate best-effort patterns (optional imports, metrics best-effort,
+  expected cache misses). 0 fixes required.
+- Commit `026c38c6`.
+- **TD-S48-W4 closed**.
+
+### Documentation
+
+#### s48/w2-adr-0121-sprint-48-partial-closure
+- ADR-0121 (Accepted) — Sprint 48 partial closure: TD-015 ruff F401 + mypy
+  0 errors (1656 source files) + stub regen audit. Documents known bug в
+  `tools/gen_dsl_stubs.py` (regen regresses mypy) deferred to S48+ D.
+- Commit `5188d732`.
+
+#### s48/w5-adr-0122-sprint-48-closure
+- ADR-0122 (Accepted) — Sprint 48 closure: audit + re-scope + 5/5 substantive.
+  Pre-flight verify-claims обнаружил, что sprint48 reference (4-дневной давности)
+  устарел. Re-audit каждой wave, formalize outcomes в 5 commits.
+- Commit (this).
+- **TD-016 (sprint ref, mypy 26 errors) closed (mypy 0 errors on-disk)**.
+
 ## [Unreleased] — Sprint 47 (2026-06-09) — ExecutionTracer storage wiring (1/5 substantive)
 
 ### Changed
