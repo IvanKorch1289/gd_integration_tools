@@ -5,6 +5,54 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 52 (2026-06-10) — ai_rpa W3 + validator + loader_v11 god-file decomp + TD-010 closure (5 commits, 5/5 substantive)
+
+### Refactored
+
+#### s52/w1-ai-rpa-w3
+- `src/backend/dsl/builders/ai_rpa.py` (61-method god-class, 824 LOC) → fully decomposed into 5 mixin files:
+  - `ai_llm.py` (305 LOC, S51 W1): 18 AI/LLM methods
+  - `rpa.py` (309 LOC, S51 W2): 20 RPA methods
+  - `text_ops.py` (99 LOC, S52 W1): 5 text operations (regex, render_template, hash, encrypt, decrypt)
+  - `system_ops.py` (140 LOC, S52 W1): 7 system operations (shell, email, citrix, terminal_3270, appium_mobile, email_driven, keystroke_replay)
+  - `banking_scripts.py` (211 LOC, S52 W1): 11 banking+scripting methods (7 banking + 4 scripting)
+  - `__init__.py` (33 LOC, S52 W1): MRO composition only
+- **MRO:** `AIRPAMixin → BankingScriptsMixin → SystemOpsMixin → TextOpsMixin → RPAMixin → AILlMMixin → object` (6-level)
+- **ai_rpa.py decomp COMPLETE** (61/61 methods across 3 sprints)
+- Fixup commit `a5a17864`: ruff sort imports
+- Commits `41fdce35` + `a5a17864`.
+
+#### s52/w2-validator-decomp
+- `src/backend/core/config/validator.py` (760 LOC, ConfigValidator god-class, 16 methods) → `validator/` package:
+  - `_helpers.py` (49 LOC, new pattern): shared definitions (PRODUCTION_ENV, JWT_SECRET_MIN_LENGTH, ConfigSeverity, ConfigViolation dataclass, ProductionConfigError, _FEATURE_FLAG_DEPENDENCIES*)
+  - `security_checks.py` (229 LOC): 6 methods (WAF strict, WAF allow-empty, ClamAV, Vault, CORS, JWT)
+  - `api_docs_checks.py` (100 LOC): 3 methods (Swagger, ReDoc, admin endpoints)
+  - `infrastructure_checks.py` (246 LOC): 5 methods (debug mode, DB host, Redis required/localhost, feature flag dependency)
+  - `__init__.py` (148 LOC): ConfigValidator (validate, _is_prod) + validate_startup_config + MRO
+- **MRO:** `ConfigValidator → SecurityChecksMixin → APIDocsChecksMixin → InfrastructureChecksMixin → object` (4-level)
+- **New pattern:** `_helpers.py` для shared definitions (avoids circular import between mixin ↔ __init__.py)
+- Commit `9bdc0fc6`.
+
+#### s52/w3-loader-v11-decomp
+- `src/backend/services/plugins/loader_v11.py` (724 LOC, PluginLoaderV11 god-class, 14 methods) → `loader_v11/` package:
+  - `discovery.py` (180 LOC): 2 methods (_topo_sort_non_blocked, _reorder_manifest_paths)
+  - `loading.py` (484 LOC): 5 methods (_load_one, _instantiate, _plugin_page_prefix, _mount_frontend_pages, _unmount_frontend_pages)
+  - `validation.py` (135 LOC): 2 methods (_check_inventory_collisions, _record_owners)
+  - `__init__.py` (212 LOC): PluginLoaderV11 (state init + 2 properties + discover_and_load + shutdown_all) + state attr annotations + MRO
+- **MRO:** `PluginLoaderV11 → DiscoveryMixin → LoadingMixin → ValidationMixin → object` (4-level)
+- **Stateful class pattern:** state attrs declared as class-level annotations on root + Callable[..., None] hints on mixins
+- **Patterns established:** state attrs via class annotations, re-exports for backward compat, _logger re-definition idempotency, @property extraction via `lineno - 1` lookup
+- Commit `ba49541a`.
+
+### Changed
+
+#### s52/w4-td010-closure
+- TD-010 (14 pages без st.set_page_config, 69 files affected) marked **closed (stale)** в `.shared/context/TECH_DEBT.md`:
+  - All 69 affected streamlit pages use `setup_page("Title", ":icon:")` helper (Sprint 12 K3 W2)
+  - Helper internally calls `st.set_page_config(page_title=..., page_icon=..., layout="wide", initial_sidebar_state="expanded")`
+  - TD-010 entry superseded — no code change needed
+- Commit `4533ba41`.
+
 ## [Unreleased] — Sprint 51 (2026-06-10) — ai_rpa/agent_dsl god-file decomp + TD-003 vault_cipher removal (5 commits, 5/5 substantive)
 
 ### Refactored

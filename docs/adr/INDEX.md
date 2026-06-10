@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **75**; уникальных слотов: **74**.
+Всего ADR-файлов: **76**; уникальных слотов: **75**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -81,5 +81,6 @@
 | 0123 | ADR-0123 — Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted (Sprint 49 W5, 2026-06-10) | [0123-sprint-49-closure.md](0123-sprint-49-closure.md) |
 | 0124 | ADR-0124 — Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted (Sprint 50 W5, 2026-06-10) | [0124-sprint-50-closure.md](0124-sprint-50-closure.md) |
 | 0125 | ADR-0125 — Sprint 51 closure: ai_rpa.py (2-wave) + agent_dsl.py + TD-003 (5 working + 1 fixup commits, 5/5 substantive) | Accepted (Sprint 51 W5, 2026-06-10) | [0125-sprint-51-closure.md](0125-sprint-51-closure.md) |
+| 0126 | ADR-0126 — Sprint 52 closure: ai_rpa.py W3 + validator.py + loader_v11.py god-file decomp + TD-010 closure (5+1 commits, 5/5 substantive) | Accepted (Sprint 52 W5, 2026-06-10) | [0126-sprint-52-closure.md](0126-sprint-52-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
