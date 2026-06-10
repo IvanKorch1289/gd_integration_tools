@@ -23,29 +23,10 @@ def _register_crud_actions(prefix: str, service_getter: Callable) -> None:
         )
 
 
-def register_action_handlers() -> None:
-    """Регистрирует все action-handlers приложения.
-
-    Функция идемпотентна — вызывается на startup приложения.
-    """
+def _register_orders() -> None:
     from extensions.core_entities.orders.services.orders import get_order_service
-    from src.backend.schemas.base import EmailSchema
-    from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
     from src.backend.schemas.route_schemas.orders import OrderIdQuerySchema
-    from src.backend.schemas.route_schemas.skb import (
-        APISKBOrderSchemaIn,
-        SKBObjectsByAddressQuerySchema,
-        SKBOrdersListQuerySchema,
-        SKBResultQuerySchema,
-    )
-    from src.backend.services.ai.ai_agent import get_ai_agent_service
-    from src.backend.services.core.admin import get_admin_service
-    from src.backend.services.core.tech import get_tech_service
-    from src.backend.services.integrations.dadata import get_dadata_service
-    from src.backend.services.integrations.skb import get_skb_service
-    from src.backend.services.io.files import get_file_service
 
-    # ── Orders: CRUD + кастомные методы ──
     _register_crud_actions("orders", get_order_service)
 
     action_handler_registry.register_many(
@@ -94,10 +75,24 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Files: CRUD ──
+
+
+def _register_files() -> None:
+    from src.backend.services.io.files import get_file_service
+
     _register_crud_actions("files", get_file_service)
 
-    # ── SKB (прокси к внешнему API) ──
+
+
+def _register_skb_api() -> None:
+    from src.backend.schemas.route_schemas.skb import (
+        APISKBOrderSchemaIn,
+        SKBObjectsByAddressQuerySchema,
+        SKBOrdersListQuerySchema,
+        SKBResultQuerySchema,
+    )
+    from src.backend.services.integrations.skb import get_skb_service
+
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
@@ -132,7 +127,12 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── DaData ──
+
+
+def _register_dadata() -> None:
+    from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
+    from src.backend.services.integrations.dadata import get_dadata_service
+
     action_handler_registry.register(
         action="dadata.get_geolocate",
         service_getter=get_dadata_service,
@@ -140,7 +140,12 @@ def register_action_handlers() -> None:
         payload_model=DadataGeolocateQuerySchema,
     )
 
-    # ── Tech ──
+
+
+def _register_tech() -> None:
+    from src.backend.schemas.base import EmailSchema
+    from src.backend.services.core.tech import get_tech_service
+
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
@@ -172,7 +177,11 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── AI ──
+
+
+def _register_ai() -> None:
+    from src.backend.services.ai.ai_agent import get_ai_agent_service
+
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
@@ -198,7 +207,11 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Admin ──
+
+
+def _register_admin() -> None:
+    from src.backend.services.core.admin import get_admin_service
+
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
@@ -239,7 +252,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Analytics (ClickHouse) ──
+
+
+def _register_analytics_clickhouse() -> None:
+
     from src.backend.services.ops.analytics import get_analytics_service
 
     action_handler_registry.register_many(
@@ -272,7 +288,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Search (Elasticsearch) ──
+
+
+def _register_search_elasticsearch() -> None:
+
     from src.backend.services.io.search import get_search_service
 
     action_handler_registry.register_many(
@@ -305,7 +324,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Notebooks (Wave 9.1) ──
+
+
+def _register_notebooks_wave_9_1() -> None:
+
     from src.backend.services.notebooks import get_notebook_service
 
     action_handler_registry.register_many(
@@ -343,7 +365,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── RAG (Vector DB + LLM) ──
+
+
+def _register_rag_vector_db_llm() -> None:
+
     from src.backend.services.ai.rag_service import get_rag_service
 
     action_handler_registry.register_many(
@@ -376,7 +401,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Agent Memory ──
+
+
+def _register_agent_memory() -> None:
+
     from src.backend.services.ai.agent_memory import get_agent_memory_service
 
     action_handler_registry.register_many(
@@ -419,7 +447,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Webhook Scheduler ──
+
+
+def _register_webhook_scheduler() -> None:
+
     from src.backend.services.ops.webhook_scheduler import get_webhook_scheduler
 
     action_handler_registry.register_many(
@@ -447,7 +478,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Web Automation (multi-protocol: REST, gRPC, GraphQL, SOAP, queue, MCP) ──
+
+
+def _register_web_automation_multi_protocol() -> None:
+
     from src.backend.services.io.web_automation import get_web_automation_service
 
     action_handler_registry.register_many(
@@ -500,7 +534,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Web Search (Perplexity + Tavily) ──
+
+
+def _register_web_search_perplexity_tavily() -> None:
+
     from src.backend.infrastructure.clients.external.search_providers import (
         get_web_search_service,
     )
@@ -520,7 +557,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Data Export (Excel/CSV/PDF) ──
+
+
+def _register_data_export_excel_csv_pdf() -> None:
+
     from src.backend.services.io.export_service import get_export_service
 
     action_handler_registry.register_many(
@@ -543,7 +583,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Notifications (email/express/webhook/telegram) ──
+
+
+def _register_notifications_email_express_webhook_telegram() -> None:
+
     from src.backend.services.ops.notification_hub import get_notification_hub
 
     action_handler_registry.register_many(
@@ -596,7 +639,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Anomaly Detection ──
+
+
+def _register_anomaly_detection() -> None:
+
     from src.backend.services.ops.anomaly_detector import get_anomaly_detector
 
     action_handler_registry.register_many(
@@ -619,7 +665,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Message Replay ──
+
+
+def _register_message_replay() -> None:
+
     from src.backend.services.ops.message_replay import get_replay_service
 
     action_handler_registry.register_many(
@@ -647,7 +696,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Webhook Relay ──
+
+
+def _register_webhook_relay() -> None:
+
     from src.backend.entrypoints.webhook.transformer import get_webhook_relay
 
     action_handler_registry.register_many(
@@ -675,7 +727,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Data Quality ──
+
+
+def _register_data_quality() -> None:
+
     from src.backend.services.ops.data_quality import get_dq_monitor
 
     action_handler_registry.register_many(
@@ -694,7 +749,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── ImportGateway (W24): унифицированный импорт OpenAPI/Postman/WSDL ──
+
+
+def _register_importgateway_w24() -> None:
+
     from src.backend.services.integrations import get_import_service
 
     action_handler_registry.register_many(
@@ -712,7 +770,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Scheduled Reports ──
+
+
+def _register_scheduled_reports() -> None:
+
     from src.backend.services.ops.scheduled_reports import get_reports_service
 
     action_handler_registry.register_many(
@@ -740,7 +801,10 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── ServiceDSL auto-register ──
+
+
+def _register_servicedsl_auto_register() -> None:
+
     from src.backend.dsl.service_dsl import (
         scan_and_register_actions,
         service_dsl_registry,
@@ -754,3 +818,37 @@ def register_action_handlers() -> None:
             "src.backend.services.integrations",
         ]
     )
+
+
+
+def register_action_handlers() -> None:
+    """Регистрирует все action-handlers приложения.
+
+    Функция идемпотентна — вызывается на startup приложения.
+    Per-service registration делегировано в ``_register_xxx()`` helpers (S53 W3 extraction).
+    Каждый helper делает свои own lazy imports (preserve original pattern).
+    """
+    _register_orders()
+    _register_files()
+    _register_skb_api()
+    _register_dadata()
+    _register_tech()
+    _register_ai()
+    _register_admin()
+    _register_analytics_clickhouse()
+    _register_search_elasticsearch()
+    _register_notebooks_wave_9_1()
+    _register_rag_vector_db_llm()
+    _register_agent_memory()
+    _register_webhook_scheduler()
+    _register_web_automation_multi_protocol()
+    _register_web_search_perplexity_tavily()
+    _register_data_export_excel_csv_pdf()
+    _register_notifications_email_express_webhook_telegram()
+    _register_anomaly_detection()
+    _register_message_replay()
+    _register_webhook_relay()
+    _register_data_quality()
+    _register_importgateway_w24()
+    _register_scheduled_reports()
+    _register_servicedsl_auto_register()
