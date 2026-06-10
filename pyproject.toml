@@ -894,6 +894,10 @@ markers = [
 [tool.coverage.run]
 source = ["src"]
 branch = true
+# S53 W4 (TD-002 closure): parallel mode for pytest-xdist combine (pytest -n auto).
+parallel = true
+concurrency = ["thread", "multiprocessing"]
+sigterm = true
 
 [tool.coverage.report]
 # [wave:s19/k2-w4-coverage-ratchet-75] Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
