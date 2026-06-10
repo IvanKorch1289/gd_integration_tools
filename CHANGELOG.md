@@ -5,6 +5,56 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 50 (2026-06-10) — TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive)
+
+### Fixed
+
+#### s50/w1-td-backlog-re-scope
+- `.shared/context/TECH_DEBT.md` summary table updated:
+  - **TD-001** closed (S50 W1): Python target locked at 3.14 (`requires-python = ">=3.14,<3.15"`)
+  - **TD-007** closed (S50 W1): vite-env.d.ts is `/// <reference types="vite/client" />` (correct), NOT HTML
+  - **TD-009** closed (S49 W2 retro): 31_DSL_Visual_Editor.py 1267→616 LOC (S49 closure)
+  - **TD-002/003/006/010** re-scoped (S50 W1): fresh scope для S51+ candidates
+- Commit `46a8906d`.
+
+#### s50/w2-transport-py-b3-b5
+- `src/backend/dsl/builders/transport/sources.py` (new, 231 LOC): 5 methods
+  (directory_scan, from_nats_js, from_webdav, to_nats_js, poll)
+- `src/backend/dsl/builders/transport/external.py` (new, 124 LOC): 3 methods
+  (http_call, graphql_query, web_search)
+- `src/backend/dsl/builders/transport/proxy.py` (new, 134 LOC): 4 methods
+  (expose_proxy, forward_to, proxy, redirect)
+- `src/backend/dsl/builders/transport/__init__.py`: 475 → 58 LOC (TransportMixin
+  MRO composition + timer)
+- **MRO chain:** `TransportMixin → SourcesMixin → ExternalMixin → ProxyMixin →
+  PersistenceMixin → SinksMixin → object` (6-level)
+- **ADR-0107 status:** Accepted (B1+B3-B5 complete, fully implemented)
+- Commit `02066a45`.
+
+### Refactored
+
+#### s50/w3-ai-banking-decomp
+- `src/backend/dsl/engine/processors/ai_banking.py` → `ai_banking/` package (6 files):
+  - `_audit.py` (95 LOC): `_emit_audit` helper
+  - `_base.py` (127 LOC): `_BankingAIProcessor` base class
+  - `identity.py` (291 LOC): KycAml{Result,VerifyProcessor}, AntiFraud{Result,ScoreProcessor}
+  - `credit.py` (214 LOC): CreditScoring{Result,RagProcessor}, CustomerChatbotProcessor, AppealProcessorAI
+  - `document.py` (293 LOC): DocumentClassifier{Result,Processor}, Francotyping{Result,Processor}, TransactionCategorizerProcessor, FinDocOcrLlmProcessor
+  - `__init__.py` (55 LOC): re-exports + `__all__`
+- 4th-largest god-file (828 → 1001 LOC across 6 files, +173 re-export overhead)
+- Backward-compat: 10+ consumer files (processors/__init__.py:25, builders/ai_rpa.py:670-722, tests/...)
+- Commit `b8a59582`.
+
+#### s50/w4-rpa-decomp
+- `src/backend/dsl/engine/processors/rpa.py` → `rpa/` package (4 files):
+  - `documents.py` (268 LOC): PdfRead, PdfMerge, WordRead, WordWrite, ExcelRead (5 classes)
+  - `operations.py` (496 LOC): FileMove, Archive, ImageOcr, ImageResize, Regex, TemplateRender, Hash, Encrypt, Decrypt (9 classes)
+  - `system.py` (157 LOC): ShellExec, EmailCompose (2 classes)
+  - `__init__.py` (53 LOC): re-exports + `__all__`
+- 5th-largest god-file (823 → 974 LOC across 4 files, +151 re-export overhead)
+- Backward-compat: 5+ consumer files (processors/__init__.py:168, tests/unit/dsl/engine/processors/test_rpa.py:13)
+- Commit `bd6fbb1a`.
+
 ## [Unreleased] — Sprint 49 (2026-06-10) — TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive)
 
 ### Fixed

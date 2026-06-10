@@ -1,6 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **72**; уникальных слотов: **72**.
+Всего ADR-файлов: **74**; уникальных слотов: **73**.
+
+⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -61,7 +63,8 @@
 | 0106 | ADR-0106: S27 closure — AIGateway enforce + WorkflowBuilder.invoke_agent() as Temporal activity | — | [0106-s27-closure.md](0106-s27-closure.md) |
 | 0107 | ADR-0107: transport.py god-object decomposition (990 LOC → 6 modules) | — | [0107-transport-py-decomposition.md](0107-transport-py-decomposition.md) |
 | 0108 | ADR-0108 — DI DSL для RouteBuilder / call_function / process_fn | Accepted (Sprint 40 W1–W5, 2026-06-09) | [0108-di-dsl-for-routes.md](0108-di-dsl-for-routes.md) |
-| 0109 | ADR-0109 — Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted (Sprint 41 W2, 2026-06-09) | [0109-feature-flag-dependency-check-fix.md](0109-feature-flag-dependency-check-fix.md) |
+| 0109 *(collision)* | ADR-0109 — Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted (Sprint 41 W2, 2026-06-09) | [0109-feature-flag-dependency-check-fix.md](0109-feature-flag-dependency-check-fix.md) |
+| 0109 *(collision)* | ADR-0109: Script Runner DSL для inline Python/Node/Ruby/Shell | — | [0109-script-runner-dsl.md](0109-script-runner-dsl.md) |
 | 0110 | ADR-0110 — WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted (Sprint 41 W4, 2026-06-09) | [0110-waf-coverage-100pct-formalize.md](0110-waf-coverage-100pct-formalize.md) |
 | 0111 | ADR-0111 — Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted (Sprint 41 W6, 2026-06-09) | [0111-chaos-multitenant-formalize.md](0111-chaos-multitenant-formalize.md) |
 | 0112 | ADR-0112 — Security Audit status (Sprint 41 #3) | Accepted (Sprint 41 W7, 2026-06-09) | [0112-security-audit-status.md](0112-security-audit-status.md) |
@@ -76,5 +79,6 @@
 | 0121 | ADR-0121 — Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted (Sprint 48 W2, 2026-06-10) | [0121-sprint-48-partial-closure.md](0121-sprint-48-partial-closure.md) |
 | 0122 | ADR-0122 — Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted (Sprint 48 W5, 2026-06-10) | [0122-sprint-48-closure.md](0122-sprint-48-closure.md) |
 | 0123 | ADR-0123 — Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted (Sprint 49 W5, 2026-06-10) | [0123-sprint-49-closure.md](0123-sprint-49-closure.md) |
+| 0124 | ADR-0124 — Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted (Sprint 50 W5, 2026-06-10) | [0124-sprint-50-closure.md](0124-sprint-50-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
