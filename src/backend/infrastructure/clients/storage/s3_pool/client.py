@@ -1,9 +1,17 @@
+"""S56 W3 — client.py part of s3_pool decomp.
+
+Classes: S3Client.
+"""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from asyncio import Lock
 from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
+
+from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client
 
 try:
     from botocore.exceptions import (  # type: ignore[import-not-found]
@@ -31,94 +39,12 @@ from functools import lru_cache
 from src.backend.core.config.settings import FileStorageSettings, settings
 from src.backend.core.errors import ServiceError
 
-__all__ = ("S3Client", "get_s3_client", "s3_client")
 
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class BaseS3Client(ABC):
-    """Абстрактный базовый класс для операций с клиентом S3."""
-
-    @abstractmethod
-    async def connect(self):
-        """Устанавливает соединение с хранилищем S3."""
-        pass
-
-    @abstractmethod
-    async def close(self):
-        """Закрывает соединение корректно."""
-        pass
-
-    @abstractmethod
-    def ensure_connected(func):
-        """Декоратор для проверки подключения перед вызовом функции."""
-        pass
-
-    @property
-    @abstractmethod
-    def is_connected(self) -> bool:
-        """Проверяет, установлено ли соединение."""
-        pass
-
-    @abstractmethod
-    @asynccontextmanager
-    async def client_context(self) -> AsyncGenerator[Any]:
-        """Контекстный менеджер для операций с клиентом."""
-        pass
-
-    @abstractmethod
-    async def put_object(
-        self, key: str, body: Any, metadata: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Загружает объект в S3."""
-        pass
-
-    @abstractmethod
-    async def get_object(self, key: str) -> tuple[Any, dict[str, Any]] | None:
-        """Получает объект из S3."""
-        pass
-
-    @abstractmethod
-    async def delete_object(self, key: str) -> dict[str, Any]:
-        """Удаляет объект из S3."""
-        pass
-
-    @abstractmethod
-    async def list_objects(self, prefix: str = None) -> list[str]:
-        """Возвращает список объектов в бакете."""
-        pass
-
-    @abstractmethod
-    async def head_object(self, key: str) -> dict[str, Any] | None:
-        """Получает метаданные объекта."""
-        pass
-
-    @abstractmethod
-    async def create_bucket_if_not_exists(self):
-        """Создает бакет, если он не существует."""
-        pass
-
-    @abstractmethod
-    async def copy_object(self, source_key: str, dest_key: str) -> dict[str, Any]:
-        """Копирует объект внутри S3."""
-        pass
-
-    @abstractmethod
-    async def generate_presigned_url(self, key: str, expiration: int = 3600) -> str:
-        """Генерирует предварительно подписанный URL для доступа к объекту."""
-        pass
-
-    @abstractmethod
-    async def delete_objects(self, keys: list[str]) -> dict[str, Any]:
-        """Удаляет несколько объектов одновременно."""
-        pass
-
-    @abstractmethod
-    async def get_object_bytes(self, key: str) -> bytes | None:
-        """Получает содержимое объекта в виде байтов."""
-        pass
 
 
 class S3Client(BaseS3Client):
@@ -573,19 +499,4 @@ class S3Client(BaseS3Client):
                 raise ServiceError(f"Файл {key} не найден") from exc
 
 
-@lru_cache(maxsize=1)
-def get_s3_client() -> S3Client:
-    """Lazy singleton ``S3Client`` (Wave 6.1).
 
-    aiobotocore — опциональная зависимость; ``S3Client.__init__`` лениво
-    обходит её отсутствие. Откладываем инициализацию до первого
-    обращения, чтобы не падать на import в dev_light окружении.
-    """
-    return S3Client(settings=settings.storage)
-
-
-def __getattr__(name: str) -> Any:
-    """Module-level lazy accessor для backward compat ``s3_client``."""
-    if name == "s3_client":
-        return get_s3_client()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
