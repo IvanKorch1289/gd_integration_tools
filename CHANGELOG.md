@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 61 (2026-06-10) — base_service/enrichment/executor/http god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: services/core/base.py 526 → 5 files** — BaseService 16 methods → CacheMixin(1) + CrudMixin(7) + VersioningMixin(4) + 4 core + helpers.py (MRO 5-level, generic class type params preserved).
+- **W2: enrichment.py 523 → 6 files** — 8 processor classes → geo_ip(1) + jwt(2) + compression(2) + webhook(2) + deadline(1) (per-enrichment file split).
+- **W3: executor.py 514 → 6 files** — DSLStepExecutor 10 methods → SequentialMixin(1) + ControlFlowMixin(3) + SubFlowMixin(2) + EvalMixin(2) + 2 core + state.py (MRO 6-level).
+- **W4: http.py 514 → 7 files** — HttpClient 17 methods → SessionMixin(5) + RequestMixin(3) + PrepMixin(3) + ObservabilityMixin(4) + 2 core + base.py + factory.py (MRO 6-level).
+- **W5: closure** — ADR-0135 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 60 (2026-06-10) — jupyter/cdc/setup_infra/authorization_gateway god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
