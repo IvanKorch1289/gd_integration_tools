@@ -30,12 +30,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID25
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page(
-    "Route Debugger",
-    ":mag:",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+setup_page("Route Debugger", ":mag:", layout="wide", initial_sidebar_state="expanded")
 # Sprint 44 W1: используем DSLRoutesClient напрямую — APIClient generic
 # wrapper не expose get_dsl_route_traces (lazy domain dispatch).
 client = DSLRoutesClient()  # type: ignore[abstract]
@@ -164,7 +159,8 @@ else:
 st.subheader("Summary")
 if filtered:
     total_duration: float = sum(
-        float(e.get("duration_ms") or 0.0) for e in filtered  # type: ignore[misc]
+        float(e.get("duration_ms") or 0.0)
+        for e in filtered  # type: ignore[misc]
     )
     error_count: int = sum(1 for e in filtered if e.get("error"))
     cols = st.columns(3)
