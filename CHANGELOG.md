@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 60 (2026-06-10) — jupyter/cdc/setup_infra/authorization_gateway god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: jupyter/execution_service.py 571 → 6 files** — NotebookExecutionService 10 methods → CoreMixin(1) + IOMixin(3) + JupyterBackendMixin(4) + 2 core + errors.py + backend.py (MRO 5-level).
+- **W2: cdc.py 538 → 4 files** — 7 classes + 1 helper → events(2) + strategies(4) + client(1+1) (per-concern file split).
+- **W3: setup_infra.py 534 → 5 files** — 13 top-level funcs → health(2) + pools(5) + workflow_audit(2) + lifecycle(4) (per-concern split).
+- **W4: authorization_gateway.py 530 → 6 files** — AuthorizationGateway 9 methods → AuditMixin(1) + CasbinMixin(1) + OpaMixin(1) + PermissionMixin(1) + 5 core + state.py (MRO 6-level, per-external-service MRO pattern).
+- **W5: closure** — ADR-0134 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 59 (2026-06-10) — banking_processors/redis/visual_editor god-file decomp (3+1 commits, 5/5 substantive)
 
 ### Changed (4 commits, 3 working + closure, W2 skipped as sibling S82 already decomp'd)
