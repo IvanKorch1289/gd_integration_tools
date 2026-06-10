@@ -11,6 +11,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 
 | # | Title | Status | Date | Sprint |
 |---|-------|--------|------|--------|
+| 0123 | Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted (Sprint 49 W5, 2026-06-10) | 2026-06-10 | S49 W5 |
 | 0122 | Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted (Sprint 48 W5, 2026-06-10) | 2026-06-10 | S48 W5 |
 | 0121 | Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted (Sprint 48 W2, 2026-06-10) | 2026-06-10 | S48 W2 |
 | 0120 | Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted (Sprint 47 W5, 2026-06-09) | 2026-06-09 | S47 W5 |
@@ -60,9 +61,8 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | 0074 | RAG hybrid retrieval, embedding provenance, source attribution & eval gate | * | 2026-05-25 | — |
 | 0073 | RAGAS evaluation gate | * | 2026-05-26 | — |
 | 0072 | PII production enforcement (Presidio + Langfuse + RAG ingest + MCP authz + Policy gate) | * | 2026-05-22 | — |
-| 0071 | AI Audit Unified Schema — `ai.invocation.*` события | * | 2026-05-22 | — |
 
-*Всего: 71 ADR-файлов. Показано топ-50 (newest first).*
+*Всего: 72 ADR-файлов. Показано топ-50 (newest first).*
 
 <!-- adr_wiki:end -->
 
@@ -82,6 +82,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | Sprint | ADRs added |
 |--------|-----------|
 | S57 | 1 |
+| S49 | 1 |
 | S48 | 2 |
 | S47 | 1 |
 | S46 | 1 |
@@ -90,7 +91,6 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | S43 | 1 |
 | S42 | 2 |
 | S41 | 5 |
-| S40 | 1 |
 
 См. также: [PLAN.md](../../PLAN.md), [CHANGELOG.md](../../CHANGELOG.md),
 [TECH_DEBT.md](../../../.shared/context/TECH_DEBT.md).
