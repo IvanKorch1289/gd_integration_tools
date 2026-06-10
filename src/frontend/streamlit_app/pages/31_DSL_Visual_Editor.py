@@ -48,6 +48,8 @@ from src.frontend.streamlit_app.pages._editor import (
 )
 from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pipeline
 from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
+from src.frontend.streamlit_app.pages._editor.properties import render_properties_panel
+from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
 
 setup_page("DSL Editor", "")
 st.header("DSL Visual Editor")
@@ -349,82 +351,7 @@ with tab_python:
 
 # ──────────────────────── Sprint 12 K3 W1: Workflow Diff ─────────────────
 with tab_diff:
-    st.subheader("Workflow Diff — side-by-side Graphviz")
-    st.caption(
-        "Сравните 2 версии workflow по WorkflowVersionRegistry. "
-        "Color-coded: зелёный=added, красный=removed, оранжевый=modified."
-    )
-    try:
-        from src.backend.dsl.workflow.versioning import get_global_registry
-        from src.backend.dsl.workflow.visualize import compute_step_diff, to_graphviz
-
-        registry = get_global_registry()
-        all_wf_ids = sorted(registry.all_workflow_ids())
-
-        if not all_wf_ids:
-            st.info(
-                "WorkflowVersionRegistry пуст. Зарегистрируйте workflow "
-                "через @workflow_versioned('X.Y.Z')."
-            )
-        else:
-            selected_wf = st.selectbox("Workflow ID", all_wf_ids, key="diff_wf")
-            history = registry.history(selected_wf)
-            versions = [v.semver for v in history]
-
-            if len(versions) < 2:
-                st.warning(f"Нужно ≥2 версии для diff. Текущее: {len(versions)}.")
-            else:
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    ver_a = st.selectbox(
-                        "Version A (база)", versions, index=0, key="diff_va"
-                    )
-                with col_b:
-                    ver_b = st.selectbox(
-                        "Version B (новая)", versions, index=1, key="diff_vb"
-                    )
-
-                if ver_a and ver_b and ver_a != ver_b:
-                    rec_a = next((v for v in history if v.semver == ver_a), None)
-                    rec_b = next((v for v in history if v.semver == ver_b), None)
-
-                    decl_a = getattr(rec_a, "declaration", None)
-                    decl_b = getattr(rec_b, "declaration", None)
-
-                    if decl_a is None or decl_b is None:
-                        st.error(
-                            "Версия не содержит declaration. Расширьте "
-                            "WorkflowVersion для хранения WorkflowDeclaration."
-                        )
-                    else:
-                        diff_results, color_map_a, color_map_b = compute_step_diff(
-                            decl_a, decl_b
-                        )
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.markdown(f"**Version A (v{ver_a})**")
-                            st.graphviz_chart(
-                                to_graphviz(decl_a, color_map=color_map_a)
-                            )
-                        with col2:
-                            st.markdown(f"**Version B (v{ver_b})**")
-                            st.graphviz_chart(
-                                to_graphviz(decl_b, color_map=color_map_b)
-                            )
-
-                        st.markdown("**Step-by-step diff**")
-                        for r in diff_results:
-                            icon = {
-                                "added": "🟢",
-                                "removed": "🔴",
-                                "modified": "🟠",
-                                "unchanged": "⚪",
-                            }.get(r.status, "·")
-                            st.write(f"{icon} `{r.identity}` — {r.status}")
-                else:
-                    st.info("Выберите две разные версии для сравнения.")
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"Ошибка инициализации diff-view: {exc}")
+    render_workflow_diff()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Canvas (Drag-Drop) tab — adapted from 40_dsl_visual_editor.py
@@ -686,91 +613,4 @@ with tab_canvas:
             )
 
     with col_props:
-        st.subheader("⚙️ Properties")
-
-        if st.session_state.selected_step_index is None:
-            st.info("Select a step on canvas to edit its properties.")
-        else:
-            idx = st.session_state.selected_step_index
-            if idx >= len(st.session_state.canvas_steps):
-                st.session_state.selected_step_index = None
-                st.rerun()
-
-            step = st.session_state.canvas_steps[idx]
-            step_type = step["type"]
-            icon = PROCESSOR_ICONS.get(step_type, "🔧")
-
-            st.markdown(f"**{icon} {step_type}** — Step #{idx + 1}")
-
-            available_params = VISUAL_PROCESSORS.get(step_type, [])
-            current_params = step.get("params", {})
-
-            params_changed = False
-            new_params = {}
-            for param in available_params:
-                default_val = current_params.get(param, "")
-                new_val = st.text_input(
-                    param,
-                    value=default_val,
-                    key=f"prop_{idx}_{param}",
-                    placeholder=f"value for {param}",
-                )
-                new_params[param] = new_val
-                if new_val != default_val:
-                    params_changed = True
-
-            if params_changed:
-                st.session_state.canvas_steps[idx]["params"] = new_params
-                sync_yaml()
-
-            st.divider()
-
-            c_del, c_clr = st.columns(2)
-            with c_del:
-                if st.button("🗑️ Delete Step", use_container_width=True):
-                    st.session_state.canvas_steps.pop(idx)
-                    st.session_state.selected_step_index = None
-                    sync_yaml()
-                    st.rerun()
-            with c_clr:
-                if st.button("Clear Params", use_container_width=True):
-                    st.session_state.canvas_steps[idx]["params"] = {
-                        p: "" for p in available_params
-                    }
-                    sync_yaml()
-                    st.rerun()
-
-        st.divider()
-        st.subheader("💾 Save")
-
-        col_save, col_upd = st.columns(2)
-        with col_save:
-            if st.button("💾 Save (Create)", use_container_width=True):
-                try:
-                    result = client.create_dsl_route(st.session_state.yaml_output)
-                    st.success(f"Created: {result.get('route_id', 'OK')}")
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Create error: {exc}")
-
-        with col_upd:
-            route_id = st.session_state.meta_route.get("route_id", "")
-            if route_id and route_id != "my.route":
-                if st.button("🔄 Update", use_container_width=True):
-                    try:
-                        client.update_dsl_route(route_id, st.session_state.yaml_output)
-                        st.success(f"Updated: {route_id}")
-                    except Exception as exc:  # noqa: BLE001
-                        st.error(f"Update error: {exc}")
-            else:
-                st.caption("Set route_id to enable update")
-
-        st.divider()
-        st.subheader("📋 Pipeline Spec")
-        try:
-            pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
-            with st.expander("JSON spec"):
-                st.json(pipeline.to_dict())
-            with st.expander("Python code"):
-                st.code(pipeline.to_python(), language="python")
-        except Exception as exc:  # noqa: BLE001
-            st.caption(f"Spec unavailable: {exc}")
+        render_properties_panel(client)
