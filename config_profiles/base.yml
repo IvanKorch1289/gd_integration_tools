@@ -506,6 +506,30 @@ telegram:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# jupyter_hub — TD-024: JupyterHub REST API integration
+#
+# Все чувствительные параметры (api_token) — в env / Vault.
+# ──────────────────────────────────────────────────────────────────────
+jupyter_hub:
+  enabled: false
+  base_url: "http://localhost:8000"
+  timeout_seconds: 30.0
+  connect_timeout: 10.0
+  max_retries: 3
+  retry_backoff_factor: 0.5
+  retry_status_codes:
+    - 408
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+  ssl_verify: true
+  default_kernel: "python3"
+  notebook_dir: ""
+
+
+# ──────────────────────────────────────────────────────────────────────
 # snapshot — Wave W26.8: PG → SQLite incremental sync для resilience-fallback
 #
 # Job периодически реплицирует read-only critical таблицы из PostgreSQL

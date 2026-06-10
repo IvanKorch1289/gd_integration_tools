@@ -178,3 +178,8 @@ dadata:
 
 antivirus:
   base_url: "https://kkdrweb.bank.srv:443"
+
+
+jupyter_hub:
+  enabled: false
+  base_url: "http://localhost:8000"

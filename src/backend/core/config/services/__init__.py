@@ -5,6 +5,10 @@ from src.backend.core.config.services.cache import (
     redis_settings,
 )
 from src.backend.core.config.services.invoker import InvokerSettings, invoker_settings
+from src.backend.core.config.services.jupyter_hub import (
+    JupyterHubSettings,
+    jupyter_hub_settings,
+)
 from src.backend.core.config.services.logging import LogStorageSettings, log_settings
 from src.backend.core.config.services.mail import MailSettings, mail_settings
 from src.backend.core.config.services.queue import (
@@ -38,6 +42,7 @@ __all__ = (
     "FileStorageSettings",
     "GRPCSettings",
     "InvokerSettings",
+    "JupyterHubSettings",
     "LogStorageSettings",
     "MailSettings",
     "QueueSettings",
@@ -50,6 +55,7 @@ __all__ = (
     "fs_settings",
     "grpc_settings",
     "invoker_settings",
+    "jupyter_hub_settings",
     "log_settings",
     "mail_settings",
     "queue_settings",
