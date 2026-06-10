@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 62 (2026-06-10) — admin_plugins/vocabulary/integration_core/yaml_loader god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: admin_plugins.py 514 → 4 files** — 11 schemas + 13 funcs → schemas(11) + helpers(5) + endpoints(8) (per-concern file split).
+- **W2: vocabulary.py 509 → 4 files** — 2 classes + 1 BIG function → models(1) + vocabulary(1) + defaults(1).
+- **W3: integration_core.py 498 → 5 files** — IntegrationCoreMixin 15 methods → CoreDispatchMixin(3) + WorkflowOpsMixin(3) + UtilsMixin(7) + AiOpsMixin(2) (MRO 6-level, no core methods).
+- **W4: yaml_loader.py 495 → 5 files** — 10 top-level funcs → resolve(2) + loaders(3) + build(4) + control_flow(1).
+- **W5: closure** — ADR-0136 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 61 (2026-06-10) — base_service/enrichment/executor/http god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
