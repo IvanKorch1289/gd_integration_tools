@@ -79,6 +79,21 @@ redis:
   socket_keepalive: false
   main_stream: null
   dlq_stream: null
+  # S48 W3 fix: invoker_subscribers.py (line 38) eagerly calls
+  # settings.redis.get_stream_name("invocations-in") on module load
+  # via @stream_client.redis_router.subscriber(...) decorator. Default
+  # streams (email/order-send/...) do not include "invocations-in",
+  # causing test_main.py collection error: "Не настроен поток для
+  # ключа: invocations-in". Dev/test override here unblocks
+  # app_factory._configure_business_routers() at import time.
+  # Production config (dev.yml, prod.yml) is unaffected.
+  streams:
+    - {name: "invocations-in", value: "invocations-in-stream"}
+    - {name: "email", value: "email-notification-stream"}
+    - {name: "order-send", value: "order-send-to-skb-stream"}
+    - {name: "order-get-result", value: "order-get-result-from-skb-stream"}
+    - {name: "order-pipeline", value: "order-start-pipeline_stream"}
+    - {name: "actions", value: "actions-stream"}
 
 
 mongo:
@@ -95,6 +110,14 @@ queue:
   port: 5672
   ui_port: 15672
   ca_bundle: null
+  # S48 W3 fix: see redis.streams above. invoker_subscribers.py:49
+  # also calls settings.queue.get_queue_name("invocations-in") on
+  # module load. Default queues (order-create, order-send) do not
+  # include it, so add here.
+  queues:
+    - {name: "invocations-in", value: "invocations-in-queue"}
+    - {name: "order-create", value: "order-init-create-queue"}
+    - {name: "order-send", value: "order-send-queue"}
 
 
 mail:
