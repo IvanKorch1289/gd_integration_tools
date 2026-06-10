@@ -1,0 +1,4 @@
+# Cocoindex cache (S49 W4 relocation from .cocoindex_code/)
+cocoindex.db/
+*.db
+mdb/
