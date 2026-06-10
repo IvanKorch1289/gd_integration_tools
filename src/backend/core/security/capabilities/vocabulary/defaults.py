@@ -1,14 +1,8 @@
-"""ADR-044 — :class:`CapabilityVocabulary` — открытый registry.
-
-Связывает имена capability с их :class:`ScopeMatcher` и метаданными
-(scope_required, описание). v0-каталог регистрируется через
-:func:`register_default_vocabulary`. Плагины могут добавлять
-новые категории через ``vocabulary.register(...)`` (требует
-meta-capability ``core.capability_vocabulary.extend`` — выдаётся
-вручную ядром-админом, см. ADR-044).
-"""
-
 from __future__ import annotations
+"""S62 W2 — defaults.py part of vocabulary decomp.
+
+build_default_vocabulary (388 LOC, BIG function).
+"""
 
 from dataclasses import dataclass, field
 
@@ -21,102 +15,9 @@ from src.backend.core.security.capabilities.matchers import (
     URISchemeMatcher,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef  # S62 W2: cross-import
 
-__all__ = ("CapabilityDef", "CapabilityVocabulary", "build_default_vocabulary")
-
-
-@dataclass(frozen=True, slots=True)
-class CapabilityDef:
-    """Метаданные одной зарегистрированной capability.
-
-    Attributes:
-        name: Полное имя ``<resource>.<verb>``.
-        matcher: Strategy для резолвинга scope.
-        scope_required: Если ``True`` — capability с ``scope=None``
-            считается ошибкой манифеста.
-        description: Человекочитаемая аннотация (для admin-UI и
-            DSL-Linter).
-        public: Если ``True`` — capability доступна route'у даже
-            без явной декларации в плагине (например, общий
-            ``net.outbound`` к публичным API).
-    """
-
-    name: str
-    matcher: ScopeMatcher
-    scope_required: bool = True
-    description: str = ""
-    public: bool = False
-    """Часть «публичного капабилити-набора ядра» (см. ADR-044)."""
-
-    aliases: tuple[str, ...] = field(default_factory=tuple)
-    """Опц. альтернативные имена (legacy)."""
-
-
-class CapabilityVocabulary:
-    """Открытый registry capability-определений."""
-
-    def __init__(self) -> None:
-        self._defs: dict[str, CapabilityDef] = {}
-
-    def register(self, definition: CapabilityDef) -> None:
-        """Зарегистрировать capability.
-
-        Raises:
-            ValueError: Если capability с таким именем уже есть.
-        """
-        if definition.name in self._defs:
-            raise ValueError(f"Capability already registered: {definition.name!r}")
-        self._defs[definition.name] = definition
-        for alias in definition.aliases:
-            if alias in self._defs:
-                raise ValueError(f"Alias {alias!r} conflicts with existing capability")
-            self._defs[alias] = definition
-
-    def get(self, name: str) -> CapabilityDef:
-        """Найти определение по имени.
-
-        Raises:
-            CapabilityNotFoundError: Если имени нет в registry.
-        """
-        try:
-            return self._defs[name]
-        except KeyError as exc:
-            raise CapabilityNotFoundError(name=name) from exc
-
-    def has(self, name: str) -> bool:
-        """Зарегистрирована ли capability."""
-        return name in self._defs
-
-    def all(self) -> tuple[CapabilityDef, ...]:
-        """Все определения в порядке регистрации (без дубликатов)."""
-        seen: set[str] = set()
-        result: list[CapabilityDef] = []
-        for definition in self._defs.values():
-            if id(definition) in seen:
-                continue
-            seen.add(id(definition))
-            result.append(definition)
-        return tuple(result)
-
-    def public_capabilities(self) -> tuple[CapabilityDef, ...]:
-        """Подмножество ``public=True`` определений."""
-        return tuple(d for d in self.all() if d.public)
-
-    def validate_ref(self, ref: CapabilityRef) -> None:
-        """Проверить, что ссылка осмысленна.
-
-        - имя зарегистрировано;
-        - если ``scope_required`` — scope не None.
-
-        Raises:
-            CapabilityNotFoundError: Имя отсутствует в registry.
-            ValueError: ``scope_required`` нарушено.
-        """
-        definition = self.get(ref.name)
-        if definition.scope_required and ref.scope is None:
-            raise ValueError(
-                f"Capability {ref.name!r} requires explicit scope (scope_required=True)"
-            )
+from src.backend.core.security.capabilities.vocabulary.vocabulary import CapabilityVocabulary  # S62 W2: cross-import
 
 
 def build_default_vocabulary() -> CapabilityVocabulary:
@@ -507,3 +408,4 @@ def build_default_vocabulary() -> CapabilityVocabulary:
         )
     )
     return vocab
+
