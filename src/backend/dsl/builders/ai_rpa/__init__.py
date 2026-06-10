@@ -15,10 +15,7 @@ Stateless — см. контракт в ``base.py``.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
-
-from src.backend.dsl.engine.exchange import Exchange
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
