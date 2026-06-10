@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 59 (2026-06-10) — banking_processors/redis/visual_editor god-file decomp (3+1 commits, 5/5 substantive)
+
+### Changed (4 commits, 3 working + closure, W2 skipped as sibling S82 already decomp'd)
+
+- **W1: banking_processors.py 552 → 8 files** — 11 classes → results(5) + base(1) + 5 processor files.
+- **W2: SKIPPED** — plugins/composition/lifecycle already decomp'd by S82 W1-W4 (4 commits, ADR-0105).
+- **W3: redis.py 647 → 5 files** — RedisClient 32 methods → ConnectionMixin(6) + CacheMixin(8) + HelpersMixin(6) + StreamMixin(8) + 4 core (MRO 6-level).
+- **W4: 31_DSL_Visual_Editor.py 616 → 2 files** — init_session_state() + render_main_tabs() extracted to render.py (sibling S77/S84 already extracted 8 _editor sub-modules).
+- **W5: closure** — ADR-0133 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 58 (2026-06-10) — crud/saga_lra/format_converters/workflow_builder god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
