@@ -2,8 +2,66 @@
 
 All notable changes to **GD Integration Tools** are documented here.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased] — Sprint 49 (2026-06-10) — TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive)
+
+### Fixed
+
+#### s49/w1-ruff-quality-baseline
+- `src/backend/dsl/engine/tracer.py`: удалён unused `from collections import deque`
+  (F401 closed). Commit `6fbc1c3f`.
+- `tools/checks/check_feature_flag_usage.py:55`:
+  - `except Exception: continue` → `except (OSError, UnicodeDecodeError) as exc: ...continue`
+  - Добавлен stderr log для dev-tool observability
+  - S112 closed. Commit `6fbc1c3f`.
+
+#### s49/w2-td-009-closure
+- `src/frontend/streamlit_app/pages/_editor/workflow_diff.py` (new, 97 LOC):
+  - Sprint 12 K3 W1 Workflow Diff tab extraction
+  - `render_workflow_diff()` function: side-by-side Graphviz + step diff
+- `src/frontend/streamlit_app/pages/_editor/properties.py` (new, 117 LOC):
+  - Canvas tab right panel extraction
+  - `render_properties_panel(client)` function: properties editor + Save + Pipeline Spec
+- `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py`: 776 → 616 LOC
+  (160 reduction, target 600 overshoot 16). **TD-009 ✅ CLOSED**.
+- Commit `619b1406`.
+
+#### s49/w3-actions-py-decomp
+- `src/backend/entrypoints/api/generator/actions.py` → `actions/` package:
+  - `actions/__init__.py` (353 LOC) — module-level helpers + class shell
+  - `actions/crud.py` (669 LOC) — `CrudMixin` class: 14 `_register_*` methods
+    + class-level `_CRUD_VERB_TO_SERVICE_METHOD` dict
+- `class ActionRouterBuilder(CrudMixin)` — MRO composition per ADR-0107
+  (transport.py decomp pattern, S84 W2).
+- Backward compat: 10+ consumer files (users.py, dsl_console.py, orderkinds.py,
+  ai_tools.py, dsl_routes.py, admin_connectors.py, files.py,
+  actions_inventory.py, skb.py, notebooks.py) work без изменений (Python
+  package import precedence).
+- `router` attribute declared on CrudMixin для mypy cross-MRO type-narrowing.
+- 4th-largest god-file в проекте: 986 → 353 main + 669 CrudMixin.
+- Commit `7877bff0`.
+
+### Changed
+
+#### s49/w4-trunk-hygiene
+- **Disk cleanup (-2GB):**
+  - `rm -rf mutants/` (1.7GB, gitignored mutmut workdir)
+  - `rm -rf graphify-out/` (337MB, gitignored graphify output)
+- **Vale config consolidation (3 → 1):**
+  - `.vale/` → `tools/vale/` (5 files rename, history preserved)
+  - `.vale.ini` → `tools/vale/.vale.ini` (StylesPath обновлён на `.`)
+  - `.vale.yaml` удалён (redundant)
+  - `tools/vale/config.yml` удалён (`git rm -f`, redundant)
+  - `[*.{md,rst}]\nBasedOnStyles = test` rule preserved из `.vale.yaml`
+- **Cocoindex relocation:**
+  - `.cocoindex_code/settings.yml` → `dev/cocoindex/settings.yml`
+  - `dev/cocoindex/.gitignore` создан (defensive: `cocoindex.db/`, `*.db`)
+- **CI update:**
+  - `.gitlab/ci/vale-lint.yml:10`: `vale --config=.vale.ini` →
+    `vale --config=tools/vale/.vale.ini`
+- Commit `ae6fd1ac`.
 
 ## [Unreleased] — Sprint 48 (2026-06-10) — Audit + re-scope + 5/5 substantive (TD-015..TD-S48-W4 closed)
 

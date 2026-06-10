@@ -7,7 +7,7 @@ vale_docs:
   allow_failure: true  # Allow failures for suggestions
   script:
     - pip install vale
-    - vale --config=.vale.ini docs/ PLAN.md ARCHITECTURE.md
+    - vale --config=tools/vale/.vale.ini docs/ PLAN.md ARCHITECTURE.md
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master"'
