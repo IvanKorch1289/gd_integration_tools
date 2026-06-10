@@ -59,7 +59,9 @@ with tab_edit:
 
     st.markdown("### Rate Limit (optional)")
     enable_rl = st.checkbox("Enable rate limit")
-    rl_rps = slider_filter("RPS", min_value=1, max_value=10000, default=100, key="rl_rps")
+    rl_rps = slider_filter(
+        "RPS", min_value=1, max_value=10000, default=100, key="rl_rps"
+    )
     rl_burst = slider_filter(
         "Burst", min_value=1, max_value=100, default=20, key="rl_burst"
     )

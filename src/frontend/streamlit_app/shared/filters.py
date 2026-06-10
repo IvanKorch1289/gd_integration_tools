@@ -45,12 +45,7 @@ __all__ = (
 T = TypeVar("T")
 
 
-def text_search(
-    label: str,
-    *,
-    placeholder: str = "",
-    key: str | None = None,
-) -> str:
+def text_search(label: str, *, placeholder: str = "", key: str | None = None) -> str:
     """st.text_input wrapper для search/filter queries.
 
     Args:
@@ -61,12 +56,7 @@ def text_search(
     Returns:
         Trimmed query string (empty если ничего не введено).
     """
-    raw = st.text_input(
-        label,
-        value="",
-        placeholder=placeholder,
-        key=key,
-    )
+    raw = st.text_input(label, value="", placeholder=placeholder, key=key)
     return raw.strip() if raw else ""
 
 
@@ -89,17 +79,12 @@ def multiselect_filter(
         Selected options (subset of `options`).
     """
     return st.multiselect(
-        label,
-        options=options,
-        default=default if default is not None else [],
-        key=key,
+        label, options=options, default=default if default is not None else [], key=key
     )
 
 
 def date_range_filter(
-    label: str,
-    *,
-    key_prefix: str | None = None,
+    label: str, *, key_prefix: str | None = None
 ) -> tuple[date | None, date | None]:
     """Pair of st.date_input для from/to range.
 
@@ -113,27 +98,17 @@ def date_range_filter(
     prefix = key_prefix or label
     cols = st.columns(2)  # type: ignore[union-attr]
     with cols[0]:  # type: ignore[union-attr]
-        from_date = st.date_input(
-            f"{label} — с",
-            value=None,
-            key=f"{prefix}_from",
-        )
+        from_date = st.date_input(f"{label} — с", value=None, key=f"{prefix}_from")
     with cols[1]:  # type: ignore[union-attr]
-        to_date = st.date_input(
-            f"{label} — по",
-            value=None,
-            key=f"{prefix}_to",
-        )
-    return (from_date if isinstance(from_date, date) else None,
-            to_date if isinstance(to_date, date) else None)
+        to_date = st.date_input(f"{label} — по", value=None, key=f"{prefix}_to")
+    return (
+        from_date if isinstance(from_date, date) else None,
+        to_date if isinstance(to_date, date) else None,
+    )
 
 
 def selectbox_filter(
-    label: str,
-    *,
-    options: list[T],
-    default: T | None = None,
-    key: str | None = None,
+    label: str, *, options: list[T], default: T | None = None, key: str | None = None
 ) -> T | None:
     """st.selectbox wrapper с default handling.
 
@@ -151,12 +126,7 @@ def selectbox_filter(
     index = 0
     if default is not None and default in options:
         index = list(options).index(default)
-    return st.selectbox(
-        label,
-        options=options,
-        index=index,
-        key=key,
-    )
+    return st.selectbox(label, options=options, index=index, key=key)
 
 
 def slider_filter(
