@@ -1099,6 +1099,11 @@ new-adr: ## Создать новый ADR из шаблона (TITLE="Загол
 	fi
 	$(UV_RUN) python tools/new_adr.py "$(TITLE)" $(if $(NUMBER),--adr-number $(NUMBER),)
 
+adr-index: check-env ## S42 W3: перегенерировать docs/adr/INDEX.md
+	@$(INFO) "Generating ADR index..."
+	$(UV_RUN) python tools/generate_adr_index.py
+	@$(SUCCESS) "ADR index updated"
+
 release-notes: ## Сгенерировать release-notes из wave-tags в git log (FROM=v0.1.0 TO=v0.2.0)
 	$(UV_RUN) python tools/changelog_autogen.py $(if $(FROM),--from $(FROM),) $(if $(TO),--to $(TO),) $(if $(OUTPUT),--output $(OUTPUT),)
 
