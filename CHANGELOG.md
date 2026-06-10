@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 57 (2026-06-10) — base/sources_mixin/collection/sink_publish god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: base.py 648 → 8 files** — RouteBuilder 32 methods → 7 mixins + 6 core (MRO 59-level: 24 parent + 7 new + object, NotebookMixin included from sibling WIP).
+- **W2: sources_mixin.py 590 → 8 files** — SourcesMixin 11 methods → 7 mixins (http/cdc/messaging/streaming/file/webhook/schedule).
+- **W3: collection.py 569 → 5 files** — 13 processor classes + 1 helper → collect(3+1) + partition(4) + set_ops(2) + aggregators(4).
+- **W4: sink_publish.py 561 → 4 files** — 6 processor classes + 1 spec + 2 helpers → protocols(2) + messaging(3) + generic(1+1+2).
+- **W5: closure** — ADR-0131 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 56 (2026-06-10) — spec/gateway_pipeline_mixin/s3_pool/admin_workflows god-file decomp (5+1 commits, 5/5 substantive)
 
 ### Changed (5+1 commits, 4 working + 1 fixup + closure)
