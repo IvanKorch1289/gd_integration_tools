@@ -1,0 +1,318 @@
+from __future__ import annotations
+import ssl
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any, TypeAlias
+
+from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import sessionmaker
+
+from src.backend.core.config.database import DatabaseConnectionSettings
+from src.backend.core.config.external_databases import (
+    ExternalDatabaseConnectionSettings,
+)
+from src.backend.core.config.settings import settings
+from src.backend.core.enums.database import DatabaseTypeChoices
+from src.backend.core.errors import DatabaseError
+from src.backend.infrastructure.database.listeners import DatabaseListener
+from src.backend.infrastructure.logging import get_logger
+
+db_logger = get_logger("database")
+
+
+
+DatabaseSettings: TypeAlias = (
+    DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
+)
+
+
+
+
+class DatabaseInitializer:
+    """
+    Универсальный инициализатор подключения к БД.
+
+    Используется:
+    - для основной БД приложения;
+    - для внешних БД по profile_name.
+    """
+
+    def __init__(self, settings: DatabaseSettings, name: str):
+        self.settings = settings
+        self.name = name
+        self.logger = db_logger
+
+        self.async_engine = self._create_async_engine()
+        self.async_session_maker = async_sessionmaker(
+            bind=self.async_engine, autoflush=False, expire_on_commit=False
+        )
+
+        # S11 K2 W2: опциональная read-replica. ``replica_dsn`` определён
+        # в :class:`DatabaseConnectionSettings`; для external БД поля нет
+        # → ``getattr`` отдаёт ``None`` и replica-роутинг выключен.
+        self.replica_engine: AsyncEngine | None = None
+        self.replica_session_maker: async_sessionmaker[AsyncSession] | None = None
+        replica_dsn = getattr(self.settings, "replica_dsn", None)
+        if replica_dsn:
+            self.replica_engine = create_async_engine(
+                url=replica_dsn, **self._engine_kwargs()
+            )
+            self.replica_session_maker = async_sessionmaker(
+                bind=self.replica_engine, autoflush=False, expire_on_commit=False
+            )
+
+        # K3 W1: OTel asyncpg auto-instrumentation под default-OFF feature-flag.
+        # Однократный вызов — внутренний guard _ASYNCPG_INSTRUMENTED защищает от
+        # повторного instrument() при создании нескольких DatabaseInitializer.
+        try:
+            from src.backend.infrastructure.observability.otel_auto import (
+                instrument_asyncpg_if_enabled,
+            )
+
+            instrument_asyncpg_if_enabled()
+        except Exception as exc:
+            self.logger.debug("OTel asyncpg hook пропущен: %s", exc)
+
+        # Wave F.3: async-first. Sync-engine опционален — если sync-драйвер
+        # (psycopg/oracledb/pysqlite) не установлен, не валим старт; вместо
+        # этого пишем warning и оставляем None. Потребители (APScheduler
+        # SQLAlchemyJobStore) обязаны иметь fallback.
+        self.sync_engine: Engine | None
+        self.sync_session_maker: sessionmaker | None
+        try:
+            self.sync_engine = self._create_sync_engine()
+            self.sync_session_maker = sessionmaker(
+                bind=self.sync_engine, autoflush=False, expire_on_commit=False
+            )
+        except ModuleNotFoundError as exc:
+            self.logger.warning(
+                "Sync-драйвер для БД '%s' недоступен (%s); sync_engine=None. "
+                "Async-путь продолжит работу; durable APScheduler jobstore "
+                "будет заменён на memory.",
+                self.name,
+                exc,
+            )
+            self.sync_engine = None
+            self.sync_session_maker = None
+
+        self.db_listener = DatabaseListener(
+            async_engine=self.async_engine,
+            db_name=self.name,
+            slow_query_threshold=self.settings.slow_query_threshold,
+        )
+
+        # S21 W1: RLS SET LOCAL app.tenant_id listener (default-OFF).
+        # Активируется get_feature_flag_service().is_enabled("rls_postgres_enforce") + dialect=postgresql.
+        try:
+            from src.backend.infrastructure.database.rls_listener import (
+                install_rls_tenant_listener,
+            )
+
+            install_rls_tenant_listener(self.async_engine)
+        except Exception as exc:
+            self.logger.debug("RLS tenant listener пропущен: %s", exc)
+
+    def as_bundle(self) -> DatabaseBundle:
+        """
+        Возвращает единый контейнер инфраструктурных объектов.
+        """
+        return DatabaseBundle(
+            name=self.name,
+            settings=self.settings,
+            async_engine=self.async_engine,
+            async_session_maker=self.async_session_maker,
+            sync_engine=self.sync_engine,
+            sync_session_maker=self.sync_session_maker,
+            replica_engine=self.replica_engine,
+            replica_session_maker=self.replica_session_maker,
+        )
+
+    def _engine_kwargs(self) -> dict[str, Any]:
+        """Базовые kwargs для create_engine / create_async_engine.
+
+        Для SQLite отключается pool — у него нет параметров pool_size/recycle,
+        и SQLAlchemy ругается на их передачу с дефолтным NullPool.
+        """
+        kwargs: dict[str, Any] = {
+            "echo": self.settings.echo,
+            "connect_args": self._get_connect_args(),
+        }
+        if self.settings.type != DatabaseTypeChoices.sqlite:
+            kwargs.update(
+                {
+                    "pool_size": self.settings.pool_size,
+                    "max_overflow": self.settings.max_overflow,
+                    "pool_recycle": self.settings.pool_recycle,
+                    "pool_timeout": self.settings.pool_timeout,
+                    "pool_pre_ping": True,
+                    "pool_use_lifo": self.settings.pool_use_lifo,
+                }
+            )
+        return kwargs
+
+    def _create_async_engine(self) -> AsyncEngine:
+        """
+        Создаёт и настраивает асинхронный engine SQLAlchemy.
+        """
+        return create_async_engine(
+            url=self.settings.async_connection_url, **self._engine_kwargs()
+        )
+
+    def _create_sync_engine(self) -> Engine:
+        """
+        Создаёт и настраивает синхронный engine SQLAlchemy.
+        """
+        return create_engine(
+            url=self.settings.sync_connection_url, **self._engine_kwargs()
+        )
+
+    def _get_connect_args(self) -> dict[str, Any]:
+        """
+        Генерирует driver-level параметры подключения.
+        """
+        connect_args: dict[str, Any] = {}
+
+        if self.settings.type == DatabaseTypeChoices.postgresql:
+            connect_args.update(
+                {
+                    "command_timeout": self.settings.command_timeout,
+                    "timeout": self.settings.connect_timeout,
+                }
+            )
+
+            if self.settings.ca_bundle:
+                ssl_context = ssl.create_default_context(cafile=self.settings.ca_bundle)
+                connect_args["ssl"] = ssl_context
+
+        elif self.settings.type == DatabaseTypeChoices.oracle:
+            connect_args.update({"tcp_connect_timeout": self.settings.connect_timeout})
+
+        return connect_args
+
+    async def initialize_async_pool(self) -> None:
+        """
+        Предварительно прогревает асинхронный пул соединений.
+        """
+        connections = []
+
+        try:
+            pool_size = getattr(self.settings, "pool_size", 1)
+
+            for _ in range(pool_size):
+                conn = await self.async_engine.connect()
+                connections.append(conn)
+
+            self.logger.info(
+                "Асинхронный пул соединений инициализирован",
+                extra={"db_name": self.name},
+            )
+        except (OSError, TimeoutError):
+            self.logger.error(
+                "Ошибка инициализации асинхронного пула соединений",
+                extra={"db_name": self.name},
+                exc_info=True,
+            )
+        finally:
+            for conn in connections:
+                await conn.close()
+
+    def get_async_engine(self) -> AsyncEngine:
+        """
+        Возвращает асинхронный engine.
+        """
+        return self.async_engine
+
+    def get_sync_engine(self) -> Engine | None:
+        """Возвращает синхронный engine или ``None`` (Wave F.3 async-first).
+
+        Sync-engine может быть ``None``, если sync-драйвер не установлен;
+        вызывающие должны иметь fallback (например, memory jobstore).
+        """
+        return self.sync_engine
+
+    async def dispose_sync(self) -> None:
+        """
+        Закрывает синхронные соединения (no-op если sync_engine is None).
+        """
+        if self.sync_engine is None:
+            return
+        try:
+            self.sync_engine.dispose()
+            self.logger.info(
+                "Синхронные соединения закрыты", extra={"db_name": self.name}
+            )
+        except (RuntimeError, OSError):
+            self.logger.error(
+                "Ошибка закрытия синхронных соединений",
+                extra={"db_name": self.name},
+                exc_info=True,
+            )
+
+    async def dispose_async(self) -> None:
+        """
+        Закрывает асинхронные соединения.
+        """
+        try:
+            await self.async_engine.dispose()
+            self.logger.info(
+                "Асинхронные соединения закрыты", extra={"db_name": self.name}
+            )
+        except (RuntimeError, OSError):
+            self.logger.error(
+                "Ошибка закрытия асинхронных соединений",
+                extra={"db_name": self.name},
+                exc_info=True,
+            )
+
+    async def close(self) -> None:
+        """
+        Закрывает все соединения с БД.
+        """
+        await self.dispose_sync()
+        await self.dispose_async()
+        if self.replica_engine is not None:
+            try:
+                await self.replica_engine.dispose()
+            except (RuntimeError, OSError):
+                self.logger.error(
+                    "Ошибка закрытия replica engine",
+                    extra={"db_name": self.name},
+                    exc_info=True,
+                )
+
+    async def check_connection(self) -> bool:
+        """
+        Проверяет работоспособность подключения.
+
+        Returns:
+            bool: True, если соединение работает корректно.
+
+        Raises:
+            DatabaseError: При ошибке проверки подключения.
+        """
+        ping_sql = (
+            "SELECT 1 FROM dual"
+            if self.settings.type == DatabaseTypeChoices.oracle
+            else "SELECT 1"
+        )
+
+        async with self.async_session_maker() as session:
+            try:
+                result = await session.execute(text(ping_sql))
+
+                if result.scalar_one_or_none() != 1:
+                    raise DatabaseError(
+                        message=f"Ошибка проверки подключения к БД '{self.name}'"
+                    )
+
+                return True
+            except Exception as exc:
+                raise DatabaseError(
+                    message=f"Ошибка проверки соединения '{self.name}': {exc}"
+                ) from exc
