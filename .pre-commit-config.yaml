@@ -15,7 +15,7 @@ repos:
     hooks:
       - id: check-layers
         name: "Архитектурный линтер слоёв (ADR-001)"
-        entry: uv run python scripts/check_layers.py
+        entry: uv run python tools/check_layers.py
         language: system
         types: [python]
         pass_filenames: false
