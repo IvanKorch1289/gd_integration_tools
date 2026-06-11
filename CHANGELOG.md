@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 68 (2026-06-10) — macros/clickhouse_audit/invoker/ai_providers god-file decomp (5 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: macros.py 458 → 9 files** — 8 blueprint funcs → 8 files (per-macro file split).
+- **W2: clickhouse_audit_service.py 455 → 4 files** — 2 classes + 4 funcs → state(1) + service(1) + helpers(4) (per-concern file split, with AuditEvent cross-import).
+- **W3: invoker/__init__.py 446 → 4 files** — 2 classes + 7 funcs → types(1) + invoker(1) + helpers(7) (per-concern file split, preserves _serialize/_deserialize duplicate).
+- **W4: ai_providers.py 443 → 6 files** — 4 provider classes + 1 func → claude(1) + gemini(1) + ollama(1) + openai(1) + helpers(1) (per-provider file split).
+- **W5: closure** — ADR-0142 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 67 (2026-06-10) — backpressure/ai_enforcer/semantic_cache/ad_directory_client god-file decomp (5 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
