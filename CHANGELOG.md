@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 67 (2026-06-10) — backpressure/ai_enforcer/semantic_cache/ad_directory_client god-file decomp (5 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: backpressure.py 465 → 6 files** — 5 classes + 1 func → types(2) + controller(1) + stream_reader(1) + bulkhead(1) + helpers(1) (per-concern file split).
+- **W2: ai/policy/enforcer.py 462 → 5 files** — AIPolicyEnforcer 12 methods → InputGuardMixin(5) + OutputGuardMixin(2) + HandleMixin(2) + SanitizeMixin(2) + 1 core (MRO 6-level).
+- **W3: semantic_cache.py 461 → 4 files** — 2 classes + 2 funcs → semantic_cache(1) + l3_cache(1) + helpers(2) (per-class file split).
+- **W4: ad_directory_client.py 457 → 3 files** — 4 classes → state(3 data) + client(1 main) (per-concern file split).
+- **W5: closure** — ADR-0141 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 66 (2026-06-10) — event_store/setup/lifecycle god-file decomp + 1 sibling WIP fixup (5 commits, 5/5 substantive)
 
 ### Changed (5 commits, 3 working + 1 sibling WIP fixup + closure)
