@@ -48,13 +48,15 @@ def _resolve_tenant_id() -> str | None:
     return None
 
 
-_default_middleware = MiddlewareChain(
-    [
-        TimeoutMiddleware(default_timeout=30.0),
-        ErrorNormalizerMiddleware(),
-        MetricsMiddleware(),
-    ]
-)
+def _default_middleware_factory() -> MiddlewareChain:
+    """Factory for default middleware chain (avoids mutable default)."""
+    return MiddlewareChain(
+        [
+            TimeoutMiddleware(default_timeout=30.0),
+            ErrorNormalizerMiddleware(),
+            MetricsMiddleware(),
+        ]
+    )
 
 
 class ExecutionEngine:
@@ -66,16 +68,27 @@ class ExecutionEngine:
         validate_before_execute: bool = True,
         pool: ProcessorPool | None = None,
     ) -> None:
-        self._middleware = middleware or _default_middleware
+        self._middleware = middleware or _default_middleware_factory()
         self._validate = validate_before_execute
         self._timeout_mw = self._find_timeout_middleware()
         self._pool = pool or get_processor_pool()
+        self._validation_cache: dict[str, Any] = {}
 
     def _find_timeout_middleware(self) -> TimeoutMiddleware | None:
-        for mw in self._middleware._middlewares:
+        for mw in self._middleware.iter_middlewares():
             if isinstance(mw, TimeoutMiddleware):
                 return mw
         return None
+
+    def _cached_validate(self, pipeline: Pipeline) -> Any:
+        """Validate pipeline with LRU-style cache by route_id."""
+        key = pipeline.route_id
+        cached = self._validation_cache.get(key)
+        if cached is not None:
+            return cached
+        result = pipeline_validator.validate(pipeline)
+        self._validation_cache[key] = result
+        return result
 
     @property
     def pool(self) -> ProcessorPool:
@@ -182,7 +195,7 @@ class ExecutionEngine:
         tenant_id = self._check_tenant_aware(pipeline)
 
         if self._validate:
-            result = pipeline_validator.validate(pipeline)
+            result = self._cached_validate(pipeline)
             if not result.valid:
                 errors = "; ".join(i.message for i in result.errors)
                 raise ValueError(
@@ -258,6 +271,7 @@ class ExecutionEngine:
         body: Any = None,
         headers: dict[str, Any] | None = None,
         context: ExecutionContext | None = None,
+        pipeline: Pipeline | None = None,
     ) -> Exchange[Any]:
         """Execute multiple processors in parallel using the processor pool.
 
@@ -267,10 +281,15 @@ class ExecutionEngine:
             body: Request body.
             headers: Request headers.
             context: Optional execution context.
+            pipeline: Optional pipeline for feature-flag and tenant checks.
 
         Returns:
             Exchange with results from all processors.
         """
+        if pipeline is not None:
+            self._check_feature_flag(pipeline)
+            self._check_tenant_aware(pipeline)
+
         current_exchange = exchange or Exchange(
             in_message=Message(body=body, headers=headers or {})
         )

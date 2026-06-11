@@ -158,7 +158,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             """
             Общий метод для получения версий объекта.
             """
-            obj = await self.main_class.get(key="id", value=object_id)
+            obj = await self.main_class.get(session=session, key="id", value=object_id)
 
             if not obj or (isinstance(obj, list) and not obj):
                 return []
@@ -194,9 +194,10 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         key: str | None = None,
         value: Any = None,
         filter: Filter | None = None,
+        pagination: Params | None = None,
         by: str | None = "id",
         order: str = "asc",
-    ) -> ConcreteTable | list[ConcreteTable] | None:
+    ) -> ConcreteTable | list[ConcreteTable] | dict[str, Any] | None:
         """
         Получить объект по ключу и значению или по фильтру.
 
@@ -204,8 +205,25 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param key: Название поля для фильтрации (опционально).
         :param value: Значение поля для фильтрации (опционально).
         :param filter: Фильтр для запроса (опционально).
-        :return: Найденный объект, список объектов или None.
+        :param pagination: Параметры пагинации (опционально, deprecated — используйте ``get_paginated``).
+        :return: Найденный объект, список объектов, словарь с пагинацией или None.
         """
+        import warnings
+
+        if pagination is not None:
+            warnings.warn(
+                "Passing pagination to get() is deprecated; use get_paginated() instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return await self.get_paginated(
+                session=session,
+                filter=filter,
+                pagination=pagination,
+                by=by,
+                order=order,
+            )
+
         is_return_list = False
 
         order_by = asc(by) if order == "asc" else desc(by)

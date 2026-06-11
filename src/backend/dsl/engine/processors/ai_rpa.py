@@ -24,7 +24,11 @@ YAML::
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import asyncio
+import json
+from typing import TYPE_CHECKING, Any, Literal
+
+from pydantic import BaseModel, Field, ValidationError
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
@@ -40,6 +44,18 @@ __all__ = ("AIRpaProcessor",)
 _logger = get_logger(__name__)
 
 _VALID_ACTIONS = frozenset({"click", "type", "screenshot", "hover", "scroll", "wait"})
+
+
+class RPAAction(BaseModel):
+    """Structured output schema for AI RPA action."""
+
+    action: Literal["click", "type", "screenshot", "hover", "scroll", "wait"] = Field(
+        ..., description="RPA action to perform"
+    )
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="Action parameters"
+    )
+    reasoning: str = Field(default="", description="LLM reasoning for the action")
 
 
 @processor(name="ai_rpa")
@@ -58,6 +74,7 @@ class AIRpaProcessor(BaseProcessor):
         temperature: Temperature для LLM (default ``0.1``).
         to: Опц. путь записи результата (``body.<field>`` / ``property:<name>``).
         name: Имя процессора для трейсов.
+        max_retries: Максимальное количество retry при невалидном ответе (default 3).
     """
 
     name = "ai_rpa"
@@ -74,6 +91,7 @@ class AIRpaProcessor(BaseProcessor):
         temperature: float = 0.1,
         to: str = "property:rpa.ai_decision",
         name: str | None = None,
+        max_retries: int = 3,
     ) -> None:
         super().__init__(name=name or self.name)
         self._task = task
@@ -82,10 +100,10 @@ class AIRpaProcessor(BaseProcessor):
         self._model = model
         self._temperature = temperature
         self._to = to
+        self._max_retries = max_retries
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Анализирует задачу + UI-контекст через LLM, записывает action."""
-        # Получаем LLM client из контекста
         llm_client = self._get_llm_client(context)
         if llm_client is None:
             exchange.fail(
@@ -93,38 +111,45 @@ class AIRpaProcessor(BaseProcessor):
             )
             return
 
-        # Формируем промпт с задачей и UI-контекстом
         prompt = self._build_prompt(exchange)
+        last_error: Exception | None = None
 
-        try:
-            response = await llm_client.chat(
-                model=self._model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=self._temperature,
-            )
-            action = self._parse_llm_response(response)
-        except Exception as exc:
-            exchange.fail(f"ai_rpa: LLM call failed: {exc}")
-            return
+        for attempt in range(1, self._max_retries + 1):
+            try:
+                response = await llm_client.chat(
+                    model=self._model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=self._temperature,
+                )
+                action = self._parse_llm_response(response)
+                exchange.set_property(self._action_property, action)
+                self._write(exchange, action)
+                return
+            except Exception as exc:
+                last_error = exc
+                _logger.warning(
+                    "ai_rpa attempt %s/%s failed: %s", attempt, self._max_retries, exc
+                )
+                if attempt < self._max_retries:
+                    await asyncio.sleep(
+                        0.5 * (2 ** (attempt - 1))
+                    )  # exponential backoff
 
-        # Записываем action в exchange properties
-        exchange.set_property(self._action_property, action)
-        self._write(exchange, action)
+        exchange.fail(
+            f"ai_rpa: LLM call failed after {self._max_retries} attempts: {last_error}"
+        )
 
     def _get_llm_client(self, context: ExecutionContext):
         """Извлекает LLM client из контекста выполнения."""
-        # Сначала пробуем direct attribute
         client = getattr(context, "llm_client", None)
         if client is not None:
             return client
 
-        # Пробуем через app_state
         app_state = getattr(context, "app_state", None)
         if app_state is not None:
             client = getattr(app_state, "llm_client", None)
             if client is not None:
                 return client
-            # Пробуем ai_gateway
             client = getattr(app_state, "ai_gateway", None)
             if client is not None:
                 return client
@@ -136,7 +161,6 @@ class AIRpaProcessor(BaseProcessor):
         context_parts = [f"Задача: {self._task}"]
 
         for key, value in self._ui_context.items():
-            # Поддержка property reference через ${...}
             if (
                 isinstance(value, str)
                 and value.startswith("${")
@@ -152,7 +176,9 @@ class AIRpaProcessor(BaseProcessor):
             "\nДоступные действия: click, type, screenshot, hover, scroll, wait"
         )
         context_parts.append(
-            'Верни JSON: {"action": "...", "params": {...}, "reasoning": "..."}'
+            "Верни строго валидный JSON без markdown-форматирования с полями: "
+            "action (string), params (object), reasoning (string). "
+            'Пример: {"action": "click", "params": {"x": 100, "y": 200}, "reasoning": "..."}'
         )
 
         return "\n".join(context_parts)
@@ -172,7 +198,7 @@ class AIRpaProcessor(BaseProcessor):
         return ""
 
     def _parse_llm_response(self, response: Any) -> dict[str, Any]:
-        """Парсит LLM response в структурированный action."""
+        """Парсит LLM response в структурированный action с Pydantic validation."""
         content = ""
         if hasattr(response, "content"):
             content = response.content
@@ -181,32 +207,47 @@ class AIRpaProcessor(BaseProcessor):
         elif isinstance(response, str):
             content = response
 
-        # Пытаемся извлечь JSON из ответа
-        import json
+        # Try to extract JSON from markdown code blocks or raw text
+        text = content.strip()
+        if text.startswith("```"):
+            lines = text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            text = "\n".join(lines).strip()
 
+        data: dict[str, Any] | None = None
         try:
-            # Прямой JSON
-            return json.loads(content)
+            data = json.loads(text)
         except json.JSONDecodeError:
-            pass
+            # Fallback: find first JSON object in text
+            brace_start = text.find("{")
+            brace_end = text.rfind("}")
+            if brace_start != -1 and brace_end != -1 and brace_end > brace_start:
+                try:
+                    data = json.loads(text[brace_start : brace_end + 1])
+                except json.JSONDecodeError:
+                    pass
 
-        # Пытаемся найти JSON в тексте
-        import re
+        if data is None:
+            raise ValueError(f"No valid JSON found in LLM response: {content!r}")
 
-        json_match = re.search(r"\{[^{}]*\}", content, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group())
-            except json.JSONDecodeError:
-                pass
+        # Validate via Pydantic schema
+        try:
+            validated = RPAAction.model_validate(data)
+        except ValidationError as exc:
+            raise ValueError(
+                f"LLM response does not match RPAAction schema: {exc}"
+            ) from exc
 
-        # Fallback: возвращаем сырой response
-        return {
-            "action": "unknown",
-            "params": {},
-            "reasoning": content,
-            "raw_response": content,
-        }
+        # Validate action against allowed set (defense in depth)
+        if validated.action not in _VALID_ACTIONS:
+            raise ValueError(
+                f"Invalid action '{validated.action}'; expected one of {_VALID_ACTIONS}"
+            )
+
+        return validated.model_dump()
 
     def _write(self, exchange: Exchange[Any], value: Any) -> None:
         """Записывает результат в указанный target."""

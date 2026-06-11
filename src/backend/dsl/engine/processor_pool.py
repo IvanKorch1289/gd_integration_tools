@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import atexit
+import threading
 import time
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -33,8 +33,9 @@ class PooledProcessor:
 
 @dataclass
 class PoolMetrics:
-    """Метрики пула процессоров."""
+    """Метрики пула процессоров (thread-safe)."""
 
+    _lock: threading.Lock = field(default_factory=threading.Lock)
     total_submitted: int = 0
     total_completed: int = 0
     total_failed: int = 0
@@ -42,9 +43,35 @@ class PoolMetrics:
 
     @property
     def avg_duration_ms(self) -> float:
-        if self.total_completed == 0:
-            return 0.0
-        return self.total_durations_ms / self.total_completed
+        with self._lock:
+            if self.total_completed == 0:
+                return 0.0
+            return self.total_durations_ms / self.total_completed
+
+    def inc_submitted(self, n: int = 1) -> None:
+        with self._lock:
+            self.total_submitted += n
+
+    def inc_completed(self, failed: bool = False, duration_ms: float = 0.0) -> None:
+        with self._lock:
+            self.total_completed += 1
+            if failed:
+                self.total_failed += 1
+            self.total_durations_ms += duration_ms
+
+    def snapshot(self) -> dict[str, float | int]:
+        with self._lock:
+            return {
+                "total_submitted": self.total_submitted,
+                "total_completed": self.total_completed,
+                "total_failed": self.total_failed,
+                "total_durations_ms": self.total_durations_ms,
+                "avg_duration_ms": (
+                    self.total_durations_ms / self.total_completed
+                    if self.total_completed
+                    else 0.0
+                ),
+            }
 
 
 class ProcessorPool:
@@ -58,7 +85,7 @@ class ProcessorPool:
         max_workers: Максимальное количество параллельных воркеров.
             По умолчанию ``4``.
         thread_pool: Опциональный ThreadPoolExecutor для CPU-bound задач.
-            Если не передан, создаётся внутри.
+            Если не передан, создаётся внутри eager'но.
     """
 
     def __init__(
@@ -70,6 +97,11 @@ class ProcessorPool:
         self._metrics = PoolMetrics()
         self._active: set[asyncio.Task[Any]] = set()
         self._semaphore = asyncio.Semaphore(max_workers)
+        # Eager creation of thread pool avoids blocking the event loop later
+        if thread_pool is None:
+            self._own_thread_pool = ThreadPoolExecutor(
+                max_workers=max_workers, thread_name_prefix="processor_pool_"
+            )
 
     @property
     def metrics(self) -> PoolMetrics:
@@ -87,13 +119,8 @@ class ProcessorPool:
         return len(self._active)
 
     def _get_thread_pool(self) -> ThreadPoolExecutor:
-        """Lazily creates/returns the underlying thread pool."""
-        if self._thread_pool is None:
-            self._own_thread_pool = ThreadPoolExecutor(
-                max_workers=self._max_workers, thread_name_prefix="processor_pool_"
-            )
-            return self._own_thread_pool
-        return self._thread_pool
+        """Returns the underlying thread pool (eagerly created)."""
+        return self._thread_pool or self._own_thread_pool  # type: ignore[return-value]
 
     async def _execute_one(
         self,
@@ -147,15 +174,6 @@ class ProcessorPool:
                 "error": pooled.error,
             }
 
-    @asynccontextmanager
-    async def _tracked(self, task: asyncio.Task[Any]):
-        """Track active task for graceful cancellation on shutdown."""
-        self._active.add(task)
-        try:
-            yield task
-        finally:
-            self._active.discard(task)
-
     async def execute_parallel(
         self,
         processors: list[BaseProcessor],
@@ -174,19 +192,34 @@ class ProcessorPool:
         Returns:
             List of trace entries for each processor execution.
         """
-        self._metrics.total_submitted += len(processors)
+        self._metrics.inc_submitted(len(processors))
 
         async def run_with_sem(proc: BaseProcessor) -> dict[str, Any]:
+            if getattr(exchange, "stopped", False):
+                return {
+                    "processor": proc.name,
+                    "type": type(proc).__name__,
+                    "duration_ms": 0.0,
+                    "status": "stopped",
+                }
             async with self._semaphore:
                 _, result = await self._execute_one(proc, exchange, context, timeout)
-                self._metrics.total_completed += 1
-                if result["status"] == "error":
-                    self._metrics.total_failed += 1
-                self._metrics.total_durations_ms += result.get("duration_ms", 0)
+                self._metrics.inc_completed(
+                    failed=result["status"] == "error",
+                    duration_ms=result.get("duration_ms", 0.0),
+                )
                 return result
 
-        tasks = [run_with_sem(p) for p in processors]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        tasks = [asyncio.create_task(run_with_sem(p)) for p in processors]
+        for task in tasks:
+            self._active.add(task)
+
+        results: list[Any] = []
+        try:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        finally:
+            for task in tasks:
+                self._active.discard(task)
 
         trace_entries: list[dict[str, Any]] = []
         for i, result in enumerate(results):
@@ -200,7 +233,7 @@ class ProcessorPool:
                         "error": str(result),
                     }
                 )
-                self._metrics.total_failed += 1
+                self._metrics.inc_completed(failed=True)
             elif isinstance(result, dict):
                 trace_entries.append(result)
 
@@ -261,16 +294,20 @@ class ProcessorPool:
 
 # Global pool instance for convenience access
 _global_pool: ProcessorPool | None = None
+_global_pool_lock: threading.Lock = threading.Lock()
 
 
 def get_processor_pool() -> ProcessorPool:
-    """Get or create the global ProcessorPool instance.
+    """Get or create the global ProcessorPool instance (thread-safe singleton).
 
-    Thread-safe singleton pattern for the global pool.
+    Returns:
+        The global ProcessorPool instance.
     """
     global _global_pool
     if _global_pool is None:
-        _global_pool = ProcessorPool()
+        with _global_pool_lock:
+            if _global_pool is None:
+                _global_pool = ProcessorPool()
     return _global_pool
 
 

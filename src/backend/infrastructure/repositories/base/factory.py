@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.repositories.base.sqlalchemy import SQLAlchemyRepository
 
 
 async def get_repository_for_model(

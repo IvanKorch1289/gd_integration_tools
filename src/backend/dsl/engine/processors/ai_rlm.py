@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import Message
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -22,6 +23,8 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
+logger = get_logger(__name__)
 
 
 class RLMResult:
@@ -115,6 +118,16 @@ class AIRLMProcessor(BaseProcessor):
         self.prompt_template = prompt_template
         self.result_property = result_property
 
+    def _get_gateway(self) -> Any:
+        """Lazy-resolve LiteLLMGateway from app_state or DI."""
+        try:
+            from src.backend.services.ai.gateway.client import get_litellm_gateway
+
+            return get_litellm_gateway()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ai_rlm: LiteLLMGateway unavailable: %s", exc)
+            return None
+
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Execute RLM processing.
 
@@ -138,21 +151,23 @@ class AIRLMProcessor(BaseProcessor):
             exchange.set_error("AIRLMProcessor: 'query' is required in body")
             return
 
-        # Check if context is large enough to warrant RLM
         estimated_tokens = self._estimate_tokens(ctx)
         use_rlm_mode = estimated_tokens > self.config.context_threshold
 
-        if use_rlm_mode:
-            result = await self._execute_rlm(ctx, query)
-        else:
-            result = await self._execute_direct(ctx, query)
+        try:
+            if use_rlm_mode:
+                result = await self._execute_rlm(ctx, query)
+            else:
+                result = await self._execute_direct(ctx, query)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("ai_rlm execution failed")
+            exchange.set_error(f"AIRLMProcessor: execution failed: {exc}")
+            return
 
-        # Store result
         exchange.set_property(self.result_property, result)
         exchange.set_property("rlm_tokens_used", result.tokens_used)
         exchange.set_property("rlm_iterations", result.iterations)
 
-        # Set output message
         if result.answer:
             exchange.out_message = exchange.out_message or Message(
                 body=result.answer, headers={}
@@ -161,50 +176,125 @@ class AIRLMProcessor(BaseProcessor):
                 exchange.out_message.body = result.answer
 
     async def _execute_rlm(self, context: str, query: str) -> RLMResult:
-        """Execute RLM algorithm.
+        """Execute RLM algorithm via recursive chunk relevance + aggregation."""
+        gateway = self._get_gateway()
+        result = RLMResult(iterations=0, calls=0, tokens_used=0)
+        result.context_size = self._estimate_tokens(context)
 
-        This is a stub implementation that demonstrates the RLM approach.
-        Full implementation would use Deno/Pyodide for sandboxed execution.
-        """
-        result = RLMResult(iterations=1)
-        result.context_size = len(context.split())
+        # Split context into chunks (~3000 tokens each)
+        words = context.split()
+        chunk_size_words = 3000  # rough word budget per chunk
+        chunks = [
+            " ".join(words[i : i + chunk_size_words])
+            for i in range(0, len(words), chunk_size_words)
+        ]
 
-        # Stub: simulate RLM behavior
-        # In production, this would:
-        # 1. Create a sandboxed Python REPL environment
-        # 2. Load context into the REPL variable space
-        # 3. Have LLM write code to examine context
-        # 4. Execute code in sandbox
-        # 5. Feed results back to LLM for refinement
-        # 6. Repeat until SUBMIT() is called
+        relevant_chunks: list[str] = []
+        for chunk in chunks:
+            if result.iterations >= self.config.max_iterations:
+                break
+            prompt = (
+                f"Context snippet:\n{chunk}\n\n"
+                f"Question: {query}\n\n"
+                'Is this snippet relevant? Reply strictly JSON: {"relevant": true/false, "reasoning": "..."}'
+            )
+            try:
+                resp = await gateway.acompletion(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=self.model,
+                    temperature=self.config.temperature,
+                )
+                result.calls += 1
+                content = self._extract_content(resp)
+                # Simple heuristic: if JSON contains "relevant": true
+                if '"relevant"' in content and "true" in content.lower():
+                    relevant_chunks.append(chunk)
+                result.tokens_used += self._estimate_tokens(
+                    prompt
+                ) + self._estimate_tokens(content)
+                result.iterations += 1
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ai_rlm chunk evaluation failed: %s", exc)
 
-        result.answer = (
-            f"[RLM stub] Processed {result.context_size} tokens for query: {query}"
+        if not relevant_chunks:
+            relevant_chunks = chunks[:3]  # fallback: first 3 chunks
+
+        aggregated = "\n---\n".join(relevant_chunks)
+        final_prompt = (
+            f"Aggregated relevant context:\n{aggregated}\n\n"
+            f"Question: {query}\n\n"
+            "Provide a concise answer based on the context."
         )
-        result.iterations = max(1, min(3, result.context_size // 1000))
-        result.calls = result.iterations
-        result.tokens_used = result.context_size * 2  # Rough estimate
+        try:
+            final_resp = await gateway.acompletion(
+                messages=[{"role": "user", "content": final_prompt}],
+                model=self.model,
+                temperature=self.config.temperature,
+            )
+            result.calls += 1
+            result.answer = self._extract_content(final_resp)
+            result.tokens_used += self._estimate_tokens(
+                final_prompt
+            ) + self._estimate_tokens(result.answer)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ai_rlm final aggregation failed: %s", exc)
+            result.answer = f"[RLM] Failed to aggregate answer: {exc}"
 
         return result
 
     async def _execute_direct(self, context: str, query: str) -> RLMResult:
         """Execute direct LLM call for smaller contexts."""
+        gateway = self._get_gateway()
         result = RLMResult()
-        result.context_size = len(context.split())
+        result.context_size = self._estimate_tokens(context)
 
-        # Stub: direct LLM call
-        result.answer = (
-            f"[Direct stub] Processed {result.context_size} tokens for query: {query}"
+        prompt = (
+            f"Context:\n{context}\n\nQuestion: {query}\n\n"
+            "Provide a concise answer based on the context."
         )
-        result.tokens_used = result.context_size
-        result.calls = 1
-        result.iterations = 1
+        if self.prompt_template:
+            prompt = self.prompt_template.format(context=context, query=query)
+
+        try:
+            resp = await gateway.acompletion(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model,
+                temperature=self.config.temperature,
+            )
+            result.calls = 1
+            result.iterations = 1
+            result.answer = self._extract_content(resp)
+            result.tokens_used = self._estimate_tokens(prompt) + self._estimate_tokens(
+                result.answer
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ai_rlm direct call failed: %s", exc)
+            result.answer = f"[Direct] Failed to get answer: {exc}"
 
         return result
 
+    @staticmethod
+    def _extract_content(response: Any) -> str:
+        """Extract text content from LLM response."""
+        if isinstance(response, dict):
+            choices = response.get("choices", [])
+            if choices:
+                msg = choices[0].get("message", {})
+                return msg.get("content", "")
+            return response.get("content", "")
+        if hasattr(response, "choices") and response.choices:
+            return getattr(response.choices[0].message, "content", "") or ""
+        return str(response)
+
     def _estimate_tokens(self, text: str) -> int:
-        """Rough token estimation (1 token ≈ 4 chars for English)."""
-        return len(text) // 4
+        """Token estimation via tiktoken with fallback to heuristic."""
+        try:
+            import tiktoken
+
+            enc = tiktoken.encoding_for_model("gpt-4")
+            return len(enc.encode(text))
+        except Exception:  # noqa: BLE001
+            return len(text) // 4
 
     def to_spec(self) -> dict[str, Any] | None:
         """Return YAML-spec for this processor."""

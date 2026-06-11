@@ -79,6 +79,10 @@ from src.backend.core.config.services import (
     tasks_settings,
     watermark_settings,
 )
+from src.backend.core.config.services.jupyter_hub import (
+    JupyterHubSettings,
+    jupyter_hub_settings,
+)
 from src.backend.core.config.telegram import TelegramBotSettings, telegram_bot_settings
 from src.backend.core.config.transport import TransportSettings, transport_settings
 from src.backend.core.config.v11 import V11Settings, v11_settings

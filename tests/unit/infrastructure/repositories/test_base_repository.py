@@ -95,13 +95,13 @@ async def test_get_by_key_value(repo: SQLAlchemyRepository[_TestItem]) -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_get_not_found_returns_empty_dict(
+async def test_get_not_found_returns_none(
     repo: SQLAlchemyRepository[_TestItem],
 ) -> None:
-    """При отсутствии записи ``get`` возвращает пустой dict (не None)."""
+    """При отсутствии записи ``get`` возвращает None."""
     result = await repo.get(key="id", value=999999)
 
-    assert result == {}
+    assert result is None
 
 
 @pytest.mark.unit
@@ -121,11 +121,11 @@ async def test_list_returns_all_records(repo: SQLAlchemyRepository[_TestItem]) -
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_list_paginated(repo: SQLAlchemyRepository[_TestItem]) -> None:
-    """``get`` с ``pagination`` возвращает словарь с items и total."""
+    """``get_paginated`` возвращает словарь с items и total."""
     for i in range(5):
         await repo.add(data={"name": f"item-{i}", "value": i})
 
-    result = await repo.get(pagination=Params(page=1, size=2))
+    result = await repo.get_paginated(pagination=Params(page=1, size=2))
 
     assert isinstance(result, dict)
     assert "items" in result
@@ -184,7 +184,7 @@ async def test_delete(repo: SQLAlchemyRepository[_TestItem]) -> None:
     await repo.delete(key="id", value=created.id)
 
     assert await repo.count() == 0
-    assert await repo.get(key="id", value=created.id) == {}
+    assert await repo.get(key="id", value=created.id) is None
 
 
 @pytest.mark.unit

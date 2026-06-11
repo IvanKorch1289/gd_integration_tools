@@ -172,6 +172,10 @@ class MiddlewareChain:
         """Выполнить операцию add."""
         self._middlewares.append(middleware)
 
+    def iter_middlewares(self):
+        """Iterate over registered middlewares."""
+        return iter(self._middlewares)
+
     async def execute(
         self,
         processor: Any,

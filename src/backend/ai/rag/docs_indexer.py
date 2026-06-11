@@ -31,7 +31,7 @@ _DEFAULT_ROOTS: tuple[str, ...] = (
     "docs/users",
     "docs/devs",
 )
-_EMBED_DIM = 64
+_EMBED_DIM = 384  # all-MiniLM-L6-v2 dimension
 
 
 def _h(text: str) -> str:
@@ -39,8 +39,8 @@ def _h(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
-def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
-    """Hash-based embedder (offline/unit). Не ML-grade, но стабильный + детерминированный."""
+def _embed_hashbased(text: str, dim: int = _EMBED_DIM) -> list[float]:
+    """Hash-based embedder (offline/unit fallback). Не ML-grade, но стабильный + детерминированный."""
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
         vec[
@@ -48,6 +48,36 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
         ] += 1.0  # noqa: S324
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
+
+
+class _SentenceTransformerEmbedder:
+    """Lazy-loaded sentence-transformers embedder with batching."""
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        self._model_name = model_name
+        self._model: Any = None
+
+    def _load(self) -> Any:
+        if self._model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+
+                self._model = SentenceTransformer(self._model_name)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "sentence_transformers unavailable (%s); fallback to hash-based",
+                    exc,
+                )
+        return self._model
+
+    def encode(self, texts: list[str]) -> list[list[float]]:
+        model = self._load()
+        if model is None:
+            return [_embed_hashbased(t) for t in texts]
+        embeddings = model.encode(
+            texts, convert_to_tensor=False, batch_size=32, show_progress_bar=False
+        )
+        return [emb.tolist() for emb in embeddings]
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -140,7 +170,7 @@ class DocsIndexer:
         self,
         *,
         qdrant_client: Any = None,
-        embedding_model: str = "text-embedding-3-small",
+        embedding_model: str = "sentence-transformers",
         collection_name: str = "project_docs",
         chunk_size: int = 512,
         chunk_overlap: int = 50,
@@ -153,6 +183,9 @@ class DocsIndexer:
         self._fallback = qdrant_client is None
         self._embedder: Any = None
         self._collection_ready = False
+        # eager init for sentence-transformers
+        if embedding_model == "sentence-transformers":
+            self._embedder = _SentenceTransformerEmbedder()
 
     @property
     def collection_name(self) -> str:
@@ -201,7 +234,7 @@ class DocsIndexer:
         return sorted(found)
 
     def chunk_text(self, text: str, metadata: dict[str, Any]) -> list[dict[str, Any]]:
-        """Split ``text`` → chunks of ``chunk_size`` chars с ``chunk_overlap``.
+        """Split ``text`` → word-aware chunks of ~``chunk_size`` chars с ``chunk_overlap``.
 
         Каждый chunk: ``id`` (sha256[:16]), ``text``, ``metadata`` (file, line,
         hash, source_path, chunk_index). Empty/whitespace text → [].
@@ -210,33 +243,58 @@ class DocsIndexer:
             return []
         step = max(1, self._chunk_size - self._chunk_overlap)
         chunks: list[dict[str, Any]] = []
-        idx, offset = 0, 0
-        while offset < len(text):
-            piece = text[offset : offset + self._chunk_size]
-            if piece.strip():
-                chunks.append(
-                    {
-                        "id": _h(piece),
-                        "text": piece,
-                        "metadata": {
-                            **metadata,
-                            "line": text.count("\n", 0, offset) + 1,
-                            "chunk_index": idx,
-                            "hash": _h(piece),
-                        },
-                    }
-                )
-                idx += 1
-            offset += step
+        idx, start = 0, 0
+        while start < len(text):
+            end = min(start + self._chunk_size, len(text))
+            if end < len(text):
+                # look backward for whitespace to avoid breaking words
+                while end > start and text[end] not in " \n\r\t":
+                    end -= 1
+                if end == start:
+                    # no whitespace found — force break at chunk_size
+                    end = min(start + self._chunk_size, len(text))
+            piece = text[start:end].strip()
+            if piece:
+                # merge tiny last piece into previous chunk
+                if (
+                    chunks
+                    and len(piece) < self._chunk_size * 0.2
+                    and len(chunks[-1]["text"]) + 1 + len(piece)
+                    <= self._chunk_size * 1.5
+                ):
+                    merged = chunks[-1]["text"] + " " + piece
+                    chunks[-1]["text"] = merged
+                    chunks[-1]["id"] = _h(merged)
+                    chunks[-1]["metadata"]["hash"] = chunks[-1]["id"]
+                else:
+                    line_no = text.count("\n", 0, start) + 1
+                    chunks.append(
+                        {
+                            "id": _h(piece),
+                            "text": piece,
+                            "metadata": {
+                                **metadata,
+                                "line": line_no,
+                                "chunk_index": idx,
+                                "hash": _h(piece),
+                            },
+                        }
+                    )
+                    idx += 1
+            start += step
+            if start <= end - self._chunk_size:
+                start = end
         return chunks
 
     async def _embed(self, texts: list[str]) -> list[list[float]]:
-        if self._embedder is None:
-            return [_embed_offline(t) for t in texts]
-        r = self._embedder(texts)
-        if hasattr(r, "__await__"):
-            r = await r  # type: ignore[func-returns-value]
-        return list(r)
+        if self._embedder is not None:
+            if hasattr(self._embedder, "encode"):
+                return self._embedder.encode(texts)
+            r = self._embedder(texts)
+            if hasattr(r, "__await__"):
+                r = await r  # type: ignore[func-returns-value]
+            return list(r)
+        return [_embed_hashbased(t) for t in texts]
 
     def _build_points(
         self, chunks: list[dict[str, Any]], vecs: list[list[float]]

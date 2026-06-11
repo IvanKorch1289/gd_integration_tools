@@ -33,7 +33,7 @@ def test_indexer_init() -> None:
     assert idx.is_fallback is True
     assert idx._chunk_size == 512
     assert idx._chunk_overlap == 50
-    assert idx._embedding_model == "text-embedding-3-small"
+    assert idx._embedding_model == "sentence-transformers"
 
 
 def test_indexer_custom_init() -> None:
