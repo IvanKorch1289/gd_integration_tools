@@ -1,3 +1,11 @@
+from __future__ import annotations
+"""S63 W2 — multicast.py part of routing decomp.
+
+Classes: MulticastProcessor, MulticastRoutesProcessor.
+
+MulticastProcessor + MulticastRoutesProcessor (1-to-many routing).
+"""
+
 import asyncio
 from collections.abc import Callable
 from typing import Any
@@ -11,255 +19,8 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
 
-__all__ = (
-    "DynamicRouterProcessor",
-    "LoadBalancerProcessor",
-    "MulticastProcessor",
-    "MulticastRoutesProcessor",
-    "RecipientListProcessor",
-    "ScatterGatherProcessor",
-)
 
 
-class DynamicRouterProcessor(BaseProcessor):
-    """Маршрутизация на основе runtime-выражения.
-
-    Вычисляет route_id из Exchange, затем делегирует
-    выполнение соответствующему DSL-маршруту.
-    """
-
-    def __init__(
-        self,
-        route_expression: Callable[[Exchange[Any]], str],
-        *,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "dynamic_router")
-        self._expr = route_expression
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.backend.dsl.commands.registry import route_registry
-        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
-
-        target_route_id = self._expr(exchange)
-        if not route_registry.is_registered(target_route_id):
-            exchange.fail(f"Dynamic route '{target_route_id}' not found")
-            return
-
-        result, error = await SubPipelineExecutor.execute_route(
-            target_route_id,
-            exchange.in_message.body,
-            dict(exchange.in_message.headers),
-            context,
-        )
-        if error:
-            exchange.fail(f"Dynamic route '{target_route_id}' failed: {error}")
-            return
-
-        exchange.set_property("dynamic_route_used", target_route_id)
-        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-
-
-class ScatterGatherProcessor(BaseProcessor):
-    """Fan-out на N маршрутов → сборка результатов.
-
-    Отправляет копию Exchange на несколько DSL-маршрутов
-    параллельно, собирает результаты в ``scatter_results``.
-    """
-
-    def __init__(
-        self,
-        route_ids: list[str],
-        *,
-        aggregation: str = "merge",
-        timeout_seconds: float = 30.0,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or f"scatter_gather({len(route_ids)})")
-        self._route_ids = route_ids
-        self._aggregation = aggregation
-        self._timeout = timeout_seconds
-
-    async def _call_route(
-        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
-    ) -> tuple[str, Any, str | None]:
-        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
-
-        return await SubPipelineExecutor.execute_route_safe(
-            route_id, body, headers, context
-        )
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        tasks = [
-            self._call_route(
-                rid, exchange.in_message.body, exchange.in_message.headers, context
-            )
-            for rid in self._route_ids
-        ]
-
-        try:
-            raw_results = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True), timeout=self._timeout
-            )
-        except TimeoutError:
-            exchange.fail(f"Scatter-gather timeout ({self._timeout}s)")
-            return
-
-        results: dict[str, Any] = {}
-        errors: dict[str, str] = {}
-        for item in raw_results:
-            if isinstance(item, BaseException):
-                errors["_exception"] = str(item)
-            else:
-                rid, result, error = item
-                if error:
-                    errors[rid] = error
-                else:
-                    results[rid] = result
-
-        exchange.set_property("scatter_results", results)
-        if errors:
-            exchange.set_property("scatter_errors", errors)
-
-        if self._aggregation == "merge" and results:
-            merged: dict[str, Any] = {}
-            for v in results.values():
-                if isinstance(v, dict):
-                    merged.update(v)
-            exchange.set_out(body=merged, headers=dict(exchange.in_message.headers))
-
-
-class RecipientListProcessor(BaseProcessor):
-    """Отправляет сообщение на динамический список маршрутов.
-
-    Список маршрутов вычисляется из Exchange. Каждый получатель
-    получает копию сообщения. Результаты собираются в property.
-    """
-
-    def __init__(
-        self,
-        recipients_expression: Callable[[Exchange[Any]], list[str]],
-        *,
-        parallel: bool = True,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "recipient_list")
-        self._expr = recipients_expression
-        self._parallel = parallel
-
-    async def _send_to(
-        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
-    ) -> tuple[str, Any, str | None]:
-        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
-
-        return await SubPipelineExecutor.execute_route_safe(
-            route_id, body, headers, context
-        )
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        recipients = self._expr(exchange)
-        if not recipients:
-            return
-
-        body = exchange.in_message.body
-        headers = exchange.in_message.headers
-
-        if self._parallel:
-            tasks = [self._send_to(rid, body, headers, context) for rid in recipients]
-            raw = await asyncio.gather(*tasks, return_exceptions=True)
-        else:
-            raw = []
-            for rid in recipients:
-                raw.append(await self._send_to(rid, body, headers, context))
-
-        results: dict[str, Any] = {}
-        errors: dict[str, str] = {}
-        for item in raw:
-            if isinstance(item, BaseException):
-                errors["_exception"] = str(item)
-            else:
-                rid, result, error = item
-                if error:
-                    errors[rid] = error
-                else:
-                    results[rid] = result
-
-        exchange.set_property("recipient_results", results)
-        if errors:
-            exchange.set_property("recipient_errors", errors)
-
-
-# ---------------------------------------------------------------------------
-#  Apache Camel EIP v2 — LoadBalancer, CircuitBreaker, ClaimCheck,
-#  Normalizer, Resequencer, Multicast
-# ---------------------------------------------------------------------------
-
-
-class LoadBalancerProcessor(BaseProcessor):
-    """Camel Load Balancer EIP — distributes exchanges across multiple routes.
-
-    Strategies: round_robin, random, weighted, sticky (header-based).
-    """
-
-    def __init__(
-        self,
-        targets: list[str],
-        *,
-        strategy: str = "round_robin",
-        weights: list[float] | None = None,
-        sticky_header: str | None = None,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or f"load_balancer({strategy})")
-        self._targets = targets
-        self._strategy = strategy
-        self._weights = weights
-        self._sticky_header = sticky_header
-        self._rr_index = 0
-        self._lock = asyncio.Lock()
-
-    async def _select_target(self, exchange: Exchange[Any]) -> str:
-        if self._strategy == "round_robin":
-            async with self._lock:
-                target = self._targets[self._rr_index % len(self._targets)]
-                self._rr_index += 1
-            return target
-
-        if self._strategy == "random":
-            import random as _random
-
-            return _random.choice(  # noqa: S311  # load-balancing, не криптография  # non-cryptographic use
-                self._targets
-            )
-
-        if self._strategy == "weighted" and self._weights:
-            import random as _random
-
-            return _random.choices(self._targets, weights=self._weights, k=1)[  # noqa: S311  # non-cryptographic use
-                0
-            ]  # weighted load-balancing, не криптография
-
-        if self._strategy == "sticky" and self._sticky_header:
-            key = exchange.in_message.headers.get(self._sticky_header, "")
-            idx = hash(key) % len(self._targets)
-            return self._targets[idx]
-
-        return self._targets[0]
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Select a target and forward exchange via sub-pipeline executor."""
-        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
-
-        target = await self._select_target(exchange)
-        exchange.set_property("lb_target", target)
-
-        result, error = await SubPipelineExecutor.execute_route(
-            target, exchange.in_message.body, dict(exchange.in_message.headers), context
-        )
-        if error:
-            exchange.fail(f"Load balancer target '{target}' failed: {error}")
-            return
-        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
 
 class MulticastProcessor(BaseProcessor):
@@ -357,6 +118,7 @@ class MulticastProcessor(BaseProcessor):
         exchange.set_property("multicast_results", results)
         if errors:
             exchange.set_property("multicast_errors", errors)
+
 
 
 class MulticastRoutesProcessor(BaseProcessor):
@@ -491,6 +253,4 @@ class MulticastRoutesProcessor(BaseProcessor):
         }
 
 
-# ---------------------------------------------------------------------------
-#  Apache Camel EIP v3 — Loop, OnCompletion, Sort, Timeout
-# ---------------------------------------------------------------------------
+
