@@ -35,6 +35,7 @@ from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
 from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
 from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.builders.notebook import NotebookMixin
+from src.backend.dsl.builders.vault import VaultSecretMixin
 from src.backend.dsl.builders.request_reply import RequestReplyMixin
 from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin

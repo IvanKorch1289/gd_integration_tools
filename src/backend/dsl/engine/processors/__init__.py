@@ -222,6 +222,10 @@ from src.backend.dsl.engine.processors.template_engine import (
     RenderTemplateFileProcessor,
     RenderTemplateProcessor,
 )
+from src.backend.dsl.engine.processors.vault_secret import (
+    VaultReadResult,
+    VaultSecretProcessor,
+)
 from src.backend.dsl.engine.processors.web import (
     ClickProcessor,
     ExtractProcessor,
@@ -408,6 +412,8 @@ __all__ = (
     "TryCatchProcessor",
     "TumblingWindowProcessor",
     "ValidateProcessor",
+    "VaultReadResult",
+    "VaultSecretProcessor",
     "VectorSearchProcessor",
     "WireTapProcessor",
     "WordReadProcessor",
