@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 66 (2026-06-10) — event_store/setup/lifecycle god-file decomp + 1 sibling WIP fixup (5 commits, 5/5 substantive)
+
+### Changed (5 commits, 3 working + 1 sibling WIP fixup + closure)
+
+- **W1: event_store.py 468 → 6 files** — 9 classes + 3 funcs → types(2) + store(2) + cqrs(4) + processor(1) + helpers(3) (per-concern file split, with cross-imports for `EventStream`).
+- **W2: setup.py 854 → 6 files** — 26 funcs (1 helper + 25 registers + 1 orchestrator) → helpers(1) + registers_domains(7) + registers_integrations(8) + registers_workflow(9) + orchestrator(1) (per-concern file split).
+- **W3: lifecycle/__init__.py 585 → 25 LOC** — `lifespan()` 538 LOC extracted to `lifespan.py`. Completes sibling S82 (ADR-0105) decomp.
+- **W4: deleted dead authorization_gateway.py 530 LOC** — sibling W60 W4 created package but forgot to delete original.
+- **W5: closure** — ADR-0140 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 65 (2026-06-10) — components/rpa/grpc/idp god-file decomp + 2 sibling WIP fixups (7 commits, 5/5 substantive)
 
 ### Changed (7 commits, 4 working + closure + 2 sibling WIP fixups)
