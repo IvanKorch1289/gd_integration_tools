@@ -18,3 +18,5 @@ __all__ = (
 )
 
 app_base_settings: AppBaseSettings = AppBaseSettings()
+
+scheduler_settings: SchedulerSettings = SchedulerSettings()  # S65 W3 fixup: missing instance
