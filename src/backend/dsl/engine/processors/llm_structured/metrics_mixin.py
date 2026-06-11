@@ -1,0 +1,91 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    pass
+
+from typing import TYPE_CHECKING, Any
+
+from src.backend.core.logging import get_logger
+from src.backend.dsl.registry import processor
+
+if TYPE_CHECKING:
+
+    pass
+
+_logger = get_logger(__name__)
+
+# Дефолтный ``temperature`` для structured-output: детерминизм важнее
+# креативности при заполнении схемы.
+_DEFAULT_TEMPERATURE: float = 0.0
+# Максимальное число instructor-retries (внутренний цикл валидации Pydantic).
+_DEFAULT_RETRY: int = 3
+
+@processor(
+    "llm_structured",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "required": ["model", "output_schema", "prompt"],
+        "properties": {
+            "model": {"type": "string"},
+            "output_schema": {"type": ["string", "object", "null"]},
+            "prompt": {"type": "string"},
+            "retry": {"type": "integer", "minimum": 0, "default": _DEFAULT_RETRY},
+            "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "default": _DEFAULT_TEMPERATURE,
+            },
+            "cost_budget_usd": {"type": ["number", "null"]},
+            "to": {"type": "string"},
+        },
+    },
+    capabilities=("ai.llm.litellm", "net.outbound.litellm:external"),
+    meta={"tier": 2, "category": "ai", "version": "v17"},
+    tags=("ai", "llm", "structured-output"),
+)
+
+class MetricsMixin:
+    """cost estimation + token extraction для LLMStructuredProcessor. S65 W2 extraction."""
+
+    __slots__ = ()
+
+    @staticmethod
+    def _estimate_cost(raw_response: Any) -> float | None:
+        """Оценивает стоимость через ``litellm.completion_cost``.
+
+        Args:
+            raw_response: Ответ от ``litellm.acompletion`` или ``None``.
+
+        Returns:
+            Стоимость в USD, ``None`` если оценка недоступна.
+        """
+        if raw_response is None:
+            return None
+        try:
+            import litellm
+
+            cost = litellm.completion_cost(completion_response=raw_response)
+            return float(cost) if cost is not None else None
+        except (ImportError, AttributeError, TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _extract_tokens(raw_response: Any) -> int | None:
+        """Извлекает total_tokens из usage."""
+        if raw_response is None:
+            return None
+        usage = getattr(raw_response, "usage", None)
+        if usage is None and isinstance(raw_response, dict):
+            usage = raw_response.get("usage")
+        if usage is None:
+            return None
+        total = getattr(usage, "total_tokens", None)
+        if total is None and isinstance(usage, dict):
+            total = usage.get("total_tokens")
+        try:
+            return int(total) if total is not None else None
+        except (TypeError, ValueError):
+            return None
+
