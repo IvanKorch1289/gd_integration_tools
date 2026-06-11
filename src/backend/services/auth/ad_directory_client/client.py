@@ -1,48 +1,10 @@
-"""AD/LDAP directory client (K1 S6 W1 — SAML+AD login).
-
-Назначение:
-    Тонкий async-фасад над ``ldap3`` для:
-
-    * валидации credentials (bind с user DN/password);
-    * поиска пользователей в AD/LDAP по userPrincipalName/sAMAccountName;
-    * resolve групп пользователя (``memberOf``);
-    * чтения атрибутов (mail, displayName, department, telephoneNumber).
-
-    Используется парой с :class:`SamlBackend`:
-        * после успешного SAMLResponse получаем principal
-          (NameID/email);
-        * AdDirectoryClient resolve'ит группы и attribute'ы для
-          authorization-policy (RBAC).
-
-Дизайн:
-    * Lazy-import ``ldap3`` — без extra'ы ``dsl-extras-3``
-      импорт не падает; ``is_available()`` возвращает False.
-    * Sync ``ldap3`` используется через ``asyncio.to_thread``
-      (как в ``dsl/engine/processors/ldap_query.py``).
-    * Capability: ``directory.read.<server>`` — проверяется на caller-side
-      (entrypoints/services через ``feature_flags.saml_ad_login_enabled``).
-
-Feature-flag:
-    Активируется через ``feature_flags.saml_ad_login_enabled`` (default-OFF).
-    При отключённом флаге caller должен **не** инстанцировать клиент.
-
-Пример::
-
-    cfg = AdServerConfig(
-        server_uri="ldaps://ad.example.com:636",
-        bind_dn="CN=svc-saml,OU=Service,DC=example,DC=com",
-        bind_password="<from-vault>",
-        search_base="DC=example,DC=com",
-    )
-    client = AdDirectoryClient(config=cfg)
-    if not client.is_available():
-        raise RuntimeError("ldap3 not installed")
-
-    user = await client.find_user("alice@example.com")
-    groups = await client.get_user_groups(user.dn)
-"""
-
 from __future__ import annotations
+"""S67 W4 - client.py part of ad_directory_client decomp.
+
+Per-class file split.
+
+Classes: AdDirectoryClient.
+"""
 
 import asyncio
 from collections.abc import Mapping, Sequence
@@ -51,66 +13,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")
-
 _logger = get_logger(__name__)
-
-
-class AdAuthError(Exception):
-    """Ошибка bind/search/credentials в AD/LDAP.
-
-    Используется как единая точка ошибок: invalid credentials,
-    server unreachable, search filter rejected.
-    """
-
-
-@dataclass(frozen=True, slots=True)
-class AdServerConfig:
-    """Конфигурация AD/LDAP сервера.
-
-    Attributes:
-        server_uri: Полный URI сервера (``ldap://`` или ``ldaps://``).
-            Для production обязателен ``ldaps://`` или START_TLS.
-        bind_dn: DN для service-account bind (e.g. ``CN=svc-saml,DC=...``).
-        bind_password: Пароль service-account (через :class:`SecretBroker`).
-        search_base: Base DN для поиска пользователей (``DC=example,DC=com``).
-        use_ssl: True для ``ldaps://``. Если URI содержит ``ldaps`` —
-            считается True автоматически (см. ``__post_init__``).
-        timeout_seconds: TCP connect-timeout (default 10s).
-        user_id_attribute: Атрибут для поиска по login (по умолчанию
-            ``userPrincipalName``; для legacy AD — ``sAMAccountName``).
-        group_attribute: Атрибут с DN групп пользователя (default ``memberOf``).
-    """
-
-    server_uri: str
-    bind_dn: str
-    bind_password: str
-    search_base: str
-    use_ssl: bool = field(default=False)
-    timeout_seconds: float = 10.0
-    user_id_attribute: str = "userPrincipalName"
-    group_attribute: str = "memberOf"
-
-    def __post_init__(self) -> None:
-        """Автоматически выставляет ``use_ssl=True`` для ldaps:// URI."""
-        if self.server_uri.startswith("ldaps://"):
-            object.__setattr__(self, "use_ssl", True)
-
-
-@dataclass(frozen=True, slots=True)
-class AdSearchEntry:
-    """Результат AD search.
-
-    Attributes:
-        dn: Distinguished Name пользователя.
-        attributes: Атрибуты пользователя (mail/displayName/department/...).
-        groups: DN всех групп пользователя (resolve'нные через memberOf).
-    """
-
-    dn: str
-    attributes: Mapping[str, Any]
-    groups: tuple[str, ...] = ()
-
 
 class AdDirectoryClient:
     """Async LDAP/AD client.
@@ -331,3 +234,4 @@ class AdDirectoryClient:
             raise AdAuthError(f"AD group lookup failure: {exc}") from exc
 
         return entry.groups if entry else ()
+
