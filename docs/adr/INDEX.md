@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **86**; уникальных слотов: **85**.
+Всего ADR-файлов: **87**; уникальных слотов: **86**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -92,5 +92,6 @@
 | 0134 | ADR-0134 — Sprint 60 closure: 4 god-file decomp (jupyter, cdc, setup_infra, authorization_gateway) (4+1 commits, 5/5 substantive) | Accepted (Sprint 60 W5, 2026-06-10) | [0134-sprint-60-closure.md](0134-sprint-60-closure.md) |
 | 0135 | ADR-0135 — Sprint 61 closure: 4 god-file decomp (base_service, enrichment, executor, http) (4+1 commits, 5/5 substantive) | Accepted (Sprint 61 W5, 2026-06-10) | [0135-sprint-61-closure.md](0135-sprint-61-closure.md) |
 | 0136 | ADR-0136 — Sprint 62 closure: 4 god-file decomp (admin_plugins, vocabulary, integration_core, yaml_loader) (4+1 commits, 5/5 substantive) | Accepted (Sprint 62 W5, 2026-06-10) | [0136-sprint-62-closure.md](0136-sprint-62-closure.md) |
+| 0137 | ADR-0137 — Sprint 63 closure: 4 god-file decomp (loading, routing, marshal, external_database) (4+1 commits, 5/5 substantive) | Accepted (Sprint 63 W5, 2026-06-10) | [0137-sprint-63-closure.md](0137-sprint-63-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

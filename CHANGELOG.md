@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 63 (2026-06-10) — loading/routing/marshal/external_database god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: loading.py 496 → 4 files** — LoadingMixin 5 methods → LoaderMixin(2) + FrontendMixin(3) + state.py (MRO 4-level, no core).
+- **W2: routing.py 496 → 6 files** — 6 EIP routing classes → dynamic(1) + scatter_gather(1) + recipient_list(1) + load_balancer(1) + multicast(2) (per-routing-pattern file split).
+- **W3: marshal.py 494 → 4 files** — 8 classes + 3 helpers → base(1) + formats(5+3) + processors(2) (per-concern file split).
+- **W4: external_database.py 492 → 7 files** — ExternalDatabaseService 16 methods → CoreMixin(3) + DispatchMixin(5) + ValidationMixin(3) + BuildMixin(3) + ProfileMixin(1) + 1 core + state.py (MRO 7-level).
+- **W5: closure** — ADR-0137 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 62 (2026-06-10) — admin_plugins/vocabulary/integration_core/yaml_loader god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
