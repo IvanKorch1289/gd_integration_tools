@@ -16,3 +16,5 @@ __all__ = (
     "AppBaseSettings",
     "SchedulerSettings",
 )
+
+app_base_settings: AppBaseSettings = AppBaseSettings()
