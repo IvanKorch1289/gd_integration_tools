@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 64 (2026-06-10) — graphql/repositories/database/rag_service god-file decomp (4+1 commits, 5/5 substantive)
+
+### Changed (5 commits, 4 working + closure)
+
+- **W1: graphql/schema.py 492 → 6 files** — 8 Pydantic types + 3 resolvers + 5 helpers → types(8) + query + mutation + subscription + helpers (5). Required fixup: orphan @strawberry.type stripped, helper cross-imports added.
+- **W2: repositories/base.py 491 → 4 files** — AbstractRepository + SQLAlchemyRepository + get_repository_for_model → base + sqlalchemy + factory (per-pattern file split, S55 W1 cert_store style).
+- **W3: database.py 489 → 5 files** — DatabaseBundle + DatabaseInitializer(13) + ExternalDatabaseRegistry(7) + 4 funcs → bundle + initializer + registry + accessors (per-concern file split).
+- **W4: rag_service.py 478 → 6 files** — RAGService 14 methods → IngestMixin(5) + SearchMixin(1) + AugmentMixin(3) + CollectionMixin(4) + 1 core + state.py (MRO 6-level).
+- **W5: closure** — ADR-0138 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 63 (2026-06-10) — loading/routing/marshal/external_database god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
