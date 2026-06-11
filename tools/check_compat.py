@@ -18,8 +18,8 @@ deprecated-паттерны, которые могут не работать в 
 
 Пример использования::
 
-    uv run python scripts/check_compat.py
-    uv run python scripts/check_compat.py --min-version 3.12
+    uv run python tools/check_compat.py
+    uv run python tools/check_compat.py --min-version 3.12
 
 Зависимости: только stdlib (``ast``, ``pathlib``, ``tokenize``, ``sys``).
 """
@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=(
             "Директория для сканирования (можно указать несколько раз). "
-            "По умолчанию: src/, scripts/, tools/."
+            "По умолчанию: src/, tools/, tools/."
         ),
     )
     args = parser.parse_args(argv)

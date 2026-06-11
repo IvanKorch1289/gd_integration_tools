@@ -22,7 +22,7 @@ repos:
 
       - id: check-compat
         name: "Совместимость с Python 3.12+"
-        entry: uv run python scripts/check_compat.py
+        entry: uv run python tools/check_compat.py
         language: system
         types: [python]
         pass_filenames: false

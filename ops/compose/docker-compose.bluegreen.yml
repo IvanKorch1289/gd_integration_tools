@@ -13,11 +13,11 @@
 #     - router — nginx (порт 80 → blue|green по active.conf)
 #     - all    — все три профиля одновременно
 #
-# Использование (через scripts/blue_green.sh):
-#     ./scripts/blue_green.sh up green       # поднять green
-#     ./scripts/blue_green.sh smoke green    # smoke
-#     ./scripts/blue_green.sh switch green   # переключить router
-#     ./scripts/blue_green.sh down blue      # остановить blue
+# Использование (через tools/blue_green.sh):
+#     ./tools/blue_green.sh up green       # поднять green
+#     ./tools/blue_green.sh smoke green    # smoke
+#     ./tools/blue_green.sh switch green   # переключить router
+#     ./tools/blue_green.sh down blue      # остановить blue
 #
 # Связано:
 #     - ADR-0060 — топология и rollback SLA

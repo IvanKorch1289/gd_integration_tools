@@ -784,7 +784,7 @@ commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
 	@$(INFO) "Committing changes (explicit paths, no -A)..."
 	@# A2 security: запрещаем git add -A, чтобы исключить добавление
 	@# случайных файлов (.env, artifacts, IDE-cruft, секреты).
-	git add src/ docs/ scripts/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	git add src/ docs/ tools/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
 	@# Опциональные корневые файлы — добавляются, только если существуют.
 	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
 	@[ -f ops/compose/Dockerfile ] && git add ops/compose/Dockerfile || true

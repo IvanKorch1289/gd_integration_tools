@@ -52,7 +52,7 @@ jobs:
         # Ловит: syntax errors (ast.parse), removed stdlib modules (imp, distutils,
         # asyncore, asynchat, collections.MutableMapping), deprecated typing (Text, io),
         # голые except: — ДО того как ruff начнёт анализ.
-        run: uv run python scripts/check_compat.py
+        run: uv run python tools/check_compat.py
 
       - name: Python compileall gate
         # Sprint 60 W3 — дополнительная защита: python -m compileall ловит

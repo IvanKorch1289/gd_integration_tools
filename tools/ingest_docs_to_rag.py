@@ -7,18 +7,18 @@ Sprint 40 W5 (v15 §10): use-case "RAG over project documentation".
 Запуск::
 
     # 1) Реальный Qdrant (env QDRANT_URL=http://localhost:6333).
-    .venv/bin/python scripts/ingest_docs_to_rag.py
+    .venv/bin/python tools/ingest_docs_to_rag.py
 
     # 2) Кастомные roots + embedding model.
-    .venv/bin/python scripts/ingest_docs_to_rag.py \\
+    .venv/bin/python tools/ingest_docs_to_rag.py \\
         --roots CLAUDE.md docs/users --collection my_docs \\
         --embedding-model text-embedding-3-large
 
     # 3) Dry-run (печать плана без индексации).
-    .venv/bin/python scripts/ingest_docs_to_rag.py --dry-run
+    .venv/bin/python tools/ingest_docs_to_rag.py --dry-run
 
     # 4) Fallback (без Qdrant, in-memory store; для smoke-test).
-    .venv/bin/python scripts/ingest_docs_to_rag.py --no-qdrant --query "dev среда"
+    .venv/bin/python tools/ingest_docs_to_rag.py --no-qdrant --query "dev среда"
 """
 
 from __future__ import annotations

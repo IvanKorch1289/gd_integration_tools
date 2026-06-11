@@ -1,7 +1,7 @@
 """Sphinx-конфигурация для auto-generated API reference (S40 W4).
 
 Sub-Sphinx-проект для автогенерации API reference из ``src/backend/dsl/``.
-Запуск: ``./scripts/gen_api_docs.sh`` или ``make -C docs/api html``.
+Запуск: ``./tools/gen_api_docs.sh`` или ``make -C docs/api html``.
 """
 
 from __future__ import annotations

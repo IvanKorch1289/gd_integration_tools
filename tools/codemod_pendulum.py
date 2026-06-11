@@ -27,7 +27,7 @@ Strategy: pendulum.DateTime IS datetime.datetime (subclass), поэтому
 - ``from datetime import timezone`` alone (timezone UTC эквивалент)
 
 Запуск:
-    python scripts/codemod_pendulum.py [--dry-run] [--verbose]
+    python tools/codemod_pendulum.py [--dry-run] [--verbose]
 """
 
 from __future__ import annotations

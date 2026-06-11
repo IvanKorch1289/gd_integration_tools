@@ -136,7 +136,7 @@ jobs:
             --output pip-audit.json \
             --ignore-vuln CVE-2025-69872 \
             --ignore-vuln PYSEC-2026-87
-          uv run python scripts/pip_audit_gate.py
+          uv run python tools/pip_audit_gate.py
 
       - name: Upload pip-audit report
         if: always()

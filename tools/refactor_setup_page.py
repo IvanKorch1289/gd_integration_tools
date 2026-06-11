@@ -9,7 +9,7 @@ Replace with: ``setup_page("X", "Y")``
 Plus adds import for setup_page.
 
 Usage:
-    python scripts/refactor_setup_page.py [--dry-run]
+    python tools/refactor_setup_page.py [--dry-run]
 """
 from __future__ import annotations
 

@@ -1,11 +1,11 @@
-"""Unit tests для scripts/refactor_setup_page.py."""
+"""Unit tests для tools/refactor_setup_page.py."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# Add scripts/ to path for direct import
+# Add tools/ to path for direct import
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 
 import tempfile
