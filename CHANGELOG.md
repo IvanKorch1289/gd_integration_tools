@@ -5,6 +5,17 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Sprint 65 (2026-06-10) — components/rpa/grpc/idp god-file decomp + 2 sibling WIP fixups (7 commits, 5/5 substantive)
+
+### Changed (7 commits, 4 working + closure + 2 sibling WIP fixups)
+
+- **W1: components.py 479 → 9 files** — 8 processor classes → 8 files (per-processor split). Required @processor block stripped from imports.
+- **W2: rpa/operations.py 478 → 10 files** — 9 processor classes → 9 files (per-processor split).
+- **W3: grpc_server.py 480 → 6 files** — 3 servicers + 1 interceptor + 3 funcs → 5 files (per-concern split).
+- **W3 fixup: app_base_settings + scheduler_settings** — sibling W3 config/base.py decomp didn't preserve module-level instances; restored.
+- **W4: idp_pipeline_processor.py 472 → 7 files** — IDPPipelineProcessor 7 methods → 4 mixins + 1 core + state.py + helpers.py (MRO 6-level).
+- **W5: closure** — ADR-0139 + CHANGELOG + INDEX regen.
+
 ## [Unreleased] — Sprint 64 (2026-06-10) — graphql/repositories/database/rag_service god-file decomp (4+1 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)
