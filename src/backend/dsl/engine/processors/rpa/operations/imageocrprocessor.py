@@ -42,10 +42,10 @@ class ImageOcrProcessor(BaseProcessor):
         if not isinstance(body, bytes):
             exchange.fail("ocr expects image bytes")
             return
-        img = Image.open(io.BytesIO(body))
-        text = await asyncio.to_thread(
-            pytesseract.image_to_string, img, lang=self._lang
-        )
+        with Image.open(io.BytesIO(body)) as img:
+            text = await asyncio.to_thread(
+                pytesseract.image_to_string, img, lang=self._lang
+            )
         exchange.set_out(
             body={"text": text.strip(), "lang": self._lang},
             headers=dict(exchange.in_message.headers),

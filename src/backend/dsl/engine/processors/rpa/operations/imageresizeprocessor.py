@@ -50,18 +50,18 @@ class ImageResizeProcessor(BaseProcessor):
             return
 
         def _resize() -> bytes:
-            img = Image.open(io.BytesIO(body))
-            if self._width and self._height:
-                img = img.resize((self._width, self._height))
-            elif self._width:
-                ratio = self._width / img.width
-                img = img.resize((self._width, int(img.height * ratio)))
-            elif self._height:
-                ratio = self._height / img.height
-                img = img.resize((int(img.width * ratio), self._height))
-            buf = io.BytesIO()
-            img.save(buf, format=self._format)
-            return buf.getvalue()
+            with Image.open(io.BytesIO(body)) as img:
+                if self._width and self._height:
+                    img = img.resize((self._width, self._height))
+                elif self._width:
+                    ratio = self._width / img.width
+                    img = img.resize((self._width, int(img.height * ratio)))
+                elif self._height:
+                    ratio = self._height / img.height
+                    img = img.resize((int(img.width * ratio), self._height))
+                buf = io.BytesIO()
+                img.save(buf, format=self._format)
+                return buf.getvalue()
 
         result = await asyncio.to_thread(_resize)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
