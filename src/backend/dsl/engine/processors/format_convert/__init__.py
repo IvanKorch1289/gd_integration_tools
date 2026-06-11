@@ -35,11 +35,7 @@ if TYPE_CHECKING:
 __all__ = ("FormatConvertProcessor",)
 
 
-class FormatConvertProcessor(
-    DataFormatsMixin,
-    EncodingsMixin,
-    SpecializedFormatsMixin,
-):
+class FormatConvertProcessor(DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin):
     """Format conversions (3 mixins = 33 format methods + 5 core)."""
 
     # State attrs (S53 W1: class-level annotations for mypy MRO)
@@ -88,8 +84,6 @@ class FormatConvertProcessor(
         self.claims = claims
         self.schema = schema
 
-
-
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
@@ -110,8 +104,6 @@ class FormatConvertProcessor(
             exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
         except Exception as exc:  # parse/format failures → fail exchange
             exchange.fail(f"format convert {self.direction}:{self.fmt} failed: {exc}")
-
-
 
     def _convert(self, data: Any) -> Any:
         if self.direction == "to_json":
@@ -188,8 +180,6 @@ class FormatConvertProcessor(
             return self._to_avro_like(data)  # type: ignore[attr-defined]
         raise ValueError(f"unknown direction: {self.direction!r}")
 
-
-
     def _to_json(self, data: Any) -> str:
         if isinstance(data, (bytes, bytearray)):
             return data.decode("utf-8", errors="replace")
@@ -197,11 +187,8 @@ class FormatConvertProcessor(
             return data  # already JSON string
         return json.dumps(data, indent=self.indent, default=str, ensure_ascii=False)
 
-
-
     def _from_json(self, data: Any) -> Any:
         text = _to_text(data)
         if text == "":
             return None
         return json.loads(text)
-

@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 """S68 W1 - webhook_relay blueprint extracted from macros.py.
 
 webhook relay blueprint (source + sink).
 """
 
-from collections.abc import Callable
-from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    DeadLetterProcessor,
-    DispatchActionProcessor,
-    LogProcessor,
-    RetryProcessor,
-)
+from src.backend.dsl.engine.processors import DispatchActionProcessor
+
 
 def webhook_relay(
     route_id: str,

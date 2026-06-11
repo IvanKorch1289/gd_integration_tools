@@ -105,13 +105,16 @@ async def test_sample_once_calls_count_stuck_pending() -> None:
     m = stuck_monitor.OutboxStuckMonitor(
         threshold_seconds=300, sample_interval_seconds=60
     )
-    with patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
-        new=AsyncMock(return_value=42),
-    ) as mock, patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
-        new=AsyncMock(return_value={"kafka": 42}),
-    ) as mock_by:
+    with (
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
+            new=AsyncMock(return_value=42),
+        ) as mock,
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+            new=AsyncMock(return_value={"kafka": 42}),
+        ) as mock_by,
+    ):
         await m._sample_once()
     mock.assert_awaited_once_with(threshold_seconds=300)
     mock_by.assert_awaited_once_with(threshold_seconds=300)
@@ -127,12 +130,15 @@ async def test_sample_once_updates_gauge() -> None:
     if stuck_monitor._STUCK_PENDING_GAUGE is None:
         pytest.skip("prometheus_client not installed")
 
-    with patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
-        new=AsyncMock(return_value=7),
-    ), patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
-        new=AsyncMock(return_value={"kafka": 5, "s3": 2}),
+    with (
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
+            new=AsyncMock(return_value=7),
+        ),
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+            new=AsyncMock(return_value={"kafka": 5, "s3": 2}),
+        ),
     ):
         # Capture .labels(...).set(...) calls.
         # After S81 W2, gauge is a labeled metric; .set() called via .labels().
@@ -201,12 +207,15 @@ async def test_last_count_and_samples_total_updated() -> None:
         threshold_seconds=300, sample_interval_seconds=60
     )
 
-    with patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
-        new=AsyncMock(return_value=15),
-    ), patch(
-        "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
-        new=AsyncMock(return_value={}),
+    with (
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending",
+            new=AsyncMock(return_value=15),
+        ),
+        patch(
+            "src.backend.infrastructure.messaging.outbox.stuck_monitor.count_stuck_pending_by_transport",
+            new=AsyncMock(return_value={}),
+        ),
     ):
         # S81 W2: _sample_once() returns None, sets _last_count internally.
         await m._sample_once()

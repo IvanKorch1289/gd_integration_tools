@@ -4,11 +4,10 @@ Classes: TomlEncodeProcessor, TomlDecodeProcessor.
 
 TOML encode + decode + _toml_* helpers.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
-import importlib
-import io
 import json
 from typing import Any, ClassVar
 
@@ -19,6 +18,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 _logger = get_logger("dsl.format_converters")
+
 
 class TomlEncodeProcessor(BaseProcessor):
     """Сериализация dict → TOML-строка."""
@@ -41,6 +41,7 @@ class TomlEncodeProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"toml_encode": {}}
+
 
 class TomlDecodeProcessor(BaseProcessor):
     """Десериализация TOML-строки/bytes → dict через stdlib ``tomllib``."""
@@ -70,6 +71,7 @@ class TomlDecodeProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"toml_decode": {}}
 
+
 def _toml_encode(data: dict[str, Any]) -> str:
     """Минимальный TOML-энкодер для top-level dict (без runtime-зависимостей).
 
@@ -82,6 +84,7 @@ def _toml_encode(data: dict[str, Any]) -> str:
     if not isinstance(data, dict):
         raise TypeError(f"TOML root must be a dict, got {type(data).__name__}")
     return _toml_encode_table(data, prefix="")
+
 
 def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
     """Сериализует одну TOML-таблицу + рекурсивно вложенные."""
@@ -126,11 +129,13 @@ def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
             sections.append("\n".join(sub_lines))
     return "\n\n".join((s for s in sections if s))
 
+
 def _toml_key(name: str) -> str:
     """Кавычит ключ TOML, если нужно."""
     if name.replace("_", "").replace("-", "").isalnum():
         return name
     return json.dumps(name)
+
 
 def _toml_value(value: Any) -> str:
     """Сериализует TOML-скаляр или массив примитивов."""
@@ -145,4 +150,3 @@ def _toml_value(value: Any) -> str:
     if isinstance(value, list):
         return "[" + ", ".join((_toml_value(v) for v in value)) + "]"
     raise TypeError(f"TOML encoder: неподдерживаемый тип {type(value).__name__}")
-

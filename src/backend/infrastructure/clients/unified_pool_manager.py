@@ -303,7 +303,10 @@ class UnifiedPoolManager:
             monitor = get_pool_monitor()
             for name, reg in self._pools.items():
                 monitor.register_pool(
-                    name=name, pool=reg.pool, ping_callable=reg.ping_fn, idle_timeout=60.0
+                    name=name,
+                    pool=reg.pool,
+                    ping_callable=reg.ping_fn,
+                    idle_timeout=60.0,
                 )
             await monitor.start()
         except Exception as exc:
@@ -320,7 +323,9 @@ class UnifiedPoolManager:
         except Exception as exc:
             logger.warning("UnifiedPoolManager: PoolMonitor не запущен: %s", exc)
 
-        logger.info("UnifiedPoolManager: мониторы запущены (pools=%d)", len(self._pools))
+        logger.info(
+            "UnifiedPoolManager: мониторы запущены (pools=%d)", len(self._pools)
+        )
 
     async def stop_monitors(self) -> None:
         """Останавливает фоновые мониторы."""

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """DSLStepExecutor package (S61 W3 decomp from executor.py 514 LOC).
 
 4 classes decomposed в 4 mixin files + state.py:
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import Literal
 
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
@@ -50,13 +51,23 @@ StepKind = Literal[
     "compensate",  # rollback chain (failure-only)
 ]
 
-from src.backend.infrastructure.workflow.executor.state import DurableWorkflowProcessor  # S61 W3: re-export
-from src.backend.infrastructure.workflow.executor.state import WorkflowSpec  # S61 W3: re-export
-from src.backend.infrastructure.workflow.executor.state import WorkflowStep  # S61 W3: re-export
-from src.backend.infrastructure.workflow.executor.sequential_mixin import SequentialMixin  # S61 W3: MRO
-from src.backend.infrastructure.workflow.executor.control_flow_mixin import ControlFlowMixin  # S61 W3: MRO
-from src.backend.infrastructure.workflow.executor.sub_flow_mixin import SubFlowMixin  # S61 W3: MRO
-from src.backend.infrastructure.workflow.executor.eval_mixin import EvalMixin  # S61 W3: MRO
+from src.backend.infrastructure.workflow.executor.control_flow_mixin import (
+    ControlFlowMixin,  # S61 W3: MRO
+)
+from src.backend.infrastructure.workflow.executor.eval_mixin import (
+    EvalMixin,  # S61 W3: MRO
+)
+from src.backend.infrastructure.workflow.executor.sequential_mixin import (
+    SequentialMixin,  # S61 W3: MRO
+)
+from src.backend.infrastructure.workflow.executor.state import (
+    DurableWorkflowProcessor,  # S61 W3: re-export
+    WorkflowSpec,  # S61 W3: re-export
+    WorkflowStep,  # S61 W3: re-export
+)
+from src.backend.infrastructure.workflow.executor.sub_flow_mixin import (
+    SubFlowMixin,  # S61 W3: MRO
+)
 
 __all__ = (
     "DSLStepExecutor",
@@ -65,12 +76,8 @@ __all__ = (
     "DurableWorkflowProcessor",
 )
 
-class DSLStepExecutor(
-    SequentialMixin,
-    ControlFlowMixin,
-    SubFlowMixin,
-    EvalMixin,
-):
+
+class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin):
     """DSL step executor (4 mixins = 8 methods + 2 core)."""
 
     __slots__ = ()
@@ -163,4 +170,3 @@ class DSLStepExecutor(
                     )
                 ],
             )
-

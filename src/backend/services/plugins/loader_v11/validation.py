@@ -86,8 +86,6 @@ class LoadedPluginV11:
         return payload
 
 
-
-
 class ValidationMixin:
     """Plugin validation (inventory collisions, owner records) для PluginLoaderV11. S52 W3 extraction."""
 
@@ -118,8 +116,6 @@ class ValidationMixin:
                         plugin=manifest.name, kind=kind, name=name, owner=owner
                     )
 
-
-
     def _record_owners(self, manifest: PluginManifestV11) -> None:
         """Запоминает имена из provides, чтобы детектить коллизии в будущем."""
         for kind, names in (
@@ -132,4 +128,3 @@ class ValidationMixin:
         ):
             for name in names:
                 self._owners[kind][name] = manifest.name
-

@@ -23,10 +23,7 @@ _logger = get_logger("dsl.file_watch")
 
 
 @processor(
-    "file_watch",
-    namespace="core",
-    capabilities=("fs.watch",),
-    tags=["fs", "watch"],
+    "file_watch", namespace="core", capabilities=("fs.watch",), tags=["fs", "watch"]
 )
 class FileWatchProcessor(BaseProcessor):
     """Сканирует директорию и помещает найденные файлы в exchange property.

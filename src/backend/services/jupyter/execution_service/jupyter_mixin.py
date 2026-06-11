@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -7,15 +8,13 @@ if TYPE_CHECKING:
 import asyncio
 import json
 import uuid
-from typing import Any
 
 import httpx
 
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
-from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
 from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger("services.jupyter.execution")
+
 
 class JupyterBackendMixin:
     """jupyter backend internals (server, upload, session, cell execution) для NotebookExecutionService. S60 W1 extraction."""
@@ -42,11 +41,7 @@ class JupyterBackendMixin:
         """Upload notebook via ``PUT /api/contents/{path}``."""
         client = self._hub.http
         url = f"{server_url}/api/contents/{path}"
-        payload = {
-            "type": "notebook",
-            "format": "json",
-            "content": content,
-        }
+        payload = {"type": "notebook", "format": "json", "content": content}
         try:
             resp = await client.put(url, json=payload)
             resp.raise_for_status()
@@ -79,12 +74,7 @@ class JupyterBackendMixin:
             ) from exc
 
     async def _execute_cell(
-        self,
-        server_url: str,
-        kernel_id: str,
-        source: str,
-        *,
-        timeout: float,
+        self, server_url: str, kernel_id: str, source: str, *, timeout: float
     ) -> list[dict[str, Any]]:
         """Execute single cell via WebSocket kernel channel."""
         try:
@@ -147,7 +137,9 @@ class JupyterBackendMixin:
                         outputs.append(
                             {
                                 "output_type": "execute_result",
-                                "execution_count": msg["content"].get("execution_count"),
+                                "execution_count": msg["content"].get(
+                                    "execution_count"
+                                ),
                                 "data": msg["content"].get("data", {}),
                             }
                         )
@@ -177,4 +169,3 @@ class JupyterBackendMixin:
             raise JupyterExecutionError(f"WebSocket error: {exc}") from exc
 
         return outputs
-

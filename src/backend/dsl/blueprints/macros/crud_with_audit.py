@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 """S68 W1 - crud_with_audit blueprint extracted from macros.py.
 
 CRUD with audit trail.
 """
 
-from collections.abc import Callable
-from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    DeadLetterProcessor,
-    DispatchActionProcessor,
-    LogProcessor,
-    RetryProcessor,
-)
+from src.backend.dsl.engine.processors import LogProcessor
+
 
 def crud_with_audit(
     route_id_prefix: str,

@@ -9,10 +9,9 @@ DoD: feature_flag.credit_pipeline_v2 default-OFF; миграция legacy→V11
 
 from __future__ import annotations
 
-from src.backend.core.config.features import feature_flags
+from src.backend.core.feature_flags import get_feature_flag_service
 
 
 def test_credit_pipeline_v2_flag_exists_and_default_off() -> None:
     """Flag зарегистрирован и default ``False``."""
-    assert hasattr(feature_flags, "credit_pipeline_v2")
-    assert feature_flags.credit_pipeline_v2 is False
+    assert get_feature_flag_service().is_enabled("credit_pipeline_v2") is False

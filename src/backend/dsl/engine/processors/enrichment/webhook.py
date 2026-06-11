@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S61 W2 — webhook.py part of enrichment decomp.
 
 Classes: WebhookSignProcessor, WebhookSignVerifyProcessor.
@@ -6,13 +7,12 @@ Classes: WebhookSignProcessor, WebhookSignVerifyProcessor.
 webhook sign + verify.
 """
 
-import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class WebhookSignProcessor(BaseProcessor):
     """Sign outgoing webhook body with HMAC-SHA256.
@@ -64,6 +64,7 @@ class WebhookSignProcessor(BaseProcessor):
         if self._algo != "sha256":
             spec["algorithm"] = self._algo
         return {"webhook_sign": spec}
+
 
 class WebhookSignVerifyProcessor(BaseProcessor):
     """Verify HMAC-SHA256 / JWS подпись входящего webhook (Sprint 9 K3 W5).
@@ -153,4 +154,3 @@ class WebhookSignVerifyProcessor(BaseProcessor):
         if self._on_invalid != "fail":
             spec["on_invalid"] = self._on_invalid
         return {"webhook_sign_verify": spec}
-

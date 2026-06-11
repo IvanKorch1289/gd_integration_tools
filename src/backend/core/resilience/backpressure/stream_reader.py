@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W1 - stream_reader.py part of backpressure decomp.
 
 AdaptiveStreamReader (3 methods).
@@ -6,16 +7,11 @@ AdaptiveStreamReader (3 methods).
 Classes: AdaptiveStreamReader.
 """
 
-import asyncio
-import time
-from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
-
-from src.backend.core.logging import get_logger
 
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
+
 
 class AdaptiveStreamReader:
     """Adaptive ``XREAD count`` для Redis Streams.
@@ -92,4 +88,3 @@ class AdaptiveStreamReader:
             )
             self._current_count = new_count
         return self._current_count
-

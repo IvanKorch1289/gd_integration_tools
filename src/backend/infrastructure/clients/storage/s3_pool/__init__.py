@@ -9,14 +9,16 @@ Backward-compat: ``from src.backend.infrastructure.clients.storage.s3_pool impor
 
 from __future__ import annotations
 
-from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client  # S56 W3: re-export
-from src.backend.infrastructure.clients.storage.s3_pool.client import S3Client  # S56 W3: re-export
-
-__all__ = (
-    "BaseS3Client",
-    "S3Client",
-    "get_s3_client",
+from src.backend.infrastructure.clients.storage.s3_pool.base import (
+    BaseS3Client,  # S56 W3: re-export
 )
+from src.backend.infrastructure.clients.storage.s3_pool.client import (
+    S3Client,  # S56 W3: re-export
+)
+
+__all__ = ("BaseS3Client", "S3Client", "get_s3_client")
+
+
 def get_s3_client() -> S3Client:
     """Lazy singleton ``S3Client`` (Wave 6.1).
 
@@ -32,5 +34,3 @@ def __getattr__(name: str) -> Any:
     if name == "s3_client":
         return get_s3_client()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-

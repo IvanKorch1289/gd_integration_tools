@@ -4,6 +4,7 @@ Schemas: RetryPolicy, SlaPolicy, MemoryScope.
 
 retry + SLA + memory scope policies.
 """
+
 from __future__ import annotations
 
 """Pydantic-декларации DSL workflow (план V16.2 §4.3, Sprint 4).
@@ -27,9 +28,10 @@ from __future__ import annotations
     * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
 """
 
-from typing import Annotated, Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class RetryPolicy(BaseModel):
     """Retry-настройки activity-шага (Temporal-совместимые)."""
@@ -57,6 +59,7 @@ class RetryPolicy(BaseModel):
         le=1.0,
         description="Jitter: random fraction of interval [0..1].",
     )
+
 
 class SlaPolicy(BaseModel):
     """SLA-политика workflow (Sprint 9 K3 W10 — GAP-WF-4.4).
@@ -88,6 +91,7 @@ class SlaPolicy(BaseModel):
     escalation_slack: str | None = None
     breach_action: str = Field(default="alert", pattern=r"^(alert|cancel|none)$")
 
+
 class MemoryScope(BaseModel):
     """Memory scope policy для :class:`AgentInvokeDeclaration` (S28 W2).
 
@@ -107,4 +111,3 @@ class MemoryScope(BaseModel):
     write: tuple[str, ...] = ()
     mode: Literal["none", "scoped", "inherited", "shared"] = "scoped"
     write_strategy: Literal["hot_path", "background", "manual"] = "background"
-

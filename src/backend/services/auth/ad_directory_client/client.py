@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W4 - client.py part of ad_directory_client decomp.
 
 Per-class file split.
@@ -7,13 +8,13 @@ Classes: AdDirectoryClient.
 """
 
 import asyncio
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Sequence
 from typing import Any
 
 from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
+
 
 class AdDirectoryClient:
     """Async LDAP/AD client.
@@ -234,4 +235,3 @@ class AdDirectoryClient:
             raise AdAuthError(f"AD group lookup failure: {exc}") from exc
 
         return entry.groups if entry else ()
-

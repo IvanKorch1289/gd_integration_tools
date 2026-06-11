@@ -69,17 +69,13 @@ def _fetch_npm_max(name: str, *, timeout: float = 5.0) -> str | None:
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
         latest = data.get("dist-tags", {}).get("latest", "")
         return str(latest) if latest else None
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+    except urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError:
         return None
 
 
 def _iter_package_jsons(root: Path) -> list[Path]:
     """Возвращает все package.json под root (skip node_modules)."""
-    return [
-        p
-        for p in root.rglob("package.json")
-        if "node_modules" not in p.parts
-    ]
+    return [p for p in root.rglob("package.json") if "node_modules" not in p.parts]
 
 
 def _extract_pins(data: dict[str, Any]) -> dict[str, str]:
@@ -104,9 +100,7 @@ def _version_tuple(v: str) -> tuple[int, ...]:
 
 
 def check_phantom_npm_versions(
-    root: str = ".",
-    *,
-    timeout: float = 5.0,
+    root: str = ".", *, timeout: float = 5.0
 ) -> list[dict[str, str]]:
     """Сканирует все package.json под root и проверяет pins против npm.
 
@@ -119,7 +113,7 @@ def check_phantom_npm_versions(
     for pkg_json in _iter_package_jsons(root_path):
         try:
             data = json.loads(pkg_json.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             continue
         for pkg_name, pin in _extract_pins(data).items():
             parsed = _parse_pin(pin)
@@ -157,9 +151,7 @@ def check_phantom_npm_versions(
     return warnings
 
 
-def verify_package_json_pins(
-    root: str = ".", *, strict: bool = False
-) -> int:
+def verify_package_json_pins(root: str = ".", *, strict: bool = False) -> int:
     """CLI entry point. Returns exit code."""
     warnings = check_phantom_npm_versions(root)
     if not warnings:
@@ -174,14 +166,10 @@ def verify_package_json_pins(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Exit 1 при phantom version warnings.",
+        "--strict", action="store_true", help="Exit 1 при phantom version warnings."
     )
     parser.add_argument(
-        "--root",
-        default=".",
-        help="Root dir для рекурсивного scan (default: .).",
+        "--root", default=".", help="Root dir для рекурсивного scan (default: .)."
     )
     args = parser.parse_args(argv)
     return verify_package_json_pins(args.root, strict=args.strict)

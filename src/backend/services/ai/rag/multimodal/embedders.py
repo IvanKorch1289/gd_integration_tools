@@ -117,11 +117,11 @@ class CLIPEmbedder:
                 ) from exc
 
             try:
-                img = Image.open(io.BytesIO(content))
-                img.load()
+                with Image.open(io.BytesIO(content)) as img:
+                    img.load()
+                    vec = model.encode(img, convert_to_numpy=True)
             except Exception as exc:  # noqa: BLE001
                 raise ValueError(f"не удалось распарсить изображение: {exc}") from exc
-            vec = model.encode(img, convert_to_numpy=True)
         else:
             raise ValueError(
                 f"CLIPEmbedder: неподдерживаемый тип content={type(content)!r}"

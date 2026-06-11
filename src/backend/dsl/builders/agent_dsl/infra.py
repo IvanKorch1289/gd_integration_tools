@@ -18,9 +18,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
 
 
-
-
-
 class InfraMixin:
     """Поведенческий миксин infra для :class:`RouteBuilder` (S51 W3)."""
 
@@ -62,8 +59,6 @@ class InfraMixin:
             )
         )
 
-
-
     def pii_mask(
         self,
         *,
@@ -96,8 +91,6 @@ class InfraMixin:
                 language=language,
             )
         )
-
-
 
     def pii_unmask(
         self,
@@ -134,8 +127,6 @@ class InfraMixin:
                 strict=strict,
             )
         )
-
-
 
     def agent_graph(
         self,
@@ -210,8 +201,6 @@ class InfraMixin:
             )
         )
 
-
-
     def skill_invoke(
         self,
         *,
@@ -241,8 +230,6 @@ class InfraMixin:
                 result_property=result_property,
             )
         )
-
-
 
     def ai_memory_recall(
         self,
@@ -285,8 +272,6 @@ class InfraMixin:
             )
         )
 
-
-
     def ai_memory_store(
         self,
         *,
@@ -327,8 +312,6 @@ class InfraMixin:
                 ttl_s=ttl_s,
             )
         )
-
-
 
     def ai_rpa(
         self,
@@ -375,8 +358,6 @@ class InfraMixin:
                 to=to,
             )
         )
-
-
 
     def mcp_tool(
         self,
@@ -426,4 +407,3 @@ class InfraMixin:
                 timeout_s=timeout_s,
             )
         )
-

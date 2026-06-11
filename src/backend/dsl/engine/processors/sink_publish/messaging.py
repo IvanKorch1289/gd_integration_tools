@@ -4,6 +4,7 @@ Classes: MqPublishProcessor, WsPublishProcessor, MqttPublishProcessor.
 
 messaging processors (MQ, WebSocket, MQTT).
 """
+
 from __future__ import annotations
 
 import json
@@ -13,10 +14,9 @@ from typing import Any
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
+
 
 @dataclass(slots=True)
-
 class MqPublishProcessor(BaseProcessor):
     """``.mq_publish(broker, url, topic)`` — публикация в Kafka/Rabbit/Redis/NATS."""
 
@@ -70,6 +70,7 @@ class MqPublishProcessor(BaseProcessor):
             spec["payload_property"] = self._payload_property
         return {"mq_publish": spec}
 
+
 class WsPublishProcessor(BaseProcessor):
     """``.ws_publish(url)`` — outbound WebSocket publish (короткое соединение)."""
 
@@ -118,6 +119,7 @@ class WsPublishProcessor(BaseProcessor):
         if self._payload_property is not None:
             spec["payload_property"] = self._payload_property
         return {"ws_publish": spec}
+
 
 class MqttPublishProcessor(BaseProcessor):
     """``.mqtt_publish(host, port, topic, ...)`` — публикация в MQTT-брокер.
@@ -214,4 +216,3 @@ class MqttPublishProcessor(BaseProcessor):
         if self._payload_property is not None:
             spec["payload_property"] = self._payload_property
         return {"mqtt_publish": spec}
-

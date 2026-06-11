@@ -29,14 +29,13 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from src.backend.core.ai.errors import GuardResult
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+
 
 class LlmInvocationMixin:
     """LLM invocation (_render_prompt, _invoke_llm, _extract_completion, _provider_from_model) для PipelineStepsMixin. S56 W2 extraction."""
@@ -254,4 +253,3 @@ class LlmInvocationMixin:
         if "/" in model:
             return model.split("/", 1)[0]
         return "openai"
-

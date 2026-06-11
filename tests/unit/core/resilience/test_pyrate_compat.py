@@ -47,6 +47,7 @@ class TestShutdownPyrateLeaker:
         limiter._leaker = None
         limiter.bucket_factory = None
         await shutdown_pyrate_leaker(limiter)
+        assert limiter._leaker is None
 
     @pytest.mark.asyncio
     async def test_task_already_done(self) -> None:
@@ -62,7 +63,7 @@ class TestShutdownPyrateLeaker:
     async def test_cancels_running_task(self) -> None:
         limiter = MagicMock()
         leaker = MagicMock()
-        task = asyncio.create_task(asyncio.sleep(10))
+        task = asyncio.create_task(asyncio.sleep(0.01))
         leaker.aio_leak_task = task
         limiter._leaker = leaker
         await shutdown_pyrate_leaker(limiter)

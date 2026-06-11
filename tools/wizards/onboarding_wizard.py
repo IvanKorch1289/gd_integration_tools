@@ -71,9 +71,7 @@ def _check_tool(name: str) -> bool:
 
 def _step_title(num: int, total: int, title: str) -> None:
     """Print step header with progress."""
-    console.print(
-        f"\n[bold cyan]── Step {num}/{total}: {title} ──[/bold cyan]"
-    )
+    console.print(f"\n[bold cyan]── Step {num}/{total}: {title} ──[/bold cyan]")
 
 
 def _preflight_checks(dry_run: bool) -> dict[str, bool]:
@@ -160,8 +158,7 @@ def _sample_plugin(non_interactive: bool, dry_run: bool) -> None:
     skip = True
     if not non_interactive and not dry_run:
         skip = not questionary.confirm(
-            "Create sample plugin ('hello_world') и sample route?",
-            default=False,
+            "Create sample plugin ('hello_world') и sample route?", default=False
         ).ask()
     if skip:
         console.print("  [dim]skipped[/dim]")
@@ -214,16 +211,11 @@ def main(
     non_interactive: Annotated[
         bool,
         typer.Option(
-            "--non-interactive",
-            help="Non-interactive mode (для CI / scripted setup).",
+            "--non-interactive", help="Non-interactive mode (для CI / scripted setup)."
         ),
     ] = False,
     dry_run: Annotated[
-        bool,
-        typer.Option(
-            "--dry-run",
-            help="Print commands без execution.",
-        ),
+        bool, typer.Option("--dry-run", help="Print commands без execution.")
     ] = False,
 ) -> None:
     """Onboarding wizard: setup dev environment end-to-end."""

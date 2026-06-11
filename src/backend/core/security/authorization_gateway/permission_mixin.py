@@ -1,18 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import uuid
-from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
-from typing import Any
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.security.authorization_gateway")
+
 
 class PermissionMixin:
     """permission step (custom logic) для AuthorizationGateway. S60 W4 extraction."""
@@ -69,7 +66,9 @@ class PermissionMixin:
             try:
                 from src.backend.core.feature_flags import get_feature_flag_service
 
-                if not get_feature_flag_service().is_enabled("route_authz_requires_permission"):
+                if not get_feature_flag_service().is_enabled(
+                    "route_authz_requires_permission"
+                ):
                     return AuthorizationReason(
                         source="permission",
                         outcome="allow",
@@ -113,4 +112,3 @@ class PermissionMixin:
 
         _step.__name__ = "permission_step"
         return _step
-

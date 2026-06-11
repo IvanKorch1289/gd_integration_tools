@@ -1,32 +1,22 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
 import re
-from dataclasses import dataclass
-from typing import Any, Final
+from typing import Final
 
 from pydantic import BaseModel
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.core.config.settings import settings
-from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.di.providers import get_external_session_manager_provider
-from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.enums.external_db import (
     ExternalDBObjectChoices,
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
-    ExternalDBParameterMeta,
-    ExternalDBParameterModeChoices,
 )
 from src.backend.core.errors import DatabaseError
-from src.backend.core.logging import get_logger
-
-
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
@@ -45,8 +35,6 @@ _IDENT_RE: Final = re.compile(
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
-
 
 
 class CoreMixin:
@@ -114,8 +102,6 @@ class CoreMixin:
 
         return self._validate_response(meta, result)
 
-
-
     def _validate_request(
         self, meta: ExternalDBObjectMeta, payload: dict[str, Any] | BaseModel | None
     ) -> dict[str, Any]:
@@ -154,8 +140,6 @@ class CoreMixin:
             return nested
 
         return source
-
-
 
     def _build_db_params(
         self, meta: ExternalDBObjectMeta, payload: dict[str, Any]
@@ -210,4 +194,3 @@ class CoreMixin:
             )
 
         return prepared
-

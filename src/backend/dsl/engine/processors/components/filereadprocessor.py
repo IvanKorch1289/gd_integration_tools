@@ -1,25 +1,18 @@
 from __future__ import annotations
+
 """S65 W1 — FileReadProcessor extracted from components.py.
 
 Per-processor file split.
 """
 
-import contextlib
-from collections.abc import Callable
 from typing import Any
-
-import orjson
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.registry import processor
-
 
 _comp_logger = get_logger("dsl.components")
-
-
 
 
 class FileReadProcessor(BaseProcessor):

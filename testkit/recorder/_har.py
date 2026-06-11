@@ -85,10 +85,7 @@ class HARRecorder:
     """
 
     def __init__(
-        self,
-        *,
-        base_url: str | None = None,
-        mask_secrets: bool = True,
+        self, *, base_url: str | None = None, mask_secrets: bool = True
     ) -> None:
         """Инициализирует recorder с пустой кассетой."""
         self.cassette = HARCassette()
@@ -185,10 +182,7 @@ class HARRecorder:
 
 @asynccontextmanager
 async def record_session(
-    *,
-    base_url: str | None = None,
-    mask_secrets: bool = True,
-    **kwargs: Any,
+    *, base_url: str | None = None, mask_secrets: bool = True, **kwargs: Any
 ):
     """Удобная shortcut-обёртка: ``async with record_session() as (client, cassette):``."""
     recorder = HARRecorder(base_url=base_url, mask_secrets=mask_secrets)

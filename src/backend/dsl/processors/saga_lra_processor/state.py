@@ -1,24 +1,16 @@
 from __future__ import annotations
+
 """S58 W2 — state.py part of saga_lra_processor decomp.
 
 3 small classes: SagaState, SagaLRAError, SagaCompensationError.
 """
 
-import asyncio
-import inspect
-import time
-import uuid
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.exchange import ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _lra_logger = get_logger("dsl.saga_lra_processor")
 
@@ -46,6 +38,7 @@ _VALID_STATES = frozenset(
     }
 )
 
+
 class SagaState:
     """String constants for the Saga LRA state machine.
 
@@ -62,8 +55,10 @@ class SagaState:
     COMPENSATED = STATE_COMPENSATED
     FAILED = STATE_FAILED
 
+
 class SagaLRAError(RuntimeError):
     """Base class for Saga LRA errors."""
+
 
 class SagaCompensationError(SagaLRAError):
     """Raised when a compensation step itself fails during rollback.
@@ -83,4 +78,3 @@ class SagaCompensationError(SagaLRAError):
         super().__init__(message)
         self.original_error = original_error
         self.compensation_errors = list(compensation_errors or [])
-

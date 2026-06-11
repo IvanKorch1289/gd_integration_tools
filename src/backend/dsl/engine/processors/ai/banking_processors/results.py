@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S59 W1 — results.py part of banking_processors decomp.
 
 Classes: CreditScoreResult, FraudDetectionResult, RiskAssessmentResult, CustomerSegmentationResult, LoanEligibilityResult.
@@ -6,22 +7,19 @@ Classes: CreditScoreResult, FraudDetectionResult, RiskAssessmentResult, Customer
 5 Pydantic result schemas.
 """
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
+
 
 class CreditScoreResult(BaseModel):
     """Результат кредитного скоринга."""
@@ -30,6 +28,7 @@ class CreditScoreResult(BaseModel):
     decision: str = Field(..., description="Решение: approve / review / reject")
     reasons: list[str] = Field(default_factory=list, description="Ключевые факторы")
     risk_factors: list[str] = Field(default_factory=list, description="Факторы риска")
+
 
 class FraudDetectionResult(BaseModel):
     """Результат детекции фрода."""
@@ -40,6 +39,7 @@ class FraudDetectionResult(BaseModel):
         default_factory=list, description="Найденные индикаторы"
     )
     recommended_action: str = Field(..., description="Рекомендуемое действие")
+
 
 class RiskAssessmentResult(BaseModel):
     """Результат оценки рисков."""
@@ -52,6 +52,7 @@ class RiskAssessmentResult(BaseModel):
     mitigation_suggestions: list[str] = Field(
         default_factory=list, description="Рекомендации по снижению"
     )
+
 
 class CustomerSegmentationResult(BaseModel):
     """Результат сегментации клиента."""
@@ -69,6 +70,7 @@ class CustomerSegmentationResult(BaseModel):
         default_factory=list, description="Рекомендованные продукты"
     )
 
+
 class LoanEligibilityResult(BaseModel):
     """Результат проверки eligibility для кредита."""
 
@@ -80,4 +82,3 @@ class LoanEligibilityResult(BaseModel):
         default_factory=list, description="Основные причины решения"
     )
     conditions: list[str] = Field(default_factory=list, description="Условия кредита")
-

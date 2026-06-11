@@ -54,14 +54,7 @@ REMOVED_MODULES_312: frozenset[str] = frozenset(
 )
 
 # Deprecated typing-имена (заменены на аналоги из collections.abc или встроенные).
-DEPRECATED_TYPING_NAMES: frozenset[str] = frozenset(
-    {
-        "Text",
-        "io",
-        "re",
-        "ByteString",
-    }
-)
+DEPRECATED_TYPING_NAMES: frozenset[str] = frozenset({"Text", "io", "re", "ByteString"})
 
 
 @dataclass(slots=True, frozen=True)
@@ -96,8 +89,7 @@ def _check_imports(tree: ast.AST, path: Path) -> list[Issue]:
                             path=path,
                             lineno=node.lineno,
                             message=(
-                                f"импорт удалённого в 3.12+ модуля "
-                                f"'{alias.name}'"
+                                f"импорт удалённого в 3.12+ модуля '{alias.name}'"
                             ),
                         )
                     )
@@ -109,9 +101,7 @@ def _check_imports(tree: ast.AST, path: Path) -> list[Issue]:
                     Issue(
                         path=path,
                         lineno=node.lineno,
-                        message=(
-                            f"импорт из удалённого в 3.12+ модуля '{module}'"
-                        ),
+                        message=(f"импорт из удалённого в 3.12+ модуля '{module}'"),
                     )
                 )
             if module == "typing":
@@ -122,8 +112,7 @@ def _check_imports(tree: ast.AST, path: Path) -> list[Issue]:
                                 path=path,
                                 lineno=node.lineno,
                                 message=(
-                                    f"deprecated typing-имя "
-                                    f"'typing.{alias.name}'"
+                                    f"deprecated typing-имя 'typing.{alias.name}'"
                                 ),
                             )
                         )
@@ -136,7 +125,7 @@ def _check_bare_except(path: Path) -> list[Issue]:
     try:
         with tokenize.open(path) as fh:
             tokens = list(tokenize.generate_tokens(fh.readline))
-    except (SyntaxError, tokenize.TokenizeError):
+    except SyntaxError, tokenize.TokenizeError:
         return issues
     for idx, tok in enumerate(tokens):
         if tok.type == tokenize.NAME and tok.string == "except":
@@ -166,7 +155,7 @@ def check_file(path: Path) -> list[Issue]:
     """Прогоняет набор проверок над одним файлом."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return []
     try:
         tree = ast.parse(source, filename=str(path))
@@ -187,9 +176,7 @@ def check_file(path: Path) -> list[Issue]:
 def main(argv: list[str] | None = None) -> int:
     """Точка входа: обходит roots, печатает сводку, возвращает код."""
     parser = argparse.ArgumentParser(
-        description=(
-            "Проверка совместимости исходников проекта с Python 3.12+."
-        )
+        description=("Проверка совместимости исходников проекта с Python 3.12+.")
     )
     parser.add_argument(
         "--root",
@@ -214,9 +201,7 @@ def main(argv: list[str] | None = None) -> int:
         all_issues.extend(check_file(file_path))
 
     if not all_issues:
-        print(
-            f"Совместимость подтверждена (проверено {len(files)} файлов)."
-        )
+        print(f"Совместимость подтверждена (проверено {len(files)} файлов).")
         return 0
 
     print(f"Найдено {len(all_issues)} проблем(ы) совместимости:")

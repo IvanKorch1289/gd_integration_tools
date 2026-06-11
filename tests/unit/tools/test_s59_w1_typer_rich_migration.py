@@ -9,6 +9,7 @@ Coverage:
 
 Strategy: typer.testing.CliRunner для каждого.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,9 +36,9 @@ def clean_py_file(tmp_path: Path) -> Path:
     f = tmp_path / "clean.py"
     f.write_text(
         '"""Clean module."""\n\n'
-        'def public_function() -> None:\n'
+        "def public_function() -> None:\n"
         '    """Has a docstring. Long enough description here."""\n'
-        '    pass\n',
+        "    pass\n",
         encoding="utf-8",
     )
     return f
@@ -73,7 +74,10 @@ def test_check_feature_flags_allow_non_off() -> None:
     # Попробуем allow-list все известные нарушения
     result = runner.invoke(
         app,
-        ["--allow-non-off", "embedding_v2_traffic,workflow_audit_extended,workflow_sla_dashboard_enabled"],
+        [
+            "--allow-non-off",
+            "embedding_v2_traffic,workflow_audit_extended,workflow_sla_dashboard_enabled",
+        ],
     )
     # Может exit 0 (если все violations в allow) или 1 (есть ещё)
     assert result.exit_code in (0, 1)
@@ -143,9 +147,7 @@ def test_check_coverage_gate_missing_xml(tmp_path: Path) -> None:
     """--coverage-xml на nonexistent → exit 2 (error)."""
     from tools.check_coverage_gate import app
 
-    result = runner.invoke(
-        app, ["--coverage-xml", str(tmp_path / "no_such.xml")]
-    )
+    result = runner.invoke(app, ["--coverage-xml", str(tmp_path / "no_such.xml")])
     assert result.exit_code == 2
 
 
@@ -261,9 +263,7 @@ def test_check_docstrings_violation_strict(tmp_path: Path) -> None:
 
     f = tmp_path / "bad.py"
     f.write_text(
-        '"""Module."""\n\n'
-        'def undocumented_public() -> None:\n'
-        '    return None\n',
+        '"""Module."""\n\ndef undocumented_public() -> None:\n    return None\n',
         encoding="utf-8",
     )
     result = runner.invoke(check_app, [str(f), "--strict"])

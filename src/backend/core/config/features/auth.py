@@ -44,15 +44,5 @@ class AuthFlags(BaseSettings):
         ),
     )
 
-    auth_mtls_client: bool = Field(
-        default=False,
-        title="Auth: mTLS HttpxClient в infrastructure/clients/",
-        description=(
-            "K1 Wave 3. Owner: K1 Auth. ETA: S2-W3. "
-            "Перенос mTLS handshake из fixture в production HttpxClient. "
-            "default-OFF до integration-test."
-        ),
-    )
-
 
 __all__ = ("AuthFlags",)

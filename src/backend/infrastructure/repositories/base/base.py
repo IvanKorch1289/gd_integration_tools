@@ -1,31 +1,11 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from typing import Any
 
-from fastapi_filter.contrib.sqlalchemy import Filter
-from fastapi_pagination import Params
-from sqlalchemy import (
-    Insert,
-    Result,
-    Select,
-    Update,
-    asc,
-    delete,
-    desc,
-    func,
-    inspect,
-    select,
-)
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy_continuum import version_class
 
-from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.infrastructure.database.models.base import BaseModel
-from src.backend.infrastructure.database.session_manager import main_session_manager
-
-
-
 
 
 class AbstractRepository[ConcreteTable: BaseModel](ABC):

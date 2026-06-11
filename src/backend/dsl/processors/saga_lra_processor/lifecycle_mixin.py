@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -7,16 +7,10 @@ if TYPE_CHECKING:
 
 
 import asyncio
-import inspect
 import time
-import uuid
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.exchange import ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -48,8 +42,6 @@ _VALID_STATES = frozenset(
         STATE_FAILED,
     }
 )
-
-
 
 
 class LifecycleMixin:
@@ -98,8 +90,6 @@ class LifecycleMixin:
                 f"step {step['name']!r} action timed out after {step_timeout}s"
             ) from exc
 
-
-
     async def _run_compensation(
         self,
         step: SagaStepSpec,
@@ -135,4 +125,3 @@ class LifecycleMixin:
             ran_compensations.add(step["name"])
             _lra_logger.error("SagaLRA compensation %s failed: %s", step["name"], exc)
             return exc
-

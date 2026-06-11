@@ -43,16 +43,14 @@ from src.backend.services.plugins.manifest_v11 import (  # S52 W3: needed for _l
     load_plugin_manifest,
 )
 
-_logger = get_logger("services.plugins.loader_v11")  # S52 W3: re-defined for backward compat
+_logger = get_logger(
+    "services.plugins.loader_v11"
+)  # S52 W3: re-defined for backward compat
 
 __all__ = ("LoadedPluginV11", "PluginInventoryConflictError", "PluginLoaderV11")
 
 
-class PluginLoaderV11(
-    DiscoveryMixin,
-    LoadingMixin,
-    ValidationMixin,
-):
+class PluginLoaderV11(DiscoveryMixin, LoadingMixin, ValidationMixin):
     """In-tree plugin loader (3 mixins = 9 internal methods + 5 public).
 
     ADR-042 R1.2: V11 plugin loader (in-tree extensions/<name>/, no entry_points).
@@ -102,21 +100,15 @@ class PluginLoaderV11(
             "schemas": {},
         }
 
-
-
     @property
     def loaded(self) -> tuple[LoadedPluginV11, ...]:
         """Все попытки загрузки (loaded / failed / skipped)."""
         return tuple(self._loaded.values())
 
-
-
     @property
     def successful(self) -> tuple[LoadedPluginV11, ...]:
         """Только успешно загруженные плагины."""
         return tuple(p for p in self._loaded.values() if p.status == "loaded")
-
-
 
     async def discover_and_load(self) -> tuple[LoadedPluginV11, ...]:
         """Сканировать ``extensions/`` и загрузить все ``plugin.toml``.
@@ -196,8 +188,6 @@ class PluginLoaderV11(
             )
         return self.loaded
 
-
-
     async def shutdown_all(self) -> None:
         """Graceful shutdown всех загруженных плагинов."""
         for entry in tuple(self._loaded.values()):
@@ -209,4 +199,3 @@ class PluginLoaderV11(
                 _logger.exception("Plugin %s on_shutdown failed", entry.name)
             self._unmount_frontend_pages(entry.name)
             self._gate.revoke(entry.name)
-

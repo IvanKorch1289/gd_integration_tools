@@ -15,6 +15,15 @@ _TABLE_NAME_RE: re.Pattern[str] = re.compile(
     r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$"
 )
 
+#: Разрешённые символы в SQL-идентификаторе (колонка, alias и т.д.).
+_IDENTIFIER_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _validate_identifier(name: str) -> None:
+    if not _IDENTIFIER_RE.fullmatch(name):
+        raise ValueError(f"Invalid identifier: {name!r}")
+
+
 # lazy-evaluated at module level for testability
 _get_external_db_registry = None
 
@@ -72,9 +81,12 @@ class BatchInsertProcessor(BaseProcessor):
             return
 
         _validate_table(self._table)
+        # fail-fast: validate all column identifiers before touching DB
+        first = items[0]
+        for col in first:
+            _validate_identifier(col)
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         # executemany через list[dict]
-        first = items[0]
         columns = ", ".join(first.keys())
         placeholders = ", ".join(f":{k}" for k in first)
         stmt_text = f"INSERT INTO {self._table} ({columns}) VALUES ({placeholders})"  # noqa: S608
@@ -125,24 +137,39 @@ class BatchUpdateProcessor(BaseProcessor):
             return
 
         _validate_table(self._table)
+        _validate_identifier(self._key_field)
+        # fail-fast: validate all column identifiers before touching DB
+        for item in items:
+            for col in item:
+                if col != self._key_field:
+                    _validate_identifier(col)
+
+        # Group items by identical update columns so each group can be
+        # executed as a single bulk statement (executemany).
+        from collections import defaultdict
+
+        groups: dict[frozenset[str], list[dict[str, Any]]] = defaultdict(list)
+        for item in items:
+            key_value = item.get(self._key_field)
+            if key_value is None:
+                continue
+            updates = {k: v for k, v in item.items() if k != self._key_field}
+            if not updates:
+                continue
+            params = dict(updates)
+            params["_key"] = key_value
+            groups[frozenset(updates.keys())].append(params)
+
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         total_affected = 0
         async with bundle.async_session_maker() as session:
-            for item in items:
-                key_value = item.get(self._key_field)
-                if key_value is None:
-                    continue
-                updates = {k: v for k, v in item.items() if k != self._key_field}
-                if not updates:
-                    continue
-                set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+            for cols, params_list in groups.items():
+                set_clause = ", ".join(f"{k} = :{k}" for k in cols)
                 stmt_text = (
                     f"UPDATE {self._table} SET {set_clause} "  # noqa: S608
                     f"WHERE {self._key_field} = :_key"
                 )
-                result = await session.execute(
-                    text(stmt_text), {**updates, "_key": key_value}
-                )
+                result = await session.execute(text(stmt_text), params_list)
                 total_affected += getattr(result, "rowcount", 0)
             await session.commit()
         exchange.set_property("batch_update_result", {"affected": total_affected})
@@ -189,6 +216,7 @@ class BatchDeleteProcessor(BaseProcessor):
             return
 
         _validate_table(self._table)
+        _validate_identifier(self._key_field)
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         async with bundle.async_session_maker() as session:
             # Postgres-compatible: = ANY(:ids); fallback IN для остальных

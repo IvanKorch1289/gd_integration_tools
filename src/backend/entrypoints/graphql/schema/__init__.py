@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """GraphQL schema package (S64 W1 decomp from schema.py 492 LOC).
 
 11 Pydantic types + 3 resolvers + 5 helpers decomposed в 5 files:
@@ -12,22 +13,30 @@ Backward-compat: ``from src.backend.entrypoints.graphql.schema import Query`` wo
 """
 
 
-from src.backend.entrypoints.graphql.schema.types import OrderKindType  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import FileType  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import OrderType  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import UserType  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import DslResult  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import ActionResult  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import TraceEventType  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.types import SystemEventType  # S64 W1: re-export
+from src.backend.entrypoints.graphql.schema.helpers import (
+    _dispatch_action,  # S64 W1: helper re-export
+    _dispatch_dsl,  # S64 W1: helper re-export
+    _schema_to_order,  # S64 W1: helper re-export
+    _schema_to_order_kind,  # S64 W1: helper re-export
+    _schema_to_user,  # S64 W1: helper re-export
+)
+from src.backend.entrypoints.graphql.schema.mutation import (
+    Mutation,  # S64 W1: re-export
+)
 from src.backend.entrypoints.graphql.schema.query import Query  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.mutation import Mutation  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.subscription import Subscription  # S64 W1: re-export
-from src.backend.entrypoints.graphql.schema.helpers import _dispatch_action  # S64 W1: helper re-export
-from src.backend.entrypoints.graphql.schema.helpers import _schema_to_order  # S64 W1: helper re-export
-from src.backend.entrypoints.graphql.schema.helpers import _schema_to_user  # S64 W1: helper re-export
-from src.backend.entrypoints.graphql.schema.helpers import _schema_to_order_kind  # S64 W1: helper re-export
-from src.backend.entrypoints.graphql.schema.helpers import _dispatch_dsl  # S64 W1: helper re-export
+from src.backend.entrypoints.graphql.schema.subscription import (
+    Subscription,  # S64 W1: re-export
+)
+from src.backend.entrypoints.graphql.schema.types import (
+    ActionResult,  # S64 W1: re-export
+    DslResult,  # S64 W1: re-export
+    FileType,  # S64 W1: re-export
+    OrderKindType,  # S64 W1: re-export
+    OrderType,  # S64 W1: re-export
+    SystemEventType,  # S64 W1: re-export
+    TraceEventType,  # S64 W1: re-export
+    UserType,  # S64 W1: re-export
+)
 
 __all__ = (
     "OrderKindType",

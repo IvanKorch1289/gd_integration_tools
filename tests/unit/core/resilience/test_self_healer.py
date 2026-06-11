@@ -48,8 +48,10 @@ class TestInit:
 class TestRegisterHealer:
     def test_register(self) -> None:
         h = SelfHealer()
+
         def check():
             return True
+
         h.register_healer("db", check)
         assert h._healers == {"db": check}
 
@@ -101,6 +103,7 @@ class TestStartApscheduler:
                     return_value=mock_task
                 )
                 await h.start()
+                mock_registry.return_value.create_task.assert_called_once()
 
         assert h._running is True
         # Fallback на asyncio
@@ -273,7 +276,8 @@ class TestHealLoop:
         h = SelfHealer(check_interval=10)
         h._running = False
         # Должен сразу выйти
-        await asyncio.wait_for(h._heal_loop(), timeout=0.5)
+        result = await asyncio.wait_for(h._heal_loop(), timeout=0.5)
+        assert result is None
 
 
 class TestModuleSingleton:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Jupyter execution service package (S60 W1 decomp from execution_service.py 571 LOC).
 
 10 methods decomposed в 3 mixin files + 2 helper files (errors + backend):
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
 import asyncio
 import json
 import uuid
-from typing import Any
 
 import httpx
 
@@ -32,11 +32,21 @@ from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger("services.jupyter.execution")
 
-from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError  # S60 W1: re-export
-from src.backend.services.jupyter.execution_service.backend import NbClientExecutionBackend  # S60 W1: re-export
-from src.backend.services.jupyter.execution_service.core_mixin import CoreMixin  # S60 W1: MRO
-from src.backend.services.jupyter.execution_service.io_mixin import IOMixin  # S60 W1: MRO
-from src.backend.services.jupyter.execution_service.jupyter_mixin import JupyterBackendMixin  # S60 W1: MRO
+from src.backend.services.jupyter.execution_service.backend import (
+    NbClientExecutionBackend,  # S60 W1: re-export
+)
+from src.backend.services.jupyter.execution_service.core_mixin import (
+    CoreMixin,  # S60 W1: MRO
+)
+from src.backend.services.jupyter.execution_service.errors import (
+    JupyterExecutionError,  # S60 W1: re-export
+)
+from src.backend.services.jupyter.execution_service.io_mixin import (
+    IOMixin,  # S60 W1: MRO
+)
+from src.backend.services.jupyter.execution_service.jupyter_mixin import (
+    JupyterBackendMixin,  # S60 W1: MRO
+)
 
 __all__ = (
     "JupyterExecutionError",
@@ -44,11 +54,8 @@ __all__ = (
     "NotebookExecutionService",
 )
 
-class NotebookExecutionService(
-    CoreMixin,
-    IOMixin,
-    JupyterBackendMixin,
-):
+
+class NotebookExecutionService(CoreMixin, IOMixin, JupyterBackendMixin):
     """Jupyter notebook execution service (3 mixins = 8 methods + 2 core)."""
 
     __slots__ = ()
@@ -63,4 +70,3 @@ class NotebookExecutionService(
         if server_url.startswith("https://"):
             return server_url.replace("https://", "wss://", 1)
         return server_url.replace("http://", "ws://", 1)
-

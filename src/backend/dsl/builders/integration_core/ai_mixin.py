@@ -1,20 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
-    DispatchActionProcessor,
-    PipelineRefProcessor,
-)
-from src.backend.dsl.engine.processors.invoke import InvokeProcessor
+
 
 class AiOpsMixin:
     """AI (llm_structured + ml_predict) для IntegrationCoreMixin. S62 W3 extraction."""
@@ -108,4 +103,3 @@ class AiOpsMixin:
                 name=name,
             )
         )
-

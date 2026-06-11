@@ -4,19 +4,18 @@ Classes: GrpcCallProcessor, SoapCallProcessor.
 
 RPC protocol processors (gRPC, SOAP).
 """
+
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
+
 
 @dataclass(slots=True)
-
 class GrpcCallProcessor(BaseProcessor):
     """``.grpc_call(target, method, ...)`` — unary gRPC-вызов."""
 
@@ -68,6 +67,7 @@ class GrpcCallProcessor(BaseProcessor):
         if self._payload_property is not None:
             spec["payload_property"] = self._payload_property
         return {"grpc_call": spec}
+
 
 class SoapCallProcessor(BaseProcessor):
     """``.soap_call(wsdl, operation, ...)`` — SOAP/WSDL операция через zeep."""
@@ -126,4 +126,3 @@ class SoapCallProcessor(BaseProcessor):
         if self._payload_property is not None:
             spec["payload_property"] = self._payload_property
         return {"soap_call": spec}
-

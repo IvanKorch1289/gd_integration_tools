@@ -27,11 +27,8 @@ if TYPE_CHECKING:
 """
 
 import asyncio
-from typing import Any
 
-from src.backend.core.interfaces.invocation_reply import (
-    InvocationReplyChannel,
-)
+from src.backend.core.interfaces.invocation_reply import InvocationReplyChannel
 from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationResponse,
@@ -41,6 +38,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.types.invocation_command import ActionCommandSchema
 
 logger = get_logger("services.execution.invoker")
+
 
 class RunMixin:
     """run helpers (channel resolution, tracking, publishing, silent, streaming) для Invoker. S54 W3 extraction."""
@@ -180,4 +178,3 @@ class RunMixin:
                     metadata=meta,
                 )
             )
-

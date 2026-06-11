@@ -38,9 +38,8 @@ logger = get_logger("dsl.streaming")
 # ──────────────────── Message Expiration ────────────────────
 
 
-
-
 # ── message-level metadata (expiration, correlation ID, schema validation) ──
+
 
 class MessageExpirationProcessor(BaseProcessor):
     """Отбрасывает сообщения старше заданного TTL.
@@ -80,7 +79,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
 
         if age <= self._ttl:
@@ -95,7 +94,6 @@ class MessageExpirationProcessor(BaseProcessor):
                 logger.info(msg)
             case "log":
                 logger.warning(msg)
-
 
 
 class CorrelationIdProcessor(BaseProcessor):
@@ -119,7 +117,6 @@ class CorrelationIdProcessor(BaseProcessor):
         new_id = str(uuid.uuid4())
         exchange.in_message.headers[self._header] = new_id
         exchange.properties["correlation_id"] = new_id
-
 
 
 class SchemaRegistryValidator(BaseProcessor):
@@ -159,4 +156,3 @@ class SchemaRegistryValidator(BaseProcessor):
             logger.warning("jsonschema не установлен, валидация пропущена")
         except Exception as exc:
             exchange.fail(f"Schema validation failed: {exc}")
-

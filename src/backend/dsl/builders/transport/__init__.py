@@ -23,11 +23,7 @@ from src.backend.dsl.builders.transport.sources import SourcesMixin
 
 
 class TransportMixin(
-    SourcesMixin,
-    ExternalMixin,
-    ProxyMixin,
-    PersistenceMixin,
-    SinksMixin,
+    SourcesMixin, ExternalMixin, ProxyMixin, PersistenceMixin, SinksMixin
 ):
     """Поведенческий миксин transport / storage / sink.
 

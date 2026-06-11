@@ -42,12 +42,6 @@ if TYPE_CHECKING:
 __all__ = ("RateConvertProcessor",)
 
 
-_PROVIDERS = {
-    "er-api": "https://open.er-api.com/v6/latest/{base}",
-    "exchangerate-host": "https://api.exchangerate.host/latest?base={base}",
-}
-
-
 @processor(
     "rate_convert",
     namespace="core",
@@ -58,7 +52,7 @@ _PROVIDERS = {
             "amount_source": {"type": ["string", "null"]},
             "from_currency": {"type": "string"},
             "to_currency": {"type": "string"},
-            "provider": {"type": "string", "enum": sorted(_PROVIDERS)},
+            "provider": {"type": "string"},
             "to": {"type": "string"},
         },
         "required": ["from_currency", "to_currency"],
@@ -98,9 +92,12 @@ class RateConvertProcessor(BaseProcessor):
             raise ValueError("rate_convert: from_currency must be non-empty")
         if not to_currency:
             raise ValueError("rate_convert: to_currency must be non-empty")
-        if provider not in _PROVIDERS:
+            from src.backend.core.config.settings import settings
+
+        providers = settings.dsl.rate_convert_providers
+        if provider not in providers:
             raise ValueError(
-                f"rate_convert: provider must be one of {sorted(_PROVIDERS)}, "
+                f"rate_convert: provider must be one of {sorted(providers)}, "
                 f"got {provider!r}"
             )
         self._from = from_currency.upper()
@@ -145,9 +142,12 @@ class RateConvertProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def _fetch_rate(self) -> float | None:
+        from src.backend.core.config.settings import settings
         from src.backend.core.net.outbound_http import OutboundHttpClient
 
-        url = _PROVIDERS[self._provider].format(base=self._from)
+        url = settings.dsl.rate_convert_providers[self._provider].format(
+            base=self._from
+        )
         async with OutboundHttpClient(plugin="core.rate_convert") as client:
             response = await client.get(url)
             response.raise_for_status()

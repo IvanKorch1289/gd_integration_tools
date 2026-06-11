@@ -3,6 +3,7 @@
 Classes: WorkflowEventStore.
 Funcs: _find_last_snapshot, _advisory_lock_key.
 """
+
 from __future__ import annotations
 
 """Внутренние store-helpers для workflow-стека (Sprint 4 К3-B §3).
@@ -25,12 +26,12 @@ native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallba
 """
 
 import hashlib
-from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timedelta
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import and_, func, or_, select, text, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.infrastructure.database.models.workflow_event import (
@@ -39,7 +40,6 @@ from src.backend.infrastructure.database.models.workflow_event import (
 )
 from src.backend.infrastructure.database.models.workflow_instance import (
     WorkflowInstance,
-    WorkflowStatus,
 )
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
@@ -48,8 +48,8 @@ _logger = get_logger("workflow.pg_runner_internals")
 
 # ─────────────────────────────── DTO ───────────────────────────────
 
-@dataclass(slots=True, frozen=True)
 
+@dataclass(slots=True, frozen=True)
 class WorkflowEventStore:
     """Append-only event store для durable workflows."""
 
@@ -164,6 +164,7 @@ class WorkflowEventStore:
                     step_name=None,
                 )
 
+
 def _find_last_snapshot(events: list[WorkflowEventRow]) -> int | None:
     """Возвращает индекс последнего ``snapshotted`` события или ``None``."""
     for idx in range(len(events) - 1, -1, -1):
@@ -171,8 +172,8 @@ def _find_last_snapshot(events: list[WorkflowEventRow]) -> int | None:
             return idx
     return None
 
+
 def _advisory_lock_key(workflow_id: UUID) -> int:
     """Детерминистический 64-bit int-ключ из UUID для pg_advisory_lock."""
     digest = hashlib.blake2b(workflow_id.bytes, digest_size=8).digest()
     return int.from_bytes(digest, "big", signed=False) & 0x7FFFFFFFFFFFFFFF
-

@@ -74,7 +74,7 @@ def _fetch_pypi_max(name: str, *, timeout: float = 5.0) -> str | None:
         with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
         return str(data.get("info", {}).get("version", ""))
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+    except urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError:
         return None
 
 
@@ -91,9 +91,7 @@ def _version_tuple(v: str) -> tuple[int, ...]:
 
 
 def check_phantom_versions(
-    pyproject_path: str = "pyproject.toml",
-    *,
-    timeout: float = 5.0,
+    pyproject_path: str = "pyproject.toml", *, timeout: float = 5.0
 ) -> list[dict[str, str]]:
     """Проверяет все upper-bound pins в pyproject.toml против PyPI.
 
@@ -130,8 +128,7 @@ def check_phantom_versions(
                     "pinned": pinned_max,
                     "actual_max": actual_max,
                     "message": (
-                        f"PHANTOM: {name} pin {pinned_max} > "
-                        f"PyPI max {actual_max}"
+                        f"PHANTOM: {name} pin {pinned_max} > PyPI max {actual_max}"
                     ),
                 }
             )
@@ -139,9 +136,7 @@ def check_phantom_versions(
 
 
 def verify_pyproject_pins(
-    pyproject_path: str = "pyproject.toml",
-    *,
-    strict: bool = False,
+    pyproject_path: str = "pyproject.toml", *, strict: bool = False
 ) -> int:
     """Точка входа CLI. Returns exit code."""
     warnings = check_phantom_versions(pyproject_path)
@@ -157,9 +152,7 @@ def verify_pyproject_pins(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Exit 1 при phantom version warnings.",
+        "--strict", action="store_true", help="Exit 1 при phantom version warnings."
     )
     parser.add_argument(
         "--pyproject",

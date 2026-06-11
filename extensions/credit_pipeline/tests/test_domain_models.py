@@ -42,10 +42,7 @@ def test_credit_report_provider_literal_enforced() -> None:
 def test_credit_decision_literal_decision_enforced() -> None:
     """decision — литерал из {APPROVE, MANUAL_REVIEW, REJECT}."""
     valid = CreditDecision(
-        applicant_id=1,
-        decision="APPROVE",
-        combined_score=750,
-        risk_class="LOW",
+        applicant_id=1, decision="APPROVE", combined_score=750, risk_class="LOW"
     )
     assert valid.decision == "APPROVE"
     with pytest.raises(ValidationError):

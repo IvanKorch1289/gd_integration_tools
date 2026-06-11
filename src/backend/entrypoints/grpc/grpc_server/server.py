@@ -1,37 +1,19 @@
 from __future__ import annotations
-import uuid
-from typing import TYPE_CHECKING, Any
 
-import orjson
-
-from src.backend.core.serialization.msgspec_hotpath import encode_json
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import grpc
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
-from src.backend.core.errors import BaseError
-from src.backend.entrypoints.base import dispatch_action
-from src.backend.entrypoints.grpc.correlation import (
-    extract_correlation_id_from_grpc_context,
-)
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
-    InvokeResponse as InvokerInvokeResponse,
-)
+from src.backend.entrypoints.grpc.grpc_server.interceptor import AuthInterceptor
+from src.backend.entrypoints.grpc.grpc_server.invoker import InvokerGRPCServicer
+from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer
 from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
-    InvokerServiceServicer,
     add_InvokerServiceServicer_to_server,
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
-    DeleteResponse as OrderDeleteResponse,
-)
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore[attr-defined]
-    OrderDetailResponse,
-    OrderResponse,
-)
 from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
-    OrderServiceServicer,
     add_OrderServiceServicer_to_server,
 )
 
@@ -40,27 +22,6 @@ grpc_logger = get_grpc_logger_provider()
 # S17 K3 W3 (D12): helper для извлечения correlation_id вынесен в
 # ``grpc/correlation.py`` (имп. наверху), чтобы тесты могли импортировать
 # без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
-
-
-
-
-def _safe_error(exc: Exception, correlation_id: str) -> str:
-    """Формирует безопасное сообщение об ошибке для gRPC client (IL-CRIT1.2).
-
-    Политика:
-      * ``BaseError`` (наши domain errors) — выдаём ``exc.message`` как есть:
-        это типизированные, контролируемые сообщения без sensitive data.
-      * Любые другие Exception — generic "Internal server error" +
-        correlation_id для корреляции с server-side logs.
-
-    Никогда не отправляем клиенту ``str(exc)`` / traceback / module-path —
-    это leak информации о внутренней реализации (кроме контролируемых
-    BaseError сообщений).
-    """
-    if isinstance(exc, BaseError):
-        return exc.message
-    return f"Internal server error; ref={correlation_id}"
-
 
 
 def _load_tls_credentials() -> "grpc.ServerCredentials | None":
@@ -98,7 +59,6 @@ def _load_tls_credentials() -> "grpc.ServerCredentials | None":
     )
 
 
-
 async def serve() -> None:
     """Запуск gRPC-сервера с регистрацией всех servicer."""
     from concurrent import futures
@@ -113,8 +73,9 @@ async def serve() -> None:
     if api_key:
         interceptors.append(AuthInterceptor(expected_key=api_key))
 
+    executor = futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers)
     grpc_server = server(
-        futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers),
+        executor,
         options=[
             ("grpc.so_reuseport", 1),
             ("grpc.max_send_message_length", 100 * 1024 * 1024),
@@ -148,7 +109,6 @@ async def serve() -> None:
         await grpc_server.wait_for_termination()
     except KeyboardInterrupt:
         grpc_logger.info("Остановка gRPC-сервера...")
+    finally:
         await grpc_server.stop(5)
-
-
-
+        executor.shutdown(wait=True)

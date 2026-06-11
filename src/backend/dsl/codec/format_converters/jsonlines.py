@@ -4,10 +4,9 @@ Classes: JsonLinesEncodeProcessor, JsonLinesDecodeProcessor.
 
 JSON Lines encode + decode.
 """
+
 from __future__ import annotations
 
-import datetime as _dt
-import importlib
 import io
 import json
 from typing import Any, ClassVar
@@ -19,6 +18,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 _logger = get_logger("dsl.format_converters")
+
 
 class JsonLinesEncodeProcessor(BaseProcessor):
     """list[dict] → NDJSON-строка (одна запись на строку)."""
@@ -48,6 +48,7 @@ class JsonLinesEncodeProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"jsonl_encode": {}}
+
 
 class JsonLinesDecodeProcessor(BaseProcessor):
     """NDJSON-строка → list[dict] (построчное чтение через ``json``)."""
@@ -87,4 +88,3 @@ class JsonLinesDecodeProcessor(BaseProcessor):
         if self._ignore_blank is not True:
             spec["ignore_blank_lines"] = self._ignore_blank
         return {"jsonl_decode": spec}
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W1 - etl_pipeline blueprint extracted from macros.py.
 
 ETL pipeline blueprint (extract-transform-load).
@@ -11,11 +12,11 @@ from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
-    DeadLetterProcessor,
     DispatchActionProcessor,
     LogProcessor,
     RetryProcessor,
 )
+
 
 def etl_pipeline(
     route_id: str,

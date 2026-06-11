@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Admin plugins API endpoints (S62 W1 decomp from admin_plugins.py 514 LOC).
 
 11 schemas + 13 funcs decomposed в 3 files:
@@ -10,30 +11,36 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_plugins i
 """
 
 
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginSummary  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginManifest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginToggleRequest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginToggleResponse  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginVersionsResponse  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginDiffResponse  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginRollbackRequest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginRollbackResponse  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginDependencyGraph  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginScaffoldRequest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import PluginScaffoldResponse  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import _check_flag_enabled  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import _get_plugin_registry  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import _mock_plugins  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import _mock_manifest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import _get_version_service  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import list_plugins  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import get_plugin_manifest  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import toggle_plugin  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import list_plugin_versions  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import diff_plugin_versions  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import rollback_plugin  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import get_dependency_graph  # S62 W1: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import scaffold_plugin_endpoint  # S62 W1: re-export
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
+    diff_plugin_versions,  # S62 W1: re-export
+    get_dependency_graph,  # S62 W1: re-export
+    get_plugin_manifest,  # S62 W1: re-export
+    list_plugin_versions,  # S62 W1: re-export
+    list_plugins,  # S62 W1: re-export
+    rollback_plugin,  # S62 W1: re-export
+    scaffold_plugin_endpoint,  # S62 W1: re-export
+    toggle_plugin,  # S62 W1: re-export
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import (
+    _check_flag_enabled,  # S62 W1: re-export
+    _get_plugin_registry,  # S62 W1: re-export
+    _get_version_service,  # S62 W1: re-export
+    _mock_manifest,  # S62 W1: re-export
+    _mock_plugins,  # S62 W1: re-export
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
+    PluginDependencyGraph,  # S62 W1: re-export
+    PluginDiffResponse,  # S62 W1: re-export
+    PluginManifest,  # S62 W1: re-export
+    PluginRollbackRequest,  # S62 W1: re-export
+    PluginRollbackResponse,  # S62 W1: re-export
+    PluginScaffoldRequest,  # S62 W1: re-export
+    PluginScaffoldResponse,  # S62 W1: re-export
+    PluginSummary,  # S62 W1: re-export
+    PluginToggleRequest,  # S62 W1: re-export
+    PluginToggleResponse,  # S62 W1: re-export
+    PluginVersionsResponse,  # S62 W1: re-export
+)
 
 __all__ = (
     "PluginSummary",

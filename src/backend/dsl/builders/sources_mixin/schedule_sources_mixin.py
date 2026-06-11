@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
+
 
 class ScheduleSourcesMixin:
     """schedule-based source registration для RouteBuilder. S57 W2 extraction."""
@@ -54,4 +55,3 @@ class ScheduleSourcesMixin:
             {"type": "schedule", "cron_expr": cron_expr, **kwargs},
         )
         return builder
-

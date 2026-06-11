@@ -52,9 +52,7 @@ def apply_rules(body: dict[str, Any]) -> dict[str, Any]:
     return body
 
 
-def calculate_combined_score(
-    skb_score: int | None, nbki_score: int | None
-) -> int:
+def calculate_combined_score(skb_score: int | None, nbki_score: int | None) -> int:
     """Объединяет SKB и НБКИ скоры по weighted-average.
 
     Args:

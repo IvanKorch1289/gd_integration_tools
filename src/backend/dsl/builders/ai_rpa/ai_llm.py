@@ -23,13 +23,11 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 
-
-
 class AILlMMixin:
     """Поведенческий миксин AI / LLM для ``RouteBuilder``.
 
-Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
-"""
+    Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
+    """
 
     __slots__ = ()
 
@@ -45,15 +43,11 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             )
         )
 
-
-
     def agent_graph(self, graph_name: str, tools: list[str]) -> RouteBuilder:
         """Запуск LangGraph-агента."""
         return self._add(  # type: ignore[attr-defined]
             AgentGraphProcessor(graph_name=graph_name, tools=tools)
         )
-
-
 
     def scrape(
         self,
@@ -70,8 +64,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             selectors=selectors,
             output_property=output_property,
         )
-
-
 
     def paginate(
         self,
@@ -91,8 +83,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             start_url=start_url,
         )
 
-
-
     def api_proxy(
         self,
         base_url: str,
@@ -111,8 +101,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             timeout=timeout,
         )
 
-
-
     def rag_search(
         self,
         query_field: str = "question",
@@ -127,8 +115,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             top_k=top_k,
             namespace=namespace,
         )
-
-
 
     def rag_query(
         self,
@@ -161,8 +147,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             output_property=output_property,
         )
 
-
-
     def rag_ingest(
         self,
         *,
@@ -186,8 +170,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             output_property=output_property,
         )
 
-
-
     def compose_prompt(
         self, template: str, context_property: str = "vector_results"
     ) -> RouteBuilder:
@@ -198,8 +180,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             template=template,
             context_property=context_property,
         )
-
-
 
     def call_llm(
         self, provider: str | None = None, model: str | None = None
@@ -212,15 +192,11 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             model=model,
         )
 
-
-
     def parse_llm_output(self, schema: type | None = None) -> RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema
         )
-
-
 
     def token_budget(self, max_tokens: int = 4096) -> RouteBuilder:
         """Ограничение по токенам (tiktoken) — обрезка текста до лимита."""
@@ -230,23 +206,17 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             max_tokens=max_tokens,
         )
 
-
-
     def sanitize_pii(self) -> RouteBuilder:
         """Маскирование PII (email/phone/СНИЛС/карт) перед LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "SanitizePIIProcessor"
         )
 
-
-
     def restore_pii(self) -> RouteBuilder:
         """Восстановление PII в ответе после LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "RestorePIIProcessor"
         )
-
-
 
     def get_feedback_examples(
         self,
@@ -275,8 +245,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             inject_as=inject_as,
         )
 
-
-
     def publish_event(self, channel: str) -> RouteBuilder:
         """Публикация события через EventBus."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -284,8 +252,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             "EventPublishProcessor",
             channel=channel,
         )
-
-
 
     def load_memory(self, session_id_header: str = "X-Session-Id") -> RouteBuilder:
         """Загрузка conversation/facts из AgentMemory (Redis)."""
@@ -295,11 +261,8 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             session_id_header=session_id_header,
         )
 
-
-
     def save_memory(self) -> RouteBuilder:
         """Сохранение результата в AgentMemory."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "MemorySaveProcessor"
         )
-

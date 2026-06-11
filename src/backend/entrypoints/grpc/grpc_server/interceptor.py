@@ -1,52 +1,22 @@
 from __future__ import annotations
+
 """S65 W3 — interceptor.py part of grpc_server decomp.
 
 Classes: AuthInterceptor.
 """
 
-import uuid
 from typing import TYPE_CHECKING, Any
 
-import orjson
-
-from src.backend.core.serialization.msgspec_hotpath import encode_json
-
 if TYPE_CHECKING:
-    import grpc
+    pass
 
-from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
-from src.backend.core.errors import BaseError
-from src.backend.entrypoints.base import dispatch_action
-from src.backend.entrypoints.grpc.correlation import (
-    extract_correlation_id_from_grpc_context,
-)
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
-    InvokeResponse as InvokerInvokeResponse,
-)
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
-    InvokerServiceServicer,
-    add_InvokerServiceServicer_to_server,
-)
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
-    DeleteResponse as OrderDeleteResponse,
-)
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore[attr-defined]
-    OrderDetailResponse,
-    OrderResponse,
-)
-from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
-    OrderServiceServicer,
-    add_OrderServiceServicer_to_server,
-)
 
 grpc_logger = get_grpc_logger_provider()
 
 # S17 K3 W3 (D12): helper для извлечения correlation_id вынесен в
 # ``grpc/correlation.py`` (имп. наверху), чтобы тесты могли импортировать
 # без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
-
-
 
 
 class AuthInterceptor:
@@ -84,6 +54,3 @@ class AuthInterceptor:
 
             return _abort
         return await continuation(handler_call_details)
-
-
-

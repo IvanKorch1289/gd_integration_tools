@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """IntegrationCoreMixin package (S62 W3 decomp from integration_core.py 498 LOC).
 
 15 methods decomposed в 4 mixin files:
@@ -19,10 +20,20 @@ if TYPE_CHECKING:
     pass
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.integration_core.ai_mixin import AiOpsMixin  # S62 W3: MRO
+from src.backend.dsl.builders.integration_core.core_mixin import (
+    CoreDispatchMixin,  # S62 W3: MRO
+)
+from src.backend.dsl.builders.integration_core.utils_mixin import (
+    UtilsMixin,  # S62 W3: MRO
+)
+from src.backend.dsl.builders.integration_core.workflow_mixin import (
+    WorkflowOpsMixin,  # S62 W3: MRO
+)
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import (
     DispatchActionProcessor,
@@ -30,21 +41,10 @@ from src.backend.dsl.engine.processors import (
 )
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 
-from src.backend.dsl.builders.integration_core.core_mixin import CoreDispatchMixin  # S62 W3: MRO
-from src.backend.dsl.builders.integration_core.workflow_mixin import WorkflowOpsMixin  # S62 W3: MRO
-from src.backend.dsl.builders.integration_core.utils_mixin import UtilsMixin  # S62 W3: MRO
-from src.backend.dsl.builders.integration_core.ai_mixin import AiOpsMixin  # S62 W3: MRO
+__all__ = ("IntegrationCoreMixin",)
 
-__all__ = (
-    "IntegrationCoreMixin",
-)
 
-class IntegrationCoreMixin(
-    CoreDispatchMixin,
-    WorkflowOpsMixin,
-    UtilsMixin,
-    AiOpsMixin,
-):
+class IntegrationCoreMixin(CoreDispatchMixin, WorkflowOpsMixin, UtilsMixin, AiOpsMixin):
     """Integration core mixin (4 mixins = 15 methods)."""
 
     __slots__ = ()

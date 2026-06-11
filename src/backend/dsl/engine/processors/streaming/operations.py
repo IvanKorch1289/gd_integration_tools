@@ -35,9 +35,8 @@ logger = get_logger("dsl.streaming")
 # ──────────────────── Message Expiration ────────────────────
 
 
-
-
 # ── pipeline operations (ChannelPurger, Sampling) ──
+
 
 class ChannelPurgerProcessor(BaseProcessor):
     """Очистка очереди/стрима (admin-операция для DLQ, устаревших потоков).
@@ -78,7 +77,6 @@ class ChannelPurgerProcessor(BaseProcessor):
         }
 
 
-
 class SamplingProcessor(BaseProcessor):
     """Вероятностный сэмплинг — пропускает сообщение с вероятностью ``probability``.
 
@@ -98,4 +96,3 @@ class SamplingProcessor(BaseProcessor):
             exchange.properties["_sampled_out"] = True
             # Помечаем как завершённое без ошибки, но downstream должен фильтровать.
             exchange.properties["_skip_downstream"] = True
-

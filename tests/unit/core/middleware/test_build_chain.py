@@ -99,8 +99,7 @@ def test_build_chain_exclude() -> None:
     """
     reg = _make_registry_with_3()
     config = RouteMiddlewareConfig(
-        include=["rate_limit", "audit", "auth"],
-        exclude=["audit"],
+        include=["rate_limit", "audit", "auth"], exclude=["audit"]
     )
 
     result = reg.build_chain("app", config)
@@ -149,8 +148,7 @@ def test_build_chain_all_excluded_returns_app_as_is() -> None:
     """include=[a, b] + exclude=[a, b] → app as-is."""
     reg = _make_registry_with_3()
     config = RouteMiddlewareConfig(
-        include=["rate_limit", "audit", "auth"],
-        exclude=["rate_limit", "audit", "auth"],
+        include=["rate_limit", "audit", "auth"], exclude=["rate_limit", "audit", "auth"]
     )
 
     result = reg.build_chain("app", config)

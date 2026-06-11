@@ -64,7 +64,7 @@ class TestGatherWithTimeout:
     @pytest.mark.asyncio
     async def test_gather_timeout_raises(self) -> None:
         async def slow() -> str:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
             return "too late"
 
         with pytest.raises(asyncio.TimeoutError):
@@ -84,7 +84,7 @@ class TestAsyncWithTimeout:
     @pytest.mark.asyncio
     async def test_returns_default_on_timeout(self) -> None:
         async def slow() -> str:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
             return "too late"
 
         result = await async_with_timeout(slow(), timeout=0.01, default="fallback")
@@ -93,7 +93,7 @@ class TestAsyncWithTimeout:
     @pytest.mark.asyncio
     async def test_returns_none_default_on_timeout(self) -> None:
         async def slow() -> str:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
             return "too late"
 
         result = await async_with_timeout(slow(), timeout=0.01)

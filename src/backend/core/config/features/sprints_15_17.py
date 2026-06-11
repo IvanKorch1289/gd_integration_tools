@@ -59,30 +59,6 @@ class Sprints1517Flags(BaseSettings):
         ),
     )
 
-    arch_map_llm_search_enabled: bool = Field(
-        default=False,
-        title="K4 S15 W18: Arch Map semantic search через LiteLLM (page 83)",
-        description=(
-            "K4 Sprint 15 Wave 18 (wave:s15/k4-w2-arch-map-llm-search). "
-            "Owner: K4 AI/Innovation. Активирует ArchMapLLMSearch — semantic "
-            "search по графу архитектуры через LiteLLM gateway + capability "
-            "ai.search.arch_map. При False — fallback на keyword grep. "
-            "default-OFF до staging-smoke с LiteLLM + audit-event coverage."
-        ),
-    )
-
-    ai_pr_review_enabled: bool = Field(
-        default=False,
-        title="K4 S15 W16: AI PR review GitHub Action (Claude API + WAF)",
-        description=(
-            "K4 Sprint 15 Wave 16 (wave:s15/k4-w1-ai-pr-review). "
-            "Owner: K4 AI/Innovation. Активирует .github/workflows/ai-pr-review.yml "
-            "Claude API review через make_http_client (WAF compliance). "
-            "При False — workflow self-skip через if-condition. "
-            "default-OFF до публикации ANTHROPIC_API_KEY secret и smoke."
-        ),
-    )
-
     dsl_visual_editor_drag_drop: bool = Field(
         default=False,
         title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
@@ -146,17 +122,6 @@ class Sprints1517Flags(BaseSettings):
         ),
     )
 
-    apscheduler_metrics: bool = Field(
-        default=False,
-        title="K2 S17 W4: APScheduler Prometheus exporter + Grafana alert",
-        description=(
-            "K2 Sprint 17 Wave W4 (D13b). Owner: K2 Observability. ETA: S17. "
-            "Активирует APSchedulerMetricsExporter — job_executions_total / "
-            "job_misfires_total / job_duration_seconds. Grafana alert на "
-            "missing-jobs > 0 в окне 5m. default-OFF до развёртывания Grafana dashboard."
-        ),
-    )
-
     authz_gateway_enabled: bool = Field(
         default=False,
         title="K1 S17 W2: AuthorizationGateway единый фасад (Casbin+OPA+CapabilityGate)",
@@ -168,19 +133,6 @@ class Sprints1517Flags(BaseSettings):
             "Цепочка: CapabilityGate → CapabilityPolicy → Casbin → OPA с единым "
             "correlation_id. Audit-event authorization.decision на каждое решение. "
             "default-OFF до миграции всех non-public endpoint-guard'ов."
-        ),
-    )
-
-    audit_correlation_required: bool = Field(
-        default=False,
-        title="K3 S17 W3: correlation_id обязателен в 100% audit events (D12)",
-        description=(
-            "K3 Sprint 17 Wave W3 (D12). Owner: K3 Routes. ETA: S17. "
-            "Активирует strict-валидацию: audit emit БЕЗ correlation_id поднимает "
-            "AuditCorrelationError. Propagation через contextvars в MW → "
-            "audit → outbound_http → DSL processors. End-to-end test: "
-            "3+ источников в SELECT * FROM audit WHERE correlation_id = X. "
-            "default-OFF до миграции всех audit callsites."
         ),
     )
 

@@ -21,9 +21,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 
-
-
-
 class BankingScriptsMixin:
     """banking AI + script execution (kyc_aml / antifraud / credit / customer / appeal / tx / findoc + script_* методы) для ``RouteBuilder``. S52 W1 extraction."""
 
@@ -39,8 +36,6 @@ class BankingScriptsMixin:
             KycAmlVerifyProcessor(jurisdiction=jurisdiction)
         )
 
-
-
     def antifraud_score(self, model: str = "default") -> RouteBuilder:
         """LLM-скоринг антифрода (поверх детерминистических правил)."""
         from src.backend.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
@@ -48,8 +43,6 @@ class BankingScriptsMixin:
         return self._add(  # type: ignore[attr-defined]
             AntiFraudScoreProcessor(model=model)
         )
-
-
 
     def credit_scoring_rag(self, product: str = "retail") -> RouteBuilder:
         """Кредитный скоринг через RAG."""
@@ -61,8 +54,6 @@ class BankingScriptsMixin:
             CreditScoringRagProcessor(product=product)
         )
 
-
-
     def customer_chatbot(self, channel: str = "web") -> RouteBuilder:
         """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
         from src.backend.dsl.engine.processors.ai_banking import (
@@ -73,15 +64,11 @@ class BankingScriptsMixin:
             CustomerChatbotProcessor(channel=channel)
         )
 
-
-
     def appeal_ai(self) -> RouteBuilder:
         """Автоматическая обработка клиентских обращений."""
         from src.backend.dsl.engine.processors.ai_banking import AppealProcessorAI
 
         return self._add(AppealProcessorAI())  # type: ignore[attr-defined]
-
-
 
     def tx_categorize(self, taxonomy: str = "mcc") -> RouteBuilder:
         """Категоризация транзакций (MCC + merchant normalization)."""
@@ -93,8 +80,6 @@ class BankingScriptsMixin:
             TransactionCategorizerProcessor(taxonomy=taxonomy)
         )
 
-
-
     def findoc_ocr_llm(self, doc_type: str = "invoice") -> RouteBuilder:
         """OCR + LLM для финансовых документов."""
         from src.backend.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
@@ -102,8 +87,6 @@ class BankingScriptsMixin:
         return self._add(  # type: ignore[attr-defined]
             FinDocOcrLlmProcessor(doc_type=doc_type)
         )
-
-
 
     def script_python(
         self,
@@ -132,8 +115,6 @@ class BankingScriptsMixin:
             )
         )
 
-
-
     def script_node(
         self,
         code: str,
@@ -156,8 +137,6 @@ class BankingScriptsMixin:
                 allowed_languages=allowed_languages,
             )
         )
-
-
 
     def script_ruby(
         self,
@@ -182,8 +161,6 @@ class BankingScriptsMixin:
             )
         )
 
-
-
     def script_shell(
         self,
         code: str,
@@ -206,4 +183,3 @@ class BankingScriptsMixin:
                 allowed_languages=allowed_languages,
             )
         )
-

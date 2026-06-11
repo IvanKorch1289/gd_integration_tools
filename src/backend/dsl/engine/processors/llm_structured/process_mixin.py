@@ -1,16 +1,16 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
-
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
@@ -21,6 +21,7 @@ _logger = get_logger(__name__)
 _DEFAULT_TEMPERATURE: float = 0.0
 # Максимальное число instructor-retries (внутренний цикл валидации Pydantic).
 _DEFAULT_RETRY: int = 3
+
 
 @processor(
     "llm_structured",
@@ -46,7 +47,6 @@ _DEFAULT_RETRY: int = 3
     meta={"tier": 2, "category": "ai", "version": "v17"},
     tags=("ai", "llm", "structured-output"),
 )
-
 class ProcessMixin:
     """process + call_with_completion (LLM call flow) для LLMStructuredProcessor. S65 W2 extraction."""
 
@@ -164,4 +164,3 @@ class ProcessMixin:
         # через litellm.completion_cost(); raw_response = None.
         result = await call()
         return result, None
-

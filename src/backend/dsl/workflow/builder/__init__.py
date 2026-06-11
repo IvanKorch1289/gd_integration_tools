@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """WorkflowBuilder package (S58 W4 decomp from builder.py 554 LOC).
 
 21 methods decomposed в 6 mixin files:
@@ -21,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -40,25 +41,20 @@ from src.backend.dsl.workflow.spec import (
 if TYPE_CHECKING:
     from src.backend.dsl.workflow.gateways import BranchSpec
 
-from src.backend.dsl.workflow.builder.sla_mixin import SlaMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.workflow_mixin import WorkflowMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.wait_mixin import WaitMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.gateway_mixin import GatewayMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.lifecycle_mixin import LifecycleMixin  # S58 W4: MRO
-
-__all__ = (
-    "WorkflowBuilder",
-    "SagaBuilder",
+from src.backend.dsl.workflow.builder.gateway_mixin import GatewayMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.lifecycle_mixin import (
+    LifecycleMixin,  # S58 W4: MRO
 )
+from src.backend.dsl.workflow.builder.sla_mixin import SlaMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.wait_mixin import WaitMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.workflow_mixin import WorkflowMixin  # S58 W4: MRO
+
+__all__ = ("WorkflowBuilder", "SagaBuilder")
+
 
 class WorkflowBuilder(
-    SlaMixin,
-    WorkflowMixin,
-    WaitMixin,
-    GatewayMixin,
-    AiAgentMixin,
-    LifecycleMixin,
+    SlaMixin, WorkflowMixin, WaitMixin, GatewayMixin, AiAgentMixin, LifecycleMixin
 ):
     """Workflow DSL builder (6 mixins = 17 methods + 4 core)."""
 
@@ -86,6 +82,7 @@ class WorkflowBuilder(
         """Установить default retry-политику workflow."""
         self._default_retry_policy = policy
         return self
+
 
 class SagaBuilder:
     """Саб-builder saga-шага. Аккумулирует forward/compensate цепочки.

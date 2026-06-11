@@ -90,14 +90,6 @@ invoker:
   streaming_chunk_buffer_size: 64
 
 
-# W22 F.2 C2 — TaskIQ-брокер для ASYNC_QUEUE.
-taskiq:
-  enabled: false
-  broker_url: "memory://"
-  result_backend_url: "memory://"
-  queue_name: "invocations"
-
-
 grpc:
   socket_path: "/tmp/order_service.sock"
   max_workers: 20

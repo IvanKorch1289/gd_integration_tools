@@ -99,7 +99,6 @@ def create_mcp_server() -> Any:
     return mcp
 
 
-
 def register_mcp_tools(mcp: Any) -> None:
     """Регистрирует все actions из ActionHandlerRegistry как MCP tools.
 
@@ -115,4 +114,3 @@ def register_mcp_tools(mcp: Any) -> None:
         "Зарегистрировано %d action MCP tools",
         len(action_handler_registry.list_actions()),
     )
-

@@ -1,15 +1,10 @@
 from __future__ import annotations
-import re
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+import re
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 # ─── Constants & defaults ──────────────────────────────────────────────
 
@@ -29,6 +24,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # Patterns are deliberately permissive to keep confidence ≥ threshold
 # on well-formed documents.
 
+
 def _invoice_extractors() -> list[_FieldPattern]:
     return [
         _FieldPattern("invoice_number", r"invoice\s*#?\s*[:\-]?\s*(\w+[\w\-]*)"),
@@ -41,6 +37,7 @@ def _invoice_extractors() -> list[_FieldPattern]:
         ),
     ]
 
+
 def _contract_extractors() -> list[_FieldPattern]:
     return [
         _FieldPattern("party_a", r"party\s*a\s*[:\-]?\s*([A-Za-z0-9 ,.&'\-]{2,60})"),
@@ -52,6 +49,7 @@ def _contract_extractors() -> list[_FieldPattern]:
         _FieldPattern("term", r"term\s*[:\-]?\s*([0-9]+)\s*(year|month|day)s?"),
     ]
 
+
 def _receipt_extractors() -> list[_FieldPattern]:
     return [
         _FieldPattern("merchant", r"merchant\s*[:\-]?\s*([A-Za-z0-9 ,.&'\-]{2,40})"),
@@ -59,6 +57,7 @@ def _receipt_extractors() -> list[_FieldPattern]:
         _FieldPattern("tax", r"tax\s*[:\-]?\s*\$?([\d,]+\.?\d*)"),
         _FieldPattern("total", r"total\s*[:\-]?\s*\$?([\d,]+\.?\d*)"),
     ]
+
 
 def _default_extractors_for(doc_type: str) -> list[_FieldPattern]:
     """Return default regex extractors for a given document type."""
@@ -69,6 +68,7 @@ def _default_extractors_for(doc_type: str) -> list[_FieldPattern]:
     if doc_type == "receipt":
         return _receipt_extractors()
     return []
+
 
 def classify_document(text: str) -> str:
     """Classify text into ``invoice | contract | receipt | other``.
@@ -94,6 +94,7 @@ def classify_document(text: str) -> str:
             best_count = count
             best_type = doc_type
     return best_type
+
 
 def extract_fields(
     text: str, doc_type: str, *, extractors: dict[str, list[str]] | None = None
@@ -141,10 +142,12 @@ def extract_fields(
         out[name] = value
     return out
 
+
 def _rule_required_present(result: IDPResult, _text: str) -> str | None:
     if not result.fields:
         return "no fields extracted"
     return None
+
 
 def _rule_total_positive(result: IDPResult, _text: str) -> str | None:
     """Total field, if present, must parse to a number > 0."""
@@ -153,11 +156,12 @@ def _rule_total_positive(result: IDPResult, _text: str) -> str | None:
     raw = result.fields["total"].replace(",", "")
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return f"total is not numeric: {result.fields['total']!r}"
     if value <= 0:
         return f"total must be > 0, got {value}"
     return None
+
 
 def validate_result(
     result: IDPResult, text: str, *, validators: list[str] | None = None
@@ -189,6 +193,7 @@ def validate_result(
     result.validation_errors = errors
     return errors
 
+
 def _coerce_to_text(body: Any) -> str:
     """Convert a body of any supported type into a searchable text.
 
@@ -206,4 +211,3 @@ def _coerce_to_text(body: Any) -> str:
 
         return json.dumps(body, default=str)
     return str(body)
-

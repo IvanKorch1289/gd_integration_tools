@@ -19,23 +19,28 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
     from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+    from src.backend.core.interfaces.ai_clients import (
+        AISanitizerProtocol,
+        HttpClientProtocol,
+    )
 
-from src.backend.services.ai.ai_agent.http_providers_mixin import HttpProvidersMixin  # S54 W2: MRO
-from src.backend.services.ai.ai_agent.web_methods_mixin import WebMethodsMixin  # S54 W2: MRO
-from src.backend.services.ai.ai_agent.agent_orchestration_mixin import AgentOrchestrationMixin  # S54 W2: MRO
-from src.backend.services.ai.ai_agent.rag_mixin import RagMixin  # S54 W2: MRO
+from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (
+    AgentOrchestrationMixin,  # S54 W2: MRO
+)
+from src.backend.services.ai.ai_agent.http_providers_mixin import (
+    HttpProvidersMixin,  # S54 W2: MRO
+)
 from src.backend.services.ai.ai_agent.policy_mixin import PolicyMixin  # S54 W2: MRO
+from src.backend.services.ai.ai_agent.rag_mixin import RagMixin  # S54 W2: MRO
+from src.backend.services.ai.ai_agent.web_methods_mixin import (
+    WebMethodsMixin,  # S54 W2: MRO
+)
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 
 
 class AIAgentService(
-    HttpProvidersMixin,
-    WebMethodsMixin,
-    AgentOrchestrationMixin,
-    RagMixin,
-    PolicyMixin,
+    HttpProvidersMixin, WebMethodsMixin, AgentOrchestrationMixin, RagMixin, PolicyMixin
 ):
     """AI Agent Service (5 mixins = 16 methods + 3 core)."""
 
@@ -76,14 +81,10 @@ class AIAgentService(
             "open_webui": self._call_open_webui,
         }
 
-
-
     def _get_http_client(self) -> HttpClientProtocol:
         # Wave 6.3: lazy-резолв через core/di.providers — без прямого
         # импорта infrastructure/*.
         return get_http_client_provider()
-
-
 
     @staticmethod
     def _extract_agent_response(result: Any) -> str:
@@ -103,8 +104,6 @@ class AIAgentService(
         return str(result)
 
 
-
 def get_ai_agent_service() -> AIAgentService:
     """Фабрика AI-сервиса."""
     raise NotImplementedError  # заменяется декоратором
-

@@ -60,9 +60,7 @@ class TestAIFeedbackService:
 
     @pytest.mark.asyncio
     async def test_set_feedback(self, service: AIFeedbackService):
-        doc_id = await service.save_response(
-            query="q", response="r", agent_id="a1"
-        )
+        doc_id = await service.save_response(query="q", response="r", agent_id="a1")
         updated = await service.set_feedback(
             doc_id=doc_id, label="negative", comment="wrong", operator_id="op1"
         )

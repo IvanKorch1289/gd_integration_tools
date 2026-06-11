@@ -2,6 +2,7 @@
 
 Classes: VaultCertBackend.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
@@ -35,24 +36,17 @@ Hot-reload механизм:
 """
 
 import asyncio
-import hashlib
-from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
-
-from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
-from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
 
-@dataclass(slots=True)
 
+@dataclass(slots=True)
 class VaultCertBackend(CertBackend):
     """HashiCorp Vault KV v2 бэкенд (prod-рекомендация).
 
@@ -150,4 +144,3 @@ class VaultCertBackend(CertBackend):
         # Поиск по всем сертификатам в Vault через list — отдельный flow,
         # нужен только для admin-задач. Baseline — пустой результат.
         return []
-

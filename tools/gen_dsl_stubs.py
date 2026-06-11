@@ -70,10 +70,7 @@ _DEFAULT_TARGETS = (
 # Add an entry here whenever a same-module class is referenced but not
 # emitted by the generator. Format: (module_name, class_name) → stub block.
 _MANUAL_CLASS_BLOCKS: dict[tuple[str, str], str] = {
-    (
-        "src.backend.dsl.workflow.builder",
-        "SagaBuilder",
-    ): '''class SagaBuilder:
+    ("src.backend.dsl.workflow.builder", "SagaBuilder"): '''class SagaBuilder:
     """Саб-builder saga-шага. Аккумулирует forward/compensate цепочки.
 
     Manual stub — генератор пока не умеет emit-ить same-module classes.
@@ -105,7 +102,7 @@ _MANUAL_CLASS_BLOCKS: dict[tuple[str, str], str] = {
     def end_saga(self) -> "WorkflowBuilder":
         """Завершить саб-chain и вернуть родительский ``WorkflowBuilder``."""
         ...
-''',
+'''
 }
 
 
@@ -118,6 +115,7 @@ def _append_manual_blocks(content: str, module_name: str) -> str:
     if not blocks:
         return content
     return content.rstrip() + "\n\n\n" + "\n\n".join(blocks).rstrip() + "\n"
+
 
 _logger = logging.getLogger("tools.gen_dsl_stubs")
 
@@ -229,7 +227,7 @@ def _get_module_namespace(module_name: str) -> dict[str, Any]:
                                         ns[imp] = importlib.import_module(
                                             from_module
                                         ).__dict__[imp]
-                                    except (KeyError, ImportError):
+                                    except KeyError, ImportError:
                                         pass
                         i += 1
                     break  # Only handle first TYPE_CHECKING block
@@ -402,7 +400,7 @@ def _build_signature(
     """Вернуть ``(formatted_signature, return_type)``."""
     try:
         sig = inspect.signature(method)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return "(*args: Any, **kwargs: Any)", "Any"
     parts: list[str] = []
     has_self = False
@@ -677,7 +675,8 @@ def _collect_all_imports(
     # underlying .py file when it can't find them in the .pyi.
     if module_name:
         import_lines = [
-            line for line in import_lines
+            line
+            for line in import_lines
             if not line.startswith(f"from {module_name} import ")
         ]
 
@@ -750,7 +749,9 @@ def _collect_all_imports(
     return deduped
 
 
-def _resolve_in_mro(cls: type, name: str, target_module: str | None = None) -> str | None:
+def _resolve_in_mro(
+    cls: type, name: str, target_module: str | None = None
+) -> str | None:
     """Look up a name in all modules of the class's MRO.
 
     Returns FQ name like

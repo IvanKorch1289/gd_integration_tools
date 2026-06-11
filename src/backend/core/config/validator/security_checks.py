@@ -49,8 +49,6 @@ class SecurityChecksMixin:
             )
         ]
 
-
-
     def _check_waf_strict_allow_empty(
         self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
@@ -79,8 +77,6 @@ class SecurityChecksMixin:
                 context={"strict": waf.strict, "allow_hosts": list(waf.allow_hosts)},
             )
         ]
-
-
 
     def _check_clamav_fail_open_in_prod(
         self, app: AppBaseSettings, waf: WafSettings
@@ -114,8 +110,6 @@ class SecurityChecksMixin:
             )
         ]
 
-
-
     def _check_vault_disabled_in_prod(
         self, app: AppBaseSettings, vault: VaultSettings
     ) -> list[ConfigViolation]:
@@ -139,8 +133,6 @@ class SecurityChecksMixin:
                 context={"vault_enabled": vault.enabled},
             )
         ]
-
-
 
     def _check_cors_credentials_with_wildcard(
         self, secure: SecureSettings
@@ -176,8 +168,6 @@ class SecurityChecksMixin:
                 },
             )
         ]
-
-
 
     def _check_jwt_secret_too_short(
         self, app: AppBaseSettings, secure: SecureSettings
@@ -226,4 +216,3 @@ class SecurityChecksMixin:
                 },
             )
         ]
-

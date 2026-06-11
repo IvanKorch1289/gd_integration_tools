@@ -1,20 +1,14 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import re
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 # ─── Constants & defaults ──────────────────────────────────────────────
 
@@ -33,6 +27,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # Default extractors: dict[type] → list[(field_name, regex)].
 # Patterns are deliberately permissive to keep confidence ≥ threshold
 # on well-formed documents.
+
 
 class HelpersMixin:
     """pipeline helpers (_pattern_count + _result_to_dict) для IDPPipelineProcessor. S65 W4 extraction."""
@@ -54,4 +49,3 @@ class HelpersMixin:
             "auto_processed": result.auto_processed,
             "stage_reached": result.stage_reached,
         }
-

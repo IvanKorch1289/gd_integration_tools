@@ -148,20 +148,6 @@ class Sprints2427Flags(BaseSettings):
         ),
     )
 
-    ai_skill_toml_enabled: bool = Field(
-        default=False,
-        title="K2 S26 W5: SkillRegistry V11.2 TOML-manifest loader (ADR-NEW-22)",
-        description=(
-            "K2 Sprint 26 Wave 5 (ADR-NEW-22). Owner: K2 DSL. "
-            "При True SkillRegistry.from_toml_manifest() загружает skills из "
-            "plugin.toml [[skill]] секции (id, version, handler, capabilities, "
-            "policy_ref, protocols, timeout_s). Auto-export в MCP + LangGraph + "
-            "OpenAI tools. Hot-reload через watchfiles ≤2s. При False — только "
-            "legacy @agent_tool Python-декоратор путь. default-OFF до JSON-Schema "
-            "валидации `make skill-schema` 100% extension манифестов."
-        ),
-    )
-
     # ─── Sprint 27 — Agent DSL + MCP Gateway + Audit Unified ──────────────
     ai_agent_dsl_enabled: bool = Field(
         default=False,

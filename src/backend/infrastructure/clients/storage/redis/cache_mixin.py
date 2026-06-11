@@ -1,34 +1,20 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timedelta
-from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from redis.asyncio import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
-from redis.exceptions import RedisError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
-    ClientCircuitBreaker,
-)
 
 redis_logger = get_logger("redis")
 
 
-
 RedisKind = Literal["cache", "queue", "limits"]
-
-
 
 
 class CacheMixin:
@@ -63,8 +49,6 @@ class CacheMixin:
             return type(value)(items)
         return value
 
-
-
     async def _safe_close(self, client: Redis | None) -> None:
         if client is None:
             return
@@ -74,8 +58,6 @@ class CacheMixin:
             self.logger.warning(
                 "Ошибка закрытия Redis-клиента: %s", str(exc), exc_info=True
             )
-
-
 
     async def cache_get(self, key: str) -> bytes | None:
         """Возвращает значение из кэша по ключу.
@@ -88,8 +70,6 @@ class CacheMixin:
         """
         return await self.execute("cache", lambda conn: conn.get(key))
 
-
-
     async def cache_set(self, key: str, value: str | bytes, expire: int) -> None:
         """Записывает значение в кэш с TTL.
 
@@ -99,8 +79,6 @@ class CacheMixin:
             expire: TTL в секундах.
         """
         await self.execute("cache", lambda conn: conn.setex(key, expire, value))
-
-
 
     async def cache_delete(self, *keys: str) -> int:
         """Удаляет ключи из кэша (unlink).
@@ -114,8 +92,6 @@ class CacheMixin:
         if not keys:
             return 0
         return int(await self.execute("cache", lambda conn: conn.unlink(*keys)))
-
-
 
     async def bulk_get(self, keys: list[str]) -> list[bytes | None]:
         """Batch-чтение через non-transactional pipeline (Sprint 0).
@@ -142,8 +118,6 @@ class CacheMixin:
                 return await pipe.execute()
 
         return await self.execute("cache", op)
-
-
 
     async def bulk_set(
         self, items: dict[str, bytes | str], expire: int | None = None
@@ -173,8 +147,6 @@ class CacheMixin:
 
         await self.execute("cache", op)
 
-
-
     async def cache_delete_pattern(self, pattern: str) -> int:
         """Удаляет ключи по маске (scan_iter + unlink).
 
@@ -184,6 +156,7 @@ class CacheMixin:
         Returns:
             Число удалённых ключей.
         """
+
         async def op(conn: Redis) -> int:
             deleted = 0
             batch: list[bytes] = []
@@ -200,4 +173,3 @@ class CacheMixin:
             return deleted
 
         return int(await self.execute("cache", op))
-

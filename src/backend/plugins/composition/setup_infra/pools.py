@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S60 W3 — pools.py part of setup_infra decomp.
 
 Funcs: _register_pools_in_unified_manager, _warmup_connection_pools, _redis_enabled, _s3_enabled, _clickhouse_enabled.
@@ -6,27 +7,15 @@ Funcs: _register_pools_in_unified_manager, _warmup_connection_pools, _redis_enab
 connection pool registration + backend enablement checks.
 """
 
-from asyncio import to_thread
-from inspect import isawaitable
-from typing import Any, Awaitable, Callable
+from typing import Any
 
-from src.backend.infrastructure.clients.external.logger import get_graylog_handler
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
-from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
-from src.backend.infrastructure.database.database import (
-    get_db_initializer,
-    get_external_db_registry,
-)
-from src.backend.infrastructure.decorators.caching import close_caches
+from src.backend.infrastructure.database.database import get_db_initializer
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")
-
-
-
 
 
 async def _register_pools_in_unified_manager() -> None:
@@ -60,7 +49,9 @@ async def _register_pools_in_unified_manager() -> None:
                 pool,
                 ping_fn=_ping_db,
                 kind="sqlalchemy",
-                max_size=getattr(pool, "size", lambda: 0)() if callable(getattr(pool, "size", None)) else 0,
+                max_size=getattr(pool, "size", lambda: 0)()
+                if callable(getattr(pool, "size", None))
+                else 0,
             )
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager db_main skipped: %s", exc)
@@ -69,14 +60,12 @@ async def _register_pools_in_unified_manager() -> None:
     if _redis_enabled():
         try:
             redis_client = await get_redis_client().get_client("cache")
+
             async def _ping_redis() -> None:
                 await redis_client.ping()
 
             manager.register(
-                "redis_cache",
-                redis_client,
-                ping_fn=_ping_redis,
-                kind="redis",
+                "redis_cache", redis_client, ping_fn=_ping_redis, kind="redis"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager redis skipped: %s", exc)
@@ -85,15 +74,11 @@ async def _register_pools_in_unified_manager() -> None:
     if _s3_enabled():
         try:
             s3_client = get_s3_client()
+
             async def _ping_s3() -> None:
                 await s3_client.check_bucket_exists()
 
-            manager.register(
-                "s3_main",
-                s3_client,
-                ping_fn=_ping_s3,
-                kind="s3",
-            )
+            manager.register("s3_main", s3_client, ping_fn=_ping_s3, kind="s3")
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager s3 skipped: %s", exc)
 
@@ -101,20 +86,17 @@ async def _register_pools_in_unified_manager() -> None:
     if _clickhouse_enabled():
         try:
             ch_client = get_clickhouse_client()
+
             async def _ping_ch() -> None:
                 await ch_client.ping()
 
             manager.register(
-                "clickhouse_main",
-                ch_client,
-                ping_fn=_ping_ch,
-                kind="clickhouse",
+                "clickhouse_main", ch_client, ping_fn=_ping_ch, kind="clickhouse"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager clickhouse skipped: %s", exc)
 
     app_logger.info("UnifiedPoolManager registered %d pools", len(manager.list_pools()))
-
 
 
 async def _warmup_connection_pools() -> None:
@@ -166,7 +148,6 @@ async def _warmup_connection_pools() -> None:
     ).warmup()
 
 
-
 def _redis_enabled() -> bool:
     """Возвращает ``True``, если интеграция с Redis активна в текущем профиле.
 
@@ -180,14 +161,12 @@ def _redis_enabled() -> bool:
     return bool(getattr(settings.redis, "enabled", True))
 
 
-
 def _s3_enabled() -> bool:
     """Возвращает ``True`` для S3-провайдеров (skip для ``local`` и ``enabled=False``)."""
     from src.backend.core.config.settings import settings
 
     fs = settings.storage
     return bool(getattr(fs, "enabled", True)) and fs.provider != "local"
-
 
 
 def _clickhouse_enabled() -> bool:
@@ -200,6 +179,3 @@ def _clickhouse_enabled() -> bool:
     from src.backend.core.config.settings import settings
 
     return bool(getattr(settings.clickhouse, "enabled", False))
-
-
-

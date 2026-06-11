@@ -1,17 +1,13 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator, Mapping
-from contextlib import asynccontextmanager
-from functools import lru_cache
+from collections.abc import Mapping
 from logging import DEBUG
 from time import monotonic
-from typing import Any, BinaryIO, TypedDict
 
 import httpx
 from tenacity import (
@@ -24,11 +20,7 @@ from tenacity import (
 )
 
 from src.backend.core.config.constants import consts
-from src.backend.core.config.settings import settings
-from src.backend.core.utils.circuit_breaker import get_circuit_breaker
-from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.dsl.codec.json import json_dumps
-from src.backend.infrastructure.logging.factory import get_logger
+
 
 class RequestMixin:
     """request execution (make_request BIG 118 LOC, retry check, final error handler) для HttpClient. S61 W4 extraction."""
@@ -176,4 +168,3 @@ class RequestMixin:
             "elapsed": monotonic() - start_time,
             "error": str(exception) if exception else None,
         }
-

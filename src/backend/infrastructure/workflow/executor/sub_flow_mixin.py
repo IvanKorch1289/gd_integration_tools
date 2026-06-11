@@ -1,13 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import Literal
 
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
@@ -15,11 +14,7 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )
-from src.backend.infrastructure.workflow.runner import (
-    StepExecutor,
-    StepOutcome,
-    StepResult,
-)
+from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 
 _logger = get_logger("workflow.executor")
 
@@ -34,6 +29,7 @@ StepKind = Literal[
     "wait",  # durable pause (next_attempt_at)
     "compensate",  # rollback chain (failure-only)
 ]
+
 
 class SubFlowMixin:
     """sub_flow + wait control flow для DSLStepExecutor. S61 W3 extraction."""
@@ -98,4 +94,3 @@ class SubFlowMixin:
                 )
             ],
         )
-

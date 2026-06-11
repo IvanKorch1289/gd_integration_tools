@@ -18,6 +18,7 @@ from src.backend.core.config.base import (
     app_base_settings,
     scheduler_settings,
 )
+from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
 from src.backend.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
 from src.backend.core.config.database import (
     DatabaseConnectionSettings,
@@ -42,10 +43,13 @@ from src.backend.core.config.external_databases import (
     external_databases_settings,
 )
 from src.backend.core.config.http_base import HttpBaseSettings, http_base_settings
+from src.backend.core.config.influxdb import InfluxDBSettings, influxdb_settings
+from src.backend.core.config.lineage import LineageSettings, lineage_settings
 from src.backend.core.config.mongo import (
     MongoConnectionSettings,
     mongo_connection_settings,
 )
+from src.backend.core.config.rag import RAGSettings, rag_settings
 from src.backend.core.config.security import SecureSettings, secure_settings
 from src.backend.core.config.services import (
     CacheSettings,
@@ -57,6 +61,7 @@ from src.backend.core.config.services import (
     QueueSettings,
     RedisSettings,
     ResilienceSettings,
+    SMSSettings,
     SnapshotSettings,
     TasksSettings,
     WatermarkSettings,
@@ -69,6 +74,7 @@ from src.backend.core.config.services import (
     queue_settings,
     redis_settings,
     resilience_settings,
+    sms_settings,
     snapshot_settings,
     tasks_settings,
     watermark_settings,
@@ -125,6 +131,11 @@ class Settings(BaseSettings):
     nim: NimSettings = nim_settings
     openai: OpenAISettings = openai_settings
 
+    # RAG + JupyterHub + CertStore
+    rag: RAGSettings = rag_settings
+    jupyter_hub: JupyterHubSettings = jupyter_hub_settings
+    cert_store: CertStoreSettings = cert_store_settings
+
     # Хранилища
     storage: FileStorageSettings = fs_settings
     logging: LogStorageSettings = log_settings
@@ -132,9 +143,14 @@ class Settings(BaseSettings):
     mongo: MongoConnectionSettings = mongo_connection_settings
     cache: CacheSettings = cache_settings
     watermark: WatermarkSettings = watermark_settings
+    influxdb: InfluxDBSettings = influxdb_settings
 
     # DSL hot-reload (W25)
     dsl: DSLSettings = dsl_settings
+
+    # SMS + Lineage
+    sms: SMSSettings = sms_settings
+    lineage: LineageSettings = lineage_settings
 
     # V11 R1.fin (ADR-042/043/044): PluginLoaderV11 + RouteLoader feature-flags.
     v11: V11Settings = v11_settings

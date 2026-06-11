@@ -237,24 +237,6 @@ class Sprint5DSLFlags(BaseSettings):
         ),
     )
 
-    blueprint_cdc_enrich: bool = Field(
-        default=False,
-        title="K3 S5 W6: Blueprint cdc_enrich",
-        description=(
-            "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
-            "Активирует blueprint cdc_enrich (cdc → enrich → publish)."
-        ),
-    )
-
-    blueprint_ai_pipeline: bool = Field(
-        default=False,
-        title="K3 S5 W6: Blueprint ai_pipeline",
-        description=(
-            "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
-            "Активирует blueprint ai_pipeline (input → preprocess → llm → validate → output)."
-        ),
-    )
-
     blueprint_saga_compensation: bool = Field(
         default=False,
         title="K3 S5 W6: Blueprint saga_with_compensation",

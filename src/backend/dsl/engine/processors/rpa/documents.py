@@ -13,6 +13,7 @@ Categories:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -48,7 +49,7 @@ class PdfReadProcessor(BaseProcessor):
 
         body = exchange.in_message.body
         try:
-            text = read_pdf(body)
+            text = await asyncio.to_thread(read_pdf, body)
         except Exception as exc:
             exchange.fail(f"pdf_read failed: {exc}")
             return
@@ -62,14 +63,17 @@ class PdfReadProcessor(BaseProcessor):
             try:
                 import pdfplumber
 
-                with pdfplumber.open(
-                    io.BytesIO(body) if isinstance(body, bytes) else body
-                ) as pdf:
-                    tables = []
-                    for page in pdf.pages:
-                        for table in page.extract_tables():
-                            tables.append(table)
-                    result["tables"] = tables
+                def _extract_tables() -> list[Any]:
+                    with pdfplumber.open(
+                        io.BytesIO(body) if isinstance(body, bytes) else body
+                    ) as pdf:
+                        tables = []
+                        for page in pdf.pages:
+                            for table in page.extract_tables():
+                                tables.append(table)
+                        return tables
+
+                result["tables"] = await asyncio.to_thread(_extract_tables)
             except ImportError:
                 result["tables"] = []
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
@@ -80,7 +84,6 @@ class PdfReadProcessor(BaseProcessor):
         if self._tables:
             spec["extract_tables"] = True
         return {"pdf_read": spec}
-
 
 
 class PdfMergeProcessor(BaseProcessor):
@@ -105,22 +108,24 @@ class PdfMergeProcessor(BaseProcessor):
         if not isinstance(body, list):
             exchange.fail("pdf_merge expects list of PDF bytes")
             return
-        writer = PdfWriter()
-        for pdf_bytes in body:
-            if isinstance(pdf_bytes, bytes):
-                reader = PdfReader(io.BytesIO(pdf_bytes))
-                for page in reader.pages:
-                    writer.add_page(page)
-        output = io.BytesIO()
-        writer.write(output)
-        exchange.set_out(
-            body=output.getvalue(), headers=dict(exchange.in_message.headers)
-        )
+
+        def _merge() -> bytes:
+            writer = PdfWriter()
+            for pdf_bytes in body:
+                if isinstance(pdf_bytes, bytes):
+                    reader = PdfReader(io.BytesIO(pdf_bytes))
+                    for page in reader.pages:
+                        writer.add_page(page)
+            output = io.BytesIO()
+            writer.write(output)
+            return output.getvalue()
+
+        result = await asyncio.to_thread(_merge)
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         return {"pdf_merge": {}}
-
 
 
 class WordReadProcessor(BaseProcessor):
@@ -142,23 +147,27 @@ class WordReadProcessor(BaseProcessor):
             exchange.fail("python-docx not installed: pip install python-docx")
             return
         body = exchange.in_message.body
-        if isinstance(body, bytes):
-            doc = Document(io.BytesIO(body))
-        elif isinstance(body, str):
-            doc = Document(body)
-        else:
-            exchange.fail("word_read expects bytes or file path")
+
+        def _read() -> dict[str, Any]:
+            if isinstance(body, bytes):
+                doc = Document(io.BytesIO(body))
+            elif isinstance(body, str):
+                doc = Document(body)
+            else:
+                raise ValueError("word_read expects bytes or file path")
+            paragraphs = [p.text for p in doc.paragraphs]
+            return {"text": "\n".join(paragraphs), "paragraphs": paragraphs}
+
+        try:
+            result = await asyncio.to_thread(_read)
+        except Exception as exc:
+            exchange.fail(f"word_read failed: {exc}")
             return
-        paragraphs = [p.text for p in doc.paragraphs]
-        exchange.set_out(
-            body={"text": "\n".join(paragraphs), "paragraphs": paragraphs},
-            headers=dict(exchange.in_message.headers),
-        )
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         return {"word_read": {}}
-
 
 
 class WordWriteProcessor(BaseProcessor):
@@ -181,25 +190,32 @@ class WordWriteProcessor(BaseProcessor):
             exchange.fail("python-docx not installed: pip install python-docx")
             return
         body = exchange.in_message.body
-        doc = Document()
-        if isinstance(body, dict):
-            for p in body.get("paragraphs", []):
-                doc.add_paragraph(str(p))
-            if "text" in body and "paragraphs" not in body:
-                doc.add_paragraph(body["text"])
-        elif isinstance(body, str):
-            doc.add_paragraph(body)
-        else:
-            exchange.fail("word_write expects dict or str body")
+
+        def _write() -> bytes:
+            doc = Document()
+            if isinstance(body, dict):
+                for p in body.get("paragraphs", []):
+                    doc.add_paragraph(str(p))
+                if "text" in body and "paragraphs" not in body:
+                    doc.add_paragraph(body["text"])
+            elif isinstance(body, str):
+                doc.add_paragraph(body)
+            else:
+                raise ValueError("word_write expects dict or str body")
+            buf = io.BytesIO()
+            doc.save(buf)
+            return buf.getvalue()
+
+        try:
+            result = await asyncio.to_thread(_write)
+        except Exception as exc:
+            exchange.fail(f"word_write failed: {exc}")
             return
-        buf = io.BytesIO()
-        doc.save(buf)
-        exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         return {"word_write": {}}
-
 
 
 class ExcelReadProcessor(BaseProcessor):
@@ -224,21 +240,27 @@ class ExcelReadProcessor(BaseProcessor):
             exchange.fail("openpyxl not installed: pip install openpyxl")
             return
         body = exchange.in_message.body
-        if isinstance(body, bytes):
-            wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
-        elif isinstance(body, str):
-            wb = load_workbook(body, read_only=True, data_only=True)
-        else:
-            exchange.fail("excel_read expects bytes or file path")
+
+        def _read() -> list[dict[str, Any]]:
+            if isinstance(body, bytes):
+                wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
+            elif isinstance(body, str):
+                wb = load_workbook(body, read_only=True, data_only=True)
+            else:
+                raise ValueError("excel_read expects bytes or file path")
+            ws = wb[self._sheet] if self._sheet else wb.active
+            rows = list(ws.iter_rows(values_only=True))
+            wb.close()
+            if not rows:
+                return []
+            headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
+            return [dict(zip(headers, row, strict=False)) for row in rows[1:]]
+
+        try:
+            data = await asyncio.to_thread(_read)
+        except Exception as exc:
+            exchange.fail(f"excel_read failed: {exc}")
             return
-        ws = wb[self._sheet] if self._sheet else wb.active
-        rows = list(ws.iter_rows(values_only=True))
-        wb.close()
-        if not rows:
-            exchange.set_out(body=[], headers=dict(exchange.in_message.headers))
-            return
-        headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
-        data = [dict(zip(headers, row, strict=False)) for row in rows[1:]]
         exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -247,4 +269,3 @@ class ExcelReadProcessor(BaseProcessor):
         if self._sheet is not None:
             spec["sheet_name"] = self._sheet
         return {"excel_read": spec}
-

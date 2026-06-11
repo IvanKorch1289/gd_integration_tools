@@ -40,7 +40,10 @@ class TestChaosEngineering:
     @pytest.mark.asyncio
     async def test_latency_no_op_when_disabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=False):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=False,
+        ):
             with patch("asyncio.sleep") as mock_sleep:
                 await chaos.latency("lat", probability=1.0, max_delay_ms=1000)
                 mock_sleep.assert_not_called()
@@ -48,7 +51,10 @@ class TestChaosEngineering:
     @pytest.mark.asyncio
     async def test_latency_injects_when_enabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             with patch("asyncio.sleep") as mock_sleep:
                 await chaos.latency("lat", probability=1.0, max_delay_ms=10)
                 mock_sleep.assert_awaited_once()
@@ -57,38 +63,56 @@ class TestChaosEngineering:
     @pytest.mark.asyncio
     async def test_latency_respects_probability(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             with patch("asyncio.sleep") as mock_sleep:
                 await chaos.latency("lat", probability=0.0, max_delay_ms=10)
                 mock_sleep.assert_not_called()
 
     def test_maybe_raise_no_op_when_disabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=False):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=False,
+        ):
             chaos.maybe_raise("err", probability=1.0, exc=RuntimeError("boom"))
 
     def test_maybe_raise_raises_when_enabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             with pytest.raises(RuntimeError, match="Chaos error probe: err"):
                 chaos.maybe_raise("err", probability=1.0)
 
     def test_maybe_raise_respects_probability(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             chaos.maybe_raise("err", probability=0.0, exc=RuntimeError("boom"))
 
     @pytest.mark.asyncio
     async def test_exhaust_pool_no_op_when_disabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=False):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=False,
+        ):
             async with chaos.exhaust_pool("db_main", duration_seconds=0.1):
                 pass
 
     @pytest.mark.asyncio
     async def test_exhaust_pool_no_op_when_pool_not_found(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             async with chaos.exhaust_pool("missing", duration_seconds=0.1):
                 pass
 
@@ -100,7 +124,10 @@ class TestChaosEngineering:
         reg = MagicMock()
         reg.pool = pool
         reg.ping_fn = AsyncMock()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=True):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=True,
+        ):
             mgr = MagicMock()
             mgr._pools = {"db_main": reg}
             with patch(
@@ -114,7 +141,10 @@ class TestChaosEngineering:
     @pytest.mark.asyncio
     async def test_partition_no_op_when_disabled(self) -> None:
         chaos = ChaosEngineering()
-        with patch("src.backend.infrastructure.chaos.probes.is_chaos_enabled", return_value=False):
+        with patch(
+            "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
+            return_value=False,
+        ):
             async with chaos.partition("db_main", duration_seconds=0.1):
                 pass
 

@@ -19,6 +19,7 @@ identifier (likely an alias variable).
 
 Idempotent: detects already-parenthesized tuples and skips.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -122,7 +123,9 @@ def main() -> int:
         except Exception as e:
             print(f"  ERROR: {f}: {e}", file=sys.stderr)
 
-    print(f"\nSummary: {changed_count} files changed, {skipped_count} skipped, {total_changes} total fixes")
+    print(
+        f"\nSummary: {changed_count} files changed, {skipped_count} skipped, {total_changes} total fixes"
+    )
     return 0
 
 

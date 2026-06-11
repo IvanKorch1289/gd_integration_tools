@@ -27,11 +27,7 @@ from src.backend.dsl.builders.ai_rpa.text_ops import TextOpsMixin  # S52 W1: MRO
 
 
 class AIRPAMixin(
-    BankingScriptsMixin,
-    SystemOpsMixin,
-    TextOpsMixin,
-    RPAMixin,
-    AILlMMixin,
+    BankingScriptsMixin, SystemOpsMixin, TextOpsMixin, RPAMixin, AILlMMixin
 ):
     """MRO composition: 5 mixins = 18 + 20 + 5 + 7 + 11 = 61 methods."""
 

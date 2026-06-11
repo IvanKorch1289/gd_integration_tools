@@ -10,15 +10,21 @@ Backward-compat: ``from src.backend.dsl.engine.processors.sink_publish import Gr
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.sink_publish.protocols import GrpcCallProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.protocols import SoapCallProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.messaging import MqPublishProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.messaging import WsPublishProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.messaging import MqttPublishProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.generic import GenericSinkPublishProcessor  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.generic import _OutSpec  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.generic import _resolve_payload  # S57 W4: re-export
-from src.backend.dsl.engine.processors.sink_publish.generic import _store_result  # S57 W4: re-export
+from src.backend.dsl.engine.processors.sink_publish.generic import (
+    GenericSinkPublishProcessor,  # S57 W4: re-export
+    _OutSpec,  # S57 W4: re-export
+    _resolve_payload,  # S57 W4: re-export
+    _store_result,  # S57 W4: re-export
+)
+from src.backend.dsl.engine.processors.sink_publish.messaging import (
+    MqPublishProcessor,  # S57 W4: re-export
+    MqttPublishProcessor,  # S57 W4: re-export
+    WsPublishProcessor,  # S57 W4: re-export
+)
+from src.backend.dsl.engine.processors.sink_publish.protocols import (
+    GrpcCallProcessor,  # S57 W4: re-export
+    SoapCallProcessor,  # S57 W4: re-export
+)
 
 __all__ = (
     "_OutSpec",

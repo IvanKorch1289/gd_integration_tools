@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W1 - controller.py part of backpressure decomp.
 
 StreamingBackpressureController (main controller, 11 methods).
@@ -8,14 +9,11 @@ Classes: StreamingBackpressureController.
 
 import asyncio
 import time
-from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
-
-from src.backend.core.logging import get_logger
 
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
+
 
 class StreamingBackpressureController:
     """Координатор pause/resume для streaming consumer'ов.
@@ -170,4 +168,3 @@ class StreamingBackpressureController:
             return feature_flags.backpressure_streaming_enabled
         except Exception as _:
             return False
-

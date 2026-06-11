@@ -1,35 +1,31 @@
 from __future__ import annotations
+
 """S68 W3 - invoker.py part of invoker decomp.
 
 Classes: Invoker.
 """
 
-from enum import StrEnum
 
 from typing import TYPE_CHECKING, Any
 
-from datetime import UTC, datetime, timedelta
-
-from src.backend.core.logging import get_logger
-
-from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
 from src.backend.core.interfaces.invoker import InvocationRequest, InvocationResponse
-from src.backend.dsl.engine.context import ExecutionContext
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.services.execution.invoker.invoke_modes_mixin import InvokeModesMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.deferred_mixin import DeferredMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.temporal_mixin import TemporalMixin  # S54 W3: MRO
+from src.backend.services.execution.invoker.deferred_mixin import (
+    DeferredMixin,  # S54 W3: MRO
+)
+from src.backend.services.execution.invoker.invoke_modes_mixin import (
+    InvokeModesMixin,  # S54 W3: MRO
+)
 from src.backend.services.execution.invoker.run_mixin import RunMixin  # S54 W3: MRO
+from src.backend.services.execution.invoker.temporal_mixin import (
+    TemporalMixin,  # S54 W3: MRO
+)
 
-class Invoker(
-    InvokeModesMixin,
-    DeferredMixin,
-    TemporalMixin,
-    RunMixin,
-):
+
+class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
     """Action invoker (4 mixins = 15 methods + 5 core)."""
 
     __slots__ = ()
@@ -109,4 +105,3 @@ class Invoker(
                 return self._invoke_deferred(request)
             case InvocationMode.ASYNC_QUEUE:
                 return await self._invoke_async_queue(request)
-

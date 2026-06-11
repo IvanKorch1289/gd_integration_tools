@@ -3,6 +3,7 @@
 Classes: .
 Funcs: _bind_workflow_status, _instance_store, _event_store, _row_to_schema, _list_instances_filtered, _get_facade, _trigger_via_action_or_store, _wait_for_terminal.
 """
+
 from __future__ import annotations
 
 """Admin REST API для durable workflows (IL-WF1.5).
@@ -28,27 +29,14 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, TypeAdapter
+from fastapi import HTTPException
 
-from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.generator.actions import (
-    ActionRouterBuilder,
-    ActionSpec,
-)
 from src.backend.entrypoints.base import dispatch_action
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).
-from src.backend.schemas.workflow import (
-    WorkflowCancelRequest,
-    WorkflowEventSchemaOut,
-    WorkflowInstanceDetailSchemaOut,
-    WorkflowInstanceRef,
-    WorkflowInstanceSchemaOut,
-)
-from src.backend.workflows.registry import workflow_registry
+from src.backend.schemas.workflow import WorkflowInstanceSchemaOut
 
 # Wave 6.5a: ``WorkflowStatus`` нужен Pydantic'у на этапе построения
 # схемы ``ListWorkflowsQuery`` (форвард-референс резолвится через
@@ -57,10 +45,12 @@ from src.backend.workflows.registry import workflow_registry
 # чистым (нет AST-импорта infrastructure), но на runtime даёт
 # конкретный enum.
 
+
 def _bind_workflow_status() -> Any:
     from src.backend.core.di.providers import get_workflow_status_enum_provider
 
     return get_workflow_status_enum_provider()
+
 
 def _instance_store() -> Any:
     """Ленивый singleton :class:`WorkflowInstanceStore` через DI provider."""
@@ -68,11 +58,13 @@ def _instance_store() -> Any:
 
     return get_workflow_state_store_provider()()
 
+
 def _event_store() -> Any:
     """Ленивый singleton :class:`WorkflowEventStore` через DI provider."""
     from src.backend.core.di.providers import get_workflow_event_store_provider
 
     return get_workflow_event_store_provider()()
+
 
 def _row_to_schema(row: Any) -> WorkflowInstanceSchemaOut:
     """DTO-строка store'а → Pydantic-схему."""
@@ -99,6 +91,7 @@ def _row_to_schema(row: Any) -> WorkflowInstanceSchemaOut:
         finished_at=row.finished_at,
         last_error=last_error,
     )
+
 
 async def _list_instances_filtered(
     status_filter: WorkflowStatus | None,
@@ -139,8 +132,10 @@ async def _list_instances_filtered(
         rows = result.scalars().all()
         return [WorkflowInstanceRow.from_orm(r) for r in rows]
 
+
 def _get_facade() -> _AdminWorkflowsFacade:
     return _FACADE
+
 
 async def _trigger_via_action_or_store(
     *, store: Any, workflow_name: str, route_id: str, payload: dict[str, Any]
@@ -175,6 +170,7 @@ async def _trigger_via_action_or_store(
         workflow_name=workflow_name, route_id=route_id, input_payload=payload
     )
 
+
 async def _wait_for_terminal(
     *, store: Any, instance_id: UUID, timeout_s: int, poll_interval_s: float = 2.0
 ) -> Any:
@@ -199,4 +195,3 @@ async def _wait_for_terminal(
         if datetime.now(UTC).timestamp() >= deadline:
             return row
         await asyncio.sleep(poll_interval_s)
-

@@ -16,6 +16,7 @@ Output:  .mcp.json          → symlink на .shared/mcp-servers.json
 3. В source нет hardcoded secrets (regex: ctx7sk-..., длинные строки в "KEY": "value")
 4. ${ENV_VAR} паттерн используется для секретных полей
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,7 +33,12 @@ TARGET_KIMI = PROJECT / ".kimi-code" / "mcp.json"
 
 # Secret-leak patterns
 SECRET_PATTERNS = [
-    (re.compile(r"ctx7sk-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"), "ctx7sk-*"),
+    (
+        re.compile(
+            r"ctx7sk-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
+        ),
+        "ctx7sk-*",
+    ),
     (re.compile(r"sk-[A-Za-z0-9]{20,}"), "sk-* (OpenAI)"),
     (re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"), "sk-ant-* (Anthropic)"),
     (re.compile(r"sk-or-[A-Za-z0-9_-]{20,}"), "sk-or-* (OpenRouter)"),
@@ -88,11 +94,15 @@ def check_symlink(path: Path, expected_target: str) -> list[str]:
         issues.append(f"MISSING: {path}")
         return issues
     if not path.is_symlink():
-        issues.append(f"NOT a symlink: {path} (должен быть symlink на {expected_target})")
+        issues.append(
+            f"NOT a symlink: {path} (должен быть symlink на {expected_target})"
+        )
         return issues
     actual_target = os.readlink(str(path))
     if actual_target != expected_target:
-        issues.append(f"WRONG target: {path} -> {actual_target!r} (expected {expected_target!r})")
+        issues.append(
+            f"WRONG target: {path} -> {actual_target!r} (expected {expected_target!r})"
+        )
     return issues
 
 
@@ -105,7 +115,9 @@ def create_symlink(path: Path, target: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--verify", action="store_true", help="verify mode: exit 1 при проблемах")
+    parser.add_argument(
+        "--verify", action="store_true", help="verify mode: exit 1 при проблемах"
+    )
     args = parser.parse_args()
 
     all_issues = []
@@ -117,7 +129,9 @@ def main() -> int:
         all_issues.extend(check_symlink(TARGET_KIMI, "../.shared/mcp-servers.json"))
 
         if not all_issues:
-            print("[OK] .shared/mcp-servers.json валиден, оба symlink-а корректны, секретов нет.")
+            print(
+                "[OK] .shared/mcp-servers.json валиден, оба symlink-а корректны, секретов нет."
+            )
             return 0
         print(f"[FAIL] найдено {len(all_issues)} проблем:")
         for i in all_issues:
@@ -127,7 +141,9 @@ def main() -> int:
     # === Recreate mode (default) ===
     if not SOURCE.exists():
         print(f"[ERROR] SOURCE не найден: {SOURCE}")
-        print("        Создай .shared/mcp-servers.json вручную или скопируй из .mcp.json")
+        print(
+            "        Создай .shared/mcp-servers.json вручную или скопируй из .mcp.json"
+        )
         return 1
 
     # Validate source first

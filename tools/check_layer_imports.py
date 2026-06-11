@@ -15,6 +15,7 @@ per v22 п.5 — "rich/typer/click не используются"). Сохран
     python tools/check_layer_imports.py [<directory>] [--config PATH]
     python tools/check_layer_imports.py --help
 """
+
 from __future__ import annotations
 
 import ast
@@ -124,7 +125,7 @@ def _scan_file(
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except (OSError, SyntaxError):
+    except OSError, SyntaxError:
         return []
 
     violations: list[tuple[int, str, str]] = []
@@ -212,8 +213,7 @@ app = typer.Typer(
 @app.command()
 def main(
     directory: Path = typer.Argument(
-        "extensions",
-        help="Корень для обхода .py (default: extensions/).",
+        "extensions", help="Корень для обхода .py (default: extensions/)."
     ),
     config: Path | None = typer.Option(
         None,
@@ -221,9 +221,7 @@ def main(
         help=f"Путь к .toml override (default: ищем {DEFAULT_CONFIG_NAME}).",
     ),
     plain: bool = typer.Option(
-        False,
-        "--plain",
-        help="Disable rich output (для CI / non-TTY).",
+        False, "--plain", help="Disable rich output (для CI / non-TTY)."
     ),
 ) -> None:
     """AST-check cross-layer imports в extensions/."""
@@ -283,10 +281,7 @@ def main(
             console_err.print(table)
     else:
         # Plain text fallback (для CI без rich)
-        print(
-            f"ERROR: {len(all_violations)} forbidden import(s):",
-            file=sys.stderr,
-        )
+        print(f"ERROR: {len(all_violations)} forbidden import(s):", file=sys.stderr)
         for py, lineno, module, prefix in sorted_violations:
             try:
                 rel = py.relative_to(directory)

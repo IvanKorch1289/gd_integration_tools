@@ -37,8 +37,7 @@ def _mock_flags(enforce: bool = False) -> MagicMock:
 @pytest.fixture(autouse=True)
 def _disable_ai_gateway_enforce() -> None:
     with patch(
-        "src.backend.core.config.features.feature_flags",
-        _mock_flags(enforce=False),
+        "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
     ):
         yield
 

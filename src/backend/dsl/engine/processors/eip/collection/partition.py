@@ -4,6 +4,7 @@ Classes: PartitionProcessor, OrElseProcessor, FlattenProcessor, UniqueProcessor.
 
 partition + orElse + flatten + unique.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -14,6 +15,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
 
 class PartitionProcessor(BaseProcessor):
     """Разбивает коллекцию на два списка: подходящие и нет.
@@ -64,6 +66,7 @@ class PartitionProcessor(BaseProcessor):
             }
         }
 
+
 class OrElseProcessor(BaseProcessor):
     """Значение по умолчанию, если body None или пустое.
 
@@ -92,6 +95,7 @@ class OrElseProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Возвращает JSON-спецификацию процессора."""
         return {"or_else": {"default": self._default}}
+
 
 class FlattenProcessor(BaseProcessor):
     """Расплющивает nested lists.
@@ -127,6 +131,7 @@ class FlattenProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"flatten": {"depth": self._depth}}
+
 
 class UniqueProcessor(BaseProcessor):
     """Уникальные элементы коллекции.
@@ -176,4 +181,3 @@ class UniqueProcessor(BaseProcessor):
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
             }
         }
-

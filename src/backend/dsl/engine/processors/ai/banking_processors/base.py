@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S59 W1 — base.py part of banking_processors decomp.
 
 Classes: _BankingAIProcessor.
@@ -8,12 +9,11 @@ _BankingAIProcessor (5 methods, base for all processors).
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 _logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
+
 
 class _BankingAIProcessor(BaseProcessor):
     """Base for banking AI processors — общая логика LLM-вызова."""
@@ -150,4 +151,3 @@ class _BankingAIProcessor(BaseProcessor):
                 "model": self._model
             }
         }
-

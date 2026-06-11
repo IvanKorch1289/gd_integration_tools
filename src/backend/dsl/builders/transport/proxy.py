@@ -131,4 +131,3 @@ class ProxyMixin:
                 allowed_hosts=allowed_hosts,
             )
         )
-

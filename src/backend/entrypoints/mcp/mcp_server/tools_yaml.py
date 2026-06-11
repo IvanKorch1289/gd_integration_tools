@@ -21,9 +21,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── YAML tools (_register_yaml_tools) ──
+
 
 def _register_yaml_tools(mcp: Any) -> None:
     """Tools для работы с YAML-определениями pipelines."""
@@ -101,4 +100,3 @@ def _register_yaml_tools(mcp: Any) -> None:
             return encode_json(report).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
-

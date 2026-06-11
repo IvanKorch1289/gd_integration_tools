@@ -7,6 +7,7 @@ Lazy-import transformers/BLIP2 — heavy ML stack (~5GB веса) включае
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any
 
@@ -102,11 +103,14 @@ class BLIP2Captioner:
                 "BLIP2 requires Pillow — install [multimodal-rag] extra"
             ) from exc
 
-        image = Image.open(BytesIO(image_bytes)).convert("RGB")
+        with Image.open(BytesIO(image_bytes)) as img:
+            image = img.convert("RGB")
         inputs = self._processor(images=image, return_tensors="pt")
         if self._device != "cpu":
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
-        generated = self._model.generate(**inputs, max_new_tokens=max_new_tokens)
+        generated = await asyncio.to_thread(
+            self._model.generate, **inputs, max_new_tokens=max_new_tokens
+        )
         caption = self._processor.batch_decode(generated, skip_special_tokens=True)[
             0
         ].strip()

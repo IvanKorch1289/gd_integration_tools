@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass  # cross-mixin / state attrs declared below
@@ -27,28 +27,17 @@ Sprint 36 (V15 GAP, Subagent A) additions:
   compat с existing call sites.
 """
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Final
 
-from src.backend.core.security.capabilities.errors import (
-    CapabilityDeniedError,
-    CapabilityNotFoundError,
-    CapabilitySupersetError,
-)
-from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
-from src.backend.core.security.capabilities.vocabulary import (
-    CapabilityVocabulary,
-    build_default_vocabulary,
-)
-
 if TYPE_CHECKING:
-    from src.backend.core.security.capabilities.policy import CapabilityPolicy
+    pass
 
 AuditCallback = Callable[[dict[str, object]], None]
 """Подпись audit-callback'а: принимает event dict, ничего не возвращает."""
 
 _DEFAULT_LRU_SIZE: Final[int] = 1024
+
 
 class AuditMixin:
     """audit event emission для CapabilityGate. S54 W4 extraction."""
@@ -89,4 +78,3 @@ class AuditMixin:
         if reason is not None:
             payload["reason"] = reason
         self._audit(payload)
-

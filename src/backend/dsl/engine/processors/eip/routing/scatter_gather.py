@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S63 W2 — scatter_gather.py part of routing decomp.
 
 Classes: ScatterGatherProcessor.
@@ -7,20 +8,15 @@ ScatterGatherProcessor (fan-out + aggregate).
 """
 
 import asyncio
-from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
-
-
-
 
 
 class ScatterGatherProcessor(BaseProcessor):
@@ -90,6 +86,3 @@ class ScatterGatherProcessor(BaseProcessor):
                 if isinstance(v, dict):
                     merged.update(v)
             exchange.set_out(body=merged, headers=dict(exchange.in_message.headers))
-
-
-

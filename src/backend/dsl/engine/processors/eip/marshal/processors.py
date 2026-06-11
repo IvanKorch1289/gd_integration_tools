@@ -1,16 +1,11 @@
 from __future__ import annotations
+
 """S63 W3 — processors.py part of marshal decomp.
 
 MarshalProcessor + UnmarshalProcessor.
 """
 
-import csv
-import io
-import json
-import pickle
 import threading
-import xml.etree.ElementTree as ET  # safe: used only for marshal (we generate XML)
-from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -28,22 +23,14 @@ except ImportError:  # pragma: no cover — dev-light fallback
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.engine.processors.eip.marshal.base import DataFormat  # S63 W3: cross-import
-
-from src.backend.dsl.engine.processors.eip.marshal.formats import JsonDataFormat  # S63 W3: cross-import
-
-from src.backend.dsl.engine.processors.eip.marshal.formats import XmlDataFormat  # S63 W3: cross-import
-
-from src.backend.dsl.engine.processors.eip.marshal.formats import CsvDataFormat  # S63 W3: cross-import
-
-from src.backend.dsl.engine.processors.eip.marshal.formats import MessagePackDataFormat  # S63 W3: cross-import
-
-from src.backend.dsl.engine.processors.eip.marshal.formats import PickleDataFormat  # S63 W3: cross-import
-
+from src.backend.dsl.engine.processors.eip.marshal.base import (
+    DataFormat,  # S63 W3: cross-import
+)
 
 _log = get_logger(__name__)
 
 # ── DataFormat abstract + concrete impls ─────────────────────────────
+
 
 class MarshalProcessor(BaseProcessor):
     """Конвертация in-memory object → wire format (Camel Marshal).
@@ -103,6 +90,7 @@ class MarshalProcessor(BaseProcessor):
             "format": self._data_format.name,
             "content_type": self._data_format.content_type,
         }
+
 
 class UnmarshalProcessor(BaseProcessor):
     """Конвертация wire format → in-memory object (Camel Unmarshal).
@@ -174,4 +162,3 @@ class UnmarshalProcessor(BaseProcessor):
                 self._target_type.__name__ if self._target_type is not None else None
             ),
         }
-

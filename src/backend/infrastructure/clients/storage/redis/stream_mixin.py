@@ -1,34 +1,22 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
-from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from redis.asyncio import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
-    ClientCircuitBreaker,
-)
 
 redis_logger = get_logger("redis")
 
 
-
 RedisKind = Literal["cache", "queue", "limits"]
-
-
 
 
 class StreamMixin:
@@ -48,8 +36,6 @@ class StreamMixin:
             )
             return False
 
-
-
     async def create_initial_streams(self) -> None:
         """Инициализирует Redis Streams из настроек, если они не существуют."""
         for stream in self.settings.streams:
@@ -65,8 +51,6 @@ class StreamMixin:
                     str(exc),
                     exc_info=True,
                 )
-
-
 
     async def _initialize_stream(self, stream_name: str) -> None:
         async def op(conn: Redis) -> None:
@@ -87,8 +71,6 @@ class StreamMixin:
 
         await self.execute("queue", op)
 
-
-
     async def stream_publish(
         self,
         stream: str,
@@ -107,6 +89,7 @@ class StreamMixin:
         Returns:
             ID добавленного события.
         """
+
         async def op(conn: Redis) -> str:
             xadd_args: dict[str, Any] = {}
             if max_len is not None:
@@ -117,8 +100,6 @@ class StreamMixin:
             return str(self.decode(event_id))
 
         return await self.execute("queue", op)
-
-
 
     async def stream_move(
         self,
@@ -135,6 +116,7 @@ class StreamMixin:
             event_id: ID события.
             additional_data: дополнительные поля к событию.
         """
+
         async def op(conn: Redis) -> None:
             events = await conn.xrange(source_stream, min=event_id, max=event_id)
             if not events:
@@ -151,8 +133,6 @@ class StreamMixin:
             await conn.xdel(source_stream, event_id)
 
         await self.execute("queue", op)
-
-
 
     async def stream_read(
         self,
@@ -177,6 +157,7 @@ class StreamMixin:
             Список событий с id, stream и data.
 
         """
+
         async def op(conn: Redis) -> list[dict[str, Any]]:
             if consumer_group:
                 group, consumer = consumer_group
@@ -215,8 +196,6 @@ class StreamMixin:
 
         return await self.execute("queue", op)
 
-
-
     async def stream_get_stats(
         self, stream: str, num_last_events: int = 5
     ) -> dict[str, Any]:
@@ -229,6 +208,7 @@ class StreamMixin:
         Returns:
             Словарь с length, last_events, first_event, groups.
         """
+
         async def op(conn: Redis) -> dict[str, Any]:
             return {
                 "length": await conn.xlen(stream),
@@ -240,8 +220,6 @@ class StreamMixin:
             }
 
         return await self.execute("queue", op)
-
-
 
     async def stream_retry_event(
         self,
@@ -265,6 +243,7 @@ class StreamMixin:
         Returns:
             True если retry разрешён, False если лимит исчерпан.
         """
+
         async def op(conn: Redis) -> bool:
             events = await conn.xrange(stream, min=event_id, max=event_id)
             if not events:
@@ -291,4 +270,3 @@ class StreamMixin:
             return True
 
         return await self.execute("queue", op)
-

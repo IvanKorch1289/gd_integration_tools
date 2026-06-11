@@ -29,7 +29,9 @@ def main() -> None:
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD~1", "HEAD"],  # noqa: S607  # PATH-managed executable (partial path intentional)
-            capture_output=True, text=True, timeout=30
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         changed_files = [
             f.strip() for f in result.stdout.strip().split("\n") if f.strip()
@@ -47,12 +49,15 @@ def main() -> None:
             with open("bandit_report.json") as f:
                 data = json.load(f)
                 highs = [
-                    r for r in data.get("results", [])
+                    r
+                    for r in data.get("results", [])
                     if r.get("severity") == "HIGH"
                     and r.get("issue_confidence") == "HIGH"
                 ]
                 if highs:
-                    security_summary = f"Found {len(highs)} high-confidence high-severity issues"
+                    security_summary = (
+                        f"Found {len(highs)} high-confidence high-severity issues"
+                    )
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
@@ -92,7 +97,7 @@ Provide a brief review (under 200 words) covering: security concerns, performanc
         "model": model,
         "max_tokens": max_tokens,
         "system": system_prompt,
-        "messages": [{"role": "user", "content": user_prompt}]
+        "messages": [{"role": "user", "content": user_prompt}],
     }
 
     content = "AI review unavailable"
@@ -105,13 +110,15 @@ Provide a brief review (under 200 words) covering: security concerns, performanc
             data=data,
             headers={
                 "Content-Type": "application/json",
-                "anthropic-version": "2023-06-01"
+                "anthropic-version": "2023-06-01",
             },
-            method="POST"
+            method="POST",
         )
         with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310  # https-only allowlist enforced (no file:// schemes)
             result = json.loads(response.read().decode("utf-8"))
-            content = result.get("content", [{}])[0].get("text", "AI review unavailable")
+            content = result.get("content", [{}])[0].get(
+                "text", "AI review unavailable"
+            )
     except urllib.error.URLError as e:
         content = f"AI review unavailable (connection error): {str(e)}"
     except Exception as e:

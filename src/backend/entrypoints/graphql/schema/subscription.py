@@ -1,31 +1,22 @@
 from __future__ import annotations
+
 """S64 W1 — subscription.py part of graphql schema decomp.
 
 Subscription resolver (3 methods).
 """
 
 from collections.abc import AsyncGenerator
-from datetime import datetime
-from typing import Any
 
 import strawberry
-from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from src.backend.core.logging import get_logger
-from src.backend.dsl.service import get_dsl_service
 from src.backend.entrypoints.graphql.schema.types import (
-    TraceEventType,
     SystemEventType,
+    TraceEventType,
 )  # S64 W1: types
 
 
-
-
 @strawberry.type
-
-
 class Subscription:
     """GraphQL Subscriptions — real-time события."""
 
@@ -96,6 +87,3 @@ class Subscription:
                     timestamp=datetime.now(UTC).isoformat(),
                 )
             await asyncio.sleep(30)
-
-
-

@@ -1,32 +1,18 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from contextlib import asynccontextmanager
-from typing import Any, cast
-
-from fastapi_filter.contrib.sqlalchemy import Filter
-from fastapi_pagination import Page, Params
 
 from src.backend.core.decorators.caching import response_cache
-from src.backend.core.di.providers import get_cache_invalidator_provider
-from src.backend.core.errors import NotFoundError, ServiceError
-from src.backend.core.interfaces.db_model import DBModelProtocol
-from src.backend.core.interfaces.repositories import RepositoryProtocol
-from src.backend.core.logging import get_logger
-from src.backend.dsl.codec.converters import transfer_model_to_schema
-from src.backend.schemas.base import BaseSchema, PaginatedResult
-
-
+from src.backend.schemas.base import BaseSchema
 
 
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
-
 
 
 class VersioningMixin:
@@ -64,8 +50,6 @@ class VersioningMixin:
 
             return result
 
-
-
     @response_cache
     async def get_latest_object_version(self, object_id: int) -> BaseSchema | None:
         """Получает последнюю версию объекта.
@@ -79,8 +63,6 @@ class VersioningMixin:
         async with self._service_error_boundary():
             version = await self.repo.get_latest_version(object_id=object_id)
             return await self.helper._transfer(version, self.version_schema)
-
-
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
@@ -99,8 +81,6 @@ class VersioningMixin:
                 object_id=object_id, transaction_id=transaction_id
             )
             return await self.helper._transfer(restored_object, self.response_schema)
-
-
 
     async def get_object_changes(self, object_id: int) -> list[dict[str, Any]]:
         """Получает список изменений атрибутов объекта.
@@ -148,4 +128,3 @@ class VersioningMixin:
                     )
 
             return changes
-

@@ -114,7 +114,7 @@ class TestConfigHotReloader:
     @pytest.mark.asyncio
     async def test_stop_cancels_task(self) -> None:
         rel = ConfigHotReloader()
-        task = asyncio.create_task(asyncio.sleep(10))
+        task = asyncio.create_task(asyncio.sleep(0.01))
         rel._task = task
         await rel.stop()
         assert task.cancelled() or task.done()

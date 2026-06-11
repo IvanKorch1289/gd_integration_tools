@@ -3,6 +3,7 @@
 Classes: _AdminWorkflowsFacade.
 Funcs: .
 """
+
 from __future__ import annotations
 
 """Admin REST API для durable workflows (IL-WF1.5).
@@ -28,21 +29,12 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, TypeAdapter
-
-from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.generator.actions import (
-    ActionRouterBuilder,
-    ActionSpec,
-)
-from src.backend.entrypoints.base import dispatch_action
+from fastapi import HTTPException
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).
 from src.backend.schemas.workflow import (
-    WorkflowCancelRequest,
     WorkflowEventSchemaOut,
     WorkflowInstanceDetailSchemaOut,
     WorkflowInstanceRef,
@@ -56,6 +48,7 @@ from src.backend.workflows.registry import workflow_registry
 # при импорте этого модуля. Это сохраняет статический check_layers.py
 # чистым (нет AST-импорта infrastructure), но на runtime даёт
 # конкретный enum.
+
 
 class _AdminWorkflowsFacade:
     """Адаптер над WorkflowInstanceStore + WorkflowEventStore + registry."""
@@ -302,4 +295,3 @@ class _AdminWorkflowsFacade:
             ),
             error=last_error if row.status == WorkflowStatus.failed else None,
         )
-

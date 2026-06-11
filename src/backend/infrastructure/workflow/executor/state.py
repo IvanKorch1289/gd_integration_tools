@@ -1,20 +1,11 @@
 from __future__ import annotations
+
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from dataclasses import field
 from typing import Any, Literal
 
-from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.workflow.pg_runner_internals import (
-    WorkflowInstanceRow,
-    WorkflowState,
-)
-from src.backend.infrastructure.workflow.runner import (
-    StepExecutor,
-    StepOutcome,
-    StepResult,
-)
+from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowState
 
 _logger = get_logger("workflow.executor")
 
@@ -29,6 +20,7 @@ StepKind = Literal[
     "wait",  # durable pause (next_attempt_at)
     "compensate",  # rollback chain (failure-only)
 ]
+
 
 class WorkflowStep:
     """Одна декларативная единица workflow-спека.
@@ -77,6 +69,7 @@ class WorkflowStep:
     duration_s: float | None = None
     until_expr: str | None = None
 
+
 class WorkflowSpec:
     """Полная декларация workflow — собирается WorkflowBuilder-ом.
 
@@ -94,6 +87,7 @@ class WorkflowSpec:
     compensators: tuple[WorkflowStep, ...] = ()
     max_attempts: int = 10
     default_timeout_s: float = 300.0
+
 
 class DurableWorkflowProcessor:
     """DSL-процессор, оборачивающий workflow spec (композиция steps).
@@ -130,4 +124,3 @@ class DurableWorkflowProcessor:
             f"steps={len(self._spec.steps)}, "
             f"max_attempts={self._spec.max_attempts})"
         )
-

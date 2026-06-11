@@ -187,39 +187,51 @@ class ImapMonitor:
         парсит каждое сообщение и обновляет ``_last_uid`` после успеха.
         """
         try:
-            response = await client.search("UNSEEN")
+            response = await client.uid_search("UNSEEN")
         except Exception as exc:
-            logger.warning("IMAP search failed: %s", exc)
+            logger.warning("IMAP uid_search failed: %s", exc)
             return []
 
         lines = response.lines or []
         raw_ids = lines[0].decode().split() if lines and lines[0] else []
 
-        messages: list[dict[str, Any]] = []
+        # Apply since_uid cutoff before bulk fetch
+        ids_to_fetch: list[str] = []
         for msg_id in raw_ids:
             try:
                 uid = int(msg_id)
             except ValueError:
-                uid = 0
-            if uid and uid <= self._last_uid:
                 continue
-            try:
-                fetch_resp = await client.fetch(msg_id, "(RFC822)")
-            except Exception as exc:
-                logger.warning("IMAP fetch %s failed: %s", msg_id, exc)
+            if uid <= self._last_uid:
                 continue
-            raw_bytes = b""
-            for line in fetch_resp.lines or []:
-                if isinstance(line, (bytes, bytearray)) and len(line) > 100:
-                    raw_bytes = bytes(line)
-                    break
-            if not raw_bytes:
+            ids_to_fetch.append(msg_id)
+
+        if not ids_to_fetch:
+            return []
+
+        try:
+            fetch_resp = await client.uid("fetch", ",".join(ids_to_fetch), "(RFC822)")
+        except Exception as exc:
+            logger.warning("IMAP bulk uid fetch failed: %s", exc)
+            return []
+
+        messages: list[dict[str, Any]] = []
+        _uid_re = re.compile(rb"UID\s+(\d+)")
+        current_uid = ""
+        for line in fetch_resp.lines or []:
+            if not isinstance(line, (bytes, bytearray)):
                 continue
-            parsed = _parse_email(raw_bytes)
-            parsed["_uid"] = msg_id
-            messages.append(parsed)
-            if uid:
-                self._last_uid = max(self._last_uid, uid)
+            m = _uid_re.search(line)
+            if m:
+                current_uid = m.group(1).decode()
+                continue
+            if len(line) > 100:
+                raw_bytes = bytes(line)
+                parsed = _parse_email(raw_bytes)
+                parsed["_uid"] = current_uid
+                messages.append(parsed)
+                if current_uid:
+                    self._last_uid = max(self._last_uid, int(current_uid))
         return messages
 
     async def _dispatch_message(self, msg_data: dict[str, Any]) -> None:

@@ -50,7 +50,9 @@ async def _insert(
     """Вставляет outbox-сообщение с заданным возрастом через SQLAlchemy."""
     from sqlalchemy import insert as sa_insert
 
-    backdate = datetime.now(UTC) - timedelta(seconds=age_seconds) if age_seconds else None
+    backdate = (
+        datetime.now(UTC) - timedelta(seconds=age_seconds) if age_seconds else None
+    )
     values: dict[str, Any] = {
         "topic": topic,
         "payload": {"test": True},

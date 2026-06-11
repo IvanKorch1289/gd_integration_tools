@@ -59,7 +59,9 @@ def _find_features_source() -> tuple[dict[str, int], str] | None:
     if _FEATURES_PKG.is_dir():
         # Modern package layout (S38+)
         for py_file in sorted(_FEATURES_PKG.glob("*.py")):
-            if py_file.name == "__init__.py" and not list(_FEATURES_PKG.glob("[a-z]*.py")):
+            if py_file.name == "__init__.py" and not list(
+                _FEATURES_PKG.glob("[a-z]*.py")
+            ):
                 # No sub-modules — only __init__.py
                 pass
             src = py_file.read_text()
@@ -68,11 +70,12 @@ def _find_features_source() -> tuple[dict[str, int], str] | None:
             # ast.AnnAssign: target=Name, annotation, value (Field(...)).
             # Ищем `name_strict: Type = Field(...)` — реальное определение флага.
             for node in ast.walk(tree):
-                if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                if isinstance(node, ast.AnnAssign) and isinstance(
+                    node.target, ast.Name
+                ):
                     if node.target.id.endswith("_strict"):
-                        strict_flags[node.target.id] = (
-                            node.target.lineno
-                            + sum(s.count("\n") for s in sources[:-1])
+                        strict_flags[node.target.id] = node.target.lineno + sum(
+                            s.count("\n") for s in sources[:-1]
                         )
         return strict_flags, "\n".join(sources)
 
@@ -105,10 +108,7 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
     # automap уже considered WARNING-declared (X_strict requires X).
     # Ищем сначала type-annotated `Final[frozenset[str]] = frozenset(`,
     # затем plain `frozenset(` (для back-compat).
-    automap_match = re.findall(
-        r"frozenset\(\s*\{([^}]+)\}",
-        validator_py,
-    )
+    automap_match = re.findall(r"frozenset\(\s*\{([^}]+)\}", validator_py)
     if automap_match:
         for entry in automap_match:
             for key_match in re.findall(r'"([^"]+)"', entry):

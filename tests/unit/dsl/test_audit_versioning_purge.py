@@ -147,9 +147,7 @@ def test_purge_dry_run_does_not_delete(session: Session) -> None:
     _backdate_transaction(session, _PurgeTestModel, days_ago=100, name="old1", value=1)
     _backdate_transaction(session, _PurgeTestModel, days_ago=100, name="old2", value=2)
 
-    result = Versioning.purge_old_versions(
-        session, retention_days=90, dry_run=True
-    )
+    result = Versioning.purge_old_versions(session, retention_days=90, dry_run=True)
 
     assert result["scanned"] == 2
     assert result["deleted_transactions"] == 0
@@ -176,9 +174,7 @@ def test_purge_deletes_old_transactions_and_versions(session: Session) -> None:
 
 def test_purge_preserves_recent_transactions(session: Session) -> None:
     """Transactions внутри retention window НЕ удаляются."""
-    _backdate_transaction(
-        session, _PurgeTestModel, days_ago=10, name="recent", value=1
-    )
+    _backdate_transaction(session, _PurgeTestModel, days_ago=10, name="recent", value=1)
 
     result = Versioning.purge_old_versions(session, retention_days=90)
 
@@ -266,9 +262,7 @@ def _register_second_model() -> Iterator[None]:
     yield
 
 
-def test_purge_cascades_across_multiple_versioned_models(
-    engine: object,
-) -> None:
+def test_purge_cascades_across_multiple_versioned_models(engine: object) -> None:
     """Purge удаляет version rows из ВСЕХ version tables (multi-model)."""
     # Создаём second_versioned table
     vm = version_class(_SecondVersioned)

@@ -76,8 +76,6 @@ def _el_to_dict(el: ET.Element) -> Any:
     return out
 
 
-
-
 from src.backend.dsl.engine.processors.format_convert._helpers import (
     _to_text,  # S53 W1: shared helper
 )
@@ -100,16 +98,12 @@ class EncodingsMixin:
             raw = str(data).encode("utf-8")
         return base64.b64encode(raw).decode("ascii")
 
-
-
     def _from_base64(self, data: Any) -> bytes:
 
         text = _to_text(data)
         if not text:
             return b""
         return base64.b64decode(text, validate=False)
-
-
 
     def _to_url_encoded(self, data: Any) -> str:
         if isinstance(data, str):
@@ -120,8 +114,6 @@ class EncodingsMixin:
             return ""
         return urllib.parse.urlencode(data, doseq=True)
 
-
-
     def _from_url_encoded(self, data: Any) -> dict[str, Any]:
         text = _to_text(data)
         if not text:
@@ -129,22 +121,16 @@ class EncodingsMixin:
         parsed = urllib.parse.parse_qs(text, keep_blank_values=True)
         return {k: (v[0] if len(v) == 1 else v) for k, v in parsed.items()}
 
-
-
     def _to_html_escape(self, data: Any) -> str:
         if data is None:
             return ""
         return html.escape(_to_text(data), quote=True)
-
-
 
     def _from_html_unescape(self, data: Any) -> str:
         text = _to_text(data)
         if not text:
             return ""
         return html.unescape(text)
-
-
 
     def _to_markdown(self, data: Any) -> str:
         if isinstance(data, str):
@@ -162,8 +148,6 @@ class EncodingsMixin:
                 parts.append(str(v))
             parts.append("")
         return "\n".join(parts)
-
-
 
     def _from_markdown(self, data: Any) -> dict[str, str]:
         text = _to_text(data)
@@ -184,4 +168,3 @@ class EncodingsMixin:
         if current_key is not None:
             out[current_key] = "\n".join(current_lines).strip()
         return out
-

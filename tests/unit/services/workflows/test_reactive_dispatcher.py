@@ -77,7 +77,7 @@ async def test_debounce_collapses_multiple_events(
     )
     dispatcher.register_trigger(
         workflow_id="wf-debounce",
-        trigger=ReactiveTrigger(channel="events.orders.created", debounce_seconds=1),
+        trigger=ReactiveTrigger(channel="events.orders.created", debounce_seconds=0.05),
     )
     await dispatcher.start()
     handler = bus_mock._handlers["events.orders.created"][0]
@@ -85,7 +85,7 @@ async def test_debounce_collapses_multiple_events(
     await handler({"event_id": "ev-1"})
     await handler({"event_id": "ev-2"})
     await handler({"event_id": "ev-3"})
-    await asyncio.sleep(1.5)
+    await asyncio.sleep(0.1)
 
     assert facade_mock.start.await_count == 1
 

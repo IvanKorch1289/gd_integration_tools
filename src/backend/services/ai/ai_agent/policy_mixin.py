@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
-    from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
 class PolicyMixin:
     """policy/authz gates (_policy_gate, _resolve_authz_gateway, _policy_gate_deny) для AIAgentService. S54 W2 extraction."""
 
@@ -152,4 +152,3 @@ class PolicyMixin:
             "principal": principal,
             "detail": detail,
         }
-

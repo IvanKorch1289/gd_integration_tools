@@ -69,7 +69,7 @@ class _MockGraylogServer:
                     self.received.append(json.loads(data))
                 except json.JSONDecodeError:
                     pass
-            except (TimeoutError, OSError):
+            except TimeoutError, OSError:
                 continue
 
 
@@ -202,7 +202,9 @@ async def test_compat_shim_with_positional_args_in_gelf(
     configure_router([sink])
 
     logger = get_logger("e2e-compat")
-    logger.warning("User %s failed login from %s (attempt %d)", "alice", "192.168.1.1", 3)
+    logger.warning(
+        "User %s failed login from %s (attempt %d)", "alice", "192.168.1.1", 3
+    )
 
     await asyncio.sleep(0.5)
     await sink.close()
@@ -212,7 +214,9 @@ async def test_compat_shim_with_positional_args_in_gelf(
 
     assert len(mock_graylog.received) >= 1
     last = mock_graylog.received[-1]
-    assert "User alice failed login from 192.168.1.1 (attempt 3)" in last.get("short_message", "")
+    assert "User alice failed login from 192.168.1.1 (attempt 3)" in last.get(
+        "short_message", ""
+    )
     assert last.get("level") == 4  # syslog warning
 
 

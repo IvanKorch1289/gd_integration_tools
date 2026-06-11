@@ -61,8 +61,7 @@ class TestLLMCallProcessor:
         }
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=False),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
         ):
             with patch(
                 "src.backend.services.ai.ai_agent.get_ai_agent_service",
@@ -91,8 +90,7 @@ class TestLLMCallProcessor:
         mock_agent.chat.return_value = "ok"
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=False),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
         ):
             with patch(
                 "src.backend.services.ai.ai_agent.get_ai_agent_service",
@@ -113,8 +111,7 @@ class TestLLMCallProcessor:
         mock_agent.chat.side_effect = RuntimeError("rate limit 429")
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=False),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
         ):
             with patch(
                 "src.backend.services.ai.ai_agent.get_ai_agent_service",
@@ -134,8 +131,7 @@ class TestLLMCallProcessor:
         mock_agent.chat.side_effect = TimeoutError("timeout")
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=False),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
         ):
             with patch(
                 "src.backend.services.ai.ai_agent.get_ai_agent_service",
@@ -165,8 +161,7 @@ class TestLLMCallProcessor:
             return real_import(name, *args, **kwargs)
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=False),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False)
         ):
             with patch.dict("sys.modules", {}, clear=False):
                 for k in list(sys.modules.keys()):
@@ -190,12 +185,9 @@ class TestLLMCallProcessor:
         mock_response.model_used = "gpt-4-0613"
 
         with patch(
-            "src.backend.core.config.features.feature_flags",
-            _mock_flags(enforce=True),
+            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=True)
         ):
-            with patch(
-                "src.backend.core.ai.gateway.AIGateway"
-            ) as MockGW:
+            with patch("src.backend.core.ai.gateway.AIGateway") as MockGW:
                 MockGW.return_value.invoke = AsyncMock(return_value=mock_response)
                 await proc.process(exchange, _Context())
 

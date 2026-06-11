@@ -158,9 +158,7 @@ def test_parse_debezium_event_unknown_op_returns_none() -> None:
 
 
 @pytest.mark.asyncio
-async def test_subscribe_yields_events(
-    mock_aiokafka: Any, fake_message: Any
-) -> None:
+async def test_subscribe_yields_events(mock_aiokafka: Any, fake_message: Any) -> None:
     backend = DebeziumEventsCDCBackend(bootstrap_servers="localhost:9092")
     mock_aiokafka.set_test_messages([fake_message])
 
@@ -226,9 +224,7 @@ async def test_ack_without_consumer_logs_warning(mock_aiokafka: Any) -> None:
 
 
 @pytest.mark.asyncio
-async def test_replay_with_end_cursor_bounds_iteration(
-    mock_aiokafka: Any,
-) -> None:
+async def test_replay_with_end_cursor_bounds_iteration(mock_aiokafka: Any) -> None:
     backend = DebeziumEventsCDCBackend(bootstrap_servers="localhost:9092")
 
     msgs: list[Any] = []

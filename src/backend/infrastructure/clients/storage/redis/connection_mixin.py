@@ -1,34 +1,21 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timedelta
-from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from redis.asyncio import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
-    ClientCircuitBreaker,
-)
 
 redis_logger = get_logger("redis")
 
 
-
 RedisKind = Literal["cache", "queue", "limits"]
-
-
 
 
 class ConnectionMixin:
@@ -85,8 +72,6 @@ class ConnectionMixin:
             health_check_interval=self.settings.health_check_interval,
         )
 
-
-
     async def get_client(self, kind: RedisKind, force_reconnect: bool = False) -> Redis:
         """Возвращает (создаёт при необходимости) клиент для указанного kind.
 
@@ -120,8 +105,6 @@ class ConnectionMixin:
             )
             return client
 
-
-
     async def reset_client(self, kind: RedisKind) -> None:
         """Закрывает и сбрасывает клиент указанного kind."""
         async with self._locks[kind]:
@@ -129,22 +112,16 @@ class ConnectionMixin:
             self._clients[kind] = None
             await self._safe_close(client)
 
-
-
     async def close(self) -> None:
         """Закрывает все клиенты (cache/queue/limits)."""
         for kind in ("cache", "queue", "limits"):
             await self.reset_client(kind)
-
-
 
     async def ensure_connected(self) -> None:
         """Инициализирует подключения для всех трёх kind'ов."""
         await self.get_client("cache")
         await self.get_client("queue")
         await self.get_client("limits")
-
-
 
     async def check_connection(self, kind: RedisKind) -> bool:
         """Проверяет доступность Redis для указанного kind.
@@ -160,4 +137,3 @@ class ConnectionMixin:
             return bool(await client.ping())
         except RedisError:
             return False
-

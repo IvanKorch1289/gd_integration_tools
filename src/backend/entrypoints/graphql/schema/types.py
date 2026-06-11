@@ -1,26 +1,17 @@
 from __future__ import annotations
+
 """S64 W1 — types.py part of graphql schema decomp.
 
 8 Pydantic types (OrderKind, File, Order, User, DslResult, ActionResult, TraceEvent, SystemEvent).
 """
 
-from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any
 
 import strawberry
-from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
-from strawberry.types import Info
-
-from src.backend.core.logging import get_logger
-from src.backend.dsl.service import get_dsl_service
-
 
 
 @strawberry.type
-
-
 class OrderKindType:
     """Вид запроса."""
 
@@ -32,7 +23,6 @@ class OrderKindType:
     updated_at: datetime | None = None
 
 
-
 class FileType:
     """Файл, связанный с заказом."""
 
@@ -41,7 +31,6 @@ class FileType:
     object_uuid: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
-
 
 
 class OrderType:
@@ -63,7 +52,6 @@ class OrderType:
     files: list[FileType] | None = None
 
 
-
 class UserType:
     """Пользователь."""
 
@@ -76,7 +64,6 @@ class UserType:
     updated_at: datetime | None = None
 
 
-
 class DslResult:
     """Результат выполнения DSL-маршрута."""
 
@@ -86,7 +73,6 @@ class DslResult:
     error: str | None = None
 
 
-
 class ActionResult:
     """Результат выполнения action через ActionHandlerRegistry."""
 
@@ -94,7 +80,6 @@ class ActionResult:
     success: bool
     data: JSON | None = None
     error: str | None = None
-
 
 
 class TraceEventType:
@@ -109,13 +94,9 @@ class TraceEventType:
     error: str | None = None
 
 
-
 class SystemEventType:
     """Системное событие (health, route change)."""
 
     event_type: str
     data: JSON | None = None
     timestamp: str = ""
-
-
-

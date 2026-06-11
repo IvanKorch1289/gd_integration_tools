@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W4 — control_flow.py part of yaml_loader decomp.
 
 Funcs: _materialize_control_flow_params.
@@ -6,15 +7,13 @@ Funcs: _materialize_control_flow_params.
 control flow params materialization.
 """
 
-from pathlib import Path
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.pipeline import Pipeline
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()
+
 
 def _materialize_control_flow_params(
     builder: RouteBuilder, proc_name: str, params: dict[str, Any]
@@ -91,4 +90,3 @@ def _materialize_control_flow_params(
                 materialized["otherwise"] = _build_sub(builder, otherwise)
 
     return materialized
-

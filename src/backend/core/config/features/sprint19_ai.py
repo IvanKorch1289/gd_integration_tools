@@ -46,7 +46,7 @@ class Sprint19AIFlags(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
-    # ─── Sprint 19 — K2 Resilience (3) ─────────────────────────────────────
+    # ─── Sprint 19 — K2 Resilience (2) ─────────────────────────────────────
     multi_replica_failover: bool = Field(
         default=False,
         title="K2 S19 W1: SmartSessionManager multi-replica failover (S-L6-4)",
@@ -68,18 +68,6 @@ class Sprint19AIFlags(BaseSettings):
             "db/redis/kafka/vault/llm-gateway/health/endpoints. "
             "CI-gate: diagnose JSON exit 0 только при all-healthy. "
             "default-OFF до diagnose output schema review."
-        ),
-    )
-
-    adaptive_timeout_enabled: bool = Field(
-        default=False,
-        title="K2 S19 W3: .policy.adaptive_timeout(percentile=99, safety_factor=1.5) builder API",
-        description=(
-            "K2 Sprint 19 Wave 3 (PLAN.md V22 §S19 W15). Owner: K2 Resilience. "
-            "При True RouteBuilder и WorkflowBuilder поддерживают "
-            ".policy.adaptive_timeout(percentile=99, safety_factor=1.5) — адаптивный "
-            "timeout на основе historical latency. "
-            "default-OFF до adaptive timeout smoke-test."
         ),
     )
 
@@ -129,19 +117,7 @@ class Sprint19AIFlags(BaseSettings):
         ),
     )
 
-    # ─── Sprint 19 — K4 AI/RAG (1) ────────────────────────────────────────
-    adaptive_rag_strategy_enabled: bool = Field(
-        default=False,
-        title="K4 S19 W6: Adaptive RAG strategy finale (dense/hybrid/hyde/multi_query)",
-        description=(
-            "K4 Sprint 19 Wave 6 (PLAN.md V22 §S19 W18). Owner: K4 AI/RAG. "
-            "При True RagQueryProcessor расширяется: dense/hybrid/hyde/multi_query "
-            "через LLM-classifier. Accuracy +15% bench. Latency <50ms. "
-            "default-OFF до adaptive RAG bench validation."
-        ),
-    )
-
-    # ─── Sprint 19 — K5 Frontend/DX + K3 DSL (3) ──────────────────────────
+    # ─── Sprint 19 — K5 Frontend/DX + K3 DSL (2) ──────────────────────────
     quick_wins_pack: bool = Field(
         default=False,
         title="K5 S19 W4: make new-adr + completions + release-notes + D3.js arch map",
@@ -150,17 +126,6 @@ class Sprint19AIFlags(BaseSettings):
             'При True: make new-adr TITLE="..." + manage.py completions install + '
             "make release-notes + frontend/streamlit_app/pages/05_Architecture_Map.py (D3.js). "
             "default-OFF до quick-wins review."
-        ),
-    )
-
-    admin_react_mvp: bool = Field(
-        default=False,
-        title="K5 S19 W5: frontend/admin-react/ MVP (React-based admin UI)",
-        description=(
-            "K5 Sprint 19 Wave 5 (PLAN.md V22 §S19 W22). Owner: K5 Frontend. "
-            "При True frontend/admin-react/ содержит MVP React admin UI: "
-            "routes dashboard + feature-flag toggle + audit viewer. "
-            "default-OFF до admin MVP review."
         ),
     )
 

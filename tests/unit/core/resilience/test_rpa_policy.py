@@ -403,6 +403,7 @@ class TestSendToDlq:
     async def test_no_writer_returns_silently(self) -> None:
         p = RPACallPolicy("test")
         ctx = RPACallContext(transport="cdc", payload="x")
+        assert p.dlq_writer is None
         # Метод private, но доступен
         await p._send_to_dlq(ctx, DLQReason.RETRIES_EXHAUSTED)  # type: ignore[attr-defined]
 
@@ -441,6 +442,7 @@ class TestSendToDlq:
 
         # Должно залогировать, не raise
         await p._send_to_dlq(ctx, DLQReason.RETRIES_EXHAUSTED)  # type: ignore[attr-defined]
+        assert writer.write.call_count == 1
 
 
 class TestModuleSingleton:

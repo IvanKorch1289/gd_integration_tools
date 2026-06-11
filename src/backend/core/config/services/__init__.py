@@ -25,6 +25,7 @@ from src.backend.core.config.services.resilience import (
     ResilienceSettings,
     resilience_settings,
 )
+from src.backend.core.config.services.sms import SMSSettings, sms_settings
 from src.backend.core.config.services.snapshot import (
     SnapshotSettings,
     snapshot_settings,
@@ -48,6 +49,7 @@ __all__ = (
     "QueueSettings",
     "RedisSettings",
     "ResilienceSettings",
+    "SMSSettings",
     "SnapshotSettings",
     "TasksSettings",
     "WatermarkSettings",
@@ -61,6 +63,7 @@ __all__ = (
     "queue_settings",
     "redis_settings",
     "resilience_settings",
+    "sms_settings",
     "snapshot_settings",
     "tasks_settings",
     "watermark_settings",

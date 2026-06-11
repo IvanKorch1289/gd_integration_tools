@@ -1,11 +1,8 @@
 from __future__ import annotations
+
 import os
 from typing import Any
 
-import httpx
-
-from src.backend.core.logging import get_logger
-from src.backend.core.net import OutboundHttpClient
 
 def register_extended_providers(agent: Any) -> int:
     """Регистрирует OpenAI/Claude/Gemini/Ollama в ``agent._providers``.
@@ -48,4 +45,3 @@ def register_extended_providers(agent: Any) -> int:
 
     logger.info("Registered %d extended AI providers", registered)
     return registered
-

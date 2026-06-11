@@ -172,7 +172,8 @@ class TestFakeBackendBehavior:
 
     async def test_replay_is_noop(self) -> None:
         backend = FakeWorkflowBackend()
-        await backend.replay(workflow_name="wf", history=b"")
+        result = await backend.replay(workflow_name="wf", history=b"")
+        assert result is None
 
     async def test_unknown_handle_raises(self) -> None:
         backend = FakeWorkflowBackend()

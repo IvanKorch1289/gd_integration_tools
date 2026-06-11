@@ -7,6 +7,7 @@ Coverage:
 * TOML override;
 * --help exit code (typer convention: 0).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -137,9 +138,7 @@ def test_scan_directory_syntax_error_no_crash(tmp_path: Path) -> None:
 
 def test_custom_whitelist_no_violation(tmp_path: Path) -> None:
     """Если ``infrastructure.*`` добавлен в whitelist → НЕ violation."""
-    (tmp_path / "ok.py").write_text(
-        "from src.backend.infrastructure.foo import x\n"
-    )
+    (tmp_path / "ok.py").write_text("from src.backend.infrastructure.foo import x\n")
     files, violations = scan_directory(
         tmp_path,
         forbidden=DEFAULT_FORBIDDEN,

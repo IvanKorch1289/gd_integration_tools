@@ -81,9 +81,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
         try:
             import pyautogui
         except ImportError:
-            exchange.fail(
-                "pyautogui not installed. Install: uv sync --extra rpa"
-            )
+            exchange.fail("pyautogui not installed. Install: uv sync --extra rpa")
             return
 
         try:

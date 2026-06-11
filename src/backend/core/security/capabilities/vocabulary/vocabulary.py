@@ -1,21 +1,16 @@
 from __future__ import annotations
+
 """S62 W2 — vocabulary.py part of vocabulary decomp.
 
 CapabilityVocabulary (7 methods).
 """
 
-from dataclasses import dataclass, field
 
 from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
-from src.backend.core.security.capabilities.matchers import (
-    ExactAliasMatcher,
-    GlobScopeMatcher,
-    ScopeMatcher,
-    SegmentedGlobMatcher,
-    URISchemeMatcher,
-)
 from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef  # S62 W2: cross-import
+from src.backend.core.security.capabilities.vocabulary.models import (
+    CapabilityDef,  # S62 W2: cross-import
+)
 
 
 class CapabilityVocabulary:
@@ -83,4 +78,3 @@ class CapabilityVocabulary:
             raise ValueError(
                 f"Capability {ref.name!r} requires explicit scope (scope_required=True)"
             )
-

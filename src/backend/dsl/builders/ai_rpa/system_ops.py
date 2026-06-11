@@ -21,9 +21,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 
-
-
-
 class SystemOpsMixin:
     """system-level operations (shell / email / citrix / terminal / mobile / keystroke replay) для ``RouteBuilder``. S52 W1 extraction."""
 
@@ -54,8 +51,6 @@ class SystemOpsMixin:
             timeout_seconds=timeout_seconds,
         )
 
-
-
     def email(self, to: str, subject: str, body_template: str) -> RouteBuilder:
         """Compose + отправка email через SMTP.
 
@@ -69,8 +64,6 @@ class SystemOpsMixin:
             body_template=body_template,
         )
 
-
-
     def citrix(self, operation: str, session_id: str) -> RouteBuilder:
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
         from src.backend.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
@@ -78,8 +71,6 @@ class SystemOpsMixin:
         return self._add(  # type: ignore[attr-defined]
             CitrixSessionProcessor(operation=operation, session_id=session_id)
         )
-
-
 
     def terminal_3270(
         self, host: str, port: int = 23, action: str = "query"
@@ -93,8 +84,6 @@ class SystemOpsMixin:
             TerminalEmulator3270Processor(host=host, port=port, action=action)
         )
 
-
-
     def appium_mobile(
         self, platform: str, app_package: str, operation: str
     ) -> RouteBuilder:
@@ -106,8 +95,6 @@ class SystemOpsMixin:
                 platform=platform, app_package=app_package, operation=operation
             )
         )
-
-
 
     def email_driven(
         self,
@@ -124,8 +111,6 @@ class SystemOpsMixin:
             )
         )
 
-
-
     def keystroke_replay(self, script_name: str) -> RouteBuilder:
         """Воспроизведение записанного сценария клавиатуры/мыши."""
         from src.backend.dsl.engine.processors.rpa_banking import (
@@ -135,4 +120,3 @@ class SystemOpsMixin:
         return self._add(  # type: ignore[attr-defined]
             KeystrokeReplayProcessor(script_name=script_name)
         )
-

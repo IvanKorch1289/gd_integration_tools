@@ -49,7 +49,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)

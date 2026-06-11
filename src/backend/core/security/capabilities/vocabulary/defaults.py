@@ -1,41 +1,33 @@
 from __future__ import annotations
+
+from src.backend.core.security.capabilities.matchers import (
+    ExactAliasMatcher,
+    GlobScopeMatcher,
+    SegmentedGlobMatcher,
+    URISchemeMatcher,
+)
+from src.backend.core.security.capabilities.vocabulary.models import (
+    CapabilityDef,  # S62 W2: cross-import
+)
+from src.backend.core.security.capabilities.vocabulary.vocabulary import (
+    CapabilityVocabulary,  # S62 W2: cross-import
+)
+
 """S62 W2 — defaults.py part of vocabulary decomp.
 
 build_default_vocabulary (388 LOC, BIG function).
 """
 
-from dataclasses import dataclass, field
 
-from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
-from src.backend.core.security.capabilities.matchers import (
-    ExactAliasMatcher,
-    GlobScopeMatcher,
-    ScopeMatcher,
-    SegmentedGlobMatcher,
-    URISchemeMatcher,
-)
-from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef  # S62 W2: cross-import
-
-from src.backend.core.security.capabilities.vocabulary.vocabulary import CapabilityVocabulary  # S62 W2: cross-import
-
-
-def build_default_vocabulary() -> CapabilityVocabulary:
-    """Собирает CapabilityVocabulary с v0-каталогом из ADR-044.
-
-    Matcher'ы выбираются по семантике sep'а ресурса:
-
-    * ``.`` — host/topic/workflow_id (DNS-стиль);
-    * ``/`` — path / provider-route;
-    * ``:`` — cache-namespace.
-    """
-    vocab = CapabilityVocabulary()
-    dot_glob = GlobScopeMatcher()  # sep="."
-    path_glob = SegmentedGlobMatcher(sep="/")
-    cache_glob = SegmentedGlobMatcher(sep=":")
-    exact = ExactAliasMatcher()
-    uri = URISchemeMatcher()
-
+def _build_base_capabilities(
+    vocab: CapabilityVocabulary,
+    exact: ExactAliasMatcher,
+    dot_glob: GlobScopeMatcher,
+    path_glob: SegmentedGlobMatcher,
+    cache_glob: SegmentedGlobMatcher,
+    uri: URISchemeMatcher,
+) -> None:
+    """Register base capabilities (db, net, fs, mq, cache, workflow, llm, etc.)."""
     vocab.register(
         CapabilityDef(
             name="db.read",
@@ -91,8 +83,6 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
-    # fs.create_new больше не регистрируется отдельно — только как alias fs.write
-
     vocab.register(
         CapabilityDef(
             name="code.execute",
@@ -181,7 +171,12 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
-    # ─── Sprint 11 — AI/RAG Completion capabilities ──────────────────────
+
+
+def _build_ai_rag_capabilities(
+    vocab: CapabilityVocabulary, exact: ExactAliasMatcher, dot_glob: GlobScopeMatcher
+) -> None:
+    """Register Sprint 11 AI/RAG Completion capabilities."""
     vocab.register(
         CapabilityDef(
             name="ai.rag.pii_redaction",
@@ -252,7 +247,12 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
-    # ─── Sprint 24 — AI Safety Hardening capabilities (ADR-NEW-16/17/18) ─
+
+
+def _build_ai_safety_capabilities(
+    vocab: CapabilityVocabulary, dot_glob: GlobScopeMatcher
+) -> None:
+    """Register Sprint 24 AI Safety Hardening capabilities."""
     vocab.register(
         CapabilityDef(
             name="pii.read",
@@ -338,7 +338,14 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
-    # ─── Sprint 25-27 — AI Platform Layer (ADR-NEW-19..24) ───────────────
+
+
+def _build_ai_platform_capabilities(
+    vocab: CapabilityVocabulary,
+    dot_glob: GlobScopeMatcher,
+    path_glob: SegmentedGlobMatcher,
+) -> None:
+    """Register Sprint 25-27 AI Platform Layer capabilities."""
     vocab.register(
         CapabilityDef(
             name="ai.invoke",
@@ -407,5 +414,27 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
-    return vocab
 
+
+def build_default_vocabulary() -> CapabilityVocabulary:
+    """Собирает CapabilityVocabulary с v0-каталогом из ADR-044.
+
+    Matcher'ы выбираются по семантике sep'а ресурса:
+
+    * ``.`` — host/topic/workflow_id (DNS-стиль);
+    * ``/`` — path / provider-route;
+    * ``:`` — cache-namespace.
+    """
+    vocab = CapabilityVocabulary()
+    dot_glob = GlobScopeMatcher()  # sep="."
+    path_glob = SegmentedGlobMatcher(sep="/")
+    cache_glob = SegmentedGlobMatcher(sep=":")
+    exact = ExactAliasMatcher()
+    uri = URISchemeMatcher()
+
+    _build_base_capabilities(vocab, exact, dot_glob, path_glob, cache_glob, uri)
+    _build_ai_rag_capabilities(vocab, exact, dot_glob)
+    _build_ai_safety_capabilities(vocab, dot_glob)
+    _build_ai_platform_capabilities(vocab, dot_glob, path_glob)
+
+    return vocab

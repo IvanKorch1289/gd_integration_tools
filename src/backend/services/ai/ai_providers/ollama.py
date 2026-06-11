@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W4 - ollama.py part of ai_providers decomp.
 
 Ollama local provider (extract_text, embeddings, chat).
@@ -11,8 +12,8 @@ from typing import Any
 
 import httpx
 
-from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
+
 
 class OllamaProvider:
     """Ollama local model provider.
@@ -36,7 +37,7 @@ class OllamaProvider:
             return response.get("message", {}).get("content", "") or response.get(
                 "response", ""
             )
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return ""
 
     async def embeddings(
@@ -79,4 +80,3 @@ class OllamaProvider:
             resp = await client.post(f"{self.base_url}/api/chat", json=payload)
             resp.raise_for_status()
             return resp.json()
-

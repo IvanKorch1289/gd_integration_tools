@@ -2,9 +2,9 @@
 
 Classes: S3Client.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from asyncio import Lock
 from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -34,17 +34,11 @@ except ImportError:  # botocore — опциональная зависимос�
             self.operation_name = kwargs.get("operation_name", "")
 
 
-from functools import lru_cache
-
-from src.backend.core.config.settings import FileStorageSettings, settings
+from src.backend.core.config.settings import FileStorageSettings
 from src.backend.core.errors import ServiceError
-
-
 
 P = ParamSpec("P")
 R = TypeVar("R")
-
-
 
 
 class S3Client(BaseS3Client):
@@ -173,7 +167,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -497,6 +491,3 @@ class S3Client(BaseS3Client):
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise ServiceError(f"Файл {key} не найден") from exc
-
-
-

@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
-    from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
 class RagMixin:
     """RAG integration (_maybe_augment_with_rag, _resolve_rag_service) для AIAgentService. S54 W2 extraction."""
 
@@ -121,4 +121,3 @@ class RagMixin:
         except Exception as exc:
             logger.warning("rag_service_resolve_failed: %s", exc)
             return None
-

@@ -14,13 +14,27 @@ Backward-compat: ``from src.backend.infrastructure.security.cert_store import Ce
 
 from __future__ import annotations
 
-from src.backend.infrastructure.security.cert_store.models import CertEntry  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.backend_base import CertBackend  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.backend_memory import MemoryCertBackend  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.backend_postgres import PostgresCertBackend  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.backend_vault import VaultCertBackend  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.backend_mongo import MongoCertBackend  # S55 W1: re-export
-from src.backend.infrastructure.security.cert_store.store import CertStore  # S55 W1: re-export
+from src.backend.infrastructure.security.cert_store.backend_base import (
+    CertBackend,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.backend_memory import (
+    MemoryCertBackend,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.backend_mongo import (
+    MongoCertBackend,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.backend_postgres import (
+    PostgresCertBackend,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.backend_vault import (
+    VaultCertBackend,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.models import (
+    CertEntry,  # S55 W1: re-export
+)
+from src.backend.infrastructure.security.cert_store.store import (
+    CertStore,  # S55 W1: re-export
+)
 
 __all__ = (
     "CertEntry",
@@ -44,5 +58,3 @@ def _fingerprint(pem: str) -> str:
 def create_cert_store() -> CertStore:
     """Фабрика по умолчанию — собирает store из глобальных настроек."""
     return CertStore.from_settings(cert_store_settings)
-
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W1 — helpers.py part of admin_plugins decomp.
 
 Funcs: _check_flag_enabled, _get_plugin_registry, _mock_plugins, _mock_manifest, _get_version_service.
@@ -10,13 +11,11 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
-
-from src.backend.core.logging import get_logger
 
 router = APIRouter(prefix="/admin/plugins", tags=["admin"])
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
+
 
 def _check_flag_enabled() -> None:
     """Проверяет feature-flag admin_marketplace_endpoints.
@@ -31,6 +30,7 @@ def _check_flag_enabled() -> None:
             detail="Admin marketplace endpoints отключены (feature_flags.admin_marketplace_endpoints=False)",
         )
 
+
 def _get_plugin_registry() -> Any:
     """Возвращает PluginRegistry/PluginLoader, если доступен.
 
@@ -43,6 +43,7 @@ def _get_plugin_registry() -> Any:
     except Exception as _:
         logger.warning("PluginLoader недоступен — используется mock")
         return None
+
 
 def _mock_plugins() -> list[PluginSummary]:
     """Возвращает mock-список плагинов для случая недоступного реестра."""
@@ -65,6 +66,7 @@ def _mock_plugins() -> list[PluginSummary]:
         ),
     ]
 
+
 def _mock_manifest(name: str) -> PluginManifest:
     """Возвращает mock-манифест плагина."""
     return PluginManifest(
@@ -82,6 +84,7 @@ def _mock_manifest(name: str) -> PluginManifest:
         },
     )
 
+
 def _get_version_service() -> Any | None:
     """Получить :class:`PluginVersionService` из app.state, если есть.
 
@@ -98,4 +101,3 @@ def _get_version_service() -> Any | None:
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
     except Exception as _:
         return None
-

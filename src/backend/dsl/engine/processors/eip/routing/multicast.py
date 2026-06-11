@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S63 W2 — multicast.py part of routing decomp.
 
 Classes: MulticastProcessor, MulticastRoutesProcessor.
@@ -7,7 +8,6 @@ MulticastProcessor + MulticastRoutesProcessor (1-to-many routing).
 """
 
 import asyncio
-from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -18,9 +18,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
-
-
-
 
 
 class MulticastProcessor(BaseProcessor):
@@ -118,7 +115,6 @@ class MulticastProcessor(BaseProcessor):
         exchange.set_property("multicast_results", results)
         if errors:
             exchange.set_property("multicast_errors", errors)
-
 
 
 class MulticastRoutesProcessor(BaseProcessor):
@@ -251,6 +247,3 @@ class MulticastRoutesProcessor(BaseProcessor):
                 "timeout": self._timeout,
             }
         }
-
-
-

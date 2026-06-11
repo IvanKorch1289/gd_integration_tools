@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import email
 import email.policy
+import re
 import ssl
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
@@ -237,59 +238,67 @@ class EmailIMAPSource:
             Список новых :class:`EmailMessage`.
         """
         try:
-            response = await client.search("UNSEEN")
+            response = await client.uid_search("UNSEEN")
         except Exception as exc:
-            logger.warning("EmailIMAPSource: search UNSEEN failed: %s", exc)
+            logger.warning("EmailIMAPSource: uid_search UNSEEN failed: %s", exc)
             return []
 
         lines = response.lines or []
         raw_ids: list[str] = lines[0].decode().split() if lines and lines[0] else []
 
-        result: list[EmailMessage] = []
+        # Apply since_uid cutoff before bulk fetch
+        ids_to_fetch: list[str] = []
         for msg_id in raw_ids:
             try:
                 uid = int(msg_id)
             except ValueError:
-                uid = 0
-            if uid and uid <= self._last_uid:
                 continue
-
-            try:
-                fetch_resp = await client.fetch(msg_id, "(RFC822)")
-            except Exception as exc:
-                logger.warning("EmailIMAPSource: fetch %s failed: %s", msg_id, exc)
+            if uid <= self._last_uid:
                 continue
+            ids_to_fetch.append(msg_id)
 
-            raw_bytes = b""
-            for line in fetch_resp.lines or []:
-                if isinstance(line, (bytes, bytearray)) and len(line) > 100:
-                    raw_bytes = bytes(line)
-                    break
-            if not raw_bytes:
+        if not ids_to_fetch:
+            return []
+
+        try:
+            fetch_resp = await client.uid("fetch", ",".join(ids_to_fetch), "(RFC822)")
+        except Exception as exc:
+            logger.warning("EmailIMAPSource: bulk uid fetch failed: %s", exc)
+            return []
+
+        result: list[EmailMessage] = []
+        _uid_re = re.compile(rb"UID\s+(\d+)")
+        current_uid = ""
+        for line in fetch_resp.lines or []:
+            if not isinstance(line, (bytes, bytearray)):
                 continue
-
-            parsed = _parse_raw_email(raw_bytes)
-            if not self._matches(parsed):
-                logger.debug(
-                    "EmailIMAPSource: UID=%s отфильтрован (subject=%r, from=%r)",
-                    msg_id,
-                    parsed.get("subject"),
-                    parsed.get("from"),
+            m = _uid_re.search(line)
+            if m:
+                current_uid = m.group(1).decode()
+                continue
+            if len(line) > 100:
+                raw_bytes = bytes(line)
+                parsed = _parse_raw_email(raw_bytes)
+                if not self._matches(parsed):
+                    logger.debug(
+                        "EmailIMAPSource: UID=%s отфильтрован (subject=%r, from=%r)",
+                        current_uid,
+                        parsed.get("subject"),
+                        parsed.get("from"),
+                    )
+                    continue
+                email_msg = EmailMessage(
+                    uid=current_uid,
+                    subject=parsed.get("subject", ""),
+                    from_addr=parsed.get("from", ""),
+                    to_addr=parsed.get("to", ""),
+                    body=parsed.get("body", ""),
+                    received_at=datetime.now(UTC),
+                    headers={k: v for k, v in parsed.items() if k not in ("body",)},
                 )
-                continue
-
-            email_msg = EmailMessage(
-                uid=msg_id,
-                subject=parsed.get("subject", ""),
-                from_addr=parsed.get("from", ""),
-                to_addr=parsed.get("to", ""),
-                body=parsed.get("body", ""),
-                received_at=datetime.now(UTC),
-                headers={k: v for k, v in parsed.items() if k not in ("body",)},
-            )
-            result.append(email_msg)
-            if uid:
-                self._last_uid = max(self._last_uid, uid)
+                result.append(email_msg)
+                if current_uid:
+                    self._last_uid = max(self._last_uid, int(current_uid))
 
         return result
 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __future__ import annotations
+
 """SagaLRAProcessor package (S58 W2 decomp from saga_lra_processor.py 587 LOC).
 
 9 methods decomposed в 4 mixin files (3 small classes в state.py):
@@ -24,7 +24,7 @@ import inspect
 import time
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
@@ -63,30 +63,28 @@ _VALID_STATES = frozenset(
 )
 
 
-
-
-from src.backend.dsl.processors.saga_lra_processor.state import SagaCompensationError  # S58 W2: re-export
-from src.backend.dsl.processors.saga_lra_processor.state import SagaLRAError  # S58 W2: re-export
-from src.backend.dsl.processors.saga_lra_processor.state import SagaState  # S58 W2: re-export
-from src.backend.dsl.processors.saga_lra_processor.core_mixin import CoreMixin  # S58 W2: MRO
-from src.backend.dsl.processors.saga_lra_processor.lifecycle_mixin import LifecycleMixin  # S58 W2: MRO
-from src.backend.dsl.processors.saga_lra_processor.serialization_mixin import SerializationMixin  # S58 W2: MRO
-from src.backend.dsl.processors.saga_lra_processor.execution_mixin import ExecutionMixin  # S58 W2: MRO
-
-__all__ = (
-    "SagaCompensationError",
-    "SagaLRAError",
-    "SagaLRAProcessor",
-    "SagaState",
+from src.backend.dsl.processors.saga_lra_processor.core_mixin import (
+    CoreMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.processors.saga_lra_processor.execution_mixin import (
+    ExecutionMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.processors.saga_lra_processor.lifecycle_mixin import (
+    LifecycleMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.processors.saga_lra_processor.serialization_mixin import (
+    SerializationMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.processors.saga_lra_processor.state import (
+    SagaCompensationError,  # S58 W2: re-export
+    SagaLRAError,  # S58 W2: re-export
+    SagaState,  # S58 W2: re-export
 )
 
+__all__ = ("SagaCompensationError", "SagaLRAError", "SagaLRAProcessor", "SagaState")
 
-class SagaLRAProcessor(
-    CoreMixin,
-    LifecycleMixin,
-    SerializationMixin,
-    ExecutionMixin,
-):
+
+class SagaLRAProcessor(CoreMixin, LifecycleMixin, SerializationMixin, ExecutionMixin):
     """Saga LRA processor (4 mixins = 6 methods + 3 core)."""
 
     __slots__ = ()

@@ -33,6 +33,8 @@ class DSLSettings(BaseSettingsWithLoader):
         hot_reload_debounce_ms: Окно агрегирования file-event'ов
             перед перезагрузкой (в миллисекундах). Защита от шторма
             событий при сохранении редактором (tmp-файл + rename).
+        rate_convert_providers: Словарь URL провайдеров курсов валют
+            для RateConvertProcessor.
     """
 
     yaml_group: ClassVar[str] = "dsl"
@@ -56,6 +58,14 @@ class DSLSettings(BaseSettingsWithLoader):
         le=10_000,
         title="Окно дебаунса (ms)",
         description="Сколько ждать после первого file-event'а перед reload.",
+    )
+    rate_convert_providers: dict[str, str] = Field(
+        default_factory=lambda: {
+            "er-api": "https://open.er-api.com/v6/latest/{base}",
+            "exchangerate-host": "https://api.exchangerate.host/latest?base={base}",
+        },
+        title="Провайдеры курсов валют",
+        description="Словарь name → URL-шаблон для RateConvertProcessor.",
     )
 
 

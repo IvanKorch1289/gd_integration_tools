@@ -29,14 +29,14 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.ai.errors import GuardResult
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-from src.backend.core.logging import get_logger
+from src.backend.core.ai.gateway_models import AIRequest
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+
 
 class InputMixin:
     """input sanitization + guards (_apply_input_sanitizers, _apply_input_guards, _resolve_sanitizer) для PipelineStepsMixin. S56 W2 extraction."""
@@ -129,4 +129,3 @@ class InputMixin:
             logger.debug("AIGateway: PresidioSanitizerAdapter недоступен (%s)", exc)
             self._sanitizer = None
         return self._sanitizer
-

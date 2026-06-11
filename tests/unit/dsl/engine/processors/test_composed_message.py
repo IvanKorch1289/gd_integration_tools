@@ -36,25 +36,32 @@ class TestComposedMessageProcessor:
     def test_name_default(self) -> None:
         def splitter(ex):
             return [ex]
+
         def agg(parts):
             return parts[0] if parts else _make_exchange()
+
         proc = ComposedMessageProcessor(splitter, [], agg)
         assert proc.name == "composed_message"
 
     def test_name_custom(self) -> None:
         def splitter(ex):
             return [ex]
+
         def agg(parts):
             return parts[0] if parts else _make_exchange()
+
         proc = ComposedMessageProcessor(splitter, [], agg, name="custom")
         assert proc.name == "custom"
 
     def test_processors_list_copied(self) -> None:
         procs = [DummyProcessor()]
+
         def splitter(ex):
             return [ex]
+
         def agg(parts):
             return parts[0] if parts else _make_exchange()
+
         proc = ComposedMessageProcessor(splitter, procs, agg)
         assert proc._processors == procs
         assert proc._processors is not procs  # Should be a copy
@@ -249,7 +256,9 @@ class TestComposedMessageProcessorProcess:
     async def test_to_spec_returns_none(self) -> None:
         def splitter(ex):
             return [ex]
+
         def agg(parts):
             return parts[0] if parts else _make_exchange()
+
         proc = ComposedMessageProcessor(splitter, [], agg)
         assert proc.to_spec() is None

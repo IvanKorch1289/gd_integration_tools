@@ -13,23 +13,32 @@ Backward-compat: ``from src.backend.core.security.capabilities.gate import Capab
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
-
-from src.backend.core.security.capabilities.errors import CapabilityNotFoundError, CapabilitySupersetError
-from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.vocabulary import CapabilityVocabulary
-
-
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Final
+
+from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.errors import (
+    CapabilityNotFoundError,
+    CapabilitySupersetError,
+)
+from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.vocabulary import CapabilityVocabulary
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.security.capabilities.gate.declaration_mixin import DeclarationMixin  # S54 W4: MRO
-from src.backend.core.security.capabilities.gate.check_mixin import CheckMixin  # S54 W4: MRO
-from src.backend.core.security.capabilities.gate.cache_mixin import CacheMixin  # S54 W4: MRO
-from src.backend.core.security.capabilities.gate.audit_mixin import AuditMixin  # S54 W4: MRO
+from src.backend.core.security.capabilities.gate.audit_mixin import (
+    AuditMixin,  # S54 W4: MRO
+)
+from src.backend.core.security.capabilities.gate.cache_mixin import (
+    CacheMixin,  # S54 W4: MRO
+)
+from src.backend.core.security.capabilities.gate.check_mixin import (
+    CheckMixin,  # S54 W4: MRO
+)
+from src.backend.core.security.capabilities.gate.declaration_mixin import (
+    DeclarationMixin,  # S54 W4: MRO
+)
 
 __all__ = ("CapabilityGate",)
 
@@ -42,12 +51,7 @@ _DEFAULT_LRU_SIZE: Final[int] = 1024
 # --- End constants ---
 
 
-class CapabilityGate(
-    DeclarationMixin,
-    CheckMixin,
-    CacheMixin,
-    AuditMixin,
-):
+class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
     """Capability Gate (4 mixins = 14 methods + 3 core)."""
 
     __slots__ = ()
@@ -71,20 +75,15 @@ class CapabilityGate(
         self._tenant_cache: dict[tuple[str, str, str, str | None], bool] = {}
         self._policy: "CapabilityPolicy | None" = policy
 
-
-
     @property
     def vocabulary(self) -> CapabilityVocabulary:
         """Доступ к registry для админ-UI и DSL-Linter."""
         return self._vocabulary
 
-
-
     @property
     def policy(self) -> "CapabilityPolicy | None":
         """Опц. policy, интегрированная в gate (``None`` → no policy)."""
         return self._policy
-
 
 
 def check_capabilities_subset(
@@ -147,4 +146,3 @@ def _is_covered(
         if definition.matcher.match(ref.scope, candidate.scope):
             return True
     return False
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Setup infrastructure package (S60 W3 decomp from setup_infra.py 534 LOC).
 
 13 top-level funcs decomposed в 4 files (per concern):
@@ -11,19 +12,27 @@ Backward-compat: ``from src.backend.plugins.composition.setup_infra import perfo
 """
 
 
-from src.backend.plugins.composition.setup_infra.health import _get_watcher_manager  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.health import _register_health_checks  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.pools import _register_pools_in_unified_manager  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.pools import _warmup_connection_pools  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.pools import _redis_enabled  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.pools import _s3_enabled  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.pools import _clickhouse_enabled  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.workflow_audit import _init_workflow_audit_sink  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.workflow_audit import _close_workflow_audit_sink  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.lifecycle import _register_default_degradation_features  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.lifecycle import perform_infrastructure_operation  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.lifecycle import starting  # S60 W3: re-export
-from src.backend.plugins.composition.setup_infra.lifecycle import ending  # S60 W3: re-export
+from src.backend.plugins.composition.setup_infra.health import (
+    _get_watcher_manager,  # S60 W3: re-export
+    _register_health_checks,  # S60 W3: re-export
+)
+from src.backend.plugins.composition.setup_infra.lifecycle import (
+    _register_default_degradation_features,  # S60 W3: re-export
+    ending,  # S60 W3: re-export
+    perform_infrastructure_operation,  # S60 W3: re-export
+    starting,  # S60 W3: re-export
+)
+from src.backend.plugins.composition.setup_infra.pools import (
+    _clickhouse_enabled,  # S60 W3: re-export
+    _redis_enabled,  # S60 W3: re-export
+    _register_pools_in_unified_manager,  # S60 W3: re-export
+    _s3_enabled,  # S60 W3: re-export
+    _warmup_connection_pools,  # S60 W3: re-export
+)
+from src.backend.plugins.composition.setup_infra.workflow_audit import (
+    _close_workflow_audit_sink,  # S60 W3: re-export
+    _init_workflow_audit_sink,  # S60 W3: re-export
+)
 
 __all__ = (
     "_get_watcher_manager",

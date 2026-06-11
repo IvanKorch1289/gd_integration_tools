@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
+
 
 class HttpSourcesMixin:
     """HTTP-based source registration (WebDAV) для RouteBuilder. S57 W2 extraction."""
@@ -61,4 +62,3 @@ class HttpSourcesMixin:
         builder: RouteBuilder = cls(route_id=route_id, source=f"webdav:{route_id}")
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
-

@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from src.backend.core.config.external_databases.connection import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.infrastructure.database.database import (
     DatabaseBundle,
-    DatabaseInitializer,
     ExternalDatabaseRegistry,
 )
 

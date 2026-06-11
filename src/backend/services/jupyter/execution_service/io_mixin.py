@@ -1,21 +1,18 @@
 from __future__ import annotations
+
+import asyncio
+import json
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-import json
-import uuid
-from typing import Any
-
 import httpx
 
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
-from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
 from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger("services.jupyter.execution")
+
 
 class IOMixin:
     """export + execute + build_ipynb I/O methods для NotebookExecutionService. S60 W1 extraction."""
@@ -93,21 +90,25 @@ class IOMixin:
         try:
             import nbformat
 
-            with open(notebook_path, "r", encoding="utf-8") as fh:
-                nb = nbformat.read(fh, as_version=4)
+            def _read_nbformat() -> Any:
+                with open(notebook_path, "r", encoding="utf-8") as fh:
+                    return nbformat.read(fh, as_version=4)
+
+            nb = await asyncio.to_thread(_read_nbformat)
             cells = [
                 {"cell_type": cell.cell_type, "source": cell.source}
                 for cell in nb.cells
             ]
         except ImportError:
             _logger.warning("nbformat not installed — falling back to manual JSON read")
-            with open(notebook_path, "r", encoding="utf-8") as fh:
-                data = json.load(fh)
+
+            def _read_json() -> Any:
+                with open(notebook_path, "r", encoding="utf-8") as fh:
+                    return json.load(fh)
+
+            data = await asyncio.to_thread(_read_json)
             cells = [
-                {
-                    "cell_type": c.get("cell_type", "code"),
-                    "source": c.get("source", ""),
-                }
+                {"cell_type": c.get("cell_type", "code"), "source": c.get("source", "")}
                 for c in data.get("cells", [])
             ]
         except Exception as exc:
@@ -146,9 +147,7 @@ class IOMixin:
         return result
 
     @staticmethod
-    def _build_ipynb(
-        notebook_path: str, cells: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _build_ipynb(notebook_path: str, cells: list[dict[str, Any]]) -> dict[str, Any]:
         """Build validated .ipynb JSON structure via nbformat.
 
         Falls back to manual JSON if nbformat is not installed.
@@ -198,4 +197,3 @@ class IOMixin:
                     for cell in cells
                 ],
             }
-

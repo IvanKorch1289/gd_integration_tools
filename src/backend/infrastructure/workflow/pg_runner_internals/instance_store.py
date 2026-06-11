@@ -3,6 +3,7 @@
 Classes: WorkflowInstanceStore.
 Funcs: .
 """
+
 from __future__ import annotations
 
 """Внутренние store-helpers для workflow-стека (Sprint 4 К3-B §3).
@@ -24,19 +25,15 @@ Sprint 4 К3-B §3 — удалены 4 legacy-файла (985 LOC), Mongo-пр�
 native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallback.
 """
 
-import hashlib
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, func, or_, select, text, update
+from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.workflow_event import (
-    WorkflowEvent,
-    WorkflowEventType,
-)
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.database.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
@@ -48,8 +45,8 @@ _logger = get_logger("workflow.pg_runner_internals")
 
 # ─────────────────────────────── DTO ───────────────────────────────
 
-@dataclass(slots=True, frozen=True)
 
+@dataclass(slots=True, frozen=True)
 class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 
@@ -235,4 +232,3 @@ class WorkflowInstanceStore:
             .where(WorkflowInstance.id == workflow_id)
             .values(snapshot_state=merged)
         )
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W3 - semantic_cache.py part of semantic_cache decomp.
 
 Per-class file split.
@@ -6,16 +7,13 @@ Per-class file split.
 Classes: SemanticCache.
 """
 
-import asyncio
-import contextlib
 import hashlib
 import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
-
 #: Redis pub/sub канал для cross-instance invalidation L3-кеша.
 RAG_CACHE_INVALIDATE_CHANNEL = "rag-cache-invalidate"
+
 
 class SemanticCache:
     """Cache LLM responses by semantic similarity of queries.
@@ -188,4 +186,3 @@ class SemanticCache:
                 )
         except Exception as exc:
             logger.debug("Semantic cache store failed: %s", exc)
-

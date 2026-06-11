@@ -55,8 +55,7 @@ NEVER_REPLACE = frozenset({"timedelta", "date", "time", "timezone", "tzinfo"})
 
 # Match `from datetime import X, Y, Z`
 RE_FROM_DATETIME = re.compile(
-    r"^(\s*)from\s+datetime\s+import\s+(\([^)]+\)|[^\n#]+)",
-    re.MULTILINE,
+    r"^(\s*)from\s+datetime\s+import\s+(\([^)]+\)|[^\n#]+)", re.MULTILINE
 )
 
 
@@ -86,7 +85,7 @@ def transform_file(path: Path, dry_run: bool, verbose: bool) -> tuple[bool, int]
     """Transform one file. Returns (changed, num_imports_migrated)."""
     try:
         original = path.read_text(encoding="utf-8")
-    except (UnicodeDecodeError, OSError):
+    except UnicodeDecodeError, OSError:
         return False, 0
 
     new_lines: list[str] = []
@@ -114,7 +113,7 @@ def transform_file(path: Path, dry_run: bool, verbose: bool) -> tuple[bool, int]
         else:
             replacement = f"{indent}from pendulum import DateTime as datetime"
 
-        new_lines.append(original[last_idx:m.start()])
+        new_lines.append(original[last_idx : m.start()])
         new_lines.append(replacement)
         last_idx = m.end()
         changed = True
@@ -175,4 +174,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

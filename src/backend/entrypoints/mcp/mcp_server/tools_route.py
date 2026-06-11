@@ -23,9 +23,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── route tools (_register_route_tools) ──
+
 
 def _register_route_tools(mcp: Any) -> None:
     """Tools для управления DSL-маршрутами."""
@@ -72,7 +71,7 @@ def _register_route_tools(mcp: Any) -> None:
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()
@@ -122,4 +121,3 @@ def _register_route_tools(mcp: Any) -> None:
                 ],
             }
         ).decode("utf-8")
-

@@ -27,11 +27,8 @@ if TYPE_CHECKING:
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
-from src.backend.core.interfaces.invocation_reply import (
-    ReplyChannelKind,
-)
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
 from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationResponse,
@@ -41,6 +38,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 
 logger = get_logger("services.execution.invoker")
+
 
 class DeferredMixin:
     """streaming + deferred (jobstore + scheduled) invocation для Invoker. S54 W3 extraction."""
@@ -211,4 +209,3 @@ class DeferredMixin:
         if isinstance(delay_raw, (int, float)) and delay_raw >= 0:
             return datetime.now(UTC) + timedelta(seconds=float(delay_raw))
         return None
-

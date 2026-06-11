@@ -134,7 +134,7 @@ class ExecutionTracer:
         """
         # S44 W1 + S47 W1: storage append для end/error events.
         if event.phase in ("end", "error"):
-            self._storage.append(event)
+            await self._storage.append(event)
         for target in (route_id, "__all__"):
             queues = self._subscribers.get(target)
             if not queues:
@@ -146,7 +146,7 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except (asyncio.QueueEmpty, asyncio.QueueFull):
+                    except asyncio.QueueEmpty, asyncio.QueueFull:
                         pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent]:
@@ -179,7 +179,9 @@ class ExecutionTracer:
             if queue in subs:
                 subs.remove(queue)
 
-    def get_recent_traces(self, route_id: str, limit: int = 100) -> list[TraceEvent]:
+    async def get_recent_traces(
+        self, route_id: str, limit: int = 100
+    ) -> list[TraceEvent]:
         """S44 W1 + S47 W1 (TD-026): возвращает последние N events.
 
         Args:
@@ -196,7 +198,7 @@ class ExecutionTracer:
             - JsonFile / Redis / Postgres: persistent.
             - Используется endpoint ``GET /admin/dsl-routes/{route_id}/traces``.
         """
-        return self._storage.read_recent(route_id, limit)
+        return await self._storage.read_recent(route_id, limit)
 
     def list_traced_routes(self) -> list[str]:
         """S44 W1 + S47 W1: возвращает список route_id с events в storage."""

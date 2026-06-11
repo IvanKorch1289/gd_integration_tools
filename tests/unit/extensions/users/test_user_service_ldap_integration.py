@@ -12,6 +12,7 @@ Coverage:
 
 Strategy: mock AdDirectoryClient (no real LDAP server).
 """
+
 from __future__ import annotations
 
 import warnings
@@ -130,8 +131,7 @@ def test_extract_username_strips_upn_domain() -> None:
     from extensions.core_entities.users.services.users import _extract_username
 
     ad_user = AdSearchEntry(
-        dn="CN=alice,DC=x",
-        attributes={"userPrincipalName": "alice@example.com"},
+        dn="CN=alice,DC=x", attributes={"userPrincipalName": "alice@example.com"}
     )
     assert _extract_username(ad_user) == "alice"
 
@@ -140,10 +140,7 @@ def test_extract_username_falls_back_to_cn() -> None:
     """Priority 3: cn attribute."""
     from extensions.core_entities.users.services.users import _extract_username
 
-    ad_user = AdSearchEntry(
-        dn="CN=alice,DC=x",
-        attributes={"cn": "Alice Doe"},
-    )
+    ad_user = AdSearchEntry(dn="CN=alice,DC=x", attributes={"cn": "Alice Doe"})
     assert _extract_username(ad_user) == "Alice Doe"
 
 
@@ -171,9 +168,7 @@ async def test_login_with_method_dispatches_to_password() -> None:
         method="password", username="alice", password="pwd"
     )
     assert result == "user_password_result"
-    service._login_password.assert_awaited_once_with(
-        username="alice", password="pwd"
-    )
+    service._login_password.assert_awaited_once_with(username="alice", password="pwd")
 
 
 @pytest.mark.asyncio
@@ -186,8 +181,7 @@ async def test_login_with_method_dispatches_to_ldap() -> None:
     service._login_ldap = AsyncMock(return_value="user_ldap_result")
 
     with patch(
-        "src.backend.core.auth.ldap_client_factory.get_ad_client",
-        return_value=None,
+        "src.backend.core.auth.ldap_client_factory.get_ad_client", return_value=None
     ):
         result = await service.login_with_method(
             method="ldap", username="alice@example.com", password="pwd"
@@ -287,12 +281,15 @@ def test_login_password_success(client: TestClient) -> None:
     async def fake_login(*args: Any, **kwargs: Any) -> Any:
         return mock_user
 
-    with patch(
-        "src.backend.entrypoints.api.v1.endpoints.auth_login._get_user_service",
-        AsyncMock(return_value=MagicMock(login_with_method=fake_login)),
-    ), patch(
-        "src.backend.entrypoints.api.v1.endpoints.auth_login._get_jwt_backend",
-        AsyncMock(return_value=lambda subject, claims: ("mock-token-xyz", 3600)),
+    with (
+        patch(
+            "src.backend.entrypoints.api.v1.endpoints.auth_login._get_user_service",
+            AsyncMock(return_value=MagicMock(login_with_method=fake_login)),
+        ),
+        patch(
+            "src.backend.entrypoints.api.v1.endpoints.auth_login._get_jwt_backend",
+            AsyncMock(return_value=lambda subject, claims: ("mock-token-xyz", 3600)),
+        ),
     ):
         r = client.post(
             "/api/v1/auth/login",
@@ -309,6 +306,7 @@ def test_login_password_success(client: TestClient) -> None:
 
 def test_login_invalid_credentials_returns_401(client: TestClient) -> None:
     """POST /auth/login + invalid creds → 401."""
+
     async def fake_login(*args: Any, **kwargs: Any) -> Any:
         return None
 
@@ -326,6 +324,7 @@ def test_login_invalid_credentials_returns_401(client: TestClient) -> None:
 
 def test_login_ldap_unavailable_returns_503(client: TestClient) -> None:
     """POST /auth/login method=ldap, LDAP not configured → 503."""
+
     async def fake_login(*args: Any, **kwargs: Any) -> Any:
         raise AdAuthError("LDAP auth is not enabled or not configured")
 
@@ -335,11 +334,7 @@ def test_login_ldap_unavailable_returns_503(client: TestClient) -> None:
     ):
         r = client.post(
             "/api/v1/auth/login",
-            json={
-                "method": "ldap",
-                "username": "alice@example.com",
-                "password": "pwd",
-            },
+            json={"method": "ldap", "username": "alice@example.com", "password": "pwd"},
         )
     assert r.status_code == 503
     assert "LDAP" in r.json()["detail"]
@@ -347,6 +342,7 @@ def test_login_ldap_unavailable_returns_503(client: TestClient) -> None:
 
 def test_login_unknown_method_returns_400(client: TestClient) -> None:
     """POST /auth/login с валидным method но service raise'ит ValueError → 400."""
+
     async def fake_login(*args: Any, **kwargs: Any) -> Any:
         raise ValueError("Unknown auth method: 'password-mock-error'")
 

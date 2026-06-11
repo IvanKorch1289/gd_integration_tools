@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W1 - polling_etl blueprint extracted from macros.py.
 
 polling-based ETL (interval trigger).
@@ -10,12 +11,7 @@ from typing import Any
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    DeadLetterProcessor,
-    DispatchActionProcessor,
-    LogProcessor,
-    RetryProcessor,
-)
+
 
 def polling_etl(
     route_id: str,

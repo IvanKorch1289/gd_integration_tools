@@ -4,6 +4,7 @@ Schemas: ActivityDeclaration, SagaDeclaration, PauseDeclaration, ResumeDeclarati
 
 core activity declarations (activity/saga/pause/resume/signal_wait/sleep).
 """
+
 from __future__ import annotations
 
 """Pydantic-декларации DSL workflow (план V16.2 §4.3, Sprint 4).
@@ -27,9 +28,10 @@ from __future__ import annotations
     * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
 """
 
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class ActivityDeclaration(BaseModel):
     """Декларация atomic-задачи (Temporal activity).
@@ -60,6 +62,7 @@ class ActivityDeclaration(BaseModel):
         default=(), description="Capability'и, требуемые для активности (V15 R-V15-1)."
     )
 
+
 class SagaDeclaration(BaseModel):
     """Saga-паттерн: forward-шаги + соответствующие compensate-шаги.
 
@@ -82,6 +85,7 @@ class SagaDeclaration(BaseModel):
         default=False,
         description="If True, raise exception when compensation fails. Default False (best-effort).",
     )
+
 
 class PauseDeclaration(BaseModel):
     """Pause-шаг: приостановка workflow через Temporal API (S35 GAP-DSL-2).
@@ -106,6 +110,7 @@ class PauseDeclaration(BaseModel):
     output_key: str | None = Field(
         default=None, description="Имя property для сохранения timestamp паузы."
     )
+
 
 class ResumeDeclaration(BaseModel):
     """Resume-шаг: возобновление paused workflow через Temporal API (S35 GAP-DSL-2).
@@ -132,6 +137,7 @@ class ResumeDeclaration(BaseModel):
         description="Опциональный checkpoint_id для восстановления состояния.",
     )
 
+
 class SignalWaitDeclaration(BaseModel):
     """Durable-ожидание внешнего сигнала (HITL, асинхронное событие).
 
@@ -151,6 +157,7 @@ class SignalWaitDeclaration(BaseModel):
         default=None, description="Имя property для сохранения payload сигнала."
     )
 
+
 class SleepDeclaration(BaseModel):
     """Durable-sleep (Temporal-friendly, переживает worker-restart).
 
@@ -163,4 +170,3 @@ class SleepDeclaration(BaseModel):
 
     type: Literal["sleep"] = "sleep"
     duration_s: float = Field(gt=0.0, description="Длительность sleep в секундах.")
-

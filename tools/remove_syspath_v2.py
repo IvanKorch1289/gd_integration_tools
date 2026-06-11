@@ -8,14 +8,8 @@ from pathlib import Path
 PAGES = Path("src/frontend/streamlit_app/pages")
 
 # Паттерн для _root варианта
-_RE_ROOT = re.compile(
-    r"\nimport sys\n(?=\nimport streamlit)",
-    re.MULTILINE,
-)
-_RE_ROOT_PATH = re.compile(
-    r"\nfrom pathlib import Path\n",
-    re.MULTILINE,
-)
+_RE_ROOT = re.compile(r"\nimport sys\n(?=\nimport streamlit)", re.MULTILINE)
+_RE_ROOT_PATH = re.compile(r"\nfrom pathlib import Path\n", re.MULTILINE)
 _RE_ROOT_BLOCK = re.compile(
     r"\n_root = Path\(__file__\)\.resolve\(\)\.parents\[4\]\n"
     r"if str\(_root\) not in sys\.path:\n"

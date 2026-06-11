@@ -1,22 +1,16 @@
 from __future__ import annotations
-from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
 
-import asyncio
-import inspect
 import time
-import uuid
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -48,8 +42,6 @@ _VALID_STATES = frozenset(
         STATE_FAILED,
     }
 )
-
-
 
 
 class ExecutionMixin:
@@ -176,8 +168,6 @@ class ExecutionMixin:
         if exchange.status not in (ExchangeStatus.completed, ExchangeStatus.failed):
             exchange.complete()
 
-
-
     def to_spec(self) -> dict[str, Any] | None:
         """Serialize to a YAML-compatible spec.
 
@@ -205,4 +195,3 @@ class ExecutionMixin:
                 "fail_fast": self._fail_fast,
             }
         }
-

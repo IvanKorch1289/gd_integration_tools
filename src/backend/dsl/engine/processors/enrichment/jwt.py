@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S61 W2 — jwt.py part of enrichment decomp.
 
 Classes: JwtSignProcessor, JwtVerifyProcessor.
@@ -9,10 +10,10 @@ JWT sign + verify.
 import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class JwtSignProcessor(BaseProcessor):
     """Sign payload as JWT with secret + algorithm.
@@ -67,6 +68,7 @@ class JwtSignProcessor(BaseProcessor):
             spec["output_property"] = self._output
         return {"jwt_sign": spec}
 
+
 class JwtVerifyProcessor(BaseProcessor):
     """Verify JWT from header. Stores claims в property или fail.
 
@@ -120,4 +122,3 @@ class JwtVerifyProcessor(BaseProcessor):
         if self._output != "jwt_claims":
             spec["output_property"] = self._output
         return {"jwt_verify": spec}
-

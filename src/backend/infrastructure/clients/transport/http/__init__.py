@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """HttpClient package (S61 W4 decomp from http.py 514 LOC).
 
 17 methods decomposed в 4 mixin files + base.py + factory.py:
@@ -27,7 +28,7 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from logging import DEBUG
 from time import monotonic
-from typing import Any, BinaryIO, TypedDict
+from typing import BinaryIO, TypedDict
 
 import httpx
 from tenacity import (
@@ -44,16 +45,27 @@ from src.backend.core.config.settings import settings
 from src.backend.core.utils.circuit_breaker import get_circuit_breaker
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.codec.json import json_dumps
+from src.backend.infrastructure.clients.transport.http.base import (
+    BaseHttpClient,  # S61 W4: re-export
+    FilePart,  # S61 W4: re-export
+)
+from src.backend.infrastructure.clients.transport.http.factory import (
+    get_http_client,  # S61 W4: re-export
+    get_http_client_dependency,  # S61 W4: re-export
+)
+from src.backend.infrastructure.clients.transport.http.observability_mixin import (
+    ObservabilityMixin,  # S61 W4: MRO
+)
+from src.backend.infrastructure.clients.transport.http.prep_mixin import (
+    PrepMixin,  # S61 W4: MRO
+)
+from src.backend.infrastructure.clients.transport.http.request_mixin import (
+    RequestMixin,  # S61 W4: MRO
+)
+from src.backend.infrastructure.clients.transport.http.session_mixin import (
+    SessionMixin,  # S61 W4: MRO
+)
 from src.backend.infrastructure.logging.factory import get_logger
-
-from src.backend.infrastructure.clients.transport.http.base import BaseHttpClient  # S61 W4: re-export
-from src.backend.infrastructure.clients.transport.http.base import FilePart  # S61 W4: re-export
-from src.backend.infrastructure.clients.transport.http.factory import get_http_client  # S61 W4: re-export
-from src.backend.infrastructure.clients.transport.http.factory import get_http_client_dependency  # S61 W4: re-export
-from src.backend.infrastructure.clients.transport.http.session_mixin import SessionMixin  # S61 W4: MRO
-from src.backend.infrastructure.clients.transport.http.request_mixin import RequestMixin  # S61 W4: MRO
-from src.backend.infrastructure.clients.transport.http.prep_mixin import PrepMixin  # S61 W4: MRO
-from src.backend.infrastructure.clients.transport.http.observability_mixin import ObservabilityMixin  # S61 W4: MRO
 
 __all__ = (
     "HttpClient",
@@ -63,12 +75,8 @@ __all__ = (
     "get_http_client_dependency",
 )
 
-class HttpClient(
-    SessionMixin,
-    RequestMixin,
-    PrepMixin,
-    ObservabilityMixin,
-):
+
+class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
     """HTTP client (4 mixins = 15 methods + 2 core)."""
 
     __slots__ = ()
@@ -107,4 +115,3 @@ class HttpClient(
                 await self._close_session()
         except Exception as exc:
             self.logger.error(f"Ошибка закрытия сетевых ресурсов: {exc}", exc_info=True)
-

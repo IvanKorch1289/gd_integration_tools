@@ -18,23 +18,21 @@ if TYPE_CHECKING:
 Actions: dq.check, dq.schema_infer, dq.stats, dq.rules
 """
 
-import statistics
-from collections import defaultdict
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from enum import Enum
-from typing import Any
 
-from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
 
 class DQSeverity(str, Enum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
+
 
 @dataclass(slots=True)
 class DQViolation:
@@ -43,6 +41,7 @@ class DQViolation:
     severity: DQSeverity
     message: str
     value: Any = None
+
 
 @dataclass(slots=True)
 class DQCheckResult:
@@ -53,6 +52,7 @@ class DQCheckResult:
     @property
     def is_clean(self) -> bool:
         return len(self.violations) == 0
+
 
 @dataclass(slots=True)
 class DQRemediationResult:
@@ -72,6 +72,7 @@ class DQRemediationResult:
     def is_clean(self) -> bool:
         return len(self.violations) == 0
 
+
 @dataclass(slots=True)
 class DQRule:
     """Правило проверки качества данных."""
@@ -82,6 +83,7 @@ class DQRule:
     params: dict[str, Any] = dataclass_field(default_factory=dict)
     severity: DQSeverity = DQSeverity.WARNING
     enabled: bool = True
+
 
 class CheckMixin:
     """capability check (check, _check_rule) для DataQualityMonitor. S55 W4 extraction."""
@@ -206,4 +208,3 @@ class CheckMixin:
                 for v in result.violations
             ],
         }
-

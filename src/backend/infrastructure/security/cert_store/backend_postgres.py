@@ -2,6 +2,7 @@
 
 Classes: PostgresCertBackend.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
@@ -34,25 +35,19 @@ Hot-reload механизм:
     pem = await store.get("skb_api")
 """
 
-import asyncio
-import hashlib
-from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
-from typing import Any
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
 from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
 
-@dataclass(slots=True)
 
+@dataclass(slots=True)
 class PostgresCertBackend(CertBackend):
     """PostgreSQL бэкенд: таблицы ``certs`` + ``cert_history``."""
 
@@ -169,4 +164,3 @@ class PostgresCertBackend(CertBackend):
             description=row.description,
             version=row.version,
         )
-

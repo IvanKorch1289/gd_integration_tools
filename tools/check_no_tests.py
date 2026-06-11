@@ -43,7 +43,7 @@ def main() -> int:
         if f.suffix == ".py" and f.exists():
             try:
                 text = f.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+            except OSError, UnicodeDecodeError:
                 continue
             if BAD_IMPORTS.search(text):
                 errors.append(

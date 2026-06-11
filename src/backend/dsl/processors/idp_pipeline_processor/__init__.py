@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """IDPPipelineProcessor package (S65 W4 decomp from idp_pipeline_processor.py 472 LOC).
 
 1 god-class (7 methods) + 2 small classes + 10 funcs → 4 mixins + state.py + helpers.py.
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
@@ -42,23 +43,34 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # Patterns are deliberately permissive to keep confidence ≥ threshold
 # on well-formed documents.
 
-from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult  # S65 W4: re-export
-from src.backend.dsl.processors.idp_pipeline_processor.state import _FieldPattern  # S65 W4: re-export
-from src.backend.dsl.processors.idp_pipeline_processor.pipeline_mixin import PipelineMixin  # S65 W4: MRO
-from src.backend.dsl.processors.idp_pipeline_processor.routing_mixin import RoutingMixin  # S65 W4: MRO
-from src.backend.dsl.processors.idp_pipeline_processor.serialization_mixin import SerializationMixin  # S65 W4: MRO
-from src.backend.dsl.processors.idp_pipeline_processor.helpers_mixin import HelpersMixin  # S65 W4: MRO
-
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _invoice_extractors  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _contract_extractors  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _receipt_extractors  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _default_extractors_for  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import classify_document  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import extract_fields  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _rule_required_present  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _rule_total_positive  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import validate_result  # S65 W4: helper re-export
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import _coerce_to_text  # S65 W4: helper re-export
+from src.backend.dsl.processors.idp_pipeline_processor.helpers import (
+    _coerce_to_text,  # S65 W4: helper re-export
+    _contract_extractors,  # S65 W4: helper re-export
+    _default_extractors_for,  # S65 W4: helper re-export
+    _invoice_extractors,  # S65 W4: helper re-export
+    _receipt_extractors,  # S65 W4: helper re-export
+    _rule_required_present,  # S65 W4: helper re-export
+    _rule_total_positive,  # S65 W4: helper re-export
+    classify_document,  # S65 W4: helper re-export
+    extract_fields,  # S65 W4: helper re-export
+    validate_result,  # S65 W4: helper re-export
+)
+from src.backend.dsl.processors.idp_pipeline_processor.helpers_mixin import (
+    HelpersMixin,  # S65 W4: MRO
+)
+from src.backend.dsl.processors.idp_pipeline_processor.pipeline_mixin import (
+    PipelineMixin,  # S65 W4: MRO
+)
+from src.backend.dsl.processors.idp_pipeline_processor.routing_mixin import (
+    RoutingMixin,  # S65 W4: MRO
+)
+from src.backend.dsl.processors.idp_pipeline_processor.serialization_mixin import (
+    SerializationMixin,  # S65 W4: MRO
+)
+from src.backend.dsl.processors.idp_pipeline_processor.state import (
+    IDPResult,  # S65 W4: re-export
+    _FieldPattern,  # S65 W4: re-export
+)
 
 __all__ = (
     "IDPPipelineProcessor",
@@ -76,11 +88,9 @@ __all__ = (
     "_coerce_to_text",
 )
 
+
 class IDPPipelineProcessor(
-    PipelineMixin,
-    RoutingMixin,
-    SerializationMixin,
-    HelpersMixin,
+    PipelineMixin, RoutingMixin, SerializationMixin, HelpersMixin
 ):
     """IDP pipeline processor (4 mixins = 6 methods + 1 core)."""
 
@@ -115,4 +125,3 @@ class IDPPipelineProcessor(
         self._validators: list[str] | None = list(validators) if validators else None
         self._hitl_property = hitl_property
         self._result_property = result_property
-

@@ -8,6 +8,7 @@ Coverage:
 * Fail-secure (Redis unavailable → 503);
 * Integration: real endpoint /auth/login с mock limiter.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -52,7 +53,9 @@ def test_tarpit_delay_positive() -> None:
 # === X-Forwarded-For parsing (via _extract_client_ip internals) ===
 
 
-def _build_request(headers: dict[str, str] | None = None, client_host: str = "1.2.3.4") -> Request:
+def _build_request(
+    headers: dict[str, str] | None = None, client_host: str = "1.2.3.4"
+) -> Request:
     """Build minimal Request mock for _extract_client_ip testing."""
     from starlette.datastructures import Headers
 
@@ -94,7 +97,9 @@ async def test_direct_connection_fallback() -> None:
 async def test_check_ip_rate_limit_ok() -> None:
     """OK: limiter returns remaining > 0 → no exception."""
     mock_limiter = MagicMock()
-    mock_limiter.check = AsyncMock(return_value={"remaining": 3, "reset_at": 0, "limit": 5})
+    mock_limiter.check = AsyncMock(
+        return_value={"remaining": 3, "reset_at": 0, "limit": 5}
+    )
 
     with patch(
         "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
@@ -157,7 +162,9 @@ async def test_check_username_rate_limit_empty_username_skipped() -> None:
 async def test_check_username_rate_limit_ok() -> None:
     """OK case для username check."""
     mock_limiter = MagicMock()
-    mock_limiter.check = AsyncMock(return_value={"remaining": 2, "reset_at": 0, "limit": 3})
+    mock_limiter.check = AsyncMock(
+        return_value={"remaining": 2, "reset_at": 0, "limit": 3}
+    )
 
     with patch(
         "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
@@ -248,7 +255,9 @@ def test_login_endpoint_includes_ip_rate_limit_dependency(
 # === Tarpit delay timing test (fast, 0.01 sec в тестах) ===
 
 
-async def test_tarpit_delays_response_on_exceeded(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_tarpit_delays_response_on_exceeded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """При exceeded — asyncio.sleep с TARPIT_DELAY_SECONDS."""
     from src.backend.infrastructure.resilience.unified_rate_limiter import (
         RateLimitExceeded,

@@ -16,6 +16,7 @@ S59 W1 (libraries > custom, v22 п.5): мигрирован с ``argparse`` на
 
     python tools/check_feature_flags.py [--allow-non-off NAME1,NAME2]
 """
+
 from __future__ import annotations
 
 import sys
@@ -74,8 +75,7 @@ def main(
 
     if errors:
         console_err.print(
-            f"[bold red]✗ feature-flag audit FAILED:[/bold red] "
-            f"{len(errors)} нарушений"
+            f"[bold red]✗ feature-flag audit FAILED:[/bold red] {len(errors)} нарушений"
         )
         for err in errors:
             console_err.print(f"  [red]-[/red] {err}")

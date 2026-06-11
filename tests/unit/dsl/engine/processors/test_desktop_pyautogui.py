@@ -33,10 +33,16 @@ class TestDesktopPyAutoGUIProcessor:
         exchange = _make_exchange()
 
         mock_img = MagicMock()
-        with patch.dict("sys.modules", {"pyautogui": MagicMock(screenshot=MagicMock(return_value=mock_img))}):
+        with patch.dict(
+            "sys.modules",
+            {"pyautogui": MagicMock(screenshot=MagicMock(return_value=mock_img))},
+        ):
             await proc.process(exchange, MagicMock())
 
-        assert exchange.properties.get("desktop_result") == {"action": "screenshot", "result": True}
+        assert exchange.properties.get("desktop_result") == {
+            "action": "screenshot",
+            "result": True,
+        }
 
     @pytest.mark.asyncio
     async def test_click_with_coords(self) -> None:
@@ -49,7 +55,10 @@ class TestDesktopPyAutoGUIProcessor:
             await proc.process(exchange, MagicMock())
 
         mock_pyautogui.click.assert_called_once_with(100, 200, duration=0.25)
-        assert exchange.properties.get("desktop_result") == {"action": "click", "result": True}
+        assert exchange.properties.get("desktop_result") == {
+            "action": "click",
+            "result": True,
+        }
 
     @pytest.mark.asyncio
     async def test_type_text(self) -> None:

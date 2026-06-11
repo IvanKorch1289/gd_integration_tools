@@ -4,9 +4,9 @@ Classes: IntersectProcessor, DiffProcessor.
 
 set algebra (intersect, diff).
 """
+
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -14,6 +14,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
 
 class IntersectProcessor(BaseProcessor):
     """Пересечение с другим списком.
@@ -42,6 +43,7 @@ class IntersectProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         return {"intersect": {"other": self._other}}
 
+
 class DiffProcessor(BaseProcessor):
     """Разность с другим списком.
 
@@ -68,4 +70,3 @@ class DiffProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"diff": {"other": self._other}}
-

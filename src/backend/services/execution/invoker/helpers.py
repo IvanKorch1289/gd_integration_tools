@@ -1,29 +1,21 @@
 from __future__ import annotations
-from enum import StrEnum
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
-
-from datetime import UTC, datetime, timedelta
-
-from src.backend.core.logging import get_logger
 
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
 from src.backend.core.interfaces.invoker import InvocationRequest, InvocationResponse
-from src.backend.dsl.engine.context import ExecutionContext
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.services.execution.invoker.invoke_modes_mixin import InvokeModesMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.deferred_mixin import DeferredMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.temporal_mixin import TemporalMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.run_mixin import RunMixin  # S54 W3: MRO
 
 def _is_async_iterator(obj: Any) -> bool:
     """True если ``obj`` поддерживает ``async for`` (AsyncIterable/Iterator)."""
     return (hasattr(obj, "__aiter__") and isinstance(obj, AsyncIterator)) or hasattr(
         obj, "__aiter__"
     )
+
 
 async def _run_deferred_job(request: InvocationRequest) -> None:
     """APScheduler-job: вызывает Invoker SYNC и публикует ответ в reply_channel.
@@ -71,6 +63,7 @@ async def _run_deferred_job(request: InvocationRequest) -> None:
             request.invocation_id,
         )
 
+
 def _serialize_request(request: InvocationRequest) -> dict[str, Any]:
     """Сериализует :class:`InvocationRequest` в JSON-friendly dict.
 
@@ -89,6 +82,7 @@ def _serialize_request(request: InvocationRequest) -> dict[str, Any]:
         "timeout": request.timeout,
         "correlation_id": request.correlation_id,
     }
+
 
 def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
     """Восстанавливает :class:`InvocationRequest` из словаря."""
@@ -112,6 +106,7 @@ def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
         correlation_id=raw.get("correlation_id"),
     )
 
+
 def get_invoker() -> Invoker:
     """Singleton-доступ к Invoker'у (для DI и DSL processors).
 
@@ -121,4 +116,3 @@ def get_invoker() -> Invoker:
     Тело перезаписывается декоратором; ``raise`` — для mypy.
     """
     raise RuntimeError("get_invoker overridden by app_state_singleton")
-

@@ -347,7 +347,7 @@ def check_file(path: Path) -> list[Violation]:
     """Распарсить файл и вернуть список нарушений."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return []
     try:
         tree = ast.parse(source, filename=str(path))

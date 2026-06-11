@@ -87,7 +87,10 @@ def cmd_list() -> int:
     """Список активных worktree (включая master)."""
     print("Active git worktrees:")
     result = subprocess.run(
-        ["git", "worktree", "list"], check=False, capture_output=True, text=True  # noqa: S607  # PATH-managed executable (partial path intentional)
+        ["git", "worktree", "list"],
+        check=False,
+        capture_output=True,
+        text=True,  # noqa: S607  # PATH-managed executable (partial path intentional)
     )
     print(result.stdout)
 

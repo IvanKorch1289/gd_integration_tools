@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -8,15 +8,11 @@ if TYPE_CHECKING:
 
 import asyncio
 import inspect
-import time
 import uuid
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.exchange import ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -48,8 +44,6 @@ _VALID_STATES = frozenset(
         STATE_FAILED,
     }
 )
-
-
 
 
 class CoreMixin:
@@ -93,8 +87,6 @@ class CoreMixin:
         self._on_state_change = on_state_change
         self._saga_id = uuid.uuid4().hex
 
-
-
     def _set_state(self, exchange: Exchange[Any], new_state: str) -> None:
         """Set saga state and notify listener (if any)."""
         if new_state not in _VALID_STATES:
@@ -108,8 +100,6 @@ class CoreMixin:
                 _lra_logger.exception(
                     "SagaLRA on_state_change callback raised: saga_id=%s", self._saga_id
                 )
-
-
 
     async def _invoke(
         self,
@@ -131,4 +121,3 @@ class CoreMixin:
                 coro = asyncio.wait_for(coro, timeout=self._per_step_timeout)
             result = await coro
         return result
-

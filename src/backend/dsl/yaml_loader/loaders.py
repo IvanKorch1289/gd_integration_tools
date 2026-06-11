@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W4 — loaders.py part of yaml_loader decomp.
 
 Funcs: load_pipeline_from_yaml, load_pipeline_from_file, load_all_from_directory.
@@ -7,14 +8,12 @@ public loaders (yaml/file/directory).
 """
 
 from pathlib import Path
-from typing import Any
 
-from src.backend.core.logging import get_logger
-from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()
+
 
 def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pipeline:
     """Парсит YAML-строку в Pipeline.
@@ -57,6 +56,7 @@ def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pip
 
     return _build_pipeline(data)
 
+
 def load_pipeline_from_file(path: str | Path) -> Pipeline:
     """Загружает Pipeline из YAML-файла.
 
@@ -69,6 +69,7 @@ def load_pipeline_from_file(path: str | Path) -> Pipeline:
     file_path = Path(path)
     yaml_str = file_path.read_text(encoding="utf-8")
     return load_pipeline_from_yaml(yaml_str, base_path=file_path.parent)
+
 
 def load_all_from_directory(directory: str | Path) -> list[Pipeline]:
     """Загружает все .yaml/.yml файлы из директории как Pipelines."""
@@ -88,4 +89,3 @@ def load_all_from_directory(directory: str | Path) -> list[Pipeline]:
             logger.error("Failed to load %s: %s", yaml_file, exc)
 
     return pipelines
-

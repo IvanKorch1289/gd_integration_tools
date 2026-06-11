@@ -37,8 +37,9 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
     # Сбрасываем синглтон
     mod._instance = None
 
-    # Патчим атрибут на уже импортированном объекте feature_flags
-    with patch.object(mod.feature_flags, "prompt_registry_langfuse", langfuse_flag):
+    # Патчим get_feature_flag_service в модуле
+    with patch.object(mod, "get_feature_flag_service") as mock_ff:
+        mock_ff.return_value.is_enabled.return_value = langfuse_flag
         storage = mod.LangfusePromptStorage()
 
     return storage
@@ -158,11 +159,12 @@ async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
     mock_langfuse_class = MagicMock(return_value=mock_langfuse_instance)
 
     with (
-        patch.object(mod.feature_flags, "prompt_registry_langfuse", True),
+        patch.object(mod, "get_feature_flag_service") as mock_ff,
         patch.dict(
             "sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)}
         ),
     ):
+        mock_ff.return_value.is_enabled.return_value = True
         storage = mod.LangfusePromptStorage()
         # При включённом флаге и доступном SDK — Langfuse должен быть инициализирован
         assert storage._langfuse_available is True, (

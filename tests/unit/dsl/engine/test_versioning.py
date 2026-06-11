@@ -125,6 +125,7 @@ class TestNextVersion:
                 return_value=False
             )
             assert await mgr._next_version("r1") == 1
+            mock_session.execute.assert_called_once()
 
     async def test_existing_version_returns_incremented(self) -> None:
         mgr = PipelineVersionManager()
@@ -144,6 +145,7 @@ class TestNextVersion:
                 return_value=False
             )
             assert await mgr._next_version("r1") == 8
+            mock_session.execute.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -183,6 +185,7 @@ class TestSnapshot:
         assert snap.api_version == "v2"
         # session.add должен быть вызван с экземпляром DslSnapshot
         assert mock_session.add.call_count == 1
+        mock_mgr.create_session.assert_called_once()
         added = mock_session.add.call_args[0][0]
         assert added.route_id == "r1"
         assert added.version == 1
@@ -246,6 +249,7 @@ class TestGetHistory:
         assert len(history) == 1
         assert history[0]["version"] == 2
         assert history[0]["processors"] == [{"type": "T", "name": "n"}]
+        mock_session.execute.assert_called_once()
 
     async def test_history_returns_empty_on_error(self) -> None:
         mgr = PipelineVersionManager()
@@ -290,6 +294,7 @@ class TestCompare:
 
             result = await mgr.compare("r1", 1, 2)
             assert result == {"error": "Version not found"}
+            mock_session.execute.assert_called_once()
 
     async def test_compare_same_processors(self) -> None:
         mgr = PipelineVersionManager()
@@ -326,6 +331,7 @@ class TestCompare:
         assert result["removed_processors"] == []
         assert result["changed_processors"] == []
         assert result["feature_flag_changed"] is False
+        mock_session.execute.assert_called_once()
 
     async def test_compare_added_removed_changed(self) -> None:
         mgr = PipelineVersionManager()
@@ -368,6 +374,7 @@ class TestCompare:
         assert result["removed_processors"] == ["p1"]
         assert result["changed_processors"] == ["p2"]
         assert result["feature_flag_changed"] is True
+        mock_session.execute.assert_called_once()
 
     async def test_compare_with_migration(self) -> None:
         mgr = PipelineVersionManager()
@@ -402,6 +409,7 @@ class TestCompare:
             await mgr.compare("r1", 1, 2)
 
         assert mock_migrate.call_count == 1  # только v1 мигрируется
+        mock_session.execute.assert_called_once()
 
     async def test_compare_returns_error_on_exception(self) -> None:
         mgr = PipelineVersionManager()

@@ -60,6 +60,12 @@ class SecureSettings(BaseSettingsWithLoader):
         le=3600,
         description="TTL JWKS-кеша в секундах (по умолчанию 5 минут).",
     )
+    jwks_fetch_timeout: float = Field(
+        default=5.0,
+        gt=0.0,
+        le=60.0,
+        description="HTTP-таймаут для fetch JWKS-документа (сек).",
+    )
     jwt_leeway: int = Field(
         default=60,
         ge=0,

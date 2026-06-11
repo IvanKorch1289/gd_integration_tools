@@ -86,7 +86,11 @@ async def test_to_s3_fails_on_invalid_key(patch_storage: None) -> None:
     assert ex.error is not None
     # LocalFSStorage raises "Небезопасный ключ объекта" / S3ObjectStorage raises
     # "Path-traversal" — оба варианта означают rejection.
-    assert "Небезопасный" in ex.error or "Path-traversal" in ex.error or "Абсолютный" in ex.error
+    assert (
+        "Небезопасный" in ex.error
+        or "Path-traversal" in ex.error
+        or "Абсолютный" in ex.error
+    )
 
 
 async def test_to_s3_fails_on_empty_key(patch_storage: None) -> None:
@@ -175,7 +179,9 @@ def test_from_s3_side_effect() -> None:
 
 def test_from_s3_to_spec_roundtrip() -> None:
     proc = FromS3Processor(key_from="mykey", result_property="data")
-    assert proc.to_spec() == {"from_s3": {"key_from": "mykey", "result_property": "data"}}
+    assert proc.to_spec() == {
+        "from_s3": {"key_from": "mykey", "result_property": "data"}
+    }
 
 
 # ── s3_presign ────────────────────────────────────────────────────────────

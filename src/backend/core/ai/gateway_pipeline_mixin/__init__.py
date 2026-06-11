@@ -41,7 +41,7 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.ai.errors import GuardResult
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
@@ -52,20 +52,27 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-from src.backend.core.ai.gateway_pipeline_mixin.policy_mixin import PolicyMixin  # S56 W2: MRO
-from src.backend.core.ai.gateway_pipeline_mixin.input_mixin import InputMixin  # S56 W2: MRO
-from src.backend.core.ai.gateway_pipeline_mixin.llm_mixin import LlmInvocationMixin  # S56 W2: MRO
-from src.backend.core.ai.gateway_pipeline_mixin.output_mixin import OutputMixin  # S56 W2: MRO
-from src.backend.core.ai.gateway_pipeline_mixin.observability_mixin import ObservabilityMixin  # S56 W2: MRO
+from src.backend.core.ai.gateway_pipeline_mixin.input_mixin import (
+    InputMixin,  # S56 W2: MRO
+)
+from src.backend.core.ai.gateway_pipeline_mixin.llm_mixin import (
+    LlmInvocationMixin,  # S56 W2: MRO
+)
+from src.backend.core.ai.gateway_pipeline_mixin.observability_mixin import (
+    ObservabilityMixin,  # S56 W2: MRO
+)
+from src.backend.core.ai.gateway_pipeline_mixin.output_mixin import (
+    OutputMixin,  # S56 W2: MRO
+)
+from src.backend.core.ai.gateway_pipeline_mixin.policy_mixin import (
+    PolicyMixin,  # S56 W2: MRO
+)
 
 __all__ = ("PipelineStepsMixin",)
 
+
 class PipelineStepsMixin(
-    PolicyMixin,
-    InputMixin,
-    LlmInvocationMixin,
-    OutputMixin,
-    ObservabilityMixin,
+    PolicyMixin, InputMixin, LlmInvocationMixin, OutputMixin, ObservabilityMixin
 ):
     """AI Gateway Pipeline Steps (5 mixins = 15 methods)."""
 

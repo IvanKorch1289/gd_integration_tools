@@ -10,6 +10,8 @@ substitution for HTTP enrichment URLs.
 
 from __future__ import annotations
 
+import asyncio
+import atexit
 import json
 import re
 import urllib.request
@@ -33,6 +35,7 @@ __all__ = (
 )
 
 _TAP_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="eip-tap")
+atexit.register(_TAP_EXECUTOR.shutdown, wait=True)
 _PH_RE = re.compile(r"\$\{exchange\.([a-zA-Z0-9_.]+)\}")
 
 
@@ -82,7 +85,7 @@ class EnrichEIPProcessor(BaseProcessor):
                 raw = r.read().decode("utf-8")
             try:
                 return json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return {"_raw": raw}
         if self.strategy == "static":
             return self.value
@@ -92,7 +95,7 @@ class EnrichEIPProcessor(BaseProcessor):
         raise ValueError(f"unknown enrich strategy: {self.strategy!r}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        exchange.properties[self.field] = self._fetch(exchange)
+        exchange.properties[self.field] = await asyncio.to_thread(self._fetch, exchange)
 
 
 class WireTapEIPProcessor(BaseProcessor):

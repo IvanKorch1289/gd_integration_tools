@@ -28,7 +28,7 @@ class TestWatchdog:
         wd = Watchdog(name="test-timeout", deadline_seconds=0.01)
 
         async def slow_coro() -> str:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
             return "too late"
 
         with pytest.raises(asyncio.TimeoutError):

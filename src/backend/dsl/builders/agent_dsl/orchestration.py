@@ -19,9 +19,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
-
-
-
 class OrchestrationMixin:
     """Поведенческий миксин orchestration для :class:`RouteBuilder` (S51 W3)."""
 
@@ -83,8 +80,6 @@ class OrchestrationMixin:
             )
         )
 
-
-
     def ai_invoke(
         self,
         *,
@@ -107,8 +102,6 @@ class OrchestrationMixin:
             context_property=context_property,
             result_property=result_property,
         )
-
-
 
     def agent_branch(
         self,
@@ -146,8 +139,6 @@ class OrchestrationMixin:
                 source_property=source_property, branches=branches, default=default
             )
         )
-
-
 
     def agent_loop(
         self,
@@ -190,8 +181,6 @@ class OrchestrationMixin:
             )
         )
 
-
-
     def agent_parallel(
         self,
         *,
@@ -230,8 +219,6 @@ class OrchestrationMixin:
                 continue_on_error=continue_on_error,
             )
         )
-
-
 
     def plan_execute(
         self,
@@ -283,8 +270,6 @@ class OrchestrationMixin:
                 timeout_s=timeout_s,
             )
         )
-
-
 
     def reflection_loop_workflow(
         self,
@@ -342,8 +327,6 @@ class OrchestrationMixin:
             )
         )
 
-
-
     def hitl_approval(
         self,
         *,
@@ -387,4 +370,3 @@ class OrchestrationMixin:
                 priority=priority,
             )
         )
-

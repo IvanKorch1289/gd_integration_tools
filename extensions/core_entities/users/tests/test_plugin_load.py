@@ -49,9 +49,7 @@ def test_users_shim_module_emits_deprecation_warning() -> None:
         warnings.simplefilter("always")
         import importlib
 
-        importlib.reload(
-            importlib.import_module("src.backend.services.core.users")
-        )
+        importlib.reload(importlib.import_module("src.backend.services.core.users"))
 
     assert any(
         issubclass(w.category, DeprecationWarning)

@@ -2,13 +2,22 @@
 
 Classes: CertStore.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
-from src.backend.infrastructure.security.cert_store.backend_memory import MemoryCertBackend
-from src.backend.infrastructure.security.cert_store.backend_mongo import MongoCertBackend
-from src.backend.infrastructure.security.cert_store.backend_postgres import PostgresCertBackend
-from src.backend.infrastructure.security.cert_store.backend_vault import VaultCertBackend
+from src.backend.infrastructure.security.cert_store.backend_memory import (
+    MemoryCertBackend,
+)
+from src.backend.infrastructure.security.cert_store.backend_mongo import (
+    MongoCertBackend,
+)
+from src.backend.infrastructure.security.cert_store.backend_postgres import (
+    PostgresCertBackend,
+)
+from src.backend.infrastructure.security.cert_store.backend_vault import (
+    VaultCertBackend,
+)
 
 """CertStore — хранилище TLS-сертификатов внешних сервисов (Wave 2.1).
 
@@ -38,25 +47,17 @@ Hot-reload механизм:
     pem = await store.get("skb_api")
 """
 
-import asyncio
-import hashlib
-from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
-from sqlalchemy import select
-
-from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
-from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.core.config.cert_store import CertStoreSettings
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
 
-@dataclass(slots=True)
 
+@dataclass(slots=True)
 class CertStore:
     """Высокоуровневый фасад: backend + in-process кэш + hooks.
 
@@ -153,4 +154,3 @@ class CertStore:
                     await result
             except Exception as exc:
                 logger.warning("CertStore listener failed: %s", exc)
-

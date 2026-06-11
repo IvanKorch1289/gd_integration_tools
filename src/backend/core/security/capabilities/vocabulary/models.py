@@ -1,21 +1,16 @@
 from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from src.backend.core.security.capabilities.matchers import ScopeMatcher
+
 """S62 W2 — models.py part of vocabulary decomp.
 
 CapabilityDef data class.
 """
 
-from dataclasses import dataclass, field
 
-from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
-from src.backend.core.security.capabilities.matchers import (
-    ExactAliasMatcher,
-    GlobScopeMatcher,
-    ScopeMatcher,
-    SegmentedGlobMatcher,
-    URISchemeMatcher,
-)
-from src.backend.core.security.capabilities.models import CapabilityRef
-
+@dataclass
 class CapabilityDef:
     """Метаданные одной зарегистрированной capability.
 
@@ -40,4 +35,3 @@ class CapabilityDef:
 
     aliases: tuple[str, ...] = field(default_factory=tuple)
     """Опц. альтернативные имена (legacy)."""
-

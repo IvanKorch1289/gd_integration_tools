@@ -1,19 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
-
-from src.backend.core.logging import get_logger
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.core.ai.gateway import AIRequest, AIResponse
+    from src.backend.core.ai.gateway import AIResponse
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
-    from src.backend.core.messaging.dlq import DLQWriter
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
+
 
 class OutputGuardMixin:
     """output guard (2 methods: entry + backend) для AIPolicyEnforcer. S67 W2 extraction."""
@@ -94,4 +93,3 @@ class OutputGuardMixin:
                 categories=result.flagged_categories,
             )
         return GuardResult(guard_name=ref.name, verdict="passed", categories=[])
-

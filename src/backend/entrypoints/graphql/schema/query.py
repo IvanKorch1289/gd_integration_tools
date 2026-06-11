@@ -1,27 +1,14 @@
 from __future__ import annotations
+
 """S64 W1 — query.py part of graphql schema decomp.
 
 Query resolver (11 methods).
 """
 
-from collections.abc import AsyncGenerator
-from datetime import datetime
-from typing import Any
 
 import strawberry
-from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
-from strawberry.types import Info
 
-from src.backend.core.logging import get_logger
-from src.backend.dsl.service import get_dsl_service
-from src.backend.entrypoints.graphql.schema.types import (
-    OrderKindType,
-    FileType,
-    OrderType,
-    UserType,
-    DslResult,
-)  # S64 W1: types
 from src.backend.entrypoints.graphql.schema.helpers import (
     _dispatch_action,
     _dispatch_dsl,
@@ -29,13 +16,17 @@ from src.backend.entrypoints.graphql.schema.helpers import (
     _schema_to_order_kind,
     _schema_to_user,
 )  # S64 W1: helpers
+from src.backend.entrypoints.graphql.schema.types import (
+    DslResult,
+    FileType,
+    OrderKindType,
+    OrderType,
+    UserType,
+)  # S64 W1: types
 
 
 @strawberry.type
-
 @strawberry.type
-
-
 class Query:
     """GraphQL Query — чтение данных из всех доменов + DSL-fallback."""
 
@@ -126,6 +117,3 @@ class Query:
         from src.backend.dsl.commands.registry import action_handler_registry
 
         return list(action_handler_registry.list_actions())
-
-
-

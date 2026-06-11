@@ -52,9 +52,6 @@ __all__ = ("lifespan",)
 
 
 @asynccontextmanager
-
-
-
 async def lifespan(app: FastAPI):
     """
     Управляет жизненным циклом приложения FastAPI.

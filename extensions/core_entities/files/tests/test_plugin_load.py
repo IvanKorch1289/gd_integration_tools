@@ -57,7 +57,6 @@ def test_files_shim_emits_deprecation_warning() -> None:
     assert hasattr(mod, "get_file_service")
     assert hasattr(mod, "FileService")
     assert any(
-        issubclass(w.category, DeprecationWarning)
-        and "files" in str(w.message).lower()
+        issubclass(w.category, DeprecationWarning) and "files" in str(w.message).lower()
         for w in caught
     )

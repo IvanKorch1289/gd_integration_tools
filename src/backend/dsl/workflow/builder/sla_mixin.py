@@ -1,27 +1,17 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
-from src.backend.dsl.workflow.spec import (
-    ActivityDeclaration,
-    MemoryScope,
-    PauseDeclaration,
-    ResumeDeclaration,
-    RetryPolicy,
-    SagaDeclaration,
-    SensorDeclaration,
-    SignalWaitDeclaration,
-    SleepDeclaration,
-    WorkflowDeclaration,
-    WorkflowStep,
-)
+from src.backend.dsl.workflow.spec import ActivityDeclaration, RetryPolicy
 
 if TYPE_CHECKING:
-    from src.backend.dsl.workflow.gateways import BranchSpec
+    pass
+
 
 class SlaMixin:
     """SLA + activity config для WorkflowBuilder. S58 W4 extraction."""
@@ -77,4 +67,3 @@ class SlaMixin:
             )
         )
         return self
-

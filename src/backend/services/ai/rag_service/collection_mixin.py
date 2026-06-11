@@ -1,28 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import hashlib
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
-
-from src.backend.core.di import app_state_singleton
-from src.backend.core.interfaces.vector_store import BaseVectorStore
-from src.backend.core.logging import get_logger
-from src.backend.services.ai.embedding_providers import (
-    EmbeddingProvider,
-    get_embedding_provider,
-)
-from src.backend.services.ai.rag_augment import (
-    AugmentResult,
-    FreshnessLabel,
-    build_augment_result,
-)
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
+    pass
+
 
 class CollectionMixin:
     """collection ops (delete/delete_collection/stats/count) для RAGService. S64 W4 extraction."""
@@ -88,4 +75,3 @@ class CollectionMixin:
         except Exception as exc:
             logger.warning("count(%s) failed: %s", collection, exc)
             return 0
-

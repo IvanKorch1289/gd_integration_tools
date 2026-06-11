@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 """S65 W2 — ImageResizeProcessor extracted from rpa/operations.py.
 
 Per-processor file split.
 """
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -12,6 +14,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
+
 
 class ImageResizeProcessor(BaseProcessor):
     """Ресайз и конвертация изображений через Pillow.
@@ -45,18 +48,23 @@ class ImageResizeProcessor(BaseProcessor):
         if not isinstance(body, bytes):
             exchange.fail("image_resize expects bytes")
             return
-        img = Image.open(io.BytesIO(body))
-        if self._width and self._height:
-            img = img.resize((self._width, self._height))
-        elif self._width:
-            ratio = self._width / img.width
-            img = img.resize((self._width, int(img.height * ratio)))
-        elif self._height:
-            ratio = self._height / img.height
-            img = img.resize((int(img.width * ratio), self._height))
-        buf = io.BytesIO()
-        img.save(buf, format=self._format)
-        exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
+
+        def _resize() -> bytes:
+            img = Image.open(io.BytesIO(body))
+            if self._width and self._height:
+                img = img.resize((self._width, self._height))
+            elif self._width:
+                ratio = self._width / img.width
+                img = img.resize((self._width, int(img.height * ratio)))
+            elif self._height:
+                ratio = self._height / img.height
+                img = img.resize((int(img.width * ratio), self._height))
+            buf = io.BytesIO()
+            img.save(buf, format=self._format)
+            return buf.getvalue()
+
+        result = await asyncio.to_thread(_resize)
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""

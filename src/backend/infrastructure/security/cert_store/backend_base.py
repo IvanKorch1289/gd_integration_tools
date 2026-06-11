@@ -2,6 +2,7 @@
 
 Classes: CertBackend.
 """
+
 from __future__ import annotations
 
 """CertStore — хранилище TLS-сертификатов внешних сервисов (Wave 2.1).
@@ -32,25 +33,16 @@ Hot-reload механизм:
     pem = await store.get("skb_api")
 """
 
-import asyncio
-import hashlib
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
-from typing import Any
+from datetime import datetime
 
-from sqlalchemy import select
-
-from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
-from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
 
-@dataclass(slots=True)
 
+@dataclass(slots=True)
 class CertBackend(ABC):
     """Контракт persistent-бэкенда сертификатов."""
 
@@ -75,4 +67,3 @@ class CertBackend(ABC):
 
     @abstractmethod
     async def list_expiring(self, before: datetime) -> list[CertEntry]: ...
-

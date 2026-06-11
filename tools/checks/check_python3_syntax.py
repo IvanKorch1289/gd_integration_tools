@@ -114,7 +114,7 @@ def check_file(path: Path) -> list[Violation]:
     """Распарсить файл и вернуть найденные нарушения."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return []
     source_lines = source.splitlines()
     violations: list[Violation] = []

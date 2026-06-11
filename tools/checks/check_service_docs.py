@@ -25,6 +25,7 @@ feature_flag: service_doc_gate_enabled (default-OFF).
 
 Возвращает exit 0 если все @service_dsl документированы, exit 1 иначе.
 """
+
 from __future__ import annotations
 
 import ast
@@ -59,7 +60,9 @@ def _has_service_dsl_decorator(
     return False
 
 
-def _iter_documented(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> Iterable[str]:
+def _iter_documented(
+    node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+) -> Iterable[str]:
     """Yield docstring lines of the AST node if non-empty.
 
     Args:
@@ -81,14 +84,14 @@ def _iter_documented(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
     yield from docstring.splitlines()
 
 
-def _check_docstring(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+def _check_docstring(
+    node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[str]:
     """Проверяет docstring определения; возвращает список issues."""
     issues: list[str] = []
     docstring_lines = list(_iter_documented(node))
     if not docstring_lines:
-        return [
-            f"{node.name}: отсутствует docstring (требуется для @service_dsl)."
-        ]
+        return [f"{node.name}: отсутствует docstring (требуется для @service_dsl)."]
 
     first_line = docstring_lines[0].strip()
     if len(first_line) < _MIN_DESCRIPTION_LEN:
@@ -122,7 +125,7 @@ def check_target(target: Path) -> int:
     for py_file in target.rglob("*.py"):
         try:
             source = py_file.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        except OSError, UnicodeDecodeError:
             continue
         try:
             tree = ast.parse(source, filename=str(py_file))
@@ -159,9 +162,7 @@ console_err = Console(stderr=True, style="red")
 @app.command()
 def main(
     target: Path = typer.Option(
-        Path("src/backend"),
-        "--target",
-        help="Путь к коду для анализа",
+        Path("src/backend"), "--target", help="Путь к коду для анализа"
     ),
     strict: bool = typer.Option(
         False,

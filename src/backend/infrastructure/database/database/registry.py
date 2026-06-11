@@ -1,37 +1,20 @@
 from __future__ import annotations
-import ssl
-from dataclasses import dataclass
-from functools import lru_cache
-from typing import Any, TypeAlias
 
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
-from sqlalchemy.orm import sessionmaker
+from typing import TypeAlias
 
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
-from src.backend.core.config.settings import settings
-from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
-from src.backend.infrastructure.database.listeners import DatabaseListener
 from src.backend.infrastructure.logging import get_logger
 
 db_logger = get_logger("database")
 
 
-
 DatabaseSettings: TypeAlias = (
     DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 )
-
-
 
 
 class ExternalDatabaseRegistry:

@@ -86,9 +86,7 @@ class UserService(
         try:
             user = await self._get_user_by_username(data=data)
             if user:
-                raise ValueError(
-                    "The user with the specified login already exists."
-                )
+                raise ValueError("The user with the specified login already exists.")
             return await super().add(data=data)
         except ValueError:
             raise
@@ -120,19 +118,14 @@ class UserService(
             stacklevel=2,
         )
         user = await self._login_password(
-            username=data.get("username", ""),
-            password=data.get("password", ""),
+            username=data.get("username", ""), password=data.get("password", "")
         )
         return user is not None
 
     # === Unified auth dispatch (S58 W6) ===
 
     async def login_with_method(
-        self,
-        *,
-        method: AuthMethod,
-        username: str,
-        password: str | None = None,
+        self, *, method: AuthMethod, username: str, password: str | None = None
     ) -> Any:
         """Единый entry point для аутентификации (S58 W6).
 
@@ -157,12 +150,13 @@ class UserService(
             AdAuthError: LDAP ошибка (server unreachable, etc.).
         """
         if method == "password":
-            return await self._login_password(username=username, password=password or "")
+            return await self._login_password(
+                username=username, password=password or ""
+            )
         if method == "ldap":
             return await self._login_ldap(username=username, password=password or "")
         raise ValueError(
-            f"Unknown auth method: {method!r}. "
-            f"Supported: 'password', 'ldap'."
+            f"Unknown auth method: {method!r}. Supported: 'password', 'ldap'."
         )
 
     async def _login_password(self, *, username: str, password: str) -> Any:
@@ -300,7 +294,9 @@ class UserService(
         # Auto-provision new user
         username = _extract_username(ad_user)
         first, _, last = (
-            ad_display_name.partition(" ") if isinstance(ad_display_name, str) else ("", "", "")
+            ad_display_name.partition(" ")
+            if isinstance(ad_display_name, str)
+            else ("", "", "")
         )
         new_data: dict[str, Any] = {
             "username": username,

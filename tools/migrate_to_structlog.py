@@ -19,6 +19,7 @@ Idempotent: detects if file already has `from ...factory import get_logger` and 
 
 Usage: python3 tools/migrate_to_structlog.py [--dry-run] [path ...]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,8 +33,7 @@ RE_IMPORT_LOGGING = re.compile(
     re.MULTILINE,
 )
 RE_FROM_LOGGING_GETLOGGER = re.compile(
-    r"^(?P<indent>[ \t]*)from logging import (?P<get>getLogger)\s*$",
-    re.MULTILINE,
+    r"^(?P<indent>[ \t]*)from logging import (?P<get>getLogger)\s*$", re.MULTILINE
 )
 RE_FROM_LOGGING_ANY = re.compile(
     r"^(?P<indent>[ \t]*)from logging import (?P<names>[A-Za-z_][A-Za-z0-9_]*(?:, *[A-Za-z_][A-Za-z0-9_]*)*)\s*$",
@@ -156,7 +156,9 @@ def add_factory_import(src: str) -> str:
         pos = m.start()
         # Find end of first contiguous import block
         end_pos = pos
-        for line_m in re.finditer(r"^((?:from|import) [^\n]+\n?)+", src[pos:], re.MULTILINE):
+        for line_m in re.finditer(
+            r"^((?:from|import) [^\n]+\n?)+", src[pos:], re.MULTILINE
+        ):
             end_pos = pos + line_m.end()
             break
         return src[:end_pos] + factory_line + "\n" + src[end_pos:]
@@ -167,11 +169,7 @@ def add_factory_import(src: str) -> str:
 def rewrite_get_logger_calls(src: str, aliases: dict[str, str]) -> str:
     """Replace `logging.getLogger(X)` and `alias.getLogger(X)` with `get_logger(X)`."""
     for alias in aliases:
-        src = re.sub(
-            rf"\b{re.escape(alias)}\.getLogger\(",
-            "get_logger(",
-            src,
-        )
+        src = re.sub(rf"\b{re.escape(alias)}\.getLogger\(", "get_logger(", src)
     # Also handle remaining `logging.getLogger` in case alias dict missed
     src = re.sub(r"\blogging\.getLogger\(", "get_logger(", src)
     return src
@@ -180,7 +178,12 @@ def rewrite_get_logger_calls(src: str, aliases: dict[str, str]) -> str:
 def process_file(path: Path, dry_run: bool = False) -> tuple[bool, str]:
     """Returns (changed, summary)."""
     src = path.read_text(encoding="utf-8")
-    if "logging.getLogger" not in src and "logging as " not in src and "import logging" not in src and "from logging import" not in src:
+    if (
+        "logging.getLogger" not in src
+        and "logging as " not in src
+        and "import logging" not in src
+        and "from logging import" not in src
+    ):
         return False, "no logging usage"
 
     aliases = detect_logging_module_aliases(src)
@@ -208,15 +211,10 @@ def process_file(path: Path, dry_run: bool = False) -> tuple[bool, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "paths",
-        nargs="*",
-        default=["src/"],
-        help="Paths to scan (default: src/)",
+        "paths", nargs="*", default=["src/"], help="Paths to scan (default: src/)"
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print changes without writing files",
+        "--dry-run", action="store_true", help="Print changes without writing files"
     )
     args = parser.parse_args()
 
@@ -275,7 +273,9 @@ def main() -> int:
             error_count += 1
             print(f"  ERROR: {f}: {e}", file=sys.stderr)
 
-    print(f"\nSummary: {changed_count} changed, {skipped_count} skipped, {error_count} errors")
+    print(
+        f"\nSummary: {changed_count} changed, {skipped_count} skipped, {error_count} errors"
+    )
     return 0 if error_count == 0 else 1
 
 

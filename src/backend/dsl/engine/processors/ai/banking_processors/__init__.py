@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Banking AI processors package (S59 W1 decomp from banking_processors.py 552 LOC).
 
 11 classes decomposed в 7 files:
@@ -10,17 +11,31 @@ Backward-compat: ``from src.backend.dsl.engine.processors.ai.banking_processors 
 """
 
 
-from src.backend.dsl.engine.processors.ai.banking_processors.results import CreditScoreResult  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.results import FraudDetectionResult  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.results import RiskAssessmentResult  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.results import CustomerSegmentationResult  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.results import LoanEligibilityResult  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.base import _BankingAIProcessor  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.credit import CreditScoreProcessor  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.fraud import FraudDetectionProcessor  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.risk import RiskAssessmentProcessor  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.segmentation import CustomerSegmentationProcessor  # S59 W1: re-export
-from src.backend.dsl.engine.processors.ai.banking_processors.loan import LoanEligibilityProcessor  # S59 W1: re-export
+from src.backend.dsl.engine.processors.ai.banking_processors.base import (
+    _BankingAIProcessor,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.credit import (
+    CreditScoreProcessor,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.fraud import (
+    FraudDetectionProcessor,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.loan import (
+    LoanEligibilityProcessor,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.results import (
+    CreditScoreResult,  # S59 W1: re-export
+    CustomerSegmentationResult,  # S59 W1: re-export
+    FraudDetectionResult,  # S59 W1: re-export
+    LoanEligibilityResult,  # S59 W1: re-export
+    RiskAssessmentResult,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.risk import (
+    RiskAssessmentProcessor,  # S59 W1: re-export
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.segmentation import (
+    CustomerSegmentationProcessor,  # S59 W1: re-export
+)
 
 __all__ = (
     "_BankingAIProcessor",

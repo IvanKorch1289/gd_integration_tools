@@ -358,10 +358,10 @@ def _interactive_prompts() -> dict[str, object] | None:
     try:
         name = questionary.text(
             "Plugin name (snake_case):",
-            validate=lambda t: bool(
-                re.fullmatch(r"[a-z][a-z0-9_]{1,63}", t)
-            )
-            or "Use snake_case (2-64 chars, start with letter)",
+            validate=lambda t: (
+                bool(re.fullmatch(r"[a-z][a-z0-9_]{1,63}", t))
+                or "Use snake_case (2-64 chars, start with letter)"
+            ),
         ).ask()
         if not name:
             return None
@@ -371,8 +371,7 @@ def _interactive_prompts() -> dict[str, object] | None:
         ).ask()
 
         features_raw = questionary.text(
-            "Features (comma-separated, e.g. 'ping,echo'):",
-            default="",
+            "Features (comma-separated, e.g. 'ping,echo'):", default=""
         ).ask()
         features = [f.strip() for f in (features_raw or "").split(",") if f.strip()]
 
@@ -400,7 +399,7 @@ def _interactive_prompts() -> dict[str, object] | None:
             "with_frontend": with_frontend,
             "overwrite": overwrite,
         }
-    except (KeyboardInterrupt, EOFError):
+    except KeyboardInterrupt, EOFError:
         return None
 
 

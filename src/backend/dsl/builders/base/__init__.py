@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __future__ import annotations
+
 """RouteBuilder package (S57 W1 decomp from base.py 648 LOC).
 32 methods decomposed в 7 mixin files:
 - fluent_mixin.py (5), config_mixin.py (5), validation_mixin.py (4)
@@ -9,12 +9,14 @@ Core (6) остается в __init__.py: from_, from_registered_source, _add, _
 Backward-compat: ``from src.backend.dsl.builders.base import RouteBuilder`` works.
 """
 from typing import TYPE_CHECKING, Any
+
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     pass
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
@@ -51,18 +53,25 @@ from src.backend.dsl.engine.processors import (
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin
+
 logger = get_logger(__name__)
-from src.backend.dsl.builders.base.fluent_mixin import FluentMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.compliance_mixin import (
+    ComplianceMixin,  # S57 W1: MRO
+)
 from src.backend.dsl.builders.base.config_mixin import ConfigMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.validation_mixin import ValidationMixin  # S57 W1: MRO
 from src.backend.dsl.builders.base.deps_mixin import DepsMixin  # S57 W1: MRO
 from src.backend.dsl.builders.base.feature_mixin import FeatureMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.resilience_mixin import ResilienceMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.compliance_mixin import ComplianceMixin  # S57 W1: MRO
-__all__ = (
-    "RouteBuilder",
-    "get_route_builder",
+from src.backend.dsl.builders.base.fluent_mixin import FluentMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.resilience_mixin import (
+    ResilienceMixin,  # S57 W1: MRO
 )
+from src.backend.dsl.builders.base.validation_mixin import (
+    ValidationMixin,  # S57 W1: MRO
+)
+
+__all__ = ("RouteBuilder", "get_route_builder")
+
+
 class RouteBuilder(
     AIRPAMixin,
     BatchMixin,
@@ -96,7 +105,9 @@ class RouteBuilder(
     ComplianceMixin,
 ):
     """RouteBuilder — DSL core (7 mixins = 26 methods + 6 core)."""
+
     __slots__ = ()
+
     @classmethod
     def from_(
         cls, route_id: str, source: str, *, description: str | None = None
@@ -118,6 +129,7 @@ class RouteBuilder(
             )
         """
         return cls(route_id=route_id, source=source, description=description)
+
     @classmethod
     def from_registered_source(
         cls, route_id: str, source_id: str, *, description: str | None = None
@@ -142,20 +154,25 @@ class RouteBuilder(
         return cls(
             route_id=route_id, source=f"source:{source_id}", description=description
         )
+
     def _add(self, processor: BaseProcessor) -> RouteBuilder:
         self._processors.append(processor)
         return self
+
     def _add_lazy(
         self, import_path: str, class_name: str, **kwargs: Any
     ) -> RouteBuilder:
         """Lazy import + создание процессора. Для AI/Web/Export/Integration."""
         import importlib
+
         mod = importlib.import_module(import_path)
         cls = getattr(mod, class_name)
         return self._add(cls(**kwargs))
+
     def process(self, processor: BaseProcessor) -> RouteBuilder:
         """Добавляет произвольный процессор в pipeline."""
         return self._add(processor)
+
     def build(self, *, validate_actions: bool = True) -> Pipeline:
         """Собирает Pipeline из накопленных процессоров.
         Финальный вызов в fluent-chain.

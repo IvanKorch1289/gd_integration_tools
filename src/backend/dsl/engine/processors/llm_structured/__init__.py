@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """LLMStructuredProcessor package (S65 W2 decomp from llm_structured.py 485 LOC).
 
 10 methods decomposed в 4 mixin files:
@@ -18,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -39,20 +40,24 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-from src.backend.dsl.engine.processors.llm_structured.resolve_mixin import ResolveMixin  # S65 W2: MRO
-from src.backend.dsl.engine.processors.llm_structured.process_mixin import ProcessMixin  # S65 W2: MRO
-from src.backend.dsl.engine.processors.llm_structured.metrics_mixin import MetricsMixin  # S65 W2: MRO
-from src.backend.dsl.engine.processors.llm_structured.serialization_mixin import SerializationMixin  # S65 W2: MRO
-
-__all__ = (
-    "LLMStructuredProcessor",
+from src.backend.dsl.engine.processors.llm_structured.metrics_mixin import (
+    MetricsMixin,  # S65 W2: MRO
+)
+from src.backend.dsl.engine.processors.llm_structured.process_mixin import (
+    ProcessMixin,  # S65 W2: MRO
+)
+from src.backend.dsl.engine.processors.llm_structured.resolve_mixin import (
+    ResolveMixin,  # S65 W2: MRO
+)
+from src.backend.dsl.engine.processors.llm_structured.serialization_mixin import (
+    SerializationMixin,  # S65 W2: MRO
 )
 
+__all__ = ("LLMStructuredProcessor",)
+
+
 class LLMStructuredProcessor(
-    ResolveMixin,
-    ProcessMixin,
-    MetricsMixin,
-    SerializationMixin,
+    ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin
 ):
     """LLM structured output processor (4 mixins = 9 methods + 1 core)."""
 
@@ -92,4 +97,3 @@ class LLMStructuredProcessor(
         self._temperature = temperature
         self._cost_budget_usd = cost_budget_usd
         self._to = to
-

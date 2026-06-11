@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W1 — processor.py part of event_store decomp.
 
 EventStoreProcessor (DSL pipeline integration).
@@ -6,23 +7,15 @@ EventStoreProcessor (DSL pipeline integration).
 Classes: EventStoreProcessor.
 """
 
-import threading
-import time
 import uuid
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-
 from src.backend.dsl.processors.event_store.types import Event  # S66 W1: cross-import
 
-
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
@@ -30,7 +23,9 @@ _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
 
-from src.backend.dsl.processors.event_store.types import EventStream, Event  # S66 W1: cross-import
+from src.backend.dsl.processors.event_store.types import (
+    EventStream,  # S66 W1: cross-import
+)
 
 
 class EventStoreProcessor(BaseProcessor):
@@ -121,4 +116,3 @@ class EventStoreProcessor(BaseProcessor):
 
         # Record count в exchange properties
         exchange.set_property("events_appended", len(events_raw))
-

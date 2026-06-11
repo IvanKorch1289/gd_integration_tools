@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 """S68 W1 - ai_qa_pipeline blueprint extracted from macros.py.
 
 AI Q&A pipeline (RAG-style retrieval + LLM answer).
 """
 
-from collections.abc import Callable
-from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    DeadLetterProcessor,
-    DispatchActionProcessor,
-    LogProcessor,
-    RetryProcessor,
-)
+from src.backend.dsl.engine.processors import DispatchActionProcessor
+
 
 def ai_qa_pipeline(
     route_id: str,

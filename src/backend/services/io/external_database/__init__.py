@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """ExternalDatabaseService package (S63 W4 decomp from external_database.py 492 LOC).
 
 15 methods decomposed в 5 mixin files + state.py:
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 import re
 from dataclasses import dataclass
-from typing import Any, Final
+from typing import Final
 
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -41,8 +42,6 @@ from src.backend.core.enums.external_db import (
 )
 from src.backend.core.errors import DatabaseError
 from src.backend.core.logging import get_logger
-
-
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
@@ -63,14 +62,24 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-
-
-from src.backend.services.io.external_database.state import PreparedDBParameter  # S63 W4: re-export
-from src.backend.services.io.external_database.core_mixin import CoreMixin  # S63 W4: MRO
-from src.backend.services.io.external_database.dispatch_mixin import DispatchMixin  # S63 W4: MRO
-from src.backend.services.io.external_database.validation_mixin import ValidationMixin  # S63 W4: MRO
-from src.backend.services.io.external_database.build_mixin import BuildMixin  # S63 W4: MRO
-from src.backend.services.io.external_database.profile_mixin import ProfileMixin  # S63 W4: MRO
+from src.backend.services.io.external_database.build_mixin import (
+    BuildMixin,  # S63 W4: MRO
+)
+from src.backend.services.io.external_database.core_mixin import (
+    CoreMixin,  # S63 W4: MRO
+)
+from src.backend.services.io.external_database.dispatch_mixin import (
+    DispatchMixin,  # S63 W4: MRO
+)
+from src.backend.services.io.external_database.profile_mixin import (
+    ProfileMixin,  # S63 W4: MRO
+)
+from src.backend.services.io.external_database.state import (
+    PreparedDBParameter,  # S63 W4: re-export
+)
+from src.backend.services.io.external_database.validation_mixin import (
+    ValidationMixin,  # S63 W4: MRO
+)
 
 __all__ = (
     "ExternalDatabaseService",
@@ -81,11 +90,7 @@ __all__ = (
 
 
 class ExternalDatabaseService(
-    CoreMixin,
-    DispatchMixin,
-    ValidationMixin,
-    BuildMixin,
-    ProfileMixin,
+    CoreMixin, DispatchMixin, ValidationMixin, BuildMixin, ProfileMixin
 ):
     """External database service (5 mixins = 14 methods + 1 core)."""
 
@@ -105,5 +110,3 @@ def __getattr__(name: str) -> Any:
     if name == "external_db_service":
         return get_external_db_service()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-

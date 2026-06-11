@@ -1,39 +1,23 @@
 from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from src.backend.core.interfaces.plugin import (
-        ActionRegistryProtocol,
-        BasePlugin,
-        ProcessorRegistryProtocol,
-        RepositoryRegistryProtocol,
-    )
-    from src.backend.core.security.capabilities import CapabilityGate
+    from src.backend.core.interfaces.plugin import BasePlugin
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
-    from src.backend.services.plugins.loader_v11 import LoadedPluginV11 as _LoadedPluginV11
 
 # Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
 
-import importlib
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
+from src.backend.core.interfaces.plugin import BasePlugin
 from src.backend.core.logging import get_logger
-from src.backend.core.plugin_runtime.compat_checker import CompatViolation
-from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
-from src.backend.services.plugins.manifest_v11 import (
-    PluginManifestError,
-    PluginManifestV11,
-    load_plugin_manifest,
-)
+from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
 _logger = get_logger("services.plugins.loader_v11")
+
 
 class PluginInventoryConflictError(RuntimeError):
     """Имя из ``provides`` уже зарегистрировано другим плагином."""
@@ -47,6 +31,7 @@ class PluginInventoryConflictError(RuntimeError):
             f"Plugin {plugin!r} cannot register {kind} {name!r} — "
             f"already provided by {owner!r}"
         )
+
 
 class LoadedPluginV11:
     """Метаданные одного загруженного плагина для admin-эндпоинта."""
@@ -93,4 +78,3 @@ class LoadedPluginV11:
                 "schemas": list(self.manifest.provides.schemas),
             }
         return payload
-

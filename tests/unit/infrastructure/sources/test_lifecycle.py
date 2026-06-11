@@ -31,7 +31,7 @@ class TestGracefulCancel:
     @pytest.mark.asyncio
     async def test_cancelled_error_swallowed(self) -> None:
         async def sleep_forever() -> None:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(0.1)
 
         task = asyncio.create_task(sleep_forever())
         await asyncio.sleep(0)  # даём event loop запустить корутину
@@ -45,7 +45,7 @@ class TestGracefulCancel:
     ) -> None:
         async def raise_value_error() -> None:
             try:
-                await asyncio.sleep(3600)
+                await asyncio.sleep(0.1)
             except asyncio.CancelledError:
                 raise ValueError("boom")
 

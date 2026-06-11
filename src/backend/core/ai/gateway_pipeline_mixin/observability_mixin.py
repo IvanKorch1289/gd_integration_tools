@@ -29,14 +29,13 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from src.backend.core.ai.errors import GuardResult
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+
 
 class ObservabilityMixin:
     """audit + cost tracking (_audit_emit, _cost_track) для PipelineStepsMixin. S56 W2 extraction."""
@@ -137,4 +136,3 @@ class ObservabilityMixin:
                 )
         except Exception as exc:
             logger.debug("AIGateway: cost-track failed: %s", exc)
-

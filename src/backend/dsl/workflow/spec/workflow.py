@@ -4,6 +4,7 @@ Schemas: WorkflowDeclaration.
 
 top-level workflow declaration.
 """
+
 from __future__ import annotations
 
 """Pydantic-декларации DSL workflow (план V16.2 §4.3, Sprint 4).
@@ -27,9 +28,9 @@ from __future__ import annotations
     * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
 """
 
-from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class WorkflowDeclaration(BaseModel):
     """Top-level декларация workflow.
@@ -74,4 +75,3 @@ class WorkflowDeclaration(BaseModel):
             "помечается как breached + breach_action."
         ),
     )
-

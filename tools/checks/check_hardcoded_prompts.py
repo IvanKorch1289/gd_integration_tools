@@ -209,7 +209,7 @@ def scan_file(path: Path, *, min_length: int = 50) -> list[Finding]:
     """Сканировать один Python-файл."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return []
     try:
         tree = ast.parse(source, filename=str(path))

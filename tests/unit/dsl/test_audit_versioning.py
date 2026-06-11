@@ -13,6 +13,7 @@ Strategy: in-memory SQLite + continuum. Continuum уже настроен в
 используют существующий ``User`` + runtime-defined ``AuditTestModel`` для
 изоляции от production data.
 """
+
 from __future__ import annotations
 
 from typing import Iterator

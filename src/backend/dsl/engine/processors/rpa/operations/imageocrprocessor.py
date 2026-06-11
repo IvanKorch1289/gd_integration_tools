@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 """S65 W2 — ImageOcrProcessor extracted from rpa/operations.py.
 
 Per-processor file split.
 """
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -12,6 +14,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
+
 
 class ImageOcrProcessor(BaseProcessor):
     """OCR — извлечение текста с изображений через Tesseract.
@@ -40,7 +43,9 @@ class ImageOcrProcessor(BaseProcessor):
             exchange.fail("ocr expects image bytes")
             return
         img = Image.open(io.BytesIO(body))
-        text = pytesseract.image_to_string(img, lang=self._lang)
+        text = await asyncio.to_thread(
+            pytesseract.image_to_string, img, lang=self._lang
+        )
         exchange.set_out(
             body={"text": text.strip(), "lang": self._lang},
             headers=dict(exchange.in_message.headers),

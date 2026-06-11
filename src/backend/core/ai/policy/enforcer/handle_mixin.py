@@ -1,19 +1,17 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
-
-from src.backend.core.logging import get_logger
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.core.ai.gateway import AIRequest, AIResponse
-    from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
-    from src.backend.core.messaging.dlq import DLQWriter
+    pass
 
-from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
+from src.backend.core.ai.errors import GuardrailViolationError
+
 
 class HandleMixin:
     """handle guard block + DLQ publish (2 methods) для AIPolicyEnforcer. S67 W2 extraction."""
@@ -88,4 +86,3 @@ class HandleMixin:
             await writer.write(envelope)
         except Exception as exc:
             logger.error("AIPolicyEnforcer: DLQ publish failed: %s", exc)
-

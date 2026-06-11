@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W4 - state.py part of ad_directory_client decomp.
 
 Per-class file split.
@@ -6,14 +7,14 @@ Per-class file split.
 Classes: AdAuthError, AdServerConfig, AdSearchEntry.
 """
 
-import asyncio
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Mapping
+from dataclasses import field
 from typing import Any
 
 from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
+
 
 class AdAuthError(Exception):
     """Ошибка bind/search/credentials в AD/LDAP.
@@ -21,6 +22,7 @@ class AdAuthError(Exception):
     Используется как единая точка ошибок: invalid credentials,
     server unreachable, search filter rejected.
     """
+
 
 class AdServerConfig:
     """Конфигурация AD/LDAP сервера.
@@ -53,6 +55,7 @@ class AdServerConfig:
         if self.server_uri.startswith("ldaps://"):
             object.__setattr__(self, "use_ssl", True)
 
+
 class AdSearchEntry:
     """Результат AD search.
 
@@ -65,4 +68,3 @@ class AdSearchEntry:
     dn: str
     attributes: Mapping[str, Any]
     groups: tuple[str, ...] = ()
-

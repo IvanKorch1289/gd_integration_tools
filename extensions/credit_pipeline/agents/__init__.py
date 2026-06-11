@@ -32,11 +32,7 @@ from typing import Any, Literal
 from extensions.credit_pipeline.domain.models import CreditDecision
 from extensions.credit_pipeline.functions.normalize import apply_rules
 
-__all__ = (
-    "decision_agent",
-    "document_parser_agent",
-    "scoring_agent",
-)
+__all__ = ("decision_agent", "document_parser_agent", "scoring_agent")
 
 
 # Threshold для approval — 600 FICO-equivalent (из supervisor stub).

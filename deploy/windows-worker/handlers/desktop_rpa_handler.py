@@ -246,9 +246,7 @@ async def desktop_screenshot(request: DesktopScreenshotRequest) -> dict[str, Any
         raise
     except Exception as exc:  # noqa: BLE001
         _logger.warning("desktop_screenshot failed: %s", exc)
-        raise HTTPException(
-            status_code=500, detail=f"desktop_screenshot error: {exc}"
-        )
+        raise HTTPException(status_code=500, detail=f"desktop_screenshot error: {exc}")
     return {"ok": True, "format": "png", "base64": encoded}
 
 

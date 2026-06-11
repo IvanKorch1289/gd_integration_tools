@@ -23,6 +23,7 @@ V7 defense-in-depth: даже если разработчик забыл require
 * без ``--strict``: выводит warning список, exit 0;
 * со ``--strict``: при наличии нарушений exit 1 (CI gate).
 """
+
 from __future__ import annotations
 
 import ast
@@ -170,19 +171,13 @@ console_err = Console(stderr=True, style="red")
 @app.command()
 def main(
     root: str = typer.Option(
-        "src/backend/entrypoints/api",
-        "--root",
-        help="Корень поиска endpoint-файлов",
+        "src/backend/entrypoints/api", "--root", help="Корень поиска endpoint-файлов"
     ),
     public_prefix: Optional[list[str]] = typer.Option(
-        None,
-        "--public-prefix",
-        help="Префиксы публичных путей (можно повторять)",
+        None, "--public-prefix", help="Префиксы публичных путей (можно повторять)"
     ),
     strict: bool = typer.Option(
-        False,
-        "--strict",
-        help="Выйти с кодом 1 при наличии нарушений (CI gate)",
+        False, "--strict", help="Выйти с кодом 1 при наличии нарушений (CI gate)"
     ),
 ) -> None:
     """CLI-entrypoint (typer)."""
@@ -195,7 +190,9 @@ def main(
 
     root_path = Path(root)
     if not root_path.exists():
-        console_err.print(f"[red]check_auth_coverage: путь {root_path} не существует[/red]")
+        console_err.print(
+            f"[red]check_auth_coverage: путь {root_path} не существует[/red]"
+        )
         raise typer.Exit(1)
 
     findings: list[_Finding] = []

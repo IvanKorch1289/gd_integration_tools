@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S59 W1 — segmentation.py part of banking_processors decomp.
 
 Classes: CustomerSegmentationProcessor.
@@ -6,26 +7,23 @@ Classes: CustomerSegmentationProcessor.
 Customer segmentation processor.
 """
 
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
-from src.backend.dsl.engine.processors.ai.banking_processors.base import _BankingAIProcessor  # S59 W1: base for processors
-from src.backend.dsl.engine.processors.ai.banking_processors.results import CustomerSegmentationResult  # S59 W1: result schema
-
-
+from src.backend.dsl.engine.processors.ai.banking_processors.base import (
+    _BankingAIProcessor,  # S59 W1: base for processors
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.results import (
+    CustomerSegmentationResult,  # S59 W1: result schema
+)
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
+
 
 class CustomerSegmentationProcessor(_BankingAIProcessor):
     """Сегментация клиентов — отнесение клиента к банковскому сегменту.
@@ -62,4 +60,3 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
 - recommended_products: list[str] — 2-3 рекомендованных продукта для этого сегмента
 
 Отвечай ТОЛЬКО валидным JSON, соответствующим схеме."""
-

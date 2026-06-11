@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S61 W2 — geo_ip.py part of enrichment decomp.
 
 Classes: GeoIpProcessor.
@@ -6,13 +7,12 @@ Classes: GeoIpProcessor.
 Geo IP enrichment.
 """
 
-import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class GeoIpProcessor(BaseProcessor):
     """GeoIP enrichment via MaxMind GeoLite2.
@@ -104,4 +104,3 @@ class GeoIpProcessor(BaseProcessor):
         if self._output != "geo":
             spec["output_property"] = self._output
         return {"geoip": spec}
-

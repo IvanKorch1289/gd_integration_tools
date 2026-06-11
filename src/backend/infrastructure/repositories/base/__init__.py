@@ -10,12 +10,14 @@ Backward-compat: ``from src.backend.infrastructure.repositories.base import Abst
 
 from __future__ import annotations
 
-from src.backend.infrastructure.repositories.base.base import AbstractRepository  # S64 W2: re-export
-from src.backend.infrastructure.repositories.base.factory import get_repository_for_model  # S64 W2: re-export
-from src.backend.infrastructure.repositories.base.sqlalchemy import SQLAlchemyRepository  # S64 W2: re-export
-
-__all__ = (
-    "AbstractRepository",
-    "SQLAlchemyRepository",
-    "get_repository_for_model",
+from src.backend.infrastructure.repositories.base.base import (
+    AbstractRepository,  # S64 W2: re-export
 )
+from src.backend.infrastructure.repositories.base.factory import (
+    get_repository_for_model,  # S64 W2: re-export
+)
+from src.backend.infrastructure.repositories.base.sqlalchemy import (
+    SQLAlchemyRepository,  # S64 W2: re-export
+)
+
+__all__ = ("AbstractRepository", "SQLAlchemyRepository", "get_repository_for_model")

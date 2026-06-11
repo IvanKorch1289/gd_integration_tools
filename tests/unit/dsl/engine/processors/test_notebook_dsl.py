@@ -19,8 +19,12 @@ from src.backend.dsl.engine.processors.notebook_dsl import NotebookDSLProcessor
 from src.backend.services.jupyter.execution_service import JupyterExecutionError
 
 
-def _make_exchange(body: Any = None, properties: dict[str, Any] | None = None) -> Exchange[Any]:
-    return Exchange(in_message=Message(body=body, headers={}), properties=properties or {})
+def _make_exchange(
+    body: Any = None, properties: dict[str, Any] | None = None
+) -> Exchange[Any]:
+    return Exchange(
+        in_message=Message(body=body, headers={}), properties=properties or {}
+    )
 
 
 class TestNotebookDSLProcessor:
@@ -38,7 +42,9 @@ class TestNotebookDSLProcessor:
         exchange = _make_exchange()
 
         mock_result = {
-            "outputs": [{"cell_index": 0, "outputs": [{"output_type": "stream", "text": "ok"}]}],
+            "outputs": [
+                {"cell_index": 0, "outputs": [{"output_type": "stream", "text": "ok"}]}
+            ]
         }
 
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
@@ -57,9 +63,7 @@ class TestNotebookDSLProcessor:
     @pytest.mark.asyncio
     async def test_execute_without_parameters(self) -> None:
         """Выполнение без параметров — пустой dict по умолчанию."""
-        proc = NotebookDSLProcessor(
-            notebook_path="analysis.ipynb",
-        )
+        proc = NotebookDSLProcessor(notebook_path="analysis.ipynb")
         exchange = _make_exchange()
 
         mock_result = {"outputs": []}
@@ -81,9 +85,7 @@ class TestNotebookDSLProcessor:
     async def test_execute_with_export(self) -> None:
         """Выполнение с output_format — export_data тоже попадает в exchange."""
         proc = NotebookDSLProcessor(
-            notebook_path="report.ipynb",
-            output_format="html",
-            user_name="bob",
+            notebook_path="report.ipynb", output_format="html", user_name="bob"
         )
         exchange = _make_exchange()
 
@@ -104,10 +106,7 @@ class TestNotebookDSLProcessor:
     @pytest.mark.asyncio
     async def test_execute_failure(self) -> None:
         """Ошибка выполнения — пробрасывается как JupyterExecutionError."""
-        proc = NotebookDSLProcessor(
-            notebook_path="bad.ipynb",
-            parameters={"x": 1},
-        )
+        proc = NotebookDSLProcessor(notebook_path="bad.ipynb", parameters={"x": 1})
         exchange = _make_exchange()
 
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
@@ -137,12 +136,6 @@ class TestNotebookDSLProcessor:
 
     def test_to_spec_defaults(self) -> None:
         """to_spec не включает дефолтные значения."""
-        proc = NotebookDSLProcessor(
-            notebook_path="nb.ipynb",
-        )
+        proc = NotebookDSLProcessor(notebook_path="nb.ipynb")
         spec = proc.to_spec()
-        assert spec == {
-            "notebook_dsl": {
-                "notebook_path": "nb.ipynb",
-            }
-        }
+        assert spec == {"notebook_dsl": {"notebook_path": "nb.ipynb"}}

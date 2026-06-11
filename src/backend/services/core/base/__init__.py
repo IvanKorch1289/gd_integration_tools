@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """BaseService package (S61 W1 decomp from base.py 526 LOC).
 
 16 methods decomposed в 3 mixin files + helpers.py:
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     pass
 
 from contextlib import asynccontextmanager
-from typing import Any, cast
+from typing import cast
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
@@ -34,21 +35,21 @@ from src.backend.dsl.codec.converters import transfer_model_to_schema
 from src.backend.schemas.base import BaseSchema, PaginatedResult
 
 
-
-
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-
-
-from src.backend.services.core.base.helpers import _is_orm_model  # S61 W1: re-export
-from src.backend.services.core.base.helpers import create_service_class  # S61 W1: re-export
-from src.backend.services.core.base.helpers import get_service_for_model  # S61 W1: re-export
 from src.backend.services.core.base.cache_mixin import CacheMixin  # S61 W1: MRO
 from src.backend.services.core.base.crud_mixin import CrudMixin  # S61 W1: MRO
-from src.backend.services.core.base.versioning_mixin import VersioningMixin  # S61 W1: MRO
+from src.backend.services.core.base.helpers import (
+    _is_orm_model,  # S61 W1: re-export
+    create_service_class,  # S61 W1: re-export
+    get_service_for_model,  # S61 W1: re-export
+)
+from src.backend.services.core.base.versioning_mixin import (
+    VersioningMixin,  # S61 W1: MRO
+)
 
 __all__ = (
     "BaseService",
@@ -97,8 +98,6 @@ class BaseService[
         self.table_name = table_name
         self.helper = self.HelperMethods(repo)
 
-
-
     @asynccontextmanager
     async def _service_error_boundary():
         """Контекстный менеджер для единообразной обработки ошибок.
@@ -115,8 +114,6 @@ class BaseService[
         except Exception as exc:
             raise ServiceError from exc
 
-
-
     def _entity_tag(self) -> str:
         """Возвращает tag-префикс для инвалидации кэша текущего сервиса.
 
@@ -125,11 +122,8 @@ class BaseService[
         """
         return f"entity:{self.__class__.__name__}"
 
-
-
     def _table_tag(self) -> str | None:
         """Возвращает table-based тег для инвалидации, если table_name задан."""
         if self.table_name:
             return f"table:{self.table_name}"
         return None
-

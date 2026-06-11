@@ -2,6 +2,7 @@
 
 Classes: MongoCertBackend.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
@@ -34,25 +35,16 @@ Hot-reload механизм:
     pem = await store.get("skb_api")
 """
 
-import asyncio
-import hashlib
-from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
-
-from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
-from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
 
-@dataclass(slots=True)
 
+@dataclass(slots=True)
 class MongoCertBackend(CertBackend):
     """MongoDB бэкенд: коллекции ``certs`` + ``certs_history``.
 
@@ -202,4 +194,3 @@ class MongoCertBackend(CertBackend):
                 )
             )
         return result
-

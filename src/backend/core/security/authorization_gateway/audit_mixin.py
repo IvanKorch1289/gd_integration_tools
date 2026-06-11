@@ -1,18 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-import uuid
-from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
-from typing import Any
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.security.authorization_gateway")
+
 
 class AuditMixin:
     """audit emission helper для AuthorizationGateway. S60 W4 extraction."""
@@ -40,4 +37,3 @@ class AuditMixin:
             )
         except Exception as _:
             _logger.exception("AuthorizationGateway audit_callback failed")
-

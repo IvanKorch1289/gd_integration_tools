@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
+
 
 class WebhookSourcesMixin:
     """webhook source registration для RouteBuilder. S57 W2 extraction."""
@@ -53,4 +54,3 @@ class WebhookSourcesMixin:
         builder: RouteBuilder = cls(route_id=route_id, source=f"webhook:{path}")
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
-

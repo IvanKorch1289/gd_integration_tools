@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """RAGService package (S64 W4 decomp from rag_service.py 478 LOC).
 
 14 methods decomposed в 4 mixin files + state.py:
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 import hashlib
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.vector_store import BaseVectorStore
@@ -39,23 +40,20 @@ from src.backend.services.ai.rag_augment import (
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
 
-from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
+from src.backend.services.ai.rag_service.augment_mixin import (
+    AugmentMixin,  # S64 W4: MRO
+)
+from src.backend.services.ai.rag_service.collection_mixin import (
+    CollectionMixin,  # S64 W4: MRO
+)
 from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 W4: MRO
 from src.backend.services.ai.rag_service.search_mixin import SearchMixin  # S64 W4: MRO
-from src.backend.services.ai.rag_service.augment_mixin import AugmentMixin  # S64 W4: MRO
-from src.backend.services.ai.rag_service.collection_mixin import CollectionMixin  # S64 W4: MRO
+from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
 
-__all__ = (
-    "RAGService",
-    "RAGCitation",
-)
+__all__ = ("RAGService", "RAGCitation")
 
-class RAGService(
-    IngestMixin,
-    SearchMixin,
-    AugmentMixin,
-    CollectionMixin,
-):
+
+class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):
     """RAG service (4 mixins = 13 methods + 1 core)."""
 
     __slots__ = ()
@@ -69,4 +67,3 @@ class RAGService(
         self._store = store
         self._embedder = embedder or get_embedding_provider()
         self._cache = cache
-

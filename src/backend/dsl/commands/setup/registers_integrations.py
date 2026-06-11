@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W2 — registers_integrations.py part of setup.py decomp.
 
 integration registrations (AI, analytics, search, RAG, etc.).
@@ -6,12 +7,8 @@ integration registrations (AI, analytics, search, RAG, etc.).
 Functions: _register_ai, _register_analytics_clickhouse, _register_search_elasticsearch, _register_notebooks_wave_9_1, _register_rag_vector_db_llm, _register_agent_memory, _register_web_search_perplexity_tavily, _register_anomaly_detection.
 """
 
-from collections.abc import Callable
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
-
-
-
 
 
 def _register_ai() -> None:
@@ -41,7 +38,6 @@ def _register_ai() -> None:
             ),
         ]
     )
-
 
 
 def _register_analytics_clickhouse() -> None:
@@ -79,7 +75,6 @@ def _register_analytics_clickhouse() -> None:
     )
 
 
-
 def _register_search_elasticsearch() -> None:
 
     from src.backend.services.io.search import get_search_service
@@ -113,7 +108,6 @@ def _register_search_elasticsearch() -> None:
             ),
         ]
     )
-
 
 
 def _register_notebooks_wave_9_1() -> None:
@@ -156,7 +150,6 @@ def _register_notebooks_wave_9_1() -> None:
     )
 
 
-
 def _register_rag_vector_db_llm() -> None:
 
     from src.backend.services.ai.rag_service import get_rag_service
@@ -190,7 +183,6 @@ def _register_rag_vector_db_llm() -> None:
             ),
         ]
     )
-
 
 
 def _register_agent_memory() -> None:
@@ -238,7 +230,6 @@ def _register_agent_memory() -> None:
     )
 
 
-
 def _register_web_search_perplexity_tavily() -> None:
 
     from src.backend.infrastructure.clients.external.search_providers import (
@@ -259,7 +250,6 @@ def _register_web_search_perplexity_tavily() -> None:
             ),
         ]
     )
-
 
 
 def _register_anomaly_detection() -> None:
@@ -285,6 +275,3 @@ def _register_anomaly_detection() -> None:
             ),
         ]
     )
-
-
-

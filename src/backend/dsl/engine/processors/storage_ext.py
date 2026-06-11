@@ -141,6 +141,8 @@ class TimeSeriesWriteProcessor(BaseProcessor):
             exchange.fail(f"Time series write failed: {exc}")
 
     async def _write_timescale(self, points: list[dict]) -> None:
+        from datetime import UTC, datetime
+
         from sqlalchemy import text
 
         from src.backend.infrastructure.database.database import db_initializer
@@ -151,14 +153,15 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         col_names = ", ".join(columns)
         sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # _table/_tags/_field — DSL-config параметры, не runtime input  # noqa: S608  # internal query with controlled parameters
 
-        async with engine.connect() as conn:
-            for point in points:
-                row = {c: point.get(c) for c in columns}
-                if row["timestamp"] is None:
-                    from datetime import UTC, datetime
+        rows: list[dict[str, Any]] = []
+        for point in points:
+            row = {c: point.get(c) for c in columns}
+            if row["timestamp"] is None:
+                row["timestamp"] = datetime.now(UTC)
+            rows.append(row)
 
-                    row["timestamp"] = datetime.now(UTC)
-                await conn.execute(text(sql), row)
+        async with engine.connect() as conn:
+            await conn.execute(text(sql), rows)
             await conn.commit()
 
     async def _write_influxdb(self, points: list[dict]) -> None:

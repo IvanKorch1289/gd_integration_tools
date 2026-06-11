@@ -212,12 +212,16 @@ class TestReplay:
 
     async def test_replay_empty_history(self) -> None:
         backend = FakeWorkflowBackend()
-        await backend.replay(workflow_name="wf", history=b"")
+        result = await backend.replay(workflow_name="wf", history=b"")
+        assert result is None
 
     async def test_replay_with_arbitrary_bytes(self) -> None:
         backend = FakeWorkflowBackend()
         # Любой bytes принимается, fake не моделирует replay-семантику.
-        await backend.replay(workflow_name="credit_score", history=b"\x00\x01\x02\xff")
+        result = await backend.replay(
+            workflow_name="credit_score", history=b"\x00\x01\x02\xff"
+        )
+        assert result is None
 
     async def test_replay_does_not_affect_instances(self) -> None:
         backend = FakeWorkflowBackend()

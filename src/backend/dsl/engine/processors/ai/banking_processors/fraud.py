@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S59 W1 — fraud.py part of banking_processors decomp.
 
 Classes: FraudDetectionProcessor.
@@ -6,26 +7,23 @@ Classes: FraudDetectionProcessor.
 Fraud detection processor.
 """
 
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
-from src.backend.dsl.engine.processors.ai.banking_processors.base import _BankingAIProcessor  # S59 W1: base for processors
-from src.backend.dsl.engine.processors.ai.banking_processors.results import FraudDetectionResult  # S59 W1: result schema
-
-
+from src.backend.dsl.engine.processors.ai.banking_processors.base import (
+    _BankingAIProcessor,  # S59 W1: base for processors
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.results import (
+    FraudDetectionResult,  # S59 W1: result schema
+)
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
+
 
 class FraudDetectionProcessor(_BankingAIProcessor):
     """Детекция фрода — анализ транзакции на признаки мошенничества.
@@ -66,4 +64,3 @@ class FraudDetectionProcessor(_BankingAIProcessor):
 - recommended_action: str — "allow" если score < 0.3, "review" если 0.3-0.7, "block" если > 0.7
 
 Отвечай ТОЛЬКО валидным JSON, соответствующим схеме."""
-

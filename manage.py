@@ -281,9 +281,7 @@ def validate_profile(
     # Базовая проверка: наличие хотя бы одной section. Полный invariant
     # check выполняется через runtime ConfigValidator после merge.
     if not data:
-        typer.echo(
-            f"[ERROR] Profile {env} is empty (no overlay sections)", err=True
-        )
+        typer.echo(f"[ERROR] Profile {env} is empty (no overlay sections)", err=True)
         raise typer.Exit(code=1)
 
     # ConfigValidator-инварианты применимы только для прод (validate-profile
@@ -331,7 +329,9 @@ def routes():
         flag_str = typer.style(flag, fg=typer.colors.YELLOW) if flag else ""
         typer.echo(f"  {route_name:<40} {procs_str}{flag_str}")
 
-    total_str = typer.style(f"Total: {len(route_ids)} routes", fg=typer.colors.BLUE, bold=True)
+    total_str = typer.style(
+        f"Total: {len(route_ids)} routes", fg=typer.colors.BLUE, bold=True
+    )
     typer.echo(f"\n{total_str}")
 
 
@@ -363,9 +363,7 @@ def actions(
     typer.echo(f"\nTotal: {len(action_list)} actions")
 
     explicit, inferred = audit_action_specs()
-    typer.echo(
-        f"\nActionSpec audit: explicit={len(explicit)} inferred={len(inferred)}"
-    )
+    typer.echo(f"\nActionSpec audit: explicit={len(explicit)} inferred={len(inferred)}")
 
     if inferred:
         typer.echo("\nInferred action_id (Wave B fallback):")
@@ -393,7 +391,9 @@ def services():
     for name in names:
         typer.echo(f"  {typer.style(name, fg=typer.colors.GREEN)}")
 
-    total_str = typer.style(f"Total: {len(names)} services", fg=typer.colors.BLUE, bold=True)
+    total_str = typer.style(
+        f"Total: {len(names)} services", fg=typer.colors.BLUE, bold=True
+    )
     typer.echo(f"\n{total_str}")
 
 
@@ -474,12 +474,14 @@ def diagnose(
         checks = {}
         try:
             from src.backend.infrastructure.clients.storage.redis import redis_client
+
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
 
         try:
             from src.backend.infrastructure.database.database import db_initializer
+
             checks["database"] = await db_initializer.check_connection()
         except Exception:
             checks["database"] = False
@@ -502,6 +504,7 @@ def diagnose(
         from src.backend.infrastructure.clients.external.circuit_breakers import (
             breaker_registry,
         )
+
         diagnostics["breakers"] = breaker_registry.get_all_status()
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
@@ -509,6 +512,7 @@ def diagnose(
     # Services
     try:
         from src.backend.core.svcs_registry import list_services
+
         diagnostics["services"] = sorted(list_services())
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
@@ -516,6 +520,7 @@ def diagnose(
     # Routes count
     try:
         from src.backend.dsl.route.loader import RouteLoader
+
         routes = RouteLoader.load_all()
         diagnostics["routes_count"] = len(routes)
         if verbose:
@@ -528,6 +533,7 @@ def diagnose(
     # Actions count
     try:
         from src.backend.core.actions import ActionHandlerRegistry
+
         diagnostics["actions_count"] = len(ActionHandlerRegistry.get_all_actions())
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
@@ -535,6 +541,7 @@ def diagnose(
     # Feature flags
     try:
         from src.backend.core.config.features import feature_flags
+
         flags = feature_flags.model_dump()
         if not verbose:
             # In non-verbose mode, only show flags that are ON
@@ -553,7 +560,11 @@ def diagnose(
         typer.echo("")
         typer.echo("Health:")
         for name, ok in diagnostics["health"].items():
-            status = typer.style("OK", fg=typer.colors.GREEN) if ok else typer.style("FAIL", fg=typer.colors.RED)
+            status = (
+                typer.style("OK", fg=typer.colors.GREEN)
+                if ok
+                else typer.style("FAIL", fg=typer.colors.RED)
+            )
             typer.echo(f"  {name:<20} {status}")
         typer.echo("")
         typer.echo(f"Circuit Breakers: {len(diagnostics['breakers'])}")
@@ -687,7 +698,9 @@ def scaffold_codegen_service(
         "{}", help='JSON {"field":"py_type"} для Create/Update схем'
     ),
     model_class: str | None = typer.Option(
-        None, "--model-class", help="имя SQLAlchemy-модели (default: PascalCase singular)"
+        None,
+        "--model-class",
+        help="имя SQLAlchemy-модели (default: PascalCase singular)",
     ),
     overwrite: bool = typer.Option(False, "--overwrite", help="разрешить перезапись"),
 ) -> None:
@@ -707,9 +720,7 @@ def scaffold_codegen_service(
 @scaffold_app.command("codegen-extract")
 def scaffold_codegen_extract(
     service: str = typer.Option(..., help="путь к service .py"),
-    output: str = typer.Option(
-        "-", help="путь YAML; '-' (default) — stdout"
-    ),
+    output: str = typer.Option("-", help="путь YAML; '-' (default) — stdout"),
 ) -> None:
     """Wave 5.5 — фасад над `tools/codegen_extract.py` через Typer."""
     from tools.codegen_extract import main as _extract_main
@@ -915,9 +926,7 @@ def dsl_reload(
 
 @dsl_app.command("lint")
 def dsl_lint(
-    path: Path = typer.Argument(
-        ..., help="Каталог с route.toml или *.dsl.yaml файл"
-    ),
+    path: Path = typer.Argument(..., help="Каталог с route.toml или *.dsl.yaml файл"),
     strict: bool = typer.Option(
         False, "--strict", help="Strict-mode (warnings → errors, для CI)"
     ),
@@ -1188,7 +1197,11 @@ def workflow_import(
     if show:
         import json
 
-        typer.echo(json.dumps(declaration.model_dump(mode="json"), indent=2, ensure_ascii=False))
+        typer.echo(
+            json.dumps(
+                declaration.model_dump(mode="json"), indent=2, ensure_ascii=False
+            )
+        )
 
 
 @workflow_app.command("dryrun")
@@ -1272,10 +1285,7 @@ def workflow_dryrun(
     # Запуск симуляции (lazy-import чтобы не подтягивать temporal SDK).
     from src.backend.dsl.workflow.dryrun import run_workflow_dryrun
 
-    report = run_workflow_dryrun(
-        declaration=declaration,
-        input_data=input_data,
-    )
+    report = run_workflow_dryrun(declaration=declaration, input_data=input_data)
 
     if record:
         trace_path = Path(".dryrun_trace.json")
@@ -1364,9 +1374,7 @@ def workflow_version(
 def workflow_cancel(
     workflow_id: str = typer.Argument(..., help="Workflow ID (Temporal)."),
     reason: str = typer.Option("", "--reason", help="Причина отмены."),
-    namespace: str = typer.Option(
-        "default", "--namespace", help="Workflow namespace."
-    ),
+    namespace: str = typer.Option("default", "--namespace", help="Workflow namespace."),
 ) -> None:
     """Sprint 12 K3 W7 — отменить running workflow по ID.
 
@@ -1386,9 +1394,7 @@ def workflow_cancel(
 
         backend = await create_workflow_backend(kind="auto")
         handle = WorkflowHandle(
-            workflow_id=workflow_id,
-            run_id=workflow_id,
-            namespace=namespace,
+            workflow_id=workflow_id, run_id=workflow_id, namespace=namespace
         )
         try:
             await backend.cancel_workflow(handle=handle)
@@ -1494,9 +1500,7 @@ def plugin_hot_swap(
 
 
 @plugin_app.command("new")
-def plugin_new(
-    name: str = typer.Argument(..., help="snake_case имя плагина"),
-):
+def plugin_new(name: str = typer.Argument(..., help="snake_case имя плагина")):
     """Создать каркас V11 плагина в ``extensions/<name>/``.
 
     Эквивалент ``make new-plugin NAME=<name>``.
@@ -1514,9 +1518,7 @@ def plugin_new(
         raise typer.Exit(1) from exc
 
     typer.echo(f"Created plugin: {plugin_root}")
-    typer.echo(
-        f"Next: edit {plugin_root}/plugin.toml and {plugin_root}/plugin.py"
-    )
+    typer.echo(f"Next: edit {plugin_root}/plugin.toml and {plugin_root}/plugin.py")
 
 
 @plugin_app.command("serve")
@@ -1613,7 +1615,9 @@ def ai_eval_nightly(
 
     summary = runner.run_all(write_artifacts=True)
     typer.echo(typer.style(f"Suites: {len(summary.suites)}", fg=typer.colors.CYAN))
-    typer.echo(typer.style(f"Total samples: {summary.total_samples}", fg=typer.colors.CYAN))
+    typer.echo(
+        typer.style(f"Total samples: {summary.total_samples}", fg=typer.colors.CYAN)
+    )
     if summary.failed:
         typer.echo(typer.style(f"Failed: {summary.failed}", fg=typer.colors.RED))
         raise typer.Exit(code=1)
@@ -1622,11 +1626,11 @@ def ai_eval_nightly(
 
 @ai_eval_app.command("suite")
 def ai_eval_suite(
-    suite_name: str = typer.Argument(..., help="Имя suite (knowledge_qa, safety_classifier, ...)."),
+    suite_name: str = typer.Argument(
+        ..., help="Имя suite (knowledge_qa, safety_classifier, ...)."
+    ),
     artifacts_dir: Path = typer.Option(
-        Path("artifacts/inspect-ai"),
-        "--artifacts-dir",
-        help="Каталог для отчётов.",
+        Path("artifacts/inspect-ai"), "--artifacts-dir", help="Каталог для отчётов."
     ),
 ) -> None:
     """K4 S6 W1: запуск одного suite по имени.
@@ -1662,8 +1666,7 @@ app.add_typer(completions_app, name="completions")
 @completions_app.command("install")
 def completions_install(
     shell: str = typer.Option(
-        ..., "--shell", "-s",
-        help="Shell type: bash | zsh | fish | powershell"
+        ..., "--shell", "-s", help="Shell type: bash | zsh | fish | powershell"
     ),
 ) -> None:
     """Install shell completions for gd-tools CLI.

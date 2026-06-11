@@ -82,7 +82,7 @@ def run_jscpd(target: Path) -> int:
         try:
             data = json.loads(json_report.read_text(encoding="utf-8"))
             return int(data.get("statistics", {}).get("total", {}).get("clones", 0))
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             pass
     # fallback парсинг stdout
     for line in result.stdout.splitlines():

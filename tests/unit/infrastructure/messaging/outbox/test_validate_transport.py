@@ -82,16 +82,11 @@ async def session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 async def _write_inline(
-    session: AsyncSession,
-    *,
-    topic: str,
-    transport: str = "other",
+    session: AsyncSession, *, topic: str, transport: str = "other"
 ) -> int:
     """Inline replica of write_within_session (S81 W2, validates transport)."""
     transport = validate_transport(transport)
-    msg = OutboxMessage(
-        topic=topic, payload={}, headers={}, transport=transport
-    )
+    msg = OutboxMessage(topic=topic, payload={}, headers={}, transport=transport)
     session.add(msg)
     await session.flush()
     return msg.id

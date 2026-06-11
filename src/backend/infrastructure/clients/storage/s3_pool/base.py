@@ -2,13 +2,12 @@
 
 Classes: BaseS3Client.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from asyncio import Lock
-from collections.abc import AsyncGenerator, Callable, Coroutine
-from contextlib import AsyncExitStack, asynccontextmanager
-from functools import wraps
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Any, ParamSpec, TypeVar
 
 try:
@@ -32,17 +31,8 @@ except ImportError:  # botocore — опциональная зависимос�
             self.operation_name = kwargs.get("operation_name", "")
 
 
-from functools import lru_cache
-
-from src.backend.core.config.settings import FileStorageSettings, settings
-from src.backend.core.errors import ServiceError
-
-
-
 P = ParamSpec("P")
 R = TypeVar("R")
-
-
 
 
 class BaseS3Client(ABC):
@@ -126,6 +116,3 @@ class BaseS3Client(ABC):
     async def get_object_bytes(self, key: str) -> bytes | None:
         """Получает содержимое объекта в виде байтов."""
         pass
-
-
-

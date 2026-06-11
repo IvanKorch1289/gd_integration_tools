@@ -1,14 +1,12 @@
 from __future__ import annotations
+
 """S68 W1 - safe_action blueprint extracted from macros.py.
 
 safe action wrapper (retry + DLQ + audit).
 """
 
-from collections.abc import Callable
-from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
     DeadLetterProcessor,
@@ -16,6 +14,7 @@ from src.backend.dsl.engine.processors import (
     LogProcessor,
     RetryProcessor,
 )
+
 
 def safe_action(
     route_id: str,

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S61 W2 — deadline.py part of enrichment decomp.
 
 Classes: DeadlineProcessor.
@@ -9,10 +10,10 @@ deadline enforcement.
 import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class DeadlineProcessor(BaseProcessor):
     """Устанавливает дedline для pipeline — проверяется последующими процессорами.
@@ -54,4 +55,3 @@ class DeadlineProcessor(BaseProcessor):
         if self._fail is not True:
             spec["fail_on_exceed"] = self._fail
         return {"deadline": spec}
-

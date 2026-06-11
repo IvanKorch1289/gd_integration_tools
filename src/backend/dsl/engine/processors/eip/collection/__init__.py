@@ -11,20 +11,28 @@ Backward-compat: ``from src.backend.dsl.engine.processors.eip.collection import 
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.collection.collect import CollectProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.collect import FindAllProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.collect import GroupByProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.partition import PartitionProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.partition import OrElseProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.partition import FlattenProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.partition import UniqueProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.set_ops import IntersectProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.set_ops import DiffProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.aggregators import SumByProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.aggregators import MaxByProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.aggregators import MinByProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.aggregators import SortByProcessor  # S57 W3: re-export
-from src.backend.dsl.engine.processors.eip.collection.collect import _resolve_field  # S57 W3: re-export
+from src.backend.dsl.engine.processors.eip.collection.aggregators import (
+    MaxByProcessor,  # S57 W3: re-export
+    MinByProcessor,  # S57 W3: re-export
+    SortByProcessor,  # S57 W3: re-export
+    SumByProcessor,  # S57 W3: re-export
+)
+from src.backend.dsl.engine.processors.eip.collection.collect import (
+    CollectProcessor,  # S57 W3: re-export
+    FindAllProcessor,  # S57 W3: re-export
+    GroupByProcessor,  # S57 W3: re-export
+    _resolve_field,  # S57 W3: re-export
+)
+from src.backend.dsl.engine.processors.eip.collection.partition import (
+    FlattenProcessor,  # S57 W3: re-export
+    OrElseProcessor,  # S57 W3: re-export
+    PartitionProcessor,  # S57 W3: re-export
+    UniqueProcessor,  # S57 W3: re-export
+)
+from src.backend.dsl.engine.processors.eip.collection.set_ops import (
+    DiffProcessor,  # S57 W3: re-export
+    IntersectProcessor,  # S57 W3: re-export
+)
 
 __all__ = (
     "CollectProcessor",

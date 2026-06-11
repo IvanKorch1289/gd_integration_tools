@@ -88,3 +88,59 @@ async def test_batch_delete(mock_bundle: MagicMock) -> None:
         exchange = _ex()
         await proc.process(exchange, None)  # type: ignore[arg-type]
         assert exchange.properties["batch_delete_result"]["affected"] == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_insert_bad_column_sets_error() -> None:
+    proc = BatchInsertProcessor(table="orders", items=[{"id; DROP TABLE orders;--": 1}])
+    exchange = _ex()
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+    assert exchange.error is not None
+    assert "Invalid identifier" in exchange.error
+    assert exchange.stopped
+
+
+@pytest.mark.asyncio
+async def test_batch_insert_from_body_bad_column_sets_error() -> None:
+    proc = BatchInsertProcessor(table="orders")
+    exchange = _ex([{"bad;column": 1}])
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+    assert exchange.error is not None
+    assert "Invalid identifier" in exchange.error
+    assert exchange.stopped
+
+
+@pytest.mark.asyncio
+async def test_batch_update_bad_column_sets_error() -> None:
+    proc = BatchUpdateProcessor(
+        table="orders", items=[{"id": 1, "status; DROP TABLE orders;--": "ok"}]
+    )
+    exchange = _ex()
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+    assert exchange.error is not None
+    assert "Invalid identifier" in exchange.error
+    assert exchange.stopped
+
+
+@pytest.mark.asyncio
+async def test_batch_update_bad_key_field_sets_error() -> None:
+    proc = BatchUpdateProcessor(
+        table="orders", items=[{"id": 1}], key_field="id; DROP TABLE orders;--"
+    )
+    exchange = _ex()
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+    assert exchange.error is not None
+    assert "Invalid identifier" in exchange.error
+    assert exchange.stopped
+
+
+@pytest.mark.asyncio
+async def test_batch_delete_bad_key_field_sets_error() -> None:
+    proc = BatchDeleteProcessor(
+        table="orders", ids=[1], key_field="id; DROP TABLE orders;--"
+    )
+    exchange = _ex()
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+    assert exchange.error is not None
+    assert "Invalid identifier" in exchange.error
+    assert exchange.stopped

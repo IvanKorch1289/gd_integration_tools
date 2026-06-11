@@ -35,9 +35,8 @@ logger = get_logger("dsl.streaming")
 # ──────────────────── Message Expiration ────────────────────
 
 
-
-
 # ── reliability patterns (ReplyTo, ExactlyOnce, DurableSubscriber) ──
+
 
 class ReplyToProcessor(BaseProcessor):
     """Публикует ответ в очередь указанную в заголовке ``reply-to``.
@@ -79,7 +78,6 @@ class ReplyToProcessor(BaseProcessor):
             exchange.fail(f"Reply publish failed: {exc}")
 
 
-
 class ExactlyOnceProcessor(BaseProcessor):
     """Dedup по message-id через внешний storage.
 
@@ -116,7 +114,6 @@ class ExactlyOnceProcessor(BaseProcessor):
             exchange.fail(f"Duplicate message-id: {msg_id}")
 
 
-
 class DurableSubscriberProcessor(BaseProcessor):
     """Fan-out к нескольким подписчикам с гарантией доставки.
 
@@ -148,4 +145,3 @@ class DurableSubscriberProcessor(BaseProcessor):
         ]
         if failed:
             exchange.fail(f"Durable publish failed for: {failed}")
-

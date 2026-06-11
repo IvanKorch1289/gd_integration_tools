@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
@@ -8,25 +9,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from src.backend.core.interfaces.plugin import (
-        ActionRegistryProtocol,
-        BasePlugin,
-        ProcessorRegistryProtocol,
-        RepositoryRegistryProtocol,
-    )
-    from src.backend.core.security.capabilities import CapabilityGate
+    from src.backend.core.interfaces.plugin import BasePlugin
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
-    from src.backend.services.plugins.loader_v11 import LoadedPluginV11 as _LoadedPluginV11
 
 # Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
 
 import importlib
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
 
 from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
 from src.backend.core.logging import get_logger
@@ -39,6 +28,7 @@ from src.backend.services.plugins.manifest_v11 import (
 )
 
 _logger = get_logger("services.plugins.loader_v11")
+
 
 class LoaderMixin:
     """plugin loading internals (_load_one BIG 253 LOC + _instantiate) для LoadingMixin. S63 W1 extraction."""
@@ -324,4 +314,3 @@ class LoaderMixin:
             f"entry_class {manifest.entry_class!r} is neither a BasePlugin "
             f"subclass nor a factory callable"
         )
-

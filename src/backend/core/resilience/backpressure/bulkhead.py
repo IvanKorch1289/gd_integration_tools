@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W1 - bulkhead.py part of backpressure decomp.
 
 AdaptiveBulkhead (7 methods).
@@ -7,15 +8,11 @@ Classes: AdaptiveBulkhead.
 """
 
 import asyncio
-import time
-from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
-
-from src.backend.core.logging import get_logger
 
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
+
 
 class AdaptiveBulkhead:
     """Bulkhead с динамическим max_concurrent.
@@ -122,4 +119,3 @@ class AdaptiveBulkhead:
             self._current = new_value
             logger.info("AdaptiveBulkhead: scale_down → %d", self._current)
         return self._current
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W2 — registers_workflow.py part of setup.py decomp.
 
 workflow/notification registrations (webhook, replay, scheduled, etc.).
@@ -6,12 +7,8 @@ workflow/notification registrations (webhook, replay, scheduled, etc.).
 Functions: _register_webhook_scheduler, _register_web_automation_multi_protocol, _register_data_export_excel_csv_pdf, _register_notifications_email_express_webhook_telegram, _register_message_replay, _register_webhook_relay, _register_scheduled_reports, _register_data_quality, _register_importgateway_w24.
 """
 
-from collections.abc import Callable
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
-
-
-
 
 
 def _register_webhook_scheduler() -> None:
@@ -42,7 +39,6 @@ def _register_webhook_scheduler() -> None:
             ),
         ]
     )
-
 
 
 def _register_web_automation_multi_protocol() -> None:
@@ -100,7 +96,6 @@ def _register_web_automation_multi_protocol() -> None:
     )
 
 
-
 def _register_data_export_excel_csv_pdf() -> None:
 
     from src.backend.services.io.export_service import get_export_service
@@ -124,7 +119,6 @@ def _register_data_export_excel_csv_pdf() -> None:
             ),
         ]
     )
-
 
 
 def _register_notifications_email_express_webhook_telegram() -> None:
@@ -182,7 +176,6 @@ def _register_notifications_email_express_webhook_telegram() -> None:
     )
 
 
-
 def _register_message_replay() -> None:
 
     from src.backend.services.ops.message_replay import get_replay_service
@@ -211,7 +204,6 @@ def _register_message_replay() -> None:
             ),
         ]
     )
-
 
 
 def _register_webhook_relay() -> None:
@@ -244,7 +236,6 @@ def _register_webhook_relay() -> None:
     )
 
 
-
 def _register_data_quality() -> None:
 
     from src.backend.services.ops.data_quality import get_dq_monitor
@@ -266,7 +257,6 @@ def _register_data_quality() -> None:
     )
 
 
-
 def _register_importgateway_w24() -> None:
 
     from src.backend.services.integrations import get_import_service
@@ -285,7 +275,6 @@ def _register_importgateway_w24() -> None:
             ),
         ]
     )
-
 
 
 def _register_scheduled_reports() -> None:
@@ -316,6 +305,3 @@ def _register_scheduled_reports() -> None:
             ),
         ]
     )
-
-
-

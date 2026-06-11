@@ -1,19 +1,19 @@
 from __future__ import annotations
-import threading
+
 import uuid
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.logging import get_logger
-from src.backend.core.util.json_utils import dumps_str
-
-from src.backend.services.audit.clickhouse_audit_service.state import AuditEvent  # S68 W2: cross-import
+from src.backend.services.audit.clickhouse_audit_service.state import (
+    AuditEvent,  # S68 W2: cross-import
+)
 
 if TYPE_CHECKING:
     pass
 
 _logger = get_logger("services.audit.clickhouse")
+
 
 def _make_default_event_id() -> str:
     """Генерирует уникальный ID события через UUID4.
@@ -23,6 +23,7 @@ def _make_default_event_id() -> str:
     """
     return str(uuid.uuid4())
 
+
 def _make_default_timestamp() -> datetime:
     """Возвращает текущее время в UTC.
 
@@ -30,6 +31,7 @@ def _make_default_timestamp() -> datetime:
         Текущая временная метка в timezone-aware формате UTC.
     """
     return datetime.now(UTC)
+
 
 def make_audit_event(
     event_type: str,
@@ -68,6 +70,7 @@ def make_audit_event(
         severity=severity,
     )
 
+
 def get_audit_service() -> ClickHouseAuditService:
     """Возвращает глобальный singleton :class:`ClickHouseAuditService`.
 
@@ -83,4 +86,3 @@ def get_audit_service() -> ClickHouseAuditService:
         if _service_instance is None:
             _service_instance = ClickHouseAuditService()
     return _service_instance
-

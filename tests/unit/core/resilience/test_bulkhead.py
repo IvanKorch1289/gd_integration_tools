@@ -39,6 +39,7 @@ class TestBulkhead:
     def test_release_unknown_service(self, bulkhead: Bulkhead) -> None:
         # Should not raise
         bulkhead.release("unknown")
+        assert "unknown" not in bulkhead.stats()
 
     def test_stats(self, bulkhead: Bulkhead) -> None:
         bulkhead.register("svc3", max_concurrent=5)

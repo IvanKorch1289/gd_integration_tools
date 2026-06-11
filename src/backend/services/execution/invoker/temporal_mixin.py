@@ -26,7 +26,6 @@ if TYPE_CHECKING:
   adapter (Sprint 8 K2 W1: TaskIQ полностью удалён).
 """
 
-from typing import Any
 
 from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
@@ -41,6 +40,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 
 logger = get_logger("services.execution.invoker")
+
 
 class TemporalMixin:
     """async queue + Temporal adapter + Temporal activity execution для Invoker. S54 W3 extraction."""
@@ -141,4 +141,3 @@ class TemporalMixin:
                     "Temporal-activity: ReplyChannel.send failed (id=%s)",
                     request.invocation_id,
                 )
-

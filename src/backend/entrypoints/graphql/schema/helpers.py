@@ -1,14 +1,7 @@
 from __future__ import annotations
-from collections.abc import AsyncGenerator
-from datetime import datetime
+
 from typing import Any
 
-import strawberry
-from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON
-from strawberry.types import Info
-
-from src.backend.core.logging import get_logger
 from src.backend.dsl.service import get_dsl_service
 
 
@@ -39,7 +32,6 @@ async def _dispatch_action(
     except Exception as exc:
         logger.exception("GraphQL action error: %s", exc)
         return ActionResult(action=action, success=False, error=str(exc))
-
 
 
 def _schema_to_order(data: Any) -> OrderType:
@@ -74,7 +66,6 @@ def _schema_to_order(data: Any) -> OrderType:
     )
 
 
-
 def _schema_to_user(data: Any) -> UserType:
     """Конвертирует Pydantic-схему или dict в UserType."""
     if isinstance(data, dict):
@@ -94,7 +85,6 @@ def _schema_to_user(data: Any) -> UserType:
     )
 
 
-
 def _schema_to_order_kind(data: Any) -> OrderKindType:
     """Конвертирует Pydantic-схему или dict в OrderKindType."""
     if isinstance(data, dict):
@@ -111,7 +101,6 @@ def _schema_to_order_kind(data: Any) -> OrderKindType:
         created_at=d.get("created_at"),
         updated_at=d.get("updated_at"),
     )
-
 
 
 async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
@@ -137,6 +126,3 @@ async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
     except Exception as exc:
         logger.exception("GraphQL DSL error: %s", exc)
         return DslResult(route_id=route_id, status="failed", error=str(exc))
-
-
-

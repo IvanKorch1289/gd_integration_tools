@@ -155,15 +155,9 @@ def _is_internal_exempt(rel_path: str) -> bool:
 
 @app.callback(invoke_without_command=True)
 def main(
-    root_path: Path = typer.Option(
-        ROOT_DEFAULT,
-        "--root",
-        help="Каталог сканирования",
-    ),
+    root_path: Path = typer.Option(ROOT_DEFAULT, "--root", help="Каталог сканирования"),
     strict: bool = typer.Option(
-        False,
-        "--strict",
-        help="Игнорировать allowlist (CI/release-gate)",
+        False, "--strict", help="Игнорировать allowlist (CI/release-gate)"
     ),
 ) -> None:
     """Entry-point: typer callback с теми же флагами что и старый argparse."""

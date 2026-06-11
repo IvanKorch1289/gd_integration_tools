@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W4 — resolve.py part of yaml_loader decomp.
 
 Funcs: _is_route_composition_include_enabled, _resolve_include_extends.
@@ -9,12 +10,9 @@ include/extends resolution (153 LOC BIG).
 from pathlib import Path
 from typing import Any
 
-from src.backend.core.logging import get_logger
-from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.pipeline import Pipeline
-
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()
+
 
 def _is_route_composition_include_enabled() -> bool:
     """Check if route_composition_include feature flag is enabled."""
@@ -24,6 +22,7 @@ def _is_route_composition_include_enabled() -> bool:
         return getattr(feature_flags, "route_composition_include", False)
     except ImportError:
         return False
+
 
 def _resolve_include_extends(
     data: dict[str, Any],
@@ -178,4 +177,3 @@ def _resolve_include_extends(
         spec["steps"] = existing_steps + all_steps
 
     return spec
-

@@ -15,6 +15,7 @@ from src.backend.infrastructure.clients.storage.clickhouse import (
 
 # ── helpers ──
 
+
 def test_validate_identifier_ok() -> None:
     assert _validate_identifier("events", context="test") == "events"
     assert _validate_identifier("_audit_log", context="test") == "_audit_log"
@@ -38,7 +39,9 @@ def test_validate_identifier_rejects_injection() -> None:
 
 def test_validate_where_ok() -> None:
     _validate_where("status = 'active'", context="test")
-    _validate_where("created_at > '2026-01-01' AND level IN ('ERROR', 'WARN')", context="test")
+    _validate_where(
+        "created_at > '2026-01-01' AND level IN ('ERROR', 'WARN')", context="test"
+    )
     _validate_where(None, context="test")
 
 
@@ -58,6 +61,7 @@ def test_validate_where_rejects_injection() -> None:
 
 # ── ClickHouseClient.insert ──
 
+
 @pytest.mark.asyncio
 async def test_insert_valid_table() -> None:
     client = ClickHouseClient()
@@ -68,7 +72,10 @@ async def test_insert_valid_table() -> None:
         assert n == 1
         fake_http.post.assert_awaited_once()
         call_args = fake_http.post.await_args
-        assert "INSERT INTO events FORMAT JSONEachRow" in call_args.kwargs["params"]["query"]
+        assert (
+            "INSERT INTO events FORMAT JSONEachRow"
+            in call_args.kwargs["params"]["query"]
+        )
 
 
 @pytest.mark.asyncio
@@ -80,13 +87,16 @@ async def test_insert_rejects_bad_table() -> None:
 
 # ── ClickHouseClient.aggregate ──
 
+
 @pytest.mark.asyncio
 async def test_aggregate_valid() -> None:
     client = ClickHouseClient()
     fake_http = AsyncMock()
     fake_http.get = AsyncMock(return_value=MagicMock(status_code=200, text=""))
     with patch.object(client, "_ensure_client", return_value=fake_http):
-        rows = await client.aggregate("events", "count", "id", group_by="status", where="level = 'ERROR'")
+        rows = await client.aggregate(
+            "events", "count", "id", group_by="status", where="level = 'ERROR'"
+        )
         assert rows == []
         fake_http.get.assert_awaited_once()
         call_args = fake_http.get.await_args

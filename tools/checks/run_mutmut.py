@@ -20,6 +20,7 @@
 
     uv run python tools/checks/run_mutmut.py [-- mutmut-args]
 """
+
 from __future__ import annotations
 
 import os
@@ -31,14 +32,29 @@ from pathlib import Path
 def _patch_mutmut() -> None:
     """Idempotent patch mutmut в venv для поддержки пакета ``src``."""
     venv = Path(sys.executable).parent.parent
-    main_py = venv / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages" / "mutmut" / "__main__.py"
-    format_utils_py = venv / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages" / "mutmut" / "utils" / "format_utils.py"
+    main_py = (
+        venv
+        / "lib"
+        / f"python{sys.version_info.major}.{sys.version_info.minor}"
+        / "site-packages"
+        / "mutmut"
+        / "__main__.py"
+    )
+    format_utils_py = (
+        venv
+        / "lib"
+        / f"python{sys.version_info.major}.{sys.version_info.minor}"
+        / "site-packages"
+        / "mutmut"
+        / "utils"
+        / "format_utils.py"
+    )
 
     # Patch 1: убрать assert на src. в record_trampoline_hit
     if main_py.exists():
         content = main_py.read_text()
         old = 'assert not name.startswith("src."), "Failed trampoline hit. Module name starts with `src.`, which is invalid"'
-        new = 'pass  # src. assertion removed for gd_integration_tools (src is real package name)'
+        new = "pass  # src. assertion removed for gd_integration_tools (src is real package name)"
         if old in content:
             main_py.write_text(content.replace(old, new))
             print("[run_mutmut] Patched mutmut/__main__.py (src. assertion)")

@@ -102,9 +102,7 @@ class CreditSKBClient(BaseExternalAPIClient):
             Ответ с ``data.Id`` (UUID нового запроса).
         """
         try:
-            return await self._request(
-                "POST", self._url("CREATE_REQUEST"), json=data
-            )
+            return await self._request("POST", self._url("CREATE_REQUEST"), json=data)
         except Exception as exc:
             raise ServiceError from exc
 
@@ -130,11 +128,7 @@ class CreditSKBClient(BaseExternalAPIClient):
                 response_type="bytes" if response_type_str == "PDF" else "json",
                 raise_for_status=False,
             )
-            return (
-                response.get("data")
-                if response_type_str == "PDF"
-                else response
-            )
+            return response.get("data") if response_type_str == "PDF" else response
         except Exception as exc:
             raise ServiceError from exc
 

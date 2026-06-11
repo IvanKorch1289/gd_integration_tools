@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """gRPC server package (S65 W3 decomp from grpc_server.py 480 LOC).
 
 3 servicers + 1 interceptor + 3 funcs → 5 files (per-concern):
@@ -12,13 +13,25 @@ Backward-compat: ``from src.backend.entrypoints.grpc.grpc_server import OrderGRP
 """
 
 
-from src.backend.entrypoints.grpc.grpc_server.base import BaseGRPCServicer  # S65 W3: re-export
-from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer  # S65 W3: re-export
-from src.backend.entrypoints.grpc.grpc_server.invoker import InvokerGRPCServicer  # S65 W3: re-export
-from src.backend.entrypoints.grpc.grpc_server.interceptor import AuthInterceptor  # S65 W3: re-export
-from src.backend.entrypoints.grpc.grpc_server.server import _safe_error  # S65 W3: top-level func re-export
-from src.backend.entrypoints.grpc.grpc_server.server import _load_tls_credentials  # S65 W3: top-level func re-export
-from src.backend.entrypoints.grpc.grpc_server.server import serve  # S65 W3: top-level func re-export
+from src.backend.entrypoints.grpc.grpc_server._safe_error import (
+    _safe_error,  # S65 W3: top-level func re-export
+)
+from src.backend.entrypoints.grpc.grpc_server.base import (
+    BaseGRPCServicer,  # S65 W3: re-export
+)
+from src.backend.entrypoints.grpc.grpc_server.interceptor import (
+    AuthInterceptor,  # S65 W3: re-export
+)
+from src.backend.entrypoints.grpc.grpc_server.invoker import (
+    InvokerGRPCServicer,  # S65 W3: re-export
+)
+from src.backend.entrypoints.grpc.grpc_server.order import (
+    OrderGRPCServicer,  # S65 W3: re-export
+)
+from src.backend.entrypoints.grpc.grpc_server.server import (
+    _load_tls_credentials,  # S65 W3: top-level func re-export
+    serve,  # S65 W3: top-level func re-export
+)
 
 __all__ = (
     "BaseGRPCServicer",

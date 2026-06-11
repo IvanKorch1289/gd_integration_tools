@@ -1,27 +1,15 @@
 from __future__ import annotations
-from contextlib import asynccontextmanager
-from typing import Any, cast
 
-from fastapi_filter.contrib.sqlalchemy import Filter
-from fastapi_pagination import Page, Params
+from typing import Any
 
-from src.backend.core.decorators.caching import response_cache
-from src.backend.core.di.providers import get_cache_invalidator_provider
-from src.backend.core.errors import NotFoundError, ServiceError
 from src.backend.core.interfaces.db_model import DBModelProtocol
 from src.backend.core.interfaces.repositories import RepositoryProtocol
-from src.backend.core.logging import get_logger
-from src.backend.dsl.codec.converters import transfer_model_to_schema
-from src.backend.schemas.base import BaseSchema, PaginatedResult
-
-
+from src.backend.schemas.base import BaseSchema
 
 
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
-
 
 
 def _is_orm_model(instance: Any) -> bool:
@@ -33,7 +21,6 @@ def _is_orm_model(instance: Any) -> bool:
     """
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
 
 
 async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
@@ -61,7 +48,6 @@ async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
         ) from exc
 
 
-
 def create_service_class(
     request_schema: type[BaseSchema],
     response_schema: type[BaseSchema],
@@ -70,6 +56,3 @@ def create_service_class(
 ) -> BaseService:
     """Фабрика для создания экземпляра BaseService."""
     return BaseService(repo, response_schema, request_schema, version_schema)
-
-
-

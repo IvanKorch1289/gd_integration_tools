@@ -2,12 +2,85 @@
 
 from typing import ClassVar
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
-__all__ = ("RAGSettings", "rag_settings")
+__all__ = (
+    "RAGSettings",
+    "rag_settings",
+    "HyDESettings",
+    "MultiQuerySettings",
+    "HybridSettings",
+    "StrategyThresholdsSettings",
+    "AdaptiveRAGSettings",
+)
+
+
+class HyDESettings(BaseModel):
+    """Параметры HyDE (Hypothetical Document Embedding) стратегии."""
+
+    max_tokens: int = Field(
+        256, ge=1, description="Макс. токенов для hypothetical answer."
+    )
+    temperature: float = Field(
+        0.1, ge=0.0, le=2.0, description="Температура генерации HyDE."
+    )
+    prompt_template: str = Field(
+        "Напиши краткий идеальный ответ на следующий вопрос. Отвечай только по существу, без введения. Вопрос: {query}",
+        description="Шаблон промпта для HyDE.",
+    )
+    include_hypothetical_in_result: bool = Field(
+        False, description="Включать hypothetical answer в итоговый результат."
+    )
+
+
+class MultiQuerySettings(BaseModel):
+    """Параметры Multi-query стратегии."""
+
+    num_reformulations: int = Field(
+        5, ge=1, description="Число реформулировок запроса."
+    )
+    rrf_k: int = Field(60, ge=1, description="RRF параметр k для multi-query.")
+    parallel: bool = Field(True, description="Запускать реформулировки параллельно.")
+    prompt_template: str = Field(
+        "Переформулируй следующий запрос {n} различными способами. Каждая реформализация должна раскрывать разный аспект или использовать синонимы. Верни только список реформализаций, по одной на строке. Оригинальный запрос: {query}",
+        description="Шаблон промпта для multi-query.",
+    )
+
+
+class HybridSettings(BaseModel):
+    """Параметры Hybrid (dense + sparse) стратегии."""
+
+    rrf_k: int = Field(60, ge=1, description="RRF параметр k для hybrid.")
+
+
+class StrategyThresholdsSettings(BaseModel):
+    """Пороги переключения adaptive-стратегий."""
+
+    min_confidence_for_llm: float = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Минимальная уверенность для вызова LLM-классификатора.",
+    )
+    cache_size: int = Field(512, ge=1, description="Размер кэша стратегий.")
+
+
+class AdaptiveRAGSettings(BaseModel):
+    """Adaptive RAG стратегии (Sprint 19 K4)."""
+
+    enabled: bool = Field(True, description="Включить adaptive RAG.")
+    default_strategy: str = Field(
+        "dense", description="Стратегия по умолчанию (dense/hybrid/hyde/multi_query)."
+    )
+    hyde: HyDESettings = Field(default_factory=HyDESettings)
+    multi_query: MultiQuerySettings = Field(default_factory=MultiQuerySettings)
+    hybrid: HybridSettings = Field(default_factory=HybridSettings)
+    strategy_thresholds: StrategyThresholdsSettings = Field(
+        default_factory=StrategyThresholdsSettings
+    )
 
 
 class RAGSettings(BaseSettingsWithLoader):
@@ -71,6 +144,9 @@ class RAGSettings(BaseSettingsWithLoader):
     chunk_overlap: int = Field(50, ge=0, description="Перекрытие чанков.")
     top_k: int = Field(5, ge=1, le=100, description="Кол-во результатов поиска.")
     enabled: bool = Field(False, description="Включить RAG.")
+
+    # --- Adaptive RAG (base.yml) ---------------------------------------
+    adaptive: AdaptiveRAGSettings = Field(default_factory=AdaptiveRAGSettings)
 
     # --- Block 3.5 (gap-ai-3.5, ADR-0074): embedding provenance --------
     embedding_strict_mode: bool = Field(

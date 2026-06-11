@@ -237,7 +237,7 @@ class _DSLRoutesFacade:
         """
         capped = max(1, min(int(limit), 1000))
         tracer = get_tracer()
-        events: list[TraceEvent] = tracer.get_recent_traces(route_id, capped)
+        events: list[TraceEvent] = await tracer.get_recent_traces(route_id, capped)
         return [e.to_dict() for e in events]
 
 

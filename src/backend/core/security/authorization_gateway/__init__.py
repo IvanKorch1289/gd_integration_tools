@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Authorization gateway package (S60 W4 decomp from authorization_gateway.py 530 LOC).
 
 9 methods decomposed в 4 mixin files + state.py:
@@ -22,32 +23,33 @@ if TYPE_CHECKING:
 import uuid
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.security.authorization_gateway")
 
-from src.backend.core.security.authorization_gateway.state import AuthorizationDecision  # S60 W4: re-export
-from src.backend.core.security.authorization_gateway.state import AuthorizationReason  # S60 W4: re-export
-from src.backend.core.security.authorization_gateway.audit_mixin import AuditMixin  # S60 W4: MRO
-from src.backend.core.security.authorization_gateway.casbin_mixin import CasbinMixin  # S60 W4: MRO
-from src.backend.core.security.authorization_gateway.opa_mixin import OpaMixin  # S60 W4: MRO
-from src.backend.core.security.authorization_gateway.permission_mixin import PermissionMixin  # S60 W4: MRO
-
-__all__ = (
-    "AuthorizationGateway",
-    "AuthorizationReason",
-    "AuthorizationDecision",
+from src.backend.core.security.authorization_gateway.audit_mixin import (
+    AuditMixin,  # S60 W4: MRO
+)
+from src.backend.core.security.authorization_gateway.casbin_mixin import (
+    CasbinMixin,  # S60 W4: MRO
+)
+from src.backend.core.security.authorization_gateway.opa_mixin import (
+    OpaMixin,  # S60 W4: MRO
+)
+from src.backend.core.security.authorization_gateway.permission_mixin import (
+    PermissionMixin,  # S60 W4: MRO
+)
+from src.backend.core.security.authorization_gateway.state import (
+    AuthorizationDecision,  # S60 W4: re-export
+    AuthorizationReason,  # S60 W4: re-export
 )
 
-class AuthorizationGateway(
-    AuditMixin,
-    CasbinMixin,
-    OpaMixin,
-    PermissionMixin,
-):
+__all__ = ("AuthorizationGateway", "AuthorizationReason", "AuthorizationDecision")
+
+
+class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
     """Authorization gateway (4 mixins = 4 methods + 5 core)."""
 
     __slots__ = ()
@@ -206,4 +208,3 @@ class AuthorizationGateway(
             return get_feature_flag_service().is_enabled("authz_gateway_enabled")
         except Exception as _:
             return False
-

@@ -1,22 +1,20 @@
 from __future__ import annotations
+
 """S68 W2 - service.py part of clickhouse_audit_service decomp.
 
 Classes: ClickHouseAuditService.
 """
 
 import threading
-import uuid
-from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.util.json_utils import dumps_str
 
 if TYPE_CHECKING:
     pass
 
 _logger = get_logger("services.audit.clickhouse")
+
 
 class ClickHouseAuditService:
     """Сервис записи audit-событий в ClickHouse.
@@ -157,4 +155,3 @@ class ClickHouseAuditService:
                 len(events),
                 exc,
             )
-

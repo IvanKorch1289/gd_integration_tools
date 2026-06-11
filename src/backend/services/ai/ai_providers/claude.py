@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W4 - claude.py part of ai_providers decomp.
 
 Anthropic Claude provider (extract_text, embeddings, chat).
@@ -11,8 +12,8 @@ from typing import Any
 
 import httpx
 
-from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
+
 
 class ClaudeProvider:
     """Anthropic Claude provider.
@@ -38,7 +39,7 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
@@ -96,4 +97,3 @@ class ClaudeProvider:
             )
             resp.raise_for_status()
             return resp.json()
-

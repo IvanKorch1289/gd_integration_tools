@@ -21,9 +21,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── document tools (_register_document_tools) ──
+
 
 def _register_document_tools(mcp: Any) -> None:
     """Tools для работы с файловыми документами (Sprint S5 hotfix).
@@ -72,4 +71,3 @@ def _register_document_tools(mcp: Any) -> None:
             ).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
-

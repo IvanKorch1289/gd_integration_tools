@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass  # cross-mixin / state attrs declared below
@@ -29,14 +29,13 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from src.backend.core.ai.errors import GuardResult
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-from src.backend.core.logging import get_logger
+from src.backend.core.ai.gateway_models import AIRequest
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+
 
 class PolicyMixin:
     """policy + capability checks (_resolve_policy, _check_capability, _language_from_policy) для PipelineStepsMixin. S56 W2 extraction."""
@@ -115,4 +114,3 @@ class PolicyMixin:
         if ":" in name:
             return name.rsplit(":", 1)[-1] or default
         return default
-

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S60 W3 — workflow_audit.py part of setup_infra decomp.
 
 Funcs: _init_workflow_audit_sink, _close_workflow_audit_sink.
@@ -6,27 +7,11 @@ Funcs: _init_workflow_audit_sink, _close_workflow_audit_sink.
 workflow audit sink init/close.
 """
 
-from asyncio import to_thread
-from inspect import isawaitable
-from typing import Any, Awaitable, Callable
 
-from src.backend.infrastructure.clients.external.logger import get_graylog_handler
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
-from src.backend.infrastructure.clients.storage.redis import get_redis_client
-from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
-from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
-from src.backend.infrastructure.database.database import (
-    get_db_initializer,
-    get_external_db_registry,
-)
-from src.backend.infrastructure.decorators.caching import close_caches
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")
-
-
-
 
 
 async def _init_workflow_audit_sink() -> None:
@@ -66,7 +51,6 @@ async def _init_workflow_audit_sink() -> None:
         app_logger.warning("WorkflowAuditSink init skipped: %s", str(exc)[:200])
 
 
-
 async def _close_workflow_audit_sink() -> None:
     """Graceful shutdown sink: финальный flush + остановка writer'а."""
     from src.backend.services.audit.workflow_audit_sink import (
@@ -81,6 +65,3 @@ async def _close_workflow_audit_sink() -> None:
         await sink.aclose()
     finally:
         reset_workflow_audit_sink()
-
-
-

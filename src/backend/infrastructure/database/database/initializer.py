@@ -1,7 +1,6 @@
 from __future__ import annotations
+
 import ssl
-from dataclasses import dataclass
-from functools import lru_cache
 from typing import Any, TypeAlias
 
 from sqlalchemy import Engine, create_engine, text
@@ -17,7 +16,6 @@ from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
-from src.backend.core.config.settings import settings
 from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
 from src.backend.infrastructure.database.listeners import DatabaseListener
@@ -26,12 +24,9 @@ from src.backend.infrastructure.logging import get_logger
 db_logger = get_logger("database")
 
 
-
 DatabaseSettings: TypeAlias = (
     DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 )
-
-
 
 
 class DatabaseInitializer:
@@ -212,7 +207,7 @@ class DatabaseInitializer:
                 "Асинхронный пул соединений инициализирован",
                 extra={"db_name": self.name},
             )
-        except (OSError, TimeoutError):
+        except OSError, TimeoutError:
             self.logger.error(
                 "Ошибка инициализации асинхронного пула соединений",
                 extra={"db_name": self.name},
@@ -247,7 +242,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Синхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия синхронных соединений",
                 extra={"db_name": self.name},
@@ -263,7 +258,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Асинхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия асинхронных соединений",
                 extra={"db_name": self.name},
@@ -279,7 +274,7 @@ class DatabaseInitializer:
         if self.replica_engine is not None:
             try:
                 await self.replica_engine.dispose()
-            except (RuntimeError, OSError):
+            except RuntimeError, OSError:
                 self.logger.error(
                     "Ошибка закрытия replica engine",
                     extra={"db_name": self.name},

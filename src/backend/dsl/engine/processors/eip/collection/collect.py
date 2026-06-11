@@ -4,6 +4,7 @@ Classes: CollectProcessor, FindAllProcessor, GroupByProcessor.
 
 basic collection operations (collect, findAll, groupBy).
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -14,6 +15,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
 
 class CollectProcessor(BaseProcessor):
     """Извлекает поле из каждого объекта коллекции.
@@ -66,6 +68,7 @@ class CollectProcessor(BaseProcessor):
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
             }
         }
+
 
 class FindAllProcessor(BaseProcessor):
     """Фильтрует коллекцию по условию.
@@ -123,6 +126,7 @@ class FindAllProcessor(BaseProcessor):
             }
         }
 
+
 class GroupByProcessor(BaseProcessor):
     """Группирует коллекцию по полю.
 
@@ -177,10 +181,10 @@ class GroupByProcessor(BaseProcessor):
             }
         }
 
+
 def _resolve_field(item: Any, field: str | None) -> Any:
     if field is None:
         return item
     if isinstance(item, dict):
         return item.get(field)
     return getattr(item, field, None)
-

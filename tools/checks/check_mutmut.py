@@ -8,6 +8,7 @@
 
     uv run python tools/checks/check_mutmut.py [--threshold 55]
 """
+
 from __future__ import annotations
 
 import argparse

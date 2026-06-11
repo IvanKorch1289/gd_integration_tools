@@ -251,6 +251,14 @@ class AIProvidersSettings(BaseSettingsWithLoader):
         default=60.0, ge=1.0, description="Таймаут чтения ответа от AI API (сек)"
     )
 
+    search_timeout: float = Field(
+        default=30.0, ge=1.0, description="Таймаут поискового запроса (сек)"
+    )
+
+    search_deep_timeout: float = Field(
+        default=60.0, ge=1.0, description="Таймаут deep-research запроса (сек)"
+    )
+
 
 class AIWorkspaceSettings(BaseSettingsWithLoader):
     """Настройки изолированного AI-workspace (V15 R-V15-4, Wave 1.6).

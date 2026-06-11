@@ -28,7 +28,6 @@
 """
 
 from __future__ import annotations
-from src.backend.core.feature_flags import get_feature_flag_service
 
 import asyncio
 import random
@@ -36,13 +35,10 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.backend.core.feature_flags import get_feature_flag_service
 from src.backend.infrastructure.logging.factory import get_logger
 
-__all__ = (
-    "ChaosEngineering",
-    "get_chaos_engineering",
-    "is_chaos_enabled",
-)
+__all__ = ("ChaosEngineering", "get_chaos_engineering", "is_chaos_enabled")
 
 logger = get_logger("infrastructure.chaos")
 
@@ -78,9 +74,13 @@ class ChaosEngineering:
     # Experiment management
     # ------------------------------------------------------------------
 
-    def register(self, name: str, probability: float = 0.0, **params: Any) -> ChaosConfig:
+    def register(
+        self, name: str, probability: float = 0.0, **params: Any
+    ) -> ChaosConfig:
         """Регистрирует или обновляет chaos-эксперимент."""
-        cfg = ChaosConfig(name=name, enabled=True, probability=probability, parameters=params)
+        cfg = ChaosConfig(
+            name=name, enabled=True, probability=probability, parameters=params
+        )
         self._experiments[name] = cfg
         logger.info("Chaos experiment registered: %s (p=%.2f)", name, probability)
         return cfg
@@ -112,7 +112,11 @@ class ChaosEngineering:
         if not is_chaos_enabled():
             return
         cfg = self._experiments.get(name)
-        p = probability if probability is not None else (cfg.probability if cfg else 0.0)
+        p = (
+            probability
+            if probability is not None
+            else (cfg.probability if cfg else 0.0)
+        )
         if p <= 0.0 or random.random() > p:  # noqa: S311
             return
         delay = random.uniform(0, max_delay_ms) / 1000.0  # noqa: S311
@@ -136,7 +140,11 @@ class ChaosEngineering:
         if not is_chaos_enabled():
             return
         cfg = self._experiments.get(name)
-        p = probability if probability is not None else (cfg.probability if cfg else 0.0)
+        p = (
+            probability
+            if probability is not None
+            else (cfg.probability if cfg else 0.0)
+        )
         if p <= 0.0 or random.random() > p:  # noqa: S311
             return
         error = exc or RuntimeError(f"Chaos error probe: {name}")
@@ -209,7 +217,9 @@ class ChaosEngineering:
         finally:
             if original_max is not None:
                 setattr(pool_target, attr_name, original_max)
-                logger.info("Chaos pool restored: %s (%s=%s)", name, attr_name, original_max)
+                logger.info(
+                    "Chaos pool restored: %s (%s=%s)", name, attr_name, original_max
+                )
 
     @asynccontextmanager
     async def partition(self, name: str, duration_seconds: float = 5.0):
@@ -237,6 +247,7 @@ class ChaosEngineering:
             return
 
         original_ping = reg.ping_fn
+
         async def _broken_ping() -> None:
             raise ConnectionError(f"Chaos partition probe: {name}")
 
@@ -263,7 +274,6 @@ def is_chaos_enabled() -> bool:
     Returns ``False`` при любой ошибке импорта (safe default).
     """
     try:
-
         return get_feature_flag_service().is_enabled("chaos_engineering_enabled")
     except Exception:
         return False

@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.registry import processor
@@ -21,6 +22,7 @@ _logger = get_logger(__name__)
 _DEFAULT_TEMPERATURE: float = 0.0
 # Максимальное число instructor-retries (внутренний цикл валидации Pydantic).
 _DEFAULT_RETRY: int = 3
+
 
 @processor(
     "llm_structured",
@@ -46,7 +48,6 @@ _DEFAULT_RETRY: int = 3
     meta={"tier": 2, "category": "ai", "version": "v17"},
     tags=("ai", "llm", "structured-output"),
 )
-
 class ResolveMixin:
     """resolve schema + prompt + provider для LLMStructuredProcessor. S65 W2 extraction."""
 
@@ -102,7 +103,7 @@ class ResolveMixin:
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             entry = None
 
         if entry is not None:
@@ -161,4 +162,3 @@ class ResolveMixin:
     def _provider_name(self) -> str:
         """Извлекает имя провайдера из ``model`` для capability/трейсов."""
         return self._model.split("/", 1)[0]
-

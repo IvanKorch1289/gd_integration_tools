@@ -12,6 +12,7 @@ Exit code:
 - 0: no CRITICAL or MEDIUM findings
 - 1: at least one CRITICAL or MEDIUM finding
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,7 +36,7 @@ def audit(root: str) -> list[dict[str, object]]:
             try:
                 src = open(full).read()
                 tree = ast.parse(src)
-            except (SyntaxError, UnicodeDecodeError):
+            except SyntaxError, UnicodeDecodeError:
                 continue
             for node in ast.walk(tree):
                 if not isinstance(node, ast.ExceptHandler):
@@ -52,7 +53,9 @@ def audit(root: str) -> list[dict[str, object]]:
                 else:
                     if "Exception" in type_str and "," not in type_str:
                         severity = "MEDIUM"
-                        reason = "except Exception: pass (silent failure, may hide bugs)"
+                        reason = (
+                            "except Exception: pass (silent failure, may hide bugs)"
+                        )
                     else:
                         # Specific exception — likely intentional.
                         continue
@@ -78,9 +81,7 @@ def main() -> int:
         help="Root directory to scan (default: src/backend)",
     )
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output JSON instead of human-readable text",
+        "--json", action="store_true", help="Output JSON instead of human-readable text"
     )
     args = parser.parse_args()
 
@@ -116,7 +117,11 @@ def main() -> int:
                 print(f"  {f['file']}:{f['line']}  except {f['type']}: pass")
             print(f"  ... and {len(medium) - 10} more")
 
-    return 0 if by_severity.get("CRITICAL", 0) == 0 and by_severity.get("MEDIUM", 0) == 0 else 1
+    return (
+        0
+        if by_severity.get("CRITICAL", 0) == 0 and by_severity.get("MEDIUM", 0) == 0
+        else 1
+    )
 
 
 if __name__ == "__main__":

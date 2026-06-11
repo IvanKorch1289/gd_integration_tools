@@ -5,34 +5,19 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from collections.abc import Awaitable, Callable, Sequence
 from inspect import Parameter
-from typing import Any
 
-from fastapi import APIRouter, Request, status
+from fastapi import Request, status
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
-from pydantic import BaseModel
 
 from src.backend.core.enums.ordering import OrderingTypeChoices
-from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint
 from src.backend.entrypoints.api.generator.reflection import (
-    body_parameter,
     make_signature,
-    path_parameter,
     query_parameter,
     request_parameter,
-    required_query_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import (
-    CrudSpec,
-    HttpMethod,
-    RouteDecorator,
-)
-
-
+from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 
 class QueryMixin:
@@ -103,4 +88,3 @@ class QueryMixin:
             tags=spec.tags,
             decorators=spec.decorators,
         )
-

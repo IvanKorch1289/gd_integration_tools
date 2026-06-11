@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W3 - l3_cache.py part of semantic_cache decomp.
 
 Per-class file split.
@@ -12,10 +13,9 @@ import hashlib
 import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
-
 #: Redis pub/sub канал для cross-instance invalidation L3-кеша.
 RAG_CACHE_INVALIDATE_CHANNEL = "rag-cache-invalidate"
+
 
 class L3RetrievalGraphCache:
     """In-process cache RAG retrieval-result с pub/sub invalidation.
@@ -228,4 +228,3 @@ class L3RetrievalGraphCache:
             raise
         except Exception as exc:
             logger.debug("L3 listener loop error: %s", exc)
-

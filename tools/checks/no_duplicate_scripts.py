@@ -24,8 +24,16 @@ def main() -> int:
         print("scripts/ or tools/ not found — skip")
         return 0
 
-    scripts_files = {p.name for p in scripts_dir.iterdir() if p.is_file() and p.suffix in (".py", ".sh")}
-    tools_files = {p.name for p in tools_dir.iterdir() if p.is_file() and p.suffix in (".py", ".sh")}
+    scripts_files = {
+        p.name
+        for p in scripts_dir.iterdir()
+        if p.is_file() and p.suffix in (".py", ".sh")
+    }
+    tools_files = {
+        p.name
+        for p in tools_dir.iterdir()
+        if p.is_file() and p.suffix in (".py", ".sh")
+    }
 
     duplicates = sorted(scripts_files & tools_files)
 
@@ -33,15 +41,27 @@ def main() -> int:
         print("OK: no duplicate scripts between scripts/ and tools/")
         return 0
 
-    print(f"FAIL: {len(duplicates)} duplicate(s) between scripts/ and tools/:", file=sys.stderr)
+    print(
+        f"FAIL: {len(duplicates)} duplicate(s) between scripts/ and tools/:",
+        file=sys.stderr,
+    )
     for name in duplicates:
         scripts_path = scripts_dir / name
         tools_path = tools_dir / name
         print(f"  - {name}", file=sys.stderr)
-        print(f"    scripts/  ({scripts_path.stat().st_size} bytes, mtime {scripts_path.stat().st_mtime:.0f})", file=sys.stderr)
-        print(f"    tools/    ({tools_path.stat().st_size} bytes, mtime {tools_path.stat().st_mtime:.0f})", file=sys.stderr)
+        print(
+            f"    scripts/  ({scripts_path.stat().st_size} bytes, mtime {scripts_path.stat().st_mtime:.0f})",
+            file=sys.stderr,
+        )
+        print(
+            f"    tools/    ({tools_path.stat().st_size} bytes, mtime {tools_path.stat().st_mtime:.0f})",
+            file=sys.stderr,
+        )
 
-    print("\nFix: pick the canonical version (likely tools/) and delete the other. Then update any references in Makefile / .pre-commit-config.yaml.", file=sys.stderr)
+    print(
+        "\nFix: pick the canonical version (likely tools/) and delete the other. Then update any references in Makefile / .pre-commit-config.yaml.",
+        file=sys.stderr,
+    )
     return 1
 
 

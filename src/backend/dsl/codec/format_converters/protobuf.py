@@ -4,12 +4,10 @@ Classes: ProtobufEncodeProcessor, ProtobufDecodeProcessor.
 
 Protobuf encode + decode + _resolve_protobuf_class helper.
 """
+
 from __future__ import annotations
 
-import datetime as _dt
 import importlib
-import io
-import json
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -19,6 +17,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 _logger = get_logger("dsl.format_converters")
+
 
 class ProtobufEncodeProcessor(BaseProcessor):
     """Сериализация dict → protobuf bytes через runtime-resolve message-класса.
@@ -58,6 +57,7 @@ class ProtobufEncodeProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"protobuf_encode": {"message_class": self._message_class}}
 
+
 class ProtobufDecodeProcessor(BaseProcessor):
     """Десериализация protobuf bytes → dict через runtime-resolve.
 
@@ -93,6 +93,7 @@ class ProtobufDecodeProcessor(BaseProcessor):
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"protobuf_decode": {"message_class": self._message_class}}
 
+
 def _resolve_protobuf_class(message_class: str) -> Any:
     """Импортирует protobuf message-класс по строковому пути.
 
@@ -110,4 +111,3 @@ def _resolve_protobuf_class(message_class: str) -> Any:
             )
     module = importlib.import_module(module_name)
     return getattr(module, class_name)
-

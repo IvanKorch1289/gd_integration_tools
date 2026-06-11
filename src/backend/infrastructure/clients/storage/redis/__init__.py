@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """RedisClient package (S59 W3 decomp from redis.py 647 LOC).
 
 32 methods decomposed в 4 mixin files:
@@ -22,7 +23,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -39,37 +40,33 @@ from src.backend.infrastructure.resilience.client_breaker import (
 redis_logger = get_logger("redis")
 
 
-
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-
-
-from src.backend.infrastructure.clients.storage.redis.connection_mixin import ConnectionMixin  # S59 W3: MRO
-from src.backend.infrastructure.clients.storage.redis.cache_mixin import CacheMixin  # S59 W3: MRO
-from src.backend.infrastructure.clients.storage.redis.helpers_mixin import HelpersMixin  # S59 W3: MRO
-from src.backend.infrastructure.clients.storage.redis.stream_mixin import StreamMixin  # S59 W3: MRO
-
-__all__ = (
-    "RedisClient",
-    "get_redis_client",
-    "__getattr__",
+from src.backend.infrastructure.clients.storage.redis.cache_mixin import (
+    CacheMixin,  # S59 W3: MRO
+)
+from src.backend.infrastructure.clients.storage.redis.connection_mixin import (
+    ConnectionMixin,  # S59 W3: MRO
+)
+from src.backend.infrastructure.clients.storage.redis.helpers_mixin import (
+    HelpersMixin,  # S59 W3: MRO
+)
+from src.backend.infrastructure.clients.storage.redis.stream_mixin import (
+    StreamMixin,  # S59 W3: MRO
 )
 
+__all__ = ("RedisClient", "get_redis_client", "__getattr__")
 
-class RedisClient(
-    ConnectionMixin,
-    CacheMixin,
-    HelpersMixin,
-    StreamMixin,
-):
+
+class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     """Redis client (4 mixins = 25 methods + 4 core)."""
 
     __slots__ = ()
 
     def __init__(self, settings: RedisSettings) -> None:
         """Args:
-            settings: конфигурация Redis-подключений.
+        settings: конфигурация Redis-подключений.
         """
         self.settings = settings
         self.logger = redis_logger
@@ -100,13 +97,9 @@ class RedisClient(
             for kind in _kinds
         }
 
-
-
     def _base_url(self) -> str:
         scheme = "rediss" if self.settings.use_ssl else "redis"
         return f"{scheme}://{self.settings.host}:{self.settings.port}"
-
-
 
     def _db_for_kind(self, kind: RedisKind) -> int:
         mapping = {
@@ -115,8 +108,6 @@ class RedisClient(
             "limits": self.settings.db_limits,
         }
         return mapping[kind]
-
-
 
     def _resolve_retry_on_error(self) -> list[type[BaseException]]:
         """Резолвит ``retry_on_error`` из настроек в классы исключений.
@@ -146,5 +137,3 @@ def __getattr__(name: str) -> Any:
     if name == "redis_client":
         return get_redis_client()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-

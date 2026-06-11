@@ -39,9 +39,7 @@ class ExamplePlugin(BasePlugin):
         self._ctx = ctx
         logger.info("ExamplePlugin loaded with config=%s", ctx.config)
 
-    async def on_register_actions(
-        self, registry: ActionRegistryProtocol
-    ) -> None:
+    async def on_register_actions(self, registry: ActionRegistryProtocol) -> None:
         """Регистрирует action ``example.echo``."""
         registry.register("example.echo", self._echo_handler)
 
@@ -55,7 +53,9 @@ class ExamplePlugin(BasePlugin):
         из этого хука.
         """
 
-    async def _echo_handler(self, payload: Any | None = None, **_: Any) -> dict[str, Any]:
+    async def _echo_handler(
+        self, payload: Any | None = None, **_: Any
+    ) -> dict[str, Any]:
         """Handler для action ``example.echo``: возвращает payload as-is."""
         return {"echo": payload, "plugin": self.name, "version": self.version}
 
@@ -63,16 +63,10 @@ class ExamplePlugin(BasePlugin):
     async def _audit_before_create(self, repo: Any, entity: Any) -> None:
         """Логирует попытку создать заказ (демо-аудит)."""
         logger.info(
-            "ExamplePlugin audit: orders.before_create entity=%r repo=%r",
-            entity,
-            repo,
+            "ExamplePlugin audit: orders.before_create entity=%r repo=%r", entity, repo
         )
 
     @override_method("orders", "get_by_id")
     async def _override_get_by_id(self, repo: Any, order_id: Any) -> dict[str, Any]:
         """Возвращает stub-ответ вместо реального запроса в БД."""
-        return {
-            "id": order_id,
-            "stub": True,
-            "source": f"{self.name} v{self.version}",
-        }
+        return {"id": order_id, "stub": True, "source": f"{self.name} v{self.version}"}

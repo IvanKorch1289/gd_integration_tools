@@ -436,8 +436,9 @@ async def serve() -> None:
     if api_key:
         interceptors.append(AuthInterceptor(expected_key=api_key))
 
+    executor = futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers)
     grpc_server = server(
-        futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers),
+        executor,
         options=[
             ("grpc.so_reuseport", 1),
             ("grpc.max_send_message_length", 100 * 1024 * 1024),
@@ -471,7 +472,9 @@ async def serve() -> None:
         await grpc_server.wait_for_termination()
     except KeyboardInterrupt:
         grpc_logger.info("Остановка gRPC-сервера...")
+    finally:
         await grpc_server.stop(5)
+        executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":

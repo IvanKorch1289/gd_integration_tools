@@ -4,12 +4,10 @@ Classes: AvroEncodeProcessor, AvroDecodeProcessor.
 
 Avro encode + decode.
 """
+
 from __future__ import annotations
 
-import datetime as _dt
-import importlib
 import io
-import json
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -19,6 +17,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 _logger = get_logger("dsl.format_converters")
+
 
 class AvroEncodeProcessor(BaseProcessor):
     """Сериализация dict/list-of-dict → Avro bytes через ``fastavro``.
@@ -50,6 +49,7 @@ class AvroEncodeProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"avro_encode": {"schema": self._schema}}
+
 
 class AvroDecodeProcessor(BaseProcessor):
     """Десериализация Avro bytes → list[dict] через ``fastavro``.
@@ -91,4 +91,3 @@ class AvroDecodeProcessor(BaseProcessor):
         if self._schema is not None:
             spec["schema"] = self._schema
         return {"avro_decode": spec}
-

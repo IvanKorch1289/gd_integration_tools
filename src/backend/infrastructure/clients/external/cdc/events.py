@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S60 W2 — events.py part of cdc decomp.
 
 Classes: CDCEvent, CDCSubscription.
@@ -6,16 +7,11 @@ Classes: CDCEvent, CDCSubscription.
 CDCEvent (Pydantic-ish) + CDCSubscription (data classes).
 """
 
-import asyncio
-from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from dataclasses import field
 from typing import Any
 from uuid import uuid4
 
-from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
 
 class CDCEvent:
     """Стандартизированное CDC-событие."""
@@ -37,6 +33,7 @@ class CDCEvent:
             "old": self.old,
         }
 
+
 class CDCSubscription:
     """Описание подписки на изменения."""
 
@@ -51,4 +48,3 @@ class CDCSubscription:
     callback: Callable[[dict[str, Any]], Awaitable[None]] | None = None
     target_action: str | None = None
     active: bool = True
-

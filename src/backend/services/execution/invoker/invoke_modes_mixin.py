@@ -27,11 +27,8 @@ if TYPE_CHECKING:
 """
 
 import asyncio
-from typing import Any
 
-from src.backend.core.interfaces.invocation_reply import (
-    ReplyChannelKind,
-)
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
 from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationResponse,
@@ -42,6 +39,7 @@ from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.core.utils.task_registry import get_task_registry
 
 logger = get_logger("services.execution.invoker")
+
 
 class InvokeModesMixin:
     """synchronous + async_api + background invocation modes для Invoker. S54 W3 extraction."""
@@ -149,4 +147,3 @@ class InvokeModesMixin:
             status=InvocationStatus.ACCEPTED,
             mode=request.mode,
         )
-

@@ -153,17 +153,6 @@ class AIRAGFlags(BaseSettings):
         ),
     )
 
-    ai_route_optimization: bool = Field(
-        default=False,
-        title="K4 S11 W7: AI-driven route optimization (PR-suggestion)",
-        description=(
-            "K4 Sprint 11 Wave 7 (wave:s11/k4-w7-ai-route-optimization). "
-            "Owner: K4 AI/Data. Анализирует логи route → metrics → AI "
-            "recommendations + PR markdown. CLI: manage.py ai-route-optimize. "
-            "Capability: ai.route.optimize. default-OFF."
-        ),
-    )
-
     embedding_ab_migration: bool = Field(
         default=False,
         title="K4 S11 W8: embedding A/B progressive migration",

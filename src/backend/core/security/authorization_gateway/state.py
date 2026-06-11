@@ -1,13 +1,9 @@
 from __future__ import annotations
-import uuid
-from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
-from typing import Any
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.security.authorization_gateway")
+
 
 class AuthorizationReason:
     """Одно звено в reason-chain ``AuthorizationDecision``."""
@@ -15,6 +11,7 @@ class AuthorizationReason:
     source: str
     outcome: str
     detail: str | None = None
+
 
 class AuthorizationDecision:
     """Результат ``authorize()``: allow/deny + reason-chain.

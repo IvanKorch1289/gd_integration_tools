@@ -6,6 +6,7 @@ Coverage:
 * Cache hit (second call returns same data without recomputing);
 * Different keys produce different cache entries.
 """
+
 from __future__ import annotations
 
 import asyncio

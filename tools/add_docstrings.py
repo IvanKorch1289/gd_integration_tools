@@ -61,9 +61,7 @@ def _find_public_targets(tree: ast.AST) -> list[tuple[int, int, int, str]]:
     return targets
 
 
-def add_docstrings_to_file(
-    path: Path, summary: str, *, dry_run: bool = False
-) -> int:
+def add_docstrings_to_file(path: Path, summary: str, *, dry_run: bool = False) -> int:
     """Добавляет placeholder docstrings к public объектам в file.
 
     Returns: number of docstrings added.
@@ -93,14 +91,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("paths", nargs="+", help="Files to process.")
     parser.add_argument(
-        "--summary",
-        required=True,
-        help="1-line summary для placeholder docstring.",
+        "--summary", required=True, help="1-line summary для placeholder docstring."
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Показать stats без записи.",
+        "--dry-run", action="store_true", help="Показать stats без записи."
     )
     args = parser.parse_args(argv)
     total = 0

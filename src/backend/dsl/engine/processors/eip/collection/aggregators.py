@@ -4,9 +4,9 @@ Classes: SumByProcessor, MaxByProcessor, MinByProcessor, SortByProcessor.
 
 aggregate functions (sumBy, maxBy, minBy, sortBy).
 """
+
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -14,6 +14,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
 
 class SumByProcessor(BaseProcessor):
     """Сумма по полю элементов коллекции.
@@ -44,6 +45,7 @@ class SumByProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         return {"sum_by": {"field": self._field}}
 
+
 class MaxByProcessor(BaseProcessor):
     """Максимум по полю элементов коллекции.
 
@@ -71,6 +73,7 @@ class MaxByProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         return {"max_by": {"field": self._field}}
 
+
 class MinByProcessor(BaseProcessor):
     """Минимум по полю элементов коллекции.
 
@@ -97,6 +100,7 @@ class MinByProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"min_by": {"field": self._field}}
+
 
 class SortByProcessor(BaseProcessor):
     """Сортировка коллекции по полю.
@@ -131,4 +135,3 @@ class SortByProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"sort_by": {"field": self._field, "reverse": self._reverse}}
-

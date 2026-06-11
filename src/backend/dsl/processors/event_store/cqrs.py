@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W1 — cqrs.py part of event_store decomp.
 
 CQRS bus (Projection + CommandBus + QueryBus + CQRSMixin).
@@ -6,29 +7,18 @@ CQRS bus (Projection + CommandBus + QueryBus + CQRSMixin).
 Classes: Projection, CommandBus, QueryBus, CQRSMixin.
 """
 
-import threading
-import time
-import uuid
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-
 from src.backend.dsl.processors.event_store.types import Event  # S66 W1: cross-import
-
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
 
 _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
+
 
 class Projection:
     """Base class для read-model projections.
@@ -42,6 +32,7 @@ class Projection:
     def apply(self, event: Event) -> None:
         """Override в subclass: apply event к read-model state."""
         raise NotImplementedError
+
 
 class CommandBus:
     """Routes commands → command handlers → events.
@@ -90,6 +81,7 @@ class CommandBus:
             self._store.append(ev)
         return events
 
+
 class QueryBus:
     """Routes queries → query handlers → result.
 
@@ -117,7 +109,10 @@ class QueryBus:
             )
         return await handler(params)
 
-from src.backend.dsl.processors.event_store.types import EventStream, Event  # S66 W1: cross-import
+
+from src.backend.dsl.processors.event_store.types import (
+    EventStream,  # S66 W1: cross-import
+)
 
 
 class CQRSMixin:
@@ -152,4 +147,3 @@ class CQRSMixin:
                 events_field=events_field,
             )
         )
-

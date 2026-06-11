@@ -20,7 +20,9 @@ from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 
 def _make_exchange(properties: dict[str, Any] | None = None) -> Exchange[Any]:
-    return Exchange(in_message=Message(body=None, headers={}), properties=properties or {})
+    return Exchange(
+        in_message=Message(body=None, headers={}), properties=properties or {}
+    )
 
 
 class TestFileWatchProcessor:

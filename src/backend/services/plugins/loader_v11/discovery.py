@@ -90,8 +90,6 @@ class LoadedPluginV11:
         return payload
 
 
-
-
 class DiscoveryMixin:
     """Plugin discovery (topo sort, manifest path ordering) для PluginLoaderV11. S52 W3 extraction."""
 
@@ -141,8 +139,6 @@ class DiscoveryMixin:
             return ()
         return tuple(m.name for m in ordered)
 
-
-
     def _reorder_manifest_paths(
         self, *, manifest_paths: list[Path], sorted_names: tuple[str, ...]
     ) -> list[Path]:
@@ -177,4 +173,3 @@ class DiscoveryMixin:
                 used.add(path)
         remainder = [p for p in manifest_paths if p not in used]
         return remainder + ordered_named
-

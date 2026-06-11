@@ -1,32 +1,20 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from contextlib import asynccontextmanager
-from typing import Any, cast
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
 from src.backend.core.decorators.caching import response_cache
-from src.backend.core.di.providers import get_cache_invalidator_provider
-from src.backend.core.errors import NotFoundError, ServiceError
-from src.backend.core.interfaces.db_model import DBModelProtocol
-from src.backend.core.interfaces.repositories import RepositoryProtocol
-from src.backend.core.logging import get_logger
-from src.backend.dsl.codec.converters import transfer_model_to_schema
-from src.backend.schemas.base import BaseSchema, PaginatedResult
-
-
 
 
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
-
 
 
 class CrudMixin:
@@ -52,8 +40,6 @@ class CrudMixin:
             entity_id = getattr(result, "id", None)
             await self._invalidate_entity_cache(entity_id=entity_id)
             return result
-
-
 
     async def add_many(
         self, data_list: list[dict[str, Any]]
@@ -99,8 +85,6 @@ class CrudMixin:
 
         return result
 
-
-
     async def update(
         self, key: str, value: int, data: dict[str, Any]
     ) -> ConcreteResponseSchema | None:
@@ -120,8 +104,6 @@ class CrudMixin:
             )
             await self._invalidate_entity_cache(entity_id=value)
             return result
-
-
 
     @response_cache
     async def get(
@@ -169,8 +151,6 @@ class CrudMixin:
                 )
             return result
 
-
-
     async def get_or_add(
         self,
         key: str | None = None,
@@ -199,8 +179,6 @@ class CrudMixin:
                 )
             return instance
 
-
-
     @response_cache
     async def get_first_or_last_with_limit(
         self, limit: int = 1, by: str = "id", order: str = "asc"
@@ -210,8 +188,6 @@ class CrudMixin:
             return await self.helper._process_and_transfer(
                 "first_or_last", self.response_schema, limit=limit, by=by, order=order
             )
-
-
 
     async def delete(self, key: str, value: int) -> None:
         """Удаляет объект и инвалидирует кэш.
@@ -223,4 +199,3 @@ class CrudMixin:
         async with self._service_error_boundary():
             await self.repo.delete(key=key, value=value)
             await self._invalidate_entity_cache(entity_id=value)
-

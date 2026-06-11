@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from threading import Lock
 from typing import Any
 
@@ -29,7 +30,7 @@ class MemoryMetricsBackend(MetricsBackend):
     def __init__(self) -> None:
         self._counters: dict[str, float] = {}
         self._gauges: dict[str, float] = {}
-        self._histograms: dict[str, list[float]] = {}
+        self._histograms: dict[str, deque[float]] = {}
         self._lock = Lock()
 
     def inc_counter(
@@ -49,7 +50,7 @@ class MemoryMetricsBackend(MetricsBackend):
     ) -> None:
         k = _key(name, labels)
         with self._lock:
-            self._histograms.setdefault(k, []).append(value)
+            self._histograms.setdefault(k, deque(maxlen=1000)).append(value)
 
     def snapshot(self) -> dict[str, Any]:
         with self._lock:

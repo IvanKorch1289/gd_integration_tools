@@ -126,8 +126,7 @@ async def test_upload_wraps_boto_error_as_service_error(
     class _FakeS3:
         async def put_object(self, **kwargs: Any) -> None:
             raise ClientError(
-                {"Error": {"Code": "InternalError", "Message": "boom"}},
-                "PutObject",
+                {"Error": {"Code": "InternalError", "Message": "boom"}}, "PutObject"
             )
 
     class _FakeS3Session:
@@ -160,9 +159,7 @@ async def test_exists_missing_returns_false(storage: S3ObjectStorage) -> None:
     assert await storage.exists("ghost.bin") is False
 
 
-async def test_download_missing_raises_file_not_found(
-    storage: S3ObjectStorage,
-) -> None:
+async def test_download_missing_raises_file_not_found(storage: S3ObjectStorage) -> None:
     with pytest.raises(FileNotFoundError, match="Object not found"):
         await storage.download("missing.bin")
 
@@ -193,9 +190,7 @@ async def test_list_keys_empty_bucket(storage_no_prefix: S3ObjectStorage) -> Non
 # ── presigned URL ────────────────────────────────────────────────────────
 
 
-async def test_presigned_url_returns_signed_string(
-    storage: S3ObjectStorage,
-) -> None:
+async def test_presigned_url_returns_signed_string(storage: S3ObjectStorage) -> None:
     await storage.upload("a.txt", b"x")
     url = await storage.presigned_url("a.txt", expires_in=300)
     assert isinstance(url, str)
@@ -259,9 +254,7 @@ async def test_key_with_double_slash_rejected(storage: S3ObjectStorage) -> None:
 # ── factory integration ─────────────────────────────────────────────────
 
 
-async def test_factory_uses_s3_when_provider_not_local(
-    moto_server: Any,
-) -> None:
+async def test_factory_uses_s3_when_provider_not_local(moto_server: Any) -> None:
     """``get_object_storage`` возвращает ``S3ObjectStorage`` при provider=s3."""
     from src.backend.infrastructure.storage import factory
 
@@ -284,7 +277,9 @@ async def test_factory_returns_local_when_provider_local() -> None:
     factory.get_object_storage.cache_clear()
     factory.get_local_fs_storage.cache_clear()
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr("src.backend.core.config.settings.settings.storage.provider", "local")
+        mp.setattr(
+            "src.backend.core.config.settings.settings.storage.provider", "local"
+        )
         store = factory.get_object_storage()
     from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 

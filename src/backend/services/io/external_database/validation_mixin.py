@@ -1,32 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
 import re
-from dataclasses import dataclass
-from typing import Any, Final
+from typing import Final
 
-from pydantic import BaseModel
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.backend.core.config.settings import settings
-from src.backend.core.di.app_state import app_state_singleton
-from src.backend.core.di.providers import get_external_session_manager_provider
-from src.backend.core.enums.database import DatabaseTypeChoices
-from src.backend.core.enums.external_db import (
-    ExternalDBObjectChoices,
-    ExternalDBObjectMeta,
-    ExternalDBObjectTypeChoices,
-    ExternalDBParameterMeta,
-    ExternalDBParameterModeChoices,
-)
+from src.backend.core.enums.external_db import ExternalDBObjectMeta
 from src.backend.core.errors import DatabaseError
-from src.backend.core.logging import get_logger
-
-
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
@@ -45,8 +28,6 @@ _IDENT_RE: Final = re.compile(
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
-
 
 
 class ValidationMixin:
@@ -75,8 +56,6 @@ class ValidationMixin:
             )
         return value
 
-
-
     @staticmethod
     def _validate_bind_name(value: str, *, context: str) -> str:
         """Bind-параметр (после ':') — простой identifier без точек."""
@@ -88,8 +67,6 @@ class ValidationMixin:
                 )
             )
         return value
-
-
 
     def _validate_response(self, meta: ExternalDBObjectMeta, result: Any) -> Any:
         """
@@ -108,4 +85,3 @@ class ValidationMixin:
             return meta.response_schema.model_validate(result).model_dump()
 
         return result
-

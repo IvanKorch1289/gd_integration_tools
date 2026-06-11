@@ -314,6 +314,8 @@ class TestRotate:
         cipher._client = mock_client
         with pytest.raises(VaultCipherError, match="read-key HTTP 404"):
             await cipher.rotate()
+        mock_client.post.assert_awaited_once()
+        mock_client.get.assert_awaited_once()
 
     async def test_bad_version_response(self) -> None:
         cipher = VaultTransitCipher(key_name="k", vault_token="t")
@@ -329,6 +331,8 @@ class TestRotate:
         cipher._client = mock_client
         with pytest.raises(VaultCipherError, match="read-key bad response"):
             await cipher.rotate()
+        mock_client.post.assert_awaited_once()
+        mock_client.get.assert_awaited_once()
 
 
 @pytest.mark.asyncio

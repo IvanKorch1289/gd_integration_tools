@@ -28,7 +28,9 @@ class TestUnifiedPoolManager:
     async def test_register_and_list(self) -> None:
         mgr = UnifiedPoolManager()
         ping = AsyncMock()
-        mgr.register("db_main", MagicMock(), ping_fn=ping, kind="sqlalchemy", max_size=10)
+        mgr.register(
+            "db_main", MagicMock(), ping_fn=ping, kind="sqlalchemy", max_size=10
+        )
         assert mgr.list_pools() == ["db_main"]
         reg = mgr._pools["db_main"]
         assert reg.name == "db_main"
@@ -97,7 +99,10 @@ class TestUnifiedPoolManager:
         # PoolWarmup is imported inside warmup_all from database.pool_warmup
         mock_warmup_cls = MagicMock()
         mock_warmup_cls.return_value.warmup_postgres = AsyncMock()
-        with patch("src.backend.infrastructure.database.pool_warmup.PoolWarmup", mock_warmup_cls):
+        with patch(
+            "src.backend.infrastructure.database.pool_warmup.PoolWarmup",
+            mock_warmup_cls,
+        ):
             result = await mgr.warmup_all()
         assert result["db"] == "ok"
         ping.assert_not_awaited()  # sqlalchemy branch uses PoolWarmup.warmup_postgres

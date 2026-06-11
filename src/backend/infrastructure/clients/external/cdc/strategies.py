@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S60 W2 — strategies.py part of cdc decomp.
 
 Classes: _CDCStrategy, _PollingStrategy, _ListenNotifyStrategy, _LogMinerStrategy.
@@ -9,14 +10,12 @@ Classes: _CDCStrategy, _PollingStrategy, _ListenNotifyStrategy, _LogMinerStrateg
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
 
-from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.clients.external.cdc.events import CDCEvent  # S60 W2: cross-import
+from src.backend.infrastructure.clients.external.cdc.events import (
+    CDCEvent,  # S60 W2: cross-import
+)
 
 
 class _CDCStrategy(ABC):
@@ -28,6 +27,7 @@ class _CDCStrategy(ABC):
         sub: CDCSubscription,
         dispatch: Callable[[CDCSubscription, CDCEvent], Awaitable[None]],
     ) -> None: ...
+
 
 class _PollingStrategy(_CDCStrategy):
     """Polling-based CDC: запрос по timestamp_column.
@@ -55,7 +55,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except (ImportError, ValueError, Exception):
+        except ImportError, ValueError, Exception:
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
@@ -67,7 +67,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except (ImportError, Exception):
+        except ImportError, Exception:
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 
@@ -140,6 +140,7 @@ class _PollingStrategy(_CDCStrategy):
                     )
 
             await asyncio.sleep(sub.interval)
+
 
 class _ListenNotifyStrategy(_CDCStrategy):
     """PostgreSQL LISTEN/NOTIFY — low-latency CDC.
@@ -235,6 +236,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
             except Exception as _:
                 logger.debug("CDC LISTEN connection cleanup failed", exc_info=True)
 
+
 class _LogMinerStrategy(_CDCStrategy):
     """Oracle LogMiner — читает V$LOGMNR_CONTENTS.
 
@@ -317,4 +319,3 @@ class _LogMinerStrategy(_CDCStrategy):
                 logger.warning("CDC LogMiner error [%s]: %s", sub.profile, exc)
 
             await asyncio.sleep(sub.interval)
-

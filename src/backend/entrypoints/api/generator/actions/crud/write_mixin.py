@@ -5,34 +5,18 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from collections.abc import Awaitable, Callable, Sequence
-from inspect import Parameter
-from typing import Any
 
-from fastapi import APIRouter, Request, status
-from fastapi_filter import FilterDepends
-from fastapi_pagination import Params
+from fastapi import Request, status
 from pydantic import BaseModel
 
 from src.backend.core.enums.ordering import OrderingTypeChoices
-from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint
 from src.backend.entrypoints.api.generator.reflection import (
     body_parameter,
     make_signature,
     path_parameter,
-    query_parameter,
     request_parameter,
-    required_query_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import (
-    CrudSpec,
-    HttpMethod,
-    RouteDecorator,
-)
-
-
+from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 
 class WriteMixin:
@@ -79,8 +63,6 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-
-
     def _register_create_many(self, spec: CrudSpec) -> None:
         """Выполнить операцию  register create many."""
 
@@ -123,8 +105,6 @@ class WriteMixin:
             input_model=spec.schema_in,
             output_model=None,
         )
-
-
 
     def _register_update(self, spec: CrudSpec) -> None:
         """Выполнить операцию  register update."""
@@ -172,8 +152,6 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-
-
     def _register_delete(self, spec: CrudSpec) -> None:
         """Выполнить операцию  register delete."""
 
@@ -216,8 +194,6 @@ class WriteMixin:
             output_model=None,
         )
 
-
-
     def _register_all_versions(self, spec: CrudSpec) -> None:
         """Выполнить операцию  register all versions."""
 
@@ -250,4 +226,3 @@ class WriteMixin:
             tags=spec.tags,
             decorators=spec.decorators,
         )
-

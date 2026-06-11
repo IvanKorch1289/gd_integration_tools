@@ -1,28 +1,17 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-import hashlib
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from src.backend.core.di import app_state_singleton
-from src.backend.core.interfaces.vector_store import BaseVectorStore
-from src.backend.core.logging import get_logger
-from src.backend.services.ai.embedding_providers import (
-    EmbeddingProvider,
-    get_embedding_provider,
-)
-from src.backend.services.ai.rag_augment import (
-    AugmentResult,
-    FreshnessLabel,
-    build_augment_result,
-)
+from src.backend.services.ai.rag_augment import AugmentResult, build_augment_result
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
+    pass
+
 
 class AugmentMixin:
     """prompt augmentation (3 augment variants) для RAGService. S64 W4 extraction."""
@@ -144,4 +133,3 @@ class AugmentMixin:
             top_k=top_k,
             max_staleness_hours=max_staleness_hours,
         )
-

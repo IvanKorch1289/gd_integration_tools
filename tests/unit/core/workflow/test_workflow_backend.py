@@ -148,7 +148,8 @@ async def test_set_result_overrides() -> None:
 @pytest.mark.asyncio
 async def test_replay_noop() -> None:
     backend = FakeWorkflowBackend()
-    await backend.replay(workflow_name="wf1", history=b"hist")
+    result = await backend.replay(workflow_name="wf1", history=b"hist")
+    assert result is None
 
 
 @pytest.mark.asyncio

@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 """S65 W2 — ArchiveProcessor extracted from rpa/operations.py.
 
 Per-processor file split.
 """
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -12,6 +14,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
+
 
 class ArchiveProcessor(BaseProcessor):
     """ZIP/TAR архивация и распаковка.
@@ -35,7 +38,7 @@ class ArchiveProcessor(BaseProcessor):
                 exchange.fail("archive extract expects bytes")
                 return
             try:
-                files = self._extract(body)
+                files = await asyncio.to_thread(self._extract, body)
                 exchange.set_out(body=files, headers=dict(exchange.in_message.headers))
             except Exception as exc:
                 exchange.fail(f"Archive extract failed: {exc}")
@@ -44,7 +47,7 @@ class ArchiveProcessor(BaseProcessor):
                 exchange.fail("archive create expects list of {name, data}")
                 return
             try:
-                result = self._create(body)
+                result = await asyncio.to_thread(self._create, body)
                 exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
             except Exception as exc:
                 exchange.fail(f"Archive create failed: {exc}")

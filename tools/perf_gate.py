@@ -212,9 +212,7 @@ def _parse_locust_csv(csv_prefix: str) -> dict[str, Any]:
     return aggregated
 
 
-def _check_thresholds(
-    metrics: dict[str, Any], args: Any
-) -> tuple[bool, list[str]]:
+def _check_thresholds(metrics: dict[str, Any], args: Any) -> tuple[bool, list[str]]:
     """Сверить метрики с порогами.
 
     Returns:
@@ -241,18 +239,14 @@ def main(
         "--scenario",
         help="Путь к locustfile (например, tests/perf/locust_baseline.py).",
     ),
-    users: int = typer.Option(
-        100, "--users", help="Число concurrent users."
-    ),
+    users: int = typer.Option(100, "--users", help="Число concurrent users."),
     spawn_rate: int = typer.Option(
         10, "--spawn-rate", help="Users spawn rate per second."
     ),
     duration: str = typer.Option(
         "60s", "--duration", help="Длительность теста (locust format)."
     ),
-    host: str = typer.Option(
-        "http://localhost:8000", "--host", help="Target host."
-    ),
+    host: str = typer.Option("http://localhost:8000", "--host", help="Target host."),
     rps_floor: float = typer.Option(
         1000.0, "--rps-floor", help="Минимум RPS (failure < threshold)."
     ),
@@ -324,9 +318,7 @@ def main(
     if args.baseline is not None:
         baseline_data = _load_baseline(args.baseline)
         if not baseline_data:
-            _err_console.print(
-                f"WARN: baseline пустой/невалидный {args.baseline}"
-            )
+            _err_console.print(f"WARN: baseline пустой/невалидный {args.baseline}")
             passed, violations = _check_thresholds(metrics, args)
             thresholds_used: dict[str, Any] = {
                 "mode": "fallback-args",
@@ -372,9 +364,7 @@ def main(
         _out_console.print("[perf-gate] OK — all thresholds passed")
         raise typer.Exit(code=EXIT_OK)
     if is_strict:
-        _err_console.print(
-            f"[perf-gate] FAIL (strict) — violations: {violations}"
-        )
+        _err_console.print(f"[perf-gate] FAIL (strict) — violations: {violations}")
         raise typer.Exit(code=EXIT_THRESHOLD_FAIL)
     _err_console.print(
         f"[perf-gate] WARN (warn-only; feature_flag perf_gate_strict=false): {violations}"

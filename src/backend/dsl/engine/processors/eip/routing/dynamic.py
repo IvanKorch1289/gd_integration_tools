@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S63 W2 — dynamic.py part of routing decomp.
 
 Classes: DynamicRouterProcessor.
@@ -6,21 +7,16 @@ Classes: DynamicRouterProcessor.
 DynamicRouterProcessor (runtime-decided routing).
 """
 
-import asyncio
 from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
-
-
-
 
 
 class DynamicRouterProcessor(BaseProcessor):
@@ -60,6 +56,3 @@ class DynamicRouterProcessor(BaseProcessor):
 
         exchange.set_property("dynamic_route_used", target_route_id)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-
-
-

@@ -47,10 +47,7 @@ def build_credit_check_route() -> None:
     )
 
     # 3. Guardrails input
-    builder.guardrails_apply(
-        stage="input",
-        on_block="dlq",
-    )
+    builder.guardrails_apply(stage="input", on_block="dlq")
 
     # 4. Agent parallel
     builder.agent_parallel(
@@ -67,17 +64,13 @@ def build_credit_check_route() -> None:
             {
                 "name": "fraud_check_agent",
                 "workflow_id": "fraud_detection_v1",
-                "context": {
-                    "customer_id": "${body.masked.customer_id}",
-                },
+                "context": {"customer_id": "${body.masked.customer_id}"},
                 "timeout_s": 8,
             },
             {
                 "name": "compliance_agent",
                 "workflow_id": "compliance_check_v1",
-                "context": {
-                    "applicant": "${body.masked}",
-                },
+                "context": {"applicant": "${body.masked}"},
                 "timeout_s": 12,
             },
         ],
@@ -88,12 +81,8 @@ def build_credit_check_route() -> None:
     builder.agent_branch(
         condition="${agent_results.credit_score_agent.verdict}",
         branches={
-            "APPROVED": [
-                {"set": {"body.decision": "approved"}},
-            ],
-            "DENIED": [
-                {"set": {"body.decision": "denied"}},
-            ],
+            "APPROVED": [{"set": {"body.decision": "approved"}}],
+            "DENIED": [{"set": {"body.decision": "denied"}}],
             "REVIEW": [
                 # Agent loop для уточняющих вопросов
                 {
@@ -105,13 +94,11 @@ def build_credit_check_route() -> None:
                         "loop_step": {
                             "agent_run": {
                                 "workflow_id": "additional_info_collection_v1",
-                                "context": {
-                                    "missing_fields": "${body.missing_fields}",
-                                },
-                            },
+                                "context": {"missing_fields": "${body.missing_fields}"},
+                            }
                         },
-                    },
-                },
+                    }
+                }
             ],
         },
     )
@@ -127,16 +114,10 @@ def build_credit_check_route() -> None:
     )
 
     # 7. Guardrails output
-    builder.guardrails_apply(
-        stage="output",
-        on_block="warn",
-    )
+    builder.guardrails_apply(stage="output", on_block="warn")
 
     # 8. PII unmask
-    builder.pii_unmask(
-        source="body.decision_response",
-        target="body",
-    )
+    builder.pii_unmask(source="body.decision_response", target="body")
 
     # 9. Memory store
     builder.ai_memory_store(

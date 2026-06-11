@@ -11,6 +11,7 @@ Plus adds import for setup_page.
 Usage:
     python tools/refactor_setup_page.py [--dry-run]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,9 +25,9 @@ PAGES_DIR = Path("src/frontend/streamlit_app/pages")
 # Regex to match st.set_page_config calls (single line, with optional kwargs)
 # Order of kwargs doesn't matter; only page_title and page_icon are extracted.
 RE_SET_PAGE_CONFIG = re.compile(
-    r'st\.set_page_config\s*\('
-    r'(?P<args>[^)]*?)'
-    r'\)\s*$',  # End of line (no multi-line support — Streamlit calls are single-line)
+    r"st\.set_page_config\s*\("
+    r"(?P<args>[^)]*?)"
+    r"\)\s*$",  # End of line (no multi-line support — Streamlit calls are single-line)
     re.MULTILINE,
 )
 
@@ -66,7 +67,9 @@ def refactor_file(path: Path) -> tuple[bool, str]:
         new_text = new_text[: m.start()] + replacement + new_text[m.end() :]
 
     # Add import if not present
-    setup_page_import = "from src.frontend.streamlit_app.shared.components import setup_page"
+    setup_page_import = (
+        "from src.frontend.streamlit_app.shared.components import setup_page"
+    )
     if "setup_page(" in new_text and setup_page_import not in new_text:
         if "import streamlit as st" in new_text:
             new_text = new_text.replace(
@@ -113,7 +116,9 @@ def main() -> int:
             error_count += 1
             print(f"  ✗ {page.name}: ERROR {exc}")
 
-    print(f"\nResult: {changed_count} changed, {skipped_count} skipped, {error_count} errors")
+    print(
+        f"\nResult: {changed_count} changed, {skipped_count} skipped, {error_count} errors"
+    )
     if args.dry_run:
         print("(dry-run, no files modified)")
     return 0 if error_count == 0 else 1

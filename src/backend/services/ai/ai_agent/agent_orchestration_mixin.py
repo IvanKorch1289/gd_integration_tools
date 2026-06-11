@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
-    from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
 class AgentOrchestrationMixin:
     """agent orchestration (chat, run_agent, _record_feedback) для AIAgentService. S54 W2 extraction."""
 
@@ -281,4 +281,3 @@ class AgentOrchestrationMixin:
         except Exception as exc:
             logger.warning("ai_feedback_save_failed: %s", exc)
             return None
-

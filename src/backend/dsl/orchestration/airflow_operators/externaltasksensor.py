@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 import asyncio
 import threading
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -23,6 +23,7 @@ BranchResolver = Callable[[Exchange[Any]], str | Awaitable[str]]
 Predicate = Callable[[Exchange[Any]], bool | Awaitable[bool]]
 
 # ── BranchPythonOperator ─────────────────────────────────────────────
+
 
 class ExternalTaskSensor(BaseProcessor):
     """Ждёт завершения task в другом DAG / route (Airflow ExternalTaskSensor).

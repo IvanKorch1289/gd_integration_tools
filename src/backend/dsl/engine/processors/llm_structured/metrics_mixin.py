@@ -1,16 +1,16 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
-
     pass
 
 _logger = get_logger(__name__)
@@ -20,6 +20,7 @@ _logger = get_logger(__name__)
 _DEFAULT_TEMPERATURE: float = 0.0
 # Максимальное число instructor-retries (внутренний цикл валидации Pydantic).
 _DEFAULT_RETRY: int = 3
+
 
 @processor(
     "llm_structured",
@@ -45,7 +46,6 @@ _DEFAULT_RETRY: int = 3
     meta={"tier": 2, "category": "ai", "version": "v17"},
     tags=("ai", "llm", "structured-output"),
 )
-
 class MetricsMixin:
     """cost estimation + token extraction для LLMStructuredProcessor. S65 W2 extraction."""
 
@@ -68,7 +68,7 @@ class MetricsMixin:
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None
-        except (ImportError, AttributeError, TypeError, ValueError):
+        except ImportError, AttributeError, TypeError, ValueError:
             return None
 
     @staticmethod
@@ -86,6 +86,5 @@ class MetricsMixin:
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
-

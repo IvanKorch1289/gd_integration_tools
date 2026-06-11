@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W4 - gemini.py part of ai_providers decomp.
 
 Google Gemini provider (extract_text, embeddings, chat).
@@ -11,8 +12,8 @@ from typing import Any
 
 import httpx
 
-from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
+
 
 class GeminiProvider:
     """Google Gemini provider.
@@ -39,7 +40,7 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
@@ -134,4 +135,3 @@ class GeminiProvider:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()
             return resp.json()
-

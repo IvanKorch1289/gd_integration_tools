@@ -137,13 +137,14 @@ async def test_scrape_processor_process_success() -> None:
         "src.backend.infrastructure.clients.transport.http.HttpClient.make_request",
         new_callable=AsyncMock,
         return_value=fake_response,
-    ):
+    ) as mock_req:
         with patch.dict(
             "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
         ):
             with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
                 await proc.process(ex, AsyncMock())
 
+    mock_req.assert_awaited_once()
     assert ex.error is None
     assert ex.properties["scraped"] == {"title": "Hello World"}
     assert ex.out_message is not None
@@ -187,13 +188,14 @@ async def test_scrape_processor_url_from_property() -> None:
         "src.backend.infrastructure.clients.transport.http.HttpClient.make_request",
         new_callable=AsyncMock,
         return_value=fake_response,
-    ):
+    ) as mock_req:
         with patch.dict(
             "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
         ):
             with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
                 await proc.process(ex, AsyncMock())
 
+    mock_req.assert_awaited_once()
     assert ex.error is None
     assert ex.properties["scraped"] == {"a": "link"}
 

@@ -37,12 +37,7 @@ import httpx
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.infrastructure.logging.factory import get_logger
 
-__all__ = (
-    "JupyterHubClient",
-    "JupyterHubError",
-    "JupyterHubUser",
-    "JupyterHubServer",
-)
+__all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubUser", "JupyterHubServer")
 
 _logger = get_logger("infrastructure.jupyter_hub")
 
@@ -148,12 +143,9 @@ class JupyterHubClient:
 
     def _build_client(self) -> httpx.AsyncClient:
         """Собирает ``httpx.AsyncClient`` с таймаутами и auth-заголовком."""
-        transport = httpx.AsyncHTTPTransport(
-            retries=self._settings.max_retries,
-        )
+        transport = httpx.AsyncHTTPTransport(retries=self._settings.max_retries)
         timeout = httpx.Timeout(
-            self._settings.timeout_seconds,
-            connect=self._settings.connect_timeout,
+            self._settings.timeout_seconds, connect=self._settings.connect_timeout
         )
         return httpx.AsyncClient(
             base_url=self._settings.base_url.rstrip("/"),
@@ -206,9 +198,7 @@ class JupyterHubClient:
             raise JupyterHubError("Unexpected response type for get_user")
         return JupyterHubUser(data)
 
-    async def create_user(
-        self, name: str, *, admin: bool = False
-    ) -> JupyterHubUser:
+    async def create_user(self, name: str, *, admin: bool = False) -> JupyterHubUser:
         """Создаёт пользователя (``POST /hub/api/users/{name}``).
 
         Args:
@@ -222,9 +212,7 @@ class JupyterHubClient:
             JupyterHubError: 409 — пользователь уже существует.
         """
         data = await self._request(
-            "POST",
-            f"/hub/api/users/{name}",
-            json={"admin": admin},
+            "POST", f"/hub/api/users/{name}", json={"admin": admin}
         )
         if not isinstance(data, dict):
             raise JupyterHubError("Unexpected response type for create_user")
@@ -243,9 +231,7 @@ class JupyterHubClient:
 
     # ── Servers ──
 
-    async def start_server(
-        self, user_name: str, *, server_name: str = ""
-    ) -> None:
+    async def start_server(self, user_name: str, *, server_name: str = "") -> None:
         """Запускает сервер пользователя (``POST /hub/api/users/{user}/servers/{name}``).
 
         Args:
@@ -262,9 +248,7 @@ class JupyterHubClient:
             path += ""
         await self._request("POST", path)
 
-    async def stop_server(
-        self, user_name: str, *, server_name: str = ""
-    ) -> None:
+    async def stop_server(self, user_name: str, *, server_name: str = "") -> None:
         """Останавливает сервер пользователя (``DELETE /hub/api/users/{user}/servers/{name}``).
 
         Args:
@@ -299,11 +283,7 @@ class JupyterHubClient:
     # ── Low-level ──
 
     async def _request(
-        self,
-        method: str,
-        path: str,
-        *,
-        json: dict[str, Any] | None = None,
+        self, method: str, path: str, *, json: dict[str, Any] | None = None
     ) -> Any:
         """Низкоуровневый запрос с логированием и обработкой ошибок."""
         try:

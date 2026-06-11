@@ -107,6 +107,7 @@ class TestEnsureRequiredBaggagePasses:
                 ):
                     # Должно пройти без исключений
                     ensure_required_baggage()
+                    assert mock_flags.tracing_baggage_strict is True
 
         asyncio.run(_run())
 
@@ -163,5 +164,6 @@ class TestStrictModeDefaultOff:
             ):
                 # Должно пройти без исключений, несмотря на пустой baggage
                 ensure_required_baggage()
+                assert mock_flags.tracing_baggage_strict is False
 
         asyncio.run(_run())

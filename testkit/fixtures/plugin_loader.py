@@ -49,9 +49,7 @@ def plugin_runtime() -> Iterator[Any]:
 
 
 @pytest.fixture
-def loaded_plugin(
-    plugin_runtime: Any,
-) -> Callable[[str], Any]:
+def loaded_plugin(plugin_runtime: Any) -> Callable[[str], Any]:
     """Фабрика: загружает плагин по name (``extensions/<name>/plugin.toml``).
 
     Возвращает spec-объект с capabilities/provides — без bootstrap'а

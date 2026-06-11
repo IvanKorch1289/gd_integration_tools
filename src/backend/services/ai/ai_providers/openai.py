@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S68 W4 - openai.py part of ai_providers decomp.
 
 OpenAI provider (extract_text, embeddings, chat).
@@ -11,8 +12,8 @@ from typing import Any
 
 import httpx
 
-from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
+
 
 class OpenAIProvider:
     """OpenAI GPT-провайдер.
@@ -48,7 +49,7 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
@@ -105,4 +106,3 @@ class OpenAIProvider:
             )
             resp.raise_for_status()
             return resp.json()
-

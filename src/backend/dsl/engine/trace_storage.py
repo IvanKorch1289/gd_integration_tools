@@ -26,6 +26,7 @@ S46 W3 scope: abstraction + JSON impl + tests. Redis/PG impl = S47+ D.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import deque
 from pathlib import Path
@@ -48,11 +49,11 @@ class TraceStorage(Protocol):
     - PostgresTraceStorage (S47+ D): production, queryable history.
     """
 
-    def append(self, event: TraceEvent) -> None:
+    async def append(self, event: TraceEvent) -> None:
         """Сохранить event (idempotent на level per-event)."""
         ...
 
-    def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
+    async def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
         """Возвращает последние N events для route_id (chronological order)."""
         ...
 
@@ -71,12 +72,12 @@ class InMemoryTraceStorage:
     def __init__(self, *, maxlen: int = 1000) -> None:
         self._buffer: dict[str, deque[TraceEvent]] = {}
 
-    def append(self, event: TraceEvent) -> None:
+    async def append(self, event: TraceEvent) -> None:
         """Добавить событие в in-memory buffer маршрута."""
         buf = self._buffer.setdefault(event.route_id, deque(maxlen=1000))
         buf.append(event)
 
-    def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
+    async def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
         """Вернуть последние ``limit`` событий для маршрута."""
         buf = self._buffer.get(route_id)
         if not buf:
@@ -110,23 +111,31 @@ class JsonFileTraceStorage:
         safe = route_id.replace("/", "_").replace("\\", "_")
         return self._dir / f"{safe}.jsonl"
 
-    def append(self, event: TraceEvent) -> None:
+    async def append(self, event: TraceEvent) -> None:
         """Добавить событие в JSONL-файл маршрута."""
         path = self._file_for(event.route_id)
         line = json.dumps(event.to_dict(), ensure_ascii=False) + "\n"
-        # Append mode: O_APPEND atomic для small writes на POSIX.
-        with path.open("a", encoding="utf-8") as f:
-            f.write(line)
 
-    def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
+        def _write() -> None:
+            # Append mode: O_APPEND atomic для small writes на POSIX.
+            with path.open("a", encoding="utf-8") as f:
+                f.write(line)
+
+        await asyncio.to_thread(_write)
+
+    async def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
         """Вернуть последние ``limit`` событий из JSONL-файла маршрута."""
         path = self._file_for(route_id)
         if not path.exists():
             return []
         # Read tail: efficient если limit < file size.
         try:
-            with path.open("r", encoding="utf-8") as f:
-                lines = f.readlines()
+
+            def _read() -> list[str]:
+                with path.open("r", encoding="utf-8") as f:
+                    return f.readlines()
+
+            lines = await asyncio.to_thread(_read)
         except OSError:
             return []
         tail = lines[-min(limit, 1000) :]
@@ -163,39 +172,45 @@ class JsonFileTraceStorage:
 
 # Self-test (run: uv run python src/backend/dsl/engine/trace_storage.py).
 if __name__ == "__main__":
+    import asyncio
     import tempfile
 
-    # Test 1: InMemory.
-    mem = InMemoryTraceStorage()
-    e1 = TraceEvent(
-        route_id="r1",
-        processor_name="p1",
-        processor_type="http",
-        phase="end",
-        duration_ms=10.5,
-    )
-    mem.append(e1)
-    assert len(mem.read_recent("r1", 10)) == 1
-    assert mem.list_routes() == ["r1"]
-    print("InMemory OK")
+    async def _self_test() -> None:
+        from src.backend.dsl.engine.tracer import TraceEvent
 
-    # Test 2: JsonFile.
-    with tempfile.TemporaryDirectory() as td:
-        js = JsonFileTraceStorage(td)
-        js.append(e1)
-        js.append(
-            TraceEvent(
-                route_id="r1",
-                processor_name="p2",
-                processor_type="log",
-                phase="end",
-                duration_ms=2.0,
-            )
+        # Test 1: InMemory.
+        mem = InMemoryTraceStorage()
+        e1 = TraceEvent(
+            route_id="r1",
+            processor_name="p1",
+            processor_type="http",
+            phase="end",
+            duration_ms=10.5,
         )
-        recent = js.read_recent("r1", 10)
-        assert len(recent) == 2
-        assert recent[0].processor_name == "p1"
-        assert recent[1].processor_name == "p2"
-        assert js.list_routes() == ["r1"]
-        print("JsonFile OK")
-    print("All tests pass.")
+        await mem.append(e1)
+        assert len(await mem.read_recent("r1", 10)) == 1
+        assert mem.list_routes() == ["r1"]
+        print("InMemory OK")
+
+        # Test 2: JsonFile.
+        with tempfile.TemporaryDirectory() as td:
+            js = JsonFileTraceStorage(td)
+            await js.append(e1)
+            await js.append(
+                TraceEvent(
+                    route_id="r1",
+                    processor_name="p2",
+                    processor_type="log",
+                    phase="end",
+                    duration_ms=2.0,
+                )
+            )
+            recent = await js.read_recent("r1", 10)
+            assert len(recent) == 2
+            assert recent[0].processor_name == "p1"
+            assert recent[1].processor_name == "p2"
+            assert js.list_routes() == ["r1"]
+            print("JsonFile OK")
+        print("All tests pass.")
+
+    asyncio.run(_self_test())

@@ -263,7 +263,7 @@ def _parse_postman_item(item: dict, endpoints: list[EndpointSpec]) -> None:
                         FieldSpec(name=k, python_type=_infer_python_type_from_value(v))
                     )
                 break  # берём первый пример
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             pass
 
     endpoints.append(ep)

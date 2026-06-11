@@ -24,14 +24,11 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 
-
-
-
 class RPAMixin:
     """Поведенческий миксин RPA / automation / documents для ``RouteBuilder``.
 
-Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
-"""
+    Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
+    """
 
     __slots__ = ()
 
@@ -43,8 +40,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url
         )
 
-
-
     def click(self, url: str, selector: str) -> RouteBuilder:
         """Клик по CSS-селектору."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -53,8 +48,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             url=url,
             selector=selector,
         )
-
-
 
     def fill_form(
         self, url: str, fields: dict | None = None, submit: str | None = None
@@ -68,8 +61,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             submit=submit,
         )
 
-
-
     def extract(
         self, selector: str, url: str | None = None, output_property: str = "extracted"
     ) -> RouteBuilder:
@@ -82,23 +73,17 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             output_property=output_property,
         )
 
-
-
     def screenshot(self, url: str | None = None) -> RouteBuilder:
         """Скриншот страницы как bytes."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
         )
 
-
-
     def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
         )
-
-
 
     def call_llm_with_fallback(
         self, providers: list[str], *, model: str = "default"
@@ -111,8 +96,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             model=model,
         )
 
-
-
     def cache(
         self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
     ) -> RouteBuilder:
@@ -124,8 +107,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             ttl_seconds=ttl,
         )
 
-
-
     def cache_write(
         self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
     ) -> RouteBuilder:
@@ -136,8 +117,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             key_fn=key_fn,
             ttl_seconds=ttl,
         )
-
-
 
     def guardrails(
         self,
@@ -154,8 +133,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             blocked_patterns=blocked_patterns,
             required_fields=required_fields,
         )
-
-
 
     def semantic_route(
         self,
@@ -177,8 +154,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             namespace=namespace,
         )
 
-
-
     def pdf_read(self, *, extract_tables: bool = False) -> RouteBuilder:
         """Извлечь текст и таблицы из PDF.
 
@@ -191,8 +166,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             extract_tables=extract_tables,
         )
 
-
-
     def pdf_merge(self) -> RouteBuilder:
         """Объединить несколько PDF в один.
 
@@ -202,8 +175,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor"
         )
-
-
 
     def word_read(self) -> RouteBuilder:
         """Извлечь текст из .docx файла.
@@ -215,8 +186,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             "src.backend.dsl.engine.processors.rpa", "WordReadProcessor"
         )
 
-
-
     def word_write(self) -> RouteBuilder:
         """Генерировать .docx документ из текста.
 
@@ -226,8 +195,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "WordWriteProcessor"
         )
-
-
 
     def excel_read(self, *, sheet_name: str | None = None) -> RouteBuilder:
         """Читать Excel файл в list[dict].
@@ -240,8 +207,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             "ExcelReadProcessor",
             sheet_name=sheet_name,
         )
-
-
 
     def file_move(
         self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
@@ -258,8 +223,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             mode=mode,
         )
 
-
-
     def archive(self, *, mode: str = "extract", format: str = "zip") -> RouteBuilder:
         """Создать или распаковать архив (ZIP/TAR).
 
@@ -273,8 +236,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             format=format,
         )
 
-
-
     def ocr(self, *, lang: str = "eng+rus") -> RouteBuilder:
         """OCR — оптическое распознавание текста из изображений/PDF.
 
@@ -284,8 +245,6 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang
         )
-
-
 
     def image_resize(
         self,
@@ -306,4 +265,3 @@ Stateless: использует ``self._add`` / ``self._add_lazy`` через MR
             height=height,
             output_format=output_format,
         )
-

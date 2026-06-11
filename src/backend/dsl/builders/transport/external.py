@@ -121,4 +121,3 @@ class ExternalMixin:
             to=to,
             deep_research=deep_research,
         )
-

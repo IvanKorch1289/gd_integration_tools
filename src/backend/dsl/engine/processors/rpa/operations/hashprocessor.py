@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S65 W2 — HashProcessor extracted from rpa/operations.py.
 
 Per-processor file split.
@@ -12,6 +13,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
+
 
 class HashProcessor(BaseProcessor):
     """Вычисляет hash от body.

@@ -65,12 +65,8 @@ def db_snapshot(tmp_path: Path) -> Iterator[Callable[..., DBSnapshot]]:
         snap_path = tmp_path / f"snapshot_{len(created)}.sqlite"
         conn = sqlite3.connect(snap_path)
         cur = conn.cursor()
-        cur.execute(
-            "CREATE TABLE metadata (version TEXT, created_at TEXT)"
-        )
-        cur.execute(
-            "INSERT INTO metadata VALUES ('1.0', datetime('now'))"
-        )
+        cur.execute("CREATE TABLE metadata (version TEXT, created_at TEXT)")
+        cur.execute("INSERT INTO metadata VALUES ('1.0', datetime('now'))")
         conn.commit()
         conn.close()
         created.append(snap_path)

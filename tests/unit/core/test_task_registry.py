@@ -50,7 +50,7 @@ async def test_shutdown_all_cancels_pending() -> None:
     registry = TaskRegistry()
 
     async def _worker() -> None:
-        await asyncio.sleep(60)
+        await asyncio.sleep(10)
 
     task = registry.create_task(_worker(), name="long")
     assert not task.done()
@@ -101,7 +101,7 @@ async def test_cancel_by_name() -> None:
     registry = TaskRegistry()
 
     async def _worker() -> None:
-        await asyncio.sleep(60)
+        await asyncio.sleep(10)
 
     registry.create_task(_worker(), name="ctl")
     assert registry.cancel("ctl") is True
@@ -115,7 +115,7 @@ async def test_deadline_expiry_escalates_via_watchdog() -> None:
     registry = TaskRegistry()
 
     async def _slow() -> None:
-        await asyncio.sleep(5)
+        await asyncio.sleep(0.1)
 
     task = registry.create_task(_slow(), name="slow", deadline_seconds=0.05)
     with pytest.raises(asyncio.TimeoutError):

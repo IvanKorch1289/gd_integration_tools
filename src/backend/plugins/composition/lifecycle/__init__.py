@@ -9,12 +9,14 @@ S66 W3: lifespan -> lifespan.py.
 from __future__ import annotations
 
 from src.backend.plugins.composition.lifecycle.bootstrap import (  # noqa: E402, F401
+    bootstrap_resilience_coordinator,
+    bootstrap_snapshot_job,
     register_storage_singletons,
     validate_cache_layers,
-    bootstrap_snapshot_job,
-    bootstrap_resilience_coordinator,
 )
-from src.backend.plugins.composition.lifecycle.lifespan import lifespan  # noqa: E402, F401
+from src.backend.plugins.composition.lifecycle.lifespan import (
+    lifespan,  # noqa: E402, F401
+)
 
 __all__ = (
     "lifespan",

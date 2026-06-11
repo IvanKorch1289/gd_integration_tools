@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -23,12 +23,9 @@ from sqlalchemy_continuum import version_class
 from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.infrastructure.database.models.base import BaseModel
 from src.backend.infrastructure.database.session_manager import main_session_manager
-
-
-
-
-
-from src.backend.infrastructure.repositories.base.base import AbstractRepository  # S64 W2: cross-import
+from src.backend.infrastructure.repositories.base.base import (
+    AbstractRepository,  # S64 W2: cross-import
+)
 
 
 class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[ConcreteTable]):

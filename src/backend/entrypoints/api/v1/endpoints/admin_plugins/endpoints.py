@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W1 — endpoints.py part of admin_plugins decomp.
 
 Funcs: list_plugins, get_plugin_manifest, toggle_plugin, list_plugin_versions, diff_plugin_versions, rollback_plugin, get_dependency_graph, scaffold_plugin_endpoint.
@@ -10,27 +11,25 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
 
-from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
-    PluginSummary,
+    PluginDependencyGraph,
+    PluginDiffResponse,
     PluginManifest,
+    PluginRollbackRequest,
+    PluginRollbackResponse,
+    PluginScaffoldRequest,
+    PluginScaffoldResponse,
+    PluginSummary,
     PluginToggleRequest,
     PluginToggleResponse,
     PluginVersionsResponse,
-    PluginDiffResponse,
-    PluginRollbackRequest,
-    PluginRollbackResponse,
-    PluginDependencyGraph,
-    PluginScaffoldRequest,
-    PluginScaffoldResponse,
 )  # S62 W1: schemas
-
 
 router = APIRouter(prefix="/admin/plugins", tags=["admin"])
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
+
 
 async def list_plugins() -> list[PluginSummary]:
     """Возвращает список плагинов из реестра.
@@ -64,6 +63,7 @@ async def list_plugins() -> list[PluginSummary]:
     except Exception as exc:
         logger.warning("Ошибка чтения реестра плагинов: %s — возврат mock", exc)
         return _mock_plugins()
+
 
 async def get_plugin_manifest(name: str) -> PluginManifest:
     """Возвращает манифест плагина по имени.
@@ -102,6 +102,7 @@ async def get_plugin_manifest(name: str) -> PluginManifest:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Плагин '{name}' не найден в реестре",
         )
+
 
 async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleResponse:
     """Включает или отключает плагин по имени.
@@ -154,6 +155,7 @@ async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleRes
             detail=f"Плагин '{name}' не найден в реестре",
         )
 
+
 async def list_plugin_versions(name: str) -> PluginVersionsResponse:
     """Перечислить все локально установленные версии плагина."""
     _check_flag_enabled()
@@ -162,6 +164,7 @@ async def list_plugin_versions(name: str) -> PluginVersionsResponse:
         return PluginVersionsResponse(plugin=name, versions=[])
     versions = service.list_versions(name)
     return PluginVersionsResponse(plugin=name, versions=[v.to_dict() for v in versions])
+
 
 async def diff_plugin_versions(
     name: str, from_version: str, to_version: str
@@ -180,6 +183,7 @@ async def diff_plugin_versions(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     return PluginDiffResponse(**result)
 
+
 async def rollback_plugin(
     name: str, body: PluginRollbackRequest
 ) -> PluginRollbackResponse:
@@ -193,6 +197,7 @@ async def rollback_plugin(
         )
     result = await service.rollback(name, to_version=body.to_version)
     return PluginRollbackResponse(**result.to_dict())
+
 
 async def get_dependency_graph() -> PluginDependencyGraph:
     """Собрать граф из ``plugin.toml::compatibility.requires_plugins``."""
@@ -227,6 +232,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
             edges.append({"source": manifest.name, "target": required, "spec": spec})
     return PluginDependencyGraph(nodes=nodes, edges=edges)
 
+
 async def scaffold_plugin_endpoint(
     body: PluginScaffoldRequest,
 ) -> PluginScaffoldResponse:
@@ -256,4 +262,3 @@ async def scaffold_plugin_endpoint(
         dry_run=False,
         actions=[f"created {plugin_root}"],
     )
-

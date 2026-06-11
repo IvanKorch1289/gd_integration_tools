@@ -23,9 +23,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── convert tools (_register_convert_tools) ──
+
 
 def _register_convert_tools(mcp: Any) -> None:
     """Tools для конвертации форматов данных."""
@@ -51,7 +50,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except (orjson.JSONDecodeError, TypeError):
+                except orjson.JSONDecodeError, TypeError:
                     pass
 
             result = strategy.convert(input_data)
@@ -82,4 +81,3 @@ def _register_convert_tools(mcp: Any) -> None:
         from src.backend.dsl.engine.processors.converters import _STRATEGIES
 
         return encode_json(list(_STRATEGIES.keys())).decode("utf-8")
-

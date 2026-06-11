@@ -41,8 +41,10 @@ class ZeepSoapAdapter:
 
         import httpx
 
-        session = httpx.AsyncClient(auth=self._auth if self._auth else None, timeout=30)
-        transport = AsyncTransport(client=session)
+        self._session = httpx.AsyncClient(
+            auth=self._auth if self._auth else None, timeout=30
+        )
+        transport = AsyncTransport(client=self._session)
         self._client = AsyncClient(wsdl=self._wsdl_url, transport=transport)
         return self._client
 
@@ -53,6 +55,13 @@ class ZeepSoapAdapter:
         if fn is None:
             raise AttributeError(f"SOAP-метод '{method}' не найден в WSDL")
         return await fn(**params)
+
+    async def aclose(self) -> None:
+        """Закрывает HTTP-сессию и zeep-клиент."""
+        if self._session is not None:
+            await self._session.aclose()
+            self._session = None
+        self._client = None
 
     def list_methods(self) -> list[str]:
         """Список доступных операций (из уже загруженного WSDL)."""

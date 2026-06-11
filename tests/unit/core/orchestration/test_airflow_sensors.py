@@ -90,7 +90,8 @@ class TestSqlSensor:
                 trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
             )
         assert result is True
-        assert mock_conn.close.called
+        mock_connect.assert_awaited_once()
+        mock_conn.close.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_no_match_returns_false_on_timeout(self) -> None:
@@ -108,6 +109,7 @@ class TestSqlSensor:
                 trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
             )
         assert result is False
+        mock_connect.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_jmespath_predicate(self) -> None:
@@ -128,6 +130,7 @@ class TestSqlSensor:
                 trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
             )
         assert result is True
+        mock_connect.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_connection_error_retries(self) -> None:
@@ -143,6 +146,7 @@ class TestSqlSensor:
             )
         # Should timeout, not crash
         assert result is False
+        assert mock_connect.call_count >= 1
 
 
 # ── HttpSensor ──────────────────────────────────────────────────────
@@ -170,6 +174,8 @@ class TestHttpSensor:
                 trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
             )
         assert result is True
+        MockClient.assert_called_once()
+        mock_client.request.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_match_on_expected_status(self) -> None:
@@ -196,6 +202,8 @@ class TestHttpSensor:
         # Verify method
         call = mock_client.request.call_args
         assert call[0][0] == "POST"
+        MockClient.assert_called_once()
+        mock_client.request.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_body_match_jmespath(self) -> None:
@@ -219,6 +227,8 @@ class TestHttpSensor:
                 trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
             )
         assert result is True
+        MockClient.assert_called_once()
+        mock_client.request.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_wrong_status_timeout(self) -> None:
@@ -239,6 +249,8 @@ class TestHttpSensor:
                 trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
             )
         assert result is False
+        MockClient.assert_called_once()
+        mock_client.request.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_request_error_retries(self) -> None:
@@ -255,6 +267,8 @@ class TestHttpSensor:
                 trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
             )
         assert result is False
+        MockClient.assert_called_once()
+        mock_client.request.assert_awaited_once()
 
 
 # ── S3Sensor ────────────────────────────────────────────────────────

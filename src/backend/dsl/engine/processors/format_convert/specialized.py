@@ -74,8 +74,6 @@ def _el_to_dict(el: ET.Element) -> Any:
     return out
 
 
-
-
 from src.backend.dsl.engine.processors.format_convert._helpers import (
     _to_text,  # S53 W1: shared helper
 )
@@ -90,8 +88,6 @@ class SpecializedFormatsMixin:
 
     def _to_uuid_string(self, data: Any) -> str:
         return str(uuid.uuid4())
-
-
 
     def _to_jwt(self, data: Any) -> str:
         try:
@@ -110,12 +106,8 @@ class SpecializedFormatsMixin:
         header = {"alg": self.algorithm, "typ": "JWT"}
         return _jwt.encode(header, body_claims, key)
 
-
-
     def _to_bencode(self, data: Any) -> bytes:
         return _bencode(data)
-
-
 
     def _from_bencode(self, data: Any) -> Any:
         if isinstance(data, (bytes, bytearray)):
@@ -128,8 +120,6 @@ class SpecializedFormatsMixin:
             return None
         result, _consumed = _bdecode(raw, 0)
         return result
-
-
 
     def _from_jwt(self, data: Any) -> dict[str, Any]:
         """Decode JWT string → claims ``dict``.
@@ -154,8 +144,6 @@ class SpecializedFormatsMixin:
         result = _jwt.decode(token, key, algorithms=[self.algorithm])
         return dict(result.claims)
 
-
-
     def _to_compact_json(self, data: Any) -> str:
         """``dict`` → minified JSON (no indent, no spaces between separators)."""
         if isinstance(data, (bytes, bytearray)):
@@ -163,8 +151,6 @@ class SpecializedFormatsMixin:
         if isinstance(data, str):
             return data  # already a string — assume compact
         return json.dumps(data, separators=(",", ":"), default=str, ensure_ascii=False)
-
-
 
     def _to_protobuf_like(self, data: Any) -> bytes:
         """``dict`` → base64-encoded JSON ``bytes`` (protobuf-like wire format).
@@ -176,8 +162,6 @@ class SpecializedFormatsMixin:
             return b""
         text = json.dumps(data, separators=(",", ":"), default=str, ensure_ascii=False)
         return base64.b64encode(text.encode("utf-8"))
-
-
 
     def _from_protobuf_like(self, data: Any) -> Any:
         """base64-encoded JSON ``bytes`` → ``dict`` (inverse of ``to_protobuf_like``)."""
@@ -194,8 +178,6 @@ class SpecializedFormatsMixin:
             return None
         return json.loads(text)
 
-
-
     def _to_avro_like(self, data: Any) -> str:
         """``dict`` → JSON ``str`` с обёрткой ``{"schema": ..., "data": ...}``.
 
@@ -208,4 +190,3 @@ class SpecializedFormatsMixin:
             "data": data,
         }
         return json.dumps(envelope, default=str, ensure_ascii=False)
-

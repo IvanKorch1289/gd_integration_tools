@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W1 — types.py part of event_store decomp.
 
 core data types (EventStream + Event).
@@ -6,26 +7,21 @@ core data types (EventStream + Event).
 Classes: EventStream, Event.
 """
 
-import threading
 import time
 import uuid
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
+
 
 class EventStream(str, Enum):
     """Имя event stream / topic / aggregate type."""
@@ -36,6 +32,7 @@ class EventStream(str, Enum):
     USER = "user"
     AUDIT = "audit"
     CUSTOM = "custom"
+
 
 class Event:
     """Immutable domain event.
@@ -71,4 +68,3 @@ class Event:
             "timestamp": self.timestamp,
             "metadata": dict(self.metadata),
         }
-

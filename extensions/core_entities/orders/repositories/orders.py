@@ -31,9 +31,7 @@ class OrderRepository(SQLAlchemyRepository):
     class HelperMethods(SQLAlchemyRepository.HelperMethods):
         """Вспомогательные методы валидации order_kind_id."""
 
-        async def _validate_order_kind(
-            self, data: dict[str, Any]
-        ) -> dict[str, Any]:
+        async def _validate_order_kind(self, data: dict[str, Any]) -> dict[str, Any]:
             """Резолвит ``order_kind_id`` через OrderKind репозиторий.
 
             Args:
@@ -71,9 +69,7 @@ class OrderRepository(SQLAlchemyRepository):
         self.helper.order_kind_repo = order_kind_repo  # type: ignore[attr-defined]
 
     @main_session_manager.connection()
-    async def add(
-        self, session: AsyncSession, data: dict[str, Any]
-    ) -> Order | None:
+    async def add(self, session: AsyncSession, data: dict[str, Any]) -> Order | None:
         """Создание заказа с валидацией kind."""
         data = await self.helper._validate_order_kind(data)  # type: ignore[attr-defined]
         return await super().add(data=data)
@@ -109,8 +105,6 @@ def get_order_repo() -> OrderRepository:
     global _order_repo_instance
     if _order_repo_instance is None:
         _order_repo_instance = OrderRepository(
-            model=Order,
-            load_joined_models=True,
-            order_kind_repo=get_order_kind_repo(),
+            model=Order, load_joined_models=True, order_kind_repo=get_order_kind_repo()
         )
     return _order_repo_instance

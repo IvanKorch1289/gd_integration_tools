@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S63 W3 — formats.py part of marshal decomp.
 
 5 data format classes (Json/Xml/Csv/MessagePack/Pickle) + 3 helpers.
@@ -8,13 +9,10 @@ import csv
 import io
 import json
 import pickle
-import threading
 import xml.etree.ElementTree as ET  # safe: used only for marshal (we generate XML)
-from abc import ABC, abstractmethod
-from typing import Any, ClassVar
+from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
 
 # Security: defusedxml guards against XXE / billion-laughs in XML unmarshal.
 # ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for
@@ -25,15 +23,14 @@ try:
     import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover — dev-light fallback
     DET = None  # type: ignore[assignment]
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.engine.processors.eip.marshal.base import DataFormat  # S63 W3: cross-import
-
+from src.backend.dsl.engine.processors.eip.marshal.base import (
+    DataFormat,  # S63 W3: cross-import
+)
 
 _log = get_logger(__name__)
 
 # ── DataFormat abstract + concrete impls ─────────────────────────────
+
 
 class JsonDataFormat(DataFormat):
     """JSON via stdlib ``json``. Indent / sort_keys / ensure_ascii options."""
@@ -80,6 +77,7 @@ class JsonDataFormat(DataFormat):
             )
         return decoded
 
+
 class XmlDataFormat(DataFormat):
     """XML via stdlib ``xml.etree.ElementTree``.
 
@@ -116,6 +114,7 @@ class XmlDataFormat(DataFormat):
         else:  # pragma: no cover — dev-light path
             root = ET.fromstring(data)  # noqa: S314 — see SECURITY above
         return _xml_to_dict(root)
+
 
 class CsvDataFormat(DataFormat):
     """CSV via stdlib ``csv``.
@@ -162,6 +161,7 @@ class CsvDataFormat(DataFormat):
         reader = csv.DictReader(buf, delimiter=self._delimiter)
         return list(reader)
 
+
 class MessagePackDataFormat(DataFormat):
     """MessagePack via optional ``msgpack`` package.
 
@@ -192,6 +192,7 @@ class MessagePackDataFormat(DataFormat):
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
         return self._msgpack.unpackb(data, raw=False)
+
 
 class PickleDataFormat(DataFormat):
     """Pickle via stdlib. Только для trusted data (security warning)."""

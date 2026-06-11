@@ -281,7 +281,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             try:
                 _, end_offset_str = end_cursor.value.split(":")
                 end_offset = int(end_offset_str)
-            except (ValueError, KeyError):
+            except ValueError, KeyError:
                 _logger.warning("Invalid end_cursor for replay: %s", end_cursor.value)
 
         _logger.info(

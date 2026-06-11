@@ -1,32 +1,22 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
 import re
-from dataclasses import dataclass
-from typing import Any, Final
+from typing import Final
 
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.core.config.settings import settings
-from src.backend.core.di.app_state import app_state_singleton
-from src.backend.core.di.providers import get_external_session_manager_provider
 from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.enums.external_db import (
-    ExternalDBObjectChoices,
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
-    ExternalDBParameterMeta,
-    ExternalDBParameterModeChoices,
 )
 from src.backend.core.errors import DatabaseError
-from src.backend.core.logging import get_logger
-
-
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
@@ -45,8 +35,6 @@ _IDENT_RE: Final = re.compile(
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
-
 
 
 class DispatchMixin:
@@ -93,8 +81,6 @@ class DispatchMixin:
             message=f"Неподдерживаемый тип внешнего объекта: {meta.object_type}"
         )
 
-
-
     async def _execute_query(
         self,
         session: AsyncSession,
@@ -112,8 +98,6 @@ class DispatchMixin:
         result = await session.execute(text(meta.sql_text), execute_params)
         return [dict(row) for row in result.mappings().all()]
 
-
-
     async def _execute_view(
         self, session: AsyncSession, meta: ExternalDBObjectMeta
     ) -> list[dict[str, Any]]:
@@ -124,8 +108,6 @@ class DispatchMixin:
         sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # noqa: S608  # internal query with controlled parameters
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
-
-
 
     async def _execute_function(
         self,
@@ -163,8 +145,6 @@ class DispatchMixin:
 
         raise DatabaseError(message=f"Неподдерживаемый тип БД для function: {db_type}")
 
-
-
     async def _execute_procedure(
         self,
         session: AsyncSession,
@@ -198,4 +178,3 @@ class DispatchMixin:
         await session.commit()
 
         return {"status": "ok"}
-

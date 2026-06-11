@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W2 — registers_domains.py part of setup.py decomp.
 
 domain entity registrations (orders, files, dadata, admin, etc.).
@@ -6,14 +7,11 @@ domain entity registrations (orders, files, dadata, admin, etc.).
 Functions: _register_orders, _register_files, _register_skb_api, _register_dadata, _register_tech, _register_admin, _register_servicedsl_auto_register.
 """
 
-from collections.abc import Callable
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
-
-from src.backend.dsl.commands.setup.helpers import _register_crud_actions  # S66 W2: cross-import
-
-
-
+from src.backend.dsl.commands.setup.helpers import (
+    _register_crud_actions,  # S66 W2: cross-import
+)
 
 
 def _register_orders() -> None:
@@ -69,12 +67,10 @@ def _register_orders() -> None:
     )
 
 
-
 def _register_files() -> None:
     from src.backend.services.io.files import get_file_service
 
     _register_crud_actions("files", get_file_service)
-
 
 
 def _register_skb_api() -> None:
@@ -121,7 +117,6 @@ def _register_skb_api() -> None:
     )
 
 
-
 def _register_dadata() -> None:
     from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
     from src.backend.services.integrations.dadata import get_dadata_service
@@ -132,7 +127,6 @@ def _register_dadata() -> None:
         service_method="get_geolocate",
         payload_model=DadataGeolocateQuerySchema,
     )
-
 
 
 def _register_tech() -> None:
@@ -169,7 +163,6 @@ def _register_tech() -> None:
             ),
         ]
     )
-
 
 
 def _register_admin() -> None:
@@ -216,7 +209,6 @@ def _register_admin() -> None:
     )
 
 
-
 def _register_servicedsl_auto_register() -> None:
 
     from src.backend.dsl.service_dsl import (
@@ -232,6 +224,3 @@ def _register_servicedsl_auto_register() -> None:
             "src.backend.services.integrations",
         ]
     )
-
-
-

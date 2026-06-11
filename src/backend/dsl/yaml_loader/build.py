@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S62 W4 — build.py part of yaml_loader decomp.
 
 Funcs: _build_pipeline, _is_allowed_processor, _build_sub, _apply_processor.
@@ -6,15 +7,14 @@ Funcs: _build_pipeline, _is_allowed_processor, _build_sub, _apply_processor.
 pipeline building (build_pipeline + processor gating + sub-pipeline + apply processor).
 """
 
-from pathlib import Path
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()
+
 
 def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
     """Строит Pipeline из распарсенного spec."""
@@ -36,6 +36,7 @@ def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
         _apply_processor(builder, proc_spec)
 
     return builder.build()
+
 
 def _is_allowed_processor(builder: RouteBuilder, name: str) -> bool:
     """Whitelist-проверка имени процессора (A2 / ADR-003).
@@ -66,6 +67,7 @@ def _is_allowed_processor(builder: RouteBuilder, name: str) -> bool:
             return True
     return False
 
+
 def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
     """Строит sub-pipeline из nested-spec'ов через временный ``RouteBuilder``.
 
@@ -87,6 +89,7 @@ def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
     for s in specs:
         _apply_processor(sub_builder, s)
     return list(sub_builder._processors)  # type: ignore[attr-defined]
+
 
 def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
     """Применяет один процессор к builder.
@@ -130,4 +133,3 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
         method(**params)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid params for '{proc_name}': {exc}") from exc
-

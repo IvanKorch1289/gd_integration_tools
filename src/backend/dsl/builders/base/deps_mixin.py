@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
@@ -33,46 +33,6 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
   ``RouteBuilder`` и доступны через ``self``.
 """
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any
-
-from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
-from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
-from src.backend.dsl.builders.ai_rpa import AIRPAMixin
-from src.backend.dsl.builders.batch import BatchMixin
-from src.backend.dsl.builders.collection import CollectionMixin
-from src.backend.dsl.builders.content import ContentMixin
-from src.backend.dsl.builders.content_mixin import EIPContentMixin
-from src.backend.dsl.builders.control_flow import ControlFlowMixin
-from src.backend.dsl.builders.converters import ConvertersMixin
-from src.backend.dsl.builders.converters_mixin import FormatConvertersMixin
-from src.backend.dsl.builders.data_store import DataStoreStepMixin
-from src.backend.dsl.builders.data_store_mixin import DataStoreMixin
-from src.backend.dsl.builders.deferred_execution_mixin import DeferredExecutionMixin
-from src.backend.dsl.builders.eip import EIPMixin
-from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
-from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
-from src.backend.dsl.builders.integration import IntegrationMixin
-from src.backend.dsl.builders.notebook import NotebookMixin
-from src.backend.dsl.builders.request_reply import RequestReplyMixin
-from src.backend.dsl.builders.saga_lra import SagaLRAMixin
-from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
-from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    BaseProcessor,
-    CallableProcessor,
-    LogProcessor,
-    ProcessorCallable,
-    SetHeaderProcessor,
-    SetPropertyProcessor,
-    ValidateProcessor,
-)
-from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
-from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
-from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin
 
 class DepsMixin:
     """dependencies (depends — BIG 45 LOC) для RouteBuilder. S57 W1 extraction."""
@@ -124,4 +84,3 @@ class DepsMixin:
         else:
             last._inject.extend(flat)
         return self
-

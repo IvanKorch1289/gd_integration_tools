@@ -1,27 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Any, Self
-
-from src.backend.dsl.workflow.spec import (
-    ActivityDeclaration,
-    MemoryScope,
-    PauseDeclaration,
-    ResumeDeclaration,
-    RetryPolicy,
-    SagaDeclaration,
-    SensorDeclaration,
-    SignalWaitDeclaration,
-    SleepDeclaration,
-    WorkflowDeclaration,
-    WorkflowStep,
-)
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from src.backend.dsl.workflow.gateways import BranchSpec
+
 
 class GatewayMixin:
     """gateway_xor + gateway_and + gateway_or для WorkflowBuilder. S58 W4 extraction."""
@@ -85,4 +73,3 @@ class GatewayMixin:
         spec = GatewaySpec(kind="or", branches=list(branches))
         self._steps.append(spec)  # type: ignore[arg-type]
         return self
-

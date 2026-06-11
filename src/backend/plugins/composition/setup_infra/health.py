@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S60 W3 — health.py part of setup_infra decomp.
 
 Funcs: _get_watcher_manager, _register_health_checks.
@@ -6,27 +7,15 @@ Funcs: _get_watcher_manager, _register_health_checks.
 health check registration (132 LOC main func + helper).
 """
 
-from asyncio import to_thread
-from inspect import isawaitable
-from typing import Any, Awaitable, Callable
+from typing import Any
 
-from src.backend.infrastructure.clients.external.logger import get_graylog_handler
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
-from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
-from src.backend.infrastructure.database.database import (
-    get_db_initializer,
-    get_external_db_registry,
-)
-from src.backend.infrastructure.decorators.caching import close_caches
+from src.backend.infrastructure.database.database import get_db_initializer
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")
-
-
-
 
 
 def _get_watcher_manager():
@@ -34,7 +23,6 @@ def _get_watcher_manager():
     from src.backend.entrypoints.filewatcher.watcher_manager import watcher_manager
 
     return watcher_manager
-
 
 
 async def _register_health_checks() -> None:
@@ -169,6 +157,3 @@ async def _register_health_checks() -> None:
     app_logger.info(
         "Health checks registered: redis, database, s3, clickhouse, kafka, nats"
     )
-
-
-

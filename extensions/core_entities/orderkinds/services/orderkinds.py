@@ -26,9 +26,7 @@ from src.backend.services.integrations.skb import APISKBService, get_skb_service
 __all__ = ("OrderKindService", "get_order_kind_service")
 
 
-_REPO_ORDERKINDS_MOD = (
-    "extensions.core_entities.orderkinds.repositories.orderkinds"
-)
+_REPO_ORDERKINDS_MOD = "extensions.core_entities.orderkinds.repositories.orderkinds"
 
 
 class OrderKindService(

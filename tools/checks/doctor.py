@@ -74,7 +74,10 @@ def check_uv_available(report: DoctorReport) -> None:
     """uv установлен в PATH."""
     try:
         proc = subprocess.run(
-            ["uv", "--version"], capture_output=True, text=True, timeout=5  # noqa: S607  # PATH-managed executable (partial path intentional)
+            ["uv", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,  # noqa: S607  # PATH-managed executable (partial path intentional)
         )
         report.add("uv-binary", proc.returncode == 0, proc.stdout.strip())
     except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
@@ -101,7 +104,7 @@ def _tcp_ping(host: str, port: int, timeout: float = 1.0) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
-    except (OSError, socket.timeout):
+    except OSError, socket.timeout:
         return False
 
 

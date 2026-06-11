@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Enrichment processors package (S61 W2 decomp from enrichment.py 523 LOC).
 
 8 processor classes decomposed в 5 files (per enrichment type):
@@ -12,14 +13,24 @@ Backward-compat: ``from src.backend.dsl.engine.processors.enrichment import GeoI
 """
 
 
-from src.backend.dsl.engine.processors.enrichment.geo_ip import GeoIpProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.jwt import JwtSignProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.jwt import JwtVerifyProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.compression import CompressProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.compression import DecompressProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.webhook import WebhookSignProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.webhook import WebhookSignVerifyProcessor  # S61 W2: re-export
-from src.backend.dsl.engine.processors.enrichment.deadline import DeadlineProcessor  # S61 W2: re-export
+from src.backend.dsl.engine.processors.enrichment.compression import (
+    CompressProcessor,  # S61 W2: re-export
+    DecompressProcessor,  # S61 W2: re-export
+)
+from src.backend.dsl.engine.processors.enrichment.deadline import (
+    DeadlineProcessor,  # S61 W2: re-export
+)
+from src.backend.dsl.engine.processors.enrichment.geo_ip import (
+    GeoIpProcessor,  # S61 W2: re-export
+)
+from src.backend.dsl.engine.processors.enrichment.jwt import (
+    JwtSignProcessor,  # S61 W2: re-export
+    JwtVerifyProcessor,  # S61 W2: re-export
+)
+from src.backend.dsl.engine.processors.enrichment.webhook import (
+    WebhookSignProcessor,  # S61 W2: re-export
+    WebhookSignVerifyProcessor,  # S61 W2: re-export
+)
 
 __all__ = (
     "GeoIpProcessor",

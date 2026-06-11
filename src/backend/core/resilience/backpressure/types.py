@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S67 W1 - types.py part of backpressure decomp.
 
 core types (protocol + state dataclass).
@@ -6,16 +7,14 @@ core types (protocol + state dataclass).
 Classes: ConsumerControlProtocol, BackpressureState.
 """
 
-import asyncio
 import time
-from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
-
-from src.backend.core.logging import get_logger
+from dataclasses import field
+from typing import Protocol
 
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
+
 
 class ConsumerControlProtocol(Protocol):
     """Контракт для consumer'ов с pause/resume.
@@ -31,6 +30,7 @@ class ConsumerControlProtocol(Protocol):
     async def resume(self) -> None:
         """Возобновить consumer."""
         ...
+
 
 class BackpressureState:
     """Текущее состояние backpressure.
@@ -53,4 +53,3 @@ class BackpressureState:
         if self.queue_limit <= 0:
             return 0.0
         return self.queue_size / self.queue_limit
-

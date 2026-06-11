@@ -205,10 +205,3 @@ invoker:
     - "background"
     - "streaming"
   streaming_chunk_buffer_size: 16
-
-
-taskiq:
-  enabled: false
-  broker_url: "memory://"
-  result_backend_url: "memory://"
-  queue_name: "invocations.dev_light"

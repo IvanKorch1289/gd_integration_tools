@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 from collections.abc import Awaitable, Callable, Sequence
 from inspect import Parameter
-from typing import Any
 
 from fastapi import APIRouter, Request, status
 from fastapi_filter import FilterDepends
@@ -30,6 +29,18 @@ from pydantic import BaseModel
 from src.backend.core.enums.ordering import OrderingTypeChoices
 from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
+    QueryMixin,  # S58 W1: MRO
+)
+from src.backend.entrypoints.api.generator.actions.crud.read_mixin import (
+    ReadMixin,  # S58 W1: MRO
+)
+from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import (
+    VersioningMixin,  # S58 W1: MRO
+)
+from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (
+    WriteMixin,  # S58 W1: MRO
+)
 from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint
 from src.backend.entrypoints.api.generator.reflection import (
     body_parameter,
@@ -45,23 +56,10 @@ from src.backend.entrypoints.api.generator.specs import (
     RouteDecorator,
 )
 
-
-
-
-from src.backend.entrypoints.api.generator.actions.crud.read_mixin import ReadMixin  # S58 W1: MRO
-from src.backend.entrypoints.api.generator.actions.crud.write_mixin import WriteMixin  # S58 W1: MRO
-from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import VersioningMixin  # S58 W1: MRO
-from src.backend.entrypoints.api.generator.actions.crud.query_mixin import QueryMixin  # S58 W1: MRO
-
 __all__ = ("CrudMixin",)
 
 
-class CrudMixin(
-    ReadMixin,
-    WriteMixin,
-    VersioningMixin,
-    QueryMixin,
-):
+class CrudMixin(ReadMixin, WriteMixin, VersioningMixin, QueryMixin):
     """CRUD action mixin (4 mixins = 13 methods + 1 core)."""
 
     __slots__ = ()
@@ -137,4 +135,3 @@ class CrudMixin(
                 payload_model=input_model,
             )
         return action_id
-

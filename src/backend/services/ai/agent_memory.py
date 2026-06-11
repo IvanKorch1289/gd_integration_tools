@@ -58,6 +58,9 @@ class AgentMemoryService:
         # Wave 6.3: lazy-провайдер вместо direct infrastructure import.
         # Реальная фабрика резолвится в момент первого вызова `_client()`.
         self._client_factory = client_factory
+        # Periodic trim: avoid O(N) count+find+delete on every add_message.
+        self._trim_interval = max(1, self._max_messages // 2)
+        self._trim_counter = 0
 
     def _client(self) -> MongoClientProtocol:
         factory = self._client_factory or get_mongo_client_provider()
@@ -119,22 +122,28 @@ class AgentMemoryService:
             **(metadata or {}),
         }
         await client.insert_one(_MESSAGES, doc)
-        # Trim до max_messages — оставляем только N последних.
-        cnt = await client.count(_MESSAGES, {"session_id": session_id})
-        if cnt > self._max_messages:
-            keep_ts_doc = await client.find(
-                _MESSAGES,
-                query={"session_id": session_id},
-                projection={"ts": 1, "_id": 0},
-                limit=1,
-                skip=cnt - self._max_messages,
-                sort=[("ts", 1)],
+        # Periodic trim: run only every ~N inserts to avoid O(N) overhead.
+        self._trim_counter += 1
+        if self._trim_counter >= self._trim_interval:
+            await self._trim_messages(session_id)
+            self._trim_counter = 0
+
+    async def _trim_messages(self, session_id: str) -> None:
+        """Удаляет излишние сообщения, оставляя только _max_messages последних."""
+        client = self._client()
+        keep_doc = await client.find(
+            _MESSAGES,
+            query={"session_id": session_id},
+            projection={"ts": 1, "_id": 0},
+            limit=1,
+            skip=self._max_messages,
+            sort=[("ts", 1)],
+        )
+        if keep_doc:
+            cutoff = keep_doc[0]["ts"]
+            await client.collection(_MESSAGES).delete_many(
+                {"session_id": session_id, "ts": {"$lt": cutoff}}
             )
-            if keep_ts_doc:
-                cutoff = keep_ts_doc[0]["ts"]
-                await client.collection(_MESSAGES).delete_many(
-                    {"session_id": session_id, "ts": {"$lt": cutoff}}
-                )
 
     async def clear_conversation(self, session_id: str) -> None:
         client = self._client()

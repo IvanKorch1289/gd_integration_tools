@@ -3,22 +3,17 @@
 Classes: TryCatchProcessor, _RetryAbort, RetryProcessor.
 Funcs: .
 """
+
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 _cf_logger = get_logger("dsl.control_flow")
-
-
 
 
 class TryCatchProcessor(BaseProcessor):
@@ -91,13 +86,11 @@ class TryCatchProcessor(BaseProcessor):
         return {"do_try": spec}
 
 
-
 class _RetryAbort(Exception):
     """Внутренний маркер для tenacity — извлекаем error из Exchange."""
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
-
 
 
 class RetryProcessor(BaseProcessor):
@@ -183,7 +176,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except (RetryError, _RetryAbort):
+        except RetryError, _RetryAbort:
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
@@ -207,6 +200,3 @@ class RetryProcessor(BaseProcessor):
         if self._jitter > 0:
             spec["jitter_seconds"] = self._jitter
         return {"retry": spec}
-
-
-

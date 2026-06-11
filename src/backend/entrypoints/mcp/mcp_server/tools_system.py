@@ -21,9 +21,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── system tools (_register_system_tools) ──
+
 
 def _register_system_tools(mcp: Any) -> None:
     """Tools для мониторинга и управления системой."""
@@ -98,4 +97,3 @@ def _register_system_tools(mcp: Any) -> None:
         return encode_json({"disabled_flags": list(disabled_feature_flags)}).decode(
             "utf-8"
         )
-

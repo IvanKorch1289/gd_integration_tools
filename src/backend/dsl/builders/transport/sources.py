@@ -228,4 +228,3 @@ class SourcesMixin:
                 result_property=result_property,
             )
         )
-

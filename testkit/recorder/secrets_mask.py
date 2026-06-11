@@ -99,9 +99,7 @@ def mask_response_headers(headers: dict[str, str] | None) -> dict[str, str]:
 
 
 def mask_request_body(
-    body: str | bytes | None,
-    *,
-    content_type: str | None = None,
+    body: str | bytes | None, *, content_type: str | None = None
 ) -> str | None:
     """Возвращает body с замаскированными секретными полями.
 
@@ -140,7 +138,7 @@ def mask_request_body(
     if "application/json" in ct or text.lstrip()[:1] in {"{", "["}:
         try:
             parsed = json.loads(text)
-        except (json.JSONDecodeError, ValueError):
+        except json.JSONDecodeError, ValueError:
             return text
         return json.dumps(_mask_json_value(parsed), ensure_ascii=False)
 

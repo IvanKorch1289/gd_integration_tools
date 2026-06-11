@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S61 W2 — compression.py part of enrichment decomp.
 
 Classes: CompressProcessor, DecompressProcessor.
@@ -6,13 +7,12 @@ Classes: CompressProcessor, DecompressProcessor.
 compression + decompression.
 """
 
-import time
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
 
 class CompressProcessor(BaseProcessor):
     """Compress body через gzip/brotli/zstd.
@@ -73,6 +73,7 @@ class CompressProcessor(BaseProcessor):
             spec["level"] = self._level
         return {"compress": spec}
 
+
 class DecompressProcessor(BaseProcessor):
     """Decompress body (auto-detect или указанный algorithm)."""
 
@@ -123,4 +124,3 @@ class DecompressProcessor(BaseProcessor):
         if self._algo != "auto":
             spec["algorithm"] = self._algo
         return {"decompress": spec}
-

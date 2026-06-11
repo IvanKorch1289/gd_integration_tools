@@ -74,8 +74,6 @@ def _el_to_dict(el: ET.Element) -> Any:
     return out
 
 
-
-
 from src.backend.dsl.engine.processors.format_convert._helpers import (
     _to_text,  # S53 W1: shared helper
 )
@@ -107,20 +105,14 @@ class DataFormatsMixin:
             writer.writerow({k: row.get(k, "") for k in cols})
         return buf.getvalue()
 
-
-
     def _from_csv(self, data: Any) -> list[dict[str, str]]:
         text = _to_text(data)
         if not text:
             return []
         return list(csv.DictReader(io.StringIO(text)))
 
-
-
     def _to_xml(self, data: Any) -> str:
         return _dict_to_xml_stdlib(data, root=self.root_tag)
-
-
 
     def _from_xml(self, data: Any) -> dict[str, Any]:
         text = _to_text(data)
@@ -136,8 +128,6 @@ class DataFormatsMixin:
         except ImportError:
             return _xml_to_dict_stdlib(text)
 
-
-
     def _to_yaml(self, data: Any) -> str:
         try:
             import yaml
@@ -145,8 +135,6 @@ class DataFormatsMixin:
             return yaml.dump(data, default_flow_style=False, allow_unicode=True)
         except ImportError:
             return json.dumps(data, default=str, ensure_ascii=False)
-
-
 
     def _from_yaml(self, data: Any) -> Any:
         text = _to_text(data)
@@ -158,8 +146,6 @@ class DataFormatsMixin:
             return yaml.safe_load(text) or {}
         except ImportError:
             return json.loads(text)
-
-
 
     def _to_excel(self, data: Any) -> bytes:
         import openpyxl
@@ -177,8 +163,6 @@ class DataFormatsMixin:
         buf = io.BytesIO()
         wb.save(buf)
         return buf.getvalue()
-
-
 
     def _from_excel(self, data: Any) -> list[dict[str, Any]]:
         import openpyxl
@@ -201,8 +185,6 @@ class DataFormatsMixin:
             out.append({h: v for h, v in zip(hdrs, r, strict=False)})
         return out
 
-
-
     def _to_parquet(self, data: Any) -> bytes:
         try:
             import pyarrow as pa
@@ -219,8 +201,6 @@ class DataFormatsMixin:
         pq.write_table(table, buf, compression=self.compression)
         return buf.getvalue()
 
-
-
     def _from_parquet(self, data: Any) -> list[dict[str, Any]]:
         try:
             import pyarrow.parquet as pq
@@ -236,8 +216,6 @@ class DataFormatsMixin:
             table = pq.read_table(data)
         return table.to_pylist()
 
-
-
     def _to_msgpack(self, data: Any) -> bytes:
         try:
             import msgpack
@@ -250,8 +228,6 @@ class DataFormatsMixin:
             import pickle
 
             return pickle.dumps(data)
-
-
 
     def _from_msgpack(self, data: Any) -> Any:
         if isinstance(data, (bytes, bytearray)):
@@ -270,8 +246,6 @@ class DataFormatsMixin:
 
             return pickle.loads(raw)  # noqa: S301 — см. комментарий выше
 
-
-
     def _to_toml(self, data: Any) -> str:
         if not isinstance(data, dict):
             raise ValueError("to_toml requires dict at body")
@@ -283,8 +257,6 @@ class DataFormatsMixin:
             raise ImportError(
                 "to_toml requires 'tomli_w' (pip install tomli_w)"
             ) from exc
-
-
 
     def _from_toml(self, data: Any) -> dict[str, Any]:
         text = _to_text(data)
@@ -300,8 +272,6 @@ class DataFormatsMixin:
                     "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'"
                 ) from exc
         return tomllib.loads(text)
-
-
 
     def _to_ini(self, data: Any) -> str:
         import configparser
@@ -320,8 +290,6 @@ class DataFormatsMixin:
         cp.write(buf)
         return buf.getvalue()
 
-
-
     def _from_ini(self, data: Any) -> dict[str, Any]:
         import configparser
 
@@ -337,4 +305,3 @@ class DataFormatsMixin:
         if defaults:
             out["DEFAULT"] = defaults
         return out
-

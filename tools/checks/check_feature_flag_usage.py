@@ -53,7 +53,10 @@ def _find_unused(flags: set[str], search_roots: list[Path]) -> set[str]:
             try:
                 text = f.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError) as exc:  # noqa: S112  # dev-tool: skip unreadable/binary files
-                print(f"[check_feature_flag_usage] skip {f}: {type(exc).__name__}: {exc}", file=__import__("sys").stderr)
+                print(
+                    f"[check_feature_flag_usage] skip {f}: {type(exc).__name__}: {exc}",
+                    file=__import__("sys").stderr,
+                )
                 continue
             for flag in flags:
                 if flag in text:

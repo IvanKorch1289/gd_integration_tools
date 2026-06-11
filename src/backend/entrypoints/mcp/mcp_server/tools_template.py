@@ -23,9 +23,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── template tools (_register_template_tools) ──
+
 
 def _register_template_tools(mcp: Any) -> None:
     """Tools для работы с шаблонами Pipeline."""
@@ -56,7 +55,7 @@ def _register_template_tools(mcp: Any) -> None:
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:
@@ -113,4 +112,3 @@ def _register_template_tools(mcp: Any) -> None:
                     }
                 )
         return encode_json(result).decode("utf-8")
-

@@ -41,8 +41,6 @@ class APIDocsChecksMixin:
             )
         ]
 
-
-
     def _check_redoc_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:
         """ReDoc UI в production раскрывает структуру API наружу."""
         if not self._is_prod(app):
@@ -62,8 +60,6 @@ class APIDocsChecksMixin:
                 context={"environment": app.environment},
             )
         ]
-
-
 
     def _check_admin_without_ips(
         self, app: AppBaseSettings, secure: SecureSettings
@@ -94,4 +90,3 @@ class APIDocsChecksMixin:
                 },
             )
         ]
-

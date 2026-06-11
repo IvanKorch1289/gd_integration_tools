@@ -91,7 +91,9 @@ def test_no_args_passes_through() -> None:
 def test_kwarg_only_passes_through() -> None:
     sl, inner = _new_logger()
     sl.info("Order created", order_id=123, tenant_id="t-1")
-    assert inner.calls == [("info", "Order created", {"order_id": 123, "tenant_id": "t-1"})]
+    assert inner.calls == [
+        ("info", "Order created", {"order_id": 123, "tenant_id": "t-1"})
+    ]
 
 
 # ---------------------------------------------------------------------- exception
@@ -116,7 +118,11 @@ def test_exception_with_extra_kwargs() -> None:
     sl, inner = _new_logger()
     sl.exception("Redis %s down", "node-3", host="redis-1", port=6379)
     assert inner.calls == [
-        ("exception", "Redis node-3 down", {"host": "redis-1", "port": 6379, "exc_info": True})
+        (
+            "exception",
+            "Redis node-3 down",
+            {"host": "redis-1", "port": 6379, "exc_info": True},
+        )
     ]
 
 
@@ -128,7 +134,9 @@ def test_unparseable_format_passes_args_as_kwarg() -> None:
     sl, inner = _new_logger()
     sl.warning("plain text with extra", "arg1", "arg2")
     # msg не имеет %-placeholders → TypeError → args записываются в kwargs
-    assert inner.calls == [("warning", "plain text with extra", {"args": ["arg1", "arg2"]})]
+    assert inner.calls == [
+        ("warning", "plain text with extra", {"args": ["arg1", "arg2"]})
+    ]
 
 
 def test_typing_format_passes_through() -> None:
@@ -203,7 +211,13 @@ def test_all_levels_support_positional_args() -> None:
     sl.warning("w %s", 3)
     sl.error("e %s", 4)
     sl.exception("x %s", 5)
-    assert [c[0] for c in inner.calls] == ["debug", "info", "warning", "error", "exception"]
+    assert [c[0] for c in inner.calls] == [
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "exception",
+    ]
     assert [c[1] for c in inner.calls] == ["d 1", "i 2", "w 3", "e 4", "x 5"]
 
 

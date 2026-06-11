@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         from typer.testing import CliRunner
 
         return CliRunner().invoke(app_main, _sys.argv[1:]).exit_code or 0
-    except (ImportError, SystemExit):
+    except ImportError, SystemExit:
         return 0
 
 
@@ -224,8 +224,7 @@ console_err = Console(stderr=True, style="red")
 @app.command()
 def app_main(
     paths: list[Path] = typer.Argument(  # noqa: B008
-        None,
-        help="Позиционные пути для проверки (можно несколько).",
+        None, help="Позиционные пути для проверки (можно несколько)."
     ),
     files: Optional[list[str]] = typer.Option(
         None,
@@ -236,14 +235,10 @@ def app_main(
         ),
     ),
     update_allowlist: bool = typer.Option(
-        False,
-        "--update-allowlist",
-        help="Перезаписать allowlist.",
+        False, "--update-allowlist", help="Перезаписать allowlist."
     ),
     strict: bool = typer.Option(
-        False,
-        "--strict",
-        help="Игнорировать allowlist; любое нарушение → exit 1.",
+        False, "--strict", help="Игнорировать allowlist; любое нарушение → exit 1."
     ),
 ) -> None:
     """Точка входа CLI (typer)."""

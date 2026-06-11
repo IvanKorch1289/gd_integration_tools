@@ -1,18 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import uuid
-from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
-from typing import Any
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.security.authorization_gateway")
+
 
 class OpaMixin:
     """OPA (Open Policy Agent) step для AuthorizationGateway. S60 W4 extraction."""
@@ -63,7 +60,9 @@ class OpaMixin:
             try:
                 from src.backend.core.feature_flags import get_feature_flag_service
 
-                if not get_feature_flag_service().is_enabled("opa_runtime_query_enabled"):
+                if not get_feature_flag_service().is_enabled(
+                    "opa_runtime_query_enabled"
+                ):
                     return AuthorizationReason(
                         source="opa",
                         outcome="allow",
@@ -99,4 +98,3 @@ class OpaMixin:
 
         _step.__name__ = "opa_step"
         return _step
-

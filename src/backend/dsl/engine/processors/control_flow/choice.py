@@ -3,22 +3,18 @@
 Classes: ChoiceBranch, ChoiceProcessor.
 Funcs: _normalize_choice_branches.
 """
+
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 _cf_logger = get_logger("dsl.control_flow")
-
-
 
 
 class ChoiceBranch:
@@ -49,7 +45,6 @@ class ChoiceBranch:
         import jmespath
 
         return bool(jmespath.search(self.expr, exchange.in_message.body))
-
 
 
 class ChoiceProcessor(BaseProcessor):
@@ -117,7 +112,6 @@ class ChoiceProcessor(BaseProcessor):
         return {"choice": result}
 
 
-
 def _normalize_choice_branches(
     when: list[ChoiceBranch]
     | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
@@ -135,6 +129,3 @@ def _normalize_choice_branches(
         else:
             raise ValueError(f"Invalid choice-branch spec: {item!r}")
     return branches
-
-
-

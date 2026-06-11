@@ -33,26 +33,6 @@ class ResilienceFlags(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
-    auto_scaler_process_level: bool = Field(
-        default=False,
-        title="Resilience: Granian dynamic workers (SIGUSR1 → fork)",
-        description=(
-            "K3 Wave 3. Owner: K3 Resilience. ETA: S2-W3. "
-            "Активирует уровень 1 auto-scaler (process-level). "
-            "default-OFF до проверки SIGUSR1 поведения на staging."
-        ),
-    )
-
-    auto_scaler_task_level: bool = Field(
-        default=False,
-        title="Resilience: asyncio Bulkhead HighWatermark/LowWatermark",
-        description=(
-            "K3 Wave 3. Owner: K3 Resilience. ETA: S2-W3. "
-            "Активирует уровень 2 auto-scaler (task-level). "
-            "default-OFF до chaos-теста с back-pressure."
-        ),
-    )
-
     k8s_hpa_exporter: bool = Field(
         default=False,
         title="K2: Prometheus k8s HPA exporter (container-level auto-scaler)",

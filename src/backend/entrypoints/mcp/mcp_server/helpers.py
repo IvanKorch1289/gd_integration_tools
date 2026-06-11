@@ -23,9 +23,8 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 logger = get_logger(__name__)
 
 
-
-
 # ── shared helpers (action input schema, authz check, single tool registration) ──
+
 
 def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
     """Извлекает JSON-Schema payload-модели action'а.
@@ -44,7 +43,6 @@ def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
         return metadata.input_model.model_json_schema()
     except Exception as _:
         return None
-
 
 
 def _register_single_tool(mcp: Any, action_name: str) -> None:
@@ -88,7 +86,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -109,7 +107,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -123,7 +121,6 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
             return encode_json(result).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
-
 
 
 def _check_mcp_tool_authz(action_name: str) -> str | None:
@@ -182,4 +179,3 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
         return "capability_check_failed"
 
     return "not_in_allowlist_or_public_ns"
-

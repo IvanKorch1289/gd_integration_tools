@@ -43,12 +43,7 @@ import yaml
 from testkit.recorder._har import HARCassette, HAREntry, HARRecorder
 from testkit.recorder.secrets_mask import mask_request_body, mask_response_headers
 
-__all__ = (
-    "cassette",
-    "load_cassette",
-    "save_cassette",
-    "CassetteMode",
-)
+__all__ = ("cassette", "load_cassette", "save_cassette", "CassetteMode")
 
 CassetteMode = Literal["auto", "record", "replay"]
 
@@ -56,10 +51,7 @@ CassetteMode = Literal["auto", "record", "replay"]
 def save_cassette(path: Path, cas: HARCassette) -> None:
     """Сериализует cassette в YAML."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = {
-        "version": "1.0",
-        "entries": [asdict(entry) for entry in cas.entries],
-    }
+    data = {"version": "1.0", "entries": [asdict(entry) for entry in cas.entries]}
     path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
 
 
@@ -80,9 +72,7 @@ class _ReplayTransport(httpx.AsyncBaseTransport):
             (e.method.upper(), e.url): e for e in cas.entries
         }
 
-    async def handle_async_request(
-        self, request: httpx.Request
-    ) -> httpx.Response:
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Возвращает записанный ответ или 599 'cassette miss'."""
         key = (request.method.upper(), str(request.url))
         entry = self._map.get(key)
@@ -115,16 +105,11 @@ def _client_param_name(fn: Callable) -> str:
     for name in sig.parameters:
         if name not in {"self", "cls"}:
             return name
-    raise TypeError(
-        f"@cassette: функция {fn.__name__} не имеет параметра для client"
-    )
+    raise TypeError(f"@cassette: функция {fn.__name__} не имеет параметра для client")
 
 
 def cassette(
-    path: str | Path,
-    *,
-    mode: CassetteMode = "auto",
-    mask_secrets: bool = True,
+    path: str | Path, *, mode: CassetteMode = "auto", mask_secrets: bool = True
 ) -> Callable:
     """Декоратор @cassette — оборачивает тест в record/replay HTTP.
 
@@ -222,9 +207,7 @@ def _build_sync_handler(cas: HARCassette):
             return httpx.Response(599, json={"error": "cassette_miss"})
         body = (entry.response_body or "").encode("utf-8")
         return httpx.Response(
-            entry.status,
-            content=body,
-            headers=entry.response_headers,
+            entry.status, content=body, headers=entry.response_headers
         )
 
     return _handler

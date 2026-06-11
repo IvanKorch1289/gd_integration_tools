@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
-import json
-import uuid
-from typing import Any
 
-import httpx
-
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
-from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
 from src.backend.infrastructure.logging.factory import get_logger
 
 _logger = get_logger("services.jupyter.execution")
+
 
 class CoreMixin:
     """public execute_notebook entry (78 LOC, BIG) для NotebookExecutionService. S60 W1 extraction."""
@@ -72,7 +66,9 @@ class CoreMixin:
 
             server_url = server.url if server else ""
             if not server_url:
-                raise JupyterExecutionError(f"Server URL unavailable for user={user_name}")
+                raise JupyterExecutionError(
+                    f"Server URL unavailable for user={user_name}"
+                )
 
             # 2. Upload notebook
             await self._upload_notebook(
@@ -83,7 +79,9 @@ class CoreMixin:
             session = await self._create_session(server_url, notebook_path)
             kernel_id = session.get("kernel", {}).get("id")
             if not kernel_id:
-                raise JupyterExecutionError("Kernel ID not returned from session creation")
+                raise JupyterExecutionError(
+                    "Kernel ID not returned from session creation"
+                )
 
             # 4. Execute cells
             results: list[dict[str, Any]] = []
@@ -100,4 +98,3 @@ class CoreMixin:
                 pass
 
             return results
-

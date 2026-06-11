@@ -58,11 +58,7 @@ def _parse_adr(path: Path) -> dict[str, str] | None:
 
     # Sprint: первое "S## W##" в status line (e.g., "S40 W1" или "Sprint 40 W1")
     sprint_m = _SPRINT_RE.search(status)
-    sprint = (
-        f"S{sprint_m.group(1)} W{sprint_m.group(2)}"
-        if sprint_m
-        else "—"
-    )
+    sprint = f"S{sprint_m.group(1)} W{sprint_m.group(2)}" if sprint_m else "—"
 
     return {
         "slot": slot,

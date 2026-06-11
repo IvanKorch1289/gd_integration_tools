@@ -4,21 +4,24 @@
 S29 W1: pip-audit 2.10.0 always exits 0 even with vulnerabilities.
 This wrapper parses JSON output and enforces the gate properly.
 """
+
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
 
-IGNORED_VULNS: frozenset[str] = frozenset([
-    # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache now uses JSONDisk
-    # instead of default pickle-based Disk (s19 diskcache upgrade).
-    # pip-audit checks package VERSION, not usage pattern — CVE stays in ignore.
-    "CVE-2025-69872",  # diskcache: no fix version available (MITIGATED via JSONDisk)
-    # S29 W2 carryover — dependency constraint, NOT unfixable:
-    "PYSEC-2026-87",   # lxml: fix 6.1.0 available but no Python 3.14 wheels
-    # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
-])
+IGNORED_VULNS: frozenset[str] = frozenset(
+    [
+        # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache now uses JSONDisk
+        # instead of default pickle-based Disk (s19 diskcache upgrade).
+        # pip-audit checks package VERSION, not usage pattern — CVE stays in ignore.
+        "CVE-2025-69872",  # diskcache: no fix version available (MITIGATED via JSONDisk)
+        # S29 W2 carryover — dependency constraint, NOT unfixable:
+        "PYSEC-2026-87",  # lxml: fix 6.1.0 available but no Python 3.14 wheels
+        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
+    ]
+)
 
 
 def main() -> None:
@@ -43,13 +46,17 @@ def main() -> None:
             if vuln_id in IGNORED_VULNS:
                 print(f"IGNORED: {dep['name']} {vuln_id}")
                 continue
-            print(f"VULN: {dep['name']} {vuln_id} — fix available: {vuln.get('fix_versions', [])}")
+            print(
+                f"VULN: {dep['name']} {vuln_id} — fix available: {vuln.get('fix_versions', [])}"
+            )
             vuln_count += 1
             if dep["name"] not in vuln_packages:
                 vuln_packages.append(dep["name"])
 
     if vuln_count > 0:
-        print(f"\nFAIL: {vuln_count} unignored vulnerabilities in {len(vuln_packages)} packages")
+        print(
+            f"\nFAIL: {vuln_count} unignored vulnerabilities in {len(vuln_packages)} packages"
+        )
         print("Update dependencies to fix versions to pass the gate.")
         sys.exit(1)
 

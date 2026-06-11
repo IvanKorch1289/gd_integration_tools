@@ -50,8 +50,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
     # ── Обязательные параметры (при enabled=True) ──
 
     enabled: bool = Field(
-        default=False,
-        description="Включить интеграцию с JupyterHub.",
+        default=False, description="Включить интеграцию с JupyterHub."
     )
 
     base_url: str = Field(
@@ -104,8 +103,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
     )
 
     ssl_verify: bool = Field(
-        default=True,
-        description="Проверять TLS-сертификат сервера.",
+        default=True, description="Проверять TLS-сертификат сервера."
     )
 
     # ── Jupyter-специфичные параметры ──

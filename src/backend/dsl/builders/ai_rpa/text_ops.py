@@ -21,9 +21,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 
-
-
-
 class TextOpsMixin:
     """text utilities (regex / templates / hash / encrypt / decrypt) для ``RouteBuilder``. S52 W1 extraction."""
 
@@ -46,8 +43,6 @@ class TextOpsMixin:
             replacement=replacement,
         )
 
-
-
     def render_template(self, template: str) -> RouteBuilder:
         """Рендеринг Jinja2-шаблона.
 
@@ -60,8 +55,6 @@ class TextOpsMixin:
             template=template,
         )
 
-
-
     def hash(self, *, algorithm: str = "sha256") -> RouteBuilder:
         """Хеширование тела сообщения.
 
@@ -73,8 +66,6 @@ class TextOpsMixin:
             algorithm=algorithm,
         )
 
-
-
     def encrypt(self, key: str) -> RouteBuilder:
         """Шифрование тела сообщения (AES-GCM).
 
@@ -84,8 +75,6 @@ class TextOpsMixin:
             "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
         )
 
-
-
     def decrypt(self, key: str) -> RouteBuilder:
         """Дешифрование AES-GCM-сообщения.
 
@@ -94,4 +83,3 @@ class TextOpsMixin:
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
         )
-

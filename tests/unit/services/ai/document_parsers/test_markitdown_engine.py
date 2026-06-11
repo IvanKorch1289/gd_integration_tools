@@ -55,13 +55,13 @@ class TestConvert:
 
 class TestTimeout:
     async def test_long_running_convert_raises_timeout(self) -> None:
-        engine = MarkitdownEngine(timeout_s=1)
+        engine = MarkitdownEngine(timeout_s=0.01)
         mock_md = MagicMock()
 
         def _slow(path):
             import time
 
-            time.sleep(2)
+            time.sleep(0.1)
             return MagicMock(text_content="late")
 
         mock_md.convert.side_effect = _slow

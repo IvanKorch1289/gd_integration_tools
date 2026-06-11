@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S66 W1 — store.py part of event_store decomp.
 
 event store (EventStore ABC + InMemoryEventStore impl).
@@ -7,28 +8,18 @@ Classes: EventStore, InMemoryEventStore.
 """
 
 import threading
-import time
-import uuid
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-
 from src.backend.dsl.processors.event_store.types import Event  # S66 W1: cross-import
 
-
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
+
 
 class EventStore(Protocol):
     """Protocol для event store (DI-friendly)."""
@@ -40,6 +31,7 @@ class EventStore(Protocol):
     def replay(
         self, projection: "Projection", *, since_timestamp: float | None = None
     ) -> None: ...
+
 
 class InMemoryEventStore:
     """Thread-safe in-memory append-only event store.
@@ -97,4 +89,3 @@ class InMemoryEventStore:
         for ev in events:
             if since_timestamp is None or ev.timestamp >= since_timestamp:
                 projection.apply(ev)
-

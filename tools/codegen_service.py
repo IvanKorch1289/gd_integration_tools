@@ -123,7 +123,9 @@ def app_main(
         "{}", "--fields", help='JSON {"field":"py_type"} для Create/Update схем'
     ),
     model_class: str | None = typer.Option(
-        None, "--model-class", help="имя SQLAlchemy-модели (default: PascalCase singular)"
+        None,
+        "--model-class",
+        help="имя SQLAlchemy-модели (default: PascalCase singular)",
     ),
     overwrite: bool = typer.Option(
         False, "--overwrite", help="разрешить перезапись существующих"

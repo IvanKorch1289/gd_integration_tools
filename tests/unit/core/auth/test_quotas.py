@@ -96,6 +96,7 @@ class TestQuotaCheckMiddleware:
         scope = {"type": "http", "path": "/api", "headers": [(b"x-tenant-id", b"t1")]}
         await mw(scope, MagicMock(), send)
         app.assert_not_awaited()
+        service.consume_request.assert_awaited_once_with("t1")
         assert send.await_count == 2
         start_call = send.await_args_list[0][0][0]
         assert start_call["status"] == 429

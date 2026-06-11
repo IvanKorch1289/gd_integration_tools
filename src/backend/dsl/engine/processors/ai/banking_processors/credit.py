@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """S59 W1 — credit.py part of banking_processors decomp.
 
 Classes: CreditScoreProcessor.
@@ -6,26 +7,23 @@ Classes: CreditScoreProcessor.
 Credit score processor.
 """
 
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
-from src.backend.dsl.engine.processors.ai.banking_processors.base import _BankingAIProcessor  # S59 W1: base for processors
-from src.backend.dsl.engine.processors.ai.banking_processors.results import CreditScoreResult  # S59 W1: result schema
-
-
+from src.backend.dsl.engine.processors.ai.banking_processors.base import (
+    _BankingAIProcessor,  # S59 W1: base for processors
+)
+from src.backend.dsl.engine.processors.ai.banking_processors.results import (
+    CreditScoreResult,  # S59 W1: result schema
+)
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 _logger = get_logger("dsl.processors.ai.banking")
 
 # ─── Pydantic schemas for structured output ─────────────────────────────────
+
 
 class CreditScoreProcessor(_BankingAIProcessor):
     """Кредитный скоринг — оценка кредитного балла и решения.
@@ -64,4 +62,3 @@ class CreditScoreProcessor(_BankingAIProcessor):
 - risk_factors: list[str] — выявленные факторы риска
 
 Отвечай ТОЛЬКО валидным JSON, соответствующим схеме."""
-

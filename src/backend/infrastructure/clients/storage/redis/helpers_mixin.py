@@ -1,34 +1,25 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-import asyncio
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timedelta
-from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
-    ClientCircuitBreaker,
-)
+from src.backend.infrastructure.resilience.client_breaker import CircuitOpen
 
 redis_logger = get_logger("redis")
 
 
-
 RedisKind = Literal["cache", "queue", "limits"]
-
-
 
 
 class HelpersMixin:
@@ -66,19 +57,13 @@ class HelpersMixin:
             self.logger.warning("Redis kind=%s CircuitOpen: %s", kind, str(exc))
             raise
 
-
-
     async def limits_client(self) -> Redis:
         """Возвращает клиент для раздела limits."""
         return await self.get_client("limits")
 
-
-
     async def queue_client(self) -> Redis:
         """Возвращает клиент для раздела queue."""
         return await self.get_client("queue")
-
-
 
     async def list_cache_keys(self, pattern: str = "*") -> dict[str, list[str]]:
         """Возвращает список ключей кэша по маске.
@@ -89,6 +74,7 @@ class HelpersMixin:
         Returns:
             Словарь {"keys": [...]}.
         """
+
         async def op(conn: Redis) -> dict[str, list[str]]:
             result: list[str] = []
             async for key in conn.scan_iter(match=pattern, count=500):
@@ -96,8 +82,6 @@ class HelpersMixin:
             return {"keys": result}
 
         return await self.execute("cache", op)
-
-
 
     async def get_cache_value(self, key: str) -> dict[str, str | None]:
         """Возвращает декодированное значение кэша по ключу.
@@ -111,17 +95,15 @@ class HelpersMixin:
         value = await self.cache_get(key)
         return {key: self.decode(value) if value is not None else None}
 
-
-
     async def invalidate_cache(self) -> dict[str, str]:
         """Очищает текущую БД кэша (flushdb).
 
         Returns:
             Статус операции.
         """
+
         async def op(conn: Redis) -> dict[str, str]:
             await conn.flushdb()
             return {"status": "Кэш успешно очищен"}
 
         return await self.execute("cache", op)
-

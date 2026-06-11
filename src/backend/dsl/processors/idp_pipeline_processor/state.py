@@ -1,15 +1,11 @@
 from __future__ import annotations
-import re
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+import re
+from dataclasses import field
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 # ─── Constants & defaults ──────────────────────────────────────────────
 
@@ -29,6 +25,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # Patterns are deliberately permissive to keep confidence ≥ threshold
 # on well-formed documents.
 
+
 class _FieldPattern:
     """Immutable (field name, regex) pair."""
 
@@ -37,6 +34,7 @@ class _FieldPattern:
 
     def compiled(self) -> re.Pattern[str]:
         return re.compile(self.pattern, re.IGNORECASE | re.MULTILINE)
+
 
 class IDPResult:
     """Immutable snapshot of one IDP pipeline run.

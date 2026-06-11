@@ -202,7 +202,9 @@ class QueryResultCache:
         if keys:
             await self._backend.delete(*keys)
         await self._backend.delete(idx_key)
-        logger.info("qrc_invalidate_table", profile=profile, table=table, count=len(keys))
+        logger.info(
+            "qrc_invalidate_table", profile=profile, table=table, count=len(keys)
+        )
         return len(keys)
 
     async def invalidate_profile(self, profile: str) -> None:
@@ -217,9 +219,7 @@ class QueryResultCache:
     # ------------------------------------------------------------------ #
     # Internal helpers
     # ------------------------------------------------------------------ #
-    async def _index_add(
-        self, profile: str, tables: list[str], key: str
-    ) -> None:
+    async def _index_add(self, profile: str, tables: list[str], key: str) -> None:
         for table in tables:
             idx_key = self._index_key(profile, table)
             raw = await self._backend.get(idx_key)

@@ -4,19 +4,18 @@ Classes: GenericSinkPublishProcessor, _OutSpec.
 
 generic sink + shared spec + helpers.
 """
+
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.registry import processor
+
 
 @dataclass(slots=True)
-
 class GenericSinkPublishProcessor(BaseProcessor):
     """``.sink_publish(kind=..., config={...})`` — обобщённый sink publisher.
 
@@ -86,6 +85,7 @@ class GenericSinkPublishProcessor(BaseProcessor):
             spec["payload_property"] = self._payload_property
         return {"sink_publish": spec}
 
+
 class _OutSpec:
     """Конфигурация сохранения результата в exchange (общая для всех Sink-процессоров).
 
@@ -97,15 +97,16 @@ class _OutSpec:
     result_property: str
     set_out: bool = True
 
+
 def _resolve_payload(exchange: Exchange[Any], payload_property: str | None) -> Any:
     """Извлекает payload из exchange (по property или из in_message.body)."""
     if payload_property:
         return exchange.properties.get(payload_property, exchange.in_message.body)
     return exchange.in_message.body
 
+
 def _store_result(exchange: Exchange[Any], spec: _OutSpec, result: Any) -> None:
     """Сохраняет result в property и опционально в out_message."""
     exchange.set_property(spec.result_property, result)
     if spec.set_out:
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-

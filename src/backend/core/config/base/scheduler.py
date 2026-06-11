@@ -1,13 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
+
 from typing import Any, ClassVar, Literal
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
-from src.backend.core.config.constants import consts
-
 
 
 class SchedulerSettings(BaseSettingsWithLoader):

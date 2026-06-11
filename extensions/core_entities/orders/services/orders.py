@@ -174,9 +174,7 @@ class OrderService(
 
             return {"instance": order_data, "response": result}
 
-    async def get_order_result(
-        self, order_id: int, response_type: Any
-    ) -> Any:
+    async def get_order_result(self, order_id: int, response_type: Any) -> Any:
         """Получает результат заказа из СКБ-Техно в указанном формате."""
         async with self._service_error_boundary():
             await self._invalidate_cache()
@@ -211,7 +209,10 @@ class OrderService(
                 }
                 return content
 
-            if isinstance(result, dict) and result.get("content_type") == "application/json":
+            if (
+                isinstance(result, dict)
+                and result.get("content_type") == "application/json"
+            ):
                 data = result.get("data", {})
 
                 await self.repo.update(
@@ -243,7 +244,8 @@ class OrderService(
                 return {"hasError": True, "message": "Inactive order"}
 
             json_result = await self.get_order_result(
-                order_id=order_id, response_type=type("ResponseTypeChoices", (), {"value": "JSON"})()
+                order_id=order_id,
+                response_type=type("ResponseTypeChoices", (), {"value": "JSON"})(),
             )
 
             has_pdf_result = get(json_result, "response.data.Result", False)

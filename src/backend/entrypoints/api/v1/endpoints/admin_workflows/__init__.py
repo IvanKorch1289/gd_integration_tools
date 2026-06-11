@@ -18,6 +18,30 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows.facade import (
+    _AdminWorkflowsFacade,  # S56 W4: re-export
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import (
+    _bind_workflow_status,  # S56 W4: re-export
+    _event_store,  # S56 W4: re-export
+    _get_facade,  # S56 W4: re-export
+    _instance_store,  # S56 W4: re-export
+    _list_instances_filtered,  # S56 W4: re-export
+    _row_to_schema,  # S56 W4: re-export
+    _trigger_via_action_or_store,  # S56 W4: re-export
+    _wait_for_terminal,  # S56 W4: re-export
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows.input_schema import (
+    input_schema_json,  # S56 W4: re-export
+)
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import (
+    EventsQuery,  # S56 W4: re-export
+    ListWorkflowsQuery,  # S56 W4: re-export
+    TriggerBody,  # S56 W4: re-export
+    TriggerQuery,  # S56 W4: re-export
+    WorkflowInstanceIdPath,  # S56 W4: re-export
+    WorkflowNamePath,  # S56 W4: re-export
+)
 from src.backend.schemas.workflow import (
     WorkflowCancelRequest,
     WorkflowEventSchemaOut,
@@ -25,23 +49,6 @@ from src.backend.schemas.workflow import (
     WorkflowInstanceRef,
     WorkflowInstanceSchemaOut,
 )
-
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import WorkflowInstanceIdPath  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import WorkflowNamePath  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import ListWorkflowsQuery  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import EventsQuery  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import TriggerQuery  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import TriggerBody  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.facade import _AdminWorkflowsFacade  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _bind_workflow_status  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _instance_store  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _event_store  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _row_to_schema  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _list_instances_filtered  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _get_facade  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _trigger_via_action_or_store  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import _wait_for_terminal  # S56 W4: re-export
-from src.backend.entrypoints.api.v1.endpoints.admin_workflows.input_schema import input_schema_json  # S56 W4: re-export
 
 __all__ = (
     "router",
@@ -55,7 +62,6 @@ __all__ = (
     "WorkflowInstanceDetailSchemaOut",
     "WorkflowInstanceRef",
     "WorkflowInstanceSchemaOut",
-
     "WorkflowInstanceIdPath",
     "WorkflowNamePath",
     "ListWorkflowsQuery",

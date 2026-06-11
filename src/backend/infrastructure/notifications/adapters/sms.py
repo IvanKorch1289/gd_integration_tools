@@ -26,6 +26,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Final, Literal
 
+from src.backend.core.config.settings import settings
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
@@ -35,9 +36,9 @@ SMSProvider = Literal["mts", "megafon", "smsru"]
 
 
 PROVIDER_ENDPOINTS: Final[dict[str, str]] = {
-    "mts": "https://api.mts.ru/sms/v1/send",  # TODO: verify, может быть другой endpoint
-    "megafon": "https://a2p-api.megafon.ru/sms/send",  # TODO: verify
-    "smsru": "https://sms.ru/sms/send",  # проверено, стандартный endpoint SMS.ru
+    "mts": settings.sms.mts_url,
+    "megafon": settings.sms.megafon_url,
+    "smsru": settings.sms.smsru_url,
 }
 
 

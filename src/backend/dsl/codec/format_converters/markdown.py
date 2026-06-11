@@ -4,12 +4,9 @@ Classes: MarkdownToHtmlProcessor, HtmlToMarkdownProcessor.
 
 Markdown ↔ HTML conversion + _simple_html_to_markdown helper.
 """
+
 from __future__ import annotations
 
-import datetime as _dt
-import importlib
-import io
-import json
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -19,6 +16,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 _logger = get_logger("dsl.format_converters")
+
 
 class MarkdownToHtmlProcessor(BaseProcessor):
     """Markdown → HTML через ``markdown-it-py`` (transitive dep, есть в стеке)."""
@@ -48,6 +46,7 @@ class MarkdownToHtmlProcessor(BaseProcessor):
         if self._preset != "commonmark":
             spec["preset"] = self._preset
         return {"markdown_to_html": spec}
+
 
 class HtmlToMarkdownProcessor(BaseProcessor):
     """HTML → Markdown.
@@ -86,6 +85,7 @@ class HtmlToMarkdownProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
         return {"html_to_markdown": {}}
+
 
 def _simple_html_to_markdown(html: str) -> str:
     """Минимальная эвристика HTML → Markdown без сторонних зависимостей."""
@@ -152,4 +152,3 @@ def _simple_html_to_markdown(html: str) -> str:
     parser = _MdParser()
     parser.feed(html)
     return "".join(parser.parts).strip()
-

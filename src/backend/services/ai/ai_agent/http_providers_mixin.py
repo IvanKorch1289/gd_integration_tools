@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
-    from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+    from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
 class HttpProvidersMixin:
     """HTTP/auth + AI provider integrations (Perplexity, HuggingFace, Open WebUI) для AIAgentService. S54 W2 extraction."""
 
@@ -139,4 +139,3 @@ class HttpProvidersMixin:
             return get_agent_metrics_service()
         except Exception as _:
             return None
-

@@ -4,6 +4,7 @@ Schemas: SensorDeclaration, AgentInvokeDeclaration, ReflectDeclaration, Checkpoi
 
 advanced declarations (sensor/agent/reflect/checkpoint/guardrail/escalate).
 """
+
 from __future__ import annotations
 
 """Pydantic-декларации DSL workflow (план V16.2 §4.3, Sprint 4).
@@ -27,9 +28,10 @@ from __future__ import annotations
     * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
 """
 
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class SensorDeclaration(BaseModel):
     """Periodic-предикат с poll-интервалом (Airflow-style sensor).
@@ -52,6 +54,7 @@ class SensorDeclaration(BaseModel):
     timeout_s: float | None = Field(
         default=None, gt=0.0, description="Полный timeout; None — бесконечно."
     )
+
 
 class AgentInvokeDeclaration(BaseModel):
     """Вызов AI-агента через AIGateway как Temporal activity (S27 W6, S28 W2).
@@ -181,6 +184,7 @@ class AgentInvokeDeclaration(BaseModel):
         ),
     )
 
+
 class ReflectDeclaration(BaseModel):
     """Reflect-шаг: procedural memory update на основе output (S28 W3).
 
@@ -225,6 +229,7 @@ class ReflectDeclaration(BaseModel):
         default=None, description="Имя property для сохранения результата reflect."
     )
 
+
 class CheckpointDeclaration(BaseModel):
     """Checkpoint-шаг: workflow state persistence (S28 W3).
 
@@ -265,6 +270,7 @@ class CheckpointDeclaration(BaseModel):
     output_key: str | None = Field(
         default=None, description="Имя property для сохранения checkpoint_id."
     )
+
 
 class GuardrailDeclaration(BaseModel):
     """Guardrail-шаг: лимиты доступа для AI-вызовов (S28 W3).
@@ -311,6 +317,7 @@ class GuardrailDeclaration(BaseModel):
         default=None, description="Имя property для сохранения результата проверки."
     )
 
+
 class EscalateDeclaration(BaseModel):
     """Escalate-шаг: переключение на другого агента/модель (S28 W3).
 
@@ -349,4 +356,3 @@ class EscalateDeclaration(BaseModel):
     output_key: str | None = Field(
         default=None, description="Имя property для сохранения результата escalation."
     )
-

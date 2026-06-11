@@ -190,7 +190,7 @@ class TestOnDone:
         reg = TaskRegistry()
 
         async def long_running() -> None:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
 
         with patch("src.backend.core.utils.task_registry._logger") as mock_logger:
             task = reg.create_task(long_running(), name="cancel-test")
@@ -213,7 +213,7 @@ class TestCancel:
         reg = TaskRegistry()
 
         async def worker() -> None:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
 
         reg.create_task(worker(), name="cancel-me")
         assert reg.cancel("cancel-me") is True
@@ -248,7 +248,7 @@ class TestShutdownAll:
         reg = TaskRegistry()
 
         async def long_running() -> None:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
 
         reg.create_task(long_running(), name="live-1")
         reg.create_task(long_running(), name="live-2")
@@ -292,7 +292,7 @@ class TestListTasks:
         reg = TaskRegistry()
 
         async def worker() -> None:
-            await asyncio.sleep(10)
+            await asyncio.sleep(0.1)
 
         t1 = reg.create_task(worker(), name="list-1")
         t2 = reg.create_task(worker(), name="list-2")

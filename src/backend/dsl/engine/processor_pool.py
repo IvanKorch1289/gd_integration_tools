@@ -7,6 +7,7 @@ K-ARCH-2: Processors are poolable for parallel execution.
 from __future__ import annotations
 
 import asyncio
+import atexit
 import time
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -277,3 +278,15 @@ def set_processor_pool(pool: ProcessorPool) -> None:
     """Set the global ProcessorPool instance (for testing or custom pools)."""
     global _global_pool
     _global_pool = pool
+
+
+def _cleanup_global_pool() -> None:
+    """Shutdown the global ProcessorPool instance on process exit."""
+    global _global_pool
+    if _global_pool is not None:
+        if _global_pool._own_thread_pool is not None:
+            _global_pool._own_thread_pool.shutdown(wait=True)
+        _global_pool = None
+
+
+atexit.register(_cleanup_global_pool)

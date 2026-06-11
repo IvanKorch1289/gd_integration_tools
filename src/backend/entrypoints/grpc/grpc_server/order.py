@@ -1,32 +1,20 @@
-from __future__ import annotations
 """S65 W3 — order.py part of grpc_server decomp.
 
 Classes: OrderGRPCServicer.
 """
 
+from __future__ import annotations
+
 import uuid
-from typing import TYPE_CHECKING, Any
-
-import orjson
-
-from src.backend.core.serialization.msgspec_hotpath import encode_json
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import grpc
+    pass
 
-from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
-from src.backend.core.errors import BaseError
-from src.backend.entrypoints.base import dispatch_action
-from src.backend.entrypoints.grpc.correlation import (
-    extract_correlation_id_from_grpc_context,
-)
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
-    InvokeResponse as InvokerInvokeResponse,
-)
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
-    InvokerServiceServicer,
-    add_InvokerServiceServicer_to_server,
+from src.backend.entrypoints.grpc.grpc_server._safe_error import _safe_error
+from src.backend.entrypoints.grpc.grpc_server.base import (
+    BaseGRPCServicer,  # S65 W3: cross-import
 )
 from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
@@ -35,20 +23,13 @@ from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore[a
     OrderDetailResponse,
     OrderResponse,
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
-from src.backend.entrypoints.grpc.grpc_server.base import BaseGRPCServicer  # S65 W3: cross-import
-
-    OrderServiceServicer,
-    add_OrderServiceServicer_to_server,
-)
+from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import OrderServiceServicer
 
 grpc_logger = get_grpc_logger_provider()
 
 # S17 K3 W3 (D12): helper для извлечения correlation_id вынесен в
 # ``grpc/correlation.py`` (имп. наверху), чтобы тесты могли импортировать
 # без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
-
-
 
 
 class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
@@ -176,6 +157,3 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 "SendOrderData ошибка [ref=%s]: %s", cid, exc, exc_info=True
             )
             return OrderResponse(error=_safe_error(exc, cid))
-
-
-

@@ -36,6 +36,7 @@ Exit-codes:
 * ``1`` — coverage < threshold OR drop > 0.5% от baseline;
 * ``2`` — error (нет coverage.xml / parse-fail).
 """
+
 from __future__ import annotations
 
 import json
@@ -112,14 +113,10 @@ def _check_drop(current: float, baseline: float) -> bool:
 @app.command()
 def main(
     coverage_xml: str = typer.Option(
-        "coverage.xml",
-        "--coverage-xml",
-        help="Путь к coverage.xml (cobertura формат).",
+        "coverage.xml", "--coverage-xml", help="Путь к coverage.xml (cobertura формат)."
     ),
     baseline: str = typer.Option(
-        ".baselines/coverage.json",
-        "--baseline",
-        help="Путь к baseline-snapshot.",
+        ".baselines/coverage.json", "--baseline", help="Путь к baseline-snapshot."
     ),
     threshold: float = typer.Option(
         _DEFAULT_THRESHOLD,
@@ -161,9 +158,7 @@ def main(
         baseline_data["threshold"] = threshold
         baseline_data.setdefault("notes", [])
         if current < _DEFAULT_THRESHOLD:
-            todo = (
-                f"raise threshold from {threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
-            )
+            todo = f"raise threshold from {threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
             if todo not in baseline_data.get("next_wave_todo", []):
                 baseline_data.setdefault("next_wave_todo", []).append(todo)
         _save_baseline(baseline_path, baseline_data)
@@ -178,11 +173,7 @@ def main(
         raise typer.Exit(EXIT_THRESHOLD_FAIL)
 
     # Strict: drop от baseline > 0.5% — fail.
-    if (
-        strict
-        and baseline_value is not None
-        and _check_drop(current, baseline_value)
-    ):
+    if strict and baseline_value is not None and _check_drop(current, baseline_value):
         console_err.print(
             f"[bold red]FAIL:[/bold red] coverage drop > {_BASELINE_DROP_TOLERANCE}% "
             f"(baseline={baseline_value:.2f}%, current={current:.2f}%)"

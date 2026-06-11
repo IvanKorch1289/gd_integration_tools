@@ -115,19 +115,6 @@ class Sprint19DXFlags(BaseSettings):
         ),
     )
 
-    banking_ai_processors_impl: bool = Field(
-        default=False,
-        title="K4 S19 W3: Banking AI processors implementation (S-L4-1 closure)",
-        description=(
-            "K4 Sprint 19 Wave 3 (PLAN.md V22 §S19 W8, S-L4-1 closure). Owner: K4 AI. "
-            "При True реализует логику в dsl/engine/processors/ai_banking.py: "
-            "KycAmlVerifyProcessor / AntiFraudScoreProcessor / CreditScoringRagProcessor / "
-            "DocumentClassifierProcessor / FrancotypingProcessor — LLM call + structured output Pydantic + "
-            "capability-gate ai.banking.* + audit-event + cost budget tracking. "
-            "default-OFF до LLM integration smoke-tests."
-        ),
-    )
-
     banking_ai_processors_enabled: bool = Field(
         default=False,
         title="K4 S19 W3: Banking AI processors - CreditScore, FraudDetection, RiskAssessment, CustomerSegmentation, LoanEligibility",

@@ -42,9 +42,8 @@ logger = get_logger("dsl.streaming")
 # ──────────────────── Message Expiration ────────────────────
 
 
-
-
 # ── windowing (Tumbling/Sliding/Session/GroupBy) — _BaseWindow + 4 window processors ──
+
 
 class _BaseWindow(BaseProcessor):
     """Общая логика для оконных процессоров.
@@ -148,7 +147,7 @@ class _BaseWindow(BaseProcessor):
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
             event_time = float(event_time_raw) if event_time_raw is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             event_time = None
         if event_time is None:
             return False
@@ -172,7 +171,6 @@ class _BaseWindow(BaseProcessor):
                 await result
         except Exception as exc:
             logger.error("Window sink failed: %s", exc)
-
 
 
 class TumblingWindowProcessor(_BaseWindow):
@@ -232,7 +230,6 @@ class TumblingWindowProcessor(_BaseWindow):
             bucket = list(self._buffer)
             self._buffer.clear()
         await self._emit(bucket)
-
 
 
 class SlidingWindowProcessor(_BaseWindow):
@@ -299,7 +296,6 @@ class SlidingWindowProcessor(_BaseWindow):
             await self._emit(bucket)
 
 
-
 class SessionWindowProcessor(_BaseWindow):
     """Session-окно: окно закрывается после паузы ``gap_seconds``.
 
@@ -363,7 +359,6 @@ class SessionWindowProcessor(_BaseWindow):
             return
 
 
-
 class GroupByKeyProcessor(_BaseWindow):
     """Группирует события по ключу в пределах окна.
 
@@ -413,4 +408,3 @@ class GroupByKeyProcessor(_BaseWindow):
                     await result
             except Exception as exc:
                 logger.error("GroupBy sink failed: %s", exc)
-

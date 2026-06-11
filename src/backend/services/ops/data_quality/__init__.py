@@ -13,7 +13,6 @@ Backward-compat: ``from src.backend.services.ops.data_quality import DataQuality
 
 from __future__ import annotations
 
-import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
@@ -23,10 +22,14 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-from src.backend.services.ops.data_quality.rule_mgmt_mixin import RuleManagementMixin  # S55 W4: MRO
-from src.backend.services.ops.data_quality.check_mixin import CheckMixin  # S55 W4: MRO
-from src.backend.services.ops.data_quality.schema_mixin import SchemaMixin  # S55 W4: MRO
 from src.backend.services.ops.data_quality.apply_mixin import ApplyMixin  # S55 W4: MRO
+from src.backend.services.ops.data_quality.check_mixin import CheckMixin  # S55 W4: MRO
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import (
+    RuleManagementMixin,  # S55 W4: MRO
+)
+from src.backend.services.ops.data_quality.schema_mixin import (
+    SchemaMixin,  # S55 W4: MRO
+)
 
 __all__ = (
     "DataQualityMonitor",
@@ -39,15 +42,8 @@ __all__ = (
 )
 
 
-class DataQualityMonitor(
-    RuleManagementMixin,
-    CheckMixin,
-    SchemaMixin,
-    ApplyMixin,
-):
+class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixin):
     """Data Quality Monitor (4 mixins = 8 methods + 2 core)."""
-
-    __slots__ = ()
 
     def __init__(self) -> None:
         self._rules: list[DQRule] = []
@@ -58,12 +54,8 @@ class DataQualityMonitor(
         self._seen_keys: dict[str, set[str]] = defaultdict(set)
         self._numeric_history: dict[str, list[float]] = defaultdict(list)
 
-
-
     def add_rule(self, rule: DQRule) -> None:
         self._rules.append(rule)
-
-
 
 
 # --- Top-level re-exports (S55 W4 decomp: preserve original public surface) ---
@@ -74,6 +66,7 @@ class DQSeverity(str, Enum):
     CRITICAL = "critical"
 
 
+@dataclass
 class DQViolation:
     rule: str
     field: str
@@ -82,6 +75,7 @@ class DQViolation:
     value: Any = None
 
 
+@dataclass
 class DQCheckResult:
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
@@ -92,6 +86,7 @@ class DQCheckResult:
         return len(self.violations) == 0
 
 
+@dataclass
 class DQRemediationResult:
     """Result of auto-remediation pass.
 
@@ -110,6 +105,7 @@ class DQRemediationResult:
         return len(self.violations) == 0
 
 
+@dataclass
 class DQRule:
     """Правило проверки качества данных."""
 
@@ -123,5 +119,3 @@ class DQRule:
 
 def get_dq_monitor() -> DataQualityMonitor:
     raise NotImplementedError  # заменяется декоратором
-
-

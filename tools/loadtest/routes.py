@@ -15,6 +15,7 @@
 в development + CI. Для production-grade load testing — используйте
 k6 / locust / wrk.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -182,6 +183,7 @@ async def route_loadtest(
 
 # ── CLI ────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="DSL route load test (S55 W5 smoke perf harness)"
@@ -199,10 +201,7 @@ def main() -> None:
     )
     stats = asyncio.run(
         route_loadtest(
-            args.route_id,
-            rps=args.rps,
-            duration_s=args.duration,
-            workers=args.workers,
+            args.route_id, rps=args.rps, duration_s=args.duration, workers=args.workers
         )
     )
     print(stats.report())

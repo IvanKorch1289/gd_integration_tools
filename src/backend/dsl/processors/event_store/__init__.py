@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Event store + CQRS package (S66 W1 decomp from event_store.py 468 LOC).
 
 9 classes + 3 funcs → 5 files (per-concern):
@@ -12,18 +13,28 @@ Backward-compat: ``from src.backend.dsl.processors.event_store import EventStore
 """
 
 
-from src.backend.dsl.processors.event_store.types import EventStream  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.types import Event  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.store import EventStore  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.store import InMemoryEventStore  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.cqrs import Projection  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.cqrs import CommandBus  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.cqrs import QueryBus  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.cqrs import CQRSMixin  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.processor import EventStoreProcessor  # S66 W1: re-export
-from src.backend.dsl.processors.event_store.helpers import get_event_store  # S66 W1: helper re-export
-from src.backend.dsl.processors.event_store.helpers import set_event_store  # S66 W1: helper re-export
-from src.backend.dsl.processors.event_store.helpers import reset_event_store  # S66 W1: helper re-export
+from src.backend.dsl.processors.event_store.cqrs import (
+    CommandBus,  # S66 W1: re-export
+    CQRSMixin,  # S66 W1: re-export
+    Projection,  # S66 W1: re-export
+    QueryBus,  # S66 W1: re-export
+)
+from src.backend.dsl.processors.event_store.helpers import (
+    get_event_store,  # S66 W1: helper re-export
+    reset_event_store,  # S66 W1: helper re-export
+    set_event_store,  # S66 W1: helper re-export
+)
+from src.backend.dsl.processors.event_store.processor import (
+    EventStoreProcessor,  # S66 W1: re-export
+)
+from src.backend.dsl.processors.event_store.store import (
+    EventStore,  # S66 W1: re-export
+    InMemoryEventStore,  # S66 W1: re-export
+)
+from src.backend.dsl.processors.event_store.types import (
+    Event,  # S66 W1: re-export
+    EventStream,  # S66 W1: re-export
+)
 
 __all__ = (
     "EventStream",

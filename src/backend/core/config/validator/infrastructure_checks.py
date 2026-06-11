@@ -56,8 +56,6 @@ class InfrastructureChecksMixin:
             )
         ]
 
-
-
     def _check_database_host_in_prod(
         self, app: AppBaseSettings, database: DatabaseConnectionSettings
     ) -> list[ConfigViolation]:
@@ -95,8 +93,6 @@ class InfrastructureChecksMixin:
             )
         ]
 
-
-
     def _check_redis_host_required_in_prod(
         self, app: AppBaseSettings, redis: RedisSettings
     ) -> list[ConfigViolation]:
@@ -128,8 +124,6 @@ class InfrastructureChecksMixin:
                 context={"environment": app.environment, "enabled": True},
             )
         ]
-
-
 
     def _check_redis_host_localhost_in_prod(
         self, app: AppBaseSettings, redis: RedisSettings
@@ -167,8 +161,6 @@ class InfrastructureChecksMixin:
                 )
             ]
         return []
-
-
 
     def _check_feature_flag_dependency_unmet(
         self, settings: Settings
@@ -244,4 +236,3 @@ class InfrastructureChecksMixin:
                 )
             )
         return violations
-

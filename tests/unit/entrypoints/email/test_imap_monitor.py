@@ -68,8 +68,8 @@ def _make_aioimaplib_client(
 ) -> AsyncMock:
     """Build a fully-mocked ``aioimaplib`` client.
 
-    Each call to ``fetch`` returns a fresh Response so the same client
-    can be reused across multiple messages in ``_fetch_messages``.
+    Bulk ``uid_search`` + single ``uid('fetch', ...)`` are used so the
+    same ``fetch_lines`` must contain the full multi-message response.
     """
     client = AsyncMock()
     client.wait_hello_from_server = AsyncMock(return_value=None)
@@ -78,14 +78,14 @@ def _make_aioimaplib_client(
     client.select = AsyncMock(return_value=None)
     client.logout = AsyncMock(return_value=None)
 
-    # search() returns Response with one byte-string line: "1 2 3"
+    # uid_search() returns Response with one byte-string line: "1 2 3"
     search_lines = search_ids if search_ids is not None else []
-    client.search = AsyncMock(return_value=_make_response(lines=search_lines))
+    client.uid_search = AsyncMock(return_value=_make_response(lines=search_lines))
 
-    # fetch() returns a Response carrying raw email bytes (long enough
-    # to pass the >100 bytes heuristic in _fetch_messages).
+    # uid('fetch', ...) returns a Response carrying raw email bytes (long
+    # enough to pass the >100 bytes heuristic in _fetch_messages).
     default_lines = fetch_lines if fetch_lines is not None else [b"x" * 200]
-    client.fetch = AsyncMock(return_value=_make_response(lines=default_lines))
+    client.uid = AsyncMock(return_value=_make_response(lines=default_lines))
 
     # idle API
     client.idle_start = AsyncMock(return_value=None)
@@ -343,10 +343,17 @@ def test_parse_email_multipart_picks_text_plain() -> None:
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_fetch_messages_returns_parsed_dicts() -> None:
-    """Normal case: search returns IDs, fetch returns bytes → parsed dict."""
+    """Normal case: uid_search returns IDs, bulk uid fetch returns bytes → parsed dict."""
     client = _make_aioimaplib_client(
         search_ids=[b"101 102"],
-        fetch_lines=[_make_email_bytes(subject="S101", body="body101")],
+        fetch_lines=[
+            b"* 1 FETCH (UID 101 RFC822 {200}",
+            _make_email_bytes(subject="S101", body="body101"),
+            b")",
+            b"* 2 FETCH (UID 102 RFC822 {200}",
+            _make_email_bytes(subject="S102", body="body102"),
+            b")",
+        ],
     )
     mon = _make_monitor()
     msgs = await mon._fetch_messages(client)
@@ -355,8 +362,8 @@ async def test_fetch_messages_returns_parsed_dicts() -> None:
     assert all("_uid" in m for m in msgs)
     # _last_uid advanced to 102 after the batch
     assert mon._last_uid == 102
-    client.search.assert_awaited_once_with("UNSEEN")
-    assert client.fetch.await_count == 2
+    client.uid_search.assert_awaited_once_with("UNSEEN")
+    assert client.uid.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -364,7 +371,12 @@ async def test_fetch_messages_returns_parsed_dicts() -> None:
 async def test_fetch_messages_skips_uid_at_or_below_since_uid() -> None:
     """since_uid cutoff: UID <= _last_uid → skip (no fetch call)."""
     client = _make_aioimaplib_client(
-        search_ids=[b"5 6 7"], fetch_lines=[_make_email_bytes(body="b")]
+        search_ids=[b"5 6 7"],
+        fetch_lines=[
+            b"* 1 FETCH (UID 7 RFC822 {200}",
+            _make_email_bytes(body="b"),
+            b")",
+        ],
     )
     mon = _make_monitor()
     mon._last_uid = 6  # UIDs 5 and 6 must be skipped
@@ -373,16 +385,16 @@ async def test_fetch_messages_skips_uid_at_or_below_since_uid() -> None:
     assert len(msgs) == 1
     assert msgs[0]["_uid"] == "7"
     assert mon._last_uid == 7
-    # Only one fetch (for msg 7); msgs 5 and 6 were skipped.
-    assert client.fetch.await_count == 1
+    # Only one bulk fetch for msg 7; msgs 5 and 6 were skipped.
+    assert client.uid.await_count == 1
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_fetch_messages_search_failure_returns_empty() -> None:
-    """When ``client.search`` raises → return [] and log warning."""
+    """When ``client.uid_search`` raises → return [] and log warning."""
     client = AsyncMock()
-    client.search = AsyncMock(side_effect=RuntimeError("IMAP down"))
+    client.uid_search = AsyncMock(side_effect=RuntimeError("IMAP down"))
     mon = _make_monitor()
     msgs = await mon._fetch_messages(client)
     assert msgs == []
@@ -396,7 +408,7 @@ async def test_fetch_messages_empty_search_response() -> None:
     mon = _make_monitor()
     msgs = await mon._fetch_messages(client)
     assert msgs == []
-    client.fetch.assert_not_awaited()
+    client.uid.assert_not_awaited()
 
 
 @pytest.mark.asyncio

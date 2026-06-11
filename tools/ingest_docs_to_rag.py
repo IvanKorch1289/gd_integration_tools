@@ -42,30 +42,41 @@ logger = logging.getLogger("ingest_docs_to_rag")
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Ingest project markdown docs (CLAUDE.md, .claude/, docs/) → Qdrant для RAG.",
+        description="Ingest project markdown docs (CLAUDE.md, .claude/, docs/) → Qdrant для RAG."
     )
     parser.add_argument(
-        "--roots", nargs="+", default=None,
+        "--roots",
+        nargs="+",
+        default=None,
         help="Кастомные roots (paths/dirs). Default: CLAUDE.md, .claude/CLAUDE.md, docs/users, docs/devs",
     )
-    parser.add_argument("--collection", default="project_docs", help="Qdrant collection name")
+    parser.add_argument(
+        "--collection", default="project_docs", help="Qdrant collection name"
+    )
     parser.add_argument("--embedding-model", default="text-embedding-3-small")
     parser.add_argument("--chunk-size", type=int, default=512)
     parser.add_argument("--chunk-overlap", type=int, default=50)
     parser.add_argument(
-        "--qdrant-url", default=None,
+        "--qdrant-url",
+        default=None,
         help="Qdrant URL (default: http://localhost:6333 если задан QDRANT_URL)",
     )
     parser.add_argument(
-        "--no-qdrant", action="store_true",
+        "--no-qdrant",
+        action="store_true",
         help="Не подключаться к Qdrant (in-memory fallback; полезно для smoke-test)",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Печать плана без индексации")
     parser.add_argument(
-        "--query", default=None,
+        "--dry-run", action="store_true", help="Печать плана без индексации"
+    )
+    parser.add_argument(
+        "--query",
+        default=None,
         help="После индексации выполнить RAG-поиск с этим query (smoke-test)",
     )
-    parser.add_argument("--limit", type=int, default=5, help="Top-N для search (default: 5)")
+    parser.add_argument(
+        "--limit", type=int, default=5, help="Top-N для search (default: 5)"
+    )
     parser.add_argument("-v", "--verbose", action="store_true")
     return parser.parse_args()
 
@@ -127,12 +138,19 @@ async def _run(args: argparse.Namespace) -> int:
             print(f"  {p}")
         if len(paths) > 20:
             print(f"  ... и ещё {len(paths) - 20}")
-        print(f"DRY-RUN: would ingest {len(paths)} files → collection={args.collection}")
+        print(
+            f"DRY-RUN: would ingest {len(paths)} files → collection={args.collection}"
+        )
         return 0
 
     # 2) Index.
     n = await indexer.index_docs(args.roots)
-    logger.info("Indexed: %d chunks → collection=%s (fallback=%s)", n, args.collection, indexer.is_fallback)
+    logger.info(
+        "Indexed: %d chunks → collection=%s (fallback=%s)",
+        n,
+        args.collection,
+        indexer.is_fallback,
+    )
     print(f"OK: {n} chunks indexed → {args.collection}")
 
     # 3) Optional search.

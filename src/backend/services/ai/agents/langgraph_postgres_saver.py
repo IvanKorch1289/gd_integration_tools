@@ -68,6 +68,7 @@ class LangGraphPostgresSaverWrapper:
         """
         self._dsn = dsn
         self._saver: Any = None
+        self._ctx: Any = None
         self._enabled_override = enabled
 
     @property
@@ -128,8 +129,8 @@ class LangGraphPostgresSaverWrapper:
             # AsyncPostgresSaver.from_conn_string возвращает async-context-manager;
             # для долгоживущего использования вызываем .__aenter__ вручную и
             # храним сам объект до явного close.
-            ctx = AsyncPostgresSaver.from_conn_string(dsn)
-            saver = await ctx.__aenter__()
+            self._ctx = AsyncPostgresSaver.from_conn_string(dsn)
+            saver = await self._ctx.__aenter__()
         except Exception as exc:
             raise LangGraphPostgresSaverUnavailable(
                 f"Не удалось инициализировать AsyncPostgresSaver: {exc}"
@@ -151,15 +152,25 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is None:
             return
         try:
-            close = getattr(self._saver, "close", None)
-            if close is not None:
-                result = close()
-                if hasattr(result, "__await__"):
-                    await result
+            if self._ctx is not None:
+                await self._ctx.__aexit__(None, None, None)
+            else:
+                close = getattr(self._saver, "close", None)
+                if close is not None:
+                    result = close()
+                    if hasattr(result, "__await__"):
+                        await result
         except Exception as exc:
             logger.debug("AsyncPostgresSaver.close() error: %s", exc)
         finally:
             self._saver = None
+            self._ctx = None
+
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any
+    ) -> None:
+        """Async context manager exit."""
+        await self.close()
 
 
 _wrapper: LangGraphPostgresSaverWrapper | None = None

@@ -10,6 +10,3 @@ def _to_text(data: Any) -> str:
     if isinstance(data, (bytes, bytearray)):
         return data.decode("utf-8", errors="replace")
     return data
-
-
-
