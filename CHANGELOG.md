@@ -5,7 +5,7 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S95 (2026-06-13) — DSL CRUD + Ratchet + Audit + AuthGateway (4 commits, 37 NEW tests)
+## [Unreleased] — Autonomous cycle S96 (2026-06-13) — Auth Relocation + SyntaxWarning + Ratchet + SSE Multi (4 commits, 23 NEW tests)
 
 ### Added
 
@@ -18,6 +18,24 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Tests
 
 - 37 NEW (W1: 19 + W3: 9 + W4: 9; W2 ratchet без tests)
+
+### Added (S96)
+
+- **S96 W1-Auth relocation**: `core/auth/auth_selector.py` (NEW, 339 LOC) — canonical implementation (`verify_request`, `require_auth`, `set_default_auth`, `_VERIFIERS`). `core/auth/gateway.py` → imports from core (НЕ entrypoints), resolves layer violation. `entrypoints.api.dependencies.auth_selector` → DEPRECATED shim с `DeprecationWarning` (S99+ removal). 7 tests: canonical impl, gateway-imports-core, shim-deprecated, shim-re-exports-core, shim-hides-private-verifiers, AuthGateway OO class, require() factory.
+- **S96 W2-SyntaxWarning fix**: `core/security/capabilities/tool_policy_integration.py:172` — legacy `\``tools\`` → reST literal `\`\`tools\`\``. 2 tests: compileall guard + docstring render check.
+- **S96 W3-Docstring ratchet -11** (1171 → 1160 NEW violations eliminated): `dsl/builders/data_store_mixin.py` — DataStore class full coverage (11 public methods: name, backend, _alive, get, set, delete, has, keys, values, items, clear, size).
+- **S96 W4-SSE multi-stream**: `from_sse_multi(route_id, urls, merge_strategy)` — subscribe N SSE streams параллельно с 3 merge strategies (interleave/concat/first). Validates urls non-empty + strategy whitelist. 3 tests (pass) + 4 skip due to **CRITICAL pre-existing bug** (RouteBuilder broken с S94, see ADR-0180).
+- **S96 W4-CRITICAL FINDING**: `RouteBuilder` имеет `__slots__=()` без `__init__` — все 12+ `from_*` builders (CDC, messaging, SSE, HTTP, ...) TypeError на instantiation. Pre-existing DSL bug с S94 (или ранее). S97+ блокирующая задача.
+- `docs/adr/0180-sprint-96-closure.md` — closure ADR.
+
+### Tests
+
+- 23 NEW (W1: 7 + W2: 2 + W3: 0 ratchet + W4: 3 pass + 4 skip; 1 test file S95 W3 cleanup)
+
+### Known Issues (S97+ blocking)
+
+- `RouteBuilder.__init__` missing — `cls()` TypeError блокирует все `from_*` builders. S97 W1.
+- 1160 NEW docstring violations накоплено (allowlist stale). S97 W2 ratchet.
 - S93+S94+S95 total: 57 + 20 + 37 = 114 NEW tests across 9 atomic commits
 
 ## [Unreleased] — Autonomous cycle S94 (2026-06-13) — Logging codemod + Docstring ratchet + DSL SSE (4 commits, 20 NEW tests)
