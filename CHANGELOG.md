@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S93 (2026-06-13) — W3-W5: Auth Gateway + CDC feed + Logging codemod + DSL fork_join (4 commits, 28 NEW tests)
+
+### Added
+
+- **S93 W3-AuthGateway**: `verify_request()` public API в `auth_selector.py`. Раньше `auth_required` middleware лез в **private** `_VERIFIERS` (leading underscore) — нарушение инкапсуляции. Новая public функция с поддержкой `tuple[AuthMethod, ...] | list | single | None`. 6 NEW tests.
+- **S93 W4-PollCDCBackend feed mode**: `infrastructure/cdc/poll_backend.py` — добавлен optional `feed: AsyncIterator[dict]` для test/dev режима. R3 polling scaffold сохранён. 7 NEW tests: basic feed, skip non-dict, stop via close, ack, replay feed, close, polling-scaffold no-events.
+- **S93 W4-stdlib logging codemod**: 5 файлов в `core/auth/*` (jwt_backend, jwt_blacklist, ldap_client_factory, jwks_cache, mtls_backend) — `import logging` → `from src.backend.core.logging import get_logger`. `saml_backend.py` исключён (legit stdlib Handler usage). 6 NEW tests: per-module + all-core-auth scan.
+- **S93 W5-fork_join DSL**: `dsl.engine.processors.eip.ForkJoinProcessor` + `RouteBuilder.fork_join(branches, aggregation, timeout_seconds)`. Composes `ParallelProcessor` (battle-tested execution), добавляет 3 aggregation modes: `collect` (default, `{branch: result}` dict), `merge` (B dicts → 1), `first` (первый non-None). 9 NEW tests.
+- `docs/adr/0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md` — closure ADR.
+
+### Tests
+
+- 28 NEW (W3: 6 + W4: 7+6 + W5: 9)
+- S93 total: 13+16+6+13+9 = 57 NEW tests across 5 waves, 10 atomic commits
+
 ## [Unreleased] — Autonomous cycle S93 (2026-06-12) — W2: Frontend PATH + Docstring Ratchet + Resilience Fact-Check (3 commits, 16 NEW tests)
 
 ### Added
