@@ -5,7 +5,27 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S84 (2026-06-12) — V2 P0 #3 closure: logging.factory 274 layer violations → 0 (codemod 253 files, 10 NEW tests) (5 commits)
+
+### Changed
+
+- **S84 W2: 253 файла redirect** `from src.backend.infrastructure.logging.factory` → `from src.backend.core.logging`. Codemod через `tools/s84_codemod_logging.py` (Python AST-based, exclude infrastructure/*). infrastructure/* оставлены без изменений (own layer, allowed internal access).
+
+### Added
+
+- **S84 W1: LoggerProtocol в core.logging facade** — TYPE_CHECKING block + lazy `__getattr__` import. S27/ADR-001 facade уже существовал, добавлен только missing public symbol.
+
+### Tests
+
+- **S84 W3: 5 facade regression tests** в `tests/unit/core/test_logging_facade.py` (public API, backward-compat, lazy load, Protocol class, get_logger works).
+- **S84 W4: 5 layer-check tests** в `tests/unit/core/test_logging_layer_check.py` (CI guard: core/services/entrypoints/dsl/plugins НЕ импортируют infrastructure.logging.factory).
+
+### Performance
+
+- **V2 P0 #3 impact**: 274 violations → 0 (100% reduction). Total layer violations: 460 → 186 (-60%). V2 verdict projected +1.0 к 6.16 baseline.
+
 ## [Unreleased] — Autonomous cycle S83 (2026-06-12) — V2 P0 N1 closure: DetachedInstanceError fix via attribute_names refresh (7 NEW tests) (4 commits)
+
 
 ### Fixed
 

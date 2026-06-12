@@ -1,4 +1,19 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S83 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S84 W5)
+
+## S84 closure summary (2026-06-12, ADR-0166)
+
+**Status: V2 P0 #3 (274 logging.factory layer violations) CLOSED в S84 (5 commits, 10 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#3 logging.factory** | ✅ CLOSED S84 W1-W4 | Codemod 253 files → core.logging facade, 274 → 0 violations |
+
+**Net S84 LOC**: 256 files changed, +468 LOC, 10 NEW tests.
+
+**Net V2 P0 rating**: N1 ✅, #3 ✅ CLOSED. Осталось: #1, #2, #5, #6, #7, #8, #9, #10.
+
+**V2 verdict impact**: "Один главный шаг для +2 балла: logging + AIGateway + DetachedInstanceError".
+2/3 done (S84, S83). S85 (AIGateway) = +1.0 → projected 7.16/10.
 
 ## S83 closure summary (2026-06-12, ADR-0165)
 
