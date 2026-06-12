@@ -119,7 +119,6 @@ src/backend/infrastructure/clients/transport/http_httpx.py	infrastructure	src.ba
 src/backend/infrastructure/decorators/caching/__init__.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/decorators/caching/decorator.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/decorators/caching/storage/disk.py	infrastructure	src.backend.dsl.codec.json
-src/backend/infrastructure/external_apis/s3.py	infrastructure	src.backend.dsl.codec.base64
 src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.backend.dsl.engine.processors.express._common
 src/backend/infrastructure/observability/immutable_audit.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.context
