@@ -140,7 +140,7 @@ class RedisJwtBlacklist:
             return False
         try:
             iat_int = int(iat)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             _logger.warning(
                 "JWT blacklist is_iat_revoked: некорректный iat=%r — skip", iat
             )
@@ -154,6 +154,6 @@ class RedisJwtBlacklist:
             return False
         try:
             threshold = int(value)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return False
         return iat_int < threshold

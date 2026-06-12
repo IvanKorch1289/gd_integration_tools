@@ -305,7 +305,7 @@ class RedeliveryPolicyProcessor(BaseProcessor):
         else:
             try:
                 attempt = int(attempt_raw) + 1
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 attempt = 1
             exchange.in_message.set_header(self._header, attempt)
 

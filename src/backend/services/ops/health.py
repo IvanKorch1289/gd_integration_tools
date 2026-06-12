@@ -557,7 +557,7 @@ def _is_strict_mode() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.processor_health_checks_strict
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         return False
 
 

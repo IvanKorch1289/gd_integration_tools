@@ -68,7 +68,7 @@ class MetricsMixin:
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None
-        except ImportError, AttributeError, TypeError, ValueError:
+        except (ImportError, AttributeError, TypeError, ValueError):
             return None
 
     @staticmethod
@@ -86,5 +86,5 @@ class MetricsMixin:
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None

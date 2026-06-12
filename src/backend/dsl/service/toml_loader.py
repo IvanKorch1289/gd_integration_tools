@@ -86,6 +86,6 @@ def scan_services(root: Path) -> list[ServiceSpec]:
     for service_toml in root.rglob("*.service.toml"):
         try:
             specs.append(load_service_toml(service_toml))
-        except ValueError, OSError:
+        except (ValueError, OSError):
             continue
     return specs

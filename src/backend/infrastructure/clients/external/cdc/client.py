@@ -123,7 +123,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)

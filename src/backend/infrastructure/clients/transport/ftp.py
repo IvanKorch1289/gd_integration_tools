@@ -168,7 +168,7 @@ class FTPClient:
         try:
             async with await self._get_client():
                 return True
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 

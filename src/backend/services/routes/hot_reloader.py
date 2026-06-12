@@ -115,7 +115,7 @@ class RouteHotReloader:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
             self._task = None
         _logger.info("hot_reloader.stopped")
