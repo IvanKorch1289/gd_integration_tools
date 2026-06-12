@@ -126,11 +126,11 @@ def get_rag_cache_provider() -> Any:
     """
     if "rag_cache" in _overrides:
         return _overrides["rag_cache"]
-    from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
-        _get_three_tier_cache,
-    )
+    # S93 W1 C1: перенесено в core/di/app_state.get_three_tier_rag_cache_from_state
+    # чтобы core/ не импортировал из entrypoints/ (layer policy).
+    from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 
-    return _get_three_tier_cache()
+    return get_three_tier_rag_cache_from_state()
 
 
 def set_rag_cache_provider(impl: Any) -> None:

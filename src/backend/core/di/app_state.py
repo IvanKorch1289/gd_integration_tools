@@ -25,6 +25,7 @@ T = TypeVar("T")
 __all__ = (
     "app_state_singleton",
     "get_app_ref",
+    "get_three_tier_rag_cache_from_state",
     "require_app_ref",
     "reset_app_state",
     "set_app_ref",
@@ -99,6 +100,29 @@ def reset_app_state() -> None:
     _app_ref = None
     for cache in _DECORATOR_CACHES:
         cache.clear()
+
+
+def get_three_tier_rag_cache_from_state() -> Any:
+    """Lazy-резолв ThreeTierRagCache из ``app.state``.
+
+    Используется как core-layer-фасад для доступа к зарегистрированному
+    RAG-кэшу из любого слоя (DSL providers, admin endpoints, services).
+    Раньше функция жила в ``entrypoints/api/v1/endpoints/rag_cache_admin.py``,
+    что вынуждало ``core/di/providers/cache.py`` импортировать из ``entrypoints/``
+    и нарушать layer policy.
+
+    Returns:
+        Экземпляр ``ThreeTierRagCache`` или ``None``, если ещё не зарегистрирован
+        (``app.state.three_tier_rag_cache`` отсутствует или ``set_app_ref``
+        не вызывался).
+    """
+    try:
+        app = get_app_ref()
+    except Exception:
+        return None
+    if app is None:
+        return None
+    return getattr(app.state, "three_tier_rag_cache", None)
 
 
 def _get_from_app_state(attr: str) -> Any | None:

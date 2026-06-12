@@ -15,9 +15,10 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
+from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 
-__all__ = ("record_invalidation_event", "router")
+__all__ = ("record_invalidation_event", "router", "get_three_tier_cache")
 
 router = APIRouter()
 
@@ -29,17 +30,12 @@ def record_invalidation_event(event: dict[str, Any]) -> None:
     _EVENTS_RING.append({"ts": datetime.now(UTC).isoformat(), **event})
 
 
-def _get_three_tier_cache() -> Any:
-    """Lazy-резолв ThreeTierRagCache из app.state (если зарегистрирован)."""
-    try:
-        from src.backend.core.di.app_state import get_app_ref
-
-        app = get_app_ref()
-    except Exception as _:
-        return None
-    if app is None:
-        return None
-    return getattr(app.state, "three_tier_rag_cache", None)
+# S93 W1 C1: shim для backward-compat с core/di/providers/cache.py.
+# Реальная имплементация — в core/di/app_state.get_three_tier_rag_cache_from_state.
+# TODO(S94): удалить после миграции callsite'ов.
+_get_three_tier_cache = get_three_tier_rag_cache_from_state
+# Re-export под старым именем для public API compatibility
+get_three_tier_cache = get_three_tier_rag_cache_from_state
 
 
 @router.get("/rag-cache/stats", summary="Снимок hit/miss по tier'ам RAG-кэша")
