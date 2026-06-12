@@ -17,6 +17,9 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.engine.tracer import get_tracer
+from src.backend.dsl.registry import route_registry
 from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("graphql_router",)
@@ -303,15 +306,11 @@ class Query:
     @strawberry.field(description="Список зарегистрированных DSL-маршрутов.")
     async def dsl_routes(self) -> list[str]:
         """Выполнить операцию dsl routes."""
-        from src.backend.dsl.registry import route_registry
-
         return list(route_registry.list_routes())
 
     @strawberry.field(description="Список зарегистрированных actions.")
     async def actions(self) -> list[str]:
         """Выполнить операцию actions."""
-        from src.backend.dsl.commands.registry import action_handler_registry
-
         return list(action_handler_registry.list_actions())
 
 
@@ -426,8 +425,6 @@ class Subscription:
         self, route_id: str, info: Info
     ) -> AsyncGenerator[TraceEventType]:
         """Выполнить операцию route trace."""
-        from src.backend.dsl.engine.tracer import get_tracer
-
         tracer = get_tracer()
         async for event in tracer.subscribe(route_id):
             yield TraceEventType(
@@ -443,8 +440,6 @@ class Subscription:
     @strawberry.subscription(description="Все trace-события (для dashboard).")
     async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType]:
         """Выполнить операцию all traces."""
-        from src.backend.dsl.engine.tracer import get_tracer
-
         tracer = get_tracer()
         async for event in tracer.subscribe_all():
             yield TraceEventType(
