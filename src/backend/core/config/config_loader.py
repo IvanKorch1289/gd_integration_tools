@@ -129,9 +129,12 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
     def _handle_error(self, error: Exception) -> None:
         """Handle errors during data loading."""
-        import logging
+        # S98 W4: lazy import через core.logging (не stdlib logging).
+        # Error handler часто вызывается при проблемах с config chain,
+        # stdlib logging не зависит от core.logging → safe fallback.
+        from src.backend.core.logging import get_logger
 
-        logging.getLogger(__name__).error(
+        get_logger(__name__).error(
             "Ошибка в %s: %s", self.__class__.__name__, error
         )
 
@@ -244,9 +247,10 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     @staticmethod
     def _log_vault_unreachable(detail: str) -> None:
         """Один warning на процесс при недоступности Vault."""
-        import logging
+        # S98 W4: lazy import через core.logging.
+        from src.backend.core.logging import get_logger
 
-        logging.getLogger(__name__).warning(
+        get_logger(__name__).warning(
             "Vault недоступен (%s) — secrets-источник пропущен. "
             "Установите vault.enabled=false или поднимите Vault, "
             "чтобы убрать это сообщение.",
