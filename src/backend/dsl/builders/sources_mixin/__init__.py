@@ -1,6 +1,6 @@
 """SourcesMixin package (S57 W2 decomp from sources_mixin.py 590 LOC).
 
-11 methods decomposed в 7 mixin files:
+11 methods decomposed в 7 mixin files (S57 W2):
 - http_sources_mixin.py (1): from_webdav
 - cdc_sources_mixin.py (3): from_cdc, from_cdc_logical, from_cdc_capture
 - messaging_sources_mixin.py (3): from_kafka, from_rabbit, from_mqtt
@@ -8,6 +8,8 @@
 - file_sources_mixin.py (1): from_filewatcher
 - webhook_sources_mixin.py (1): from_webhook
 - schedule_sources_mixin.py (1): from_schedule
+
+S94 W4: добавлен 8-й mixin — sse_sources_mixin.py (1): from_sse.
 
 Backward-compat: ``from src.backend.dsl.builders.sources_mixin import SourcesMixin`` works.
 """
@@ -43,6 +45,9 @@ from src.backend.dsl.builders.sources_mixin.messaging_sources_mixin import (
 from src.backend.dsl.builders.sources_mixin.schedule_sources_mixin import (
     ScheduleSourcesMixin,  # S57 W2: MRO
 )
+from src.backend.dsl.builders.sources_mixin.sse_sources_mixin import (
+    StreamingSSEMixin,  # S94 W4: SSE
+)
 from src.backend.dsl.builders.sources_mixin.streaming_sources_mixin import (
     StreamingSourcesMixin,  # S57 W2: MRO
 )
@@ -58,10 +63,11 @@ class SourcesMixin(
     CdcSourcesMixin,
     MessagingSourcesMixin,
     StreamingSourcesMixin,
+    StreamingSSEMixin,  # S94 W4: SSE
     FileSourcesMixin,
     WebhookSourcesMixin,
     ScheduleSourcesMixin,
 ):
-    """Sources mixin (7 mixins = 11 methods)."""
+    """Sources mixin (8 mixins = 12 methods)."""
 
     __slots__ = ()
