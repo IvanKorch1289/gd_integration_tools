@@ -9,7 +9,7 @@ workflow audit sink init/close.
 
 
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 app_logger = get_logger("application")
 

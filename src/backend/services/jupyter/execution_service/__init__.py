@@ -28,7 +28,7 @@ import httpx
 
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 _logger = get_logger("services.jupyter.execution")
 

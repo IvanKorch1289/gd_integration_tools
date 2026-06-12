@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 import streamlit as st
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.frontend.streamlit_app.shared.components import setup_page
 
 logger = get_logger(__name__)

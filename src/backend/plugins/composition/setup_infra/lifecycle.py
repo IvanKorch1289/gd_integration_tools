@@ -24,7 +24,7 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import _init_wor
 from src.backend.plugins.composition.setup_infra.pools import _warmup_connection_pools  # S60 W3: cross-import
 
 from src.backend.infrastructure.decorators.caching import close_caches
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")

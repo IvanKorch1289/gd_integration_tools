@@ -13,7 +13,7 @@ from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.database.database import get_db_initializer
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 app_logger = get_logger("application")
 

@@ -10,7 +10,7 @@ S82 W1 scope: ТОЛЬКО ``_register_protocol_providers`` (175 LOC).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 app_logger = get_logger("application")
 

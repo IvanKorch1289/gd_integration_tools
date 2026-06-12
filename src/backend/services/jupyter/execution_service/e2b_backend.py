@@ -55,7 +55,7 @@ import os
 from collections.abc import Mapping
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 _logger = get_logger("services.jupyter.e2b")
 
