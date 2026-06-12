@@ -171,48 +171,62 @@ async def claim_pending(
     worker_id: str,
     lease_seconds: int = 300,
 ) -> list[OutboxMessage]:
-    """Multi-instance safe атомарный claim batch pending outbox-сообщений (S64 W1).
+    """Multi-instance safe атомарный claim batch pending outbox-сообщений.
 
-    Алгоритм:
+    История:
+    * S64 W1 — per-call advisory lock + SELECT-FOR-UPDATE-SKIP-LOCKED +
+      ``retry_count++`` (batch-level coordination).
+    * **S72 W2** (TD-S64-W1, ADR-0087) — per-row claim с
+      ``status='processing'`` + ``claimed_by``/``claimed_at``/
+      ``claimed_until`` (row-level coordination).
 
-    1. ``pg_try_advisory_xact_lock(hash(worker_id))`` — non-blocking try-lock
-       per-worker. Если другой worker уже держит lock — возврат ``[]``
-       (этот worker skip, попробует следующий tick).
-    2. ``UPDATE outbox_messages SET retry_count = retry_count + 1 WHERE id IN
-       (SELECT id FROM outbox_messages WHERE status='pending' AND
-        next_attempt_at <= now ORDER BY created_at LIMIT :limit
-        FOR UPDATE SKIP LOCKED) RETURNING *`` — атомарный claim
-       (SELECT-FOR-UPDATE-SKIP-LOCKED предотвращает гонки даже в пределах
-       одной сессии/транзакции).
-    3. Commit → advisory lock и row locks снимаются.
+    Алгоритм (S72 W2):
+
+    1. ``pg_try_advisory_xact_lock(hash(worker_id))`` — non-blocking
+       try-lock per-worker (coarse coordination, позволяет 1 worker
+       делать bulk claim, остальные skip).
+    2. ``UPDATE outbox_messages SET status='processing', claimed_by=$1,
+       claimed_at=NOW(), claimed_until=NOW() + INTERVAL '$2 seconds'
+       WHERE id IN (SELECT id FROM outbox_messages WHERE
+       status='pending' AND next_attempt_at <= :now ORDER BY
+       created_at LIMIT :limit FOR UPDATE SKIP LOCKED) RETURNING *`` —
+       атомарный per-row claim (SELECT-FOR-UPDATE-SKIP-LOCKED +
+       UPDATE в одном statement).
+    3. Commit → advisory lock и row locks снимаются, но ``status`` уже
+       ``'processing'`` + ``claimed_by`` set. Row остаётся
+       "привязан" к worker'у на ``lease_seconds``.
 
     Args:
         limit: max messages in batch (default 100).
         worker_id: уникальный ID (UUID, pod-name, hostname). Hash
-            используется как advisory lock key.
-        lease_seconds: (reserved) lease TTL для будущего S65
-            (``status='processing'`` + ``locked_until``). Сейчас
-            игнорируется — atomic-claim уже обеспечивает не-дубли
-            в пределах одной транзакции.
+            используется как advisory lock key + записывается в
+            ``claimed_by``.
+        lease_seconds: lease TTL для ``claimed_until`` (default 300s).
+            Sweeper job (S72 W3) reset'нёт rows с expired
+            ``claimed_until`` обратно в ``pending``.
 
     Returns:
-        List of claimed :class:`OutboxMessage` records (с инкрементированным
-        ``retry_count``). ``[]`` если advisory lock не получен (другой
-        worker активен) ИЛИ если pending пуст.
+        List of claimed :class:`OutboxMessage` records (с
+        ``status='processing'``, ``claimed_by=worker_id``,
+        ``claimed_until=now+lease_seconds``).
+        ``[]`` если advisory lock не получен (другой worker активен)
+        ИЛИ если pending пуст.
 
     Trade-offs / ограничения:
 
-    * **Advisory lock granularity = per-call, не per-row.** Один worker
-      захватывает lock → claim batch → commit. Другой worker в это
-      время получает ``[]`` (skip) и попробует на следующем tick.
-      Это **batch-level coordination**, не row-level.
-    * **После commit row lock released**, ``retry_count`` инкрементирован
-      (signal for monitoring), но ``status`` остаётся ``pending``. Если
-      worker упадёт между claim и ``mark_sent``, строка будет
-      переclaim'нута следующим tick (retry_count уже > 0). Корректно
-      для at-least-once семантики.
-    * **Полное row-level решение** (с ``status='processing'`` +
-      ``locked_until``) — S65+ (требует Alembic-миграцию).
+    * **Per-row lease защищает от worker hang.** Если worker_A
+      зависнет в середине обработки, его ``claimed_until`` держится
+      ``lease_seconds`` (default 5 min), после чего sweeper reset'нёт
+      row → другой worker может пере-забрать.
+    * **Advisory lock остаётся batch-level** (не row-level) — позволяет
+      1 worker делать bulk claim за 1 SQL statement. Multi-worker
+      coordination через этот lock + per-row lease для safety net.
+    * **Advisory lock НЕ auto-extends** (TD-S64-W2 был для scheduler,
+      outbox не критичен). Если worker держит lock > lease → другой
+      worker попробует на следующем tick.
+    * **Backward compat**: existing rows (pre-S72 migration) имеют
+      ``claimed_by=NULL`` и ``status='pending'`` — claim SQL filter
+      ``WHERE status='pending'`` остаётся валидным.
     """
     if not worker_id:
         raise ValueError("worker_id обязателен для claim_pending")
@@ -220,7 +234,7 @@ async def claim_pending(
     lock_key = _advisory_lock_key(worker_id)
     now = datetime.now(UTC)
     async with main_session_manager.transaction() as session:
-        # 1. Try acquire per-worker advisory lock
+        # 1. Try acquire per-worker advisory lock (coarse batch-level)
         got_lock = bool(
             (
                 await session.execute(
@@ -232,12 +246,19 @@ async def claim_pending(
         if not got_lock:
             return []
 
-        # 2. Atomic claim: SELECT FOR UPDATE SKIP LOCKED + UPDATE + RETURNING
+        # 2. S72 W2: per-row claim с status='processing' + claimed_by +
+        # claimed_at + claimed_until. Один atomic statement с
+        # FOR UPDATE SKIP LOCKED предотвращает гонки даже в пределах
+        # одной сессии.
         result = await session.execute(
             text(
                 """
                 UPDATE outbox_messages
-                SET retry_count = retry_count + 1
+                SET status = 'processing',
+                    retry_count = retry_count + 1,
+                    claimed_by = :worker_id,
+                    claimed_at = :now,
+                    claimed_until = :claimed_until
                 WHERE id IN (
                     SELECT id FROM outbox_messages
                     WHERE status = 'pending'
@@ -248,10 +269,16 @@ async def claim_pending(
                 )
                 RETURNING id, topic, payload, headers, status, retry_count,
                           last_error, transport, published_at, next_attempt_at,
-                          created_at, updated_at
+                          created_at, updated_at,
+                          claimed_by, claimed_at, claimed_until
                 """
             ),
-            {"now": now, "limit": limit},
+            {
+                "worker_id": worker_id,
+                "now": now,
+                "claimed_until": now + timedelta(seconds=lease_seconds),
+                "limit": limit,
+            },
         )
         rows = result.fetchall()
         # Преобразуем RawRow → OutboxMessage ORM-объекты
@@ -269,6 +296,9 @@ async def claim_pending(
                 next_attempt_at=row.next_attempt_at,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
+                claimed_by=row.claimed_by,
+                claimed_at=row.claimed_at,
+                claimed_until=row.claimed_until,
             )
             for row in rows
         ]
@@ -365,13 +395,24 @@ async def count_stuck_pending_by_transport(*, threshold_seconds: int) -> dict[st
 
 
 async def mark_sent(message_id: int) -> None:
-    """Помечает сообщение как успешно опубликованное."""
+    """Помечает сообщение как успешно опубликованное.
+
+    S72 W2: дополнительно clears ``claimed_by``/``claimed_at``/
+    ``claimed_until`` (release lease) — row теперь в финальном
+    ``status='sent'``, claim metadata не нужен.
+    """
     now = datetime.now(UTC)
     async with main_session_manager.transaction() as session:
         await session.execute(
             update(OutboxMessage)
             .where(OutboxMessage.id == message_id)
-            .values(status="sent", published_at=now)
+            .values(
+                status="sent",
+                published_at=now,
+                claimed_by=None,
+                claimed_at=None,
+                claimed_until=None,
+            )
         )
 
 
@@ -396,6 +437,10 @@ async def mark_failed(
 
         msg.retry_count += 1
         msg.last_error = error[:1024]
+        # S72 W2: release claim lease (row освобождается для sweeper/retry).
+        msg.claimed_by = None
+        msg.claimed_at = None
+        msg.claimed_until = None
         if msg.retry_count >= max_retries:
             msg.status = "failed"
         else:
