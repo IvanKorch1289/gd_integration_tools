@@ -5,7 +5,7 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S96 (2026-06-13) — Auth Relocation + SyntaxWarning + Ratchet + SSE Multi (4 commits, 23 NEW tests)
+## [Unreleased] — Autonomous cycle S97 (2026-06-13) — RouteBuilder fix (CRITICAL) + Ratchet + Debt catalog + Telegram DSL (5 commits, 23 NEW tests)
 
 ### Added
 
@@ -28,14 +28,28 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **S96 W4-CRITICAL FINDING**: `RouteBuilder` имеет `__slots__=()` без `__init__` — все 12+ `from_*` builders (CDC, messaging, SSE, HTTP, ...) TypeError на instantiation. Pre-existing DSL bug с S94 (или ранее). S97+ блокирующая задача.
 - `docs/adr/0180-sprint-96-closure.md` — closure ADR.
 
+### Known Issues (S97+ blocking)
+
+- ~~`RouteBuilder.__init__` missing~~ — **S97 W1 FIXED**.
+- 1157 NEW docstring violations накоплено (allowlist stale). S97 W2 ratchet -3.
+
+### Added (S97)
+
+- **S97 W1-CRITICAL FIX: RouteBuilder.__init__** — Pre-S97: `RouteBuilder` имел `__slots__=()` без `__init__`, все 12+ `from_*` builders (CDC, SSE, HTTP, messaging, ...) TypeError на instantiation. S94 W4 `from_sse` был orphan (mixin не подключён). Fix: explicit `__init__(route_id='', source='', description=None)` + 8 `__slots__` + подключение `TransportSourcesMixin` (renamed для избежания collision). 8 tests: init, from_, from_registered_source, from_sse, from_sse_multi, build, _add, slots.
+- **S97 W2-Docstring ratchet -3** (1160 → 1157 NEW violations): `services/ai/prompt_versioning.py` — 13 NEW docstrings (to_dict, store methods, service proxies). 16 Protocol stubs остаются exempt per convention.
+- **S97 W3-TODO catalog**: 4 real deferred features (S18 middleware registry, S24 LangGraph Checkpointer, S40 DSL codegen, S40 express callback) каталогизированы в `docs/tech-debt/TODO-CATALOG.md`. S98+ backlog: middleware → codegen → checkpointer → express.
+- **S97 W4-Telegram Bot DSL**: `infrastructure/sources/telegram_webhook.py` (NEW) — `TelegramUpdate` + `TelegramWebhookSource` с HMAC secret validation. `dsl/builders/sources_mixin/telegram_sources_mixin.py` (NEW) — `from_telegram(route_id, bot_token, secret_token, allowed_updates, offset)`. `SourcesMixin`: 8 → 9 mixins, 12 → 13 methods. 12 tests: validation (4), parsing (3), URL building (2), DSL integration (3).
+- `docs/adr/0181-sprint-97-closure.md` — closure ADR.
+
 ### Tests
 
-- 23 NEW (W1: 7 + W2: 2 + W3: 0 ratchet + W4: 3 pass + 4 skip; 1 test file S95 W3 cleanup)
+- 23 NEW (W1: 8 + W4: 12 + W2/W3: 0/3 ratchet; W3 debt catalog no tests)
 
 ### Known Issues (S97+ blocking)
 
 - `RouteBuilder.__init__` missing — `cls()` TypeError блокирует все `from_*` builders. S97 W1.
 - 1160 NEW docstring violations накоплено (allowlist stale). S97 W2 ratchet.
+- **S97 W1 FIXED**: `RouteBuilder.__init__` теперь работает, 12+ `from_*` builders functional.
 - S93+S94+S95 total: 57 + 20 + 37 = 114 NEW tests across 9 atomic commits
 
 ## [Unreleased] — Autonomous cycle S94 (2026-06-13) — Logging codemod + Docstring ratchet + DSL SSE (4 commits, 20 NEW tests)
