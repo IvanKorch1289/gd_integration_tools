@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S93 (2026-06-12) — W1: Cleanup + Critical Fixes (5 commits, 13 NEW tests)
+
+### Added
+
+- **S93 W1-C1**: `core/di/providers/cache.py` — больше НЕ импортирует из `entrypoints/`. New core facade `get_three_tier_rag_cache_from_state()` + endpoint shim для backward-compat. TODO(S94): мигрировать callsite'ы и удалить shim.
+- **S93 W1-C7**: NeMo guard → explicit warning + llm_guard fallback (4 mappings: colang:topics, colang:sensitive, moderation, prompt_injection). **CRITICAL BUG FIX**: `input_guard_mixin.py` использовал `logger` БЕЗ ИМПОРТА → `NameError` при каждом вызове. Добавлен `_NEMO_TO_LLM_GUARD_FALLBACK` + `category="policy_degradation"` для monitoring.
+- **S93 W1-C6**: `NotebookExecutionService` → singleton via DI. New `core/di/providers/jupyter.py` с `_overrides` dict. 3 процессора (`notebook_dsl`, `notebook_execute`, `notebook_export`) lazy-resolve через `_get_service()`. Per-process connection pool вместо per-processor.
+- **S93 W1-C29**: L2 semantic RAG cache default ON. `three_tier.py:29` `l2_enabled: bool = True` (было `False`). Qdrant-клиент lazy+try/except — при недоступности `_client=None` → `get()` returns `None` (no errors).
+- **S93 W1-C30**: Удалены 2 dead demo routes: `test_mf` (0 refs) + `credit_check_demo` (0 refs, S27 W3/W4 PoC). `health_proxy_demo` ОСТАВЛЕН (referenced в `tests/unit/dsl/route/test_routes_v11_discovery.py`).
+- **Tests**: 13 NEW regression tests:
+  - `tests/unit/core/ai/policy/test_nemo_guard_fallback.py` (4 tests: logger defined, fallback map, nemo without/with fallback)
+  - `tests/unit/core/di/test_cache_provider_no_entrypoints.py` (3 tests: AST scan, runtime without app, runtime with mock app)
+  - `tests/unit/dsl/processors/test_notebook_di_singleton.py` (5 tests: 3× AST scan, singleton, reset)
+- `docs/adr/0175-sprint-93-w1-cleanup-and-critical-fixes.md` — closure ADR.
+
 ## [Unreleased] — Autonomous cycle S92 (2026-06-12) — V2 P0 #6 continue (File + OrderKind) (8 NEW tests, 4 commits)
 
 ### Added
