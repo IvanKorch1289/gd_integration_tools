@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S94 (2026-06-13) — Logging codemod + Docstring ratchet + DSL SSE (4 commits, 20 NEW tests)
+
+### Added
+
+- **S94 W1-stdlib logging codemod**: 6 core/* files — `import logging` → `from src.backend.core.logging import get_logger`. core/config/{consul_config,hot_reload}.py, core/audit/sinks/ai_unified_sink.py, core/actions/{proto,strawberry}_adapter.py, core/interfaces/__init__.py. 8 regression tests.
+- **S94 W2-stdlib logging codemod (auth + http)**: core/auth/saml_backend.py — getLogger → core.logging.get_logger (S93 W4 incorrectly excluded). infrastructure/clients/transport/http/__init__.py — removed dead `from logging import DEBUG` (unused). infrastructure/clients/transport/http_httpx.py — explicit comment why `import logging` retained (tenacity DEBUG constant). 3 regression tests.
+- **S94 W3-docstring ratchet**: -12 docstrings (576 → 564). core/di/providers/cache.py: 12 setter/getter functions добавлены short docstrings. 3 функции пока в allowlist. **NOTE**: manual edit, не --update-allowlist (последний сканирует ВСЕ dirs и ломает baseline).
+- **S94 W4-DSL from_sse consumer**: infrastructure/sources/sse.py — новый SSESource + SSEEvent dataclass. manual SSE parsing (event:, data:, id:, retry:), Last-Event-ID tracking, reconnect с exponential backoff, heartbeat timeout, parse_json option. dsl/builders/sources_mixin/sse_sources_mixin.py — новый StreamingSSEMixin. SourcesMixin MRO = 8 mixins = 12 methods. 9 tests.
+- `docs/adr/0178-sprint-94-w5-closure-logging-ratchet-sse.md` — closure ADR.
+
+### Tests
+
+- 20 NEW (W1: 8 + W2: 3 + W4: 9; W3: docstring ratchet без tests)
+- S93+S94 total: 11 + 20 = 31 stdlib logging migrations + DSL SSE feature
+
 ## [Unreleased] — Autonomous cycle S93 (2026-06-13) — W3-W5: Auth Gateway + CDC feed + Logging codemod + DSL fork_join (4 commits, 28 NEW tests)
 
 ### Added
