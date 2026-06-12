@@ -1,4 +1,19 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S84 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S85 W5)
+
+## S85 closure summary (2026-06-12, ADR-0167)
+
+**Status: V2 P0 #1 (AIGateway pass-through + 3 bypass + _legacy_invoke) CLOSED в S85 (5 commits, 7 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#1 AIGateway pass-through** | ✅ CLOSED S85 W1-W4 | _legacy_invoke removed, AIGatewayEnforcementRequiredError, 3 bypass paths closed |
+
+**Net S85 LOC**: 5 files changed, +130 LOC, 7 NEW tests.
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #3 ✅ CLOSED. Осталось: #2, #5, #6, #7, #8, #9, #10.
+
+**V2 verdict impact**: "Главный шаг +2 балла" complete: logging (S84) + AIGateway (S85) + DetachedInstanceError (S83).
+Projected rating: 6.16 → **7.16/10**.
 
 ## S84 closure summary (2026-06-12, ADR-0166)
 

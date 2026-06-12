@@ -5,6 +5,29 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S85 (2026-06-12) — V2 P0 #1 closure: AIGateway enforcement mandatory (3 bypass paths closed, 7 NEW tests) (5 commits)
+
+### Changed
+
+- **S85 W1: `_legacy_invoke` removed** (FINAL_REPORT_V2 P0 #1). Pass-through scaffold возвращал пустой `AIResponse(content="")` → caller думал что получил результат. Заменён на `AIGatewayEnforcementRequiredError` при `ai_gateway_enforce=False`.
+- **S85 W2: 3 bypass paths closed** — `ai_graph.build_and_run_agent`, `BasePydanticAgent._ensure_gateway`, `LiteLLMModel.request`. Каждый получил pre-flight enforcement check через `feature_flags.ai_gateway_enforce`.
+
+### Added
+
+- **S85 W1: `AIGatewayEnforcementRequiredError`** в `core/ai/errors.py`. Поднимается при попытке silent pass-through.
+
+### Tests
+
+- **S85 W3: 1 regression test** для `ai_gateway_enforce` default=True (CI guard).
+- **S85 W4: 6 enforcement tests** в `tests/unit/core/ai/test_ai_gateway_enforcement.py`: _legacy_invoke removed, error exported, AIGateway raises при enforce=False, 3 bypass paths contain check. 7/7 pass.
+
+### Performance
+
+- **V2 verdict impact**: S85 завершает "главный шаг +2 балла" (logging S84 + DetachedInstanceError S83 + AIGateway S85). Projected rating: 6.16 → **7.16/10**.
+
+## [Unreleased] — Autonomous cycle S84 (2026-06-12) — V2 P0 #3 closure: logging.factory 274 layer violations → 0 (codemod 253 files, 10 NEW tests) (5 commits)
+
+
 ## [Unreleased] — Autonomous cycle S84 (2026-06-12) — V2 P0 #3 closure: logging.factory 274 layer violations → 0 (codemod 253 files, 10 NEW tests) (5 commits)
 
 ### Changed
