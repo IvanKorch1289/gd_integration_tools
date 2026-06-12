@@ -57,8 +57,9 @@ _DEFAULT_LRU_SIZE: Final[int] = 1024
 class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
     """Capability Gate (4 mixins = 14 methods + 3 core)."""
 
-    __slots__ = ()
-
+    # S79 W2 fix: removed `__slots__ = ()` (S54 W4 decomp forgot про
+    # instance attrs `_vocabulary` etc). Same pattern as S74 W4
+    # NotebookExecutionService / S76 W3 AIPolicyEnforcer / S76 W4 fix.
     def __init__(
         self,
         *,
