@@ -20,11 +20,108 @@ app_logger = get_logger("application")
 __all__ = ("starting", "ending")
 
 
+# S64 W2: distributed leader election для APScheduler.
+# TTL=300s — leader-renewal window (lock НЕ auto-extends, eventual
+# leadership shift при cluster instability; документировано в ADR-0087).
+_SCHEDULER_LEADER_LOCK_TTL_S: int = 300
+_SCHEDULER_LEADER_LOCK_KEY: str = "scheduler:leader:v1"
+# Module-level state: был ли этот инстанс выбран leader'ом.
+# Используется в stop() для symmetric shutdown — non-leader не должен
+# вызывать scheduler.stop() (APScheduler бросает SchedulerNotRunningError).
+_scheduler_leader_acquired: bool = False
+
+
 def _get_watcher_manager():
     """Ленивый импорт WatcherManager для избежания циклических зависимостей."""
     from src.backend.entrypoints.filewatcher.watcher_manager import watcher_manager
 
     return watcher_manager
+
+
+async def _start_scheduler_with_leader_election() -> None:
+    """S64 W2 — distributed leader election для APScheduler (multi-instance safe).
+
+    Алгоритм:
+
+    1. ``distributed_lock("scheduler:leader:v1", ttl_seconds=300,
+       blocking_timeout=0)`` — non-blocking try-lock.
+    2. Если lock acquired → ``await get_scheduler_manager().start()`` →
+       этот инстанс становится leader'ом, все cron/interval jobs
+       выполняются ТОЛЬКО на нём.
+    3. Если lock NOT acquired → log "skip" + return. APScheduler на
+       этом инстансе НЕ стартует (no orphan jobs).
+
+    **Trade-off** (задокументировано в ADR-0087):
+
+    * Lock TTL=300s (5 min) — lock НЕ auto-extends. Если leader
+      instance живёт > 5 min без касания lock'а, lock expires и
+      другой instance может стать leader. Eventual-consistency
+      shift при cluster instability. Лучше: leader dies → 5 min
+      cron stall → новый leader берёт (acceptable для cron-уровня).
+    * Реализация auto-extend (heartbeat task) — S65+, требует
+      lifecycle-интеграции (start/stop heartbeat).
+    * ``scheduler.max_instances=1`` (per-job) защищает внутри
+      одного APScheduler; leader election — между инстансами.
+
+    Сценарии:
+
+    * 1 инстанс в кластере → всегда leader.
+    * 2+ инстанса → ровно 1 leader (остальные skip).
+    * Leader упал → через ≤5 min другой инстанс возьмёт lock.
+    * Redis недоступен → ``RedisLock.acquire()`` возвращает ``True``
+      (fail-open, см. infra/clients/storage/redis_lock.py:48) →
+      ВСЕ инстансы стартуют scheduler (W2 trade-off, см. G6 в
+      аудите S64). Prod fix — добавить fail-closed в RedisLock.
+    """
+    global _scheduler_leader_acquired
+    from src.backend.infrastructure.clients.storage.redis_lock import (
+        distributed_lock,
+    )
+
+    async with distributed_lock(
+        _SCHEDULER_LEADER_LOCK_KEY,
+        ttl_seconds=_SCHEDULER_LEADER_LOCK_TTL_S,
+        blocking_timeout=0,
+    ) as acquired:
+        if not acquired:
+            app_logger.info(
+                "Scheduler leader election: lock NOT acquired — another instance "
+                "holds it. Skipping scheduler.start() on this instance.",
+                extra={
+                    "lock_key": _SCHEDULER_LEADER_LOCK_KEY,
+                    "ttl_seconds": _SCHEDULER_LEADER_LOCK_TTL_S,
+                },
+            )
+            return
+        _scheduler_leader_acquired = True
+        app_logger.info(
+            "Scheduler leader election: lock acquired — starting scheduler.",
+            extra={
+                "lock_key": _SCHEDULER_LEADER_LOCK_KEY,
+                "ttl_seconds": _SCHEDULER_LEADER_LOCK_TTL_S,
+            },
+        )
+        await get_scheduler_manager().start()
+
+
+async def _stop_scheduler_if_leader() -> None:
+    """S64 W2 — symmetric shutdown: только leader вызывает ``scheduler.stop()``.
+
+    APScheduler бросает :class:`apscheduler.schedulers.SchedulerNotRunningError`
+    при попытке ``stop()`` на уже остановленном (или никогда не
+    стартовавшем) scheduler'е. Non-leader инстансы никогда не
+    стартовали scheduler → должны skip stop.
+    """
+    global _scheduler_leader_acquired
+    if not _scheduler_leader_acquired:
+        app_logger.info(
+            "Scheduler leader election: this instance was NOT leader — "
+            "skipping scheduler.stop()."
+        )
+        return
+    app_logger.info("Scheduler leader election: stopping scheduler (was leader).")
+    await get_scheduler_manager().stop()
+    _scheduler_leader_acquired = False
 
 
 OperationCallable = Callable[[], Any | Awaitable[Any]]
@@ -310,14 +407,14 @@ starting_operations: list[OperationItem] = [
         lambda: get_redis_client().create_initial_streams(),
         _redis_enabled,
     ),
-    ("scheduler", lambda: get_scheduler_manager().start(), None),
+    ("scheduler", _start_scheduler_with_leader_election, None),
     ("health_aggregator", _register_health_checks, None),  # ARCH-3
     ("degradation_registry_bootstrap", _register_default_degradation_features, None),
 ]
 
 ending_operations: list[OperationItem] = [
     ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
-    ("scheduler", lambda: get_scheduler_manager().stop(), None),
+    ("scheduler", _stop_scheduler_if_leader, None),
     ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
     ("workflow_audit_sink", _close_workflow_audit_sink, _clickhouse_enabled),
     ("clickhouse_client", lambda: get_clickhouse_client().close(), _clickhouse_enabled),
