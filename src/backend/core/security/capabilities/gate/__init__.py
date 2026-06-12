@@ -22,6 +22,9 @@ from src.backend.core.security.capabilities.errors import (
     CapabilitySupersetError,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.vocabulary import (
+    build_default_vocabulary,  # S79 W2 fix: S54 W4 decomp forgot import
+)
 from src.backend.core.security.capabilities.vocabulary import CapabilityVocabulary
 
 if TYPE_CHECKING:
