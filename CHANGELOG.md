@@ -5,6 +5,22 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S66 (2026-06-12) — fact-checked quick wins (4 commits, 4/4 substantive)
+
+### Changed
+
+- **S66 W1: `pyproject.toml` — pendulum dedup** — удалён versionless дубль (line 107), оставлен versioned (line 48, `pendulum>=3.2.0,<4.0.0`). tomllib valid: 91 deps, 1 pendulum.
+- **S66 W2: `ARCHITECTURE.md` — обновление цифр** — 3× "125 legacy" → "201 legacy" (S65 W2 +35, S65 W4 +119); `scripts/check_layers.py` → `tools/check_layers.py` (S27, файл удалён).
+- **S66 W3: 5× `__init__.py` namespace markers** — PEP 420 docstring для `services`, `services/ai`, `services/io`, `services/ops`, `core`. 24→19 empty.
+- **S66 W4: `BatchUpdateProcessor` docstring + tests** — docstring clarification: "executemany per column-group" (НЕ "cycle per item", как утверждал audit P1-5). 3 unit-теста закрепляют правильное поведение.
+
+### Notes
+
+- **FACT-CHECK**: audit P1-5 (BatchUpdateProcessor cycle) **НЕВЕРНО** — код уже executemany per group. W4 = docstring + tests, no behavior change.
+- **FACT-CHECK**: audit P2-19 (scripts/check_layers.py dup) **НЕ СУЩЕСТВУЕТ** — moot.
+- См. ADR-0146 для полного контекста и S67+ backlog (jwt_backend consolidation, 19 remaining namespace, 35+119 violations).
+- 10/10 EXISTING batch tests pass после W4. 3/3 NEW executemany tests pass.
+
 ## [Unreleased] — Autonomous cycle S65 (2026-06-12) — P0 cleanup (3 commits, 3/3 substantive)
 
 ### Changed

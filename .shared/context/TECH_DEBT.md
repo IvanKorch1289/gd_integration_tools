@@ -725,6 +725,72 @@ streams/queues override) ValueError на module load.
 - Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
   unrelated.
 
+## TD-S66-quick-wins (P2, open) — S66 honest gaps for S67+
+
+**Sprint**: autonomous cycle S66 (2026-06-12, ADR-0146)
+
+S66 закрыл 4 quick wins (pendulum, ARCHITECTURE, namespace markers,
+BatchUpdateProcessor doc+tests). Оставшиеся:
+
+### TD-S66-W4: jwt_backend_joserfc.py consolidation (M, open)
+
+**Файлы**:
+- `src/backend/core/auth/jwt_backend.py` (297 LOC, canonical, default)
+- `src/backend/core/auth/jwt_backend_joserfc.py` (380 LOC, shim, feature-flag)
+
+**Analysis P2-28**: "Удалить `jwt_backend_joserfc.py` если дублирует".
+
+**Fact-check**: **ОБА** файла используют `joserfc` (НЕ python-jose как
+утверждает docstring shim'а). Это **parallel implementation**, не
+"old vs new". Feature-flag `auth_joserfc` (default-OFF) контролирует
+через `jwt_backend.py` какой активен.
+
+**Production usage shim'а** (РЕАЛЬНО используется):
+- `src/backend/entrypoints/api/v1/endpoints/auth_login.py:104` —
+  `from src.backend.core.auth.jwt_backend_joserfc import encode`
+- `src/backend/entrypoints/api/v1/endpoints/auth_introspect.py` —
+  `from src.backend.core.auth.jwt_backend_joserfc import JwtVerificationError`
+- 2 test files (`test_jwt_joserfc.py`, `test_auth_introspect.py`)
+
+**Fix (S67+, M-scope)**:
+1. Migrate `auth_login.py` + `auth_introspect.py` на canonical
+   `jwt_backend` (replace shim imports).
+2. Delete `jwt_backend_joserfc.py` (380 LOC).
+3. Update `jwt_backend.py` feature-flag dispatch (remove lazy import
+   branch).
+4. Delete `test_jwt_joserfc.py` (replaced by `test_jwt.py` if exists).
+5. Update `test_auth_introspect.py` (replace shim imports).
+
+### TD-S66-W3: 19 remaining empty `__init__.py` (S, low priority)
+
+**Файлы** (subpackage-level, all namespace by design):
+```
+src/backend/__init__.py
+src/backend/core/security/__init__.py
+src/backend/dsl/analysis/__init__.py
+src/backend/dsl/commands/__init__.py
+src/backend/dsl/transforms/__init__.py
+src/backend/entrypoints/api/dependencies/__init__.py
+src/backend/entrypoints/grpc/protobuf/auto/__init__.py
+src/backend/entrypoints/mqtt/__init__.py
+src/backend/infrastructure/audit/__init__.py
+src/backend/infrastructure/clients/external/__init__.py
+src/backend/infrastructure/clients/messaging/__init__.py
+src/backend/infrastructure/clients/storage/__init__.py
+src/backend/infrastructure/clients/transport/__init__.py
+src/backend/infrastructure/monitoring/__init__.py
+src/backend/infrastructure/persistence/__init__.py
+src/backend/infrastructure/security/__init__.py
+src/backend/infrastructure/storage/__init__.py
+src/backend/services/ai/agents_pydantic/examples/__init__.py
+src/backend/services/ai/llm/__init__.py
+src/backend/services/core/__init__.py
+src/backend/services/scheduler/__init__.py
+```
+
+**Fix (S67+, S-scope, low priority)**: docstring-маркеры (как S66 W3) для
+top-level subpackages. Можно batch'ить все 21 в один commit (~1 KB total).
+
 ## TD-S65-P0-cleanup (P1, open) — S65 honest gaps for S66+
 
 **Sprint**: autonomous cycle S65 (2026-06-12, ADR-0145)
