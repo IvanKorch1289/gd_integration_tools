@@ -5,7 +5,7 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S68 W1 (2026-06-12) — auth_joserfc flag cleanup (1 commit, 1/1 substantive)
+## [Unreleased] — Autonomous cycle S68 (2026-06-12) — SWARM execution (3 teams, 4 violations closed, 2 ADR docs) (4 commits, 4/4 substantive)
 
 ### Removed
 
@@ -17,7 +17,41 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   var `FEATURE_AUTH_JOSERFC` теперь silently ignored (pydantic-settings
   не находит matching field). 3 NEW tests в `test_features_auth.py`
   верифицируют removal (field не существует, singleton не имеет attr,
-  env var ignored).
+  env var ignored). Orchestrator fix: subagent случайно удалил
+  `auth_mtls_client` (out of scope) — restored с explicit comment.
+
+### Refactored
+
+- **S68 W2: TD-S65-W2 sample refactor (RetryPolicy)** — subagent
+  investigation → orchestrator execution. `RetryPolicy` moved из
+  `dsl/workflow/spec/policies.py` в `core/ai/retry_policy.py`.
+  Backward compat via re-export. 2 violations closed (allowlist
+  201 → 199). 9 NEW tests в `test_retry_policy.py`. ADR-0149 (35
+  violations tier classification, 33 remaining S69+ backlog).
+
+- **S68 W3: TD-S65-W4 sample refactor (audit JSON codec)** — subagent
+  investigation → orchestrator execution. Local `dumps_str` создан в
+  `infrastructure/audit/_json_codec.py` (orjson + stdlib fallback).
+  2 audit files updated. 2 violations closed (allowlist 199 → 197).
+  9 NEW tests + 1 skipped. ADR-0150 (124 violations classified,
+  122 remaining S69+ backlog).
+
+### Notes
+
+- **SWARM EXECUTION pattern**: 3 parallel subagent teams на independent
+  modules (W1: auth/config, W2: core/gateway+di, W3: dsl/workflows).
+  Subagent completion rate: 1/3 clean (W1), 2/3 timeout (W2, W3).
+  Per `subagent-parallel-coverage-batch` skill, pitfall #49 ("PIVOT
+  RULE"): 3 subagents timeout → orchestrator finishes execution.
+- **Pre-existing bug обнаружен в W3**: `audit/event_log.py:164` Python 2
+  syntax (`except TypeError, ValueError:`). File не импортируется
+  even до S68 W3. Tracking: `TD-S68-event-log-python2-syntax`.
+  Out of S68 W3 scope.
+- **Bonus finding**: 28 STALE allowlist entries (separate fix needed,
+  `TD-S68-stale-allowlist-cleanup`, deferred S69 W0).
+- Verified: 21 NEW tests pass (3 W1 + 9 W2 + 9 W3), 0 regressions.
+  ruff clean. Allowlist 201 → 197 (-4 violations in S68).
+- См. ADR-0148 для полного контекста и S69+ backlog.
 
 ## [Unreleased] — Autonomous cycle S67 (2026-06-12) — torch CVE + namespace + JWT consolidation + pre-existing fix (4 commits, 4/4 substantive)
 

@@ -784,6 +784,57 @@ S64 backlog упоминал 3 pre-existing import bugs:
 - GitHub alert #183: state=dismissed, reason=tolerable_risk
 - Dismissed by: IvanKorch1289 (2026-06-12)
 
+## TD-S68-swarm-closure (P2, closed) — 3 teams, 4 violations, 2 ADR docs
+
+**Sprint**: autonomous cycle S68 (2026-06-12, ADR-0148, ADR-0149, ADR-0150)
+
+S68 = SWARM execution (3 parallel subagent teams):
+- W1 (auth/config): subagent clean → 1 commit (with 1 orchestrator fix)
+- W2 (core/gateway+di): subagent timeout → orchestrator execution → 1 commit
+- W3 (dsl/workflows): subagent timeout → orchestrator execution → 1 commit
+
+Net: -4 violations (201 → 197), +21 NEW tests, +2 ADR docs.
+
+## TD-S68-event-log-python2-syntax (XS, open) — audit/event_log.py:164 pre-existing
+
+**Обнаружено в S68 W3**: `src/backend/infrastructure/audit/event_log.py:164`:
+```python
+try:
+    safe_limit = max(1, min(int(limit), 10000))
+except TypeError, ValueError:  # Python 2 syntax
+    safe_limit = 100
+```
+
+**Проблема**: Python 3.10+ raises `SyntaxError: multiple exception
+types must be parenthesized`. Файл **не импортируется** even до S68 W3.
+
+**Fix (XS, S69 W1)**:
+```python
+except (TypeError, ValueError):  # parens!
+    safe_limit = 100
+```
+
+**Scope**: 1 line fix. После fix, мой S68 W3 import change
+(`dumps_str` из local `_json_codec`) начнёт работать.
+
+**Tracking**: TD-S68-event-log-python2-syntax (P3 priority).
+
+## TD-S68-stale-allowlist-cleanup (S, open) — 28 stale entries
+
+**Обнаружено в S68 W3** (subagent bonus finding): `python
+tools/check_layers.py --root src` reports "28 STALE entries в
+allowlist (исправлены — обновите)". Entries в allowlist больше не
+нужны (violations уже были исправлены в прошлых sprints, но записи
+забыли удалить).
+
+**Fix (S, S69 W0)**: 1-batch cleanup. Запустить
+`python tools/check_layers.py --root src --update-allowlist` ПОСЛЕ
+verify что эти 28 entries действительно stale (run layer check,
+сравнить с allowlist, удалить duplicates).
+
+**Scope**: 1 commit, ~5 минут (auto-merge если подтверждено через
+CI run).
+
 ## TD-S67-feature-flag-deprecation (P3, deferred S68+) — auth_joserfc setting cleanup
 
 **Sprint**: autonomous cycle S67 (2026-06-12, ADR-0147)
