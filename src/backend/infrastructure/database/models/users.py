@@ -21,6 +21,7 @@ from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("User",)
 
@@ -39,8 +40,13 @@ def _get_password_hasher() -> PasswordHasher:
     )
 
 
-class User(BaseModel):
-    """ORM-класс таблицы учёта пользователей."""
+class User(BaseModel, TenantMixin):
+    """ORM-класс таблицы учёта пользователей.
+
+    S91 W2 (V2 P0 #6 continue): тепер TenantMixin subclass.
+    2/7 моделей tenant-isolated (Order + User). ``tenant_id`` надається
+    через mixin (не потрібен окремий mapped_column).
+    """
 
     __table_args__ = {"comment": "Пользователи"}
 
