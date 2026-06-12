@@ -78,14 +78,14 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
                 # session.refresh() marks all attrs as expired; после
                 # @main_session_manager.connection() closes session
                 # доступ к obj.field = DetachedInstanceError.
-                # Решение: expire_on_commit=False сохраняет attrs loaded
-                # после commit, объект остаётся usable до GC.
-                original_expire = session.expire_on_commit
-                session.expire_on_commit = False
-                try:
-                    await session.refresh(instance=obj)
-                finally:
-                    session.expire_on_commit = original_expire
+                # Решение: явно указываем attribute_names при refresh —
+                # refresh() с конкретным списком не expire'ит остальные
+                # attrs, и оставшиеся attrs остаются loaded после commit.
+                # Это безопаснее чем expire_on_commit=False (глобально
+                # для session) и не ломает concurrent sessions.
+                mapper = inspect(obj.__class__)
+                all_column_names = [c.key for c in mapper.columns]
+                await session.refresh(instance=obj, attribute_names=all_column_names)
 
             return obj
 

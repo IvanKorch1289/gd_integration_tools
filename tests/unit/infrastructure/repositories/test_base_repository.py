@@ -213,3 +213,94 @@ async def test_first_or_last_desc(repo: SQLAlchemyRepository[_TestItem]) -> None
     assert isinstance(result, list)
     assert len(result) == 2
     assert result[0].id > result[1].id
+
+
+# ====================================================================
+# S83: V2 P0 N1 — DetachedInstanceError regression tests
+# ====================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_update_returned_object_attrs_accessible(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W3: update() returns object; доступ к attrs после return
+    НЕ должен выкинуть DetachedInstanceError.
+
+    Pre-fix: session.refresh() оставлял attrs expired → доступ к
+    obj.name после @main_session_manager.connection() close = bug.
+    """
+    created = await repo.add(data={"name": "before", "value": 1})
+    obj_id = created.id
+
+    updated = await repo.update(
+        key="id", value=obj_id, data={"name": "after", "value": 42}
+    )
+
+    # Это и есть регрессия — раньше obj.name = DetachedInstanceError
+    assert updated.id == obj_id
+    assert updated.name == "after"
+    assert updated.value == 42
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_update_returned_object_usable_in_caller(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W3: caller использует returned object для дальнейших операций."""
+    created = await repo.add(data={"name": "test"})
+    obj_id = created.id
+
+    updated = await repo.update(key="id", value=obj_id, data={"value": 100})
+
+    # Simulate "use after session close" — caller передаёт object дальше
+    payload = {"id": updated.id, "name": updated.name, "value": updated.value}
+    assert payload == {"id": obj_id, "name": "test", "value": 100}
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_returns_object_id(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W2: delete() возвращает ID удалённого объекта (был None)."""
+    created = await repo.add(data={"name": "to-delete"})
+    obj_id = created.id
+
+    deleted_id = await repo.delete(key="id", value=obj_id)
+
+    assert deleted_id == obj_id
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_returns_none_when_not_found(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W2: delete() возвращает None если объект не найден."""
+    deleted_id = await repo.delete(key="id", value=999999)
+    assert deleted_id is None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_update_does_not_affect_other_sessions(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W3: expire_on_commit=False НЕ должен ломать concurrent sessions.
+
+    Гарантия: после commit() в session A, session B всё ещё видит
+    свежие данные (read-after-write consistency).
+    """
+    created_a = await repo.add(data={"name": "A", "value": 1})
+    obj_id = created_a.id
+
+    # Update в session A
+    await repo.update(key="id", value=obj_id, data={"value": 2})
+
+    # Read в новой операции (открывает новую session)
+    found = await repo.get(key="id", value=obj_id)
+    assert found is not None
+    assert found.value == 2
