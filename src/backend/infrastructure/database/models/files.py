@@ -2,13 +2,17 @@ from sqlalchemy import UUID, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.backend.infrastructure.database.models.base import Base, BaseModel
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("File", "OrderFile")
 
 
-class File(BaseModel):
+class File(BaseModel, TenantMixin):
     """
     ORM-класс таблицы учета файлов.
+
+    S92 W2 (V2 P0 #6 continue): тепер TenantMixin subclass.
+    3/7 моделей tenant-isolated (Order + User + File).
 
     Атрибуты:
         name (Mapped[str]): Название файла. Может быть пустым.

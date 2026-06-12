@@ -2,13 +2,17 @@ from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.backend.infrastructure.database.models.base import BaseModel, nullable_str
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("OrderKind",)
 
 
-class OrderKind(BaseModel):
+class OrderKind(BaseModel, TenantMixin):
     """
     ORM-класс таблицы учета видов запросов.
+
+    S92 W2 (V2 P0 #6 continue): тепер TenantMixin subclass.
+    4/7 моделей tenant-isolated (Order + User + File + OrderKind).
 
     Атрибуты:
         name (Mapped[nullable_str]): Название вида запроса.
