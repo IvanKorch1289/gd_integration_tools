@@ -64,8 +64,9 @@ __all__ = (
 class AIPolicyEnforcer(InputGuardMixin, OutputGuardMixin, HandleMixin, SanitizeMixin):
     """AI policy enforcer (4 mixins = 11 methods + 1 core)."""
 
-    __slots__ = ()
-
+    # S76 W4 fix: removed `__slots__ = ()` (S67 W2 decomp forgot про
+    # instance attrs `_pii_tokenizer` etc). Same pattern as S74 W4
+    # NotebookExecutionService fix — decomp bug recurring.
     def __init__(
         self,
         *,
