@@ -5,6 +5,24 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S86 (2026-06-12) — V2 P0 #2 closure: Temporal sandbox verified + CI guard (12 NEW tests, 1 tool, 1 CI gate) (4 commits)
+
+### Changed
+
+- **S86: V2 P0 #2 verified CLOSED + defense-in-depth** (FINAL_REPORT_V2 #2). Sprint 37 (d42c550d) уже исправил `compile_agent_invoke_step` → `workflow.execute_activity(_agent_invoke)` + `_agent_invoke_activity` в activity_bridge.py. V2 audit от 9 июня не обновился после Sprint 37 fix. **S86 добавляет** static analyzer + CI gate + 7 regression tests для предотвращения регрессии.
+- S86 W1 ОШИБКА: первая итерация создала `tools/s86_sandbox_scan.py` (минимальный), затем W2-W3 переписали как `tools/s86_workflow_sandbox_guard.py` (полный). **W4 удаляет `s86_sandbox_scan.py`** + обновляет `.github/workflows/lint.yml` reference.
+
+### Added
+
+- `tools/s86_workflow_sandbox_guard.py` — static analyzer для `step_compilers/*.py` (compile_*_step + _run), detects direct I/O (gateway/redis/db/http/publisher/sink), non-deterministic clock (asyncio.sleep/time.time/uuid.uuid4/datetime.now), direct stream client. Whitelist: `workflow.execute_activity/sleep/wait_condition/pause/resume/now/logger/unsafe.*`.
+- `tests/unit/tools/test_s86_workflow_sandbox_guard.py` — 7 NEW regression tests (safe compile, gateway violation, asyncio.sleep violation, time.time violation, code outside compile_*_step OK, workflow.sleep whitelisted, multiple violations).
+- `.github/workflows/lint.yml` — added `Temporal sandbox gate` step (блокирующий — exit 1 → CI fail).
+- `docs/adr/0168-sprint-86-temporal-sandbox-closure.md` — closure ADR (supersedes surface-level S86 first iteration).
+
+### Removed
+
+- `tools/s86_sandbox_scan.py` — superseded by `s86_workflow_sandbox_guard.py` (minimal initial version, replaced).
+
 ## [Unreleased] — Autonomous cycle S85 (2026-06-12) — V2 P0 #1 closure: AIGateway enforcement mandatory (3 bypass paths closed, 7 NEW tests) (5 commits)
 
 ### Changed

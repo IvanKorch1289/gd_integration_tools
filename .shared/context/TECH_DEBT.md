@@ -1,4 +1,27 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S85 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S86 W5)
+
+## S86 closure summary (2026-06-12, ADR-0168)
+
+**Status: V2 P0 #2 (Temporal sandbox violation) CLOSED (verified) в S86 (4 commits, 12 NEW tests, 1 tool, 1 CI gate).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#2 Temporal sandbox** | ✅ CLOSED S86 W1-W4 (verified, Sprint 37 main fix `d42c550d`) | Defense-in-depth: static analyzer `s86_workflow_sandbox_guard.py` + CI gate + 7 analyzer regression tests + 5 workflow compile tests |
+
+**Net S86 LOC**: 5 files changed, +325 LOC, 12 NEW tests (5 temporal sandbox + 7 analyzer), 1 tool added, 1 tool removed (s86_sandbox_scan.py superseded), 1 CI gate.
+
+**S86 scope correction** (vs first S86 iteration): first surface-level scan (5 tests) **missed**:
+- All 8 `compile_*_step` functions in `step_compilers.py` (только agent_invoke_step был проверен)
+- Dynamic class creation `type()` в `emitter.py:140` (build-time, OK)
+- `outbox_worker.py` direct `get_stream_client().publish_to_*` (НЕ @workflow.defn — OK)
+- `worker.py` direct `await session.execute(...)` (worker bootstrap, OK)
+- `globals()["_CircuitOpen"]` в `graylog_gelf.py:92-95` (module-level, OK)
+
+S86 deep re-scan: **0 violations** во всех 5 файлах `src/backend/dsl/workflow/compiler/`.
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅ CLOSED. Осталось: #5, #6, #7, #8, #9, #10.
+
+**V2 verdict impact**: 4/10 V2 P0 items CLOSED. Projected rating: 6.16 → **7.36/10**.
 
 ## S85 closure summary (2026-06-12, ADR-0167)
 
