@@ -76,20 +76,13 @@ class StreamingSSEMixin:
             reconnect_max_retries=reconnect_max_retries,
             parse_json=parse_json,
         )
-        # S96 W4: fix S94 W4 broken _source_obj= kwarg (cls() TypeError).
-        # builder is created via mixin protocol (no __init__), so we use
-        # object.__setattr__ for source binding. Runtime caller accesses
-        # via builder._sse_source.
-        builder = cls()  # type: ignore[call-arg]
-        try:
-            object.__setattr__(builder, "_sse_source", source)
-        except (AttributeError, TypeError):
-            # If RouteBuilder is re-defined with __init__ in future — fall back.
-            builder = cls.from_(  # type: ignore[return-value]
-                route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}"
-            )
-            object.__setattr__(builder, "_sse_source", source)
-        return builder  # type: ignore[return-value]
+        # S97 W1: RouteBuilder.__init__ теперь принимает (route_id, source, description).
+        # Bind source через object.__setattr__ (slot declaration в __slots__).
+        builder = cls.from_(  # type: ignore[return-value]
+            route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}"
+        )
+        object.__setattr__(builder, "_sse_source", source)
+        return builder
 
     @classmethod
     def from_sse_multi(
@@ -177,16 +170,11 @@ class StreamingSSEMixin:
         # Multi-source route_id suffix для disambiguation.
         multi_route_id = f"{route_id}.multi" if not route_id.endswith(".multi") else route_id
 
-        # S96 W4: same pattern as from_sse — object.__setattr__ for slot binding
-        # (RouteBuilder uses __slots__=() and has no __init__ in current state).
-        builder = cls()  # type: ignore[call-arg]
-        try:
-            object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
-        except (AttributeError, TypeError):
-            builder = cls.from_(  # type: ignore[return-value]
-                multi_route_id,
-                source=f"sse-multi:{multi_route_id}",
-                description=f"SSE multi: {len(urls)} streams ({merge_strategy})",
-            )
-            object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
+        # S97 W1: same as from_sse — use cls.from_ (no-args cls() deprecated).
+        builder = cls.from_(  # type: ignore[return-value]
+            multi_route_id,
+            source=f"sse-multi:{multi_route_id}",
+            description=f"SSE multi: {len(urls)} streams ({merge_strategy})",
+        )
+        object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
         return builder  # type: ignore[return-value]

@@ -37,6 +37,9 @@ from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.builders.notebook import NotebookMixin
 from src.backend.dsl.builders.vault import VaultSecretMixin
 from src.backend.dsl.builders.request_reply import RequestReplyMixin
+from src.backend.dsl.builders.sources_mixin import (
+    SourcesMixin as TransportSourcesMixin,  # S97 W1: SSE, CDC, messaging, ...
+)
 from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
 from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
@@ -104,10 +107,48 @@ class RouteBuilder(
     FeatureMixin,
     ResilienceMixin,
     ComplianceMixin,
+    TransportSourcesMixin,  # S97 W1: SSE/CDC/messaging builders (orphan в S94)
 ):
     """RouteBuilder — DSL core (7 mixins = 26 methods + 6 core)."""
 
-    __slots__ = ()
+    __slots__ = (
+        "_description",
+        "_feature_flag",
+        "_processors",
+        "_protocol",
+        "_transport_config",
+        "description",
+        "route_id",
+        "source",
+    )
+
+    def __init__(
+        self,
+        route_id: str = "",
+        source: str = "",
+        description: str | None = None,
+    ) -> None:
+        """S97 W1: explicit __init__ чтобы ``cls(route_id=..., ...)`` работал.
+
+        Pre-S97: ``RouteBuilder`` имел ``__slots__=()`` и **нет** ``__init__``,
+        поэтому ``from_`` (``cls(route_id=..., source=..., description=...)``)
+        → ``TypeError: RouteBuilder() takes no arguments``. Все 12+ ``from_*``
+        builders (CDC, SSE, HTTP, messaging, ...) TypeError на instantiation.
+
+        Fix: slots с явными атрибутами (slot'ы требуют declaration),
+        ``__init__`` с keyword-only args (default values для backward compat
+        с ``cls()`` no-args pattern). Атрибуты с префиксом ``_`` —
+        internal state (``_processors``, ``_protocol``), без префикса —
+        public API (``route_id``, ``source``, ``description``) для ``build()``.
+        """
+        object.__setattr__(self, "route_id", route_id)
+        object.__setattr__(self, "source", source)
+        object.__setattr__(self, "description", description)
+        object.__setattr__(self, "_description", description or "")
+        object.__setattr__(self, "_processors", [])
+        object.__setattr__(self, "_protocol", None)
+        object.__setattr__(self, "_transport_config", None)
+        object.__setattr__(self, "_feature_flag", None)
 
     @classmethod
     def from_(
