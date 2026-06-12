@@ -5,6 +5,26 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S64 (2026-06-12) — multi-instance safety (3 commits, 3/5 substantive)
+
+### Added
+
+- **S64 W1: `outbox_repo.claim_pending()`** — multi-instance safe claim with `pg_try_advisory_xact_lock(blake2b(worker_id))` + `FOR UPDATE SKIP LOCKED`. Prevents duplicate delivery across K8s pods.
+- **S64 W2: Scheduler leader election** — `distributed_lock("scheduler:leader:v1", ttl=300)` для APScheduler startup. Non-leader pods skip `scheduler.start()` and `scheduler.stop()`.
+- **S64 W3: OutboxDispatcher cutover** — feature flag `outbox_settings.enabled` (default OFF) для legacy worker ↔ new dispatcher. `_register_outbox_dispatcher()` в lifespan.py. Worker ID = `HOSTNAME` env (K8s pod name).
+- **S64 W4: `make_dedupe_store()` factory** — feature flag `outbox_settings.use_redis_dedupe` (default OFF) для `MemoryDedupeStore` ↔ `RedisDedupeStore` (cross-instance safe). Default-возврат: `MemoryDedupeStore()`.
+
+### Architecture
+
+- All S64 changes flag-gated (default OFF) — плавный cutover в prod, не breaking dev/test setups.
+- Fail-fast на `RedisDedupeStore` construction (если Redis недоступен при `use_redis_dedupe=True` — `ConnectionError`, не silent degrade).
+- Best-effort startup для outbox dispatcher (outer `try/except` log warning, не raise).
+
+### Notes
+
+- See ADR-0144 для полного контекста, honest gaps (per-row lock, auto-extend, fail-closed), и S65+ backlog.
+- Pre-existing import bugs (`DatabaseInitializer` в `accessors.py:24`, `graphql_router` в `plugins/composition/__init__.py:9`, `redis_client` в `caching/decorator.py:16`) обойдены через test stubs, не правкой production кода. В TECH_DEBT для S65+.
+
 ## [Unreleased] — Sprint 68 (2026-06-10) — macros/clickhouse_audit/invoker/ai_providers god-file decomp (5 commits, 5/5 substantive)
 
 ### Changed (5 commits, 4 working + closure)

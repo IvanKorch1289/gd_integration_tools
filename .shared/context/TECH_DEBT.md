@@ -725,6 +725,68 @@ streams/queues override) ValueError на module load.
 - Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
   unrelated.
 
+## TD-S64-multi-instance-safety (P1, open) — multi-instance safety gaps
+
+**Sprint**: autonomous cycle S64 (2026-06-12, ADR-0144)
+
+**Honest gaps** (НЕ блокеры S64 acceptance, deferred S65+):
+
+### TD-S64-W1: per-row advisory lock granularity
+
+**Файл**: `src/backend/infrastructure/repositories/outbox.py:claim_pending`
+
+W1 использует **per-call** advisory lock (один на batch), не
+per-row. Trade-off:
+- per-call: быстрее, не требует Alembic-миграцию.
+- per-row: защита от worker hang (если worker_A зависнет в середине
+  обработки, его `pg_try_advisory_xact_lock` держится до commit'а,
+  но retry_count уже инкрементнут → другой worker может пере-забрать
+  тот же message_id).
+
+**Fix (S65+)**: Alembic-миграция:
+```sql
+ALTER TABLE outbox_messages ADD COLUMN status TEXT DEFAULT 'pending';
+ALTER TABLE outbox_messages ADD COLUMN claimed_by TEXT;
+ALTER TABLE outbox_messages ADD COLUMN claimed_at TIMESTAMP;
+-- claim_pending: UPDATE ... SET status='processing', claimed_by=$1, claimed_at=NOW()
+-- mark_sent: UPDATE ... SET status='sent'
+-- периодический job: UPDATE ... SET status='pending' WHERE status='processing' AND claimed_at < NOW() - INTERVAL '5 minutes'
+```
+
+### TD-S64-W2: scheduler lock auto-extend
+
+**Файл**: `src/backend/plugins/composition/setup_infra.py`
+
+W2 использует `distributed_lock(ttl=300)`. Lock НЕ auto-extends. При
+cluster instability возможен leadership shift посреди cron-job.
+
+**Fix (S65+)**: либо `redis_lock` auto-extend (S52 W3) либо
+background `scheduler_lock` refresh task.
+
+### TD-S64-W4: RedisDedupeStore fail-closed mode
+
+**Файл**: `src/backend/services/sources/idempotency.py:RedisDedupeStore.is_duplicate`
+
+Текущий код **degrade'ит в False** при любой exception (best-effort,
+чтобы не уронить hot-path). При flapping Redis возможен **дубль**
+event'а. Для prod-профилей с strong-consistency требованиями это
+неприемлемо.
+
+**Fix (S65+)**: добавить `fail_closed: bool = False` параметр в
+`RedisDedupeStore.__init__`; в prod-профиле `fail_closed=True` →
+`raise` вместо `return False`.
+
+### TD-S64-W3: pre-existing import bugs (NOT в S64 scope, обойдены test stubs)
+
+**Production код не тронут**. Баги задокументированы для отдельной
+работы (S65+ или sprint cleanup):
+
+1. `src/backend/plugins/composition/__init__.py:9` — `cannot import name 'graphql_router' from 'src.backend.entrypoints.graphql.schema'`. Сама `graphql_router` определена в `entrypoints/graphql/schema.py:492`, но импорт в `__init__.py` идёт по неправильному пути.
+2. `src/backend/infrastructure/database/database/accessors.py:24` — `NameError: name 'DatabaseInitializer' is not defined`. Используется до определения.
+3. `src/backend/infrastructure/caching/decorator.py:16` — `redis_client` not defined (lazy import через `__getattr__` ожидает имя `redis_client` в module scope).
+
+**Impact**: блокируют ~50+ unit-тестов в `tests/unit/plugins/composition/`, `tests/unit/infrastructure/database/`, `tests/unit/infrastructure/caching/`. S64 обошёл через `sys.modules` stubs в `_load_lifespan_isolated()`.
+
 ### TD-S48-W4: `ast-silent-except-pass-audit` (low, S48 W4 ✅ CLOSED)
 
 **Файлы:** `tools/audit_silent_excepts.py` (NEW, S48 W4).
