@@ -3048,7 +3048,6 @@ requires-dist = [
     { name = "orjson", specifier = ">=3.11.8,<4.0.0" },
     { name = "paddleocr", marker = "extra == 'multimodal-rag'", specifier = ">=2.8.0,<4.0.0" },
     { name = "patchright", marker = "extra == 'rpa'", specifier = ">=1.40.0,<2.0" },
-    { name = "pendulum" },
     { name = "pendulum", specifier = ">=3.2.0,<4.0.0" },
     { name = "pillow", marker = "extra == 'multimodal-rag'", specifier = ">=10.0.0,<13.0.0" },
     { name = "pillow", marker = "extra == 'rpa-windows'", specifier = ">=10.0,<13.0" },

@@ -299,7 +299,7 @@ class QuotasService:
         отсутствие Redis — активирует in-memory fallback.
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
         except Exception as _:
             return None
         candidate = getattr(redis_client, "_raw_client", None) or redis_client

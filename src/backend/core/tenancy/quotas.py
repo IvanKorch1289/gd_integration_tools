@@ -30,7 +30,7 @@ class QuotaTracker:
         period_seconds: int,
     ) -> dict:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
         except ImportError:
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 

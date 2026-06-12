@@ -13,7 +13,7 @@ from src.backend.core.config.settings import settings
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.dsl.codec.json import json_dumps, json_loads
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-from src.backend.infrastructure.clients.storage.redis import redis_client
+from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.backend.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.backend.infrastructure.decorators.caching.storage.disk import DiskTTLCache

@@ -102,7 +102,7 @@ class SemanticCache:
 
     async def get(self, query: str) -> Any | None:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
         except ImportError:
             return None
         key = self._exact_key(query)
@@ -116,7 +116,7 @@ class SemanticCache:
 
     async def set(self, query: str, value: str) -> None:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
         except ImportError:
             return
         key = self._exact_key(query)

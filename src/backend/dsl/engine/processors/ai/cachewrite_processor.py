@@ -48,7 +48,7 @@ class CacheWriteProcessor(BaseProcessor):
         )
 
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)

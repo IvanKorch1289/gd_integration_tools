@@ -179,7 +179,7 @@ class StreamingLLMProcessor(BaseProcessor):
         self, session_id: str, content: Any, *, is_final: bool
     ) -> None:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",

@@ -223,7 +223,7 @@ class ClaimCheckProcessor(BaseProcessor):
                 token = f"claim:{uuid.uuid4()}"
                 try:
                     from src.backend.infrastructure.clients.storage.redis import (
-                        redis_client,
+                        get_redis_client as redis_client,  # S71 W1 fix
                     )
 
                     await redis_client.set_if_not_exists(
@@ -263,7 +263,7 @@ class ClaimCheckProcessor(BaseProcessor):
                     restored = orjson.loads(raw_bytes)
                 else:
                     from src.backend.infrastructure.clients.storage.redis import (
-                        redis_client,
+                        get_redis_client as redis_client,  # S71 W1 fix
                     )
 
                     raw = await redis_client.get(token)

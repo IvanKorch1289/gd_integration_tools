@@ -15,7 +15,6 @@ from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
-from src.backend.infrastructure.database.database import (
 from src.backend.plugins.composition.setup_infra.health import _register_health_checks  # S60 W3: cross-import
 
 from src.backend.plugins.composition.setup_infra.pools import _register_pools_in_unified_manager  # S60 W3: cross-import
@@ -24,9 +23,6 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import _init_wor
 
 from src.backend.plugins.composition.setup_infra.pools import _warmup_connection_pools  # S60 W3: cross-import
 
-    get_db_initializer,
-    get_external_db_registry,
-)
 from src.backend.infrastructure.decorators.caching import close_caches
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager

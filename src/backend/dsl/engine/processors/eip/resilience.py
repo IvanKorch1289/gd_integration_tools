@@ -41,7 +41,7 @@ class DeadLetterProcessor(BaseProcessor):
 
     async def _send_to_dlq(self, exchange: Exchange[Any]) -> None:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             dlq_entry = {
                 "exchange_id": exchange.meta.exchange_id,

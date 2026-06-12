@@ -82,7 +82,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             async def _mget_keys(conn: Any) -> list[dict[str, Any]]:
                 keys: list[str] = []
@@ -165,7 +165,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             await redis_client.add_to_stream(
                 stream_name=_AUDIT_PREFIX + "events",
@@ -191,7 +191,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             raw = await redis_client._redis.get(f"{_KEY_PREFIX}{client_id}")
             if not raw:
@@ -238,7 +238,7 @@ class APIKeyManager:
     async def revoke_client_key(self, client_id: str) -> bool:
         """Отзывает ключ клиента (немедленно, без grace period)."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             await redis_client._redis.delete(f"{_KEY_PREFIX}{client_id}")
             await redis_client.add_to_stream(
@@ -260,7 +260,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
 
             result: list[dict[str, Any]] = []
             keys = await redis_client.list_cache_keys(f"{_KEY_PREFIX}*")
