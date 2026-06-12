@@ -1,18 +1,4 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S86 W5)
-
-## S86 closure summary (2026-06-12, ADR-0168)
-
-**Status: V2 P0 #2 (Temporal sandbox violation) CLOSED (verified) в S86 (4 commits, 5 NEW tests).**
-
-| FINAL_REPORT_V2 # | Status | What |
-|---|---|---|
-| **#2 Temporal sandbox** | ✅ CLOSED S86 W1-W4 (verified, Sprint 37 main fix) | Defense-in-depth: regression tests + CI guard |
-
-**Net S86 LOC**: 4 files changed, +250 LOC, 5 NEW tests.
-
-**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅ CLOSED. Осталось: #5, #6, #7, #8, #9, #10.
-
-**V2 verdict impact**: 4/10 V2 P0 items CLOSED. Projected rating: 6.16 → **7.36/10**.
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S85 W5)
 
 ## S85 closure summary (2026-06-12, ADR-0167)
 

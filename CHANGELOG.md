@@ -5,24 +5,6 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S86 (2026-06-12) — V2 P0 #2 closure: Temporal sandbox verified + CI guard (5 NEW tests) (4 commits)
-
-### Changed
-
-- **S86: V2 P0 #2 verified CLOSED** (FINAL_REPORT_V2 #2). Sprint 37 (d42c550d) уже исправил `compile_agent_invoke_step` → `workflow.execute_activity(_agent_invoke)` + `_agent_invoke_activity` в activity_bridge.py. V2 audit от 9 июня не обновился после Sprint 37 fix.
-
-### Added
-
-- **S86 W2: 5 regression tests** в `tests/unit/dsl/workflow/test_temporal_sandbox.py` (AST scan: 0 direct I/O calls, workflow.execute_activity usage, _agent_invoke_activity reconstruction).
-- **S86 W3: scan tool `tools/s86_sandbox_scan.py`** — CLI scan всех `dsl/workflow/compiler/*.py` для direct I/O. Allowlist: activity_bridge.py.
-
-### CI
-
-- **S86 W4: lint workflow integration** — `Temporal sandbox gate` step в `.github/workflows/lint.yml`. Если кто-то добавит direct `gateway.invoke` в workflow-функцию → CI fail.
-
-## [Unreleased] — Autonomous cycle S85 (2026-06-12) — V2 P0 #1 closure: AIGateway enforcement mandatory (3 bypass paths closed, 7 NEW tests) (5 commits)
-
-
 ## [Unreleased] — Autonomous cycle S85 (2026-06-12) — V2 P0 #1 closure: AIGateway enforcement mandatory (3 bypass paths closed, 7 NEW tests) (5 commits)
 
 ### Changed
