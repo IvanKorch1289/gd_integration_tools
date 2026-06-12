@@ -304,3 +304,35 @@ async def test_update_does_not_affect_other_sessions(
     found = await repo.get(key="id", value=obj_id)
     assert found is not None
     assert found.value == 2
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_update_idempotent_on_repeated_calls(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W4: повторные update() calls работают корректно (no state leak)."""
+    created = await repo.add(data={"name": "x", "value": 0})
+    obj_id = created.id
+
+    for i in range(3):
+        updated = await repo.update(key="id", value=obj_id, data={"value": i * 10})
+        assert updated.value == i * 10
+        # Доступ к name НЕ должен сломаться между updates
+        assert updated.name == "x"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_idempotent(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """S83 W4: повторный delete() возвращает None (no error)."""
+    created = await repo.add(data={"name": "once"})
+    obj_id = created.id
+
+    first = await repo.delete(key="id", value=obj_id)
+    second = await repo.delete(key="id", value=obj_id)
+
+    assert first == obj_id
+    assert second is None
