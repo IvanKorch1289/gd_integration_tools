@@ -5,6 +5,23 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S81 (2026-06-12) — P1 #8 closure: CircuitBreakerMiddleware restoration (per-route, no global state, 13 NEW tests) (4 commits)
+
+### Added
+
+- **S81 W1: CircuitBreakerMiddleware** (FINAL_REPORT_V2 P1 #8).
+  Restored after A2/ADR-005 removal. New design: per-route state,
+  sliding window, BreakerPolicy config. NO global state.
+- **S81 W2: Middleware registry integration** — order=250 (Layer 2),
+  default_policy 5/60/30.
+
+### Tests
+
+- **S81 W3: 13 NEW tests** в
+  `tests/unit/entrypoints/middlewares/test_circuit_breaker.py`:
+  2 policy + 5 state machine + 1 sliding window + 3 per-route +
+  1 excluded + 1 ASGI integration.
+
 ## [Unreleased] — Autonomous cycle S80 (2026-06-12) — P1 #6 closure: LiteLLM Gateway pool registration в PoolHealthMonitor (8 NEW tests) (6 commits)
 
 ### Added
