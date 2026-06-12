@@ -25,8 +25,20 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterable
 
-    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.dsl.commands.action_registry import (
+        ActionHandlerRegistry,
+        ActionHandlerSpec,
+    )
     from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
+    from src.backend.dsl.engine.processors import BaseProcessor
+
+# Runtime imports — вынесены из function-local для S70 W3 style cleanup.
+# ActionHandlerSpec нужен в ActionRegistryAdapter.register() для построения
+# handler_spec; BaseProcessor нужен в ProcessorRegistryAdapter.register_class()
+# для issubclass-проверки. Type-only импорты выше в TYPE_CHECKING остаются —
+# не дублируются, а дополняются (split import pattern).
+from src.backend.dsl.commands.action_registry import ActionHandlerSpec
+from src.backend.dsl.engine.processors import BaseProcessor
 
 __all__ = (
     "ActionRegistryAdapter",
@@ -203,7 +215,6 @@ class ActionRegistryAdapter:
         иначе создаётся минимальный stub.
         """
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         metadata = (
             spec
@@ -255,8 +266,6 @@ class ProcessorRegistryAdapter:
 
     def register_class(self, name: str, cls: type) -> None:
         """Регистрирует класс DSL-процессора."""
-        from src.backend.dsl.engine.processors import BaseProcessor
-
         if not (isinstance(cls, type) and issubclass(cls, BaseProcessor)):
             raise TypeError(
                 f"{cls!r} is not a BaseProcessor subclass — отказ в регистрации"
