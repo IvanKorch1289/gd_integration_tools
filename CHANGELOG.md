@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S65 (2026-06-12) — P0 cleanup (3 commits, 3/3 substantive)
+
+### Changed
+
+- **S65 W2: `check_layers.py` покрывает lazy imports** — удалён S27 marker `if is_lazy: continue`. 42 новых violations найдено (core/ → other layers), 4 stale удалено. Allowlist: 47 → 82 entries.
+- **S65 W3: dead enforcement cleanup** — удалены `tools/check_no_tests.py` (67 LOC, dead, Python 2 syntax, противоречит 1135 тестам), `src/backend/infrastructure/cache/aiocache_poc.py` (S59 W4 PoC), и его тест. `aiocache` оставлен в deps для ADR-0086.
+- **S65 W4: `dsl` и `workflows` в `LAYERS`** — meta-layers, оркестрирующие backend. 119 новых violations (теперь ВИДИМЫ). Allowlist: 82 → 201 entries. `--strict` mode готов (exit 1 при violations).
+
+### Notes
+
+- См. ADR-0145 для полного контекста и S66+ backlog (35 + 119 violations для refactoring).
+- Comprehensive audit P0-5 (JupyterHubClient) **fact-check**: клиент УЖЕ используется в `services/jupyter/execution_service/__init__.py:30,65`. P0-5 moot.
+- P0-4 (`AgentSpec.tools` runtime enforcement) deferred S66+ (L-scope, требует MCP gateway changes).
+
 ## [Unreleased] — Autonomous cycle S64 (2026-06-12) — multi-instance safety (3 commits, 3/5 substantive)
 
 ### Added

@@ -725,6 +725,67 @@ streams/queues override) ValueError на module load.
 - Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
   unrelated.
 
+## TD-S65-P0-cleanup (P1, open) — S65 honest gaps for S66+
+
+**Sprint**: autonomous cycle S65 (2026-06-12, ADR-0145)
+
+S65 закрыл 3 из 5 P0 из comprehensive audit. Оставшиеся gaps:
+
+### TD-S65-W2: 35 core → other layers violations
+
+**Файл**: `tools/check_layers_allowlist.txt:47-82`
+
+35 violations core/ → services/infrastructure/entrypoints, найденных
+после удаления S27 marker. Worst offenders:
+- `core/ai/gateway_pipeline_mixin/*` (8 файлов) → services
+- `core/di/providers/ai.py` → services.audit, services.ai.pii
+- `core/messaging/dlq.py` → infrastructure.messaging
+- `core/resilience/cache_decorators.py` → infrastructure
+- `core/scaling/auto_scaler.py` → infrastructure.observability
+
+**Fix (S66+)**: рефакторинг — переместить `gateway_pipeline_mixin/*`
+в `services/ai/gateway/`, `di/providers/ai.py` в `services/ai/`,
+либо выделить Protocol'ы в `core/` и оставить impl в `services/`.
+
+### TD-S65-W4: 119 dsl/workflows violations
+
+**Файл**: `tools/check_layers_allowlist.txt:82-201`
+
+119 violations из dsl/ и workflows/ импортов. Worst offenders:
+- `core/ai/agent_registry.py` → `dsl.workflow.spec` (core → dsl: BAD)
+- `core/interfaces/batch_capable.py` → `dsl.engine.context`
+- `entrypoints/_action_bridge.py` → `dsl.service`
+- `entrypoints/api/v1/endpoints/*` → `dsl.*` (40+ endpoints)
+
+**Fix (S66+)**: god-file candidates для рефакторинга:
+1. `core/ai/agent_registry.py` (imports dsl — нарушение core)
+2. `core/interfaces/batch_capable.py`
+3. `entrypoints/_action_bridge.py`
+4. Reverse dependency: `dsl/` импортирует из `services/` и
+   `entrypoints/` — потенциальные cycle candidates.
+
+### TD-S65-AUDIT: P0-4 AgentSpec.tools runtime enforcement
+
+**Файл**: `src/backend/core/ai/agent_registry.py` + MCP gateway
+
+Analysis P0-4: `AgentSpec.tools` декларирует разрешённые tools, но
+нет runtime enforcement. **L-scope**: требует MCP gateway changes
+(перехват `mcp.tool.call` → проверка `agent.tools`).
+
+**Fix (S66+, L-scope)**: добавить `ToolEnforcementInterceptor` в
+MCP gateway namespace isolation layer. Не блокирует S65.
+
+### TD-S65-AUDIT: P0-5 JupyterHubClient — moot
+
+Analysis P0-5: "JupyterHubClient нигде не вызывается".
+**Fact-check**: клиент УЖЕ используется в
+`services/jupyter/execution_service/__init__.py:30, 65`
+(`JupyterHubClient(settings)`). Analysis неверно — fix не требуется.
+
+**Honest gap**: `execution_service` насколько полноценный
+(реальный `.ipynb` execution или scaffold) — нужно отдельное
+research.
+
 ## TD-S64-multi-instance-safety (P1, open) — multi-instance safety gaps
 
 **Sprint**: autonomous cycle S64 (2026-06-12, ADR-0144)
