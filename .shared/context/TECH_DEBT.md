@@ -1,6 +1,27 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S71 W4)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S72 W5)
 
 Tracking для known issues, workarounds, и deferred work, который
+
+## S72 closure summary (2026-06-12, ADR-0154)
+
+**Status: 1/1 deferred P1 epic CLOSED в S72 (4 commits, 6 NEW tests).**
+
+| TD | Status | What |
+|---|---|---|
+| **TD-S64-W1** per-row outbox claim | ✅ CLOSED S72 | Alembic + claim SQL rewrite + sweeper + 6 tests |
+
+**Net S72 LOC**: 6 files changed (+630, -130), 1 Alembic migration,
+6 NEW tests. **9/10 deferred P1 items теперь CLOSED total** (8 в S71 + 1 в S72).
+
+**S73+ epic candidates** (correlated с FINAL_REPORT_V2.md fact-check):
+1. **P0-A SyntaxError batch fix (83 files)** — `tools/fix_except_bug.py`
+   codemod exists, был написан S60 W3 но НЕ ЗАПУЩЕН. Report указал
+   26 files — fact-check shows 83 files реально.
+2. **CI gate `python -m compileall`** в pre-commit (предотвратить новые
+   SyntaxError).
+3. **4 stale allowlist entries** (schema/* deleted в S71 W1) — cleanup.
+4. **AI Policy / tools whitelist** (P0-B/C per report, L-scope).
+5. **CORS/XSRF в Streamlit** (P0-D per report).
 
 ## S71 closure summary (2026-06-12, ADR-0153)
 
@@ -1016,27 +1037,32 @@ research.
 
 **Honest gaps** (НЕ блокеры S64 acceptance, deferred S65+):
 
-### TD-S64-W1: per-row advisory lock granularity (⏸ DEFERRED S72+)
+### TD-S64-W1: per-row advisory lock granularity (✅ CLOSED S72)
 
 **Файл**: `src/backend/infrastructure/repositories/outbox.py:claim_pending`
 
-W1 использует **per-call** advisory lock (один на batch), не
-per-row. Trade-off:
-- per-call: быстрее, не требует Alembic-миграцию.
-- per-row: защита от worker hang (если worker_A зависнет в середине
-  обработки, его `pg_try_advisory_xact_lock` держится до commit'а,
-  но retry_count уже инкрементнут → другой worker может пере-забрать
-  тот же message_id).
+**S72 fix** (4 commits, ADR-0154):
+* W1 (commit `d49d6b09`): Alembic migration `c5d6e7f8a9b0` —
+  3 nullable columns (`claimed_by`, `claimed_at`, `claimed_until`)
+  + partial index `ix_outbox_messages_status_claimed_until` +
+  per-worker index `ix_outbox_messages_claimed_by`.
+* W2 (commit `005d1ad3`): `claim_pending` UPDATE statement теперь
+  per-row — SET `status='processing'`, `claimed_by=:worker_id`,
+  `claimed_at=:now`, `claimed_until=:now+lease_interval`. `mark_sent`
+  + `mark_failed` clear claimed_* (release lease).
+* W3 (commit `2dda5181`): `outbox_repo.reset_stuck_processing`
+  + `outbox_worker.sweep_stuck_once` sweeper. Wired в
+  `start_outbox_worker` как separate APScheduler job
+  (id='outbox_sweeper', 60s interval, max_instances=1).
+* W4 (commit `17bc0f1a`): 6 NEW unit tests
+  (`tests/unit/infrastructure/messaging/outbox/test_per_row_claim_and_sweeper.py`).
 
-**Fix (S65+)**: Alembic-миграция:
-```sql
-ALTER TABLE outbox_messages ADD COLUMN status TEXT DEFAULT 'pending';
-ALTER TABLE outbox_messages ADD COLUMN claimed_by TEXT;
-ALTER TABLE outbox_messages ADD COLUMN claimed_at TIMESTAMP;
--- claim_pending: UPDATE ... SET status='processing', claimed_by=$1, claimed_at=NOW()
--- mark_sent: UPDATE ... SET status='sent'
--- периодический job: UPDATE ... SET status='pending' WHERE status='processing' AND claimed_at < NOW() - INTERVAL '5 minutes'
-```
+**Per-row lease защищает от worker hang**: если worker_A claim'нул
+row в t=0 с lease=300s и завис → в t=300+5s sweeper reset'нёт row →
+другой worker может пере-забрать. Trade-off: minimal overhead (1
+partial index) для full multi-instance safety.
+
+**Closed** (S72). Tracking удалён.
 
 ### TD-S64-W2: scheduler lock auto-extend (✅ CLOSED S71 W3)
 

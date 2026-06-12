@@ -5,6 +5,39 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S72 (2026-06-12) — TD-S64-W1 closure: per-row outbox claim (Alembic + SQL rewrite + sweeper + tests) (4 commits, 6 NEW tests)
+
+### Added
+
+- **S72 W1: Alembic migration для per-row outbox claim** (revision
+  `c5d6e7f8a9b0`). Schema: `claimed_by VARCHAR(256) NULL` +
+  `claimed_at TIMESTAMP NULL` + `claimed_until TIMESTAMP NULL` +
+  partial index `ix_outbox_messages_status_claimed_until` (только
+  status='processing') + index `ix_outbox_messages_claimed_by`.
+  OutboxMessage ORM обновлён (3 new mapped columns, all nullable
+  для backwards-compat).
+
+- **S72 W2: `claim_pending` per-row SQL rewrite** (TD-S64-W1 closure).
+  UPDATE statement теперь sets `status='processing'`,
+  `claimed_by=:worker_id`, `claimed_at=:now`,
+  `claimed_until=:now+lease_interval`. `mark_sent` + `mark_failed`
+  clear claimed_* (release lease). Per-row lease защищает от
+  worker hang — sweeper (W3) reset'нёт expired claim.
+
+- **S72 W3: outbox sweeper job** (TD-S64-W1 closure).
+  `outbox_repo.reset_stuck_processing(threshold_seconds=300, limit=1000)`
+  — atomic UPDATE: `status='pending', claimed_*=NULL WHERE
+  status='processing' AND claimed_until < cutoff`. Uses partial index.
+  Wired в `start_outbox_worker` как separate APScheduler job
+  (id='outbox_sweeper', 60s interval, max_instances=1, coalesce=True).
+  Multi-leader protection via S71 W3 leader election.
+
+- **S72 W4: 6 NEW tests** в
+  `tests/unit/infrastructure/messaging/outbox/test_per_row_claim_and_sweeper.py`:
+  claim propagates columns, SQL includes status=processing, sweeper
+  returns count, no-stuck returns 0, SQL filter verification,
+  threshold cutoff timing.
+
 ## [Unreleased] — Autonomous cycle S71 (2026-06-12) — TECH_DEBT closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 6 NEW tests, 0/3 subagent)
 
 ### Fixed
