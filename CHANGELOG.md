@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S89 (2026-06-12) — V2 P0 #6 pilot: Order→TenantMixin (1/7 models tenant-isolated) (8 NEW tests) (4 commits)
+
+### Changed
+
+- **S89 W1**: Alembic migration `d6e7f8a9b0c1_orders_tenant_id` — `ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'` + `CREATE INDEX ix_orders_tenant_id` + idempotent backfill. Online migration (PG 11+ metadata-only). Idempotent guard через `inspector.get_columns()`.
+- **S89 W2**: `Order.tenant_id: Mapped[str] = mapped_column(String(64), nullable=False, default='default', index=True)`. Type fix: `errors Mapped[str]` → `Mapped[str | None]`.
+- **S89 W3**: `Order(BaseModel, TenantMixin)` — видалив окремий `tenant_id` column (redundant, TenantMixin надає). `_is_tenant_aware(Order) = True` → apply_tenant_filter (S88 W2) auto-filter активний.
+
+### Added
+
+- `src/backend/infrastructure/database/migrations/versions/2026_06_12_1900-d6e7f8a9b0c1_orders_tenant_id.py` — Alembic migration (revision d6e7f8a9b0c1, down_revision c5d6e7f8a9b0).
+- `tests/unit/infrastructure/database/models/test_order_tenant_mixin.py` — 8 NEW regression tests (MRO, column spec, _is_tenant_aware, relationships preservation).
+- `docs/adr/0171-sprint-89-order-tenant-mixin-pilot.md` — closure ADR.
+
 ## [Unreleased] — Autonomous cycle S88 (2026-06-12) — V2 P0 #5 + #6 closure: env-aware rate limit + tenant auto-filter wire-up (17 NEW tests) (4 commits)
 
 ### Changed

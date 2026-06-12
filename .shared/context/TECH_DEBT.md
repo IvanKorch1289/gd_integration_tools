@@ -1,4 +1,28 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S88 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S89 W5)
+
+## S89 closure summary (2026-06-12, ADR-0171)
+
+**Status: V2 P0 #6 (HIGH) PILOT CLOSED для Order в S89 (4 commits, 8 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#6 Tenant auto-filter** | 🟡 **PILOT CLOSED** | S88 (wire-up) + S89 (Order pilot: Alembic + model + TenantMixin) |
+
+**Net S89 LOC**: 4 files changed, +125 LOC (код: migration + model), +105 LOC (tests), 8 NEW tests, 1 ADR.
+
+**S89 deep re-check** (vs S88 plan):
+- OutboxMessage ВИКЛЮЧЕНО з S89 — service-level таблиця (transactional outbox), не user data, tenant isolation не застосовується.
+- RuleEngineRuleset + WorkflowInstance вже мають tenant_id (S21 W0) — V2 #6 частково covered для них.
+- 7 моделей без tenant_id на S89 start: Order, DslSnapshot, OutboxMessage, File, OrderKind, WorkflowEvent, User. S89: Order ✅. S90+: User + File + OrderKind (3 наступні). Long-term: DslSnapshot, WorkflowEvent.
+
+**Online migration pattern** (S89 W1):
+- `ALTER TABLE ... ADD COLUMN ... NOT NULL DEFAULT 'default'` — Postgres 11+ metadata-only.
+- Idempotent guard через `inspector.get_columns('orders')` — safe re-runs.
+- Backfill: existing rows отримують `tenant_id='default'` (TenantMiddleware fallback).
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅, #5 ✅, #6 🟡 pilot-closed. Осталось: #6 (6 моделей), #7, #8, #10.
+
+**V2 verdict impact**: 5/10 fully closed, 1/10 pilot-closed, 3/10 pending, 1/10 V2 fact-check wrong. Projected rating: 7.66 → **7.96/10** (pilot-closed +1/2).
 
 ## S88 closure summary (2026-06-12, ADR-0170)
 
