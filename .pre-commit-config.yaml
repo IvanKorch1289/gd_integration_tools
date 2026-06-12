@@ -39,6 +39,22 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+      # S73 W3 (FINAL_REPORT_V2.md P0-A): CI gate для предотвращения
+      # `except A, B:` semantic bug (Python 3.14 silent semantic bug).
+      # Codemod tools/fix_except_bug.py существует с S60 W3, но
+      # regression был возможен т.к. compileall passes. Этот hook
+      # запускает dry-run codemod и fail'ит commit если 1+ legacy
+      # pattern detected.
+      - id: check-except-bug
+        name: "Except A, B: semantic bug gate (P0-A, FINAL_REPORT_V2)"
+        entry: uv run python tools/fix_except_bug.py --dry-run src/
+        language: system
+        types: [python]
+        pass_filenames: false
+        # S73 W3: запускаем только в pre-push (не каждый commit)
+        # для скорости. CI gate остаётся в pre-push hook.
+        stages: [pre-push]
+
       # Wave R1.2 — V11 manifest schemas + capability catalog gate.
       # Запускается только при push: артефакты редко меняются, нет смысла
       # тратить время на каждый локальный commit.
