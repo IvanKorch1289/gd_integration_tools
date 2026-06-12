@@ -59,3 +59,16 @@ class OutboxMessage(BaseModel):
     next_attempt_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), index=True
     )
+
+    # S72 W1 (TD-S64-W1, ADR-0087): per-row claim metadata.
+    # ``claimed_by`` = worker_id, ``claimed_at`` = claim moment,
+    # ``claimed_until`` = deadline после которого sweeper может
+    # reset'нуть row в ``pending`` (lease TTL). Все 3 nullable для
+    # backwards-compat с existing rows.
+    claimed_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    claimed_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
