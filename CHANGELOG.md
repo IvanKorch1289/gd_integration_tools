@@ -5,7 +5,7 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S97 (2026-06-13) — RouteBuilder fix (CRITICAL) + Ratchet + Debt catalog + Telegram DSL (5 commits, 23 NEW tests)
+## [Unreleased] — Autonomous cycle S98 (2026-06-13) — TODO closure + ratchet + DSL tests + stdlib logging (5 commits, 16 NEW tests)
 
 ### Added
 
@@ -32,6 +32,24 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - ~~`RouteBuilder.__init__` missing~~ — **S97 W1 FIXED**.
 - 1157 NEW docstring violations накоплено (allowlist stale). S97 W2 ratchet -3.
+
+### Added (S98)
+
+- **S98 W1-TODO S18 closure**: `core/middleware/__init__.py` — outdated "TODO S18: full implementation per ADR-A-01" marker заменён на "S70 W1: build_chain full implementation per ADR-A-01". 6 NEW tests in `test_registry_status.py` (build_chain works, frozen dataclass, register rejects dup, has/list_registered, _resolve_chain_order diff, no actionable TODO).
+- **S98 W2-Docstring ratchet -12** (1157 → 1145 NEW violations): `infrastructure/clients/storage/vector_store.py` — Qdrant (6) + Chroma (6) methods full Args/Returns/Note/to_thread.
+- **S98 W3-DSL integration tests**: 8 NEW tests in `test_from_builders_integration.py` для from_cdc/from_kafka/from_rabbit/from_filewatcher/from_webhook (instance method, not classmethod — documented), comprehensive 8-builder smoke test, fluent chain, build() pipeline. Findings: `from_filewatcher` требует `source_id` через `**kwargs` (AST-detected bug class).
+- **S98 W4-stdlib logging cleanup**: `core/config/config_loader.py` — 2 lazy `import logging` заменены на `core.logging.get_logger` (error handler + vault unreachable warning). 1 NEW regression test: grep-based guard.
+- `docs/adr/0182-sprint-98-closure.md` — closure ADR.
+
+### Tests
+
+- 16 NEW (W1: 6 + W3: 8 + W4: 1; W2 ratchet без tests; W5 closure no tests)
+
+### Real TODOs Remaining (S99+ backlog)
+
+- S24 W3: `dsl/workflow/compiler/step_compilers.py:319` — LangGraph Checkpointer integration
+- S40 W6: `dsl/cli/generate.py:304` — implement `{name}` placeholder
+- S40 (Wave 4.2): `dsl/engine/processors/express/_common.py:32` — express callback integration
 
 ### Added (S97)
 
