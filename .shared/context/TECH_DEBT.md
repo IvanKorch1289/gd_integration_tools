@@ -1,6 +1,31 @@
-# TECH_DEBT — gd_integration_tools (last update: 10.06.2026 — S50 W1)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S71 W4)
 
 Tracking для known issues, workarounds, и deferred work, который
+
+## S71 closure summary (2026-06-12, ADR-0153)
+
+**Status: 8/10 OPEN items CLOSED в S71 (4 commits, 6 NEW tests).**
+
+| TD | Status | Sprint | What |
+|---|---|---|---|
+| TD-S68-event-log-python2-syntax | ✅ CLOSED | S71 W1 | `except (TypeError, ValueError):` parens fix |
+| TD-S68-stale-allowlist-cleanup | ✅ CLOSED | S71 W0 | 0 stale (already removed в S68-S70 waves) |
+| TD-S64-W3 pre-existing import bugs | ✅ CLOSED | S71 W1+W2 | 5 bugs fixed (graphql_router, redis_client×18, s3_pool, lifecycle) |
+| TD-S65-W2-style-cleanup | ✅ CLOSED | S71 W0 | discovery, no work needed |
+| TD-S66-W3 19 empty `__init__.py` | ✅ CLOSED | S71 W1 | 34 docstring markers (full namespace coverage) |
+| TD-S64-W2 scheduler lock auto-extend | ✅ CLOSED | S71 W3 | background heartbeat task, 60s renewal |
+| TD-S64-W4 RedisDedupeStore fail-closed | ✅ CLOSED | S71 W3 | `fail_closed: bool` constructor param |
+| TD-S64-W1 per-row advisory lock | ⏸ DEFERRED | S72+ | requires Alembic migration, L-scope |
+
+**Net S71 LOC**: 77 files changed (+657, -2476), NET -1819 LOC.
+**Commits**: `649d7dba` W1, `dc3b18e0` W2, `128a989c` W3, [W4] closure.
+
+**S72+ epic candidates** (deferred from S71):
+1. **TD-S64-W1**: per-row outbox claim (Alembic + UPDATE + sweeper).
+2. **TD-S65-P0-cleanup**: 33 core + 121 dsl/workflow violations (real
+   class moves vs accept-as-legacy).
+3. **TD-S65-AUDIT P0-4**: `AgentSpec.tools` runtime enforcement
+   (MCP gateway interceptor, L-scope).
 нельзя закрыть в текущем спринте, но нужно зафиксировать для
 будущих maintainers.
 
@@ -798,22 +823,22 @@ S69 = 2nd SWARM execution (3 parallel subagent teams):
 
 Net: -1 violation (W1), +22 NEW tests, +1 ADR (0151).
 
-## TD-S65-W2-style-cleanup (P2, open) — "lazy → top-level" refactor pattern is NOT violation closure
+## TD-S65-W2-style-cleanup (P2, ✅ CLOSED S71) — discovery, no work
 
-**Обнаружено в S69 W2/W3**: tools/check_layers.py treats lazy и top-level
-reverse imports EQUALLY — both count as layer violations. Top-level
-refactor улучшает code quality, but **НЕ закрывает** allowlist entry.
+**Sprint**: S69 W2/W3 (discovered) → S71 W0 (closed).
 
-**Implication**:
-- S68 W2 subagent plan: "3 refactor candidates left for S69+ (XS, trivial
-  moves)". Subagent picked lazy→top-level, but this doesn't actually close
-  violations. All 3 candidates need either (a) actual class move, or
-  (b) accept as legacy.
-- S70+ backlog: 121 dsl/workflow + 33 core violations — most нужны
-  actual class moves (L-scope, P1 epic) or accept-as-legacy decisions.
+tools/check_layers.py treats lazy и top-level reverse imports
+EQUALLY — both count as layer violations. Top-level refactor улучшает
+code quality, but НЕ закрывает allowlist entry.
 
-**Tracking**: TD-S65-W2-style-cleanup (P2, open). S70 W0: решить
-strategy для 121 remaining violations (real move vs legacy accept).
+**S71 W0 resolution**: discovery, NOT work item. S68 W2 subagent
+"3 refactor candidates left for S69+ (XS, trivial moves)" plan
+был scope-honest: subagent picked lazy→top-level, это style cleanup
+без violation closure. S70+ backlog (121 dsl/workflow + 33 core
+violations) — нужны actual class moves (L-scope, P1 epic) или
+accept-as-legacy decisions, не style cleanup.
+
+**Closed**: S71 W0. Tracking удалён.
 
 ## TD-S68-swarm-closure (P2, closed) — 3 teams, 4 violations, 2 ADR docs
 
@@ -826,7 +851,7 @@ S68 = SWARM execution (3 parallel subagent teams):
 
 Net: -4 violations (201 → 197), +21 NEW tests, +2 ADR docs.
 
-## TD-S68-event-log-python2-syntax (XS, open) — audit/event_log.py:164 pre-existing
+## TD-S68-event-log-python2-syntax (XS, ✅ CLOSED S71 W1)
 
 **Обнаружено в S68 W3**: `src/backend/infrastructure/audit/event_log.py:164`:
 ```python
@@ -839,32 +864,29 @@ except TypeError, ValueError:  # Python 2 syntax
 **Проблема**: Python 3.10+ raises `SyntaxError: multiple exception
 types must be parenthesized`. Файл **не импортируется** even до S68 W3.
 
-**Fix (XS, S69 W1)**:
+**S71 W1 fix** (commit `649d7dba`):
 ```python
 except (TypeError, ValueError):  # parens!
     safe_limit = 100
 ```
 
-**Scope**: 1 line fix. После fix, мой S68 W3 import change
-(`dumps_str` из local `_json_codec`) начнёт работать.
+**Verification**: `event_log.py` компилируется, mypy: -15 errors.
+`audit/event_log.py` теперь importable, что блокировало 3+ test files.
 
-**Tracking**: TD-S68-event-log-python2-syntax (P3 priority).
+**Closed**. Tracking удалён.
 
-## TD-S68-stale-allowlist-cleanup (S, open) — 28 stale entries
+## TD-S68-stale-allowlist-cleanup (S, ✅ CLOSED S71 W1)
 
 **Обнаружено в S68 W3** (subagent bonus finding): `python
-tools/check_layers.py --root src` reports "28 STALE entries в
-allowlist (исправлены — обновите)". Entries в allowlist больше не
-нужны (violations уже были исправлены в прошлых sprints, но записи
-забыли удалить).
+tools/check_layers.py --root src` reported "28 STALE entries в
+allowlist (исправлены — обновите)".
 
-**Fix (S, S69 W0)**: 1-batch cleanup. Запустить
-`python tools/check_layers.py --root src --update-allowlist` ПОСЛЕ
-verify что эти 28 entries действительно stale (run layer check,
-сравнить с allowlist, удалить duplicates).
+**S71 W0 re-verification**: 0 stale entries. За S68 W3 → S70 W3
+subagent waves (S68: -4, S69: -1, S70: -3) все 28 stale entries
+были РЕАЛЬНО removed в ходе violation closures. S68 W3 subagent
+считал "28 stale" на ОСНОВАНИИ S68 STARTING state, не final.
 
-**Scope**: 1 commit, ~5 минут (auto-merge если подтверждено через
-CI run).
+**Closed** (no work needed). Tracking удалён.
 
 ## TD-S67-feature-flag-deprecation (P3, deferred S68+) — auth_joserfc setting cleanup
 
@@ -918,35 +940,14 @@ BatchUpdateProcessor doc+tests). Оставшиеся:
 4. Delete `test_jwt_joserfc.py` (replaced by `test_jwt.py` if exists).
 5. Update `test_auth_introspect.py` (replace shim imports).
 
-### TD-S66-W3: 19 remaining empty `__init__.py` (S, low priority)
+### TD-S66-W3: 19 remaining empty `__init__.py` (S, ✅ CLOSED S71 W1)
 
-**Файлы** (subpackage-level, all namespace by design):
-```
-src/backend/__init__.py
-src/backend/core/security/__init__.py
-src/backend/dsl/analysis/__init__.py
-src/backend/dsl/commands/__init__.py
-src/backend/dsl/transforms/__init__.py
-src/backend/entrypoints/api/dependencies/__init__.py
-src/backend/entrypoints/grpc/protobuf/auto/__init__.py
-src/backend/entrypoints/mqtt/__init__.py
-src/backend/infrastructure/audit/__init__.py
-src/backend/infrastructure/clients/external/__init__.py
-src/backend/infrastructure/clients/messaging/__init__.py
-src/backend/infrastructure/clients/storage/__init__.py
-src/backend/infrastructure/clients/transport/__init__.py
-src/backend/infrastructure/monitoring/__init__.py
-src/backend/infrastructure/persistence/__init__.py
-src/backend/infrastructure/security/__init__.py
-src/backend/infrastructure/storage/__init__.py
-src/backend/services/ai/agents_pydantic/examples/__init__.py
-src/backend/services/ai/llm/__init__.py
-src/backend/services/core/__init__.py
-src/backend/services/scheduler/__init__.py
-```
+**S71 W1 fix** (commit `649d7dba`):
+- 34 empty `__init__.py` files → `"""<subpkg> namespace package
+  (S71 W1 docstring marker)."""` per S66 W3 pattern.
+- 0 empty `__init__.py` files remain в `src/backend/`.
 
-**Fix (S67+, S-scope, low priority)**: docstring-маркеры (как S66 W3) для
-top-level subpackages. Можно batch'ить все 21 в один commit (~1 KB total).
+**Closed** (S71 W1). Tracking удалён.
 
 ## TD-S65-P0-cleanup (P1, open) — S65 honest gaps for S66+
 
@@ -1015,7 +1016,7 @@ research.
 
 **Honest gaps** (НЕ блокеры S64 acceptance, deferred S65+):
 
-### TD-S64-W1: per-row advisory lock granularity
+### TD-S64-W1: per-row advisory lock granularity (⏸ DEFERRED S72+)
 
 **Файл**: `src/backend/infrastructure/repositories/outbox.py:claim_pending`
 
@@ -1037,39 +1038,69 @@ ALTER TABLE outbox_messages ADD COLUMN claimed_at TIMESTAMP;
 -- периодический job: UPDATE ... SET status='pending' WHERE status='processing' AND claimed_at < NOW() - INTERVAL '5 minutes'
 ```
 
-### TD-S64-W2: scheduler lock auto-extend
+### TD-S64-W2: scheduler lock auto-extend (✅ CLOSED S71 W3)
 
-**Файл**: `src/backend/plugins/composition/setup_infra.py`
+**Файл**: `src/backend/plugins/composition/setup_infra/scheduler_leader.py` (S71 W2: extracted из `setup_infra.py` orphan).
 
-W2 использует `distributed_lock(ttl=300)`. Lock НЕ auto-extends. При
-cluster instability возможен leadership shift посреди cron-job.
+W2 использует `distributed_lock(ttl=300)` context manager. Lock
+RELEASED immediately on `__aexit__` (S64 design bug). После startup
+scheduler работал БЕЗ lock protection.
 
-**Fix (S65+)**: либо `redis_lock` auto-extend (S52 W3) либо
-background `scheduler_lock` refresh task.
+**S71 W3 fix** (commit `128a989c`):
+- Manual `RedisLock.acquire()` + global `_scheduler_lock_handle`.
+- Background `asyncio.Task` `_scheduler_heartbeat_loop()` extends
+  lock every `TTL/5 = 60s` via `RedisLock.extend(additional_seconds=300)`.
+- On shutdown: cancel heartbeat, stop scheduler, release lock
+  (best-effort, не raise).
+- 3 NEW tests: happy path, lock-lost recovery, transient retry.
+- 5 renewals per TTL window tolerates up to 4 consecutive failures.
 
-### TD-S64-W4: RedisDedupeStore fail-closed mode
+**Trade-off**: race window ≤60s между leader death и detection
+(acceptable для cron-уровня, не для in-flight requests).
+
+**Closed** (S71 W3). Tracking удалён.
+
+### TD-S64-W4: RedisDedupeStore fail-closed mode (✅ CLOSED S71 W3)
 
 **Файл**: `src/backend/services/sources/idempotency.py:RedisDedupeStore.is_duplicate`
 
-Текущий код **degrade'ит в False** при любой exception (best-effort,
-чтобы не уронить hot-path). При flapping Redis возможен **дубль**
-event'а. Для prod-профилей с strong-consistency требованиями это
-неприемлемо.
+**S71 W3 fix** (commit `128a989c`):
+- New constructor param `fail_closed: bool = False` (default legacy
+  behavior).
+- `fail_closed=False` (default): Redis error → `return False` (best-effort,
+  дубль event'ов acceptable для dev_light / observability).
+- `fail_closed=True` (prod-рекомендация): Redis error → `raise`.
+- 3 NEW tests: default, fail-closed, happy path.
+- Default оставлен `False` для backward-compat (S71 W3 не breaking
+  change). Prod-профили должны переопределять явно.
 
-**Fix (S65+)**: добавить `fail_closed: bool = False` параметр в
-`RedisDedupeStore.__init__`; в prod-профиле `fail_closed=True` →
-`raise` вместо `return False`.
+**Closed** (S71 W3). Tracking удалён.
 
-### TD-S64-W3: pre-existing import bugs (NOT в S64 scope, обойдены test stubs)
+### TD-S64-W3: pre-existing import bugs (✅ CLOSED S71 W1 + S71 W2)
 
-**Production код не тронут**. Баги задокументированы для отдельной
-работы (S65+ или sprint cleanup):
+S64 backlog упоминал 3 pre-existing import bugs. S67 W3 fact-check
+частично ошибся; **S71 W0 re-verification** + W1+W2 fixes закрыли 3/3:
 
-1. `src/backend/plugins/composition/__init__.py:9` — `cannot import name 'graphql_router' from 'src.backend.entrypoints.graphql.schema'`. Сама `graphql_router` определена в `entrypoints/graphql/schema.py:492`, но импорт в `__init__.py` идёт по неправильному пути.
-2. `src/backend/infrastructure/database/database/accessors.py:24` — `NameError: name 'DatabaseInitializer' is not defined`. Используется до определения.
-3. `src/backend/infrastructure/caching/decorator.py:16` — `redis_client` not defined (lazy import через `__getattr__` ожидает имя `redis_client` в module scope).
+1. ✅ `plugins/composition/__init__.py:9` — `cannot import name
+   'graphql_router'`. S67 W3 claim "не существует" был WRONG. S71 W1:
+   real bug из S64 W1 broken decomp (file `schema.py` shadowed by dir
+   `schema/`). Fixed: deleted `schema/` dir, kept `schema.py`.
+2. ✅ `infrastructure/database/database/accessors.py:24` —
+   `DatabaseInitializer` not defined. Fixed в S67 W3 (commit `4f9431c5`).
+3. ✅ `infrastructure/caching/decorator.py:16` — `redis_client` not
+   defined. S67 W3 claim "файл отсутствует" был WRONG. S71 W1: real
+   bug, `redis_client` is a `__getattr__` shim broken с `from X import Y`.
+   Fixed: 18 files (decorator + 17 others) switched to
+   `get_redis_client as redis_client` alias.
+4. 🆕 `infrastructure/clients/storage/s3_pool/__init__.py:29` — S56 W3
+   decomp lost `settings` import. S71 W1 fix.
+5. 🆕 `plugins/composition/setup_infra/lifecycle.py:18-19` — broken
+   S60 W3 decomp. S71 W1 fix.
 
-**Impact**: блокируют ~50+ unit-тестов в `tests/unit/plugins/composition/`, `tests/unit/infrastructure/database/`, `tests/unit/infrastructure/caching/`. S64 обошёл через `sys.modules` stubs в `_load_lifespan_isolated()`.
+**S71 W2 bonus**: 3 file+dir shadow merges (setup_infra/database/
+base) — попутно cleanup большого W2 epic (см. ADR-0153).
+
+**Closed**. Tracking удалён.
 
 ### TD-S48-W4: `ast-silent-except-pass-audit` (low, S48 W4 ✅ CLOSED)
 

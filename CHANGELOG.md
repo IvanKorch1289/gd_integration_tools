@@ -5,6 +5,76 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S71 (2026-06-12) — TECH_DEBT closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 6 NEW tests, 0/3 subagent)
+
+### Fixed
+
+- **S71 W1: 4 pre-existing import bugs** (CRITICAL — `create_app()` was
+  completely broken before this commit). All 4 pre-date S64 W3 decomp
+  series and were silently tolerated via `sys.modules` stubs (S67 W3).
+  1. `infrastructure/audit/event_log.py:164` — Python 2 syntax
+     `except TypeError, ValueError:` (file completely non-importable).
+  2. `infrastructure/decorators/caching/decorator.py:16` + 17 other files
+     — `from ...redis import redis_client` doesn't work because
+     `redis_client` is a `__getattr__` shim (not a module attribute).
+     Replaced with `from ...redis import get_redis_client as redis_client`
+     (alias pattern).
+  3. `infrastructure/clients/storage/s3_pool/__init__.py:29` —
+     `S3Client(settings=settings.storage)` used `settings` without import
+     (S56 W3 decomp lost the import line).
+  4. `plugins/composition/setup_infra/lifecycle.py:18-19` — broken
+     `from ...database import (` (orphan orphan) + orphan
+     `get_db_initializer`/`get_external_db_registry` lines (S60 W3).
+- **S71 W1: 34 namespace `__init__.py` docstring markers** (TD-S66-W3
+  closure). Per S66 W3 pattern, batch of 34 docstrings:
+  `"""<subpkg> namespace package (S71 W1 docstring marker)."""`.
+- **S71 W1: deleted 2 broken artifacts** — `entrypoints/graphql/schema/`
+  dir (S64 W1 incomplete decomp, shadowed `schema.py` and broke
+  `graphql_router` import) + `frontend/.../31_DSL_Visual_Editor/`
+  dir (S59 W4 decomp lost ALL indentation in `render.py`, 164 LOC).
+  Reverted to pre-W4 state (single 616 LOC file).
+
+### Refactored
+
+- **S71 W2: 3 file+dir shadow merge** (the biggest W2 epic). Python
+  prefers package over module when both `X.py` and `X/` exist, so
+  orphan files silently shadowed the new directory's `__init__.py`.
+  Fixed:
+  1. `plugins/composition/setup_infra.py` (479 LOC) — extracted 2
+     unique funcs (`_start_scheduler_with_leader_election`,
+     `_stop_scheduler_if_leader`, S64 W2) into new
+     `setup_infra/scheduler_leader.py` (98 LOC, NEW).
+  2. `infrastructure/database/database.py` (466 LOC) — all public names
+     already in `database/{bundle,initializer,registry,accessors}.py`
+     + re-exported from `__init__.py`. Just deleted orphan file.
+  3. `dsl/builders/base.py` (646 LOC) — `RouteBuilder` already in
+     `base/__init__.py` + 7 mixin files. Just deleted orphan file.
+  Verified: 0 file+dir shadow patterns remain anywhere in `src/`.
+
+### Added
+
+- **S71 W3: TD-S64-W2 closure — scheduler leader lock auto-extend**.
+  S64 W2 used `distributed_lock` context manager → lock RELEASED
+  immediately after `start()`. S71 W3: manual `RedisLock.acquire()` +
+  background `_scheduler_heartbeat_loop()` task, extends lock every
+  TTL/5 = 60s via `RedisLock.extend(additional_seconds=300)`. On
+  shutdown `_stop_scheduler_if_leader` cancels heartbeat + releases
+  lock. 5 renewals per TTL window tolerates up to 4 consecutive
+  failures. 3 NEW tests (happy, lock-lost, transient retry).
+- **S71 W3: TD-S64-W4 closure — `RedisDedupeStore.fail_closed: bool =
+  False` constructor param**. Legacy: any Redis error → degrade to
+  `False` (best-effort, дубль event'ов under flapping Redis). New:
+  `fail_closed=True` → re-raise on Redis error (strong-consistency
+  для financial/regulatory workloads). Default `False` для
+  backward-compat. 3 NEW tests (default, fail-closed, happy).
+
+### Deferred to S72+ backlog
+
+- **TD-S64-W1: per-row advisory lock** — requires Alembic migration
+  (`outbox_messages ADD COLUMN status/claimed_by/claimed_at`) +
+  per-row claim logic + periodic sweeper job. L-scope, отдельный
+  sprint epic.
+
 ## [Unreleased] — Autonomous cycle S70 (2026-06-12) — 3rd SWARM (3 teams, all style cleanup, 2/3 subagent clean) (3 commits, 3/3 substantive)
 
 ### Refactored
