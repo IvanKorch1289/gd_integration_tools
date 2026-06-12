@@ -42,6 +42,7 @@ Use case: agent хочет invoke ``db.read.orders``:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
@@ -50,6 +51,7 @@ from src.backend.core.security.capabilities.errors import (
 )
 from src.backend.core.ai.policy.enforcer.tools_policy import (
     ToolPolicyViolationError,
+    check_tool_allowed,
     enforce_tool_policy,
 )
 
@@ -63,6 +65,7 @@ _logger = get_logger("core.security.capabilities.tool_integration")
 
 __all__ = (
     "check_tool_with_policy",
+    "filter_tools_with_gate",
     "ToolCapabilityCheckError",
 )
 
@@ -137,3 +140,79 @@ def check_tool_with_policy(
             exc,
         )
         raise
+
+
+def filter_tools_with_gate(
+    *,
+    gate: "CapabilityGate",
+    plugin: str,
+    tool_names: Iterable[str],
+    scope: str | None,
+    policy: "ToolsSpec",
+) -> list[str]:
+    """S79 W3 — pre-init filter tool list через two-layer enforcement.
+
+    Combines :class:`CapabilityGate.check` (capability declared) +
+    :func:`check_tool_allowed` (AIPolicySpec.tools whitelist/blacklist).
+    Returns list of tools that pass BOTH layers. Failed tools are
+    silently dropped (с warning log) — caller НЕ получает per-tool
+    exception (use :func:`check_tool_with_policy` для per-tool errors).
+
+    Args:
+        gate: :class:`CapabilityGate` instance.
+        plugin: plugin name (e.g. ``"credit_check"``).
+        tool_names: iterable of tool names (e.g. AgentSpec.tools).
+        scope: optional scope (e.g. ``"tenant_abc"``).
+        policy: :class:`ToolsSpec` (AIPolicySpec.tools section).
+
+    Returns:
+        Filtered list of tools that pass BOTH layers. Order preserved.
+
+    Use case (S79 W3 integration):
+        :class:`AgentSpec` constructor filters \`tools\` tuple через
+        эту функцию. Результат — AgentSpec создаётся с filtered
+        tools (fail-closed defense: agent НИКОГДА не получает
+        disallowed tools в свой toolset).
+
+        Pre-init filter (W3 approach) — alternative к per-invoke
+        :func:`check_tool_with_policy` (W2). Оба approaches
+        valid: pre-init for fail-closed, per-invoke для
+        dynamic policy (hot-reload changes).
+
+    Example:
+        >>> gate = CapabilityGate()
+        >>> gate.declare("credit", [
+        ...     CapabilityRef("db.read.orders"),
+        ...     CapabilityRef("ai.invoke.credit_check"),
+        ... ])
+        >>> policy = ToolsSpec(whitelist=["db.read.orders"])
+        >>> filter_tools_with_gate(
+        ...     gate=gate, plugin="credit",
+        ...     tool_names=["db.read.orders", "ai.invoke.credit_check"],
+        ...     scope=None, policy=policy,
+        ... )
+        ['db.read.orders']  # ai.invoke.credit_check dropped (not in whitelist)
+    """
+    allowed: list[str] = []
+    for tool_name in tool_names:
+        # Layer 1: CapabilityGate
+        try:
+            gate.check(plugin, tool_name, scope)
+        except CapabilityDeniedError as exc:
+            _logger.debug(
+                "CapabilityGate dropped tool=%s for plugin=%s: %s",
+                tool_name,
+                plugin,
+                exc,
+            )
+            continue
+        # Layer 2: AIPolicySpec.tools
+        if not check_tool_allowed(tool_name, policy):
+            _logger.debug(
+                "AIPolicySpec.tools dropped tool=%s for plugin=%s",
+                tool_name,
+                plugin,
+            )
+            continue
+        allowed.append(tool_name)
+    return allowed
