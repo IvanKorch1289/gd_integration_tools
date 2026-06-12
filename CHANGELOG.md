@@ -5,6 +5,25 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S80 (2026-06-12) — P1 #6 closure: LiteLLM Gateway pool registration в PoolHealthMonitor (8 NEW tests) (6 commits)
+
+### Added
+
+- **S80 W1: pool_registration.py** — `register_litellm_pool(gateway)`
+  для PoolHealthMonitor integration. `_litellm_ping` liveness check
+  через litellm.models query.
+- **S80 W2: Lifecycle integration** — `_register_pools_in_unified_manager`
+  auto-регистрирует LiteLLM (feature_flags.ai_gateway_enforce guard).
+
+### Fixed
+
+- **S80 W2 follow-up: feature flag name** — `ai_gateway_enforce`
+  (not `ai_gateway_enabled`).
+
+### Tests
+
+- **S80 W4: 8 NEW tests** для pool registration + ping.
+
 ## [Unreleased] — Autonomous cycle S79 (2026-06-12) — CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits)
 
 ### Added
