@@ -26,7 +26,7 @@ class ThreeTierRagCache:
         l3: L3RetrievalCache | None = None,
         bus: RagInvalidationBus | None = None,
         l1_enabled: bool = True,
-        l2_enabled: bool = False,
+        l2_enabled: bool = True,
         l3_enabled: bool = True,
     ) -> None:
         self._l1 = l1 or L1ExactCache()
