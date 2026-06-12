@@ -52,6 +52,16 @@ class OutboxSettings(BaseSettingsWithLoader):
             "Outbox и DLQ-handler."
         ),
     )
+    use_redis_dedupe: bool = Field(
+        default=False,
+        description=(
+            "S64 W4: feature-flag для cross-instance dedup store. "
+            "``False`` (default) → MemoryDedupeStore (in-process, "
+            "TTLCache + asyncio.Lock — single-instance only). "
+            "``True`` → RedisDedupeStore (atomic SET NX EX, "
+            "multi-instance safe, требует живой Redis)."
+        ),
+    )
     poll_interval_seconds: float = Field(
         default=1.0,
         ge=0.05,

@@ -25,16 +25,50 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.services.sources.adapter import SourceToInvokerAdapter
+from src.backend.services.sources.idempotency import (
+    DedupeStore,
+    MemoryDedupeStore,
+    RedisDedupeStore,
+)
 
 if TYPE_CHECKING:
     from src.backend.core.config.source_spec import SourceSpec
     from src.backend.core.interfaces.invoker import Invoker
-    from src.backend.services.sources.idempotency import DedupeStore
     from src.backend.services.sources.registry import SourceRegistry
 
-__all__ = ("start_all_sources", "stop_all_sources")
+__all__ = ("start_all_sources", "stop_all_sources", "make_dedupe_store")
 
 logger = get_logger("services.sources.lifecycle")
+
+
+async def make_dedupe_store() -> DedupeStore:
+    """S64 W4: factory для cross-instance safe :class:`DedupeStore`.
+
+    Под feature flag-ом ``outbox_settings.use_redis_dedupe`` (default OFF):
+
+    * **False** (default, dev_light/unit-тесты) → :class:`MemoryDedupeStore`
+      (in-process :class:`cachetools.TTLCache` + :class:`asyncio.Lock`).
+      Single-instance only — дубль event_id на другом pod НЕ детектится.
+    * **True** (prod, multi-instance K8s) → :class:`RedisDedupeStore`
+      поверх ``SET NX EX`` (атомарная first-write, multi-instance safe).
+      Требует живой Redis; при недоступности degrade to non-dup
+      (best-effort, см. ``RedisDedupeStore.is_duplicate``).
+
+    Returns:
+        Singleton :class:`DedupeStore`. Default-возврат: ``MemoryDedupeStore()``.
+
+    Note:
+        Async — требует живой event loop для ``RedisClient.get_client()``
+        (lazy init Redis-клиента per kind).
+    """
+    # Lazy import — settings и Redis client тяжёлые, не нужны в unit-tests.
+    from src.backend.core.config.services.outbox import outbox_settings
+    from src.backend.infrastructure.clients.storage.redis import get_redis_client
+
+    if not outbox_settings.use_redis_dedupe:
+        return MemoryDedupeStore()
+    redis_client = await get_redis_client().get_client("cache")
+    return RedisDedupeStore(redis_client)
 
 
 async def start_all_sources(
