@@ -203,10 +203,9 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
 
     allowed = ALLOWED.get(layer, set())
     for module, lineno, is_lazy in _imports(tree):
-        # S27: lazy imports inside functions are runtime-only, not checked.
-        # These are bridge-pattern implementations (protocol→impl).
-        if is_lazy:
-            continue
+        # S27 marker удалён S65 W2: lazy imports ДОЛЖНЫ проверяться
+        # (раньше S27 их skip'ал, создавая blind spot). Теперь они
+        # проходят через allowlist/fail-CI как обычные нарушения.
         # S27: TYPE_CHECKING импорты не считаются нарушениями
         if _is_in_type_checking_block(tree, lineno):
             continue
