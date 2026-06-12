@@ -5,6 +5,29 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S75 (2026-06-12) — Jupyter execution final closure (e2b + KernelSpecDiscovery, направление #1 → 6/6 ✅) (5 commits, 15 NEW tests)
+
+### Added
+
+- **S75 W1: E2BExecutionBackend** (FINAL_REPORT_V2 #2, направление #1).
+  e2b_code_interpreter (opt-in dep) — cloud sandbox для untrusted
+  notebooks. Two-phase execution: parameter cells (injected values) →
+  code cells (sequential stateful).  (distinct
+  от JupyterExecutionError).  в finally.
+- **S75 W2: E2B factory integration** (FINAL_REPORT_V2 #2 closure).
+  S74 W2 NotImplementedError stub REMOVED. 
+  → E2BExecutionBackend (lazy API key check).
+- **S75 W3: KernelSpecDiscovery** (FINAL_REPORT_V2 направление #1).
+  Multi-kernels support (Python 3, R, Julia, etc.) via
+  . 
+  security policy.  для backward compat.
+
+### Tests
+
+- **S75 W4: 15 NEW tests** в
+  :
+  6 E2B + 2 factory + 6 KernelSpec + 1 default fallback.
+
 ## [Unreleased] — Autonomous cycle S74 (2026-06-12) — Jupyter notebook execution ecosystem (Papermill + Factory + WebSocket heartbeat) (5 commits, 13 NEW tests)
 
 ### Added

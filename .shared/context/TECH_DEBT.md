@@ -2,6 +2,19 @@
 
 Tracking для known issues, workarounds, и deferred work, который
 
+## S75 closure summary (2026-06-12, ADR-0157)
+
+**Status: направление #1 final closure CLOSED в S75 (5 commits, 15 NEW tests). 6/6 components ✅.**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#2** e2b sandbox | ✅ CLOSED S75 W1+W2 | E2BExecutionBackend (factory stub → real) |
+| **#1 multi-kernels** | ✅ CLOSED S75 W3 | KernelSpecDiscovery + whitelist filter |
+
+**Net S75 LOC**: 9 files changed, NET +864 LOC, 15 NEW tests.
+
+**Net direction #1 rating**: ⚠️ → ✅ (6/6 components, full closure).
+
 ## S74 closure summary (2026-06-12, ADR-0156)
 
 **Status: 1/1 P1 from FINAL_REPORT_V2 направление #1 CLOSED в S74 (5 commits, 13 NEW tests).**
