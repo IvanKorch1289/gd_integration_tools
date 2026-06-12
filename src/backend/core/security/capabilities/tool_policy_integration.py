@@ -169,7 +169,7 @@ def filter_tools_with_gate(
         Filtered list of tools that pass BOTH layers. Order preserved.
 
     Use case (S79 W3 integration):
-        :class:`AgentSpec` constructor filters \`tools\` tuple через
+        :class:`AgentSpec` constructor filters ``tools`` tuple через
         эту функцию. Результат — AgentSpec создаётся с filtered
         tools (fail-closed defense: agent НИКОГДА не получает
         disallowed tools в свой toolset).
