@@ -26,17 +26,29 @@ class DataStore:
 
     @property
     def name(self) -> str:
+        """Имя store (например, ``"default"`` или ``"session_cache"``)."""
         return self._name
 
     @property
     def backend(self) -> str:
+        """Backend identifier (``"memory"`` сегодня, ``"redis"`` в S97+)."""
         return self._backend
 
     @staticmethod
     def _alive(expire_at: float | None, now: float) -> bool:
+        """TTL check: ``expire_at is None`` → бессрочно, иначе ``now < expire_at``."""
         return expire_at is None or now < expire_at
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Получить value по ``key``.
+
+        Args:
+            key: Ключ записи.
+            default: Возвращается если ключ отсутствует или истёк TTL.
+
+        Returns:
+            Value или ``default``. Expired записи lazy-удаляются при access.
+        """
         with self._lock:
             entry = self._data.get(key)
             if entry is None:
@@ -48,15 +60,31 @@ class DataStore:
             return value
 
     def set(self, key: str, value: Any, ttl_seconds: int | None = None) -> None:
+        """Сохранить ``value`` под ``key``.
+
+        Args:
+            key: Ключ записи.
+            value: Любой picklable value.
+            ttl_seconds: TTL в секундах (``None`` = бессрочно).
+        """
         with self._lock:
             exp = time.monotonic() + ttl_seconds if ttl_seconds is not None else None
             self._data[key] = (value, exp)
 
     def delete(self, key: str) -> bool:
+        """Удалить запись.
+
+        Returns:
+            ``True`` если ключ существовал, ``False`` если нет.
+        """
         with self._lock:
             return self._data.pop(key, None) is not None
 
     def has(self, key: str) -> bool:
+        """Проверить наличие ключа (без получения value).
+
+        Expired записи lazy-удаляются, как в :meth:`get`.
+        """
         with self._lock:
             entry = self._data.get(key)
             if entry is None:
@@ -68,25 +96,30 @@ class DataStore:
             return True
 
     def keys(self) -> list[str]:
+        """Список живых (non-expired) ключей."""
         with self._lock:
             now = time.monotonic()
             return [k for k, (_, e) in self._data.items() if self._alive(e, now)]
 
     def values(self) -> list[Any]:
+        """Список живых values (порядок не гарантирован)."""
         with self._lock:
             now = time.monotonic()
             return [v for v, e in self._data.values() if self._alive(e, now)]
 
     def items(self) -> list[tuple[str, Any]]:
+        """Список ``(key, value)`` для живых записей."""
         with self._lock:
             now = time.monotonic()
             return [(k, v) for k, (v, e) in self._data.items() if self._alive(e, now)]
 
     def clear(self) -> None:
+        """Очистить все записи (atomic под lock)."""
         with self._lock:
             self._data.clear()
 
     def size(self) -> int:
+        """Количество живых (non-expired) записей."""
         with self._lock:
             now = time.monotonic()
             return sum(1 for _, e in self._data.values() if self._alive(e, now))
