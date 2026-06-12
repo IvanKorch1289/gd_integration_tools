@@ -76,10 +76,6 @@ src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.commands.r
 src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.engine.tracer
 src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.registry
 src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.service
-src/backend/entrypoints/graphql/schema/helpers.py	entrypoints	src.backend.dsl.service
-src/backend/entrypoints/graphql/schema/query.py	entrypoints	src.backend.dsl.commands.registry
-src/backend/entrypoints/graphql/schema/query.py	entrypoints	src.backend.dsl.registry
-src/backend/entrypoints/graphql/schema/subscription.py	entrypoints	src.backend.dsl.engine.tracer
 src/backend/entrypoints/grpc/auto_servicer.py	entrypoints	src.backend.dsl.commands.action_registry
 src/backend/entrypoints/grpc/grpc_server.py	entrypoints	src.backend.infrastructure.observability.correlation
 src/backend/entrypoints/grpc/grpc_server/base.py	entrypoints	src.backend.infrastructure.observability.correlation
