@@ -784,6 +784,37 @@ S64 backlog упоминал 3 pre-existing import bugs:
 - GitHub alert #183: state=dismissed, reason=tolerable_risk
 - Dismissed by: IvanKorch1289 (2026-06-12)
 
+## TD-S69-swarm-2nd (P2, closed) — 3 teams, 1 violation + 2 style cleanups, scope-honest
+
+**Sprint**: autonomous cycle S69 (2026-06-12, ADR-0151)
+
+S69 = 2nd SWARM execution (3 parallel subagent teams):
+- W1 (s3.py base64): subagent PARTIAL (created _base64_codec, не применил
+  s3.py import) → orchestrator finished. 1 violation closed (197 → 196).
+- W2 (pydantic_ai_client gateway exc): subagent TIMEOUT → orchestrator
+  finished. **Style cleanup, NOT violation closure** (0 stale entries).
+- W3 (graphql/schema 4 dsl imports): subagent TIMEOUT → orchestrator
+  finished. **Same as W2** (style only).
+
+Net: -1 violation (W1), +22 NEW tests, +1 ADR (0151).
+
+## TD-S65-W2-style-cleanup (P2, open) — "lazy → top-level" refactor pattern is NOT violation closure
+
+**Обнаружено в S69 W2/W3**: tools/check_layers.py treats lazy и top-level
+reverse imports EQUALLY — both count as layer violations. Top-level
+refactor улучшает code quality, but **НЕ закрывает** allowlist entry.
+
+**Implication**:
+- S68 W2 subagent plan: "3 refactor candidates left for S69+ (XS, trivial
+  moves)". Subagent picked lazy→top-level, but this doesn't actually close
+  violations. All 3 candidates need either (a) actual class move, or
+  (b) accept as legacy.
+- S70+ backlog: 121 dsl/workflow + 33 core violations — most нужны
+  actual class moves (L-scope, P1 epic) or accept-as-legacy decisions.
+
+**Tracking**: TD-S65-W2-style-cleanup (P2, open). S70 W0: решить
+strategy для 121 remaining violations (real move vs legacy accept).
+
 ## TD-S68-swarm-closure (P2, closed) — 3 teams, 4 violations, 2 ADR docs
 
 **Sprint**: autonomous cycle S68 (2026-06-12, ADR-0148, ADR-0149, ADR-0150)

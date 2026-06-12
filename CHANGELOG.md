@@ -5,6 +5,48 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S69 (2026-06-12) — 2nd SWARM (3 teams, 1 violation + 2 style cleanups, scope-honest) (3 commits, 3/3 substantive)
+
+### Refactored
+
+- **S69 W1: TD-S65-W4 base64 codec move (REAL fix)** — subagent PARTIAL
+  (created `_base64_codec.py` but did NOT apply s3.py import change) →
+  orchestrator finished. `infrastructure/external_apis/_base64_codec.py`
+  NEW (66 LOC) — verbatim copy of `decode_base64`/`encode_base64` from
+  dsl/codec/base64.py. `s3.py:7-12` import re-redirected. Allowlist
+  197 → 196 (1 stale entry REMOVED). 11 NEW tests.
+
+- **S69 W2: TD-S65-W2 gateway exceptions top-level (style cleanup)** —
+  subagent TIMEOUT → orchestrator finished. `pydantic_ai_client.py:32-35`
+  top-level import of `GatewayRateLimited`/`GatewayUnavailable`. Removed
+  2 lazy imports ВНУТРИ `_reraise_normalized()`. **Honest scope**: top-level
+  import всё ещё counts as violation, **0 stale entries удалено**. Code
+  quality improvement. 6 NEW tests.
+
+- **S69 W3: TD-S65-W4 graphql 4 dsl imports top-level (style cleanup)** —
+  subagent TIMEOUT → orchestrator finished. `graphql/schema.py:20-23`
+  added 3 top-level dsl imports (route_registry, action_handler_registry,
+  get_tracer) + existing get_dsl_service consolidated. Removed 4 lazy
+  imports ВНУТРИ resolvers. **Honest scope**: same as W2. 5 NEW tests.
+
+### Notes
+
+- **2nd SWARM EXECUTION pattern** (user request: "также дорабатывай в
+  помощью агентов"). Subagent completion rate: 0/3 clean, 3/3 partial
+  /timeout — ещё хуже S68 (1/3 clean). Per PIVOT RULE: orchestrator finishes
+  execution.
+- **SCOPE CORRECTION** (важное): W2/W3 "lazy → top-level" refactor **НЕ
+  закрывает** layer violation. tools/check_layers.py treats lazy и
+  top-level reverse imports equally. Top-level = code quality, not
+  violation closure. 0 stale entries removed в W2/W3.
+- **Subagent "claimed done" vs actually done**: W1 subagent сказал
+  "import updated" в summary, но git diff не показал изменений. Verify
+  via `git diff` BEFORE trusting subagent's verbal claim.
+- **Allowlist**: 197 → 196 (-1 in W1 only). Code style improved в W2/W3
+  (top-level imports), but no allowlist change.
+- Verified: 22 NEW tests pass (11 W1 + 6 W2 + 5 W3), 0 regressions.
+  ruff clean. См. ADR-0151 для S70+ backlog + scope discipline lessons.
+
 ## [Unreleased] — Autonomous cycle S68 (2026-06-12) — SWARM execution (3 teams, 4 violations closed, 2 ADR docs) (4 commits, 4/4 substantive)
 
 ### Removed
