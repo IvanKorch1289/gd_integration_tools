@@ -1,6 +1,30 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S73 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S74 W5)
 
 Tracking для known issues, workarounds, и deferred work, который
+
+## S74 closure summary (2026-06-12, ADR-0156)
+
+**Status: 1/1 P1 from FINAL_REPORT_V2 направление #1 CLOSED в S74 (5 commits, 13 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#9** Papermill | ✅ CLOSED S74 W1 | New dep + PapermillExecutionBackend |
+| **#1 #3** NbClient factory | ✅ CLOSED S74 W2 | ExecutionBackendFactory (HUB/PAPERMILL/NBCLIENT/E2B) |
+| **#1** WebSocket heartbeat | ✅ CLOSED S74 W3 | Background ping/pong loop (30s/60s) |
+| **#1** e2b notebook ExecutionBackend | ⏸ DEFERRED S75+ | Factory stub raises NotImplementedError |
+| S60 W1 decomp bug | ✅ FIXED S74 W4 | __slots__ = () removed (NotebookExecutionService was unconstructable) |
+
+**Net S74 LOC**: 12 files changed, NET +837 LOC, 13 NEW tests.
+
+**Направление #1 rating**: ⚠️ → ⚠️-иш (3/6 components fixed, 1 partial, 2 deferred).
+
+## S75+ epic candidates (FINAL_REPORT_V2 P0-B/C/D + S74 leftovers)
+
+1. **e2b notebook ExecutionBackend** — implement NotImplementedError path
+2. **P0-B: tools whitelist в AIPolicySpec** (FINAL_REPORT_V2)
+3. **P0-C: AI Policy Spec DSL** (ADR-0067, FINAL_REPORT_V2)
+4. **P0-D: CORS/XSRF в Streamlit** (FINAL_REPORT_V2)
+5. **Множественные kernels** (jupyter kernelspec discovery, направление #1)
 
 ## S73 closure summary (2026-06-12, ADR-0155)
 

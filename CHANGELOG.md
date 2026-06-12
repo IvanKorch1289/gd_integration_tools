@@ -5,6 +5,44 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S74 (2026-06-12) — Jupyter notebook execution ecosystem (Papermill + Factory + WebSocket heartbeat) (5 commits, 13 NEW tests)
+
+### Added
+
+- **S74 W1: PapermillExecutionBackend** (FINAL_REPORT_V2 #9, направление #1).
+  New opt-in dep `papermill>=2.6.0` (через `[jupyter]` extra, с nbclient,
+  nbformat, jupyter_client). New class
+  `PapermillExecutionBackend.execute_with_params(notebook_path, parameters,
+  output_path)` — template `{{param}}` placeholders в cells, lazy-import,
+  sync papermill в `asyncio.to_thread`. Returns metadata (cells_executed,
+  duration, errors, output_path).
+- **S74 W2: ExecutionBackendFactory** (FINAL_REPORT_V2 #1 #3).
+  `BackendKind` enum (HUB / PAPERMILL / NBCLIENT / E2B) +
+  `ExecutionBackendFactory.create(kind, settings, override, **kwargs)` —
+  single source of truth для notebook backends. `from_config()` reads
+  `JUPYTER_BACKEND` env. E2B raises NotImplementedError (S74 W3+ stub,
+  deferred S75+ epic).
+- **S74 W3: WebSocket heartbeat в `_execute_cell`** (FINAL_REPORT_V2
+  направление #1). Background `_heartbeat_loop` sends `ws.ping()` каждые
+  30s, aborts execution если pong не получен в 60s. Long-running cells
+  (model training) теперь detect silent network drops. Cleanup в finally
+  block.
+
+### Fixed
+
+- **S74 W4: S60 W1 decomp `__slots__ = ()` bug**. `NotebookExecutionService`
+  не конструктабельна была (AttributeError при `self._settings = settings`).
+  S60 W1 decomp forgot про instance attrs. Fix: remove __slots__, allow
+  default __dict__.
+
+### Tests
+
+- **S74 W4: 13 NEW tests** в
+  `tests/unit/services/jupyter/execution_service/test_papermill_factory_heartbeat.py`:
+  3 papermill (not found, requires papermill, happy path), 7 factory
+  (kind variants, override, from_config), 1 heartbeat (dead connection
+  detection). Все passing.
+
 ## [Unreleased] — Autonomous cycle S73 (2026-06-12) — P0-A closure: 106 files batch-fixed, 2 NEW regression tests, pre-push CI gate (5 commits)
 
 ### Fixed
