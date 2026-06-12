@@ -175,6 +175,49 @@ class ControlFlowMixin:
             ParallelProcessor(branches=branches, strategy=strategy)
         )
 
+    def fork_join(
+        self,
+        branches: dict[str, list[BaseProcessor]],
+        *,
+        aggregation: str = "collect",
+        timeout_seconds: float | None = None,
+    ) -> RouteBuilder:
+        """Fork-Join pattern: explicit join semantics поверх ``parallel``.
+
+        S93 W5: ``parallel`` сохраняет результаты в ``parallel_results``
+        property. ``fork_join`` — DSL-фасад с explicit join-aggregation:
+        ``collect`` (default) → ``{branch_name: result}`` dict, ``merge``
+        → merged body, ``first`` → первый не-None результат.
+
+        Args:
+            branches: Map имя → процессоры.
+            aggregation: ``collect`` | ``merge`` | ``first``.
+            timeout_seconds: Опциональный таймаут (None = no timeout).
+
+        Usage::
+
+            route = (
+                RouteBuilder.from_("order.process", source="http:/orders")
+                .fork_join(
+                    branches={
+                        "validate": [validate_order],
+                        "inventory": [check_inventory],
+                        "payment": [validate_payment],
+                    },
+                    aggregation="merge",
+                )
+                .dispatch_action("order.fulfill")
+                .build()
+            )
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.eip",
+            "ForkJoinProcessor",
+            branches=branches,
+            aggregation=aggregation,
+            timeout_seconds=timeout_seconds,
+        )
+
     def saga(self, steps: list[SagaStep]) -> RouteBuilder:
         """Saga-паттерн: последовательные шаги с компенсацией при ошибке."""
         return self._add(SagaProcessor(steps=steps))  # type: ignore[attr-defined]

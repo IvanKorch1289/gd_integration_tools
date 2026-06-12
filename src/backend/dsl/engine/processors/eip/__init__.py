@@ -39,6 +39,7 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
     ThrottlerProcessor,
     WireTapProcessor,
 )
+from src.backend.dsl.engine.processors.eip.fork_join import ForkJoinProcessor
 from src.backend.dsl.engine.processors.eip.glom_ops import (
     GlomExtractProcessor,
     GlomFlattenProcessor,
@@ -121,6 +122,7 @@ __all__ = (
     "FindAllProcessor",
     "FlattenProcessor",
     "ForEachProcessor",
+    "ForkJoinProcessor",
     "GlomExtractProcessor",
     "GlomFlattenProcessor",
     "GlomTransformProcessor",
