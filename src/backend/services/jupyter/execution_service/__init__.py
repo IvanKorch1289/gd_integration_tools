@@ -68,8 +68,10 @@ __all__ = (
 class NotebookExecutionService(CoreMixin, IOMixin, JupyterBackendMixin):
     """Jupyter notebook execution service (3 mixins = 8 methods + 2 core)."""
 
-    __slots__ = ()
-
+    # S74 W4 fix: removed `__slots__ = ()` (S60 W1 decomp forgot про
+    # `_settings`/`_hub` instance attrs). Default Python __dict__
+    # works correctly. Trade-off: minor memory overhead (single
+    # instance per app, negligible).
     def __init__(self, settings: JupyterHubSettings) -> None:
         self._settings = settings
         self._hub = JupyterHubClient(settings)
