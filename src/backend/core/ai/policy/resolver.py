@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 import yaml
 
 from src.backend.core.ai.policy.spec import AIPolicySpec
+from src.backend.core.ai.policy.specificity import find_specific_match
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -139,6 +140,48 @@ class PolicyResolver:
                 return policy
         return None
 
+    async def resolve_specific(
+        self, workflow_id: str, tenant_id: str
+    ) -> AIPolicySpec | None:
+        """S77 W3 — specificity-based resolver (P0-C improvement).
+
+        В отличие от :meth:`resolve` (first match wins), этот method
+        выбирает MOST specific match по pattern specificity:
+
+        * tenant_pattern более specific (напр. ``"premium_*"`` vs
+          ``"*"``) → wins
+        * workflow_pattern более specific (напр.
+          ``"credit_check_v2"`` vs ``"credit_*"``) → wins
+        * Ties → list order (stable)
+
+        Use case: multi-tenant deployments с policy override layers
+        (global → premium → specific user).
+
+        Args:
+            workflow_id: Идентификатор workflow.
+            tenant_id: Идентификатор tenant.
+
+        Returns:
+            Most specific :class:`AIPolicySpec` или ``None``.
+
+        Note:
+            Uses SEPARATE cache (``_specific_cache``) чтобы не
+            conflict с :meth:`resolve` cache (callers могут
+            использовать оба в разных contexts).
+        """
+        cache_key = (workflow_id, tenant_id)
+        if hasattr(self, "_specific_cache") and cache_key in self._specific_cache:
+            return self._specific_cache[cache_key]
+
+        if self._policies is None:
+            self._policies = list(self._load_all())
+
+        result = find_specific_match(self._policies, workflow_id, tenant_id)
+        if not hasattr(self, "_specific_cache"):
+            self._specific_cache = {}
+        self._specific_cache[cache_key] = result
+        return result
+
     def reload(self) -> None:
         """Сбросить кэш и пометить policies для повторной загрузки.
 
@@ -146,6 +189,8 @@ class PolicyResolver:
         или административным endpoint'ом.
         """
         self._cache.clear()
+        if hasattr(self, "_specific_cache"):
+            self._specific_cache.clear()
         self._policies = None
 
     def list_policies(self) -> list[AIPolicySpec]:
