@@ -64,10 +64,8 @@ def test_register_litellm_pool_default_name() -> None:
     monitor = PoolHealthMonitor()
     gateway = MagicMock()
     register_litellm_pool(gateway, monitor=monitor)
-    # Pool registered
-    pools = monitor.list_pools()
-    names = [p.name for p in pools]
-    assert "litellm_main" in names
+    # Pool registered (use internal _pools dict)
+    assert "litellm_main" in monitor._pools
 
 
 def test_register_litellm_pool_custom_name() -> None:
@@ -75,10 +73,8 @@ def test_register_litellm_pool_custom_name() -> None:
     monitor = PoolHealthMonitor()
     gateway = MagicMock()
     register_litellm_pool(gateway, monitor=monitor, name="litellm_premium")
-    pools = monitor.list_pools()
-    names = [p.name for p in pools]
-    assert "litellm_premium" in names
-    assert "litellm_main" not in names
+    assert "litellm_premium" in monitor._pools
+    assert "litellm_main" not in monitor._pools
 
 
 def test_register_litellm_pool_custom_idle_timeout() -> None:
@@ -89,8 +85,7 @@ def test_register_litellm_pool_custom_idle_timeout() -> None:
         gateway, monitor=monitor,
         name="litellm_fast", idle_timeout=30.0,
     )
-    pools = monitor.list_pools()
-    entry = next(p for p in pools if p.name == "litellm_fast")
+    entry = monitor._pools["litellm_fast"]
     assert entry.idle_timeout == 30.0
 
 
@@ -101,10 +96,9 @@ def test_register_litellm_pool_idempotent() -> None:
     gateway2 = MagicMock()
     register_litellm_pool(gateway1, monitor=monitor, name="litellm_main")
     register_litellm_pool(gateway2, monitor=monitor, name="litellm_main")
-    pools = monitor.list_pools()
     # Only one entry (idempotent)
-    main_pools = [p for p in pools if p.name == "litellm_main"]
-    assert len(main_pools) == 1
+    main_count = sum(1 for k in monitor._pools if k == "litellm_main")
+    assert main_count == 1
 
 
 def test_register_litellm_pool_uses_get_pool_monitor_default() -> None:
