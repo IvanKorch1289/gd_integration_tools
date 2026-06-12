@@ -128,14 +128,13 @@ class ExecutionBackendFactory:
 
             return NbClientExecutionBackend(**kwargs)
         elif kind == BackendKind.E2B:
-            # S74 W2 stub: e2b ExecutionBackend not yet implemented.
-            # e2b_sandbox exists (Wave 1.7, general code sandbox),
-            # but notebook-specific ExecutionBackend is S74 W3+
-            # (или deferred — needs separate epic).
-            raise NotImplementedError(
-                "E2B notebook ExecutionBackend — S74 W3+ (deferred). "
-                "Current: e2b_sandbox для general code, не notebook-specific."
+            # S75 W2: E2BExecutionBackend integration (was NotImplementedError
+            # в S74 W2 stub). e2b_code_interpreter opt-in dep ([ai] extra).
+            from src.backend.services.jupyter.execution_service import (
+                E2BExecutionBackend,
             )
+
+            return E2BExecutionBackend(**kwargs)
         else:
             raise ValueError(f"Unknown backend kind: {kind!r}")
 
