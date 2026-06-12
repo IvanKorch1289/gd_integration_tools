@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S82 (2026-06-12) — P1 #10 closure: Documentation cookbooks (5 production-ready recipes) (5 commits)
+
+### Added
+
+- **S82 W1: `docs/cookbooks/README.md`** — operational recipes index.
+  Pattern: use case → solution → recipe → key points → related.
+- **S82 W2: 2 cookbooks** (AI tools whitelist, Outbox multi-instance).
+- **S82 W3: 2 cookbooks** (E2B sandbox, CircuitBreaker middleware).
+- **S82 W4: 1 cookbook** (Pool health monitoring).
+
+### Docs
+
+- **S82 W5: ADR-0164** — closure of documentation cookbooks sprint.
+
 ## [Unreleased] — Autonomous cycle S81 (2026-06-12) — P1 #8 closure: CircuitBreakerMiddleware restoration (per-route, no global state, 13 NEW tests) (4 commits)
 
 ### Added

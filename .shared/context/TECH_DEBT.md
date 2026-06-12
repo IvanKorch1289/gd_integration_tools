@@ -1,4 +1,16 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S74 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S82 W5)
+
+## S82 closure summary (2026-06-12, ADR-0164)
+
+**Status: P1 #10 (docs/cookbooks) CLOSED в S82 (5 commits, 6 docs files).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#10 cookbooks** | ✅ CLOSED S82 W1-W5 | 5 production-ready recipes (AI tools, Outbox, E2B, CB, Pool) + README |
+
+**Net S82 LOC**: 6 files changed, +13,212 LOC docs.
+
+**Net P1 rating**: #6, #8, #10 CLOSED в S79-S82. Осталось: #5, #7, #11, #12.
 
 Tracking для known issues, workarounds, и deferred work, который
 
