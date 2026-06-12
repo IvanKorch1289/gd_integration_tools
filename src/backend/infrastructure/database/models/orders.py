@@ -5,11 +5,12 @@ from sqlalchemy_utils.types import EmailType, UUIDType
 
 from src.backend.infrastructure.database.models.base import BaseModel, nullable_str
 from src.backend.infrastructure.database.models.files import OrderFile
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("Order",)
 
 
-class Order(BaseModel):
+class Order(BaseModel, TenantMixin):
     """
     ORM-класс таблицы учета запросов.
 
@@ -26,13 +27,16 @@ class Order(BaseModel):
         email_for_answer (str): Email для ответа.
         order_kind (OrderKind): Связь с видом запроса.
         files (list[File]): Связь с файлами, прикрепленными к запросу.
-        tenant_id (str): Tenant identifier для multi-tenancy (S89 W2, V2 P0 #6).
+        tenant_id (str): Tenant identifier для multi-tenancy (S89 W2+W3, V2 P0 #6).
 
     History:
         * S89 W2 (V2 P0 #6): tenant_id column added via Alembic migration
           d6e7f8a9b0c1 (2026-06-12 19:00). NOT NULL DEFAULT 'default' для
           backward-compat з existing rows. Index ix_orders_tenant_id для
           apply_tenant_filter performance.
+        * S89 W3 (V2 P0 #6): додано TenantMixin в MRO для auto-filter.
+          apply_tenant_filter (S88 W2) тепер буде фільтрувати Order queries
+          по tenant_id коли встановлено в contextvar.
     """
 
     __table_args__ = {"comment": "Запросы в СКБ-Техно"}
@@ -52,12 +56,6 @@ class Order(BaseModel):
     )
     response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)
     email_for_answer: Mapped[str] = mapped_column(EmailType, nullable=False)
-
-    # S89 W2 (V2 P0 #6): tenant_id для multi-tenancy. NOT NULL DEFAULT 'default'
-    # дозволяє existing rows мати значення 'default' без backfill.
-    tenant_id: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="default", index=True
-    )
 
     # Связи
     order_kind = relationship("OrderKind", back_populates="orders", lazy="joined")
