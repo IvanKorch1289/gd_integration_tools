@@ -51,6 +51,9 @@ from src.backend.dsl.builders.sources_mixin.sse_sources_mixin import (
 from src.backend.dsl.builders.sources_mixin.streaming_sources_mixin import (
     StreamingSourcesMixin,  # S57 W2: MRO
 )
+from src.backend.dsl.builders.sources_mixin.telegram_sources_mixin import (
+    TelegramSourcesMixin,  # S97 W4: Telegram Bot webhook
+)
 from src.backend.dsl.builders.sources_mixin.webhook_sources_mixin import (
     WebhookSourcesMixin,  # S57 W2: MRO
 )
@@ -67,7 +70,8 @@ class SourcesMixin(
     FileSourcesMixin,
     WebhookSourcesMixin,
     ScheduleSourcesMixin,
+    TelegramSourcesMixin,  # S97 W4: Telegram Bot
 ):
-    """Sources mixin (8 mixins = 12 methods)."""
+    """Sources mixin (9 mixins = 13 methods)."""
 
     __slots__ = ()
