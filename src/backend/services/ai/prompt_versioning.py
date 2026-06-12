@@ -55,6 +55,11 @@ class PromptVersion:
     created_by: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация dataclass → dict (для JSON API / LangFuse export).
+
+        Returns:
+            dict со всеми полями dataclass.
+        """
         return {
             "name": self.name,
             "version": self.version,
@@ -78,6 +83,11 @@ class PromptComparison:
     metric_diffs: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация dataclass → dict (для JSON API / LangFuse export).
+
+        Returns:
+            dict со всеми полями dataclass.
+        """
         return {
             "name": self.name,
             "a": self.a.to_dict(),
@@ -198,6 +208,11 @@ class PromptVersionService:
         return await self._store.list_names()
 
     async def get_active(self, name: str) -> PromptVersion | None:
+        """Получить текущую active версию prompt.
+
+        Returns:
+            :class:`PromptVersion` или ``None`` если нет active.
+        """
         versions = await self._store.list_versions(name)
         active = [v for v in versions if v.is_active]
         return active[0] if active else None
