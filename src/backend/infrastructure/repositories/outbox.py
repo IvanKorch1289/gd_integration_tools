@@ -36,6 +36,7 @@ __all__ = (
     "fetch_stuck_pending",
     "mark_failed",
     "mark_sent",
+    "reset_stuck_processing",  # S72 W3, TD-S64-W1 sweeper
     "validate_transport",
     "write",
     "write_within_session",
@@ -302,6 +303,83 @@ async def claim_pending(
             )
             for row in rows
         ]
+
+
+async def reset_stuck_processing(
+    *,
+    threshold_seconds: int = 300,
+    limit: int = 1000,
+) -> int:
+    """S72 W3 — TD-S64-W1 closure, sweeper job (ADR-0087).
+
+    Reset'ит "застрявшие" ``status='processing'`` rows обратно в
+    ``status='pending'`` если их ``claimed_until`` истёк
+    (worker died между claim и ``mark_sent``/``mark_failed``).
+
+    Алгоритм:
+    1. ``UPDATE outbox_messages SET status='pending', claimed_by=NULL,
+       claimed_at=NULL, claimed_until=NULL WHERE id IN (SELECT id
+       FROM outbox_messages WHERE status='processing' AND
+       claimed_until IS NOT NULL AND claimed_until < :cutoff
+       ORDER BY claimed_until LIMIT :limit)`` — атомарный reset
+       (1 statement, uses partial index
+       ``ix_outbox_messages_status_claimed_until``).
+    2. Возвращает count reset rows (для logging / Prometheus).
+
+    Args:
+        threshold_seconds: stale threshold (default 300s = lease TTL).
+            Должен быть >= ``claim_pending.lease_seconds`` чтобы избежать
+            гонки с активным worker'ом (worker_A claim'нул в t=0 с
+            lease=300s → в t=295s sweeper ещё не должен reset).
+        limit: max rows to reset per call (default 1000). Защита от
+            runaway reset (если 10k rows stuck → batch'им).
+
+    Returns:
+        Количество reset rows.
+
+    Trade-offs:
+    * **Per-row lease + sweeper = full multi-instance safety.** Active
+      worker с ``claimed_until > now-threshold`` НЕ затрагивается.
+      Dead worker (lease expired) → row освобождается → другой
+      worker пере-заберёт на следующем ``claim_pending`` tick.
+    * **Sweeper должен run'иться ТОЛЬКО на 1 инстансе** (не
+      multi-leader). Achieved via S71 W3 leader election
+      (``_start_scheduler_with_leader_election`` в
+      ``setup_infra/scheduler_leader.py``) — sweeper wired
+      ТОЛЬКО в leader's startup path.
+    * **Worker_id не сохраняется** (reset clears ``claimed_by``) —
+      новый worker может быть другим инстансом. Audit trail в
+      ``retry_count++`` + ``last_error`` от предыдущей попытки.
+    * **Backward compat**: existing rows (pre-S72 migration) с
+      ``claimed_until=NULL`` НЕ затрагиваются (filter requires
+      ``status='processing'``, pre-migration rows имеют ``status='pending'``).
+    """
+    now = datetime.now(UTC)
+    cutoff = now - timedelta(seconds=threshold_seconds)
+    async with main_session_manager.transaction() as session:
+        result = await session.execute(
+            text(
+                """
+                UPDATE outbox_messages
+                SET status = 'pending',
+                    claimed_by = NULL,
+                    claimed_at = NULL,
+                    claimed_until = NULL
+                WHERE id IN (
+                    SELECT id FROM outbox_messages
+                    WHERE status = 'processing'
+                      AND claimed_until IS NOT NULL
+                      AND claimed_until < :cutoff
+                    ORDER BY claimed_until
+                    LIMIT :limit
+                )
+                RETURNING id
+                """
+            ),
+            {"cutoff": cutoff, "limit": limit},
+        )
+        rows = result.fetchall()
+        return len(rows)
 
 
 async def fetch_stuck_pending(

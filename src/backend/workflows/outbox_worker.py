@@ -21,7 +21,12 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("start_outbox_worker", "stop_outbox_worker", "run_once")
+__all__ = (
+    "start_outbox_worker",
+    "stop_outbox_worker",
+    "run_once",
+    "sweep_stuck_once",  # S72 W3, TD-S64-W1 sweeper
+)
 
 logger = get_logger("workflows.outbox")
 
@@ -116,9 +121,24 @@ def start_outbox_worker(*, interval_seconds: int = 5, batch_size: int = 100) -> 
         max_instances=1,  # защита от перекрытий при зависшем запуске
         coalesce=True,
     )
+    # S72 W3 (TD-S64-W1) — sweeper job для reset stuck 'processing' rows.
+    # Runs каждые 60s, threshold=lease_seconds (300s) — rows с expired
+    # claimed_until reset'аются обратно в pending. Multi-leader
+    # protection на стороне caller'а (S71 W3 leader election).
+    _scheduler.add_job(
+        sweep_stuck_once,
+        trigger="interval",
+        seconds=60,
+        kwargs={"threshold_seconds": 300, "limit": 1000},
+        id="outbox_sweeper",
+        max_instances=1,
+        coalesce=True,
+    )
     _scheduler.start()
     logger.info(
-        "Outbox worker started (interval=%ds, batch=%d)", interval_seconds, batch_size
+        "Outbox worker started (interval=%ds, batch=%d, sweeper=60s/300s)",
+        interval_seconds,
+        batch_size,
     )
 
 
@@ -130,3 +150,43 @@ async def stop_outbox_worker() -> None:
     _scheduler.shutdown(wait=False)
     _scheduler = None
     logger.info("Outbox worker stopped")
+
+
+async def sweep_stuck_once(
+    *, threshold_seconds: int = 300, limit: int = 1000
+) -> int:
+    """S72 W3 (TD-S64-W1) — одна итерация sweeper job'а.
+
+    Wraps :func:`outbox_repo.reset_stuck_processing` для periodic
+    invocation из APScheduler. Возвращает count reset rows (для
+    logging / Prometheus gauge).
+
+    **Зачем нужен sweeper**:
+    Если worker claim'нул row (``status='processing'``,
+    ``claimed_until=now+lease``) и умер между claim и
+    ``mark_sent``/``mark_failed`` → row остаётся ``processing``
+    навсегда, не обрабатывается другими worker'ами. Sweeper
+    reset'нёт row обратно в ``pending`` после
+    ``threshold_seconds`` (= lease TTL) — другой worker может
+    пере-забрать.
+
+    **Multi-leader protection**: sweeper SHOULD run ТОЛЬКО на
+    1 инстансе (иначе дублирующие resets + overhead). Achieved
+    via S71 W3 leader election — sweeper registration guard'ится
+    на стороне caller'а (см. ``setup_infra/scheduler_leader.py``).
+    Default ``threshold_seconds=300`` синхронизирован с
+    ``claim_pending.lease_seconds`` default.
+    """
+    from src.backend.infrastructure.repositories import outbox as outbox_repo
+
+    reset_count = await outbox_repo.reset_stuck_processing(
+        threshold_seconds=threshold_seconds,
+        limit=limit,
+    )
+    if reset_count > 0:
+        logger.info(
+            "Outbox sweeper: reset %d stuck 'processing' rows (threshold=%ds)",
+            reset_count,
+            threshold_seconds,
+        )
+    return reset_count
