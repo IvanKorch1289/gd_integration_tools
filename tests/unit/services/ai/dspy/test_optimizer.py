@@ -34,9 +34,11 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     )
 
 
+@pytest.mark.dspy_eval
 @pytest.mark.asyncio
-async def test_baseline_score_zero_on_stub() -> None:
+async def test_baseline_score_zero_on_stub(monkeypatch: pytest.MonkeyPatch) -> None:
     """Baseline forward = '' даёт 0.0 при metric exact-match."""
+    _force_flag(monkeypatch, True)
     baseline = BaselineDataset(
         name="t1",
         train=[{"input": "a", "expected": "OK"}],
@@ -50,8 +52,10 @@ async def test_baseline_score_zero_on_stub() -> None:
     assert report.optimized_score == pytest.approx(1.0)
 
 
+@pytest.mark.dspy_eval
 @pytest.mark.asyncio
-async def test_lift_calculation() -> None:
+async def test_lift_calculation(monkeypatch: pytest.MonkeyPatch) -> None:
+    _force_flag(monkeypatch, True)
     baseline = BaselineDataset(
         name="t2",
         train=[
@@ -159,8 +163,10 @@ def test_rag_reranker_metric() -> None:
     assert 0.0 <= score <= 1.0
 
 
+@pytest.mark.dspy_eval
 @pytest.mark.asyncio
-async def test_compile_report_to_dict() -> None:
+async def test_compile_report_to_dict(monkeypatch: pytest.MonkeyPatch) -> None:
+    _force_flag(monkeypatch, True)
     baseline = BaselineDataset(
         name="x", train=[{"input": "a", "expected": "1"}], eval=[]
     )

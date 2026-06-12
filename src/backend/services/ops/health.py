@@ -58,6 +58,29 @@ class ProcessorHealthResult:
     latency_ms: float
 
 
+# ---------------------------------------------------------------------------
+# Low-level probes
+# ---------------------------------------------------------------------------
+
+
+async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
+    """Выполнить HTTP GET и вернуть (status_code, text)."""
+    import httpx
+
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        resp = await client.get(url)
+        return resp.status_code, resp.text
+
+
+async def _tcp_connect(host: str, port: int, timeout: float = 5.0) -> None:
+    """Установить TCP-соединение и сразу закрыть."""
+    _, writer = await asyncio.wait_for(
+        asyncio.open_connection(host, port), timeout=timeout
+    )
+    writer.close()
+    await writer.wait_closed()
+
+
 class ProcessorHealthService:
     """Координатор processor-specific health-checks.
 
@@ -204,7 +227,6 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
     """
     start = time.monotonic()
     try:
-        # Lazy import — не падать если SDK отсутствует.
         from src.backend.core.config.settings import settings
 
         registry_url = getattr(settings.queue, "schema_registry_url", None)
@@ -215,19 +237,27 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
                 reason="schema_registry_url не настроен",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
-        # Здесь должен быть реальный HTTP-call /subjects.
-        # В Sprint 6 K2 — stub-вариант (best-effort).
+        code, _ = await asyncio.wait_for(
+            _http_get(f"{registry_url.rstrip('/')}/subjects"), timeout=5.0
+        )
+        if code >= 300:
+            return ProcessorHealthResult(
+                processor_name="kafka_schema_registry",
+                ok=False,
+                reason=f"HTTP {code}",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
         return ProcessorHealthResult(
             processor_name="kafka_schema_registry",
             ok=True,
-            reason="best-effort: settings configured",
+            reason="healthy",
             latency_ms=(time.monotonic() - start) * 1000,
         )
     except Exception as exc:
         return ProcessorHealthResult(
             processor_name="kafka_schema_registry",
             ok=False,
-            reason=f"check failed: {exc}",
+            reason=f"check failed: {type(exc).__name__}: {exc}",
             latency_ms=(time.monotonic() - start) * 1000,
         )
 
@@ -246,17 +276,24 @@ async def _check_temporal_server() -> ProcessorHealthResult:
                 reason="temporal.host не настроен",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
+        host, _, port_str = temporal_host.rpartition(":")
+        if not host:
+            host = temporal_host
+            port = 7233
+        else:
+            port = int(port_str)
+        await asyncio.wait_for(_tcp_connect(host, port), timeout=5.0)
         return ProcessorHealthResult(
             processor_name="temporal_server",
             ok=True,
-            reason="best-effort: settings configured",
+            reason="healthy",
             latency_ms=(time.monotonic() - start) * 1000,
         )
     except Exception as exc:
         return ProcessorHealthResult(
             processor_name="temporal_server",
             ok=False,
-            reason=f"check failed: {exc}",
+            reason=f"check failed: {type(exc).__name__}: {exc}",
             latency_ms=(time.monotonic() - start) * 1000,
         )
 
@@ -267,25 +304,53 @@ async def _check_vault_sealed() -> ProcessorHealthResult:
     try:
         from src.backend.core.config.settings import settings
 
-        vault_enabled = getattr(getattr(settings, "vault", None), "enabled", False)
-        if not vault_enabled:
+        vault = getattr(settings, "vault", None)
+        if vault is None or not getattr(vault, "enabled", False):
             return ProcessorHealthResult(
                 processor_name="vault",
                 ok=True,
-                reason="vault disabled (dev_light mode)",
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        addr = getattr(vault, "addr", "")
+        if not addr:
+            return ProcessorHealthResult(
+                processor_name="vault",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        code, text = await asyncio.wait_for(
+            _http_get(f"{addr.rstrip('/')}/v1/sys/seal-status"), timeout=5.0
+        )
+        if code != 200:
+            return ProcessorHealthResult(
+                processor_name="vault",
+                ok=False,
+                reason=f"HTTP {code}",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        import json
+
+        data = json.loads(text)
+        if data.get("sealed", True):
+            return ProcessorHealthResult(
+                processor_name="vault",
+                ok=False,
+                reason="vault is sealed",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
         return ProcessorHealthResult(
             processor_name="vault",
             ok=True,
-            reason="best-effort: vault.enabled=true",
+            reason="healthy",
             latency_ms=(time.monotonic() - start) * 1000,
         )
     except Exception as exc:
         return ProcessorHealthResult(
             processor_name="vault",
             ok=False,
-            reason=f"check failed: {exc}",
+            reason=f"check failed: {type(exc).__name__}: {exc}",
             latency_ms=(time.monotonic() - start) * 1000,
         )
 
@@ -293,12 +358,49 @@ async def _check_vault_sealed() -> ProcessorHealthResult:
 async def _check_clickhouse() -> ProcessorHealthResult:
     """Проверка доступности ClickHouse."""
     start = time.monotonic()
-    return ProcessorHealthResult(
-        processor_name="clickhouse",
-        ok=True,
-        reason="best-effort stub (Sprint 6 K2; реальная проверка — Sprint 7)",
-        latency_ms=(time.monotonic() - start) * 1000,
-    )
+    try:
+        from src.backend.core.config.settings import settings
+
+        ch = getattr(settings, "clickhouse", None)
+        if ch is None or not getattr(ch, "enabled", False):
+            return ProcessorHealthResult(
+                processor_name="clickhouse",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        host = getattr(ch, "host", "")
+        port = getattr(ch, "http_port", 8123)
+        if not host:
+            return ProcessorHealthResult(
+                processor_name="clickhouse",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        code, text = await asyncio.wait_for(
+            _http_get(f"http://{host}:{port}/ping"), timeout=5.0
+        )
+        if code != 200 or text.strip() != "Ok.":
+            return ProcessorHealthResult(
+                processor_name="clickhouse",
+                ok=False,
+                reason=f"HTTP {code}",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        return ProcessorHealthResult(
+            processor_name="clickhouse",
+            ok=True,
+            reason="healthy",
+            latency_ms=(time.monotonic() - start) * 1000,
+        )
+    except Exception as exc:
+        return ProcessorHealthResult(
+            processor_name="clickhouse",
+            ok=False,
+            reason=f"check failed: {type(exc).__name__}: {exc}",
+            latency_ms=(time.monotonic() - start) * 1000,
+        )
 
 
 async def _check_redis_cluster() -> ProcessorHealthResult:
@@ -307,25 +409,45 @@ async def _check_redis_cluster() -> ProcessorHealthResult:
     try:
         from src.backend.core.config.settings import settings
 
-        redis_enabled = getattr(getattr(settings, "redis", None), "enabled", False)
-        if not redis_enabled:
+        redis = getattr(settings, "redis", None)
+        if redis is None or not getattr(redis, "enabled", False):
             return ProcessorHealthResult(
                 processor_name="redis_cluster",
                 ok=True,
-                reason="redis disabled (dev_light mode)",
+                reason="not configured",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
+        host = getattr(redis, "host", "")
+        port = getattr(redis, "port", 6379)
+        if not host:
+            return ProcessorHealthResult(
+                processor_name="redis_cluster",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        import redis.asyncio as aioredis
+
+        r = aioredis.Redis(
+            host=host,
+            port=port,
+            socket_connect_timeout=min(
+                5.0, getattr(redis, "socket_connect_timeout", None) or 5.0
+            ),
+        )
+        await asyncio.wait_for(r.ping(), timeout=5.0)
+        await r.close()
         return ProcessorHealthResult(
             processor_name="redis_cluster",
             ok=True,
-            reason="best-effort: redis.enabled=true",
+            reason="healthy",
             latency_ms=(time.monotonic() - start) * 1000,
         )
     except Exception as exc:
         return ProcessorHealthResult(
             processor_name="redis_cluster",
             ok=False,
-            reason=f"check failed: {exc}",
+            reason=f"check failed: {type(exc).__name__}: {exc}",
             latency_ms=(time.monotonic() - start) * 1000,
         )
 
@@ -333,12 +455,47 @@ async def _check_redis_cluster() -> ProcessorHealthResult:
 async def _check_nats() -> ProcessorHealthResult:
     """Проверка доступности NATS."""
     start = time.monotonic()
-    return ProcessorHealthResult(
-        processor_name="nats",
-        ok=True,
-        reason="best-effort stub (Sprint 6 K2; реальная проверка — Sprint 7)",
-        latency_ms=(time.monotonic() - start) * 1000,
-    )
+    try:
+        from src.backend.core.config.settings import settings
+
+        nats_cfg = getattr(settings, "nats", None)
+        if nats_cfg is not None:
+            host = getattr(nats_cfg, "host", "")
+            port = getattr(nats_cfg, "port", 4222)
+        else:
+            # Попробуем вытащить URL из очереди, если broker_url начинается с nats://
+            queue_cfg = getattr(settings, "queue", None)
+            broker_url = getattr(queue_cfg, "broker_url", "")
+            if isinstance(broker_url, str) and broker_url.startswith("nats://"):
+                from urllib.parse import urlparse
+
+                parsed = urlparse(broker_url)
+                host = parsed.hostname or ""
+                port = parsed.port or 4222
+            else:
+                host = ""
+                port = 4222
+        if not host:
+            return ProcessorHealthResult(
+                processor_name="nats",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        await asyncio.wait_for(_tcp_connect(host, port), timeout=5.0)
+        return ProcessorHealthResult(
+            processor_name="nats",
+            ok=True,
+            reason="healthy",
+            latency_ms=(time.monotonic() - start) * 1000,
+        )
+    except Exception as exc:
+        return ProcessorHealthResult(
+            processor_name="nats",
+            ok=False,
+            reason=f"check failed: {type(exc).__name__}: {exc}",
+            latency_ms=(time.monotonic() - start) * 1000,
+        )
 
 
 async def _check_graylog() -> ProcessorHealthResult:
@@ -347,25 +504,49 @@ async def _check_graylog() -> ProcessorHealthResult:
     try:
         from src.backend.core.config.settings import settings
 
-        log_host = getattr(getattr(settings, "logging", None), "host", "")
-        if not log_host:
+        log_cfg = getattr(settings, "logging", None)
+        if log_cfg is None:
             return ProcessorHealthResult(
                 processor_name="graylog",
                 ok=True,
-                reason="graylog disabled (LOG_HOST пуст)",
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        host = getattr(log_cfg, "host", "")
+        if not host:
+            return ProcessorHealthResult(
+                processor_name="graylog",
+                ok=True,
+                reason="not configured",
+                latency_ms=(time.monotonic() - start) * 1000,
+            )
+        base_url = getattr(log_cfg, "base_url", None)
+        if not base_url:
+            port = getattr(log_cfg, "port", 9000)
+            use_tls = getattr(log_cfg, "use_tls", False)
+            scheme = "https" if use_tls else "http"
+            base_url = f"{scheme}://{host}:{port}"
+        code, _ = await asyncio.wait_for(
+            _http_get(f"{base_url.rstrip('/')}/api/system"), timeout=5.0
+        )
+        if code >= 300:
+            return ProcessorHealthResult(
+                processor_name="graylog",
+                ok=False,
+                reason=f"HTTP {code}",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
         return ProcessorHealthResult(
             processor_name="graylog",
             ok=True,
-            reason="best-effort: LOG_HOST configured",
+            reason="healthy",
             latency_ms=(time.monotonic() - start) * 1000,
         )
     except Exception as exc:
         return ProcessorHealthResult(
             processor_name="graylog",
             ok=False,
-            reason=f"check failed: {exc}",
+            reason=f"check failed: {type(exc).__name__}: {exc}",
             latency_ms=(time.monotonic() - start) * 1000,
         )
 
@@ -376,7 +557,7 @@ def _is_strict_mode() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.processor_health_checks_strict
-    except Exception as _:
+    except ImportError, AttributeError:
         return False
 
 

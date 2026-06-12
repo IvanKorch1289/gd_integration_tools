@@ -159,8 +159,11 @@ async def test_build_and_run_agent_invokes_react(
     captured_invoke: dict[str, Any] = {}
 
     class _FakeAgent:
-        async def ainvoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+        async def ainvoke(
+            self, payload: dict[str, Any], config: dict[str, Any] | None = None
+        ) -> dict[str, Any]:
             captured_invoke.update(payload)
+            captured_invoke["config"] = config
             return {"messages": [SimpleNamespace(content="ok-final")]}
 
     def _fake_create_react_agent(
@@ -169,6 +172,7 @@ async def test_build_and_run_agent_invokes_react(
         captured_invoke["llm_present"] = llm is not None
         captured_invoke["tools_count"] = len(tools)
         captured_invoke["checkpointer"] = kwargs.get("checkpointer")
+        captured_invoke["max_iterations"] = kwargs.get("max_iterations")
         return _FakeAgent()
 
     fake_lp = ModuleType("langgraph.prebuilt")
@@ -188,5 +192,8 @@ async def test_build_and_run_agent_invokes_react(
     assert result["message_count"] == 1
     assert captured_invoke["llm_present"] is True
     assert captured_invoke["tools_count"] == 0
+    assert captured_invoke["max_iterations"] == 10
+    assert captured_invoke["config"] is not None
+    assert "thread_id" in (captured_invoke["config"].get("configurable") or {})
     # Проверяем что ChatLiteLLM был сконструирован с параметрами из gateway.
     assert fake_chat_litellm_module["model"] == "openai/gpt-4o-mini"

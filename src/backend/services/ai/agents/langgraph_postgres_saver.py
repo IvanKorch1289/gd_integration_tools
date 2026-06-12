@@ -23,6 +23,8 @@
 
 from __future__ import annotations
 
+import threading
+from contextlib import AsyncExitStack
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -69,6 +71,7 @@ class LangGraphPostgresSaverWrapper:
         self._dsn = dsn
         self._saver: Any = None
         self._ctx: Any = None
+        self._exit_stack: AsyncExitStack | None = None
         self._enabled_override = enabled
 
     @property
@@ -126,11 +129,12 @@ class LangGraphPostgresSaverWrapper:
 
         dsn = self._resolve_dsn()
         try:
-            # AsyncPostgresSaver.from_conn_string возвращает async-context-manager;
-            # для долгоживущего использования вызываем .__aenter__ вручную и
-            # храним сам объект до явного close.
+            # Используем AsyncExitStack для корректного входа в async CM
+            # без ручного __aenter__ — стек держит контекст открытым
+            # до вызова close().
+            self._exit_stack = AsyncExitStack()
             self._ctx = AsyncPostgresSaver.from_conn_string(dsn)
-            saver = await self._ctx.__aenter__()
+            saver = await self._exit_stack.enter_async_context(self._ctx)
         except Exception as exc:
             raise LangGraphPostgresSaverUnavailable(
                 f"Не удалось инициализировать AsyncPostgresSaver: {exc}"
@@ -152,7 +156,9 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is None:
             return
         try:
-            if self._ctx is not None:
+            if self._exit_stack is not None:
+                await self._exit_stack.aclose()
+            elif self._ctx is not None:
                 await self._ctx.__aexit__(None, None, None)
             else:
                 close = getattr(self._saver, "close", None)
@@ -165,6 +171,7 @@ class LangGraphPostgresSaverWrapper:
         finally:
             self._saver = None
             self._ctx = None
+            self._exit_stack = None
 
     async def __aexit__(
         self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any
@@ -174,13 +181,15 @@ class LangGraphPostgresSaverWrapper:
 
 
 _wrapper: LangGraphPostgresSaverWrapper | None = None
+_wrapper_lock = threading.Lock()
 
 
 def _factory() -> LangGraphPostgresSaverWrapper:
     """Создаёт singleton wrapper (без acquire — ленивая инициализация)."""
     global _wrapper
-    if _wrapper is None:
-        _wrapper = LangGraphPostgresSaverWrapper()
+    with _wrapper_lock:
+        if _wrapper is None:
+            _wrapper = LangGraphPostgresSaverWrapper()
     return _wrapper
 
 
@@ -207,4 +216,5 @@ async def get_langgraph_postgres_saver() -> Any | None:
 def reset_langgraph_postgres_saver() -> None:
     """Сбрасывает singleton (для тестов)."""
     global _wrapper
-    _wrapper = None
+    with _wrapper_lock:
+        _wrapper = None

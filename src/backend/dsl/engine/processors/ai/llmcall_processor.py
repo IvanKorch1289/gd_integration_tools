@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.services.ai.gateway.exceptions import GatewayRateLimited
 
 
 class LLMCallProcessor(BaseProcessor):
@@ -17,7 +19,7 @@ class LLMCallProcessor(BaseProcessor):
     - llm.provider — фактически использованный провайдер
     - llm.model — модель
     - llm.tokens_used — количество токенов (если LLM вернул usage)
-    - llm.cost_usd — оценка стоимости (если есть таблица цен в config)
+    - llm.cost_usd — оценка стоимости через litellm.completion_cost
 
     Args:
         max_retries: Количество повторов при transient ошибках (default 2).
@@ -39,6 +41,23 @@ class LLMCallProcessor(BaseProcessor):
         self._prompt_property = prompt_property
         self._max_retries = max_retries
         self._retry_delay = retry_delay
+
+    def _compute_cost(
+        self, model: str | None, prompt_tokens: int, completion_tokens: int
+    ) -> float:
+        """Оценка стоимости через litellm.completion_cost с fallback на 0.0."""
+        try:
+            import litellm  # type: ignore[import-not-found]
+
+            return float(
+                litellm.completion_cost(
+                    model=model or self._model or "unknown",
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
+            )
+        except Exception:
+            return 0.0
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
 
@@ -83,10 +102,25 @@ class LLMCallProcessor(BaseProcessor):
                 prompt_inline=prompt,
             )
 
-            try:
-                response = await AIGateway().invoke(request)
-            except Exception as exc:
-                exchange.fail(f"LLM gateway call failed: {exc}")
+            gateway = AIGateway()
+            response = None
+            for attempt in range(self._max_retries + 1):
+                try:
+                    response = await gateway.invoke(request)
+                    break
+                except GatewayRateLimited as exc:
+                    exchange.fail(f"LLM rate limit: {exc}")
+                    return
+                except Exception as exc:
+                    if attempt == self._max_retries:
+                        exchange.fail(
+                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}"
+                        )
+                        return
+                    await asyncio.sleep(self._retry_delay * (2**attempt))
+
+            if response is None:
+                exchange.fail("LLM gateway call returned no response")
                 return
 
             total_tokens = response.tokens_prompt + response.tokens_completion
@@ -100,7 +134,14 @@ class LLMCallProcessor(BaseProcessor):
                 "model": response.model_used,
             }
             exchange.set_property("llm.tokens_used", total_tokens)
-            exchange.set_property("llm.cost_usd", round(total_tokens * 0.00002, 6))
+            exchange.set_property(
+                "llm.cost_usd",
+                self._compute_cost(
+                    response.model_used,
+                    response.tokens_prompt,
+                    response.tokens_completion,
+                ),
+            )
             if response.model_used:
                 exchange.set_property("llm.model", response.model_used)
             exchange.set_property("llm.provider", "gateway")
@@ -127,8 +168,7 @@ class LLMCallProcessor(BaseProcessor):
         agent = get_ai_agent_service()
 
         # K3 W1: замена custom retry-loop на tenacity через make_async_retry.
-        # Rate-limit (RuntimeError с "rate"/"429"/"quota") — non-retryable,
-        # обрабатывается отдельно до вызова retry-обёртки.
+        # GatewayRateLimited — non-retryable, обрабатывается отдельно.
         _retryable = (TimeoutError, ConnectionError)
 
         @make_async_retry(
@@ -145,19 +185,18 @@ class LLMCallProcessor(BaseProcessor):
                     provider=self._provider,
                     model=self._model or "default",
                 )
+            except GatewayRateLimited:
+                # Rate-limit — non-retryable, пробрасываем как есть.
+                raise
             except RuntimeError as exc:
-                msg = str(exc).lower()
-                if "rate" in msg or "429" in msg or "quota" in msg:
-                    # Rate-limit — non-retryable, пробрасываем как есть.
-                    raise
                 # Остальные RuntimeError считаем transient — оборачиваем
                 # в ConnectionError, чтобы tenacity их поймал.
                 raise ConnectionError(str(exc)) from exc
 
         try:
             result = await _chat_with_retry()
-        except RuntimeError as exc:
-            # rate-limit или другие non-retryable RuntimeError
+        except GatewayRateLimited as exc:
+            # rate-limit — non-retryable
             exchange.fail(f"LLM rate limit: {exc}")
             return
         except (TimeoutError, ConnectionError) as exc:
@@ -169,9 +208,16 @@ class LLMCallProcessor(BaseProcessor):
         if isinstance(result, dict):
             usage = result.get("usage") or {}
             tokens = int(usage.get("total_tokens", 0)) if usage else 0
+            prompt_tokens = int(usage.get("prompt_tokens", 0)) if usage else 0
+            completion_tokens = int(usage.get("completion_tokens", 0)) if usage else 0
             if tokens:
                 exchange.set_property("llm.tokens_used", tokens)
-                exchange.set_property("llm.cost_usd", round(tokens * 0.00002, 6))
+                exchange.set_property(
+                    "llm.cost_usd",
+                    self._compute_cost(
+                        result.get("model"), prompt_tokens, completion_tokens
+                    ),
+                )
             if "model" in result:
                 exchange.set_property("llm.model", result["model"])
 

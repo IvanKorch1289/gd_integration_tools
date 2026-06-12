@@ -148,6 +148,17 @@ class PromptRegistry:
             ),
         )
 
+    async def get_compiled(
+        self,
+        name: str,
+        *,
+        version: int | str | None = None,
+        label: str = "production",
+        variables: dict[str, Any] | None = None,
+    ) -> str:
+        pv = await self.get(name, version=version, label=label, variables=variables)
+        return pv.compiled
+
 
 _instance: PromptRegistry | None = None
 

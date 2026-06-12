@@ -11,6 +11,7 @@ from typing import Any
 
 import orjson
 
+from src.backend.infrastructure.cache.rag.embedding_cache import EmbeddingVectorCache
 from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
 from src.backend.infrastructure.logging.factory import get_logger
 
@@ -35,6 +36,7 @@ class L2SemanticRagCache:
         self._collection = collection
         self._threshold = threshold
         self._vector_size = vector_size
+        self._embedding_cache = EmbeddingVectorCache()
 
     def _ensure_client(self) -> Any:
         if self._client is not None:
@@ -65,6 +67,9 @@ class L2SemanticRagCache:
         return self._embedder
 
     async def _embed(self, text: str) -> list[float]:
+        cached = self._embedding_cache.get(text)
+        if cached is not None:
+            return cached
         embedder = self._ensure_embedder()
         if not embedder:
             return []
@@ -73,7 +78,10 @@ class L2SemanticRagCache:
         except Exception as exc:
             logger.debug("L2 embedder failed: %s", exc)
             return []
-        return list(result[0]) if result else []
+        vector = list(result[0]) if result else []
+        if vector:
+            self._embedding_cache.set(text, vector)
+        return vector
 
     async def get(self, query: str, *, tenant: str | None = None) -> Any | None:
         """Возвращает кэшированный answer если score >= threshold."""

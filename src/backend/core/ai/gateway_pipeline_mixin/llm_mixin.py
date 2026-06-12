@@ -1,10 +1,3 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
-
 """PipelineStepsMixin для :class:`AIGateway` (S38 P1.1b, v9 P1 split).
 
 Извлечено из ``core/ai/gateway.py`` в рамках T-P1.1b (v9 P1 God-объекты
@@ -29,12 +22,17 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+
+logger = get_logger(__name__)
 
 
 class LlmInvocationMixin:
@@ -64,10 +62,30 @@ class LlmInvocationMixin:
             Rendered prompt после template + budget trim + context strategy.
         """
         from src.backend.core.ai.context_strategy import get_context_strategy
+        from src.backend.core.config.features import feature_flags
+
+        prompt = sanitized
+
+        if feature_flags.prompt_registry_gateway_wiring and request.prompt_ref:
+            try:
+                from src.backend.services.ai.prompt_registry import get_prompt_registry
+
+                registry = get_prompt_registry()
+                compiled = await registry.get_compiled(
+                    request.prompt_ref,
+                    version=None,
+                    label="production",
+                    variables=request.context,
+                )
+                prompt = compiled
+            except Exception as exc:
+                logger.debug(
+                    "PromptRegistry lookup failed for %s: %s", request.prompt_ref, exc
+                )
 
         budget_spec = policy.budget if policy else None
         if budget_spec is None:
-            return sanitized
+            return prompt
 
         limit = budget_spec.max_tokens_prompt
         strategy_type = getattr(budget_spec, "context_strategy", "rolling_window")
@@ -85,9 +103,9 @@ class LlmInvocationMixin:
             def count_tokens(text: str) -> int:
                 return max(1, len(text) // 4)
 
-        total_tokens = count_tokens(sanitized)
+        total_tokens = count_tokens(prompt)
         if total_tokens <= limit:
-            return sanitized
+            return prompt
 
         # String-level truncation: keep start + end (best for most prompts)
         # This is the fallback; full strategy requires request.messages
@@ -106,7 +124,7 @@ class LlmInvocationMixin:
         if enc is not None:
             half = limit // 2
             try:
-                encoded_full = enc.encode(sanitized)
+                encoded_full = enc.encode(prompt)
                 truncated_enc = encoded_full[:half] + encoded_full[-(limit - half) :]
                 return enc.decode(truncated_enc)
             except Exception:
@@ -114,9 +132,7 @@ class LlmInvocationMixin:
 
         # Fallback: naive char-level
         half_chars = (limit * 4) // 2
-        return (
-            sanitized[:half_chars] + "\n... [truncated] ...\n" + sanitized[-half_chars:]
-        )
+        return prompt[:half_chars] + "\n... [truncated] ...\n" + prompt[-half_chars:]
 
     async def _invoke_llm(
         self, rendered: str, policy: AIPolicySpec | None, stream: bool

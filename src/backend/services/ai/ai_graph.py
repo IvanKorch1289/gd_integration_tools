@@ -21,9 +21,11 @@ Lazy-import:
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.request_context import RequestContext
 
 __all__ = ("build_and_run_agent", "build_chat_model")
 
@@ -137,6 +139,7 @@ async def build_and_run_agent(
     gateway: Any | None = None,
     temperature: float = 0.0,
     durable: bool = False,
+    session_id: str | None = None,
 ) -> dict[str, Any]:
     """Строит и запускает LangGraph-агента через :class:`LiteLLMGateway`.
 
@@ -149,6 +152,9 @@ async def build_and_run_agent(
         durable: При True — подключает LangGraph PostgresCheckpointer
             (требует ``feature_flags.langgraph_postgres_checkpoint=True``).
             При недоступности — fallback на in-memory checkpointing.
+        session_id: Опц. ID сессии; используется как LangGraph ``thread_id``.
+            При ``None`` — берётся ``correlation_id`` из текущего
+            :class:`RequestContext` либо генерируется UUID4.
 
     Returns:
         Результат работы агента: словарь с ``prompt``, ``tools_used``,
@@ -179,10 +185,18 @@ async def build_and_run_agent(
 
                 checkpointer = MemorySaver()
 
-        agent = create_react_agent(llm, tools, checkpointer=checkpointer)
+        agent = create_react_agent(
+            llm, tools, checkpointer=checkpointer, max_iterations=10
+        )
+
+        thread_id = session_id or ""
+        if not thread_id:
+            ctx = RequestContext.current()
+            thread_id = ctx.correlation_id if ctx is not None else uuid.uuid4().hex
 
         result = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": prompt}]}
+            {"messages": [{"role": "user", "content": prompt}]},
+            config={"configurable": {"thread_id": thread_id}},
         )
 
         messages = result.get("messages", [])

@@ -80,12 +80,14 @@ class AIFlags(BaseSettings):
     )
 
     rag_cache_l2_semantic: bool = Field(
-        default=False,
+        default=True,
         title="AI: RAG cache L2 (semantic match через embeddings)",
         description=(
             "K6 Wave 3. Owner: K6 AI/RAG. ETA: S2-W3. "
             "Активирует L2 semantic cache layer (L1 LRU уже работает). "
-            "default-OFF до измерения hit-rate ≥30% в staging."
+            "Требует sentence-transformers (или fallback-эмбеддер) в окружении. "
+            "default-ON начиная с Sprint 86; при отсутствии зависимостей "
+            "кэш gracefully отключается."
         ),
     )
 
@@ -119,6 +121,17 @@ class AIFlags(BaseSettings):
             "При False — используется in-memory fallback (PromptEntry store). "
             "default-OFF до staging-smoke с Langfuse instance и smoke-теста "
             "на 1 prompt round-trip."
+        ),
+    )
+
+    prompt_registry_gateway_wiring: bool = Field(
+        default=False,
+        title="AI: PromptRegistry → AIGateway wiring (Sprint 86)",
+        description=(
+            "При True AIGateway шаг 5 (render prompt) вызывает "
+            "PromptRegistry.get_compiled() по prompt_ref до инвокации LLM. "
+            "При промахе registry fallback к inline prompt. default-OFF до "
+            "smoke-теста registry round-trip."
         ),
     )
 

@@ -28,6 +28,7 @@ class TestFastMCPserver:
             mock_registry_cls.return_value = mock_registry
 
             server = FastMCPserver()
+            server._ensure_mcp()
 
             # Should have created a FastMCP instance
             assert server._mcp is not None
@@ -76,8 +77,8 @@ class TestFastMCPserver:
             # start/stop should not raise (no-arg async methods)
             import asyncio
 
-            asyncio.get_event_loop().run_until_complete(server.start())
-            asyncio.get_event_loop().run_until_complete(server.stop())
+            asyncio.run(server.start())
+            asyncio.run(server.stop())
 
     def test_asgi_app_returns_fastmcp_app(self) -> None:
         """asgi_app property returns the MCP ASGI application."""

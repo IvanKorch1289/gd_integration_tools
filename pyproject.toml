@@ -888,6 +888,7 @@ markers = [
     "slow: slow tests, skipped by default in unit-suite",
     "requires_toxiproxy: requires toxiproxy container",
     "unit: fast unit tests",
+    "dspy_eval: DSPy optimizer evaluation tests",
 ]
 
 

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 __all__ = (
     "AIFsError",
     "AIWorkspaceError",
     "GuardResult",
     "GuardrailViolationError",
+    "MCPToolError",
     "WorkspaceQuotaExceededError",
     "WorkspaceTTLExpiredError",
 )
@@ -100,6 +102,17 @@ class WorkspaceTTLExpiredError(AIWorkspaceError):
             f"Workspace {session_id!r} TTL expired: "
             f"{age_seconds:.0f}s > {ttl_seconds:.0f}s"
         )
+
+
+class MCPToolError(Exception):
+    """Normalized MCP tool execution error — no internal details leak."""
+
+    def __init__(self, message: str = "Tool execution failed") -> None:
+        self.message = message
+        super().__init__(message)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"error": self.message}
 
 
 class AIFsError(Exception):

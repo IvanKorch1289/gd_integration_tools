@@ -152,6 +152,19 @@ class DSPyOptimizer:
 
     async def compile(self, *, pipeline: DSPyPipeline) -> CompileReport:
         """Запускает baseline + optimized eval, возвращает ``CompileReport``."""
+        if not self.is_enabled():
+            train, eval_set = self._baseline.split()
+            return CompileReport(
+                pipeline_name=pipeline.name,
+                baseline_name=self._baseline.name,
+                baseline_score=0.0,
+                optimized_score=0.0,
+                train_size=len(train),
+                eval_size=len(eval_set),
+                sdk_available=self._is_sdk_available(),
+                error="dspy_eval_pipeline_enabled=False",
+            )
+
         train, eval_set = self._baseline.split()
         sdk_available = self._is_sdk_available()
 

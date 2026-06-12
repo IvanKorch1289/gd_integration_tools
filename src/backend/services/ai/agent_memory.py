@@ -19,6 +19,7 @@ DSL-actions (``src/dsl/commands/setup.py``).
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any
 
@@ -61,6 +62,7 @@ class AgentMemoryService:
         # Periodic trim: avoid O(N) count+find+delete on every add_message.
         self._trim_interval = max(1, self._max_messages // 2)
         self._trim_counter = 0
+        self._trim_lock = asyncio.Lock()
 
     def _client(self) -> MongoClientProtocol:
         factory = self._client_factory or get_mongo_client_provider()
@@ -130,20 +132,21 @@ class AgentMemoryService:
 
     async def _trim_messages(self, session_id: str) -> None:
         """Удаляет излишние сообщения, оставляя только _max_messages последних."""
-        client = self._client()
-        keep_doc = await client.find(
-            _MESSAGES,
-            query={"session_id": session_id},
-            projection={"ts": 1, "_id": 0},
-            limit=1,
-            skip=self._max_messages,
-            sort=[("ts", 1)],
-        )
-        if keep_doc:
-            cutoff = keep_doc[0]["ts"]
-            await client.collection(_MESSAGES).delete_many(
-                {"session_id": session_id, "ts": {"$lt": cutoff}}
+        async with self._trim_lock:
+            client = self._client()
+            keep_doc = await client.find(
+                _MESSAGES,
+                query={"session_id": session_id},
+                projection={"ts": 1, "_id": 0},
+                limit=1,
+                skip=self._max_messages,
+                sort=[("ts", 1)],
             )
+            if keep_doc:
+                cutoff = keep_doc[0]["ts"]
+                await client.collection(_MESSAGES).delete_many(
+                    {"session_id": session_id, "ts": {"$lt": cutoff}}
+                )
 
     async def clear_conversation(self, session_id: str) -> None:
         client = self._client()

@@ -29,8 +29,10 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.prompts.base import Prompt, PromptArgument
 
+from src.backend.core.ai.errors import MCPToolError
 from src.backend.core.ai.skill_registry import SkillRegistry, SkillSpec
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy import current_tenant
 from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
 
 __all__ = ("FastMCPserver",)
@@ -224,10 +226,21 @@ def _build_tool_callback(skill: SkillSpec, registry: SkillRegistry) -> Any:
 
     async def tool_callback(arguments: dict[str, Any]) -> str:
         try:
-            result = await registry.invoke(skill.id, **arguments)
+            tenant_ctx = current_tenant()
+            tenant_id = tenant_ctx.tenant_id if tenant_ctx else None
+
+            if skill.tenant_allowlist and tenant_id not in skill.tenant_allowlist:
+                raise MCPToolError("Tenant access denied")
+
+            result = await registry.invoke(
+                skill.id, timeout=skill.timeout_s, **arguments
+            )
             return json.dumps(result, default=str, ensure_ascii=False)
+        except MCPToolError as exc:
+            logger.warning("Skill %s denied: %s", skill.id, exc.message)
+            return json.dumps(exc.to_dict(), ensure_ascii=False)
         except Exception as exc:
             logger.exception("Skill %s failed: %s", skill.id, exc)
-            return json.dumps({"error": str(exc)})
+            return json.dumps(MCPToolError().to_dict(), ensure_ascii=False)
 
     return tool_callback

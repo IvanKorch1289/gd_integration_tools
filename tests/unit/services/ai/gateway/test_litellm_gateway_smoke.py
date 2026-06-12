@@ -12,6 +12,20 @@ from src.backend.services.ai.gateway.client import LiteLLMGateway
 from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 
 
+class _FakeRateLimitError(Exception):
+    pass
+
+
+_FAKE_EXCEPTIONS = SimpleNamespace(
+    RateLimitError=_FakeRateLimitError,
+    ServiceUnavailableError=RuntimeError,
+    Timeout=TimeoutError,
+    APIError=RuntimeError,
+    BadRequestError=ValueError,
+    AuthenticationError=PermissionError,
+)
+
+
 def test_gateway_disabled_by_default() -> None:
     """Default-OFF: вызов acompletion поднимает GatewayUnavailable."""
     gw = LiteLLMGateway()
@@ -35,6 +49,7 @@ async def test_gateway_acompletion_calls_litellm(
             return_value={"choices": [{"message": {"content": "ok"}}]}
         ),
         success_callback=[],
+        exceptions=_FAKE_EXCEPTIONS,
     )
     monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
 
@@ -53,7 +68,9 @@ async def test_gateway_aembedding_returns_vectors(
 ) -> None:
     fake_response = {"data": [{"embedding": [0.1, 0.2, 0.3]}]}
     fake_litellm = SimpleNamespace(
-        aembedding=AsyncMock(return_value=fake_response), success_callback=[]
+        aembedding=AsyncMock(return_value=fake_response),
+        success_callback=[],
+        exceptions=_FAKE_EXCEPTIONS,
     )
     monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
 
@@ -70,8 +87,9 @@ async def test_gateway_rate_limited_raises_normalized(
     from src.backend.services.ai.gateway.exceptions import GatewayRateLimited
 
     fake_litellm = SimpleNamespace(
-        acompletion=AsyncMock(side_effect=RuntimeError("Rate limit exceeded")),
+        acompletion=AsyncMock(side_effect=_FakeRateLimitError("Rate limit exceeded")),
         success_callback=[],
+        exceptions=_FAKE_EXCEPTIONS,
     )
     monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
 

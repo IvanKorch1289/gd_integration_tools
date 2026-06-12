@@ -211,7 +211,7 @@ class TestMCPToolProcessorRun:
 
         assert exchange.get_property("mcp_result") == {"rows": [1, 2, 3]}
         mock_client.call_tool.assert_called_once_with(
-            "db.query", arguments={"sql": "SELECT 1"}
+            "db.query", arguments={"sql": "SELECT 1"}, timeout=30.0
         )
 
     @pytest.mark.asyncio

@@ -34,10 +34,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 
+Client: Any = None
 try:
     from fastmcp import Client
 except ImportError:
-    Client = None
+    pass
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -87,6 +88,8 @@ class MCPToolProcessor(BaseAIProcessor):
         self.arguments_property = arguments_property
         self.result_property = result_property
         self.timeout_s = timeout_s
+        self._client: Any = None
+        self._client_connected: bool = False
 
     def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope для ``mcp.call`` = tool_name ( resource-level )."""
@@ -140,13 +143,35 @@ class MCPToolProcessor(BaseAIProcessor):
             return value if isinstance(value, dict) else None
         return None
 
+    def _get_client(self) -> Any:
+        """Lazy-инициализация FastMCP Client с connection pooling."""
+        if self._client is None:
+            self._client = Client(self.tool_uri, timeout=self.timeout_s)
+        return self._client
+
+    async def _ensure_connected(self) -> Any:
+        """Убедиться, что Client подключён (ленивое подключение)."""
+        client = self._get_client()
+        if not self._client_connected:
+            await client.__aenter__()
+            self._client_connected = True
+        return client
+
     async def _call_mcp_tool(self, arguments: dict[str, Any]) -> Any:
         """Выполняет actual MCP tool call через FastMCP Client."""
         if Client is None:
             raise ImportError("fastmcp not installed: pip install fastmcp")
 
-        async with Client(self.tool_uri) as client:
-            return await client.call_tool(self.tool_name, arguments=arguments)
+        client = await self._ensure_connected()
+        return await client.call_tool(
+            self.tool_name, arguments=arguments, timeout=self.timeout_s
+        )
+
+    async def close(self) -> None:
+        """Закрыть соединение с MCP-сервером (cleanup)."""
+        if self._client is not None and self._client_connected:
+            await self._client.close()
+            self._client_connected = False
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

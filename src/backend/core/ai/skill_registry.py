@@ -100,6 +100,7 @@ class SkillSpec(BaseModel):
     )
     timeout_s: float = Field(default=30.0, ge=0.1)
     tenant_aware: bool = False
+    tenant_allowlist: list[str] | None = Field(default=None)
     feature_flag: str | None = None
 
 
@@ -200,7 +201,9 @@ class SkillRegistry:
         del func
         raise NotImplementedError("S26 W5: bridge с services/ai/tools/registry")
 
-    async def invoke(self, skill_id: str, **kwargs: Any) -> Any:
+    async def invoke(
+        self, skill_id: str, timeout: float | None = None, **kwargs: Any
+    ) -> Any:
         """Выполнить skill через handler (с capability check + module whitelist).
 
         Flow:
@@ -208,10 +211,11 @@ class SkillRegistry:
         2. Module-whitelist check (same logic as ``CallFunctionProcessor``).
         3. Capability check via ``CapabilityGate`` if available.
         4. Dynamic import ``module:function`` via ``importlib``.
-        5. Call handler with ``**kwargs``.
+        5. Call handler with ``**kwargs`` (with optional ``timeout``).
 
         Args:
             skill_id: Идентификатор skill (``"credit.score.calculate"``).
+            timeout: Опциональный таймаут вызова handler'а в секундах.
             **kwargs: Параметры handler'а.
 
         Returns:
@@ -222,6 +226,7 @@ class SkillRegistry:
             PermissionError: Module not in whitelist.
             CapabilityDeniedError: Отсутствует одна из capabilities.
             ImportError: Handler module/function not found.
+            asyncio.TimeoutError: При превышении ``timeout``.
         """
         skill = self._skills.get(skill_id)
         if skill is None:
@@ -287,7 +292,10 @@ class SkillRegistry:
         import asyncio
 
         if asyncio.iscoroutinefunction(fn):
-            return await fn(**kwargs)
+            coro = fn(**kwargs)
+            if timeout is not None and timeout > 0:
+                return await asyncio.wait_for(coro, timeout=timeout)
+            return await coro
         return fn(**kwargs)
 
     async def hot_reload(self) -> None:
