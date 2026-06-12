@@ -10,7 +10,7 @@ read_file, write_file, read_s3, write_s3, file_move.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -69,6 +69,106 @@ class PersistenceMixin:
             "src.backend.dsl.engine.processors.components",
             "DatabaseQueryProcessor",
             sql=sql,
+            result_property=result_property,
+        )
+
+    def db_insert(
+        self,
+        table: str,
+        data: dict[str, Any],
+        *,
+        result_property: str = "db_crud_result",
+    ) -> RouteBuilder:
+        """Safe INSERT через parameterized SQL (S95 W1).
+
+        Auto-генерирует ``INSERT INTO "t" ("c1", "c2") VALUES (:c1, :c2)`` из
+        ``data`` dict. Идентификаторы (table, columns) проходят whitelist
+        (только [A-Za-z0-9_]); values — bind-params.
+
+        Args:
+            table: Table name.
+            data: Column → value mapping.
+            result_property: Куда положить result.
+
+        Example::
+
+            RouteBuilder.from_("orders.create", source="http:/orders")
+                .db_insert("orders", {"id": "${body.id}", "status": "new"})
+                .build()
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.db_crud",
+            "DbCrudProcessor",
+            operation="INSERT",
+            table=table,
+            data=data,
+            result_property=result_property,
+        )
+
+    def db_upsert(
+        self,
+        table: str,
+        data: dict[str, Any],
+        conflict_keys: list[str],
+        *,
+        result_property: str = "db_crud_result",
+    ) -> RouteBuilder:
+        """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE, PostgreSQL).
+
+        Args:
+            table: Table name.
+            data: Column → value mapping (включая conflict_keys).
+            conflict_keys: PK/unique columns для conflict target.
+            result_property: Куда положить result.
+
+        Example::
+
+            RouteBuilder.from_("users.sync", source="http:/users")
+                .db_upsert(
+                    "users",
+                    {"id": "${body.id}", "name": "${body.name}"},
+                    conflict_keys=["id"],
+                )
+                .build()
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.db_crud",
+            "DbCrudProcessor",
+            operation="UPSERT",
+            table=table,
+            data=data,
+            conflict_keys=conflict_keys,
+            result_property=result_property,
+        )
+
+    def db_delete(
+        self,
+        table: str,
+        where: dict[str, Any],
+        *,
+        result_property: str = "db_crud_result",
+    ) -> RouteBuilder:
+        """Safe DELETE с explicit WHERE (S95 W1).
+
+        ``where`` НЕ МОЖЕТ быть пустым (защита от accidental DELETE all).
+
+        Args:
+            table: Table name.
+            where: Column → value mapping для WHERE clause.
+            result_property: Куда положить result.
+
+        Example::
+
+            RouteBuilder.from_("orders.purge", source="timer:1d")
+                .db_delete("orders", {"created_at_lt": "${now-30d}"})
+                .build()
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.db_crud",
+            "DbCrudProcessor",
+            operation="DELETE",
+            table=table,
+            where=where,
             result_property=result_property,
         )
 
