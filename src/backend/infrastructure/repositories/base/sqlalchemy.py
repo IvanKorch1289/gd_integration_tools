@@ -383,20 +383,29 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection()
-    async def delete(self, session: AsyncSession, key: str, value: Any) -> None:
+    async def delete(
+        self, session: AsyncSession, key: str, value: Any
+    ) -> int | None:
         """
         Удалить объект из таблицы по ключу и значению.
 
+        S83 W2 (V2 P0 N1): возвращает ID удалённого объекта (или None),
+        чтобы caller мог залогировать audit event. Раньше возвращал None
+        → audit терял информацию что именно удалено.
+
         :param session: Асинхронная сессия SQLAlchemy.
         :param key: Название поля для поиска объекта.
-        :param value: Значение поля для поиска объекта.
+        :param value: Значение поля для поиска.
+        :return: ID удалённого объекта или None если не найден.
         """
-        await session.execute(
+        result = await session.execute(
             delete(self.model)
             .where(getattr(self.model, key) == value)
             .returning(self.model.id)
         )
         await session.flush()
+        row = result.scalar_one_or_none()
+        return int(row) if row is not None else None
 
     @main_session_manager.connection(commit=False)
     async def get_all_versions(
