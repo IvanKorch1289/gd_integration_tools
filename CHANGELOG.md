@@ -5,6 +5,18 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S93 (2026-06-12) — W2: Frontend PATH + Docstring Ratchet + Resilience Fact-Check (3 commits, 16 NEW tests)
+
+### Added
+
+- **S93 W2-C11**: `manage.py:run_frontend()` — теперь устанавливает `PYTHONPATH=$(pwd)` через `os.execvpe`. 3 streamlit-файла (`app.py`, `31_DSL_Visual_Editor.py`, `86_DSL_Usage_Audit.py`) — `sys.path.insert` хаки УДАЛЕНЫ. Trade-off: прямой `streamlit run` без manage.py упадёт с ImportError (документировано в NOTE comments).
+- **S93 W2-C15**: Docstring ratchet -10 (586 → 576). `dsl/engine/processors/eip/marshal/formats.py` — 5 классов (Json/Xml/Csv/MessagePack/Pickle DataFormat) × 4 метода + 4 `__init__` = 24 docstrings. `dsl/engine/processors/streaming/windows.py` — 4 процессора (Tumbling/Sliding/Session/GroupByKey) × `process()` = 4 docstrings.
+- **S93 W2-C25/C26**: FACT-CHECK FALSE POSITIVE — V2/юзер claim "4× CB дубликатов" + "4× retry" опровергнуты. Реально: 1 canonical CB (V22.10.2) + 3 specialized variants; 1 canonical retry (V16) + 4 specialized variants. 7 NEW regression тестов фиксируют canonical structure.
+- **Tests**: 16 NEW (5 frontend + 7 resilience + 4 streaming):
+  - `tests/unit/frontend/test_no_sys_path_hacks.py` (5: 3× no sys.path.insert + manage.py + import resolve)
+  - `tests/unit/core/resilience/test_canonical_resilience_modules.py` (7: canonical + shim + coexistence + saga + no-new-files)
+- `docs/adr/0176-sprint-93-w2-frontend-and-resilience-factcheck.md` — closure ADR.
+
 ## [Unreleased] — Autonomous cycle S93 (2026-06-12) — W1: Cleanup + Critical Fixes (5 commits, 13 NEW tests)
 
 ### Added
