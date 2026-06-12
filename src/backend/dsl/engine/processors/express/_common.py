@@ -29,7 +29,9 @@ async def log_outgoing_message(
     """Дописывает исходящее сообщение бота в ``ExpressDialogStore`` (best-effort).
 
     Wave 9.2.4: Mongo-сбой не должен ломать отправку — все ошибки гасятся.
-    Входящие сообщения логируются callback-приёмником (Wave 4.2 — TODO).
+    Входящие сообщения логируются напрямую в ``ExpressDialogStore.append_message``
+    в call-sites (см. ``services/integrations/express/``). TODO S40 Wave 4.2
+    (callback-приёмник) — closed, refactored to direct calls.
     """
     if not session_id:
         return
