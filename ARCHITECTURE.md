@@ -56,8 +56,8 @@ AI-агентами и developer portal на Streamlit.
 - `services` импортирует только `core`, `schemas`
 - `infrastructure` реализует контракты из `core/interfaces` и `core/protocols`
 - `core` не импортирует код из остального `src/`
-- Линтер слоёв: `make layers`, `scripts/check_layers.py`
-  (125 legacy-нарушений в allowlist)
+- Линтер слоёв: `make layers`, `tools/check_layers.py`
+  (201 legacy-нарушение в allowlist: 82 baseline + 119 dsl/workflows S65 W4)
 
 ## Основные подсистемы
 
@@ -295,14 +295,16 @@ CircuitBreaker, ExceptionHandler.
 
 - ruff/mypy ошибки в `src/backend/` — pre-existing baseline
 - 42 ruff-S101 в `tests/` — pre-existing baseline
-- 125 legacy layer-нарушений в allowlist
+- 201 legacy layer-нарушений в allowlist
+  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
 - ClamAV не поднят в `docker-compose.yml`
 - Memcached cache backend = stub
 - CertStore vault backend требует `vault_url` / `vault_token`
 - `psycopg2` отсутствует в venv (используется asyncpg)
 - 42 ruff-S101 в `tests/` — pre-existing baseline
-- 125 legacy layer-нарушений в allowlist
+- 201 legacy layer-нарушений в allowlist
+  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
 - ClamAV не поднят в `docker-compose.yml`
 - Memcached cache backend = stub
