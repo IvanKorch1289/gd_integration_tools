@@ -12,6 +12,7 @@ from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )
+from src.backend.infrastructure.database.tenant_filter import apply_tenant_filter
 from src.backend.infrastructure.logging.factory import get_logger
 
 db_logger = get_logger("database")
@@ -48,6 +49,10 @@ class DatabaseSessionManager:
         self.session_maker = session_maker
         self.db_name = db_name
         self.logger = db_logger
+        # S88 W2 (V2 P0 #6 HIGH): wire up tenant auto-filter (was dead code since
+        # S21 W0). Listeners реєструються на класі ``Session`` (SessionEvents),
+        # тому target аргумент ігнорується. Ідемпотентно через _INSTALLED.
+        apply_tenant_filter()
         # Wave 6.2: per-DB circuit breaker. Параметры из settings.database.*.
         self._breaker = breaker_registry.get_or_create(
             f"db:{db_name}",
