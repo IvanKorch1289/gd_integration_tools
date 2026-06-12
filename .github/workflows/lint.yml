@@ -78,3 +78,9 @@ jobs:
         # (см. tools/check_docstrings_allowlist.txt).
         continue-on-error: true
         run: uv run python tools/check_docstrings.py --strict
+
+      - name: Temporal sandbox gate (S86 W4, V2 P0 #2)
+        # S86: scan step_compilers для direct I/O в workflow-функциях.
+        # Запрещено: gateway.invoke, .acompletion, .completion в workflow.
+        # Разрешено: workflow.execute_activity, _agent_invoke_activity.
+        run: uv run python tools/s86_sandbox_scan.py
