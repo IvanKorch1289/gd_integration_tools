@@ -156,6 +156,19 @@ class BasePydanticAgent(Generic[ResultT]):
     def _ensure_gateway(self) -> Any:
         if self._gateway is not None:
             return self._gateway
+        # S85 W2 (V2 P0 #1): pre-flight enforcement check.
+        # Bypass через LiteLLMGateway запрещён. Если ai_gateway_enforce=False
+        # — бросаем AIGatewayEnforcementRequiredError.
+        from src.backend.core.ai.errors import (
+            AIGatewayEnforcementRequiredError,
+        )
+        from src.backend.core.config.features import feature_flags
+
+        if not feature_flags.ai_gateway_enforce:
+            raise AIGatewayEnforcementRequiredError(
+                "agents_pydantic.BasePydanticAgent requires ai_gateway_enforce=True "
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
+            )
         from src.backend.services.ai.gateway.client import get_litellm_gateway
 
         self._gateway = get_litellm_gateway()

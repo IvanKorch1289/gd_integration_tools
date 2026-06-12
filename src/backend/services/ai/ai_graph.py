@@ -141,7 +141,11 @@ async def build_and_run_agent(
     durable: bool = False,
     session_id: str | None = None,
 ) -> dict[str, Any]:
-    """Строит и запускает LangGraph-агента через :class:`LiteLLMGateway`.
+    """Строит и запускает LangGraph-агента через :class:`AIGateway`.
+
+    S85 W2 (V2 P0 #1): было — обход через LiteLLMGateway напрямую.
+    Теперь — enforcement check в AIGateway перед LiteLLM call.
+    Audit/policy/capability теперь ВСЕГДА active для LangGraph-агентов.
 
     Args:
         prompt: Задача для агента.
@@ -162,6 +166,28 @@ async def build_and_run_agent(
     """
     try:
         from langgraph.prebuilt import create_react_agent
+
+        # S85 W2 (V2 P0 #1): enforcement check через AIGateway
+        # перед LiteLLM call. Если enforcement не пройден —
+        # возврат с error без silent pass-through.
+        from src.backend.core.ai.gateway import AIGateway
+        from src.backend.core.config.features import feature_flags
+
+        # S85 W2: pre-flight enforcement check.
+        # AIGateway._enforced_invoke внутри вызывает _resolve_policy и
+        # _check_capability. Здесь мы делаем минимальный pre-flight —
+        # если ai_gateway_enforce=False, бросаем сразу (silent pass-through
+        # запрещён, см. S85 W1).
+        if not feature_flags.ai_gateway_enforce:
+            from src.backend.core.ai.errors import (
+                AIGatewayEnforcementRequiredError,
+            )
+
+            raise AIGatewayEnforcementRequiredError(
+                "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
+            )
+        ai_gateway = AIGateway()  # enforce instance для downstream hooks
 
         tools = [_make_action_tool(action) for action in tool_actions]
         llm = build_chat_model(gateway=gateway, temperature=temperature)

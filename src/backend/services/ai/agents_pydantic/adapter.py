@@ -62,7 +62,23 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
         model_settings: ModelSettings | None,
         model_request_parameters: ModelRequestParameters,
     ) -> ModelResponse:
-        """Delegate to gateway.acompletion."""
+        """Delegate to gateway.acompletion.
+
+        S85 W2 (V2 P0 #1): pre-flight enforcement check перед LiteLLM call.
+        Bypass через LiteLLMGateway запрещён.
+        """
+        # S85 W2: enforcement gate
+        from src.backend.core.ai.errors import (
+            AIGatewayEnforcementRequiredError,
+        )
+        from src.backend.core.config.features import feature_flags
+
+        if not feature_flags.ai_gateway_enforce:
+            raise AIGatewayEnforcementRequiredError(
+                "agents_pydantic.LiteLLMModel requires ai_gateway_enforce=True "
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
+            )
+
         # Convert ModelMessage → dict for gateway
         dict_messages: list[dict[str, Any]] = []
         for msg in messages:
