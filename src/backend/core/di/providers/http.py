@@ -30,6 +30,7 @@ def get_http_client_provider() -> Any:
 
 
 def set_http_client_provider(client: Any) -> None:
+    """Установить override для ``http_client`` provider (test-инжекция)."""
     _overrides["http_client"] = client
 
 
@@ -45,6 +46,7 @@ def get_smtp_client_provider() -> Any:
 
 
 def set_smtp_client_provider(client: Any) -> None:
+    """Установить override для ``smtp_client`` provider (test-инжекция)."""
     _overrides["smtp_client"] = client
 
 
@@ -60,6 +62,7 @@ def get_express_client_provider() -> Any:
 
 
 def set_express_client_provider(client: Any) -> None:
+    """Установить override для ``express_client`` provider (test-инжекция)."""
     _overrides["express_client"] = client
 
 
@@ -75,6 +78,7 @@ def get_express_dialog_store_provider() -> Any:
 
 
 def set_express_dialog_store_provider(store: Any) -> None:
+    """Установить override для ``express_dialog_store`` provider (test-инжекция)."""
     _overrides["express_dialog_store"] = store
 
 
@@ -87,6 +91,7 @@ def get_express_session_store_provider() -> Any:
 
 
 def set_express_session_store_provider(store: Any) -> None:
+    """Установить override для ``express_session_store`` provider (test-инжекция)."""
     _overrides["express_session_store"] = store
 
 
@@ -108,6 +113,7 @@ def get_express_metrics_recorder_provider() -> Any:
 
 
 def set_express_metrics_recorder_provider(recorder: Any) -> None:
+    """Установить override для ``express_metrics_recorder`` provider (test-инжекция)."""
     _overrides["express_metrics_recorder"] = recorder
 
 
@@ -132,6 +138,7 @@ def get_express_bot_client_factory_provider() -> Any:
 
 
 def set_express_bot_client_factory_provider(factory: Any) -> None:
+    """Установить override для ``express_bot_client_factory`` provider (test-инжекция)."""
     _overrides["express_bot_client_factory"] = factory
 
 
@@ -155,6 +162,7 @@ def get_browser_client_provider() -> Any:
 
 
 def set_browser_client_provider(client: Any) -> None:
+    """Установить override для ``browser_client`` provider (test-инжекция)."""
     _overrides["browser_client"] = client
 
 
@@ -174,6 +182,7 @@ def get_external_session_manager_provider() -> Any:
 
 
 def set_external_session_manager_provider(factory: Any) -> None:
+    """Установить override для ``external_session_manager`` provider (test-инжекция)."""
     _overrides["external_session_manager"] = factory
 
 
@@ -192,6 +201,7 @@ def get_import_gateway_factory_provider() -> Any:
 
 
 def set_import_gateway_factory_provider(factory: Any) -> None:
+    """Установить override для ``import_gateway_factory`` provider (test-инжекция)."""
     _overrides["import_gateway_factory"] = factory
 
 
@@ -207,6 +217,7 @@ def get_redis_hash_factory_provider() -> Any:
 
 
 def set_redis_hash_factory_provider(factory: Any) -> None:
+    """Установить override для ``redis_hash_factory`` provider (test-инжекция)."""
     _overrides["redis_hash_factory"] = factory
 
 
@@ -219,6 +230,7 @@ def get_redis_set_factory_provider() -> Any:
 
 
 def set_redis_set_factory_provider(factory: Any) -> None:
+    """Установить override для ``redis_factory`` provider (test-инжекция)."""
     _overrides["redis_set_factory"] = factory
 
 
@@ -231,6 +243,7 @@ def get_redis_pubsub_factory_provider() -> Any:
 
 
 def set_redis_pubsub_factory_provider(factory: Any) -> None:
+    """Установить override для ``redis_pubsub_factory`` provider (test-инжекция)."""
     _overrides["redis_pubsub_factory"] = factory
 
 
@@ -243,6 +256,7 @@ def get_redis_cursor_factory_provider() -> Any:
 
 
 def set_redis_cursor_factory_provider(factory: Any) -> None:
+    """Установить override для ``redis_cursor_factory`` provider (test-инжекция)."""
     _overrides["redis_cursor_factory"] = factory
 
 
@@ -258,6 +272,7 @@ def get_stream_client_provider() -> Any:
 
 
 def set_stream_client_provider(client: Any) -> None:
+    """Установить override для ``stream_client`` provider (test-инжекция)."""
     _overrides["stream_client"] = client
 
 
