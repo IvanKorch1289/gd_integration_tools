@@ -96,6 +96,24 @@ async def _register_pools_in_unified_manager() -> None:
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager clickhouse skipped: %s", exc)
 
+    # S80 W2: LiteLLM Gateway (FINAL_REPORT_V2 P1 #6).
+    # LiteLLM SDK manages connections internally (no native pool),
+    # so we register as LOGICAL pool with custom ping (model list
+    # query as liveness check).
+    try:
+        from src.backend.core.config.features import feature_flags
+        if feature_flags.ai_gateway_enabled:
+            from src.backend.services.ai.gateway.client import (
+                get_litellm_gateway,
+            )
+            from src.backend.services.ai.gateway.pool_registration import (
+                register_litellm_pool,
+            )
+            gateway = get_litellm_gateway()
+            register_litellm_pool(gateway, name="litellm_main", idle_timeout=60.0)
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager litellm skipped: %s", exc)
+
     app_logger.info("UnifiedPoolManager registered %d pools", len(manager.list_pools()))
 
 
