@@ -74,7 +74,18 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             await session.flush()
 
             if load_into_memory:
-                await session.refresh(instance=obj)
+                # S83 W1 (V2 P0 N1): fix DetachedInstanceError.
+                # session.refresh() marks all attrs as expired; после
+                # @main_session_manager.connection() closes session
+                # доступ к obj.field = DetachedInstanceError.
+                # Решение: expire_on_commit=False сохраняет attrs loaded
+                # после commit, объект остаётся usable до GC.
+                original_expire = session.expire_on_commit
+                session.expire_on_commit = False
+                try:
+                    await session.refresh(instance=obj)
+                finally:
+                    session.expire_on_commit = original_expire
 
             return obj
 
