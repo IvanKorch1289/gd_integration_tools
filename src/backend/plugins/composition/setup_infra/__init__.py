@@ -30,6 +30,7 @@ from src.backend.plugins.composition.setup_infra.pools import (
     _warmup_connection_pools,  # S60 W3: re-export
 )
 from src.backend.plugins.composition.setup_infra.scheduler_leader import (  # S71 W2: extracted из setup_infra.py orphan
+    _scheduler_heartbeat_loop,  # S71 W3: TD-S64-W2 closure, lock auto-extend
     _start_scheduler_with_leader_election,  # S64 W2: leader election
     _stop_scheduler_if_leader,  # S64 W2: symmetric shutdown
 )
@@ -49,6 +50,7 @@ __all__ = (
     "_init_workflow_audit_sink",
     "_close_workflow_audit_sink",
     "_register_default_degradation_features",
+    "_scheduler_heartbeat_loop",  # S71 W3
     "_start_scheduler_with_leader_election",  # S71 W2
     "_stop_scheduler_if_leader",  # S71 W2
     "perform_infrastructure_operation",

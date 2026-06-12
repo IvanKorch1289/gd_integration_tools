@@ -71,22 +71,46 @@ class MemoryDedupeStore:
 class RedisDedupeStore:
     """Dedup поверх Redis ``SET NX EX`` (атомарная регистрация first-write).
 
-    Не блокирует event loop: использует ``redis.asyncio``. Ошибки сети
-    деградируются в ``False`` (лучше пропустить дубль, чем уронить hot-path).
+    Не блокирует event loop: использует ``redis.asyncio``.
+
+    **Failure mode** (S71 W3, TD-S64-W4 closure):
+
+    * ``fail_closed=False`` (default, legacy): ошибки Redis деградируются
+      в ``False`` (best-effort, лучше пропустить дубль, чем уронить
+      hot-path). Подходит для dev_light / observability-grade профилей.
+    * ``fail_closed=True`` (prod-рекомендация): ошибки Redis → ``raise``,
+      гарантирует strong-consistency семантику. В multi-instance setup
+      дубли событий при flapping Redis недопустимы для финансовых /
+      regulatory workloads.
+
+    Default оставлен ``False`` для backward-compat (S71 W3 не breaking
+    change). Prod-профили должны переопределять явно.
     """
 
     def __init__(
-        self, redis: Redis, *, ttl_seconds: int = 86_400, key_prefix: str = "dedup:"
+        self,
+        redis: Redis,
+        *,
+        ttl_seconds: int = 86_400,
+        key_prefix: str = "dedup:",
+        fail_closed: bool = False,
     ) -> None:
         self._redis = redis
         self._ttl = ttl_seconds
         self._prefix = key_prefix
+        self._fail_closed = fail_closed
 
     async def is_duplicate(self, namespace: str, event_id: str) -> bool:
         key = f"{self._prefix}{namespace}:{event_id}"
         try:
             stored = await self._redis.set(key, b"1", nx=True, ex=self._ttl)
         except Exception as exc:
+            if self._fail_closed:
+                logger.error(
+                    "RedisDedupeStore failed in fail-closed mode (re-raising): %s",
+                    exc,
+                )
+                raise
             logger.warning("RedisDedupeStore failed (degrade to non-dup): %s", exc)
             return False
         # ``set NX`` returns True если ключа не было (первая запись)
