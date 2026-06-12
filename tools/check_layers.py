@@ -44,7 +44,15 @@ import sys
 from collections.abc import Iterable
 from pathlib import Path
 
-LAYERS = ("core", "infrastructure", "services", "entrypoints", "schemas")
+LAYERS = (
+    "core",
+    "infrastructure",
+    "services",
+    "entrypoints",
+    "schemas",
+    "dsl",  # S65 W4: DSL — meta-layer, импортирует всё (orchestration)
+    "workflows",  # S65 W4: workflows/ — meta-layer, импортирует всё
+)
 PLUGINS_LAYER = "plugins"
 FRONTEND_LAYER = "frontend"
 
@@ -54,6 +62,10 @@ ALLOWED: dict[str, set[str]] = {
     "services": {"core", "schemas"},
     "entrypoints": {"services", "schemas", "core"},
     "schemas": {"core"},
+    # S65 W4: DSL/workflows — meta-layers, оркестрирующие все backend слои.
+    # Фактически могут импортировать любой слой (DSL строится поверх всего).
+    "dsl": {"core", "infrastructure", "services", "entrypoints", "schemas"},
+    "workflows": {"core", "infrastructure", "services", "entrypoints", "schemas"},
 }
 
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.

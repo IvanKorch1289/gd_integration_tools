@@ -87,3 +87,41 @@ def test_violation_key_format() -> None:
         ("src/backend/core/foo.py", "core", "src.backend.services.bar")
     )
     assert key == "src/backend/core/foo.py\tcore\tsrc.backend.services.bar"
+
+
+def test_dsl_and_workflows_in_layers() -> None:
+    """S65 W4: ``dsl`` и ``workflows`` — часть LAYERS.
+
+    Без этого 280+ файлов в ``dsl/`` импортируют из других слоёв
+    и линтер их не видит (blind spot).
+    """
+    assert "dsl" in check_layers.LAYERS
+    assert "workflows" in check_layers.LAYERS
+    # Allowed: dsl/workflows могут импортировать все backend слои
+    dsl_allowed = check_layers.ALLOWED["dsl"]
+    workflows_allowed = check_layers.ALLOWED["workflows"]
+    for layer in ("core", "infrastructure", "services", "entrypoints", "schemas"):
+        assert layer in dsl_allowed, f"dsl must allow {layer}"
+        assert layer in workflows_allowed, f"workflows must allow {layer}"
+
+
+def test_file_layer_detects_dsl() -> None:
+    """S65 W4: ``_file_layer`` корректно определяет ``dsl`` layer."""
+    from pathlib import Path
+
+    root = Path("src")
+    layer = check_layers._file_layer(
+        Path("src/backend/dsl/route/builder/foo.py"), root
+    )
+    assert layer == "dsl"
+
+
+def test_file_layer_detects_workflows() -> None:
+    """S65 W4: ``_file_layer`` корректно определяет ``workflows`` layer."""
+    from pathlib import Path
+
+    root = Path("src")
+    layer = check_layers._file_layer(
+        Path("src/backend/workflows/registry.py"), root
+    )
+    assert layer == "workflows"
