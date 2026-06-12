@@ -1,8 +1,6 @@
 # Allowlist архитектурных нарушений (Wave 1.3 baseline).
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
-src/backend/core/ai/agent_registry.py	core	src.backend.dsl.workflow.spec
-src/backend/core/ai/agent_spec.py	core	src.backend.dsl.workflow.spec
 src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
 src/backend/core/ai/gateway_pipeline_mixin/observability_mixin.py	core	src.backend.services.audit.audit_service

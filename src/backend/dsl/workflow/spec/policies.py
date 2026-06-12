@@ -28,37 +28,16 @@ from __future__ import annotations
     * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
 """
 
-from typing import Literal
+from typing import Literal  # noqa: E402
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field  # noqa: E402
 
+# S68 W2: RetryPolicy moved в core/ai/retry_policy.py (re-export здесь для
+# backward compat — existing imports ``from src.backend.dsl.workflow.spec
+# import RetryPolicy`` продолжают работать).
+from src.backend.core.ai.retry_policy import RetryPolicy  # noqa: E402
 
-class RetryPolicy(BaseModel):
-    """Retry-настройки activity-шага (Temporal-совместимые)."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    max_attempts: int = Field(default=3, ge=1, description="Максимум попыток.")
-    initial_interval_s: float = Field(
-        default=1.0, gt=0.0, description="Начальный интервал retry в секундах."
-    )
-    backoff_coefficient: float = Field(
-        default=2.0, ge=1.0, description="Коэффициент экспоненциального backoff."
-    )
-    maximum_interval_s: float | None = Field(
-        default=None,
-        gt=0.0,
-        description="Верхняя граница интервала retry; None — без ограничения.",
-    )
-    non_retryable_errors: tuple[str, ...] = Field(
-        default=(), description="Имена ошибок, при которых retry НЕ выполняется."
-    )
-    jitter: float | None = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="Jitter: random fraction of interval [0..1].",
-    )
+__all__ = ("RetryPolicy", "SlaPolicy", "MemoryScope")
 
 
 class SlaPolicy(BaseModel):

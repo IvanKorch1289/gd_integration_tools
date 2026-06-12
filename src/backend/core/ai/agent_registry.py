@@ -110,7 +110,7 @@ class AgentRegistry:
             return []
 
         from src.backend.core.ai.agent_spec import AgentSpec
-        from src.backend.dsl.workflow.spec import RetryPolicy
+        from src.backend.core.ai.retry_policy import RetryPolicy
 
         results: list[AgentSpec] = []
         for idx, raw in enumerate(agents_section):
