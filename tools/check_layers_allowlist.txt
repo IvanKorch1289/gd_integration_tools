@@ -13,6 +13,7 @@ src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.p
 src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.token_registry
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/di/providers/ai.py	core	src.backend.services.audit.audit_service
+src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.context
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.exchange
 src/backend/core/interfaces/ratelimit_gateway.py	core	src.backend.entrypoints.middlewares.global_ratelimit

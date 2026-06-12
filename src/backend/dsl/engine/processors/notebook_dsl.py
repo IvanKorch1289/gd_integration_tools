@@ -13,6 +13,9 @@ from __future__ import annotations
 from typing import Any, ClassVar
 
 from src.backend.core.config.services.jupyter_hub import jupyter_hub_settings
+from src.backend.core.di.providers.jupyter import (
+    get_notebook_execution_service_provider,
+)
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -73,11 +76,18 @@ class NotebookDSLProcessor(BaseProcessor):
         self._output_format = output_format
         self._user_name = user_name
         self._timeout = timeout_seconds
-        self._svc = NotebookExecutionService(jupyter_hub_settings)
+        # S93 W1 C6: singleton via DI (lazy).
+        self._svc: NotebookExecutionService | None = None
+
+    def _get_service(self) -> NotebookExecutionService:
+        if self._svc is None:
+            self._svc = get_notebook_execution_service_provider()
+        return self._svc
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            result = await self._svc.execute(
+            svc = self._get_service()
+            result = await svc.execute(
                 notebook_path=self._notebook_path,
                 parameters=self._parameters,
                 output_format=self._output_format,

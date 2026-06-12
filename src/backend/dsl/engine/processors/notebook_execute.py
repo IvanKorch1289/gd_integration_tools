@@ -10,6 +10,9 @@ from __future__ import annotations
 from typing import Any, ClassVar
 
 from src.backend.core.config.services.jupyter_hub import jupyter_hub_settings
+from src.backend.core.di.providers.jupyter import (
+    get_notebook_execution_service_provider,
+)
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -65,7 +68,15 @@ class NotebookExecuteProcessor(BaseProcessor):
         self._user_name = user_name
         self._notebook_path = notebook_path
         self._timeout = timeout_seconds
-        self._svc = NotebookExecutionService(jupyter_hub_settings)
+        # S93 W1 C6: NotebookExecutionService теперь singleton через DI.
+        # __init__ хранит ТОЛЬКО config (без service instantiation).
+        self._svc: NotebookExecutionService | None = None
+
+    def _get_service(self) -> NotebookExecutionService:
+        """Lazy-resolve singleton через DI (создаётся один раз per process)."""
+        if self._svc is None:
+            self._svc = get_notebook_execution_service_provider()
+        return self._svc
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         cells = exchange.get_property("notebook_cells")
@@ -82,7 +93,8 @@ class NotebookExecuteProcessor(BaseProcessor):
             return
 
         try:
-            outputs = await self._svc.execute_notebook(
+            svc = self._get_service()
+            outputs = await svc.execute_notebook(
                 user_name=self._user_name,
                 notebook_path=self._notebook_path,
                 cells=cells,
