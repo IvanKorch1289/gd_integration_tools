@@ -144,6 +144,18 @@ async def _register_pools_in_unified_manager() -> None:
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager litellm skipped: %s", exc)
 
+    # S90 W3: Kafka producer (FINAL_REPORT_V3 #5) — DI-injected, optional.
+    # Deferred to S91+ — Kafka producer is a per-component dependency
+    # (KafkaDLQWriter takes it via __init__), not a centralised singleton.
+    # Central registration would require a new accessor (e.g. get_kafka_producer)
+    # which is out of scope for S90. See ADR-0172.
+    try:
+        from src.backend.infrastructure.messaging.dlq.kafka_writer import (  # noqa: F401
+            KafkaDLQWriter,
+        )
+    except ImportError:
+        pass
+
     app_logger.info("UnifiedPoolManager registered %d pools", len(manager.list_pools()))
 
 
