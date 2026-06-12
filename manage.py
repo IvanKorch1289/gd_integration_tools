@@ -94,7 +94,18 @@ def http3_serve(
 
 @app.command("run-frontend")
 def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
-    """Запуск Streamlit dashboard."""
+    """Запуск Streamlit dashboard.
+
+    S93 W2-C11: добавлен PYTHONPATH=$(pwd) для sys.path, чтобы убрать
+    хаки sys.path.insert в 3 page-файлах. Запускать из project root.
+    """
+    project_root = Path.cwd().resolve()
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    # prepend project_root, dedup, coerce to str
+    paths_str = [str(project_root), *existing.split(os.pathsep)] if existing else [str(project_root)]
+    env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(paths_str))
+
     cmd = [
         sys.executable,
         "-m",
@@ -106,8 +117,8 @@ def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
         "--server.headless",
         "true",
     ]
-    typer.echo(f"Starting Streamlit on :{port}...")
-    os.execvp(cmd[0], cmd)  # noqa: S606  # CLI developer tool: cmd сформирован из sys.executable + фиксированных аргументов
+    typer.echo(f"Starting Streamlit on :{port} (PYTHONPATH={env['PYTHONPATH']})...")
+    os.execvpe(cmd[0], cmd, env)  # noqa: S606  # CLI developer tool: cmd сформирован из sys.executable + фиксированных аргументов
 
 
 @app.command("run-all")

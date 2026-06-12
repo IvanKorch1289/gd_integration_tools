@@ -18,18 +18,14 @@ Python и preview-spec вычисляются on-demand через локаль�
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
+# NOTE (S93 W2-C11): PYTHONPATH=$(pwd) устанавливается manage.py run-frontend.
+# Прямой запуск `streamlit run` без PYTHONPATH упадёт с ImportError.
 
-from src.backend.services.dsl_portal import load_pipeline_from_yaml  # noqa: E402
+from src.backend.services.dsl_portal import load_pipeline_from_yaml
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.pages._editor import (
     PROCESSOR_ICONS,

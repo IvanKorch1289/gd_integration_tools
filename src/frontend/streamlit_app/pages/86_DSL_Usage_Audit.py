@@ -11,17 +11,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-# Ensure project root is in path for imports
-ROOT = Path(__file__).resolve().parents[4]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# NOTE (S93 W2-C11): PYTHONPATH=$(pwd) устанавливается manage.py run-frontend.
+# Прямой запуск `streamlit run` без PYTHONPATH упадёт с ImportError.
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 
@@ -45,8 +40,11 @@ def run_audit(top: int = 20) -> dict:
     """Вызывает dsl_usage_audit.py и возвращает результат."""
     import json
     import subprocess
+    from pathlib import Path
 
-    audit_script = ROOT / "tools" / "audit" / "dsl_usage_audit.py"
+    # S93 W2-C11: project_root from PYTHONPATH (manage.py run-frontend sets it).
+    project_root = Path.cwd() if Path.cwd().name == "gd_integration_tools" else Path(__file__).resolve().parents[4]
+    audit_script = project_root / "tools" / "audit" / "dsl_usage_audit.py"
     if not audit_script.exists():
         return {"error": f"Audit script not found: {audit_script}"}
 
@@ -64,7 +62,7 @@ def run_audit(top: int = 20) -> dict:
             capture_output=True,
             text=True,
             timeout=60,
-            cwd=str(ROOT),
+            cwd=str(project_root),
         )
         if result.returncode == 0:
             return json.loads(result.stdout)

@@ -1,18 +1,20 @@
 """GD Integration Tools — Streamlit Dashboard.
 
 Главная страница: KPI метрики + Component Health.
-"""
 
-import sys
+NOTE (S93 W2-C11): Запускать через `python manage.py run-frontend` — он
+устанавливает PYTHONPATH=$(pwd) в env. Прямой запуск `streamlit run` без
+PYTHONPATH упадёт с ImportError на ``from src.frontend...``.
+"""
+from __future__ import annotations
+
 from pathlib import Path
 
 import streamlit as st
 
-_project_root = Path(__file__).resolve().parents[3]
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
-
 from src.frontend.streamlit_app.api_clients import get_api_client
+
+_project_root = Path(__file__).resolve().parents[3]
 
 st.set_page_config(
     page_title="GD Integration Tools",
