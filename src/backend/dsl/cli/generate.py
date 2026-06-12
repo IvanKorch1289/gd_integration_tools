@@ -301,8 +301,10 @@ class {name}(BaseProcessor):
             exchange: The current exchange.
             context: Execution context.
         """
-        # TODO(S40-W6): Implement {name} — audit found placeholder
-        msg = f"{name!r} not implemented — fill in process() body"
+        # S99 W1: подсказка для разработчика. Шаблон process() body
+        # нужно реализовать под конкретный use-case (ai/http/db/...).
+        # Помощь: см. существующие processors в src/backend/dsl/engine/processors/.
+        msg = f"{name!r} ({ptype!r}) not implemented — fill in process() body"
         raise NotImplementedError(msg)
 '''
 
