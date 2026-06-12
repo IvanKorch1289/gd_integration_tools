@@ -6,7 +6,36 @@ textColor = "#e1e4eb"
 font = "sans serif"
 
 [server]
+# S78 W1 (FINAL_REPORT_V2 P0-D closure): CORS/XSRF defaults to
+# DISABLED в Streamlit. Pre-S78: enableCORS=false, enableXsrfProtection=false
+# (development convenience, but unsafe для production deployments).
+# S78: ENABLED с explicit allowlist (не wildcard).
 port = 8501
 headless = true
-enableCORS = false
-enableXsrfProtection = false
+# Enable CSRF/XSRF protection (Streamlit 1.30+). Prevents cross-site
+# request forgery attacks. Required для production.
+enableXsrfProtection = true
+# Enable CORS (Streamlit 1.30+) с EXPLICIT allowlist.
+# Default (false) = browser same-origin only (safest, but blocks
+# legitimate cross-origin from trusted internal services).
+# S78: enabled с explicit allowlist для known origins (admin UI,
+# Grafana dashboards, monitoring tools).
+enableCORS = true
+# Explicit allowlist (Streamlit 1.30+). Wildcard NOT allowed
+# (consistent с backend CORS policy — wildcard + credentials is
+# security anti-pattern, see security_checks.py).
+#
+# Development: localhost:3000 (React admin UI, ADMIN_REACT_INTEGRATION.md)
+# Production:   https://admin.corp.example.ru
+# Staging:      https://staging-admin.corp.example.ru
+# Monitoring:   https://grafana.corp.example.ru
+corsAllowedOrigins = [
+    "http://localhost:3000",
+    "https://admin.corp.example.ru",
+    "https://staging-admin.corp.example.ru",
+    "https://grafana.corp.example.ru",
+]
+
+[browser]
+# S78 W1: disable gatherUsageStats (privacy + reduces data leakage).
+gatherUsageStats = false
