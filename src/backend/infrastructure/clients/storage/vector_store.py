@@ -78,6 +78,19 @@ class QdrantVectorStore(BaseVectorStore):
         ids: list[str],
         metadatas: list[dict[str, Any]] | None = None,
     ) -> None:
+        """Insert или update vectors в Qdrant collection.
+
+        Args:
+            embeddings: list векторов (list[float], размер должен
+                совпадать с ``vector_size``).
+            documents: list document texts (parallel to embeddings/ids).
+            ids: list уникальных ID (parallel).
+            metadatas: optional list[dict] с metadata (parallel).
+
+        Note:
+            ``client = await self._ensure_collection()`` создаёт
+            collection при первом обращении.
+        """
         from qdrant_client.models import PointStruct
 
         client = await self._ensure_collection()
@@ -100,6 +113,17 @@ class QdrantVectorStore(BaseVectorStore):
         top_k: int = 5,
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
+        """Top-K similarity search в Qdrant.
+
+        Args:
+            embedding: query vector.
+            top_k: Количество результатов.
+            where: optional metadata filter (``{key: value}``).
+
+        Returns:
+            list[dict] с полями ``id``, ``document``, ``metadata``,
+            ``distance`` (1.0 - similarity).
+        """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         client = await self._ensure_collection()
@@ -130,6 +154,7 @@ class QdrantVectorStore(BaseVectorStore):
         ]
 
     async def delete(self, ids: list[str]) -> None:
+        """Удалить vectors по list of IDs (atomic batch)."""
         from qdrant_client.models import PointIdsList
 
         client = await self._ensure_collection()
@@ -139,11 +164,20 @@ class QdrantVectorStore(BaseVectorStore):
         )
 
     async def count(self) -> int:
+        """Количество vectors в collection (exact count)."""
         client = await self._ensure_collection()
         result = await client.count(collection_name=self._collection_name, exact=True)
         return int(result.count)
 
     async def delete_where(self, where: dict[str, Any]) -> int:
+        """Bulk delete по Qdrant filter (metadata match).
+
+        Args:
+            where: ``{key: value}`` filter — Qdrant Filter.
+
+        Returns:
+            int count удалённых vectors.
+        """
         from qdrant_client.models import (
             FieldCondition,
             Filter,
@@ -170,6 +204,14 @@ class QdrantVectorStore(BaseVectorStore):
         return int(before)
 
     async def count_where(self, where: dict[str, Any]) -> int:
+        """Count vectors matching Qdrant filter (metadata match).
+
+        Args:
+            where: ``{key: value}`` filter.
+
+        Returns:
+            int count.
+        """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         client = await self._ensure_collection()
@@ -221,6 +263,7 @@ class ChromaVectorStore(BaseVectorStore):
         ids: list[str],
         metadatas: list[dict[str, Any]] | None = None,
     ) -> None:
+        """Insert или update vectors в Chroma collection (async via to_thread)."""
         import asyncio
 
         collection = await self._ensure_collection()
@@ -239,6 +282,11 @@ class ChromaVectorStore(BaseVectorStore):
         top_k: int = 5,
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
+        """Top-K similarity search в Chroma.
+
+        Returns:
+            list[dict] с ``id``, ``document``, ``metadata``, ``distance``.
+        """
         import asyncio
 
         collection = await self._ensure_collection()
@@ -270,18 +318,28 @@ class ChromaVectorStore(BaseVectorStore):
         return items
 
     async def delete(self, ids: list[str]) -> None:
+        """Удалить vectors по list of IDs (async via to_thread)."""
         import asyncio
 
         collection = await self._ensure_collection()
         await asyncio.to_thread(collection.delete, ids=ids)
 
     async def count(self) -> int:
+        """Количество vectors в Chroma collection."""
         import asyncio
 
         collection = await self._ensure_collection()
         return await asyncio.to_thread(collection.count)
 
     async def delete_where(self, where: dict[str, Any]) -> int:
+        """Bulk delete по metadata filter.
+
+        Args:
+            where: Chroma where filter (``{key: value}``).
+
+        Returns:
+            int count удалённых vectors (``before - after``).
+        """
         import asyncio
 
         collection = await self._ensure_collection()
@@ -291,6 +349,14 @@ class ChromaVectorStore(BaseVectorStore):
         return int(before - after)
 
     async def count_where(self, where: dict[str, Any]) -> int:
+        """Count vectors matching metadata filter.
+
+        Args:
+            where: Chroma where filter.
+
+        Returns:
+            int count (через ``collection.get(where=...)``).
+        """
         import asyncio
 
         collection = await self._ensure_collection()
