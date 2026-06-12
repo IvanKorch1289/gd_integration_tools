@@ -725,6 +725,39 @@ streams/queues override) ValueError на module load.
 - Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
   unrelated.
 
+## TD-S67-torch-cve (P2, accepted risk) — torch CVE-2025-3000
+
+**Dependabot alert #183** (dismissed 2026-06-12, reason: tolerable_risk).
+
+**Alert details**:
+- Package: `torch` (transitive via `sentence-transformers>=3.0.0,<6.0.0`)
+- CVE: CVE-2025-3000 (GHSA-rrmf-rvhw-rf47)
+- Severity: **LOW** (CVSS v3 5.3, v4 1.9, EPSS 0.00081%)
+- Vector: `AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L` — local access required
+- Vulnerable: `<= 2.12.0`
+- **`first_patched_version: null`** — no upstream patch exists
+- PyPI latest torch = 2.12.0 = max vulnerable (no fix released)
+
+**Usage в проекте** (3 файла, lazy imports only):
+- `src/backend/dsl/engine/processors/ml_predict.py`
+- `src/backend/services/ai/guardrails/nemo_client.py`
+- `src/backend/services/ai/ml/model_loader.py`
+
+**Mitigations**:
+1. **Не установлен в dev_light profile** (тяжёлый dep, opt-in);
+2. **Lazy import only** — torch загружается только при вызове ML endpoints;
+3. **Local-only attack vector** — эксплойт требует локального доступа +
+   возможности вызвать `torch.jit.script` с attacker-controlled входом;
+4. **Не exposed в deployment** — наш ML pipeline использует `transformers`
+   inference, не JIT-компиляцию пользовательского кода.
+
+**Reopen condition**: автоматически при выходе PyTorch > 2.12.0 с
+подтверждённым CVE fix. Мониторить через Dependabot.
+
+**Dismissal record**:
+- GitHub alert #183: state=dismissed, reason=tolerable_risk
+- Dismissed by: IvanKorch1289 (2026-06-12)
+
 ## TD-S66-quick-wins (P2, open) — S66 honest gaps for S67+
 
 **Sprint**: autonomous cycle S66 (2026-06-12, ADR-0146)
