@@ -5,6 +5,28 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S79 (2026-06-12) — CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits)
+
+### Added
+
+- **S79 W1: check_tool_with_policy** — per-invoke two-layer check
+  (gate.check + enforce_tool_policy). NEW: tool_policy_integration.py.
+- **S79 W3: filter_tools_with_gate** — pre-init fail-closed filter
+  (silently drops disallowed tools).
+
+### Fixed
+
+- **S79 W2: build_default_vocabulary NameError** (S54 W4 decomp bug).
+- **S79 W2 follow-up: CapabilityGate __slots__=() removal** (S54 W4
+  decomp bug, 4th occurrence в 6 sprints — pre-S80 checklist MUST
+  include `git grep -n "__slots__ = ()" src/`).
+
+### Tests
+
+- **S79 W4: 15 NEW tests** в
+  `tests/unit/core/security/capabilities/test_tool_policy_integration.py`:
+  5 check_tool + 8 filter_tools + 2 ToolCapabilityCheckError.
+
 ## [Unreleased] — Autonomous cycle S78 (2026-06-12) — P0-D closure: Streamlit CORS/XSRF security (config + nginx + validator, 17 NEW tests) (5 commits)
 
 ### Changed
