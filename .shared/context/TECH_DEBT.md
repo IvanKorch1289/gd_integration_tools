@@ -725,6 +725,32 @@ streams/queues override) ValueError на module load.
 - Pre-existing failures (`test_dadata` 1 fail, `test_msgspec_speedup` flaky)
   unrelated.
 
+## TD-S67-pre-existing-fact-checks (P3, closed by fact-check) — 2/3 claim'ов не подтвердились
+
+**Sprint**: autonomous cycle S67 (2026-06-12, ADR-0147)
+
+S64 backlog упоминал 3 pre-existing import bugs:
+1. ❌ `plugins/composition/__init__.py:9` — `cannot import name 'graphql_router'`
+2. ✅ `infrastructure/database/database/accessors.py:24` — `DatabaseInitializer` not defined
+3. ❌ `infrastructure/caching/decorator.py:16` — `redis_client` not defined
+
+**S67 fact-check**:
+- **Bug #1 (`graphql_router`)**: НЕ СУЩЕСТВУЕТ. `composition/__init__.py`
+  не импортирует `graphql_router` (`__all__` = `("create_app", "ending",
+  "lifespan", "starting")`). `graphql_router` определён в
+  `entrypoints/graphql/schema.py:492` и нигде не импортируется из
+  `composition`. Claim в S64 backlog — fact-check error.
+- **Bug #3 (`redis_client` decorator)**: НЕ СУЩЕСТВУЕТ. Файл
+  `src/backend/infrastructure/caching/decorator.py` отсутствует.
+  `caching/` dir пустая. Claim в S64 backlog — fact-check error.
+- **Bug #2 (`DatabaseInitializer`)**: РЕАЛЬНЫЙ, fixed в S67 W3
+  (commit `4f9431c5`).
+
+**Lessons**:
+- "Pre-existing bug" claim → **verify в коде** ДО fix (2/3 оказались
+  несуществующими).
+- Фактчек обязателен даже для "очевидных" pre-existing bugs.
+
 ## TD-S67-torch-cve (P2, accepted risk) — torch CVE-2025-3000
 
 **Dependabot alert #183** (dismissed 2026-06-12, reason: tolerable_risk).
@@ -757,6 +783,22 @@ streams/queues override) ValueError на module load.
 **Dismissal record**:
 - GitHub alert #183: state=dismissed, reason=tolerable_risk
 - Dismissed by: IvanKorch1289 (2026-06-12)
+
+## TD-S67-feature-flag-deprecation (P3, deferred S68+) — auth_joserfc setting cleanup
+
+**Sprint**: autonomous cycle S67 (2026-06-12, ADR-0147)
+
+S67 W2: feature-flag `feature_flags.auth_joserfc` стал no-op (shim
+удалён). Setting остаётся в коде, но больше не влияет на runtime.
+
+**Fix (S68+, S-scope)**:
+1. Удалить `auth_joserfc` из `src/backend/core/config/features.py`
+   (или заменить на `DeprecationWarning` если external consumers читают).
+2. Поискать и удалить все references в pyproject.toml, env configs,
+   deployment yamls.
+3. Удалить упоминания в docs (ARCHITECTURE.md, README, ADRs).
+
+Honest scope: S68+ (1 commit, 5-10 LOC).
 
 ## TD-S66-quick-wins (P2, open) — S66 honest gaps for S67+
 

@@ -5,6 +5,55 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S67 (2026-06-12) — torch CVE + namespace + JWT consolidation + pre-existing fix (4 commits, 4/4 substantive)
+
+### Security
+
+- **S67 W0: torch CVE-2025-3000** (Dependabot #183) — DISMISSED `tolerable_risk`.
+  PyTorch 2.12.0 = max vulnerable (NO upstream patch). Transitive via
+  `sentence-transformers>=3.0.0,<6.0.0` (RAG default). Local-only attack
+  vector (CVSS v3 5.3, v4 1.9, EPSS 0.00081%). 0 open Dependabot alerts.
+
+### Changed
+
+- **S67 W1: 21 namespace markers** — PEP 420 docstring для оставшихся
+  пустых `__init__.py` (S66 W3 fixed 5, S67 W1 fixed 21). 0 empty
+  `__init__.py` осталось.
+
+- **S67 W2: JWT backend consolidation** — `jwt_backend_joserfc.py`
+  (380 LOC) + `test_jwt_joserfc.py` DELETED. Canonical `jwt_backend.py`
+  теперь содержит top-level `encode()` и `decode()` (раньше только в
+  shim). Feature-flag `auth_joserfc` — no-op. 2 endpoints + 1 test
+  переключены на canonical imports. **Critical bug fix**:
+  `auth_login.py:173` использовал `subject=` kwarg, которого не было в
+  shim's `encode(claims, ...)` → TypeError masked by `try/except` →
+  mock token fallback в проде. Canonical `encode()` совместим с
+  `auth_login.py:173` signature.
+
+- **S67 W3: pre-existing NameError fix** — `accessors.py:24, 49`
+  ссылался на `DatabaseInitializer` / `ExternalDatabaseRegistry` без
+  импорта. NameError при первом вызове `get_db_initializer()`. Fix:
+  добавлены imports из same-package.
+
+### Tests
+
+- **S67 W4: regression tests для canonical `encode()`** — 9 NEW tests
+  покрывают tuple return, iat/exp auto-injection, custom expires_in,
+  issuer claim, error cases, round-trip, **regression test для
+  call pattern `auth_login.py:173`**.
+- 6 NEW tests для `accessors.py` NameError fix (mock SQLAlchemy engine).
+
+### Notes
+
+- **FACT-CHECK** (S64 backlog): 2/3 pre-existing bug claim'ов НЕ
+  подтвердились: `graphql_router` import не существует (никто не
+  импортит из `composition`); `redis_client decorator` — файл
+  `caching/decorator.py` отсутствует. Только `DatabaseInitializer`
+  NameError был real (fixed W3).
+- Verified: 9/9 NEW jwt tests + 6/6 NEW accessors tests + 111/111 EXISTING
+  jwt tests pass. 0 open Dependabot alerts.
+- См. ADR-0147 для полного контекста и S68+ backlog.
+
 ## [Unreleased] — Autonomous cycle S66 (2026-06-12) — fact-checked quick wins (4 commits, 4/4 substantive)
 
 ### Changed
