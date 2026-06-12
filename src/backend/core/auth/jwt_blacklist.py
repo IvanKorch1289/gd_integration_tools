@@ -21,13 +21,13 @@ Wave [s2/k1-2-jwt-jwks] + [wave:s18/k1-w4-jwt-blacklist-batch-revoke].
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 import time
 from typing import Any, Protocol
 
 __all__ = ("JwtBlacklistProtocol", "RedisJwtBlacklist")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class JwtBlacklistProtocol(Protocol):

@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -25,7 +25,7 @@ from typing import Any, Protocol
 
 __all__ = ("MtlsBackend", "MtlsConfig", "MtlsVerificationError", "ParsedClientCert")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

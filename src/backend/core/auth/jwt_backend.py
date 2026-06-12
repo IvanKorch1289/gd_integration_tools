@@ -19,7 +19,7 @@ TD-S67-feature-flag-deprecation).
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -38,7 +38,7 @@ __all__ = (
     "decode",
 )
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 _ASYMMETRIC_ALGS = frozenset(
     {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"}

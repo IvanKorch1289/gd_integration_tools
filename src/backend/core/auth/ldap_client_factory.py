@@ -23,7 +23,7 @@ process (per-env). Это соответствует pattern других core c
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 from typing import Any
 
 from src.backend.services.auth.ad_directory_client import (
@@ -33,7 +33,7 @@ from src.backend.services.auth.ad_directory_client import (
 
 __all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 # Singleton cache. ``None`` = ещё не инстанцирован.
 # ``False`` = инстанциация провалилась (не enable'нули) → кэшируем False.
