@@ -33,6 +33,7 @@ def get_cache_invalidator_provider() -> Any:
 
 
 def set_cache_invalidator_provider(invalidator: Any) -> None:
+    """Установить override для ``cache_invalidator`` provider (test-инжекция)."""
     _overrides["cache_invalidator"] = invalidator
 
 
@@ -40,6 +41,7 @@ def set_cache_invalidator_provider(invalidator: Any) -> None:
 
 
 def get_slo_tracker_provider() -> Any:
+    """Получить SLO tracker из overrides или resolve через ``app.slo_tracker``."""
     if "slo_tracker" in _overrides:
         return _overrides["slo_tracker"]
     module = resolve_module("app.slo_tracker")
@@ -47,6 +49,7 @@ def get_slo_tracker_provider() -> Any:
 
 
 def set_slo_tracker_provider(tracker: Any) -> None:
+    """Установить override для ``slo_tracker`` provider (test-инжекция)."""
     _overrides["slo_tracker"] = tracker
 
 
@@ -54,6 +57,7 @@ def set_slo_tracker_provider(tracker: Any) -> None:
 
 
 def get_health_aggregator_provider() -> Any:
+    """Получить health aggregator из overrides или resolve через ``app.health_aggregator``."""
     if "health_aggregator" in _overrides:
         return _overrides["health_aggregator"]
     module = resolve_module("app.health_aggregator")
@@ -61,6 +65,7 @@ def get_health_aggregator_provider() -> Any:
 
 
 def set_health_aggregator_provider(aggregator: Any) -> None:
+    """Установить override для ``health_aggregator`` provider (test-инжекция)."""
     _overrides["health_aggregator"] = aggregator
 
 
@@ -76,6 +81,7 @@ def get_healthcheck_session_provider() -> Any:
 
 
 def set_healthcheck_session_provider(factory: Any) -> None:
+    """Установить override для ``healthcheck_session`` factory (test-инжекция)."""
     _overrides["healthcheck_session"] = factory
 
 
@@ -83,6 +89,7 @@ def set_healthcheck_session_provider(factory: Any) -> None:
 
 
 def get_admin_cache_storage_provider() -> Any:
+    """Получить admin cache storage client из overrides или resolve через ``clients.storage.redis``."""
     if "admin_cache_storage" in _overrides:
         return _overrides["admin_cache_storage"]
     module = resolve_module("clients.storage.redis")
@@ -90,6 +97,7 @@ def get_admin_cache_storage_provider() -> Any:
 
 
 def set_admin_cache_storage_provider(client: Any) -> None:
+    """Установить override для ``admin_cache_storage`` provider (test-инжекция)."""
     _overrides["admin_cache_storage"] = client
 
 
@@ -110,6 +118,7 @@ def get_response_cache_provider() -> Any:
 
 
 def set_response_cache_provider(decorator: Any) -> None:
+    """Установить override для ``response_cache`` decorator (test-инжекция)."""
     _overrides["response_cache"] = decorator
 
 

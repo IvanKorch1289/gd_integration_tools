@@ -40,18 +40,6 @@ src/backend/core/di/providers/ai.py:48:0 set_ai_sanitizer_provider
 src/backend/core/di/providers/auth.py:104:0 set_jwks_cache_provider
 src/backend/core/di/providers/auth.py:40:0 set_api_key_manager_provider
 src/backend/core/di/providers/auth.py:82:0 set_jwt_backend_provider
-src/backend/core/di/providers/cache.py:112:0 set_response_cache_provider
-src/backend/core/di/providers/cache.py:159:0 set_redis_kv_client_provider
-src/backend/core/di/providers/cache.py:175:0 set_redis_stream_client_provider
-src/backend/core/di/providers/cache.py:190:0 set_signature_builder_provider
-src/backend/core/di/providers/cache.py:35:0 set_cache_invalidator_provider
-src/backend/core/di/providers/cache.py:42:0 get_slo_tracker_provider
-src/backend/core/di/providers/cache.py:49:0 set_slo_tracker_provider
-src/backend/core/di/providers/cache.py:56:0 get_health_aggregator_provider
-src/backend/core/di/providers/cache.py:63:0 set_health_aggregator_provider
-src/backend/core/di/providers/cache.py:78:0 set_healthcheck_session_provider
-src/backend/core/di/providers/cache.py:85:0 get_admin_cache_storage_provider
-src/backend/core/di/providers/cache.py:92:0 set_admin_cache_storage_provider
 src/backend/core/di/providers/db.py:118:0 set_cdc_client_provider
 src/backend/core/di/providers/db.py:133:0 set_s3_service_provider
 src/backend/core/di/providers/db.py:31:0 set_clickhouse_client_provider
@@ -574,3 +562,6 @@ src/backend/dsl/engine/validation.py:29:4 ValidationResult.errors
 src/backend/dsl/engine/validation.py:33:4 ValidationResult.warnings
 src/backend/dsl/engine/validation.py:47:4 PipelineValidator.validate
 src/backend/dsl/engine/versioning.py:41:4 PipelineSnapshot.to_dict
+src/backend/core/di/providers/cache.py:168:0 set_redis_kv_client_provider
+src/backend/core/di/providers/cache.py:184:0 set_redis_stream_client_provider
+src/backend/core/di/providers/cache.py:199:0 set_signature_builder_provider
