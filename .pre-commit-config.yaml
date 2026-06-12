@@ -27,6 +27,16 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # S78 W3 (FINAL_REPORT_V2 P0-D) — Streamlit config security gate.
+      # Verifies config.toml has secure CORS/XSRF defaults (CSRF ON,
+      # explicit CORS allowlist, no wildcard, gatherUsageStats off).
+      - id: check-streamlit-security
+        name: "Streamlit config security (CORS/XSRF/gatherUsageStats)"
+        entry: uv run python tools/check_streamlit_security.py
+        language: system
+        types: [toml]
+        pass_filenames: false
+
       # Wave F.6 — docstring policy gate. Запускается только при push,
       # чтобы не тормозить локальные commit'ы. Игнорирует пункты в
       # tools/check_docstrings_allowlist.txt (амнистия baseline);
