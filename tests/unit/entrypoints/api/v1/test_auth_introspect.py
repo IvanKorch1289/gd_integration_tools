@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.backend.core.auth.jwt_backend_joserfc import JwtClaims, JwtVerificationError
+from src.backend.core.auth.jwt_backend import JwtClaims, JwtVerificationError
 
 
 @pytest.fixture

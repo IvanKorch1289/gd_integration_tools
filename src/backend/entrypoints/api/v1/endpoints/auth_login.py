@@ -100,8 +100,8 @@ async def _get_user_service() -> Any:
 
 
 async def _get_jwt_backend() -> Any:
-    """Lazy import JWT encode (избегаем circular)."""
-    from src.backend.core.auth.jwt_backend_joserfc import encode
+    """Lazy import JWT encode (избегаем circular). S67 W2: canonical."""
+    from src.backend.core.auth.jwt_backend import encode
 
     return encode
 
@@ -121,7 +121,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
     """Единый login endpoint (S58 W6d).
 
     Вызывает :meth:`UserService.login_with_method` с dispatch по ``payload.method``.
-    На успехе выпускает JWT через ``jwt_backend_joserfc.encode``.
+    На успехе выпускает JWT через ``jwt_backend.encode`` (canonical, S67 W2).
 
     Rate limiting (S59 W3):
     * per-IP (5/min) — анти-brute-force на IP-level (FastAPI dependency);
@@ -169,7 +169,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
     # Issue JWT
     is_superuser = bool(getattr(user, "is_superuser", False))
     try:
-        # encode() returns (token_str, expires_in_seconds) — см. jwt_backend_joserfc
+        # encode() returns (token_str, expires_in_seconds) — см. jwt_backend
         result = jwt_encode(
             subject=user.username,
             claims={"auth_method": payload.method, "is_superuser": is_superuser},

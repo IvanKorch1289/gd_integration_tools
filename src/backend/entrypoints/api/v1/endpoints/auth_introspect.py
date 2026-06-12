@@ -17,7 +17,7 @@ from typing import Any
 
 from fastapi import APIRouter, Form, HTTPException, status
 
-from src.backend.core.auth.jwt_backend_joserfc import JwtVerificationError
+from src.backend.core.auth.jwt_backend import JwtVerificationError
 from src.backend.core.di.providers import get_jwt_backend_provider
 from src.backend.core.logging import get_logger
 

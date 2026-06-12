@@ -1,24 +1,18 @@
-"""JWT backend — dispatcher с feature-flag ``auth_joserfc``.
+"""JWT backend — canonical implementation поверх ``joserfc``.
 
 Wave [s2/k1-2-jwt-jwks] — V7 Auth-стек R1. Поддержка алгоритмов:
 * HS256 / HS384 / HS512 — симметричная подпись (shared secret);
 * RS256 / RS384 / RS512 — асимметричная (RSA + JWKS lookup);
 * ES256 / ES384 — асимметричная (ECDSA + JWKS lookup).
 
-Критический prod-bug: ранее ``auth_selector.py`` импортировал
+S67 W2: удалён parallel shim ``jwt_backend_joserfc.py``. Текущая
+реализация — единственная. ``feature_flags.auth_joserfc`` flag
+deprecated (no-op).
+
+Критический prod-bug (V7): ранее ``auth_selector.py`` импортировал
 ``python-jose``, который отсутствует в pyproject.toml → ``ImportError``
 при первом Bearer-token-запросе на проде. Этот backend заменяет
 данную секцию верификации и поднимается через DI.
-
-Feature-flag [s2/k1-w1-joserfc]:
-    * ``feature_flags.auth_joserfc = False`` (default-OFF) — текущая
-      joserfc-реализация непосредственно в этом модуле.
-    * ``feature_flags.auth_joserfc = True`` — делегирование в
-      :mod:`jwt_backend_joserfc` (параллельный shim), что позволяет
-      переключить бэкенд без удаления python-jose кода из основного пути.
-
-    Импорт feature_flags и проверка выполняются внутри методов (lazy),
-    чтобы не сломать startup при ещё не инициализированном Settings.
 """
 
 from __future__ import annotations
@@ -34,7 +28,13 @@ from joserfc.jwk import ECKey, OctKey, RSAKey
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
 
-__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError")
+__all__ = (
+    "JwtBackend",
+    "JwtClaims",
+    "JwtVerificationError",
+    "encode",
+    "decode",
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -46,6 +46,124 @@ _SYMMETRIC_ALGS = frozenset({"HS256", "HS384", "HS512"})
 
 class JwtVerificationError(Exception):
     """Ошибка верификации JWT (expired/bad-sig/wrong-claims/revoked)."""
+
+
+def encode(
+    subject: str,
+    claims: dict[str, Any] | None = None,
+    *,
+    alg: str = "HS256",
+    secret: str | None = None,
+    private_key: Any = None,
+    kid: str | None = None,
+    expires_in: int = 3600,
+    issuer: str | None = None,
+) -> tuple[str, int]:
+    """S67 W2: top-level encode (canonical, replaces shim's encode).
+
+    Создаёт подписанный JWT через ``joserfc``.
+
+    Args:
+        subject: ``sub`` claim (user identity).
+        claims: Дополнительные claims (auth_method, is_superuser, …).
+        alg: Алгоритм подписи (HS256, RS256, …).
+        secret: Shared secret для HS-алгоритмов.
+        private_key: Приватный ключ для RS/EC-алгоритмов (joserfc RSAKey / ECKey).
+        kid: Идентификатор ключа (``kid`` в header).
+        expires_in: TTL в секундах (default 3600 = 1h).
+        issuer: ``iss`` claim (optional).
+
+    Returns:
+        Кортеж ``(token_str, expires_in)``.
+
+    Raises:
+        ValueError: Если ни ``secret``, ни ``private_key`` не переданы.
+    """
+    import time as _time
+
+    now = int(_time.time())
+    full_claims: dict[str, Any] = {
+        "sub": subject,
+        "iat": now,
+        "exp": now + expires_in,
+    }
+    if issuer:
+        full_claims["iss"] = issuer
+    if claims:
+        full_claims.update(claims)
+
+    header: dict[str, Any] = {"alg": alg}
+    if kid is not None:
+        header["kid"] = kid
+
+    if alg in _SYMMETRIC_ALGS:
+        if not secret:
+            raise ValueError("encode: secret обязателен для симметричных алгоритмов")
+        key = OctKey.import_key(secret)
+    elif alg in _ASYMMETRIC_ALGS:
+        if private_key is None:
+            raise ValueError(
+                "encode: private_key обязателен для асимметричных алгоритмов"
+            )
+        key = private_key
+    else:
+        raise ValueError(f"encode: неподдерживаемый алгоритм {alg}")
+
+    token = joserfc_jwt.encode(header, full_claims, key)
+    return token, expires_in
+
+
+def decode(
+    token: str,
+    *,
+    algorithms: list[str],
+    secret: str | None = None,
+    public_key: Any = None,
+) -> dict[str, Any]:
+    """Декодирует и верифицирует JWT через joserfc (без валидации claims).
+
+    Низкоуровневая функция — валидацию iss/aud/exp производить поверх
+    (через :meth:`JwtBackend.decode`).
+
+    Args:
+        token: Компактный JWT-строка.
+        algorithms: Разрешённые алгоритмы.
+        secret: Shared secret для HS-алгоритмов.
+        public_key: Публичный ключ для RS/EC-алгоритмов.
+
+    Returns:
+        Словарь claims из payload.
+
+    Raises:
+        JwtVerificationError: При ошибке подписи или декодирования.
+    """
+    try:
+        header_raw = _parse_header_unsafe(token)
+        alg = header_raw.get("alg")
+
+        if alg in _SYMMETRIC_ALGS:
+            if not secret:
+                raise JwtVerificationError(
+                    "decode: secret обязателен для симметричных алгоритмов"
+                )
+            key = OctKey.import_key(secret)
+        elif alg in _ASYMMETRIC_ALGS:
+            if public_key is None:
+                raise JwtVerificationError(
+                    "decode: public_key обязателен для асимметричных алгоритмов"
+                )
+            key = public_key
+        else:
+            raise JwtVerificationError(f"decode: неподдерживаемый алгоритм {alg}")
+
+        decoded = joserfc_jwt.decode(token, key=key, algorithms=algorithms)
+        return dict(decoded.claims)
+    except JwtVerificationError:
+        raise
+    except (BadSignatureError, DecodeError) as exc:
+        raise JwtVerificationError(f"Ошибка верификации JWT: {exc}") from exc
+    except Exception as exc:
+        raise JwtVerificationError(f"Ошибка декодирования JWT: {exc}") from exc
 
 
 @dataclass
@@ -120,41 +238,13 @@ class JwtBackend:
     async def decode(self, token: str) -> JwtClaims:
         """Верифицирует токен и возвращает извлечённые claims.
 
-        При ``feature_flags.auth_joserfc = True`` делегирует в
-        :mod:`jwt_backend_joserfc`. Импорт выполняется lazy (внутри метода)
-        чтобы не нарушить startup при ещё не инициализированном Settings.
+        При ``feature_flags.auth_joserfc = True`` (DEPRECATED, S67 W2)
+        ранее делегировал в :mod:`jwt_backend_joserfc`. Shim удалён,
+        feature flag — no-op. Используется canonical реализация.
 
         Raises:
             JwtVerificationError: При любой ошибке валидации.
         """
-        # Lazy feature-flag check — импорт внутри метода для избежания
-        # circular imports и корректного lazy-loading Settings на старте.
-        from src.backend.core.config.features import feature_flags
-
-        if feature_flags.auth_joserfc:
-            import src.backend.core.auth.jwt_backend_joserfc as _joserfc_shim
-
-            shim = _joserfc_shim.JwtBackend(
-                method=self.method,
-                algorithms=self.algorithms,
-                secret=self.secret,
-                jwks=self.jwks,
-                audience=self.audience,
-                issuer=self.issuer,
-                leeway=self.leeway,
-                blacklist=self.blacklist,
-            )
-            shim_claims = await shim.decode(token)
-            # Конвертируем shim-тип JwtClaims → локальный JwtClaims
-            return JwtClaims(
-                sub=shim_claims.sub,
-                iss=shim_claims.iss,
-                aud=shim_claims.aud,
-                exp=shim_claims.exp,
-                jti=shim_claims.jti,
-                raw=shim_claims.raw,
-            )
-
         header = _parse_header_unsafe(token)
         alg = header.get("alg")
         if alg not in self.algorithms:
