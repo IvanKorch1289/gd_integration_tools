@@ -5,6 +5,25 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S77 (2026-06-12) — P0-C closure: AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits)
+
+### Added
+
+- **S77 W1: Hot-reload через watchfiles** (FINAL_REPORT_V2 P0-C, ADR-0067).
+  `watch_policy_files(resolver, paths, stop_event, on_reload)` — async
+  generator с debounce 1600ms, watch_filter для *.policy.yaml.
+- **S77 W2: JSON-Schema export** (P0-C). `export_aipolicy_json_schema()`
+  для admin UI / MCP docs / IDE autocomplete. `validate_aipolicy_dict()`
+  + `export_default_policy_yaml()` starter template.
+- **S77 W3: Specificity-based resolution** (P0-C improvement). `resolve_specific()`
+  выбирает most specific match (tenant > workflow > list order).
+
+### Tests
+
+- **S77 W4: 20 NEW tests** в
+  `tests/unit/core/ai/policy/test_hotreload_jsonschema_specific.py`:
+  6 JSON-Schema + 9 specificity + 3 resolver integration + 2 hot-reload.
+
 ## [Unreleased] — Autonomous cycle S76 (2026-06-12) — P0-B closure: ToolsSpec whitelist/blacklist в AIPolicySpec (21 NEW tests) (5 commits)
 
 ### Added
