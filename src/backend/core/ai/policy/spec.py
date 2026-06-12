@@ -22,6 +22,7 @@ __all__ = (
     "MemorySpec",
     "ModelRouterSpec",
     "SanitizerRef",
+    "ToolsSpec",  # S76 W1
 )
 
 
@@ -160,6 +161,53 @@ class AuditSpec(BaseModel):
     schema_version: int = 1
 
 
+class ToolsSpec(BaseModel):
+    """S76 W1 (FINAL_REPORT_V2 P0-B) — tools whitelist/blacklist для
+    AI agent'а.
+
+    Защищает от over-permissive tool-инвокаций: agent может invoke
+    только tools в whitelist (если whitelist непустой) и не может
+    invoke tools в blacklist.
+
+    Use case (FINAL_REPORT_V2 P0-B): agent имеет доступ к 30+ tools
+    (MCP gateway, built-in tools, plugin tools). Tenant admin хочет
+    restrict agent только к ``["db.read.orders", "ai.invoke.credit_check"]``
+    (whitelist) И запретить ``["fs.write", "shell.execute"]`` (blacklist).
+
+    Attributes:
+        whitelist: Список разрешённых tool names (пустой = no
+            restriction, default). Используется :class:`AIGateway`
+            для filter agent's tool set при invoke.
+        blacklist: Список запрещённых tool names (пустой = no
+            blacklist, default). Always applied (даже если whitelist
+            непустой — explicit denylist).
+        on_violation: Поведение при попытке invoke tool вне whitelist
+            или в blacklist:
+            ``"fail"`` — поднять :exc:`ToolPolicyViolationError` (default);
+            ``"warn"`` — логировать warning и allow invocation;
+            ``"block"`` — silently drop (no exception, no log).
+
+    Examples:
+        Только whitelist:
+        ```yaml
+        tools:
+          whitelist: ["db.read.orders", "ai.invoke.credit_check"]
+          on_violation: "fail"
+        ```
+
+        Только blacklist:
+        ```yaml
+        tools:
+          blacklist: ["fs.write", "shell.execute", "network.open_socket"]
+          on_violation: "fail"
+        ```
+    """
+
+    whitelist: list[str] = Field(default_factory=list)
+    blacklist: list[str] = Field(default_factory=list)
+    on_violation: Literal["fail", "warn", "block"] = "fail"
+
+
 class AIPolicySpec(BaseModel):
     """Декларативная политика AI per-workflow (ADR-NEW-20).
 
@@ -184,6 +232,9 @@ class AIPolicySpec(BaseModel):
         memory: :class:`MemorySpec` — memory layers (опционально).
         budget: :class:`BudgetSpec` — токены / стоимость / TTL.
         audit: :class:`AuditSpec` — audit-event extra attrs.
+        tools: :class:`ToolsSpec` — S76 W1 (FINAL_REPORT_V2 P0-B)
+            whitelist/blacklist для agent tool invocations. Default
+            empty = no restriction (backward-compat с pre-S76).
         required: Если ``True`` — :class:`AIGateway` падает с
             :exc:`PolicyNotResolvedError` если resolver не нашёл подходящую
             политику. ``False`` — fallback default-pass-through.
@@ -201,6 +252,7 @@ class AIPolicySpec(BaseModel):
     memory: MemorySpec | None = None
     budget: BudgetSpec = Field(default_factory=BudgetSpec)
     audit: AuditSpec = Field(default_factory=AuditSpec)
+    tools: ToolsSpec = Field(default_factory=ToolsSpec)  # S76 W1
     required: bool = True
 
     @property
