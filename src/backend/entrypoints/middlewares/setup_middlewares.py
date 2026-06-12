@@ -53,6 +53,10 @@ def build_default_registry() -> MiddlewareRegistry:
     from src.backend.entrypoints.middlewares.brotli_compression import (
         BrotliCompressionMiddleware,
     )
+    from src.backend.entrypoints.middlewares.circuit_breaker import (
+        BreakerPolicy,
+        CircuitBreakerMiddleware,  # S81 W2: restored
+    )
     from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
     from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
@@ -122,7 +126,23 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("api_key", APIKeyMiddleware, order=110)
 
     # Layer 2: request management (250-499) -------------------------------- #
-    # CircuitBreakerMiddleware удалён в A2 (ADR-005) — global-state баг.
+    # S81 W2: CircuitBreakerMiddleware RESTORED (FINAL_REPORT_V2 P1 #8).
+    # Removed в A2 (ADR-005) — global-state bug. S81 design:
+    # per-route state, sliding window, BreakerPolicy config (NO global).
+    # Order=250: early enough to reject unhealthy upstreams before
+    # processing.
+    registry.register_builtin(
+        "circuit_breaker",
+        CircuitBreakerMiddleware,
+        {
+            "default_policy": BreakerPolicy(
+                failure_threshold=5,
+                window_seconds=60.0,
+                reset_timeout=30.0,
+            ),
+        },
+        order=250,
+    )
     registry.register_builtin("request_id", RequestIDMiddleware, order=260)
     # Sprint 0 #12: correlation-id propagation (X-Correlation-ID header).
     registry.register_builtin("correlation_id", CorrelationIdMiddleware, order=280)
