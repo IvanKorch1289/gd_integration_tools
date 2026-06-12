@@ -48,13 +48,19 @@ class JsonDataFormat(DataFormat):
 
     @property
     def content_type(self) -> str:
+        """MIME content type: ``application/json``."""
         return "application/json"
 
     @property
     def name(self) -> str:
+        """Format identifier (``"json"``)."""
         return "json"
 
     def marshal(self, body: Any) -> bytes:
+        """Encode object → JSON bytes.
+
+        Pass-through для bytes/str input (no double-encode).
+        """
         if isinstance(body, bytes):
             return body  # already encoded
         if isinstance(body, str):
@@ -68,6 +74,10 @@ class JsonDataFormat(DataFormat):
         ).encode("utf-8")
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
+        """Decode JSON bytes → Python object.
+
+        ``target_type`` — optional hint (только для dict/list source).
+        """
         if isinstance(data, bytes):
             data = data.decode("utf-8")
         decoded = json.loads(data)
@@ -85,18 +95,27 @@ class XmlDataFormat(DataFormat):
     """
 
     def __init__(self, *, root_tag: str = "root", pretty: bool = False) -> None:
+        """Init XML format options.
+
+        Args:
+            root_tag: Tag для корневого элемента (default ``"root"``).
+            pretty: Indent XML для human-readability.
+        """
         self._root_tag = root_tag
         self._pretty = pretty
 
     @property
     def content_type(self) -> str:
+        """MIME content type: ``application/xml``."""
         return "application/xml"
 
     @property
     def name(self) -> str:
+        """Format identifier (``"xml"``)."""
         return "xml"
 
     def marshal(self, body: Any) -> bytes:
+        """Encode dict → XML bytes с XML declaration."""
         root = ET.Element(self._root_tag)
         _dict_to_xml(body, root, self._root_tag)
         if self._pretty:
@@ -104,6 +123,11 @@ class XmlDataFormat(DataFormat):
         return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
+        """Decode XML bytes → dict (defusedxml когда available).
+
+        SECURITY: prefer defusedxml (XXE/billion-laughs protection).
+        Fallback to stdlib ET only в dev-light без defusedxml.
+        """
         if isinstance(data, bytes):
             data = data.decode("utf-8")
         # SECURITY: prefer defusedxml when available to block XXE / billion-laughs.
@@ -126,18 +150,27 @@ class CsvDataFormat(DataFormat):
     def __init__(
         self, *, headers: list[str] | None = None, delimiter: str = ","
     ) -> None:
+        """Init CSV format options.
+
+        Args:
+            headers: Explicit headers (если None — auto-detect из первой row).
+            delimiter: Field delimiter (default ``","``).
+        """
         self._headers = headers
         self._delimiter = delimiter
 
     @property
     def content_type(self) -> str:
+        """MIME content type: ``text/csv``."""
         return "text/csv"
 
     @property
     def name(self) -> str:
+        """Format identifier (``"csv"``)."""
         return "csv"
 
     def marshal(self, body: Any) -> bytes:
+        """Encode list[dict] → CSV bytes (UTF-8)."""
         if not isinstance(body, list):
             raise TypeError(
                 f"CsvDataFormat.marshal expects list[dict], got {type(body).__name__}"
@@ -155,6 +188,7 @@ class CsvDataFormat(DataFormat):
         return buf.getvalue().encode("utf-8")
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
+        """Decode CSV bytes → list[dict]."""
         if isinstance(data, bytes):
             data = data.decode("utf-8")
         buf = io.StringIO(data)
@@ -169,6 +203,7 @@ class MessagePackDataFormat(DataFormat):
     """
 
     def __init__(self) -> None:
+        """Lazy-validate msgpack dependency, raise ``ImportError`` если нет."""
         try:
             import msgpack  # type: ignore[import-not-found]  # noqa: F401
         except ImportError as exc:
@@ -181,16 +216,20 @@ class MessagePackDataFormat(DataFormat):
 
     @property
     def content_type(self) -> str:
+        """MIME content type: ``application/msgpack``."""
         return "application/msgpack"
 
     @property
     def name(self) -> str:
+        """Format identifier (``"msgpack"``)."""
         return "msgpack"
 
     def marshal(self, body: Any) -> bytes:
+        """Encode object → MessagePack bytes (binary)."""
         return self._msgpack.packb(body, use_bin_type=True)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
+        """Decode MessagePack bytes → Python object."""
         return self._msgpack.unpackb(data, raw=False)
 
 
@@ -198,24 +237,35 @@ class PickleDataFormat(DataFormat):
     """Pickle via stdlib. Только для trusted data (security warning)."""
 
     def __init__(self, *, protocol: int = pickle.DEFAULT_PROTOCOL) -> None:
+        """Init pickle format.
+
+        Args:
+            protocol: Pickle protocol version (default = current stdlib default).
+        """
         self._protocol = protocol
 
     @property
     def content_type(self) -> str:
+        """MIME content type: ``application/x-python-pickle``."""
         return "application/x-python-pickle"
 
     @property
     def name(self) -> str:
+        """Format identifier (``"pickle"``)."""
         return "pickle"
 
     def marshal(self, body: Any) -> bytes:
+        """Serialize object → pickle bytes."""
         return pickle.dumps(body, protocol=self._protocol)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
-        # SECURITY: pickle.loads executes arbitrary code. This EIP is only safe
-        # for trusted producers (intra-cluster, signed payloads). Production
-        # callers MUST validate data provenance (signature, mTLS, source check)
-        # before invoking this processor. See Camel Marshal docs warning.
+        """Deserialize pickle bytes → Python object (TRUSTED ONLY).
+
+        SECURITY: pickle.loads executes arbitrary code. This EIP is only safe
+        for trusted producers (intra-cluster, signed payloads). Production
+        callers MUST validate data provenance (signature, mTLS, source check)
+        before invoking this processor. See Camel Marshal docs warning.
+        """
         obj = pickle.loads(data)  # noqa: S301 — see SECURITY above
         if target_type is not None and not isinstance(obj, target_type):
             return target_type(obj)

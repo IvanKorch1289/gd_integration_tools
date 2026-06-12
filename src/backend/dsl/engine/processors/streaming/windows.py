@@ -210,6 +210,7 @@ class TumblingWindowProcessor(_BaseWindow):
         self._flush_task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Process message: append to tumbling buffer, schedule flush."""
         # Late event — engine применяет политику и прекращает обработку.
         if await self._is_late_and_handle(exchange):
             return
@@ -272,6 +273,7 @@ class SlidingWindowProcessor(_BaseWindow):
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Process message: append to sliding window, evict expired."""
         if await self._is_late_and_handle(exchange):
             return
         now = self._clock.monotonic()
@@ -382,6 +384,7 @@ class GroupByKeyProcessor(_BaseWindow):
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Process message: group by key, emit batched output."""
         try:
             import jmespath
 
