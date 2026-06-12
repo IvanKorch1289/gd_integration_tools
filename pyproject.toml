@@ -176,6 +176,18 @@ rpa = [
     "patchright>=1.40.0,<2.0",
     "playwright>=1.48.0"
 ]
+# S74 W1 (FINAL_REPORT_V2 #9, направление #1): parameterized notebook execution.
+# nbclient — local kernel execution (already used в NbClientExecutionBackend).
+# papermill — parameterized execution (template notebooks с {{param}} placeholders).
+# nbformat — .ipynb serialization (papermill dependency, declared explicitly).
+# jupyter_client — kernel management (papermill dependency).
+# Scoped as opt-in extra (тяжёлые C-extensions, не нужны для dev_light).
+jupyter = [
+    "nbclient>=0.10.0",
+    "nbformat>=5.10.0",
+    "papermill>=2.6.0",
+    "jupyter_client>=8.0.0",
+]
 # K3 Sprint 8: OCR для извлечения текста со скриншотов / PDF.
 # Опционально: тяжёлый paddlepaddle backend; lazy-import в processor.
 # S16 gate-w0-ops-reorg-smoke (2026-05-21): paddlepaddle 2.6.2 не имеет

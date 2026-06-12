@@ -2173,6 +2173,15 @@ wheels = [
 ]
 
 [[package]]
+name = "entrypoints"
+version = "0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/8d/a7121ffe5f402dc015277d2d31eb82d2187334503a011c18f2e78ecbb9b2/entrypoints-0.4.tar.gz", hash = "sha256:b706eddaa9218a19ebcd67b56818f05bb27589b1ca9e8d797b74affad4ccacd4", size = 13974, upload-time = "2022-02-02T21:30:28.172Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/a8/365059bbcd4572cbc41de17fd5b682be5868b218c3c5479071865cab9078/entrypoints-0.4-py3-none-any.whl", hash = "sha256:f174b5ff827504fd3cd97cc3f8649f3693f51538c7e4bdf3ef002c8429d42f9f", size = 5294, upload-time = "2022-02-02T21:30:26.024Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2852,6 +2861,12 @@ frontend = [
 http3 = [
     { name = "aioquic", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
+jupyter = [
+    { name = "jupyter-client", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "nbclient", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "nbformat", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "papermill", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
 lsp = [
     { name = "pygls", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
@@ -3018,6 +3033,7 @@ requires-dist = [
     { name = "jmespath", specifier = ">=1.0.1,<2.0.0" },
     { name = "joserfc", specifier = ">=1.0.0,<2.0.0" },
     { name = "jsonpath-ng", marker = "extra == 'dsl-extras'", specifier = ">=1.6.0,<2.0.0" },
+    { name = "jupyter-client", marker = "extra == 'jupyter'", specifier = ">=8.0.0" },
     { name = "langchain-postgres", marker = "extra == 'ai-memory'", specifier = ">=0.0.10,<1.0.0" },
     { name = "langfuse", marker = "extra == 'ai'", specifier = ">=2.0.0" },
     { name = "langgraph", marker = "extra == 'ai'", specifier = ">=0.3.0" },
@@ -3033,6 +3049,8 @@ requires-dist = [
     { name = "msgpack", specifier = ">=1.1.0,<2.0.0" },
     { name = "msgspec", specifier = ">=0.18.0,<1.0.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=5.0.0,<6.0.0" },
+    { name = "nbclient", marker = "extra == 'jupyter'", specifier = ">=0.10.0" },
+    { name = "nbformat", marker = "extra == 'jupyter'", specifier = ">=5.10.0" },
     { name = "openapi-pydantic", specifier = ">=0.5.0,<1.0.0" },
     { name = "openfeature-sdk", marker = "extra == 'feature-flags'", specifier = ">=0.7,<1.0" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
@@ -3047,6 +3065,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", specifier = ">=1.30.0,<2.0.0" },
     { name = "orjson", specifier = ">=3.11.8,<4.0.0" },
     { name = "paddleocr", marker = "extra == 'multimodal-rag'", specifier = ">=2.8.0,<4.0.0" },
+    { name = "papermill", marker = "extra == 'jupyter'", specifier = ">=2.6.0" },
     { name = "patchright", marker = "extra == 'rpa'", specifier = ">=1.40.0,<2.0" },
     { name = "pendulum", specifier = ">=3.2.0,<4.0.0" },
     { name = "pillow", marker = "extra == 'multimodal-rag'", specifier = ">=10.0.0,<13.0.0" },
@@ -3123,7 +3142,7 @@ requires-dist = [
     { name = "xmltodict", specifier = ">=0.14.0,<1.0.0" },
     { name = "zeep", specifier = ">=4.3.1,<5.0.0" },
 ]
-provides-extras = ["ai", "security", "ai-safety", "auth-saml", "mcp", "rpa", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "rag", "ai-2026", "ai-model-registry", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "circuit-breaker", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags"]
+provides-extras = ["ai", "security", "ai-safety", "auth-saml", "mcp", "rpa", "jupyter", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "rag", "ai-2026", "ai-model-registry", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "circuit-breaker", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -6331,6 +6350,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/70/6f/3dd4940bbe001c06a65f88e36bad298bc7a0de5036115639926b0c5c0458/pandocfilters-1.5.1.tar.gz", hash = "sha256:002b4a555ee4ebc03f8b66307e287fa492e4a77b4ea14d3f934328297bb4939e", size = 8454, upload-time = "2024-01-18T20:08:13.726Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/af/4fbc8cab944db5d21b7e2a5b8e9211a03a79852b1157e2c102fcc61ac440/pandocfilters-1.5.1-py2.py3-none-any.whl", hash = "sha256:93be382804a9cdb0a7267585f157e5d1731bbe5545a85b268d6f5fe6232de2bc", size = 8663, upload-time = "2024-01-18T20:08:11.28Z" },
+]
+
+[[package]]
+name = "papermill"
+version = "2.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "entrypoints", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "nbclient", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "nbformat", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "requests", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "tenacity", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "tqdm", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b6/92d770c5ced66ed0134256f8de781e98c824d3a0662af1643a91fcc36663/papermill-2.7.0.tar.gz", hash = "sha256:ec10b37594a060662f57269e1ebd108c209d204450f00fdfeb70a1c7cfb7fbc8", size = 77961, upload-time = "2026-02-27T19:07:30.548Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/9f/f9fd57a727dcc89c54e84455d8317bff7db05ef21bb6d05b03705111f7c0/papermill-2.7.0-py3-none-any.whl", hash = "sha256:e1855e6670100a02bb4f8a6870484a5c10b84a8d2e49c49921c90209940c7514", size = 88858, upload-time = "2026-02-27T19:07:28.862Z" },
 ]
 
 [[package]]
