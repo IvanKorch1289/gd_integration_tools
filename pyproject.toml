@@ -104,7 +104,9 @@ dependencies = [
     "pydash>=8.0,<9.0",
     "glom>=25.12.0",
     "presidio-analyzer>=2.2.362",
-    "pendulum",
+    # S66 W1: pendulum УЖЕ pinned в [project].dependencies:48 с явной
+    # версией "pendulum>=3.2.0,<4.0.0". Удалён дубль (была строка 107
+    # без версии — старый baseline до S57 W1).
 ]
 
 [project.optional-dependencies]
