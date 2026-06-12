@@ -47,6 +47,31 @@ class Sprints1821Flags(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
+    @staticmethod
+    def _env_aware_default(env_var_name: str, prod_value: bool) -> bool:
+        """S88 W1 (V2 P0 #5): env-aware default для security flags.
+
+        Якщо env var не встановлена явно — повертає ``prod_value`` в production,
+        ``not prod_value`` в development/staging. Дозволяє secure-by-default в prod
+        без зламування dev/staging workflow.
+        """
+        import os
+        from src.backend.core.config.base.app_base import AppBaseSettings
+
+        # Read raw env var BEFORE pydantic-settings processing.
+        explicit = os.environ.get(env_var_name)
+        if explicit is not None:
+            return explicit.lower() in ("1", "true", "yes", "on")
+
+        # Try to read app environment from AppBaseSettings singleton.
+        try:
+            app_env = AppBaseSettings().environment  # type: ignore[attr-defined]
+        except Exception:
+            # AppBaseSettings not yet initialized (e.g. unit tests without env).
+            # Default to NOT-prod для safety (rate limit OFF як default).
+            return not prod_value
+        return prod_value if app_env == "production" else not prod_value
+
     # ─── Sprint 18 — Operational + Security GAP Carryover (backbone) ──────
     waf_strict_zero_allowlist: bool = Field(
         default=False,
@@ -134,14 +159,19 @@ class Sprints1821Flags(BaseSettings):
     )
 
     multi_tenant_rate_limit_enabled: bool = Field(
-        default=False,
+        default_factory=lambda: Sprints1821Flags._env_aware_default(
+            env_var_name="FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED",
+            prod_value=True,
+        ),
         title="K5 S18 W1: global rate-limit middleware (fastapi-limiter + per-tenant)",
         description=(
             "K5 Sprint 18 Wave 1 (PLAN.md V22 §S18, P0 Gateway-centralization). "
             "Owner: K5 Frontend/Ops. При True entrypoints/middlewares/global_rate_limit.py "
             "RateLimitMiddleware активна: global default + per-route override + per-tenant "
             "namespace через Casbin/OPA. Базируется на fastapi-limiter (Redis backend). "
-            "default-OFF до интеграции с TenantContext + staging-smoke."
+            "S88 W1 (V2 P0 #5 HIGH): env-aware default — production → True, "
+            "development/staging → False. Override через "
+            "FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED env var."
         ),
     )
 
