@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.backend.dsl.workflow.spec import WorkflowDeclaration
+from src.backend.dsl.workflow.visualize import to_mermaid
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
@@ -84,13 +86,6 @@ def _render_workflow_templates() -> None:
         from src.backend.services.workflows.template_registry import (
             get_template_registry,
         )
-
-    try:
-        from src.backend.dsl.workflow.spec import WorkflowDeclaration
-        from src.backend.dsl.workflow.visualize import to_mermaid
-    except ImportError as exc:
-        st.error(f"Не удалось импортировать visualize/spec: {exc}")
-        return
 
     registry = get_template_registry()
     all_templates = registry.load_all()
