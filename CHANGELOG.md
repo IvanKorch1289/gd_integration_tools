@@ -5,6 +5,30 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S78 (2026-06-12) — P0-D closure: Streamlit CORS/XSRF security (config + nginx + validator, 17 NEW tests) (5 commits)
+
+### Changed
+
+- **S78 W1: Streamlit config.toml secure defaults** (FINAL_REPORT_V2 P0-D).
+  `enableXsrfProtection = true`, `enableCORS = true` с explicit
+  `corsAllowedOrigins` (4 origins, no wildcard),
+  `gatherUsageStats = false`, `headless = true`.
+
+### Added
+
+- **S78 W2: docs/deployment/nginx_streamlit.conf** — production nginx
+  reverse-proxy config с 7 security headers (X-Frame-Options,
+  X-Content-Type-Options, CSP, HSTS, etc.) + WebSocket support.
+- **S78 W2: tools/check_streamlit_security.py** — 4-check validator
+  (XSRF/CORS/gatherUsageStats/headless) с CLI mode.
+- **S78 W3: pre-commit hook** `check-streamlit-security` registered.
+
+### Tests
+
+- **S78 W4: 17 NEW tests** в
+  `tests/unit/tools/test_check_streamlit_security.py`:
+  5 default + 6 failure + 3 dataclass + 1 error + 2 CLI.
+
 ## [Unreleased] — Autonomous cycle S77 (2026-06-12) — P0-C closure: AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits)
 
 ### Added
