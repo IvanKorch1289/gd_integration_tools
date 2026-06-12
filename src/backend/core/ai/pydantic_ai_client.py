@@ -29,6 +29,10 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.services.ai.gateway.exceptions import (
+    GatewayRateLimited,
+    GatewayUnavailable,
+)
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -357,11 +361,7 @@ class PydanticAIClient:
         """Нормализует исключения LiteLLMGateway к доменным Gateway-исключениям."""
         text = str(exc).lower()
         if "rate" in text and "limit" in text:
-            from src.backend.services.ai.gateway.exceptions import GatewayRateLimited
-
             raise GatewayRateLimited(str(exc)) from exc
-        from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
-
         raise GatewayUnavailable(str(exc)) from exc
 
     def _emit_counter(self, name: str, labels: dict[str, str]) -> None:
