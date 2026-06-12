@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import logging  # keep for DEBUG constant; get_logger from factory below
 from collections.abc import Mapping
 from typing import Any
 

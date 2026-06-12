@@ -27,7 +27,7 @@ staging IdP конфигурации; см. S6 K1 W1).
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 import secrets
 import time
 from collections.abc import Callable, Mapping
@@ -36,7 +36,7 @@ from typing import Any
 
 __all__ = ("IdpMetadata", "SamlAuthResult", "SamlBackend", "SamlConfig", "SamlError")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

@@ -26,7 +26,6 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from logging import DEBUG
 from time import monotonic
 from typing import BinaryIO, TypedDict
 
