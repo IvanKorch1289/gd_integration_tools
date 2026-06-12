@@ -109,17 +109,9 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     async def _authenticate(self, request: Request) -> AuthContext | None:
-        # Lazy-import: auth_selector тащит heavy DI providers.
-        from src.backend.entrypoints.api.dependencies.auth_selector import _VERIFIERS
+        # S93 W3: public verify_request вместо private _VERIFIERS access.
+        from src.backend.entrypoints.api.dependencies.auth_selector import (
+            verify_request,
+        )
 
-        for method in self._accepted_methods:
-            verifier = _VERIFIERS.get(method)
-            if verifier is None:
-                continue
-            try:
-                ctx = await verifier(request)
-            except Exception:  # верификатор не должен ронять middleware
-                ctx = None
-            if ctx is not None:
-                return ctx
-        return None
+        return await verify_request(request, methods=self._accepted_methods)

@@ -210,6 +210,55 @@ _VERIFIERS: dict[AuthMethod, Callable[..., Any]] = {
 }
 
 
+async def verify_request(
+    request: Request,
+    methods: AuthMethod | list[AuthMethod] | tuple[AuthMethod, ...] | None = None,
+) -> AuthContext | None:
+    """Public single entry-point для verify-flow (S93 W3).
+
+    Раньше middleware (auth_required) лез в private ``_VERIFIERS`` dict
+    напрямую — нарушение инкапсуляции. Теперь — public API.
+
+    Args:
+        request: FastAPI Request.
+        methods: Один метод / список / None (try all known).
+
+    Returns:
+        :class:`AuthContext` при успехе (первый match), ``None`` если
+        ни один verifier не вернул контекст.
+    """
+    if methods is None:
+        methods_list = list(_VERIFIERS.keys())
+    elif isinstance(methods, AuthMethod):
+        methods_list = [methods]
+    else:
+        methods_list = list(methods)
+
+    for method in methods_list:
+        verifier = _VERIFIERS.get(method)
+        if verifier is None:
+            logger.debug("verify_request: no verifier for %s", method)
+            continue
+        try:
+            ctx = await verifier(request)
+        except Exception as exc:
+            logger.warning("verify_request: %s raised: %s", method, exc)
+            continue
+        if ctx is not None:
+            request.state.auth = ctx
+            return ctx
+    return None
+
+
+__all__ = (
+    "AuthContext",
+    "AuthMethod",
+    "require_auth",
+    "set_default_auth",
+    "verify_request",
+)
+
+
 def require_auth(
     methods: AuthMethod | list[AuthMethod] | None = None,
 ) -> Callable[[Request], Any]:
