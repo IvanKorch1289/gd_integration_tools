@@ -1,4 +1,25 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S86 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S88 W5)
+
+## S88 closure summary (2026-06-12, ADR-0170)
+
+**Status: V2 P0 #5 (HIGH) CLOSED + V2 P0 #6 (HIGH) PARTIALLY CLOSED в S88 (4 commits, 17 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#5 GlobalRateLimit** | ✅ CLOSED S88 W1 | env-aware default (production=True, dev/staging=False), override через env var |
+| **#6 Tenant auto-filter** | 🟡 PARTIAL S88 W2+W3+W4 | wire-up fixed (was dead code since S21 W0), 17 tests; моделі міграція → S89+ |
+
+**Net S88 LOC**: 4 files changed, +165 LOC (код), +218 LOC (tests), 17 NEW tests, 1 ADR (0170).
+
+**S88 deep re-check** (vs S87 plan):
+- Original plan: створити `TenantSQLAlchemyRepository` base class — **НЕ ПОТРІБНО**, бо `apply_tenant_filter` вже існував, потрібен був лише wire-up fix.
+- S21 W0 broken: `@event.listens_for(session_factory, "do_orm_execute")` — `do_orm_execute` це `SessionEvents`, не sessionmaker event. Функція ніколи не могла виконатись без AttributeError.
+- TenantMiddleware вже викликає `set_correlation_context` (Wave 6.5a) — tenant_id propagates to contextvar ✅.
+- `WorkflowInstance` — ЄДИНА модель з `TenantMixin` (8 моделей). Міграція 7 інших → S89+ scope.
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅, **#5 ✅** CLOSED. **#6 🟡 partial**. Осталось: #6 (model migration), #7, #8, #10.
+
+**V2 verdict impact**: 5/10 V2 P0 items CLOSED. Projected rating: 7.36 → **7.66/10**.
 
 ## S86 closure summary (2026-06-12, ADR-0168)
 

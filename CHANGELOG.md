@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S88 (2026-06-12) — V2 P0 #5 + #6 closure: env-aware rate limit + tenant auto-filter wire-up (17 NEW tests) (4 commits)
+
+### Changed
+
+- **S88 W1 (V2 P0 #5 HIGH)**: `multi_tenant_rate_limit_enabled` env-aware default — production → True, development/staging → False. Override через `FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED` env var. Helper `_env_aware_default()` в `Sprints1821Flags`.
+- **S88 W2 (V2 P0 #6 HIGH)**: fixed dead code `apply_tenant_filter` (S21 W0) — original implementation used wrong event target (`session_factory` замість `Session` class). S88 fix: `@event.listens_for(Session, "do_orm_execute")` + `before_flush`. `_INSTALLED` global flag для idempotency. `DatabaseSessionManager.__init__` тепер викликає `apply_tenant_filter()` для всіх session managers (main + external).
+
+### Added
+
+- `tests/unit/infrastructure/database/test_tenant_filter_wireup.py` — 8 NEW regression tests (idempotency, target ignored, TenantMixin declarations, _is_tenant_aware cases, session manager wiring).
+- `tests/unit/infrastructure/database/test_tenant_filter_e2e.py` — 5 NEW e2e tests (TenantEntity vs NonTenantEntity, contextvar behavior, listener registration).
+- `tests/unit/entrypoints/middlewares/test_tenant_middleware_public_endpoints.py` — 4 NEW tests (real Starlette Request, default tenant, header, state).
+- `docs/adr/0170-sprint-88-rate-limit-and-tenant-isolation.md` — closure ADR (V2 P0 #5 + #6 status).
+
 ## [Unreleased] — Autonomous cycle S86 (2026-06-12) — V2 P0 #2 closure: Temporal sandbox verified + CI guard (12 NEW tests, 1 tool, 1 CI gate) (4 commits)
 
 ### Changed
