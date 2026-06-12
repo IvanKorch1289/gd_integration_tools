@@ -5,6 +5,32 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S76 (2026-06-12) — P0-B closure: ToolsSpec whitelist/blacklist в AIPolicySpec (21 NEW tests) (5 commits)
+
+### Added
+
+- **S76 W1: ToolsSpec** (FINAL_REPORT_V2 P0-B). `whitelist: list[str]` +
+  `blacklist: list[str]` + `on_violation: Literal["fail", "warn", "block"]`
+  (default "fail"). AIPolicySpec.tools field с default_factory=ToolsSpec
+  (backward-compat: pre-S76 YAML = empty spec = all allowed).
+- **S76 W2: Enforcement logic** (P0-B closure). 3 modes per on_violation.
+  Precedence: blacklist wins (security-first). ToolPolicyViolationError
+  (distinct от GuardrailViolationError — structural vs content).
+- **S76 W3: AIPolicyEnforcer.filter_tools** integration. Re-exports
+  check_tool_allowed / enforce_tool_policy / filter_tools_by_policy
+  from enforcer package.
+
+### Fixed
+
+- **S76 W3 follow-up: AIPolicyEnforcer __slots__=() bug** (S67 W2 decomp
+  recurring pattern, same as S74 W4 NotebookExecutionService fix).
+
+### Tests
+
+- **S76 W4: 21 NEW tests** в
+  `tests/unit/core/ai/policy/test_tools_whitelist.py`:
+  4 data model + 6 check + 5 enforce + 5 filter + 1 integration.
+
 ## [Unreleased] — Autonomous cycle S75 (2026-06-12) — Jupyter execution final closure (e2b + KernelSpecDiscovery, направление #1 → 6/6 ✅) (5 commits, 15 NEW tests)
 
 ### Added
