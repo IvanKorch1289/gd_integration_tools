@@ -17,7 +17,7 @@ PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 import time  # PERF-5: top-level import (hot path — CircuitBreaker state checks)
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -36,7 +36,7 @@ from src.backend.core.interfaces.notification import (
 from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.interfaces.storage import ObjectStorage
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = (
     # Health

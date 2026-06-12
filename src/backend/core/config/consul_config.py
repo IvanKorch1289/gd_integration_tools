@@ -17,11 +17,11 @@ Usage::
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 from collections.abc import Callable
 from typing import Any
 
-_logger = logging.getLogger("core.config.consul")
+_logger = get_logger("core.config.consul")
 
 __all__ = ("ConsulConfigStore",)
 

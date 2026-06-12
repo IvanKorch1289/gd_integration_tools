@@ -21,7 +21,7 @@ Layer-correct placement
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -33,7 +33,7 @@ from src.backend.core.audit.schema.ai_invocation import (
 if TYPE_CHECKING:
     from src.backend.core.audit.interfaces import AuditBackend, LangfuseCallbackBackend
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 __all__ = (
     "UnifiedAISink",

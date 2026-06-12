@@ -25,7 +25,7 @@ Layer policy: модуль живёт в ``src/core/actions/`` и не импо�
 
 from __future__ import annotations
 
-import logging
+from src.backend.core.logging import get_logger
 import types
 import typing
 from dataclasses import dataclass, field
@@ -41,7 +41,7 @@ __all__ = (
     "render_proto_file",
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # Маппинг базовых Python-типов в protobuf3 scalar-типы.

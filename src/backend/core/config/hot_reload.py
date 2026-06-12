@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+from src.backend.core.logging import get_logger
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
@@ -26,7 +26,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("ConfigHotReloader", "get_hot_reloader")
 
-logger = logging.getLogger("config.hot_reload")
+logger = get_logger("config.hot_reload")
 
 ReloadCallback = Callable[[], Awaitable[None] | None]
 
