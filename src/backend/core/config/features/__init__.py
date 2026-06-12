@@ -203,9 +203,11 @@ class FeatureFlags(
     # features/experimental.py::ExperimentalFlags (T1.3.9). См. comment
     # выше в EventBus block.
 
-    # K1 — Auth fields (auth_joserfc, auth_mtls_client) — extracted в
+    # K1 — Auth fields (auth_mtls_client) — extracted в
     # features/auth.py::AuthFlags (T1.3.1). Наследуются через multiple
     # inheritance. См. class FeatureFlags(AuthFlags, BaseSettingsWithLoader).
+    # NOTE (S68 W1): auth_joserfc field удалён (S67 W2 сделал flag no-op
+    # после deletion ``jwt_backend_joserfc.py`` shim). TD-S67-feature-flag-deprecation.
 
     # Sprint 5 K1 Security + K2 DLQ fields — extracted в
     # features/sprint5.py::Sprint5Flags (T1.3.12). Наследуются через

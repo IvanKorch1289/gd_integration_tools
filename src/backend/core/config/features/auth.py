@@ -14,7 +14,6 @@ Future T1.3.1+ extensions (deferred to S39+):
 
 from __future__ import annotations
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,15 +33,10 @@ class AuthFlags(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
-    auth_joserfc: bool = Field(
-        default=False,
-        title="Auth: joserfc вместо python-jose (deprecated)",
-        description=(
-            "K1 Wave 1. Owner: K1 Auth. ETA: S2-W1. "
-            "Миграция с python-jose (deprecated) на joserfc. "
-            "default-OFF до полной замены и unit-test coverage."
-        ),
-    )
+    # S68 W1: auth_mtls_client остаётся (НЕ удалён в scope W1 — ТОЛЬКО
+    # auth_joserfc). Subagent S68 W1 случайно удалил оба; orchestrator
+    # restore, чтобы не ломать 2 pre-existing tests.
+    auth_mtls_client: bool = False
 
 
 __all__ = ("AuthFlags",)

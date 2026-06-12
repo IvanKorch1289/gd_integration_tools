@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S68 W1 (2026-06-12) — auth_joserfc flag cleanup (1 commit, 1/1 substantive)
+
+### Removed
+
+- **S68 W1: cleanup `auth_joserfc` no-op feature flag** (TD-S67-feature-flag-deprecation).
+  После S67 W2 (deletion `jwt_backend_joserfc.py` shim) flag стал no-op.
+  Полностью удалён `auth_joserfc: bool` field из `core/config/features/auth.py::AuthFlags`.
+  Убран dead branch в `core/auth/jwt_backend.py::verify()` (lazy import
+  несуществующего `jwt_backend_joserfc` модуля). `extra="forbid"` env
+  var `FEATURE_AUTH_JOSERFC` теперь silently ignored (pydantic-settings
+  не находит matching field). 3 NEW tests в `test_features_auth.py`
+  верифицируют removal (field не существует, singleton не имеет attr,
+  env var ignored).
+
 ## [Unreleased] — Autonomous cycle S67 (2026-06-12) — torch CVE + namespace + JWT consolidation + pre-existing fix (4 commits, 4/4 substantive)
 
 ### Security

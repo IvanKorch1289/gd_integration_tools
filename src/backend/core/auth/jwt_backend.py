@@ -8,6 +8,8 @@ Wave [s2/k1-2-jwt-jwks] — V7 Auth-стек R1. Поддержка алгори
 S67 W2: удалён parallel shim ``jwt_backend_joserfc.py``. Текущая
 реализация — единственная. ``feature_flags.auth_joserfc`` flag
 deprecated (no-op).
+S68 W1: ``feature_flags.auth_joserfc`` field удалён (no-op cleanup,
+TD-S67-feature-flag-deprecation).
 
 Критический prod-bug (V7): ранее ``auth_selector.py`` импортировал
 ``python-jose``, который отсутствует в pyproject.toml → ``ImportError``
@@ -241,6 +243,7 @@ class JwtBackend:
         При ``feature_flags.auth_joserfc = True`` (DEPRECATED, S67 W2)
         ранее делегировал в :mod:`jwt_backend_joserfc`. Shim удалён,
         feature flag — no-op. Используется canonical реализация.
+        S68 W1: feature flag полностью удалён.
 
         Raises:
             JwtVerificationError: При любой ошибке валидации.
@@ -319,32 +322,16 @@ class JwtBackend:
         )
 
     async def verify(self, request: Any) -> AuthContext | None:
-        """Адаптер для FastAPI: извлекает ``Authorization: Bearer ...`` и верифицирует.
+        """Адаптер для FastAPI: извлекает ``Authorization: Bearer *** и верифицирует.
 
-        При ``feature_flags.auth_joserfc = True`` делегирует в
-        :mod:`jwt_backend_joserfc`. Импорт выполняется lazy (внутри метода).
+        S68 W1: dead branch (``auth_joserfc`` delegation в удалённый
+        ``jwt_backend_joserfc`` shim) убран. Используется canonical
+        реализация всегда.
 
         Returns:
             ``AuthContext`` при успехе; ``None`` если header отсутствует или
             токен невалиден (детали в логе).
         """
-        from src.backend.core.config.features import feature_flags
-
-        if feature_flags.auth_joserfc:
-            import src.backend.core.auth.jwt_backend_joserfc as _joserfc_shim
-
-            shim = _joserfc_shim.JwtBackend(
-                method=self.method,
-                algorithms=self.algorithms,
-                secret=self.secret,
-                jwks=self.jwks,
-                audience=self.audience,
-                issuer=self.issuer,
-                leeway=self.leeway,
-                blacklist=self.blacklist,
-            )
-            return await shim.verify(request)
-
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
             return None
