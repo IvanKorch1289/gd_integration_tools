@@ -24,6 +24,25 @@
 
 **V2 verdict impact**: 5/10 fully closed, 1/10 pilot-closed, 3/10 pending, 1/10 V2 fact-check wrong. Projected rating: 7.66 → **7.96/10** (pilot-closed +1/2).
 
+## S92 closure summary (2026-06-12, ADR-0174)
+
+**Status: V2 P0 #6 (continue) 4/7 моделей tenant-isolated в S92 (4 commits, 8 NEW tests, 1 ADR).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#6 Tenant auto-filter (continue)** | 🟡 4/7 CLOSED S89+S91+S92 | Order (S89), User (S91), File + OrderKind (S92). Залишилося: WorkflowEvent, DslSnapshot, RuleEngine → S93+ |
+
+**Net S92 LOC**: 4 files changed (1 migration + 2 models + 1 test), +228 LOC (код), +122 LOC (tests), 8 NEW tests, 1 ADR (0174).
+
+**S92 deep re-check** (vs plan):
+- `File` має M2M до `Order` через `OrderFile` — tenant isolation потрібен для multi-tenant file storage.
+- `OrderKind` — довідник типів запитів, але tenant-scoped (різні tenants мають власні каталоги).
+- `OrderFile` (M2M association) НЕ потребує TenantMixin — tenant isolation implicit через join to Order.
+- `OutboxMessage` НЕ потребує (service-level, S89 deep check).
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅, #5 ✅, **#7 ✅ CLOSED**, **#6 🟡 4/7 partial** (S89+S91+S92). Осталось: #6 (3 моделі), #8, #10.
+**Projected rating**: 8.30 → **8.50/10** (#6 4/7 +0.20).
+
 ## S91 closure summary (2026-06-12, ADR-0173)
 
 **Status: V2 P0 #6 (continue) 2/7 моделей tenant-isolated + V2 P0 #7 fix (10 processors) в S91 (5 commits, 6 NEW tests, 1 ADR).**

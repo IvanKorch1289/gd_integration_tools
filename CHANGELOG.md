@@ -5,6 +5,15 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S92 (2026-06-12) — V2 P0 #6 continue (File + OrderKind) (8 NEW tests, 4 commits)
+
+### Added
+
+- **S92 W1**: Alembic migration `f8a9b0c1d2e3_files_tenant_id` — `ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'` + `CREATE INDEX ix_files_tenant_id` + idempotent backfill. Online migration (PG 11+ metadata-only).
+- **S92 W2**: `File(BaseModel, TenantMixin)` + `OrderKind(BaseModel, TenantMixin)` — 4/7 моделей tenant-isolated (Order + User + File + OrderKind). `apply_tenant_filter` (S88 W2) auto-filtrує їх queries.
+- **S92 W3**: `tests/unit/dsl/test_s92_file_orderkind_tenant.py` — 8 NEW regression tests (MRO, column, migration chain, count 4/7).
+- `docs/adr/0174-sprint-92-v2-p0-6-file-orderkind.md` — closure ADR.
+
 ## [Unreleased] — Autonomous cycle S91 (2026-06-12) — V2 P0 #6 continue (User) + V2 P0 #7 fix (10 processors) (6 NEW tests, 5 commits)
 
 ### Added
