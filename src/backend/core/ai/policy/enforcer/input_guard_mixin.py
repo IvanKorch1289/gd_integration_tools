@@ -11,6 +11,17 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
+from src.backend.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+# NeMo guard → LLM Guard scanner fallback (Python 3.14 incompat, ADR-0175 C7)
+_NEMO_TO_LLM_GUARD_FALLBACK: dict[str, str] = {
+    "nemo:colang:topics": "llm_guard:BanTopics",
+    "nemo:colang:sensitive": "llm_guard:Sensitive",
+    "nemo:moderation": "llm_guard:PromptInjection",
+    "nemo:prompt_injection": "llm_guard:PromptInjection",
+}
 
 
 class InputGuardMixin:
@@ -49,10 +60,25 @@ class InputGuardMixin:
         name = ref.name.lower()
         on_block = ref.on_block
 
-        # NeMo — Python 3.14 incompat, пропускаем
+        # NeMo — Python 3.14 incompat, fallback to llm_guard if mapped
         if name.startswith("nemo:"):
-            logger.debug(
-                "AIPolicyEnforcer: nemo input guard skipped (Python 3.14 incompat)"
+            fallback = _NEMO_TO_LLM_GUARD_FALLBACK.get(name)
+            if fallback is not None:
+                logger.warning(
+                    "AIPolicyEnforcer: nemo guard %r → fallback to %r "
+                    "(NeMo Python 3.14 incompat)",
+                    name,
+                    fallback,
+                    extra={"guard_ref": name, "fallback": fallback, "category": "policy_degradation"},
+                )
+                # Delegate to llm_guard with mapped scanner
+                from src.backend.core.ai.policy.spec import GuardRef
+                mapped_ref = GuardRef(name=fallback, on_block=on_block)
+                return await self._guard_input_llm_guard(prompt, mapped_ref, on_block)
+            logger.warning(
+                "AIPolicyEnforcer: nemo guard %r skipped (Python 3.14 incompat, no fallback)",
+                name,
+                extra={"guard_ref": name, "category": "policy_degradation"},
             )
             return None
 
