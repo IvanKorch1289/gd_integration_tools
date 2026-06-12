@@ -5,6 +5,40 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S70 (2026-06-12) — 3rd SWARM (3 teams, all style cleanup, 2/3 subagent clean) (3 commits, 3/3 substantive)
+
+### Refactored
+
+- **S70 W1: services/dsl/builder_service.py imports doc** — subagent
+  CLEAN (best so far!). Imports already в target state (2 top-level
+  dsl + 1 TYPE_CHECKING). Added inline comment про circular import
+  guard + 4 NEW AST tests. 0 structural changes.
+
+- **S70 W2: frontend 33_DSL_Templates dsl imports top-level** —
+  subagent TIMEOUT → orchestrator finished (3 test fixes). 2 dsl
+  imports (WorkflowDeclaration, to_mermaid) moved из try/except в
+  top-level. `get_template_registry` остался в try/except (TRULY
+  OPTIONAL). 11 NEW tests pass + 1 skipped.
+
+- **S70 W3: services/plugins/registries.py consolidated dsl imports** —
+  subagent CLEAN! 4 dsl imports → 3 unique modules. 2 function-local
+  imports removed (в `register()` / `register_class()`). 11 NEW
+  AST tests.
+
+### Notes
+
+- **3rd SWARM EXECUTION pattern** (continuation). Subagent completion
+  rate: **2/3 clean (66%) — best so far** (S68: 1/3, S69: 0/3).
+- **Pattern**: smaller S-scope tasks → higher subagent success rate.
+- **All 3 W1-W3 были style cleanup, НЕ violation closure**. Per
+  S69 W2/W3 discovery: top-level dsl imports наружу всё ещё count
+  as violations. Allowlist 196 → 196 (0 entries).
+- **Subagent test bugs** (W2): path off-by-one (`parents[3]→[4]`),
+  count off-by-one (`5→6 imports` with from __future__),
+  strict-order assertions. All fixed by orchestrator.
+- Verified: 26 NEW tests pass (4 W1 + 11 W2 + 11 W3), 0 regressions.
+  ruff clean. См. ADR-0152 для S71+ backlog + subagent pattern lessons.
+
 ## [Unreleased] — Autonomous cycle S69 (2026-06-12) — 2nd SWARM (3 teams, 1 violation + 2 style cleanups, scope-honest) (3 commits, 3/3 substantive)
 
 ### Refactored
