@@ -37,34 +37,50 @@ class Condition:
 
     @classmethod
     def eq(cls, column: str, value: Any) -> Condition:
+        """``column = value`` (parametrized)."""
         return cls(f"{column} = %s", (value,))
 
     @classmethod
     def neq(cls, column: str, value: Any) -> Condition:
+        """``column != value`` (parametrized)."""
         return cls(f"{column} != %s", (value,))
 
     @classmethod
     def gt(cls, column: str, value: Any) -> Condition:
+        """``column > value`` (parametrized)."""
         return cls(f"{column} > %s", (value,))
 
     @classmethod
     def gte(cls, column: str, value: Any) -> Condition:
+        """``column >= value`` (parametrized)."""
         return cls(f"{column} >= %s", (value,))
 
     @classmethod
     def lt(cls, column: str, value: Any) -> Condition:
+        """``column < value`` (parametrized)."""
         return cls(f"{column} < %s", (value,))
 
     @classmethod
     def lte(cls, column: str, value: Any) -> Condition:
+        """``column <= value`` (parametrized)."""
         return cls(f"{column} <= %s", (value,))
 
     @classmethod
     def like(cls, column: str, pattern: str) -> Condition:
+        """``column LIKE pattern`` (parametrized; ClickHouse-style %)."""
         return cls(f"{column} LIKE %s", (pattern,))
 
     @classmethod
     def raw(cls, expression: str, *params: Any) -> Condition:
+        """Raw SQL expression with params (escape hatch for custom operators).
+
+        Args:
+            expression: Raw SQL fragment (e.g., ``"toDate(ts) = %s"``).
+            *params: Bind params (any type).
+
+        Returns:
+            :class:`Condition` with raw expression.
+        """
         return cls(expression, tuple(params))
 
 
@@ -87,12 +103,14 @@ class ClickHouseQueryBuilder:
     _sample: float | None = None
 
     def select(self, *cols: str, distinct: bool = False) -> ClickHouseQueryBuilder:
+        """Добавить columns в SELECT. ``distinct=True`` добавляет DISTINCT."""
         self._select.extend(cols)
         if distinct:
             self._distinct = True
         return self
 
     def from_(self, table: str, alias: str | None = None) -> ClickHouseQueryBuilder:
+        """FROM clause: ``FROM <table> [AS <alias>]``."""
         self._from = table
         self._from_alias = alias
         return self
@@ -100,10 +118,12 @@ class ClickHouseQueryBuilder:
     def with_cte(
         self, name: str, query: ClickHouseQueryBuilder | str
     ) -> ClickHouseQueryBuilder:
+        """WITH clause: добавить CTE ``name AS <query>``."""
         self._ctes.append((name, query))
         return self
 
     def where(self, *conditions: Condition) -> ClickHouseQueryBuilder:
+        """WHERE clause: добавить AND-ed conditions."""
         self._wheres.extend(conditions)
         return self
 

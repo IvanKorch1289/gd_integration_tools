@@ -41,7 +41,16 @@ Grep `TODO|FIXME|XXX` даёт **много false positives** в:
 ## S98+ Plan
 
 S98+ будет инкрементально закрывать по 1 TODO за sprint. Приоритет:
-1. `core/middleware/__init__.py:12` (high impact — middleware registry)
-2. `dsl/cli/generate.py:304` (medium — DSL codegen)
-3. `step_compilers.py:319` (LangGraph integration, large)
-4. `_common.py:32` (express integration, small)
+1. `core/middleware/__init__.py:12` (high impact — middleware registry) — **S98 W1 CLOSED**
+2. `dsl/cli/generate.py:304` (medium — DSL codegen) — **S99 W1 CLOSED**
+3. `step_compilers.py:319` (LangGraph integration, large) — S100+ scope (deferred)
+4. `_common.py:32` (express integration, small) — **S99 W2 CLOSED**
+
+## S99 Status
+
+| TODO | Sprint closed |
+|------|---------------|
+| S18 middleware | S98 W1 |
+| S40 W6 DSL codegen | S99 W1 |
+| S40 Wave 4.2 express | S99 W2 |
+| S24 W3 LangGraph | S100+ (NOT closed — actual feature) |
