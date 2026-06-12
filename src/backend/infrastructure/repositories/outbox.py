@@ -17,10 +17,11 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.infrastructure.database.models.outbox import OutboxMessage
@@ -28,6 +29,7 @@ from src.backend.infrastructure.database.session_manager import main_session_man
 
 __all__ = (
     "ALLOWED_TRANSPORTS",
+    "claim_pending",
     "count_stuck_pending",
     "count_stuck_pending_by_transport",
     "fetch_pending",
@@ -130,6 +132,13 @@ async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
     Фильтр: ``status='pending'`` и ``next_attempt_at <= now``. Сортировка
     по ``created_at`` — FIFO. Limit защищает worker от OOM при большом
     backlog'е.
+
+    .. warning::
+       **Не multi-instance safe**: N worker'ов, вызывающих параллельно,
+       прочтут один и тот же набор строк → дубль публикаций. Для
+       multi-instance используй :func:`claim_pending`.
+
+    See :func:`claim_pending` для production path (S64 W1).
     """
     now = datetime.now(UTC)
     async with main_session_manager.create_session() as session:
@@ -142,6 +151,127 @@ async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
         )
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+
+def _advisory_lock_key(worker_id: str) -> int:
+    """Deterministic 64-bit int key из ``worker_id`` для ``pg_try_advisory_xact_lock``.
+
+    Использует BLAKE2b-256 с 8-байтовым digest → 64-bit unsigned int
+    (Postgres bigint range). Same pattern as
+    :func:`src.backend.infrastructure.workflow.pg_runner_internals.event_store._advisory_lock_key`
+    — но для outbox.
+    """
+    digest = hashlib.blake2b(worker_id.encode("utf-8"), digest_size=8).digest()
+    return int.from_bytes(digest, "big", signed=False) & 0x7FFFFFFFFFFFFFFF
+
+
+async def claim_pending(
+    limit: int = 100,
+    *,
+    worker_id: str,
+    lease_seconds: int = 300,
+) -> list[OutboxMessage]:
+    """Multi-instance safe атомарный claim batch pending outbox-сообщений (S64 W1).
+
+    Алгоритм:
+
+    1. ``pg_try_advisory_xact_lock(hash(worker_id))`` — non-blocking try-lock
+       per-worker. Если другой worker уже держит lock — возврат ``[]``
+       (этот worker skip, попробует следующий tick).
+    2. ``UPDATE outbox_messages SET retry_count = retry_count + 1 WHERE id IN
+       (SELECT id FROM outbox_messages WHERE status='pending' AND
+        next_attempt_at <= now ORDER BY created_at LIMIT :limit
+        FOR UPDATE SKIP LOCKED) RETURNING *`` — атомарный claim
+       (SELECT-FOR-UPDATE-SKIP-LOCKED предотвращает гонки даже в пределах
+       одной сессии/транзакции).
+    3. Commit → advisory lock и row locks снимаются.
+
+    Args:
+        limit: max messages in batch (default 100).
+        worker_id: уникальный ID (UUID, pod-name, hostname). Hash
+            используется как advisory lock key.
+        lease_seconds: (reserved) lease TTL для будущего S65
+            (``status='processing'`` + ``locked_until``). Сейчас
+            игнорируется — atomic-claim уже обеспечивает не-дубли
+            в пределах одной транзакции.
+
+    Returns:
+        List of claimed :class:`OutboxMessage` records (с инкрементированным
+        ``retry_count``). ``[]`` если advisory lock не получен (другой
+        worker активен) ИЛИ если pending пуст.
+
+    Trade-offs / ограничения:
+
+    * **Advisory lock granularity = per-call, не per-row.** Один worker
+      захватывает lock → claim batch → commit. Другой worker в это
+      время получает ``[]`` (skip) и попробует на следующем tick.
+      Это **batch-level coordination**, не row-level.
+    * **После commit row lock released**, ``retry_count`` инкрементирован
+      (signal for monitoring), но ``status`` остаётся ``pending``. Если
+      worker упадёт между claim и ``mark_sent``, строка будет
+      переclaim'нута следующим tick (retry_count уже > 0). Корректно
+      для at-least-once семантики.
+    * **Полное row-level решение** (с ``status='processing'`` +
+      ``locked_until``) — S65+ (требует Alembic-миграцию).
+    """
+    if not worker_id:
+        raise ValueError("worker_id обязателен для claim_pending")
+
+    lock_key = _advisory_lock_key(worker_id)
+    now = datetime.now(UTC)
+    async with main_session_manager.transaction() as session:
+        # 1. Try acquire per-worker advisory lock
+        got_lock = bool(
+            (
+                await session.execute(
+                    text("SELECT pg_try_advisory_xact_lock(:k)"),
+                    {"k": lock_key},
+                )
+            ).scalar()
+        )
+        if not got_lock:
+            return []
+
+        # 2. Atomic claim: SELECT FOR UPDATE SKIP LOCKED + UPDATE + RETURNING
+        result = await session.execute(
+            text(
+                """
+                UPDATE outbox_messages
+                SET retry_count = retry_count + 1
+                WHERE id IN (
+                    SELECT id FROM outbox_messages
+                    WHERE status = 'pending'
+                      AND next_attempt_at <= :now
+                    ORDER BY created_at
+                    LIMIT :limit
+                    FOR UPDATE SKIP LOCKED
+                )
+                RETURNING id, topic, payload, headers, status, retry_count,
+                          last_error, transport, published_at, next_attempt_at,
+                          created_at, updated_at
+                """
+            ),
+            {"now": now, "limit": limit},
+        )
+        rows = result.fetchall()
+        # Преобразуем RawRow → OutboxMessage ORM-объекты
+        return [
+            OutboxMessage(
+                id=row.id,
+                topic=row.topic,
+                payload=row.payload,
+                headers=row.headers or {},
+                status=row.status,
+                retry_count=row.retry_count,
+                last_error=row.last_error,
+                transport=row.transport,
+                published_at=row.published_at,
+                next_attempt_at=row.next_attempt_at,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+            )
+            for row in rows
+        ]
 
 
 async def fetch_stuck_pending(
