@@ -76,7 +76,19 @@ class JupyterBackendMixin:
     async def _execute_cell(
         self, server_url: str, kernel_id: str, source: str, *, timeout: float
     ) -> list[dict[str, Any]]:
-        """Execute single cell via WebSocket kernel channel."""
+        """Execute single cell via WebSocket kernel channel.
+
+        S74 W3 (FINAL_REPORT_V2 направление #1): WebSocket heartbeat
+        для long-running cells (model training, etc.) — connection
+        may silently drop без ``recv()`` raising. Background
+        ``_heartbeat_loop`` sends ping каждые ``HEARTBEAT_INTERVAL_S``
+        и abort'ит execution если pong не получен в
+        ``HEARTBEAT_TIMEOUT_S``.
+        """
+        # S74 W3: heartbeat tuning
+        HEARTBEAT_INTERVAL_S = 30.0
+        HEARTBEAT_TIMEOUT_S = 60.0  # 2x interval (typical WS pong latency)
+
         try:
             import websockets
         except ImportError as exc:
@@ -110,14 +122,79 @@ class JupyterBackendMixin:
 
         outputs: list[dict[str, Any]] = []
 
+        # S74 W3: heartbeat state (single-slot, скоординировано
+        # между heartbeat task и main recv loop).
+        last_pong_time = asyncio.get_event_loop().time()
+        connection_dead = asyncio.Event()
+        heartbeat_task: asyncio.Task[None] | None = None
+
+        async def _heartbeat_loop() -> None:
+            """Background task: ping kernel WS каждые 30s.
+
+            Если pong не получен в HEARTBEAT_TIMEOUT_S → connection_dead.
+            websockets library обрабатывает ping/pong на protocol level
+            (auto-replies to ping), но мы track'им latency для
+            detection of silent network drops.
+            """
+            nonlocal last_pong_time
+            try:
+                while not connection_dead.is_set():
+                    await asyncio.sleep(HEARTBEAT_INTERVAL_S)
+                    if connection_dead.is_set():
+                        break
+                    now = asyncio.get_event_loop().time()
+                    # If we haven't seen a pong в last interval, send ping
+                    if now - last_pong_time >= HEARTBEAT_INTERVAL_S:
+                        try:
+                            await asyncio.wait_for(
+                                ws.ping(),  # type: ignore[has-type]
+                                timeout=HEARTBEAT_TIMEOUT_S,
+                            )
+                            last_pong_time = now
+                            _logger.debug(
+                                "WS heartbeat OK (kernel=%s)", kernel_id
+                            )
+                        except asyncio.TimeoutError:
+                            _logger.warning(
+                                "WS heartbeat timeout (kernel=%s) — "
+                                "connection presumed dead",
+                                kernel_id,
+                            )
+                            connection_dead.set()
+                            break
+            except asyncio.CancelledError:
+                pass  # Normal shutdown
+            except Exception as exc:  # noqa: BLE001
+                _logger.warning("Heartbeat task error: %s", exc)
+                connection_dead.set()
+
         try:
             async with websockets.connect(uri) as ws:  # type: ignore[var-annotated]
+                # S74 W3: register pong handler для updating last_pong_time
+                def _on_pong_received(*_args: Any) -> None:
+                    nonlocal last_pong_time
+                    last_pong_time = asyncio.get_event_loop().time()
+
+                ws.pong_handler = _on_pong_received  # type: ignore[attr-defined]
+
+                # Start heartbeat AFTER setting up pong handler
+                heartbeat_task = asyncio.create_task(_heartbeat_loop())
+
                 await ws.send(json.dumps(execute_msg))
 
                 # Wait for execute_reply with msg_id matching our request
                 deadline = asyncio.get_event_loop().time() + timeout
                 while asyncio.get_event_loop().time() < deadline:
+                    if connection_dead.is_set():
+                        raise JupyterExecutionError(
+                            f"WebSocket connection dead "
+                            f"(no heartbeat response for "
+                            f"{HEARTBEAT_TIMEOUT_S}s)"
+                        )
                     raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
+                    # Update last_pong_time на любом message
+                    # (sign of life, не только pong).
+                    last_pong_time = asyncio.get_event_loop().time()
                     msg = json.loads(raw)
                     msg_type = msg.get("msg_type", "")
                     parent_id = msg.get("parent_header", {}).get("msg_id")
@@ -167,5 +244,13 @@ class JupyterBackendMixin:
             ) from exc
         except Exception as exc:
             raise JupyterExecutionError(f"WebSocket error: {exc}") from exc
+        finally:
+            # S74 W3: cancel heartbeat task и cleanup
+            if heartbeat_task is not None and not heartbeat_task.done():
+                heartbeat_task.cancel()
+                try:
+                    await heartbeat_task
+                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                    pass
 
         return outputs
