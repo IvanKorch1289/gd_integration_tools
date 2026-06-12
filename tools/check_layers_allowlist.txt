@@ -110,8 +110,6 @@ src/backend/entrypoints/sse/handler.py	entrypoints	src.backend.infrastructure.se
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.codec.json
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.engine.processors.scraping
 src/backend/entrypoints/webhook/transformer.py	entrypoints	src.backend.infrastructure.resilience.retry
-src/backend/infrastructure/audit/event_log.py	infrastructure	src.backend.dsl.codec.json
-src/backend/infrastructure/audit/jsonl_audit.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/cache/rag/semantic.py	infrastructure	src.backend.services.ai.embedding_providers
 src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
 src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
