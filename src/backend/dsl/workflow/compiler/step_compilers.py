@@ -316,11 +316,16 @@ async def compile_agent_invoke_step(
 
             saver = await get_langgraph_postgres_saver()
             if saver is not None:
-                # TODO S24 W3: integrate LangGraph Checkpointer here
-                # For now, fall through to stateless mode
+                # S99 W3: checkpointer IS available (saver != None), но thread_id
+                # state-management (put/get_next_version) не интегрирован в
+                # AgentInvoke workflow. S100+ scope: bind saver.put() к
+                # exchange.message checkpoint, saver.get() для resume.
+                #
+                # For now, fall through to stateless mode.
                 _logger.debug(
                     "AgentInvoke %s: durable mode requested but checkpointer "
-                    "integration pending S24 W3 — using stateless fallback",
+                    "integration pending S100+ (saver available, thread_id "
+                    "state management not yet wired) — using stateless fallback",
                     decl.agent_id,
                 )
         except Exception as exc:
