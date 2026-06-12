@@ -102,7 +102,7 @@ async def _register_pools_in_unified_manager() -> None:
     # query as liveness check).
     try:
         from src.backend.core.config.features import feature_flags
-        if feature_flags.ai_gateway_enabled:
+        if feature_flags.ai_gateway_enforce:
             from src.backend.services.ai.gateway.client import (
                 get_litellm_gateway,
             )
