@@ -10,6 +10,8 @@ connection pool registration + backend enablement checks.
 from typing import Any
 
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
+from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.database.database import get_db_initializer
@@ -95,6 +97,34 @@ async def _register_pools_in_unified_manager() -> None:
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager clickhouse skipped: %s", exc)
+
+    # S90 W1: MongoDB (FINAL_REPORT_V3 #5).
+    if _mongo_enabled():
+        try:
+            mongo_client = get_mongo_client()
+
+            async def _ping_mongo() -> None:
+                await mongo_client.ping()
+
+            manager.register(
+                "mongodb_main", mongo_client, ping_fn=_ping_mongo, kind="mongodb"
+            )
+        except Exception as exc:
+            app_logger.debug("UnifiedPoolManager mongodb skipped: %s", exc)
+
+    # S90 W2: Elasticsearch (FINAL_REPORT_V3 #5).
+    if _es_enabled():
+        try:
+            es_client = get_elasticsearch_client()
+
+            async def _ping_es() -> None:
+                await es_client.ping()
+
+            manager.register(
+                "elasticsearch_main", es_client, ping_fn=_ping_es, kind="elasticsearch"
+            )
+        except Exception as exc:
+            app_logger.debug("UnifiedPoolManager elasticsearch skipped: %s", exc)
 
     # S80 W2: LiteLLM Gateway (FINAL_REPORT_V2 P1 #6).
     # LiteLLM SDK manages connections internally (no native pool),
@@ -197,3 +227,23 @@ def _clickhouse_enabled() -> bool:
     from src.backend.core.config.settings import settings
 
     return bool(getattr(settings.clickhouse, "enabled", False))
+
+
+def _mongo_enabled() -> bool:
+    """S90 W1 — MongoDB integration enablement guard.
+
+    Управляется ``settings.mongo.enabled`` (default ``True`` для production).
+    """
+    from src.backend.core.config.settings import settings
+
+    return bool(getattr(settings.mongo, "enabled", True))
+
+
+def _es_enabled() -> bool:
+    """S90 W2 — Elasticsearch integration enablement guard.
+
+    Управляется ``settings.elasticsearch.enabled`` (default ``False``).
+    """
+    from src.backend.core.config.settings import settings
+
+    return bool(getattr(settings.elasticsearch, "enabled", False))
