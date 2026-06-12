@@ -17,6 +17,7 @@ src/backend/core/di/providers/cache.py	core	src.backend.entrypoints.api.v1.endpo
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.context
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.exchange
 src/backend/core/interfaces/ratelimit_gateway.py	core	src.backend.entrypoints.middlewares.global_ratelimit
+src/backend/core/logging/__init__.py	core	src.backend.infrastructure.logging.base
 src/backend/core/messaging/dlq.py	core	src.backend.infrastructure.messaging
 src/backend/core/messaging/dlq.py	core	src.backend.infrastructure.messaging.dlq_base
 src/backend/core/messaging/dlq_policy.py	core	src.backend.infrastructure.messaging.dlq_base
@@ -134,6 +135,7 @@ src/backend/infrastructure/sinks/webhook_sink.py	infrastructure	src.backend.dsl.
 src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
+src/backend/services/ai/gateway/pool_registration.py	services	src.backend.infrastructure.clients.pool_health
 src/backend/services/ai/langmem_models.py	services	src.backend.infrastructure.database.models
 src/backend/services/ai/langmem_models.py	services	src.backend.infrastructure.database.models.langmem_models
 src/backend/services/ai/langmem_service.py	services	src.backend.infrastructure.database.session
@@ -158,12 +160,6 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoin
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/jupyter/execution_service/__init__.py	services	src.backend.infrastructure.clients.external.jupyter_hub
-src/backend/services/jupyter/execution_service/__init__.py	services	src.backend.infrastructure.logging.factory
-src/backend/services/jupyter/execution_service/backend.py	services	src.backend.infrastructure.logging.factory
-src/backend/services/jupyter/execution_service/core_mixin.py	services	src.backend.infrastructure.logging.factory
-src/backend/services/jupyter/execution_service/errors.py	services	src.backend.infrastructure.logging.factory
-src/backend/services/jupyter/execution_service/io_mixin.py	services	src.backend.infrastructure.logging.factory
-src/backend/services/jupyter/execution_service/jupyter_mixin.py	services	src.backend.infrastructure.logging.factory
 src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry
@@ -182,13 +178,11 @@ src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workfl
 src/backend/services/workflows/sla_alerting.py	services	src.backend.infrastructure.observability.metrics_registry
 src/backend/workflows/worker.py	workflows	src.backend.dsl.commands.setup
 src/backend/workflows/worker.py	workflows	src.backend.dsl.routes
-src/frontend/streamlit_app/api_clients/k4.py	frontend	src.backend.infrastructure.logging.factory
 src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/18_Workflow_Versioning.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.spec
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.template_registry_compat
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.visualize
-src/frontend/streamlit_app/pages/43_Realtime_Logs.py	frontend	src.backend.infrastructure.logging.factory
 src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engine.dry_run
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
