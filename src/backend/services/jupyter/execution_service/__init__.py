@@ -35,6 +35,10 @@ _logger = get_logger("services.jupyter.execution")
 from src.backend.services.jupyter.execution_service.backend import (
     NbClientExecutionBackend,  # S60 W1: re-export
 )
+from src.backend.services.jupyter.execution_service.factory import (  # S74 W2
+    BackendKind,  # S74 W2: re-export
+    ExecutionBackendFactory,  # S74 W2: re-export
+)
 from src.backend.services.jupyter.execution_service.papermill_backend import (  # S74 W1
     PapermillExecutionBackend,  # S74 W1: re-export
 )
@@ -52,6 +56,8 @@ from src.backend.services.jupyter.execution_service.jupyter_mixin import (
 )
 
 __all__ = (
+    "BackendKind",  # S74 W2
+    "ExecutionBackendFactory",  # S74 W2
     "JupyterExecutionError",
     "NbClientExecutionBackend",
     "NotebookExecutionService",
