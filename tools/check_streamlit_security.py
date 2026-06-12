@@ -203,7 +203,8 @@ def main() -> int:
     Returns:
         Exit code: 0 = all passed, 1 = some failed.
     """
-    result = check_streamlit_config()
+    # S78 W4 fix: read module attribute at call time (testability)
+    result = check_streamlit_config(DEFAULT_CONFIG_PATH)
     print(f"Streamlit security check: {result.config_path}")
     print()
     for check in result.checks:
