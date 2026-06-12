@@ -108,7 +108,24 @@ class BatchInsertProcessor(BaseProcessor):
 
 
 class BatchUpdateProcessor(BaseProcessor):
-    """Batch UPDATE через SQLAlchemy core (один statement на item)."""
+    """Batch UPDATE через SQLAlchemy core (executemany per column-group).
+
+    S66 W4: docstring clarification (vs analysis P1-5 claim "один UPDATE per item").
+
+    Реально:
+    * Items группируются по ``frozenset(update_columns)`` (идентичный
+      набор обновляемых колонок = один group);
+    * Для каждого group: ОДИН ``UPDATE ... WHERE key = :_key`` statement,
+      выполненный через ``session.execute(text(stmt), params_list)`` —
+      это **executemany** pattern, SINGLE RTT per group;
+    * N групп → N statements, но каждый statement = bulk UPDATE
+      (НЕ цикл per item).
+
+    Сравнение с ошибочным утверждением:
+    * ~~"for item in batch: await session.execute(update_stmt, item)"~~
+      (анализ P1-5, **НЕ соответствует коду**);
+    * Реально: groups.items() → executemany per group.
+    """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
     compensatable: ClassVar[bool] = False
