@@ -1,19 +1,19 @@
-"""S95 W4 — Auth Gateway: canonical public facade для auth-логики.
+"""S95 W4 / S96 W1 — Auth Gateway: canonical public facade для auth-логики.
 
-S93 W3 уже создал ``verify_request`` public API в
-``entrypoints.api.dependencies.auth_selector``. W4 — move canonical
-import path в ``core.auth.gateway`` чтобы extensions использовали
-stable public API, не entrypoints-уровень.
+S93 W3 создал ``verify_request`` public API в
+``entrypoints.api.dependencies.auth_selector``. S95 W4 — ``core.auth.gateway``
+фасад (стабильный import path для extensions). S96 W1 — перенёс РЕАЛЬНУЮ
+implementation в ``core.auth.auth_selector`` чтобы избежать downward layer
+violation (``core/ → entrypoints/``).
 
-Архитектура:
+Архитектура (S96 W1):
 
-* ``core.auth.gateway`` — stable public facade (extensions import отсюда)
-* ``entrypoints.api.dependencies.auth_selector`` — implementation
-  (DI-aware, holds verifier registry, can do FastAPI dependency injection)
-
-Это thin re-export pattern: gateway импортирует из auth_selector и
-пере-экспортирует. Если когда-нибудь auth_selector будет split/refactored,
-extensions не сломаются (импорт через gateway остаётся стабильным).
+* ``core.auth.auth_selector`` — canonical implementation (verifier
+  registry, ``verify_request``, ``require_auth`` factory).
+* ``core.auth.gateway`` — public facade (re-exports + OO ``AuthGateway``
+  class с pre-configured defaults).
+* ``entrypoints.api.dependencies.auth_selector`` — DEPRECATED shim
+  (re-exports из ``core.auth.auth_selector``). Удалится в S99+.
 
 Использование в extensions::
 
@@ -33,7 +33,7 @@ from src.backend.core.auth import (
     AuthContext,
     AuthMethod,
 )
-from src.backend.entrypoints.api.dependencies.auth_selector import (
+from src.backend.core.auth.auth_selector import (
     require_auth,
     set_default_auth,
     verify_request,
