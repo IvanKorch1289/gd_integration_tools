@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S95 (2026-06-13) — DSL CRUD + Ratchet + Audit + AuthGateway (4 commits, 37 NEW tests)
+
+### Added
+
+- **S95 W1-DSL db_insert/db_upsert/db_delete**: Safe parameterized SQL builder. `dsl/engine/processors/db_crud.py` — DbCrudProcessor + standalone SQL builders. Identifier whitelist `[A-Za-z0-9_]`, values = bind-params (no f-string SQL). DELETE requires non-empty where (защита от accidental DELETE all). UPSERT = PostgreSQL `ON CONFLICT DO UPDATE` (DO NOTHING если все cols = conflict_keys). Composes `DatabaseQueryProcessor` (battle-tested connection pool + retry). DSL builder methods в PersistenceMixin: `db_insert`, `db_upsert`, `db_delete`. **PersistenceMixin: 9 → 12 methods**. 19 tests: SQL builders (12) + processor (5) + DSL (2).
+- **S95 W2-docstring ratchet -15** (567 → 552): `core/di/providers/http.py` — 15 setter providers добавлены short docstrings (set_http_client_provider, set_smtp_client_provider, set_express_*, set_browser_client_provider, set_external_session_manager_provider, и т.д.).
+- **S95 W3-stdlib logging audit + regression guard**: 7 файлов retain stdlib logging legitimately (dsl/engine/context.py, infrastructure/clients/external/logger.py, http/request_mixin.py, execution/dask_backend.py, external_apis/logging_service.py, observability/structlog_batching.py, workflows/worker.py). `tests/unit/core/test_legitimate_stdlib_logging.py` — 9 tests enforce policy. Также: deleted orphan `core/auth/gateway.py` from S93 W3 (моя `git checkout && rm` chain failure).
+- **S95 W4-AuthGateway facade**: `core/auth/gateway.py` — thin re-export facade (AuthContext, AuthMethod, verify_request, require_auth). NEW: AuthGateway class (OOP wrapper с default_method + verify()/require()). Stable canonical import path для extensions. 9 tests: re-export identity + AuthGateway class + verify() + no-stdlib-logging.
+- `docs/adr/0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md` — closure ADR.
+
+### Tests
+
+- 37 NEW (W1: 19 + W3: 9 + W4: 9; W2 ratchet без tests)
+- S93+S94+S95 total: 57 + 20 + 37 = 114 NEW tests across 9 atomic commits
+
 ## [Unreleased] — Autonomous cycle S94 (2026-06-13) — Logging codemod + Docstring ratchet + DSL SSE (4 commits, 20 NEW tests)
 
 ### Added
