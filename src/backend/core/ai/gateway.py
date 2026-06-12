@@ -198,38 +198,38 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             (tokens / cost / guards).
 
         Raises:
-            CapabilityDeniedError: При ``enforce=True`` и отсутствии
-                ``ai.invoke.<workflow_id>`` в plugin.toml::capabilities.
-            PolicyNotResolvedError: При ``enforce=True`` и
-                :data:`feature_flags.ai_policy_enforce = True`, если
-                :class:`PolicyResolver` не нашёл подходящую policy с
+            CapabilityDeniedError: При отсутствии ``ai.invoke.<workflow_id>``
+                в plugin.toml::capabilities.
+            PolicyNotResolvedError: При :data:`feature_flags.ai_policy_enforce = True`,
+                если :class:`PolicyResolver` не нашёл подходящую policy с
                 ``required=True``.
+            AIGatewayEnforcementRequiredError: При
+                :data:`feature_flags.ai_gateway_enforce = False` (scaffold-режим).
+                S85: enforcement ВСЕГДА включён — silent pass-through запрещён.
 
         Notes:
-            При ``enforce=False`` (default scaffold-режим) делегирует
-            в :meth:`_legacy_invoke` без enforcement.
+            S85 W1 (V2 P0 #1): _legacy_invoke удалён. Enforcement обязателен.
         """
         from src.backend.core.config.features import feature_flags
 
+        # S85 W1 (V2 P0 #1): enforcement is mandatory, scaffold-режим запрещён.
         if not feature_flags.ai_gateway_enforce:
-            return await self._legacy_invoke(request)
+            from src.backend.core.ai.errors import (
+                AIGatewayEnforcementRequiredError,
+            )
+
+            raise AIGatewayEnforcementRequiredError(
+                "ai_gateway_enforce=False is no longer supported (S85). "
+                "Set feature_flags.ai_gateway_enforce=True."
+            )
         return await self._enforced_invoke(request)
-
     # `_enforced_invoke` extracted в gateway_orchestrator_mixin.py (T-P1.1c)
-    async def _legacy_invoke(self, request: AIRequest) -> AIResponse:
-        """Pass-through до S27 closure: caller использует свой prompt напрямую.
 
-        Используется только для backward-compat обёртки 3 кодопутей LLM.
-        Возвращает пустой AIResponse — реальный вызов делает caller.
-
-        Args:
-            request: AIRequest (игнорируется в scaffold).
-
-        Returns:
-            Пустой AIResponse (placeholder, caller использует свой контракт).
-        """
-        del request
-        return AIResponse(content="", model_used="pass-through-scaffold")
+    # S85 W1 (V2 P0 #1): _legacy_invoke удалён. Pass-through scaffold
+    # больше не нужен — все 3 bypass paths (ai_graph, agents_pydantic/base,
+    # adapter) теперь обязаны идти через AIGateway с enforcement.
+    # Если feature_flags.ai_gateway_enforce=False, AIGateway.invoke()
+    # бросает AIGatewayEnforcementRequiredError вместо silent pass-through.
 
 
 # ── Mixins extracted (T-P1.1a/b/c):

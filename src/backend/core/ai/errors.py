@@ -7,6 +7,7 @@ from typing import Any
 
 __all__ = (
     "AIFsError",
+    "AIGatewayEnforcementRequiredError",
     "AIWorkspaceError",
     "GuardResult",
     "GuardrailViolationError",
@@ -117,6 +118,15 @@ class MCPToolError(Exception):
 
 class AIFsError(Exception):
     """Базовый класс ошибок :class:`AIFsFacade`."""
+
+
+class AIGatewayEnforcementRequiredError(Exception):
+    """S85 W1 (V2 P0 #1): AIGateway требует enforcement.
+
+    Поднимается когда :data:`feature_flags.ai_gateway_enforce = False`.
+    Scaffold-режим (silent pass-through) запрещён — каждый LLM call
+    обязан идти через enforcement pipeline.
+    """
 
 
 class FsForbiddenWriteError(AIFsError):
