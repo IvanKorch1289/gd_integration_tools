@@ -5,6 +5,32 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S73 (2026-06-12) — P0-A closure: 106 files batch-fixed, 2 NEW regression tests, pre-push CI gate (5 commits)
+
+### Fixed
+
+- **S73 W1: 106 files with `except A, B:` semantic bug fixed** (P0-A from
+  FINAL_REPORT_V2.md). Codemod `tools/fix_except_bug.py` (написан S60 W3,
+  не запускался до S73) batch-fixed 136 `except A, B:` patterns.
+  Python 3.14 silent semantic bug: `except A, B:` валиден syntax, но
+  catches только `A` (второй — alias variable, не exception type).
+  1:1 swap, +136/-136 LOC. Compiles, `create_app()` loads, 76+ tests
+  pass. 2 NEW regression tests в
+  `tests/unit/tools/test_fix_except_bug_no_remaining.py` гарантируют
+  no future regression.
+- **S73 W2: 4 stale allowlist entries cleaned** (FINAL_REPORT_V2 finding).
+  `tools/check_layers_allowlist.txt`: -4 entries referencing
+  `schema/*` files удалённые в S71 W1 (helpers, query, subscription).
+  0 stale, 192 legacy (down from 196).
+
+### Added
+
+- **S73 W3: pre-push hook для `except A, B:` regression prevention**
+  (P0-A CI gate from FINAL_REPORT_V2). `.pre-commit-config.yaml`:
+  new hook `check-except-bug` runs `tools/fix_except_bug.py --dry-run
+  src/` on pre-push stage. Exit code != 0 → push blocked. Defense-in-depth
+  с W1 regression test (статический scan vs dynamic check).
+
 ## [Unreleased] — Autonomous cycle S72 (2026-06-12) — TD-S64-W1 closure: per-row outbox claim (Alembic + SQL rewrite + sweeper + tests) (4 commits, 6 NEW tests)
 
 ### Added

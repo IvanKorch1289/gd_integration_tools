@@ -1,6 +1,31 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S72 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S73 W5)
 
 Tracking для known issues, workarounds, и deferred work, который
+
+## S73 closure summary (2026-06-12, ADR-0155)
+
+**Status: 1/1 P0 from FINAL_REPORT_V2.md CLOSED в S73 (5 commits, 2 NEW tests).**
+
+| P0 | Status | What |
+|---|---|---|
+| **P0-A** SyntaxError batch fix | ✅ CLOSED S73 | 106 files / 136 patterns fixed + 2 regression tests + pre-push CI gate |
+
+**Net S73 LOC**: 111 files changed, NET +91 LOC.
+
+**FINAL_REPORT_V2 fact-check**:
+* 26 files claim → real **83+ files** (rg pattern broader).
+  106 files / 136 fixes после codemod.
+* `_base64_codec.py:54` (S69 W1 subagent artifact) → ✅ auto-fixed в W1.
+* 4 stale allowlist entries (schema/* deleted в S71) → ✅ W2 cleanup.
+* P0-B/C/D (tools whitelist, AI Policy, CORS) → S74+ candidates.
+
+## S74+ epic candidates (from FINAL_REPORT_V2 P0-B/C/D)
+
+1. **P0-B: tools whitelist в AIPolicySpec** (L-scope, AI safety)
+2. **P0-C: AI Policy Spec DSL** — реализовать ADR-0067 (L-scope, multi-file)
+3. **P0-D: CORS/XSRF в Streamlit** (L-scope, frontend)
+4. P1: PoolHealthMonitor registration (LiteLLM Gateway, etc.)
+5. P1: CircuitBreakerMiddleware restoration (если ещё не deprecated)
 
 ## S72 closure summary (2026-06-12, ADR-0154)
 
