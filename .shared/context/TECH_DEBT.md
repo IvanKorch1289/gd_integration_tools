@@ -1,4 +1,16 @@
-# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S82 W5)
+# TECH_DEBT — gd_integration_tools (last update: 12.06.2026 — S83 W5)
+
+## S83 closure summary (2026-06-12, ADR-0165)
+
+**Status: V2 P0 N1 (DetachedInstanceError → data corruption) CLOSED в S83 (4 commits, 7 NEW tests).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **N1 DetachedInstanceError** | ✅ CLOSED S83 W1-W4 | `attribute_names=...` refresh + `delete()` returns ID |
+
+**Net S83 LOC**: 3 files changed, +127 LOC, 7 NEW tests.
+
+**Net V2 P0 rating**: N1 CLOSED. Осталось: N2, #5, #6, #8, #9, #10, N3, N5.
 
 ## S82 closure summary (2026-06-12, ADR-0164)
 

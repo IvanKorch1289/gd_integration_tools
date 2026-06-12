@@ -5,6 +5,36 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S83 (2026-06-12) — V2 P0 N1 closure: DetachedInstanceError fix via attribute_names refresh (7 NEW tests) (4 commits)
+
+### Fixed
+
+- **S83 W3: DetachedInstanceError в `update()`** (FINAL_REPORT_V2 N1).
+  `SQLAlchemyRepository._prepare_and_save_object` использовал
+  `session.refresh()` без `attribute_names` — все attrs expired,
+  доступ к obj.field после `@main_session_manager.connection()`
+  close = `DetachedInstanceError` → data corruption. Fix:
+  `session.refresh(instance=obj, attribute_names=[c.key for c in inspect(obj.__class__).columns])`
+  — refresh с explicit list не expire'ит остальные attrs,
+  объект остаётся usable до GC.
+  W1 fix (expire_on_commit=False) REVERTED — AsyncSession не имеет
+  expire_on_commit attribute (это sync Session property).
+
+### Changed
+
+- **S83 W2: `delete()` returns `int | None`** (was `None`).
+  Возвращает ID удалённого объекта для audit logging. 0 callers
+  в src/ используют return value → backward-compat signal change.
+
+### Tests
+
+- **S83 W3 + W4: 7 NEW tests** в
+  `tests/unit/infrastructure/repositories/test_base_repository.py`:
+  5 DetachedInstanceError regression + 2 idempotency. 7/7 pass.
+
+## [Unreleased] — Autonomous cycle S82 (2026-06-12) — P1 #10 closure: Documentation cookbooks (5 production-ready recipes) (5 commits)
+
+
 ## [Unreleased] — Autonomous cycle S82 (2026-06-12) — P1 #10 closure: Documentation cookbooks (5 production-ready recipes) (5 commits)
 
 ### Added
