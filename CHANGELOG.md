@@ -5,6 +5,16 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S91 (2026-06-12) — V2 P0 #6 continue (User) + V2 P0 #7 fix (10 processors) (6 NEW tests, 5 commits)
+
+### Added
+
+- **S91 W1**: Alembic migration `e7f8a9b0c1d2_users_tenant_id` — `ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'` + `CREATE INDEX ix_users_tenant_id` + idempotent backfill. Online migration (PG 11+ metadata-only). `User` — 2/7 моделей tenant-isolated.
+- **S91 W2**: `User(BaseModel, TenantMixin)` — `tenant_id` надається через mixin. `apply_tenant_filter` (S88 W2) auto-filtrує users queries.
+- **S91 W3**: 10 processors (`agent_dsl/*` + `ml_predict.py`): `del context` → `_ = context  # Зарезервировано`. Дозволяє майбутнє використання `context` для tenant_id/correlation_id propagation без UnboundLocalError.
+- **S91 W4**: `tests/unit/dsl/test_s91_user_tenant_and_processors.py` — 6 NEW regression tests (User MRO, tenant_id column, 10/10 processors with `_ = context`, signature intact).
+- `docs/adr/0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md` — closure ADR.
+
 ## [Unreleased] — Autonomous cycle S90 (2026-06-12) — V3 #5 closure: MongoDB + Elasticsearch pool registration (3 NEW tests, 4 commits)
 
 ### Added

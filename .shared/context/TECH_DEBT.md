@@ -24,6 +24,25 @@
 
 **V2 verdict impact**: 5/10 fully closed, 1/10 pilot-closed, 3/10 pending, 1/10 V2 fact-check wrong. Projected rating: 7.66 → **7.96/10** (pilot-closed +1/2).
 
+## S91 closure summary (2026-06-12, ADR-0173)
+
+**Status: V2 P0 #6 (continue) 2/7 моделей tenant-isolated + V2 P0 #7 fix (10 processors) в S91 (5 commits, 6 NEW tests, 1 ADR).**
+
+| FINAL_REPORT_V2 # | Status | What |
+|---|---|---|
+| **#6 Tenant auto-filter (continue)** | 🟡 2/7 CLOSED S89+S91 | Order (S89), User (S91). Залишилося: File, OrderKind, WorkflowEvent, DslSnapshot, RuleEngine → S92+ |
+| **#7 del context у processors** | ✅ CLOSED S91 W3 | 10 processors: `del context` → `_ = context` (зберігає значення для майбутнього use) |
+
+**Net S91 LOC**: 13 files changed (1 migration + 1 model + 10 processors + 1 test), +243 LOC (код), +127 LOC (tests), 6 NEW tests, 1 ADR (0173).
+
+**S91 deep re-check** (vs plan):
+- V2 audit **WRONG** на `skill_invoke.py` (не існує) — **CORRECT** на 10 processors (verified).
+- Pattern `_ = context` обрано замість remove param: зберігає signature, дозволяє майбутнє tenant_id/correlation_id propagation.
+- User — найбільш critical (auth/RBAC кожен запит), тому обрано першим з 5 моделей що залишилися.
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅, #5 ✅ CLOSED, **#6 🟡 2/7 partial** (S89+S91), **#7 ✅ CLOSED** S91. Осталось: #6 (5 моделей), #8, #10.
+**Projected rating**: 8.05 → **8.30/10** (#7 closed +0.15, #6 2/7 +0.10).
+
 ## S90 closure summary (2026-06-12, ADR-0172)
 
 **Status: V3 #5 (Pool registration) 80% CLOSED в S90 (4 commits, 3 NEW tests, 1 ADR).**
