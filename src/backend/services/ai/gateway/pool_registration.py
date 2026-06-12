@@ -43,6 +43,9 @@ from src.backend.infrastructure.clients.pool_health import get_pool_monitor
 from src.backend.infrastructure.logging.factory import get_logger
 
 if TYPE_CHECKING:
+    from src.backend.infrastructure.clients.pool_health import (
+        PoolHealthMonitor,  # S80 W4: TYPE_CHECKING for testability
+    )
     from src.backend.services.ai.gateway.client import LiteLLMGateway
 
 _logger = get_logger("services.ai.gateway.pool_registration")
@@ -85,6 +88,7 @@ def register_litellm_pool(
     *,
     name: str = "litellm_main",
     idle_timeout: float = 60.0,
+    monitor: "PoolHealthMonitor | None" = None,
 ) -> None:
     """Register LiteLLM Gateway в :class:`PoolHealthMonitor`.
 
@@ -93,12 +97,15 @@ def register_litellm_pool(
         name: logical pool name (для unified monitor reports).
             Default: ``"litellm_main"`` (для primary gateway).
         idle_timeout: seconds между ping checks. Default 60s.
+        monitor: optional :class:`PoolHealthMonitor` instance (для
+            testability). Default: ``get_pool_monitor()`` singleton.
 
     Side effects:
         * Registers pool в :func:`get_pool_monitor`.
         * Returns immediately (ping runs в background task).
     """
-    monitor = get_pool_monitor()
+    if monitor is None:
+        monitor = get_pool_monitor()
     # LiteLLM SDK has no native pool object — use gateway reference
     # (PoolHealthMonitor just stores reference, no actual pool ops)
     pool_ref = gateway
