@@ -24,6 +24,26 @@
 
 **V2 verdict impact**: 5/10 fully closed, 1/10 pilot-closed, 3/10 pending, 1/10 V2 fact-check wrong. Projected rating: 7.66 → **7.96/10** (pilot-closed +1/2).
 
+## S90 closure summary (2026-06-12, ADR-0172)
+
+**Status: V3 #5 (Pool registration) 80% CLOSED в S90 (4 commits, 3 NEW tests, 1 ADR).**
+
+| FINAL_REPORT_V3 # | Status | What |
+|---|---|---|
+| **#5 Pool registration (MongoDB/ES)** | ✅ 80% CLOSED S90 W1+W2 | `mongodb_main` + `elasticsearch_main` registered. Kafka+NATS deferred (per-component DI, no central accessor). |
+| (V3 audit was 80% accurate) | | Redis/S3/LiteLLM вже були зареєстровані в S60/S80 — V3 audit їх пропустив. |
+
+**Net S90 LOC**: 2 files changed (pools.py + test_s90_pool_registration.py), +62 LOC (код), +116 LOC (tests), 3 NEW tests, 1 ADR (0172).
+
+**S90 deep re-check** (vs S90 plan):
+- Original S90 plan: 2 Alembic migrations (User + File + OrderKind) → TenantMixin. **PLAN REVISED** after V3 report re-verification.
+- V3 #5 виявився HIGH priority (V2 не згадував). Pilot: MongoDB + ES.
+- Kafka/NATS — per-component DI, deferred S91+ (architectural scope).
+- HTTP — connection per-request, not centralised (not a "pool").
+
+**Net V2 P0 rating**: N1 ✅, #1 ✅, #2 ✅, #3 ✅, #5 ✅ CLOSED, **#6 🟡 partial** (S89 pilot Order), 3/10 pending.
+**Net V3 P0 rating**: 1/22 partial (V3 #5 80% closed). Projected rating: 7.96 → **8.05/10** (V3 #5 partial +1/2).
+
 ## S88 closure summary (2026-06-12, ADR-0170)
 
 **Status: V2 P0 #5 (HIGH) CLOSED + V2 P0 #6 (HIGH) PARTIALLY CLOSED в S88 (4 commits, 17 NEW tests).**

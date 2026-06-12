@@ -5,6 +5,19 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S90 (2026-06-12) — V3 #5 closure: MongoDB + Elasticsearch pool registration (3 NEW tests, 4 commits)
+
+### Added
+
+- **S90 W1+W2**: `mongodb_main` + `elasticsearch_main` registered in `_register_pools_in_unified_manager`. New guards `_mongo_enabled()` (default `True`) and `_es_enabled()` (default `False`). Both use existing async `ping()` methods.
+- **S90 W4**: `tests/unit/plugins/composition/setup_infra/test_s90_pool_registration.py` — 3 NEW regression tests (mongo enabled, ES enabled, both disabled).
+- `docs/adr/0172-sprint-90-pool-registration-completion.md` — closure ADR (V3 #5 80% closed).
+
+### Deferred to S91+
+
+- **Kafka producer registration** — per-component DI, no central accessor; needs `get_kafka_producer()` + lifecycle hook.
+- **NATS jetstream registration** — per-component connection, no singleton; needs `get_nats_jetstream()` + lifecycle hook.
+
 ## [Unreleased] — Autonomous cycle S89 (2026-06-12) — V2 P0 #6 pilot: Order→TenantMixin (1/7 models tenant-isolated) (8 NEW tests) (4 commits)
 
 ### Changed
