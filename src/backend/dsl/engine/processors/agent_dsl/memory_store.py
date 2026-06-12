@@ -80,7 +80,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
         return self.namespace
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         backend = self._resolve_backend()
         if backend is None:
             _logger.debug("%s: MemoryProtocol backend недоступен — skip", self.name)

@@ -97,7 +97,7 @@ class MCPToolProcessor(BaseAIProcessor):
         return self.tool_name
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
 
         arguments = self._extract_arguments(exchange)
         if arguments is None:

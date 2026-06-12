@@ -118,7 +118,7 @@ class AgentRunProcessor(BaseAIProcessor):
         return self.workflow_id
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         from src.backend.core.ai.gateway import AIRequest
 
         gateway = self._resolve_gateway()

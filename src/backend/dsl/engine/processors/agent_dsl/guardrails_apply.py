@@ -96,7 +96,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         self.categories = list(categories) if categories else None
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         text = self._extract_text(exchange)
         if not text:
             return

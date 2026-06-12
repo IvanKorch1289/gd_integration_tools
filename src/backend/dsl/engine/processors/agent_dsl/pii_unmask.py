@@ -67,7 +67,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
         return self.scope
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         token_map = exchange.get_property(self.token_map_property)
         if token_map is None:
             if self.strict:

@@ -89,7 +89,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
         self.timeout_s = timeout_s
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         gateway = self._resolve_gateway()
         if gateway is None:
             exchange.set_error(

@@ -88,7 +88,7 @@ class PIIMaskProcessor(BaseAIProcessor):
         return self.scope
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        del context
+        _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         text = self._extract_text(exchange)
         if not text:
             exchange.set_property("pii_detected", False)

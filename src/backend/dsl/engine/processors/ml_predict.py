@@ -130,7 +130,7 @@ class MLPredictProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет ML-инференс."""
-        del context  # Зарезервирован для будущего use (correlation, tenant_id)
+        _ = context  # Зарезервирован для будущего use (correlation, tenant_id)
         # 1. Найти artifact URI модели
         artifact_uri = await self._resolve_artifact_uri()
         if artifact_uri is None:
