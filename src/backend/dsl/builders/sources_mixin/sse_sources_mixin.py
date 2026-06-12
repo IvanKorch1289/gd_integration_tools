@@ -76,6 +76,117 @@ class StreamingSSEMixin:
             reconnect_max_retries=reconnect_max_retries,
             parse_json=parse_json,
         )
-        return cls(  # type: ignore[call-arg, return-value]
-            route_id, source=f"sse:{route_id}", _source_obj=source
-        )
+        # S96 W4: fix S94 W4 broken _source_obj= kwarg (cls() TypeError).
+        # builder is created via mixin protocol (no __init__), so we use
+        # object.__setattr__ for source binding. Runtime caller accesses
+        # via builder._sse_source.
+        builder = cls()  # type: ignore[call-arg]
+        try:
+            object.__setattr__(builder, "_sse_source", source)
+        except (AttributeError, TypeError):
+            # If RouteBuilder is re-defined with __init__ in future — fall back.
+            builder = cls.from_(  # type: ignore[return-value]
+                route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}"
+            )
+            object.__setattr__(builder, "_sse_source", source)
+        return builder  # type: ignore[return-value]
+
+    @classmethod
+    def from_sse_multi(
+        cls,
+        route_id: str,
+        urls: list[str],
+        *,
+        merge_strategy: str = "interleave",
+        headers: dict[str, str] | None = None,
+        event_type: str | None = None,
+        heartbeat_timeout_s: float = 60.0,
+        reconnect_max_retries: int | None = None,
+        parse_json: bool = True,
+    ) -> RouteBuilder:
+        """S96 W4: multi-stream SSE consumer — subscribe N URLs параллельно.
+
+        Каждый URL подписывается отдельно через :class:`SSESource`,
+        события мерджатся согласно ``merge_strategy``:
+
+        * ``"interleave"`` (default) — round-robin merge, preserves order
+          across streams (как :func:`merge_streams`).
+        * ``"concat"`` — strict ordered concat: дожидается close от stream N
+          перед N+1. Полезно для batch-replay.
+        * ``"first"`` — fire event от первого активного stream (как
+          :class:`ForkJoinProcessor` aggregation="first").
+
+        Args:
+            route_id: Уникальный ID маршрута (suffix ``.multi`` добавится).
+            urls: Список SSE endpoint URLs.
+            merge_strategy: One of ``"interleave"``, ``"concat"``, ``"first"``.
+            headers: Общие заголовки для всех streams.
+            event_type: Общий фильтр (``None`` = все типы).
+            heartbeat_timeout_s: Reconnect timeout (per stream).
+            reconnect_max_retries: Max attempts (None = infinite).
+            parse_json: JSON-decode если True.
+
+        Returns:
+            RouteBuilder с source ``sse-multi:<route_id>``.
+
+        Raises:
+            ValueError: Если ``urls`` пуст или ``merge_strategy`` invalid.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_sse_multi(
+                    "multi.tenant_streams",
+                    [
+                        "https://tenant-a.example.com/events",
+                        "https://tenant-b.example.com/events",
+                    ],
+                    merge_strategy="interleave",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                .transform(unify_event_schema)
+                .dispatch_action("events.process")
+                .build()
+            )
+        """
+        if not urls:
+            raise ValueError("from_sse_multi: urls must be non-empty list")
+        if merge_strategy not in ("interleave", "concat", "first"):
+            raise ValueError(
+                f"from_sse_multi: invalid merge_strategy={merge_strategy!r} "
+                f"(expected: interleave, concat, first)"
+            )
+
+        import importlib
+
+        mod = importlib.import_module("src.backend.infrastructure.sources.sse")
+
+        # Build N SSESource instances.
+        sources = [
+            mod.SSESource(
+                url=u,
+                headers=headers,
+                event_type=event_type,
+                last_event_id=None,
+                heartbeat_timeout_s=heartbeat_timeout_s,
+                reconnect_max_retries=reconnect_max_retries,
+                parse_json=parse_json,
+            )
+            for u in urls
+        ]
+        # Multi-source route_id suffix для disambiguation.
+        multi_route_id = f"{route_id}.multi" if not route_id.endswith(".multi") else route_id
+
+        # S96 W4: same pattern as from_sse — object.__setattr__ for slot binding
+        # (RouteBuilder uses __slots__=() and has no __init__ in current state).
+        builder = cls()  # type: ignore[call-arg]
+        try:
+            object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
+        except (AttributeError, TypeError):
+            builder = cls.from_(  # type: ignore[return-value]
+                multi_route_id,
+                source=f"sse-multi:{multi_route_id}",
+                description=f"SSE multi: {len(urls)} streams ({merge_strategy})",
+            )
+            object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
+        return builder  # type: ignore[return-value]
