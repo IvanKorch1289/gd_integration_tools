@@ -21,6 +21,10 @@ from src.backend.dsl.commands.registry import route_registry
 from src.backend.dsl.yaml_store import YAMLStore
 
 if TYPE_CHECKING:
+    # ``Pipeline`` нужен только в return-type hint ``get_pipeline()``.
+    # ``from __future__ import annotations`` (line 12) делает все
+    # аннотации строками → runtime-импорт не требуется, оставляем
+    # TYPE_CHECKING для обхода potential circular import (services ↔ dsl).
     from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
