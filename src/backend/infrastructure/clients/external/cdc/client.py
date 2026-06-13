@@ -24,6 +24,17 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
 )
 
 
+# S102 W1: module-level singleton holder. До этого момента
+# ``get_cdc_client()`` падал с NameError на ``_cdc_instance``
+# (pre-existing bug с S60 W2 — был определён в client.py, но
+# потерян при decomp из monolithic cdc.py). Lock добавляет
+# thread-safety для concurrent first-call.
+import threading
+
+_cdc_instance: CDCClient | None = None  # type: ignore[name-defined]  # noqa: F821
+_cdc_lock = threading.Lock()
+
+
 class CDCClient:
     """Клиент CDC — управление подписками на изменения.
 
@@ -176,8 +187,23 @@ class CDCClient:
 
 
 def get_cdc_client() -> CDCClient:
-    """Фабрика CDC-клиента (singleton)."""
+    """Фабрика CDC-клиента (singleton, thread-safe).
+
+    S102 W1: добавлен ``_cdc_lock`` (threading.Lock) для concurrent
+    first-call safety. ``_cdc_instance`` теперь явно объявлен на
+    module level (раньше — NameError, см. ADR-0186).
+    """
     global _cdc_instance
     if _cdc_instance is None:
-        _cdc_instance = CDCClient()
+        with _cdc_lock:
+            # Double-checked locking
+            if _cdc_instance is None:
+                _cdc_instance = CDCClient()
     return _cdc_instance
+
+
+def reset_cdc_client() -> None:
+    """Сбрасывает singleton (для tests). S102 W1."""
+    global _cdc_instance
+    with _cdc_lock:
+        _cdc_instance = None
