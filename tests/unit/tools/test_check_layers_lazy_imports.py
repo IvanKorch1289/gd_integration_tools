@@ -142,7 +142,9 @@ def test_test_files_in_extensions_are_excluded() -> None:
         prod_file = root / "extensions" / "ext1" / "service.py"
         prod_file.parent.mkdir(parents=True)
         prod_file.write_text(
-            "from src.backend.infrastructure.database.session_manager import main_session_manager\n"
+            # S110 W4: services.integrations.skb — НЕ framework exception,
+            # остаётся violation для production code.
+            "from src.backend.services.integrations.skb import APISKBService\n"
         )
         # Test file in extensions — should be excluded
         test_file = root / "extensions" / "ext1" / "tests" / "test_x.py"
@@ -156,7 +158,7 @@ def test_test_files_in_extensions_are_excluded() -> None:
 
         # Production file: violation detected
         assert len(prod_violations) == 1
-        assert prod_violations[0][2] == "src.backend.infrastructure.database.session_manager"
+        assert prod_violations[0][2] == "src.backend.services.integrations.skb"
 
         # Test file: excluded (no violations)
         assert len(test_violations) == 0
@@ -195,3 +197,70 @@ def test_update_allowlist_merges_with_existing(tmp_path, monkeypatch) -> None:
     assert any("extensions/new/file.py" in k for k in keys_in_file), (
         f"new entry was not added; got {keys_in_file}"
     )
+
+
+def test_framework_exceptions_list_exists() -> None:
+    """S110 W4: EXTENSIONS_FRAMEWORK_EXCEPTIONS defined и non-empty.
+
+    11 модулей: SQLAlchemyRepository, main_session_manager, BaseService,
+    BaseEntrypoint, BaseSchema, BaseExternalAPIClient, AdDirectoryClient,
+    4 per-entity route schemas (orders/users/orderkinds/files).
+    """
+    exceptions = check_layers.EXTENSIONS_FRAMEWORK_EXCEPTIONS
+    assert isinstance(exceptions, set)
+    assert len(exceptions) >= 7
+    # Spot-check key entries
+    assert "src.backend.infrastructure.repositories.base" in exceptions
+    assert "src.backend.infrastructure.database.session_manager" in exceptions
+    assert "src.backend.services.core.base" in exceptions
+    assert "src.backend.entrypoints.base" in exceptions
+    assert "src.backend.schemas.base" in exceptions
+
+
+def test_framework_exception_hides_violation() -> None:
+    """S110 W4: framework base classes НЕ считаются нарушениями в extensions.
+
+    Regression: до S110 W4 extensions импортирующие SQLAlchemyRepository
+    или main_session_manager считались layer violations. Теперь это
+    легитимные framework imports.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        # Extension file with framework base import
+        ext_file = root / "extensions" / "ext1" / "repo.py"
+        ext_file.parent.mkdir(parents=True)
+        ext_file.write_text(
+            "from src.backend.infrastructure.repositories.base import SQLAlchemyRepository\n"
+            "from src.backend.infrastructure.database.session_manager import main_session_manager\n"
+            "from src.backend.services.core.base import BaseService\n"
+        )
+
+        violations = check_layers._check_file(ext_file, root)
+        # Все 3 импорта — framework exceptions, 0 violations
+        assert len(violations) == 0, (
+            f"Framework exceptions should not be violations, got {violations}"
+        )
+
+
+def test_framework_exception_does_not_apply_to_other_layers() -> None:
+    """S110 W4: framework exception ТОЛЬКО для extensions layer.
+
+    Core/Services/Infra не получают bonus — для них те же imports
+    остаются легитимными (allowed set), но exceptions здесь не нужны.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        # Service file with framework import — должен быть ALLOWED
+        # (services → core/schemas), не violation
+        svc_file = root / "services" / "svc1" / "service.py"
+        svc_file.parent.mkdir(parents=True)
+        svc_file.write_text(
+            "from src.backend.core.errors import NotFoundError\n"  # core — allowed
+        )
+
+        violations = check_layers._check_file(svc_file, root)
+        assert len(violations) == 0

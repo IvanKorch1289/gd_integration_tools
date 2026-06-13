@@ -159,12 +159,13 @@ def test_real_codebase_finds_legacy_callsites() -> None:
     checker.scan()
 
     # Per S105 subagent-2 finding: 77 callsites в 23 файлах.
-    # Допускаем отклонение из-за разных exclude правил / комментариев.
-    assert checker.total_callsites >= 70, (
-        f"Expected ≥ 70 callsites, got {checker.total_callsites}. "
+    # S108 W3 + S109 W1-W4 reduced TD-004: 73 → 29 callsites (-60%).
+    # Floor 20 reflects post-S109 baseline (mixin internals — functional completion).
+    assert checker.total_callsites >= 20, (
+        f"Expected ≥ 20 callsites (post-S109 baseline), got {checker.total_callsites}. "
         f"Files: {sorted(checker._results.keys())[:5]}..."
     )
-    assert checker.total_files >= 20
+    assert checker.total_files >= 5
 
 
 # ──────────────────────────────────────────────────────────────────────

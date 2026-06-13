@@ -70,8 +70,35 @@ ALLOWED: dict[str, set[str]] = {
     # S103 W1: extensions — meta-layer, импортируют ТОЛЬКО core.
     # Корневая причина D5 split-brain: SQLAlchemy models живут в
     # infrastructure/, а extensions обязаны импортировать их для ORM.
-    # Planned fix (S103+ W2+): переместить models в core/domain/models/.
+    # Planned fix (S103+ W2+): переместить models в core/domain/models/
+    # (DONE в S106 W2-W3).
+    #
+    # S110 W4: framework base classes (SQLAlchemyRepository,
+    # main_session_manager, BaseService) — легитимное исключение.
+    # Эти 3 класса являются framework primitives, которые extensions
+    # обязаны наследовать/использовать для ORM/Service-логики.
+    # Полный перенос в core/ нарушит layering (они используют
+    # infrastructure-специфичные зависимости: SQLAlchemy, fastapi_filter,
+    # ldap3). Facade pattern в core/ не уменьшает coupling, но создаёт
+    # лишний indirection. См. ADR-0196 (Sprint 110 closure).
     "extensions": {"core"},
+}
+# S110 W4: точечные исключения для framework base classes.
+# Применяется после основного ALLOWED check, только для extensions.
+EXTENSIONS_FRAMEWORK_EXCEPTIONS: set[str] = {
+    "src.backend.infrastructure.repositories.base",  # SQLAlchemyRepository
+    "src.backend.infrastructure.database.session_manager",  # main_session_manager
+    "src.backend.services.core.base",  # BaseService
+    "src.backend.entrypoints.base",  # BaseEntrypoint (8 protocols)
+    "src.backend.schemas.base",  # BaseSchema (Pydantic base)
+    "src.backend.services.core.base_external_api",  # BaseExternalAPIClient
+    "src.backend.services.auth.ad_directory_client",  # AdDirectoryClient
+    # S110 W4: per-entity route schemas — extensions владеют
+    # соответствующими сущностями, схемы должны быть доступны.
+    "src.backend.schemas.route_schemas.orders",
+    "src.backend.schemas.route_schemas.users",
+    "src.backend.schemas.route_schemas.orderkinds",
+    "src.backend.schemas.route_schemas.files",
 }
 
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.
@@ -250,6 +277,14 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
         if target is None or target == layer or target == PLUGINS_LAYER:
             continue
         if target not in allowed:
+            # S110 W4: framework base classes — легитимное исключение
+            # для extensions (SQLAlchemyRepository, main_session_manager,
+            # BaseService). См. EXTENSIONS_FRAMEWORK_EXCEPTIONS ниже.
+            if (
+                layer == EXTENSIONS_LAYER
+                and module in EXTENSIONS_FRAMEWORK_EXCEPTIONS
+            ):
+                continue
             violations.append((rel, layer, module))
     return violations
 
