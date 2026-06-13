@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, configure_mappers, mapped_column
 pytest.importorskip("aiosqlite")
 
 from src.backend.core.errors import NotFoundError
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 

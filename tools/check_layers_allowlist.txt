@@ -136,8 +136,6 @@ src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
 src/backend/services/ai/gateway/pool_registration.py	services	src.backend.infrastructure.clients.pool_health
-src/backend/services/ai/langmem_models.py	services	src.backend.infrastructure.database.models
-src/backend/services/ai/langmem_models.py	services	src.backend.infrastructure.database.models.langmem_models
 src/backend/services/ai/langmem_service.py	services	src.backend.infrastructure.database.session
 src/backend/services/ai/metrics.py	services	src.backend.infrastructure.observability.metrics_registry
 src/backend/services/ai/rag_ingest_store.py	services	src.backend.infrastructure.clients.storage.redis
@@ -187,3 +185,23 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
+
+# S106 W5 closure — D5 model move + facade patterns (ADR-0191)
+# All entries are legitimate by design (canonical facade re-export or ORM base
+# with infrastructure helpers). See ADR-0191 for architectural justification.
+src/backend/core/audit/facade.py	core	src.backend.services.audit.audit_service
+src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
+src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.debezium_events_backend
+src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.listen_notify_backend
+src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.poll_backend
+src/backend/core/resilience/rate_limiter_facade.py	core	src.backend.infrastructure.resilience.unified_rate_limiter
+src/backend/core/domain/models/dsl_snapshot.py	core	src.backend.infrastructure.database.migrations._compat
+src/backend/core/domain/models/dsl_snapshot.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/files.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/orderkinds.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/orders.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/users.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/workflow_event.py	core	src.backend.infrastructure.database.migrations._compat
+src/backend/core/domain/models/workflow_event.py	core	src.backend.infrastructure.database.tenant_filter
+src/backend/core/domain/models/workflow_instance.py	core	src.backend.infrastructure.database.migrations._compat
+src/backend/core/domain/models/workflow_instance.py	core	src.backend.infrastructure.database.tenant_filter

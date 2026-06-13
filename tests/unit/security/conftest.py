@@ -24,7 +24,7 @@ if _session_mod_name not in sys.modules:
     _session_stub.main_session_manager = None  # type: ignore[attr-defined]
     sys.modules[_session_mod_name] = _session_stub
 
-_cert_model_mod_name = "src.backend.infrastructure.database.models.cert"
+_cert_model_mod_name = "src.backend.core.domain.models.cert"
 if _cert_model_mod_name not in sys.modules:
     _cert_model_stub = types.ModuleType(_cert_model_mod_name)
     _cert_model_stub.CertHistory = type("CertHistory", (), {})  # type: ignore[attr-defined]

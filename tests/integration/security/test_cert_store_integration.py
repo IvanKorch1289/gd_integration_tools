@@ -66,8 +66,8 @@ async def pg_session_manager(monkeypatch):
         async_url = sync_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
         engine = create_async_engine(async_url, future=True)
 
-        from src.backend.infrastructure.database.models.base import BaseModel
-        from src.backend.infrastructure.database.models.cert import (  # noqa: F401
+        from src.backend.core.domain.models.base import BaseModel
+        from src.backend.core.domain.models.cert import (  # noqa: F401
             CertHistory,
             CertRecord,
         )

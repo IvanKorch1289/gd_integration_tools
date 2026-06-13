@@ -58,23 +58,43 @@ class AuditMixin:
     ) -> None:
         """Вызвать audit-callback, если задан.
 
+        S106 W5 closure: дополнительно вызывает
+        ``emit_capability_check`` helper из ``core.audit.facade`` (S106 W2
+        Path A) для dual-emission: callback для backward compat + unified
+        audit service для новых консумеров. 17 inherited callsites
+        автоматически получают новый path.
+
         Поля ``tenant``, ``reason``, ``event`` — опциональные
         (передаются только в tenant-aware путях или для указания
         причины ``"policy"``). Старые callers (без этих kwargs) получают
         тот же event-dict, что и раньше — backward compat preserved.
         """
-        if self._audit is None:
-            return
-        payload: dict[str, object] = {
-            "event": event,
-            "plugin": plugin,
-            "capability": capability,
-            "requested_scope": requested_scope,
-            "declared_scope": declared_scope,
-            "outcome": outcome,
-        }
-        if tenant is not None:
-            payload["tenant"] = tenant
-        if reason is not None:
-            payload["reason"] = reason
-        self._audit(payload)
+        if self._audit is not None:
+            payload: dict[str, object] = {
+                "event": event,
+                "plugin": plugin,
+                "capability": capability,
+                "requested_scope": requested_scope,
+                "declared_scope": declared_scope,
+                "outcome": outcome,
+            }
+            if tenant is not None:
+                payload["tenant"] = tenant
+            if reason is not None:
+                payload["reason"] = reason
+            self._audit(payload)
+
+        # S106 W5: dual emission через unified audit service.
+        # Lazy import для избежания circular dep (facade → services/audit).
+        from src.backend.core.audit.facade import emit_capability_check
+
+        emit_capability_check(
+            plugin=plugin,
+            capability=capability,
+            requested_scope=requested_scope,
+            declared_scope=declared_scope,
+            outcome=outcome,
+            tenant=tenant,
+            reason=reason,
+            event=event,
+        )

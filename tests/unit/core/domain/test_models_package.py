@@ -106,56 +106,14 @@ class TestCoreDomainModelsPackage:
         assert "infrastructure.database.models" not in rule_engine_text
 
     def test_shim_reexports_with_warning(self) -> None:
-        """Old path shims re-export + emit DeprecationWarning."""
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            from src.backend.infrastructure.database.models import (  # noqa: F401
-                base,
-                users,
-            )
-
-        deprecations = [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
-        assert len(deprecations) >= 2, (
-            f"Expected 2 DeprecationWarnings, got {len(deprecations)}"
+        """S106 W5: shims hard deleted, canonical path is the only one."""
+        # After W5, old path does NOT exist
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent.parent
+        old_models = project_root / "src" / "backend" / "infrastructure" / "database" / "models"
+        assert not old_models.exists(), (
+            f"Old models dir should be removed: {old_models}"
         )
-        # User class re-exported correctly
-        assert users.User.__tablename__ == "users"
-        # BaseModel re-exported correctly
-        assert base.BaseModel.__name__ == "BaseModel"
-
-    def test_shim_warning_message_mentions_new_path(self) -> None:
-        """Shim warning explicitly tells consumers where to migrate."""
-        import importlib
-        import sys
-
-        # Force fresh import to trigger DeprecationWarning
-        # (previous shim test cached the module)
-        for mod_name in (
-            "src.backend.infrastructure.database.models.users",
-            "src.backend.infrastructure.database.models",
-        ):
-            if mod_name in sys.modules:
-                del sys.modules[mod_name]
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.resetwarnings()
-            warnings.simplefilter("always")
-            importlib.import_module("src.backend.infrastructure.database.models.users")
-
-        msgs = [str(w.message) for w in caught]
-        user_warnings = [m for m in msgs if "core.domain.models.users" in m]
-        assert len(user_warnings) >= 1, (
-            f"Warning should mention new path, got: {msgs}"
-        )
-
-    def test_shim_class_identity_with_canonical(self) -> None:
-        """Shim classes are the SAME class as canonical (not copy)."""
-        from src.backend.core.domain.models import User as CanonicalUser
-        from src.backend.infrastructure.database.models import users as shim_users
-
-        assert shim_users.User is CanonicalUser
 
     def test_metadata_preserved_after_move(self) -> None:
         """SQLAlchemy metadata tables count unchanged after move."""
@@ -179,33 +137,6 @@ class TestCoreDomainModelsPackage:
         assert "OrderKind" in __import__(
             "src.backend.core.domain.models", fromlist=["__all__"]
         ).__all__
-
-    def test_orderkinds_shim_re_exports(self) -> None:
-        """S106 W3 (D5 B2a): shim re-exports OrderKind with DeprecationWarning."""
-        import importlib
-        import sys
-
-        for mod_name in (
-            "src.backend.infrastructure.database.models.orderkinds",
-        ):
-            if mod_name in sys.modules:
-                del sys.modules[mod_name]
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.resetwarnings()
-            warnings.simplefilter("always")
-            importlib.import_module(
-                "src.backend.infrastructure.database.models.orderkinds"
-            )
-
-        msgs = [str(w.message) for w in caught]
-        orderkinds_warnings = [
-            m for m in msgs if "core.domain.models.orderkinds" in m
-        ]
-        assert len(orderkinds_warnings) >= 1
-
-        from src.backend.infrastructure.database.models import orderkinds as shim
-        assert shim.OrderKind.__tablename__ == "orderkinds"
 
     def test_orders_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2b): Order moved to core.domain.models."""
@@ -236,36 +167,6 @@ class TestCoreDomainModelsPackage:
             f"FK→orderkinds missing: {fk_targets}"
         )
 
-    def test_orders_shim_re_exports(self) -> None:
-        """S106 W3 (D5 B2b): shim re-exports Order with DeprecationWarning."""
-        import importlib
-        import sys
-
-        for mod_name in (
-            "src.backend.infrastructure.database.models.orders",
-        ):
-            if mod_name in sys.modules:
-                del sys.modules[mod_name]
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.resetwarnings()
-            warnings.simplefilter("always")
-            importlib.import_module(
-                "src.backend.infrastructure.database.models.orders"
-            )
-
-        msgs = [str(w.message) for w in caught]
-        orders_warnings = [
-            m for m in msgs if "core.domain.models.orders" in m
-        ]
-        assert len(orders_warnings) >= 1
-
-        from src.backend.infrastructure.database.models import orders as shim
-        assert shim.Order.__tablename__ == "orders"
-        assert shim.Order is __import__(
-            "src.backend.core.domain.models", fromlist=["Order"]
-        ).Order
-
     def test_files_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2c): File + OrderFile moved to core.domain.models."""
         from src.backend.core.domain.models import File, OrderFile
@@ -287,38 +188,6 @@ class TestCoreDomainModelsPackage:
         assert hasattr(Order, "files")
         assert hasattr(File, "orders")
         assert Order.files.property.secondary is OrderFile.__table__
-
-    def test_files_shim_re_exports(self) -> None:
-        """S106 W3 (D5 B2c): shim re-exports File + OrderFile."""
-        import importlib
-        import sys
-
-        for mod_name in (
-            "src.backend.infrastructure.database.models.files",
-        ):
-            if mod_name in sys.modules:
-                del sys.modules[mod_name]
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.resetwarnings()
-            warnings.simplefilter("always")
-            importlib.import_module(
-                "src.backend.infrastructure.database.models.files"
-            )
-
-        msgs = [str(w.message) for w in caught]
-        files_warnings = [
-            m for m in msgs if "core.domain.models.files" in m
-        ]
-        assert len(files_warnings) >= 1
-
-        from src.backend.infrastructure.database.models import files as shim
-        assert shim.File is __import__(
-            "src.backend.core.domain.models", fromlist=["File"]
-        ).File
-        assert shim.OrderFile is __import__(
-            "src.backend.core.domain.models", fromlist=["OrderFile"]
-        ).OrderFile
 
     def test_workflow_models_in_canonical_package(self) -> None:
         """S106 W4 (D5 B3): WorkflowInstance + WorkflowEvent moved."""
@@ -376,45 +245,6 @@ class TestCoreDomainModelsPackage:
         ][0]
         ondelete = list(workflow_id_fk)[0].ondelete
         assert ondelete == "CASCADE"
-
-    def test_workflow_shims_re_exports(self) -> None:
-        """S106 W4 (D5 B3): shims re-export with DeprecationWarning."""
-        import importlib
-        import sys
-
-        for mod_name in (
-            "src.backend.infrastructure.database.models.workflow_instance",
-            "src.backend.infrastructure.database.models.workflow_event",
-        ):
-            if mod_name in sys.modules:
-                del sys.modules[mod_name]
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.resetwarnings()
-            warnings.simplefilter("always")
-            importlib.import_module(
-                "src.backend.infrastructure.database.models.workflow_instance"
-            )
-            importlib.import_module(
-                "src.backend.infrastructure.database.models.workflow_event"
-            )
-
-        msgs = [str(w.message) for w in caught]
-        i_warnings = [m for m in msgs if "core.domain.models.workflow_instance" in m]
-        e_warnings = [m for m in msgs if "core.domain.models.workflow_event" in m]
-        assert len(i_warnings) >= 1
-        assert len(e_warnings) >= 1
-
-        from src.backend.infrastructure.database.models import (
-            workflow_instance as shim_i,
-            workflow_event as shim_e,
-        )
-        from src.backend.core.domain.models import (
-            WorkflowInstance,
-            WorkflowEvent,
-        )
-        assert shim_i.WorkflowInstance is WorkflowInstance
-        assert shim_e.WorkflowEvent is WorkflowEvent
 
 
 class TestLayerLinterAfterB1:

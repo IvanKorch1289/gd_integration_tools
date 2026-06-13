@@ -25,7 +25,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy_continuum import version_class, versioning_manager
 
-import src.backend.infrastructure.database.models.users as users_module
+import src.backend.core.domain.models.users as users_module
 from src.backend.dsl.audit_versioning import (
     OP_DELETE,
     OP_INSERT,
@@ -33,7 +33,7 @@ from src.backend.dsl.audit_versioning import (
     Versioning,
     VersioningError,
 )
-from src.backend.infrastructure.database.models.base import Base
+from src.backend.core.domain.models.base import Base
 
 
 @pytest.fixture(scope="module", autouse=True)

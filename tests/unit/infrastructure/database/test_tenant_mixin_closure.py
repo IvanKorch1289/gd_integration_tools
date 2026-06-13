@@ -33,13 +33,13 @@ def test_model_has_tenant_mixin(model_name: str) -> None:
     import importlib
 
     module_path = {
-        "Order": "src.backend.infrastructure.database.models.orders",
-        "User": "src.backend.infrastructure.database.models.users",
-        "File": "src.backend.infrastructure.database.models.files",
-        "OrderKind": "src.backend.infrastructure.database.models.orderkinds",
-        "DslSnapshot": "src.backend.infrastructure.database.models.dsl_snapshot",
-        "WorkflowEvent": "src.backend.infrastructure.database.models.workflow_event",
-        "WorkflowInstance": "src.backend.infrastructure.database.models.workflow_instance",
+        "Order": "src.backend.core.domain.models.orders",
+        "User": "src.backend.core.domain.models.users",
+        "File": "src.backend.core.domain.models.files",
+        "OrderKind": "src.backend.core.domain.models.orderkinds",
+        "DslSnapshot": "src.backend.core.domain.models.dsl_snapshot",
+        "WorkflowEvent": "src.backend.core.domain.models.workflow_event",
+        "WorkflowInstance": "src.backend.core.domain.models.workflow_instance",
     }
     mod = importlib.import_module(module_path[model_name])
     cls = getattr(mod, model_name)

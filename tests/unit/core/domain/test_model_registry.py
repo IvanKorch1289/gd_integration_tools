@@ -11,7 +11,7 @@ from src.backend.infrastructure.database.model_registry import (
     get_model_enum,
     get_user_models,
 )
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 
 
 class TestGetUserModels:

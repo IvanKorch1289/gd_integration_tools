@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 def __getattr__(name: str):
     if not TYPE_CHECKING:
         if name in ("LangMemEpisodic", "LangMemProcedural"):
-            from src.backend.infrastructure.database.models import langmem_models
+            from src.backend.core.domain.models import langmem_models
 
             return getattr(langmem_models, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

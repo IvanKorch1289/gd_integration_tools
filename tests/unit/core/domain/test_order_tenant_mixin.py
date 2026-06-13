@@ -11,7 +11,7 @@ S89 W4 (V2 P0 #6): verify that:
 
 from __future__ import annotations
 
-from src.backend.infrastructure.database.models.orders import Order
+from src.backend.core.domain.models.orders import Order
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     _is_tenant_aware,
@@ -92,8 +92,8 @@ def test_order_existing_fields_preserved() -> None:
 def test_order_relationships_preserved() -> None:
     """Order.relationships — order_kind, files — збережені після S89."""
     # Import related models для SQLAlchemy mapper initialization
-    from src.backend.infrastructure.database.models.orderkinds import OrderKind
-    from src.backend.infrastructure.database.models.files import OrderFile
+    from src.backend.core.domain.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.files import OrderFile
 
     # SQLAlchemy relationships
     rels = Order.__mapper__.relationships

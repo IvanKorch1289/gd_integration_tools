@@ -29,7 +29,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.backend.core.domain.models.workflow_instance import WorkflowStatus
 from src.backend.infrastructure.workflow import runner as runner_module
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,

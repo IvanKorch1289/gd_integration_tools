@@ -30,7 +30,7 @@ from src.backend.dsl.audit_versioning import (
     Versioning,
     VersioningError,
 )
-from src.backend.infrastructure.database.models.base import Base, BaseModel
+from src.backend.core.domain.models.base import Base, BaseModel
 
 # === Test models (module-level для корректной SQLAlchemy registration) ===
 

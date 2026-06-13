@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy_continuum import version_class, versioning_manager
 
 from src.backend.dsl.audit_versioning import Versioning, VersioningError
-from src.backend.infrastructure.database.models.base import Base, BaseModel
+from src.backend.core.domain.models.base import Base, BaseModel
 
 
 class _PurgeTestModel(BaseModel):

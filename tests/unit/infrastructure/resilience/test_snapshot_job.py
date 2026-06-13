@@ -140,7 +140,7 @@ def test_is_snapshot_fresh_uses_settings_threshold(mock_settings: MagicMock) -> 
 @patch("src.backend.infrastructure.resilience.snapshot_job.insert")
 @patch("src.backend.infrastructure.resilience.snapshot_job.delete")
 @patch("src.backend.infrastructure.resilience.snapshot_job.select")
-@patch("src.backend.infrastructure.database.models.base.metadata")
+@patch("src.backend.core.domain.models.base.metadata")
 def test_sync_pg_to_sqlite_success(
     mock_metadata: MagicMock,
     mock_select: MagicMock,
@@ -180,7 +180,7 @@ def test_sync_pg_to_sqlite_success(
 @patch("src.backend.infrastructure.resilience.snapshot_job.insert")
 @patch("src.backend.infrastructure.resilience.snapshot_job.delete")
 @patch("src.backend.infrastructure.resilience.snapshot_job.select")
-@patch("src.backend.infrastructure.database.models.base.metadata")
+@patch("src.backend.core.domain.models.base.metadata")
 def test_sync_pg_to_sqlite_empty_rows(
     mock_metadata: MagicMock,
     mock_select: MagicMock,
@@ -211,7 +211,7 @@ def test_sync_pg_to_sqlite_empty_rows(
 @patch("src.backend.infrastructure.resilience.snapshot_job.insert")
 @patch("src.backend.infrastructure.resilience.snapshot_job.delete")
 @patch("src.backend.infrastructure.resilience.snapshot_job.select")
-@patch("src.backend.infrastructure.database.models.base.metadata")
+@patch("src.backend.core.domain.models.base.metadata")
 def test_sync_pg_to_sqlite_skips_unknown_table(
     mock_metadata: MagicMock,
     mock_select: MagicMock,
@@ -240,7 +240,7 @@ def test_sync_pg_to_sqlite_skips_unknown_table(
 
 
 @pytest.mark.unit
-@patch("src.backend.infrastructure.database.models.base.metadata")
+@patch("src.backend.core.domain.models.base.metadata")
 def test_sync_pg_to_sqlite_no_tables(
     mock_metadata: MagicMock,
     mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],

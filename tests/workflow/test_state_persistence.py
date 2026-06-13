@@ -17,7 +17,7 @@ import pytest_asyncio
 from sqlalchemy import StaticPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from src.backend.infrastructure.database.models.base import mapper_registry
+from src.backend.core.domain.models.base import mapper_registry
 from src.backend.infrastructure.workflow.saga_state import WorkflowStateRepository
 
 pytestmark = pytest.mark.asyncio

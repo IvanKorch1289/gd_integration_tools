@@ -19,7 +19,7 @@ import pytest
 @pytest.mark.unit
 def test_user_is_tenant_aware() -> None:
     """User успадковує TenantMixin → _is_tenant_aware повертає True."""
-    from src.backend.infrastructure.database.models.users import User
+    from src.backend.core.domain.models.users import User
     from src.backend.infrastructure.database.tenant_filter import (
         _is_tenant_aware,
     )
@@ -30,7 +30,7 @@ def test_user_is_tenant_aware() -> None:
 @pytest.mark.unit
 def test_user_mro_includes_tenant_mixin() -> None:
     """User MRO містить TenantMixin перед BaseModel."""
-    from src.backend.infrastructure.database.models.users import User
+    from src.backend.core.domain.models.users import User
     from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in User.__mro__]
@@ -43,7 +43,7 @@ def test_user_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_user_tenant_id_column_present() -> None:
     """User має tenant_id mapped_column через TenantMixin."""
-    from src.backend.infrastructure.database.models.users import User
+    from src.backend.core.domain.models.users import User
     from sqlalchemy import inspect
 
     mapper = inspect(User)

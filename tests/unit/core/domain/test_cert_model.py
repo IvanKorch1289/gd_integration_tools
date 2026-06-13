@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
+from src.backend.core.domain.models.cert import CertHistory, CertRecord
 
 
 class TestCertRecord:

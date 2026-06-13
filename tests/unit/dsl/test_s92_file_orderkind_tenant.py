@@ -16,7 +16,7 @@ import pytest
 @pytest.mark.unit
 def test_file_is_tenant_aware() -> None:
     """File успадковує TenantMixin → _is_tenant_aware повертає True."""
-    from src.backend.infrastructure.database.models.files import File
+    from src.backend.core.domain.models.files import File
     from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
 
     assert _is_tenant_aware(File) is True
@@ -25,7 +25,7 @@ def test_file_is_tenant_aware() -> None:
 @pytest.mark.unit
 def test_file_mro_includes_tenant_mixin() -> None:
     """File MRO містить TenantMixin після BaseModel."""
-    from src.backend.infrastructure.database.models.files import File
+    from src.backend.core.domain.models.files import File
     from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in File.__mro__]
@@ -37,7 +37,7 @@ def test_file_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_file_tenant_id_column_present() -> None:
     """File має tenant_id mapped_column через TenantMixin."""
-    from src.backend.infrastructure.database.models.files import File
+    from src.backend.core.domain.models.files import File
     from sqlalchemy import inspect
 
     mapper = inspect(File)
@@ -53,7 +53,7 @@ def test_file_tenant_id_column_present() -> None:
 @pytest.mark.unit
 def test_orderkind_is_tenant_aware() -> None:
     """OrderKind успадковує TenantMixin → _is_tenant_aware повертає True."""
-    from src.backend.infrastructure.database.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.orderkinds import OrderKind
     from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
 
     assert _is_tenant_aware(OrderKind) is True
@@ -62,7 +62,7 @@ def test_orderkind_is_tenant_aware() -> None:
 @pytest.mark.unit
 def test_orderkind_mro_includes_tenant_mixin() -> None:
     """OrderKind MRO містить TenantMixin після BaseModel."""
-    from src.backend.infrastructure.database.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.orderkinds import OrderKind
     from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in OrderKind.__mro__]
@@ -74,7 +74,7 @@ def test_orderkind_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_orderkind_tenant_id_column_present() -> None:
     """OrderKind має tenant_id mapped_column через TenantMixin."""
-    from src.backend.infrastructure.database.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.orderkinds import OrderKind
     from sqlalchemy import inspect
 
     mapper = inspect(OrderKind)
@@ -109,10 +109,10 @@ def test_files_migration_chain() -> None:
 def test_tenant_isolated_models_count() -> None:
     """4/7 моделей мають TenantMixin (Order, User, File, OrderKind)."""
     from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
-    from src.backend.infrastructure.database.models.orders import Order
-    from src.backend.infrastructure.database.models.users import User
-    from src.backend.infrastructure.database.models.files import File
-    from src.backend.infrastructure.database.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.orders import Order
+    from src.backend.core.domain.models.users import User
+    from src.backend.core.domain.models.files import File
+    from src.backend.core.domain.models.orderkinds import OrderKind
 
     tenant_aware = [
         m

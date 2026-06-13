@@ -50,6 +50,7 @@ class ImageResizeProcessor(BaseProcessor):
             return
 
         def _resize() -> bytes:
+<<<<<<< Updated upstream
             with Image.open(io.BytesIO(body)) as img:
                 if self._width and self._height:
                     img = img.resize((self._width, self._height))
@@ -62,6 +63,26 @@ class ImageResizeProcessor(BaseProcessor):
                 buf = io.BytesIO()
                 img.save(buf, format=self._format)
                 return buf.getvalue()
+=======
+            # ``with Image.open(...)`` гарантирует .close() даже при
+            # исключении в resize/save. PIL держит reference на
+            # underlying file пока Image жив; при больших batch'ах это
+            # приводит к file-descriptor leak (Sprint 83 W3).
+            with Image.open(io.BytesIO(body)) as src:
+                if self._width and self._height:
+                    resized = src.resize((self._width, self._height))
+                elif self._width:
+                    ratio = self._width / src.width
+                    resized = src.resize((self._width, int(src.height * ratio)))
+                elif self._height:
+                    ratio = self._height / src.height
+                    resized = src.resize((int(src.width * ratio), self._height))
+                else:
+                    resized = src.copy()
+                buf = io.BytesIO()
+                resized.save(buf, format=self._format)
+            return buf.getvalue()
+>>>>>>> Stashed changes
 
         result = await asyncio.to_thread(_resize)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))

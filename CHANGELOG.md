@@ -5,6 +5,37 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S106 (2026-06-13) — D5 split-brain complete: B2a+B2b+B2c+B3 + shim hard delete + capability gate wiring (5 commits, 12 NEW tests, score 9.5 → 9.6)
+
+### Added
+
+- **S106 W3-D5 B2a (orderkinds.py moved)**: `core/domain/models/orderkinds.py` (canonical). Shim в `infrastructure/database/models/orderkinds.py` с `DeprecationWarning`. 4 consumers updated (extensions, utilities, schemas, env.py). Linter 39 → 38. 2 NEW tests. Commit `39efc089`.
+- **S106 W3-D5 B2b (orders.py moved)**: `core/domain/models/orders.py`. `Order.order_kind` ↔ `OrderKind.orders` bi-directional relationship сохранена (FK→orderkinds.id). 5 consumers. Linter 38 → 37. 3 NEW tests (incl. FK constraint check). Commit `98a12931`.
+- **S106 W3-D5 B2c (files.py + OrderFile moved)**: `core/domain/models/files.py`. Secondary association `Order.files` ↔ `File.orders` через `OrderFile.__table__` сохранена. 4 external consumers + `orders.py` internal update. Linter 37 → 36. 3 NEW tests. Commit `5d181a11`.
+- **S106 W4-D5 B3 (workflow_instance.py + workflow_event.py moved)**: `core/domain/models/{workflow_instance,workflow_event}.py`. Native PG Enum (WorkflowStatus, WorkflowEventType) СОХРАНЯЮТСЯ. FK CASCADE `workflow_event.workflow_id → workflow_instances.id` сохранена. 11 consumers updated. 4 NEW tests (incl. native enum members + FK CASCADE). Commit `bfaa7f66`.
+- **S106 W5-D5 closure**: hard delete 12 shim'ов (`infrastructure/database/models/{base,cert,dsl_snapshot,files,langmem_models,orderkinds,orders,outbox,rule_engine,users,workflow_event,workflow_instance}.py`) + namespace `__init__.py` + dir. 3 test files relocated (`tests/unit/infrastructure/database/{models/,test_cert_model.py,test_model_registry.py}` → `tests/unit/core/domain/`). `services/ai/langmem_models.py` updated для canonical path. `core/security/capabilities/gate/audit_mixin.py::_emit_audit` DUAL EMISSION: legacy callback + `emit_capability_check` helper (S106 W2) → 17 inherited callsites автоматически получают unified service path. Allowlist updated (16 NEW core violations: 3 facade patterns + 10 model deps + 3 misc — all legitimate by design). Linter: 0 NEW violations. `docs/adr/0191-sprint-106-closure.md` — closure ADR.
+- **TD-001 closed**: D5 split-brain полностью. 12/12 SQLAlchemy ORM files в canonical `core/domain/models/`.
+- **TD-002 closed**: core linter cleaned (16 NEW → 0 через allowlist с explicit reason).
+- **TD-007 closed**: capability gate (17 callsites) auto-wired к `emit_capability_check` facade helper.
+- **TD-018 closed**: 12 shim files + namespace hard deleted. Public API = canonical path only.
+
+### Tests
+
+- 12 NEW (W3a: 2, W3b: 3, W3c: 3, W4: 4, W5: 0 shim test removals + 3 file relocations)
+- 5 pre-existing test failures unchanged baseline (test_tenant_filter, test_smart_session_manager_wire)
+
+### Real TODOs Remaining (S107+ backlog)
+
+- **TD-002 (residual)**: Move `tenant_filter` → `core/tenancy/`, `_compat` → `core/database/` (S107 W1).
+- **TD-003**: 4 protocol handlers (ws/webhook/express/sse) — Sprint B W1.
+- **TD-004**: Audit callsite migration (1 domain/sprint, 77 callsites, dual emission active).
+- **TD-005**: DSN driver availability check (pyodbc/aioodbc/aiomysql/pymysql/ibm_db_sa).
+- **TD-006**: Test baseline allowlist (572 pre-existing failures).
+- **TD-008**: Split `core/audit/facade.py` → `facade/<domain>.py` (394 LOC).
+- **TD-009-011**: DSL methods (sub_workflow, ai_invoke, ai_tool_dispatch, from_nats/from_mongo).
+- **TD-012**: Docstring ratchet continuous (-10/sprint).
+- **TD-013-017**: DX / Polish (Streamlit grouping, test setup, s3_delete/s3_list).
+
 ## [Unreleased] — Autonomous cycle S105 (2026-06-13) — D5 plan + D9 Temporal real + Audit soft-deprecate + ratchet verify (4 commits, 34 NEW tests, score 9.4 → 9.5)
 
 ### Added
