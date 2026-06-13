@@ -21,7 +21,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ENTRYPOINTS = ROOT / "src" / "entrypoints"
+# S106 W6: V22 layout — actual code lives at src/backend/entrypoints (NOT
+# legacy src/entrypoints). Tool was using stale R3.10 path.
+ENTRYPOINTS = ROOT / "src" / "backend" / "entrypoints"
 BRIDGE_FILE = ENTRYPOINTS / "_action_bridge.py"
 
 # entrypoint → (файл, ожидаемый action-id источник для smoke).
@@ -77,13 +79,21 @@ def _check_actions_registered() -> list[str]:
     одного вызова ``action_handler_registry.register(...)``. Цель —
     отметить деградацию реестра, если кто-то снёс все регистрации.
     """
-    setup_file = ROOT / "src" / "dsl" / "commands" / "setup.py"
-    if not setup_file.is_file():
-        return [f"missing {setup_file.relative_to(ROOT)} (Tier 1 setup)"]
-    text = setup_file.read_text(encoding="utf-8")
-    if "action_handler_registry.register" not in text:
+    # S106 W6: V22 layout — actual code is src/backend/dsl/commands/setup/ (a
+    # package, not a file). Check the package's __init__.py for registry.
+    setup_pkg = ROOT / "src" / "backend" / "dsl" / "commands" / "setup"
+    setup_init = setup_pkg / "__init__.py"
+    if not setup_init.is_file():
+        return [f"missing {setup_init.relative_to(ROOT)} (Tier 1 setup)"]
+    text = setup_init.read_text(encoding="utf-8")
+    # Aggregate all files in setup/ — registry may be split across modules
+    setup_text = text
+    for f in setup_pkg.glob("*.py"):
+        if f.name != "__init__.py":
+            setup_text += f.read_text(encoding="utf-8")
+    if "action_handler_registry.register" not in setup_text:
         return [
-            "src/backend/dsl/commands/setup.py — не найдено action_handler_registry.register(...)"
+            "src/backend/dsl/commands/setup/ — не найдено action_handler_registry.register(...)"
         ]
     return []
 
