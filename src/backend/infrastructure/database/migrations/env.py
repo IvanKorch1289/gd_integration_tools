@@ -19,7 +19,7 @@ from src.backend.infrastructure.database.models.files import (  # noqa: F401
     File,
     OrderFile,
 )
-from src.backend.infrastructure.database.models.orderkinds import (
+from src.backend.core.domain.models.orderkinds import (
     OrderKind,  # noqa: F401
 )
 from src.backend.infrastructure.database.models.orders import Order  # noqa: F401

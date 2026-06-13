@@ -51,7 +51,7 @@ class TestCoreDomainModelsPackage:
         """__all__ matches actual exports."""
         from src.backend.core.domain.models import __all__
 
-        assert len(__all__) == 14
+        assert len(__all__) == 15
         for symbol in (
             "Base",
             "BaseModel",
@@ -63,6 +63,7 @@ class TestCoreDomainModelsPackage:
             "DslSnapshot",
             "LangMemEpisodic",
             "LangMemProcedural",
+            "OrderKind",
             "OutboxMessage",
             "RuleEngineBase",
             "RuleEngineRulesetORM",
@@ -160,6 +161,44 @@ class TestCoreDomainModelsPackage:
         assert expected.issubset(table_names), (
             f"Missing tables: {expected - table_names}"
         )
+
+    def test_orderkinds_in_canonical_package(self) -> None:
+        """S106 W3 (D5 B2a): OrderKind moved to core.domain.models."""
+        from src.backend.core.domain.models import OrderKind
+        from src.backend.core.domain.models.orderkinds import OrderKind as Direct
+
+        assert OrderKind is Direct
+        assert OrderKind.__tablename__ == "orderkinds"
+        assert "OrderKind" in __import__(
+            "src.backend.core.domain.models", fromlist=["__all__"]
+        ).__all__
+
+    def test_orderkinds_shim_re_exports(self) -> None:
+        """S106 W3 (D5 B2a): shim re-exports OrderKind with DeprecationWarning."""
+        import importlib
+        import sys
+
+        for mod_name in (
+            "src.backend.infrastructure.database.models.orderkinds",
+        ):
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.resetwarnings()
+            warnings.simplefilter("always")
+            importlib.import_module(
+                "src.backend.infrastructure.database.models.orderkinds"
+            )
+
+        msgs = [str(w.message) for w in caught]
+        orderkinds_warnings = [
+            m for m in msgs if "core.domain.models.orderkinds" in m
+        ]
+        assert len(orderkinds_warnings) >= 1
+
+        from src.backend.infrastructure.database.models import orderkinds as shim
+        assert shim.OrderKind.__tablename__ == "orderkinds"
 
 
 class TestLayerLinterAfterB1:
