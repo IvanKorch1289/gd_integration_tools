@@ -9,7 +9,9 @@ Layout::
 * TTL=7 дней по умолчанию (configurable);
 * size quota per tenant;
 * cleanup-loop через :class:`TaskRegistry` (см. R-V15-11);
-* audit-event на каждое создание workspace'а.
+* audit-event на каждое создание workspace'а через canonical
+  :func:`core.audit.facade.emit_ai_workspace` (S108 W3 — TD-004 migration
+  домена AI).
 """
 
 from __future__ import annotations
@@ -18,7 +20,6 @@ import asyncio
 import shutil
 import time
 import uuid
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -26,6 +27,7 @@ from src.backend.core.ai.errors import (
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )
+from src.backend.core.audit.facade import emit_ai_workspace
 from src.backend.core.logging import get_logger
 
 __all__ = ("AIWorkspaceManager", "WorkspaceHandle")
@@ -54,10 +56,6 @@ class WorkspaceHandle:
     created_at: float
 
 
-AuditCallback = Callable[[dict[str, object]], None]
-"""Сигнатура audit-callback'а: принимает event dict, ничего не возвращает."""
-
-
 @dataclass(slots=True)
 class _TenantUsage:
     bytes_used: int = 0
@@ -74,7 +72,6 @@ class AIWorkspaceManager:
             одного тенанта.
         cleanup_interval_seconds: Период cleanup-loop (отдельный
             ``asyncio.Task``).
-        audit: Опц. callback на ``create_new``/``cleanup`` события.
     """
 
     def __init__(
@@ -84,13 +81,11 @@ class AIWorkspaceManager:
         ttl_seconds: float = DEFAULT_TTL_SECONDS,
         per_tenant_quota_bytes: int = DEFAULT_QUOTA_BYTES,
         cleanup_interval_seconds: float = DEFAULT_CLEANUP_INTERVAL_SECONDS,
-        audit: AuditCallback | None = None,
     ) -> None:
         self._root = root
         self._ttl = ttl_seconds
         self._quota = per_tenant_quota_bytes
         self._cleanup_interval = cleanup_interval_seconds
-        self._audit = audit
         self._usage: dict[str, _TenantUsage] = {}
         self._lock = asyncio.Lock()
         self._cleanup_task: asyncio.Task[None] | None = None
@@ -137,7 +132,7 @@ class AIWorkspaceManager:
             )
             usage.sessions[session_id] = handle
 
-            self._emit_audit(
+            await emit_ai_workspace(
                 {
                     "event": "ai_workspace.create_new",
                     "tenant": tenant,
@@ -193,7 +188,7 @@ class AIWorkspaceManager:
                     usage.sessions.pop(session_id, None)
                     usage.bytes_used = max(0, usage.bytes_used - size_freed)
                     removed += 1
-                    self._emit_audit(
+                    await emit_ai_workspace(
                         {
                             "event": "ai_workspace.cleanup",
                             "tenant": tenant,
@@ -247,14 +242,6 @@ class AIWorkspaceManager:
                 await task
             except (asyncio.CancelledError, Exception):
                 pass
-
-    def _emit_audit(self, event: dict[str, object]) -> None:
-        if self._audit is None:
-            return
-        try:
-            self._audit(event)
-        except Exception as exc:
-            _logger.debug("ai_workspace audit emission failed: %s", exc)
 
 
 def _dir_size(path: Path) -> int:
