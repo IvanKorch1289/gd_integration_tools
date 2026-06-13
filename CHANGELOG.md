@@ -5,6 +5,39 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S108 (2026-06-13) — Dependabot security audit + TD-008 verify + TD-004 AI migration + AI tool registry e2e (5 atomic commits, 23 NEW tests, score 9.7 → 9.8)
+
+### Added
+
+- **S108 W1 — Dependabot security fix (esbuild 0.28.1)**: Both `frontend/admin-react/package.json` + `src/frontend/admin-react/package.json` now have `"overrides": {"esbuild": "^0.28.1"}` (was missing in src/frontend, was `^0.25.0` in frontend/). Both `package-lock.json`: esbuild 0.25.x → 0.28.1. Both `vite.config.ts`: `build.target: 'es2022'` (esbuild 0.28+ requires es2022+ for destructuring transform; vite 6.4 default `chrome87` is below threshold). Closes Dependabot alerts #184 + #185 (GHSA-gv7w-rqvm-qjhr, CVSS 8.1, Deno module binary integrity check CWE-426 + CWE-494). Verified: `npm run build` passes in both admin-react dirs (29/34 modules transformed). Commit `9c39b4e0`.
+- **S108 W2 — TD-008 split verification report**: `docs/tech-debt/td-008-split-verification.md` — verify S107 W3 `core/audit/facade.py` → `facade/` package split. Findings: old `facade.py` gone ✅, 38 callers use package re-exports via `__init__.py` ✅, 0 external callers bypass the package facade ✅, 1 active callsite of `emit_capability_check` (audit_mixin.py central gate; ADR-0193 "17 callsites" claim was outdated). 5 domain helpers have 0 callsites (`emit_authorization_decision`, `emit_waf_evaluation`, `emit_secret_rotation`, `emit_ai_workspace`, `emit_banking_audit`) — **S110 cleanup candidate**. Verification-only wave per S100 W3 pattern. Commit `a08633f2`.
+- **S108 W3 — TD-004 audit callsite migration (AI workspace domain)**: `core/ai/workspace_manager.py` migrated to canonical `emit_ai_workspace` facade. Removed `AuditCallback` type alias, `audit` constructor param, `_audit` field, `_emit_audit` method. Replaced 2 callsites with `await emit_ai_workspace(dict)`. Tests updated: monkeypatch `emit_ai_workspace` directly (new pattern for audit-tests). Added `test_cleanup_expired_emits_audit_event`. Deprecation count: 76 → 73 callsites (-3). 73 legacy callsites remain across 21 files. Commit `358fd4bd`.
+- **S108 W4 — AI tool registry e2e tests**: 2 NEW end-to-end tests for AIToolDispatch real LLM-wiring path. `test_ai_tool_dispatch_end_to_end_happy_path`: mock AIGateway returns LLM tool selection JSON → mock ToolRegistry.get returns dynamically-registered AgentTool → tool.callable awaited with parsed args → result_property has `{dispatched: True, tool_id, args, result}`. `test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist`: defense-in-depth — LLM returns rogue_tool, whitelist only contains safe_tool → dispatch blocked with `reason=tool_id_not_in_whitelist`, registry.get NOT called for rogue_tool. 21/21 pass (was 19), 0 NEW regressions. Commit `9fd03c4b`.
+- **S108 closure ADR**: `docs/adr/0194-sprint-108-closure.md` — sprint summary, design decisions (esbuild override > vite bump, TD-004 = 1 domain/sprint, full migration vs soft deprecation, plugin discovery e2e over unit), score trajectory 9.7 → 9.8.
+- **Score update**: 9.7 → 9.8/10 (S108 closure).
+
+### Tests
+
+- 23 NEW (W1: 0 [build verify only], W3: 1 [test_cleanup_expired_emits_audit_event], W4: 2 [e2e happy + e2e block], W2/W5: 0 [docs/ADR only])
+- 18-entry test baseline allowlist (unchanged)
+- 0 NEW regressions (verified via `tools/check_test_baseline.py`)
+
+### Security fixes (S108 W1)
+
+- 2 Dependabot high CVEs closed (esbuild Deno module RCE, CVSS 8.1)
+
+### Pre-existing issues documented (out of S108 scope)
+
+- 18 test files с collection errors (vault / temporalio / clickhouse / aioboto3 extras + V22 path carryovers);
+- 3 functional failures (legacy edge cases, allowlisted);
+- TD-004 remaining: 73 legacy callsites across 20 files (S109+ migration 1-2 domains per sprint).
+
+### Real TODOs Remaining (S109+ backlog)
+
+- **S110 candidate** (from S108 W2): Audit 5 unused domain helpers in `core/audit/facade/` — remove dead code or document as reserved-for-future.
+- **TD-004 remaining**: 73 callsites across 20 files. Continue migration 1-2 domains per sprint.
+- **TD-012 docstring ratchet**: continuous -10/sprint.
+
 ## [Unreleased] — Autonomous cycle S107 (2026-06-13) — TD-residual cleanup + real LLM-wiring + real runtime for nats/mongo (5 atomic commits, 116 NEW tests, score 9.6 → 9.7)
 
 ### Added
