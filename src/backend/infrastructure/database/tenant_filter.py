@@ -18,10 +18,11 @@ import warnings
 
 from src.backend.core.tenancy.sqlalchemy_filter import (  # noqa: F401  re-export
     TenantMixin,
+    _is_tenant_aware,
     apply_tenant_filter,
 )
 
-__all__ = ("TenantMixin", "apply_tenant_filter")
+__all__ = ("TenantMixin", "_is_tenant_aware", "apply_tenant_filter")
 
 warnings.warn(
     "src.backend.infrastructure.database.tenant_filter is deprecated; "

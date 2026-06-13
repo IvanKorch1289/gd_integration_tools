@@ -57,6 +57,7 @@ class SourcesMixin:
             )
         )
 
+    @classmethod
     def from_nats_js(
         cls,
         route_id: str,
@@ -102,8 +103,9 @@ class SourcesMixin:
             )
         """
         source = f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
-        return cls(route_id=route_id, source=source, description=description)  # type: ignore[operator,return-value]
+        return cls(route_id=route_id, source=source, description=description)
 
+    @classmethod
     def from_webdav(
         cls,
         route_id: str,
@@ -155,7 +157,7 @@ class SourcesMixin:
         # Создаём source instance для smoke-валидации конструктора;
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
-        return cls(  # type: ignore[operator,return-value]
+        return cls(
             route_id=route_id, source=f"webdav:{route_id}", description=description
         )
 

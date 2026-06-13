@@ -11,6 +11,8 @@
 # (S106 W4 closure).
 
 # ── Collection errors (18 pre-existing, V22 path issues) ──
+# S107 W2 closed: TD-007 (from_webdav, from_nats_js @classmethod) +
+# TD-006 (loaders.py missing imports) — these tests no longer fail.
 tests/unit/core/security/test_vault_cipher.py	pre-existing: pydantic Field regex import (vault client migration S88+)
 tests/unit/core/security/test_vault_cipher_sqlalchemy.py	pre-existing: SQLAlchemy 2.x type import (vault client migration S88+)
 tests/unit/dsl/engine/processors/test_llm_structured.py	pre-existing: src.backend.dsl.engine.context import path (S62 yaml_loader decomp side-effect)
@@ -30,10 +32,7 @@ tests/unit/services/ai/cache/test_l3_retrieval.py	pre-existing: l3 retrieval req
 tests/unit/storage/test_s3_object_storage.py	pre-existing: aioboto3 import (S75+)
 tests/unit/test_main.py	pre-existing: main app import (full env required)
 
-# ── Functional failures (post-collection) ──
-# Added in S106 W3 (TD-006 closure, sub_workflow):
-# loaders.py pre-existing — missing _build_pipeline / _resolve_include_extends
-# / logger imports (S62 W4 yaml_loader decomp side-effect, OUT of W3 scope).
-re:tests/unit/dsl/round_trip/test_invoke_workflow\.py::test_invoke_workflow_round_trip	pre-existing: loaders.py missing _build_pipeline + _resolve_include_extends + logger (S62 W4 decomp side-effect, not from S106 W3 sub_workflow)
-re:tests/unit/infrastructure/sources/test_webdav_source\.py::test_builder_from_webdav	pre-existing: from_webdav uses def X(cls,...) without @classmethod (sibling-bug with from_nats_js, documented in S106 W4 from_nats docstring)
-re:tests/unit/dsl/round_trip/test_invoke_workflow\.py::test_invoke_workflow_(preserves_defaults_in_spec|async_reply_default_timeout_not_in_spec|async_reply_custom_timeout_in_spec|rejects_invalid_mode)	pre-existing: loaders.py side-effect (see above)
+# S107 W2 closed (no longer needed in allowlist):
+# - TD-007 (from_webdav / from_nats_js @classmethod) — FIXED в W2
+# - TD-006 (loaders.py missing _build_pipeline + _resolve_include_extends + logger) — FIXED в W2
+# - test_invoke_workflow_round_trip — was failing due to TD-006; now PASSES (29/29).

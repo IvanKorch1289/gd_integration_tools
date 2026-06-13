@@ -9,7 +9,15 @@ public loaders (yaml/file/directory).
 
 from pathlib import Path
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.yaml_loader.build import _build_pipeline
+from src.backend.dsl.yaml_loader.resolve import (
+    _is_route_composition_include_enabled,
+    _resolve_include_extends,
+)
+
+logger = get_logger(__name__)
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()
