@@ -218,6 +218,7 @@ from src.backend.dsl.engine.processors.streaming import (
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
+from src.backend.dsl.engine.processors.sub_workflow import SubWorkflowProcessor
 from src.backend.dsl.engine.processors.template_engine import (
     RenderTemplateFileProcessor,
     RenderTemplateProcessor,
@@ -399,6 +400,7 @@ __all__ = (
     "SplitterProcessor",
     "SseSourceProcessor",
     "SshCommandProcessor",
+    "SubWorkflowProcessor",
     "SwitchProcessor",
     "TemplateRenderProcessor",
     "TenantScopeProcessor",

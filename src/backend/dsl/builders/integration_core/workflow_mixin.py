@@ -136,6 +136,83 @@ class WorkflowOpsMixin:
             )
         )
 
+    def sub_workflow(
+        self,
+        name: str,
+        args: dict[str, Any],
+        *,
+        namespace: str = "default",
+        task_queue: str = "default",
+        sub_workflow_id_property: str = "sub_workflow_id",
+        result_property: str = "sub_workflow_result",
+        parent_workflow_id_property: str = "workflow_id",
+        parent_correlation_id_property: str = "correlation_id",
+    ) -> RouteBuilder:
+        """Запуск sub-workflow (fire-and-forget) — S106 W3 / TD-006.
+
+        Сахар над :meth:`invoke_workflow` с зафиксированным
+        ``mode="async-api"``. Семантически отличается от
+        ``invoke_workflow``:
+
+        * **Невозможно заблокироваться на результате** — ``mode`` жёстко
+          залочен на ``async-api`` (synchronous sub-workflow = race
+          conditions + излишне хрупкая связь parent→child).
+        * **Args обязателен** — sub-workflow это декомпозиция с явными
+          входными данными, а не трансформация in-place. Для
+          implicit-args fallback на ``body`` используйте
+          :meth:`invoke_workflow`.
+        * **Parent → child tracing** — ``parent_workflow_id`` и
+          ``parent_correlation_id`` автоматически пробрасываются из
+          ``exchange.property`` в ``args._parent_workflow_id`` /
+          ``args._parent_correlation_id`` (для audit distributed trace).
+
+        Пример::
+
+            route = (
+                RouteBuilder("orders_with_subwf", source="kafka:orders")
+                .set_property("workflow_id", "parent-123")
+                .set_property("correlation_id", "corr-456")
+                .sub_workflow(
+                    "notifications.send_receipt",
+                    args={"order_id": "${body.order_id}", "channel": "email"},
+                )
+                .build()
+            )
+
+        Args:
+            name: Имя sub-workflow (compiled в ``workflow_compiler_registry``
+                либо registered в ``WorkflowBackend``).
+            args: Аргументы sub-workflow. Обязательны (непустой dict).
+            namespace: Workflow namespace (Temporal).
+            task_queue: Workflow task queue.
+            sub_workflow_id_property: Куда писать ``workflow_id`` ребёнка.
+            result_property: Куда писать ``{"accepted": True,
+                "workflow_id": ..., "parent_workflow_id": ...}``.
+            parent_workflow_id_property: Property name для чтения
+                ``workflow_id`` родителя.
+            parent_correlation_id_property: Property name для чтения
+                ``correlation_id`` родителя.
+
+        Returns:
+            RouteBuilder с добавленным ``SubWorkflowProcessor``.
+        """
+        from src.backend.dsl.engine.processors.sub_workflow import (
+            SubWorkflowProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            SubWorkflowProcessor(
+                name,
+                args,
+                namespace=namespace,
+                task_queue=task_queue,
+                sub_workflow_id_property=sub_workflow_id_property,
+                result_property=result_property,
+                parent_workflow_id_property=parent_workflow_id_property,
+                parent_correlation_id_property=parent_correlation_id_property,
+            )
+        )
+
     def cron_schedule(
         self,
         name: str,
