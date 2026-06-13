@@ -24,12 +24,18 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.migrations._compat import json_b
 from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("DslSnapshot",)
 
 
-class DslSnapshot(BaseModel):
-    """Версионированный снэпшот pipeline маршрута."""
+class DslSnapshot(BaseModel, TenantMixin):
+    """Версионированный снэпшот pipeline маршрута.
+
+    S101 W4 (V2 P0 #6): TenantMixin добавлен для multi-tenant blue/green
+    deployments. ``tenant_id`` backfilled к ``"default"`` для existing rows
+    через Alembic migration ``a1b2c3d4e5f6`` (2026-06-13 12:00).
+    """
 
     __tablename__ = "dsl_snapshots"
     __versioned__ = {"versioning": False}

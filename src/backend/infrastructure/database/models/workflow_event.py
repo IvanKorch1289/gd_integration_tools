@@ -24,6 +24,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
 from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("WorkflowEvent", "WorkflowEventType")
 
@@ -72,7 +73,7 @@ class WorkflowEventType(str, enum.Enum):
     signal_received = "signal_received"
 
 
-class WorkflowEvent(BaseModel):
+class WorkflowEvent(BaseModel, TenantMixin):
     """Одна строка event log'а.
 
     Attributes:
@@ -84,6 +85,10 @@ class WorkflowEvent(BaseModel):
             ``event_type`` (``step_finished`` → ``{"result": ...}`` и т.д.).
         step_name: Имя шага DSL (null для instance-level событий).
         occurred_at: Момент записи (timezone-aware).
+
+    S101 W4 (V2 P0 #6): TenantMixin добавлен для multi-tenant replay
+    isolation. ``tenant_id`` backfilled к ``"default"`` для existing rows
+    через Alembic migration ``a1b2c3d4e5f6`` (2026-06-13 12:00).
     """
 
     __tablename__ = "workflow_events"
