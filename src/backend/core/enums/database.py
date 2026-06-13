@@ -11,11 +11,17 @@ class DatabaseTypeChoices(str, Enum):
         postgresql (str): PostgreSQL.
         oracle (str): Oracle.
         sqlite (str): SQLite (профиль dev_light, W21.2).
+        mssql (str): Microsoft SQL Server (S104 W3).
+        mysql (str): MySQL / MariaDB (S104 W3).
+        db2 (str): IBM Db2 (S104 W3).
     """
 
     postgresql = "postgresql"
     oracle = "oracle"
     sqlite = "sqlite"
+    mssql = "mssql"  # S104 W3
+    mysql = "mysql"  # S104 W3
+    db2 = "db2"  # S104 W3
 
 
 class IsolationLevelChoices(str, Enum):

@@ -219,6 +219,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         Примечание:
             Для Oracle поле `name` трактуется как `service_name`.
             Для SQLite используется ``path`` (для ``:memory:`` префикс пустой).
+            Для MSSQL/MySQL/DB2 — S104 W3 добавлена поддержка.
         """
         if self.type == DatabaseTypeChoices.sqlite:
             driver = "aiosqlite" if is_async else "pysqlite"
@@ -237,6 +238,33 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             return (
                 f"oracle+{driver}://{self.username}:{self.password}"
                 f"@{self.host}:{self.port}/?service_name={self.name}"
+            )
+
+        # S104 W3: MSSQL / MySQL / DB2 support (DEEP-RESEARCH D19).
+        if self.type == DatabaseTypeChoices.mssql:
+            # pyodbc / aioodbc — ODBC driver. Требует ``pyodbc`` + ``aioodbc``
+            # (опциональные deps, см. pyproject.toml [project.optional-dependencies]).
+            mssql_driver = driver or ("aioodbc" if is_async else "pyodbc")
+            return (
+                f"mssql+{mssql_driver}://{self.username}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
+                f"?driver=ODBC+Driver+17+for+SQL+Server"
+            )
+
+        if self.type == DatabaseTypeChoices.mysql:
+            # aiomysql / pymysql. Требует ``aiomysql`` (async) или ``pymysql`` (sync).
+            mysql_driver = driver or ("aiomysql" if is_async else "pymysql")
+            return (
+                f"mysql+{mysql_driver}://{self.username}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
+            )
+
+        if self.type == DatabaseTypeChoices.db2:
+            # ibm_db / ibm_db_sa. Требует ``ibm_db`` или ``ibm_db_sa``.
+            db2_driver = driver or "ibm_db_sa"
+            return (
+                f"db2+{db2_driver}://{self.username}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
             )
 
         raise NotImplementedError(f"Поддержка СУБД '{self.type}' не реализована")
