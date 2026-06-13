@@ -125,3 +125,38 @@ def test_file_layer_detects_workflows() -> None:
         Path("src/backend/workflows/registry.py"), root
     )
     assert layer == "workflows"
+
+
+def test_test_files_in_extensions_are_excluded() -> None:
+    """S110 W1: extensions/*/tests/ are excluded from layer check.
+
+    Tests are allowed to import from any layer (test internals).
+    Production code in extensions/ still must follow core-only rule.
+    """
+    # Create fake extensions tree in temp
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        # Production extension file — should be checked
+        prod_file = root / "extensions" / "ext1" / "service.py"
+        prod_file.parent.mkdir(parents=True)
+        prod_file.write_text(
+            "from src.backend.infrastructure.database.session_manager import main_session_manager\n"
+        )
+        # Test file in extensions — should be excluded
+        test_file = root / "extensions" / "ext1" / "tests" / "test_x.py"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text(
+            "from src.backend.services.plugins.manifest_v11 import load_plugin_manifest\n"
+        )
+
+        prod_violations = check_layers._check_file(prod_file, root)
+        test_violations = check_layers._check_file(test_file, root)
+
+        # Production file: violation detected
+        assert len(prod_violations) == 1
+        assert prod_violations[0][2] == "src.backend.infrastructure.database.session_manager"
+
+        # Test file: excluded (no violations)
+        assert len(test_violations) == 0

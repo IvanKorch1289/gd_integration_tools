@@ -210,6 +210,12 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
     layer = _file_layer(path, root)
     if layer is None or layer == PLUGINS_LAYER:
         return []
+    # S110 W1: test files inside extensions/ are allowed to import
+    # from any layer (they test internals — fixture/manifest loaders
+    # live in services/ for example). Production extension code still
+    # must follow core-only rule.
+    if layer == EXTENSIONS_LAYER and "/tests/" in str(path.as_posix()):
+        return []
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     except SyntaxError:
