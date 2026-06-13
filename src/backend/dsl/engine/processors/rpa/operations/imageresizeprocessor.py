@@ -50,20 +50,6 @@ class ImageResizeProcessor(BaseProcessor):
             return
 
         def _resize() -> bytes:
-<<<<<<< Updated upstream
-            with Image.open(io.BytesIO(body)) as img:
-                if self._width and self._height:
-                    img = img.resize((self._width, self._height))
-                elif self._width:
-                    ratio = self._width / img.width
-                    img = img.resize((self._width, int(img.height * ratio)))
-                elif self._height:
-                    ratio = self._height / img.height
-                    img = img.resize((int(img.width * ratio), self._height))
-                buf = io.BytesIO()
-                img.save(buf, format=self._format)
-                return buf.getvalue()
-=======
             # ``with Image.open(...)`` гарантирует .close() даже при
             # исключении в resize/save. PIL держит reference на
             # underlying file пока Image жив; при больших batch'ах это
@@ -82,7 +68,6 @@ class ImageResizeProcessor(BaseProcessor):
                 buf = io.BytesIO()
                 resized.save(buf, format=self._format)
             return buf.getvalue()
->>>>>>> Stashed changes
 
         result = await asyncio.to_thread(_resize)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))

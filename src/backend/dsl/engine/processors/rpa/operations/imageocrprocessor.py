@@ -42,13 +42,10 @@ class ImageOcrProcessor(BaseProcessor):
         if not isinstance(body, bytes):
             exchange.fail("ocr expects image bytes")
             return
-<<<<<<< Updated upstream
-=======
         # ``with Image.open(...)`` гарантирует .close() даже при
         # исключении в pytesseract.image_to_string. PIL держит
         # reference на underlying file пока Image жив; без ``with``
         # это приводит к file-descriptor leak (Sprint 83 W3).
->>>>>>> Stashed changes
         with Image.open(io.BytesIO(body)) as img:
             text = await asyncio.to_thread(
                 pytesseract.image_to_string, img, lang=self._lang
