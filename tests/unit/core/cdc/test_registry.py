@@ -94,16 +94,10 @@ def test_get_cdc_source_debezium_constructs() -> None:
 def test_get_cdc_source_adapter_constructs() -> None:
     """``get_cdc_source("adapter", ...)`` — construction OK через legacy CDCClient.
 
-    SKIP: legacy ``get_cdc_client()`` has pre-existing bug (``_cdc_instance``
-    not defined в client.py:181). Per S99 W3 lesson, real fix requires
-    separate sprint — S101 W1 only consolidates registry, not legacy bugs.
+    S102 W1: bug fixed — ``_cdc_instance`` теперь module-level, locked.
     """
-    import pytest
-
-    pytest.skip(
-        "Legacy CDCClient.get_cdc_client() имеет pre-existing bug "
-        "(_cdc_instance NameError в client.py:181). S101+ W5 backlog."
-    )
+    src = get_cdc_source("adapter", profile="dev", strategy="polling")
+    assert isinstance(src, CDCSource)
 
 
 def test_get_cdc_source_unknown_raises_value_error() -> None:
