@@ -5,7 +5,7 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S99 (2026-06-13) — TODO closure (3/4) + ratchet (5 commits, 6 NEW tests, score 9.0/10 TARGET ACHIEVED)
+## [Unreleased] — Autonomous cycle S100 (2026-06-13) — TODO backlog = 0: LangGraph Checkpointer + Python 2 codemod + ratchet -10 + stdlib audit (5 commits, 14 NEW tests, score 9.1/10)
 
 ### Added
 
@@ -66,8 +66,25 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - S24 W3: `dsl/workflow/compiler/step_compilers.py:319` — LangGraph Checkpointer full integration (deferred S100+)
 
-### Added (S97)
+### Added (S100)
 
+- **S100 W1-TODO S24 W3 CLOSED**: `src/backend/dsl/workflow/compiler/activity_bridge.py` + `step_compilers.py` — 2 NEW Temporal activities (`_langgraph_checkpoint_get`, `_langgraph_checkpoint_put`) с `register_langgraph_checkpoint_activities()` helper. `compile_agent_invoke_step` durable=True: thread_id = `{agent_id}:{correlation_id}` + 3 activity calls (get + invoke + put). durable=False: 1 call (unchanged). **Sandbox violation removed**: pre-existing `await get_langgraph_postgres_saver()` прямо в workflow коде заменён на activity indirection. 14 NEW tests (8 activity-level, 2 bridge, 4 workflow-level). Failed checkpoint НЕ прерывает workflow (degrades to stateless).
+- **S100 W2-Python 2 syntax codemod batch fix**: 31 файла, 43 occurrences `except A, B:` → `except (A, B):` (2-4+ types, multi-line, anchored skip module-level docstrings). 18 в `tools/*`, 9 в `tests/*`, 1 в `testkit/*`. AST errors: 36 → 0 (Python 3.14). 9 utility tools (ratchet, layer gate, API fuzzer, etc.) unblocked.
+- **S100 W3-Docstring ratchet -10** (1133 → 1123): 3 файла — `docs_indexer.py` (7: SentenceTransformerEmbedder.encode, InMemoryQdrantFallback.__init__/get_collection/create_collection/upsert/search, DocsIndexer.collection_name/is_fallback), `blueprint_loader.py` (1: BlueprintParam.from_dict), `content_mixin.py` (2: Enrich/WireTap EIP.process).
+- **S100 W4-stdlib logging audit**: `tools/audit_stdlib_logging.py` (NEW) — CI-runnable scan `src/backend/**` для `import logging` / `from logging import`. Cross-check с `LEGITIMATE_STDLIB_FILES`. `--ci` mode: exit 1 на NEW uses (regression). `tests/unit/core/test_legitimate_stdlib_logging.py` 7 → 8 entries (добавлен `workflows/worker.py` typer basicConfig + `http_httpx.py` tenacity DEBUG; marker regex `re.search(..., re.MULTILINE)` для anchored patterns). **Migration stdlib → core.logging ЗАВЕРШЕНА** (S93-S98 = 22 файлов).
+- `docs/adr/0184-sprint-100-closure.md` — closure ADR. **TODO backlog = 0** (S100 W1 closed last real item). **Score 9.1/10**.
+
+### Tests
+
+- 14 NEW (W1: 14; W2-W5: 0 codemod/closure)
+- **S93-S100 total: 196 NEW tests, 40 atomic commits**
+- **5 ADRs** (0175-0178 + 0179-0183 + 0184)
+
+### Real TODOs Remaining (S101+ backlog)
+
+- **NONE** (S100 W1 closed S24 W3 — last real deferred feature)
+
+### Added (S97)
 - **S97 W1-CRITICAL FIX: RouteBuilder.__init__** — Pre-S97: `RouteBuilder` имел `__slots__=()` без `__init__`, все 12+ `from_*` builders (CDC, SSE, HTTP, messaging, ...) TypeError на instantiation. S94 W4 `from_sse` был orphan (mixin не подключён). Fix: explicit `__init__(route_id='', source='', description=None)` + 8 `__slots__` + подключение `TransportSourcesMixin` (renamed для избежания collision). 8 tests: init, from_, from_registered_source, from_sse, from_sse_multi, build, _add, slots.
 - **S97 W2-Docstring ratchet -3** (1160 → 1157 NEW violations): `services/ai/prompt_versioning.py` — 13 NEW docstrings (to_dict, store methods, service proxies). 16 Protocol stubs остаются exempt per convention.
 - **S97 W3-TODO catalog**: 4 real deferred features (S18 middleware registry, S24 LangGraph Checkpointer, S40 DSL codegen, S40 express callback) каталогизированы в `docs/tech-debt/TODO-CATALOG.md`. S98+ backlog: middleware → codegen → checkpointer → express.
