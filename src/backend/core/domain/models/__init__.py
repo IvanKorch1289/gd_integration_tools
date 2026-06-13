@@ -44,6 +44,14 @@ from src.backend.core.domain.models.rule_engine import (
     RuleEngineRulesetORM,
 )
 from src.backend.core.domain.models.users import User
+from src.backend.core.domain.models.workflow_event import (
+    WorkflowEvent,
+    WorkflowEventType,
+)
+from src.backend.core.domain.models.workflow_instance import (
+    WorkflowInstance,
+    WorkflowStatus,
+)
 
 __all__ = (
     # base
@@ -74,4 +82,10 @@ __all__ = (
     "RuleEngineRulesetORM",
     # users
     "User",
+    # workflow_event
+    "WorkflowEvent",
+    "WorkflowEventType",
+    # workflow_instance
+    "WorkflowInstance",
+    "WorkflowStatus",
 )

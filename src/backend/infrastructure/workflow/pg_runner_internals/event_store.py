@@ -34,11 +34,11 @@ from uuid import UUID
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.workflow_event import (
+from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
 )
-from src.backend.infrastructure.database.models.workflow_instance import (
+from src.backend.core.domain.models.workflow_instance import (
     WorkflowInstance,
 )
 from src.backend.infrastructure.database.session_manager import main_session_manager

@@ -51,7 +51,7 @@ class TestCoreDomainModelsPackage:
         """__all__ matches actual exports."""
         from src.backend.core.domain.models import __all__
 
-        assert len(__all__) == 18
+        assert len(__all__) == 22
         for symbol in (
             "Base",
             "BaseModel",
@@ -71,6 +71,10 @@ class TestCoreDomainModelsPackage:
             "RuleEngineBase",
             "RuleEngineRulesetORM",
             "User",
+            "WorkflowEvent",
+            "WorkflowEventType",
+            "WorkflowInstance",
+            "WorkflowStatus",
         ):
             assert symbol in __all__
 
@@ -315,6 +319,102 @@ class TestCoreDomainModelsPackage:
         assert shim.OrderFile is __import__(
             "src.backend.core.domain.models", fromlist=["OrderFile"]
         ).OrderFile
+
+    def test_workflow_models_in_canonical_package(self) -> None:
+        """S106 W4 (D5 B3): WorkflowInstance + WorkflowEvent moved."""
+        from src.backend.core.domain.models import (
+            WorkflowInstance,
+            WorkflowEvent,
+            WorkflowStatus,
+            WorkflowEventType,
+        )
+        from src.backend.core.domain.models.workflow_instance import (
+            WorkflowInstance as DirectI,
+            WorkflowStatus as DirectS,
+        )
+        from src.backend.core.domain.models.workflow_event import (
+            WorkflowEvent as DirectE,
+            WorkflowEventType as DirectT,
+        )
+
+        assert WorkflowInstance is DirectI
+        assert WorkflowEvent is DirectE
+        assert WorkflowStatus is DirectS
+        assert WorkflowEventType is DirectT
+        assert WorkflowInstance.__tablename__ == "workflow_instances"
+        assert WorkflowEvent.__tablename__ == "workflow_events"
+
+    def test_workflow_native_enum_preserved(self) -> None:
+        """Native PG Enum (WorkflowStatus, WorkflowEventType) preserved post-move."""
+        from src.backend.core.domain.models import (
+            WorkflowStatus,
+            WorkflowEventType,
+        )
+
+        # Enum members preserved
+        assert WorkflowStatus.pending.value == "pending"
+        assert WorkflowStatus.running.value == "running"
+        assert WorkflowEventType.created.value == "created"
+        assert WorkflowEventType.step_started.value == "step_started"
+
+    def test_workflow_fk_cross_reference_preserved(self) -> None:
+        """WorkflowEvent.workflow_id → workflow_instances.id FK preserved."""
+        from src.backend.core.domain.models import (
+            WorkflowEvent,
+            WorkflowInstance,
+        )
+
+        fk_cols = [c for c in WorkflowEvent.__table__.c if c.foreign_keys]
+        fk_targets = {
+            list(c.foreign_keys)[0].target_fullname for c in fk_cols
+        }
+        assert "workflow_instances.id" in fk_targets
+        # ONDELETE CASCADE preserved
+        workflow_id_fk = [
+            c.foreign_keys for c in WorkflowEvent.__table__.c
+            if c.name == "workflow_id"
+        ][0]
+        ondelete = list(workflow_id_fk)[0].ondelete
+        assert ondelete == "CASCADE"
+
+    def test_workflow_shims_re_exports(self) -> None:
+        """S106 W4 (D5 B3): shims re-export with DeprecationWarning."""
+        import importlib
+        import sys
+
+        for mod_name in (
+            "src.backend.infrastructure.database.models.workflow_instance",
+            "src.backend.infrastructure.database.models.workflow_event",
+        ):
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.resetwarnings()
+            warnings.simplefilter("always")
+            importlib.import_module(
+                "src.backend.infrastructure.database.models.workflow_instance"
+            )
+            importlib.import_module(
+                "src.backend.infrastructure.database.models.workflow_event"
+            )
+
+        msgs = [str(w.message) for w in caught]
+        i_warnings = [m for m in msgs if "core.domain.models.workflow_instance" in m]
+        e_warnings = [m for m in msgs if "core.domain.models.workflow_event" in m]
+        assert len(i_warnings) >= 1
+        assert len(e_warnings) >= 1
+
+        from src.backend.infrastructure.database.models import (
+            workflow_instance as shim_i,
+            workflow_event as shim_e,
+        )
+        from src.backend.core.domain.models import (
+            WorkflowInstance,
+            WorkflowEvent,
+        )
+        assert shim_i.WorkflowInstance is WorkflowInstance
+        assert shim_e.WorkflowEvent is WorkflowEvent
 
 
 class TestLayerLinterAfterB1:

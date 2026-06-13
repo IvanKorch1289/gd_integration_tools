@@ -33,8 +33,8 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.backend.infrastructure.database.models.workflow_instance import (
+from src.backend.core.domain.models.workflow_event import WorkflowEventType
+from src.backend.core.domain.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )

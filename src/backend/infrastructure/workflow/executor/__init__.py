@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,

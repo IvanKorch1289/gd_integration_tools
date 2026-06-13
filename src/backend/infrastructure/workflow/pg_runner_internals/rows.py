@@ -30,11 +30,11 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from src.backend.infrastructure.database.models.workflow_event import (
+from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
 )
-from src.backend.infrastructure.database.models.workflow_instance import (
+from src.backend.core.domain.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )

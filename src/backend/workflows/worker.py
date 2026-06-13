@@ -305,7 +305,7 @@ async def _print_status() -> None:
     """Async-helper команды ``status``: печатает счётчики по статусам."""
     from sqlalchemy import func, select
 
-    from src.backend.infrastructure.database.models.workflow_instance import (
+    from src.backend.core.domain.models.workflow_instance import (
         WorkflowInstance,
         WorkflowStatus,
     )
