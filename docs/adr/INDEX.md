@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **92**; уникальных слотов: **91**.
+Всего ADR-файлов: **142**; уникальных слотов: **141**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -98,5 +98,55 @@
 | 0140 | ADR-0140 — Sprint 66 closure: 3 god-file decomp (event_store, setup, lifecycle) + 1 sibling WIP fixup (4+1 commits, 5/5 substantive) | Accepted (Sprint 66 W5, 2026-06-10) | [0140-sprint-66-closure.md](0140-sprint-66-closure.md) |
 | 0141 | ADR-0141 — Sprint 67 closure: 4 god-file decomp (backpressure, ai_enforcer, semantic_cache, ad_directory_client) (4+1 commits, 5/5 substantive) | Accepted (Sprint 67 W5, 2026-06-10) | [0141-sprint-67-closure.md](0141-sprint-67-closure.md) |
 | 0142 | ADR-0142 — Sprint 68 closure: 4 god-file decomp (macros, clickhouse_audit, invoker, ai_providers) (4+1 commits, 5/5 substantive) | Accepted (Sprint 68 W5, 2026-06-10) | [0142-sprint-68-closure.md](0142-sprint-68-closure.md) |
+| 0143 | ADR-0143 — Sprint 83 W3: Vault DSL wrapper + PIL leak fix | Accepted (Sprint 83 W3, 2026-08-31) | [0143-sprint-83-w3-closure.md](0143-sprint-83-w3-closure.md) |
+| 0144 | ADR-0144 — Multi-instance safety: outbox claim_pending + scheduler leader election + RedisDedupeStore (4 commits, 3/5 substantive) | Accepted (Autonomous work cycle, 2026-06-12) | [0144-multi-instance-safety.md](0144-multi-instance-safety.md) |
+| 0145 | ADR-0145 — Sprint 65 closure: P0 cleanup (lazy imports, dead enforcement, dsl/workflows LAYERS) (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S65, 2026-06-12) | [0145-sprint-65-p0-cleanup-closure.md](0145-sprint-65-p0-cleanup-closure.md) |
+| 0146 | ADR-0146 — Sprint 66 closure: fact-checked quick wins (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S66, 2026-06-12) | [0146-sprint-66-quick-wins-closure.md](0146-sprint-66-quick-wins-closure.md) |
+| 0147 | ADR-0147 — Sprint 67 closure: torch CVE, namespace markers, JWT consolidation, pre-existing fix (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S67, 2026-06-12) | [0147-sprint-67-torch-namespace-jwt-fix-closure.md](0147-sprint-67-torch-namespace-jwt-fix-closure.md) |
+| 0148 | ADR-0148 — Sprint 68 closure: 3 parallel teams (swarm), 4 violations closed, 2 ADR docs (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S68, 2026-06-12) | [0148-sprint-68-swarm-closure.md](0148-sprint-68-swarm-closure.md) |
+| 0149 | ADR-0149 — TD-S65-W2 audit: 34 core→other violations classified + 1 sample refactor (RetryPolicy) | Accepted (Autonomous work cycle S68 W2, 2026-06-12) | [0149-core-violations-audit.md](0149-core-violations-audit.md) |
+| 0150 | ADR-0150 — TD-S65-W4 audit: 124 dsl/workflows violations classified + 1 sample refactor (audit JSON codec) | Accepted (Autonomous work cycle S68 W3, 2026-06-12) | [0150-dsl-violations-audit.md](0150-dsl-violations-audit.md) |
+| 0151 | ADR-0151 — Sprint 69 closure: 2nd SWARM (3 teams) — 1 violation closed + 2 style cleanups (3 commits, 3/3 substantive, scope discipline) | Accepted (Autonomous work cycle S69, 2026-06-12) | [0151-sprint-69-swarm-2nd-closure.md](0151-sprint-69-swarm-2nd-closure.md) |
+| 0152 | ADR-0152 — Sprint 70 closure: 3rd SWARM (3 teams) — 3 style cleanups (3 commits, 3/3 substantive, 2/3 subagent clean) | Accepted (Autonomous work cycle S70, 2026-06-12) | [0152-sprint-70-swarm-3rd-closure.md](0152-sprint-70-swarm-3rd-closure.md) |
+| 0153 | ADR-0153 — Sprint 71 closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 7+3 NEW tests) | Accepted (Autonomous work cycle S71, 2026-06-12) | [0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md](0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md) |
+| 0154 | ADR-0154 — Sprint 72 closure: TD-S64-W1 per-row outbox claim (3 files, 5+1 NEW tests, per-row lease + sweeper) | Accepted (Autonomous work cycle S72, 2026-06-12) | [0154-sprint-72-outbox-per-row-claim-closure.md](0154-sprint-72-outbox-per-row-claim-closure.md) |
+| 0155 | ADR-0155 — Sprint 73 closure: P0-A batch fix (106 files, 136 except-A-B fixes, 2 NEW regression tests, pre-push CI gate) (5 commits) | Accepted (Autonomous work cycle S73, 2026-06-12) | [0155-sprint-73-p0-a-except-bug-batch-fix-closure.md](0155-sprint-73-p0-a-except-bug-batch-fix-closure.md) |
+| 0156 | ADR-0156 — Sprint 74 closure: Jupiter Hub + Notebook Execution ecosystem (Papermill + Factory + WebSocket heartbeat, 13 NEW tests) (5 commits) | Accepted (Autonomous work cycle S74, 2026-06-12) | [0156-sprint-74-jupyter-execution-ecosystem-closure.md](0156-sprint-74-jupyter-execution-ecosystem-closure.md) |
+| 0157 | ADR-0157 — Sprint 75 closure: направление #1 final closure (e2b ExecutionBackend + KernelSpecDiscovery, 15 NEW tests) (5 commits) | Accepted (Autonomous work cycle S75, 2026-06-12) | [0157-sprint-75-jupyter-execution-final-closure.md](0157-sprint-75-jupyter-execution-final-closure.md) |
+| 0158 | ADR-0158 — Sprint 76 closure: P0-B tools whitelist в AIPolicySpec (ToolsSpec + enforcement + 21 NEW tests) (5 commits) | Accepted (Autonomous work cycle S76, 2026-06-12) | [0158-sprint-76-tools-whitelist-closure.md](0158-sprint-76-tools-whitelist-closure.md) |
+| 0159 | ADR-0159 — Sprint 77 closure: P0-C AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits) | Accepted (Autonomous work cycle S77, 2026-06-12) | [0159-sprint-77-ai-policy-dsl-closure.md](0159-sprint-77-ai-policy-dsl-closure.md) |
+| 0160 | ADR-0160 — Sprint 78 closure: P0-D CORS/XSRF в Streamlit (config security + nginx + validator + 17 NEW tests) (5 commits) | Accepted (Autonomous work cycle S78, 2026-06-12) | [0160-sprint-78-streamlit-cors-xsrf-closure.md](0160-sprint-78-streamlit-cors-xsrf-closure.md) |
+| 0161 | ADR-0161 — Sprint 79 closure: CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits) | Accepted (Autonomous work cycle S79, 2026-06-12) | [0161-sprint-79-capability-gate-tools-integration-closure.md](0161-sprint-79-capability-gate-tools-integration-closure.md) |
+| 0162 | ADR-0162 — Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted (Autonomous work cycle S80, 2026-06-12) | [0162-sprint-80-litellm-pool-registration-closure.md](0162-sprint-80-litellm-pool-registration-closure.md) |
+| 0163 | ADR-0163 — Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted (Autonomous work cycle S81, 2026-06-12) | [0163-sprint-81-circuit-breaker-middleware-closure.md](0163-sprint-81-circuit-breaker-middleware-closure.md) |
+| 0164 | ADR-0164: Sprint 82 — Documentation Cookbooks Closure | Accepted | [0164-sprint-82-cookbooks-closure.md](0164-sprint-82-cookbooks-closure.md) |
+| 0165 | ADR-0165: Sprint 83 — DetachedInstanceError Closure (V2 P0 N1) | Accepted | [0165-sprint-83-detached-instance-error-closure.md](0165-sprint-83-detached-instance-error-closure.md) |
+| 0166 | ADR-0166: Sprint 84 — logging.factory Layer Violations Closure (V2 P0 #3) | Accepted | [0166-sprint-84-logging-facade-closure.md](0166-sprint-84-logging-facade-closure.md) |
+| 0167 | ADR-0167: Sprint 85 — AIGateway Pass-Through Closure (V2 P0 #1) | Accepted | [0167-sprint-85-ai-gateway-enforcement-closure.md](0167-sprint-85-ai-gateway-enforcement-closure.md) |
+| 0168 | ADR-0168: Sprint 86 — Temporal Sandbox Closure + Defense-in-Depth (V2 P0 #2) | Accepted | [0168-sprint-86-temporal-sandbox-closure.md](0168-sprint-86-temporal-sandbox-closure.md) |
+| 0169 | ADR-0169: Sprint 87 — V2 P0 Re-Verification (Fact-Check, NO Code Changes) | Accepted (investigation-only) | [0169-sprint-87-v2-p0-reverification.md](0169-sprint-87-v2-p0-reverification.md) |
+| 0170 | ADR-0170: Sprint 88 — V2 P0 #5 + #6 Closure (HIGH severity) | Accepted | [0170-sprint-88-rate-limit-and-tenant-isolation.md](0170-sprint-88-rate-limit-and-tenant-isolation.md) |
+| 0171 | ADR-0171: Sprint 89 — V2 P0 #6 Pilot Migration (Order → TenantMixin) | Accepted | [0171-sprint-89-order-tenant-mixin-pilot.md](0171-sprint-89-order-tenant-mixin-pilot.md) |
+| 0172 | ADR-0172: Sprint 90 — Pool Registration Completion (V3 #5) | — | [0172-sprint-90-pool-registration-completion.md](0172-sprint-90-pool-registration-completion.md) |
+| 0173 | ADR-0173: Sprint 91 — V2 P0 #6 continue (User) + V2 P0 #7 fix (processors) | — | [0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md](0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md) |
+| 0174 | ADR-0174: Sprint 92 — V2 P0 #6 continue (File + OrderKind) | — | [0174-sprint-92-v2-p0-6-file-orderkind.md](0174-sprint-92-v2-p0-6-file-orderkind.md) |
+| 0175 | ADR-0175: Sprint 93 Wave 1 — Cleanup + Critical Fixes | — | [0175-sprint-93-w1-cleanup-and-critical-fixes.md](0175-sprint-93-w1-cleanup-and-critical-fixes.md) |
+| 0176 | ADR-0176: Sprint 93 Wave 2 — Frontend PATH + Docstring Ratchet + Resilience Fact-Check | — | [0176-sprint-93-w2-frontend-and-resilience-factcheck.md](0176-sprint-93-w2-frontend-and-resilience-factcheck.md) |
+| 0177 | ADR-0177: S93 closure — auth, CDC, logging, DSL | — | [0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md](0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md) |
+| 0178 | ADR-0178: S94 closure — stdlib logging codemod + docstring ratchet + DSL SSE | — | [0178-sprint-94-w5-closure-logging-ratchet-sse.md](0178-sprint-94-w5-closure-logging-ratchet-sse.md) |
+| 0179 | ADR-0179: S95 closure — DSL CRUD + docstring ratchet + stdlib audit + AuthGateway | — | [0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md](0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md) |
+| 0180 | ADR-0180: S96 Closure | — | [0180-sprint-96-closure.md](0180-sprint-96-closure.md) |
+| 0181 | ADR-0181: S97 Closure | — | [0181-sprint-97-closure.md](0181-sprint-97-closure.md) |
+| 0182 | ADR-0182: S98 Closure | — | [0182-sprint-98-closure.md](0182-sprint-98-closure.md) |
+| 0183 | ADR-0183: S99 Closure — Final Score 9.0/10 | — | [0183-sprint-99-closure.md](0183-sprint-99-closure.md) |
+| 0184 | ADR-0184: S100 Closure — TODO backlog = 0 | — | [0184-sprint-100-closure.md](0184-sprint-100-closure.md) |
+| 0185 | 0185-sprint-101-deep-research-followup | — | [0185-sprint-101-deep-research-followup.md](0185-sprint-101-deep-research-followup.md) |
+| 0186 | 0186-sprint-102-backlog-closure | — | [0186-sprint-102-backlog-closure.md](0186-sprint-102-backlog-closure.md) |
+| 0187 | 0187-sprint-103-cross-cutting | — | [0187-sprint-103-cross-cutting.md](0187-sprint-103-cross-cutting.md) |
+| 0188 | ADR-0188: D5 model move plan (analysis-only, multi-sprint execution) | — | [0188-d5-models-move-plan.md](0188-d5-models-move-plan.md) |
+| 0189 | ADR-0189: Sprint 104 closure — DSN tests + RPA DSL + Rate limit + MSSQL/MySQL/DB2 | — | [0189-sprint-104-closure.md](0189-sprint-104-closure.md) |
+| 0190 | ADR-0190: Sprint 105 Closure | — | [0190-sprint-105-closure.md](0190-sprint-105-closure.md) |
+| 0191 | ADR-0191: Sprint 106 Closure — D5 split-brain B1+B2+B3 complete | — | [0191-sprint-106-closure.md](0191-sprint-106-closure.md) |
+| 0192 | ADR-0192: Sprint 106 Sprint B closure — sub_workflow + ai_tool_dispatch + from_nats/from_mongo + test baseline | — | [0192-sprint-106-sprint-b-closure.md](0192-sprint-106-sprint-b-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
