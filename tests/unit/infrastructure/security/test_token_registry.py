@@ -375,3 +375,14 @@ def _cleanup_env_pollution() -> None:
     for k in list(os.environ):
         if k.startswith("PII_AES_KEY_V"):
             del os.environ[k]
+
+
+def test_token_registry_uses_renamed_audit_method() -> None:
+    """S109 W4: ``_emit_audit`` → ``_audit_emit`` (regex-friendly name).
+
+    Verifies that RedisTokenRegistry has the renamed method.
+    """
+    from src.backend.infrastructure.security.token_registry import RedisTokenRegistry
+
+    assert hasattr(RedisTokenRegistry, "_audit_emit")
+    assert not hasattr(RedisTokenRegistry, "_emit_audit")

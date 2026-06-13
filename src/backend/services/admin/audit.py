@@ -1,7 +1,7 @@
 """Admin audit helpers (S19 K5 W5b).
 
 Emits ``admin.action`` events through the shared audit_callback pattern
-(same callback interface as RouteLoader._emit_audit).
+(same callback interface as RouteLoader._audit_emit).
 """
 
 from __future__ import annotations

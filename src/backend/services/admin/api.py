@@ -195,7 +195,7 @@ class AdminService:
         Retrieve audit log entries (S19 K5 W5b).
 
         Requires AuthZ: ``admin.audit:read``.
-        Returns entries emitted via ``emit_admin_action`` / ``_emit_audit``.
+        Returns entries emitted via ``emit_admin_action`` / ``_audit_emit``.
         """
         resource = "admin.audit"
         await self._authorize(actor=actor, resource=resource, action="read")

@@ -267,7 +267,7 @@ class RedisTokenRegistry:
         redis_key = self._build_key(key)
         payload = self._serialize(token_map)
         await self._redis.set(redis_key, payload, ex=ttl_s)
-        await self._emit_audit(
+        await self._audit_emit(
             event="ai.pii.tokenize.store",
             action="store",
             outcome="success",
@@ -291,14 +291,14 @@ class RedisTokenRegistry:
             _logger.warning(
                 "TokenMap deserialization failed for %s: %r", redis_key, exc
             )
-            await self._emit_audit(
+            await self._audit_emit(
                 event="ai.pii.tokenize.decrypt_failed",
                 action="retrieve",
                 outcome="failure",
                 details={"reason": "deserialize_failed"},
             )
             return None
-        await self._emit_audit(
+        await self._audit_emit(
             event="ai.pii.tokenize.retrieve",
             action="retrieve",
             outcome="success",
@@ -313,7 +313,7 @@ class RedisTokenRegistry:
         """Явно удаляет :class:`TokenMap` (например после успешного ``unmask``)."""
         redis_key = self._build_key(key)
         await self._redis.delete(redis_key)
-        await self._emit_audit(
+        await self._audit_emit(
             event="ai.pii.tokenize.delete",
             action="delete",
             outcome="success",
@@ -391,7 +391,7 @@ class RedisTokenRegistry:
             if fnmatch.fnmatchcase(k, match):
                 yield k
 
-    async def _emit_audit(
+    async def _audit_emit(
         self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""

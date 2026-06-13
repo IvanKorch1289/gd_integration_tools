@@ -459,3 +459,14 @@ class TestCapabilityGateAuditAndStrict:
 def _smoke_textwrap_used() -> str:
     """Использует textwrap, чтобы избежать unused-import."""
     return textwrap.dedent("a")
+
+
+def test_route_loader_uses_renamed_audit_method() -> None:
+    """S109 W4: ``_emit_audit`` → ``_audit_emit`` (regex-friendly name).
+
+    Verifies that RouteLoader has the renamed method.
+    """
+    from src.backend.services.routes.loader import RouteLoader
+
+    assert hasattr(RouteLoader, "_audit_emit")
+    assert not hasattr(RouteLoader, "_emit_audit")

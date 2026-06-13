@@ -7,7 +7,7 @@
 
 Цель: единая точка эмита для всех source'ов (HTTP middleware, AI workspace,
 WAF outbound, capability gate, DSL pipeline, feature-flag toggle).
-Существующие legacy ``_emit_audit``/``log_capability_event`` callsite'ы
+Существующие legacy ``_audit_emit``/``log_capability_event`` callsite'ы
 постепенно переходят на этот фасад без breaking-changes — оригинальные
 inline-логи остаются как backward-compat.
 

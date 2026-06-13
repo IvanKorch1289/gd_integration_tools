@@ -229,7 +229,7 @@ class RouteLoader:
             missing_wf = manifest.missing_workflows(self._installed_workflows)
             if missing_wf:
                 # Emit audit event for workflow version mismatch
-                self._emit_audit(
+                self._audit_emit(
                     {
                         "event": "workflow.version.mismatch",
                         "route": manifest.name,
@@ -343,7 +343,7 @@ class RouteLoader:
             return
 
         # ── Audit: capability-аллокация (route.capabilities.allocated)
-        self._emit_audit(
+        self._audit_emit(
             {
                 "event": "route.capabilities.allocated",
                 "route": manifest.name,
@@ -422,7 +422,7 @@ class RouteLoader:
         except Exception as _:
             return False
 
-    def _emit_audit(self, event: dict[str, Any]) -> None:
+    def _audit_emit(self, event: dict[str, Any]) -> None:
         """Эмиссия audit-event через ``audit_callback`` (best-effort)."""
         if self._audit is None:
             return
