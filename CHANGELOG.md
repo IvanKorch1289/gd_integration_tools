@@ -5,6 +5,30 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S103 (2026-06-13) — Cross-cutting: D5 linter 41 violations + D9 cron DSL + §3.4 audit facade + V2 P0 #10 verified (5 commits, 19 NEW tests, score 9.3 → 9.4)
+
+### Added
+
+- **S103 W1-D5 extensions layer scanning (DEEP-RESEARCH 🔴)**: `tools/check_layers.py` — `EXTENSIONS_LAYER = "extensions"`, `ALLOWED["extensions"] = {"core"}`. Поддерживает 2 режима (`--root extensions` или `--root .`). **Measured: 41 NEW violations** (vs DEEP-RESEARCH claim 20). Per S58+ rule — detection only, multi-wave fix backlog.
+- **S103 W2-D9 cron_schedule DSL skeleton (DEEP-RESEARCH ⚠️)**: `src/backend/dsl/builders/integration_core/workflow_mixin.py` — NEW method `RouteBuilder.cron_schedule()` (5-field cron, Temporal-style). `src/backend/dsl/engine/processors/cron_schedule.py` (NEW, 90 LOC) — `CronScheduleProcessor` dataclass с validation + kind + to_dict. 9/9 tests pass. Real Temporal Schedule-to-Close wiring — S103+ W3+ (facade pattern).
+- **S103 W3-§3.4 Audit facade canonical (DEEP-RESEARCH 🟡)**: `src/backend/core/audit/facade.py` (NEW, 70 LOC) — canonical re-export `AuditService` + `get_unified_audit_service` + new `emit_audit()` sync wrapper. **Measured:** 16 facade users / 58 legacy `_emit_audit()` callsites (multi-wave migration backlog). 4/4 tests pass.
+- **S103 W4-V2 P0 #10 HTTP drain verified**: `tests/unit/infrastructure/test_v2_p0_10_http_drain.py` (NEW, 87 LOC) — 6 regression-guard tests. Verified: uvicorn SIGTERM → lifespan → `await ending()` (`lifespan.py:643`) + HTTP/3 `server.close()` (`server.py:98`). 6/6 tests pass.
+- `docs/adr/0187-sprint-103-cross-cutting.md` — closure ADR.
+
+### Tests
+
+- 19 NEW (W1: 0; W2: 9; W3: 4; W4: 6; W5 closure no tests)
+
+### Real TODOs Remaining (S104+ backlog)
+
+- **S104 W1**: D21 RPA SSH/S3/SFTP DSL (aioboto3 + asyncssh) — DEEP-RESEARCH ⚠️.
+- **S104 W2**: 3.9 Rate limiting facade (3 impls) — DEEP-RESEARCH 🟡.
+- **S104 W3**: D19 DSN MSSQL/MySQL/DB2 — DEEP-RESEARCH 🔴.
+- **S104 W4**: docstring ratchet -20 (2x S102 для catch-up) — backlog.
+- **S105+**: D5 model move (`infrastructure/database/models` → `core/domain/models`) — multi-sprint breaking change (41 violations).
+- **S105+**: 58 legacy `_emit_audit()` callsites → facade migration.
+- **S105+**: D9 real Temporal Schedule-to-Close wiring (apscheduler + Temporal client).
+
 ## [Unreleased] — Autonomous cycle S102 (2026-06-13) — Backlog closure: CDCClient bug + CI lint fix + V2 P0 #6 7/7 verified + ratchet -7 (5 commits, 8 NEW docstrings, score 9.2 → 9.3)
 
 ### Added
