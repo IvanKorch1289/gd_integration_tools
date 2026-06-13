@@ -21,12 +21,24 @@ __all__ = ("CheckStatus", "HealthStatus", "CheckResult", "HealthReport", "Health
 
 
 class CheckStatus(str, Enum):
+    """Per-check статус: OK / DEGRADED / FAILED.
+
+    Используется :class:`CheckResult` для маркировки результата
+    каждого индивидуального health-check. ``HealthStatus`` (overall)
+    агрегирует несколько ``CheckStatus`` в один общий статус системы.
+    """
     OK = "ok"
     DEGRADED = "degraded"
     FAILED = "failed"
 
 
 class HealthStatus(str, Enum):
+    """Overall system health: HEALTHY / DEGRADED / UNHEALTHY.
+
+    Агрегированный статус системы: HEALTHY = все critical checks OK,
+    DEGRADED = есть DEGRADED checks или non-critical FAILED,
+    UNHEALTHY = хотя бы один critical check FAILED.
+    """
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -34,6 +46,16 @@ class HealthStatus(str, Enum):
 
 @dataclass
 class CheckResult:
+    """Результат одного health-check.
+
+    Attributes:
+        name: Имя check (из :meth:`HealthCheck.add_*`).
+        status: ``CheckStatus`` (OK / DEGRADED / FAILED).
+        latency_ms: Время выполнения (мс).
+        error: Текст ошибки при FAILED, иначе None.
+        details: Доп. метаданные (e.g. ``{"rows": 42}`` для DB query).
+        critical: True если failure приводит к UNHEALTHY overall.
+    """
     name: str
     status: CheckStatus
     latency_ms: float
@@ -44,20 +66,30 @@ class CheckResult:
 
 @dataclass
 class HealthReport:
+    """Агрегированный health report после :meth:`HealthCheck.run`.
+
+    Attributes:
+        overall: Агрегированный :class:`HealthStatus`.
+        results: dict name → :class:`CheckResult` для всех выполненных checks.
+        timestamp: Unix timestamp момента формирования отчёта.
+    """
     overall: HealthStatus
     results: dict[str, CheckResult]
     timestamp: float
 
     @property
     def is_healthy(self) -> bool:
+        """True если ``overall`` == ``HealthStatus.HEALTHY`` (все OK)."""
         return self.overall is HealthStatus.HEALTHY
 
     @property
     def failed(self) -> list[str]:
+        """Список имён checks со статусом ``CheckStatus.FAILED``."""
         return [n for n, r in self.results.items() if r.status is CheckStatus.FAILED]
 
     @property
     def degraded(self) -> list[str]:
+        """Список имён checks со статусом ``CheckStatus.DEGRADED``."""
         return [n for n, r in self.results.items() if r.status is CheckStatus.DEGRADED]
 
 
@@ -117,6 +149,7 @@ class HealthCheck:
         depends_on: list[str] | None = None,
         critical: bool = True,
     ) -> HealthCheck:
+        """Добавить HTTP check: ``HEAD/GET url`` через aiohttp."""
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             return await self._http_check(url)
 
@@ -132,6 +165,7 @@ class HealthCheck:
         depends_on: list[str] | None = None,
         critical: bool = True,
     ) -> HealthCheck:
+        """Добавить TCP check: ``connect(host, port)`` через asyncio.open_connection."""
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             return await self._tcp_check(host, port)
 
@@ -146,6 +180,11 @@ class HealthCheck:
         depends_on: list[str] | None = None,
         critical: bool = True,
     ) -> HealthCheck:
+        """Добавить DB check: выполнить ``query`` через registered ``db_executor``.
+
+        Требует :meth:`set_db_executor` до :meth:`run`; иначе FAILED
+        с ``{"reason": "no db_executor registered"}``.
+        """
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             if self._db_executor is None:
                 return CheckStatus.FAILED, {"reason": "no db_executor registered"}
@@ -161,6 +200,11 @@ class HealthCheck:
         depends_on: list[str] | None = None,
         critical: bool = True,
     ) -> HealthCheck:
+        """Добавить Redis check: ``PING`` через registered ``redis_executor``.
+
+        Требует :meth:`set_redis_executor` до :meth:`run`; иначе FAILED
+        с ``{"reason": "no redis_executor registered"}``.
+        """
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             if self._redis_executor is None:
                 return CheckStatus.FAILED, {"reason": "no redis_executor registered"}
@@ -177,11 +221,20 @@ class HealthCheck:
         depends_on: list[str] | None = None,
         critical: bool = True,
     ) -> HealthCheck:
+        """Добавить custom check: вызвать user-provided ``check_fn()``.
+
+        ``check_fn`` — async callable возвращает ``(status, details)``.
+        """
         return self._add(name, "custom", timeout, critical, depends_on, check_fn)
 
     # -- run --------------------------------------------------------------
 
     async def run(self) -> HealthReport:
+        """Запустить все checks в topological order с кэшированием.
+
+        Возвращает :class:`HealthReport` с агрегированным overall.
+        Если DAG содержит цикл — :class:`ValueError`.
+        """
         self._validate_dag()
         if not self._checks:
             return HealthReport(
@@ -199,11 +252,23 @@ class HealthCheck:
         )
 
     async def run_one(self, name: str) -> CheckResult:
+        """Запустить один check по имени (с кэшированием).
+
+        Args:
+            name: Имя check (из :meth:`add_*`).
+
+        Returns:
+            :class:`CheckResult`.
+
+        Raises:
+            KeyError: ``name`` не зарегистрирован.
+        """
         if name not in self._checks:
             raise KeyError(f"unknown check: {name!r}")
         return await self._run_with_cache(name)
 
     def clear_cache(self) -> None:
+        """Очистить кэш результатов checks (force re-run)."""
         self._cache.clear()
 
     # -- internals --------------------------------------------------------

@@ -204,7 +204,6 @@ src/backend/dsl/builders/infrastructure_dsl.py:111:0 ElasticsearchSearchProcesso
 src/backend/dsl/builders/infrastructure_dsl.py:119:0 MongoInsertProcessor
 src/backend/dsl/builders/infrastructure_dsl.py:124:0 MongoFindProcessor
 src/backend/dsl/builders/infrastructure_dsl.py:132:0 S3PutProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:140:0 SqlExecProcessor
 src/backend/dsl/builders/infrastructure_dsl.py:64:4 _InfraOp.to_spec
 src/backend/dsl/builders/infrastructure_dsl.py:75:0 RedisSetProcessor
 src/backend/dsl/builders/infrastructure_dsl.py:80:0 RedisGetProcessor

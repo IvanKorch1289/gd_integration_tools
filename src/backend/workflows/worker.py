@@ -111,6 +111,19 @@ class NoOpStepExecutor:
     """
 
     async def execute_next(self, *, instance: Any, state: Any) -> Any:
+        """No-op execute: возвращает ``StepResult(outcome=DONE, events=[])``.
+
+        Используется для dev-окружений без registered workflow specs
+        (activation через ``WORKFLOW_WORKER_EXECUTOR=noop``). Логирует
+        warning с instance.id для observability.
+
+        Args:
+            instance: Workflow instance (используется только для logging).
+            state: Текущее состояние (игнорируется в noop-режиме).
+
+        Returns:
+            ``StepResult(outcome=StepOutcome.DONE, events=[], output_state=None)``.
+        """
         # Импорт отложен чтобы CLI --help не тянул БД/модели.
         from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 

@@ -11,6 +11,15 @@ __all__ = ("setup_admin",)
 
 
 def setup_admin(app: FastAPI) -> None:
+    """Подключить sqladmin к FastAPI app: регистрация 5 views.
+
+    Регистрирует :class:`UserAdmin`, :class:`OrderAdmin`,
+    :class:`OrderKindAdmin`, :class:`OrderFileAdmin`, :class:`FileAdmin`.
+    Engine берётся из :func:`get_db_initializer` (per-app singleton).
+
+    Args:
+        app: FastAPI app instance.
+    """
     admin = Admin(app, get_db_initializer().async_engine)
     admin.add_view(UserAdmin)
     admin.add_view(OrderAdmin)

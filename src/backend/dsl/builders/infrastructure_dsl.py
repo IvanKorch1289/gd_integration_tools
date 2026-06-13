@@ -156,6 +156,13 @@ class SftpPutProcessor(_InfraOp):
 
 
 class SqlExecProcessor(_InfraOp):
+    """SQL exec placeholder для ``op_name="sql_exec"`` (DML/DDL).
+
+    Используется :meth:`RouteBuilder.sql_exec` для выполнения
+    произвольного SQL через переданный ``async_engine``. Компенсация
+    отключена (``compensatable=False``) — DML нельзя автоматически
+    откатить без явной inverse-операции в compensable spec'е.
+    """
     op_name: ClassVar[str] = "sql_exec"
     compensatable: ClassVar[bool] = False  # DML не компенсируется
 
