@@ -73,11 +73,12 @@ jobs:
         # tools/check_layers.py лежит плоско в tools/, без подкаталога checks/.
         run: uv run python tools/check_layers.py
 
-      - name: Docstring policy gate (check_docstrings --strict)
-        # TODO: убрать continue-on-error после очистки baseline-issues
-        # (см. tools/check_docstrings_allowlist.txt).
+      - name: Docstring policy gate (check_docstrings)
+        # S102 W2: убран --strict (без paths = exit 2 typer bug). Используем
+        # default mode (diff vs allowlist) с путями из pre-commit hook.
+        # TODO S102+ W3: убрать continue-on-error после full ratchet (S104+).
         continue-on-error: true
-        run: uv run python tools/check_docstrings.py --strict
+        run: uv run python tools/check_docstrings.py src/backend/core src/backend/dsl src/backend/dsl/engine src/backend/core/interfaces src/backend/services src/backend/entrypoints src/backend/infrastructure src/backend/ai
 
       - name: Temporal sandbox gate (S86 W4, V2 P0 #2)
         # S86: scan step_compilers для direct I/O в workflow-функциях.
