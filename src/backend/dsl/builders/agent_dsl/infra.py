@@ -23,7 +23,7 @@ class InfraMixin:
 
     __slots__ = ()
 
-    # --- AI infrastructure (guardrails_apply, pii_mask, pii_unmask, agent_graph, skill_invoke, ai_memory_recall, ai_memory_store, ai_rpa, mcp_tool) ---
+    # --- AI infrastructure (guardrails_apply, pii_mask, pii_unmask, agent_graph, skill_invoke, ai_memory_recall, ai_memory_store, ai_rpa, mcp_tool, ai_tool_dispatch) ---
 
     def guardrails_apply(
         self,
@@ -405,5 +405,69 @@ class InfraMixin:
                 arguments_property=arguments_property,
                 result_property=result_property,
                 timeout_s=timeout_s,
+            )
+        )
+
+    def ai_tool_dispatch(
+        self,
+        *,
+        available_tool_ids: list[str],
+        query: str | None = None,
+        query_property: str | None = None,
+        result_property: str = "tool_dispatch_result",
+        model: str = "gpt-4o-mini",
+        temperature: float = 0.0,
+    ) -> RouteBuilder:
+        """LLM-orchestrated dispatch к одному tool из whitelist (S106 W4 / TD-009).
+
+        Упрощённый single-shot ReAct: LLM выбирает tool из
+        ``available_tool_ids`` (whitelist) и автоматически вызывает
+        его через :class:`ToolRegistry`. Без цикла thought→action→observation,
+        без LangGraph overhead.
+
+        Args:
+            available_tool_ids: Whitelist tool_id из
+                :meth:`ToolRegistry.list`. LLM выбирает строго из этого
+                списка (защита от prompt-injection: LLM не может вызвать
+                произвольный tool).
+            query: Статичный query для LLM. Взаимоисключающ с
+                ``query_property``.
+            query_property: Dot-path к динамическому query в exchange
+                (``"body.user_input"`` / ``"property:user_query"``).
+            result_property: Свойство exchange для dict-результата.
+                Default ``"tool_dispatch_result"``.
+            model: LLM model для tool selection. Default ``"gpt-4o-mini"``.
+            temperature: LLM temperature. Default ``0.0`` (deterministic
+                selection, минимум галлюцинаций).
+
+        Example::
+
+            builder.ai_tool_dispatch(
+                available_tool_ids=[
+                    "order_service.get",
+                    "order_service.list",
+                    "credit_service.score",
+                ],
+                query_property="body.user_request",
+                result_property="dispatch_result",
+            )
+
+        Note:
+            S106 W4 = skeleton: DSL method + validation + capability gate
+            + audit emit. Real LLM-wiring (AIGateway.invoke + JSON-parse
+            + auto-dispatch) — S106+ W5+ (multi-wave scope).
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
+            AIToolDispatchProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            AIToolDispatchProcessor(
+                available_tool_ids=available_tool_ids,
+                query=query,
+                query_property=query_property,
+                result_property=result_property,
+                model=model,
+                temperature=temperature,
             )
         )
