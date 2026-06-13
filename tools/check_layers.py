@@ -55,6 +55,7 @@ LAYERS = (
 )
 PLUGINS_LAYER = "plugins"
 FRONTEND_LAYER = "frontend"
+EXTENSIONS_LAYER = "extensions"  # S103 W1: extensions scanned by linter
 
 ALLOWED: dict[str, set[str]] = {
     "core": set(),
@@ -66,6 +67,11 @@ ALLOWED: dict[str, set[str]] = {
     # Фактически могут импортировать любой слой (DSL строится поверх всего).
     "dsl": {"core", "infrastructure", "services", "entrypoints", "schemas"},
     "workflows": {"core", "infrastructure", "services", "entrypoints", "schemas"},
+    # S103 W1: extensions — meta-layer, импортируют ТОЛЬКО core.
+    # Корневая причина D5 split-brain: SQLAlchemy models живут в
+    # infrastructure/, а extensions обязаны импортировать их для ORM.
+    # Planned fix (S103+ W2+): переместить models в core/domain/models/.
+    "extensions": {"core"},
 }
 
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.
@@ -117,7 +123,13 @@ def _file_layer(path: Path, root: Path) -> str | None:
     """Определяет слой по физическому пути файла.
 
     Поддерживает layout ``src/backend/<layer>/...`` (R3.10+),
-    ``src/frontend/...`` и legacy ``src/<layer>/...``.
+    ``src/frontend/...``, ``extensions/...`` и legacy ``src/<layer>/...``.
+
+    S103 W1: extensions layer detection — поддерживает 2 режима:
+    1. ``--root extensions`` → rel path = "core_entities/...", нужно
+       проверять ``root.name == EXTENSIONS_LAYER``.
+    2. ``--root .`` → rel path = "extensions/...", нужно проверять
+       ``rel.parts[0] == EXTENSIONS_LAYER``.
     """
     try:
         rel = path.relative_to(root)
@@ -133,6 +145,9 @@ def _file_layer(path: Path, root: Path) -> str | None:
         candidate = rel.parts[0]
     if candidate in LAYERS or candidate == PLUGINS_LAYER:
         return candidate
+    # S103 W1: extensions — отдельный layer (root.name OR rel.parts[0])
+    if root.name == EXTENSIONS_LAYER or rel.parts[0] == EXTENSIONS_LAYER:
+        return EXTENSIONS_LAYER
     return None
 
 
