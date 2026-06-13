@@ -134,6 +134,24 @@ class S3PutProcessor(_InfraOp):
     compensatable: ClassVar[bool] = True
 
 
+class S3GetProcessor(_InfraOp):
+    """S104 W1 — S3 GET processor (требует aioboto3)."""
+    op_name: ClassVar[str] = "s3_get"
+    compensatable: ClassVar[bool] = False
+
+
+class SftpGetProcessor(_InfraOp):
+    """S104 W1 — SFTP GET processor (требует asyncssh)."""
+    op_name: ClassVar[str] = "sftp_get"
+    compensatable: ClassVar[bool] = False
+
+
+class SftpPutProcessor(_InfraOp):
+    """S104 W1 — SFTP PUT processor (требует asyncssh)."""
+    op_name: ClassVar[str] = "sftp_put"
+    compensatable: ClassVar[bool] = True
+
+
 # ── SQL (1) ────────────────────────────────────────────────────────────
 
 
