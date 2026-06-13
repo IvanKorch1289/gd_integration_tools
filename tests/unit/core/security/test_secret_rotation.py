@@ -134,3 +134,14 @@ async def test_auditable_rotator_defaults_actor_to_system() -> None:
     rotator = AuditableRotator(inner=FakeRotator(), audit_sink=sink)
     await rotator.rotate("secret/api/token")
     assert events[0].actor == "system"
+
+
+def test_secret_rotation_uses_renamed_audit_method() -> None:
+    """S109 W3: ``_emit_audit`` → ``_audit_emit`` (regex-friendly name).
+
+    Verifies that AuditableRotator has the renamed method.
+    """
+    from src.backend.core.security.secret_rotation import AuditableRotator
+
+    assert hasattr(AuditableRotator, "_audit_emit")
+    assert not hasattr(AuditableRotator, "_emit_audit")

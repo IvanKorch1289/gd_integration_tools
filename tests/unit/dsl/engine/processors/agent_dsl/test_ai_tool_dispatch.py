@@ -422,3 +422,14 @@ def test_ai_tool_dispatch_build_selection_prompt_contains_tools() -> None:
     assert "JSON object" in prompt or "json" in prompt.lower()
     assert "tool_id" in prompt
     assert "args" in prompt
+
+
+def test_agent_dsl_base_uses_renamed_audit_method() -> None:
+    """S109 W3: ``_emit_audit_safe`` → ``_audit_safe_emit`` (regex-friendly name).
+
+    Verifies that AgentDSL base has the renamed method.
+    """
+    from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
+
+    assert hasattr(BaseAIProcessor, "_audit_safe_emit")
+    assert not hasattr(BaseAIProcessor, "_emit_audit_safe")

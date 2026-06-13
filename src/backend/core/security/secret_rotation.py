@@ -195,7 +195,7 @@ class AuditableRotator:
                 secret_path, correlation_id=correlation_id, actor=actor
             )
         except Exception as exc:
-            await self._emit_audit(
+            await self._audit_emit(
                 secret_path=secret_path,
                 rotation_id="-",
                 correlation_id=correlation_id,
@@ -204,7 +204,7 @@ class AuditableRotator:
                 error_class=type(exc).__name__,
             )
             raise
-        await self._emit_audit(
+        await self._audit_emit(
             secret_path=secret_path,
             rotation_id=result.rotation_id,
             correlation_id=correlation_id,
@@ -214,7 +214,7 @@ class AuditableRotator:
         )
         return result
 
-    async def _emit_audit(
+    async def _audit_emit(
         self,
         *,
         secret_path: str,

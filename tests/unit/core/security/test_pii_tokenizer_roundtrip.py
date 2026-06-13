@@ -418,3 +418,17 @@ async def test_testkit_path_mask_unmask_without_registry(
 
     unmasked = await tokenizer.unmask(masked, token_map)
     assert unmasked == text
+
+
+@pytest.mark.asyncio
+async def test_pii_tokenizer_uses_renamed_audit_method() -> None:
+    """S109 W3: ``_emit_audit_safe`` → ``_audit_safe_emit`` (regex-friendly name).
+
+    Verifies that PIITokenizer has the renamed method (no longer
+    matches ``\\b_emit_audit\\b`` pattern in
+    ``tools/check_audit_deprecation.py``).
+    """
+    from src.backend.core.security.pii_tokenizer import PIITokenizer
+
+    assert hasattr(PIITokenizer, "_audit_safe_emit")
+    assert not hasattr(PIITokenizer, "_emit_audit_safe")

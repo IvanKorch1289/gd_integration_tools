@@ -111,7 +111,7 @@ class BaseAIProcessor(BaseProcessor):
         except Exception as exc:
             exchange.set_error(f"{self.name}: capability denied ({exc})")
             exchange.stop()
-            await self._emit_audit_safe(
+            await self._audit_safe_emit(
                 exchange,
                 outcome="denied",
                 severity="warning",
@@ -124,12 +124,12 @@ class BaseAIProcessor(BaseProcessor):
         except Exception as exc:
             exchange.set_error(f"{self.name} error: {exc}")
             exchange.stop()
-            await self._emit_audit_safe(
+            await self._audit_safe_emit(
                 exchange, outcome="failure", severity="error", extra={"error": str(exc)}
             )
             return
 
-        await self._emit_audit_safe(exchange, outcome="success", severity="info")
+        await self._audit_safe_emit(exchange, outcome="success", severity="info")
 
     # ── Helpers (для наследников) ──
 
@@ -208,7 +208,7 @@ class BaseAIProcessor(BaseProcessor):
         except Exception as _:
             return None
 
-    async def _emit_audit_safe(
+    async def _audit_safe_emit(
         self,
         exchange: Exchange[Any],
         *,

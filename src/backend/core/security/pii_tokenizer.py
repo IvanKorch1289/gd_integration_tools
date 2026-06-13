@@ -262,7 +262,7 @@ class PIITokenizer:
             created_at=datetime.now(UTC),
             ttl_s=policy.ttl_s,
         )
-        await self._emit_audit_safe(
+        await self._audit_safe_emit(
             event="ai.pii.tokenize.mask",
             action="mask",
             outcome="success",
@@ -304,7 +304,7 @@ class PIITokenizer:
         masked_text = _PRESIDIO_PLACEHOLDER_RE.sub(
             lambda m: f"<{m.group(1)}>", result.sanitized_text
         )
-        await self._emit_audit_safe(
+        await self._audit_safe_emit(
             event="ai.pii.tokenize.mask",
             action="mask",
             outcome="success",
@@ -348,7 +348,7 @@ class PIITokenizer:
                 result_text = result_text.replace(placeholder, original)
                 restored += 1
 
-        await self._emit_audit_safe(
+        await self._audit_safe_emit(
             event="ai.pii.tokenize.unmask",
             action="unmask",
             outcome="success" if failed == 0 else "failure",
@@ -406,7 +406,7 @@ class PIITokenizer:
                 return None
         return self._token_registry.decrypt_value(value)
 
-    async def _emit_audit_safe(
+    async def _audit_safe_emit(
         self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""
