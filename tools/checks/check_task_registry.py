@@ -148,7 +148,7 @@ def check_file(path: Path) -> list[Violation]:
     """Найти orphan ``create_task``/``ensure_future`` callsites в файле."""
     try:
         source = path.read_text(encoding="utf-8")
-    except OSError, UnicodeDecodeError:
+    except (OSError, UnicodeDecodeError):
         return []
     try:
         tree = ast.parse(source, filename=str(path))

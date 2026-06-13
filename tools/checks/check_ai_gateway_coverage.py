@@ -111,7 +111,7 @@ def _check_file(path: Path) -> list[Violation]:
     """
     try:
         source = path.read_text(encoding="utf-8")
-    except UnicodeDecodeError, OSError:
+    except (UnicodeDecodeError, OSError):
         return []
     try:
         tree = ast.parse(source, filename=str(path))

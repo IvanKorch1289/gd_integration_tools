@@ -28,7 +28,7 @@ class TestFixExceptClause:
             def f():
                 try:
                     do()
-                except ValueError, TypeError:
+                except (ValueError, TypeError):
                     pass
             """
         ).lstrip()
@@ -43,7 +43,7 @@ class TestFixExceptClause:
             def f():
                 try:
                     do()
-                except orjson.JSONDecodeError, TypeError:
+                except (orjson.JSONDecodeError, TypeError):
                     pass
             """
         ).lstrip()
@@ -57,11 +57,11 @@ class TestFixExceptClause:
             def f():
                 try:
                     do()
-                except A, B, C:
+                except (A, B, C):
                     pass
                 try:
                     do2()
-                except A, B, C, D:
+                except (A, B, C, D):
                     pass
             """
         ).lstrip()
@@ -90,7 +90,7 @@ class TestFixExceptClause:
             def f():
                 try:
                     do()
-                except ValueError, TypeError:  # noqa: PERF203
+                except (ValueError, TypeError):  # noqa: PERF203
                     pass
             """
         ).lstrip()

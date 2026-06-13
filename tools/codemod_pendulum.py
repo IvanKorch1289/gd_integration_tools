@@ -85,7 +85,7 @@ def transform_file(path: Path, dry_run: bool, verbose: bool) -> tuple[bool, int]
     """Transform one file. Returns (changed, num_imports_migrated)."""
     try:
         original = path.read_text(encoding="utf-8")
-    except UnicodeDecodeError, OSError:
+    except (UnicodeDecodeError, OSError):
         return False, 0
 
     new_lines: list[str] = []

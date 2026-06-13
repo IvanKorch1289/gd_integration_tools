@@ -78,7 +78,7 @@ def load_baseline() -> float | None:
         return float(
             json.loads(BASELINE_FILE.read_text(encoding="utf-8")).get("total", 0)
         )
-    except ValueError, KeyError, json.JSONDecodeError:
+    except (ValueError, KeyError, json.JSONDecodeError):
         return None
 
 

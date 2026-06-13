@@ -69,7 +69,7 @@ def _fetch_npm_max(name: str, *, timeout: float = 5.0) -> str | None:
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
         latest = data.get("dist-tags", {}).get("latest", "")
         return str(latest) if latest else None
-    except urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError:
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         return None
 
 
@@ -113,7 +113,7 @@ def check_phantom_npm_versions(
     for pkg_json in _iter_package_jsons(root_path):
         try:
             data = json.loads(pkg_json.read_text(encoding="utf-8"))
-        except json.JSONDecodeError, OSError:
+        except (json.JSONDecodeError, OSError):
             continue
         for pkg_name, pin in _extract_pins(data).items():
             parsed = _parse_pin(pin)

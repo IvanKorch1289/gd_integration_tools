@@ -125,7 +125,7 @@ def check_target(target: Path) -> int:
     for py_file in target.rglob("*.py"):
         try:
             source = py_file.read_text(encoding="utf-8")
-        except OSError, UnicodeDecodeError:
+        except (OSError, UnicodeDecodeError):
             continue
         try:
             tree = ast.parse(source, filename=str(py_file))

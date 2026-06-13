@@ -125,7 +125,7 @@ def _check_bare_except(path: Path) -> list[Issue]:
     try:
         with tokenize.open(path) as fh:
             tokens = list(tokenize.generate_tokens(fh.readline))
-    except SyntaxError, tokenize.TokenizeError:
+    except (SyntaxError, tokenize.TokenizeError):
         return issues
     for idx, tok in enumerate(tokens):
         if tok.type == tokenize.NAME and tok.string == "except":
@@ -155,7 +155,7 @@ def check_file(path: Path) -> list[Issue]:
     """Прогоняет набор проверок над одним файлом."""
     try:
         source = path.read_text(encoding="utf-8")
-    except OSError, UnicodeDecodeError:
+    except (OSError, UnicodeDecodeError):
         return []
     try:
         tree = ast.parse(source, filename=str(path))

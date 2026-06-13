@@ -74,7 +74,7 @@ def _fetch_pypi_max(name: str, *, timeout: float = 5.0) -> str | None:
         with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
         return str(data.get("info", {}).get("version", ""))
-    except urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError:
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         return None
 
 

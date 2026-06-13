@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         from typer.testing import CliRunner
 
         return CliRunner().invoke(app_main, _sys.argv[1:]).exit_code or 0
-    except ImportError, SystemExit:
+    except (ImportError, SystemExit):
         return 0
 
 

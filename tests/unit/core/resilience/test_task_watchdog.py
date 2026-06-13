@@ -45,7 +45,7 @@ async def test_register_noop_when_flag_off() -> None:
         task.cancel()
         try:
             await task
-        except asyncio.CancelledError, Exception:  # noqa: S110, BLE001
+        except (asyncio.CancelledError, Exception):  # noqa: S110, BLE001
             pass
 
 
@@ -88,7 +88,7 @@ async def test_tick_cancels_task_after_deadline() -> None:
     # Даём event-loop'у обработать cancel() → CancelledError доходит до задачи.
     try:
         await asyncio.wait_for(task, timeout=0.5)
-    except asyncio.CancelledError, asyncio.TimeoutError:  # noqa: BLE001
+    except (asyncio.CancelledError, asyncio.TimeoutError):  # noqa: BLE001
         pass
 
     # После tick задача должна быть отменена, список registrations — пуст.
@@ -126,7 +126,7 @@ async def test_tick_keeps_alive_tasks() -> None:
     # Даём cancel() пройти через event-loop.
     try:
         await asyncio.wait_for(task_expire, timeout=0.5)
-    except asyncio.CancelledError, asyncio.TimeoutError:  # noqa: BLE001
+    except (asyncio.CancelledError, asyncio.TimeoutError):  # noqa: BLE001
         pass
 
     # Первая задача была отменена, вторая осталась.
@@ -139,7 +139,7 @@ async def test_tick_keeps_alive_tasks() -> None:
     task_alive.cancel()
     try:
         await task_alive
-    except asyncio.CancelledError, Exception:  # noqa: S110, BLE001
+    except (asyncio.CancelledError, Exception):  # noqa: S110, BLE001
         pass
 
 

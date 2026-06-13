@@ -65,7 +65,7 @@ def _parse_report(output_path: Path) -> tuple[int, int]:
     try:
         with output_path.open(encoding="utf-8") as fh:
             data = json.load(fh)
-    except json.JSONDecodeError, OSError:
+    except (json.JSONDecodeError, OSError):
         return 0, 0
 
     # Формат pip-audit JSON: {"dependencies": [{"name": ..., "vulns": [...]}]}

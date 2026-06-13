@@ -38,7 +38,7 @@ def find_violations(root: Path) -> list[tuple[str, int, str]]:
             continue
         try:
             text = py_file.read_text(encoding="utf-8")
-        except UnicodeDecodeError, OSError:
+        except (UnicodeDecodeError, OSError):
             continue
         for match in IMPORT_RE.finditer(text):
             line_no = text[: match.start()].count("\n") + 1

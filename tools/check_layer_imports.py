@@ -125,7 +125,7 @@ def _scan_file(
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except OSError, SyntaxError:
+    except (OSError, SyntaxError):
         return []
 
     violations: list[tuple[int, str, str]] = []

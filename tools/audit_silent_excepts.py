@@ -36,7 +36,7 @@ def audit(root: str) -> list[dict[str, object]]:
             try:
                 src = open(full).read()
                 tree = ast.parse(src)
-            except SyntaxError, UnicodeDecodeError:
+            except (SyntaxError, UnicodeDecodeError):
                 continue
             for node in ast.walk(tree):
                 if not isinstance(node, ast.ExceptHandler):

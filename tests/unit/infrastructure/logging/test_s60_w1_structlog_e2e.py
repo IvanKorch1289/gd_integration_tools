@@ -69,7 +69,7 @@ class _MockGraylogServer:
                     self.received.append(json.loads(data))
                 except json.JSONDecodeError:
                     pass
-            except TimeoutError, OSError:
+            except (TimeoutError, OSError):
                 continue
 
 

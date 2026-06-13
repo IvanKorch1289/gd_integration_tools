@@ -66,7 +66,7 @@ def load_baseline() -> int | None:
         return None
     try:
         return int(json.loads(BASELINE_FILE.read_text()).get("errors"))
-    except ValueError, KeyError:
+    except (ValueError, KeyError):
         return None
 
 

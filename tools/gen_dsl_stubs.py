@@ -227,7 +227,7 @@ def _get_module_namespace(module_name: str) -> dict[str, Any]:
                                         ns[imp] = importlib.import_module(
                                             from_module
                                         ).__dict__[imp]
-                                    except KeyError, ImportError:
+                                    except (KeyError, ImportError):
                                         pass
                         i += 1
                     break  # Only handle first TYPE_CHECKING block
@@ -400,7 +400,7 @@ def _build_signature(
     """Вернуть ``(formatted_signature, return_type)``."""
     try:
         sig = inspect.signature(method)
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         return "(*args: Any, **kwargs: Any)", "Any"
     parts: list[str] = []
     has_self = False

@@ -161,7 +161,7 @@ def discover_capabilities(path: Path) -> list[str]:
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except OSError, SyntaxError:
+    except (OSError, SyntaxError):
         return []
     seen: set[str] = set()
     for lineno, _method, cap_name in _iter_capability_calls(tree):

@@ -170,7 +170,7 @@ def _count_violations(stdout: str, stderr: str) -> int:
                 for part in parts:
                     if part.isdigit():
                         return int(part)
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 pass
     return 0
 
