@@ -51,7 +51,7 @@ class TestCoreDomainModelsPackage:
         """__all__ matches actual exports."""
         from src.backend.core.domain.models import __all__
 
-        assert len(__all__) == 15
+        assert len(__all__) == 16
         for symbol in (
             "Base",
             "BaseModel",
@@ -64,6 +64,7 @@ class TestCoreDomainModelsPackage:
             "LangMemEpisodic",
             "LangMemProcedural",
             "OrderKind",
+            "Order",
             "OutboxMessage",
             "RuleEngineBase",
             "RuleEngineRulesetORM",
@@ -199,6 +200,65 @@ class TestCoreDomainModelsPackage:
 
         from src.backend.infrastructure.database.models import orderkinds as shim
         assert shim.OrderKind.__tablename__ == "orderkinds"
+
+    def test_orders_in_canonical_package(self) -> None:
+        """S106 W3 (D5 B2b): Order moved to core.domain.models."""
+        from src.backend.core.domain.models import Order
+        from src.backend.core.domain.models.orders import Order as Direct
+
+        assert Order is Direct
+        assert Order.__tablename__ == "orders"
+        assert "Order" in __import__(
+            "src.backend.core.domain.models", fromlist=["__all__"]
+        ).__all__
+
+    def test_orders_orderkind_relationship_after_move(self) -> None:
+        """Order ↔ OrderKind bi-directional relationship works post-move."""
+        from src.backend.core.domain.models import Order, OrderKind
+
+        # Both moved (orderkinds in W1, orders in W2)
+        assert hasattr(Order, "order_kind")
+        assert hasattr(OrderKind, "orders")
+        # FK constraint name in Order points to orderkinds.id
+        fk_columns = [
+            col for col in Order.__table__.c
+            if col.foreign_keys
+        ]
+        fk_targets = {list(col.foreign_keys)[0].target_fullname
+                      for col in fk_columns}
+        assert any("orderkinds" in t for t in fk_targets), (
+            f"FK→orderkinds missing: {fk_targets}"
+        )
+
+    def test_orders_shim_re_exports(self) -> None:
+        """S106 W3 (D5 B2b): shim re-exports Order with DeprecationWarning."""
+        import importlib
+        import sys
+
+        for mod_name in (
+            "src.backend.infrastructure.database.models.orders",
+        ):
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.resetwarnings()
+            warnings.simplefilter("always")
+            importlib.import_module(
+                "src.backend.infrastructure.database.models.orders"
+            )
+
+        msgs = [str(w.message) for w in caught]
+        orders_warnings = [
+            m for m in msgs if "core.domain.models.orders" in m
+        ]
+        assert len(orders_warnings) >= 1
+
+        from src.backend.infrastructure.database.models import orders as shim
+        assert shim.Order.__tablename__ == "orders"
+        assert shim.Order is __import__(
+            "src.backend.core.domain.models", fromlist=["Order"]
+        ).Order
 
 
 class TestLayerLinterAfterB1:

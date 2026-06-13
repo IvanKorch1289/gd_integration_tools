@@ -36,6 +36,7 @@ from src.backend.core.domain.models.langmem_models import (
     LangMemProcedural,
 )
 from src.backend.core.domain.models.orderkinds import OrderKind
+from src.backend.core.domain.models.orders import Order
 from src.backend.core.domain.models.outbox import OutboxMessage
 from src.backend.core.domain.models.rule_engine import (
     RuleEngineBase,
@@ -60,6 +61,8 @@ __all__ = (
     "LangMemProcedural",
     # orderkinds
     "OrderKind",
+    # orders
+    "Order",
     # outbox
     "OutboxMessage",
     # rule_engine

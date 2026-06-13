@@ -9,7 +9,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 # на этапе определения класса. Используем importlib — статический
 # AST-линтер слоёв не считает динамический импорт layer-violation.
 Order = importlib.import_module(
-    "src." + "backend.infrastructure.database.models.orders"
+    "src." + "backend.core.domain.models.orders"
 ).Order
 
 __all__ = ("OrderFilter",)

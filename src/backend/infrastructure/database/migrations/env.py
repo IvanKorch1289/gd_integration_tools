@@ -22,7 +22,7 @@ from src.backend.infrastructure.database.models.files import (  # noqa: F401
 from src.backend.core.domain.models.orderkinds import (
     OrderKind,  # noqa: F401
 )
-from src.backend.infrastructure.database.models.orders import Order  # noqa: F401
+from src.backend.core.domain.models.orders import Order  # noqa: F401
 from src.backend.core.domain.models.users import User  # noqa: F401
 from src.backend.infrastructure.logging.factory import get_logger
 

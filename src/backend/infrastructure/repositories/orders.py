@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.errors import NotFoundError
-from src.backend.infrastructure.database.models.orders import Order
+from src.backend.core.domain.models.orders import Order
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 from src.backend.infrastructure.repositories.orderkinds import get_order_kind_repo
