@@ -39,10 +39,23 @@ from src.backend.dsl.workflow.spec import (
 )
 from src.backend.schemas.invocation import ActionCommandSchema
 
-__all__ = ("ActivityBridge", "bridge_action_handler", "get_activity_callables")
+__all__ = (
+    "ActivityBridge",
+    "bridge_action_handler",
+    "get_activity_callables",
+    "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
+    "LANGGRAPH_CHECKPOINT_PUT_ACTIVITY",
+)
 
 
 _logger = get_logger("workflow.compiler.activity_bridge")
+
+# Stable activity names for LangGraph Checkpointer integration (S100 W1).
+# These activities are NOT in any declaration — they are called by name from
+# ``compile_agent_invoke_step`` when ``durable=True``. Worker must register
+# them via :func:`register_langgraph_checkpoint_activities`.
+LANGGRAPH_CHECKPOINT_GET_ACTIVITY = "_langgraph_checkpoint_get"
+LANGGRAPH_CHECKPOINT_PUT_ACTIVITY = "_langgraph_checkpoint_put"
 
 
 async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
@@ -59,6 +72,101 @@ async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
     request = AIRequest(**payload)
     gateway = AIGateway()
     return await gateway.invoke(request)
+
+
+async def _langgraph_checkpoint_get_activity(
+    thread_id: str,
+) -> dict[str, Any] | None:
+    """Temporal activity для чтения LangGraph checkpoint по ``thread_id`` (S100 W1).
+
+    Выполняется вне workflow-sandbox'а, поэтому может делать DB I/O.
+    Используется в :func:`compile_agent_invoke_step` для resume в
+    durable mode (``AgentInvokeDeclaration.durable=True``).
+
+    Args:
+        thread_id: LangGraph thread identifier (``{agent_id}:{correlation_id}``).
+
+    Returns:
+        Prior state (dict) если checkpoint существует, иначе ``None``.
+        Возвращает ``None`` также если saver недоступен (flag OFF или
+        langchain_postgres не установлен) — caller ОБРАБАТЫВАЕТ None как
+        "первый запуск, нет prior state".
+    """
+    from src.backend.services.ai.agents.langgraph_postgres_saver import (
+        get_langgraph_postgres_saver,
+    )
+
+    try:
+        saver = await get_langgraph_postgres_saver()
+        if saver is None:
+            return None
+        config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+        chk = await saver.aget(config)
+        if chk is None:
+            return None
+        # AsyncPostgresSaver возвращает TypedDict-подобный объект; нормализуем
+        # в plain dict для безопасной передачи через Temporal payload.
+        return dict(chk) if hasattr(chk, "__iter__") else {"raw": chk}
+    except Exception as exc:  # noqa: BLE001 — best-effort checkpoint load
+        _logger.debug(
+            "LangGraph checkpoint get(thread_id=%s) failed: %s", thread_id, exc
+        )
+        return None
+
+
+async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
+    """Temporal activity для записи LangGraph checkpoint (S100 W1).
+
+    Best-effort persist: при недоступности saver или ошибке записи
+    возвращает ``False`` (НЕ raise) — durable mode degraded до
+    stateless без прерывания workflow.
+
+    Args:
+        state: Сериализуемый dict с полями ``thread_id``, ``agent_id``,
+            ``tenant_id``, ``prior_summary``, ``output_summary``, ``ts``.
+            ``thread_id`` обязателен.
+
+    Returns:
+        ``True`` если checkpoint успешно записан, ``False`` иначе.
+    """
+    from src.backend.services.ai.agents.langgraph_postgres_saver import (
+        get_langgraph_postgres_saver,
+    )
+
+    thread_id = state.get("thread_id") if isinstance(state, dict) else None
+    if not thread_id:
+        _logger.debug("LangGraph checkpoint put skipped: no thread_id in state")
+        return False
+    try:
+        saver = await get_langgraph_postgres_saver()
+        if saver is None:
+            return False
+        config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+        # AsyncPostgresSaver.aput signature: (config, values, metadata)
+        await saver.aput(config, state, {})
+        return True
+    except Exception as exc:  # noqa: BLE001 — best-effort checkpoint save
+        _logger.debug(
+            "LangGraph checkpoint put(thread_id=%s) failed: %s", thread_id, exc
+        )
+        return False
+
+
+def register_langgraph_checkpoint_activities(bridge: ActivityBridge) -> None:
+    """Регистрирует LangGraph checkpoint activities в bridge (S100 W1).
+
+    Worker-инициализатор должен вызвать эту функцию ДО
+    :meth:`ActivityBridge.decorate` чтобы checkpoint activities попали
+    в список регистрируемых в Temporal Worker. Без этого вызова
+    ``workflow.execute_activity("_langgraph_checkpoint_get", ...)``
+    упадёт с ``ActivityNotRegisteredError``.
+
+    Args:
+        bridge: ActivityBridge, в который добавляются 2 checkpoint
+            activity-обёртки.
+    """
+    bridge.get(LANGGRAPH_CHECKPOINT_GET_ACTIVITY)
+    bridge.get(LANGGRAPH_CHECKPOINT_PUT_ACTIVITY)
 
 
 def bridge_action_handler(
@@ -136,6 +244,14 @@ class ActivityBridge:
         if wrapper is None:
             if action_id == "_agent_invoke":
                 wrapper = _agent_invoke_activity
+                wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            elif action_id == LANGGRAPH_CHECKPOINT_GET_ACTIVITY:
+                # S100 W1: direct binding, чтобы cache identity match
+                # ``is _langgraph_checkpoint_get_activity`` (тесты).
+                wrapper = _langgraph_checkpoint_get_activity
+                wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            elif action_id == LANGGRAPH_CHECKPOINT_PUT_ACTIVITY:
+                wrapper = _langgraph_checkpoint_put_activity
                 wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
             else:
                 wrapper = bridge_action_handler(

@@ -40,6 +40,13 @@ from src.backend.dsl.workflow.spec import (
     WorkflowStep,
 )
 
+# Relative import (avoid Pyright false-positive on long absolute path within
+# the same package; runtime resolves both equivalently).
+from .activity_bridge import (  # noqa: I001 — intentional relative
+    LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
+    LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
+)
+
 __all__ = (
     "StepCompiler",
     "compile_activity_step",
@@ -307,30 +314,6 @@ async def compile_agent_invoke_step(
 
     timeout_s = decl.timeout_s or ctx.get("_default_timeout_s", 300.0)
 
-    if decl.durable:
-        # Durable mode: check LangGraph checkpoint availability
-        try:
-            from src.backend.services.ai.agents.langgraph_postgres_saver import (
-                get_langgraph_postgres_saver,
-            )
-
-            saver = await get_langgraph_postgres_saver()
-            if saver is not None:
-                # S99 W3: checkpointer IS available (saver != None), но thread_id
-                # state-management (put/get_next_version) не интегрирован в
-                # AgentInvoke workflow. S100+ scope: bind saver.put() к
-                # exchange.message checkpoint, saver.get() для resume.
-                #
-                # For now, fall through to stateless mode.
-                _logger.debug(
-                    "AgentInvoke %s: durable mode requested but checkpointer "
-                    "integration pending S100+ (saver available, thread_id "
-                    "state management not yet wired) — using stateless fallback",
-                    decl.agent_id,
-                )
-        except Exception as exc:
-            _logger.debug("LangGraph saver unavailable: %s", exc)
-
     # Stateless call via AIGateway as Temporal activity (sandbox-safe)
     from temporalio import workflow
 
@@ -343,9 +326,52 @@ async def compile_agent_invoke_step(
         "context": {"max_turns": decl.max_turns, "timeout_s": timeout_s},
     }
 
-    result = await workflow.execute_activity(
-        "_agent_invoke", payload, start_to_close_timeout=timedelta(seconds=timeout_s)
-    )
+    if decl.durable:
+        # Durable mode: thread-scoped checkpoint via LangGraph Checkpointer
+        # activities (S100 W1). DB I/O is sandbox-safe because it lives in
+        # activities, NOT in workflow code.
+        correlation_id = ctx.get("_correlation_id", "n/a")
+        thread_id = f"{decl.agent_id}:{correlation_id}"
+
+        # Best-effort: load prior state. None = saver unavailable OR first run.
+        prior = await workflow.execute_activity(
+            LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
+            thread_id,
+            start_to_close_timeout=timedelta(seconds=10),
+        )
+        if prior is not None:
+            _logger.debug(
+                "AgentInvoke %s: resuming thread %s (prior checkpoint found)",
+                decl.agent_id,
+                thread_id,
+            )
+        # Always call agent (durable mode = checkpoint around, not skip).
+        result = await workflow.execute_activity(
+            "_agent_invoke",
+            payload,
+            start_to_close_timeout=timedelta(seconds=timeout_s),
+        )
+        # Best-effort persist. Failure does NOT break the workflow —
+        # durable mode degrades to stateless when saver is unavailable.
+        state_to_persist: dict[str, Any] = {
+            "thread_id": thread_id,
+            "agent_id": decl.agent_id,
+            "tenant_id": ctx.get("_tenant_id", "unknown"),
+            "prior_summary": str(prior)[:500] if prior else None,
+            "output_summary": str(result)[:1000],
+            "ts": correlation_id,
+        }
+        await workflow.execute_activity(
+            LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
+            state_to_persist,
+            start_to_close_timeout=timedelta(seconds=10),
+        )
+    else:
+        result = await workflow.execute_activity(
+            "_agent_invoke",
+            payload,
+            start_to_close_timeout=timedelta(seconds=timeout_s),
+        )
 
     if decl.output_key:
         ctx.setdefault("_outputs", {})[decl.output_key] = result
