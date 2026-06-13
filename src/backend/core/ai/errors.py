@@ -113,6 +113,11 @@ class MCPToolError(Exception):
         super().__init__(message)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализует ошибку в dict для JSON-логирования / API response.
+
+        Returns:
+            ``{"error": message}`` — минимальный dict-формат для клиента.
+        """
         return {"error": self.message}
 
 

@@ -98,6 +98,7 @@ class QueueSettings(BaseSettingsWithLoader):
     @field_validator("port")
     @classmethod
     def validate_port(cls, v: int, values: Any) -> int:
+        """Валидатор: порт 465 требует SSL/TLS."""
         if v == 465 and not values.data.get("use_tls"):
             raise ValueError("Порт 465 требует включения SSL/TLS")
         return v
@@ -105,6 +106,7 @@ class QueueSettings(BaseSettingsWithLoader):
     @field_validator("ca_bundle")
     @classmethod
     def validate_ca_path(cls, v: Path | None) -> Path | None:
+        """Валидатор: ``ca_bundle`` path должен существовать (если указан)."""
         if v and not v.exists():
             raise ValueError(f"Файл CA bundle не найден: {v}")
         return v
@@ -120,6 +122,14 @@ class QueueSettings(BaseSettingsWithLoader):
         return f"{self.host}:{self.ui_port}"
 
     def get_queue_name(self, queue_key: str) -> str:
+        """Возвращает имя AMQP-queue по его ключу.
+
+        Args:
+            queue_key: Ключ (например, ``"orders"``).
+
+        Returns:
+            Имя queue (``self.queues[i]["name"]``) или ``None``.
+        """
         # Оптимизированный поиск с использованием генератора
         queue = next(
             (queue for queue in self.queues if queue.get("name", None) == queue_key),

@@ -6,8 +6,6 @@
 src/backend/core/ai/context_strategy.py:120:4 RollingWindowStrategy.apply
 src/backend/core/ai/context_strategy.py:181:4 MapReduceStrategy.apply
 src/backend/core/ai/context_strategy.py:259:4 HierarchicalStrategy.apply
-src/backend/core/ai/errors.py:115:4 MCPToolError.to_dict
-src/backend/core/ai/guardrails/llamaguard.py:46:4 GuardResult.is_safe
 src/backend/core/ai/guardrails/llm_guard_client.py:51:4 LLMGuardResult.is_safe
 src/backend/core/ai/sandbox.py:84:4 NoOpSandbox.run
 src/backend/core/audit/interfaces.py:14:4 AuditBackend.emit
@@ -25,13 +23,8 @@ src/backend/core/clock.py:22:4 RealClock.monotonic
 src/backend/core/clock.py:25:4 RealClock.time
 src/backend/core/clock.py:43:4 FakeClock.monotonic
 src/backend/core/clock.py:46:4 FakeClock.time
-src/backend/core/config/services/cache.py:214:4 RedisSettings.validate_redis_numbers
-src/backend/core/config/services/cache.py:219:4 RedisSettings.get_stream_name
 src/backend/core/config/services/mail.py:101:4 MailSettings.validate_ca_path
 src/backend/core/config/services/mail.py:94:4 MailSettings.validate_port
-src/backend/core/config/services/queue.py:100:4 QueueSettings.validate_port
-src/backend/core/config/services/queue.py:107:4 QueueSettings.validate_ca_path
-src/backend/core/config/services/queue.py:122:4 QueueSettings.get_queue_name
 src/backend/core/di/providers/ai.py:128:0 set_llm_judge_metrics_provider
 src/backend/core/di/providers/ai.py:150:0 set_model_enum_provider
 src/backend/core/di/providers/ai.py:165:0 set_vault_refresher_provider

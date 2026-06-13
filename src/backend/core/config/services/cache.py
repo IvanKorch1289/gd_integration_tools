@@ -212,11 +212,20 @@ class RedisSettings(BaseSettingsWithLoader):
     @field_validator("port", "db_cache", "db_queue", "db_limits", "db_tasks")
     @classmethod
     def validate_redis_numbers(cls, v: int) -> int:
+        """Валидатор: Redis-номера (port/db indices) должны быть неотрицательными."""
         if isinstance(v, int) and v < 0:
             raise ValueError("Значение должно быть неотрицательным целым числом")
         return v
 
     def get_stream_name(self, stream_key: str) -> str:
+        """Возвращает имя Redis-stream'а по его ключу.
+
+        Args:
+            stream_key: Ключ (например, ``"orders"``).
+
+        Returns:
+            Имя stream'а (``self.streams[i]["name"]``) или ``None``.
+        """
         stream = next(
             (
                 stream

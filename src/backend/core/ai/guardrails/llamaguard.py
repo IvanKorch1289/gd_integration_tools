@@ -44,6 +44,7 @@ class GuardResult:
 
     @property
     def is_safe(self) -> bool:
+        """``True`` если LlamaGuard посчитал content безопасным."""
         return self.safe
 
     def __bool__(self) -> bool:
