@@ -228,3 +228,139 @@ class SourcesMixin:
                 result_property=result_property,
             )
         )
+
+    @classmethod
+    def from_nats(
+        cls,
+        route_id: str,
+        subject: str,
+        *,
+        nats_url: str = "nats://localhost:4222",
+        description: str | None = None,
+    ) -> RouteBuilder:
+        """Точка входа: маршрут из NATS core (sub, без JetStream) — S106 W4.
+
+        Создаёт :class:`RouteBuilder` с источником NATS core (без
+        durability, без ack, fan-out всем подписчикам). Использует
+        :class:`~src.backend.infrastructure.sources.nats.NatsSource`.
+
+        Подходит для fire-and-forget pub/sub-паттернов: LLM-events,
+        metrics, notification fan-out, ephemeral-команды. Для durable
+        delivery → :meth:`from_nats_js`.
+
+        Под feature-flag ``nats_core_dsl`` (default-OFF, S106+ W5+).
+        nats-py добавляется в pyproject.toml в S3 Wave 3 cutover.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            subject: Subject (тема) NATS для подписки (wildcards
+                ``*`` / ``>`` поддерживаются).
+            nats_url: URL NATS-сервера.
+            description: Человекочитаемое описание маршрута.
+
+        Returns:
+            :class:`RouteBuilder` для fluent-chain вызовов.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_nats(
+                    "metrics.consumer",
+                    subject="metrics.app.>",
+                )
+                .call_function("extensions.metrics.handler:process")
+                .dispatch_action("metrics.ack")
+                .build()
+            )
+
+        Note:
+            Использует ``@classmethod`` (в отличие от sibling-методов
+            ``from_nats_js`` / ``from_webdav`` которые ошибочно используют
+            ``def X(cls, ...)`` без декоратора). Pre-existing TD для них —
+            вне scope W4.
+        """
+        import importlib
+
+        mod = importlib.import_module("src.backend.infrastructure.sources.nats")
+        # Smoke-валидация конструктора (S50 W2 pattern, как from_webdav).
+        mod.NatsSource(subject=subject, nats_url=nats_url)
+        return cls(
+            route_id=route_id,
+            source=f"nats:{subject}",
+            description=description,
+        )
+
+    @classmethod
+    def from_mongo(
+        cls,
+        route_id: str,
+        connection_url: str,
+        database: str,
+        collection: str = "",
+        *,
+        full_document_lookup: bool = False,
+        pipeline: list[dict[str, Any]] | None = None,
+        description: str | None = None,
+    ) -> RouteBuilder:
+        """Точка входа: маршрут из MongoDB change-streams — S106 W4.
+
+        Создаёт :class:`RouteBuilder` с источником MongoDB change
+        streams (CDC pattern). Использует
+        :class:`~src.backend.infrastructure.sources.mongo.MongoSource`.
+
+        Требует MongoDB **replica set** (change streams не работают на
+        standalone). Реальный runtime-wiring (motor.watch() + resume
+        token) — S106+ W5+ (multi-wave scope).
+
+        Под feature-flag ``mongo_change_streams_dsl`` (default-OFF,
+        S106+ W5+). motor>=3.0 добавляется в pyproject.toml в S3 cutover.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            connection_url: MongoDB connection string
+                (``mongodb://localhost:27017``).
+            database: Имя базы данных (обязательно).
+            collection: Имя коллекции (пустая строка = watch на уровне
+                database, все коллекции).
+            full_document_lookup: При ``True`` — для update-событий
+                подгружается полная версия документа
+                (``fullDocument=updateLookup``).
+            pipeline: Опц. MongoDB aggregation pipeline для server-side
+                фильтрации change events (до доставки клиенту).
+            description: Описание маршрута.
+
+        Returns:
+            :class:`RouteBuilder` с source ``mongo:<db>/<collection>``.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_mongo(
+                    "orders.changes",
+                    connection_url="mongodb://localhost:27017",
+                    database="shop",
+                    collection="orders",
+                    full_document_lookup=True,
+                )
+                .call_function("extensions.orders.cdc_handler:apply")
+                .dispatch_action("orders.ack")
+                .build()
+            )
+        """
+        import importlib
+
+        mod = importlib.import_module("src.backend.infrastructure.sources.mongo")
+        cfg = mod.MongoSourceConfig(
+            connection_url=connection_url,
+            database=database,
+            collection=collection,
+            full_document_lookup=full_document_lookup,
+            pipeline=pipeline,
+        )
+        # Smoke-валидация конструктора (S50 W2 pattern).
+        mod.MongoSource(cfg)
+        return cls(
+            route_id=route_id,
+            source=f"mongo:{database}/{collection or '*'}",
+            description=description,
+        )
