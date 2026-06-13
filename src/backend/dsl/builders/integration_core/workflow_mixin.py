@@ -135,3 +135,68 @@ class WorkflowOpsMixin:
                 result_property=result_property,
             )
         )
+
+    def cron_schedule(
+        self,
+        name: str,
+        *,
+        cron_expr: str,
+        workflow_name: str,
+        workflow_args: dict[str, Any] | None = None,
+        namespace: str = "default",
+        task_queue: str = "default",
+        result_property: str = "schedule_handle",
+        timezone: str = "UTC",
+    ) -> RouteBuilder:
+        """S103 W2 — DSL-шаг ``cron_schedule``: запуск workflow по cron-расписанию.
+
+        Temporal-style scheduled workflow (Schedule-to-Close). ``cron_expr``
+        в формате ``"*/5 * * * *"`` (5-field cron, как в APScheduler/CronTrigger).
+        ``workflow_name`` может ссылаться на registered workflow в namespace.
+
+        Пример::
+
+            route = (
+                RouteBuilder("nightly_etl", source="timer:cron")
+                .cron_schedule(
+                    "every_5min",
+                    cron_expr="*/5 * * * *",
+                    workflow_name="etl_pipeline",
+                    workflow_args={"source": "prod"},
+                )
+                .build()
+            )
+
+        Args:
+            name: Имя schedule (для idempotency + audit).
+            cron_expr: Cron expression (5-field standard).
+            workflow_name: Имя workflow для запуска.
+            workflow_args: Аргументы workflow (default ``None``).
+            namespace: Workflow namespace.
+            task_queue: Workflow task queue.
+            result_property: Куда писать handle (имя schedule'а).
+            timezone: Timezone для cron (default ``"UTC"``).
+
+        Returns:
+            RouteBuilder с добавленным ``CronScheduleProcessor`` в pipeline.
+
+        S103 W2 scope: DSL skeleton + processor class. Real Temporal
+        Schedule-to-Close wiring — S103+ W3+ (требует apscheduler adapter +
+        Temporal Schedule client, multi-wave scope).
+        """
+        from src.backend.dsl.engine.processors.cron_schedule import (
+            CronScheduleProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            CronScheduleProcessor(
+                name=name,
+                cron_expr=cron_expr,
+                workflow_name=workflow_name,
+                workflow_args=workflow_args,
+                namespace=namespace,
+                task_queue=task_queue,
+                result_property=result_property,
+                timezone=timezone,
+            )
+        )
