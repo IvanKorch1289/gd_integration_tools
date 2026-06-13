@@ -95,6 +95,7 @@ class EnrichEIPProcessor(BaseProcessor):
         raise ValueError(f"unknown enrich strategy: {self.strategy!r}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обогатить exchange.properties[self.field] через async-to-thread fetch."""
         exchange.properties[self.field] = await asyncio.to_thread(self._fetch, exchange)
 
 
@@ -111,6 +112,7 @@ class WireTapEIPProcessor(BaseProcessor):
         self.sink, self.async_ = sink, async_
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Записать copy exchange в ``_wire_taps`` (fire-and-forget для async)."""
         taps = list(exchange.properties.get("_wire_taps") or [])
         taps.append({"sink": self.sink, "async": self.async_})
         exchange.properties["_wire_taps"] = taps

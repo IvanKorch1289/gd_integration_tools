@@ -58,6 +58,7 @@ class BlueprintParam:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> BlueprintParam:
+        """Construct ``BlueprintParam`` from raw dict (DSL/JSON loader)."""
         return cls(
             name=str(d.get("name", "")),
             type=str(d.get("type", "string")),

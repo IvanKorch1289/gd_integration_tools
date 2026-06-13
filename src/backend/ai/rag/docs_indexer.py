@@ -71,6 +71,11 @@ class _SentenceTransformerEmbedder:
         return self._model
 
     def encode(self, texts: list[str]) -> list[list[float]]:
+        """Закодировать список текстов в list-of-embedding-vectors.
+
+        Использует sentence-transformers (lazy-loaded) или hash-based
+        fallback если модель недоступна.
+        """
         model = self._load()
         if model is None:
             return [_embed_hashbased(t) for t in texts]
@@ -111,19 +116,23 @@ class InMemoryQdrantFallback:
     """Минимальный in-memory Qdrant-substitute (для unit-tests и dev-light)."""
 
     def __init__(self) -> None:
+        """Инициализировать пустое in-memory storage для collections и vectors."""
         self._coll: dict[str, dict[str, dict[str, Any]]] = {}
         self._vec: dict[str, dict[str, list[float]]] = {}
 
     def get_collection(self, name: str) -> dict[str, Any]:
+        """Получить метаданные collection или raise ``ValueError``."""
         if name not in self._coll:
             raise ValueError(f"collection {name!r} not found")
         return {"name": name}
 
     def create_collection(self, name: str, **_kwargs: Any) -> None:
+        """Создать пустую collection (idempotent: no-op если уже существует)."""
         self._coll.setdefault(name, {})
         self._vec.setdefault(name, {})
 
     def upsert(self, collection_name: str, points: Any) -> None:
+        """Вставить или обновить points (Qdrant-style API) в in-memory storage."""
         coll = self._coll.setdefault(collection_name, {})
         vecs = self._vec.setdefault(collection_name, {})
         for p in points:
@@ -139,6 +148,7 @@ class InMemoryQdrantFallback:
         limit: int = 5,
         query_filter: Any = None,
     ) -> list[Any]:
+        """K-NN поиск по cosine similarity. ``query_filter`` игнорируется в fallback."""
         vecs = self._vec.get(collection_name, {})
         coll = self._coll.get(collection_name, {})
         if not vecs:
@@ -189,10 +199,12 @@ class DocsIndexer:
 
     @property
     def collection_name(self) -> str:
+        """Имя Qdrant collection, в которую индексируются docs."""
         return self._collection_name
 
     @property
     def is_fallback(self) -> bool:
+        """True если Qdrant недоступен и используется in-memory fallback."""
         return self._fallback
 
     def set_embedder(self, embed_fn: Any) -> "DocsIndexer":
