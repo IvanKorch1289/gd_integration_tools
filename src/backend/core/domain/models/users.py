@@ -21,7 +21,7 @@ from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import BaseModel
-from src.backend.infrastructure.database.tenant_filter import TenantMixin
+from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
 __all__ = ("User",)
 

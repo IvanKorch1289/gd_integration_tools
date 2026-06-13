@@ -1,39 +1,31 @@
-"""Helpers для dialect-aware типов столбцов (W21.2).
+"""S107 W1 — shim: ``infrastructure.database.migrations._compat`` → ``core.database.dialect_types``.
 
-Позволяют моделям и миграциям использовать PG-специфичные типы
-(JSONB, UUID, ENUM) с автоматическим fallback'ом на портативные
-аналоги для SQLite (JSON, String).
+DEPRECATED (S107 W1, TD-002 residual): canonical path —
+:mod:`src.backend.core.database.dialect_types`. Этот shim остаётся
+для backward compat с extensions / pre-S107 кодом; new code ДОЛЖЕН
+использовать canonical import:
 
-Использование в моделях::
+    # canonical (S107+):
+    from src.backend.core.database.dialect_types import json_b, uuid_t
 
-    from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
-
-    class MyModel(BaseModel):
-        payload: Mapped[dict] = mapped_column(json_b(), nullable=False)
-        id: Mapped[UUID] = mapped_column(uuid_t(), primary_key=True)
-
-Использование в миграциях::
-
-    from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
-
-    op.create_table("foo", sa.Column("payload", json_b(), nullable=False))
+    # legacy (deprecated, will be removed в S109+):
+    from src.backend.infrastructure.database.migrations._compat import json_b  # noqa: DEPRECATED
 """
 
 from __future__ import annotations
 
-from typing import Any
+import warnings
 
-from sqlalchemy import JSON, String
-from sqlalchemy.dialects import postgresql
+from src.backend.core.database.dialect_types import (  # noqa: F401  re-export
+    json_b,
+    uuid_t,
+)
 
 __all__ = ("json_b", "uuid_t")
 
-
-def json_b() -> Any:
-    """JSONB на PostgreSQL, JSON на остальных диалектах (включая SQLite)."""
-    return postgresql.JSONB().with_variant(JSON(), "sqlite")
-
-
-def uuid_t() -> Any:
-    """UUID на PostgreSQL, String(36) на SQLite (хранение в текстовой форме)."""
-    return postgresql.UUID(as_uuid=True).with_variant(String(36), "sqlite")
+warnings.warn(
+    "src.backend.infrastructure.database.migrations._compat is deprecated; "
+    "use src.backend.core.database.dialect_types (S107 W1, TD-002).",
+    DeprecationWarning,
+    stacklevel=2,
+)

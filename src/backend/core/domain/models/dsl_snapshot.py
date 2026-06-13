@@ -22,9 +22,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.backend.infrastructure.database.migrations._compat import json_b
+from src.backend.core.database.dialect_types import json_b
 from .base import BaseModel
-from src.backend.infrastructure.database.tenant_filter import TenantMixin
+from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
 __all__ = ("DslSnapshot",)
 

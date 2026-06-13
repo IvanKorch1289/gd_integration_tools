@@ -5,7 +5,7 @@ from sqlalchemy_utils.types import EmailType, UUIDType
 
 from src.backend.core.domain.models.base import BaseModel, nullable_str
 from .files import OrderFile
-from src.backend.infrastructure.database.tenant_filter import TenantMixin
+from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
 __all__ = ("Order",)
 

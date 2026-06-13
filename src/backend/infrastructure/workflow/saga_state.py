@@ -41,9 +41,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.backend.infrastructure.database.migrations._compat import json_b
+from src.backend.core.database.dialect_types import json_b
 from src.backend.core.domain.models.base import BaseModel
-from src.backend.infrastructure.database.tenant_filter import TenantMixin
+from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
 
 class _UUIDType(TypeDecorator[uuid.UUID]):
