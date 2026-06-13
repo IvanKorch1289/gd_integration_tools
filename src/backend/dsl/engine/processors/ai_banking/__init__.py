@@ -10,9 +10,6 @@ KycAmlResult, KycAmlVerifyProcessor`` works через re-exports ниже.
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.ai_banking._audit import (
-    _emit_audit,  # S50 W3: helper
-)
 from src.backend.dsl.engine.processors.ai_banking._base import (
     _BankingAIProcessor,  # S50 W3: base
 )
@@ -39,7 +36,6 @@ from src.backend.dsl.engine.processors.ai_banking.identity import (  # S50 W3: r
 
 __all__ = (
     "_BankingAIProcessor",
-    "_emit_audit",
     "AntiFraudResult",
     "AntiFraudScoreProcessor",
     "AppealProcessorAI",

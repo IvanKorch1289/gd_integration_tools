@@ -24,8 +24,8 @@ from pydantic import BaseModel, Field
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.ai_banking._audit import (
-    _emit_audit,  # S50 W3: cross-module dep
+from src.backend.core.audit.facade import (
+    emit_banking_audit,  # S109 W2: migrated to canonical facade
 )
 from src.backend.dsl.engine.processors.ai_banking._base import (
     _BankingAIProcessor,  # S50 W3: base class
@@ -85,14 +85,14 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
             model=self.model,
         )
         if result is None:
-            await _emit_audit(
+            await emit_banking_audit(
                 event=f"{self.audit_event_prefix}.failed",
                 processor=self.name,
                 params={"type_hint": type_hint},
                 error="llm_call_failed",
             )
             return
-        await _emit_audit(
+        await emit_banking_audit(
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
             params={"type_hint": type_hint},
@@ -129,7 +129,7 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
             return True
         except Exception as exc:
             exchange.fail(f"capability_denied: {self.capability} - {exc}")
-            await _emit_audit(
+            await emit_banking_audit(
                 event=f"{self.audit_event_prefix}.capability_denied",
                 processor=self.name,
                 params={},
@@ -184,14 +184,14 @@ class FrancotypingProcessor(_BankingAIProcessor):
             model=self.model,
         )
         if result is None:
-            await _emit_audit(
+            await emit_banking_audit(
                 event=f"{self.audit_event_prefix}.failed",
                 processor=self.name,
                 params={},
                 error="llm_call_failed",
             )
             return
-        await _emit_audit(
+        await emit_banking_audit(
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
             params={"text_length": len(text)},
@@ -229,7 +229,7 @@ class FrancotypingProcessor(_BankingAIProcessor):
             return True
         except Exception as exc:
             exchange.fail(f"capability_denied: {self.capability} - {exc}")
-            await _emit_audit(
+            await emit_banking_audit(
                 event=f"{self.audit_event_prefix}.capability_denied",
                 processor=self.name,
                 params={},
