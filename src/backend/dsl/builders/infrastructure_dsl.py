@@ -244,12 +244,109 @@ class InfrastructureDSL:
             )
         )
 
-    # ── S3 (1) ──
+    # ── S3 (2) ──
 
     def s3_put(self, key: str, *, body_from: str = "body") -> RouteBuilder:
         """PUT объекта в S3 по ``key`` (body из ``body_from``)."""
         return self._add(  # type: ignore[attr-defined]
             S3PutProcessor(key=key, body_from=body_from)
+        )
+
+    def s3_get(self, key: str, *, result_property: str = "s3_object") -> RouteBuilder:
+        """GET объекта из S3 по ``key``.
+
+        S104 W1: NEW DSL method для D21 RPA coverage.
+        Использует :class:`S3GetProcessor` (требует aioboto3 — optional dep).
+
+        Args:
+            key: S3 object key (e.g. ``"backups/daily.json"``).
+            result_property: Куда писать результат
+                (``{"body": ..., "metadata": ..., "etag": ...}``).
+
+        Returns:
+            RouteBuilder с добавленным ``S3GetProcessor`` в pipeline.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            S3GetProcessor(key=key, result_property=result_property)
+        )
+
+    # ── SFTP (2) — S104 W1 ──
+
+    def sftp_get(
+        self,
+        host: str,
+        remote_path: str,
+        *,
+        username: str | None = None,
+        password_from: str = "none",
+        key_file: str | None = None,
+        timeout: float = 30.0,
+        result_property: str = "sftp_object",
+    ) -> RouteBuilder:
+        """S104 W1 — GET файла с SFTP-сервера.
+
+        Args:
+            host: Адрес SFTP-сервера.
+            remote_path: Путь к файлу на сервере.
+            username: SFTP-пользователь (``None`` = системный).
+            password_from: Источник пароля (``"body"`` / ``"properties"`` / ``"none"``).
+            key_file: Путь к private key (для key-based auth).
+            timeout: Таймаут в секундах.
+            result_property: Куда писать результат (``{"body": ..., "metadata": ...}``).
+
+        Returns:
+            RouteBuilder с добавленным ``SftpGetProcessor`` в pipeline.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            SftpGetProcessor(
+                host=host,
+                remote_path=remote_path,
+                username=username,
+                password_from=password_from,
+                key_file=key_file,
+                timeout=timeout,
+                result_property=result_property,
+            )
+        )
+
+    def sftp_put(
+        self,
+        host: str,
+        remote_path: str,
+        *,
+        body_from: str = "body",
+        username: str | None = None,
+        password_from: str = "none",
+        key_file: str | None = None,
+        timeout: float = 30.0,
+        result_property: str = "sftp_result",
+    ) -> RouteBuilder:
+        """S104 W1 — PUT файла на SFTP-сервер.
+
+        Args:
+            host: Адрес SFTP-сервера.
+            remote_path: Путь к файлу на сервере.
+            body_from: Источник содержимого (``"body"`` / ``"properties"``).
+            username: SFTP-пользователь.
+            password_from: Источник пароля.
+            key_file: Путь к private key.
+            timeout: Таймаут в секундах.
+            result_property: Куда писать результат.
+
+        Returns:
+            RouteBuilder с добавленным ``SftpPutProcessor`` в pipeline.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            SftpPutProcessor(
+                host=host,
+                remote_path=remote_path,
+                body_from=body_from,
+                username=username,
+                password_from=password_from,
+                key_file=key_file,
+                timeout=timeout,
+                result_property=result_property,
+            )
         )
 
     # ── SQL (1) ──
