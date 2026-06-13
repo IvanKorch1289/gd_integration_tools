@@ -5,6 +5,28 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S105 (2026-06-13) — D5 plan + D9 Temporal real + Audit soft-deprecate + ratchet verify (4 commits, 34 NEW tests, score 9.4 → 9.5)
+
+### Added
+
+- **S105 W1-D5 model move plan (DEEP-RESEARCH 🔴)**: `docs/migration/d5-models-to-core.md` — детальный план B1/B2/B3 (12 model files категоризированы по риску A/B/C, back-compat shim pattern по образцу `core/audit/facade.py`). `docs/adr/0188-d5-models-move-plan.md` — ADR с 5 resolved OPEN_QUESTIONS + 9-sprint roadmap до S106 W5 closure. `scripts/verify_d5_migration_readiness.sh` — pre/post flight checks (12 model files, 5 tables reflected, 41 linter violations baseline, facade sanity). Pre-flight: PASS.
+- **S105 W2-Audit soft-deprecation gate (Path B per consult)**: Subagent-2 обнаружил архитектурный конфликт (DI-callback vs service-locator). Решение: soft deprecation. `tools/check_audit_deprecation.py` (NEW) — CI-runnable сканер 77 legacy callsites. Modes: default (exit 0), `--strict` (CI gate, exit 1), `--json` (CI integration). 12 NEW tests pass. `docs/migration/audit-emit-deprecation.md` — guide с migration paths A/B/C/D. Measured: 22 files / 76 legacy callsites.
+- **S105 W3-D9 Temporal Schedule real implementation**: `src/backend/infrastructure/scheduler/temporal_scheduler_backend.py` (NEW) — real impl через `temporalio.client.Client`. Methods: `schedule_cron` (ScheduleActionStartWorkflow + ScheduleCronSpec), `schedule_oneshot` (start_workflow + start_delay), `cancel` (schedule.delete → workflow.cancel fallback), `list_jobs` (list_schedules + cache). **Semantic difference documented**: APScheduler = Python callable, Temporal = workflow name string. Lazy import temporalio (опциональная dep, mypy ignores_missing_imports). 22 NEW tests + 50/50 scheduler tests pass.
+- **S105 W4-Docstring ratchet verification (no work)**: 0 NEW violations, 0 stale entries. Allowlist 1636 (stable после S105 W2-W3 subagent work). Honest W1 per S58+ rule — ratchet = regression guard, не vanity metric.
+- `docs/adr/0190-sprint-105-closure.md` — closure ADR.
+
+### Tests
+
+- 34 NEW (W1: 0; W2: 12; W3: 22; W4: 0 verification; W5: 0 closure)
+
+### Real TODOs Remaining (S106+ backlog)
+
+- **S106 W1**: D5 B1 (6 Risk A models → `core/domain/models/` + shims) — DEEP-RESEARCH 🔴.
+- **S106 W2**: Audit Path A (per-domain helpers в facade, migration of high-traffic callsites).
+- **S106 W3**: Pre-commit hook auto-wire ratchet + D5 B2 starter (`orderkinds.py`).
+- **S106 W4**: D5 B2 (`orders.py` + `files.py` + `OrderFile`) — circular MRO, secondary association.
+- **S106 W5**: D5 B3 (`workflow_instance.py` + `workflow_event.py`, native enum) + closure ADR-0191.
+
 ## [Unreleased] — Autonomous cycle S104 (2026-06-13) — DSN MSSQL/MySQL/DB2 + RPA DSL + Rate limit + ratchet -18 (5 commits, 10 NEW tests, score 9.4)
 
 ### Added
@@ -25,24 +47,6 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **S105 W2**: Audit soft-deprecation gate (Path B chosen per consult) — legacy 77 callsites.
 - **S105 W3**: D9 Temporal Schedule real impl — replace S18 W0 stub.
 - **S106+**: D5 B1 (Risk A models) + Audit Path A (per-domain helpers) + Pre-commit hook wiring.
-
-## [Unreleased] — Autonomous cycle S105 (2026-06-13) — D5 plan + D9 Temporal real + Audit soft-deprecate (3 commits, 34 NEW tests, score 9.4 → 9.5)
-
-### Added
-
-- **S105 W1-D5 model move plan (DEEP-RESEARCH 🔴)**: `docs/migration/d5-models-to-core.md` — детальный план B1/B2/B3 (12 model files категоризированы по риску A/B/C, back-compat shim pattern по образцу `core/audit/facade.py`). `docs/adr/0188-d5-models-move-plan.md` — ADR с 5 resolved OPEN_QUESTIONS + 9-sprint roadmap до S106 W5 closure. `scripts/verify_d5_migration_readiness.sh` — pre/post flight checks (12 model files, 5 tables reflected, 41 linter violations baseline, facade sanity). Pre-flight: PASS.
-- **S105 W2-Audit soft-deprecation gate (Path B per consult)**: Subagent-2 обнаружил архитектурный конфликт (DI-callback vs service-locator). Решение: soft deprecation. `tools/check_audit_deprecation.py` (NEW) — CI-runnable сканер 77 legacy callsites. Modes: default (exit 0), `--strict` (CI gate, exit 1), `--json` (CI integration). 12 NEW tests pass. `docs/migration/audit-emit-deprecation.md` — guide с migration paths A/B/C/D. Measured: 22 files / 76 legacy callsites.
-- **S105 W3-D9 Temporal Schedule real implementation**: `src/backend/infrastructure/scheduler/temporal_scheduler_backend.py` (NEW) — real impl через `temporalio.client.Client`. Methods: `schedule_cron` (ScheduleActionStartWorkflow + ScheduleCronSpec), `schedule_oneshot` (start_workflow + start_delay), `cancel` (schedule.delete → workflow.cancel fallback), `list_jobs` (list_schedules + cache). **Semantic difference documented**: APScheduler = Python callable, Temporal = workflow name string. Lazy import temporalio (опциональная dep, mypy ignores_missing_imports). 22 NEW tests + 50/50 scheduler tests pass.
-
-### Tests
-
-- 34 NEW (W1: 0; W2: 12; W3: 22)
-
-### Cumulative (S93-S105)
-
-- 15 sprints, 70+ atomic commits, 295+ NEW tests, 11 ADRs (0175-0189).
-- TODO backlog: 0 (S100) → maintained.
-- Score: 9.4 → 9.5.
 
 ## [Unreleased] — Autonomous cycle S103 (2026-06-13) — Cross-cutting: D5 linter 41 violations + D9 cron DSL + §3.4 audit facade + V2 P0 #10 verified (5 commits, 19 NEW tests, score 9.3 → 9.4)
 
