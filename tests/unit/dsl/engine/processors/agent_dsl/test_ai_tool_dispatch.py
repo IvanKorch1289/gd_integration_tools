@@ -13,6 +13,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from src.backend.dsl.builders.base import RouteBuilder
@@ -237,6 +239,127 @@ def test_ai_tool_dispatch_omits_default_query_in_spec() -> None:
     p = b._processors[0]
     assert p.query is None
     assert p.query_property == "body.q"
+
+
+# ── S108 W4: End-to-end real LLM-wiring tests (plugin discovery + dispatch) ──
+
+
+@pytest.mark.asyncio
+async def test_ai_tool_dispatch_end_to_end_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """S108 W4: AIGateway returns valid tool_id+args → tool.callable invoked → result written.
+
+    Full plugin discovery flow: mock AIGateway (returns LLM selection)
+    + mock ToolRegistry (contains dynamically-registered tool) →
+    verify tool.callable was awaited with parsed args + result_property
+    has {dispatched: True, tool_id, args, result}.
+    """
+    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+    from src.backend.services.ai.tools.registry import AgentTool
+
+    # Mock AIGateway instance — AIGateway() returns this mock, .invoke() returns AIResponse.
+    async def _mock_invoke(request: AIRequest) -> AIResponse:
+        return AIResponse(content='{"tool_id": "echo_tool", "args": {"message": "hi"}}')
+
+    mock_gateway_instance = MagicMock()
+    mock_gateway_instance.invoke = _mock_invoke
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway",
+        lambda *a, **kw: mock_gateway_instance,
+    )
+
+    # Mock tool callable — captures args for assertion
+    captured: dict = {}
+
+    async def _echo(message: str) -> str:
+        captured["message"] = message
+        return f"echo: {message}"
+
+    mock_tool = AgentTool(
+        id="echo_tool",
+        name="echo",
+        description="Echoes the input message",
+        parameters={
+            "type": "object",
+            "properties": {"message": {"type": "string"}},
+            "required": ["message"],
+        },
+        callable=_echo,
+    )
+
+    def _registry_get(tid: str):
+        return mock_tool if tid == "echo_tool" else None
+
+    mock_registry = MagicMock()
+    mock_registry.get = MagicMock(side_effect=_registry_get)
+    monkeypatch.setattr(
+        "src.backend.services.ai.tools.registry.get_tool_registry",
+        lambda: mock_registry,
+    )
+
+    p = AIToolDispatchProcessor(
+        available_tool_ids=["echo_tool"],
+        query="test query",
+    )
+    ex = _ex()
+    await p._run(ex, _ctx())
+
+    result = ex.get_property("tool_dispatch_result")
+    assert result["dispatched"] is True
+    assert result["tool_id"] == "echo_tool"
+    assert result["args"] == {"message": "hi"}
+    assert result["result"] == "echo: hi"
+    assert captured == {"message": "hi"}  # tool.callable was invoked with parsed args
+
+
+@pytest.mark.asyncio
+async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """S108 W4: defense-in-depth — даже если LLM вернёт tool_id вне whitelist, dispatch blocked.
+
+    Mock AIGateway returns ``{"tool_id": "rogue_tool", ...}`` but
+    processor's whitelist only contains ``["safe_tool"]``. The dispatch
+    should be blocked with reason ``tool_id_not_in_whitelist``.
+    """
+    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+
+    async def _mock_invoke(request: AIRequest) -> AIResponse:
+        return AIResponse(
+            content='{"tool_id": "rogue_tool", "args": {"x": 1}}'
+        )
+
+    mock_gateway_instance = MagicMock()
+    mock_gateway_instance.invoke = _mock_invoke
+    monkeypatch.setattr(
+        "src.backend.core.ai.gateway.AIGateway",
+        lambda *a, **kw: mock_gateway_instance,
+    )
+
+    # Registry: _resolve_tools_description calls registry.get("safe_tool")
+    # → возвращаем None (available=False), чтобы json.dumps не падал на MagicMock.
+    # Для rogue_tool registry.get НЕ должен вызываться (whitelist check раньше).
+    mock_registry = MagicMock()
+    mock_registry.get = MagicMock(return_value=None)
+    monkeypatch.setattr(
+        "src.backend.services.ai.tools.registry.get_tool_registry",
+        lambda: mock_registry,
+    )
+
+    p = AIToolDispatchProcessor(
+        available_tool_ids=["safe_tool"],  # rogue_tool NOT in whitelist
+        query="test",
+    )
+    ex = _ex()
+    await p._run(ex, _ctx())
+
+    result = ex.get_property("tool_dispatch_result")
+    assert result["dispatched"] is False
+    assert result["reason"] == "tool_id_not_in_whitelist"
+    assert result["llm_tool_id"] == "rogue_tool"
+    # registry.get вызывается один раз (для _resolve_tools_description),
+    # но НЕ для rogue_tool (whitelist check блокирует раньше).
+    assert mock_registry.get.call_count == 1
+    assert mock_registry.get.call_args[0][0] == "safe_tool"
 
 
 # ── S107 W4: Real LLM-wiring tests ──
