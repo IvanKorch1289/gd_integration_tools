@@ -1,62 +1,23 @@
-"""SQLAlchemy-модель таблицы ``dsl_snapshots`` (Wave 1.4).
+"""DEPRECATED shim — use ``src.backend.core.domain.models.dsl_snapshot`` directly.
 
-Снэпшоты определений DSL-маршрутов с версионированием. Перенесено из
-Redis (см. ``.claude/REDIS_AUDIT.md``): требуется история, A/B и rollback —
-кэш-хранилище неприемлемо.
+S106 W1 (D5 B1) перенёс dsl_snapshot.py в ``core/domain/models/``. Этот shim —
+back-compat re-export с ``DeprecationWarning`` (1 sprint grace, hard delete
+S106 W5).
+
+References:
+- ADR-0188
+- ``docs/migration/d5-models-to-core.md``
 """
-
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
+import warnings
 
-from sqlalchemy import (
-    BigInteger,
-    DateTime,
-    Index,
-    Integer,
-    String,
-    Text,
-    UniqueConstraint,
-    func,
+from src.backend.core.domain.models.dsl_snapshot import *  # noqa: F401,F403
+
+warnings.warn(
+    "Importing from src.backend.infrastructure.database.models.dsl_snapshot is "
+    "deprecated; use src.backend.core.domain.models.dsl_snapshot instead. "
+    "This shim will be removed in S106 W5.",
+    DeprecationWarning,
+    stacklevel=2,
 )
-from sqlalchemy.orm import Mapped, mapped_column
-
-from src.backend.infrastructure.database.migrations._compat import json_b
-from src.backend.infrastructure.database.models.base import BaseModel
-from src.backend.infrastructure.database.tenant_filter import TenantMixin
-
-__all__ = ("DslSnapshot",)
-
-
-class DslSnapshot(BaseModel, TenantMixin):
-    """Версионированный снэпшот pipeline маршрута.
-
-    S101 W4 (V2 P0 #6): TenantMixin добавлен для multi-tenant blue/green
-    deployments. ``tenant_id`` backfilled к ``"default"`` для existing rows
-    через Alembic migration ``a1b2c3d4e5f6`` (2026-06-13 12:00).
-    """
-
-    __tablename__ = "dsl_snapshots"
-    __versioned__ = {"versioning": False}
-    __table_args__ = (
-        UniqueConstraint("route_id", "version", name="uq_dsl_snapshots_route_ver"),
-        Index("idx_dsl_snapshots_route", "route_id"),
-    )
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    route_id: Mapped[str] = mapped_column(Text, nullable=False)
-    version: Mapped[int] = mapped_column(Integer, nullable=False)
-    spec: Mapped[dict[str, Any]] = mapped_column(json_b(), nullable=False)
-
-    feature_flag: Mapped[str | None] = mapped_column(Text, nullable=True)
-    source: Mapped[str | None] = mapped_column(Text, nullable=True)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    api_version: Mapped[str] = mapped_column(
-        String(8), nullable=False, server_default="v2"
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )

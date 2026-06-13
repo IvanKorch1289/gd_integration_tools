@@ -11,7 +11,7 @@ from sqlalchemy.orm import configure_mappers
 from src.backend.core.config.settings import settings
 from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
 from src.backend.infrastructure.database.migrations.types import load_types
-from src.backend.infrastructure.database.models.base import (  # noqa: F401
+from src.backend.core.domain.models.base import (  # noqa: F401
     BaseModel,
     metadata,
 )
@@ -23,7 +23,7 @@ from src.backend.infrastructure.database.models.orderkinds import (
     OrderKind,  # noqa: F401
 )
 from src.backend.infrastructure.database.models.orders import Order  # noqa: F401
-from src.backend.infrastructure.database.models.users import User  # noqa: F401
+from src.backend.core.domain.models.users import User  # noqa: F401
 from src.backend.infrastructure.logging.factory import get_logger
 
 # this is the Alembic Config object, which provides

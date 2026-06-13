@@ -7,7 +7,7 @@ from pydantic import Field, SecretStr
 # на этапе определения класса. Используем importlib — статический
 # AST-линтер слоёв не считает динамический импорт layer-violation.
 User = importlib.import_module(
-    "src." + "backend.infrastructure.database.models.users"
+    "src." + "backend.core.domain.models.users"
 ).User
 
 __all__ = ("UserFilter", "UserLogin")

@@ -1,94 +1,23 @@
-from datetime import datetime
-from typing import Annotated, Any
+"""DEPRECATED shim — use ``src.backend.core.domain.models.base`` directly.
 
-from pydantic import SecretStr
-from sqlalchemy import Integer, MetaData, func
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import Mapped, declared_attr, mapped_column, registry
-from sqlalchemy_continuum import make_versioned
-from sqlalchemy_continuum.plugins import ActivityPlugin, PropertyModTrackerPlugin
+S106 W1 (D5 B1) перенёс base.py в ``core/domain/models/``. Этот shim —
+back-compat re-export с ``DeprecationWarning`` (1 sprint grace, hard delete
+S106 W5). Pattern аналогичен S95 W4 AuthGateway + S103 W3 ``core/audit/facade.py``.
 
-__all__ = ("BaseModel", "mapper_registry", "nullable_str")
+References:
+- ADR-0188
+- ``docs/migration/d5-models-to-core.md``
+"""
+from __future__ import annotations
 
-# Аннотация для необязательных строковых полей
-nullable_str = Annotated[str, mapped_column(nullable=False)]
+import warnings
 
-# Инициализация метаданных
-metadata = MetaData(
-    naming_convention={
-        "ix": "ix_%(column_0_label)s",
-        "uq": "uq_%(table_name)s_%(column_0_name)s",
-        "ck": "ck_%(table_name)s_`%(constraint_name)s",
-        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-        "pk": "pk_%(table_name)s",
-    }
+from src.backend.core.domain.models.base import *  # noqa: F401,F403
+
+warnings.warn(
+    "Importing from src.backend.infrastructure.database.models.base is "
+    "deprecated; use src.backend.core.domain.models.base instead. "
+    "This shim will be removed in S106 W5.",
+    DeprecationWarning,
+    stacklevel=2,
 )
-
-# Инициализация SQLAlchemy-Continuum
-make_versioned(user_cls=None, plugins=[ActivityPlugin(), PropertyModTrackerPlugin()])
-
-# Создаем registry и Base с использованием metadata
-mapper_registry = registry(metadata=metadata)
-Base = mapper_registry.generate_base()
-
-
-class BaseModel(AsyncAttrs, Base):  # type: ignore
-    """
-    Базовый класс для всех моделей SQLAlchemy.
-
-    Атрибуты:
-        id (Mapped[int]): Уникальный идентификатор записи.
-        created_at (Mapped[datetime]): Время создания записи.
-        updated_at (Mapped[datetime]): Время последнего обновления записи.
-
-    Методы:
-        get_value_from_secret_str: Преобразует SecretStr в обычные строки.
-        to_dict: Преобразует модель в словарь.
-    """
-
-    __abstract__ = True
-    __versioned__ = {}
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        default=func.now(), onupdate=func.now()
-    )
-
-    @declared_attr.directive
-    @classmethod
-    def __tablename__(cls) -> str:
-        """
-        Генерирует имя таблицы на основе имени класса.
-
-        Возвращает:
-            str: Имя таблицы в нижнем регистре с добавлением 's'.
-        """
-        return cls.__name__.lower() + "s"
-
-    @staticmethod
-    async def get_value_from_secret_str(data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Преобразует все SecretStr в словаре в обычные строки.
-
-        Аргументы:
-            data (dict[str, Any]): Словарь, который может содержать SecretStr.
-
-        Возвращает:
-            dict[str, Any]: Словарь с преобразованными значениями.
-        """
-        return {
-            key: (value.get_secret_value() if isinstance(value, SecretStr) else value)
-            for key, value in data.items()
-        }
-
-    async def to_dict(self) -> dict[str, Any]:
-        """
-        Преобразует модель в словарь.
-
-        Возвращает:
-            dict[str, Any]: Словарь с атрибутами модели.
-        """
-        return {
-            column.name: getattr(self, column.name) for column in self.__table__.columns
-        }

@@ -1,7 +1,7 @@
 from sqlalchemy import UUID, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.backend.infrastructure.database.models.base import Base, BaseModel
+from src.backend.core.domain.models.base import Base, BaseModel
 from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("File", "OrderFile")

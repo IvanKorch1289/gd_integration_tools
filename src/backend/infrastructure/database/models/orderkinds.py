@@ -1,7 +1,7 @@
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.backend.infrastructure.database.models.base import BaseModel, nullable_str
+from src.backend.core.domain.models.base import BaseModel, nullable_str
 from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("OrderKind",)

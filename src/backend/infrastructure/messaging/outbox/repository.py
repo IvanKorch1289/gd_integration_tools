@@ -36,7 +36,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.outbox import OutboxMessage
+from src.backend.core.domain.models.outbox import OutboxMessage
 
 __all__ = ("OutboxRepository", "TransactionalOutboxEnqueuer")
 

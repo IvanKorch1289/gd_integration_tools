@@ -1,6 +1,6 @@
 from sqladmin import ModelView
 
-from src.backend.infrastructure.database.models.users import User
+from src.backend.core.domain.models.users import User
 from src.backend.utilities.admin_panel.base import BaseAdmin
 
 __all__ = ("UserAdmin",)

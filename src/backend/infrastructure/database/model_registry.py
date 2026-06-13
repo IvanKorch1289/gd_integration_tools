@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any
 
-from src.backend.infrastructure.database.models.base import BaseModel, mapper_registry
+from src.backend.core.domain.models.base import BaseModel, mapper_registry
 
 __all__ = ("get_model_enum", "get_user_models")
 

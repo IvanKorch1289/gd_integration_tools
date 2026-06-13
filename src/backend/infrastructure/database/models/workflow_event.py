@@ -23,7 +23,7 @@ from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, String, fu
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("WorkflowEvent", "WorkflowEventType")

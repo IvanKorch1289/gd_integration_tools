@@ -5,7 +5,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 
 
 class AbstractRepository[ConcreteTable: BaseModel](ABC):

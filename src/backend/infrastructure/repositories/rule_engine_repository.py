@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import delete, select
 
 from src.backend.core.interfaces.rule_engine import RuleEngineRepository, RulesetDoc
-from src.backend.infrastructure.database.models.rule_engine import RuleEngineRulesetORM
+from src.backend.core.domain.models.rule_engine import RuleEngineRulesetORM
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

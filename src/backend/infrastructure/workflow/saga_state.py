@@ -42,7 +42,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.infrastructure.database.migrations._compat import json_b
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 

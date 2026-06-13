@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.database.models.langmem_models import (
+    from src.backend.core.domain.models.langmem_models import (
         LangMemEpisodic,
         LangMemProcedural,
     )

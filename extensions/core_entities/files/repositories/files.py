@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from extensions.core_entities.files.domain.models import File, OrderFile
 from src.backend.core.errors import NotFoundError
-from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.core.domain.models.base import BaseModel
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 

@@ -24,7 +24,7 @@ from typing import Any
 from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.infrastructure.database.models.outbox import OutboxMessage
+from src.backend.core.domain.models.outbox import OutboxMessage
 from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = (

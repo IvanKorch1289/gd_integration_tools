@@ -201,7 +201,7 @@ def sync_pg_to_sqlite(
     # Импорт моделей для side-effect: они регистрируются в metadata.tables.
     # Без этого metadata.create_all вернёт пустую структуру.
     import src.backend.infrastructure.database.models  # noqa: F401
-    from src.backend.infrastructure.database.models.base import metadata
+    from src.backend.core.domain.models.base import metadata
 
     target_tables = _select_tables(metadata.tables, tables)
     if not target_tables:

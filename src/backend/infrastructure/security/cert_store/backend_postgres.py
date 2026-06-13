@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
+from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 

@@ -1,60 +1,23 @@
-"""SQLAlchemy-модели TLS-сертификатов (Wave 2.1).
+"""DEPRECATED shim — use ``src.backend.core.domain.models.cert`` directly.
 
-* :class:`CertRecord` — актуальное состояние сертификата по ``service_id``.
-* :class:`CertHistory` — append-only лог замен с привязкой к ``uploaded_by``.
+S106 W1 (D5 B1) перенёс cert.py в ``core/domain/models/``. Этот shim —
+back-compat re-export с ``DeprecationWarning`` (1 sprint grace, hard delete
+S106 W5).
 
-Связано с миграцией ``f6a7b8c9d0e1_certs``.
+References:
+- ADR-0188
+- ``docs/migration/d5-models-to-core.md``
 """
-
 from __future__ import annotations
 
-from datetime import datetime
+import warnings
 
-from sqlalchemy import BigInteger, DateTime, Index, Integer, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from src.backend.core.domain.models.cert import *  # noqa: F401,F403
 
-from src.backend.infrastructure.database.models.base import Base
-
-__all__ = ("CertHistory", "CertRecord")
-
-
-# Модели наследуют ``Base`` (а не ``BaseModel``), потому что реальная
-# alembic-миграция PG для ``certs`` не содержит колонок ``id``/``created_at``/
-# ``updated_at`` из ``BaseModel`` и единственный PK = ``service_id``.
-# Дополнительный ``id`` ломал бы create_all() на SQLite (composite PK
-# с autoincrement) и расходился с production-схемой PG.
-
-
-class CertRecord(Base):
-    """Текущая версия сертификата для ``service_id``."""
-
-    __tablename__ = "certs"
-    __table_args__ = (Index("idx_certs_expires", "expires_at"),)
-
-    service_id: Mapped[str] = mapped_column(Text, primary_key=True)
-    pem: Mapped[str] = mapped_column(Text, nullable=False)
-    fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-
-
-class CertHistory(Base):
-    """Лог замен сертификата (append-only)."""
-
-    __tablename__ = "cert_history"
-    __table_args__ = (Index("idx_cert_history_service", "service_id"),)
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    service_id: Mapped[str] = mapped_column(Text, nullable=False)
-    version: Mapped[int] = mapped_column(Integer, nullable=False)
-    pem: Mapped[str] = mapped_column(Text, nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    uploaded_by: Mapped[str | None] = mapped_column(Text, nullable=True)
+warnings.warn(
+    "Importing from src.backend.infrastructure.database.models.cert is "
+    "deprecated; use src.backend.core.domain.models.cert instead. "
+    "This shim will be removed in S106 W5.",
+    DeprecationWarning,
+    stacklevel=2,
+)
