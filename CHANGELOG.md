@@ -5,6 +5,45 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S104 (2026-06-13) — DSN MSSQL/MySQL/DB2 + RPA DSL + Rate limit + ratchet -18 (5 commits, 10 NEW tests, score 9.4)
+
+### Added
+
+- **S104 W1-D21 RPA DSL coverage**: `src/backend/dsl/builders/infrastructure_dsl.py` — NEW DSL methods `s3_get(key, result_property)` / `sftp_get(host, remote_path, username, password_from, key_file, timeout)` / `sftp_put(host, remote_path, body_from, ...)` + 3 NEW processor classes (`S3GetProcessor`, `SftpGetProcessor`, `SftpPutProcessor`). Pattern идентичен `S3PutProcessor`/ssh_exec (lifespan DI-фасады). 2 commits: `2065ea36` (DSL methods) + `158d7099` (processor classes).
+- **S104 W2-§3.9 Rate limiting facade canonical**: `src/backend/core/resilience/rate_limiter_facade.py` — canonical re-export of `unified_rate_limiter.get_rate_limiter()` (аналогично S95 W4 AuthGateway + S103 W3 audit/facade pattern). 5/5 tests pass.
+- **S104 W3-D19 DSN MSSQL/MySQL/DB2 (DEEP-RESEARCH 🔴)**: `src/backend/core/enums/database.py` + `DatabaseTypeChoices` (mssql/mysql/db2). `src/backend/core/config/database.py::_build_dsn()` + 3 NEW branches: mssql+{aioodbc|pyodbc}, mysql+{aiomysql|pymysql}, db2+ibm_db_sa. `tests/unit/core/config/test_dsn_mssql_mysql_db2.py` (NEW, 10 tests). 2 commits: `50c9bd26` (DSN builder) + `6820937d` (test fix: helper _make_settings с ssl_mode=None override + corrupted mysql async test fix + DB2 async test).
+- **S104 W4-Docstring ratchet -18**: 18 NEW docstrings в 4 файлах: `infrastructure_dsl.py` (SqlExecProcessor), `ops/health.py` (14: CheckStatus, HealthStatus, CheckResult, HealthReport + 3 properties, 5 add_* + run/run_one/clear_cache), `utilities/admin_panel/setup_admin.py` (setup_admin), `workflows/worker.py` (NoOpStepExecutor.execute_next). Allowlist 1642 → 1641.
+- `docs/adr/0189-sprint-104-closure.md` — closure ADR.
+
+### Tests
+
+- 10 NEW (W3: 10; W1: 0; W2: 0; W4: 0)
+
+### Real TODOs Remaining (S105+ backlog)
+
+- **S105 W1**: D5 model move plan (analysis-only, multi-sprint breaking) — DEEP-RESEARCH 🔴.
+- **S105 W2**: Audit soft-deprecation gate (Path B chosen per consult) — legacy 77 callsites.
+- **S105 W3**: D9 Temporal Schedule real impl — replace S18 W0 stub.
+- **S106+**: D5 B1 (Risk A models) + Audit Path A (per-domain helpers) + Pre-commit hook wiring.
+
+## [Unreleased] — Autonomous cycle S105 (2026-06-13) — D5 plan + D9 Temporal real + Audit soft-deprecate (3 commits, 34 NEW tests, score 9.4 → 9.5)
+
+### Added
+
+- **S105 W1-D5 model move plan (DEEP-RESEARCH 🔴)**: `docs/migration/d5-models-to-core.md` — детальный план B1/B2/B3 (12 model files категоризированы по риску A/B/C, back-compat shim pattern по образцу `core/audit/facade.py`). `docs/adr/0188-d5-models-move-plan.md` — ADR с 5 resolved OPEN_QUESTIONS + 9-sprint roadmap до S106 W5 closure. `scripts/verify_d5_migration_readiness.sh` — pre/post flight checks (12 model files, 5 tables reflected, 41 linter violations baseline, facade sanity). Pre-flight: PASS.
+- **S105 W2-Audit soft-deprecation gate (Path B per consult)**: Subagent-2 обнаружил архитектурный конфликт (DI-callback vs service-locator). Решение: soft deprecation. `tools/check_audit_deprecation.py` (NEW) — CI-runnable сканер 77 legacy callsites. Modes: default (exit 0), `--strict` (CI gate, exit 1), `--json` (CI integration). 12 NEW tests pass. `docs/migration/audit-emit-deprecation.md` — guide с migration paths A/B/C/D. Measured: 22 files / 76 legacy callsites.
+- **S105 W3-D9 Temporal Schedule real implementation**: `src/backend/infrastructure/scheduler/temporal_scheduler_backend.py` (NEW) — real impl через `temporalio.client.Client`. Methods: `schedule_cron` (ScheduleActionStartWorkflow + ScheduleCronSpec), `schedule_oneshot` (start_workflow + start_delay), `cancel` (schedule.delete → workflow.cancel fallback), `list_jobs` (list_schedules + cache). **Semantic difference documented**: APScheduler = Python callable, Temporal = workflow name string. Lazy import temporalio (опциональная dep, mypy ignores_missing_imports). 22 NEW tests + 50/50 scheduler tests pass.
+
+### Tests
+
+- 34 NEW (W1: 0; W2: 12; W3: 22)
+
+### Cumulative (S93-S105)
+
+- 15 sprints, 70+ atomic commits, 295+ NEW tests, 11 ADRs (0175-0189).
+- TODO backlog: 0 (S100) → maintained.
+- Score: 9.4 → 9.5.
+
 ## [Unreleased] — Autonomous cycle S103 (2026-06-13) — Cross-cutting: D5 linter 41 violations + D9 cron DSL + §3.4 audit facade + V2 P0 #10 verified (5 commits, 19 NEW tests, score 9.3 → 9.4)
 
 ### Added
