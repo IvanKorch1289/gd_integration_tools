@@ -18,7 +18,7 @@ from src.backend.core.audit import facade
 def mock_audit_service() -> Any:
     """Mock ``get_unified_audit_service().emit()`` return value."""
     mock_emit = patch(
-        "src.backend.core.audit.facade.get_unified_audit_service"
+        "src.backend.core.audit.facade._base.get_unified_audit_service"
     )
     with mock_emit as mock_get:
         svc = mock_get.return_value
@@ -286,7 +286,7 @@ class TestEmitAuditSafe:
     def test_never_raises_on_emit_failure(self) -> None:
         """_safe: emit_audit raises → helper returns None, doesn't propagate."""
         with patch(
-            "src.backend.core.audit.facade.get_unified_audit_service",
+            "src.backend.core.audit.facade._base.get_unified_audit_service",
             side_effect=RuntimeError("service unavailable"),
         ):
             # Should not raise
