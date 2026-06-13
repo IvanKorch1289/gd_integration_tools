@@ -117,3 +117,56 @@ async def test_async_context_manager(transport: httpx.MockTransport) -> None:
     async with client as c:
         response = await c.get("https://example.com/")
         assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_dual_emit_calls_both_callback_and_facade(
+    transport: httpx.MockTransport,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """S109 W1: dual-emit — callback + emit_waf_evaluation (canonical).
+
+    Verifies that WAF evaluation emits BOTH the legacy callback
+    (for backward compat) AND the canonical facade helper (for
+    unified audit service).
+    """
+    events: list[dict[str, object]] = []
+
+    def audit(event: dict[str, object]) -> None:
+        events.append(event)
+
+    facade_calls: list[dict[str, object]] = []
+
+    def fake_emit_waf_evaluation(
+        *,
+        decision: Any,
+        plugin: str,
+        method: str,
+        url: str,
+    ) -> None:
+        facade_calls.append(
+            {
+                "decision": decision,
+                "plugin": plugin,
+                "method": method,
+                "url": url,
+            }
+        )
+
+    monkeypatch.setattr(
+        "src.backend.core.audit.facade.emit_waf_evaluation",
+        fake_emit_waf_evaluation,
+    )
+
+    client = _make_client(transport=transport, audit=audit)
+    await client.get("https://example.com/dual-emit")
+    await client.aclose()
+
+    # Legacy callback received event
+    assert len(events) == 1
+    assert events[0]["event"] == "waf.evaluate"
+    # Canonical facade was also called
+    assert len(facade_calls) == 1
+    assert facade_calls[0]["plugin"] == "core"  # default plugin
+    assert facade_calls[0]["method"] == "GET"
+    assert "dual-emit" in str(facade_calls[0]["url"])

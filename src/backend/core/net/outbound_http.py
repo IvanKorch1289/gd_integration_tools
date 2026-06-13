@@ -212,20 +212,49 @@ class OutboundHttpClient:
         return await self.request("DELETE", url, **kwargs)
 
     def _emit_audit(self, decision: WafDecision, method: str, url: str) -> None:
-        """Вызвать audit-callback, если задан."""
-        if self._audit is None:
-            return
-        self._audit(
-            {
-                "event": "waf.evaluate",
-                "plugin": self._plugin,
-                "method": method,
-                "url": url,
-                "host": decision.host,
-                "allowed": decision.allowed,
-                "reason": decision.reason,
-            }
-        )
+        """Вызвать audit-callback, если задан.
+
+        S109 W1: dual-emit — callback для backward compat +
+        :func:`emit_waf_evaluation` из ``core.audit.facade`` (canonical
+        Path A helper) для unified audit service. Callback-only путь
+        сохранён для callers, которым нужен sync ``dict`` payload
+        (legacy testkit).
+        """
+        if self._audit is not None:
+            self._audit(
+                {
+                    "event": "waf.evaluate",
+                    "plugin": self._plugin,
+                    "method": method,
+                    "url": url,
+                    "host": decision.host,
+                    "allowed": decision.allowed,
+                    "reason": decision.reason,
+                }
+            )
+        # S109 W1: dual-emit через unified audit service.
+        # Lazy import для избежания circular dep (facade → services/audit).
+        # ``emit_waf_evaluation`` возвращает coroutine — fire-and-forget через
+        # ``asyncio.create_task`` если event loop активен, иначе sync close.
+        import asyncio
+
+        from src.backend.core.audit.facade import emit_waf_evaluation
+
+        try:
+            coro = emit_waf_evaluation(
+                decision=decision,
+                plugin=self._plugin,
+                method=method,
+                url=url,
+            )
+            if asyncio.iscoroutine(coro):
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(coro)
+                except RuntimeError:
+                    pass  # no running loop → drop coroutine (sync context)
+        except Exception as _:
+            pass  # never raise from audit emission
 
 
 SyncOutboundFactory = Callable[..., Awaitable[OutboundHttpClient]]

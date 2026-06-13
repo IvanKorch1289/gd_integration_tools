@@ -133,13 +133,45 @@ def _is_gate_enabled() -> bool:
 
 
 def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> None:
-    """Записать audit-событие через callback контекста."""
-    if context is None or context.audit is None:
-        return
+    """Записать audit-событие через callback контекста + canonical facade.
+
+    S109 W1: dual-emit — callback для backward compat +
+    :func:`emit_audit` из ``core.audit.facade`` (canonical Path A
+    helper) для unified audit service. Callback-only путь сохранён
+    для callers, которым нужен sync ``dict`` payload (legacy testkit).
+    """
+    if context is not None and context.audit is not None:
+        try:
+            context.audit(event)
+        except Exception as _:
+            _logger.exception("Audit callback raised; suppressing")
+
+    # S109 W1: dual-emit через unified audit service.
+    # Lazy import для избежания circular dep (facade → services/audit).
+    # ``emit_audit`` возвращает coroutine — fire-and-forget через
+    # ``asyncio.create_task`` если event loop активен, иначе drop.
+    import asyncio
+
+    from src.backend.core.audit.facade import emit_audit
+
+    event_name = str(event.get("event", "activity.capability"))
     try:
-        context.audit(event)
+        coro = emit_audit(
+            event=event_name,
+            actor=str(event.get("plugin", "")),
+            resource=str(event.get("activity", "")),
+            action=event_name.split(".")[-1] if event_name else "",
+            outcome="denied" if "denied" in event_name else "success",
+            details=dict(event),
+        )
+        if asyncio.iscoroutine(coro):
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(coro)
+            except RuntimeError:
+                pass  # no running loop → drop coroutine (sync context)
     except Exception as _:
-        _logger.exception("Audit callback raised; suppressing")
+        pass  # never raise from audit emission
 
 
 def capability_guarded_activity(capabilities: tuple[str, ...]) -> Callable[[F], F]:

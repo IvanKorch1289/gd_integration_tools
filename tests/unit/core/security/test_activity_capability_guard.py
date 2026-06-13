@@ -153,3 +153,67 @@ def test_get_set_context_roundtrip() -> None:
     assert get_active_capability_context() is context
     set_active_capability_context(None)
     assert get_active_capability_context() is None
+
+
+def test_dual_emit_calls_both_callback_and_facade(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """S109 W1: dual-emit — callback + emit_audit (canonical).
+
+    Verifies that ``_emit_audit`` emits BOTH the legacy callback
+    (for backward compat) AND the canonical facade helper (for
+    unified audit service).
+    """
+    from src.backend.core.security.activity_capability_guard import _emit_audit
+
+    events: list[dict[str, object]] = []
+
+    def audit_cb(event: dict[str, object]) -> None:
+        events.append(event)
+
+    facade_calls: list[dict[str, object]] = []
+
+    def fake_emit_audit(
+        *,
+        event: str,
+        actor: str = "system",
+        resource: str = "",
+        action: str = "",
+        outcome: str = "success",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        facade_calls.append(
+            {
+                "event": event,
+                "actor": actor,
+                "resource": resource,
+                "action": action,
+                "outcome": outcome,
+                "details": details,
+            }
+        )
+
+    monkeypatch.setattr(
+        "src.backend.core.audit.facade.emit_audit",
+        fake_emit_audit,
+    )
+
+    context = _build_context()
+    context.audit = audit_cb
+    test_event: dict[str, object] = {
+        "event": "activity.capability.denied",
+        "plugin": "test_plugin",
+        "capability": "db.read",
+        "activity": "my_activity",
+    }
+    _emit_audit(context, test_event)
+
+    # Legacy callback received event
+    assert len(events) == 1
+    assert events[0]["event"] == "activity.capability.denied"
+    # Canonical facade was also called
+    assert len(facade_calls) == 1
+    assert facade_calls[0]["event"] == "activity.capability.denied"
+    assert facade_calls[0]["actor"] == "test_plugin"
+    assert facade_calls[0]["outcome"] == "denied"
+    assert facade_calls[0]["resource"] == "my_activity"
