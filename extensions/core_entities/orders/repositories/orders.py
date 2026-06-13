@@ -1,13 +1,9 @@
-"""Репозиторий Order (миграция из ядра — Sprint 7, R-V15-16).
+"""Репозиторий Order (Sprint 7, R-V15-16 → Sprint 110, R-V110-01).
 
-Каноническое расположение в V11 plugin layout. Старый модуль
-``src.backend.infrastructure.repositories.orders`` сохраняется как
-backward-compat shim и эмитит DeprecationWarning.
-
-Зависит от ``get_order_kind_repo()`` — берём из shim'а
-``infrastructure.repositories.orderkinds``, чтобы не дублировать
-loaders. После flip плагины перейдут на прямой импорт из
+Каноническое расположение в V11 plugin layout. Зависит от
+``get_order_kind_repo()`` — прямой импорт из соседнего extension
 ``extensions.core_entities.orderkinds.repositories.orderkinds``.
+Sprint 110 (R-V110-01): удалён устаревший shim в infrastructure.
 """
 
 from __future__ import annotations
@@ -16,11 +12,13 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from extensions.core_entities.orderkinds.repositories.orderkinds import (
+    get_order_kind_repo,
+)
 from extensions.core_entities.orders.domain.models import Order
 from src.backend.core.errors import NotFoundError
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
-from src.backend.infrastructure.repositories.orderkinds import get_order_kind_repo
 
 __all__ = ("OrderRepository", "get_order_repo")
 

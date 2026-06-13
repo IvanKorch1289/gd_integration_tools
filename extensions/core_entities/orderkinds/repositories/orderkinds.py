@@ -1,9 +1,8 @@
-"""Репозиторий OrderKind (миграция из ядра — Sprint 7, R-V15-16).
+"""Репозиторий OrderKind (Sprint 7, R-V15-16 → Sprint 110, R-V110-01).
 
-Является каноническим расположением OrderKindRepository в рамках
-V11 plugin layout. Старый модуль
-``src.backend.infrastructure.repositories.orderkinds`` сохраняется
-как backward-compat shim и эмитит DeprecationWarning.
+Каноническое расположение OrderKindRepository в V11 plugin layout.
+Shim ``src.backend.infrastructure.repositories.orderkinds`` удалён
+в Sprint 110 (R-V110-01) — был помечен устаревшим и больше не нужен.
 """
 
 from __future__ import annotations

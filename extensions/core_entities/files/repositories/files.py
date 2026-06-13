@@ -1,8 +1,8 @@
-"""Репозиторий File (миграция из ядра — Sprint 7, R-V15-16).
+"""Репозиторий File (Sprint 7, R-V15-16 → Sprint 110, R-V110-01).
 
-Каноническое расположение в V11 plugin layout. Старый модуль
-``src.backend.infrastructure.repositories.files`` сохраняется как
-backward-compat shim и эмитит DeprecationWarning.
+Каноническое расположение в V11 plugin layout. Shim
+``src.backend.infrastructure.repositories.files`` удалён
+в Sprint 110 (R-V110-01).
 """
 
 from __future__ import annotations
