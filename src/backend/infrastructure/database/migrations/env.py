@@ -15,7 +15,7 @@ from src.backend.core.domain.models.base import (  # noqa: F401
     BaseModel,
     metadata,
 )
-from src.backend.infrastructure.database.models.files import (  # noqa: F401
+from src.backend.core.domain.models.files import (  # noqa: F401
     File,
     OrderFile,
 )

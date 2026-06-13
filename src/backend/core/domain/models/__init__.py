@@ -31,6 +31,7 @@ from src.backend.core.domain.models.base import (
 )
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.core.domain.models.dsl_snapshot import DslSnapshot
+from src.backend.core.domain.models.files import File, OrderFile
 from src.backend.core.domain.models.langmem_models import (
     LangMemEpisodic,
     LangMemProcedural,
@@ -56,6 +57,9 @@ __all__ = (
     "CertRecord",
     # dsl_snapshot
     "DslSnapshot",
+    # files
+    "File",
+    "OrderFile",
     # langmem
     "LangMemEpisodic",
     "LangMemProcedural",

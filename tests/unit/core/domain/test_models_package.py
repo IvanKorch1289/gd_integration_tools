@@ -51,7 +51,7 @@ class TestCoreDomainModelsPackage:
         """__all__ matches actual exports."""
         from src.backend.core.domain.models import __all__
 
-        assert len(__all__) == 16
+        assert len(__all__) == 18
         for symbol in (
             "Base",
             "BaseModel",
@@ -61,6 +61,8 @@ class TestCoreDomainModelsPackage:
             "CertHistory",
             "CertRecord",
             "DslSnapshot",
+            "File",
+            "OrderFile",
             "LangMemEpisodic",
             "LangMemProcedural",
             "OrderKind",
@@ -259,6 +261,60 @@ class TestCoreDomainModelsPackage:
         assert shim.Order is __import__(
             "src.backend.core.domain.models", fromlist=["Order"]
         ).Order
+
+    def test_files_in_canonical_package(self) -> None:
+        """S106 W3 (D5 B2c): File + OrderFile moved to core.domain.models."""
+        from src.backend.core.domain.models import File, OrderFile
+        from src.backend.core.domain.models.files import (
+            File as DirectFile,
+            OrderFile as DirectOrderFile,
+        )
+
+        assert File is DirectFile
+        assert OrderFile is DirectOrderFile
+        assert File.__tablename__ == "files"
+        assert OrderFile.__tablename__ == "orderfiles"
+
+    def test_files_orderfile_secondary_after_move(self) -> None:
+        """Order ↔ File secondary association via OrderFile works post-move."""
+        from src.backend.core.domain.models import File, Order, OrderFile
+
+        # secondary association: Order.files via OrderFile.__table__
+        assert hasattr(Order, "files")
+        assert hasattr(File, "orders")
+        assert Order.files.property.secondary is OrderFile.__table__
+
+    def test_files_shim_re_exports(self) -> None:
+        """S106 W3 (D5 B2c): shim re-exports File + OrderFile."""
+        import importlib
+        import sys
+
+        for mod_name in (
+            "src.backend.infrastructure.database.models.files",
+        ):
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.resetwarnings()
+            warnings.simplefilter("always")
+            importlib.import_module(
+                "src.backend.infrastructure.database.models.files"
+            )
+
+        msgs = [str(w.message) for w in caught]
+        files_warnings = [
+            m for m in msgs if "core.domain.models.files" in m
+        ]
+        assert len(files_warnings) >= 1
+
+        from src.backend.infrastructure.database.models import files as shim
+        assert shim.File is __import__(
+            "src.backend.core.domain.models", fromlist=["File"]
+        ).File
+        assert shim.OrderFile is __import__(
+            "src.backend.core.domain.models", fromlist=["OrderFile"]
+        ).OrderFile
 
 
 class TestLayerLinterAfterB1:

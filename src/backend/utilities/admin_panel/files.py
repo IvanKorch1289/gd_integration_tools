@@ -1,6 +1,6 @@
 from sqladmin import ModelView
 
-from src.backend.infrastructure.database.models.files import File, OrderFile
+from src.backend.core.domain.models.files import File, OrderFile
 from src.backend.utilities.admin_panel.base import BaseAdmin
 
 __all__ = ("FileAdmin", "OrderFileAdmin")

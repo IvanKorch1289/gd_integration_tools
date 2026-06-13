@@ -9,7 +9,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 # импорт layer-violation. Это адекватный компромисс для архитектурной
 # особенности fastapi_filter (filter ↔ ORM-связь).
 File = importlib.import_module(
-    "src." + "backend.infrastructure.database.models.files"
+    "src." + "backend.core.domain.models.files"
 ).File
 
 __all__ = ("FileFilter",)
