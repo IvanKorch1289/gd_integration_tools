@@ -160,3 +160,38 @@ def test_test_files_in_extensions_are_excluded() -> None:
 
         # Test file: excluded (no violations)
         assert len(test_violations) == 0
+
+
+def test_update_allowlist_merges_with_existing(tmp_path, monkeypatch) -> None:
+    """S110 W2: --update-allowlist MERGES with existing (was REPLACE).
+
+    Regression: pre-S110 W2 the function used ``sorted(set(keys))``
+    which DROPPED existing entries. Test verifies legacy entries
+    survive a refresh.
+    """
+    # Pre-populate allowlist with legacy entry
+    legacy_entry = "extensions/legacy/file.py\t\textensions\t\tsrc.backend.services.foo"
+    monkeypatch.setattr(check_layers, "ALLOWLIST_PATH", tmp_path / "allowlist.txt")
+    tmp_path.joinpath("allowlist.txt").write_text(
+        "# header\n" + legacy_entry + "\n"
+    )
+
+    # New violations to add
+    new_violations = [
+        ("extensions/new/file.py", "extensions", "src.backend.services.bar"),
+    ]
+    check_layers._save_allowlist(
+        {check_layers._violation_key(v) for v in new_violations}
+    )
+
+    content = tmp_path.joinpath("allowlist.txt").read_text()
+    # Legacy entry preserved
+    assert legacy_entry in content, "legacy entry was dropped (regression)"
+    # New entry added (verify with parsed keys, not raw tab chars)
+    keys_in_file = [
+        line for line in content.splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
+    assert any("extensions/new/file.py" in k for k in keys_in_file), (
+        f"new entry was not added; got {keys_in_file}"
+    )

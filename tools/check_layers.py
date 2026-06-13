@@ -271,11 +271,21 @@ def _load_allowlist() -> set[str]:
 
 
 def _save_allowlist(keys: Iterable[str]) -> None:
-    sorted_keys = sorted(set(keys))
+    """S110 W2: MERGE new violations with existing allowlist (was REPLACE).
+
+    Раньше ``--update-allowlist`` ПЕРЕЗАПИСЫВАЛ весь файл только новыми
+    violations, теряя legacy 200+ entries из S103-S106 baseline.
+    Теперь MERGE: existing + new = union, deduped, sorted.
+    """
+    new_keys = set(keys)
+    existing = _load_allowlist()
+    merged = existing | new_keys
+    sorted_keys = sorted(merged)
     body = (
         "# Allowlist архитектурных нарушений (Wave 1.3 baseline).\n"
         "# Формат: <rel_path>\\t<importer_layer>\\t<imported_module>\n"
         "# Цель — постепенно сокращать.\n"
+        "# S110 W2: --update-allowlist MERGES (was REPLACE).\n"
     )
     ALLOWLIST_PATH.write_text(body + "\n".join(sorted_keys) + "\n", encoding="utf-8")
 
