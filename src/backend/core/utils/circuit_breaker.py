@@ -100,6 +100,7 @@ class CircuitBreaker:
 
     @property
     def failure_count(self) -> int:
+        """Число зафиксированных failures с момента последнего reset."""
         return self._impl._failure_count
 
 

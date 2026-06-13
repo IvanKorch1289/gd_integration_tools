@@ -90,6 +90,13 @@ class InMemorySlaAlertDispatcher:
     async def dispatch(
         self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
     ) -> None:
+        """Фиксирует факт отправки SLA-alert'а (in-memory test double).
+
+        Args:
+            breach: Запись о breach (SLA violation record).
+            email: Email получателя (или ``None``).
+            slack: Slack channel (или ``None``).
+        """
         self.sent.append({"breach": breach.to_dict(), "email": email, "slack": slack})
 
 
@@ -225,6 +232,11 @@ class SlaTracker:
             self._tracked.pop(workflow_id, None)
 
     async def start(self) -> None:
+        """Запускает фоновую задачу SLA-tracker'а.
+
+        No-op если task уже запущен (idempotent). Создаёт task через
+        :func:`get_task_registry` и запускает ``self._run()``.
+        """
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
@@ -307,4 +319,5 @@ class SlaTracker:
         return breaches
 
     def list_tracked(self) -> list[str]:
+        """Возвращает отсортированный список workflow_id с активным SLA-tracking."""
         return sorted(self._tracked.keys())

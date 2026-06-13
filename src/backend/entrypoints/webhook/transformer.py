@@ -94,13 +94,30 @@ class WebhookRelay:
     # ── Rules management ──
 
     def add_rule(self, rule: RelayRule) -> str:
+        """Регистрирует новое правило relay'а.
+
+        Args:
+            rule: Конфигурация правила с уникальным ``rule.id``.
+
+        Returns:
+            ID зарегистрированного правила (``rule.id``).
+        """
         self._rules[rule.id] = rule
         return rule.id
 
     def remove_rule(self, rule_id: str) -> bool:
+        """Удаляет правило по ID.
+
+        Args:
+            rule_id: ID правила.
+
+        Returns:
+            ``True`` если правило существовало и было удалено, иначе ``False``.
+        """
         return self._rules.pop(rule_id, None) is not None
 
     def list_rules(self) -> list[dict[str, Any]]:
+        """Возвращает список всех зарегистрированных правил (snapshot)."""
         return [
             {
                 "id": r.id,

@@ -129,9 +129,22 @@ class InMemoryTokenBudgetBackend:
         return self._store[key]
 
     async def get(self, *, key: str) -> int:
+        """Возвращает текущее значение счётчика для ``key``.
+
+        Args:
+            key: Ключ счётчика (например, ``"tenant:42:tokens"``).
+
+        Returns:
+            Текущее значение; ``0`` если ключ отсутствует.
+        """
         return self._store.get(key, 0)
 
     async def reset(self, *, key: str) -> None:
+        """Сбрасывает счётчик для ``key`` (no-op если отсутствует).
+
+        Args:
+            key: Ключ счётчика.
+        """
         self._store.pop(key, None)
 
 

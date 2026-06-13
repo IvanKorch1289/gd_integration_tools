@@ -42,8 +42,12 @@ repos:
       # tools/check_docstrings_allowlist.txt (амнистия baseline);
       # любой НОВЫЙ пропущенный docstring блокирует push.
       - id: check-docstrings
-        name: "Docstring policy (Wave F.6 / Roadmap V10 #12)"
-        entry: uv run python tools/check_docstrings.py src/backend/core src/backend/dsl/engine src/backend/core/interfaces
+        name: "Docstring policy (Wave F.6 / Roadmap V10 #12) — extended S101 W3"
+        # S101 W3: extended from 3 dirs → 6 dirs (added services, entrypoints, infrastructure, ai).
+        # Old: src/backend/core src/backend/dsl/engine src/backend/core/interfaces
+        # Amnesty baseline для services/entrypoints/infrastructure в tools/check_docstrings_allowlist.txt
+        # (snapshot S101 W3). Реальный ratchet начинается с S102+ W1.
+        entry: uv run python tools/check_docstrings.py src/backend/core src/backend/dsl src/backend/dsl/engine src/backend/core/interfaces src/backend/services src/backend/entrypoints src/backend/infrastructure src/backend/ai
         language: system
         types: [python]
         pass_filenames: false
