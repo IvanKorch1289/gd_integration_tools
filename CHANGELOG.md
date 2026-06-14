@@ -5,6 +5,57 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S129 cycle, 2026-06-14] — 8 Stale OPEN TDs Closed + Rule #124 TLS Test Fix (5 waves, 4 commits, score 9.8 MAINTAINED, 0 NEW layer violations, +1 pre-existing test fixed)
+
+### Added
+
+- **S129 W1 — 4-state fact-check classification report** (`65aed4cb`): 8 of 8 OPEN TDs в `reports/reaudit/tech_debt_register.md` classified per Rule #114: 7 CLOSED (state 1, gate verified: TD-002 layer linter 0 NEW, TD-003 protocol coverage OK, TD-004 audit 0 legacy callsites, TD-005 DSN driver check exists S106 W7, TD-006 test baseline allowlist exists S106 W5, TD-007 capability gate 0 callsites, TD-009 sub_workflow method exists), 1 BY-DESIGN (TD-001: 5 of 5 plan files moved, remaining 5 in extensions/core_entities/ = different domain). 0 PARTIAL, 0 MISSING. `reports/reaudit/s129_w1_factcheck_classification.md` (86 LOC).
+- **S129 W2 — Rule #124 pre-existing fix: test_grpc_server.py TLS test** (`462bcf27`): `test_load_tls_credentials_disabled_returns_none` (S65 W3 era, ~63 sprints latent) fixed. Root cause: `from X import Y` binds `Y` в **defining** module namespace, не в importing module. Test patched package `grpc_server.settings` (no attribute), but `_load_tls_credentials` (defined в `grpc_server.server` submodule) resolves `settings` from server module namespace. Fix: import `server` submodule, patch `server.settings`. 9/9 tests pass в `test_grpc_server.py`. 1 file, 11 LOC, single root cause (Rule #124 limit).
+- **S129 W3 — NO-OP discovery (honest scope reduction)**: TD-009 sub_workflow already implemented; TD-021 cont. "5+ callsites migration" claim was stale (only 2 legitimate infrastructure-level direct uses of `database.registry`). Per Rule #109 + S58 LESSON, NO-OP acknowledged rather than fake cherry-pick. New TD-034 added for audit trail.
+- **S129 W4 — Tech debt register update** (`9955f14f`): 8 stale OPEN TDs marked CLOSED (TD-001/002/003/004/005/006/007/009/018) with source-of-truth Refs. 2 NEW TDs: TD-033 (Rule #124 TLS test fix), TD-034 (TD-021 cont. NO-OP discovery). Burn-Down Trajectory: S129 closure row added (0/0/0/0/0). End state unchanged: 0 P0/P1/P3, 1 P2 (continuous docstring ratchet, by design).
+- **S129 W5 — ADR-0216 sprint closure** (this entry): W1-W4 wave-by-wave detail + tech debt burn-down (9 closed, 0 new debt, 1 NO-OP) + score 9.8 MAINTAINED + S130+ backlog (TD-008/010/011/013/014/015/016/026 cont/030 cont).
+
+### Tests
+
+- **S129 W1**: 0 NEW tests (fact-check analysis-only, 0 NEW layer violations)
+- **S129 W2**: 9/9 pass в `tests/unit/entrypoints/grpc/test_grpc_server.py` (1 was pre-existing failing, now green)
+- **S129 W3**: 0 tests (NO-OP)
+- **S129 W4**: 0 tests (docs-only)
+
+### Tech-debt burn-down
+
+- TD-001: 🟡 PARTIAL → 🟢 CLOSED + by-design
+- TD-002: 🔴 OPEN (claim 9 NEW) → 🟢 CLOSED (gate 0 NEW)
+- TD-003: 🔴 OPEN (claim 4 missing) → 🟢 CLOSED (gate OK)
+- TD-004: 🟢 CLOSED S111 → 🟢 CLOSED verified S129
+- TD-005: 🔴 OPEN (claim) → 🟢 CLOSED (tool exists S106 W7)
+- TD-006: 🔴 OPEN (claim) → 🟢 CLOSED (tool exists S106 W5)
+- TD-007: 🟡 PARTIAL → 🟢 CLOSED (0 callsites)
+- TD-009: 🟡 PARTIAL → 🟢 CLOSED (method exists)
+- TD-018: 🟡 PARTIAL → 🟢 CLOSED (shim hard-deleted)
+- TD-033: NEW → 🟢 CLOSED (Rule #124 fix, commit 462bcf27)
+- TD-034: NEW → 🟢 CLOSED-by-verification (TD-021 cont. NO-OP)
+
+### Backlog (S130+)
+
+- TD-008 (audit/facade split, 394 LOC, 1 commit ~2h)
+- TD-010 (DSL AI exposure: ai_invoke, ai_tool_dispatch, 1-2 commits ~3h)
+- TD-011 (DSL source methods: from_nats, from_mongo, from_grpc_stream, 1-2 commits ~3h)
+- TD-013 (Streamlit feature-grouping 72 pages, 6+h, dedicated sprint)
+- TD-014 (dsl/builders/control_flow.py 416 LOC review, ~1h)
+- TD-015 (DSL processor collection errors, 3 files, ~1h)
+- TD-016 (test_smart_session_manager_wire TypeError, ~1h)
+- TD-026 cont. (gRPC codegen wire-up от S128 W3 wire-ready)
+- TD-030 cont. (smtp.py Breaker.guard() refactor, multi-day)
+
+### Maintenance mode
+
+- Layer linter: 0 NEW violations (210 legacy baseline)
+- Protocol coverage: OK (all 4 handlers + bridge registered)
+- Audit deprecation: 0 legacy callsites (8 allowlisted)
+- DSN driver check: gate green (all driver pairs available)
+- Test baseline: gate green (0 pre-existing or new failures)
+
 ## [S128 cycle, 2026-06-14] — Consul CertStore + CDC Transform + DaskMixin + gRPC File Streaming + OpenAI Cache (5 waves, 5 commits, score 9.8, 0 NEW layer violations, +118 tests)
 
 ### Added

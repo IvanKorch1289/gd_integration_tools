@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **165**; уникальных слотов: **164**.
+Всего ADR-файлов: **166**; уникальных слотов: **165**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -171,5 +171,6 @@
 | 0213 | ADR-0213: Sprint 125 Closure — SSO/IdP Layer Built: SsoRegistry + require_sso_auth + Backward-Compat Shim (5 waves, 100% scope, +S126 W0 regressions fix) | — | [0213-sprint-125-closure.md](0213-sprint-125-closure.md) |
 | 0214 | ADR-0214: Sprint 127 Closure — DSL Variable Store + ExternalDB Facade + Anthropic Prompt Cache (5 waves, 100% scope, score 9.6) | — | [0214-sprint-127-closure.md](0214-sprint-127-closure.md) |
 | 0215 | ADR-0215: Sprint 128 Closure — Consul CertStore + CDC Transform + DaskMixin + gRPC File Streaming + OpenAI Cache (5 waves, 100% scope, score 9.8) | — | [0215-sprint-128-closure.md](0215-sprint-128-closure.md) |
+| 0216 | ADR-0216: Sprint 129 Closure — 8 Stale OPEN TDs Closed + Rule #124 TLS Test Fix (4 waves, 100% scope, score 9.8 MAINTAINED) | — | [0216-sprint-129-closure.md](0216-sprint-129-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
