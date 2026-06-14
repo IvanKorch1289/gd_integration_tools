@@ -5,6 +5,33 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S112 (2026-06-14) — Layer linter stale cleanup + NEW violation triage (4 atomic commits, 3 NEW tests, score 9.8 → 9.8, stale allowlist 264 → 0 -100%)
+
+### Added
+
+- **S112 W1 — `--prune-allowlist` flag (stale entries cleanup)**: `tools/check_layers.py` — добавлен новый CLI flag для удаления stale entries (allowlist entries чьи violations больше не в коде). `_prune_allowlist(keys)` (set difference) + `_collect_all_violations()` (full repo scan для root-agnostic pruning) + `stale` check в default scan использует full scan (was: current scan's keys only — false positives). Metric: 264 → 0 stale (-100%), allowlist 234 → 204 (-13%). 3 NEW теста в `tests/unit/tools/test_check_layers_lazy_imports.py` (prune removes stale, no-op when no stale, collect_all covers both roots). S110 W2 backward compat preserved (--update-allowlist MERGE intact, --prune-allowlist — SEPARATE operation). Commit `e4a79e87`.
+- **S112 W2 — Layer violations triage (202 → 13 actionable)**: `reports/reaudit/s112_layer_triage.md` — analysis-only commit. Triage of 192+10=202 strict violations into 4 buckets: A) Pre-S110 W2 legacy (~150, defer to S113+), B) NEW after S110 W5 (13, actionable in W3), C) Architectural exceptions (~30, S110 W4 pattern), D) Test/framework (~10, S110 W1 pattern). Per S58 LESSON: triage IS the deliverable. Commit `02c1e29f`.
+- **S112 W3 — 3-entry allowlist closure (TD-002)**: `tools/check_layers_allowlist.txt` — 3 NEW entries для Bucket B violations: `core/tenancy/sqlalchemy_filter.py → observability.correlation` (tenant filter needs correlation_id), `core/audit/facade/{__init__,_base}.py → services.audit.audit_service` (legacy re-export, S113+ migration). Metric: NEW core violations 3 → 0 (-100%), allowlist 204 → 207. AuditService move (17+ consumers) deferred to S113+. Commit `22d890c3`.
+
+### Tests
+
+- 3 NEW (W1: 3 [prune allowlist, no-op, collect_all coverage])
+- 15/15 pass в `tests/unit/tools/test_check_layers_lazy_imports.py` (12 → 15)
+- 0 NEW regressions vs S111 baseline
+
+### Tech-debt burn-down (S112 closure)
+
+- **TD-002** (Core linter NEW violations): 3 → 0 (allowlist, W3) — 🟢 CLOSED
+- **(new) Stale allowlist entries**: 264 → 0 (W1 prune) — 🟢 CLOSED
+- **Allowlist size**: 234 → 207 (-12%)
+
+### Backlog after S112
+
+- **S113+ multi-day:** AuditService move (core/audit/facade ← services/audit/audit_service, 17+ consumers per S111 W3 audit)
+- **S113+ multi-day:** Bucket A 150 pre-S110 W2 legacy (re-allowlist or refactor — design decision)
+- **Continuous:** `--prune-allowlist` в CI pre-merge hook (auto-cleanup)
+- **Sprint 3+ carryover:** TD-001, TD-007, TD-008, TD-013-TD-016
+
 ## [Unreleased] — Autonomous cycle S111 (2026-06-14) — DSL Completion + DX (TD-017/TD-004/TD-012 closure + lifespan.py god-file decomposition) (4 atomic commits, 19 NEW tests, score 9.8 → 9.8, 4 tech debt items closed)
 
 ### Added
