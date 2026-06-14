@@ -197,8 +197,18 @@ class LlmInvocationMixin:
         kwargs: dict[str, Any] = {}
         if fallbacks:
             kwargs["fallbacks"] = fallbacks
+        # S127 W4 (TD-022): inject Anthropic prompt cache_control
+        # для cacheable моделей (50-90% token savings на повторных
+        # вызовах с идентичным prompt).
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_prompt_cache,
+        )
+
+        messages = [{"role": "user", "content": rendered}]
+        if model is not None:
+            messages = inject_prompt_cache(messages, model)
         response = await gw.acompletion(
-            [{"role": "user", "content": rendered}], model=model, stream=False, **kwargs
+            messages, model=model, stream=False, **kwargs
         )
 
         content, tokens_prompt, tokens_completion, model_used = (
