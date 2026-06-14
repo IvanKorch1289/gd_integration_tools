@@ -94,6 +94,7 @@ class ToS3Processor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Upload data в S3 по resolved key, set result_property = full_key."""
         data = _resolve(exchange, self._data_property)
         key = _resolve(exchange, self._key_from)
         content_type = (
@@ -122,6 +123,7 @@ class ToS3Processor(BaseProcessor):
         exchange.properties[self._result_property] = full_key
 
     def to_spec(self) -> dict[str, Any]:
+        """Сериализует to_s3 конфиг в JSON-Schema spec."""
         spec: dict[str, Any] = {
             "data_property": self._data_property,
             "key_from": self._key_from,
@@ -158,6 +160,7 @@ class FromS3Processor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Download object из S3 по resolved key, set result_property = data."""
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"from_s3: key must be str, got {type(key).__name__}")
@@ -178,6 +181,7 @@ class FromS3Processor(BaseProcessor):
         exchange.properties[self._result_property] = data
 
     def to_spec(self) -> dict[str, Any]:
+        """Сериализует from_s3 конфиг в JSON-Schema spec."""
         return {
             "from_s3": {
                 "key_from": self._key_from,
@@ -219,6 +223,7 @@ class S3PresignProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Generate presigned URL для S3 object (expires_in seconds)."""
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"s3_presign: key must be str, got {type(key).__name__}")
@@ -239,6 +244,7 @@ class S3PresignProcessor(BaseProcessor):
         exchange.properties[self._result_property] = url
 
     def to_spec(self) -> dict[str, Any]:
+        """Сериализует s3_presign конфиг в JSON-Schema spec."""
         return {
             "s3_presign": {
                 "key_from": self._key_from,
@@ -267,6 +273,7 @@ class S3DeleteProcessor(BaseProcessor):
         self._key_from = key_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Delete S3 object по resolved key (idempotent best-effort)."""
         key = _resolve(exchange, self._key_from)
         if not isinstance(key, str):
             exchange.fail(f"s3_delete: key must be str, got {type(key).__name__}")
@@ -283,6 +290,7 @@ class S3DeleteProcessor(BaseProcessor):
             return
 
     def to_spec(self) -> dict[str, Any]:
+        """Сериализует s3_delete конфиг в JSON-Schema spec."""
         return {"s3_delete": {"key_from": self._key_from}}
 
 
@@ -313,6 +321,7 @@ class S3ListProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """List S3 keys с optional prefix, set result_property = list of keys."""
         prefix: str = ""
         if self._prefix_from is not None:
             resolved = _resolve(exchange, self._prefix_from)
@@ -335,6 +344,7 @@ class S3ListProcessor(BaseProcessor):
         exchange.properties[self._result_property] = keys
 
     def to_spec(self) -> dict[str, Any]:
+        """Сериализует s3_list конфиг в JSON-Schema spec."""
         spec: dict[str, Any] = {"result_property": self._result_property}
         if self._prefix_from is not None:
             spec["prefix_from"] = self._prefix_from

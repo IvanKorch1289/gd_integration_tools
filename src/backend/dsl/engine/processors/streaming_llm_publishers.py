@@ -18,9 +18,11 @@ class _BasePublisher:
     """Общий интерфейс publisher'а."""
 
     async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
+        """Abstract: publish LLM token chunk to downstream consumer."""
         raise NotImplementedError
 
     async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
+        """Abstract: signal LLM stream completion с finish_reason."""
         raise NotImplementedError
 
 
@@ -30,6 +32,7 @@ class SSEPublisher(_BasePublisher):
     PROPERTY = "sse_events"
 
     async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
+        """Append delta event в sse_events list property."""
         events = exchange.properties.get(self.PROPERTY)
         if events is None:
             events = []
@@ -37,6 +40,7 @@ class SSEPublisher(_BasePublisher):
         events.append({"event": "delta", "data": chunk["delta"]})
 
     async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
+        """Append done event в sse_events list property."""
         events = exchange.properties.get(self.PROPERTY) or []
         events.append({"event": "done", "data": finish_reason})
         exchange.set_property(self.PROPERTY, events)
@@ -48,12 +52,14 @@ class WSPublisher(_BasePublisher):
     SEND_PROPERTY = "ws_send"
 
     async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
+        """Send delta через WS send callable (no-op если ws_send не задан)."""
         send = exchange.properties.get(self.SEND_PROPERTY)
         if send is None:
             return
         await send({"type": "delta", "delta": chunk["delta"]})
 
     async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
+        """Send done через WS send callable (no-op если ws_send не задан)."""
         send = exchange.properties.get(self.SEND_PROPERTY)
         if send is None:
             return
@@ -87,12 +93,14 @@ class WebhookChunkedPublisher(_BasePublisher):
             logger.debug("WebhookChunkedPublisher: send failed: %s", exc)
 
     async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
+        """POST delta payload на resolved webhook URL (best-effort)."""
         url = exchange.properties.get(self._url_property)
         if not url:
             return
         await self._send(url, {"type": "delta", "delta": chunk["delta"]})
 
     async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
+        """POST done payload на resolved webhook URL (best-effort)."""
         url = exchange.properties.get(self._url_property)
         if not url:
             return
