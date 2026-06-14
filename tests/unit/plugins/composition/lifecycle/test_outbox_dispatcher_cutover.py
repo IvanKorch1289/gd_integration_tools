@@ -27,7 +27,8 @@ import pytest
 
 
 def _load_lifespan_isolated() -> ModuleType:
-    """Load ``lifespan.py`` как isolated module, обходя pre-existing import-bugs.
+    """Load ``lifespan.py`` + ``startup.py`` как isolated modules, обходя
+    pre-existing import-bugs в ``plugins/composition/__init__.py``.
 
     Path: ``tests/unit/plugins/composition/lifecycle/`` → 6 уровней вверх → project root.
 
@@ -35,7 +36,11 @@ def _load_lifespan_isolated() -> ModuleType:
     ``src.backend.plugins.composition.lifecycle`` в ``sys.modules`` ДО
     exec_module, чтобы Python НЕ запускал их ``__init__.py``
     (которые содержат сломанные imports — graphql_router и т.п.).
-    Только ``lifespan.py`` грузится по реальному пути.
+    Только ``lifespan.py`` + ``startup.py`` грузятся по реальному пути.
+
+    S111 W2: ``_register_outbox_dispatcher`` переехал из ``lifespan.py``
+    в ``startup.py``. lifespan.py ре-экспортирует её для backward compat.
+    Тест грузит ОБА модуля, чтобы покрыть и реальный код, и re-export.
     """
     import types as _types
 
@@ -45,6 +50,7 @@ def _load_lifespan_isolated() -> ModuleType:
     # NOTE: bootstrap/protocols/watchers импортируются из
     # ``src.backend.plugins.composition.lifecycle.*`` (не из
     # ``src.backend.plugins.composition.*``).
+    # S111 W2: ``startup`` module is now a sibling (S111 W2 extract).
     broken_pkgs_and_subs = {
         "src.backend.plugins.composition": True,  # package (has __path__)
         "src.backend.plugins.composition.lifecycle": True,
@@ -60,7 +66,10 @@ def _load_lifespan_isolated() -> ModuleType:
                 _stub_mod.__path__ = []  # type: ignore[attr-defined]
             sys.modules[mod_name] = _stub_mod
 
-    # 2. Stub имена, которые lifespan.py импортирует на module-level
+    # 2. Stub имена, которые lifespan.py / startup.py импортируют на module-level.
+    # S111 W2: startup.py использует ТОЛЬКО lazy imports внутри функций
+    # (для избежания pre-existing import-bugs в composition package).
+    # Поэтому module-level stubs нужны ТОЛЬКО для lifespan.py.
     module_level_stubs: dict[str, object] = {
         "src.backend.core.utils.task_registry.get_task_registry": MagicMock(),
         "src.backend.infrastructure.logging.factory.get_logger": MagicMock(
@@ -106,16 +115,31 @@ def _load_lifespan_isolated() -> ModuleType:
             # Force-overwrite attribute on existing module.
             setattr(_existing, full_name.rsplit(".", 1)[-1], stub_obj)
 
-    # 4. Загружаем lifespan.py напрямую (минуя __init__.py)
-    lifespan_path = (
+    # 4. Загружаем startup.py напрямую (минуя __init__.py).
+    # startup.py содержит реальную ``_register_outbox_dispatcher`` функцию.
+    # Это НОВЫЙ home после S111 W2 рефактора lifespan.py.
+    lifecycle_dir = (
         Path(__file__).parent.parent.parent.parent.parent.parent
         / "src"
         / "backend"
         / "plugins"
         / "composition"
         / "lifecycle"
-        / "lifespan.py"
     )
+    startup_path = lifecycle_dir / "startup.py"
+    spec = importlib.util.spec_from_file_location(
+        "_startup_isolated", startup_path
+    )
+    assert spec is not None and spec.loader is not None
+    startup_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(startup_module)
+    # Регистрируем в sys.modules ДО загрузки lifespan.py, чтобы
+    # ``from .startup import _register_outbox_dispatcher`` нашёл его.
+    sys.modules["src.backend.plugins.composition.lifecycle.startup"] = startup_module
+
+    # 5. Загружаем lifespan.py напрямую (минуя __init__.py).
+    # lifespan.py ре-экспортирует ``_register_outbox_dispatcher`` из startup.
+    lifespan_path = lifecycle_dir / "lifespan.py"
     spec = importlib.util.spec_from_file_location(
         "_lifespan_isolated", lifespan_path
     )
@@ -127,12 +151,14 @@ def _load_lifespan_isolated() -> ModuleType:
 
 # Pre-load на collection.
 # NOTE: pre-loading happens at collection time. If you modify
-# ``lifespan.py`` after this, tests will use STALE version. Re-run
-# pytest to pick up changes.
+# ``lifespan.py`` / ``startup.py`` after this, tests will use STALE
+# version. Re-run pytest to pick up changes.
 _lifespan = _load_lifespan_isolated()
 sys.modules["src.backend.plugins.composition.lifecycle.lifespan"] = _lifespan
 
 # Force-overwrite DEBUG print to verify _lifespan version matches
+# S111 W2: re-exported from startup, but co_filename / co_firstlineno
+# указывают на startup.py (где функция реально определена).
 print(
     f"DEBUG TEST: _lifespan._register_outbox_dispatcher source = "
     f"{_lifespan._register_outbox_dispatcher.__code__.co_filename}:"
