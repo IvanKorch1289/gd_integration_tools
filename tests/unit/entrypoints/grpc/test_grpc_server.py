@@ -119,10 +119,19 @@ def test_serialize_dict_returns_json(grpc_server_module) -> None:
 
 @pytest.mark.unit
 def test_load_tls_credentials_disabled_returns_none(grpc_server_module) -> None:
-    """When tls_enabled=False on settings.grpc → return None (no TLS)."""
+    """When tls_enabled=False on settings.grpc → return None (no TLS).
+
+    Note (S129 W2, Rule #124): ``_load_tls_credentials`` lives в
+    ``grpc_server.server`` submodule (не в package ``__init__``), и его
+    name-binding ``settings`` resolves в server module namespace.
+    Патчить нужно ``server.settings``, не package ``settings``.
+    Package не имеет своего ``settings`` атрибута (AttributeError до fix).
+    """
+    from src.backend.entrypoints.grpc.grpc_server import server
+
     fake_settings = MagicMock()
     fake_settings.grpc.tls_enabled = False
-    with patch.object(grpc_server_module, "settings", fake_settings):
+    with patch.object(server, "settings", fake_settings):
         result = grpc_server_module._load_tls_credentials()
     assert result is None
 
