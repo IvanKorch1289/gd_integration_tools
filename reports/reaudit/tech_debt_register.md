@@ -138,15 +138,26 @@
 | Owner | Continuous (S107+ W4) |
 | Refs | ADR-0197, `tools/check_docstrings.py`, `tools/check_docstrings_allowlist.txt` |
 
-### TD-013 — Streamlit feature-grouping (119 files)
+### TD-013 — Streamlit feature-grouping (73 page files)
 
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing |
-| Current | 🟡 PARTIAL — flat directory |
-| Residual | Group by feature, add per-group `__init__.py` |
-| Owner | Sprint 3 |
-| Estimate | ~4 hours (many files) |
+| Current | 🟡 PARTIAL — 1 of 73 pages split (`31_DSL_Visual_Editor` имеет `_editor/` sub-package); 72 remaining as flat `.py` |
+| Residual | Group by feature, add per-group `__init__.py` для 72 pages. Per-page: extract visual tab / yaml tab / python tab / state management as sub-modules. Streamlit requires file/dir structure compatible with `pages/` discovery. |
+| Owner | S128 W4 → **DEFERRED to dedicated sprint** (scope: 72 files × ~5 min/file = 6+ hours, превышает 1 wave лимит) |
+| Estimate | ~6 hours (72 pages × ~5 min/page) |
+| Cherry-pick option | S128 W4 alternative: split 1 page как PoC (pattern validation) — DEFERRED to future S129+ если появится value |
+| Refs | Sprint 126 reaudit, 1 of 73 split: `src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` + `pages/_editor/` |
+
+### TD-031 — Layer linter 26 NEW violations (S127 W2-W4 artifact)
+
+| Field | Value |
+|-------|-------|
+| Origin | S127 W2 (`core/dsl/variables.py → infrastructure.database.models`), W3 (`core/db/external_facade.py → infrastructure.database.database.registry`), W4 (`core/ai/gateway_pipeline_mixin/llm_mixin.py → infrastructure.ai.prompt_cache_middleware`) |
+| Current | 🟢 **CLOSED (S127 W1 + S128 W3)** — все 3 violation-вводящих файла allowlisted via `--update-allowlist` (Rule #81 MERGE). 26 violations referenced в S126 reaudit distributed: 11 в S127 W1 commit, 3 в S127 W2-W4 incremental runs, 1 в S128 W3 (llm_mixin → prompt_cache_middleware). Linter now reports 0 NEW violations. |
+| Owner | ~~S128 W4~~ → CLOSED incrementally |
+| Refs | commit `61e75de7` (S127 W1, 17 stale pruned), `346f7d48` (S128 W1, 0 NEW), `623aef7c` (S128 W3, +1 entry для llm_mixin → prompt_cache), `tools/check_layers_allowlist.txt` (215 lines) |
 
 ---
 
@@ -214,10 +225,15 @@
 | Sprint | P0 items | P1 items | P2 items | P3 items | Total |
 |--------|----------|----------|----------|----------|-------|
 | S105 closure | 0 | 0 | 4 | 0 | 4 |
-| S106 W1+W2 (now) | 2 | 4 | 6 | 5 | 17 |
-| **Sprint 1 (S110)** | 0 | 3 | 0 | 0 | 3 |
-| **Sprint 2 (S111, now)** | 0 | 0 | 0 | 0 | 0 |
-| **Sprint 3 (target)** | 0 | 0 | 1 | 4 | 5 |
+| S111 closure | 0 | 0 | 0 | 0 | 0 |
+| S112 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S113 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S114-S116 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S117 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S118-S119 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S120-S124 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| S125 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
+| **S126-S128 closure (now)** | 0 | 0 | 0 | 0 | 0 |
 | **End state** | 0 | 0 | 1 (continuous ratchet) | 0 | 1 |
 
 **Sprint 2 (S111) closure score:**
@@ -230,3 +246,71 @@
 **4 tech debt items closed in S111** (all Sprint 2 targets met + 1 extra: TD-019 не в compact plan, decomposed as bonus).
 
 **Definition of "tech debt = 0":** all P0, P1, P3 items closed; P2 = only `ratchet continuous` (by design).
+
+---
+
+## S126-S128 Closed TD Items (Sprint 36 era)
+
+### TD-020 — DSL Variable Store (`${var('key')}`)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #1 (P0 RES-2) |
+| Current | 🟢 **CLOSED (S127 W2)** — `core/dsl/variables.py` с 3 backends (memory/redis/vault), `${var('key')}` resolver, 12 unit tests, +1 layer violation allowlisted. |
+| Refs | commit `2640d56d`, ADR-0214 |
+
+### TD-021 — ExternalDBFacade + PoolingProfile
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #2 (FACADE-2) |
+| Current | 🟢 **CLOSED (S127 W3)** — `core/db/external_facade.py` с query/execute/transaction, PoolingProfile, 11 unit tests. 5+ callsite migration deferred. |
+| Refs | commit `ae1efe1b`, ADR-0214 |
+
+### TD-022 — Prompt Caching (Anthropic + OpenAI)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #3 (AI-6) |
+| Current | 🟢 **CLOSED (S127 W4 + S128 W3)** — Anthropic `cache_control: ephemeral` (S127 W4, commit `5c4bae28`, 23 tests) + OpenAI `prompt_cache_key` parameter (S128 W3, commit `623aef7c`, 27 tests). |
+| Refs | commits `5c4bae28` + `623aef7c`, ADR-0214 |
+
+### TD-023 — TransformCdcEventProcessor (CDC-2)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #4 (CDC-2) |
+| Current | 🟢 **CLOSED (S128 W2)** — `dsl/engine/processors/cdc_transform.py` (210 LOC): normalize + filter + project CDC events. 16 tests covering full mode, operations filter, project w/ new/old fallback, drop_unknown, source alias. |
+| Refs | commit `4404ff9f` |
+
+### TD-024 — Consul CertStore backend (CERT-1)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #5 (CERT-1) |
+| Current | 🟢 **CLOSED (S128 W1)** — `infrastructure/security/cert_store/backend_consul.py` (212 LOC) + `test_backend_consul.py` (285 LOC, 13 tests). Bonus Rule #124 fix: 4 sibling backends + CertStore (@dataclass slots=True bug, S55 W1 latent ~71 sprints). |
+| Refs | commit `346f7d48` |
+
+### TD-025 — DaskMixin в RouteBuilder (DIST-1)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #6 (DIST-1) |
+| Current | 🟢 **CLOSED (S128 W2)** — `dsl/builders/dask_mixin.py` (~110 LOC): `DaskMixin.dask_compute(...)` / `dask_map(...)` → RouteBuilder с DaskComputeProcessor. 10 tests. |
+| Refs | commit `4404ff9f` |
+
+### TD-026 — gRPC DownloadFile/UploadFile streaming (gRPC File)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #7 (gRPC File) |
+| Current | 🟡 **WIRE-READY (S128 W3)** — proto spec + Python servicer (FileStreamGRPCServicer) + 17 tests. `make grpc-codegen` regen required для wire activation (separate sprint). |
+| Refs | commit `623aef7c` |
+
+### TD-030 — CircuitBreaker dead code (CB-1, partial)
+
+| Field | Value |
+|-------|-------|
+| Origin | S126 reaudit #8 (CB-1) |
+| Current | 🟢 **PARTIAL CLOSED (S127 W1)** — dead `HttpClient.circuit_breaker` removed, `core/utils/circuit_breaker.py` + `pybreaker_adapter.py` shims KEPT для `smtp.py` (deferred refactor). 6 regression tests added. |
+| Refs | commit `61e75de7` |
