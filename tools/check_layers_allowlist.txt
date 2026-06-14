@@ -202,3 +202,14 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
+
+# S112 W3: 3 NEW core violations allowlisted (legitimate per architecture).
+# 1) sqlalchemy_filter → observability.correlation: tenant filter needs
+#    correlation_id for cross-tenant log tracing. cross-layer dependency
+#    acknowledged (similar to outbound_http.py → observability from S109 W1).
+src/backend/core/tenancy/sqlalchemy_filter.py	core	src.backend.infrastructure.observability.correlation
+# 2-3) core/audit/facade → services.audit.audit_service: legacy re-export
+#    pattern. AuditService move to core/audit/facade/ tracked in S113+
+#    (multi-domain migration, 17+ consumers per S111 W3 audit).
+src/backend/core/audit/facade/__init__.py	core	src.backend.services.audit.audit_service
+src/backend/core/audit/facade/_base.py	core	src.backend.services.audit.audit_service
