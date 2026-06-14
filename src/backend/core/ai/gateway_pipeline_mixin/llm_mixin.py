@@ -201,12 +201,17 @@ class LlmInvocationMixin:
         # для cacheable моделей (50-90% token savings на повторных
         # вызовах с идентичным prompt).
         from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
             inject_prompt_cache,
         )
 
         messages = [{"role": "user", "content": rendered}]
         if model is not None:
             messages = inject_prompt_cache(messages, model)
+            # S128 W3 (TD-022 cont.): OpenAI prompt cache (gpt-4o/o1/o3)
+            # использует prompt_cache_key parameter (НЕ cache_control).
+            openai_cache_kwargs = inject_openai_prompt_cache(messages, model)
+            kwargs.update(openai_cache_kwargs)
         response = await gw.acompletion(
             messages, model=model, stream=False, **kwargs
         )

@@ -5,6 +5,12 @@ package files;
 service FileService {
   rpc GetFile(GetFileRequest) returns (FileResponse) {}
   rpc DeleteFile(GetFileRequest) returns (DeleteResponse) {}
+  // S128 W3 (TD-026): server streaming для больших файлов.
+  // Server → client chunks (по 64KB default). Без memory-pressure на стороне сервера.
+  rpc DownloadFile(DownloadFileRequest) returns (stream FileChunk) {}
+  // S128 W3 (TD-026): client streaming для загрузки.
+  // Client → server chunks. Server accumulates → storage backend.
+  rpc UploadFile(stream FileUploadRequest) returns (FileUploadResponse) {}
 }
 
 message GetFileRequest {
@@ -21,4 +27,37 @@ message FileResponse {
 message DeleteResponse {
   bool success = 1;
   string error = 2;
+}
+
+// S128 W3 (TD-026) — streaming messages.
+message DownloadFileRequest {
+  int32 file_id = 1;
+  // Optional range start (для resume; 0 = с начала).
+  int64 offset = 2;
+}
+
+message FileChunk {
+  // Sequence number (0-indexed) для reorder detection.
+  int32 sequence = 1;
+  bytes data = 2;
+  // SHA-256 fingerprint последнего chunk (final chunk only).
+  string final_fingerprint = 3;
+  bool is_last = 4;
+}
+
+message FileUploadRequest {
+  int32 file_id = 1;
+  string filename = 2;
+  int32 sequence = 3;
+  bytes data = 4;
+  // True для последнего chunk — server начинает commit.
+  bool is_last = 5;
+}
+
+message FileUploadResponse {
+  int32 file_id = 1;
+  string object_uuid = 2;
+  int64 size_bytes = 3;
+  string fingerprint = 4;
+  string error = 5;
 }

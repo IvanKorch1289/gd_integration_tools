@@ -173,3 +173,167 @@ class TestIntegrationWithLlmMixin:
 
         source = inspect.getsource(llm_mixin)
         assert "inject_prompt_cache" in source
+
+
+# ---------------------------------------------------------------------------
+# S128 W3 — OpenAI prompt caching (TD-022 cont.)
+# ---------------------------------------------------------------------------
+
+
+class TestIsOpenAICacheable:
+    @pytest.mark.parametrize(
+        "model",
+        [
+            "openai/gpt-4o",
+            "openai/gpt-4o-mini",
+            "openai/gpt-4o-2024-08-06",
+            "openai/gpt-4-turbo",
+            "openai/gpt-4-turbo-2024-04-09",
+            "openai/o1",
+            "openai/o1-mini",
+            "openai/o1-preview",
+            "openai/o3-mini",
+        ],
+    )
+    def test_cacheable_models(self, model: str) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            is_openai_cacheable,
+        )
+        assert is_openai_cacheable(model) is True
+
+    @pytest.mark.parametrize(
+        "model",
+        [
+            "openai/gpt-3.5-turbo",
+            "openai/gpt-3.5-turbo-0125",
+            "openai/gpt-4",  # legacy
+            "openai/gpt-4-0613",  # legacy
+            "openai/gpt-4-0314",  # legacy
+        ],
+    )
+    def test_non_cacheable_models(self, model: str) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            is_openai_cacheable,
+        )
+        assert is_openai_cacheable(model) is False
+
+    @pytest.mark.parametrize(
+        "model",
+        ["", "anthropic/claude-3-5-sonnet", "gemini/gemini-pro", "gpt-4o"],
+    )
+    def test_non_openai_returns_false(self, model: str) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            is_openai_cacheable,
+        )
+        assert is_openai_cacheable(model) is False
+
+
+class TestInjectOpenAIPromptCache:
+    def test_cacheable_model_returns_kwargs(self) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "What is 2+2?"},
+        ]
+        kwargs = inject_openai_prompt_cache(messages, "openai/gpt-4o-mini")
+        assert "prompt_cache_key" in kwargs
+        assert kwargs["prompt_cache_retention"] == "in-memory"
+        # Key should be stable: same messages → same key
+        key1 = kwargs["prompt_cache_key"]
+        assert key1.startswith("cache_")
+        assert len(key1) <= 64  # OpenAI limit
+
+    def test_non_cacheable_model_returns_empty(self) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        messages = [{"role": "user", "content": "Hello"}]
+        kwargs = inject_openai_prompt_cache(messages, "openai/gpt-3.5-turbo")
+        assert kwargs == {}
+
+    def test_non_openai_model_returns_empty(self) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        messages = [{"role": "user", "content": "Hello"}]
+        kwargs = inject_openai_prompt_cache(
+            messages, "anthropic/claude-3-5-sonnet"
+        )
+        assert kwargs == {}
+
+    def test_disabled_config_returns_empty(self) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        cfg = PromptCacheConfig(enabled=False)
+        kwargs = inject_openai_prompt_cache(
+            [{"role": "user", "content": "Hi"}], "openai/gpt-4o-mini", cfg
+        )
+        assert kwargs == {}
+
+    def test_cache_key_is_stable(self) -> None:
+        """Одинаковые messages → одинаковый cache key."""
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        messages = [
+            {"role": "system", "content": "system prompt"},
+            {"role": "user", "content": "question"},
+        ]
+        kwargs1 = inject_openai_prompt_cache(messages, "openai/gpt-4o")
+        kwargs2 = inject_openai_prompt_cache(messages, "openai/gpt-4o")
+        assert kwargs1["prompt_cache_key"] == kwargs2["prompt_cache_key"]
+
+    def test_cache_key_differs_for_different_messages(self) -> None:
+        """Разные messages → разный cache key."""
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        msgs1 = [{"role": "user", "content": "What is 2+2?"}]
+        msgs2 = [{"role": "user", "content": "What is 3+3?"}]
+        k1 = inject_openai_prompt_cache(msgs1, "openai/gpt-4o")["prompt_cache_key"]
+        k2 = inject_openai_prompt_cache(msgs2, "openai/gpt-4o")["prompt_cache_key"]
+        assert k1 != k2
+
+    def test_empty_messages(self) -> None:
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        kwargs = inject_openai_prompt_cache([], "openai/gpt-4o")
+        # Empty messages → empty prefix → still produces a key
+        assert "prompt_cache_key" in kwargs
+
+    def test_multiblock_content_handled(self) -> None:
+        """list content (multi-block) → str() then hash."""
+        from src.backend.infrastructure.ai.prompt_cache_middleware import (
+            inject_openai_prompt_cache,
+        )
+
+        messages = [
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "block 1"}],
+            }
+        ]
+        kwargs = inject_openai_prompt_cache(messages, "openai/gpt-4o")
+        assert "prompt_cache_key" in kwargs
+
+
+class TestOpenAIIntegrationWithLlmMixin:
+    def test_llm_mixin_imports_inject_openai_prompt_cache(self) -> None:
+        """Verify the llm_mixin module imports inject_openai_prompt_cache."""
+        import inspect
+
+        from src.backend.core.ai.gateway_pipeline_mixin import llm_mixin
+
+        source = inspect.getsource(llm_mixin)
+        assert "inject_openai_prompt_cache" in source
