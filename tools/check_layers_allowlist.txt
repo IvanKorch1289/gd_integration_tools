@@ -214,3 +214,11 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engin
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
+# S115 W3: services/dsl/builder_service.py + services/plugins/registries.py
+# = DSL command/service registrations (by design, same pattern as W2).
+src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
+src/backend/services/dsl/builder_service.py	services	src.backend.dsl.engine.pipeline
+src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
+src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
+src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
+src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
