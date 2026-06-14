@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **142**; уникальных слотов: **141**.
+Всего ADR-файлов: **147**; уникальных слотов: **146**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -148,5 +148,10 @@
 | 0190 | ADR-0190: Sprint 105 Closure | — | [0190-sprint-105-closure.md](0190-sprint-105-closure.md) |
 | 0191 | ADR-0191: Sprint 106 Closure — D5 split-brain B1+B2+B3 complete | — | [0191-sprint-106-closure.md](0191-sprint-106-closure.md) |
 | 0192 | ADR-0192: Sprint 106 Sprint B closure — sub_workflow + ai_tool_dispatch + from_nats/from_mongo + test baseline | — | [0192-sprint-106-sprint-b-closure.md](0192-sprint-106-sprint-b-closure.md) |
+| 0193 | ADR-0193: Sprint 107 closure — TD-residual cleanup + real LLM-wiring + real runtime for nats/mongo | — | [0193-sprint-107-closure.md](0193-sprint-107-closure.md) |
+| 0194 | ADR-0194: Sprint 108 closure — Dependabot security audit + TD-008 verify + TD-004 AI migration + AI tool registry e2e tests | — | [0194-sprint-108-closure.md](0194-sprint-108-closure.md) |
+| 0195 | ADR-0195: Sprint 109 closure — TD-004 audit migration wave 2 (4 domains) | — | [0195-sprint-109-closure.md](0195-sprint-109-closure.md) |
+| 0196 | ADR-0196: Sprint 110 closure — Layer policy enforcement + linter tooling hardening | — | [0196-sprint-110-closure.md](0196-sprint-110-closure.md) |
+| 0197 | ADR-0197: Sprint 111 closure — DSL Completion + DX (TD-017 / TD-004 / TD-012 closure + lifespan.py god-file decomposition) | — | [0197-sprint-111-closure.md](0197-sprint-111-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
