@@ -102,6 +102,7 @@ class PydashGetProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Читает nested field из body по pydash path, кладёт в property или out."""
         body = exchange.in_message.body
         value = pydash.get(body, self._path, default=self._default)
         exchange.set_property(self._property_name, value)
@@ -110,6 +111,7 @@ class PydashGetProcessor(BaseProcessor):
             exchange.set_out(body=value, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {
             "type": "pydash_get",
             "path": self._path,
@@ -151,6 +153,7 @@ class PydashSetProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Set nested field в body по pydash path (immutable: defensive copy)."""
         # Resolve dynamic value (callable принимает exchange).
         resolved = self._value
         if callable(self._value) and not isinstance(self._value, type):
@@ -168,6 +171,7 @@ class PydashSetProcessor(BaseProcessor):
         _log.debug("PydashSet[%s]: %r", self._path, resolved)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {"type": "pydash_set", "path": self._path}
 
 
@@ -204,6 +208,7 @@ class PydashOmitProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Omit fields из body (top-level или deep recursive)."""
         body = exchange.in_message.body
         if not isinstance(body, dict):
             _log.warning("PydashOmit: body is not a dict, no-op")
@@ -222,6 +227,7 @@ class PydashOmitProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {"type": "pydash_omit", "fields": self._fields, "deep": self._deep}
 
 
@@ -266,6 +272,7 @@ class PydashPickProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Pick fields из body (whitelist, immutable copy)."""
         body = exchange.in_message.body
         if not isinstance(body, dict):
             _log.warning("PydashPick: body is not a dict, no-op")
@@ -275,6 +282,7 @@ class PydashPickProcessor(BaseProcessor):
         _log.debug("PydashPick: kept %d fields", len(self._fields))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {"type": "pydash_pick", "fields": self._fields}
 
 
@@ -318,6 +326,7 @@ class PydashMergeProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Deep merge defaults с body (overwrite=True → defaults выигрывают)."""
         body = exchange.in_message.body
         if not isinstance(body, dict):
             new_body = copy.deepcopy(self._defaults)
@@ -334,4 +343,5 @@ class PydashMergeProcessor(BaseProcessor):
         _log.debug("PydashMerge: applied defaults (overwrite=%s)", self._overwrite)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {"type": "pydash_merge", "overwrite": self._overwrite}

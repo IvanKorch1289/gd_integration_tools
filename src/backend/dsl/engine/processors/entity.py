@@ -139,6 +139,7 @@ class EntityCreateProcessor(_BaseEntityProcessor):
         self._payload_from = payload_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Resolve payload from exchange, validate dict, dispatch entity creation."""
         payload = _resolve(exchange, self._payload_from)
         if not isinstance(payload, dict):
             exchange.fail(
@@ -182,6 +183,7 @@ class EntityGetProcessor(_BaseEntityProcessor):
         self._id_from = id_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Resolve entity id, dispatch get query, set result property."""
         entity_id = _resolve(exchange, self._id_from)
         if entity_id is None:
             exchange.fail(f"{type(self).__name__}: id_from={self._id_from!r} пуст")
@@ -189,6 +191,7 @@ class EntityGetProcessor(_BaseEntityProcessor):
         await self._dispatch({"id": entity_id}, context, exchange)
 
     def to_spec(self) -> dict:
+        """Сериализует entity_get конфиг в JSON-Schema spec."""
         return {
             "entity_get": {
                 "entity": self._entity,
@@ -224,6 +227,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
         self._payload_from = payload_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Resolve id + payload, dispatch entity update."""
         entity_id = _resolve(exchange, self._id_from)
         payload = _resolve(exchange, self._payload_from)
         if entity_id is None:
@@ -238,6 +242,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
         await self._dispatch({"id": entity_id, "data": payload}, context, exchange)
 
     def to_spec(self) -> dict:
+        """Сериализует entity_update конфиг в JSON-Schema spec."""
         return {
             "entity_update": {
                 "entity": self._entity,
@@ -271,6 +276,7 @@ class EntityDeleteProcessor(_BaseEntityProcessor):
         self._id_from = id_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Resolve entity id, dispatch delete query."""
         entity_id = _resolve(exchange, self._id_from)
         if entity_id is None:
             exchange.fail(f"{type(self).__name__}: id_from={self._id_from!r} пуст")
@@ -278,6 +284,7 @@ class EntityDeleteProcessor(_BaseEntityProcessor):
         await self._dispatch({"id": entity_id}, context, exchange)
 
     def to_spec(self) -> dict:
+        """Сериализует entity_delete конфиг в JSON-Schema spec."""
         return {
             "entity_delete": {
                 "entity": self._entity,
@@ -322,6 +329,7 @@ class EntityListProcessor(_BaseEntityProcessor):
         self._size_from = size_from
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Resolve filters + pagination, dispatch entity list query."""
         filters = _resolve(exchange, self._filters_from) or {}
         page = self._page
         if self._page_from is not None:
@@ -344,6 +352,7 @@ class EntityListProcessor(_BaseEntityProcessor):
         await self._dispatch(payload, context, exchange)
 
     def to_spec(self) -> dict:
+        """Сериализует entity_list конфиг в JSON-Schema spec."""
         spec: dict[str, Any] = {
             "entity": self._entity,
             "result_property": self._result_property,

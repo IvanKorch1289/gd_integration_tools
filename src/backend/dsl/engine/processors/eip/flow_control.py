@@ -40,6 +40,7 @@ class WireTapProcessor(BaseProcessor):
         self._tap_processors = tap_processors
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Создаёт tap-копию exchange и прогоняет через tap_processors (fire-and-forget)."""
         tap_exchange = Exchange(
             in_message=Message(
                 body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
@@ -84,6 +85,7 @@ class ThrottlerProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Token-bucket throttle: await if bucket empty, otherwise consume 1 token."""
 
         async with self._lock:
             now = time.monotonic()
@@ -102,6 +104,7 @@ class ThrottlerProcessor(BaseProcessor):
                 self._tokens -= 1.0
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         spec: dict[str, Any] = {"rate": self._rate}
         if self._burst != 1:
             spec["burst"] = self._burst
@@ -123,6 +126,7 @@ class DelayProcessor(BaseProcessor):
         self._scheduled_fn = scheduled_time_fn
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Async sleep до scheduled_time или delay_ms (whichever specified)."""
 
         if self._scheduled_fn is not None:
             target = self._scheduled_fn(exchange)
@@ -133,6 +137,7 @@ class DelayProcessor(BaseProcessor):
             await asyncio.sleep(self._delay_ms / 1000.0)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует delay_ms в JSON-Schema spec (None для callable scheduled_time_fn)."""
         # scheduled_time_fn — callable, не сериализуется.
         if self._scheduled_fn is not None:
             return None
@@ -168,6 +173,7 @@ class AggregatorProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Буферизует exchanges по correlation key, flush при достижении batch size или interval."""
         key = self._corr_key(exchange)
         now = time.monotonic()
 
@@ -237,6 +243,7 @@ class LoopProcessor(BaseProcessor):
         self._copy = copy_exchange
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Loop: применяет sub_processors до count/until/max_iterations."""
         from src.backend.dsl.engine.processors.base import run_sub_processors
 
         iteration = 0
@@ -309,6 +316,7 @@ class ForEachProcessor(BaseProcessor):
         self._max_iterations = max_iterations
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """ForEach: extract items via JMESPath, apply sub_processors per item."""
         import jmespath
 
         from src.backend.dsl.engine.processors.base import run_sub_processors
@@ -404,6 +412,7 @@ class OnCompletionProcessor(BaseProcessor):
         self._on_failure = on_failure_only
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """OnCompletion: run sub_processors по success/failure filter."""
         is_failed = exchange.status == ExchangeStatus.failed
 
         if self._on_success and is_failed:
