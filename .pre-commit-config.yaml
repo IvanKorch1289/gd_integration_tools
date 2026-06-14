@@ -20,6 +20,18 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # S113 W4 — auto-prune stale allowlist entries on pre-push (CI gate).
+      # Complement к S112 W1 --prune-allowlist flag: запускает prune
+      # и warn'ит если stale entries > 0. Не блокирует push (т.к. prune
+      # может быть артефактом legacy fix в том же commit'е).
+      - id: check-layers-prune
+        name: "Auto-prune stale layer-allowlist entries (S113 W4)"
+        entry: tools/hooks/check_layers_prune.sh
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
       - id: check-compat
         name: "Совместимость с Python 3.12+"
         entry: uv run python tools/check_compat.py
