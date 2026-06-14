@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
@@ -10,9 +11,17 @@ from src.backend.services.audit.clickhouse_audit_service.state import (
 )
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.services.audit.clickhouse_audit_service.service import (
+        ClickHouseAuditService,
+    )
 
 _logger = get_logger("services.audit.clickhouse")
+
+# S114 W1: module-level singleton state (missing since S68 W2 decomp).
+# `_service_instance` + `_service_lock` должны жить в module scope,
+# иначе `global` declaration в `get_audit_service` падает с NameError.
+_service_instance: ClickHouseAuditService | None = None
+_service_lock = threading.Lock()
 
 
 def _make_default_event_id() -> str:
@@ -79,6 +88,11 @@ def get_audit_service() -> ClickHouseAuditService:
     Returns:
         Единственный экземпляр :class:`ClickHouseAuditService`.
     """
+    # Late import: избегаем circular (service.py не импортирует helpers).
+    from src.backend.services.audit.clickhouse_audit_service.service import (
+        ClickHouseAuditService,
+    )
+
     global _service_instance
     if _service_instance is not None:
         return _service_instance

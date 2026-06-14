@@ -5,6 +5,7 @@ from __future__ import annotations
 Classes: AuditEvent.
 """
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 _logger = get_logger("services.audit.clickhouse")
 
 
+@dataclass(frozen=True, slots=True)
 class AuditEvent:
     """Неизменяемое описание одного audit-события.
 
