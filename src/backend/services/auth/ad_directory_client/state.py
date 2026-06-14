@@ -8,7 +8,7 @@ Classes: AdAuthError, AdServerConfig, AdSearchEntry.
 """
 
 from collections.abc import Mapping
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -24,6 +24,7 @@ class AdAuthError(Exception):
     """
 
 
+@dataclass
 class AdServerConfig:
     """Конфигурация AD/LDAP сервера.
 
@@ -56,6 +57,7 @@ class AdServerConfig:
             object.__setattr__(self, "use_ssl", True)
 
 
+@dataclass
 class AdSearchEntry:
     """Результат AD search.
 
