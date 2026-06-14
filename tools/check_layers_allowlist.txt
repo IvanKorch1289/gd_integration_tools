@@ -204,3 +204,13 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
+# S115 W2: services/dsl_portal/builder_facade.py = architectural exception
+# (facade pattern: by design exposes DSL types to frontend via services).
+# Module explicitly says: "services-слой имеет на это право: services → dsl
+# через registries — допустимый паттерн". Protocol refactor deferred to S115+.
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
