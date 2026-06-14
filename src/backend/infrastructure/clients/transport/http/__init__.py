@@ -41,7 +41,6 @@ from tenacity import (
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.core.utils.circuit_breaker import get_circuit_breaker
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.codec.json import json_dumps
 from src.backend.infrastructure.clients.transport.http.base import (
@@ -93,7 +92,6 @@ class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
         self._metrics_lock = asyncio.Lock()
         self.purger_task: asyncio.Task | None = None
 
-        self.circuit_breaker = get_circuit_breaker()
         self.metrics: dict[str, Any] = {
             "total_requests": 0,
             "successful_requests": 0,

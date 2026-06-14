@@ -3,12 +3,6 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-extensions/core_entities/orderkinds/services/orderkinds.py	extensions	src.backend.services.integrations.skb
-extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.integrations.skb
-extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.io.indexers
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.notifications
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.builder
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.executor
 extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.builder
 extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.spec
 extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.builder
@@ -155,12 +149,6 @@ src/backend/infrastructure/sinks/webhook_sink.py	infrastructure	src.backend.dsl.
 src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
-src/backend/services/ai/gateway/pool_registration.py	services	src.backend.infrastructure.clients.pool_health
-src/backend/services/ai/langmem_service.py	services	src.backend.infrastructure.database.session
-src/backend/services/ai/metrics.py	services	src.backend.infrastructure.observability.metrics_registry
-src/backend/services/ai/rag_ingest_store.py	services	src.backend.infrastructure.clients.storage.redis
-src/backend/services/ai/rag_service/__init__.py	services	src.backend.infrastructure.cache.rag.three_tier
-src/backend/services/billing/quotas_service.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
 src/backend/services/core/base/__init__.py	services	src.backend.dsl.codec.converters
@@ -176,7 +164,6 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/jupyter/execution_service/__init__.py	services	src.backend.infrastructure.clients.external.jupyter_hub
 src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry
@@ -186,13 +173,9 @@ src/backend/services/plugins/loader.py	services	src.backend.dsl.engine.plugin_re
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
-src/backend/services/scheduler/cron_dashboard_service.py	services	src.backend.infrastructure.scheduler.scheduler_manager
-src/backend/services/schema_registry/event_schemas.py	services	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.commands.registry
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
-src/backend/services/sources/lifecycle.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/workflows/sla_alerting.py	services	src.backend.infrastructure.observability.metrics_registry
 src/backend/workflows/worker.py	workflows	src.backend.dsl.commands.setup
 src/backend/workflows/worker.py	workflows	src.backend.dsl.routes
 src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py	frontend	src.backend.dsl.workflow.versioning
