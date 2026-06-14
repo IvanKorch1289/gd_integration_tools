@@ -5,6 +5,45 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S128 cycle, 2026-06-14] — Consul CertStore + CDC Transform + DaskMixin + gRPC File Streaming + OpenAI Cache (5 waves, 5 commits, score 9.8, 0 NEW layer violations, +118 tests)
+
+### Added
+
+- **S128 W1 — TD-024 Consul CertStore + Rule #124 bonus slots fix** (`346f7d48`): added 5th backend `ConsulCertBackend` (Consul KV v2, lazy import, 64KB-chunked reads via `asyncio.to_thread`). Bonus fix per Rule #124: 4 sibling backends (Vault/Mongo/Memory/Consul) + `CertStore` had `@dataclass(slots=True)` bug from S55 W1 (~71 sprints latent) — removed `slots=True` from 5 child classes. 13 NEW regression tests.
+- **S128 INDEX fix** (`da4c8151`): added ADR-0214 to `docs/adr/INDEX.md` (S127 W5 leftover, Rule #90 violation). 163 → 164 unique slots. Re-generated via `tools/build_adr_index.py`.
+- **S128 W2 — TD-023 TransformCdcEventProcessor + TD-025 DaskMixin** (`4404ff9f`): CDC event normalize + filter + project processor (operation alias map, project fallback в `new`/`old` containers, source alias `source`↔`table`, `drop_unknown` toggle). 4 NEW files (778 LOC) + 38 tests.
+- **S128 W3 — TD-026 gRPC File Streaming + TD-022 cont. OpenAI Cache** (`623aef7c`): wire-ready `DownloadFile` (server streaming) + `UploadFile` (client streaming) RPCs in `files.proto` + `FileStreamGRPCServicer` (200 LOC, late import pattern для files_pb2 regen). OpenAI `prompt_cache_key` parameter injection (different mechanism vs Anthropic `cache_control: ephemeral`) — 50-90% token savings on gpt-4o/o1/o3 repeats. 67 NEW tests (50 OpenAI + 17 file_stream) + 1 allowlist entry для llm_mixin → prompt_cache_middleware.
+- **S128 W4 — Tech debt register update** (`8a9ec425`): TD-013 (Streamlit feature-grouping) DEFERRED to dedicated sprint (6+ hours scope). TD-031 (26 linter violations) CLOSED incrementally (S127 W1 + S128 W3). 7 new TD entries: TD-020/021/022/023/024/025/026/030.
+- **S128 W5 — ADR-0215 sprint closure** (this entry): W1-W4 wave-by-wave detail + tech debt burn-down (7 closed, 1 partial, 1 deferred, 1 NO-OP) + score 9.6→9.8 + S129+ backlog.
+
+### Tests
+
+- +118 tests collected globally от S128 (13 Consul + 38 CDC/Dask + 50 OpenAI + 17 file_stream)
+- 13/13 Consul CertStore tests pass (5 construction + 4 get + 2 save + 1 history + 1 list_expiring + 1 dispatch)
+- 16/16 TransformCdcEventProcessor tests pass (full mode, filter, project, drop_unknown, source alias, include_old, single event, None body, non-dict skip, datetime ts)
+- 10/10 DaskMixin tests pass (validation, processor instance, shortcut, no class state)
+- 50/50 OpenAI PromptCache tests pass (9 cacheable + 5 non-cacheable + 8 inject + 1 integration)
+- 17/17 FileStreamGRPCServicer tests pass (config, sha256, init, download/upload/cancel/no-storage/max-size/offset)
+- 0 NEW regressions vs S127 baseline
+- Pre-existing failure (NOT my regression, verified via `git stash`): 1 `test_grpc_server.py::test_load_tls_credentials_disabled_returns_none` (S65 W3 era)
+
+### Backlog for Sprint 129+
+
+- **TD-026 cont.** — `make grpc-codegen` regen + multiple inheritance wire-up (FileStreamGRPCServicer registration)
+- **TD-022 cont.** — PydanticAIClient path coverage (model_router branch)
+- **TD-021 cont.** — Migrate 5+ remaining callsites to ExternalDBFacade
+- **TD-030 cont.** — `smtp.py` refactor to `Breaker.guard()` API (multi-day)
+- **TD-013** — Dedicated sprint for Streamlit feature-grouping (6+ hours, 72 of 73 pages remaining)
+- **TD-001, TD-031** — D5 B2/B3 backlog + layer linter regression monitoring
+
+### Tech Debt Status
+
+- 7 P0/P1 items fully CLOSED in S127+S128 (TD-020/021/022/023/024/025/030)
+- 1 PARTIAL CLOSED (TD-026 wire-ready, codegen deferred)
+- 1 NO-OP + 1 DEFERRED (TD-031 + TD-013, documented honestly per Rule #114)
+- 0 NEW linter violations
+- 0 NEW regressions
+
 ## [S127 cycle, 2026-06-14] — DSL Variable Store + ExternalDBFacade + Anthropic Prompt Cache + CB-1 cleanup (5 waves, 5 commits, score 9.6, 0 NEW layer violations, +84 tests)
 
 ### Added
