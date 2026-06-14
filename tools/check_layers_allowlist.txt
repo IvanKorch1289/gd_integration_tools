@@ -204,38 +204,3 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
-# S115 W2: services/dsl_portal/builder_facade.py = architectural exception
-# (facade pattern: by design exposes DSL types to frontend via services).
-# Module explicitly says: "services-слой имеет на это право: services → dsl
-# через registries — допустимый паттерн". Protocol refactor deferred to S115+.
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
-# S115 W3: services/dsl/builder_service.py + services/plugins/registries.py
-# = DSL command/service registrations (by design, same pattern as W2).
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.engine.pipeline
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
-src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
-src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
-# S115 W4: entrypoints + infrastructure/observability = by-design DSL usage
-# - entrypoints/api/v1/endpoints/dsl_routes.py: admin endpoint для DSL routes
-# - entrypoints/api/v1/endpoints/imports.py: DSL import endpoint
-# - infrastructure/observability/{metrics,tracing}.py: DSL pipeline context
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.pipeline
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.tracer
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_loader
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_store
-src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.builder
-src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.execution_engine
-src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.pipeline_registry
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.context
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.exchange
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.middleware
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.context
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.exchange
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.middleware
