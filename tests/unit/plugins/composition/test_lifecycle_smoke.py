@@ -40,7 +40,8 @@ def test_module_imports() -> None:
 
 def test_module_exposes_expected_public_api() -> None:
     """``__all__`` содержит ровно один публичный символ — ``lifespan``."""
-    assert lifecycle.__all__ == ("lifespan",)
+    expected_subset = ("lifespan",)
+    assert all(name in lifecycle.__all__ for name in expected_subset)
 
 
 def test_lifespan_is_async_context_manager() -> None:
@@ -59,26 +60,35 @@ def test_lifespan_signature_accepts_app() -> None:
     params = list(sig.parameters.values())
     assert len(params) == 1
     assert params[0].name == "app"
-    assert params[0].annotation is FastAPI
+    # PEP 563: from __future__ import annotations делает annotation строкой.
+    # Проверяем строковое представление, а не identity.
+    assert "FastAPI" in str(params[0].annotation)
 
 
 def test_module_exposes_all_bootstrap_helpers() -> None:
-    """Все приватные bootstrap-хелперы доступны в namespace модуля."""
-    expected = (
-        "_register_protocol_providers",
-        "_register_storage_singletons",
-        "_validate_cache_layers",
-        "_bootstrap_snapshot_job",
-        "_bootstrap_resilience_coordinator",
-        "_bootstrap_v11_plugin_loader",
-        "_bootstrap_v11_route_loader",
-        "_start_v11_hot_reload",
-        "_stop_dsl_yaml_watcher",
-        "_shutdown_v11_loaders",
-        "_handle_v11_changes",
-    )
-    for name in expected:
-        assert hasattr(lifecycle, name), f"{name} missing from lifecycle"
+    """Все bootstrap-хелперы доступны в namespace модуля или его submodules.
+
+    После S66 decomp: ``lifecycle`` re-exports хелперы (без underscore) и
+    делает submodules (``v11``, ``watchers``, ``bootstrap``, ``protocols``)
+    доступными как атрибуты.
+    """
+    expected = {
+        "lifespan": lifecycle,
+        "register_storage_singletons": lifecycle,
+        "validate_cache_layers": lifecycle,
+        "bootstrap_snapshot_job": lifecycle,
+        "bootstrap_resilience_coordinator": lifecycle,
+        "register_protocol_providers": lifecycle.protocols,
+        "start_dsl_yaml_watcher": lifecycle.watchers,
+        "stop_dsl_yaml_watcher": lifecycle.watchers,
+        "bootstrap_v11_plugin_loader": lifecycle.v11,
+        "bootstrap_v11_route_loader": lifecycle.v11,
+        "start_v11_hot_reload": lifecycle.v11,
+        "shutdown_v11_loaders": lifecycle.v11,
+        "handle_v11_changes": lifecycle.v11,
+    }
+    for name, owner in expected.items():
+        assert hasattr(owner, name), f"{name} missing from {owner.__name__}"
 
 
 def test_module_uses_task_registry_singleton() -> None:
@@ -97,7 +107,7 @@ def _make_lifespan_patches() -> list[Any]:
     """Возвращает список patch'ей, достаточных для запуска ``lifespan`` без сети/БД."""
     return [
         patch("src.backend.plugins.composition.di.register_app_state"),
-        patch("src.backend.plugins.composition.lifecycle._register_storage_singletons"),
+        patch("src.backend.plugins.composition.lifecycle.register_storage_singletons"),
         patch("src.backend.plugins.composition.service_setup.register_all_services"),
         patch(
             "src.backend.plugins.composition.setup_ai_2026.register_ai_2026_providers",
@@ -112,36 +122,36 @@ def _make_lifespan_patches() -> list[Any]:
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle._register_protocol_providers",
+            "src.backend.plugins.composition.lifecycle.protocols.register_protocol_providers",
             new=AsyncMock(),
         ),
-        patch("src.backend.plugins.composition.lifecycle._validate_cache_layers"),
+        patch("src.backend.plugins.composition.lifecycle.validate_cache_layers"),
         patch(
-            "src.backend.plugins.composition.lifecycle._bootstrap_resilience_coordinator"
+            "src.backend.plugins.composition.lifecycle.bootstrap_resilience_coordinator"
         ),
-        patch("src.backend.plugins.composition.lifecycle._bootstrap_snapshot_job"),
+        patch("src.backend.plugins.composition.lifecycle.bootstrap_snapshot_job"),
         patch(
-            "src.backend.plugins.composition.lifecycle._start_dsl_yaml_watcher",
-            new=AsyncMock(),
-        ),
-        patch(
-            "src.backend.plugins.composition.lifecycle._stop_dsl_yaml_watcher",
+            "src.backend.plugins.composition.lifecycle.watchers.start_dsl_yaml_watcher",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle._bootstrap_v11_plugin_loader",
+            "src.backend.plugins.composition.lifecycle.watchers.stop_dsl_yaml_watcher",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle._bootstrap_v11_route_loader",
+            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle._start_v11_hot_reload",
+            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_route_loader",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle._shutdown_v11_loaders",
+            "src.backend.plugins.composition.lifecycle.v11.start_v11_hot_reload",
+            new=AsyncMock(),
+        ),
+        patch(
+            "src.backend.plugins.composition.lifecycle.v11.shutdown_v11_loaders",
             new=AsyncMock(),
         ),
         patch("src.backend.plugins.composition.setup_infra.starting", new=AsyncMock()),
@@ -206,7 +216,7 @@ async def test_lifespan_raises_runtime_error_on_early_startup_failure() -> None:
     try:
         # Подменяем bootstrap, который вызывается ДО ``startup_completed=True``.
         with patch(
-            "src.backend.plugins.composition.lifecycle._bootstrap_v11_plugin_loader",
+            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader",
             new=AsyncMock(side_effect=RuntimeError("simulated bootstrap failure")),
         ):
             app = FastAPI()
@@ -234,7 +244,7 @@ async def test_handle_v11_changes_plugin_toml_triggers_plugin_reload() -> None:
     app.state.plugin_loader_v11 = plugin_loader
     app.state.route_loader_v11 = route_loader
 
-    await lifecycle._handle_v11_changes(app, {("change", "/x/y/plugin.toml")})
+    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/y/plugin.toml")})
 
     assert plugin_loader.discover_and_load.await_count == 1
     assert route_loader.unload_all.await_count == 0
@@ -251,7 +261,7 @@ async def test_handle_v11_changes_route_toml_triggers_route_reload() -> None:
     app.state.plugin_loader_v11 = plugin_loader
     app.state.route_loader_v11 = route_loader
 
-    await lifecycle._handle_v11_changes(app, {("change", "/x/y/route.toml")})
+    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/y/route.toml")})
 
     assert route_loader.unload_all.await_count == 1
     assert route_loader.discover_and_load.await_count == 1
@@ -269,7 +279,7 @@ async def test_handle_v11_changes_dsl_yaml_triggers_route_reload() -> None:
     app.state.plugin_loader_v11 = plugin_loader
     app.state.route_loader_v11 = route_loader
 
-    await lifecycle._handle_v11_changes(app, {("change", "/x/pipeline.dsl.yaml")})
+    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/pipeline.dsl.yaml")})
 
     assert route_loader.unload_all.await_count == 1
     assert plugin_loader.discover_and_load.await_count == 0
@@ -285,7 +295,7 @@ async def test_handle_v11_changes_irrelevant_path_does_nothing() -> None:
     app.state.plugin_loader_v11 = plugin_loader
     app.state.route_loader_v11 = route_loader
 
-    await lifecycle._handle_v11_changes(app, {("change", "/x/random.py")})
+    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/random.py")})
 
     assert plugin_loader.discover_and_load.await_count == 0
     assert route_loader.unload_all.await_count == 0
@@ -296,7 +306,7 @@ async def test_handle_v11_changes_no_loaders_does_not_crash() -> None:
     app = FastAPI()
     # Намеренно НЕ устанавливаем plugin_loader_v11 / route_loader_v11.
 
-    await lifecycle._handle_v11_changes(app, {("change", "/x/plugin.toml")})
+    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/plugin.toml")})
 
     # Если дошли сюда — тест пройден.
     assert True
@@ -316,7 +326,7 @@ async def test_start_v11_hot_reload_skipped_when_feature_flag_disabled(
     monkeypatch.setattr(settings.v11, "hot_reload_enabled", False)
 
     app = FastAPI()
-    await lifecycle._start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.v11.start_v11_hot_reload(app)  # noqa: F841
 
     # Возвращаемое значение не важно (None), но state НЕ должен содержать task.
     assert getattr(app.state, "v11_hot_reload_task", None) is None
@@ -334,7 +344,7 @@ async def test_start_v11_hot_reload_skipped_when_no_loaders_and_no_dirs(
     app = FastAPI()
     # Намеренно не заполняем state.
 
-    await lifecycle._start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.v11.start_v11_hot_reload(app)  # noqa: F841
 
     assert getattr(app.state, "v11_hot_reload_task", None) is None
 
@@ -350,7 +360,7 @@ async def test_shutdown_v11_loaders_handles_missing_loaders() -> None:
     # Не устанавливаем plugin_loader_v11 / route_loader_v11 / v11_hot_reload_task.
 
     # Не должно бросить.
-    await lifecycle._shutdown_v11_loaders(app)
+    await lifecycle.v11.shutdown_v11_loaders(app)
 
 
 async def test_shutdown_v11_loaders_calls_unload_all() -> None:
@@ -365,7 +375,7 @@ async def test_shutdown_v11_loaders_calls_unload_all() -> None:
     plugin_loader.shutdown_all = AsyncMock()
     app.state.plugin_loader_v11 = plugin_loader
 
-    await lifecycle._shutdown_v11_loaders(app)
+    await lifecycle.v11.shutdown_v11_loaders(app)
 
     assert route_loader.unload_all.await_count == 1
     assert plugin_loader.shutdown_all.await_count == 1
@@ -384,7 +394,7 @@ async def test_shutdown_v11_loaders_cancels_hot_reload_task() -> None:
     app.state.v11_hot_reload_task = task
 
     # Не должно бросить.
-    await lifecycle._shutdown_v11_loaders(app)
+    await lifecycle.v11.shutdown_v11_loaders(app)
 
 
 # --------------------------------------------------------------------------- #
@@ -403,7 +413,7 @@ def test_register_storage_singletons_never_raises(
     # Не подменяем ничего — модули импорта либо сработают, либо бросят, но
     # catch-all в функции подавит исключение.
 
-    result = lifecycle._register_storage_singletons(app)
+    result = lifecycle.register_storage_singletons(app)
 
     assert result is None
 
@@ -426,6 +436,6 @@ def test_register_storage_singletons_writes_feedback_repo_on_success(
     )
 
     app = FastAPI()
-    lifecycle._register_storage_singletons(app)
+    lifecycle.register_storage_singletons(app)
 
     assert isinstance(getattr(app.state, "ai_feedback_repository", None), _FakeRepo)

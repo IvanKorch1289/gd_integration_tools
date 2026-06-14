@@ -89,8 +89,13 @@ def test_module_exposes_expected_public_api() -> None:
 
 
 def test_module_logger_is_named_correctly() -> None:
-    """Локальный логгер модуля использует ``composition.service_setup`` namespace."""
-    assert isinstance(service_setup._logger, logging.Logger)
+    """Локальный логгер модуля использует ``composition.service_setup`` namespace.
+
+    TD-0247: после S62 W5 ``_logger`` стал ``StdlibLogger`` (обёртка над
+    stdlib ``logging.Logger``), а не нативный ``logging.Logger``. Тест
+    duck-typed: проверяем наличие ``name`` атрибута (как у ``Logger``).
+    """
+    assert hasattr(service_setup._logger, "name")
     assert service_setup._logger.name == "composition.service_setup"
 
 

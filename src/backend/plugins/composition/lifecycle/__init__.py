@@ -8,6 +8,16 @@ S66 W3: lifespan -> lifespan.py.
 
 from __future__ import annotations
 
+from src.backend.plugins.composition.lifecycle import (  # noqa: F401
+    bootstrap,
+    protocols,
+    shutdown,
+    signals,
+    startup,
+    v11,
+    watchers,
+)
+from src.backend.plugins.composition.lifecycle import lifespan as lifespan_module
 from src.backend.plugins.composition.lifecycle.bootstrap import (  # noqa: E402, F401
     bootstrap_resilience_coordinator,
     bootstrap_snapshot_job,
@@ -15,7 +25,8 @@ from src.backend.plugins.composition.lifecycle.bootstrap import (  # noqa: E402,
     validate_cache_layers,
 )
 from src.backend.plugins.composition.lifecycle.lifespan import (
-    lifespan,  # noqa: E402, F401
+    get_task_registry,  # noqa: E402, F401
+    lifespan,
 )
 
 __all__ = (
@@ -24,4 +35,13 @@ __all__ = (
     "validate_cache_layers",
     "bootstrap_snapshot_job",
     "bootstrap_resilience_coordinator",
+    "get_task_registry",
+    "bootstrap",
+    "lifespan_module",
+    "protocols",
+    "shutdown",
+    "signals",
+    "startup",
+    "v11",
+    "watchers",
 )
