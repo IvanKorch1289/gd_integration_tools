@@ -33,11 +33,14 @@ suggestion, file, line). Exit-code 0 при отсутствии errors, 1 пр�
 
 from __future__ import annotations
 
-import argparse
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import typer
+from rich.console import Console
 
 __all__ = ("DSLLinter", "LintIssue", "lint_path", "main")
 
@@ -407,49 +410,91 @@ def lint_path(path: Path, *, strict: bool = False) -> list[LintIssue]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entrypoint: ``manage.py dsl lint <path>``."""
-    parser = argparse.ArgumentParser(description="DSL Linter (route.toml + *.dsl.yaml)")
-    parser.add_argument("path", type=Path, help="Каталог или *.dsl.yaml файл")
-    parser.add_argument(
-        "--strict", action="store_true", help="Strict-mode: warnings → errors (для CI)."
-    )
-    parser.add_argument("--json", action="store_true", help="Вывод в JSON формате.")
-    args = parser.parse_args(argv)
+    """CLI entrypoint: ``manage.py dsl lint <path>``.
 
-    if not args.path.exists():
-        print(f"ERROR: путь не найден: {args.path}", file=sys.stderr)
-        return 2
+    Migrated S116 W2: argparse → typer + rich (S62 W3 batch 4 of 5).
+    Backward compat: argv list support + typer-driven CLI mode.
+    """
+    console = Console(file=sys.stderr)
+    app = typer.Typer(add_completion=False, help="DSL Linter (route.toml + *.dsl.yaml)")
 
-    issues = lint_path(args.path, strict=args.strict)
+    @app.command()
+    def lint_cmd(
+        path: Path = typer.Argument(..., help="Каталог или *.dsl.yaml файл"),
+        strict: bool = typer.Option(False, "--strict", help="Strict-mode: warnings → errors (для CI)."),
+        as_json: bool = typer.Option(False, "--json", help="Вывод в JSON формате."),
+    ) -> None:
+        if not path.exists():
+            console.print(f"[red]ERROR: путь не найден: {path}[/red]")
+            raise typer.Exit(code=2)
 
-    if args.json:
-        import json as _json
+        issues = lint_path(path, strict=strict)
 
-        payload = [
-            {
-                "code": iss.code,
-                "severity": iss.severity,
-                "message": iss.message,
-                "file": str(iss.file),
-                "line": iss.line,
-                "processor": iss.processor,
+        if as_json:
+            payload = [
+                {
+                    "code": iss.code,
+                    "severity": iss.severity,
+                    "message": iss.message,
+                    "file": str(iss.file),
+                    "line": iss.line,
+                    "processor": iss.processor,
+                    "suggestion": iss.suggestion,
+                }
+                for iss in issues
+            ]
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            for iss in issues:
+                style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+                    iss.severity, "white"
+                )
+                line_suffix = f":{iss.line}" if iss.line else ""
+                console.print(
+                    f"[{style}][{iss.severity.upper()}][/] "
+                    f"{iss.code}: {iss.message} ({iss.file}{line_suffix})"
+                )
+                if iss.suggestion:
+                    console.print(f"  → {iss.suggestion}")
+
+        errors = sum(1 for iss in issues if iss.severity == "error")
+        if errors:
+            raise typer.Exit(code=1)
+
+    # Programmatic API (для `manage.py dsl lint <path>` + тестов).
+    if argv is not None:
+        # Backward compat path: parse argv list (для S62 W3 batch 3 call sites).
+        path_arg = Path(argv[0]) if argv else None
+        strict = "--strict" in argv
+        as_json = "--json" in argv
+        if path_arg is None:
+            return 2
+        if not path_arg.exists():
+            console.print(f"[red]ERROR: путь не найден: {path_arg}[/red]")
+            return 2
+        issues = lint_path(path_arg, strict=strict)
+        if as_json:
+            print(json.dumps([{
+                "code": iss.code, "severity": iss.severity, "message": iss.message,
+                "file": str(iss.file), "line": iss.line, "processor": iss.processor,
                 "suggestion": iss.suggestion,
-            }
-            for iss in issues
-        ]
-        print(_json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        for iss in issues:
-            print(
-                f"[{iss.severity.upper()}] {iss.code}: {iss.message} "
-                f"({iss.file}{':' + str(iss.line) if iss.line else ''})"
-            )
-            if iss.suggestion:
-                print(f"  → {iss.suggestion}")
+            } for iss in issues], indent=2, ensure_ascii=False))
+        else:
+            for iss in issues:
+                style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+                    iss.severity, "white"
+                )
+                line_suffix = f":{iss.line}" if iss.line else ""
+                console.print(
+                    f"[{style}][{iss.severity.upper()}][/] {iss.code}: {iss.message} "
+                    f"({iss.file}{line_suffix})"
+                )
+                if iss.suggestion:
+                    console.print(f"  → {iss.suggestion}")
+        return 1 if any(iss.severity == "error" for iss in issues) else 0
 
-    errors = sum(1 for iss in issues if iss.severity == "error")
-    if errors:
-        return 1
+    # typer CLI mode (direct invocation).
+    app()
     return 0
 
 
