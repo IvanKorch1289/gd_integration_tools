@@ -1937,6 +1937,23 @@ class RouteBuilder:
         """PUT объекта в S3 по ``key`` (body из ``body_from``)."""
         ...
 
+    def s3_get(self, key: str, *, result_property: str = ...) -> RouteBuilder:
+        """GET объекта из S3 по ``key``."""
+        ...
+
+    def s3_delete(self, key_from: str = ...) -> RouteBuilder:
+        """DELETE объекта из S3 по ``key_from`` (idempotent: missing → no-op)."""
+        ...
+
+    def s3_list(
+        self,
+        *,
+        prefix_from: Union[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """LIST ключей в S3 bucket с пагинацией по ``prefix_from``."""
+        ...
+
     def saga(self, steps: list[SagaStep]) -> RouteBuilder:
         """Saga-паттерн: последовательные шаги с компенсацией при ошибке."""
         ...

@@ -26,6 +26,9 @@ from src.backend.dsl.builders.infrastructure_dsl import (
     RedisDeleteProcessor,
     RedisGetProcessor,
     RedisSetProcessor,
+    S3DeleteProcessor,
+    S3GetProcessor,
+    S3ListProcessor,
     S3PutProcessor,
     SqlExecProcessor,
 )
@@ -135,6 +138,35 @@ class TestS3AndSQL:
         builder.s3_put("path/key.json")
         assert isinstance(builder._processors[-1], S3PutProcessor)
 
+    def test_s3_get(self, builder: RouteBuilder) -> None:
+        builder.s3_get("path/key.json", result_property="payload")
+        proc = builder._processors[-1]
+        assert isinstance(proc, S3GetProcessor)
+        assert proc.params["result_property"] == "payload"
+
+    def test_s3_delete(self, builder: RouteBuilder) -> None:
+        """S111 W1: TD-017 / D17 — new DSL method for S3 DELETE."""
+        builder.s3_delete(key_from="properties.s3_key")
+        proc = builder._processors[-1]
+        assert isinstance(proc, S3DeleteProcessor)
+        assert proc.params["key_from"] == "properties.s3_key"
+
+    def test_s3_list(self, builder: RouteBuilder) -> None:
+        """S111 W1: TD-017 / D17 — new DSL method for S3 LIST."""
+        builder.s3_list(prefix_from="properties.prefix", result_property="keys")
+        proc = builder._processors[-1]
+        assert isinstance(proc, S3ListProcessor)
+        assert proc.params["prefix_from"] == "properties.prefix"
+        assert proc.params["result_property"] == "keys"
+
+    def test_s3_list_no_prefix(self, builder: RouteBuilder) -> None:
+        """S111 W1: s3_list без prefix_from — list all keys."""
+        builder.s3_list()
+        proc = builder._processors[-1]
+        assert isinstance(proc, S3ListProcessor)
+        assert proc.params["prefix_from"] is None
+        assert proc.params["result_property"] == "s3_keys"
+
     def test_sql_exec(self, builder: RouteBuilder) -> None:
         builder.sql_exec("DELETE FROM x", params={"id": 1})
         proc = builder._processors[-1]
@@ -156,10 +188,13 @@ class TestChainingAndIntegration:
             .mongo_insert("c")
             .mongo_find("c", {})
             .s3_put("k")
+            .s3_get("k")
+            .s3_delete("k")
+            .s3_list(prefix_from="p")
             .sql_exec("SELECT 1")
         )
         assert result is builder
-        assert len(builder._processors) == 11
+        assert len(builder._processors) == 14
 
     def test_to_spec_round_trip(self, builder: RouteBuilder) -> None:
         builder.redis_set("k", "v", ttl_seconds=30)

@@ -1,4 +1,4 @@
-"""InfrastructureDSL (S38 W4): 11 helper methods для Redis/ClickHouse/ES/Mongo/S3/SQL.
+"""InfrastructureDSL (S38 W4): 14 helper methods для Redis/ClickHouse/ES/Mongo/S3/SQL.
 
 Stateless mixin для :class:`RouteBuilder`. Каждый wrapper — тонкая обёртка
 над placeholder-процессором, фиксирующим intent операции в pipeline.
@@ -8,12 +8,12 @@ downstream фасады в lifespan (DI-wiring).
 Паттерн: копия :class:`EventBusMixin` (chainable, ``_add`` через MRO,
 ``__slots__ = ()``, ``to_spec()`` для сериализации).
 
-11 методов:
+14 методов:
     * Redis (3): ``redis_set``, ``redis_get``, ``redis_delete``
     * ClickHouse (2): ``clickhouse_insert``, ``clickhouse_query``
     * Elasticsearch (2): ``es_index``, ``es_search``
     * MongoDB (2): ``mongo_insert``, ``mongo_find``
-    * S3 (1): ``s3_put``
+    * S3 (4): ``s3_put``, ``s3_get``, ``s3_delete`` (S111 W1), ``s3_list`` (S111 W1)
     * SQL (1): ``sql_exec``
 """
 
@@ -40,6 +40,9 @@ __all__ = (
     "RedisDeleteProcessor",
     "RedisGetProcessor",
     "RedisSetProcessor",
+    "S3DeleteProcessor",
+    "S3GetProcessor",
+    "S3ListProcessor",
     "S3PutProcessor",
     "SqlExecProcessor",
 )
@@ -138,6 +141,18 @@ class S3GetProcessor(_InfraOp):
     """S104 W1 — S3 GET processor (требует aioboto3)."""
     op_name: ClassVar[str] = "s3_get"
     compensatable: ClassVar[bool] = False
+
+
+class S3DeleteProcessor(_InfraOp):
+    """S111 W1 — S3 DELETE processor (idempotent: missing → no-op)."""
+    op_name: ClassVar[str] = "s3_delete"
+    compensatable: ClassVar[bool] = False  # delete необратим
+
+
+class S3ListProcessor(_InfraOp):
+    """S111 W1 — S3 LIST processor (пагинация по префиксу)."""
+    op_name: ClassVar[str] = "s3_list"
+    compensatable: ClassVar[bool] = True  # read — обратимо
 
 
 class SftpGetProcessor(_InfraOp):
@@ -293,6 +308,45 @@ class InfrastructureDSL:
         """
         return self._add(  # type: ignore[attr-defined]
             S3GetProcessor(key=key, result_property=result_property)
+        )
+
+    def s3_delete(self, key_from: str = "s3_key") -> RouteBuilder:
+        """DELETE объекта из S3 по ``key_from`` (idempotent: missing → no-op).
+
+        S111 W1: NEW DSL method (TD-017 / D17 closure).
+        Использует :class:`S3DeleteProcessor` (требует aioboto3 — optional dep).
+
+        Args:
+            key_from: выражение для S3-ключа (default ``"s3_key"``).
+
+        Returns:
+            RouteBuilder с добавленным ``S3DeleteProcessor`` в pipeline.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            S3DeleteProcessor(key_from=key_from)
+        )
+
+    def s3_list(
+        self,
+        *,
+        prefix_from: str | None = None,
+        result_property: str = "s3_keys",
+    ) -> RouteBuilder:
+        """LIST ключей в S3 bucket с пагинацией по ``prefix_from``.
+
+        S111 W1: NEW DSL method (TD-017 / D17 closure).
+        Использует :class:`S3ListProcessor` (требует aioboto3 — optional dep).
+
+        Args:
+            prefix_from: выражение для префикса (опционально).
+            result_property: имя property для записи ``list[str]``
+                (default ``"s3_keys"``).
+
+        Returns:
+            RouteBuilder с добавленным ``S3ListProcessor`` в pipeline.
+        """
+        return self._add(  # type: ignore[attr-defined]
+            S3ListProcessor(prefix_from=prefix_from, result_property=result_property)
         )
 
     # ── SFTP (2) — S104 W1 ──
