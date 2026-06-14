@@ -1,57 +1,102 @@
-"""SSO stubs (Sprint 19 K5 W5b): SAML / AD / OIDC placeholders.
+"""Backward-compat shim для ``services.admin.sso`` (Sprint 125 W4).
 
-Wave: s19/k5-w5b
+.. deprecated::
+    Use :mod:`src.backend.core.auth` напрямую. Этот модуль остаётся
+    только для downstream consumers, которые импортировали из
+    ``services.admin.sso`` до Sprint 125 (S125 W2+).
 
-Этот модуль содержит placeholder-классы для SSO-интеграции.
-Реальная реализация планируется в S20+ после выбора identity provider.
+**Что изменилось в S125:**
 
-Stub-ы:
-    - SamlSSOClient       — SAML 2.0 SP integration (Okta / ADFS / Azure AD)
-    - OidcSSOClient       — OIDC/OAuth2 PKCE flow
-    - AdminSSOConfig      — конфигурация из admin UI
-    - require_sso_auth     — decorator для admin endpoints (TODO S20)
+* :class:`SSOUserInfo` — re-export из :mod:`core.auth.sso_types` (W2).
+* :class:`SamlSSOClient` — alias на :class:`core.auth.SamlBackend`.
+  API частично отличается (Sprint 19 API → Sprint 96 SAML API).
+  Migration guide: см. :class:`SamlBackend.build_login_redirect_url`
+  вместо ``get_login_url(return_to=...)``.
+* :class:`OidcSSOClient` — остаётся ABC stub. OIDC не реализован в S125
+  (отложен на S126+ per ADR-0054 §5).
+* :class:`AdminSSOConfig` — legacy class, сохранён для backward-compat.
+  Новый код должен использовать :class:`core.auth.IdpConfig` +
+  per-tenant Vault registry (:class:`core.auth.SsoRegistry`).
+* :func:`require_sso_auth` — re-export нового API из :func:`core.auth.require_sso_auth`.
+  Старый API (Sprint 19) ``require_sso_auth(resource, action)`` переименован
+  в :func:`require_sso_auth_legacy` (no-op decorator + DeprecationWarning).
+  Новый API (S125 W3): :func:`core.auth.require_sso_auth` (registry-based) +
+  :func:`core.auth.require_sso_capability` для granular RBAC.
+
+**Deprecation policy:** S125 (current) — warning. S127 — planned removal
+(TD-0248 — добавить в backlog).
+
+Wave: s125-w4-sso-shim
 """
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
+# --- core.auth re-exports (backward-compat) ------------------------------
+from src.backend.core.auth import (
+    GroupsToCapabilities,
+    IdpConfig,
+    RequireSsoAuthError,
+    SamlBackend,
+    SsoRegistry,
+    SsoRegistryError,
+    SsoRegistrySchemaError,
+    SsoRegistryVaultError,
+    SSOUserInfo,
+    require_sso_auth,
+    require_sso_capability,
+)
 from src.backend.core.logging import get_logger
-
-logger = get_logger(__name__)
 
 __all__ = (
     "AdminSSOConfig",
+    "GroupsToCapabilities",
+    "IdpConfig",
     "OidcSSOClient",
+    "RequireSsoAuthError",
     "SSOUserInfo",
+    "SamlBackend",
     "SamlSSOClient",
+    "SsoRegistry",
+    "SsoRegistryError",
+    "SsoRegistrySchemaError",
+    "SsoRegistryVaultError",
     "require_sso_auth",
+    "require_sso_auth_legacy",
+    "require_sso_capability",
 )
 
+# Emitted при import модуля (singleton deprecation gate).
+_DEPRECATION_MSG = (
+    "src.backend.services.admin.sso is deprecated since S125; "
+    "import from src.backend.core.auth instead "
+    "(SsoRegistry, IdpConfig, require_sso_auth, SamlBackend, SSOUserInfo). "
+    "This shim will be removed in S127 (TD-0248)."
+)
+warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
 
-class SSOUserInfo:
-    """Данные аутентифицированного пользователя из SSO."""
+_logger = get_logger(__name__)
 
-    def __init__(
-        self,
-        *,
-        sub: str,  # SSO subject (user id)
-        email: str | None = None,
-        name: str | None = None,
-        groups: list[str] | None = None,
-        roles: list[str] | None = None,
-    ) -> None:
-        self.sub = sub
-        self.email = email
-        self.name = name
-        self.groups = list(groups) if groups else []
-        self.roles = list(roles) if roles else []
+# --- Aliases --------------------------------------------------------------
+
+#: .. deprecated:: 1.0
+#:     Use :class:`src.backend.core.auth.SamlBackend` directly.
+SamlSSOClient = SamlBackend
+
+
+# --- Legacy: AdminSSOConfig (Sprint 19 era) ------------------------------
 
 
 class AdminSSOConfig:
     """
-    SSO configuration record (persisted to DB / config file, S20+).
+    Legacy SSO config (Sprint 19).
+
+    .. deprecated::
+        Use :class:`core.auth.IdpConfig` (per-tenant) +
+        :class:`core.auth.SsoRegistry` (Vault-backed). Sprint 125 W2+.
 
     Attributes:
         provider:      ``saml`` | ``oidc``.
@@ -87,41 +132,18 @@ class AdminSSOConfig:
         }
 
 
-class SamlSSOClient(ABC):
-    """
-    SAML 2.0 Service Provider stub.
-
-    Реализация S20+ (TBD):
-        - python3-saml / onelogin-saml
-        - Assertion Consumer Service (ACS) endpoint
-        - SP metadata generation
-        - NameID mapping to internal user
-    """
-
-    def __init__(self, config: AdminSSOConfig) -> None:
-        self._cfg = config
-
-    @abstractmethod
-    def get_login_url(self, *, return_to: str) -> str:
-        """Возвращает URL для redirect на IdP."""
-        raise NotImplementedError("SAML login URL — implement in S20+")
-
-    @abstractmethod
-    def get_logout_url(self, *, return_to: str) -> str:
-        """Возвращает URL для Single Logout."""
-        raise NotImplementedError("SAML logout URL — implement in S20+")
-
-    @abstractmethod
-    async def handle_acs_response(self, *, saml_response: str) -> SSOUserInfo:
-        """Обрабатывает SAML Response от IdP. Returns SSOUserInfo."""
-        raise NotImplementedError("SAML ACS handler — implement in S20+")
+# --- OIDC stub (не реализован в S125) -----------------------------------
 
 
 class OidcSSOClient(ABC):
     """
     OIDC/OAuth2 PKCE stub.
 
-    Реализация S20+ (TBD):
+    .. deprecated::
+        OIDC не реализован в S125 (per ADR-0054 §5 — SAML primary,
+        OIDC deferred). Реализация планируется S126+.
+
+    Реализация S126+ (TBD):
         - authlib / python-jose
         - Authorization Code + PKCE flow
         - ID token validation (RS256)
@@ -134,35 +156,59 @@ class OidcSSOClient(ABC):
     @abstractmethod
     def get_authorization_url(self, *, state: str, code_challenge: str) -> str:
         """Возвращает authorization endpoint URL."""
-        raise NotImplementedError("OIDC auth URL — implement in S20+")
+        raise NotImplementedError("OIDC auth URL — implement in S126+")
 
     @abstractmethod
     async def exchange_code(self, *, code: str, code_verifier: str) -> SSOUserInfo:
         """Обменивает authorization code на tokens, returns SSOUserInfo."""
-        raise NotImplementedError("OIDC token exchange — implement in S20+")
+        raise NotImplementedError("OIDC token exchange — implement in S126+")
 
 
-# TODO S20: decorator for admin endpoints
-def require_sso_auth(resource: str, action: str) -> Any:
+# --- require_sso_auth_legacy (Sprint 19 API shim) ----------------------
+
+
+def require_sso_auth_legacy(resource: str, action: str) -> Any:
     """
-    Decorator для admin endpoints — enforces SSO auth + AuthZ (S20+).
+    Legacy SSO auth decorator (Sprint 19 API).
 
-    usage::
+    .. deprecated::
+        Use :func:`core.auth.require_sso_auth` (registry-based) +
+        :func:`core.auth.require_sso_capability` для granular RBAC.
 
-        @require_sso_auth("admin.feature_flag", "write")
-        async def toggle_flag(request: Request) -> Response:
-            ...
+    Old API::
 
-    S20 implementation will:
-        1. Validate session/JWT from SSO provider
-        2. Call AuthorizationGateway with principal = SSOUserInfo.sub
-        3. Map SSO groups → RBAC roles
+        @require_sso_auth_legacy("admin.feature_flag", "write")
+        async def toggle_flag(...): ...
+
+    New API::
+
+        @require_sso_capability("admin.feature_flag:write", registry)
+        async def toggle_flag(auth: AuthContext, ...): ...
+
+    Legacy shim **not behavioral equivalent** — новый API требует
+    SsoRegistry instance и принимает ``auth: AuthContext`` параметр.
+    Здесь возвращается no-op decorator, который emit'ит warning при
+    первом use, чтобы downstream код видел миграционные требования.
+
+    Имя изменено на ``require_sso_auth_legacy`` чтобы не конфликтовать
+    с new-API ``require_sso_auth`` (re-exported из core.auth).
     """
+    warnings.warn(
+        f"require_sso_auth_legacy(resource={resource!r}, action={action!r}) is "
+        f"deprecated; use core.auth.require_sso_auth(registry) + "
+        f"require_sso_capability('{resource}:{action}', registry). "
+        f"See S125 W3 for new API.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def decorator(fn: Any) -> Any:
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            logger.debug("require_sso_auth placeholder for %s/%s", resource, action)
-            # S20: implement SSO validation + AuthZ
+            _logger.debug(
+                "Legacy require_sso_auth shim: %s/%s (no-op, migrate to core.auth)",
+                resource,
+                action,
+            )
             return fn(*args, **kwargs)
 
         return wrapper
