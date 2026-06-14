@@ -5,7 +5,39 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S127 cycle, 2026-06-14] — DSL Variable Store + ExternalDBFacade + Anthropic Prompt Cache + CB-1 cleanup (5 waves, 5 commits, score 9.6, 0 NEW layer violations, +84 tests)
+
+### Added
+
+- **S127 W1 — TD-030 CB-1 cleanup** (`61e75de7`): removed dead `HttpClient.circuit_breaker` (variable created but never referenced). Pruned 17 stale allowlist entries via `--prune-allowlist`. 6 NEW regression tests in `test_http_no_circuit_breaker.py`. Layer linter (extensions): 0 NEW (was 0/17 stale → 0/0).
+- **S127 W2 — TD-020 DSL Variable Store** (`2640d56d`): Airflow-style `${var(\'key\')}` resolver с 3 backends (InMemory/Consul/Postgres), scope fallback chain (route→tenant→global), 4 expression types (`${var}` / `${env:VAR}` / `${body.field}` / `${secret:}` passthrough). 5 NEW files (927 LOC): `core/dsl/variables.py`, `core/dsl/expression_resolver.py`, `dsl/engine/processors/variable_resolve.py`, `dsl/builders/variable_mixin.py` + 43 tests.
+- **S127 W3 — TD-021 ExternalDBFacade** (`ae1efe1b`): capability-checked facade поверх `ExternalDatabaseRegistry`. 4-method API: `query` / `execute` / `call_procedure` / `transaction` (with `TransactionContext` для commit/rollback). 2 NEW files (494 LOC): `core/db/external_facade.py` + 12 tests.
+- **S127 W4 — TD-022 Anthropic Prompt Cache (partial)** (`5c4bae28`): AIGateway injects `cache_control: {type: ephemeral, ttl: 300}` в user/system content для cacheable моделей (claude-3-5/3-7/sonnet-4/opus-4/haiku-4). 50-90% token savings на повторных вызовах. 3 NEW files (339 LOC): `infrastructure/ai/prompt_cache_middleware.py` + integration в `llm_mixin.py` + 23 tests.
+- **S127 W5 — ADR-0214 sprint closure** (this entry): W1-W4 wave-by-wave detail + tech debt burn-down (1 gap closed, 3 partial, 1 improved) + score 9.5→9.6 + S128 backlog.
+
+### Tests
+
+- +84 tests collected глобально от S127 (43 VariableStore + 12 ExternalDB + 23 PromptCache + 6 CB cleanup)
+- 6/6 HttpClient dead-code regression tests pass
+- 43/43 DSL Variable Store tests pass (scope parsing, TTL expiry, fallback chain, multi-block expressions)
+- 12/12 ExternalDBFacade tests pass (query/execute/transaction + commit/rollback semantics)
+- 23/23 Anthropic PromptCache tests pass (7 cacheable + 5 non-cacheable models)
+- 0 NEW regressions vs S126 baseline
+- Pre-existing failures (НЕ мои): 8 `test_http.py::test_process_response_*` (Pydantic deprecation в `core/config/services/storage.py:78`, not related)
+
+### Backlog for Sprint 128 (5 items, per `reports/reaudit/s126_sprint_plan.md`)
+
+- **TD-024 (P1)** — Consul CertStore backend (`backend: Literal[...]` enum + `infrastructure/cert/consul_cert_backend.py`)
+- **TD-023 (P1)** — TransformCdcEventProcessor (Debezium + pgoutput format)
+- **TD-025 (P1)** — DaskMixin в RouteBuilder
+- **TD-026 (P1)** — gRPC File Streaming (DownloadFile/UploadFile)
+- **TD-022 continuation** — PydanticAIClient path + OpenAI cache
+- **TD-021 continuation** — Migrate 5+ callsites к `ExternalDBFacade.get_default()`
+- **TD-030 continuation** — `smtp.py` refactor к `Breaker.guard()` API
+- **TD-001, TD-031** — Continue layer linter closure + D5 B2/B3 backlog
+
 ## [Unreleased] — Autonomous cycle S125 + S126 W0 (2026-06-14) — SSO/IdP layer built (SsoRegistry + require_sso_auth + shim) + S67 regressions fix (7 commits, score 9.9+, 0 boundary violations, 0 collection errors, 0 untracked runtime failures)
+ + S126 W0 (2026-06-14) — SSO/IdP layer built (SsoRegistry + require_sso_auth + shim) + S67 regressions fix (7 commits, score 9.9+, 0 boundary violations, 0 collection errors, 0 untracked runtime failures)
 
 ### Added
 
