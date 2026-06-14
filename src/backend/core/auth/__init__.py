@@ -13,11 +13,20 @@ from enum import Enum
 from typing import Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth
+from src.backend.core.auth.auth_context_helpers import (
+    extract_tenant_id,
+    extract_user_groups,
+)
 from src.backend.core.auth.mtls_backend import (
     MtlsBackend,
     MtlsConfig,
     MtlsVerificationError,
     ParsedClientCert,
+)
+from src.backend.core.auth.require_sso_auth import (
+    RequireSsoAuthError,
+    require_sso_auth,
+    require_sso_capability,
 )
 from src.backend.core.auth.saml_backend import (
     SamlAuthResult,
@@ -46,6 +55,7 @@ __all__ = (
     "MtlsConfig",
     "MtlsVerificationError",
     "ParsedClientCert",
+    "RequireSsoAuthError",
     "SamlAuthResult",
     "SamlBackend",
     "SamlConfig",
@@ -56,6 +66,10 @@ __all__ = (
     "SsoRegistryVaultError",
     "SSOUserInfo",
     "VaultClientProtocol",
+    "extract_tenant_id",
+    "extract_user_groups",
+    "require_sso_auth",
+    "require_sso_capability",
 )
 
 
