@@ -158,5 +158,6 @@
 | 0200 | ADR-0200: Sprint 114 closure — 191 → 0 layer violations + 10 audit tests fixed + P0-1/P0-2 closed | — | [0200-sprint-114-closure.md](0200-sprint-114-closure.md) |
 | 0201 | ADR-0201: Sprint 115 closure — DSL Protocol inversion (W1) + dsl.* architectural exceptions (W2-W4) + verification | — | [0201-sprint-115-closure.md](0201-sprint-115-closure.md) |
 | 0202 | ADR-0202: Sprint 116 Closure — DSL bulk final + typer+rich migration + orphan tests + NO-OP fact-check | Accepted (Sprint 116 W5, 2026-06-12) | [0202-sprint-116-closure.md](0202-sprint-116-closure.md) |
+| 0203 | ADR-0203: Sprint 117 Closure — Tenant Models Fact-Check (NO-OP, 2 closed + 1 by-design) | Accepted (Sprint 117 W1, 2026-06-12) | [0203-sprint-117-closure.md](0203-sprint-117-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
