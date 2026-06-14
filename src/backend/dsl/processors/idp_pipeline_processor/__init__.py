@@ -44,6 +44,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # on well-formed documents.
 
 from src.backend.dsl.processors.idp_pipeline_processor.helpers import (
+    DEFAULT_EXTRACTORS,  # S124 W2: restored constant (lost in S65 W4 decomp)
     _coerce_to_text,  # S65 W4: helper re-export
     _contract_extractors,  # S65 W4: helper re-export
     _default_extractors_for,  # S65 W4: helper re-export
@@ -80,6 +81,7 @@ __all__ = (
     "_contract_extractors",
     "_receipt_extractors",
     "_default_extractors_for",
+    "DEFAULT_EXTRACTORS",
     "classify_document",
     "extract_fields",
     "_rule_required_present",

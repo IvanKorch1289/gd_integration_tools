@@ -53,6 +53,16 @@ from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-
 __all__ = ("RAGService", "RAGCitation")
 
 
+def get_rag_service() -> RAGService:
+    """S124 W2: восстановлено (потеряно при S64 W4 decomp).
+
+    Singleton-factory для RAGService через app_state_singleton.
+    Используется lazy-импортом из hybrid_rag / semantic_cache /
+    feedback_indexer / ai_agent.rag_mixin.
+    """
+    return app_state_singleton.get_or_create("rag_service", RAGService)
+
+
 class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):
     """RAG service (4 mixins = 13 methods + 1 core)."""
 

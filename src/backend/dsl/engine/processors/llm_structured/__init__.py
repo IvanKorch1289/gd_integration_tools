@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.registry import processor
+from src.backend.dsl.registry import processor as _processor_reg
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -56,6 +56,30 @@ from src.backend.dsl.engine.processors.llm_structured.serialization_mixin import
 __all__ = ("LLMStructuredProcessor",)
 
 
+@_processor_reg(
+    "llm_structured",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "required": ["model", "output_schema", "prompt"],
+        "properties": {
+            "model": {"type": "string"},
+            "output_schema": {"type": ["string", "object", "null"]},
+            "prompt": {"type": "string"},
+            "retry": {"type": "integer", "minimum": 0, "default": _DEFAULT_RETRY},
+            "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "default": _DEFAULT_TEMPERATURE,
+            },
+            "cost_budget_usd": {"type": ["number", "null"]},
+            "to": {"type": "string"},
+        },
+    },
+    capabilities=("ai.llm.litellm", "net.outbound.litellm:external"),
+    meta={"tier": 2, "category": "ai", "version": "v17"},
+    tags=("ai", "llm", "structured-output"),
+)
 class LLMStructuredProcessor(
     ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin
 ):

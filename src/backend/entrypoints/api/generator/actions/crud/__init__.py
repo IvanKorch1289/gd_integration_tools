@@ -64,6 +64,19 @@ class CrudMixin(ReadMixin, WriteMixin, VersioningMixin, QueryMixin):
 
     __slots__ = ()
 
+    # Маппинг CRUD-глагол → имя метода на сервисе.
+    # Используется в ``_register_crud_action_metadata`` для регистрации
+    # handler в ``action_handler_registry``. S124 W2: восстановлено
+    # (потеряно при S65 decomp).
+    _CRUD_VERB_TO_SERVICE_METHOD: dict[str, str] = {
+        "list": "list",
+        "get": "get",
+        "create": "create",
+        "create_many": "bulk_create",
+        "update": "update",
+        "delete": "delete",
+    }
+
     @classmethod
     def _register_crud_action_metadata(
         cls,

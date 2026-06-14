@@ -17,6 +17,7 @@ from src.backend.services.ai.semantic_cache.helpers import (
 )
 from src.backend.services.ai.semantic_cache.l3_cache import (
     L3RetrievalGraphCache,  # S67 W3: re-export
+    RAG_CACHE_INVALIDATE_CHANNEL,  # S124 W2: re-export for test_l3_retrieval
 )
 from src.backend.services.ai.semantic_cache.semantic_cache import (
     SemanticCache,  # S67 W3: re-export
@@ -25,6 +26,7 @@ from src.backend.services.ai.semantic_cache.semantic_cache import (
 __all__ = (
     "SemanticCache",
     "L3RetrievalGraphCache",
+    "RAG_CACHE_INVALIDATE_CHANNEL",
     "get_semantic_cache",
     "get_l3_retrieval_cache",
 )

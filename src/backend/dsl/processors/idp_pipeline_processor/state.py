@@ -31,6 +31,12 @@ class _FieldPattern:
 
     name: str
     pattern: str
+    regex: str  # alias for pattern (used by DEFAULT_EXTRACTORS public API)
+
+    def __init__(self, name: str, pattern: str) -> None:
+        self.name = name
+        self.pattern = pattern
+        self.regex = pattern  # public API: extracted regexes
 
     def compiled(self) -> re.Pattern[str]:
         return re.compile(self.pattern, re.IGNORECASE | re.MULTILINE)

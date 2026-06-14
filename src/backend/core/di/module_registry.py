@@ -75,8 +75,8 @@ INFRA_MODULES: Final[dict[str, str]] = {
     # ─── Database ───────────────────────────────────────────────────
     "database.session_manager": f"{_INFRA}.database.session_manager",
     "database.model_registry": f"{_INFRA}.database.model_registry",
-    "database.models.workflow_event": f"{_INFRA}.database.models.workflow_event",
-    "database.models.workflow_instance": f"{_INFRA}.database.models.workflow_instance",
+    "database.models.workflow_event": "src.backend.core.domain.models.workflow_event",
+    "database.models.workflow_instance": "src.backend.core.domain.models.workflow_instance",
     # ─── Repositories ───────────────────────────────────────────────
     "repos.connector_configs": f"{_INFRA}.repositories.connector_configs_mongo",
     "repos.files": f"{_INFRA}.repositories.files",

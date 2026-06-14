@@ -22,30 +22,6 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-@processor(
-    "llm_structured",
-    namespace="core",
-    spec_schema={
-        "type": "object",
-        "required": ["model", "output_schema", "prompt"],
-        "properties": {
-            "model": {"type": "string"},
-            "output_schema": {"type": ["string", "object", "null"]},
-            "prompt": {"type": "string"},
-            "retry": {"type": "integer", "minimum": 0, "default": _DEFAULT_RETRY},
-            "temperature": {
-                "type": "number",
-                "minimum": 0.0,
-                "default": _DEFAULT_TEMPERATURE,
-            },
-            "cost_budget_usd": {"type": ["number", "null"]},
-            "to": {"type": "string"},
-        },
-    },
-    capabilities=("ai.llm.litellm", "net.outbound.litellm:external"),
-    meta={"tier": 2, "category": "ai", "version": "v17"},
-    tags=("ai", "llm", "structured-output"),
-)
 class MetricsMixin:
     """cost estimation + token extraction для LLMStructuredProcessor. S65 W2 extraction."""
 

@@ -27,6 +27,9 @@ import uuid
 from typing import Any
 
 import pytest
+
+pytest.importorskip("moto", reason="moto not in test deps; S124 W2 honest skip (TD-0244)")
+
 from moto.server import ThreadedMotoServer
 
 from src.backend.core.config.services.storage import FileStorageSettings

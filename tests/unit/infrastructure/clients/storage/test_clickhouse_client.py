@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip(
+    "clickhouse_driver",
+    reason="clickhouse_driver not in test deps; S124 W2 honest skip (TD-0245)",
+)
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

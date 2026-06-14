@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
+from src.backend.dsl.processors.idp_pipeline_processor.state import _FieldPattern
+
 if TYPE_CHECKING:
     pass
 
@@ -68,6 +70,15 @@ def _default_extractors_for(doc_type: str) -> list[_FieldPattern]:
     if doc_type == "receipt":
         return _receipt_extractors()
     return []
+
+
+# Public default-extractors mapping: type → list[regex]. Restored in S124 W2
+# (was lost during S65 W4 decomp). Used by IDP tests + public API.
+DEFAULT_EXTRACTORS: dict[str, list[str]] = {
+    "invoice": [p.regex for p in _invoice_extractors()],
+    "contract": [p.regex for p in _contract_extractors()],
+    "receipt": [p.regex for p in _receipt_extractors()],
+}
 
 
 def classify_document(text: str) -> str:
