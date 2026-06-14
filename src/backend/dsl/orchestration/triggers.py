@@ -45,10 +45,12 @@ class FileSensorTaskWrapper:
         self._task = task
 
     async def start(self) -> None:
+        """No-op: task уже started в DSL builder."""
         # Task already started in DSL builder; this is no-op
         pass
 
     async def stop(self) -> None:
+        """Cancel underlying task и await с swallow CancelledError/Exception."""
         if self._task and not self._task.done():
             self._task.cancel()
             try:
@@ -111,6 +113,7 @@ class IntervalTrigger:
         self._stop = asyncio.Event()
 
     async def start(self) -> None:
+        """Запускает background loop: dispatch payload с interval_s, опционально immediate."""
 
         async def _loop() -> None:
             if self._start_immediately:
@@ -133,6 +136,7 @@ class IntervalTrigger:
         )
 
     async def stop(self) -> None:
+        """Signal stop event, cancel task, await с swallow exception."""
         self._stop.set()
         if self._task:
             self._task.cancel()
@@ -189,6 +193,7 @@ class WebhookTrigger:
         self._route_added = False
 
     async def start(self) -> None:
+        """Регистрирует FastAPI route для webhook → DSL dispatch (idempotent)."""
         if self._route_added:
             return
         # Try to find FastAPI app from common locations
@@ -231,6 +236,7 @@ class WebhookTrigger:
         )
 
     async def stop(self) -> None:
+        """Удаляет webhook route из FastAPI router (best-effort)."""
         if self._app is not None and self._route_added:
             try:
                 self._app.router.routes = [
@@ -259,24 +265,29 @@ class TriggerRegistry:
         self._lock = threading.Lock()
 
     def register(self, trigger: Trigger) -> None:
+        """Регистрирует trigger по name (replace если уже есть, с warning)."""
         with self._lock:
             if trigger.name in self._triggers:
                 _log.warning("Trigger %s already registered, replacing", trigger.name)
             self._triggers[trigger.name] = trigger
 
     def unregister(self, name: str) -> None:
+        """Удаляет trigger по name (no-op если нет)."""
         with self._lock:
             self._triggers.pop(name, None)
 
     def get(self, name: str) -> Trigger | None:
+        """Возвращает trigger по name или None."""
         with self._lock:
             return self._triggers.get(name)
 
     def list_names(self) -> list[str]:
+        """Возвращает список зарегистрированных trigger names."""
         with self._lock:
             return list(self._triggers.keys())
 
     async def start_all(self) -> None:
+        """Запускает все triggers sequentially (errors swallowed per trigger)."""
         with self._lock:
             triggers = list(self._triggers.values())
         for t in triggers:
@@ -286,6 +297,7 @@ class TriggerRegistry:
                 _log.exception("Trigger %s start failed", t.name)
 
     async def stop_all(self) -> None:
+        """Останавливает все triggers sequentially (errors swallowed per trigger)."""
         with self._lock:
             triggers = list(self._triggers.values())
         for t in triggers:

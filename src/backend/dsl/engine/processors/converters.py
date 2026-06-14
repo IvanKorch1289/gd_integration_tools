@@ -23,6 +23,8 @@ _conv_logger = get_logger("dsl.converters")
 
 
 class ConversionStrategy(ABC):
+    """Базовый класс для format conversion strategies (Strategy pattern)."""
+
     @abstractmethod
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
@@ -30,6 +32,8 @@ class ConversionStrategy(ABC):
 
 
 class JsonToYaml(ConversionStrategy):
+    """Конвертирует JSON → YAML с сохранением unicode."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import yaml
@@ -40,6 +44,8 @@ class JsonToYaml(ConversionStrategy):
 
 
 class YamlToJson(ConversionStrategy):
+    """Конвертирует YAML → JSON через orjson."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import yaml
@@ -50,6 +56,8 @@ class YamlToJson(ConversionStrategy):
 
 
 class JsonToMsgpack(ConversionStrategy):
+    """Сериализует JSON → MessagePack binary (use_bin_type=True)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import msgpack
@@ -60,6 +68,8 @@ class JsonToMsgpack(ConversionStrategy):
 
 
 class MsgpackToJson(ConversionStrategy):
+    """Десериализует MessagePack → Python object (raw=False для str keys)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import msgpack
@@ -70,6 +80,8 @@ class MsgpackToJson(ConversionStrategy):
 
 
 class JsonToXml(ConversionStrategy):
+    """Конвертирует JSON → XML через xmltodict (auto-wrap non-dict в root)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import xmltodict
@@ -87,6 +99,8 @@ class JsonToXml(ConversionStrategy):
 
 
 class XmlToJson(ConversionStrategy):
+    """Парсит XML → dict через xmltodict (auto-unwrap single-root)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import xmltodict
@@ -100,6 +114,8 @@ class XmlToJson(ConversionStrategy):
 
 
 class CsvToParquet(ConversionStrategy):
+    """Конвертирует CSV (string/list-of-dicts) → Parquet binary через polars."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import io
@@ -118,6 +134,8 @@ class CsvToParquet(ConversionStrategy):
 
 
 class ParquetToCsv(ConversionStrategy):
+    """Конвертирует Parquet binary → CSV string через polars."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         import io
@@ -131,6 +149,8 @@ class ParquetToCsv(ConversionStrategy):
 
 
 class HtmlToJson(ConversionStrategy):
+    """Извлекает структуру из HTML: title/headings/paragraphs/links/tables."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         if not isinstance(data, str):
@@ -170,6 +190,8 @@ class HtmlToJson(ConversionStrategy):
 
 
 class JsonToBson(ConversionStrategy):
+    """Сериализует dict → BSON binary (MongoDB storage format)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         from bson import BSON
@@ -182,6 +204,8 @@ class JsonToBson(ConversionStrategy):
 
 
 class BsonToJson(ConversionStrategy):
+    """Десериализует BSON binary → Python dict."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         from bson import BSON
@@ -192,6 +216,8 @@ class BsonToJson(ConversionStrategy):
 
 
 class DictToCsv(ConversionStrategy):
+    """Сериализует list-of-dicts → CSV string через polars (fallback: manual join)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         if not isinstance(data, list) or not data:
@@ -210,6 +236,8 @@ class DictToCsv(ConversionStrategy):
 
 
 class CsvToDict(ConversionStrategy):
+    """Парсит CSV string → list-of-dicts через polars (fallback: manual split)."""
+
     def convert(self, data: Any) -> Any:
         """Выполнить операцию convert."""
         if not isinstance(data, str):

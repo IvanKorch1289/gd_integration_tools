@@ -100,6 +100,7 @@ class CorrelationIdentifierProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Применяет correlation_id политику: preserve existing или generate new."""
         existing = exchange.in_message.get_header(self._header_name)
 
         if existing and self._preserve:
@@ -117,10 +118,12 @@ class CorrelationIdentifierProcessor(BaseProcessor):
         _log.debug("CorrelationIdentifier: %s (preserved=%s)", new_id, bool(existing))
 
     def stats(self) -> dict[str, int]:
+        """Возвращает счётчики generated/preserved под lock."""
         with self._lock:
             return {"generated": self._generated, "preserved": self._preserved}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {
             "type": "correlation_identifier",
             "preserve_existing": self._preserve,
@@ -184,6 +187,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Применяет expiration policy: drop expired messages или route via on_expired_action."""
         # Compute expiration deadline
         exp: datetime | None = None
         if self._resolver is not None:
@@ -221,10 +225,12 @@ class MessageExpirationProcessor(BaseProcessor):
             _log.debug("MessageExpiration: not expired, remaining=%sms", remaining_ms)
 
     def stats(self) -> dict[str, int]:
+        """Возвращает счётчики expired/kept под lock."""
         with self._lock:
             return {"expired": self._expired_count, "kept": self._kept_count}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {
             "type": "message_expiration",
             "ttl_seconds": self._ttl_seconds,
@@ -298,6 +304,7 @@ class RedeliveryPolicyProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Применяет redelivery policy: retry с backoff до max_attempts, затем DLQ."""
         attempt_raw = exchange.in_message.get_header(self._header)
         if attempt_raw is None:
             attempt = 1
@@ -343,10 +350,12 @@ class RedeliveryPolicyProcessor(BaseProcessor):
             await asyncio.sleep(delay)
 
     def stats(self) -> dict[str, int]:
+        """Возвращает счётчики retried/exhausted под lock."""
         with self._lock:
             return {"retried": self._retried, "exhausted": self._exhausted}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {
             "type": "redelivery_policy",
             "max_attempts": self._max_attempts,
@@ -403,6 +412,7 @@ class ReturnAddressProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Capture return address для request-reply: preserve existing или resolve new."""
         # Preserve existing return address if already set (chained requests)
         existing = exchange.in_message.get_header(self._header_name)
         if existing:
@@ -423,8 +433,10 @@ class ReturnAddressProcessor(BaseProcessor):
         _log.debug("ReturnAddress: set %s", addr_str)
 
     def stats(self) -> dict[str, int]:
+        """Возвращает счётчик resolved под lock."""
         with self._lock:
             return {"resolved": self._resolved_count}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует конфиг процессора в JSON-Schema spec."""
         return {"type": "return_address", "return_address": self._static_address}
