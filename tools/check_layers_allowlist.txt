@@ -222,3 +222,20 @@ src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
+# S115 W4: entrypoints + infrastructure/observability = by-design DSL usage
+# - entrypoints/api/v1/endpoints/dsl_routes.py: admin endpoint для DSL routes
+# - entrypoints/api/v1/endpoints/imports.py: DSL import endpoint
+# - infrastructure/observability/{metrics,tracing}.py: DSL pipeline context
+src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.pipeline
+src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.tracer
+src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_loader
+src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_store
+src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.builder
+src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.execution_engine
+src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.pipeline_registry
+src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.context
+src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.exchange
+src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.middleware
+src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.context
+src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.exchange
+src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.middleware
