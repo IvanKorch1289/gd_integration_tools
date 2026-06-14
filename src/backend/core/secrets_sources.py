@@ -86,6 +86,18 @@ class VaultSettingsSource:
         return self._load()
 
     def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        """Получить значение секрета ``field_name`` из Vault KV v2.
+
+        Args:
+            field: Pydantic FieldInfo (используется для совместимости
+                с pydantic-settings API; не читается).
+            field_name: Имя ключа внутри JSON-секрета (например ``api_key``).
+
+        Returns:
+            Кортеж ``(value, field_name, is_complex)``: ``value`` равен
+            ``None`` если ключ отсутствует; ``is_complex`` всегда ``False``
+            (Vault source не помечает поля как complex).
+        """
         data = self._load()
         if field_name in data:
             return data[field_name], field_name, False
@@ -136,6 +148,18 @@ class AwsSecretsManagerSource:
         return self._load()
 
     def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        """Получить значение секрета ``field_name`` из AWS Secrets Manager.
+
+        Args:
+            field: Pydantic FieldInfo (для совместимости с pydantic-settings;
+                не читается).
+            field_name: Имя ключа внутри JSON-секрета (например ``db_password``).
+
+        Returns:
+            Кортеж ``(value, field_name, is_complex)``: ``value`` равен
+            ``None`` если ключ отсутствует в секрете; ``is_complex`` всегда
+            ``False``.
+        """
         data = self._load()
         if field_name in data:
             return data[field_name], field_name, False

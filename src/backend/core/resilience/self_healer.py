@@ -35,9 +35,27 @@ class SelfHealer:
         self._healers: dict[str, Callable[[], Any]] = {}
 
     def register_healer(self, component: str, health_check: Callable[[], Any]) -> None:
+        """Зарегистрировать health-check для ``component``.
+
+        Args:
+            component: Имя компонента (должно совпадать с именем,
+                зарегистрированным в ``degradation_manager``).
+            health_check: Callable без аргументов, возвращающий ``bool``
+                (или awaitable[bool]). ``True`` означает, что компонент
+                восстановлен.
+        """
         self._healers[component] = health_check
 
     async def start(self) -> None:
+        """Запустить фоновый цикл self-healing (APScheduler или asyncio).
+
+        Предпочитает APScheduler (``AsyncIOScheduler``) — persistence задач
+        и надёжный shutdown. Если APScheduler недоступен (ImportError или
+        иная ошибка инициализации), fallback на простой ``asyncio.sleep``
+        loop.
+
+        Идемпотентно: повторный ``start`` без ``stop`` перезапускает цикл.
+        """
         self._running = True
         try:
             from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -62,6 +80,12 @@ class SelfHealer:
         )
 
     async def stop(self) -> None:
+        """Остановить фоновый цикл и освободить ресурсы.
+
+        Корректно глушит APScheduler (если был запущен) и отменяет
+        fallback-задачу. После ``stop`` можно безопасно вызвать ``start``
+        повторно.
+        """
         self._running = False
         if self._scheduler is not None:
             self._scheduler.shutdown(wait=False)

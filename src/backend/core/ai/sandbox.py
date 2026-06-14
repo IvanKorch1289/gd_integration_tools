@@ -89,6 +89,22 @@ class NoOpSandbox:
         files: Mapping[str, bytes] | None = None,
         workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
+        """Заглушка sandbox-провайдера.
+
+        Всегда выбрасывает ``RuntimeError`` с инструкцией по установке
+        e2b-code-interpreter. Используется по умолчанию, если ни один
+        провайдер не сконфигурирован — гарантирует, что код НЕ будет
+        исполняться через ``subprocess.run`` (V15 R-V15-4).
+
+        Args:
+            code: Исходный код Python для исполнения (игнорируется).
+            timeout_s: Максимальное время исполнения (игнорируется).
+            files: Дополнительные файлы для контекста (игнорируется).
+            workspace: Handle на workspace для AI Safety (игнорируется).
+
+        Raises:
+            RuntimeError: Всегда, если не подключён реальный провайдер.
+        """
         raise RuntimeError(
             "CodeSandbox не сконфигурирован: установите e2b-code-interpreter "
             "и задайте E2B_API_KEY (или подключите альтернативный sandbox-провайдер)."
