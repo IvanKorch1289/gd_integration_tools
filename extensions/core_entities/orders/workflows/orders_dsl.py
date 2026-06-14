@@ -38,8 +38,8 @@ from typing import Any
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.workflow.builder import WorkflowBuilder
-from src.backend.infrastructure.workflow.executor import (
+from src.backend.core.workflow.builder import WorkflowBuilder
+from src.backend.core.workflow.builder import (
     DurableWorkflowProcessor,
     WorkflowStep,
 )
@@ -65,7 +65,7 @@ async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
     Использует новый gateway из src/infrastructure/notifications/; старый
     notification_hub — deprecated (DeprecationWarning шлёт при import).
     """
-    from src.backend.infrastructure.notifications import get_gateway
+    from src.backend.core.notifications import get_gateway
 
     gw = get_gateway()
     payload = body.get("payload") or body

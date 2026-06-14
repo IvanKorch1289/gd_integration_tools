@@ -31,7 +31,7 @@ from src.backend.schemas.route_schemas.orders import (
     OrderVersionSchemaOut,
 )
 from src.backend.core.services.base_service import BaseService
-from src.backend.services.integrations.skb import APISKBService, get_skb_service
+from src.backend.core.integrations.skb import APISKBService, get_skb_service
 
 if TYPE_CHECKING:
     pass
@@ -105,7 +105,7 @@ class OrderService(
         if instance is None:
             return
         try:
-            from src.backend.services.io.indexers import get_order_indexer
+            from src.backend.core.io.indexers import get_order_indexer
 
             get_order_indexer().index_one_fire_and_forget(instance)
         except Exception:  # noqa: BLE001
@@ -115,7 +115,7 @@ class OrderService(
         """Wave 9.3.2: удаление документа из ES (fire-and-forget)."""
         try:
             from src.backend.core.utils.task_registry import get_task_registry
-            from src.backend.services.io.indexers import get_order_indexer
+            from src.backend.core.io.indexers import get_order_indexer
 
             get_task_registry().create_task(
                 get_order_indexer().delete_one(value),

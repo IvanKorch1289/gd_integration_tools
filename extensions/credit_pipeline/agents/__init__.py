@@ -8,7 +8,7 @@ Integration pattern (вместо supervisor stub):
     from extensions.credit_pipeline.agents import (
         scoring_agent, document_parser_agent, decision_agent,
     )
-    from src.backend.services.ai.multi_agent import MultiAgentSupervisor, AgentSpec
+    from src.backend.core.ai.multi_agent import MultiAgentSupervisor, AgentSpec
 
     supervisor = MultiAgentSupervisor(
         name="credit_orchestrator",
