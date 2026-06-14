@@ -7,6 +7,10 @@ AdaptiveStreamReader (3 methods).
 Classes: AdaptiveStreamReader.
 """
 
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Protocols
@@ -80,7 +84,7 @@ class AdaptiveStreamReader:
             new_count = self._current_count
 
         if new_count != self._current_count:
-            logger.debug(
+            _logger.debug(
                 "AdaptiveStreamReader: count %d → %d (util=%.2f)",
                 self._current_count,
                 new_count,

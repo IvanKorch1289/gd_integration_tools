@@ -10,6 +10,16 @@ Classes: StreamingBackpressureController.
 import asyncio
 import time
 
+from src.backend.core.logging import get_logger
+from src.backend.core.resilience.backpressure.types import (
+    BackpressureState,
+    ConsumerControlProtocol,
+)
+
+# Backward-compat alias — original code used bare `logger` name.
+logger = get_logger(__name__)
+_logger = logger
+
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------

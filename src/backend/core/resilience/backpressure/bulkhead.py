@@ -9,6 +9,10 @@ Classes: AdaptiveBulkhead.
 
 import asyncio
 
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
+
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
@@ -102,7 +106,7 @@ class AdaptiveBulkhead:
             for _ in range(new_value - self._current):
                 self._semaphore.release()
             self._current = new_value
-            logger.info("AdaptiveBulkhead: scale_up → %d", self._current)
+            _logger.info("AdaptiveBulkhead: scale_up → %d", self._current)
         return self._current
 
     def scale_down(self) -> int:
@@ -117,5 +121,5 @@ class AdaptiveBulkhead:
         new_value = max(self._min, self._current - self._adjust_step)
         if new_value < self._current:
             self._current = new_value
-            logger.info("AdaptiveBulkhead: scale_down → %d", self._current)
+            _logger.info("AdaptiveBulkhead: scale_down → %d", self._current)
         return self._current
