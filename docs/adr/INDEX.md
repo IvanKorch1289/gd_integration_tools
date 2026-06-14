@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **148**; уникальных слотов: **147**.
+Всего ADR-файлов: **149**; уникальных слотов: **148**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -154,5 +154,6 @@
 | 0196 | ADR-0196: Sprint 110 closure — Layer policy enforcement + linter tooling hardening | — | [0196-sprint-110-closure.md](0196-sprint-110-closure.md) |
 | 0197 | ADR-0197: Sprint 111 closure — DSL Completion + DX (TD-017 / TD-004 / TD-012 closure + lifespan.py god-file decomposition) | — | [0197-sprint-111-closure.md](0197-sprint-111-closure.md) |
 | 0198 | ADR-0198: Sprint 112 closure — Layer linter stale cleanup + NEW violation triage + 3-entry allowlist closure | — | [0198-sprint-112-closure.md](0198-sprint-112-closure.md) |
+| 0199 | ADR-0199: Sprint 113 closure — AuditService canonical home + 10 extensions allowlist + Bucket A classification + prune CI hook | — | [0199-sprint-113-closure.md](0199-sprint-113-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

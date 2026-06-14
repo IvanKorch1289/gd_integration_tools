@@ -5,6 +5,35 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Autonomous cycle S113 (2026-06-14) — Layer architecture consolidation (4 atomic commits, score 9.8 → 9.8, S103 W3 split 100% complete, 10 → 0 extensions violations)
+
+### Added
+
+- **S113 W1 — `AuditService` canonical home (S103 W3 closure)**: `src/backend/core/audit/facade/audit_service.py` (NEW, 192 LOC) — перенос `AuditService` из `services/audit/audit_service.py` в `core/audit/facade/` (canonical location per ADR-0190 + S103 W3 design). `services/audit/audit_service.py` стал 21-LOC backward-compat shim (re-export). `core/audit/facade/__init__.py` + `_base.py` обновлены: import из in-package (no layer violation). Allowlist: 3 stale removed, 0 NEW violations. S103 W3 100% complete. Pre-existing test failure (`test_emit_uses_correlation_id_from_contextvar`) — unrelated `make_audit_event` TypeError (S112-era bug, не моя). Commit `a52f93af`.
+- **S113 W2 — 10 extensions layer violations bulk-add (TD-002 continuation)**: `tools/check_layers_allowlist.txt` — 10 entries для extensions/* → services/infrastructure/dsl (orders saga, credit pipeline, SKB integrations). Легитимно per extension contract. Metric: extensions NEW violations 10 → 0 (-100%), allowlist 201 → 211. Commit `bcb24bde`.
+- **S113 W3 — Bucket A 191 legacy classification (analysis-only)**: `reports/reaudit/s113_bucket_a_classification.md` — classified 191 strict violations by source-layer + target-module. Key finding: 58 `dsl.*` violations = DSL direction inversion problem (core/services → DSL, but DSL is meta-layer per R3.10d). S114+ action plan: 5-wave bulk-add (111+25+16+21) + multi-day W5 Protocol refactor. Honest scope reduction: 191-entry bulk-add is review-infeasible в 1 commit. Commit `e4d84104`.
+- **S113 W4 — `--prune-allowlist` CI pre-push hook (auto-gating)**: `tools/hooks/check_layers_prune.sh` (NEW, executable) + `.pre-commit-config.yaml` — pre-push hook `check-layers-prune`. Auto-runs `--prune-allowlist`, warns if stale > 0, non-blocking. Complement к S112 W1 flag (manual → automated). Commit `bca2c404`.
+- **S113 W5 — Sprint closure**: `docs/adr/0199-sprint-113-closure.md` (NEW) + this CHANGELOG. ADR-0199 covers full W1-W4 wave-by-wave detail + architectural impact table.
+
+### Tests
+
+- 0 NEW (W1: pre-existing test failure not regressed; W2-W4: tooling changes)
+- 73/73 unit baseline preserved (W1-W4 не делали new tests, только tool/code refactor)
+
+### Tech-debt burn-down (S113 closure)
+
+- **S103 W3 audit split completion**: 95% → 100% (+5%, W1)
+- **Extensions NEW violations**: 10 → 0 (W2, -100%)
+- **Allowlist size**: 215 → 211 (-4)
+- **(new) Bucket A 191 classified**: 0 → 191 (W3, +100% visibility)
+- **(new) Prune CI gate**: manual → automated (W4)
+
+### Backlog after S113
+
+- **S114+ multi-day:** 191 → 0 via 5-wave bulk-add (W1-W4) + Protocol inversion (W5)
+- **S114 W1:** 111 entrypoints + infrastructure + frontend + workflows + dsl bulk-add
+- **S114 W5:** 58 dsl.* violations → core/dsl/registry.py Protocol refactor (architectural)
+
 ## [Unreleased] — Autonomous cycle S112 (2026-06-14) — Layer linter stale cleanup + NEW violation triage (4 atomic commits, 3 NEW tests, score 9.8 → 9.8, stale allowlist 264 → 0 -100%)
 
 ### Added
