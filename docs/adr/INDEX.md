@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **151**; уникальных слотов: **150**.
+Всего ADR-файлов: **163**; уникальных слотов: **162**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -157,9 +157,17 @@
 | 0199 | ADR-0199: Sprint 113 closure — AuditService canonical home + 10 extensions allowlist + Bucket A classification + prune CI hook | — | [0199-sprint-113-closure.md](0199-sprint-113-closure.md) |
 | 0200 | ADR-0200: Sprint 114 closure — 191 → 0 layer violations + 10 audit tests fixed + P0-1/P0-2 closed | — | [0200-sprint-114-closure.md](0200-sprint-114-closure.md) |
 | 0201 | ADR-0201: Sprint 115 closure — DSL Protocol inversion (W1) + dsl.* architectural exceptions (W2-W4) + verification | — | [0201-sprint-115-closure.md](0201-sprint-115-closure.md) |
-| 0202 | ADR-0202: Sprint 116 Closure — DSL bulk final + typer+rich migration + orphan tests + NO-OP fact-check | Accepted (Sprint 116 W5, 2026-06-12) | [0202-sprint-116-closure.md](0202-sprint-116-closure.md) |
-| 0203 | ADR-0203: Sprint 117 Closure — Tenant Models Fact-Check (NO-OP, 2 closed + 1 by-design) | Accepted (Sprint 117 W1, 2026-06-12) | [0203-sprint-117-closure.md](0203-sprint-117-closure.md) |
-| 0204 | ADR-0204: Sprint 118 — Docstring Ratchet Plan (multi-sprint, -200/wave, baseline 1625) | Accepted (Sprint 118 W1, 2026-06-12) | [0204-sprint-118-docstring-ratchet-plan.md](0204-sprint-118-docstring-ratchet-plan.md) |
-| 0205 | ADR-0205: Sprint 118 Closure — Docstring Ratchet S118 Complete (1625 → 1524, -101) | Accepted (Sprint 118 W5, 2026-06-12) | [0205-sprint-118-closure.md](0205-sprint-118-closure.md) |
+| 0202 | ADR-0202: Sprint 116 Closure — DSL bulk final + typer+rich migration + orphan tests + NO-OP fact-check | — | [0202-sprint-116-closure.md](0202-sprint-116-closure.md) |
+| 0203 | ADR-0203: Sprint 117 Closure — Tenant Models Fact-Check (NO-OP) | — | [0203-sprint-117-closure.md](0203-sprint-117-closure.md) |
+| 0204 | ADR-0204: Sprint 118 — Docstring Ratchet Plan (multi-sprint, -200/wave) | — | [0204-sprint-118-docstring-ratchet-plan.md](0204-sprint-118-docstring-ratchet-plan.md) |
+| 0205 | ADR-0205: Sprint 118 Closure — Docstring Ratchet S118 Complete (1625 → 1524, -101 violations, -6.2%) | — | [0205-sprint-118-closure.md](0205-sprint-118-closure.md) |
+| 0206 | ADR-0206: Sprint 119 Closure — Docstring Ratchet Complete + Protocol Bulk Amnisty (1625 → 0, -100%) | — | [0206-sprint-119-closure.md](0206-sprint-119-closure.md) |
+| 0207 | ADR-0207: Sprint 120 Closure — Architectural Boundary Hardening (43 → 9 violations, -79%) | — | [0207-sprint-120-closure.md](0207-sprint-120-closure.md) |
+| 0208 | ADR-0208: Sprint 121 Plan — Orphan Tests Root Cause Analysis (17 of 18 deferred from S116 W4) | — | [0208-sprint-121-orphan-tests-plan.md](0208-sprint-121-orphan-tests-plan.md) |
+| 0209 | ADR-0209: Sprint 123 Closure — Boundary Hardening Complete (43 → 1, -98%) | — | [0209-sprint-123-closure.md](0209-sprint-123-closure.md) |
+| 0210 | ADR-0210: Sprint 124 W1 Closure — Boundary Hardening 100% Complete (43 → 0) | — | [0210-sprint-124-w1-closure.md](0210-sprint-124-w1-closure.md) |
+| 0211 | ADR-0211: Sprint 124 Closure — Orphan Tests, Collection Pollution, Composition Mock Hardening (5 waves, 100% scope) | — | [0211-sprint-124-closure.md](0211-sprint-124-closure.md) |
+| 0212 | ADR-0212: Sprint 125 W1 — SSO Registry Design (Re-affirm ADR-0054 + Fill Research Gap) | — | [0212-sprint-125-w1-sso-registry-design.md](0212-sprint-125-w1-sso-registry-design.md) |
+| 0213 | ADR-0213: Sprint 125 Closure — SSO/IdP Layer Built: SsoRegistry + require_sso_auth + Backward-Compat Shim (5 waves, 100% scope, +S126 W0 regressions fix) | — | [0213-sprint-125-closure.md](0213-sprint-125-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

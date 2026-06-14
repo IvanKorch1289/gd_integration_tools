@@ -5,7 +5,35 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Autonomous cycle S124 (2026-06-14) — Orphan tests + collection pollution + composition mock hardening (5 waves, 5 commits, score 9.9+, 0 boundary violations, 0 collection errors, 0 untracked runtime failures)
+## [Unreleased] — Autonomous cycle S125 + S126 W0 (2026-06-14) — SSO/IdP layer built (SsoRegistry + require_sso_auth + shim) + S67 regressions fix (7 commits, score 9.9+, 0 boundary violations, 0 collection errors, 0 untracked runtime failures)
+
+### Added
+
+- **S125 W1 — ADR-0212 SSO registry design re-affirm + research gap fill** (`ba04ec34`): per-tenant IdP config в Vault (ADR-0054 §2), `groups_to_capabilities` mapping, `python3-saml>=1.16`. 5 design decisions → Variant A.
+- **S125 W2 — SsoRegistry per-tenant IdP registry** (`eac6d578`): read-through cache (TTL 300s, `time.monotonic()`, JwksCache-pattern), per-tenant `asyncio.Lock` + double-checked locking, stale-fallback на Vault error, `invalidate(tenant)` / `invalidate_all()`. Pydantic types: `IdpConfig`, `GroupsToCapabilities` (frozen, `resolve(groups)`), `SSOUserInfo` runtime DTO. Exception hierarchy: `SsoRegistryError` → `SsoRegistrySchemaError` (propagates) + `SsoRegistryVaultError` (masked). `HvacVaultClient` + `VaultClientProtocol` для production/tests.
+- **S125 W3 — `require_sso_auth` decorator** (`38483da7`): service-level SSO session auth + groups-to-capabilities RBAC. `@require_sso_auth(registry)` enforces SAML method, `@require_sso_capability(cap, registry)` — granular per-cap. `RequireSsoAuthError(PermissionError)` — fail-closed (HTTP → 403). `auth_context_helpers.py` — `extract_tenant_id` / `extract_user_groups` (duck-typed, reusable). `functools.wraps` для metadata preservation. `SsoRegistryError` propagate без маскирования.
+- **S125 W4 — `services/admin/sso.py` backward-compat shim** (`51567a44`): Sprint 19 stub с 5 `NotImplementedError` заменён на shim. Re-exports 9 symbols из `core.auth` (S125 W2/W3): `SsoRegistry`, `IdpConfig`, `GroupsToCapabilities`, `SSOUserInfo`, `RequireSsoAuthError`, `require_sso_auth`, `require_sso_capability`, `SamlBackend` (через `SamlSSOClient` alias), `SsoRegistryError*`. `AdminSSOConfig` сохранён как legacy class. `OidcSSOClient` — ABC stub (S126+ per ADR-0054 §5). `require_sso_auth_legacy` — renamed old API (resource/action) с DeprecationWarning. Module-level `DeprecationWarning` at import → S127 planned removal (TD-0248).
+- **S125 W5 — ADR-0213 sprint closure** (this entry): full W1-W4 wave-by-wave detail + S126 W0 regressions fix + honest numbers + TD-0247/0248 backlog.
+
+### Fixed
+
+- **S126 W0 W1 — backpressure missing imports after S67 W1 file-split** (`2b1e1697`): S67 W1 (b88ccfe2) split backpressure.py на 5 файлов, но imports не обновлены. `controller.py` — `BackpressureState` + `ConsumerControlProtocol` from `.types` + `logger` alias. `stream_reader.py` + `bulkhead.py` — `get_logger` + `_logger`. `helpers.py` — `StreamingBackpressureController` + singleton state. 3/3 chaos tests fixed.
+- **S126 W0 W2 — ad_directory_client @dataclass restore after S67 W4 file-split** (`f0c4785e`): S67 W4 (01eb8623) per-class file decomp потерял `@dataclass` decorator на `AdServerConfig` + `AdSearchEntry`. `field` + `__post_init__` импортированы, но `dataclass` decorator отсутствовал. Fix: импорт `dataclass` + decorator на оба класса. 23/23 LDAP integration tests fixed (было 6 failed).
+- **S126 W0 W3 — regression sweep verification** (analysis-only, no commit): sweep `tests/unit/core + tests/unit/extensions + tests/chaos` показал 145 failed = 154 baseline − 9 моих фиксов (3 chaos + 6 LDAP). **0 new regressions**. Pre-existing failures (pg_runner_backend 10, rate_limiter_tenant 5) — out of scope.
+
+### Tests
+
+- +23 tests collected глобально (11745 → 11768) от S125 W2 SsoRegistry
+- 23/23 LDAP integration tests passed (после S126 W0 W2)
+- 33/33 LDAP-related tests passed (расширенный sweep)
+- 190/190 в `tests/unit/core/auth + tests/unit/services/admin` (после S125 W4 shim)
+- 176/176 в `tests/unit/core/auth` (после S125 W3)
+- 0 NEW regressions vs S124 baseline
+- Pre-existing failures (НЕ мои): pg_runner_backend (10), rate_limiter_tenant (5) — left as-is, out of scope
+
+## [S124 cycle, 2026-06-14] — Autonomous cycle S124 — Orphan tests + collection pollution + composition mock hardening (5 waves, 5 commits, score 9.9+, 0 boundary violations, 0 collection errors, 0 untracked runtime failures)
+
+
 
 ### Added
 
