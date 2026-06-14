@@ -14,7 +14,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from extensions.credit_pipeline.services.clients.skb import CreditSKBClient
-from src.backend.services.core.base_external_api import BaseExternalAPIClient
+from src.backend.core.services.base import BaseExternalAPIClient
 
 
 def test_credit_skb_client_is_base_external_api_subclass() -> None:
