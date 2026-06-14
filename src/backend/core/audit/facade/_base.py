@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.services.audit.audit_service import get_unified_audit_service
+from src.backend.core.audit.facade.audit_service import get_unified_audit_service
 
 __all__ = ("emit_audit", "emit_audit_safe")
 

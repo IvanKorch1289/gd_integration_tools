@@ -20,6 +20,8 @@ src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.serv
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.rebuff_client
 src/backend/core/ai/pydantic_ai_client.py	core	src.backend.services.ai.gateway.exceptions
+src/backend/core/audit/facade/audit_service.py	core	src.backend.infrastructure.observability.correlation
+src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/ldap_client_factory.py	core	src.backend.services.auth.ad_directory_client
 src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
 src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.debezium_events_backend
@@ -51,6 +53,7 @@ src/backend/core/scaling/auto_scaler.py	core	src.backend.infrastructure.observab
 src/backend/core/scaling/bulkhead_scaler.py	core	src.backend.infrastructure.resilience
 src/backend/core/scaling/bulkhead_scaler.py	core	src.backend.infrastructure.resilience.bulkhead
 src/backend/core/tenancy/quotas.py	core	src.backend.infrastructure.clients.storage.redis
+src/backend/core/tenancy/sqlalchemy_filter.py	core	src.backend.infrastructure.observability.correlation
 src/backend/dsl/agents/fastmcp_server.py	dsl	src.backend.workflows.registry
 src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.service
 src/backend/entrypoints/api/generator/actions/__init__.py	entrypoints	src.backend.dsl.commands.action_registry
@@ -157,7 +160,6 @@ src/backend/services/ai/langmem_service.py	services	src.backend.infrastructure.d
 src/backend/services/ai/metrics.py	services	src.backend.infrastructure.observability.metrics_registry
 src/backend/services/ai/rag_ingest_store.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/ai/rag_service/__init__.py	services	src.backend.infrastructure.cache.rag.three_tier
-src/backend/services/audit/audit_service.py	services	src.backend.infrastructure.observability.correlation
 src/backend/services/billing/quotas_service.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
@@ -202,14 +204,3 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
-
-# S112 W3: 3 NEW core violations allowlisted (legitimate per architecture).
-# 1) sqlalchemy_filter → observability.correlation: tenant filter needs
-#    correlation_id for cross-tenant log tracing. cross-layer dependency
-#    acknowledged (similar to outbound_http.py → observability from S109 W1).
-src/backend/core/tenancy/sqlalchemy_filter.py	core	src.backend.infrastructure.observability.correlation
-# 2-3) core/audit/facade → services.audit.audit_service: legacy re-export
-#    pattern. AuditService move to core/audit/facade/ tracked in S113+
-#    (multi-domain migration, 17+ consumers per S111 W3 audit).
-src/backend/core/audit/facade/__init__.py	core	src.backend.services.audit.audit_service
-src/backend/core/audit/facade/_base.py	core	src.backend.services.audit.audit_service

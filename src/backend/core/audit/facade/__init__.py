@@ -34,7 +34,7 @@ from src.backend.core.audit.facade.banking import emit_banking_audit
 from src.backend.core.audit.facade.capability import emit_capability_check
 from src.backend.core.audit.facade.secrets import emit_secret_rotation
 from src.backend.core.audit.facade.waf import emit_waf_evaluation
-from src.backend.services.audit.audit_service import (  # noqa: F401
+from src.backend.core.audit.facade.audit_service import (  # noqa: F401
     AuditService,
     get_unified_audit_service,
 )
