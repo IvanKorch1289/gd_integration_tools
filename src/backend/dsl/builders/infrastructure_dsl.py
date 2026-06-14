@@ -65,6 +65,12 @@ class _InfraOp(BaseProcessor):
         self.params = params
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализовать ``self.params`` в DSL-спецификацию ``{op_name: params}``.
+
+        Returns:
+            dict c единственным ключом ``op_name`` и значением — копия
+            ``self.params`` (защита от мутации caller'ом).
+        """
         return {self.op_name: dict(self.params)}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -76,16 +82,19 @@ class _InfraOp(BaseProcessor):
 
 
 class RedisSetProcessor(_InfraOp):
+    """Redis SET с опциональным TTL (``params.ttl_seconds``)."""
     op_name: ClassVar[str] = "redis_set"
     compensatable: ClassVar[bool] = True
 
 
 class RedisGetProcessor(_InfraOp):
+    """Redis GET по ключу (результат в ``properties[result_property]``)."""
     op_name: ClassVar[str] = "redis_get"
     compensatable: ClassVar[bool] = True
 
 
 class RedisDeleteProcessor(_InfraOp):
+    """Redis DEL (идемпотентно: missing key → no-op)."""
     op_name: ClassVar[str] = "redis_delete"
     compensatable: ClassVar[bool] = True
 
@@ -94,11 +103,13 @@ class RedisDeleteProcessor(_InfraOp):
 
 
 class ClickHouseInsertProcessor(_InfraOp):
+    """ClickHouse INSERT (batch). INSERT не имеет meaningful compensation."""
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
 
 
 class ClickHouseQueryProcessor(_InfraOp):
+    """ClickHouse SELECT (read-only)."""
     op_name: ClassVar[str] = "clickhouse_query"
     compensatable: ClassVar[bool] = True
 
@@ -107,11 +118,13 @@ class ClickHouseQueryProcessor(_InfraOp):
 
 
 class ElasticsearchIndexProcessor(_InfraOp):
+    """Elasticsearch INDEX/UPSERT документа. Индексирование необратимо."""
     op_name: ClassVar[str] = "es_index"
     compensatable: ClassVar[bool] = False  # индекс необратим
 
 
 class ElasticsearchSearchProcessor(_InfraOp):
+    """Elasticsearch SEARCH (read-only)."""
     op_name: ClassVar[str] = "es_search"
     compensatable: ClassVar[bool] = True
 
@@ -120,11 +133,13 @@ class ElasticsearchSearchProcessor(_InfraOp):
 
 
 class MongoInsertProcessor(_InfraOp):
+    """MongoDB INSERT документа (необратимо: нет meaningful compensation)."""
     op_name: ClassVar[str] = "mongo_insert"
     compensatable: ClassVar[bool] = False
 
 
 class MongoFindProcessor(_InfraOp):
+    """MongoDB FIND (read-only, результат в ``properties[to_property]``)."""
     op_name: ClassVar[str] = "mongo_find"
     compensatable: ClassVar[bool] = True
 
@@ -133,6 +148,7 @@ class MongoFindProcessor(_InfraOp):
 
 
 class S3PutProcessor(_InfraOp):
+    """S3 PUT объекта (требует aioboto3)."""
     op_name: ClassVar[str] = "s3_put"
     compensatable: ClassVar[bool] = True
 

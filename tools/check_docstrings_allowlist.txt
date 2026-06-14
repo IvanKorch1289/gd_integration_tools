@@ -199,17 +199,6 @@ src/backend/dsl/builders/content_mixin.py:137:4 MulticastEIPProcessor.process
 src/backend/dsl/builders/content_mixin.py:164:4 RecipientListEIPProcessor.process
 src/backend/dsl/builders/eventbus_mixin.py:107:4 EventBusSubscribeProcessor.to_spec
 src/backend/dsl/builders/eventbus_mixin.py:67:4 EventBusPublishProcessor.to_spec
-src/backend/dsl/builders/infrastructure_dsl.py:106:0 ElasticsearchIndexProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:111:0 ElasticsearchSearchProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:119:0 MongoInsertProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:124:0 MongoFindProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:132:0 S3PutProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:64:4 _InfraOp.to_spec
-src/backend/dsl/builders/infrastructure_dsl.py:75:0 RedisSetProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:80:0 RedisGetProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:85:0 RedisDeleteProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:93:0 ClickHouseInsertProcessor
-src/backend/dsl/builders/infrastructure_dsl.py:98:0 ClickHouseQueryProcessor
 src/backend/dsl/builders/policy_mixin.py:282:4 PolicyMarkerProcessor.to_spec
 src/backend/dsl/builders/request_reply_mixin.py:109:4 RequestReplyBackend.pending_count
 src/backend/dsl/builders/request_reply_mixin.py:113:4 RequestReplyBackend.transport
