@@ -24,13 +24,27 @@ _log = get_logger(__name__)
 class EventStore(Protocol):
     """Protocol для event store (DI-friendly)."""
 
-    def append(self, event: Event) -> None: ...
-    def load(self, aggregate_id: str) -> list[Event]: ...
-    def load_stream(self, stream: EventStream) -> list[Event]: ...
-    def list_all(self) -> list[Event]: ...
+    def append(self, event: Event) -> None:
+        """Append event в store (с optimistic concurrency по per-aggregate version)."""
+        ...
+
+    def load(self, aggregate_id: str) -> list[Event]:
+        """Вернуть все events для aggregate (in-order, version-monotonic)."""
+        ...
+
+    def load_stream(self, stream: EventStream) -> list[Event]:
+        """Вернуть все events в stream (cross-aggregate)."""
+        ...
+
+    def list_all(self) -> list[Event]:
+        """Вернуть все events в store (для full rebuild)."""
+        ...
+
     def replay(
         self, projection: "Projection", *, since_timestamp: float | None = None
-    ) -> None: ...
+    ) -> None:
+        """Replay events через projection (для rebuild read model с optional since_timestamp)."""
+        ...
 
 
 class InMemoryEventStore:
@@ -49,6 +63,7 @@ class InMemoryEventStore:
         self._lock = threading.Lock()
 
     def append(self, event: Event) -> None:
+        """Append event с optimistic concurrency (version conflict → ValueError)."""
         with self._lock:
             # Optimistic concurrency: per-aggregate version monotonic
             existing = self._by_aggregate.get(event.aggregate_id, [])
@@ -69,14 +84,17 @@ class InMemoryEventStore:
         )
 
     def load(self, aggregate_id: str) -> list[Event]:
+        """Return copy of events для aggregate (defensive copy)."""
         with self._lock:
             return list(self._by_aggregate.get(aggregate_id, []))
 
     def load_stream(self, stream: EventStream) -> list[Event]:
+        """Return copy of events в stream."""
         with self._lock:
             return list(self._by_stream.get(stream, []))
 
     def list_all(self) -> list[Event]:
+        """Return copy of all events в store."""
         with self._lock:
             return list(self._events)
 

@@ -29,6 +29,7 @@ class SumByProcessor(BaseProcessor):
         self._field = field
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Sum numeric field across collection, output = total (float)."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -43,6 +44,7 @@ class SumByProcessor(BaseProcessor):
         exchange.set_out(body=total, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует sum_by конфиг в JSON-Schema spec."""
         return {"sum_by": {"field": self._field}}
 
 
@@ -59,6 +61,7 @@ class MaxByProcessor(BaseProcessor):
         self._field = field
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Find max element по field, output = element (fallback: original body)."""
         body = exchange.in_message.body
         if not isinstance(body, list) or not body:
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -71,6 +74,7 @@ class MaxByProcessor(BaseProcessor):
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует max_by конфиг в JSON-Schema spec."""
         return {"max_by": {"field": self._field}}
 
 
@@ -87,6 +91,7 @@ class MinByProcessor(BaseProcessor):
         self._field = field
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Find min element по field, output = element (fallback: original body)."""
         body = exchange.in_message.body
         if not isinstance(body, list) or not body:
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -99,6 +104,7 @@ class MinByProcessor(BaseProcessor):
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует min_by конфиг в JSON-Schema spec."""
         return {"min_by": {"field": self._field}}
 
 
@@ -118,6 +124,7 @@ class SortByProcessor(BaseProcessor):
         self._reverse = reverse
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Sort collection по field (asc/desc), output = sorted list (fallback: original)."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -134,4 +141,5 @@ class SortByProcessor(BaseProcessor):
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует sort_by конфиг в JSON-Schema spec."""
         return {"sort_by": {"field": self._field, "reverse": self._reverse}}
