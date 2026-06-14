@@ -44,7 +44,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 logger = get_logger("infrastructure.cert_store")
 
 
-@dataclass(slots=True)
+@dataclass
 class MongoCertBackend(CertBackend):
     """MongoDB бэкенд: коллекции ``certs`` + ``certs_history``.
 

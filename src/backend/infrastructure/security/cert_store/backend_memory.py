@@ -43,7 +43,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 logger = get_logger("infrastructure.cert_store")
 
 
-@dataclass(slots=True)
+@dataclass
 class MemoryCertBackend(CertBackend):
     """In-process бэкенд (тесты, dev-стенд без БД)."""
 

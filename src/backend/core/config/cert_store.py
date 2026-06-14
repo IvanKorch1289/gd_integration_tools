@@ -28,10 +28,10 @@ class CertStoreSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "cert_store"
     model_config = SettingsConfigDict(env_prefix="CERT_STORE_", extra="forbid")
 
-    backend: Literal["vault", "postgres", "mongo", "memory"] = Field(
+    backend: Literal["vault", "postgres", "mongo", "memory", "consul"] = Field(
         default="postgres",
         description="Бэкенд хранения сертификатов.",
-        examples=["postgres", "vault", "mongo", "memory"],
+        examples=["postgres", "vault", "mongo", "memory", "consul"],
     )
     hot_cache_ttl: int = Field(
         default=300,

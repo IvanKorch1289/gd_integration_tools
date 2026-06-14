@@ -46,7 +46,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 logger = get_logger("infrastructure.cert_store")
 
 
-@dataclass(slots=True)
+@dataclass
 class VaultCertBackend(CertBackend):
     """HashiCorp Vault KV v2 бэкенд (prod-рекомендация).
 

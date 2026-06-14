@@ -57,7 +57,7 @@ from src.backend.infrastructure.logging.factory import get_logger
 logger = get_logger("infrastructure.cert_store")
 
 
-@dataclass(slots=True)
+@dataclass
 class CertStore:
     """Высокоуровневый фасад: backend + in-process кэш + hooks.
 
@@ -82,6 +82,12 @@ class CertStore:
                 backend = MongoCertBackend(collection_name=settings.mongo_collection)
             case "memory":
                 backend = MemoryCertBackend()
+            case "consul":
+                from src.backend.infrastructure.security.cert_store.backend_consul import (
+                    ConsulCertBackend,
+                )
+
+                backend = ConsulCertBackend(base_path=settings.vault_path)
             case _:
                 backend = PostgresCertBackend()
         return cls(backend=backend, settings=settings)
