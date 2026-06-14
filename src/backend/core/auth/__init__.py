@@ -25,11 +25,23 @@ from src.backend.core.auth.saml_backend import (
     SamlConfig,
     SamlError,
 )
+from src.backend.core.auth.sso_registry import (
+    HvacVaultClient,
+    SsoRegistry,
+    SsoRegistryError,
+    SsoRegistrySchemaError,
+    SsoRegistryVaultError,
+    VaultClientProtocol,
+)
+from src.backend.core.auth.sso_types import GroupsToCapabilities, IdpConfig, SSOUserInfo
 
 __all__ = (
     "APIKeyAuth",
     "AuthContext",
     "AuthMethod",
+    "GroupsToCapabilities",
+    "HvacVaultClient",
+    "IdpConfig",
     "MtlsBackend",
     "MtlsConfig",
     "MtlsVerificationError",
@@ -38,6 +50,12 @@ __all__ = (
     "SamlBackend",
     "SamlConfig",
     "SamlError",
+    "SsoRegistry",
+    "SsoRegistryError",
+    "SsoRegistrySchemaError",
+    "SsoRegistryVaultError",
+    "SSOUserInfo",
+    "VaultClientProtocol",
 )
 
 
