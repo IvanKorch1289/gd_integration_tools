@@ -13,11 +13,24 @@ logger = get_logger("api_mgmt.quotas")
 
 
 class QuotaExceeded(Exception):
-    pass
+    """Исключение: тенант превысил квоту ``limit`` в окне ``period_seconds``.
+
+    Raises:
+        QuotaExceeded: при попытке consume сверх установленного лимита.
+            Сообщение содержит ``tenant_id``, ``resource`` и текущие
+            ``current/limit`` для observability.
+    """
 
 
 @dataclass(slots=True)
 class QuotaTracker:
+    """Sliding-window counter для rate-limit'ов тенанта поверх Redis.
+
+    Attributes:
+        prefix: Префикс ключей в Redis; используется для namespacing
+            разных окружений (например ``quota:`` или ``quota_staging:``).
+    """
+
     prefix: str = "quota:"
 
     async def consume(
@@ -29,6 +42,26 @@ class QuotaTracker:
         limit: int,
         period_seconds: int,
     ) -> dict:
+        """Атомарно списать ``units`` из квоты ``resource`` для ``tenant_id``.
+
+        Использует Redis ``INCRBY`` + ``EXPIRE``. При недоступности Redis
+        возвращает ``{"remaining": limit, ...}`` (fail-open режим) и
+        логирует warning.
+
+        Args:
+            tenant_id: Идентификатор тенанта.
+            resource: Имя ресурса/эндпоинта (например ``messages.send``).
+            units: Количество единиц, списываемых за одну операцию.
+            limit: Максимум единиц в одном окне.
+            period_seconds: Длина окна (1 минута, 1 час, 1 день...).
+
+        Returns:
+            Словарь с ключами ``remaining``, ``limit``, ``reset_at``
+            (UTC timestamp начала следующего окна).
+
+        Raises:
+            QuotaExceeded: если после инкремента счётчик превысил ``limit``.
+        """
         try:
             from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
         except ImportError:

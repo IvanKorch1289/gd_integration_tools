@@ -22,6 +22,19 @@ __all__ = (
 
 @dataclass(slots=True, frozen=True)
 class TenantContext:
+    """Иммутабельный snapshot активного тенанта в пределах одного запроса.
+
+    Attributes:
+        tenant_id: Уникальный идентификатор организации (используется для
+            изоляции данных, префикса Redis-ключей и routing).
+        plan: Тарифный план (``free`` / ``basic`` / ``pro`` / ``enterprise``);
+            определяет набор доступных функций и квот.
+        region: Географический регион тенанта (для региональной маршрутизации
+            и data-residency). По умолчанию ``ru``.
+        rate_limit: Лимит запросов в минуту для тенанта; используется
+            middleware и quota tracker'ом.
+    """
+
     tenant_id: str
     plan: str = "free"  # free/basic/pro/enterprise
     region: str = "ru"
@@ -32,10 +45,22 @@ _current: ContextVar[TenantContext | None] = ContextVar("tenant_context", defaul
 
 
 def current_tenant() -> TenantContext | None:
+    """Вернуть активный ``TenantContext`` или ``None`` вне scope.
+
+    Returns:
+        ``TenantContext``, установленный в текущем ``ContextVar``, или
+        ``None``, если ``set_tenant`` ещё не вызывался в текущей задаче.
+    """
     return _current.get()
 
 
 def set_tenant(ctx: TenantContext) -> None:
+    """Установить ``ctx`` как активный тенант для текущей async-задачи.
+
+    Args:
+        ctx: Иммутабельный snapshot тенанта, который будет доступен через
+            ``current_tenant()`` до выхода из ``tenant_scope``/задачи.
+    """
     _current.set(ctx)
 
 

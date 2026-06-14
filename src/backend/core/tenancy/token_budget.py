@@ -89,14 +89,29 @@ class BudgetSnapshot:
 
     @property
     def remaining(self) -> int:
+        """Сколько токенов ещё доступно в рамках hard limit.
+
+        Returns:
+            ``max(0, hard_limit - used)`` — не уходит в минус при over-usage.
+        """
         return max(0, self.hard_limit - self.used)
 
     @property
     def soft_breached(self) -> bool:
+        """Превышен ли soft limit (рекомендация к throttling'у).
+
+        Returns:
+            ``True`` если ``used >= soft_limit`` (тенант близок к исчерпанию).
+        """
         return self.used >= self.soft_limit
 
     @property
     def hard_breached(self) -> bool:
+        """Превышен ли hard limit (требуется reject).
+
+        Returns:
+            ``True`` если ``used >= hard_limit`` (запросы должны быть отвергнуты).
+        """
         return self.used >= self.hard_limit
 
 
@@ -124,6 +139,17 @@ class InMemoryTokenBudgetBackend:
         self._store: dict[str, int] = {}
 
     async def increment(self, *, key: str, amount: int, ttl_seconds: int) -> int:
+        """Атомарно увеличить счётчик ``key`` на ``amount``.
+
+        Args:
+            key: Полный ключ счётчика (например ``budget:tenant42:chat``).
+            amount: На сколько увеличить (может быть > 1 для batch-операций).
+            ttl_seconds: TTL ключа; in-memory backend игнорирует, Redis
+                бэкенд применяет ``EXPIRE``.
+
+        Returns:
+            Новое значение счётчика после инкремента.
+        """
         del ttl_seconds  # in-memory не поддерживает TTL
         self._store[key] = self._store.get(key, 0) + amount
         return self._store[key]
