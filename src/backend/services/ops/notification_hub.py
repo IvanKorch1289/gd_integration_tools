@@ -6,7 +6,7 @@ IL2.2 (ADR-023): **DEPRECATED** — новый путь через
 
 Новый API:
 
-    from src.backend.infrastructure.notifications import get_gateway
+    from src.backend.core.notifications import get_gateway
     gateway = get_gateway()
     await gateway.send_tx(
         channel="email",

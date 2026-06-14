@@ -71,7 +71,7 @@ class CronDashboardService:
 
     async def list_scheduled(self) -> list[ScheduledWorkflowSummary]:
         """Список всех scheduled jobs + success_rate(7d) каждой."""
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
+        from src.backend.core.scheduler import (
             get_scheduler_manager,
         )
 

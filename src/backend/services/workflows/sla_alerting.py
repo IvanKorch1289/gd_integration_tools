@@ -148,7 +148,7 @@ def _emit_sla_metric(
     global _sla_counter
     if _sla_counter is None:
         try:
-            from src.backend.infrastructure.observability.metrics_registry import (
+            from src.backend.core.observability.metrics import (
                 metrics_registry,
             )
 

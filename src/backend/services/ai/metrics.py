@@ -76,7 +76,7 @@ class AgentMetricsService:
         if self._initialized:
             return
         try:
-            from src.backend.infrastructure.observability.metrics_registry import (
+            from src.backend.core.observability.metrics import (
                 metrics_registry,
             )
 
