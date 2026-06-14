@@ -204,3 +204,15 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
+# S113 W2: 10 extensions layer violations (legitimate per extension contract)
+#   Extensions могут импортировать services/infrastructure/dsl для domain-specific logic
+extensions/core_entities/orderkinds/services/orderkinds.py	extensions	src.backend.services.integrations.skb
+extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.integrations.skb
+extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.io.indexers
+extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.notifications
+extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.builder
+extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.executor
+extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.builder
+extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.spec
+extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.builder
+extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.spec
