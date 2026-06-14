@@ -49,6 +49,13 @@ class LLMGuardResult:
 
     @property
     def is_safe(self) -> bool:
+        """Свободен ли текст от запрещённого контента.
+
+        Returns:
+            ``True`` если ``flagged`` равно ``False`` (т.е. llm-guard не
+            обнаружил нарушений). Используется downstream-пайплайном
+            для решения о пропуске/отклонении сообщения.
+        """
         return not self.flagged
 
 

@@ -124,6 +124,22 @@ class RollingWindowStrategy(ContextStrategy):
         *,
         count_tokens: Any = None,
     ) -> list[ContextMessage]:
+        """Применить стратегию усечения контекста к ``messages``.
+
+        Конкретная стратегия (rolling window / map-reduce / hierarchical)
+        определена в наследнике. Все реализации возвращают новый список
+        сообщений, вписывающийся в ``budget``.
+
+        Args:
+            messages: Входной список сообщений (свежие — в конце).
+            budget: Лимит токенов для контекста.
+            count_tokens: Опциональный callable ``list[ContextMessage] -> int``.
+                Если не передан, используется эвристика (4 символа ≈ 1 токен).
+
+        Returns:
+            Новый список сообщений, вписывающийся в бюджет. ``[]`` если
+            входной список пуст.
+        """
         if not messages:
             return []
 
@@ -185,6 +201,22 @@ class MapReduceStrategy(ContextStrategy):
         *,
         count_tokens: Any = None,
     ) -> list[ContextMessage]:
+        """Применить стратегию усечения контекста к ``messages``.
+
+        Конкретная стратегия (rolling window / map-reduce / hierarchical)
+        определена в наследнике. Все реализации возвращают новый список
+        сообщений, вписывающийся в ``budget``.
+
+        Args:
+            messages: Входной список сообщений (свежие — в конце).
+            budget: Лимит токенов для контекста.
+            count_tokens: Опциональный callable ``list[ContextMessage] -> int``.
+                Если не передан, используется эвристика (4 символа ≈ 1 токен).
+
+        Returns:
+            Новый список сообщений, вписывающийся в бюджет. ``[]`` если
+            входной список пуст.
+        """
         if not messages:
             return []
 
@@ -263,6 +295,22 @@ class HierarchicalStrategy(ContextStrategy):
         *,
         count_tokens: Any = None,
     ) -> list[ContextMessage]:
+        """Применить стратегию усечения контекста к ``messages``.
+
+        Конкретная стратегия (rolling window / map-reduce / hierarchical)
+        определена в наследнике. Все реализации возвращают новый список
+        сообщений, вписывающийся в ``budget``.
+
+        Args:
+            messages: Входной список сообщений (свежие — в конце).
+            budget: Лимит токенов для контекста.
+            count_tokens: Опциональный callable ``list[ContextMessage] -> int``.
+                Если не передан, используется эвристика (4 символа ≈ 1 токен).
+
+        Returns:
+            Новый список сообщений, вписывающийся в бюджет. ``[]`` если
+            входной список пуст.
+        """
         if not messages:
             return []
 
