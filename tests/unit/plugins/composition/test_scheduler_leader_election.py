@@ -94,7 +94,8 @@ def _load_setup_infra_isolated() -> ModuleType:
         / "backend"
         / "plugins"
         / "composition"
-        / "setup_infra.py"
+        / "setup_infra"
+        / "__init__.py"
     )
     spec = importlib.util.spec_from_file_location(
         "_setup_infra_isolated", setup_infra_path
@@ -105,9 +106,12 @@ def _load_setup_infra_isolated() -> ModuleType:
     return module
 
 
-# Pre-load один раз на collection (все тесты используют один module object).
+# S116 W4 fix: НЕ перезаписываем sys.modules["...setup_infra"], иначе
+# composition/__init__.py (импортирует ending, starting из setup_infra)
+# падает при collection последующих тестов в директории. Stubs в
+# sys.modules[infra clients] достаточны — setup_infra/__init__.py
+# re-export'ит всё что нужно из decomposed модулей.
 _setup_infra = _load_setup_infra_isolated()
-sys.modules["src.backend.plugins.composition.setup_infra"] = _setup_infra
 
 
 class _StubLock:
@@ -161,13 +165,21 @@ def mock_distributed_lock() -> "object":  # type: ignore[valid-type]
 
 
 @pytest.fixture
-def mock_scheduler_manager() -> "object":  # type: ignore[valid-type]
-    """Подменяет ``get_scheduler_manager()`` на mock с start/stop."""
+def mock_scheduler_manager(monkeypatch: pytest.MonkeyPatch) -> "object":  # type: ignore[valid-type]
+    """Подменяет ``get_scheduler_manager()`` на mock с start/stop.
+
+    S116 W4: scheduler декомпозирован в setup_infra/scheduler_leader.py,
+    который импортирует ``get_scheduler_manager`` напрямую из
+    ``infrastructure.scheduler.scheduler_manager`` (не через setup_infra
+    re-export). Поэтому patch'им source-of-truth, а не setup_infra.
+    """
+    from src.backend.infrastructure.scheduler import scheduler_manager
+
     manager = MagicMock()
     manager.start = AsyncMock()
     manager.stop = AsyncMock()
-    with patch.object(_setup_infra, "get_scheduler_manager", return_value=manager):
-        yield manager
+    monkeypatch.setattr(scheduler_manager, "get_scheduler_manager", lambda: manager)
+    yield manager
 
 
 @pytest.mark.asyncio
