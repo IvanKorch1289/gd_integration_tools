@@ -33,7 +33,7 @@ from src.backend.schemas.route_schemas.users import (
     UserVersionSchemaOut,
 )
 from src.backend.services.auth.ad_directory_client import AdAuthError, AdSearchEntry
-from src.backend.services.core.base import BaseService
+from src.backend.core.services.base_service import BaseService
 
 __all__ = ("UserService", "get_user_service", "AuthMethod")
 

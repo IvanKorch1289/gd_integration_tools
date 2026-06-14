@@ -16,7 +16,7 @@ from src.backend.schemas.route_schemas.files import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from src.backend.services.core.base import BaseService
+from src.backend.core.services.base_service import BaseService
 
 __all__ = ("FileService", "get_file_service")
 

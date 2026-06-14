@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from extensions.core_entities.files.domain.models import File, OrderFile
 from src.backend.core.errors import NotFoundError
 from src.backend.core.domain.models.base import BaseModel
-from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.core.database.session import main_session_manager
 from src.backend.core.repositories.base import SQLAlchemyRepository
 
 __all__ = ("FileRepository", "get_file_repo")

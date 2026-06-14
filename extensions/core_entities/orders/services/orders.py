@@ -30,7 +30,7 @@ from src.backend.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from src.backend.services.core.base import BaseService
+from src.backend.core.services.base_service import BaseService
 from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 if TYPE_CHECKING:

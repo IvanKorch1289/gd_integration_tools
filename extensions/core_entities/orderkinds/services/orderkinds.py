@@ -20,7 +20,7 @@ from src.backend.schemas.route_schemas.orderkinds import (
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from src.backend.services.core.base import BaseService
+from src.backend.core.services.base_service import BaseService
 from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("OrderKindService", "get_order_kind_service")
