@@ -103,7 +103,7 @@ class RedisIngestStateStore:
     def _ensure_client(self) -> Any:
         if self._client is not None:
             return self._client
-        from src.backend.infrastructure.clients.storage.redis import get_redis_client
+        from src.backend.core.storage.redis import get_redis_client
 
         self._client = get_redis_client()
         return self._client

@@ -63,7 +63,7 @@ async def make_dedupe_store() -> DedupeStore:
     """
     # Lazy import — settings и Redis client тяжёлые, не нужны в unit-tests.
     from src.backend.core.config.services.outbox import outbox_settings
-    from src.backend.infrastructure.clients.storage.redis import get_redis_client
+    from src.backend.core.storage.redis import get_redis_client
 
     if not outbox_settings.use_redis_dedupe:
         return MemoryDedupeStore()
