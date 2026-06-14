@@ -14,22 +14,20 @@
 | Field | Value |
 |-------|-------|
 | Origin | S94 W1-W2 (planned), S103 W1 linter wired, S106 W1 B1 closed |
-| Current | ⚠️ PARTIAL (6/12 files moved to `core/domain/models/`) |
-| Residual | 5 files remaining: `orders`, `orderkinds`, `files`, `workflow_instance`, `workflow_event` |
-| Owner | Sprint 1 (D5 B2: orderkinds, orders, files) + Sprint 1 (D5 B3: workflow_*) |
-| Estimate | 2 commits, ~2-3 hours |
-| Refs | ADR-0188, `docs/migration/d5-models-to-core.md` |
+| Current | 🟢 **CLOSED + BY-DESIGN (S129 W1 fact-check)** — все 5 of 5 plan files (`orderkinds`, `orders`, `files`, `workflow_instance`, `workflow_event`) moved в `core/domain/models/`. 5 remaining в `extensions/core_entities/*/domain/models.py` — different domain (не D5 banking), by-design. `extensions/credit_pipeline/domain/models.py` — separate domain, by-design. |
+| Residual | 0 (claim was stale: 7 of 12 in core, 5 by-design in extensions) |
+| Owner | ~~Sprint 1 (D5 B2/B3)~~ → CLOSED + by-design |
+| Refs | ADR-0188, `reports/reaudit/s129_w1_factcheck_classification.md`, S129 W1 commit `65aed4cb` |
 
 ### TD-002 — Core linter NEW violations (9)
 
 | Field | Value |
 |-------|-------|
 | Origin | S101 W1 (cdc/registry.py), S103 W3 (audit/facade.py) |
-| Current | 🔴 OPEN |
-| Residual | 2 NEW violators + 7 more (per `check_layers.py` output) |
-| Owner | Sprint 1 |
-| Estimate | 1 commit, ~30 min |
-| Refs | None |
+| Current | 🟢 **CLOSED (S129 W1 fact-check)** — `uv run python tools/check_layers.py` reports **0 NEW** violations (210 legacy baseline). Claim of 9 NEW was stale — likely linter refactor or remediation happened incrementally across S106-S128. |
+| Residual | 0 |
+| Owner | ~~Sprint 1~~ → CLOSED |
+| Refs | S129 W1 commit `65aed4cb`, `tools/check_layers.py` |
 
 ---
 
@@ -40,17 +38,17 @@
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing |
-| Current | 🔴 OPEN — `check_protocol_coverage.py` FAIL |
-| Residual | `entrypoints/websocket/ws_handler.py`, `entrypoints/webhook/handler.py`, `entrypoints/express/router.py`, `entrypoints/sse/handler.py`, `dsl/commands/setup.py` |
-| Owner | Sprint 2 |
-| Estimate | 1 commit, ~1-2 hours (small files) |
+| Current | 🟢 **CLOSED (S129 W1 fact-check)** — `uv run python tools/check_protocol_coverage.py` reports **`[protocol_coverage] OK`**. All 4 handlers + bridge registered (`websocket/ws_handler.py`, `webhook/handler.py`, `express/router.py`, `sse/handler.py`, `_action_bridge.py`). |
+| Residual | 0 (claim of 4 missing was stale) |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S129 W1 commit `65aed4cb`, `tools/check_protocol_coverage.py` |
 
 ### TD-004 — Audit dual architecture (77 callsites)
 
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing (DI-callback vs service-locator) |
-| Current | 🟢 **CLOSED (S111 W3)** — allowlist-based closure; 29 mixin-internal callsites allowlisted via `LEGITIMATE_MIXIN_FILES` в `tools/check_audit_deprecation.py` |
+| Current | 🟢 **CLOSED (S111 W3, S129 W1 verified)** — `uv run python tools/check_audit_deprecation.py` reports **0 legacy callsites**, 8 allowlisted mixin-internal. TD-004 closure status confirmed during S129 W1. |
 | Owner | ~~S107+ W1+ (incremental, 1 domain per wave)~~ → CLOSED |
 | Refs | ADR-0190, ADR-0197, `tools/check_audit_deprecation.py`, subagent Task 2 report, S109 W1-W4 (ai_banking, pii_tokenizer, secret_rotation, agent_dsl, token_registry, services — 73→29 callsites) |
 
@@ -59,20 +57,20 @@
 | Field | Value |
 |-------|-------|
 | Origin | S104 W3 DSN support added, no driver check |
-| Current | 🔴 OPEN — runtime risk with optional deps (pyodbc/aioodbc/aiomysql/pymysql/ibm_db_sa) |
-| Residual | Check + cookbook |
-| Owner | Sprint 2 |
-| Estimate | 1 commit, ~1 hour |
+| Current | 🟢 **CLOSED (S106 W7, S129 W1 verified)** — `tools/check_dsn_drivers.py` + `tests/unit/tools/test_check_dsn_drivers.py` exist (created в S106 W7). `DSN_DRIVER_MAP` covers all `DatabaseTypeChoices` (sync + async paired: mssql → pyodbc + aioodbc, mysql → pymysql + aiomysql, db2 → ibm_db_sa). `--ci` mode supported (exit 1 on missing). |
+| Residual | 0 |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S106 W7, `tools/check_dsn_drivers.py`, `tests/unit/tools/test_check_dsn_drivers.py`, S129 W1 commit `65aed4cb` |
 
 ### TD-006 — Test baseline allowlist
 
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing 572 failures + 70 collection errors |
-| Current | 🔴 OPEN — masks future ratchet signal |
-| Residual | Allowlist file for `tests/unit/core/config/test_features_*.py`, `test_validator.py`, DSL processor test setup |
-| Owner | Sprint 2 |
-| Estimate | 1 commit, ~30 min |
+| Current | 🟢 **CLOSED (S106 W5, S129 W1 verified)** — `tools/check_test_baseline.py` + `tools/check_test_baseline_allowlist.txt` (18 entries) exist. `uv run python tools/check_test_baseline.py` reports **No failures detected (pre-existing or new)**. |
+| Residual | 0 |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S106 W5, `tools/check_test_baseline.py`, `tools/check_test_baseline_allowlist.txt`, S129 W1 commit `65aed4cb` |
 
 ---
 
@@ -83,10 +81,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | S106 W2 added `emit_capability_check` helper, no callsite migration |
-| Current | 🟡 PARTIAL — helper available, 17 callsites still use legacy `self._audit: Callable` |
-| Residual | Wire helper in `audit_mixin._emit_audit` (1 method change) + 17 inherited callsites automatically use new path |
-| Owner | Sprint 1 (P1) — quick win |
-| Estimate | 1 commit, ~30 min |
+| Current | 🟢 **CLOSED (S129 W1 fact-check)** — `grep -rl "_audit: Callable" src/backend/` → **0 matches**. `core/security/capabilities/gate/audit_mixin.py` уже uses `emit_capability_check` из `core.audit.facade` (S106 W2 + S107 incremental migration). |
+| Residual | 0 (claim of 17 callsites was stale) |
+| Owner | ~~Sprint 1 (P1)~~ → CLOSED |
+| Refs | S106 W2, `core/audit/facade/capability.py`, S129 W1 commit `65aed4cb` |
 
 ### TD-008 — `core/audit/facade.py` split (394 LOC)
 
@@ -103,10 +101,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | DEEP-RESEARCH D9 partial |
-| Current | 🟡 PARTIAL — `invoke_workflow` exists, but no explicit `sub_workflow` for nested patterns |
-| Residual | Add method + processor |
-| Owner | Sprint 2 |
-| Estimate | 1 commit, ~1 hour |
+| Current | 🟢 **CLOSED (S129 W1 fact-check)** — `sub_workflow` method существует в `src/backend/dsl/builders/integration_core/workflow_mixin.py`. Sugar над `invoke_workflow` с `sub_workflow_id_property` / `result_property` defaults. |
+| Residual | 0 |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S129 W1 commit `65aed4cb`, `src/backend/dsl/builders/integration_core/workflow_mixin.py` |
 
 ### TD-010 — DSL AI exposure (ai_invoke, ai_tool_dispatch)
 
@@ -204,10 +202,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | S106 W1 (1 sprint grace) |
-| Current | 🟡 PARTIAL — shims active, `DeprecationWarning` fires |
-| Residual | Hard delete after D5 B2/B3 complete |
-| Owner | Sprint 1 (W5) |
-| Estimate | 1 commit, ~30 min |
+| Current | 🟢 **CLOSED (S129 W1 fact-check)** — `src/backend/infrastructure/database/models/` directory не существует (`ModuleNotFoundError` при import). 5 callsites using new path (`from src.backend.core.domain.models import ...`), 0 backward shim callsites. Hard delete уже произошёл (вероятно S124 W1 boundary hardening). |
+| Residual | 0 |
+| Owner | ~~Sprint 1 (W5)~~ → CLOSED |
+| Refs | S129 W1 commit `65aed4cb`, S124 W1 boundary hardening |
 
 ### TD-019 — `lifespan.py` god-context-manager (718 LOC)
 
@@ -233,8 +231,24 @@
 | S118-S119 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
 | S120-S124 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
 | S125 closure (NEW) | 0 | 0 | 0 | 0 | 0 |
-| **S126-S128 closure (now)** | 0 | 0 | 0 | 0 | 0 |
+| S126-S128 closure (now) | 0 | 0 | 0 | 0 | 0 |
+| **S129 closure (now)** | 0 | 0 | 0 | 0 | 0 |
 | **End state** | 0 | 0 | 1 (continuous ratchet) | 0 | 1 |
+
+**S129 sprint-specific burn-down:**
+
+* **TD-001** (5 of 5 files moved + 5 by-design) — 🟢 CLOSED + by-design (W1 fact-check)
+* **TD-002** (0 NEW layer viols vs claim 9) — 🟢 CLOSED (W1)
+* **TD-003** (4 protocol handlers present, coverage OK) — 🟢 CLOSED (W1)
+* **TD-004** (0 legacy callsites, 8 allowlisted) — 🟢 CLOSED verified (W1)
+* **TD-005** (check_dsn_drivers.py + tests since S106 W7) — 🟢 CLOSED (W1)
+* **TD-006** (test baseline allowlist + tool since S106 W5) — 🟢 CLOSED (W1)
+* **TD-007** (0 `_audit: Callable` callsites, audit_mixin uses helper) — 🟢 CLOSED (W1)
+* **TD-009** (sub_workflow method exists в workflow_mixin) — 🟢 CLOSED (W1)
+* **TD-018** (shim directory hard-deleted) — 🟢 CLOSED (W1)
+* **TD-033** (test_grpc_server.py::test_load_tls_credentials) — 🟢 CLOSED via Rule #124 fix (W2)
+
+**8 stale OPEN TDs closed + 1 Rule #124 fix in S129 = 9 P0/P1/P2 items resolved, 0 NEW items opened.**
 
 **Sprint 2 (S111) closure score:**
 
@@ -313,4 +327,19 @@
 |-------|-------|
 | Origin | S126 reaudit #8 (CB-1) |
 | Current | 🟢 **PARTIAL CLOSED (S127 W1)** — dead `HttpClient.circuit_breaker` removed, `core/utils/circuit_breaker.py` + `pybreaker_adapter.py` shims KEPT для `smtp.py` (deferred refactor). 6 regression tests added. |
-| Refs | commit `61e75de7` |
+
+### TD-033 — S129 W2 Rule #124 fix: test_grpc_server TLS test
+
+| Field | Value |
+|-------|-------|
+| Origin | S65 W3 era, ~63 sprints latent |
+| Current | 🟢 **CLOSED (S129 W2)** — `test_grpc_server.py::test_load_tls_credentials_disabled_returns_none` pre-existing failure fixed. Root cause: `patch.object(grpc_server_module, "settings", ...)` patched package namespace, but `_load_tls_credentials` (defined в `grpc_server.server` submodule) resolves `settings` from server module namespace. Fix: import `server` submodule в test, patch `server.settings`. 9/9 tests pass в test_grpc_server.py. |
+| Refs | commit `462bcf27` (S129 W2) |
+
+### TD-034 — S129 W3 NO-OP discovery (TD-021 cont. closeout)
+
+| Field | Value |
+|-------|-------|
+| Origin | S128 backlog "TD-021 cont. — Migrate 5+ remaining callsites to ExternalDBFacade" |
+| Current | 🟢 **CLOSED-BY-VERIFICATION (S129 W3)** — only 2 direct uses of `database.registry` в production: `infrastructure/database/database/accessors.py` + `infrastructure/database/database/__init__.py` — both infrastructure-level, legitimate (facade is the consumer, not a bypass). "5+ callsites" claim was stale. |
+| Refs | S129 W1 commit `65aed4cb` (fact-check), TD-021 S127 W3 commit `ae1efe1b` |
