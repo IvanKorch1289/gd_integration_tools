@@ -39,11 +39,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.backend.infrastructure.clients.pool_health import get_pool_monitor
+from src.backend.core.clients.pool_health import get_pool_monitor
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.pool_health import (
+    from src.backend.core.clients.pool_health import (
         PoolHealthMonitor,  # S80 W4: TYPE_CHECKING for testability
     )
     from src.backend.services.ai.gateway.client import LiteLLMGateway

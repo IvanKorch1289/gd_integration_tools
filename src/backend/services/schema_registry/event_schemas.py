@@ -24,7 +24,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
     Returns:
         int: Количество зарегистрированных entries.
     """
-    from src.backend.infrastructure.clients.messaging.event_bus import (
+    from src.backend.core.messaging.event_bus import (
         FlagEvent,
         OrderEvent,
         PipelineEvent,

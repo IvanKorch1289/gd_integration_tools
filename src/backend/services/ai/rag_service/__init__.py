@@ -38,7 +38,7 @@ from src.backend.services.ai.rag_augment import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
+    from src.backend.core.cache.rag import ThreeTierRagCache
 
 from src.backend.services.ai.rag_service.augment_mixin import (
     AugmentMixin,  # S64 W4: MRO
