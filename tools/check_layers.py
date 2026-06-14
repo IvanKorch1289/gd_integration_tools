@@ -311,6 +311,10 @@ def _save_allowlist(keys: Iterable[str]) -> None:
     Раньше ``--update-allowlist`` ПЕРЕЗАПИСЫВАЛ весь файл только новыми
     violations, теряя legacy 200+ entries из S103-S106 baseline.
     Теперь MERGE: existing + new = union, deduped, sorted.
+
+    S112 W1: эта функция только MERGE'ит. Для удаления stale entries
+    (allowlist entries, чьи violations больше не в коде) используй
+    ``--prune-allowlist`` (вызывает :func:`_prune_allowlist`).
     """
     new_keys = set(keys)
     existing = _load_allowlist()
@@ -321,14 +325,69 @@ def _save_allowlist(keys: Iterable[str]) -> None:
         "# Формат: <rel_path>\\t<importer_layer>\\t<imported_module>\n"
         "# Цель — постепенно сокращать.\n"
         "# S110 W2: --update-allowlist MERGES (was REPLACE).\n"
+        "# S112 W1: --prune-allowlist removes stale entries (complement to MERGE).\n"
     )
     ALLOWLIST_PATH.write_text(body + "\n".join(sorted_keys) + "\n", encoding="utf-8")
+
+
+def _prune_allowlist(keys: Iterable[str]) -> int:
+    """S112 W1: REMOVE stale entries из allowlist.
+
+    Stale entry = entry в allowlist, для которой corresponding violation
+    больше не существует в коде (refactored/removed).
+
+    Args:
+        keys: iterable of violation keys (current scan result).
+
+    Returns:
+        number of stale entries removed.
+
+    Note:
+        Сканирует ТОЛЬКО указанный root (default = ``src/``). Для full
+        repo prune (когда allowlist содержит и src/, и extensions/
+        entries) запускай с ``--root .`` или аналогичным путём,
+        покрывающим обе директории.
+    """
+    current = set(keys)
+    existing = _load_allowlist()
+    stale = existing - current
+    if not stale:
+        return 0
+    fresh = existing & current
+    body = (
+        "# Allowlist архитектурных нарушений (Wave 1.3 baseline).\n"
+        "# Формат: <rel_path>\\t<importer_layer>\\t<imported_module>\n"
+        "# Цель — постепенно сокращать.\n"
+        "# S110 W2: --update-allowlist MERGES (was REPLACE).\n"
+        "# S112 W1: --prune-allowlist removes stale entries (complement to MERGE).\n"
+    )
+    ALLOWLIST_PATH.write_text(body + "\n".join(sorted(fresh)) + "\n", encoding="utf-8")
+    return len(stale)
+
+
+def _collect_all_violations() -> set[str]:
+    """S112 W1: scan full repo (src/ + extensions/) для root-agnostic prune.
+
+    Returns:
+        set of all current violation keys across both src/ and extensions/.
+    """
+    keys: set[str] = set()
+    for root in (Path("src"), Path("extensions")):
+        if not root.exists():
+            continue
+        for py in root.rglob("*.py"):
+            if "__pycache__" in py.parts:
+                continue
+            for v in _check_file(py, root):
+                keys.add(_violation_key(v))
+    return keys
 
 
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     root = Path("src")
     update = "--update-allowlist" in args
+    prune = "--prune-allowlist" in args
     strict = "--strict" in args
     if "--root" in args:
         idx = args.index("--root")
@@ -350,10 +409,28 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Allowlist обновлён: {len(keys)} запис(и/ей) → {ALLOWLIST_PATH}")
         return 0
 
+    if prune:
+        # S112 W1: --prune-allowlist removes stale entries.
+        # Используем FULL repo scan (src/ + extensions/) для root-agnostic
+        # pruning, т.к. allowlist содержит mixed entries из обоих roots.
+        all_keys = _collect_all_violations()
+        removed = _prune_allowlist(all_keys)
+        print(
+            f"Allowlist pruned: removed {removed} stale entries → {ALLOWLIST_PATH}"
+        )
+        return 0
+
     # R3.10d: --strict игнорирует allowlist (CI/release-gate).
     allowlist: set[str] = set() if strict else _load_allowlist()
     new_violations = sorted(keys - allowlist)
-    stale = sorted(allowlist - keys) if not strict else []
+    # S112 W1: стейл-проверка должна покрывать FULL repo (src/ + extensions/),
+    # а не только текущий root — иначе src/ entries выглядят "стейл" при
+    # ``--root extensions`` (false positive).
+    if not strict:
+        all_violations = _collect_all_violations()
+        stale = sorted(allowlist - all_violations)
+    else:
+        stale = []
 
     total_files = sum(1 for _ in root.rglob("*.py"))
     if not new_violations and not stale:

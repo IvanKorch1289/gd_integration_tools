@@ -2,34 +2,15 @@
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
-extensions/core_entities/files/repositories/files.py	extensions	src.backend.infrastructure.database.session_manager
-extensions/core_entities/files/repositories/files.py	extensions	src.backend.infrastructure.repositories.base
-extensions/core_entities/files/services/files.py	extensions	src.backend.schemas.route_schemas.files
-extensions/core_entities/files/services/files.py	extensions	src.backend.services.core.base
-extensions/core_entities/orderkinds/repositories/orderkinds.py	extensions	src.backend.infrastructure.repositories.base
-extensions/core_entities/orderkinds/services/orderkinds.py	extensions	src.backend.schemas.route_schemas.orderkinds
-extensions/core_entities/orderkinds/services/orderkinds.py	extensions	src.backend.services.core.base
+# S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
 extensions/core_entities/orderkinds/services/orderkinds.py	extensions	src.backend.services.integrations.skb
-extensions/core_entities/orders/repositories/orders.py	extensions	src.backend.infrastructure.database.session_manager
-extensions/core_entities/orders/repositories/orders.py	extensions	src.backend.infrastructure.repositories.base
-extensions/core_entities/orders/repositories/orders.py	extensions	src.backend.infrastructure.repositories.orderkinds
-extensions/core_entities/orders/services/orders.py	extensions	src.backend.schemas.base
-extensions/core_entities/orders/services/orders.py	extensions	src.backend.schemas.route_schemas.orders
-extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.core.base
 extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.integrations.skb
 extensions/core_entities/orders/services/orders.py	extensions	src.backend.services.io.indexers
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.entrypoints.base
 extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.notifications
 extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.builder
 extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.infrastructure.workflow.executor
 extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.builder
 extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.spec
-extensions/core_entities/users/repositories/users.py	extensions	src.backend.infrastructure.database.session_manager
-extensions/core_entities/users/repositories/users.py	extensions	src.backend.infrastructure.repositories.base
-extensions/core_entities/users/services/users.py	extensions	src.backend.schemas.route_schemas.users
-extensions/core_entities/users/services/users.py	extensions	src.backend.services.auth.ad_directory_client
-extensions/core_entities/users/services/users.py	extensions	src.backend.services.core.base
-extensions/credit_pipeline/services/clients/skb.py	extensions	src.backend.services.core.base_external_api
 extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.builder
 extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.spec
 src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
@@ -39,7 +20,6 @@ src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.serv
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.rebuff_client
 src/backend/core/ai/pydantic_ai_client.py	core	src.backend.services.ai.gateway.exceptions
-src/backend/core/audit/facade.py	core	src.backend.services.audit.audit_service
 src/backend/core/auth/ldap_client_factory.py	core	src.backend.services.auth.ad_directory_client
 src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
 src/backend/core/cdc/registry.py	core	src.backend.infrastructure.cdc.debezium_events_backend
@@ -50,16 +30,6 @@ src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.tok
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/di/providers/ai.py	core	src.backend.services.audit.audit_service
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
-src/backend/core/domain/models/dsl_snapshot.py	core	src.backend.infrastructure.database.migrations._compat
-src/backend/core/domain/models/dsl_snapshot.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/files.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/orderkinds.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/orders.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/users.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/workflow_event.py	core	src.backend.infrastructure.database.migrations._compat
-src/backend/core/domain/models/workflow_event.py	core	src.backend.infrastructure.database.tenant_filter
-src/backend/core/domain/models/workflow_instance.py	core	src.backend.infrastructure.database.migrations._compat
-src/backend/core/domain/models/workflow_instance.py	core	src.backend.infrastructure.database.tenant_filter
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.context
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.exchange
 src/backend/core/interfaces/ratelimit_gateway.py	core	src.backend.entrypoints.middlewares.global_ratelimit
