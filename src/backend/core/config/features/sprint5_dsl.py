@@ -237,6 +237,31 @@ class Sprint5DSLFlags(BaseSettings):
         ),
     )
 
+    blueprint_cdc_enrich: bool = Field(
+        default=False,
+        title="K3 S5 W8: Blueprint macro cdc_enrich (auto-add CDC headers to JSON)",
+        description=(
+            "K3 Sprint 5 Wave 8. Owner: K3 DSL. ETA: S5-W8. "
+            "При True blueprint macro `cdc_enrich` автоматически добавляет CDC headers "
+            "(_cdc_op, _cdc_ts, _cdc_source) в JSON payload при route publish. "
+            "Используется в banking/credit/loan routes для audit traceability. "
+            "default-OFF до 100% CDC header coverage в credit_check_demo route."
+        ),
+    )
+
+    blueprint_ai_pipeline: bool = Field(
+        default=False,
+        title="K4 S5 W9: Blueprint macro ai_pipeline (LLM call → RAG → structured output)",
+        description=(
+            "K4 Sprint 5 Wave 9. Owner: K4 AI. ETA: S5-W9. "
+            "При True blueprint macro `ai_pipeline` предоставляет high-level DSL "
+            "для: LLM call (с tool-binding) → RAG retrieval (с metadata filters) → "
+            "structured output (Pydantic schema). Используется в credit_check_demo "
+            "и fraud_detection_demo. default-OFF до 5+ reference routes + RAGAS "
+            "eval shows +5% faithfulness на 200 gold-set."
+        ),
+    )
+
     blueprint_saga_compensation: bool = Field(
         default=False,
         title="K3 S5 W6: Blueprint saga_with_compensation",
