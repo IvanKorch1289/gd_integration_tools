@@ -5,6 +5,53 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S143 cycle, 2026-06-15] — Feature Flags Field() Backfill (5 waves, 4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%)
+
+### Added
+
+- **S143 W1 — Pre-flight factcheck** (`39bb462`): 5-sec recipe на test_features_*.py. Identified 6 flag classes missing 1-13 Field() decls. 23 fails total (not 26 as ADR-0225 claimed — discrepancy noted). Stale backlog items cleared: from_nats signature (15 pass, 0 fail — backlog stale), 1 sibling layer (not found in linter, likely fixed in S140-S142 cascade). New file `reports/sprint/s143_w1_factcheck.md` (74 lines). Plan: 3 small Ponytail-mode commits + 1 closure (NOT 1 big-bang).
+- **S143 W2 — `Sprints2427Flags.ai_skill_toml_enabled`** (`62527b1`): 1 file 13 lines. Field() with `default=False`, title=`K4 S26 W5: Skills Registry TOML frontmatter (ADR-NEW-22)`, description per established pattern (Sprint+Wave+Owner+ADR ref). Fixed `test_sprints_24_27_field_count` (12→13) + `test_feature_flags_inherits_sprints_24_27_fields`.
+- **S143 W3 — `Sprint19DXFlags.banking_ai_processors_impl`** (`1f35d9e`): 1 file 14 lines. Field() sibling to existing `banking_ai_processors_enabled` (interface flag). Новый field = implementation-layer flag для staged rollout (interface first with mock, then real LLM). Fixed 3 tests in `test_features_sprint19_dx.py`.
+- **S143 W4 — `Sprints1517Flags`: 4 fields** (`f8e7a55`): 1 file 49 lines. 4 missing Field() decls: `arch_map_llm_search_enabled` (K5 S15 W4), `ai_pr_review_enabled` (K4 S15 W6), `audit_correlation_required` (K3 S17 W3), `apscheduler_metrics` (K2 S17 W4). Fixed 4 tests in `test_features_sprints_15_17.py`.
+- **S143 W5 — ADR-0226 sprint closure** (this commit): W1-W4 detail + INDEX regen (176 ADRs, 175 unique) + S144+ backlog.
+
+### Tests
+
+- **S143 W1**: 0 NEW tests (fact-check analysis-only)
+- **S143 W2**: 0 NEW tests (1-line fix); -2 test_features fails (23→21)
+- **S143 W3**: 0 NEW tests (1-line fix); -3 test_features fails (21→18)
+- **S143 W4**: 0 NEW tests (4-line fix); -4 test_features fails (18→14)
+- **Net S143**: test_features_*.py 23→14 fails (-9, -39%)
+- **Cumulative S139-S143**: tests/unit/ 239→~93 fails (-146, -61%)
+
+### Ponytail-mode discipline (S143)
+
+- **3 small atomic commits** vs 1 big-bang: easier review, lower layer-violation risk, faster blame ("which Field() fix closed which test?")
+- **No back-compat shim**: new Field() with `default=False` is non-breaking; old `FeatureFlags.<new_field>` reads return `False` (same as old behavior)
+- **Comment style match**: `default=False` + `title=K{N} S{NN} W{N}: <name> (<ADR ref>)` + `description=(Sprint+Wave+Owner+ADR ref pattern)` — matches existing 100+ Field() definitions
+- **Ponytail skill active level full** (user preference, ADR-0225 confirmed)
+
+### Stale backlog items cleared (S143 W1 fact-check)
+
+- **from_nats signature**: 15 pass, 0 fail (full `pytest -k from_nats`); removed from S143 plan
+- **1 NEW sibling layer (rag_service/search_mixin.py)**: not found in `tools/check_layers.py` output; likely already fixed in S140-S142 cascade
+- **ADR count discrepancy (176 vs ADR-0225's 173)**: ls confirmed 176; 3 extra ADRs from sibling WIP + INDEX/WIKI counted; non-blocking
+
+### Pre-existing failures (NOT introduced by S143, verified via `git stash` per Rule #124)
+
+- `test_sprints_24_27_flags_instantiates` — `ai_gateway_enforce default != False` (Field has `default=True` per ADR-NEW-19 design; test assumes all False — design conflict, OUT OF SCOPE)
+- `test_sprint5_dsl_flags_inherits_sprint5_dsl_fields` — per S133 W1 classification, requires deeper investigation
+
+### Backlog (S144+)
+
+- 14 remaining test_features_*.py fails (12 missing Sprint5DSLFlags + 1 instantiate + 1 inheritance)
+- 70 TD-013 Streamlit pages remaining (6-12h dedicated sprint)
+- 73 core test fails (feature gaps, not patterns)
+- 29 services test fails (3 streaming + 26 unknown)
+- TD-006 PARTIAL (test baseline ratchet)
+- docstring coverage, security audit (P2)
+- Mutation testing, performance benchmarks (P3)
+
 ## [S141 cycle, 2026-06-15] — core/ Pattern Fixes (5 waves, 3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139)
 
 ### Added

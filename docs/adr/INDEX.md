@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **174**; уникальных слотов: **173**.
+Всего ADR-файлов: **176**; уникальных слотов: **175**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -180,5 +180,7 @@
 | 0222 | ADR-0222: Sprint 138 Closure — Layer Violations + Pydantic Online Verify + Test Failures (6 atomic commits, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged) | — | [0222-sprint-138-closure.md](0222-sprint-138-closure.md) |
 | 0223 | ADR-0223: Sprint 140 Closure — 15-Bug Pattern Fix in services/ (6 atomic commits, score 9.9 → 9.9, services 86→29 fails -66%, 0 NEW layer violations) | — | [0223-sprint-140-closure.md](0223-sprint-140-closure.md) |
 | 0224 | ADR-0224: Sprint 141 Closure — core/ Pattern Fixes (3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139) | — | [0224-sprint-141-closure.md](0224-sprint-141-closure.md) |
+| 0225 | ADR-0225: Sprint 142 Closure — Subagent Orchestration + A+B Manual Fallback (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 1 TD-013 PoC page regrouped) | — | [0225-sprint-142-closure.md](0225-sprint-142-closure.md) |
+| 0226 | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
