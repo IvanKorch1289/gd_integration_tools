@@ -28,7 +28,7 @@ class FileStorageSettings(BaseSettingsWithLoader):
             "Тип провайдера хранилища. ``local`` — LocalFS бэкенд для dev-стенда "
             "(не использовать в production)."
         ),
-        example="minio",
+        json_schema_extra={"example": "minio"},
     )
     local_storage_path: Path = Field(
         default=Path("./dev_storage"),
@@ -36,52 +36,52 @@ class FileStorageSettings(BaseSettingsWithLoader):
             "Путь к директории, используемой LocalFS-бэкендом, когда "
             "``provider=local``. Игнорируется при S3-совместимых провайдерах."
         ),
-        example="./dev_storage",
+        json_schema_extra={"example": "./dev_storage"},
     )
     bucket: str = Field(
         default="my-bucket",
         env="FS_BUCKET",
         description="Имя корзины по умолчанию",
-        example="my-bucket",
+        json_schema_extra={"example": "my-bucket"},
     )
     access_key: str = Field(..., description="Ключ доступа к хранилищу")
     secret_key: str = Field(..., description="Секретный ключ доступа к хранилищу")
     endpoint: str = Field(
-        ..., description="URL API-эндпоинта хранилища", example="https://s3.example.com"
+        ..., description="URL API-эндпоинта хранилища", json_schema_extra={"example": "https://s3.example.com"}
     )
     interface_endpoint: str = Field(
         ...,
         description="URL веб-интерфейса хранилища",
-        example="https://console.s3.example.com",
+        json_schema_extra={"example": "https://console.s3.example.com"},
     )
 
     # Параметры безопасности
     use_ssl: bool = Field(
-        ..., description="Использовать HTTPS для подключений", example=True
+        ..., description="Использовать HTTPS для подключений", json_schema_extra={"example": True}
     )
-    verify: bool = Field(..., description="Проверять SSL-сертификаты", example=True)
+    verify: bool = Field(..., description="Проверять SSL-сертификаты", json_schema_extra={"example": True})
     ca_bundle: str | None = Field(
         default=None,
         env="FS_CA_BUNDLE",
         description="Путь к пакету CA-сертификатов для SSL",
-        example="/path/to/ca-bundle.crt",
+        json_schema_extra={"example": "/path/to/ca-bundle.crt"},
     )
 
     # Параметры производительности
-    timeout: int = Field(..., description="Таймаут операций (в секундах)", example=30)
+    timeout: int = Field(..., description="Таймаут операций (в секундах)", json_schema_extra={"example": 30})
     retries: int = Field(
-        ..., description="Количество попыток для неудачных операций", example=3
+        ..., description="Количество попыток для неудачных операций", json_schema_extra={"example": 3}
     )
     max_pool_connections: int = Field(
-        ..., description="Максимальное количество соединений в пуле", example=50
+        ..., description="Максимальное количество соединений в пуле", json_schema_extra={"example": 50}
     )
     read_timeout: int = Field(
-        ..., description="Таймаут чтения объектов (в секундах)", example=30
+        ..., description="Таймаут чтения объектов (в секундах)", json_schema_extra={"example": 30}
     )
 
     # Параметры ключей
     key_prefix: str = Field(
-        ..., description="Префикс для ключей объектов", example="my-prefix/"
+        ..., description="Префикс для ключей объектов", json_schema_extra={"example": "my-prefix/"}
     )
 
     @computed_field
