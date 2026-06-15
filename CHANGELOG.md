@@ -5,6 +5,49 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S136 cycle, 2026-06-15] — Pydantic v2 Migration Complete (5 waves, 4 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 1 backlog item closed, 1 regression fixed, -81 Pydantic warnings)
+
+### Added
+
+- **S136 W1 — Pre-flight factcheck** (`32f78ea0`): 5-sec recipe on current state. State clean, no urgent work, defer 33 AST + 120 pre-existing failures. New file `reports/sprint/s136_w1_factcheck.md` (1.5 KB).
+- **S136 W2 — AST codemod pilot** (`b2638900`): storage.py, 13 multi-line `Field(example=...)` → `json_schema_extra={"example": ...}`. AST-based (NOT regex, regex was unsafe in S133 W3 initial attempt — broke syntax on list literals). Proven pattern for W4 expansion.
+- **S136 W3 — Regression fix** (`07ba6ad4`): 1 line in `tests/unit/dsl/engine/processors/test_agent_graph.py:17`. S135 fix `7d02c00c` moved `agent_sandbox.py` from `core/ai/` to `services/ai/` (layer violation fix), updated 2 source consumers (`infra.py`, `agent_graph.py`) but MISSED 1 test file. Result: `ModuleNotFoundError` on test collection, blocked full `tests/unit/dsl/engine/processors/` pytest run. **Lesson (Ponytail)**: rg-imports on moved files BEFORE commit (full tree, not just `src/`).
+- **S136 W4 — Complete Pydantic v2 deprecation migration** (`a425af85`): 6 files, ~85 changes total:
+  * 3 single-line `Field(example=)`: logging.py (x2), cache.py (x1)
+  * 72 multi-line `Field(example=...)` via AST codemod: cache.py (26), queue.py (20), mail.py (14), ldap.py (x2), logging.py (x2 more)
+  * 2 `env=` removed in storage.py (Pydantic v1 Settings pattern, v2 uses env_prefix — `env="FS_BUCKET"` redundant when env_prefix="FS_")
+  * 4 `min_items` → `min_length` in 3 files (Pydantic v2 rename)
+  * 2 missed by AST (nested `list[dict[...]]` values where `ast.get_source_segment` returned None): queue.py:88, cache.py:130
+- **S136 W5 — ADR-0221 sprint closure** (this commit): W1-W4 detail + INDEX regen (170 → 171 ADRs) + S137+ backlog.
+
+### Tests
+
+- **S136 W2**: -11 Pydantic deprecation warnings in test_storage_ext (was 93, now 82)
+- **S136 W3**: 1 collection error → 4 tests pass in test_agent_graph.py
+- **S136 W4**: -76 Pydantic deprecation warnings in test_storage_ext (was 77, now 1), -81 in broader engine/processors/ (was 98, now 17)
+- **Combined (sibling + my W4)**: tests/unit/dsl/{engine/processors,builders}/ → 1848 pass (was ~1700 pre-S136, +148 net)
+- **Sibling W2 commits**: `fbe12f71` UnifiedCacheFacade (-145 tests) + `73a7e351` StorageFacade
+
+### Regression fixed
+
+- **test_agent_graph.py** (S135 missed import): 1 collection error → 4 passed. ModuleNotFoundError on `src.backend.core.ai.agent_sandbox` (file moved to `services/ai/` in S135 but test file not updated).
+
+### Notes
+
+- **Pydantic v2 forward-compat done**: All `Field(example=...)` and `env=` and `min_items=` deprecations in `core/config/services/` migrated. Pytest's `filterwarnings = error` no longer fails on these.
+- **Sibling activity during S136**: 3 P1 backlog items closed (UnifiedCacheFacade, StorageFacade, ExternalDB facade untracked) — I focused on the 4th P1 (Pydantic migration).
+- **Regression rule (S126+) applied**: W3 separate commit (test fix), not bundled with W4 (feature work). Per `systematic-debugging` skill.
+- **Ponytail skill active**: "ship the lazy version, question in same response" — applied throughout W2-W4.
+
+### Backlog (S137+)
+
+- 4 `test_storage_ext.py::TestPriorityEnqueueProcess` mock setup failures (pre-existing, requires test refactor)
+- 42 collection errors in other test files (pre-existing, unrelated)
+- 111 broader test failures (multi-day classification, S134 W4+ scope)
+- `from_nats` signature bug (S106 W4, transport/sources.py, feature-flag OFF)
+- TD-013 Streamlit feature-grouping (P2, 6h dedicated)
+- Ponytail skill: installed on remote via `26fe783f`, no action
+
 ## [S133 cycle, 2026-06-15] — FormatConvertProcessor MRO Fix (5 waves, 3 commits + 1 blocked, score 9.9 → 9.9, 0 NEW layer violations, 2 items closed, 1 blocked)
 
 ### Added
