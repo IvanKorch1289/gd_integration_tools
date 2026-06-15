@@ -8,6 +8,10 @@ if TYPE_CHECKING:
 from typing import TYPE_CHECKING
 
 from src.backend.services.ai.rag_augment import AugmentResult, build_augment_result
+from src.backend.services.ai.rag_service.search_mixin import (
+    _format_context_with_sources,
+)
+from src.backend.services.ai.rag_service.state import RAGCitation
 
 if TYPE_CHECKING:  # pragma: no cover
     pass

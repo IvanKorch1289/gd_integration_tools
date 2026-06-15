@@ -18,6 +18,7 @@ Backward-compat: ``from src.backend.services.ai.rag_service import RAGService`` 
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
+from src.backend.services.ai.rag_augment import AugmentResult, FreshnessLabel
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
@@ -37,7 +38,7 @@ from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 
 from src.backend.services.ai.rag_service.search_mixin import SearchMixin  # S64 W4: MRO
 from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
 
-__all__ = ("RAGService", "RAGCitation")
+__all__ = ("AugmentResult", "FreshnessLabel", "RAGCitation", "RAGService")
 
 
 def get_rag_service() -> RAGService:
@@ -53,7 +54,7 @@ def get_rag_service() -> RAGService:
 class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):
     """RAG service (4 mixins = 13 methods + 1 core)."""
 
-    __slots__ = ()
+    __slots__ = ("_store", "_embedder", "_cache")
 
     def __init__(
         self,
