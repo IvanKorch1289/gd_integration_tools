@@ -27,7 +27,7 @@ failure может быть "временный" — например 5xx от S
 
 from __future__ import annotations
 
-import asyncio
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from src.backend.core.interfaces.storage import ObjectStorage
@@ -79,6 +79,7 @@ class FallbackObjectStorage(ObjectStorage):
         self._fallback_count: dict[str, int] = {
             "download": 0,
             "upload": 0,
+            "upload_stream": 0,
             "delete": 0,
             "exists": 0,
             "list_keys": 0,
@@ -227,6 +228,53 @@ class FallbackObjectStorage(ObjectStorage):
             return await self._secondary.presigned_url(key, expires_in)
 
         return await self._with_fallback("presigned_url", _primary, _secondary)
+
+    async def upload_stream(
+        self,
+        key: str,
+        stream: Any,
+        content_type: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Streaming upload: primary first; fallback на secondary при ошибке.
+
+        В отличие от обычного ``upload``, fallback для потока требует
+        буферизации уже прочитанных чанков. Реализация делегирует primary;
+        если primary падает — накапливает остаток потока и пишет во
+        secondary через ``upload`` (best-effort fallback).
+        """
+        buffer = bytearray()
+
+        async def _tee() -> AsyncGenerator[bytes]:
+            async for chunk in stream:
+                buffer.extend(chunk)
+                yield chunk
+
+        try:
+            return await self._primary.upload_stream(
+                key, _tee(), content_type=content_type, metadata=metadata
+            )
+        except BaseException as primary_exc:
+            if not self._should_fallback(primary_exc):
+                raise
+            self._fallback_count["upload_stream"] += 1
+            _logger.warning(
+                "FallbackObjectStorage[%s] upload_stream primary failed (%s: %s), "
+                "falling back to secondary upload",
+                self._name,
+                type(primary_exc).__name__,
+                str(primary_exc),
+            )
+            # Дочитываем остаток потока (если primary упала до полного чтения).
+            try:
+                async for chunk in stream:
+                    buffer.extend(chunk)
+            except Exception:
+                pass
+            return await self._secondary.upload(
+                key, bytes(buffer), content_type=content_type
+            )
 
     def supports_presigned(self) -> bool:
         """True если primary supports presigned (default True)."""

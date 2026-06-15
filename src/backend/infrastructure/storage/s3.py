@@ -235,6 +235,103 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 upload failed: {exc}") from exc
         return full_key
 
+    async def upload_stream(
+        self,
+        key: str,
+        stream: Any,
+        content_type: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Multipart streaming upload из async-итератора чанков (S13 K2 W1).
+
+        Чанки накапливаются до ``part_size`` (минимум 5MB по S3 API),
+        затем отправляются как ``upload_part``. При ошибке выполняется
+        ``abort_multipart_upload``.
+        """
+        from collections.abc import AsyncIterable
+
+        full_key = self._safe_key(key)
+        part_size = 8 * 1024 * 1024
+        upload_id: str | None = None
+        parts: list[dict[str, Any]] = []
+
+        async with self._open() as s3:
+            try:
+                create_kwargs: dict[str, Any] = {
+                    "Bucket": self._bucket,
+                    "Key": full_key,
+                }
+                if content_type:
+                    create_kwargs["ContentType"] = content_type
+                if metadata:
+                    create_kwargs["Metadata"] = metadata
+                response = await s3.create_multipart_upload(**create_kwargs)
+                upload_id = response["UploadId"]
+
+                buffer = bytearray()
+                part_number = 1
+                if not isinstance(stream, AsyncIterable):
+                    raise TypeError(
+                        f"S3ObjectStorage.upload_stream expects AsyncIterable[bytes], "
+                        f"got {type(stream).__name__}"
+                    )
+                async for chunk in stream:
+                    if not chunk:
+                        continue
+                    buffer.extend(chunk)
+                    while len(buffer) >= part_size:
+                        part_bytes = bytes(buffer[:part_size])
+                        del buffer[:part_size]
+                        part_resp = await s3.upload_part(
+                            Bucket=self._bucket,
+                            Key=full_key,
+                            UploadId=upload_id,
+                            PartNumber=part_number,
+                            Body=part_bytes,
+                        )
+                        parts.append(
+                            {"PartNumber": part_number, "ETag": part_resp["ETag"]}
+                        )
+                        part_number += 1
+
+                if buffer:
+                    part_resp = await s3.upload_part(
+                        Bucket=self._bucket,
+                        Key=full_key,
+                        UploadId=upload_id,
+                        PartNumber=part_number,
+                        Body=bytes(buffer),
+                    )
+                    parts.append({"PartNumber": part_number, "ETag": part_resp["ETag"]})
+
+                if not parts:
+                    await s3.abort_multipart_upload(
+                        Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                    )
+                    return full_key
+
+                await s3.complete_multipart_upload(
+                    Bucket=self._bucket,
+                    Key=full_key,
+                    UploadId=upload_id,
+                    MultipartUpload={"Parts": parts},
+                )
+                return full_key
+            except Exception as exc:
+                if upload_id is not None:
+                    try:
+                        await s3.abort_multipart_upload(
+                            Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                        )
+                    except Exception as abort_exc:
+                        self.logger.exception(
+                            "S3ObjectStorage.upload_stream abort failed key=%s: %s",
+                            full_key,
+                            abort_exc,
+                        )
+                raise ServiceError(f"S3 upload_stream failed: {exc}") from exc
+
     async def download(self, key: str) -> bytes:
         full_key = self._safe_key(key)
         async with self._open() as s3:

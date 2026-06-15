@@ -10,6 +10,7 @@ Wave F.5a: добавлен ``supports_presigned()`` — фабрика и по�
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class ObjectStorage(ABC):
@@ -34,6 +35,25 @@ class ObjectStorage(ABC):
 
     @abstractmethod
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str: ...
+
+    async def upload_stream(
+        self,
+        key: str,
+        stream: Any,
+        content_type: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Потоковая загрузка объекта из async-итератора чанков.
+
+        Default-реализация накапливает чанки в памяти и вызывает
+        :meth:`upload`. Backend'ы, поддерживающие настоящий streaming
+        (S3 multipart, LocalFS chunked write), должны переопределить.
+        """
+        data = bytearray()
+        async for chunk in stream:
+            data.extend(chunk)
+        return await self.upload(key, bytes(data), content_type=content_type)
 
     def supports_presigned(self) -> bool:
         """Поддерживает ли backend presigned-URL для прямой клиентской загрузки.

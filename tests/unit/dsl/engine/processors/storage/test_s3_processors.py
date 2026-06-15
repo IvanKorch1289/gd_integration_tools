@@ -48,10 +48,10 @@ def patch_storage(fs_storage: LocalFSStorage) -> Iterator[None]:
     from src.backend.infrastructure.storage import factory
 
     factory.get_object_storage.cache_clear()
-    original_get = storage.s3._get_storage
-    storage.s3._get_storage = lambda: fs_storage  # type: ignore[assignment]
+    original_get = storage.s3._get_storage_facade
+    storage.s3._get_storage_facade = lambda context: fs_storage  # type: ignore[assignment]
     yield
-    storage.s3._get_storage = original_get  # type: ignore[assignment]
+    storage.s3._get_storage_facade = original_get  # type: ignore[assignment]
     factory.get_object_storage.cache_clear()
 
 

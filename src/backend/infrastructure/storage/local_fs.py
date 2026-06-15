@@ -22,6 +22,7 @@ import asyncio
 import os
 import warnings
 from pathlib import Path
+from typing import Any
 
 import aiofiles
 import aiofiles.os
@@ -103,3 +104,28 @@ class LocalFSStorage(ObjectStorage):
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
         path = self._safe_path(key)
         return path.as_uri()
+
+    async def upload_stream(
+        self,
+        key: str,
+        stream: Any,
+        content_type: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Потоковая запись чанков в локальный файл (atomic via tmp + rename)."""
+        from collections.abc import AsyncIterable
+
+        path = self._safe_path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        async with aiofiles.open(tmp, "wb") as fh:
+            if isinstance(stream, AsyncIterable):
+                async for chunk in stream:
+                    await fh.write(chunk)
+            else:
+                # Поддержка sync-итератора через to_thread (avoid blocking).
+                for chunk in stream:
+                    await asyncio.to_thread(fh.write, chunk)
+        await aiofiles.os.replace(str(tmp), str(path))
+        return str(path)

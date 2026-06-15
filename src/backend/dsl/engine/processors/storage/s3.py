@@ -122,14 +122,24 @@ class ToS3Processor(BaseProcessor):
         if not isinstance(key, str):
             exchange.fail(f"to_s3: key must be str, got {type(key).__name__}")
             return
-        if isinstance(data, str):
-            data = data.encode("utf-8")
-        if not isinstance(data, (bytes, bytearray)):
-            exchange.fail(f"to_s3: data must be bytes/str, got {type(data).__name__}")
-            return
         try:
             storage = _get_storage_facade(context)
-            full_key = await storage.upload(key, bytes(data), content_type=content_type)
+            if self._is_async_stream(data):
+                full_key = await storage.upload_stream(
+                    key, data, content_type=content_type
+                )
+            else:
+                if isinstance(data, str):
+                    data = data.encode("utf-8")
+                if not isinstance(data, (bytes, bytearray)):
+                    exchange.fail(
+                        f"to_s3: data must be bytes/str or async iterable, "
+                        f"got {type(data).__name__}"
+                    )
+                    return
+                full_key = await storage.upload(
+                    key, bytes(data), content_type=content_type
+                )
         except (ValueError, OSError) as exc:
             exchange.fail(f"to_s3: {exc}")
             return
@@ -138,6 +148,11 @@ class ToS3Processor(BaseProcessor):
             exchange.fail(f"to_s3: {type(exc).__name__}: {exc}")
             return
         exchange.properties[self._result_property] = full_key
+
+    @staticmethod
+    def _is_async_stream(data: Any) -> bool:
+        """True для async-итераторов/генераторов, подходящих для streaming upload."""
+        return hasattr(data, "__aiter__") or hasattr(data, "__anext__")
 
     def to_spec(self) -> dict[str, Any]:
         """Сериализует to_s3 конфиг в JSON-Schema spec."""
