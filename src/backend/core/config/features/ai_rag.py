@@ -153,6 +153,18 @@ class AIRAGFlags(BaseSettings):
         ),
     )
 
+    ai_route_optimization: bool = Field(
+        default=False,
+        title="K4 S11 W7: AI Route optimization (cost + latency aware planner)",
+        description=(
+            "K4 Sprint 11 Wave 7 (wave:s11/k4-w7-ai-route-optimization). "
+            "Owner: K4 AI/Data. Подключает AIRoutePlanner — выбирает model + "
+            "provider + tier по cost/latency budget из request.meta и "
+            "AIRoutePolicy (per-tenant). Capabilities: ai.route.plan, "
+            "ai.route.telemetry. default-OFF до bench-validation."
+        ),
+    )
+
     embedding_ab_migration: bool = Field(
         default=False,
         title="K4 S11 W8: embedding A/B progressive migration",
