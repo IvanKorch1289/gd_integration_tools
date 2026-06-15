@@ -14,6 +14,8 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
+_GENERIC_SINK_KINDS: set[str] = {"http", "webhook", "file", "email", "s3"}
+
 
 @dataclass(slots=True)
 class GenericSinkPublishProcessor(BaseProcessor):
