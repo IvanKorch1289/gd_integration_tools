@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
+from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.format_convert._helpers import (
     _to_text,  # S53 W1: shared helper
 )
@@ -35,7 +36,20 @@ if TYPE_CHECKING:
 __all__ = ("FormatConvertProcessor",)
 
 
-class FormatConvertProcessor(DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin):
+class FormatConvertProcessor(
+    DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin, BaseProcessor
+):
+    """Format conversion (JSON/CSV/XML/Avro/etc.) processor.
+
+    .. note::
+        S133 W2 fix: ``BaseProcessor`` added to MRO at the END (after all
+        mixins). Previously the class inherited only from 3 mixins, so
+        ``super().__init__(name=...)`` walked through mixins →
+        ``object.__init__()`` and raised
+        ``TypeError: object.__init__() takes exactly one argument``
+        (S133 W1 confirmed in ``test_converters_mixin.py::TestToJson::test_to_json_basic``).
+        Same pattern as S132 W2 ``LLMStructuredProcessor`` MRO fix.
+    """
     """Format conversions (3 mixins = 33 format methods + 5 core)."""
 
     # State attrs (S53 W1: class-level annotations for mypy MRO)
