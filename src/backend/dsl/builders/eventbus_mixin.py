@@ -38,10 +38,11 @@ class EventBusPublishProcessor:
         self.payload_ref = payload_ref
 
     async def process(self, exchange: Any, context: Any) -> None:
-        """Записать публикацию в metadata (S18 W17 scaffold).
+        """Опубликовать событие в EventBus (S133 W4).
 
-        Wiring в EventBusFacade.publish — carryover (требует backend
-        registry в lifespan + correlation_id propagation в headers).
+        Если брокер не запущен или publish не удался — fallback к записи
+        в ``exchange.properties["_eventbus_published"]`` для backward compat
+        и тестов без Redis.
         """
         try:
             from src.backend.core.config.features import feature_flags
@@ -51,15 +52,41 @@ class EventBusPublishProcessor:
         except Exception as _:
             return
 
-        payload = (
-            exchange.body
-            if self.payload_ref == "body"
-            else (
-                exchange.properties.get(self.payload_ref.removeprefix("property:"))
-                if self.payload_ref.startswith("property:")
-                else None
+        payload = self._resolve_payload(exchange)
+
+        try:
+            import time
+
+            from src.backend.core.messaging.event_bus import GenericEvent, get_event_bus
+
+            bus = get_event_bus()
+            if bus._broker is None or not bus._started:
+                self._mark_published(exchange, payload)
+                return
+
+            event = GenericEvent(
+                topic=self.topic,
+                payload=payload,
+                correlation_id=exchange.properties.get("correlation_id"),
+                timestamp=time.time(),
             )
-        )
+            await bus.publish(self.topic, event)
+        except Exception as exc:
+            from src.backend.core.logging import get_logger
+
+            get_logger(__name__).warning(
+                "EventBus publish failed for topic=%s: %s", self.topic, exc
+            )
+            self._mark_published(exchange, payload)
+
+    def _resolve_payload(self, exchange: Any) -> Any:
+        if self.payload_ref == "body":
+            return exchange.in_message.body
+        if self.payload_ref.startswith("property:"):
+            return exchange.properties.get(self.payload_ref.removeprefix("property:"))
+        return None
+
+    def _mark_published(self, exchange: Any, payload: Any) -> None:
         published = list(exchange.properties.get("_eventbus_published") or [])
         published.append({"topic": self.topic, "payload": payload})
         exchange.set_property("_eventbus_published", published)

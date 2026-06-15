@@ -49,12 +49,8 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     Each subsystem is best-effort: log+continue on failure.
     """
     # Lazy imports (avoid pre-existing import-bugs in composition package).
-    from src.backend.plugins.composition.lifecycle.v11 import (
-        shutdown_v11_loaders,
-    )
-    from src.backend.plugins.composition.lifecycle.watchers import (
-        stop_dsl_yaml_watcher,
-    )
+    from src.backend.plugins.composition.lifecycle.v11 import shutdown_v11_loaders
+    from src.backend.plugins.composition.lifecycle.watchers import stop_dsl_yaml_watcher
 
     app = app  # type: ignore[assignment]
     app.state.infrastructure_ready = False
@@ -135,12 +131,8 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     # Singleton Limiter из get_default_limiter() запускает фоновую
     # `_leaker.aio_leak_task`, которая течёт без явной остановки.
     try:
-        from src.backend.core.resilience._pyrate_compat import (
-            shutdown_pyrate_leaker,
-        )
-        from src.backend.entrypoints.dependencies.rate_limit import (
-            get_default_limiter,
-        )
+        from src.backend.core.resilience._pyrate_compat import shutdown_pyrate_leaker
+        from src.backend.entrypoints.dependencies.rate_limit import get_default_limiter
 
         await shutdown_pyrate_leaker(get_default_limiter())
     except Exception as leaker_exc:
@@ -149,9 +141,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     # ── 10. OTel metrics shutdown ──
     # Sprint 16 K2 W3 (L3-P0-1): graceful shutdown OTel MeterProvider.
     try:
-        from src.backend.infrastructure.observability.otel import (
-            shutdown_otel_metrics,
-        )
+        from src.backend.infrastructure.observability.otel import shutdown_otel_metrics
 
         shutdown_otel_metrics()
     except Exception as metrics_stop_exc:
@@ -164,6 +154,14 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
             await cluster_adapter.close()
         except Exception as rc_close_exc:
             _logger.warning("RedisClusterAdapter close error: %s", rc_close_exc)
+
+    # ── 11b. EventBus stop (S133 W4) ──
+    bus = getattr(app.state, "event_bus", None)
+    if bus is not None:
+        try:
+            await bus.stop()
+        except Exception as bus_stop_exc:
+            _logger.warning("EventBus shutdown error: %s", bus_stop_exc)
 
     # ── 12. FeatureFlagBroadcaster stop ──
     # Sprint 17 K5 W1 (D9): graceful stop ДО task_registry.shutdown_all,

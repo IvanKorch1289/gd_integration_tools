@@ -67,6 +67,19 @@ class RouteEvent(BaseModel):
     action: str
 
 
+class GenericEvent(BaseModel):
+    """Generic event payload for DSL EventBus publish (S133 W4).
+
+    ponytail: minimal Pydantic model; avoids per-topic event classes
+    for route-level pub/sub.
+    """
+
+    topic: str
+    payload: dict[str, Any] | list[Any] | str | int | float | bool | None = None
+    correlation_id: str | None = None
+    timestamp: float | None = None
+
+
 # ────────────────── Event Bus ──────────────────
 
 

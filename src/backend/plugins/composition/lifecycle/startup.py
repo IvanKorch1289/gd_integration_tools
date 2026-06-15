@@ -47,6 +47,28 @@ __all__ = ("_register_outbox_dispatcher", "run_startup")
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+async def _start_event_bus(app: FastAPI) -> None:
+    """S133 W4 — стартует EventBus при включённом флаге.
+
+    ponytail: minimal wiring. Если Redis недоступен — log+continue,
+    DSL-процессор fallback'ит на ``exchange.properties``.
+    """
+    try:
+        from src.backend.core.config.features import feature_flags
+        from src.backend.core.config.settings import settings
+        from src.backend.core.messaging.event_bus import get_event_bus
+
+        if not feature_flags.eventbus_facade and not feature_flags.eventbus_dsl_enabled:
+            return
+
+        bus = get_event_bus()
+        await bus.start(settings.cache.redis_url)
+        app.state.event_bus = bus
+        _logger.info("EventBus started on %s", settings.cache.redis_url)
+    except Exception as exc:
+        _logger.warning("EventBus startup skipped: %s", exc)
+
+
 async def _register_outbox_dispatcher(app: FastAPI) -> None:
     """S64 W3 — outbox dispatcher cutover: legacy worker ↔ new dispatcher.
 
@@ -69,24 +91,18 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
 
         if outbox_settings.enabled:
             # S64 W3: новый OutboxDispatcher path (multi-instance safe).
-            from collections.abc import Sequence as _Sequence
-            from uuid import uuid4
-
-            from src.backend.core.messaging.outbox import (
-                FakeOutbox,
-                OutboxEvent,
-            )
-            from src.backend.infrastructure.messaging.outbox.lifecycle import (
-                start_outbox_dispatcher,
-            )
-            from src.backend.infrastructure.repositories import (
-                outbox as outbox_repo,
-            )
-            from src.backend.workflows.outbox_worker import _publish
-
             # Worker ID: HOSTNAME env (K8s pod name) → socket.gethostname()
             import os as _os
             import socket as _socket
+            from collections.abc import Sequence as _Sequence
+            from uuid import uuid4
+
+            from src.backend.core.messaging.outbox import FakeOutbox, OutboxEvent
+            from src.backend.infrastructure.messaging.outbox.lifecycle import (
+                start_outbox_dispatcher,
+            )
+            from src.backend.infrastructure.repositories import outbox as outbox_repo
+            from src.backend.workflows.outbox_worker import _publish
 
             _worker_id = _os.environ.get("HOSTNAME") or _socket.gethostname()
 
@@ -402,6 +418,9 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
     await register_protocol_providers()
     validate_cache_layers()
 
+    # ── EventBus startup (S133 W4) ──
+    await _start_event_bus(app)
+
     # ── PluginLoader (in-tree + entry_points) ──
     try:
         from pathlib import Path
@@ -502,9 +521,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
         from src.backend.core.feature_flags.runtime_overrides import (
             get_runtime_overrides,
         )
-        from src.backend.infrastructure.clients.storage.redis import (
-            get_redis_client,
-        )
+        from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
         redis_kv = getattr(get_redis_client(), "client", None)
         broadcaster = await maybe_start_broadcaster(
