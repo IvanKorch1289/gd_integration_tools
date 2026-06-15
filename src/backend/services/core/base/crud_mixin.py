@@ -10,6 +10,9 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
 from src.backend.core.decorators.caching import response_cache
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
 
 
 def _is_orm_model(instance: Any) -> bool:
@@ -22,7 +25,7 @@ class CrudMixin:
 
     __slots__ = ()
 
-    async def add(self, data: dict[str, Any]) -> ConcreteResponseSchema | None:
+    async def add(self, data: dict[str, Any]) -> Any | None:
         """Добавляет объект и инвалидирует кэш.
 
         Args:
@@ -33,7 +36,7 @@ class CrudMixin:
         """
         async with self._service_error_boundary():
             result: (
-                ConcreteResponseSchema | None
+                Any | None
             ) = await self.helper._process_and_transfer(
                 "add", self.response_schema, data=data
             )
@@ -43,7 +46,7 @@ class CrudMixin:
 
     async def add_many(
         self, data_list: list[dict[str, Any]]
-    ) -> list[ConcreteResponseSchema | None]:
+    ) -> list[Any | None]:
         """Добавляет несколько объектов.
 
         При ошибке элемент записывается как ``None``, ошибка
@@ -59,15 +62,15 @@ class CrudMixin:
         Raises:
             ServiceError: Если хотя бы один элемент не был создан.
         """
-        result: list[ConcreteResponseSchema | None] = []
+        result: list[Any | None] = []
         errors: list[dict[str, Any]] = []
 
         for idx, data in enumerate(data_list):
             try:
-                response: ConcreteResponseSchema | None = await self.add(data=data)
+                response: Any | None = await self.add(data=data)
                 result.append(response)
             except Exception as exc:
-                logger.exception(
+                _logger.exception(
                     "Ошибка при добавлении объекта #%d в add_many: %s", idx, data
                 )
                 result.append(None)
@@ -87,7 +90,7 @@ class CrudMixin:
 
     async def update(
         self, key: str, value: int, data: dict[str, Any]
-    ) -> ConcreteResponseSchema | None:
+    ) -> Any | None:
         """Обновляет объект в репозитории.
 
         Args:
@@ -115,9 +118,9 @@ class CrudMixin:
         by: str = "id",
         order: str = "asc",
     ) -> (
-        ConcreteResponseSchema
-        | list[ConcreteResponseSchema]
-        | Page[ConcreteResponseSchema]
+        Any
+        | list[Any]
+        | Page[Any]
         | None
     ):
         """Получает объекты по ключу, фильтру или все.
@@ -156,7 +159,7 @@ class CrudMixin:
         key: str | None = None,
         value: int | None = None,
         data: dict[str, Any] | None = None,
-    ) -> ConcreteResponseSchema | None:
+    ) -> Any | None:
         """Получает объект или создаёт, если не найден.
 
         Args:
@@ -182,7 +185,7 @@ class CrudMixin:
     @response_cache
     async def get_first_or_last_with_limit(
         self, limit: int = 1, by: str = "id", order: str = "asc"
-    ) -> ConcreteResponseSchema | list[ConcreteResponseSchema] | None:
+    ) -> Any | list[Any] | None:
         """Возвращает первые/последние записи с лимитом."""
         async with self._service_error_boundary():
             return await self.helper._process_and_transfer(
