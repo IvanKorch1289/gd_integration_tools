@@ -21,6 +21,33 @@ BRANCH_SKIP_VALUE = "__skip__"
 BranchResolver = Callable[[Exchange[Any]], str | Awaitable[str]]
 Predicate = Callable[[Exchange[Any]], bool | Awaitable[bool]]
 
+
+def _default_latest_checker(exchange: Exchange[Any]) -> bool:
+    """Default latest-run checker: read ``is_latest_run`` from exchange headers.
+
+    Apache Airflow convention: downstream tasks can check
+    ``logical_date`` / ``is_latest_run`` metadata injected by scheduler
+    to skip intermediate runs during backfill. We expose the same via
+    a default predicate so users don't have to write boilerplate.
+
+    Args:
+        exchange: current :class:`Exchange` instance (headers + body).
+
+    Returns:
+        ``True`` if this is the latest run (proceed),
+        ``False`` if older run (skip downstream).
+        Returns ``False`` if header is missing — safe default (skip).
+
+    .. note::
+        S132 W3 fix: headers live on ``exchange.in_message`` (``Message`` model),
+        not directly on ``Exchange``. ``Exchange.get_header`` does NOT exist;
+        use ``exchange.in_message.get_header(key, default)``.
+        This was a S65 W2 latent refactor artifact (the original code assumed
+        Exchange had ``get_header`` directly, but it lives on ``Message``).
+    """
+    return bool(exchange.in_message.get_header("is_latest_run", False))
+
+
 # ── BranchPythonOperator ─────────────────────────────────────────────
 
 
