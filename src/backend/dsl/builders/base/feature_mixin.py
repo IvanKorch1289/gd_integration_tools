@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.dsl.builders.base import RouteBuilder
 
 """Base-модуль RouteBuilder.
 
