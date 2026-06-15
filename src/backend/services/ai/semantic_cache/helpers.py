@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from src.backend.services.ai.semantic_cache.l3_cache import L3RetrievalGraphCache
+from src.backend.services.ai.semantic_cache.semantic_cache import SemanticCache
+
 #: Redis pub/sub канал для cross-instance invalidation L3-кеша.
 RAG_CACHE_INVALIDATE_CHANNEL = "rag-cache-invalidate"
+
+_instance: SemanticCache | None = None
+_l3_instance: L3RetrievalGraphCache | None = None
 
 
 def get_semantic_cache() -> SemanticCache:

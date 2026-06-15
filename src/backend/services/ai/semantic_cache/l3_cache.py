@@ -13,6 +13,10 @@ import hashlib
 import time
 from typing import Any
 
+from src.backend.infrastructure.logging.factory import get_logger
+
+logger = get_logger(__name__)
+
 #: Redis pub/sub канал для cross-instance invalidation L3-кеша.
 RAG_CACHE_INVALIDATE_CHANNEL = "rag-cache-invalidate"
 
