@@ -5,6 +5,53 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S131 cycle, 2026-06-15] — FB-1 Factory Integration + TD-026 Full Wire-Up + TD-016 + TD-015 Partial (5 waves, 4 commits, score 9.85 → 9.9, 0 NEW layer violations, 3 items closed, 1 partial)
+
+### Added
+
+- **S131 W1 — FB-1 factory integration** (`5151bf12`): `get_object_storage()` теперь оборачивает S3 в `FallbackObjectStorage` per `config_profiles/base.yml::resilience.fallbacks.minio: {chain: ["local_fs"], mode: auto}` (W26). Runtime try-S3-then-fallback согласован с config. Singleton (`lru_cache(maxsize=1)`) сохранён — wrapper переиспользуется между вызовами. При S3 init failure (ImportError на aioboto3 или generic Exception) — bare LocalFS с warning (pre-existing behaviour сохранён). 2 new tests в `tests/unit/infrastructure/storage/test_factory.py` (`test_get_object_storage_s3_returns_fallback_wrapper` + `test_get_object_storage_s3_init_failure_returns_bare_local`). Mock pattern: `sys.modules` injection (не `monkeypatch.setattr` — `storage.s3` import фейлит без `botocore`). 7/7 factory tests pass, 55/55 storage tests pass.
+- **S131 W2 — TD-026 full wire-up: FileStreamGRPCServicer в gRPC server** (`75e63b95`): multi-step completion S130 W4 deferred work. (a) Manual proto regen: `uv run python -m grpc_tools.protoc -Isrc/backend/entrypoints/grpc/protobuf files.proto` генерит `files_pb2.py` (3.4K) + `files_pb2_grpc.py` (8.6K) с `FileServiceServicer` + `add_FileServiceServicer_to_server`. (b) Absolute import post-process: protoc v1.71+ генерит `import files_pb2 as files__pb2` (relative) — patch на `import src.backend.entrypoints.grpc.protobuf.files_pb2 as files__pb2` (consistency с `orders_pb2_grpc.py` v1.70.0 era + lazy import-safety). (c) Multiple inheritance: `class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer)`. MRO verified: `['FileStreamGRPCServicer', 'BaseGRPCServicer', 'FileServiceServicer', 'object']`. (d) Server registration: `add_FileServiceServicer_to_server(FileStreamGRPCServicer(), grpc_server)` в `grpc_server/server.py::serve()`. **Bonus fixes (блокирующие wire-up)**: `invoker_pb2_grpc.py` имел ТОТ ЖЕ pre-existing relative import bug — applied same fix; `orders_pb2.py` имел pre-existing DESCRIPTOR drift (DeleteResponse declared in `.proto` but missing в generated file) — regen обновил 2.0K → 3.2K + `_pb2_grpc.py` regenerated с same absolute import fix. Cleanup: `rm -rf src/backend/entrypoints/grpc/protobuf/{backend,src}/` (untracked dirs от broken earlier regen). MRO + 3 server.py imports verified, 26/26 gRPC tests pass.
+- **S131 W3 — TD-016 fix: DatabaseBundle @dataclass** (`0498f682`): pre-existing test `test_bundle_carries_replica_session_maker` failing с `TypeError: DatabaseBundle() takes no arguments`. Root cause: `DatabaseBundle` class в `infrastructure/database/database/bundle.py` имеет type annotations + fields с default values, но НЕ `@dataclass` decorator. `initializer.py:120` вызывает `DatabaseBundle(name=..., settings=..., async_engine=..., ...)` — kw-only args работают только для dataclass. Fix: добавлен `@dataclass` decorator. Net +1 test (74 → 75 pass в `tests/unit/infrastructure/database/`). Out of scope (Rule #124): `test_smart_session_manager_singleton_uses_bundle` тоже fails с `NameError: name 'DatabaseBundle' is not defined` at `initializer.py:120` — separate pre-existing bug (initializer.py missing import of `DatabaseBundle`). Verified via `git stash` — fails BEFORE и AFTER моего fix.
+- **S131 W4 — TD-015 partial: IDPResult + _FieldPattern @dataclass** (`72e8bb2b`): pre-existing test failure pattern (35 tests в `test_idp_pipeline_processor.py`) — `TypeError: object.__init__() takes exactly one argument`. Identified 2 of 3 root causes: (1) `IDPResult` class — type annotations + `field(default_factory=...)` (уже импорт из dataclasses), но НЕ `@dataclass` decorator. Fix: добавлен `@dataclass`. (2) `_FieldPattern` class — type annotations + explicit `__init__` метод (dataclass-like вручную). Test instantiates `_FieldPattern("invoice_number", r"...")` (2 positional args). Fix: `@dataclass` + `field(init=False)` для `regex` alias + `__post_init__` для auto-set `self.regex = self.pattern`. Net +12 tests pass (35 → 23 fails). Unfixed (deferred S132+): `IDPPipelineProcessor` + `BaseProcessor` `__init__` chain — `super().__init__(name=...)` resolves to `object.__init__` (BaseProcessor НЕ имеет `__init__` accepting `name` kwarg). Multi-step refactor.
+- **S131 W5 — ADR-0218 sprint closure** (this entry): W1-W4 wave-by-wave detail + tech-debt burn-down (FB-1 factory 🟢 CLOSED, TD-026 cont. 🟢 CLOSED, TD-016 🟢 CLOSED, TD-015 🟡 PARTIAL: 35→23 fails) + score 9.85 → 9.9 + S132+ backlog.
+
+### Tests
+
+- **S131 W1**: 2 NEW tests (FB-1 factory wrapper + init failure), 7/7 factory + 55/55 storage pass
+- **S131 W2**: 0 NEW tests (proto regen + wire-up); 26 file_stream + grpc_server tests pass
+- **S131 W3**: 0 NEW tests (1-line fix); 75 directly-related database tests pass (+1 net)
+- **S131 W4**: 0 NEW tests (dataclass sweep); +12 idp tests pass (35 → 23 fails)
+
+### Tech-debt burn-down
+
+- **FB-1 factory integration**: 🟡 PARTIAL (S130 W3 wrapper, no factory) → 🟢 **CLOSED (S131 W1)**. `get_object_storage()` returns `FallbackObjectStorage` wrapper per config.
+- **TD-026 cont. full wire-up**: 🟡 PARTIAL (S130 W4 codegen path only) → 🟢 **CLOSED (S131 W2)**. All 3 steps completed: regen + multiple inheritance + server registration.
+- **TD-016**: 🔴 OPEN (pre-existing) → 🟢 **CLOSED (S131 W3)**. `@dataclass` decorator added to `DatabaseBundle`.
+- **TD-015**: 🔴 OPEN (pre-existing, 35 fails) → 🟡 **PARTIAL (S131 W4)**. 2 of 3 root causes fixed (+12 tests). 1 root cause deferred (BaseProcessor `__init__` chain, multi-step refactor S132+).
+- **Bonus pre-existing fixes** (S131 W2): `invoker_pb2_grpc.py` + `orders_pb2_grpc.py` absolute import post-process; `orders_pb2.py` DESCRIPTOR drift regen (DeleteResponse missing).
+- **TD-008** (audit/facade split 394 LOC): verified 🟢 **CLOSED (S107 W3)** — `core/audit/facade/` package с 8 per-domain modules (671 LOC total). Tech-debt register update deferred S132+ (per "без техлолга" rule).
+
+### Pre-existing failures (NOT introduced by S131, verified via `git stash`)
+
+- 23 idp tests (BaseProcessor `__init__` chain — TD-015 cont. S132+)
+- 1 db singleton test (NameError DatabaseBundle not defined in initializer.py)
+- 2 airflow_operators tests (NameError `_default_latest_checker` not defined)
+- 9 test_retry (test isolation, in-suite only)
+- 18 test_http (S107-S109 era)
+- 13 backpressure/rate_limiter_tenant_namespace
+- Per Rule #124 — OUT OF SCOPE для S131.
+
+### Backlog (S132+)
+
+- **TD-015 cont.**: `IDPPipelineProcessor` + `BaseProcessor` `__init__` chain refactor (~2h, multi-step)
+- **TD-010** (DSL AI exposure: `ai_invoke`, `ai_tool_dispatch` — partial в `dsl/builders/agent_dsl/`)
+- **TD-011** (DSL source methods: `from_nats`, `from_mongo`, `from_grpc_stream` — `from_nats_js` exists)
+- **TD-013** (Streamlit feature-grouping 72 pages, 6+h, dedicated sprint)
+- **TD-014** (control_flow.py 416 LOC review, ~1h)
+- **TD-005/027/028/029** (DSN driver check, CodecFacade, DB streaming cursor)
+- **Shim removal** (circuit_breaker.py + pybreaker_adapter.py) — V24+ per docstring
+- **master_prompt_for_agent.md update** до S131 baseline (optional)
+
 ## [S130 cycle, 2026-06-15] — TD-030 Finish + FB-1 (S3 Fallback) + gRPC Codegen Path Fix (5 waves, 4 commits, score 9.8 → 9.85, 0 NEW layer violations, 2 features closed)
 
 ### Added
