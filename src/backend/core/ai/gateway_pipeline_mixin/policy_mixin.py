@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass  # cross-mixin / state attrs declared below
 
+from src.backend.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 """PipelineStepsMixin для :class:`AIGateway` (S38 P1.1b, v9 P1 split).
 
 Извлечено из ``core/ai/gateway.py`` в рамках T-P1.1b (v9 P1 God-объекты
