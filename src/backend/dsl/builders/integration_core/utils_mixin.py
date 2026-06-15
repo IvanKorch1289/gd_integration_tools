@@ -311,3 +311,78 @@ class UtilsMixin:
             content_type=content_type,
             chunk_size=chunk_size,
         )
+
+    def regex_extract(
+        self,
+        pattern: str,
+        *,
+        source: str = "body",
+        to: str = "body.extracted",
+        mode: str = "first_named",
+        flags: int = 0,
+    ) -> RouteBuilder:
+        """Extract values via regex pattern.
+
+        Args:
+            pattern: Regex pattern with optional named groups.
+            source: Source dotted-path.
+            to: Destination dotted-path.
+            mode: ``"all"``, ``"first"``, ``"first_named"``, ``"all_named"``, ``"groups"``.
+            flags: ``re`` flags (e.g. ``re.IGNORECASE``).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.regex_extractor",
+            "RegexExtractorProcessor",
+            pattern=pattern,
+            source=source,
+            to=to,
+            mode=mode,
+            flags=flags,
+        )
+
+    def jsonpath(
+        self,
+        expr: str,
+        *,
+        to: str = "body.result",
+        mode: str = "all",
+        default: Any = None,
+    ) -> RouteBuilder:
+        """Extract values via JSONPath expression.
+
+        Args:
+            expr: JSONPath expression (e.g. ``$.users[*].name``).
+            to: Destination dotted-path.
+            mode: ``"all"`` (list), ``"first"`` (single), ``"scalar"`` (value).
+            default: Default value if no match.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.jsonpath_query",
+            "JsonPathProcessor",
+            expr=expr,
+            to=to,
+            mode=mode,
+            default=default,
+        )
+
+    def ics_calendar(
+        self,
+        mode: str,
+        *,
+        source: str = "body",
+        to: str = "body.events",
+    ) -> RouteBuilder:
+        """Parse/render iCalendar (RFC 5545) data.
+
+        Args:
+            mode: ``"parse"`` (ICS bytes → events) or ``"render"`` (events → ICS bytes).
+            source: Source dotted-path.
+            to: Destination dotted-path.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ics_calendar",
+            "IcsCalendarProcessor",
+            mode=mode,
+            source=source,
+            to=to,
+        )

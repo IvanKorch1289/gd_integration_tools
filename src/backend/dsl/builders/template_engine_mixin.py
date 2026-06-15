@@ -108,3 +108,53 @@ class TemplateEngineMixin:
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         return out.write_text(rendered, encoding="utf-8")
+
+    def html_template(  # type: ignore
+        self: RouteBuilder,
+        template: str,
+        *,
+        to: str = "body.html",
+        context_from: str = "body",
+        autoescape: bool = True,
+    ) -> RouteBuilder:
+        """Render Jinja2 HTML template (async DSL processor).
+
+        Args:
+            template: Jinja2 template string.
+            to: Destination dotted-path.
+            context_from: Source: ``"body"``, ``"properties"``, or ``"merged"``.
+            autoescape: Enable HTML autoescaping.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.html_template",
+            "HtmlTemplateProcessor",
+            template=template,
+            to=to,
+            context_from=context_from,
+            autoescape=autoescape,
+        )
+
+    def pdf_template(  # type: ignore
+        self: RouteBuilder,
+        template: str,
+        *,
+        to: str = "body.pdf_bytes",
+        page_size: str = "A4",
+        font_size: int = 12,
+    ) -> RouteBuilder:
+        """Generate PDF from Jinja2 template via ReportLab.
+
+        Args:
+            template: Jinja2 template string.
+            to: Destination dotted-path for PDF bytes.
+            page_size: ``"A4"``, ``"LETTER"``, ``"A3"``, ``"A5"``.
+            font_size: Base font size.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.pdf_template",
+            "PdfTemplateProcessor",
+            template=template,
+            to=to,
+            page_size=page_size,
+            font_size=font_size,
+        )

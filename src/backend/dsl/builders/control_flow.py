@@ -414,3 +414,28 @@ class ControlFlowMixin:
                 request_info_processors=request_info_processors,
             )
         )
+
+    def result_unwrap(
+        self,
+        *,
+        source: str = "body",
+        to: str = "body.value",
+        to_err: str = "body.error",
+        on_err: str = "dlq",
+    ) -> RouteBuilder:
+        """Unwrap Rust-style Result monad (Ok/Err).
+
+        Args:
+            source: Source dotted-path for Result value.
+            to: Destination for unwrapped value (on Ok).
+            to_err: Destination for error (on Err with on_err="continue").
+            on_err: Error handling: ``"dlq"``, ``"fail"``, or ``"continue"``.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.result_unwrap",
+            "ResultUnwrapProcessor",
+            source=source,
+            to=to,
+            to_err=to_err,
+            on_err=on_err,
+        )

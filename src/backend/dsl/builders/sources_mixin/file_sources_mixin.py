@@ -94,3 +94,28 @@ class FileSourcesMixin:
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
+
+    def watch_files(
+        self,
+        directory: str,
+        *,
+        pattern: str = "*",
+        result_property: str = "matched_files",
+        include_subdirs: bool = False,
+    ) -> RouteBuilder:
+        """Scan directory for files matching pattern.
+
+        Args:
+            directory: Directory path to scan.
+            pattern: Glob pattern (e.g. ``"*.csv"``).
+            result_property: Property name for matched files list.
+            include_subdirs: Recurse into subdirectories.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.file_watch",
+            "FileWatchProcessor",
+            directory=directory,
+            pattern=pattern,
+            result_property=result_property,
+            include_subdirs=include_subdirs,
+        )

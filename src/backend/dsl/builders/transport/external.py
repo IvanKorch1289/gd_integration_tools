@@ -161,3 +161,32 @@ class ExternalMixin:
             timeout=timeout,
             result_property=result_property,
         )
+
+    def geo(
+        self,
+        mode: str,
+        *,
+        address: str | None = None,
+        point_a: tuple[float, float] | None = None,
+        point_b: tuple[float, float] | None = None,
+        to: str = "body.geo_result",
+    ) -> RouteBuilder:
+        """Geocoding, reverse geocoding, or distance calculation.
+
+        Args:
+            mode: ``"geocode"`` (address → coords), ``"reverse"`` (coords → address),
+                ``"distance"`` (two points → km).
+            address: Address string for geocode mode.
+            point_a: First coordinate ``(lat, lon)`` for distance mode.
+            point_b: Second coordinate ``(lat, lon)`` for distance mode.
+            to: Destination dotted-path.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.geo",
+            "GeoProcessor",
+            mode=mode,
+            address=address,
+            point_a=point_a,
+            point_b=point_b,
+            to=to,
+        )

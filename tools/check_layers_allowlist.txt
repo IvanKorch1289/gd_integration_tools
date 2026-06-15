@@ -88,6 +88,7 @@ src/backend/entrypoints/api/v1/endpoints/admin_cron.py	entrypoints	src.backend.i
 src/backend/entrypoints/api/v1/endpoints/admin_cron.py	entrypoints	src.backend.infrastructure.scheduler.scheduler_manager
 src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.analysis.parallelism_analyzer
 src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.route_loader.registry
+src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py	entrypoints	src.backend.infrastructure.logging.factory
 src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py	entrypoints	src.backend.infrastructure.scheduler.dlq
 src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py	entrypoints	src.backend.infrastructure.scheduler.scheduler_manager
 src/backend/entrypoints/api/v1/endpoints/admin_tenants.py	entrypoints	src.backend.infrastructure.audit.event_log
@@ -150,7 +151,6 @@ src/backend/entrypoints/webhook/transformer.py	entrypoints	src.backend.infrastru
 src/backend/infrastructure/cache/rag/semantic.py	infrastructure	src.backend.services.ai.embedding_providers
 src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
 src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
-src/backend/infrastructure/clients/transport/http/__init__.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/clients/transport/http/prep_mixin.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/clients/transport/http_httpx.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/decorators/caching/__init__.py	infrastructure	src.backend.dsl.codec.json
@@ -175,9 +175,11 @@ src/backend/infrastructure/sinks/webhook_sink.py	infrastructure	src.backend.dsl.
 src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
+src/backend/services/ai/semantic_cache/l3_cache.py	services	src.backend.infrastructure.logging.factory
+src/backend/services/ai/semantic_cache/semantic_cache.py	services	src.backend.infrastructure.logging.factory
+src/backend/services/codec/facade.py	services	src.backend.dsl.codec.json
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
-src/backend/services/core/base/__init__.py	services	src.backend.dsl.codec.converters
 src/backend/services/core/tech.py	services	src.backend.dsl.codec.converters
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.engine.pipeline
@@ -190,6 +192,7 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
+src/backend/services/messaging/eventbus_facade.py	services	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry

@@ -294,3 +294,31 @@ class NotifyMixin:
                 continue_on_error=continue_on_error,
             )
         )
+
+    def notify_cascade(
+        self,
+        *,
+        adapters: list[Any] | None = None,
+        adapter_names: list[str] | None = None,
+        recipient_path: str = "body.recipient",
+        subject: str = "",
+        body_path: str = "body",
+    ) -> RouteBuilder:
+        """Fire-and-forget cascade notification with fallback channels.
+
+        Args:
+            adapters: List of NotificationAdapter instances.
+            adapter_names: DI-registered adapter names (alternative to adapters).
+            recipient_path: dotted-path to recipient identifier.
+            subject: Notification subject.
+            body_path: dotted-path to message body.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.notify_cascade",
+            "NotifyCascadeProcessor",
+            adapters=adapters or [],
+            adapter_names=adapter_names or [],
+            recipient_path=recipient_path,
+            subject=subject,
+            body_path=body_path,
+        )
