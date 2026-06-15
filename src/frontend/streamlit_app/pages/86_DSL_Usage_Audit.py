@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page

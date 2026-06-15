@@ -120,8 +120,8 @@ async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -
         # Fallback: route through the existing db_call_procedure processor path
         # or just raise — implementation depends on dialect.
         raise NotImplementedError(
-            f"call_procedure not supported on this bundle (dialect-specific). "
-            f"Use 'db_call_procedure' DSL step or dialect-specific driver directly."
+            "call_procedure not supported on this bundle (dialect-specific). "
+            "Use 'db_call_procedure' DSL step or dialect-specific driver directly."
         )
     if asyncio.iscoroutinefunction(fn):
         return await fn(name, **params)
