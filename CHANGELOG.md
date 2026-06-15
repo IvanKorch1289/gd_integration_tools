@@ -5,6 +5,33 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S133 cycle, 2026-06-15] — FormatConvertProcessor MRO Fix (5 waves, 3 commits + 1 blocked, score 9.9 → 9.9, 0 NEW layer violations, 2 items closed, 1 blocked)
+
+### Added
+
+- **S133 W1 — Pre-flight factcheck** (`ff799573`): 5-sec recipe (`verify-analysis-claims` skill) verified S132 backlog. Identified **systemic MRO bug** affecting 2 Processor classes (LLMStructuredProcessor S132 W2 already fixed + FormatConvertProcessor NEW). AST walk: 39 Processor classes without `BaseProcessor` directly in MRO. Grouped: A (intermediate base, OK) + B (mixins only, broken — just FormatConvertProcessor). New file `reports/sprint/s133_w1_factcheck.md` (8 KB).
+- **S133 W2 — FormatConvertProcessor MRO fix** (`970bde45`): same pattern as S132 W2 LLMStructuredProcessor. Class inherited from 3 mixins (DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin), NOT from BaseProcessor. Fix: add `BaseProcessor` to MRO at the END (Python MRO walks mixins first, concrete `process()` wins; `__init__` resolves to BaseProcessor). **+145 tests pass** (154→9 failures в `tests/unit/dsl/builders/`). 0 layer violations.
+- **S133 W3 — Pydantic deprecation (BLOCKED)** (uncommitted, working tree): 5 single-line `Field(example=...)` → `json_schema_extra={"example": ...}` в `core/config/services/{cache,logging,storage}.py`. Modest impact (+2 net tests). **Commit blocked by user** — оставлено в working tree. 30+ multi-line instances deferred S134+ (AST-based codemod needed).
+- **S133 W4 — AST audit of 32 candidates** (this commit, doc-only): subprocess test of all 32 Processor classes with custom `__init__` not inheriting BaseProcessor. **0 additional MRO-broken found.** Groups: A2 (16 intermediate base, OK), B (2 own `__init__` no name, intentional), C (1 @dataclass), D (12 legitimate signatures). Deep-dive on `CreditScoringRagProcessor`: not MRO bug, intentional API (own `__init__` doesn't call super, uses defaults).
+- **S133 W5 — ADR-0220 sprint closure** (this commit): W1-W4 detail + 169→170 ADRs INDEX regen + tech-debt burn-down + S134+ backlog.
+
+### Tests
+
+- **S133 W2**: 145 NEW tests pass (FormatConvertProcessor MRO), 365→510 в `tests/unit/dsl/builders/`, 0 regressions.
+- **S133 W4**: 0 NEW code changes (audit-only), confirms no additional MRO bugs.
+- **S133 W3 (blocked)**: +2 net tests if committed.
+- **Total S133 potential**: +147 tests pass (W2 + W3-if-committed), 0 NEW failures, 0 NEW layer violations.
+
+### Blocked
+
+- **W3 Pydantic 5 single-line migrations**: 3 files modified в working tree, **commit blocked by user**. Files: `src/backend/core/config/services/{cache,logging,storage}.py`. 30+ multi-line instances (cache.py, queue.py, mail.py, ldap.py) deferred S134+ (AST-based codemod needed).
+
+### Notes
+
+- **MRO bug pattern confirmed in 2 places, then exhausted**: `LLMStructuredProcessor` (S132 W2) + `FormatConvertProcessor` (S133 W2). Of 39 AST-walk candidates, only 2 had mixins-only MRO. The other 37 have intermediate base classes that chain to `BaseProcessor`. **The fix pattern is well-defined and reproducible**: add `BaseProcessor` LAST in MRO.
+- **Sibling subagent activity**: 5 eventbus files modified в working tree (uncommitted, not my work). Test file `test_eventbus_publish.py` added. Not touched, not committed. Flagged for user review.
+- **Ponytail already on remote** via `26fe783f` (sibling subagent). I did not install, but it's already there. Pending user decision on keep/remove.
+
 ## [S132 cycle, 2026-06-15] — TD-006 LLM+Airflow Fixes + TD-011 Partial (5 waves, 4 commits, score 9.9 → 9.9, 0 NEW layer violations, 3 items closed)
 
 ### Added
