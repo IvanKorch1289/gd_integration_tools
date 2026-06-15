@@ -29,14 +29,14 @@ class QueueSettings(BaseSettingsWithLoader):
 
     # Блок настроек типа и подключения к брокеру
     type: Literal["kafka", "rabbitmq"] = Field(
-        ..., description="Тип брокера сообщений", example="kafka"
+        ..., description="Тип брокера сообщений", json_schema_extra={"example": "kafka"}
     )
     host: str = Field(
-        ..., description="Имя хоста брокера", example="broker.example.com"
+        ..., description="Имя хоста брокера", json_schema_extra={"example": "broker.example.com"}
     )
     port: int = Field(..., ge=1, le=65535, description="Номер порта брокера")
     ui_port: int = Field(
-        ..., ge=1, le=65535, description="Номер порта UI брокера", example=9121
+        ..., ge=1, le=65535, description="Номер порта UI брокера", json_schema_extra={"example": 9121}
     )
 
     # Блок настроек таймаутов и повторных подключений
@@ -45,14 +45,14 @@ class QueueSettings(BaseSettingsWithLoader):
         ge=5,
         le=300,
         description="Таймаут подключения к брокеру в секундах",
-        example=30,
+        json_schema_extra={"example": 30},
     )
     reconnect_interval: int = Field(
         ...,
         ge=5,
         le=300,
         description="Интервал между попытками повторного подключения в секундах",
-        example=60,
+        json_schema_extra={"example": 60},
     )
 
     # Блок настроек потребителей и graceful shutdown
@@ -60,39 +60,41 @@ class QueueSettings(BaseSettingsWithLoader):
         ...,
         ge=1,
         description="Максимальное количество экземпляров потребителей",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     graceful_timeout: int = Field(
         ...,
         ge=5,
         le=300,
         description="Таймаут graceful shutdown в секундах",
-        example=60,
+        json_schema_extra={"example": 60},
     )
 
     # Блок настроек SSL/TLS и аутентификации
     use_ssl: bool = Field(
-        ..., description="Включить SSL/TLS для безопасных соединений", example=True
+        ..., description="Включить SSL/TLS для безопасных соединений", json_schema_extra={"example": True}
     )
     ca_bundle: Path | None = Field(
-        ..., description="Путь к файлу CA сертификата", example="/path/to/ca.pem"
+        ..., description="Путь к файлу CA сертификата", json_schema_extra={"example": "/path/to/ca.pem"}
     )
     username: str | None = Field(
-        ..., description="Имя пользователя для аутентификации", example="kafka-user"
+        ..., description="Имя пользователя для аутентификации", json_schema_extra={"example": "kafka-user"}
     )
     password: str | None = Field(
-        ..., description="Пароль для аутентификации", example="securepassword123"
+        ..., description="Пароль для аутентификации", json_schema_extra={"example": "securepassword123"}
     )
 
     # Блок настроек топиков
     queues: list[dict[str, str]] = Field(
         ...,
-        min_items=1,
+        min_length=1,
         description="Список топиков",
-        example=[
-            {"name": "queue1", "value": "creating-queue"},
-            {"name": "queue2", "value": "updating-queue"},
-        ],
+        json_schema_extra={
+            "example": [
+                {"name": "queue1", "value": "creating-queue"},
+                {"name": "queue2", "value": "updating-queue"},
+            ],
+        },
     )
 
     @field_validator("port")
@@ -155,30 +157,30 @@ class TasksSettings(BaseSettingsWithLoader):
 
     # Блок настроек для задач
     task_max_attempts: int = Field(
-        ..., description="Максимальное количество попыток выполнения задачи", example=5
+        ..., description="Максимальное количество попыток выполнения задачи", json_schema_extra={"example": 5}
     )
     task_seconds_delay: int = Field(
-        ..., description="Начальная задержка в секундах для задачи", example=60
+        ..., description="Начальная задержка в секундах для задачи", json_schema_extra={"example": 60}
     )
     task_retry_jitter_factor: float = Field(
-        ..., description="Фактор случайности для экспоненциального отката", example=0.5
+        ..., description="Фактор случайности для экспоненциального отката", json_schema_extra={"example": 0.5}
     )
     task_timeout_seconds: int = Field(
-        ..., description="Максимальное время выполнения задачи в секундах", example=3600
+        ..., description="Максимальное время выполнения задачи в секундах", json_schema_extra={"example": 3600}
     )
 
     # Блок настроек для потоков (flows)
     flow_max_attempts: int = Field(
-        ..., description="Максимальное количество попыток выполнения потока", example=5
+        ..., description="Максимальное количество попыток выполнения потока", json_schema_extra={"example": 5}
     )
     flow_seconds_delay: int = Field(
-        ..., description="Начальная задержка в секундах для потока", example=60
+        ..., description="Начальная задержка в секундах для потока", json_schema_extra={"example": 60}
     )
     flow_retry_jitter_factor: float = Field(
-        ..., description="Фактор случайности для экспоненциального отката", example=0.5
+        ..., description="Фактор случайности для экспоненциального отката", json_schema_extra={"example": 0.5}
     )
     flow_timeout_seconds: int = Field(
-        ..., description="Максимальное время выполнения потока в секундах", example=3600
+        ..., description="Максимальное время выполнения потока в секундах", json_schema_extra={"example": 3600}
     )
 
 
@@ -195,7 +197,7 @@ class GRPCSettings(BaseSettingsWithLoader):
     # Блок настроек сокета и воркеров
     socket_path: str = Field(..., description="Путь к файлу сокета gRPC")
     max_workers: int = Field(
-        ..., description="Максимальное количество процессов воркеров gRPC", example=10
+        ..., description="Максимальное количество процессов воркеров gRPC", json_schema_extra={"example": 10}
     )
 
     # TLS / mTLS (ADR-004). Для dev/unix-socket TLS может быть отключён.

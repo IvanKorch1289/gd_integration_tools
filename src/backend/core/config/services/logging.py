@@ -13,22 +13,22 @@ class LogStorageSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LOG_", extra="forbid")
 
     # Параметры подключения
-    host: str = Field(..., description="Хост сервера логов", example="logs.example.com")
+    host: str = Field(..., description="Хост сервера логов", json_schema_extra={"example": "logs.example.com"})
     port: int = Field(
-        ..., gt=0, lt=65536, description="TCP-порт сервера логов", example=514
+        ..., gt=0, lt=65536, description="TCP-порт сервера логов", json_schema_extra={"example": 514}
     )
     udp_port: int = Field(
-        ..., gt=0, lt=65536, description="UDP-порт для отправки логов", example=514
+        ..., gt=0, lt=65536, description="UDP-порт для отправки логов", json_schema_extra={"example": 514}
     )
 
     # Параметры безопасности
     use_tls: bool = Field(
-        ..., description="Использовать TLS для безопасных подключений", example=True
+        ..., description="Использовать TLS для безопасных подключений", json_schema_extra={"example": True}
     )
     ca_bundle: str | None = Field(
         default=None,
         description="Путь к пакету CA-сертификатов",
-        example="/path/to/ca-bundle.crt",
+        json_schema_extra={"example": "/path/to/ca-bundle.crt"},
     )
 
     # Параметры логирования
@@ -36,35 +36,35 @@ class LogStorageSettings(BaseSettingsWithLoader):
         ...,
         pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
         description="Уровень детализации логирования",
-        example="INFO",
+        json_schema_extra={"example": "INFO"},
     )
-    name_log_file: str = Field(..., description="Путь к файлу логов", example="app.log")
+    name_log_file: str = Field(..., description="Путь к файлу логов", json_schema_extra={"example": "app.log"})
     dir_log_name: str = Field(
-        ..., description="Имя директории для хранения логов", example="/var/logs/myapp"
+        ..., description="Имя директории для хранения логов", json_schema_extra={"example": "/var/logs/myapp"}
     )
     required_fields: list[str] = Field(
         ...,
         default_factory=list,
-        min_items=1,
+        min_length=1,
         description="Обязательные поля в лог-сообщениях",
-        example={"timestamp", "level", "message"},
+        json_schema_extra={"example": {"timestamp", "level", "message"}},
     )
     log_requests: bool = Field(
-        ..., description="Включить логирование входящих запросов", example=True
+        ..., description="Включить логирование входящих запросов", json_schema_extra={"example": True}
     )
     max_body_log_size: int = Field(
         ...,
         description="Максимальный размер лог-сообщений для логирования в байтах",
-        example=1024 * 1024,  # 1MB
+        json_schema_extra={"example": 1024 * 1024},  # 1MB
     )
 
     # Конфигурация логгеров
     conf_loggers: list[dict] = Field(
         ...,
         default_factory=list,
-        min_items=1,
+        min_length=1,
         description="Конфигурация логгеров",
-        example=[{"name": "application", "facility": "application"}],
+        json_schema_extra={"example": [{"name": "application", "facility": "application"}]},
     )
 
     @computed_field

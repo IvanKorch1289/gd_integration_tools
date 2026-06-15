@@ -20,54 +20,54 @@ class MailSettings(BaseSettingsWithLoader):
 
     # Блок настроек SMTP сервера
     host: str = Field(
-        ..., description="Имя хоста SMTP сервера", example="smtp.example.com"
+        ..., description="Имя хоста SMTP сервера", json_schema_extra={"example": "smtp.example.com"}
     )
     port: int = Field(
-        ..., ge=1, le=65535, description="Номер порта SMTP сервера", example=587
+        ..., ge=1, le=65535, description="Номер порта SMTP сервера", json_schema_extra={"example": 587}
     )
     use_tls: bool = Field(
-        ..., description="Включить STARTTLS для безопасных соединений", example=True
+        ..., description="Включить STARTTLS для безопасных соединений", json_schema_extra={"example": True}
     )
     validate_certs: bool = Field(
-        ..., description="Проверять SSL/TLS сертификаты сервера", example=True
+        ..., description="Проверять SSL/TLS сертификаты сервера", json_schema_extra={"example": True}
     )
     ca_bundle: Path | None = Field(
         ...,
         description="Путь к пользовательскому пакету CA сертификатов",
-        example="/path/to/ca_bundle.crt",
+        json_schema_extra={"example": "/path/to/ca_bundle.crt"},
     )
 
     # Блок настроек аутентификации
     username: str = Field(
         ...,
         description="Имя пользователя для аутентификации SMTP",
-        example="user@example.com",
+        json_schema_extra={"example": "user@example.com"},
     )
     password: str = Field(
-        ..., description="Пароль для аутентификации SMTP", example="securepassword123"
+        ..., description="Пароль для аутентификации SMTP", json_schema_extra={"example": "securepassword123"}
     )
 
     # Блок настроек таймаутов и пула соединений
     connection_pool_size: int = Field(
-        ..., ge=1, le=20, description="Размер пула соединений SMTP", example=5
+        ..., ge=1, le=20, description="Размер пула соединений SMTP", json_schema_extra={"example": 5}
     )
     connect_timeout: int = Field(
-        ..., ge=5, le=30, description="Таймаут подключения в секундах", example=30
+        ..., ge=5, le=30, description="Таймаут подключения в секундах", json_schema_extra={"example": 30}
     )
     command_timeout: int = Field(
-        ..., ge=5, le=300, description="Таймаут сетевой операции в секундах", example=30
+        ..., ge=5, le=300, description="Таймаут сетевой операции в секундах", json_schema_extra={"example": 30}
     )
 
     # Блок настроек отправителя и шаблонов
     sender: str = Field(
         ...,
         description="Адрес электронной почты отправителя по умолчанию",
-        example="noreply@example.com",
+        json_schema_extra={"example": "noreply@example.com"},
     )
     template_folder: Path | None = Field(
         ...,
         description="Путь к директории с шаблонами писем",
-        example="/app/email_templates",
+        json_schema_extra={"example": "/app/email_templates"},
     )
 
     # Блок настроек Circuit Breaker
@@ -75,13 +75,13 @@ class MailSettings(BaseSettingsWithLoader):
         ...,
         ge=0,
         description="Максимальное количество сбоев до срабатывания Circuit Breaker",
-        example=5,
+        json_schema_extra={"example": 5},
     )
     circuit_breaker_reset_timeout: int = Field(
         ...,
         ge=0,
         description="Время (в секундах) до сброса Circuit Breaker",
-        example=60,
+        json_schema_extra={"example": 60},
     )
 
     @computed_field(description="URL почтового сервера")

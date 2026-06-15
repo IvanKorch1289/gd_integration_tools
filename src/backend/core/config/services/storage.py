@@ -40,7 +40,6 @@ class FileStorageSettings(BaseSettingsWithLoader):
     )
     bucket: str = Field(
         default="my-bucket",
-        env="FS_BUCKET",
         description="Имя корзины по умолчанию",
         json_schema_extra={"example": "my-bucket"},
     )
@@ -62,7 +61,6 @@ class FileStorageSettings(BaseSettingsWithLoader):
     verify: bool = Field(..., description="Проверять SSL-сертификаты", json_schema_extra={"example": True})
     ca_bundle: str | None = Field(
         default=None,
-        env="FS_CA_BUNDLE",
         description="Путь к пакету CA-сертификатов для SSL",
         json_schema_extra={"example": "/path/to/ca-bundle.crt"},
     )

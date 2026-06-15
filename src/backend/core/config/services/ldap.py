@@ -48,7 +48,7 @@ class LdapSettings(BaseSettingsWithLoader):
             "URI LDAP-сервера: ldap://host:389 или ldaps://host:636. "
             "Production обязателен ldaps:// или START_TLS."
         ),
-        example="ldaps://ad.example.com:636",
+        json_schema_extra={"example": "ldaps://ad.example.com:636"},
     )
     bind_dn: str = Field(
         default="",
@@ -57,7 +57,7 @@ class LdapSettings(BaseSettingsWithLoader):
             "(например, ``CN=svc-saml,OU=Service,DC=example,DC=com``). "
             "Пароль — ``bind_password`` (см. SecretBroker integration)."
         ),
-        example="CN=svc-saml,OU=Service,DC=example,DC=com",
+        json_schema_extra={"example": "CN=svc-saml,OU=Service,DC=example,DC=com"},
     )
     bind_password: str = Field(
         default="",
@@ -69,7 +69,7 @@ class LdapSettings(BaseSettingsWithLoader):
     search_base: str = Field(
         default="",
         description="Base DN для user-lookup (например, ``DC=example,DC=com``).",
-        example="DC=example,DC=com",
+        json_schema_extra={"example": "DC=example,DC=com"},
     )
 
     # === Опциональные параметры (default values подходят для AD 2016+) ===
