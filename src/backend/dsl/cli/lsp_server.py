@@ -53,6 +53,44 @@ def _try_import_pygls() -> Any | None:
         return None
 
 
+def _build_completion_list(
+    uri: str,
+    lsp_types: Any,
+    route_completions: tuple[tuple[str, str], ...],
+    step_completions: tuple[tuple[str, str, str], ...],
+) -> Any:
+    """Контекстно-зависимый CompletionList по URI документа.
+
+    * ``route.toml`` — только route-level ключи.
+    * ``*.dsl.yaml`` — только step type'ы со snippet-вставкой.
+    * Остальное — оба набора.
+    """
+    path = uri.split("?")[0].lower()
+    is_route_toml = path.endswith("route.toml")
+    is_dsl_yaml = path.endswith(".dsl.yaml")
+
+    items: list[Any] = []
+    if is_route_toml or not is_dsl_yaml:
+        for key, detail in route_completions:
+            items.append(
+                lsp_types.CompletionItem(
+                    label=key, kind=lsp_types.CompletionItemKind.Property, detail=detail
+                )
+            )
+    if is_dsl_yaml or not is_route_toml:
+        for key, detail, snippet in step_completions:
+            items.append(
+                lsp_types.CompletionItem(
+                    label=key,
+                    kind=lsp_types.CompletionItemKind.Function,
+                    detail=detail,
+                    insert_text=snippet,
+                    insert_text_format=lsp_types.InsertTextFormat.Snippet,
+                )
+            )
+    return lsp_types.CompletionList(is_incomplete=False, items=items)
+
+
 def create_server() -> Any:
     """Создать ``LanguageServer`` и зарегистрировать handlers.
 
@@ -114,20 +152,9 @@ def create_server() -> Any:
             )
             return lsp_types.CompletionList(is_incomplete=False, items=[])
 
-        items: list[lsp_types.CompletionItem] = []
-        for key, detail, *_ in ROUTE_COMPLETIONS:
-            items.append(
-                lsp_types.CompletionItem(
-                    label=key, kind=lsp_types.CompletionItemKind.Property, detail=detail
-                )
-            )
-        for key, detail, *_ in STEP_COMPLETIONS:
-            items.append(
-                lsp_types.CompletionItem(
-                    label=key, kind=lsp_types.CompletionItemKind.Function, detail=detail
-                )
-            )
-        return lsp_types.CompletionList(is_incomplete=False, items=items)
+        return _build_completion_list(
+            params.text_document.uri, lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS
+        )
 
     @server.feature(lsp_types.TEXT_DOCUMENT_HOVER)
     def hover(

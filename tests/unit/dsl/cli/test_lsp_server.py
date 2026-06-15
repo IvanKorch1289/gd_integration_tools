@@ -98,3 +98,64 @@ def test_completion_details_non_empty() -> None:
     for key, detail, *_ in (*ROUTE_COMPLETIONS, *STEP_COMPLETIONS):
         assert isinstance(detail, str)
         assert len(detail) >= 8, f"detail для {key!r} слишком короткий: {detail!r}"
+
+
+def test_build_completion_list_route_toml() -> None:
+    """Для route.toml возвращаются только route-ключи без snippet."""
+    pytest.importorskip("pygls")
+    from lsprotocol import types as lsp_types
+
+    from src.backend.dsl.cli.lsp_server import _build_completion_list
+    from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
+
+    result = _build_completion_list(
+        "file:///project/routes/foo/route.toml",
+        lsp_types,
+        ROUTE_COMPLETIONS,
+        STEP_COMPLETIONS,
+    )
+    labels = {item.label for item in result.items}
+    assert "from" in labels
+    assert "steps" in labels
+    assert "call_function" not in labels
+    assert all(item.insert_text is None for item in result.items)
+
+
+def test_build_completion_list_dsl_yaml() -> None:
+    """Для *.dsl.yaml возвращаются только step'ы со snippet."""
+    pytest.importorskip("pygls")
+    from lsprotocol import types as lsp_types
+
+    from src.backend.dsl.cli.lsp_server import _build_completion_list
+    from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
+
+    result = _build_completion_list(
+        "file:///project/routes/foo/bar.dsl.yaml",
+        lsp_types,
+        ROUTE_COMPLETIONS,
+        STEP_COMPLETIONS,
+    )
+    labels = {item.label for item in result.items}
+    assert "call_function" in labels
+    assert "proxy" in labels
+    assert "from" not in labels
+    assert all(
+        item.insert_text_format == lsp_types.InsertTextFormat.Snippet
+        for item in result.items
+    )
+
+
+def test_build_completion_list_unknown_file() -> None:
+    """Для неизвестного файла возвращаются и route, и step completions."""
+    pytest.importorskip("pygls")
+    from lsprotocol import types as lsp_types
+
+    from src.backend.dsl.cli.lsp_server import _build_completion_list
+    from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
+
+    result = _build_completion_list(
+        "file:///project/readme.md", lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS
+    )
+    labels = {item.label for item in result.items}
+    assert "from" in labels
+    assert "call_function" in labels
