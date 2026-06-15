@@ -7,9 +7,15 @@ if TYPE_CHECKING:
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # S131 W2 (TD-026 cont. full wire-up)
+    FileStreamGRPCServicer,
+)
 from src.backend.entrypoints.grpc.grpc_server.interceptor import AuthInterceptor
 from src.backend.entrypoints.grpc.grpc_server.invoker import InvokerGRPCServicer
 from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer
+from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (TD-026 cont. full wire-up)
+    add_FileServiceServicer_to_server,
+)
 from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
     add_InvokerServiceServicer_to_server,
 )
@@ -86,6 +92,9 @@ async def serve() -> None:
 
     add_OrderServiceServicer_to_server(OrderGRPCServicer(), grpc_server)
     add_InvokerServiceServicer_to_server(InvokerGRPCServicer(), grpc_server)
+    # S131 W2 (TD-026 cont. full wire-up): FileStreamGRPCServicer registered
+    # для streaming DownloadFile/UploadFile RPCs (S128 W3 + S131 W2).
+    add_FileServiceServicer_to_server(FileStreamGRPCServicer(), grpc_server)
 
     credentials = _load_tls_credentials()
     if credentials is None:

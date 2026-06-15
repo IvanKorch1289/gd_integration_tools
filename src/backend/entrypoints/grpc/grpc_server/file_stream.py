@@ -27,6 +27,9 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.entrypoints.grpc.grpc_server.base import BaseGRPCServicer
+from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (TD-026 cont. full wire-up)
+    FileServiceServicer,
+)
 
 # Late import: files_pb2 (с DownloadFile/UploadFile) regen-зависимый.
 # Rule #105: late import для circular avoidance + optional codegen deps.
@@ -56,19 +59,23 @@ def compute_sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-class FileStreamGRPCServicer(BaseGRPCServicer):
-    """gRPC servicer для streaming file operations (S128 W3 / TD-026).
+class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
+    """gRPC servicer для streaming file operations (S128 W3 / TD-026, S131 W2 wire-up).
 
     Реализует 2 streaming RPC:
     - ``async DownloadFile(request, context) -> AsyncIterator[FileChunk]``
     - ``async UploadFile(request_iterator, context) -> FileUploadResponse``
 
-    ВАЖНО: для активации в gRPC server нужно:
-    1. ``make grpc-codegen`` (регенерирует files_pb2.py + files_pb2_grpc.py)
-    2. Multiple inheritance: ``class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer)``
-    3. Регистрация в ``grpc_server/server.py``
+    Multiple inheritance (``BaseGRPCServicer, FileServiceServicer``) —
+    S131 W2 завершает wire-up, начатый S128 W3. ``FileServiceServicer``
+    сгенерирован из ``files.proto`` (``make grpc-codegen`` regen, S131 W2):
+    ``src/backend/entrypoints/grpc/protobuf/files_pb2_grpc.py``.
 
-    До codegen servicer тестируется в изоляции (mock context).
+    Регистрация в gRPC server — ``grpc_server/server.py::serve()``
+    (``add_FileServiceServicer_to_server(FileStreamGRPCServicer(), grpc_server)``).
+
+    До полной активации servicer тестируется в изоляции (mock context),
+    см. ``tests/unit/entrypoints/grpc/test_file_stream.py``.
     """
 
     def __init__(

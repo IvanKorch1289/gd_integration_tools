@@ -3,7 +3,11 @@
 import grpc
 import warnings
 
-import invoker_pb2 as invoker__pb2
+# S131 W2 (TD-026 cont. full wire-up): переписываем import на absolute.
+# Default protoc (v1.71+) генерит ``import invoker_pb2 as invoker__pb2`` (relative),
+# что требует наличия ``src/backend/entrypoints/grpc/protobuf/`` в sys.path.
+# См. ``files_pb2_grpc.py`` (S131 W2) — тот же fix.
+import src.backend.entrypoints.grpc.protobuf.invoker_pb2 as invoker__pb2  # noqa: I001
 
 GRPC_GENERATED_VERSION = '1.71.2'
 GRPC_VERSION = grpc.__version__
