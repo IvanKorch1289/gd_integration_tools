@@ -184,9 +184,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing |
-| Current | 🔴 OPEN — `DatabaseBundle() takes no arguments` |
-| Owner | Sprint 3 |
-| Estimate | ~1 hour |
+| Current | 🟢 **CLOSED (S131 W3)** — commit `0498f682 fix(s131-w3-td016): add @dataclass decorator to DatabaseBundle`. S131 W5 register sync (this entry). |
+| Residual | 0 (TD-015 @dataclass for IDPResult + _FieldPattern closed in S131 W4, commit `72e8bb2b`) |
+| Owner | ~~Sprint 3~~ → CLOSED |
+| Refs | S131 W3 commit `0498f682`, S131 W4 commit `72e8bb2b`, ADR-0218 |
 
 ### TD-017 — s3_delete, s3_list DSL methods
 
