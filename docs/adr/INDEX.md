@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **171**; уникальных слотов: **170**.
+Всего ADR-файлов: **172**; уникальных слотов: **171**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -177,5 +177,6 @@
 | 0219 | ADR-0219: Sprint 132 Closure — TD-006 LLM+Airflow Fixes + TD-011 Partial (from_grpc_stream) (5 commits, score 9.9 → 9.9) | — | [0219-sprint-132-closure.md](0219-sprint-132-closure.md) |
 | 0220 | ADR-0220: Sprint 133 Closure — FormatConvertProcessor MRO Fix (W1+W2, score 9.9 → 9.9, +145 tests, 0 NEW layer violations) | — | [0220-sprint-133-closure.md](0220-sprint-133-closure.md) |
 | 0221 | ADR-0221: Sprint 136 Closure — Pydantic v2 Migration + Regression Fixes (4 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, -81 Pydantic warnings) | — | [0221-sprint-136-closure.md](0221-sprint-136-closure.md) |
+| 0222 | ADR-0222: Sprint 138 Closure — Layer Violations + Pydantic Online Verify + Test Failures (6 atomic commits, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged) | — | [0222-sprint-138-closure.md](0222-sprint-138-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

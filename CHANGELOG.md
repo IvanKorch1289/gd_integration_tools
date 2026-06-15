@@ -5,6 +5,52 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S138 cycle, 2026-06-15] — Layer Violations + Pydantic Online Verify + Test Failures (6 waves, 5 code commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged)
+
+### Added
+
+- **S138 W1 — Pre-flight factcheck** (`69596dc`): 5-sec recipe on 192+ test failures. Online verified Pydantic v2 migration via context7 (`/pydantic/pydantic`, `/pydantic/pydantic-settings`): `Field(example=) → json_schema_extra={"example": }`, `min_items → min_length`, `env_prefix` covers redundant `env=` ✅. New file `reports/sprint/s138_w1_factcheck.md` (5.2 KB).
+- **S138 W2 — Collection errors fix** (`27b7f13`): 2 sibling W3 regressions fixed:
+  * `tests/unit/core/ai/test_agent_sandbox.py:17` import path `core.ai → services.ai` (sibling S133 W4 moved file, only test_agent_graph.py was updated in S136 W3; this one was missed)
+  * `src/backend/core/interfaces/__init__.py`: added 3 re-exports (BreakerSpec→CircuitBreakerConfig, BreakerState→CircuitState, CircuitOpen→CircuitBreakerOpenError) + CircuitBreaker itself (was in __all__ but missing import — sibling's own bug)
+- **S138 W3 — filewatcher source_id pop** (`1068535`): 1 line `source_id=route_id → source_id=kwargs.pop("source_id", route_id)`. Bug: explicit `source_id=route_id` + `**kwargs` (with test passing source_id) → "got multiple values for keyword argument". Fix: pop from kwargs to allow override.
+- **S138 W4 — Bencode + cancel_deferred fix** (`7a355c6`): 2 separate bugs:
+  * `_to_bencode` called undefined `_bencode` (S40 W3 promised "40-LOC implementation" but never wrote it). Fix: implemented stdlib-only `_bencode` + `_bdecode` in `format_convert/_helpers.py` (~70 LOC, per https://wiki.theory.org/BitTorrentSpecification#Bencoding spec).
+  * `cancel_deferred` was no-op when `_deferred` not set (per docstring), but test asserted `_deferred == {}` after cancel. Fix: simplified to always set `{}`, updated docstring to match test contract.
+- **S138 W5 — Layer violation fixes** (`5ea70bd`): 2 facade files moved from services/ to infrastructure/:
+  * `services/io/external_database/facade.py → infrastructure/database/external_database_facade.py` (R: git mv)
+  * `services/messaging/eventbus_facade.py → infrastructure/clients/messaging/eventbus_facade.py` (A: was untracked, plain mv)
+  * 3 import sites updated via sed
+- **S138 W6 — ADR-0222 sprint closure** (this commit): W1-W5 detail + INDEX regen (170 → 171 ADRs) + S139+ backlog.
+
+### Tests
+
+- **S138 W2**: 0 collection errors (was 2 in tests/unit/core/, +28 tests now collect)
+- **S138 W3**: 9/9 test_from_builders_integration pass (was 1 fail)
+- **S138 W4**: 9/9 bencode pass + 57/57 deferred pass (was 5+1 fails, 6 fails total)
+- **S138 W4 combined**: tests/unit/dsl/builders/ 8 fails → 0 fails (534 pass)
+- **S138 W5**: 9/9 test_facade pass (no regression)
+- **Combined (sibling + my W2-W5)**: net ~+148 tests now collect/pass where they were failing
+- **Sibling in S138**: 4+ commits (S42 W1/W2/W3/W5: LSP, wizard tests, plugin scaffolding, IP hot-reload)
+
+### Notes
+
+- **Online verification (per user mandate "сверяйся с данными в сети")**: Pydantic v2 docs verified via context7 — S136 W4 migration is current with official Pydantic v2 migration guide.
+- **Sibling WIP not touched**: 5+ modified files in working tree (sibling's territory).
+- **Regression rule (S126+) applied**: W2 (test fix), W3 (test+code fix), W4 (code+test), W5 (regression fix for sibling) — each in separate commit.
+- **Layer linter audit**: 0 NEW from my work, 2 NEW from sibling (re-exports) flagged for sibling or future baseline-allowlist decision.
+- **Ponytail skill active**: "ship the lazy version, question in same response" — applied throughout W2-W5.
+
+### Backlog (S139+)
+
+- 153 broader test failures in `tests/unit/core/` (multi-day classification)
+- 86 services test failures (multi-day classification)
+- 2 NEW layer violations (sibling re-exports — flag for sibling)
+- 1 OPEN TD (TD-006: test baseline, 200+ failures)
+- 1 PARTIAL TD (TD-013: Streamlit feature-grouping, 6h dedicated)
+- from_nats signature bug (LOW priority, feature-flag OFF)
+- Docstring coverage, security audit, mutation testing (P3)
+
 ## [S136 cycle, 2026-06-15] — Pydantic v2 Migration Complete (5 waves, 4 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 1 backlog item closed, 1 regression fixed, -81 Pydantic warnings)
 
 ### Added
