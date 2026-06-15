@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import os
 
-from src.backend.core.svcs_registry import has_service, register_factory
 from src.backend.core.logging import get_logger
+from src.backend.core.svcs_registry import has_service, register_factory
 
 __all__ = (
     "register_all_services",
@@ -85,6 +85,33 @@ def register_secrets_backend() -> None:
     _logger.info("SecretsBackend registered: kind=%s", backend_kind)
 
 
+def _register_storage_facade() -> None:
+    """Регистрирует ``StorageFacade`` в svcs с capability-check."""
+    from src.backend.core.svcs_registry import has_service, register_factory
+    from src.backend.services.storage import StorageFacade
+
+    if has_service(StorageFacade):
+        return
+
+    def _factory() -> StorageFacade:
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+        from src.backend.core.svcs_registry import get_service, has_service
+        from src.backend.infrastructure.storage.factory import get_object_storage
+
+        storage = get_object_storage()
+        capability_check = None
+        if has_service(CapabilityGate):
+            gate = get_service(CapabilityGate)
+            capability_check = getattr(gate, "check", None)
+        return StorageFacade(
+            storage=storage,
+            capability_check=capability_check,
+            plugin="system",
+        )
+
+    register_factory(StorageFacade, _factory)
+
+
 def register_all_services() -> None:
     """
     Регистрирует все бизнес-сервисы приложения в svcs_registry.
@@ -133,6 +160,9 @@ def register_all_services() -> None:
 
     # Wave A: SecretsBackend через svcs (env/vault dispatch).
     register_secrets_backend()
+
+    # P1: StorageFacade для extensions (S133 W4).
+    _register_storage_facade()
 
     # W14.1.C: встроенные middleware action-диспетчера.
     register_default_action_middlewares()

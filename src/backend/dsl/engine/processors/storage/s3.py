@@ -53,11 +53,28 @@ __all__ = (
 _logger = get_logger("dsl.storage.s3")
 
 
-def _get_storage() -> Any:
-    """Lazy import storage factory (чтобы избежать cycle на startup)."""
-    from src.backend.infrastructure.storage import factory
+def _get_storage_facade(context: ExecutionContext) -> Any:
+    """Lazy resolve StorageFacade (fallback на bare ObjectStorage для тестов)."""
+    plugin = context.route_id or "dsl"
+    try:
+        from src.backend.core.svcs_registry import get_service, has_service
+        from src.backend.services.storage import StorageFacade
 
-    return factory.get_object_storage()
+        if has_service(StorageFacade):
+            facade = get_service(StorageFacade)
+            if facade._plugin != plugin:
+                return StorageFacade(
+                    storage=facade._storage,
+                    capability_check=facade._check,
+                    plugin=plugin,
+                )
+            return facade
+    except Exception:
+        pass
+
+    from src.backend.infrastructure.storage.factory import get_object_storage
+
+    return StorageFacade(get_object_storage(), plugin=plugin)
 
 
 # ── to_s3 ─────────────────────────────────────────────────────────────────
@@ -111,7 +128,7 @@ class ToS3Processor(BaseProcessor):
             exchange.fail(f"to_s3: data must be bytes/str, got {type(data).__name__}")
             return
         try:
-            storage = _get_storage()
+            storage = _get_storage_facade(context)
             full_key = await storage.upload(key, bytes(data), content_type=content_type)
         except (ValueError, OSError) as exc:
             exchange.fail(f"to_s3: {exc}")
@@ -166,7 +183,7 @@ class FromS3Processor(BaseProcessor):
             exchange.fail(f"from_s3: key must be str, got {type(key).__name__}")
             return
         try:
-            storage = _get_storage()
+            storage = _get_storage_facade(context)
             data = await storage.download(key)
         except FileNotFoundError as exc:
             exchange.fail(f"from_s3: {exc}")
@@ -229,7 +246,7 @@ class S3PresignProcessor(BaseProcessor):
             exchange.fail(f"s3_presign: key must be str, got {type(key).__name__}")
             return
         try:
-            storage = _get_storage()
+            storage = _get_storage_facade(context)
             if not storage.supports_presigned():
                 exchange.fail("s3_presign: backend не поддерживает presigned URLs")
                 return
@@ -279,7 +296,7 @@ class S3DeleteProcessor(BaseProcessor):
             exchange.fail(f"s3_delete: key must be str, got {type(key).__name__}")
             return
         try:
-            storage = _get_storage()
+            storage = _get_storage_facade(context)
             await storage.delete(key)
         except (ValueError, OSError) as exc:
             exchange.fail(f"s3_delete: {exc}")
@@ -332,7 +349,7 @@ class S3ListProcessor(BaseProcessor):
                 return
             prefix = resolved or ""
         try:
-            storage = _get_storage()
+            storage = _get_storage_facade(context)
             keys = await storage.list_keys(prefix)
         except (ValueError, OSError) as exc:
             exchange.fail(f"s3_list: {exc}")

@@ -85,6 +85,20 @@ def _build_base_capabilities(
     )
     vocab.register(
         CapabilityDef(
+            name="storage.read",
+            matcher=path_glob,
+            description="Чтение из объектного хранилища через StorageFacade (key/prefix).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="storage.write",
+            matcher=path_glob,
+            description="Запись/удаление в объектном хранилище через StorageFacade (key).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="code.execute",
             matcher=exact,
             description=(

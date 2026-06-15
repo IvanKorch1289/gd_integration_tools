@@ -61,6 +61,8 @@ class TestCapabilityVocabulary:
             "fs.read",
             "fs.write",
             "fs.create_new",
+            "storage.read",
+            "storage.write",
             "code.execute",
             "mq.publish",
             "mq.consume",
@@ -71,7 +73,7 @@ class TestCapabilityVocabulary:
             "llm.invoke",
         ):
             assert v.has(name), f"missing {name}"
-        assert len(v.all()) == 41
+        assert len(v.all()) == 43
 
     def test_fs_create_new_registered(self) -> None:
         """V15 R-V15-4: capability fs.create_new обязательна для AIFsFacade."""
