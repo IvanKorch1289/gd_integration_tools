@@ -7,9 +7,11 @@ Wave 1.1: монолитный ``core/interfaces.py`` разбит на тема
 * :mod:`core.interfaces.antivirus` — :class:`AntivirusBackend` (ClamAV / HTTP).
 * :mod:`core.interfaces.notification` — :class:`NotificationAdapter` (Email / Express / ...).
 
-Прочие ABC (Healthcheck, MessageBroker, AsyncLifecycle, CircuitBreaker,
+Прочие ABC (Healthcheck, MessageBroker, AsyncLifecycle,
 PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле — они
 плотно связаны и переезд в отдельные модули не уменьшает зацепления.
+
+CircuitBreaker вынесен в ``core.resilience.breaker`` (canonical, purgatory backend).
 
 Публичный API сохранён: ``from src.backend.core.interfaces import X`` продолжает
 работать для всех ранее экспортируемых имён.
@@ -17,8 +19,6 @@ PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
-import time  # PERF-5: top-level import (hot path — CircuitBreaker state checks)
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -35,6 +35,18 @@ from src.backend.core.interfaces.notification import (
 )
 from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.interfaces.storage import ObjectStorage
+from src.backend.core.logging import get_logger
+
+# Backward compat (sibling W3 moved CircuitBreaker to core.resilience.breaker
+# but kept CircuitBreaker as alias; extend with aliases for the OTHER
+# renamed names so existing test imports like
+# `from src.backend.core.interfaces import CircuitBreakerConfig` still work):
+from src.backend.core.resilience.breaker import (  # noqa: E402
+    BreakerSpec as CircuitBreakerConfig,
+    BreakerState as CircuitState,
+    CircuitBreaker,  # already aliased in breaker.__init__ for backward compat
+    CircuitOpen as CircuitBreakerOpenError,
+)
 
 logger = get_logger(__name__)
 
@@ -142,97 +154,6 @@ class ManagedResource(AsyncLifecycle, Healthcheck):
     """Компонент с lifecycle + health check."""
 
     pass
-
-
-# ────────────────── Circuit Breaker ──────────────────
-
-
-class CircuitState(Enum):
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-
-@dataclass(slots=True)
-class CircuitBreakerConfig:
-    failure_threshold: int = 5
-    recovery_timeout: float = 30.0
-    half_open_max_calls: int = 1
-    success_threshold: int = 2
-
-
-class CircuitBreaker:
-    """Lightweight circuit breaker — самодостаточная state-machine.
-
-    Сохраняет публичный API (``state``, ``record_success``, ``record_failure``,
-    ``allow_request``, ``__aenter__/__aexit__``) для обратной совместимости
-    с 11+ callsite'ами. Для нового кода предпочитать
-    ``infrastructure.resilience.breaker.BreakerRegistry`` (purgatory backend).
-    """
-
-    def __init__(self, name: str, config: CircuitBreakerConfig | None = None) -> None:
-        self.name = name
-        self._config = config or CircuitBreakerConfig()
-        self._failure_count = 0
-        self._success_count = 0
-        self._last_failure_time = 0.0
-        self._half_open_calls = 0
-        self._state = CircuitState.CLOSED
-
-    @property
-    def state(self) -> CircuitState:
-        if self._state == CircuitState.OPEN:
-            elapsed = time.monotonic() - self._last_failure_time
-            if elapsed >= self._config.recovery_timeout:
-                self._state = CircuitState.HALF_OPEN
-                self._half_open_calls = 0
-        return self._state
-
-    def record_success(self) -> None:
-        if self._state == CircuitState.HALF_OPEN:
-            self._success_count += 1
-            if self._success_count >= self._config.success_threshold:
-                self._state = CircuitState.CLOSED
-                self._failure_count = 0
-                self._success_count = 0
-        else:
-            self._failure_count = 0
-
-    def record_failure(self) -> None:
-        self._failure_count += 1
-        self._last_failure_time = time.monotonic()
-        if self._failure_count >= self._config.failure_threshold:
-            self._state = CircuitState.OPEN
-
-    def allow_request(self) -> bool:
-        state = self.state
-        if state == CircuitState.CLOSED:
-            return True
-        if state == CircuitState.HALF_OPEN:
-            self._half_open_calls += 1
-            return self._half_open_calls <= self._config.half_open_max_calls
-        return False
-
-    async def __aenter__(self) -> CircuitBreaker:
-        if not self.allow_request():
-            raise CircuitBreakerOpenError(self.name)
-        return self
-
-    async def __aexit__(
-        self, exc_type: type | None, exc_val: Exception | None, _exc_tb: Any
-    ) -> None:
-        if exc_val is None:
-            self.record_success()
-        else:
-            self.record_failure()
-
-
-class CircuitBreakerOpenError(Exception):
-    """Исключение при попытке вызова через открытый CB."""
-
-    def __init__(self, name: str) -> None:
-        super().__init__(f"Circuit breaker '{name}' is OPEN")
-        self.breaker_name = name
 
 
 # ────────────────── Connection Pool Metrics ──────────────────

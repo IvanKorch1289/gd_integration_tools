@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (
     InProcessAgentSandbox,
     ProcessPoolAgentSandbox,
 )
