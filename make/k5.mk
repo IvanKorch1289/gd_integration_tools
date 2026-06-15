@@ -6,17 +6,18 @@ testkit-smoke: check-env ## К5: запуск unit-тестов testkit (recorde
 	@$(UV_RUN) pytest tests/unit/testkit_pkg -q
 	@$(SUCCESS) "testkit OK"
 
-new-plugin: check-env ## К5: scaffold extensions/<NAME>/ V11 plugin (FEATURES='ping,echo')
+new-plugin: check-env ## К5: scaffold extensions/<NAME>/ V11 plugin (FEATURES='ping,echo') или интерактивно
 	@if [ -z "$(NAME)" ]; then \
-		echo "Использование: make new-plugin NAME=<plugin_name> [FEATURES='ping,echo'] [CAPABILITIES='mq.publish'] [WITH_FRONTEND=1]"; \
-		exit 2; \
+		echo "Запуск интерактивного wizard'а плагина..."; \
+		$(UV_RUN) python tools/codegen_plugin.py --interactive; \
+	else \
+		$(UV_RUN) python tools/codegen_plugin.py \
+			--name "$(NAME)" \
+			$(if $(FEATURES),--features "$(FEATURES)",) \
+			$(if $(CAPABILITIES),--capabilities "$(CAPABILITIES)",) \
+			$(if $(WITH_FRONTEND),--with-frontend,) \
+			$(if $(OVERWRITE),--overwrite,); \
 	fi
-	@$(UV_RUN) python tools/codegen_plugin.py \
-		--name "$(NAME)" \
-		$(if $(FEATURES),--features "$(FEATURES)",) \
-		$(if $(CAPABILITIES),--capabilities "$(CAPABILITIES)",) \
-		$(if $(WITH_FRONTEND),--with-frontend,) \
-		$(if $(OVERWRITE),--overwrite,)
 
 perf-smoke: check-env ## К5: short k6 baseline (~1 min) против запущенного backend
 	@$(INFO) "Running k6 smoke profile..."

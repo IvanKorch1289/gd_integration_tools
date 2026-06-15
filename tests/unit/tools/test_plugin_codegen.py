@@ -90,3 +90,33 @@ def test_default_with_frontend(tmp_path: Path) -> None:
     codegen = PluginCodegen(target_dir=tmp_path, default_with_frontend=True)
     plugin = codegen.scaffold(name="ui_plugin")
     assert (plugin / "frontend" / "pages").is_dir()
+
+
+def test_scaffold_with_description(codegen: PluginCodegen) -> None:
+    plugin = codegen.scaffold(name="my_plugin", description="My awesome plugin")
+    manifest = (plugin / "plugin.toml").read_text()
+    assert 'description = "My awesome plugin"' in manifest
+
+
+def test_main_interactive_creates_plugin_with_description(
+    monkeypatch, tmp_path: Path
+) -> None:
+    mod = sys.modules["codegen_plugin_mod"]
+    monkeypatch.setattr(mod, "EXTENSIONS_DIR", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "_interactive_prompts",
+        lambda: {
+            "name": "interactive_plugin",
+            "description": "Interactive plugin description",
+            "features": ["ping"],
+            "capabilities": [],
+            "with_frontend": False,
+            "overwrite": False,
+        },
+    )
+    assert mod.main(["--interactive"]) == 0
+    plugin_root = tmp_path / "interactive_plugin"
+    assert plugin_root.is_dir()
+    manifest = (plugin_root / "plugin.toml").read_text()
+    assert 'description = "Interactive plugin description"' in manifest

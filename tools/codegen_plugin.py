@@ -63,6 +63,7 @@ def scaffold_plugin(
     target_dir: Path | None = None,
     features: list[str] | None = None,
     capabilities: list[str] | None = None,
+    description: str | None = None,
     with_frontend: bool = False,
     overwrite: bool = False,
 ) -> Path:
@@ -74,6 +75,7 @@ def scaffold_plugin(
         features: Список actions для добавления в provides (``['ping','echo']``).
         capabilities: Список capability в виде ``"name:scope"`` или просто
             ``"name"``. Будет записан в plugin.toml как ``[[capabilities]]``.
+        description: Человекочитаемое описание плагина для plugin.toml.
         with_frontend: Если True — создаёт frontend/pages/ (default — да).
         overwrite: Если True — перезатирает существующий каталог.
 
@@ -104,6 +106,9 @@ def scaffold_plugin(
         (plugin_root / "frontend" / "pages").mkdir()
 
     class_name = _to_pascal(name) + "Plugin"
+    description_text = (
+        description or f"TODO: краткое описание плагина {name}"
+    ).replace('"', '\\"')
 
     # Готовим actions list (provides + handler-stubs).
     actions_list = [f"{name}.{f}" for f in (features or [])]
@@ -144,7 +149,7 @@ version = "0.1.0"
 requires_core = ">=0.2,<0.3"
 entry_class = "extensions.{name}.plugin.{class_name}"
 tenant_aware = false
-description = "TODO: краткое описание плагина {name}"
+description = "{description_text}"
 
 # ─── Runtime capabilities (sandbox gate) ──────────────────────────
 {caps_toml}
@@ -294,6 +299,7 @@ class PluginCodegen:
         *,
         features: list[str] | None = None,
         capabilities: list[str] | None = None,
+        description: str | None = None,
         with_frontend: bool | None = None,
         overwrite: bool | None = None,
     ) -> Path:
@@ -303,6 +309,7 @@ class PluginCodegen:
             name: snake_case имя плагина.
             features: список action'ов (provides).
             capabilities: список capability spec'ов.
+            description: описание плагина для plugin.toml.
             with_frontend: override default_with_frontend.
             overwrite: override default_overwrite.
 
@@ -318,6 +325,7 @@ class PluginCodegen:
             target_dir=self._target_dir,
             features=features or [],
             capabilities=capabilities or [],
+            description=description,
             with_frontend=(
                 with_frontend
                 if with_frontend is not None
@@ -399,7 +407,7 @@ def _interactive_prompts() -> dict[str, object] | None:
             "with_frontend": with_frontend,
             "overwrite": overwrite,
         }
-    except (KeyboardInterrupt, EOFError):
+    except KeyboardInterrupt, EOFError:
         return None
 
 
@@ -459,6 +467,7 @@ def main(argv: list[str] | None = None) -> int:
             args.name,
             features=features,
             capabilities=capabilities,
+            description=getattr(args, "description", None),
             with_frontend=args.with_frontend,
             overwrite=args.overwrite,
         )
