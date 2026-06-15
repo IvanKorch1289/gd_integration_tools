@@ -6,6 +6,7 @@ Funcs: _serialize_sub, _emit_saga_audit.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -16,8 +17,15 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 _cf_logger = get_logger("dsl.control_flow")
 
 
+@dataclass
 class SagaStep:
-    """Шаг саги: forward-действие + компенсация при откате."""
+    """Шаг саги: forward-действие + компенсация при откате.
+
+    .. note::
+        S137 W3 factcheck: added ``@dataclass`` decorator — 3 failing
+        tests in test_saga_lra_mixin.py (SagaStep() takes no arguments)
+        root cause: class had type-annotated attrs but no ``__init__``.
+    """
 
     forward: BaseProcessor
     compensate: BaseProcessor | None = None
