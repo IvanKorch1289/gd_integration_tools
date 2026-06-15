@@ -419,7 +419,7 @@ ai-memory = [
 multimodal-rag = [
     "docling>=2.0.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
-    "pypdfium2>=4.30.0,<5.0.0",
+    "pypdfium2>=5.9.0,<6.0.0",
     "Pillow>=10.0.0,<13.0.0",  # S30: upped to <13.0.0 — Pillow 12.x officially supports Python 3.14
     # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
