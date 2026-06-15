@@ -12,6 +12,11 @@ from collections.abc import Sequence
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.services.auth.ad_directory_client.state import (
+    AdAuthError,
+    AdSearchEntry,
+    AdServerConfig,
+)
 
 _logger = get_logger(__name__)
 
