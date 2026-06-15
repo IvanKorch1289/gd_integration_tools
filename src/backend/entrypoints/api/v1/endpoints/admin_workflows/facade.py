@@ -31,9 +31,12 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+from src.backend.core.logging import get_logger
+
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows import helpers
 from src.backend.schemas.workflow import (
     WorkflowEventSchemaOut,
     WorkflowInstanceDetailSchemaOut,
@@ -41,6 +44,15 @@ from src.backend.schemas.workflow import (
     WorkflowInstanceSchemaOut,
 )
 from src.backend.workflows.registry import workflow_registry
+
+WorkflowStatus = helpers.WorkflowStatus
+_list_instances_filtered = helpers._list_instances_filtered
+_row_to_schema = helpers._row_to_schema
+_instance_store = helpers._instance_store
+_event_store = helpers._event_store
+_trigger_via_action_or_store = helpers._trigger_via_action_or_store
+_wait_for_terminal = helpers._wait_for_terminal
+_logger = get_logger(__name__)
 
 # Wave 6.5a: ``WorkflowStatus`` нужен Pydantic'у на этапе построения
 # схемы ``ListWorkflowsQuery`` (форвард-референс резолвится через
@@ -295,3 +307,10 @@ class _AdminWorkflowsFacade:
             ),
             error=last_error if row.status == WorkflowStatus.failed else None,
         )
+
+
+_FACADE = _AdminWorkflowsFacade()
+
+
+def _get_facade() -> _AdminWorkflowsFacade:
+    return _FACADE

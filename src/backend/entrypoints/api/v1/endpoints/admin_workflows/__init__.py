@@ -19,11 +19,11 @@ from src.backend.entrypoints.api.generator.actions import (
 )
 from src.backend.entrypoints.api.v1.endpoints.admin_workflows.facade import (
     _AdminWorkflowsFacade,  # S56 W4: re-export
+    _get_facade,  # S56 W4: re-export
 )
 from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import (
     _bind_workflow_status,  # S56 W4: re-export
     _event_store,  # S56 W4: re-export
-    _get_facade,  # S56 W4: re-export
     _instance_store,  # S56 W4: re-export
     _list_instances_filtered,  # S56 W4: re-export
     _row_to_schema,  # S56 W4: re-export

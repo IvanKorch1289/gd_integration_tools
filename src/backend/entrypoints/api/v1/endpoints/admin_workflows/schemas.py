@@ -29,6 +29,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from src.backend.entrypoints.api.v1.endpoints.admin_workflows.helpers import (
+    WorkflowStatus,
+)
+
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).

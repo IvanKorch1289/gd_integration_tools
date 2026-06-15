@@ -52,6 +52,9 @@ def _bind_workflow_status() -> Any:
     return get_workflow_status_enum_provider()
 
 
+WorkflowStatus = _bind_workflow_status()
+
+
 def _instance_store() -> Any:
     """Ленивый singleton :class:`WorkflowInstanceStore` через DI provider."""
     from src.backend.core.di.providers import get_workflow_state_store_provider
@@ -131,10 +134,6 @@ async def _list_instances_filtered(
         result = await session.execute(stmt)
         rows = result.scalars().all()
         return [WorkflowInstanceRow.from_orm(r) for r in rows]
-
-
-def _get_facade() -> _AdminWorkflowsFacade:
-    return _FACADE
 
 
 async def _trigger_via_action_or_store(
