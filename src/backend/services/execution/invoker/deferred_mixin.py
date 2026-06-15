@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass  # cross-mixin / state attrs declared below
 
+from src.backend.services.execution.invoker.helpers import _run_deferred_job
+
 """Реализация Invoker (W22.1 + W22.2/W22.3 + Этап B расширения).
 
 Поддерживает шесть режимов:

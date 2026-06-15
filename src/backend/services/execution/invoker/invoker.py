@@ -8,7 +8,13 @@ Classes: Invoker.
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.invoker import InvocationRequest, InvocationResponse
+from src.backend.core.interfaces.invoker import (
+    InvocationMode,
+    InvocationRequest,
+    InvocationResponse,
+)
+from src.backend.core.di.contexts import DispatchContext
+from src.backend.core.di.dependencies import get_reply_registry_singleton
 
 if TYPE_CHECKING:
     pass
@@ -28,7 +34,7 @@ from src.backend.services.execution.invoker.temporal_mixin import (
 class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
     """Action invoker (4 mixins = 15 methods + 5 core)."""
 
-    __slots__ = ()
+    __slots__ = ("_dispatcher", "_reply_registry_override", "_tasks")
 
     def __init__(
         self,
