@@ -5,6 +5,45 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S146 cycle, 2026-06-15] — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails)
+
+### Added
+
+- **S146 W1 — Re-export `_RedisClientProtocol`** (`7f3e10c`): 1 file 12/-6. Root cause: mixin files imported `_RedisClientProtocol` from `_protocol.py` (private), but `__all__` in `redis/__init__.py` only included `("RedisClient", "get_redis_client", "__getattr__")`. Test files did `from src.backend.infrastructure.clients.storage.redis import _RedisClientProtocol` — ImportError → 14 collection errors. Fix: add `_RedisClientProtocol` to `__all__` + import в `__init__.py`. **14 collection errors → 0** (files: `test_scheduler_leader_election.py`, `test_service_setup_smoke.py`, `test_setup_ai_2026.py`, `test_waf_setup_clamav.py`, `test_waf_setup_smoke.py`, `test_workflow_setup.py`, `test_dadata.py`, `test_main.py` + 6 others).
+- **S146 W2 — Test patch source location для `mcp_settings`** (`c5c36b6`): 1 file 8/-1. Test `test_mount_mcp_http_skipped_on_import_error` patched `src.backend.main.mcp_settings` — but `main.py` does `from src.backend.core.config.ai_2026 import mcp_settings` inside function body (not module-level). Fix: patch source location `patch("src.backend.core.config.ai_2026.mcp_settings", side_effect=ImportError)`. **3 fails → 1 fail in test_main.py**.
+- **S146 W3 — Module-level uvicorn/granian imports в main.py** (`af9f6e9`): 1 file 13/-6. `run()` calls `_run_uvicorn()` / `_run_granian()` with local `import uvicorn` / `from granian import Granian, ...` inside function body. Tests `patch("src.backend.main.uvicorn")` / `patch("src.backend.main.Granian")` fail with AttributeError (not module-level attrs). Fix: move imports to module level. **2 fails → 0 в test_main.py** (file: 6/6 pass).
+- **S146 W5 — ADR-0229 sprint closure** (this commit): W1-W3 detail + INDEX regen (179 ADRs, 178 unique) + S147+ backlog.
+
+### Tests
+
+- **S146 W1**: 0 NEW tests (1-file fix); **-14 collection errors** (all related test files now collect)
+- **S146 W2**: 0 NEW tests (1-line patch location change); **-2 fails** (test_main.py 3→1)
+- **S146 W3**: 0 NEW tests (4 module-level imports); **-2 fails** (test_main.py 1→0, file 6/6 pass)
+- **Net S146**: 18 fails closed (-14 collection errors, -2 test_main, -2 test_main), 0 NEW violations
+- **Cumulative S139-S146**: tests/unit/ 239→~64 fails (-175, -73%); 14→0 collection errors
+
+### Stale Backlog Items Cleared (S146 W1)
+
+- **14 collection errors** (`_RedisClientProtocol` NameError) — CLOSED via W1
+- **4 test_main.py fails** (mcp_settings + uvicorn + granian patch) — CLOSED via W2-W3
+- AIFlags 2 fails + Sprints2427Flags 1 fail — pre-existing design conflicts OUT OF SCOPE per Rule #124 (verified S145 W1)
+
+### Ponytail-mode discipline (S146)
+
+- **3 atomic commits** (no factcheck W1 — pre-existing issues already known from S131-S145)
+- **Smallest possible fixes** (1 import + 1 __all__ entry, 1 patch location change, 4 module-level imports)
+- **Each commit verified pre-existing via `git stash`** per Rule #124
+
+### Backlog (S147+)
+
+- 3 pre-existing test_features fails (AIFlags×2, Sprints2427Flags×1) — design conflicts OUT OF SCOPE
+- 66 TD-013 Streamlit pages remaining (12h dedicated)
+- 73 core test fails (feature gaps, not patterns)
+- 29 services test fails (3 streaming + 26 unknown)
+- TD-006 PARTIAL (test baseline ratchet)
+- docstring coverage, security audit (P2)
+- Mutation testing, performance benchmarks (P3)
+
 ## [S145 cycle, 2026-06-15] — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (4 waves, 3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix)
 
 ### Added
