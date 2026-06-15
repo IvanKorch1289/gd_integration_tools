@@ -10,7 +10,11 @@ from typing import Any
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from src.backend.core.config.settings import MailSettings, settings
-from src.backend.core.utils.circuit_breaker import get_circuit_breaker
+from src.backend.core.resilience.breaker import (
+    BreakerSpec,
+    CircuitOpen,
+    get_breaker_registry,
+)
 
 __all__ = ("BaseSmtpClient", "SmtpClient", "get_smtp_client", "smtp_client")
 
@@ -61,7 +65,14 @@ class SmtpClient(BaseSmtpClient):
         self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(
             maxsize=self._pool_size
         )
-        self._circuit_breaker = get_circuit_breaker()  # Инициализация CircuitBreaker
+        self._breaker = get_breaker_registry().get_or_create(
+            "smtp",
+            BreakerSpec(
+                name="smtp",
+                failure_threshold=self.settings.circuit_breaker_max_failures,
+                recovery_timeout=float(self.settings.circuit_breaker_reset_timeout),
+            ),
+        )
 
     async def __aenter__(self):
         """
@@ -161,6 +172,11 @@ class SmtpClient(BaseSmtpClient):
         """
         Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
 
+        Использует canonical ``Breaker.guard()`` (S130 W2) — ранее
+        ``core.utils.circuit_breaker.check_state`` + ``record_success/failure``.
+        При open breaker purgatory бросает ``CircuitOpen``; мы re-raise как
+        ``ConnectionError`` для сохранения back-compat контракта.
+
         Yields:
             SMTP: SMTP-соединение из пула или новое временное соединение.
 
@@ -171,24 +187,25 @@ class SmtpClient(BaseSmtpClient):
         temporary = False
 
         try:
-            await self._circuit_breaker.check_state(
-                max_failures=self.settings.circuit_breaker_max_failures,
-                reset_timeout=self.settings.circuit_breaker_reset_timeout,
-                exception_class=ConnectionError,
-                error_message="SMTP-сервис недоступен (активирован Circuit Breaker)",
+            async with self._breaker.guard():
+                if not self._connection_pool.empty():
+                    connection = self._connection_pool.get_nowait()
+                else:
+                    connection = await self._create_connection()
+                    temporary = True
+
+                yield connection
+
+        except CircuitOpen:
+            # Breaker open — re-raise as ConnectionError (back-compat)
+            self.logger.error(
+                "SMTP-сервис недоступен (активирован Circuit Breaker)",
             )
-
-            if not self._connection_pool.empty():
-                connection = self._connection_pool.get_nowait()
-            else:
-                connection = await self._create_connection()
-                temporary = True
-
-            yield connection
-            self._circuit_breaker.record_success()
-
+            raise ConnectionError(
+                "SMTP-сервис недоступен (активирован Circuit Breaker)"
+            ) from None
         except Exception as exc:
-            self._circuit_breaker.record_failure()
+            # Failure уже auto-recorded в guard()
             self.logger.error(
                 "Ошибка SMTP-соединения: %s: %s",
                 type(exc).__name__,
@@ -269,7 +286,7 @@ class SmtpClient(BaseSmtpClient):
         """
         return {
             "pool_capacity": f"{self._connection_pool.qsize()}/{self._pool_size}",
-            "circuit_state": self._circuit_breaker.state,
+            "circuit_state": self._breaker.state,
             "active_connections": self._connection_pool.qsize(),
         }
 

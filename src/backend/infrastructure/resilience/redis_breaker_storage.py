@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from src.backend.core.utils.pybreaker_adapter import BreakerState
+from src.backend.core.resilience.breaker import BreakerState
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("RedisBreakerStateStorage",)

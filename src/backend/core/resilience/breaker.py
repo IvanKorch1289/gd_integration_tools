@@ -10,6 +10,7 @@ API:
     ``Breaker.guard()`` — async context manager.
     ``Breaker.state`` — нормализованное состояние (``closed`` / ``open``
     / ``half_open``).
+    ``BreakerState`` — dataclass snapshot для persistence в Redis/etc.
     ``CircuitOpen`` — исключение при попытке вызова через open breaker.
 
 Метрики: при каждом изменении состояния публикуется gauge через
@@ -37,6 +38,7 @@ __all__ = (
     "Breaker",
     "BreakerRegistry",
     "BreakerSpec",
+    "BreakerState",
     "CircuitBreaker",
     "CircuitOpen",
     "breaker_registry",
@@ -66,6 +68,27 @@ class BreakerSpec:
     name: str = "default"
     failure_threshold: int = consts.DEFAULT_CB_FAILURE_THRESHOLD
     recovery_timeout: float = consts.DEFAULT_CB_RECOVERY_SECONDS
+
+
+@dataclass(frozen=True, slots=True)
+class BreakerState:
+    """Snapshot состояния breaker'а для persistence-слоя (Redis, etc).
+
+    Single source of truth для state-serialization. Re-exported из
+    ``core.utils.pybreaker_adapter`` (legacy back-compat) и
+    ``core.infrastructure.resilience.redis_breaker_storage``.
+
+    Attributes:
+        name: Уникальное имя breaker'а.
+        state: ``closed`` / ``open`` / ``half_open``.
+        fail_counter: Текущий счётчик отказов.
+        last_failure_at_iso: ISO-timestamp последнего отказа (или ``""``).
+    """
+
+    name: str
+    state: str
+    fail_counter: int
+    last_failure_at_iso: str
 
 
 class Breaker:
