@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
+from src.backend.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class OutputGuardMixin:
