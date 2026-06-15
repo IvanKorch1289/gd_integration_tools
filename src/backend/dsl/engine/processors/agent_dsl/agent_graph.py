@@ -54,7 +54,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.ai.agent_sandbox import AgentSandbox, InProcessAgentSandbox
+from src.backend.services.ai.agent_sandbox import AgentSandbox, InProcessAgentSandbox
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 

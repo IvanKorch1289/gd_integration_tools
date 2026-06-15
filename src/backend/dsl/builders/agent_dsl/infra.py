@@ -188,7 +188,7 @@ class InfraMixin:
             isolated: При True запускать ReAct-агента в отдельном процессе
                 через :class:`ProcessPoolAgentSandbox`. Default False.
         """
-        from src.backend.core.ai.agent_sandbox import (
+        from src.backend.services.ai.agent_sandbox import (
             InProcessAgentSandbox,
             get_process_pool_agent_sandbox,
         )
