@@ -112,6 +112,47 @@ def _register_storage_facade() -> None:
     register_factory(StorageFacade, _factory)
 
 
+def _register_cache_facade() -> None:
+    """Регистрирует ``UnifiedCacheFacade`` в svcs с tiered fallback."""
+    from src.backend.core.svcs_registry import has_service, register_factory
+    from src.backend.services.cache import UnifiedCacheFacade
+
+    if has_service(UnifiedCacheFacade):
+        return
+
+    def _factory() -> UnifiedCacheFacade:
+        from pathlib import Path
+
+        from src.backend.core.config.services.cache import cache_settings
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+        from src.backend.core.svcs_registry import get_service, has_service
+        from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
+        from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+        from src.backend.infrastructure.cache.factory import create_cache_backend
+
+        primary = create_cache_backend(cache_settings)
+        memory = MemoryBackend(maxsize=cache_settings.l1_maxsize)
+        disk_path = getattr(cache_settings, "disk_fallback_path", None) or Path(
+            "var/cache/disk_fallback"
+        )
+        disk = DiskCacheBackend(disk_path)
+
+        capability_check = None
+        if has_service(CapabilityGate):
+            gate = get_service(CapabilityGate)
+            capability_check = getattr(gate, "check", None)
+
+        return UnifiedCacheFacade(
+            primary=primary,
+            memory_fallback=memory,
+            disk_fallback=disk,
+            capability_check=capability_check,
+            plugin="system",
+        )
+
+    register_factory(UnifiedCacheFacade, _factory)
+
+
 def register_all_services() -> None:
     """
     Регистрирует все бизнес-сервисы приложения в svcs_registry.
@@ -163,6 +204,9 @@ def register_all_services() -> None:
 
     # P1: StorageFacade для extensions (S133 W4).
     _register_storage_facade()
+
+    # P1: UnifiedCacheFacade (S133 W4).
+    _register_cache_facade()
 
     # W14.1.C: встроенные middleware action-диспетчера.
     register_default_action_middlewares()

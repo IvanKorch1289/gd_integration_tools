@@ -10,8 +10,9 @@
 Сборка через :func:`create_cache_backend` (см. ``factory.py``).
 """
 
+from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
 from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
-__all__ = ("KeyDBBackend", "MemoryBackend", "RedisBackend")
+__all__ = ("DiskCacheBackend", "KeyDBBackend", "MemoryBackend", "RedisBackend")
