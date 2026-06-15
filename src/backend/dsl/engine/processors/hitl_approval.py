@@ -34,7 +34,6 @@ YAML (blueprint)::
 
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -230,28 +229,24 @@ class HitlApprovalProcessor(BaseProcessor):
             exchange.fail(f"Unknown HITL action: {action}")
 
     async def _wait_for_decision(self, signal_id: str):
-        """Poll HitlService с exponential backoff до получения решения."""
-        poll_interval = 1.0  # Начальный интервал
-        max_poll_interval = 30.0
+        """Ждёт решения через HitlService без polling (S133 W4).
+
+        ponytail: event-driven wakeup вместо busy-wait. Для multi-instance
+        production требуется Redis pub/sub backend.
+        """
         timeout_at = time.time() + self._timeout
+        remaining = max(0.0, timeout_at - time.time())
 
-        while time.time() < timeout_at:
-            await asyncio.sleep(min(poll_interval, timeout_at - time.time()))
+        resolved = await self._hitl_service.wait_for(signal_id, timeout=remaining)
+        if not resolved:
+            _logger.warning("HITL timeout: signal_id=%s", signal_id)
+            return None
 
-            signal = await self._hitl_service.get(signal_id)
-            if signal is None:
-                _logger.warning("HITL signal not found: %s", signal_id)
-                return None
-
-            if signal.is_resolved:
-                return signal
-
-            # Exponential backoff
-            poll_interval = min(poll_interval * 1.2, max_poll_interval)
-
-        # Timeout
-        _logger.warning("HITL timeout: signal_id=%s", signal_id)
-        return None
+        signal = await self._hitl_service.get(signal_id)
+        if signal is None:
+            _logger.warning("HITL signal not found: %s", signal_id)
+            return None
+        return signal
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализует HITL-approval в YAML-spec.

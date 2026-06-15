@@ -109,6 +109,10 @@ class HitlSignalStore(Protocol):
         self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal: ...
 
+    async def wait_for(
+        self, signal_id: str, timeout: float | None = None
+    ) -> bool: ...
+
 
 class InMemoryHitlSignalStore:
     """In-memory store для dev_light и unit-тестов."""
@@ -116,10 +120,12 @@ class InMemoryHitlSignalStore:
     def __init__(self) -> None:
         self._store: dict[str, HitlPendingSignal] = {}
         self._lock = asyncio.Lock()
+        self._events: dict[str, asyncio.Event] = {}
 
     async def put(self, signal: HitlPendingSignal) -> None:
         async with self._lock:
             self._store[signal.signal_id] = signal
+            self._events.setdefault(signal.signal_id, asyncio.Event())
 
     async def get(self, signal_id: str) -> HitlPendingSignal | None:
         async with self._lock:
@@ -149,7 +155,27 @@ class InMemoryHitlSignalStore:
             signal.resolved_at = datetime.now(UTC)
             signal.resolved_action = action
             signal.resolved_by = resolved_by
-            return signal
+            event = self._events.get(signal_id)
+        if event is not None:
+            event.set()
+        return signal
+
+    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+        """Ждёт разрешения signal'а без polling.
+
+        ponytail: event-driven wakeup вместо busy-wait. Для multi-instance
+        production нужен Redis pub/sub — пока in-memory.
+        """
+        async with self._lock:
+            event = self._events.setdefault(signal_id, asyncio.Event())
+            signal = self._store.get(signal_id)
+            if signal is not None and signal.is_resolved:
+                return True
+        try:
+            await asyncio.wait_for(event.wait(), timeout=timeout)
+        except asyncio.TimeoutError:
+            return False
+        return True
 
 
 class HitlService:
@@ -188,6 +214,11 @@ class HitlService:
 
     async def get(self, signal_id: str) -> HitlPendingSignal | None:
         return await self._store.get(signal_id)
+
+    async def wait_for(
+        self, signal_id: str, timeout: float | None = None
+    ) -> bool:
+        return await self._store.wait_for(signal_id, timeout=timeout)
 
     async def resolve(
         self,
