@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Any, Final
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
@@ -22,6 +23,7 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
+@dataclass
 class PreparedDBParameter:
     """
     Подготовленный параметр для DB-вызова.

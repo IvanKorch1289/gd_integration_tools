@@ -13,6 +13,7 @@ from src.backend.core.enums.external_db import (
     ExternalDBParameterMeta,
     ExternalDBParameterModeChoices,
 )
+from src.backend.services.io.external_database.state import PreparedDBParameter
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
