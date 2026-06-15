@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TypeAlias
 
 from sqlalchemy import Engine
@@ -20,6 +21,7 @@ DatabaseSettings: TypeAlias = (
 )
 
 
+@dataclass
 class DatabaseBundle:
     """
     Контейнер инфраструктурных объектов одной БД.
