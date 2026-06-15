@@ -137,7 +137,7 @@ security = [
     # tools/checks/run_pip_audit.py (make sbom / make audit-deps).
     # S11 carryover: версии синхронизированы с [dev-group] выше — `uv sync
     # --extra security` теперь даёт ту же версию, что `uv sync` (dev).
-    "pip-audit>=2.7,<3",
+    "pip-audit>=2.10.1,<3",
     # K4 Sprint 55 W5: user-approved performance libraries.
     # rich: terminal UI (tables, progress bars, syntax highlighting).
     "rich>=14.0.0,<15.0.0",
@@ -473,7 +473,7 @@ dev = [
     "deptry>=0.20,<1.0",
     # К5 (Wave K5/supply-chain): SBOM/audit gates.
     # cyclonedx-bom>=5.0.0 in [security.extra], shared across extras
-    "pip-audit>=2.7,<3",
+    "pip-audit>=2.10.1,<3",
     # К5 (Wave K5/docs): Vale-совместимый prose lint.
     "proselint>=0.14,<1",
     "sphinx-copybutton>=0.5,<1",
