@@ -50,6 +50,21 @@ class RouteManifestError(ValueError):
     """Ошибка парсинга / валидации `route.toml`."""
 
 
+class _IPRestrictionModel(BaseModel):
+    """Pydantic-модель для ``[security.ip_restriction]`` в route.toml."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    allowed_ips: tuple[str, ...] = Field(
+        default_factory=tuple, description="Разрешённые IP/CIDR для доступа к маршруту."
+    )
+    enabled: bool = Field(default=True, description="Включено ли ограничение.")
+    path_pattern: str | None = Field(
+        default=None,
+        description="Glob-паттерн пути. Если не задан — /api/v1/auto/<route_name>.",
+    )
+
+
 class _SecurityModel(BaseModel):
     """Pydantic-модель для секции ``[security]`` в route.toml.
 
@@ -67,6 +82,9 @@ class _SecurityModel(BaseModel):
             "AuthorizationGateway проверяет наличие всех перечисленных "
             "permissions у principal перед dispatch на route."
         ),
+    )
+    ip_restriction: _IPRestrictionModel | None = Field(
+        default=None, description="Per-route IP-ограничения."
     )
 
 

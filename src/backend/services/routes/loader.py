@@ -30,6 +30,7 @@ from src.backend.core.security.capabilities import (
     CapabilityVocabulary,
     check_capabilities_subset,
 )
+from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
 from src.backend.services.routes.manifest_v11 import (
     RouteManifestError,
     RouteManifestV11,
@@ -376,6 +377,17 @@ class RouteLoader:
                 reason=f"pipeline_register_error: {exc}",
             )
             return
+
+        # ── Per-route IP restriction (security.ip_restriction)
+        if manifest.security and manifest.security.ip_restriction:
+            ipr = manifest.security.ip_restriction
+            if ipr.allowed_ips:
+                path_pattern = ipr.path_pattern or f"/api/v1/auto/{manifest.name}"
+                get_ip_restriction_store().set_route_rule(
+                    path_pattern=path_pattern,
+                    allowed_ips=ipr.allowed_ips,
+                    enabled=ipr.enabled,
+                )
 
         self._loaded[manifest.name] = LoadedRoute(
             name=manifest.name,

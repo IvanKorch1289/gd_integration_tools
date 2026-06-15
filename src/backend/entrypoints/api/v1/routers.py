@@ -20,6 +20,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (
         router as admin_feature_flags_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_ip_restriction import (
+        router as admin_ip_restriction_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_langgraph import (
         router as admin_langgraph_router,
     )
@@ -149,6 +152,10 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(tech_router, prefix="/tech", tags=["Техническое"])
     api_router_v1.include_router(
         admin_router, prefix="/admin", tags=["Администрирование"]
+    )
+    # P1 IP restriction hot-reload: admin CRUD для IP-ограничений.
+    api_router_v1.include_router(
+        admin_ip_restriction_router, prefix="/admin", tags=["Admin · IP Restriction"]
     )
     # IL1.7: Admin-endpoints для ConnectorRegistry (list / reload).
     api_router_v1.include_router(
