@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.core.domain.feedback import FeedbackDomainService
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
 from src.backend.services.ai.feedback.repository import (
@@ -228,6 +229,29 @@ class AIFeedbackService:
             Документ либо ``None``.
         """
         return await self._repo.get(doc_id)
+
+    async def mark_indexed(
+        self, doc_id: str, rag_doc_id: str
+    ) -> AIFeedbackDoc:
+        """Пометить ответ как проиндексированный в RAG.
+
+        Args:
+            doc_id: Идентификатор документа обратной связи.
+            rag_doc_id: Идентификатор документа в RAG-индексе.
+
+        Returns:
+            Обновлённый документ.
+
+        Raises:
+            KeyError: если документ не найден.
+        """
+        existing = await self._repo.get(doc_id)
+        if existing is None:
+            raise KeyError(doc_id)
+        updated = FeedbackDomainService.mark_indexed(
+            existing, rag_doc_id=rag_doc_id
+        )
+        return await self._repo.update(updated)
 
     async def stats(self) -> dict[str, int]:
         """Агрегированная статистика документов.
