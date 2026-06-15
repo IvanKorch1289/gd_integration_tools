@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """RedisClient package (S59 W3 decomp from redis.py 647 LOC).
 
 32 methods decomposed в 4 mixin files:
@@ -13,6 +11,7 @@ Core (4) остается в __init__.py: __init__, _base_url, _db_for_kind, _re
 Backward-compat: ``from src.backend.infrastructure.clients.storage.redis import RedisClient`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
@@ -26,9 +25,7 @@ from redis.asyncio import Redis
 
 from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
-    ClientCircuitBreaker,
-)
+from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker
 
 redis_logger = get_logger("redis")
 
@@ -48,8 +45,17 @@ from src.backend.infrastructure.clients.storage.redis.helpers_mixin import (
 from src.backend.infrastructure.clients.storage.redis.stream_mixin import (
     StreamMixin,  # S59 W3: MRO
 )
+from src.backend.infrastructure.clients.storage.redis._protocol import (
+    _RedisClientProtocol,  # S146 W1: re-export для test imports
+)
 
-__all__ = ("RedisClient", "get_redis_client", "__getattr__")
+__all__ = (
+    "RedisClient",
+    "RedisKind",
+    "_RedisClientProtocol",
+    "get_redis_client",
+    "__getattr__",
+)
 
 
 class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
