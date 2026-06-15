@@ -81,9 +81,28 @@ __all__ = ("LLMStructuredProcessor",)
     tags=("ai", "llm", "structured-output"),
 )
 class LLMStructuredProcessor(
-    ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin
+    ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin, BaseProcessor
 ):
-    """LLM structured output processor (4 mixins = 9 methods + 1 core)."""
+    """LLM structured output processor (4 mixins + BaseProcessor = 9 methods + 1 core).
+
+    .. note::
+        S132 W2 fix: ``BaseProcessor`` added to MRO at the END (after all
+        mixins). Originally the class inherited only from 4 mixins, so
+        ``super().__init__(name=...)`` walked through mixins →
+        ``object.__init__()`` and raised
+        ``TypeError: object.__init__() takes exactly one argument``
+        (10 tests failed in ``test_llm_structured.py``).
+
+        Why LAST and not FIRST: Python MRO resolves the first base that
+        defines a method. With ``BaseProcessor`` first, ``process`` is
+        found as the abstract version (``@abstractmethod async def
+        process(...): ...``) and overrides the concrete implementation
+        in ``ProcessMixin``. By putting ``BaseProcessor`` LAST, MRO
+        walks ``ProcessMixin`` first, finds the concrete ``process``,
+        and the abstract check passes — while ``__init__`` still
+        resolves to ``BaseProcessor.__init__`` (no mixin defines one).
+        Affected 10 tests in ``test_llm_structured.py`` (TD-006 fix #1).
+    """
 
     __slots__ = ()
 
