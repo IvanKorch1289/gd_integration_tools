@@ -79,7 +79,7 @@ class FileSourcesMixin:
             raise ValueError("from_filewatcher requires at least one path")
 
         source_instance = FileWatcherSource(
-            source_id=route_id,
+            source_id=kwargs.pop("source_id", route_id),
             paths=normalized,
             recursive=recursive,
             glob_include=glob_include,
