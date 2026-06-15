@@ -18,7 +18,14 @@ def test_mount_mcp_http_skipped_when_disabled() -> None:
 
 @patch.object(main, "app", MagicMock())
 def test_mount_mcp_http_skipped_on_import_error() -> None:
-    with patch("src.backend.main.mcp_settings", side_effect=ImportError):
+    # S146 W2: patch source location, not consumer.
+    # ``_mount_mcp_http`` does ``from src.backend.core.config.ai_2026 import mcp_settings``
+    # inside the function body, so ``src.backend.main.mcp_settings`` is not
+    # an importable attribute. Patch the source module instead.
+    with patch(
+        "src.backend.core.config.ai_2026.mcp_settings",
+        side_effect=ImportError,
+    ):
         main._mount_mcp_http()
 
 
