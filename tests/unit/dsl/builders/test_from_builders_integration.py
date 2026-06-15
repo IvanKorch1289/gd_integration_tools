@@ -161,3 +161,34 @@ def test_build_pipeline_after_chain() -> None:
     assert pipeline.route_id == "pipeline.test"
     assert pipeline.source == "sse:pipeline.test"
     assert len(pipeline.processors) == 2
+
+
+# ── S132 W4: gRPC server-streaming (TD-011 partial) ─────────────────
+
+
+def test_route_builder_from_grpc_stream() -> None:
+    """``RouteBuilder.from_grpc_stream`` создаёт builder + grpc source.
+
+    S132 W4 (TD-011). 1 method, не дублирующий существующие ``from_nats``
+    (S106 W4 в transport/sources.py) и ``from_mongo`` (S106 W4 там же).
+    """
+    from src.backend.dsl.builders.base import RouteBuilder
+
+    b = RouteBuilder.from_grpc_stream(
+        "market.feed",
+        target="marketdata:50051",
+        stub_module="pkg.marketdata_pb2_grpc",
+        stub_class="MarketDataStub",
+        method="SubscribeTicks",
+        request_module="pkg.marketdata_pb2",
+        request_class="SubscribeRequest",
+        request_kwargs={"symbol": "AAPL"},
+        secure=False,
+        reconnect_delay_seconds=2.0,
+    )
+    assert b.route_id == "market.feed"
+    assert b.source == "grpc_stream:MarketDataStub/SubscribeTicks"
+    assert b._source_instance is not None
+    assert b._source_instance.source_id == "market.feed"
+    assert b._source_instance._method == "SubscribeTicks"
+    assert b._source_instance._target == "marketdata:50051"

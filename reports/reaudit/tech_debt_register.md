@@ -121,10 +121,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | DEEP-RESEARCH D7 partial |
-| Current | 🟡 PARTIAL — adapters exist, no DSL methods |
-| Residual | `from_nats`, `from_mongo`, `from_grpc_stream` |
-| Owner | Sprint 2 |
-| Estimate | 1-2 commits, ~3 hours |
+| Current | 🟢 **CLOSED (S132 W4)** — из 3 заявленных методов: `from_grpc_stream` added (genuinely NEW, добавлен в `src/backend/dsl/builders/sources_mixin/external_sources_mixin.py` + зарегистрирован в `SourcesMixin` MRO). `from_nats` и `from_mongo` **ALREADY EXISTED** в `src/backend/dsl/builders/transport/sources.py` (S106 W4, feature-flag default-OFF) — **NOT duplicated per R10** (no parallel versions). 1 NEW test в `test_from_builders_integration.py`. |
+| Residual | 0 (транспорт-уровневые дубликаты не нужны; если потребуется feature-flag ON для `from_nats`/`from_mongo` — отдельный sprint) |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S132 W4 commit (this entry), S132 W1 factcheck, `src/backend/dsl/builders/sources_mixin/external_sources_mixin.py`, `src/backend/dsl/builders/transport/sources.py` (existing) |
 
 ### TD-012 — Docstring ratchet (1636 baseline)
 
