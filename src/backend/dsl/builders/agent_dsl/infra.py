@@ -138,6 +138,7 @@ class InfraMixin:
         tool_actions: list[str] | None = None,
         max_handoffs: int = 5,
         result_property: str = "agent_graph_result",
+        isolated: bool = False,
     ) -> RouteBuilder:
         """LangGraph execution as DSL step (S28 W4).
 
@@ -184,9 +185,21 @@ class InfraMixin:
             max_handoffs: Maximum handoffs in supervisor mode. Default 5.
             result_property: Exchange property for result dict.
                 Default ``"agent_graph_result"``.
+            isolated: При True запускать ReAct-агента в отдельном процессе
+                через :class:`ProcessPoolAgentSandbox`. Default False.
         """
+        from src.backend.core.ai.agent_sandbox import (
+            InProcessAgentSandbox,
+            get_process_pool_agent_sandbox,
+        )
         from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
             AgentGraphProcessor,
+        )
+
+        sandbox = (
+            get_process_pool_agent_sandbox()
+            if isolated
+            else InProcessAgentSandbox()
         )
 
         return self._add(  # type: ignore[attr-defined]
@@ -198,6 +211,8 @@ class InfraMixin:
                 tool_actions=tool_actions,
                 max_handoffs=max_handoffs,
                 result_property=result_property,
+                sandbox=sandbox,
+                isolated=isolated,
             )
         )
 

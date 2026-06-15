@@ -77,7 +77,11 @@ def _make_action_tool(action_name: str) -> Any:
 
 
 def build_chat_model(
-    *, gateway: Any | None = None, temperature: float = 0.0, **extra_kwargs: Any
+    *,
+    gateway: Any | None = None,
+    model: str | None = None,
+    temperature: float = 0.0,
+    **extra_kwargs: Any,
 ) -> Any:
     """Создаёт LangChain-compatible chat-model поверх :class:`LiteLLMGateway`.
 
@@ -89,6 +93,7 @@ def build_chat_model(
     Args:
         gateway: Опц. :class:`LiteLLMGateway`. При ``None`` используется
             singleton ``get_litellm_gateway()``.
+        model: Явный model identifier. При ``None`` берётся из gateway.
         temperature: Параметр sampling-температуры LLM.
         **extra_kwargs: Дополнительные kwargs, прокидываемые в ChatLiteLLM
             (например, ``max_tokens``, ``top_p``).
@@ -103,13 +108,13 @@ def build_chat_model(
     from src.backend.services.ai.gateway import get_litellm_gateway
 
     gw = gateway if gateway is not None else get_litellm_gateway()
-    model = gw._default_model
+    resolved_model = model or gw._default_model
     fallbacks = list(gw._fallbacks)
     timeout = gw._timeout
     num_retries = gw._num_retries
 
     chat_kwargs: dict[str, Any] = {
-        "model": model,
+        "model": resolved_model,
         "temperature": temperature,
         "request_timeout": timeout,
         "num_retries": num_retries,
@@ -137,6 +142,7 @@ async def build_and_run_agent(
     tool_actions: list[str],
     *,
     gateway: Any | None = None,
+    model: str | None = None,
     temperature: float = 0.0,
     durable: bool = False,
     session_id: str | None = None,
@@ -152,6 +158,7 @@ async def build_and_run_agent(
         tool_actions: Список имён actions, доступных как tools.
         gateway: Опц. :class:`LiteLLMGateway` (для DI/тестов). Если
             ``None`` — singleton.
+        model: Явный model identifier. При ``None`` берётся из gateway.
         temperature: Sampling-температура LLM.
         durable: При True — подключает LangGraph PostgresCheckpointer
             (требует ``feature_flags.langgraph_postgres_checkpoint=True``).
@@ -179,18 +186,18 @@ async def build_and_run_agent(
         # если ai_gateway_enforce=False, бросаем сразу (silent pass-through
         # запрещён, см. S85 W1).
         if not feature_flags.ai_gateway_enforce:
-            from src.backend.core.ai.errors import (
-                AIGatewayEnforcementRequiredError,
-            )
+            from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
 
             raise AIGatewayEnforcementRequiredError(
                 "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
                 "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
             )
-        ai_gateway = AIGateway()  # enforce instance для downstream hooks
+        ai_gateway = AIGateway()  # enforce instance для downstream hooks  # noqa: F841
 
         tools = [_make_action_tool(action) for action in tool_actions]
-        llm = build_chat_model(gateway=gateway, temperature=temperature)
+        llm = build_chat_model(
+            gateway=gateway, model=model, temperature=temperature
+        )
 
         checkpointer: Any | None = None
         if durable:

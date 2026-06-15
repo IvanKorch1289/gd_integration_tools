@@ -80,6 +80,19 @@ def test_build_chat_model_no_fallbacks(
     assert fake_chat_litellm_module["temperature"] == 0.2
 
 
+def test_build_chat_model_override_model(
+    fake_litellm_gateway: Any, fake_chat_litellm_module: dict[str, Any]
+) -> None:
+    """Явный model переопределяет gateway._default_model."""
+    from src.backend.services.ai.ai_graph import build_chat_model
+
+    llm = build_chat_model(
+        gateway=fake_litellm_gateway, model="anthropic/claude-3-opus", temperature=0.0
+    )
+    assert llm is not None
+    assert fake_chat_litellm_module["model"] == "anthropic/claude-3-opus"
+
+
 def test_build_chat_model_falls_back_to_community(
     monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any
 ) -> None:

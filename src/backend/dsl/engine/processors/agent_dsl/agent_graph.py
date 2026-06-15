@@ -54,6 +54,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.ai.agent_sandbox import AgentSandbox, InProcessAgentSandbox
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 
@@ -103,6 +104,8 @@ class AgentGraphProcessor(BaseAIProcessor):
         tool_actions: list[str] | None = None,
         max_handoffs: int = 5,
         result_property: str = "agent_graph_result",
+        sandbox: AgentSandbox | None = None,
+        isolated: bool = False,
         name: str | None = None,
     ) -> None:
         if graph_type not in GRAPH_TYPES:
@@ -142,6 +145,8 @@ class AgentGraphProcessor(BaseAIProcessor):
         self.tool_actions = list(tool_actions) if tool_actions else []
         self.max_handoffs = max_handoffs
         self.result_property = result_property
+        self._sandbox = sandbox or InProcessAgentSandbox()
+        self._isolated = isolated
 
     def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope = first workflow_id for capability gate."""
@@ -234,22 +239,19 @@ class AgentGraphProcessor(BaseAIProcessor):
     async def _run_react(
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
-        """Execute ReAct agent via existing build_and_run_agent."""
-        try:
-            from src.backend.services.ai.ai_graph import build_and_run_agent
-        except ImportError as exc:
-            _logger.warning(
-                "%s: langgraph/litellm not available — returning error: %s",
-                self.name,
-                exc,
-            )
-            return {
-                "error": f"langgraph/litellm not available: {exc}",
-                "graph_type": "react",
-            }
-
+        """Execute ReAct agent via configured sandbox."""
         prompt = self._prompt_with_context(exchange)
-        return await build_and_run_agent(prompt=prompt, tool_actions=self.tool_actions)
+        result = await self._sandbox.run_react(
+            prompt=prompt,
+            tool_actions=self.tool_actions,
+            model=self.model,
+            temperature=0.0,
+            durable=False,
+            session_id=exchange.meta.correlation_id,
+        )
+        if result.success:
+            return result.data
+        return {"error": result.data.get("error", "unknown"), "graph_type": "react"}
 
     def _extract_prompt(self, exchange: Exchange[Any]) -> str:
         """Extract prompt from exchange body or property."""
@@ -299,4 +301,6 @@ class AgentGraphProcessor(BaseAIProcessor):
             spec["max_handoffs"] = self.max_handoffs
         if self.result_property != "agent_graph_result":
             spec["result_property"] = self.result_property
+        if self._isolated:
+            spec["isolated"] = True
         return {"agent_graph": spec}
