@@ -242,3 +242,34 @@ class CdcSourcesMixin:
             },
         )
         return builder
+
+    def cdc_transform(
+        self,
+        *,
+        operations: list[str] | None = None,
+        project: list[str] | None = None,
+        include_old: bool = True,
+        include_new: bool = True,
+        timestamp_field: str = "timestamp",
+        drop_unknown: bool = True,
+    ) -> RouteBuilder:
+        """CDC event normalization + filtering + projection.
+
+        Args:
+            operations: Allowed operations (e.g. ``["INSERT", "UPDATE"]``).
+            project: Fields to include in output.
+            include_old: Include ``old`` payload.
+            include_new: Include ``new`` payload.
+            timestamp_field: Name of timestamp field in output.
+            drop_unknown: Drop events without operation or table.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.cdc_transform",
+            "TransformCdcEventProcessor",
+            operations=operations,
+            project=project,
+            include_old=include_old,
+            include_new=include_new,
+            timestamp_field=timestamp_field,
+            drop_unknown=drop_unknown,
+        )
