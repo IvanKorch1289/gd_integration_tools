@@ -73,4 +73,15 @@ class PipelineStepsMixin(
 ):
     """AI Gateway Pipeline Steps (5 mixins = 15 methods)."""
 
-    __slots__ = ()
+    # S141 W2: declared so tests can instantiate PipelineStepsMixin()
+    # directly and set facade-provided attrs (mixin files use
+    # __slots__ = () which forbids instance attrs by default).
+    __slots__ = (
+        "_policy_resolver",
+        "_capability_gate",
+        "_audit_service",
+        "_cost_tracker",
+        "_sanitizer",
+        "_llm_gateway",
+        "_policy_enforcer",
+    )
