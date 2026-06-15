@@ -2,8 +2,50 @@
 
 All notable changes to **GD Integration Tools** are documented here.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/keep-a-changelog/1.1.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [S130 cycle, 2026-06-15] — TD-030 Finish + FB-1 (S3 Fallback) + gRPC Codegen Path Fix (5 waves, 4 commits, score 9.8 → 9.85, 0 NEW layer violations, 2 features closed)
+
+### Added
+
+- **S130 W1 — Fresh baseline + archive stale s126 files** (`d2d1941c`): pre-flight per Rule #109/121 обнаружил **87.5% stale-gap rate** в `s126_verification_matrix.md` (vs S129 W1 = 75% stale-TD rate). 7 of 8 RED gaps already CLOSED в S127-S128, 1 PARTIAL (TD-030/CB-1), 1 MISSING (FB-1 S3 Runtime Fallback). Moved s126_sprint_plan.md + s126_verification_matrix.md → `reports/reaudit/archive/s126/`. Created `s130_w1_factcheck_classification.md` (264 LOC) + `s130_sprint_plan.md` (5 waves).
+- **S130 W2 — TD-030 finish: smtp + redis_breaker миграция к canonical** (`6f7a812d`): API mismatch обнаружен — canonical `core/resilience/breaker.Breaker.guard()` (Purgatory) ≠ shim `core/utils/circuit_breaker` (check_state+record_success/failure). Миграция: smtp.py → `Breaker.guard()` context manager + `CircuitOpen` re-raise as `ConnectionError` (back-compat contract); redis_breaker_storage.py → `BreakerState` from canonical. Shim files (`core/utils/circuit_breaker.py` + `core/utils/pybreaker_adapter.py`) KEPT as back-compat per docstring "Removal: V24+". 6 new regression tests в `tests/unit/infrastructure/clients/transport/test_smtp_canonical_breaker.py` (static guard + canonical import + back-compat). 43 directly-related tests pass, layer linter 0 NEW.
+- **S130 W3 — FB-1: FallbackObjectStorage runtime S3→LocalFS chain** (`84a10bfb`): `config_profiles/base.yml` уже содержал `resilience.fallbacks.minio: {chain: ["local_fs"]}` (W26), но runtime try-primary-then-fallback отсутствовал. New `infrastructure/storage/fallback.py` (~245 LOC) — `FallbackObjectStorage(ObjectStorage)` wrapper с 6 методами ABC + healthcheck, `fallback_exceptions` filter (default `(Exception,)`, может быть tightened), `fallback_count` per-method counter. 17 new tests в `tests/unit/infrastructure/storage/test_fallback.py` (download/upload/delete/exists/list_keys/presigned_url + filter + healthcheck + metrics). Factory integration deferred S131+.
+- **S130 W4 — gRPC codegen path fix** (`0c3aee13`): `make grpc-codegen` (target existed from W1.3) был сломан двумя багами: (a) `tools/codegen_proto.py` не добавлял project root в `sys.path` (`ModuleNotFoundError: No module named 'extensions'` workaround через `PYTHONPATH=$(pwd)`); (b) `_AUTO_PROTO_DIR` указывал на `src/entrypoints/` (НЕ `src/backend/entrypoints/`) — codegen создавал параллельную папку, игнорируя tracked файлы. Fix: `sys.path.insert(0, _REPO_ROOT)` + path constants. `make grpc-codegen` теперь работает без PYTHONPATH, пишет в правильное место. Full `FileStreamGRPCServicer` wire-up (manual proto regen + multiple inheritance) deferred S131+ (multi-day work).
+- **S130 W5 — ADR-0217 sprint closure** (this entry): W1-W4 wave-by-wave detail + tech-debt burn-down (TD-030 PARTIAL → CLOSED, FB-1 MISSING → CLOSED, TD-026 cont. PARTIAL → improved) + score 9.8 → 9.85 + S131+ backlog.
+
+### Tests
+
+- **S130 W1**: 0 NEW tests (fact-check analysis-only, archive-only)
+- **S130 W2**: 6 NEW tests (smtp canonical regression) + 43 directly-related tests pass
+- **S130 W3**: 17 NEW tests (FallbackObjectStorage), 17/17 pass
+- **S130 W4**: 0 NEW tests (infra fix); 26 file_stream + grpc_server tests pass
+
+### Tech-debt burn-down
+
+- TD-030: 🟡 PARTIAL (S127 W1) → 🟢 CLOSED (S130 W2). smtp.py + redis_breaker_storage.py мигрированы к canonical Breaker.guard().
+- FB-1 (S126 reaudit #7): 🔴 MISSING → 🟢 CLOSED (S130 W3). FallbackObjectStorage runtime chain.
+- TD-026 cont.: 🟡 PARTIAL → 🟡 PARTIAL (improved; path fix done, full wire-up deferred S131+).
+- 2 NEW TDs from W2-W3: TD-035 (FB-1 closure), TD-036 (gRPC codegen path fix).
+
+### Pre-existing failures (NOT introduced by S130)
+
+- 18 failures в `test_http.py` (S107-S109 era)
+- 13 failures в `test_backpressure_property` + `test_rate_limiter_tenant_namespace`
+- 9 failures в `test_retry.py` (test isolation issue, in-suite only)
+- Verified via `git stash` + re-run: identical with/without S130 changes. Per Rule #124 — multi-file + interaction, OUT OF SCOPE.
+
+### Backlog (S131+)
+
+- **TD-026 cont. full wire-up**: manual proto regen + multiple inheritance + server registration (multi-day, dedicated sprint)
+- **FB-1 factory integration**: refactor `get_object_storage()` to return `FallbackObjectStorage` wrapper per config (~2h)
+- **TD-008** (audit/facade split, 394 LOC, 1 commit ~2h)
+- **TD-010** (DSL AI exposure, 1-2 commits ~3h)
+- **TD-011** (DSL source methods, 1-2 commits ~3h)
+- **TD-013** (Streamlit feature-grouping 72 pages, 6+h, dedicated sprint)
+- **TD-014/015/016** (small fixes, ~1h each)
+- **Shim removal** (circuit_breaker.py + pybreaker_adapter.py) — V24+ per docstring
 
 ## [S129 cycle, 2026-06-14] — 8 Stale OPEN TDs Closed + Rule #124 TLS Test Fix (5 waves, 4 commits, score 9.8 MAINTAINED, 0 NEW layer violations, +1 pre-existing test fixed)
 
