@@ -20,7 +20,7 @@ import pytest
 
 from src.backend.core.errors import DatabaseError
 from src.backend.core.security.capabilities import CapabilityDeniedError
-from src.backend.services.io.external_database.facade import ExternalDatabaseFacade
+from src.backend.infrastructure.database.external_database_facade import ExternalDatabaseFacade
 
 
 class _FakeResult:

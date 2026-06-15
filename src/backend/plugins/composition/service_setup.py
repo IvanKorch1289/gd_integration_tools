@@ -156,7 +156,7 @@ def _register_cache_facade() -> None:
 def _register_external_database_facade() -> None:
     """Регистрирует ``ExternalDatabaseFacade`` в svcs с capability-check."""
     from src.backend.core.svcs_registry import has_service, register_factory
-    from src.backend.services.io.external_database import ExternalDatabaseFacade
+    from src.backend.infrastructure.database.external_database_facade import ExternalDatabaseFacade
 
     if has_service(ExternalDatabaseFacade):
         return
