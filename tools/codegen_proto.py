@@ -38,13 +38,31 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+# S130 W4 (TD-026 cont.): ``register_all_services`` импортирует
+# ``extensions.core_entities.*`` как top-level package. Когда
+# ``make grpc-codegen`` запускает ``python tools/codegen_proto.py``,
+# CWD (project root) не попадает в sys.path автоматически — добавляем
+# явно. Альтернатива — ``PYTHONPATH=$(pwd)``, но это требует
+# от каждого разработчика помнить про env var. Дешевле встроить.
+#
+# Также: выходная директория для авто-сгенерированных ``.proto`` +
+# ``_pb2.py`` / ``_pb2_grpc.py``. Проект использует ``src/backend/entrypoints/...``
+# layout (V22), не ``src/entrypoints/...``. Раньше codegen писал в
+# неправильный путь — стейт не совпадал с реальными файлами,
+# ``make grpc-codegen`` фактически не работал (создавал параллельную
+# ``src/entrypoints/`` папку, игнорируя tracked файлы).
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+_AUTO_PROTO_DIR = (
+    _REPO_ROOT / "src" / "backend" / "entrypoints" / "grpc" / "protobuf" / "auto"
+)
+_PROTO_INCLUDE_DIR = (
+    _REPO_ROOT / "src" / "backend" / "entrypoints" / "grpc" / "protobuf"
+)
+
 if TYPE_CHECKING:
     from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-
-# Корень репозитория = parent(parent(__file__)).
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-_AUTO_PROTO_DIR = _REPO_ROOT / "src" / "entrypoints" / "grpc" / "protobuf" / "auto"
-_PROTO_INCLUDE_DIR = _REPO_ROOT / "src" / "entrypoints" / "grpc" / "protobuf"
 
 logger = logging.getLogger("codegen_proto")
 
