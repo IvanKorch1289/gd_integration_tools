@@ -67,10 +67,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing 572 failures + 70 collection errors |
-| Current | 🟢 **CLOSED (S106 W5, S129 W1 verified)** — `tools/check_test_baseline.py` + `tools/check_test_baseline_allowlist.txt` (18 entries) exist. `uv run python tools/check_test_baseline.py` reports **No failures detected (pre-existing or new)**. |
-| Residual | 0 |
-| Owner | ~~Sprint 2~~ → CLOSED |
-| Refs | S106 W5, `tools/check_test_baseline.py`, `tools/check_test_baseline_allowlist.txt`, S129 W1 commit `65aed4cb` |
+| Current | 🟡 **PARTIAL (S132 W1 factcheck)** — `tools/check_test_baseline.py` + `tools/check_test_baseline_allowlist.txt` (18 entries) report `No failures detected (pre-existing or new)`. BUT 12 pre-existing failures confirmed via direct `pytest` runs:<br>• **`test_llm_structured.py`**: 10 failures, root cause = `LLMStructuredProcessor` missing `BaseProcessor` в MRO (`src/backend/dsl/engine/processors/llm_structured/__init__.py:90`). Symptom: `TypeError: object.__init__() takes exactly one argument`.<br>• **`test_s56_w2_airflow_operators.py`**: 2 failures, root cause = `NameError: _default_latest_checker` в `src/backend/dsl/orchestration/airflow_operators/latestonlyoperator.py:48`.<br>• **`test_idp_pipeline_processor`**: test removed in some refactor, register STALE.<br>Allowlist tool does NOT detect these because they are PARTIAL in the suite (21 of 23 pass in airflow_operators, 10 of 10 fail in test_llm_structured) — would only flag if `pytest` exit code != 0. Tool likely runs with `--continue-on-collection-errors` or skips broken files. |
+| Residual | 12 failing tests, 2 root causes (S132 W2-W3 fixes planned) |
+| Owner | S132 W2 (LLM fix) + S132 W3 (airflow fix) |
+| Refs | S132 W1 commit `?` (this entry), S132 W1 factcheck `reports/sprint/s132_w1_factcheck.md` |
 
 ---
 
@@ -91,10 +91,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | S103 W3 (74 LOC) + S106 W2 (320 LOC) |
-| Current | 🟡 PARTIAL — borderline god-module |
-| Residual | Split into `facade/{authorization,waf,capability,secret_rotation,ai_workspace,safe,banking}.py` |
-| Owner | Sprint 3 (opportunistic) |
-| Estimate | 1 commit, ~2 hours |
+| Current | 🟢 **CLOSED (S132 W1 factcheck)** — split already done incrementally (S113 W1, S120+, S127 W1). `core/audit/facade/` has 8 files: `_base.py`, `ai.py`, `audit_service.py`, `authorization.py`, `banking.py`, `capability.py`, `secrets.py`, `waf.py`. Register was stale. |
+| Residual | 0 (6 of 7 names from register match exactly: authorization/waf/capability/secret_rotation[as secrets.py]/ai_workspace[as ai.py]/banking. Only `safe.py` and `secret_rotation[exact name]` differ — `safe.py` was folded into `banking.py` per S130 audit) |
+| Owner | ~~Sprint 3~~ → CLOSED |
+| Refs | S132 W1 commit `?` (this entry), S113 W1 (AuditService canonical move with 21-LOC shim) |
 
 ### TD-009 — `sub_workflow` DSL method
 
@@ -111,10 +111,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | DEEP-RESEARCH D14 partial |
-| Current | 🟡 PARTIAL — AI/agent capabilities exist in code, limited DSL exposure |
-| Residual | Add `ai_invoke`, `ai_tool_dispatch` methods |
-| Owner | Sprint 2 |
-| Estimate | 1-2 commits, ~3 hours |
+| Current | 🟢 **CLOSED (S132 W1 factcheck)** — `AILlMMixin` (268 LOC, `src/backend/dsl/builders/ai_rpa/ai_llm.py`) уже имеет 15+ DSL methods: `mcp_tool`, `agent_graph`, `scrape`, `paginate`, `api_proxy`, `rag_search`, `rag_query`, `rag_ingest`, `compose_prompt`, `call_llm`, `parse_llm_output`, `token_budget`, `sanitize_pii`, `restore_pii`, `load_memory`, `save_memory`. Register was stale. |
+| Residual | 0 (`ai_invoke` = `call_llm`, `ai_tool_dispatch` = `mcp_tool` по сути) |
+| Owner | ~~Sprint 2~~ → CLOSED |
+| Refs | S132 W1 commit `?` (this entry) |
 
 ### TD-011 — DSL source methods for NATS, MongoDB, gRPC stream
 
