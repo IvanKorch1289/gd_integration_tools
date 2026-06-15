@@ -8,8 +8,7 @@ if TYPE_CHECKING:
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
 
-# Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
-
+from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
@@ -33,6 +32,7 @@ class PluginInventoryConflictError(RuntimeError):
         )
 
 
+@dataclass
 class LoadedPluginV11:
     """Метаданные одного загруженного плагина для admin-эндпоинта."""
 

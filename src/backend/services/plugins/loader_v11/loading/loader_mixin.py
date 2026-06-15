@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import BasePlugin
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
-
-
-# Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
 
 import importlib
 
@@ -25,6 +17,10 @@ from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,
     load_plugin_manifest,
+)
+from src.backend.services.plugins.loader_v11.discovery import LoadedPluginV11
+from src.backend.services.plugins.loader_v11.validation import (
+    PluginInventoryConflictError,
 )
 
 _logger = get_logger("services.plugins.loader_v11")
