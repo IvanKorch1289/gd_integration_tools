@@ -73,6 +73,7 @@ class WorkflowEventRow:
         )
 
 
+@dataclass(slots=True, frozen=True)
 class WorkflowInstanceRow:
     """Immutable DTO header-записи workflow инстанса."""
 
