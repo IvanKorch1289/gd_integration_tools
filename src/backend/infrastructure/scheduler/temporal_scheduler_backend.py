@@ -38,7 +38,7 @@ Out of scope (future):
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncIterator
+from typing import Any
 
 __all__ = ("TemporalSchedulerBackend",)
 
@@ -169,10 +169,7 @@ class TemporalSchedulerBackend:
 
         client = await self._factory.get_client(self._namespace)
         try:
-            from temporalio.client import (
-                ScheduleActionStartWorkflow,
-                ScheduleCronSpec,
-            )
+            from temporalio.client import ScheduleActionStartWorkflow
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "
@@ -233,13 +230,6 @@ class TemporalSchedulerBackend:
         workflow, args, kwargs = self._validate_callable_ref(callable_ref)
 
         client = await self._factory.get_client(self._namespace)
-        try:
-            from temporalio.client import StartWorkflowAction
-        except ImportError as exc:
-            raise ImportError(
-                "temporalio не установлен. Установите: "
-                "uv pip install 'temporalio>=1.27.0'"
-            ) from exc
 
         # Temporal работает в UTC.
         if run_at.tzinfo is None:
@@ -304,13 +294,6 @@ class TemporalSchedulerBackend:
             ImportError: temporalio не установлен.
         """
         client = await self._factory.get_client(self._namespace)
-        try:
-            from temporalio.client import ScheduleListSchedule
-        except ImportError as exc:
-            raise ImportError(
-                "temporalio не установлен. Установите: "
-                "uv pip install 'temporalio>=1.27.0'"
-            ) from exc
 
         result: list[dict[str, Any]] = []
 

@@ -14,9 +14,7 @@ Backward-compat: ``from src.backend.core.security.capabilities.gate import Capab
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Final
-
-from src.backend.core.logging import get_logger
+from typing import TYPE_CHECKING, Final
 from src.backend.core.security.capabilities.errors import (
     CapabilityNotFoundError,
     CapabilitySupersetError,

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.di.module_registry import resolve_module
 
 # DEPRECATED (Wave 6.1): локальная ``_INFRA`` константа склеена динамически,
 # чтобы ``tools/check_layers.py`` не считал её прямым статическим импортом.

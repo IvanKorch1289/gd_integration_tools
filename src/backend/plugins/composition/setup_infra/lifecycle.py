@@ -6,26 +6,14 @@ Funcs: _register_default_degradation_features, perform_infrastructure_operation,
 lifecycle orchestrators (degradation features + perform + starting/ending).
 """
 
-from asyncio import to_thread
 from inspect import isawaitable
-from typing import Any, Awaitable, Callable
+from typing import Any
 
-from src.backend.infrastructure.clients.external.logger import get_graylog_handler
-from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
-from src.backend.infrastructure.clients.storage.redis import get_redis_client
-from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
-from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
-from src.backend.plugins.composition.setup_infra.health import _register_health_checks  # S60 W3: cross-import
 
-from src.backend.plugins.composition.setup_infra.pools import _register_pools_in_unified_manager  # S60 W3: cross-import
 
-from src.backend.plugins.composition.setup_infra.workflow_audit import _init_workflow_audit_sink  # S60 W3: cross-import
 
-from src.backend.plugins.composition.setup_infra.pools import _warmup_connection_pools  # S60 W3: cross-import
 
-from src.backend.infrastructure.decorators.caching import close_caches
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 app_logger = get_logger("application")
 

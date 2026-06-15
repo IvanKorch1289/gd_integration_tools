@@ -28,7 +28,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.config.features import feature_flags
-from src.backend.core.feature_flags.service import get_feature_flag_service
 from src.backend.core.logging import get_logger
 
 __all__ = ("LangfusePromptStorage", "PromptEntry", "get_prompt_storage")

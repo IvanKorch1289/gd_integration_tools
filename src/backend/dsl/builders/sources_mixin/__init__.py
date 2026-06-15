@@ -21,7 +21,7 @@ Backward-compat: ``from src.backend.dsl.builders.sources_mixin import SourcesMix
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+    pass
 
 logger = get_logger(__name__)
 

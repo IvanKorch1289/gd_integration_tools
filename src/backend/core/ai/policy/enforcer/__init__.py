@@ -21,20 +21,12 @@ if TYPE_CHECKING:
 
 from typing import TYPE_CHECKING
 
-from src.backend.core.logging import get_logger
-
 if TYPE_CHECKING:
     from collections.abc import Iterable
-
-    from src.backend.core.ai.gateway import AIRequest, AIResponse
     from src.backend.core.ai.policy.spec import (
-        AIPolicySpec,
-        GuardRef,
         ToolsSpec,  # S76 W3
     )
     from src.backend.core.messaging.dlq import DLQWriter
-
-from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
 from src.backend.core.ai.policy.enforcer.handle_mixin import HandleMixin  # S67 W2: MRO
 from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
     InputGuardMixin,  # S67 W2: MRO

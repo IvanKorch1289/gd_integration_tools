@@ -45,9 +45,7 @@ from typing import Any, TYPE_CHECKING
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from starlette.middleware.base import BaseHTTPMiddleware
-    from starlette.requests import Request
-    from starlette.responses import Response
+    pass
 
 _logger = get_logger("entrypoints.middlewares.circuit_breaker")
 

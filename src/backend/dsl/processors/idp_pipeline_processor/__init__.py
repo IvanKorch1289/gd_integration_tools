@@ -8,22 +8,14 @@ Backward-compat: ``from src.backend.dsl.processors.idp_pipeline_processor import
 """
 
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-
-import re
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar
-
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 # ─── Constants & defaults ──────────────────────────────────────────────
 

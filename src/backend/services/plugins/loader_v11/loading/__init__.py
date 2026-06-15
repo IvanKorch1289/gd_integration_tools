@@ -13,43 +13,12 @@ Backward-compat: ``from src.backend.services.plugins.loader_v11.loading import L
 """
 
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from src.backend.core.interfaces.plugin import (
-        ActionRegistryProtocol,
-        BasePlugin,
-        ProcessorRegistryProtocol,
-        RepositoryRegistryProtocol,
-    )
-    from src.backend.core.security.capabilities import CapabilityGate
-    from src.backend.services.plugins.loader_v11 import (
-        LoadedPluginV11 as _LoadedPluginV11,
-    )
-    from src.backend.services.plugins.manifest_v11 import PluginManifestV11
-
-# Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
-
-import importlib
-from dataclasses import dataclass
-
-from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
 from src.backend.core.logging import get_logger
-from src.backend.core.plugin_runtime.compat_checker import CompatViolation
-from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
-from src.backend.services.plugins.manifest_v11 import (
-    PluginManifestError,
-    PluginManifestV11,
-    load_plugin_manifest,
-)
 
 _logger = get_logger("services.plugins.loader_v11")
 

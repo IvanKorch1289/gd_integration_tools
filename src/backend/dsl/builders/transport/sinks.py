@@ -375,3 +375,74 @@ class SinksMixin:
                 result_property=result_property,
             )
         )
+
+    def ssh_command(
+        self,
+        host: str,
+        command: str,
+        *,
+        username: str | None = None,
+        password_from: str = "none",  # noqa: S107 — source selector, not password
+        key_file: str | None = None,
+        timeout: float = 30.0,
+        result_property: str = "ssh_result",
+        continue_on_error: bool = False,
+    ) -> RouteBuilder:
+        """SSH remote command execution (Sprint 35).
+
+        Args:
+            host: SSH server address.
+            command: Command to execute.
+            username: SSH username (None = system username).
+            password_from: Password source: ``"body"``, ``"properties"`` or ``"none"``.
+            key_file: Path to private key file.
+            timeout: Command timeout in seconds.
+            result_property: Property name for result ``{stdout, stderr, exit_code}``.
+            continue_on_error: If True, non-zero exit_code won't fail the route.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ssh_command",
+            "SshCommandProcessor",
+            host=host,
+            command=command,
+            username=username,
+            password_from=password_from,
+            key_file=key_file,
+            timeout=timeout,
+            result_property=result_property,
+            continue_on_error=continue_on_error,
+        )
+
+    def webdav(
+        self,
+        url: str,
+        *,
+        username: str | None = None,
+        password: str | None = None,
+        mode: str = "upload",
+        remote_path: str = "/",
+        source: str = "body",
+        to: str = "body.webdav_result",
+    ) -> RouteBuilder:
+        """WebDAV upload/download/list/delete via webdav4.
+
+        Args:
+            url: WebDAV server base URL.
+            username: Authentication username.
+            password: Authentication password.
+            mode: ``"upload"``, ``"download"``, ``"list"`` or ``"delete"``.
+            remote_path: Remote path on server.
+            source: Source for upload data.
+            to: Destination for download/list results.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.webdav_io",
+            "WebDavProcessor",
+            url=url,
+            username=username,
+            password=password,
+            mode=mode,
+            remote_path=remote_path,
+            source=source,
+            to=to,
+        )

@@ -13,20 +13,11 @@ Backward-compat: ``from src.backend.entrypoints.api.generator.actions.crud impor
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-
-from collections.abc import Awaitable, Callable, Sequence
-from inspect import Parameter
-
-from fastapi import APIRouter, Request, status
-from fastapi_filter import FilterDepends
-from fastapi_pagination import Params
 from pydantic import BaseModel
-
-from src.backend.core.enums.ordering import OrderingTypeChoices
 from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 from src.backend.dsl.commands.action_registry import action_handler_registry
 from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
@@ -41,20 +32,10 @@ from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import 
 from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (
     WriteMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint
-from src.backend.entrypoints.api.generator.reflection import (
-    body_parameter,
-    make_signature,
-    path_parameter,
-    query_parameter,
-    request_parameter,
-    required_query_parameter,
-)
 from src.backend.entrypoints.api.generator.specs import (
     CrudSpec,
     HttpMethod,
-    RouteDecorator,
-)
+    )
 
 __all__ = ("CrudMixin",)
 

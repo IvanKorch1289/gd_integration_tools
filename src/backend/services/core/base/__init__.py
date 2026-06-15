@@ -20,35 +20,17 @@ if TYPE_CHECKING:
     pass
 
 from contextlib import asynccontextmanager
-from typing import cast
-
-from fastapi_filter.contrib.sqlalchemy import Filter
-from fastapi_pagination import Page, Params
-
-from src.backend.core.decorators.caching import response_cache
-from src.backend.core.di.providers import get_cache_invalidator_provider
 from src.backend.core.errors import NotFoundError, ServiceError
-from src.backend.core.interfaces.db_model import DBModelProtocol
-from src.backend.core.interfaces.repositories import RepositoryProtocol
-from src.backend.core.logging import get_logger
-from src.backend.dsl.codec.converters import transfer_model_to_schema
-from src.backend.schemas.base import BaseSchema, PaginatedResult
+from src.backend.schemas.base import BaseSchema
 
 
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
-
-from src.backend.services.core.base.cache_mixin import CacheMixin  # S61 W1: MRO
-from src.backend.services.core.base.crud_mixin import CrudMixin  # S61 W1: MRO
 from src.backend.services.core.base.helpers import (
     _is_orm_model,  # S61 W1: re-export
     create_service_class,  # S61 W1: re-export
     get_service_for_model,  # S61 W1: re-export
-)
-from src.backend.services.core.base.versioning_mixin import (
-    VersioningMixin,  # S61 W1: MRO
 )
 
 __all__ = (

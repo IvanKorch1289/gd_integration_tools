@@ -14,10 +14,6 @@ from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     pass
-from collections.abc import Callable
-from dataclasses import dataclass, field
-
-from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
 from src.backend.dsl.builders.batch import BatchMixin
@@ -35,8 +31,6 @@ from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
 from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
 from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.builders.ip_restriction_mixin import IPRestrictionMixin
-from src.backend.dsl.builders.notebook import NotebookMixin
-from src.backend.dsl.builders.vault import VaultSecretMixin
 from src.backend.dsl.builders.request_reply import RequestReplyMixin
 from src.backend.dsl.builders.sources_mixin import (
     SourcesMixin as TransportSourcesMixin,  # S97 W1: SSE, CDC, messaging, ...
@@ -44,17 +38,10 @@ from src.backend.dsl.builders.sources_mixin import (
 from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
 from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
     BaseProcessor,
-    CallableProcessor,
-    LogProcessor,
-    ProcessorCallable,
-    SetHeaderProcessor,
-    SetPropertyProcessor,
-    ValidateProcessor,
-)
+    )
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin

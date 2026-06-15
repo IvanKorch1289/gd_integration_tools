@@ -14,16 +14,14 @@ Backward-compat: ``from src.backend.dsl.builders.integration_core import Integra
 """
 
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+    pass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 from src.backend.dsl.builders.integration_core.ai_mixin import AiOpsMixin  # S62 W3: MRO
 from src.backend.dsl.builders.integration_core.core_mixin import (
     CoreDispatchMixin,  # S62 W3: MRO
@@ -34,12 +32,6 @@ from src.backend.dsl.builders.integration_core.utils_mixin import (
 from src.backend.dsl.builders.integration_core.workflow_mixin import (
     WorkflowOpsMixin,  # S62 W3: MRO
 )
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
-    DispatchActionProcessor,
-    PipelineRefProcessor,
-)
-from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 
 __all__ = ("IntegrationCoreMixin",)
 

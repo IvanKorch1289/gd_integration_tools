@@ -4,22 +4,20 @@ S127 W1 removed the unused ``self.circuit_breaker = get_circuit_breaker()``
 from ``HttpClient.__init__``. The instance attribute was created but never
 referenced anywhere in the transport/http package, so it was pure dead
 code (and the ``core.utils.circuit_breaker`` import that fed it is
-deprecated since S38 — planned V24+ removal).
+deprecated since S38 — removed in Sprint 43 CB consolidation).
 
 This test enforces the cleanup:
 1. ``HttpClient`` must not reference ``circuit_breaker`` (static check).
-2. The deprecated shim still works for smtp.py (which still uses it).
+2. The deprecated shim has been removed.
 3. The canonical ``core.resilience.breaker`` is the only future path.
 """
 
 from __future__ import annotations
 
 import ast
-import warnings
 from pathlib import Path
 
 import pytest
-
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
 _HTTP_INIT = (
@@ -90,33 +88,15 @@ class TestHttpClientDeadCodeRemoved:
         assert CircuitOpen is not None
 
 
-class TestDeprecatedShimStillWorks:
-    """The shim must remain for smtp.py until the smtp refactor (TD-030 part 2)."""
+class TestDeprecatedShimRemoved:
+    """The deprecated shim was removed in Sprint 43 (CB consolidation)."""
 
-    def test_shim_emits_deprecation_warning(self) -> None:
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            from src.backend.core.utils.circuit_breaker import (  # noqa: F401,PLC0415
-                CircuitBreaker,
-                get_circuit_breaker,
-            )
+    def test_shim_module_removed(self) -> None:
+        """Verify the deprecated shim no longer exists."""
+        import importlib
 
-        deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
-        assert deprecations, "shim must emit DeprecationWarning per S38 contract"
-        assert any("core.utils.circuit_breaker" in str(w.message) for w in deprecations)
-
-    def test_shim_factory_returns_adapter(self) -> None:
-        from src.backend.core.utils.circuit_breaker import get_circuit_breaker
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            cb = get_circuit_breaker(reset_timeout=10, name="shim-smoke-test")
-        assert cb is not None
-        # Old API surface must still be present for smtp.py.
-        assert hasattr(cb, "check_state")
-        assert hasattr(cb, "record_success")
-        assert hasattr(cb, "record_failure")
-        assert hasattr(cb, "state")
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("src.backend.core.utils.circuit_breaker")
 
 
 class TestLayerLinterNoRegression:

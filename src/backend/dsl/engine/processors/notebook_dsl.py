@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from src.backend.core.config.services.jupyter_hub import jupyter_hub_settings
 from src.backend.core.di.providers.jupyter import (
     get_notebook_execution_service_provider,
 )

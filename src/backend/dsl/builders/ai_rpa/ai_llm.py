@@ -266,3 +266,53 @@ class AILlMMixin:
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors", "MemorySaveProcessor"
         )
+
+    def llm_fallback(
+        self,
+        *,
+        models: list[str] | None = None,
+        fallback_strategy: str = "sequential",
+        max_retries: int = 2,
+        result_property: str = "llm_result",
+    ) -> RouteBuilder:
+        """LLM call with automatic fallback across models.
+
+        Args:
+            models: Ordered list of model identifiers to try.
+            fallback_strategy: ``"sequential"`` (try in order) or ``"parallel"`` (fastest wins).
+            max_retries: Max retries per model.
+            result_property: Property name for LLM response.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ai.llmfallback_processor",
+            "LLMFallbackProcessor",
+            models=models,
+            fallback_strategy=fallback_strategy,
+            max_retries=max_retries,
+            result_property=result_property,
+        )
+
+    def rerank(
+        self,
+        *,
+        query_from: str = "body.query",
+        documents_from: str = "body.documents",
+        top_k: int = 5,
+        result_property: str = "body.reranked_documents",
+    ) -> RouteBuilder:
+        """Rerank documents by relevance to query.
+
+        Args:
+            query_from: dotted-path to query string.
+            documents_from: dotted-path to list of documents.
+            top_k: Number of top documents to return.
+            result_property: Property name for reranked results.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ai.reranker",
+            "RerankerProcessor",
+            query_from=query_from,
+            documents_from=documents_from,
+            top_k=top_k,
+            result_property=result_property,
+        )

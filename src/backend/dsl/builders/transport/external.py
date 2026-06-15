@@ -121,3 +121,43 @@ class ExternalMixin:
             to=to,
             deep_research=deep_research,
         )
+
+    def ldap_query(
+        self,
+        server: str,
+        base_dn: str,
+        filter: str = "(objectClass=*)",
+        *,
+        attributes: list[str] | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        use_ssl: bool = False,
+        timeout: float = 30.0,
+        result_property: str = "ldap_result",
+    ) -> RouteBuilder:
+        """LDAP query executor.
+
+        Args:
+            server: LDAP server URI (e.g. ``ldap://ldap.example.com``).
+            base_dn: Base DN for search.
+            filter: LDAP filter string.
+            attributes: Attributes to retrieve (None = all).
+            username: Bind DN for authentication.
+            password: Bind password.
+            use_ssl: Use LDAPS.
+            timeout: Query timeout in seconds.
+            result_property: Property name for search results.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ldap_query",
+            "LdapQueryProcessor",
+            server=server,
+            base_dn=base_dn,
+            filter=filter,
+            attributes=attributes,
+            username=username,
+            password=password,
+            use_ssl=use_ssl,
+            timeout=timeout,
+            result_property=result_property,
+        )

@@ -20,20 +20,13 @@ if TYPE_CHECKING:
     pass
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timedelta
-from functools import lru_cache
 from typing import Literal
 
 from redis.asyncio import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
-from redis.exceptions import RedisError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.backend.core.config.settings import RedisSettings, settings
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
     ClientCircuitBreaker,
 )
 

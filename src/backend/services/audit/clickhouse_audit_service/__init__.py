@@ -14,8 +14,6 @@ Backward-compat: ``from src.backend.services.audit.clickhouse_audit_service impo
 from src.backend.services.audit.clickhouse_audit_service.helpers import (
     _make_default_event_id,  # S68 W2: helper re-export
     _make_default_timestamp,  # S68 W2: helper re-export
-    _service_instance,  # S114 W1: singleton state re-export (test reset)
-    _service_lock,  # S114 W1: singleton state re-export (test reset)
     get_audit_service,  # S68 W2: helper re-export
     make_audit_event,  # S68 W2: helper re-export
 )

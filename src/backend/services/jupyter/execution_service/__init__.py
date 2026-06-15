@@ -15,16 +15,10 @@ Backward-compat: ``from src.backend.services.jupyter.execution_service import No
 """
 
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-
-import asyncio
-import json
-import uuid
-
-import httpx
 
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.core.clients.jupyter_hub import JupyterHubClient

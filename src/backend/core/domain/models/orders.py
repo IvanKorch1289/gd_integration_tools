@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Boolean, ForeignKey, Integer, String, Text, func
+from sqlalchemy import UUID, Boolean, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.types import EmailType, UUIDType

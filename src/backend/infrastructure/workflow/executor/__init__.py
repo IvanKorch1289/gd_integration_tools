@@ -15,14 +15,10 @@ Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLS
 """
 
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
@@ -32,7 +28,6 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowState,
 )
 from src.backend.infrastructure.workflow.runner import (
-    StepExecutor,
     StepOutcome,
     StepResult,
 )

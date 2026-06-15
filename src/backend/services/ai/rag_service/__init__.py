@@ -15,26 +15,13 @@ Backward-compat: ``from src.backend.services.ai.rag_service import RAGService`` 
 """
 
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
-import hashlib
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.vector_store import BaseVectorStore
-from src.backend.core.logging import get_logger
 from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
-)
-from src.backend.services.ai.rag_augment import (
-    AugmentResult,
-    FreshnessLabel,
-    build_augment_result,
 )
 
 if TYPE_CHECKING:  # pragma: no cover

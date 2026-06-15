@@ -12,7 +12,6 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_workflows
 from __future__ import annotations
 
 from fastapi import APIRouter, status
-from pydantic import TypeAdapter
 
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,

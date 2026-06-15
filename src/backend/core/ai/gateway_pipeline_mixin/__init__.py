@@ -12,7 +12,7 @@ Backward-compat: ``from src.backend.core.ai.gateway_pipeline_mixin import Pipeli
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
@@ -42,13 +42,10 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 """
 
 from typing import TYPE_CHECKING
-
-from src.backend.core.ai.errors import GuardResult
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.core.ai.policy.spec import AIPolicySpec
+    pass
 
 logger = get_logger(__name__)
 

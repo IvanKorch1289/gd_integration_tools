@@ -14,11 +14,6 @@ Backward-compat: ``from src.backend.dsl.engine.processors.llm_structured import 
 """
 
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
@@ -27,9 +22,6 @@ from src.backend.dsl.registry import processor as _processor_reg
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
-
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
 
 _logger = get_logger(__name__)
 

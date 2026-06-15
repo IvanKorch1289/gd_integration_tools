@@ -23,9 +23,8 @@ import hashlib
 import uuid
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.entrypoints.grpc.grpc_server.base import BaseGRPCServicer
 from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (TD-026 cont. full wire-up)
     FileServiceServicer,

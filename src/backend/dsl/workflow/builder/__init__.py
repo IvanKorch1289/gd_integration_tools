@@ -26,20 +26,13 @@ from typing import TYPE_CHECKING, Self
 
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
-    MemoryScope,
-    PauseDeclaration,
-    ResumeDeclaration,
     RetryPolicy,
     SagaDeclaration,
-    SensorDeclaration,
-    SignalWaitDeclaration,
-    SleepDeclaration,
-    WorkflowDeclaration,
     WorkflowStep,
 )
 
 if TYPE_CHECKING:
-    from src.backend.dsl.workflow.gateways import BranchSpec
+    pass
 
 from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.gateway_mixin import GatewayMixin  # S58 W4: MRO

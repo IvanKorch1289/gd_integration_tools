@@ -217,3 +217,97 @@ class UtilsMixin:
                 )
             )
         )
+
+    def jq_query(
+        self,
+        expr: str,
+        *,
+        to: str = "body.jq_result",
+        mode: str = "all",
+    ) -> RouteBuilder:
+        """JMESPath query via jq processor.
+
+        Args:
+            expr: JMESPath expression (e.g. ``users[*].name``).
+            to: Destination dotted-path.
+            mode: ``all`` (list), ``first`` (single), ``scalar`` (value or None).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.jq_query",
+            "JqProcessor",
+            expr=expr,
+            to=to,
+            mode=mode,
+        )
+
+    def duckdb_query(
+        self,
+        sql: str,
+        *,
+        sources: dict[str, str] | None = None,
+        persistent_path: str | None = None,
+    ) -> RouteBuilder:
+        """DuckDB analytical SQL over body + lookup tables.
+
+        Args:
+            sql: SQL query referencing ``body`` and ``sources.*`` aliases.
+            sources: ``alias -> dotted_path_in_headers`` for lookup tables.
+            persistent_path: Path to DuckDB file (None = in-memory).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.duckdb_query",
+            "DuckDbQueryProcessor",
+            sql=sql,
+            sources=sources,
+            persistent_path=persistent_path,
+        )
+
+    def zip_archive(
+        self,
+        *,
+        action: str = "create",
+        files_from: str | None = None,
+        archive_to: str = "body.archive_path",
+        password: str | None = None,
+    ) -> RouteBuilder:
+        """Create/extract ZIP archives.
+
+        Args:
+            action: ``"create"`` or ``"extract"``.
+            files_from: dotted-path to list of file paths.
+            archive_to: Destination for archive path.
+            password: Optional password for encrypted archives.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.zip_archive",
+            "ZipArchiveProcessor",
+            action=action,
+            files_from=files_from,
+            archive_to=archive_to,
+            password=password,
+        )
+
+    def ingest_file(
+        self,
+        *,
+        file_path: str | None = None,
+        file_path_from: str | None = None,
+        content_type: str | None = None,
+        chunk_size: int = 1024,
+    ) -> RouteBuilder:
+        """Ingest file into exchange for processing.
+
+        Args:
+            file_path: Absolute path to file.
+            file_path_from: dotted-path to read path from.
+            content_type: MIME type (auto-detected if None).
+            chunk_size: Read chunk size in bytes.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.ingest_file",
+            "IngestFileProcessor",
+            file_path=file_path,
+            file_path_from=file_path_from,
+            content_type=content_type,
+            chunk_size=chunk_size,
+        )

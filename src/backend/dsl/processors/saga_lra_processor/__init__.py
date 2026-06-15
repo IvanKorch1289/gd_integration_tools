@@ -13,27 +13,16 @@ Backward-compat: ``from src.backend.dsl.processors.saga_lra_processor import Sag
 """
 
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-
-
-import asyncio
-import inspect
-import time
-import uuid
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.exchange import ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
+    pass
 
 
 _lra_logger = get_logger("dsl.saga_lra_processor")

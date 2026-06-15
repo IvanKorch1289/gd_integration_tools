@@ -21,8 +21,7 @@ if TYPE_CHECKING:
     pass
 
 import uuid
-from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass
+from collections.abc import Sequence
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 from src.backend.core.logging import get_logger

@@ -8,7 +8,6 @@ if TYPE_CHECKING:
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
