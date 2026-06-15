@@ -70,15 +70,41 @@ class ExecutionEngine:
     ) -> None:
         self._middleware = middleware or _default_middleware_factory()
         self._validate = validate_before_execute
-        self._timeout_mw = self._find_timeout_middleware()
         self._pool = pool or get_processor_pool()
         self._validation_cache: dict[str, Any] = {}
 
-    def _find_timeout_middleware(self) -> TimeoutMiddleware | None:
-        for mw in self._middleware.iter_middlewares():
+    @staticmethod
+    def _find_timeout_middleware_in(chain: MiddlewareChain) -> TimeoutMiddleware | None:
+        for mw in chain.iter_middlewares():
             if isinstance(mw, TimeoutMiddleware):
                 return mw
         return None
+
+    def _build_chain(self, pipeline: Pipeline) -> MiddlewareChain:
+        """Собирает effective middleware chain для pipeline.
+
+        Route-specific middleware заменяет default middleware того же класса;
+        middleware'ы уникальных классов добавляются после defaults.
+        """
+        defaults = list(self._middleware.iter_middlewares())
+        route = list(pipeline.middlewares)
+        result: list[Any] = []
+        used: list[bool] = [False] * len(route)
+
+        for default in defaults:
+            replacement: Any | None = None
+            for i, rm in enumerate(route):
+                if not used[i] and type(rm) is type(default):
+                    replacement = rm
+                    used[i] = True
+                    break
+            result.append(replacement if replacement is not None else default)
+
+        for i, rm in enumerate(route):
+            if not used[i]:
+                result.append(rm)
+
+        return MiddlewareChain(result)
 
     def _cached_validate(self, pipeline: Pipeline) -> Any:
         """Validate pipeline with LRU-style cache by route_id."""
@@ -132,6 +158,8 @@ class ExecutionEngine:
         context: ExecutionContext,
         route_id: str,
         tracer: Any,
+        middleware_chain: MiddlewareChain,
+        timeout_mw: TimeoutMiddleware | None,
     ) -> dict[str, Any]:
         """Выполняет один процессор, возвращает trace entry."""
         proc_start = time.monotonic()
@@ -141,12 +169,10 @@ class ExecutionEngine:
                 "Executing '%s' for route '%s'", processor.name, route_id
             )
 
-        timeout = (
-            self._timeout_mw.get_timeout(processor.name) if self._timeout_mw else None
-        )
+        timeout = timeout_mw.get_timeout(processor.name) if timeout_mw else None
 
         async with tracer.trace(route_id, processor.name, type(processor).__name__):
-            await self._middleware.execute(
+            await middleware_chain.execute(
                 processor, exchange, context, timeout=timeout
             )
 
@@ -179,7 +205,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(
@@ -221,6 +247,9 @@ class ExecutionEngine:
         trace_log: list[dict[str, Any]] = []
         pipeline_start = time.monotonic()
 
+        middleware_chain = self._build_chain(pipeline)
+        timeout_mw = self._find_timeout_middleware_in(middleware_chain)
+
         for processor in pipeline.processors:
             if (
                 current_exchange.status == ExchangeStatus.failed
@@ -235,6 +264,8 @@ class ExecutionEngine:
                     runtime_context,
                     pipeline.route_id,
                     tracer,
+                    middleware_chain,
+                    timeout_mw,
                 )
                 trace_log.append(entry)
             except Exception as exc:

@@ -66,6 +66,9 @@ from src.backend.dsl.builders.base.config_mixin import ConfigMixin  # S57 W1: MR
 from src.backend.dsl.builders.base.deps_mixin import DepsMixin  # S57 W1: MRO
 from src.backend.dsl.builders.base.feature_mixin import FeatureMixin  # S57 W1: MRO
 from src.backend.dsl.builders.base.fluent_mixin import FluentMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.middleware_mixin import (
+    MiddlewareMixin,  # S57 W1: MRO
+)
 from src.backend.dsl.builders.base.resilience_mixin import (
     ResilienceMixin,  # S57 W1: MRO
 )
@@ -107,6 +110,7 @@ class RouteBuilder(
     FeatureMixin,
     ResilienceMixin,
     ComplianceMixin,
+    MiddlewareMixin,
     TransportSourcesMixin,  # S97 W1: SSE/CDC/messaging builders (orphan в S94)
 ):
     """RouteBuilder — DSL core (7 mixins = 26 methods + 6 core)."""
@@ -114,6 +118,7 @@ class RouteBuilder(
     __slots__ = (
         "_description",
         "_feature_flag",
+        "_middlewares",
         "_processors",
         "_protocol",
         "_transport_config",
@@ -145,6 +150,7 @@ class RouteBuilder(
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "description", description)
         object.__setattr__(self, "_description", description or "")
+        object.__setattr__(self, "_middlewares", [])
         object.__setattr__(self, "_processors", [])
         object.__setattr__(self, "_protocol", None)
         object.__setattr__(self, "_transport_config", None)
@@ -233,4 +239,5 @@ class RouteBuilder(
             protocol=self._protocol,
             transport_config=self._transport_config,
             feature_flag=self._feature_flag,
+            middlewares=list(self._middlewares),
         )

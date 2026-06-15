@@ -46,6 +46,7 @@ class Pipeline:
     transport_config: TransportConfig | None = None
     feature_flag: str | None = None
     tenant_aware: bool = False
+    middlewares: list[Any] = field(default_factory=list)
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """
