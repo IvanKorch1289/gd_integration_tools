@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
-
 from src.backend.core.logging import get_logger
+from src.backend.core.security.authorization_gateway.state import AuthorizationDecision
 
 _logger = get_logger("core.security.authorization_gateway")
 

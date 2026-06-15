@@ -41,17 +41,30 @@ from src.backend.core.security.authorization_gateway.permission_mixin import (
     PermissionMixin,  # S60 W4: MRO
 )
 from src.backend.core.security.authorization_gateway.state import (
+    AuditCallback,  # S60 W4: re-export
     AuthorizationDecision,  # S60 W4: re-export
     AuthorizationReason,  # S60 W4: re-export
+    PolicyDecider,  # S60 W4: re-export
 )
 
-__all__ = ("AuthorizationGateway", "AuthorizationReason", "AuthorizationDecision")
+__all__ = (
+    "AuditCallback",
+    "AuthorizationGateway",
+    "AuthorizationReason",
+    "AuthorizationDecision",
+    "PolicyDecider",
+)
 
 
 class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
     """Authorization gateway (4 mixins = 4 methods + 5 core)."""
 
-    __slots__ = ()
+    __slots__ = (
+        "_capability_gateway",
+        "_policies",
+        "_audit",
+        "_enabled",
+    )
 
     def __init__(
         self,
