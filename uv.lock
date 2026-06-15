@@ -3120,7 +3120,7 @@ requires-dist = [
     { name = "standardwebhooks", marker = "extra == 'dsl-extras-2'", specifier = ">=1.0.0,<2.0.0" },
     { name = "starlette", specifier = ">=1.0.1,<2.0.0" },
     { name = "starlette-exporter", specifier = ">=0.23.0,<1.0.0" },
-    { name = "strawberry-graphql", extras = ["fastapi"], specifier = ">=0.262.0" },
+    { name = "strawberry-graphql", extras = ["fastapi"], specifier = ">=0.316.0" },
     { name = "streamlit", marker = "extra == 'frontend'", specifier = ">=1.30.0,<2.0.0" },
     { name = "streamlit-autorefresh", marker = "extra == 'frontend'", specifier = ">=1.0.0,<2.0.0" },
     { name = "structlog", specifier = ">=24.4.0,<25.0.0" },
