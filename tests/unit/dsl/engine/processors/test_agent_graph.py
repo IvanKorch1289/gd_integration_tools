@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.ai.agent_sandbox import AgentSandboxResult
+from src.backend.services.ai.agent_sandbox import AgentSandboxResult
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
