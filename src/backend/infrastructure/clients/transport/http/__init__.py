@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 import asyncio
 
 import httpx
+
 from src.backend.core.config.settings import settings
 from src.backend.infrastructure.clients.transport.http.base import (
     BaseHttpClient,  # S61 W4: re-export
@@ -69,6 +70,7 @@ class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
         "_metrics_lock",
         "purger_task",
         "metrics",
+        "circuit_breaker",
     )
 
     def __init__(self) -> None:
@@ -90,6 +92,19 @@ class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
             "failed_requests": 0,
             "average_response_time": 0.0,
         }
+
+        from src.backend.core.resilience.breaker import (
+            BreakerSpec,
+            get_breaker_registry,
+        )
+
+        self.circuit_breaker = get_breaker_registry().get_or_create(
+            "http_client",
+            BreakerSpec(
+                failure_threshold=self.settings.circuit_breaker_max_failures,
+                recovery_timeout=self.settings.circuit_breaker_reset_timeout,
+            ),
+        )
 
     async def close(self) -> None:
         try:
