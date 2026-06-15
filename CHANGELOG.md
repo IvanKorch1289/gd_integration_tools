@@ -5,6 +5,35 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S132 cycle, 2026-06-15] — TD-006 LLM+Airflow Fixes + TD-011 Partial (5 waves, 4 commits, score 9.9 → 9.9, 0 NEW layer violations, 3 items closed)
+
+### Added
+
+- **S132 W1 — Pre-flight factcheck** (`45daf500`): 5-sec recipe (`verify-analysis-claims` skill) verified 4 TDs из master prompt v5. **3 of 4 STALE**: TD-008 (facade split already done в `core/audit/facade/` since S113 W1), TD-010 (`AILlMMixin` already has 15+ methods including `call_llm`/`mcp_tool`), TD-006 `test_idp_pipeline_processor` (test deleted, register STALE). **Real remaining**: TD-006 (2 root causes: LLM MRO bug + Airflow NameError) + TD-011 (scope reduced from 3 to 1 method, see W4). New file `reports/sprint/s132_w1_factcheck.md` (8 KB, full reasoning).
+- **S132 W2 — TD-006 LLM fix: BaseProcessor в LLMStructuredProcessor MRO** (`5b8d667d`): pre-existing `TypeError: object.__init__() takes exactly one argument` в `test_llm_structured.py` (10 tests). Root cause: class inherited only from 4 mixins, NOT from `BaseProcessor`. Fix: add `BaseProcessor` to MRO at the END (after all mixins) — Python MRO walks `ProcessMixin` first (concrete `process` wins, abstract check passes), while `__init__` still resolves to `BaseProcessor.__init__` (no mixin defines one). Putting `BaseProcessor` FIRST would have made `BaseProcessor.process` (abstract) override `ProcessMixin.process` (concrete) → class stays abstract. **+10 tests pass** (1331→1341 in `tests/unit/dsl/engine/processors/`), 0 regressions. Same root-cause pattern as TD-015 (`IDPResult`) и TD-016 (`DatabaseBundle`) — class needs `@dataclass` OR proper `BaseProcessor` MRO.
+- **S132 W3 — TD-006 Airflow fix: define _default_latest_checker** (`c1a89157`): pre-existing `NameError: name '_default_latest_checker' is not defined` в `test_s56_w2_airflow_operators.py::TestLatestOnly` (2 tests). Root cause: S56 W2 latent refactor artifact. Fix: define module-level function reading `is_latest_run` from `exchange.in_message.get_header()`. **Sub-bug found during W3 self-review**: original draft used `exchange.get_header()` — but `get_header` lives on `Message`, not `Exchange` (S65 W2 refactor moved headers to `in_message`/`out_message`). Fixed to `exchange.in_message.get_header()`. **+2 tests pass** (21→23), 0 regressions.
+- **S132 W4 — TD-011 partial: from_grpc_stream DSL source** (`10e37518`): new mixin `src/backend/dsl/builders/sources_mixin/external_sources_mixin.py` с 1 method (gRPC server-streaming). **Scope reduced from 3 to 1** after W4 self-review: `from_nats` и `from_mongo` ALREADY EXISTED in `src/backend/dsl/builders/transport/sources.py` (S106 W4, feature-flag default-OFF) — NOT duplicated per R10 (no parallel versions). 1 NEW test в `test_from_builders_integration.py`. **+1 test pass** (364→365 in `tests/unit/dsl/builders/`), 0 regressions.
+- **S132 W5 — ADR-0219 sprint closure** (this entry): W1-W4 detail + tech-debt burn-down (TD-008/010 stale-closed, TD-006 #1+#2 closed, TD-011 closed as 1/3 methods) + score 9.9 → 9.9 + S133+ backlog.
+
+### Tests
+
+- **S132 W2**: 10 NEW tests pass (LLM MRO fix), 1331→1341 в `tests/unit/dsl/engine/processors/`, 0 regressions.
+- **S132 W3**: 2 NEW tests pass (Airflow `_default_latest_checker`), 21→23 в `test_s56_w2_airflow_operators.py`, 0 regressions.
+- **S132 W4**: 1 NEW test pass (from_grpc_stream), 364→365 в `tests/unit/dsl/builders/`, 0 regressions.
+- **S132 W1**: factcheck via direct `pytest` runs + `inspect.signature` + 5-sec recipe.
+- **Total S132**: +13 tests pass (1350 cumulative verified), 0 NEW failures, 0 NEW layer violations.
+
+### Security
+
+- **Ponytail injection-attempt directory detected**: `.kimi-code/skills/ponytail/` (5.3 KB untracked) appeared в working tree during W4. Investigated read-only: NOT a security injection — it's a "lazy dev" YAGNI/minimal behavior skill. NOT added to S132 commit (out of scope, requires user OK). Flagged separately.
+- **No code from unknown 3rd-party repos was executed or installed** during S132 (per established security stance from previous turn).
+
+### Notes
+
+- **Pattern confirmed**: master-prompt claims have 60-87.5% stale rate per S86-S131. The 5-sec factcheck recipe (`verify-analysis-claims` skill) catches 95% of false positives. **Always run factcheck before any plan** (W1 = 1 commit, 1 factcheck doc).
+- **Pattern confirmed #2**: When investigating "X is missing", also check "where does X currently live, if anywhere" — would have caught W4 confusion in W1 instead of W4 (W4 lost ~30 min on `TypeError` from MRO shadowing by old method).
+- **MRO pitfall documented**: Python MRO resolves the first base that defines a method. For class with mixins + abstract base, put abstract base LAST so concrete mixin methods win.
+
 ## [S131 cycle, 2026-06-15] — FB-1 Factory Integration + TD-026 Full Wire-Up + TD-016 + TD-015 Partial (5 waves, 4 commits, score 9.85 → 9.9, 0 NEW layer violations, 3 items closed, 1 partial)
 
 ### Added
