@@ -59,7 +59,17 @@ __all__ = (
 class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
     """HTTP client (4 mixins = 15 methods + 2 core)."""
 
-    __slots__ = ()
+    __slots__ = (
+        "settings",
+        "logger",
+        "client",
+        "last_activity",
+        "active_requests",
+        "session_lock",
+        "_metrics_lock",
+        "purger_task",
+        "metrics",
+    )
 
     def __init__(self) -> None:
 

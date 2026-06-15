@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
+
 if TYPE_CHECKING:
     from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
     from src.backend.core.di.providers.http import get_http_client_provider
