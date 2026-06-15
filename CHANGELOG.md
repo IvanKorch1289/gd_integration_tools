@@ -5,6 +5,54 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S145 cycle, 2026-06-15] — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (4 waves, 3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix)
+
+### Added
+
+- **S145 W1 — Pre-flight factcheck + S144 W1 correction** (`28ab139`): 5-sec recipe на 6 remaining test_features fails. **CRITICAL CORRECTION**: S144 W1 said 12 missing Sprint5DSLFlags — VERIFIED wrong via `grep -c` + `pytest field_count`; actual = 2 missing (`blueprint_cdc_enrich`, `blueprint_ai_pipeline`). 1 pre-existing fix candidate: `test_smart_session_manager_singleton_uses_bundle` (monkeypatch test setup issue). New file `reports/sprint/s145_w1_factcheck.md` (79 lines).
+- **S145 W2 — Sprint5DSLFlags 2 fields (with position reorder)** (`af64b2e`): 1 file 25 insertions. Added `blueprint_cdc_enrich` (K3 S5 W8) + `blueprint_ai_pipeline` (K4 S5 W9) at correct positions 18-19 (after `result_unwrap_processor`, before existing `blueprint_saga_compensation`). Initial commit had fields at end — failed `test_field_count` (test asserts `tuple(names) == SPRINT5_DSL_FIELD_NAMES` order-sensitive). Reorder fix verified.
+- **S145 W3 — SmartSessionManager module-level lookup fix** (`c10ff70`): 1 file 11/-1. Root cause: `get_smart_session_manager` did `from .initializer import get_db_initializer`, binding name в `accessors.__dict__`. Test's `monkeypatch.setattr(db_mod, "get_db_initializer", lambda)` patched `database.__dict__` instead. Fix: `from src.backend.infrastructure.database import database as _db_mod; _db_mod.get_db_initializer().as_bundle()`. Test `test_smart_session_manager_singleton_uses_bundle` now passes (file: 5/5). Verified pre-existing via `git stash` per Rule #124.
+- **S145 W4 — SKIPPED** (no actionable pre-existing picks within Ponytail-mode; 3 remaining fails are pre-existing design conflicts per Rule #124 OUT OF SCOPE)
+- **S145 W5 — ADR-0228 sprint closure** (this commit): W1-W4 detail + INDEX regen (178 ADRs, 177 unique) + S146+ backlog.
+
+### Tests
+
+- **S145 W1**: 0 NEW tests (fact-check analysis-only)
+- **S145 W2**: 0 NEW tests (Field() backfill); -3 test_features fails (6→3, -50%)
+- **S145 W3**: 0 NEW tests (1-line fix); -1 pre-existing fail (`test_smart_session_manager_singleton_uses_bundle` + 4 siblings pass)
+- **S145 W4**: SKIPPED
+- **Net S145**: test_features_*.py 6→3 fails (-3, -50%); +1 pre-existing fix
+- **Cumulative S139-S145**: tests/unit/ 239→~82 fails (-157, -66%)
+
+### Stale Backlog Items Cleared (S145 W1 fact-check correction)
+
+- **Sprint5DSLFlags 12 missing (S144 W1 claim)** → **CORRECTED to 2** via S145 W1 re-verification (verify-analysis-claims skill: `rg + wc -l + grep -B2 markers + git log -S` caught the error)
+- S144 W1 fact-check had wrong number (claimed 12 missing, actual 2) — root cause: miscounting class fields in grep, not running test_field_count
+
+### Pre-existing failures (NOT introduced by S145, verified via `git stash` per Rule #124)
+
+- `test_ai_flags_instantiates` — `rag_cache_l2_semantic default != False` (Field has `default=True` per design; OUT OF SCOPE)
+- `test_ai_field_count` — 10≠9 (extra `prompt_registry_gateway_wiring` field; OUT OF SCOPE)
+- `test_sprints_24_27_flags_instantiates` — `ai_gateway_enforce default != False` (OUT OF SCOPE)
+
+### Ponytail-mode discipline (S145)
+
+- **3 atomic commits** (W1 + W2 + W3, W4 skipped)
+- **S145 W1 caught S144 W1 error** (12→2 Sprint5DSLFlags missing) — verify-analysis-claims skill critical
+- **S145 W2 position reorder** — test asserts `tuple == SPRINT5_DSL_FIELD_NAMES` (order-sensitive), fields inserted at correct positions
+- **S145 W3 1-line fix** (module-level lookup) — closed 1 pre-existing fail + 4 sibling tests pass
+- **W4 SKIPPED** per Ponytail "ship the lazy version" + Rule #124 OUT OF SCOPE for design conflicts
+
+### Backlog (S146+)
+
+- 3 pre-existing test_features fails (AIFlags×2, Sprints2427Flags×1) — design conflicts OUT OF SCOPE
+- 66 TD-013 Streamlit pages remaining (12h dedicated)
+- 73 core test fails (feature gaps, not patterns)
+- 29 services test fails (3 streaming + 26 unknown)
+- TD-006 PARTIAL (test baseline ratchet)
+- docstring coverage, security audit (P2)
+- Mutation testing, performance benchmarks (P3)
+
 ## [S144 cycle, 2026-06-15] — 5 Features Backfill + 2 TD-013 Page Regroups (5 waves, 4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages)
 
 ### Added
