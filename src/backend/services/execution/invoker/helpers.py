@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
-from src.backend.core.interfaces.invoker import InvocationRequest, InvocationResponse
+from src.backend.core.interfaces.invoker import (
+    InvocationMode,
+    InvocationRequest,
+    InvocationResponse,
+)
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.core.interfaces.invoker import Invoker
+
+_logger = get_logger("services.execution.invoker")
 
 
 def _is_async_iterator(obj: Any) -> bool:
@@ -49,7 +57,7 @@ async def _run_deferred_job(request: InvocationRequest) -> None:
     channel_kind = request.reply_channel or ReplyChannelKind.API.value
     channel = invoker._resolve_channel(channel_kind)
     if channel is None:
-        logger.warning(
+        _logger.warning(
             "DEFERRED: reply_channel=%r не найден (invocation_id=%s)",
             channel_kind,
             request.invocation_id,
@@ -58,7 +66,7 @@ async def _run_deferred_job(request: InvocationRequest) -> None:
     try:
         await channel.send(response)
     except Exception as _:
-        logger.exception(
+        _logger.exception(
             "DEFERRED: ReplyChannel.send failed (invocation_id=%s)",
             request.invocation_id,
         )
