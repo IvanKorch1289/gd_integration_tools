@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 import httpx
 
 from src.backend.core.logging import get_logger
+from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError
 
 _logger = get_logger("services.jupyter.execution")
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError
 
 _logger = get_logger("services.jupyter.execution")
 
@@ -35,6 +36,10 @@ class NbClientExecutionBackend:
                 "nbclient required for local execution. "
                 "Install: uv sync --extra jupyter"
             ) from exc
+
+        from src.backend.services.jupyter.execution_service import (
+            NotebookExecutionService,
+        )
 
         svc = NotebookExecutionService.__new__(NotebookExecutionService)
         nb = svc._build_ipynb(notebook_path, cells)
