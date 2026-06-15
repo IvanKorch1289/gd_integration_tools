@@ -44,6 +44,13 @@ def _build_base_capabilities(
     )
     vocab.register(
         CapabilityDef(
+            name="db.execute_procedure",
+            matcher=dot_glob,
+            description="Вызов stored procedure во внешней БД через ExternalDatabaseFacade.",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="secrets.read",
             matcher=uri,
             description="Чтение секрета через SecretsFacade (vault:// / env:// / kms://).",

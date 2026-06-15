@@ -153,6 +153,35 @@ def _register_cache_facade() -> None:
     register_factory(UnifiedCacheFacade, _factory)
 
 
+def _register_external_database_facade() -> None:
+    """Регистрирует ``ExternalDatabaseFacade`` в svcs с capability-check."""
+    from src.backend.core.svcs_registry import has_service, register_factory
+    from src.backend.services.io.external_database import ExternalDatabaseFacade
+
+    if has_service(ExternalDatabaseFacade):
+        return
+
+    def _factory() -> ExternalDatabaseFacade:
+        from src.backend.core.di.providers import get_external_session_manager_provider
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+        from src.backend.core.svcs_registry import get_service, has_service
+
+        session_manager_factory = get_external_session_manager_provider()
+
+        capability_check = None
+        if has_service(CapabilityGate):
+            gate = get_service(CapabilityGate)
+            capability_check = getattr(gate, "check", None)
+
+        return ExternalDatabaseFacade(
+            session_manager_factory=session_manager_factory,
+            capability_check=capability_check,
+            plugin="system",
+        )
+
+    register_factory(ExternalDatabaseFacade, _factory)
+
+
 def register_all_services() -> None:
     """
     Регистрирует все бизнес-сервисы приложения в svcs_registry.
@@ -207,6 +236,9 @@ def register_all_services() -> None:
 
     # P1: UnifiedCacheFacade (S133 W4).
     _register_cache_facade()
+
+    # P1: ExternalDatabaseFacade (S133 W4).
+    _register_external_database_facade()
 
     # W14.1.C: встроенные middleware action-диспетчера.
     register_default_action_middlewares()
