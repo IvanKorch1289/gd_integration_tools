@@ -3147,7 +3147,7 @@ provides-extras = ["ai", "security", "ai-safety", "auth-saml", "mcp", "rpa", "ju
 [package.metadata.requires-dev]
 dev = [
     { name = "aiosqlite", specifier = ">=0.20.0,<1.0.0" },
-    { name = "bandit", extras = ["toml"], specifier = ">=1.7.10,<2.0.0" },
+    { name = "bandit", extras = ["toml"], specifier = ">=1.9.4,<2.0.0" },
     { name = "creosote", specifier = ">=5.2.0,<6.0.0" },
     { name = "deptry", specifier = ">=0.20,<1.0" },
     { name = "detect-secrets", specifier = ">=1.5.0,<2.0.0" },
