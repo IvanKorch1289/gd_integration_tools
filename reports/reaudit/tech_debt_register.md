@@ -67,10 +67,10 @@
 | Field | Value |
 |-------|-------|
 | Origin | Pre-existing 572 failures + 70 collection errors |
-| Current | 🟡 **PARTIAL (S132 W1 factcheck)** — `tools/check_test_baseline.py` + `tools/check_test_baseline_allowlist.txt` (18 entries) report `No failures detected (pre-existing or new)`. BUT 12 pre-existing failures confirmed via direct `pytest` runs:<br>• **`test_llm_structured.py`**: 10 failures, root cause = `LLMStructuredProcessor` missing `BaseProcessor` в MRO (`src/backend/dsl/engine/processors/llm_structured/__init__.py:90`). Symptom: `TypeError: object.__init__() takes exactly one argument`.<br>• **`test_s56_w2_airflow_operators.py`**: 2 failures, root cause = `NameError: _default_latest_checker` в `src/backend/dsl/orchestration/airflow_operators/latestonlyoperator.py:48`.<br>• **`test_idp_pipeline_processor`**: test removed in some refactor, register STALE.<br>Allowlist tool does NOT detect these because they are PARTIAL in the suite (21 of 23 pass in airflow_operators, 10 of 10 fail in test_llm_structured) — would only flag if `pytest` exit code != 0. Tool likely runs with `--continue-on-collection-errors` or skips broken files. |
-| Residual | 12 failing tests, 2 root causes (S132 W2-W3 fixes planned) |
-| Owner | S132 W2 (LLM fix) + S132 W3 (airflow fix) |
-| Refs | S132 W1 commit `?` (this entry), S132 W1 factcheck `reports/sprint/s132_w1_factcheck.md` |
+| Current | 🟡 **PARTIAL (S132 W5 sync)** — 12 of 12 originally-identified failures closed: `test_llm_structured.py` (10) fixed в S132 W2 (commit `5b8d667d`, `BaseProcessor` MRO), `test_s56_w2_airflow_operators.py` (2) fixed в S132 W3 (commit `c1a89157`, `_default_latest_checker` defined). `test_idp_pipeline_processor` claim STALE (test не существует). BUT ~262 pre-existing failures remain в unrelated files: ~109 в `tests/unit/dsl/engine/processors/`, ~153 в `tests/unit/dsl/builders/` (other root causes, classified S133 W1). Allowlist tool reports "No failures detected" but does NOT detect these (PARTIAL in suite — 21 of 23 pass in airflow_operators pre-fix, 10 of 10 fail in test_llm_structured pre-fix). Tool likely runs with `--continue-on-collection-errors` or skips broken files. |
+| Residual | ~262 pre-existing failures in 2 test directories, multiple root causes (S133+ classification) |
+| Owner | ~~S132 W2-W3~~ → CLOSED for original 12. New scope: S133+ classification of remaining ~262. |
+| Refs | S132 W2 commit `5b8d667d`, S132 W3 commit `c1a89157`, S133 W1 (pending) |
 
 ---
 
