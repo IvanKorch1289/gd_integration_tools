@@ -136,8 +136,55 @@ def test_from_filewatcher_returns_route_builder() -> None:
     assert builder.source == "filewatcher:/etc/app/config"
     mock_fw_module.FileWatcherSource.assert_called_once()
     call_kwargs = mock_fw_module.FileWatcherSource.call_args.kwargs
+    assert call_kwargs["source_id"] == "config.hotreload"
     assert call_kwargs["recursive"] is False
-    assert call_kwargs["path"] == Path("/etc/app/config")
+    assert call_kwargs["paths"] == [Path("/etc/app/config")]
+
+
+def test_from_filewatcher_supports_multiple_paths() -> None:
+    """from_filewatcher передаёт несколько путей в FileWatcherSource."""
+    mock_fw_module = MagicMock()
+    mock_fw_module.FileWatcherSource.return_value = MagicMock()
+
+    with patch.dict(
+        "sys.modules",
+        {"src.backend.infrastructure.sources.file_watcher": mock_fw_module},
+    ):
+        builder = _FakeRouteBuilder.from_filewatcher(
+            "configs.hotreload",
+            paths=["/etc/app/config", "/etc/app/overrides"],
+            recursive=True,
+        )
+
+    assert builder.source == "filewatcher:/etc/app/config;/etc/app/overrides"
+    call_kwargs = mock_fw_module.FileWatcherSource.call_args.kwargs
+    assert call_kwargs["paths"] == [Path("/etc/app/config"), Path("/etc/app/overrides")]
+
+
+def test_from_filewatcher_passes_glob_and_batch_options() -> None:
+    """from_filewatcher прокидывает glob-фильтры и batching-параметры."""
+    mock_fw_module = MagicMock()
+    mock_fw_module.FileWatcherSource.return_value = MagicMock()
+
+    with patch.dict(
+        "sys.modules",
+        {"src.backend.infrastructure.sources.file_watcher": mock_fw_module},
+    ):
+        builder = _FakeRouteBuilder.from_filewatcher(
+            "import.hotfolder",
+            path="/data/inbox",
+            glob_include="*.csv",
+            glob_exclude=["*.tmp", "*.log"],
+            batch_size=50,
+            batch_window=2.0,
+        )
+
+    assert builder.source == "filewatcher:/data/inbox"
+    call_kwargs = mock_fw_module.FileWatcherSource.call_args.kwargs
+    assert call_kwargs["glob_include"] == "*.csv"
+    assert call_kwargs["glob_exclude"] == ["*.tmp", "*.log"]
+    assert call_kwargs["batch_size"] == 50
+    assert call_kwargs["batch_window"] == 2.0
 
 
 # ─── test_from_webhook_returns_route_builder ──────────────────────────────────
