@@ -74,5 +74,29 @@ class ResilienceFlags(BaseSettings):
         ),
     )
 
+    auto_scaler_process_level: bool = Field(
+        default=False,
+        title="Resilience: AutoScaler process-level (multi-process replication-safe)",
+        description=(
+            "K2 Wave 6. Owner: K2 Net&WAF. ETA: S3-W6. "
+            "Активирует process-level auto-scaler (в отличие от task-level): "
+            "psutil.Popen fork-safety + shared memory metrics across workers. "
+            "Используется для long-running sync tasks (gunicorn workers, Celery prefork). "
+            "default-OFF до multi-process smoke test + shared memory cleanup."
+        ),
+    )
+
+    auto_scaler_task_level: bool = Field(
+        default=False,
+        title="Resilience: AutoScaler task-level (asyncio-friendly)",
+        description=(
+            "K2 Wave 6. Owner: K2 Net&WAF. ETA: S3-W6. "
+            "Активирует task-level auto-scaler: per-asyncio-task metrics + "
+            "current_task / running_task ratio для scale-up/down. "
+            "Lightweight (per-task state), suitable для high-concurrency async workloads. "
+            "default-OFF до baseline perf comparison vs process-level."
+        ),
+    )
+
 
 __all__ = ("ResilienceFlags",)
