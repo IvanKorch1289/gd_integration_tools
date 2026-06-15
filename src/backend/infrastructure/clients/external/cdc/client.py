@@ -12,6 +12,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
@@ -22,6 +23,8 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
     _LogMinerStrategy,  # S60 W2: cross-import
     _PollingStrategy,  # S60 W2: cross-import
 )
+
+logger = get_logger("infrastructure.clients.cdc")
 
 
 # S102 W1: module-level singleton holder. До этого момента
