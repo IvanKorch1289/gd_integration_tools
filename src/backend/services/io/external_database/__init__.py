@@ -71,9 +71,6 @@ from src.backend.services.io.external_database.core_mixin import (
 from src.backend.services.io.external_database.dispatch_mixin import (
     DispatchMixin,  # S63 W4: MRO
 )
-from src.backend.services.io.external_database.facade import (
-    ExternalDatabaseFacade,  # P1 S133 W4
-)
 from src.backend.services.io.external_database.profile_mixin import (
     ProfileMixin,  # S63 W4: MRO
 )
@@ -84,41 +81,18 @@ from src.backend.services.io.external_database.validation_mixin import (
     ValidationMixin,  # S63 W4: MRO
 )
 
+# NB: ExternalDatabaseFacade moved to infrastructure/ in S138 W5
+# (was services/io/external_database/facade.py, layer violation).
+# Direct import path: from src.backend.infrastructure.database.external_database_facade
+# This re-export was removed in S139 W1 to fix the NEW layer
+# violation (services->infrastructure forbidden).
+
 __all__ = (
-    "ExternalDatabaseFacade",
     "ExternalDatabaseService",
     "PreparedDBParameter",
-    "get_external_database_facade",
     "get_external_db_service",
     "__getattr__",
 )
-
-
-def get_external_database_facade(*, plugin: str = "extension") -> "ExternalDatabaseFacade":
-    """Получить ``ExternalDatabaseFacade`` из DI-контейнера.
-
-    Args:
-        plugin: Имя caller'а для capability-audit.
-
-    Raises:
-        RuntimeError: если ``ExternalDatabaseFacade`` не зарегистрирован в svcs.
-    """
-    from src.backend.core.svcs_registry import get_service, has_service
-
-    if not has_service(ExternalDatabaseFacade):
-        raise RuntimeError("ExternalDatabaseFacade not registered in svcs")
-    facade = get_service(ExternalDatabaseFacade)
-    if plugin != "extension":
-        from src.backend.services.io.external_database.facade import (
-            ExternalDatabaseFacade as _ExternalDatabaseFacade,
-        )
-
-        return _ExternalDatabaseFacade(
-            session_manager_factory=facade._session_manager_factory,
-            capability_check=facade._check,
-            plugin=plugin,
-        )
-    return facade
 
 
 class ExternalDatabaseService(
