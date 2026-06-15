@@ -59,6 +59,31 @@ class Sprints1517Flags(BaseSettings):
         ),
     )
 
+    arch_map_llm_search_enabled: bool = Field(
+        default=False,
+        title="K5 S15 W4: Architecture map LLM-search (semantic code navigation)",
+        description=(
+            "K5 Sprint 15 Wave 4 (wave:s15/k5-w4-arch-map-llm). Owner: K5 DX. "
+            "Активирует LLM-powered search по ArchitectureMap (ADR-0142) — "
+            "vector index + RAG over module/symbol graph + dependency annotations. "
+            "В IDE интеграция через LSP server (lsp_server_strict). "
+            "default-OFF до индексации 80% symbols + 5 real user-queries."
+        ),
+    )
+
+    ai_pr_review_enabled: bool = Field(
+        default=False,
+        title="K4 S15 W6: AI PR-review (CI gate, code-suggestion diff comments)",
+        description=(
+            "K4 Sprint 15 Wave 6 (wave:s15/k4-w6-ai-pr-review). Owner: K4 AI. "
+            "При True `make ai-pr-review` запускает LLM PR-review через "
+            "LiteLLMGateway: code-quality check + security check + test coverage "
+            "suggestion. Posts inline comments to GitHub PR. CI-blocking when "
+            "PR contains security-flagged patterns. default-OFF до 95% agreement "
+            "с human-reviewer на 50 historical PRs."
+        ),
+    )
+
     dsl_visual_editor_drag_drop: bool = Field(
         default=False,
         title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
@@ -133,6 +158,30 @@ class Sprints1517Flags(BaseSettings):
             "Цепочка: CapabilityGate → CapabilityPolicy → Casbin → OPA с единым "
             "correlation_id. Audit-event authorization.decision на каждое решение. "
             "default-OFF до миграции всех non-public endpoint-guard'ов."
+        ),
+    )
+
+    audit_correlation_required: bool = Field(
+        default=False,
+        title="K3 S17 W3: audit_correlation_id required for all write-events (D12)",
+        description=(
+            "K3 Sprint 17 Wave 3 (wave:s17/k3-w3-audit-correlation). Owner: K3 Observability. "
+            "При True любой write-операция требует correlation_id в audit-event. "
+            "Без correlation_id → audit-event DROPPED + warning в structured log. "
+            "Активирует post-write validation в audit facade. default-OFF до "
+            "backfill correlation_id на все ~200 write-callsites."
+        ),
+    )
+
+    apscheduler_metrics: bool = Field(
+        default=False,
+        title="K2 S17 W4: APScheduler Prometheus metrics (D13b)",
+        description=(
+            "K2 Sprint 17 Wave 4 (wave:s17/k2-w4-apscheduler-metrics). Owner: K2 Workflow. "
+            "При True экспортирует APScheduler job execution metrics "
+            "(next_run_time, last_run_duration, success/failure counts) в Prometheus. "
+            "Grafana dashboard `workflow_scheduler_overview` показывает "
+            "job_lag + failure_rate. default-OFF до 100% jobs в scheduler регистрации."
         ),
     )
 
