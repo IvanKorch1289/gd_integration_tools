@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
-from src.backend.dsl.processors.idp_pipeline_processor.state import _FieldPattern
+from src.backend.dsl.processors.idp_pipeline_processor.state import (
+    IDPResult,
+    _FieldPattern,
+)
 
 if TYPE_CHECKING:
     pass
@@ -172,6 +175,12 @@ def _rule_total_positive(result: IDPResult, _text: str) -> str | None:
     if value <= 0:
         return f"total must be > 0, got {value}"
     return None
+
+
+_VALIDATORS: dict[str, Callable[[IDPResult, str], str | None]] = {
+    "required_present": _rule_required_present,
+    "total_positive": _rule_total_positive,
+}
 
 
 def validate_result(

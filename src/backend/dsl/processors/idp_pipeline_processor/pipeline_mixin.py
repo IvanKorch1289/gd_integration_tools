@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
 from src.backend.dsl.engine.processors.base import handle_processor_error
+from src.backend.dsl.processors.idp_pipeline_processor.helpers import (
+    _coerce_to_text,
+    classify_document,
+    extract_fields,
+    validate_result,
+)
+from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
+
 
 # ─── Constants & defaults ──────────────────────────────────────────────
 
