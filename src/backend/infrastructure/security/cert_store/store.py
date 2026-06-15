@@ -53,6 +53,7 @@ from datetime import UTC, datetime, timedelta
 
 from src.backend.core.config.cert_store import CertStoreSettings
 from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.infrastructure.security.cert_store.models import CertEntry
 
 logger = get_logger("infrastructure.cert_store")
 

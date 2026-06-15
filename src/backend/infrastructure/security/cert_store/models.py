@@ -33,12 +33,18 @@ Hot-reload механизм:
     pem = await store.get("skb_api")
 """
 
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime
 
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.cert_store")
+
+
+def _fingerprint(pem: str) -> str:
+    """SHA-256 fingerprint от PEM (hex, lower)."""
+    return hashlib.sha256(pem.encode("utf-8")).hexdigest()
 
 
 @dataclass(slots=True)
