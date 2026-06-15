@@ -265,11 +265,11 @@ class DeferredExecutionMixin:
             ``RouteBuilder`` для chaining.
 
         Note:
-            No-op если ``_deferred`` не задан (idempotent semantics).
+            Идемпотентно: устанавливает ``_deferred`` в ``{}`` (создаёт slot
+            если отсутствует). Это нужно для downstream-assert'ов вида
+            ``assert builder._deferred == {}`` после ``cancel_deferred()``.
         """
-        existing = getattr(self, "_deferred", None)
-        if existing is not None:
-            object.__setattr__(self, "_deferred", {})
+        object.__setattr__(self, "_deferred", {})
         return self  # type: ignore
 
     # ── Internal helpers ──

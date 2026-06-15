@@ -75,7 +75,9 @@ def _el_to_dict(el: ET.Element) -> Any:
 
 
 from src.backend.dsl.engine.processors.format_convert._helpers import (
-    _to_text,  # S53 W1: shared helper
+    _bencode,
+    _bdecode,
+    _to_text,
 )
 
 
