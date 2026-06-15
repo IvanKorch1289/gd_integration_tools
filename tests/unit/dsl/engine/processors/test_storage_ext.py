@@ -361,7 +361,7 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client", mock_client
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client", MagicMock(return_value=mock_client)
         ):
             await proc.process(exchange, _Context())
 
@@ -380,7 +380,7 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client", mock_client
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client", MagicMock(return_value=mock_client)
         ):
             await proc.process(exchange, _Context())
 
@@ -399,7 +399,7 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client", mock_client
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client", MagicMock(return_value=mock_client)
         ):
             await proc.process(exchange, _Context())
 
@@ -415,7 +415,7 @@ class TestPriorityEnqueueProcess:
         mock_client.zadd = AsyncMock(side_effect=RuntimeError("redis down"))
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client", mock_client
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client", MagicMock(return_value=mock_client)
         ):
             await proc.process(exchange, _Context())
 
