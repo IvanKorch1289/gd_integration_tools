@@ -5,6 +5,55 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S140 cycle, 2026-06-15] — 15-Bug Pattern Fix in services/ (6 atomic commits, score 9.9 → 9.9, services 86→29 fails -66%, 0 NEW layer violations)
+
+### Added
+
+- **S140 W4 — rag_service 5-bug fix** (`06528ca`): 1 file 5 separate sibling WIP bugs:
+  * `__slots__ = ()` → `("_store", "_embedder", "_cache")` (RAGService; S132 W2 pattern)
+  * Added `from src.backend.services.ai.rag_augment import AugmentResult, FreshnessLabel` (was missing; test imports failed)
+  * Added `_filter_by_embedding_version` stub (function called but undefined, S138 W4 pattern)
+  * Added `_format_context_with_sources` stub (~15 LOC minimal: formats chunks with [doc_id:chunk_idx] markers)
+  * Added `@dataclass` to RAGCitation (S137 W3 SagaStep pattern: class had attrs but no __init__)
+- **S140 W5 — 3 quick-win patterns** (`a27da41`): 4 files:
+  * `services/ai/ai_agent/__init__.py`: added `from src.backend.core.di.providers.ai import get_ai_sanitizer_provider` (was only in TYPE_CHECKING block, NameError at runtime)
+  * `services/audit/clickhouse_audit_service/__init__.py`: re-exported `_service_instance` + `_service_lock` from helpers (test needed `mod._service_instance` for singleton reset)
+  * `infrastructure/clients/transport/http/__init__.py`: `HttpClient.__slots__ = ()` → 8 attrs (settings, logger, client, last_activity, active_requests, session_lock, _metrics_lock, purger_task) + added 'metrics' to fix test failure
+  * `infrastructure/clients/transport/http/factory.py`: lazy import `from . import HttpClient` to break __init__.py ↔ factory circular import
+- **S140 W6 — Invoker 4-pattern fix** (`081404f`): 2 files:
+  * `services/execution/invoker/invoker.py`: 3 changes:
+    - `__slots__ = ()` → 3 attrs (S140 W4 rag_service pattern)
+    - Added `from src.backend.core.interfaces.invoker import InvocationMode` (NameError at runtime)
+    - Added `from src.backend.core.di.contexts import DispatchContext`
+    - Added `from src.backend.core.di.dependencies import get_reply_registry_singleton`
+  * `services/execution/invoker/deferred_mixin.py`: added `from src.backend.services.execution.invoker.helpers import _run_deferred_job`
+- **S140 W7 — ADR-0223 sprint closure** (this commit): W4-W6 detail + INDEX regen (171 → 172 ADRs) + S141+ backlog.
+
+### Tests
+
+- **S140 W4**: tests/unit/services/ai/test_rag_citations.py: 4 fails → 0 (+4 tests pass + 21 collection errors unblocked)
+- **S140 W5**: tests/unit/services/ai/test_ai_agent_policy_gate.py: 5 fails → 0 (+5); tests/unit/services/audit/test_clickhouse_audit.py: 1 fail → 0 (+1); tests/unit/services/core/test_base_external_api_adaptive_timeout.py: 5 fails → 0 (+5)
+- **S140 W6**: tests/unit/services/execution/test_invoker.py: 21 fails → 3 (-18, +18 tests pass)
+- **Cumulative S139+S140**: tests/unit/services/ 86 failed → 29 failed (-57, -66%, 57 tests restored)
+- **Pattern-based**: 4 recurring bug patterns identified and fixed (slots, missing imports, missing @dataclass, circular imports)
+
+### Notes
+
+- **Sibling WIP activity**: 5-20+ files modified in working tree at various times, sometimes overwrote my fixes (S140 W3 langfuse had to be re-applied). Didn't touch sibling files.
+- **Ponytail skill (active, level full)**: "ship the lazy version, question in same response" — applied to all 5 code waves. "no unrequested abstractions", "fewest files possible", "deletion over addition".
+- **Pattern-based fixing**: instead of classifying 86 failures individually, identified 4 recurring patterns (slots, missing imports, missing @dataclass, circular) and fixed the source. Reusable recipes.
+- **Layer linter audit**: 0 NEW from my work, 1 NEW sibling (services/core/base/__init__.py → dsl.codec.converters) flagged for sibling or baseline-allowlist decision.
+
+### Backlog (S141+)
+
+- 29 services test failures remaining (3 streaming logic bugs + 26 unknown root causes — multi-day classification)
+- 153+ core test failures (multi-day, likely more quick wins)
+- 1 NEW sibling layer violation (services/core/base)
+- 1 OPEN TD (TD-006: test baseline)
+- 1 PARTIAL TD (TD-013: Streamlit)
+- from_nats signature, TD-013 6h sprint
+- Docstring coverage, security audit, mutation testing (P3)
+
 ## [S138 cycle, 2026-06-15] — Layer Violations + Pydantic Online Verify + Test Failures (6 waves, 5 code commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged)
 
 ### Added
