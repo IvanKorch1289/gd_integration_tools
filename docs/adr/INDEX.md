@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **176**; уникальных слотов: **175**.
+Всего ADR-файлов: **177**; уникальных слотов: **176**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -182,5 +182,6 @@
 | 0224 | ADR-0224: Sprint 141 Closure — core/ Pattern Fixes (3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139) | — | [0224-sprint-141-closure.md](0224-sprint-141-closure.md) |
 | 0225 | ADR-0225: Sprint 142 Closure — Subagent Orchestration + A+B Manual Fallback (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 1 TD-013 PoC page regrouped) | — | [0225-sprint-142-closure.md](0225-sprint-142-closure.md) |
 | 0226 | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
+| 0227 | ADR-0227: Sprint 144 Closure — 5 Features Backfill + 2 TD-013 Page Regroups (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages) | — | [0227-sprint-144-closure.md](0227-sprint-144-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

@@ -5,6 +5,61 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S144 cycle, 2026-06-15] — 5 Features Backfill + 2 TD-013 Page Regroups (5 waves, 4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages)
+
+### Added
+
+- **S144 W1 — Pre-flight factcheck** (`62ac0c8`): 5-sec recipe на 14 test_features fails. Identified 5 closeable (2 ResilienceFlags + 3 Sprint19AIFlags) + 3 pre-existing (AIFlags×2, Sprints2427Flags×1) per Rule #124. TD-013 candidates: 13_Cron_Builder, 14_Cron_Dashboard. New file `reports/sprint/s144_w1_factcheck.md` (82 lines). Plan: 4 atomic commits + 1 closure.
+- **S144 W2 — 5 Field() backfill** (`69d8d2f`): 1 commit 2 files 59 lines. ResilienceFlags (+2: `auto_scaler_process_level`, `auto_scaler_task_level`) + Sprint19AIFlags (+3: `adaptive_timeout_enabled`, `admin_react_mvp`, `adaptive_rag_strategy_enabled`). Fixed 8 test_features_*.py fails (4 ResilienceFlags + 4 Sprint19AIFlags).
+- **S144 W3 — TD-013: 13_Cron_Builder.py → `_groups/cron/builder/`** (`570df28`): 4 files 222/-134 lines. Per-page sub-package pattern (S142 W1 ref): `_groups/cron/__init__.py` (group re-exports) + `_groups/cron/builder/__init__.py` (sub-package) + `_groups/cron/builder/render.py` (extracted `render()` + `_render_body()` with lazy streamlit import) + thin `13_Cron_Builder.py` shim.
+- **S144 W4 — TD-013: 14_Cron_Dashboard.py → `_groups/cron/dashboard/`** (`67a2141`): 4 files 166/-124 lines. Same pattern: extracted table + actions + metrics + auto-refresh logic to `_groups/cron/dashboard/render.py` with lazy streamlit import. Updated `_groups/cron/__init__.py` to re-export `render_cron_dashboard`.
+- **S144 W5 — ADR-0227 sprint closure** (this commit): W1-W4 detail + INDEX regen (177 ADRs, 176 unique) + S145+ backlog.
+
+### Tests
+
+- **S144 W1**: 0 NEW tests (fact-check analysis-only)
+- **S144 W2**: 0 NEW tests (Field() backfill); -8 test_features fails (14→6, -57%)
+- **S144 W3**: 0 NEW tests (TD-013 refactor, behavior preserved)
+- **S144 W4**: 0 NEW tests (TD-013 refactor, behavior preserved)
+- **Net S144**: test_features_*.py 14→6 fails (-8, -57%)
+- **Cumulative S139-S144**: tests/unit/ 239→~85 fails (-154, -64%)
+
+### TD-013 Status (cumulative)
+
+- S142 W3: 1 page (00_Home.py) regrouped
+- S144 W3: +1 page (13_Cron_Builder.py) = 2 cumulative
+- S144 W4: +1 page (14_Cron_Dashboard.py) = 3 cumulative
+- Remaining: 66 of 69 pages (estimated 12h dedicated sprint)
+
+### Ponytail-mode discipline (S144)
+
+- **4 atomic commits** vs 1 big-bang (per ADR-0226 S143 style)
+- **2 TD-013 page regroups in 2 separate commits** (per-page blame, not "TD-013 2 pages" mega-commit)
+- **5 Field() backfill in 1 commit** (same domain: core/config/features, no need to split)
+- **Lazy streamlit import** в render-функциях (per TD-013 pilot contract from S142 W1)
+
+### Pre-existing failures (NOT introduced by S144, verified via `git stash` per Rule #124)
+
+- `test_ai_flags_instantiates` — `rag_cache_l2_semantic default != False` (Field has `default=True` per design; OUT OF SCOPE)
+- `test_ai_field_count` — 10≠9 (extra `prompt_registry_gateway_wiring` field, OUT OF SCOPE)
+- `test_sprints_24_27_flags_instantiates` — `ai_gateway_enforce default != False` (OUT OF SCOPE)
+- `test_sprint5_dsl_*` (3 fails) — 12 missing Sprint5DSLFlags fields → **S145 W2-W3 scope**
+
+### Stale Backlog Items Cleared (S144 W1 fact-check)
+
+- **1 NEW sibling layer (rag_service/search_mixin.py)**: not found in `tools/check_layers.py` output; likely already fixed in S140-S142 cascade
+- AIFlags + Sprints2427Flags fails — pre-existing design conflicts (test vs ADR-NEW-19 / per-design True defaults)
+
+### Backlog (S145+)
+
+- 6 remaining test_features_*.py fails (12 missing Sprint5DSLFlags + 3 pre-existing)
+- 66 TD-013 Streamlit pages remaining (12h dedicated)
+- 73 core test fails (feature gaps, not patterns)
+- 29 services test fails (3 streaming + 26 unknown)
+- TD-006 PARTIAL (test baseline ratchet)
+- docstring coverage, security audit (P2)
+- Mutation testing, performance benchmarks (P3)
+
 ## [S143 cycle, 2026-06-15] — Feature Flags Field() Backfill (5 waves, 4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%)
 
 ### Added
