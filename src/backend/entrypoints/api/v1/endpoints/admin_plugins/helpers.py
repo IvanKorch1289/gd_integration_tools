@@ -10,9 +10,16 @@ Funcs: _check_flag_enabled, _get_plugin_registry, _mock_plugins, _mock_manifest,
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import HTTPException, status
 
-router = APIRouter(prefix="/admin/plugins", tags=["admin"])
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
+    PluginManifest,
+    PluginSummary,
+)
+from src.backend.infrastructure.logging.factory import get_logger
+
+logger = get_logger(__name__)
+
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
 

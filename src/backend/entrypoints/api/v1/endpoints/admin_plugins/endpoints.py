@@ -12,6 +12,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins import helpers
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
     PluginDependencyGraph,
     PluginDiffResponse,
@@ -27,6 +28,13 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
 )  # S62 W1: schemas
 
 router = APIRouter(prefix="/admin/plugins", tags=["admin"])
+
+_check_flag_enabled = helpers._check_flag_enabled
+_get_plugin_registry = helpers._get_plugin_registry
+_get_version_service = helpers._get_version_service
+_mock_manifest = helpers._mock_manifest
+_mock_plugins = helpers._mock_plugins
+logger = helpers.logger
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
 
