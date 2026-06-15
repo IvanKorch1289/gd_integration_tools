@@ -175,6 +175,10 @@ src/backend/infrastructure/sinks/webhook_sink.py	infrastructure	src.backend.dsl.
 src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
+src/backend/services/ai/rag_service/augment_mixin.py	services	src.backend.infrastructure.logging.factory
+src/backend/services/ai/rag_service/collection_mixin.py	services	src.backend.infrastructure.logging.factory
+src/backend/services/ai/rag_service/ingest_mixin.py	services	src.backend.infrastructure.logging.factory
+src/backend/services/ai/rag_service/search_mixin.py	services	src.backend.infrastructure.logging.factory
 src/backend/services/ai/semantic_cache/l3_cache.py	services	src.backend.infrastructure.logging.factory
 src/backend/services/ai/semantic_cache/semantic_cache.py	services	src.backend.infrastructure.logging.factory
 src/backend/services/codec/facade.py	services	src.backend.dsl.codec.json
@@ -216,3 +220,6 @@ src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engin
 src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.dsl.workflow.visualize
+src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.spec
+src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.template_registry_compat
+src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.visualize
