@@ -13,6 +13,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.dsl.engine.processors.control_flow.saga import _serialize_sub
 
 _cf_logger = get_logger("dsl.control_flow")
 

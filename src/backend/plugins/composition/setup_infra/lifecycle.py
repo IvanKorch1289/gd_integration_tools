@@ -6,18 +6,34 @@ Funcs: _register_default_degradation_features, perform_infrastructure_operation,
 lifecycle orchestrators (degradation features + perform + starting/ending).
 """
 
+from collections.abc import Awaitable, Callable
 from inspect import isawaitable
 from typing import Any
 
-
-
-
-
 from src.backend.core.logging import get_logger
+from src.backend.plugins.composition.setup_infra.health import _register_health_checks
+from src.backend.plugins.composition.setup_infra.pools import (
+    _clickhouse_enabled,
+    _redis_enabled,
+    _register_pools_in_unified_manager,
+    _warmup_connection_pools,
+)
+from src.backend.plugins.composition.setup_infra.scheduler_leader import (
+    _start_scheduler_with_leader_election,
+    _stop_scheduler_if_leader,
+)
+from src.backend.plugins.composition.setup_infra.workflow_audit import (
+    _close_workflow_audit_sink,
+    _init_workflow_audit_sink,
+)
 
 app_logger = get_logger("application")
 
-
+OperationItem = tuple[
+    str,
+    Callable[[], Any] | Callable[[], Awaitable[Any]],
+    Callable[[], bool] | None,
+]
 
 
 
@@ -124,3 +140,16 @@ async def ending() -> None:
 
 
 
+starting_operations: list[OperationItem] = [
+    ("register_default_degradation_features", _register_default_degradation_features, None),
+    ("register_health_checks", _register_health_checks, None),
+    ("register_pools_in_unified_manager", _register_pools_in_unified_manager, None),
+    ("warmup_connection_pools", _warmup_connection_pools, None),
+    ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
+    ("start_scheduler_with_leader_election", _start_scheduler_with_leader_election, _redis_enabled),
+]
+
+ending_operations: list[OperationItem] = [
+    ("close_workflow_audit_sink", _close_workflow_audit_sink, None),
+    ("stop_scheduler_if_leader", _stop_scheduler_if_leader, None),
+]

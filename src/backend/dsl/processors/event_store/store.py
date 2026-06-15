@@ -11,9 +11,10 @@ import threading
 from typing import TYPE_CHECKING, Protocol
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.processors.event_store.types import Event  # S66 W1: cross-import
+from src.backend.dsl.processors.event_store.types import Event, EventStream  # S66 W1: cross-import
 
 if TYPE_CHECKING:
+    from src.backend.dsl.processors.event_store.cqrs import Projection
     pass
 
 _log = get_logger(__name__)

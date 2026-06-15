@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
@@ -7,9 +8,14 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     pass
 
+from src.backend.dsl.processors.event_store.store import EventStore, InMemoryEventStore
+
 _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
+
+_store: EventStore | None = None
+_store_lock = threading.Lock()
 
 
 def get_event_store() -> EventStore:

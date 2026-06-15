@@ -7,15 +7,21 @@ CQRS bus (Projection + CommandBus + QueryBus + CQRSMixin).
 Classes: Projection, CommandBus, QueryBus, CQRSMixin.
 """
 
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.processors.event_store.types import Event  # S66 W1: cross-import
+from src.backend.dsl.processors.event_store.processor import EventStoreProcessor
+from src.backend.dsl.processors.event_store.store import EventStore, InMemoryEventStore
+from src.backend.dsl.processors.event_store.types import Event, EventStream  # S66 W1: cross-import
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
 
 _log = get_logger(__name__)
+
+CommandHandler = Callable[[dict[str, Any]], Awaitable[list[Event]]]
+QueryHandler = Callable[[dict[str, Any]], Awaitable[Any]]
 
 # ── Event dataclass ─────────────────────────────────────────────────────
 
@@ -109,10 +115,6 @@ class QueryBus:
             )
         return await handler(params)
 
-
-from src.backend.dsl.processors.event_store.types import (
-    EventStream,  # S66 W1: cross-import
-)
 
 
 class CQRSMixin:
