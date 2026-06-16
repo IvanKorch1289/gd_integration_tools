@@ -44,6 +44,7 @@ class TestNotebookExecuteProcessor:
             {"cell_index": 0, "outputs": [{"output_type": "stream", "text": "2\n"}]}
         ]
 
+        proc._svc = MagicMock()
         with patch.object(
             proc._svc, "execute_notebook", new_callable=AsyncMock
         ) as mock_execute:
@@ -78,6 +79,7 @@ class TestNotebookExecuteProcessor:
 
         mock_outputs = [{"cell_index": 0, "outputs": []}]
 
+        proc._svc = MagicMock()
         with patch.object(
             proc._svc, "execute_notebook", new_callable=AsyncMock
         ) as mock_execute:
@@ -99,6 +101,7 @@ class TestNotebookExecuteProcessor:
 
         from src.backend.services.jupyter.execution_service import JupyterExecutionError
 
+        proc._svc = MagicMock()
         with patch.object(
             proc._svc, "execute_notebook", new_callable=AsyncMock
         ) as mock_execute:
@@ -118,6 +121,7 @@ class TestNotebookExportProcessor:
         )
         exchange = _make_exchange()
 
+        proc._svc = MagicMock()
         with patch.object(
             proc._svc, "export_notebook", new_callable=AsyncMock
         ) as mock_export:
@@ -142,6 +146,7 @@ class TestNotebookExportProcessor:
         exchange = _make_exchange()
         exchange.set_property("notebook_path", "override.ipynb")
 
+        proc._svc = MagicMock()
         with patch.object(
             proc._svc, "export_notebook", new_callable=AsyncMock
         ) as mock_export:

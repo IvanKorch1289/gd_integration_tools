@@ -47,6 +47,7 @@ class TestNotebookDSLProcessor:
             ]
         }
 
+        proc._svc = MagicMock()
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
             mock_execute.return_value = mock_result
             await proc.process(exchange, MagicMock())
@@ -68,6 +69,7 @@ class TestNotebookDSLProcessor:
 
         mock_result = {"outputs": []}
 
+        proc._svc = MagicMock()
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
             mock_execute.return_value = mock_result
             await proc.process(exchange, MagicMock())
@@ -95,6 +97,7 @@ class TestNotebookDSLProcessor:
             "format": "html",
         }
 
+        proc._svc = MagicMock()
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
             mock_execute.return_value = mock_result
             await proc.process(exchange, MagicMock())
@@ -109,6 +112,7 @@ class TestNotebookDSLProcessor:
         proc = NotebookDSLProcessor(notebook_path="bad.ipynb", parameters={"x": 1})
         exchange = _make_exchange()
 
+        proc._svc = MagicMock()
         with patch.object(proc._svc, "execute", new_callable=AsyncMock) as mock_execute:
             mock_execute.side_effect = JupyterExecutionError("kernel died")
             with pytest.raises(JupyterExecutionError, match="kernel died"):
