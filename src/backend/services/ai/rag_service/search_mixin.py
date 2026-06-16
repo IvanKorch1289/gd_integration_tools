@@ -41,6 +41,29 @@ def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
     return "\n\n".join(parts)
 
 
+def _extract_source_id(chunk: dict[str, Any]) -> str:
+    """Extract the source identifier from a retrieved chunk.
+
+    Priority: metadata.source > metadata.filename > metadata.doc_id > chunk.id.
+
+    S154 W1 stub (post factcheck): minimal implementation. Used by
+    source-attribution logic and exposed via the RAG service for tests.
+    Per-test contract (test_rag_source_attribution.py):
+    1. ``metadata.source`` if explicitly set.
+    2. ``metadata.filename`` if no source.
+    3. ``metadata.doc_id`` if no source/filename.
+    4. ``chunk.id`` as last resort.
+    """
+    metadata = chunk.get("metadata") or {}
+    if metadata.get("source"):
+        return metadata["source"]
+    if metadata.get("filename"):
+        return metadata["filename"]
+    if metadata.get("doc_id"):
+        return metadata["doc_id"]
+    return chunk.get("id", "")
+
+
 from src.backend.services.ai.rag_service._protocol import _RAGServiceProtocol
 
 
