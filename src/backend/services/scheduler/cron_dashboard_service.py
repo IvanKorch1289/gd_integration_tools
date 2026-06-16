@@ -85,7 +85,10 @@ class CronDashboardService:
             cron_expr = ""
             timezone = "UTC"
             if "cron[" in trigger_str:
-                cron_expr = trigger_str.split("cron[", 1)[1].rstrip("]")
+                # Parse "cron[EXPR] [timezone=TZ]" → EXPR (без ']').
+                # ponytail: split на ']' а не rstrip (S151 W1 — иначе
+                # timezone= сохраняется в cron_expr).
+                cron_expr = trigger_str.split("cron[", 1)[1].split("]", 1)[0]
             if "timezone=" in trigger_str:
                 tz_part = trigger_str.split("timezone=", 1)[1]
                 timezone = tz_part.split()[0].strip()
