@@ -1,8 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **184**; уникальных слотов: **183**.
+Всего ADR-файлов: **185**; уникальных слотов: **183**.
 
-⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+⚠️ Collision-слоты (2): ADR-0109, ADR-0226. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -180,7 +180,8 @@
 | 0222 | ADR-0222: Sprint 138 Closure — Layer Violations + Pydantic Online Verify + Test Failures (6 atomic commits, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged) | — | [0222-sprint-138-closure.md](0222-sprint-138-closure.md) |
 | 0223 | ADR-0223: Sprint 140 Closure — 15-Bug Pattern Fix in services/ (6 atomic commits, score 9.9 → 9.9, services 86→29 fails -66%, 0 NEW layer violations) | — | [0223-sprint-140-closure.md](0223-sprint-140-closure.md) |
 | 0224 | ADR-0224: Sprint 141 Closure — core/ Pattern Fixes (3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139) | — | [0224-sprint-141-closure.md](0224-sprint-141-closure.md) |
-| 0226 | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
+| 0226 *(collision)* | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
+| 0226 *(collision)* | ADR-0226: Sprint 155 Closure — Pattern-Based `@dataclass` Fixes (4 atomic commits, score 9.9 → 9.9, dsl/ 77→34 fails -56%, 0 NEW layer violations) | — | [0226-sprint-155-closure.md](0226-sprint-155-closure.md) |
 | 0227 | ADR-0227: Sprint 144 Closure — 5 Features Backfill + 2 TD-013 Page Regroups (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages) | — | [0227-sprint-144-closure.md](0227-sprint-144-closure.md) |
 | 0228 | ADR-0228: Sprint 145 Closure — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix) | — | [0228-sprint-145-closure.md](0228-sprint-145-closure.md) |
 | 0229 | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
