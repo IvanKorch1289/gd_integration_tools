@@ -5,6 +5,22 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 3 — Facades & Agent Platform, 2026-06-16] — ResilienceFacade, agent tool policy assessment
+
+### Added
+
+- **ResilienceFacade** (`services/resilience/facade.py`): New capability-checked facade for resilience patterns. Provides `check_rate_limit()` and `get_breaker()` methods for extensions.
+
+### Architecture
+
+- **Agent tool policy**: Infrastructure exists but NOT integrated into AIGateway `_invoke_llm` method. Requires passing filtered tools to LLM client. Carryover for Sprint 4.
+- **ResilienceFacade**: Minimal facade wrapping core resilience components with capability checks.
+
+### Notes
+
+- **Sprint 3 scope**: Focused on facade creation and agent tool policy assessment. Most planned tasks were already implemented or required deeper integration.
+- **Carryover to Sprint 4**: Agent tool policy integration into AIGateway, SchedulerFacade creation, SkillRegistry MCP/LangGraph export.
+
 ## [Sprint 2 — DSL & Agent Platform, 2026-06-16] — DSL verification, agent tool policy infrastructure
 
 ### Verified

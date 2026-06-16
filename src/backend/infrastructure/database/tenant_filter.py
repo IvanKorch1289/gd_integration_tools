@@ -20,9 +20,17 @@ from src.backend.core.tenancy.sqlalchemy_filter import (  # noqa: F401  re-expor
     TenantMixin,
     _is_tenant_aware,
     apply_tenant_filter,
+    event,
+    get_tenant_id,
 )
 
-__all__ = ("TenantMixin", "_is_tenant_aware", "apply_tenant_filter")
+__all__ = (
+    "TenantMixin",
+    "_is_tenant_aware",
+    "apply_tenant_filter",
+    "event",
+    "get_tenant_id",
+)
 
 warnings.warn(
     "src.backend.infrastructure.database.tenant_filter is deprecated; "

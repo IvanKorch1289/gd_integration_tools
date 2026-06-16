@@ -67,7 +67,7 @@ class ValidationMixin(_RouteBuilderProtocol):
             from src.backend.dsl.commands.registry import action_handler_registry
 
             available = set(action_handler_registry.list_actions())
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return
 
         if not available:

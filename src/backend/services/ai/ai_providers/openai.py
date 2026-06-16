@@ -49,7 +49,7 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 

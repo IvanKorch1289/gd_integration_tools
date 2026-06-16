@@ -154,7 +154,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                     raw_id = cid.removeprefix("outbox_msg_id:")
                     try:
                         await outbox_repo.mark_sent(int(raw_id))
-                    except (ValueError, TypeError):
+                    except ValueError, TypeError:
                         return
 
             async def _deliverer(event: OutboxEvent) -> None:

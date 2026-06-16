@@ -79,7 +79,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
 
         if age <= self._ttl:

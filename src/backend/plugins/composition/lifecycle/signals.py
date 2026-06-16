@@ -53,14 +53,14 @@ def install_signal_handlers() -> asyncio.Event:
         try:
             loop.add_signal_handler(sig, _on_signal, sig_name, shutdown_event)
             installed = True
-        except (NotImplementedError, RuntimeError):
+        except NotImplementedError, RuntimeError:
             # Windows / non-Unix / not in main thread → fallback.
             try:
                 signal.signal(
                     sig, lambda signum, frame: _on_signal(sig_name, shutdown_event)
                 )
                 installed = True
-            except (ValueError, OSError):
+            except ValueError, OSError:
                 # Not in main thread (subprocess / thread) → skip silently.
                 pass
 

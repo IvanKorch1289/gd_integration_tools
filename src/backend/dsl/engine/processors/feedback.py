@@ -144,7 +144,7 @@ class FeedbackProcessor(BaseProcessor):
         if isinstance(body, (bytes, bytearray)):
             try:
                 return body.decode("utf-8", errors="replace")
-            except (UnicodeDecodeError, AttributeError):
+            except UnicodeDecodeError, AttributeError:
                 return repr(body)
         return "" if body is None else str(body)
 

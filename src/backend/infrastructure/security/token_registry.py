@@ -146,7 +146,7 @@ class EnvAESGCMKeyProvider:
             return None
         try:
             decoded = base64.b64decode(raw)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             _logger.warning(
                 "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name
             )

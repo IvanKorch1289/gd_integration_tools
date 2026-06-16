@@ -55,7 +55,7 @@ def _register_template_tools(mcp: Any) -> None:
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:
