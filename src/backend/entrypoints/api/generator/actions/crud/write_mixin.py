@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
-
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+        _CrudMixinProtocol,
+    )
+    from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 from fastapi import Request, status
 from pydantic import BaseModel
@@ -16,7 +18,6 @@ from src.backend.entrypoints.api.generator.reflection import (
     path_parameter,
     request_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 
 class WriteMixin:
@@ -24,7 +25,10 @@ class WriteMixin:
 
     __slots__ = ()
 
-    def _register_create(self, spec: CrudSpec) -> None:
+    if TYPE_CHECKING:
+        _protocol_self: _CrudMixinProtocol
+
+    def _register_create(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register create."""
 
         async def endpoint(request: Request, payload: BaseModel) -> Any:
@@ -63,7 +67,7 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_create_many(self, spec: CrudSpec) -> None:
+    def _register_create_many(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register create many."""
 
         async def endpoint(request: Request, payloads: list[BaseModel]) -> Any:
@@ -106,7 +110,7 @@ class WriteMixin:
             output_model=None,
         )
 
-    def _register_update(self, spec: CrudSpec) -> None:
+    def _register_update(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register update."""
 
         async def endpoint(request: Request, payload: BaseModel, **kwargs: Any) -> Any:
@@ -152,7 +156,7 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_delete(self, spec: CrudSpec) -> None:
+    def _register_delete(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register delete."""
 
         async def endpoint(request: Request, **kwargs: Any) -> None:
@@ -194,7 +198,7 @@ class WriteMixin:
             output_model=None,
         )
 
-    def _register_all_versions(self, spec: CrudSpec) -> None:
+    def _register_all_versions(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register all versions."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:

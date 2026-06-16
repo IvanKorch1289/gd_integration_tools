@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+        _CrudMixinProtocol,
+    )
+    from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 from inspect import Parameter
 
@@ -17,7 +20,6 @@ from src.backend.entrypoints.api.generator.reflection import (
     query_parameter,
     request_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 
 class QueryMixin:
@@ -25,7 +27,10 @@ class QueryMixin:
 
     __slots__ = ()
 
-    def _register_filter(self, spec: CrudSpec) -> None:
+    if TYPE_CHECKING:
+        _protocol_self: _CrudMixinProtocol
+
+    def _register_filter(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register filter."""
         filter_class = spec.filter_class
         if filter_class is None:

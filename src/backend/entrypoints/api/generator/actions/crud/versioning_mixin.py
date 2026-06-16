@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
-
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+        _CrudMixinProtocol,
+    )
+    from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 from fastapi import Request, status
 
@@ -14,7 +16,6 @@ from src.backend.entrypoints.api.generator.reflection import (
     request_parameter,
     required_query_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import CrudSpec
 
 
 class VersioningMixin:
@@ -22,7 +23,10 @@ class VersioningMixin:
 
     __slots__ = ()
 
-    def _register_latest_version(self, spec: CrudSpec) -> None:
+    if TYPE_CHECKING:
+        _protocol_self: _CrudMixinProtocol
+
+    def _register_latest_version(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register latest version."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:
@@ -54,7 +58,7 @@ class VersioningMixin:
             decorators=spec.decorators,
         )
 
-    def _register_restore(self, spec: CrudSpec) -> None:
+    def _register_restore(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register restore."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:
@@ -90,7 +94,7 @@ class VersioningMixin:
             decorators=spec.decorators,
         )
 
-    def _register_changes(self, spec: CrudSpec) -> None:
+    def _register_changes(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register changes."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:
