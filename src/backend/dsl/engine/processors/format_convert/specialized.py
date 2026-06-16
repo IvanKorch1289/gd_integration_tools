@@ -79,9 +79,12 @@ from src.backend.dsl.engine.processors.format_convert._helpers import (
     _bencode,
     _to_text,
 )
+from src.backend.dsl.engine.processors.format_convert._protocol import (
+    _FormatConvertProtocol,
+)
 
 
-class SpecializedFormatsMixin:
+class SpecializedFormatsMixin(_FormatConvertProtocol):
     """Specialized formats (UUID, JWT, Bencode, compact JSON, Protobuf-like, Avro-like) для FormatConvertProcessor. S53 W1 extraction."""
 
     __slots__ = ()
@@ -143,7 +146,7 @@ class SpecializedFormatsMixin:
         if not token:
             return {}
         key = OctKey.import_key(self.secret)
-        result = _jwt.decode(token, key, algorithms=[self.algorithm])
+        result = _jwt.decode(token, key, algorithms=[self.algorithm or "HS256"])
         return dict(result.claims)
 
     def _to_compact_json(self, data: Any) -> str:
