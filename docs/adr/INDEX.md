@@ -1,8 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **190**; уникальных слотов: **184**.
+Всего ADR-файлов: **192**; уникальных слотов: **184**.
 
-⚠️ Collision-слоты (6): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0232, ADR-0233. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+⚠️ Collision-слоты (8): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0232, ADR-0233, ADR-0234, ADR-0235. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -194,7 +194,9 @@
 | 0232 *(collision)* | ADR-0232: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0232-sprint-157-closure.md](0232-sprint-157-closure.md) |
 | 0233 *(collision)* | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
 | 0233 *(collision)* | ADR-0233: Sprint 158 Closure — Pre-flight Protocol Verification, No More Quick Wins (0 atomic, score 9.9, dsl 15 fails pre-existing) | — | [0233-sprint-158-closure.md](0233-sprint-158-closure.md) |
-| 0234 | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
-| 0235 | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
+| 0234 *(collision)* | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
+| 0234 *(collision)* | ADR-0234: Sprint 159 Closure — 5 Atomic Commits, 8 Collection Errors → 0, dsl 23→13 (-43%) (score 9.9, 0 NEW layer violations) | — | [0234-sprint-159-closure.md](0234-sprint-159-closure.md) |
+| 0235 *(collision)* | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
+| 0235 *(collision)* | ADR-0235: Sprint 160 Closure — Pre-flight Verified, No More 1-Line Wins (0 atomic, score 9.9, 14 dsl + 22 core + 5 services pre-existing) | — | [0235-sprint-160-closure.md](0235-sprint-160-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
