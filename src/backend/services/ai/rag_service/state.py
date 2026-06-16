@@ -26,3 +26,5 @@ class RAGCitation:
     chunk_idx: int | None
     score: float
     namespace: str | None
+    freshness: str | None = None
+    ingested_at: str | None = None

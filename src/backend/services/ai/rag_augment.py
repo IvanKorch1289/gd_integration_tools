@@ -15,6 +15,8 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
+from src.backend.services.ai.rag_service.state import RAGCitation
+
 __all__ = ("AugmentResult", "FreshnessLabel", "compute_freshness")
 
 
@@ -69,7 +71,7 @@ class AugmentResult:
 
     Attributes:
         prompt: финальный prompt с inject'ом контекста.
-        citations: список ``{doc_id, chunk_idx, namespace, score, freshness}``.
+        citations: список структурированных ссылок на источники.
         used_results: число чанков, реально использованных в prompt
             (после фильтрации по freshness).
         skipped_expired: число чанков отброшенных как expired.
@@ -80,7 +82,7 @@ class AugmentResult:
     """
 
     prompt: str
-    citations: list[dict[str, Any]] = field(default_factory=list)
+    citations: list[RAGCitation] = field(default_factory=list)
     used_results: int = 0
     skipped_expired: int = 0
     namespace: str | None = None
@@ -92,7 +94,19 @@ class AugmentResult:
         """JSON-ready форма для API/UI."""
         return {
             "prompt": self.prompt,
-            "citations": self.citations,
+            "citations": [
+                {
+                    "source_doc": c.source_doc,
+                    "doc_id": c.source_doc,
+                    "chunk_id": c.chunk_id,
+                    "chunk_idx": c.chunk_idx,
+                    "namespace": c.namespace,
+                    "score": c.score,
+                    "freshness": c.freshness,
+                    "ingested_at": c.ingested_at,
+                }
+                for c in self.citations
+            ],
             "used_results": self.used_results,
             "skipped_expired": self.skipped_expired,
             "namespace": self.namespace,
@@ -124,7 +138,7 @@ def build_augment_result(
     Returns:
         :class:`AugmentResult`.
     """
-    citations: list[dict[str, Any]] = []
+    citations: list[RAGCitation] = []
     distribution = {label.value: 0 for label in FreshnessLabel}
     skipped = 0
     worst = FreshnessLabel.FRESH
@@ -163,14 +177,15 @@ def build_augment_result(
             worst = label
 
         citations.append(
-            {
-                "doc_id": meta.get("doc_id"),
-                "chunk_idx": meta.get("chunk_idx"),
-                "namespace": meta.get("namespace") or namespace,
-                "score": raw.get("score"),
-                "freshness": label.value,
-                "ingested_at": ingested_dt.isoformat() if ingested_dt else None,
-            }
+            RAGCitation(
+                source_doc=str(meta.get("doc_id") or raw.get("id") or ""),
+                chunk_id=str(raw.get("id") or ""),
+                chunk_idx=meta.get("chunk_idx"),
+                score=float(raw.get("score") or 0.0),
+                namespace=meta.get("namespace") or namespace,
+                freshness=label.value,
+                ingested_at=ingested_dt.isoformat() if ingested_dt else None,
+            )
         )
 
     return AugmentResult(

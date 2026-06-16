@@ -41,7 +41,10 @@ def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
     return "\n\n".join(parts)
 
 
-class SearchMixin:
+from src.backend.services.ai.rag_service._protocol import _RAGServiceProtocol
+
+
+class SearchMixin(_RAGServiceProtocol):
     """search (semantic search with cache) для RAGService. S64 W4 extraction."""
 
     __slots__ = ()
