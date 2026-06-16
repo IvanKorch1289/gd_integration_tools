@@ -1,4 +1,5 @@
-"""S67 W1: PEP 420 namespace package для ``src.backend.services.scheduler``.
+"""Scheduler services facade."""
 
-Scheduler services (cron registration, job management).
-"""
+from src.backend.services.scheduler.facade import SchedulerFacade
+
+__all__ = ("SchedulerFacade",)

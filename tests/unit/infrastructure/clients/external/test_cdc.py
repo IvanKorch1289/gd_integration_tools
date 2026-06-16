@@ -202,7 +202,7 @@ async def test_cdc_client_subscribe_known_strategy_creates_task(strategy: str) -
     client = CDCClient()
     fake_task = MagicMock(name=f"task_{strategy}", spec=asyncio.Task)
     fake_task.done.return_value = False
-    with patch.object(cdc_module, "get_task_registry") as reg:
+    with patch.object(cdc_module.client, "get_task_registry") as reg:
         reg.return_value.create_task = MagicMock(return_value=fake_task)
         sub_id = await client.subscribe(
             profile="default", tables=["orders"], strategy=strategy
@@ -229,7 +229,7 @@ async def test_cdc_client_unsubscribe_existing_removes_sub_and_cancels_task() ->
     client = CDCClient()
     fake_task = MagicMock(name="cdc_task", spec=asyncio.Task)
     fake_task.done.return_value = False
-    with patch.object(cdc_module, "get_task_registry") as reg:
+    with patch.object(cdc_module.client, "get_task_registry") as reg:
         reg.return_value.create_task = MagicMock(return_value=fake_task)
         sub_id = await client.subscribe(
             profile="default", tables=["orders"], strategy="polling"
@@ -267,7 +267,7 @@ async def test_cdc_client_list_subscriptions_returns_projection() -> None:
     client = CDCClient()
     fake_task = MagicMock(spec=asyncio.Task)
     fake_task.done.return_value = False
-    with patch.object(cdc_module, "get_task_registry") as reg:
+    with patch.object(cdc_module.client, "get_task_registry") as reg:
         reg.return_value.create_task = MagicMock(return_value=fake_task)
         await client.subscribe(
             profile="oracle_1",

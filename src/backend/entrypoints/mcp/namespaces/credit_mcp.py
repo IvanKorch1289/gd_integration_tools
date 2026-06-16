@@ -51,7 +51,7 @@ def _register_credit_tool(mcp: FastMCP, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             pass
 
     @mcp.tool(**tool_kwargs)

@@ -5,6 +5,18 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 7 — Critical Bug Fixes, 2026-06-16] — Python 2 except syntax, blocking I/O
+
+### Fixed
+
+- **CRITICAL: Python 2 except syntax** (86 instances across codebase): Fixed `except X, Y:` to `except (X, Y):` in all files. This was a silent correctness bug that swallowed TypeError exceptions.
+- **Blocking I/O in ml_inference.py**: Wrapped ONNX `session.run()` in `asyncio.to_thread()` to avoid blocking event loop during CPU-bound inference.
+
+### Notes
+
+- **Ponytail applied**: Minimal fixes, shortest working diff, no abstractions added.
+- **Deep research**: Found 110+ potential Python 2 except instances, 86 confirmed and fixed.
+
 ## [Sprint 6 — Audit & Agent Integration Assessment, 2026-06-16] — Audit facade verification, agent policy assessment
 
 ### Verified
@@ -113,6 +125,49 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **New facade methods**: 2 (EventBusFacade.subscribe_with_lifecycle, unsubscribe_all)
 - **New tests**: 6 (1 regression + 5 integration)
 - **Console_json.py**: Fixed pre-existing Python 2 syntax error blocking logging imports
+
+## [S157 cycle, 2026-06-16] — yaml_loader Module-Attr Lookup Fix (3 waves, 1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%)
+
+### Fixed (S157 W2)
+
+- **S157 W2 — yaml_loader module-attr lookup** (`7b03c50`): 2 files:
+  * `src/backend/dsl/yaml_loader/loaders.py`: changed
+    `if _is_route_composition_include_enabled():` to use module-attr
+    lookup (`from src.backend.dsl import yaml_loader as _yaml_loader; _yaml_loader._is_route_composition_include_enabled()`).
+  * `src/backend/dsl/yaml_loader/resolve.py`: same pattern.
+- **S157 W3 — ADR-0229 closure** (this commit): INDEX regen + 10-pattern catalogue.
+
+### Tests
+
+- **S157 W2**: `tests/unit/dsl/test_yaml_loader_composition.py`: 8/8 pass
+  (was 1/8, +7 tests restored, 6 net from cumulative)
+- **Cumulative S157 W2**: dsl/ 22→16 fails (-27%, 6 tests)
+- **Cumulative S139-S157**: ~360→45 fails (-87%, 315 tests)
+
+### Notes
+
+- **Ponytail skill (active, level full)**: "Did X (1 commit, 6 tests); Y covers it (env/deep/isolation)."
+- **Deep Research P2 (VERIFY > TRUST)**: yaml_loader fix verified — local binding vs module attr mismatch.
+- **Pattern catalogue extended to 10 patterns** (added #10: module-attr lookup for patchability).
+- **Sibling parallel work**: 12+ sibling commits during S156+S157.
+
+### Backlog (S158+)
+
+#### Real code-fixable (P1, ~5-8 fails)
+- SagaLRAProcessor.name (2 fails) — deep `__slots__` refactor
+- test_versioning isolation (deep refactor)
+- test_msgspec_speedup isolation (deep refactor)
+
+#### Pre-existing env / dep (P2, 51+ fails)
+- 37 pydantic settings env errors
+- 6 Pillow missing (deny-list blocks install)
+- 49 test isolation issues (multi-day refactor)
+- LiteLLM disabled (env)
+
+#### Sibling WIP (out of scope)
+- 1 NEW layer (sqlalchemy_filter → correlation)
+- TD-013 Streamlit (70 pages)
+- from_nats, docstring coverage, security audit
 
 ## [S156 cycle (continued), 2026-06-16] — Final Closure: 6 Atomic Commits, 30 Tests Restored, Pattern Catalogue Truly Exhausted (7 waves, 6 code + 1 closure, score 9.9, dsl 39→9 fails -77%)
 

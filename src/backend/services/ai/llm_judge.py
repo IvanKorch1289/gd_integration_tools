@@ -155,7 +155,7 @@ class LLMJudge:
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
         try:

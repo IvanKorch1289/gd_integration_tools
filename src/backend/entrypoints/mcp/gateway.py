@@ -20,9 +20,27 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.config import ai_2026
+from src.backend.core.config.features import feature_flags
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
 
 logger = get_logger(__name__)
+
+try:
+    from fastmcp import FastMCP
+except ImportError:  # pragma: no cover - optional FastMCP dependency
+    FastMCP = None  # type: ignore[misc,assignment]
+
+try:
+    from fastmcp.server.auth.providers.jwt import JWTVerifier
+except ImportError:  # pragma: no cover - optional FastMCP 3.x dependency
+    JWTVerifier = None  # type: ignore[misc,assignment]
+
+try:
+    from src.backend.core.ai.skill_registry import SkillRegistry
+except ImportError:  # pragma: no cover - optional skill registry dependency
+    SkillRegistry = None  # type: ignore[misc,assignment]
 
 __all__ = ("MCPGateway", "create_mcp_gateway")
 
@@ -34,8 +52,6 @@ def _check_feature_flag() -> bool:
         True если namespaces enabled, False otherwise.
     """
     try:
-        from src.backend.core.config.features import feature_flags
-
         return bool(feature_flags.mcp_gateway_namespaces_enabled)
     except Exception as _:
         return False
@@ -48,14 +64,10 @@ def _resolve_auth_provider() -> Any | None:
         JWTAuthProvider instance или None если недоступен / не настроен.
     """
     try:
-        from src.backend.core.config import ai_2026
-
         if not ai_2026.mcp_settings.tool_authz_enabled:
             return None
 
-        try:
-            from fastmcp.server.auth.providers.jwt import JWTVerifier
-        except ImportError:
+        if JWTVerifier is None:
             logger.debug("FastMCP 3.x JWTVerifier not available")
             return None
 
@@ -123,7 +135,8 @@ class MCPGateway:
         Returns:
             Экземпляр FastMCP с зарегистрированными tools.
         """
-        from fastmcp import FastMCP
+        if FastMCP is None:
+            raise ImportError("fastmcp is not installed")
 
         if self._auth is not None:
             mcp = FastMCP("GD Integration Tools Gateway", auth=self._auth)
@@ -215,11 +228,7 @@ class MCPGateway:
         Returns:
             Количество зарегистрированных skills.
         """
-        from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
-
-        try:
-            from src.backend.core.ai.skill_registry import SkillRegistry
-        except ImportError:
+        if SkillRegistry is None:
             logger.debug("SkillRegistry not available for auto-registration")
             return 0
 

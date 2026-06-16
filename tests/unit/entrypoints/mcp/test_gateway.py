@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from src.backend.entrypoints.mcp import gateway
 from src.backend.entrypoints.mcp.gateway import (
     MCPGateway,
     _check_feature_flag,
@@ -30,9 +31,13 @@ class TestCheckFeatureFlag:
             assert _check_feature_flag() is False
 
     def test_fallback_on_exception(self) -> None:
+        class BadFlags:
+            @property
+            def mcp_gateway_namespaces_enabled(self) -> bool:
+                raise ImportError("nope")
+
         with patch(
-            "src.backend.entrypoints.mcp.gateway.feature_flags",
-            side_effect=ImportError("nope"),
+            "src.backend.entrypoints.mcp.gateway.feature_flags", BadFlags()
         ):
             assert _check_feature_flag() is False
 
@@ -99,7 +104,7 @@ class TestMCPGateway:
     def test_create_server_without_auth(self) -> None:
         gw = MCPGateway(auth=None)
         mock_mcp = MagicMock()
-        with patch("fastmcp.FastMCP", return_value=mock_mcp):
+        with patch.object(gateway, "FastMCP", return_value=mock_mcp):
             with patch.object(gw, "_register_namespaces"):
                 with patch.object(gw, "_register_workflow_tools"):
                     with patch.object(gw, "_register_system_tools"):
@@ -111,7 +116,7 @@ class TestMCPGateway:
         auth = MagicMock()
         gw = MCPGateway(auth=auth)
         mock_mcp = MagicMock()
-        with patch("fastmcp.FastMCP", return_value=mock_mcp):
+        with patch.object(gateway, "FastMCP", return_value=mock_mcp):
             with patch.object(gw, "_register_namespaces"):
                 with patch.object(gw, "_register_workflow_tools"):
                     with patch.object(gw, "_register_system_tools"):

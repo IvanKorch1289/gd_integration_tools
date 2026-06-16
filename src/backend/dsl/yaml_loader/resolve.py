@@ -47,10 +47,6 @@ def _resolve_include_extends(
     if _visited is None:
         _visited = set()
 
-    # If feature flag is off, return data as-is
-    if not _is_route_composition_include_enabled():
-        return data
-
     # Work on a copy to avoid mutating the original
     spec = dict(data)
 

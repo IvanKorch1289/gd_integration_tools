@@ -106,7 +106,8 @@ class RedisRateLimiter:
             key = f"{policy.key_prefix}:{identifier}:{window_start}"
 
         try:
-            raw = getattr(redis_client, "_raw_client", None) or redis_client
+            client = redis_client()
+            raw = getattr(client, "_raw_client", None) or client
             pipe = raw.pipeline() if hasattr(raw, "pipeline") else None
             if pipe is not None:
                 pipe.incr(key)

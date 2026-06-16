@@ -315,10 +315,38 @@ class SkillRegistry:
         Returns:
             Список MCP-tools (FastMCP-формат).
 
-        Raises:
-            NotImplementedError: S26 W5 + S27 W4 (MCPNamespace integration).
+        Example:
+            >>> registry.export_to_mcp()
+            [{"name": "credit.score.calculate", "description": "...", ...}]
         """
-        raise NotImplementedError("S26 W5 + S27 W4: MCP auto-export")
+        tools = []
+        for skill in self._skills.values():
+            if "mcp" not in skill.protocols and "all" not in skill.protocols:
+                continue
+
+            tool_def: dict[str, Any] = {
+                "name": skill.id,
+                "description": skill.description,
+            }
+
+            # Add input schema if available
+            if skill.input_schema:
+                try:
+                    from pathlib import Path
+
+                    schema_path = Path(skill.input_schema)
+                    if schema_path.exists():
+                        import json
+
+                        with open(schema_path) as f:
+                            input_schema = json.load(f)
+                        tool_def["inputSchema"] = input_schema
+                except Exception:
+                    pass  # Skip schema if not loadable
+
+            tools.append(tool_def)
+
+        return tools
 
     def export_to_langgraph(self) -> list[Any]:
         """Экспортировать skills с ``"langgraph"`` в protocols.
@@ -326,10 +354,78 @@ class SkillRegistry:
         Returns:
             Список LangGraph BaseTool subclasses.
 
-        Raises:
-            NotImplementedError: S26 W5.
+        Example:
+            >>> registry.export_to_langgraph()
+            [<class 'CreditScoreCalculateTool'>]
         """
-        raise NotImplementedError("S26 W5: LangGraph auto-export")
+        try:
+            from langchain_core.tools import StructuredTool
+        except ImportError:
+            # langchain not installed — return empty list
+            return []
+
+        tools = []
+        for skill in self._skills.values():
+            if "langgraph" not in skill.protocols and "all" not in skill.protocols:
+                continue
+
+            # Create a wrapper function that calls SkillRegistry.invoke
+            def make_handler(skill_id: str) -> Any:
+                async def handler(**kwargs: Any) -> Any:
+                    return await self.invoke(skill_id, **kwargs)
+                handler.__name__ = skill_id.replace(".", "_")
+                handler.__doc__ = skill.description
+                return handler
+
+            handler = make_handler(skill.id)
+
+            # Create StructuredTool with input schema
+            tool_kwargs: dict[str, Any] = {
+                "name": skill.id.replace(".", "_"),
+                "description": skill.description,
+                "func": handler,
+            }
+
+            # Add input schema if available
+            if skill.input_schema:
+                try:
+                    from pathlib import Path
+                    from pydantic import create_model
+
+                    schema_path = Path(skill.input_schema)
+                    if schema_path.exists():
+                        import json
+
+                        with open(schema_path) as f:
+                            input_schema = json.load(f)
+
+                        # Convert JSON Schema to Pydantic model fields
+                        fields = {}
+                        properties = input_schema.get("properties", {})
+                        required = set(input_schema.get("required", []))
+                        for prop_name, prop_def in properties.items():
+                            prop_type = prop_def.get("type", "string")
+                            python_type = {
+                                "string": str,
+                                "integer": int,
+                                "number": float,
+                                "boolean": bool,
+                            }.get(prop_type, Any)
+                            if prop_name in required:
+                                fields[prop_name] = (python_type, ...)
+                            else:
+                                fields[prop_name] = (python_type, None)
+
+                        if fields:
+                            InputModel = create_model("Input", **fields)
+                            tool_kwargs["args_schema"] = InputModel
+                except Exception:
+                    pass  # Skip schema if not loadable
+
+            tool = StructuredTool(**tool_kwargs)
+            tools.append(tool)
+
+        return tools
 
     def export_to_openai_tools(self) -> list[dict[str, Any]]:
         """Экспортировать skills как OpenAI function-calling spec.
@@ -337,10 +433,41 @@ class SkillRegistry:
         Returns:
             Список dict-ов формата OpenAI tools.
 
-        Raises:
-            NotImplementedError: S26 W5.
+        Example:
+            >>> registry.export_to_openai_tools()
+            [{"type": "function", "function": {"name": "credit.score.calculate", ...}}]
         """
-        raise NotImplementedError("S26 W5: OpenAI tools auto-export")
+        tools = []
+        for skill in self._skills.values():
+            if "openai_tools" not in skill.protocols and "all" not in skill.protocols:
+                continue
+
+            tool_def: dict[str, Any] = {
+                "type": "function",
+                "function": {
+                    "name": skill.id.replace(".", "_"),
+                    "description": skill.description,
+                },
+            }
+
+            # Add input schema if available
+            if skill.input_schema:
+                try:
+                    from pathlib import Path
+
+                    schema_path = Path(skill.input_schema)
+                    if schema_path.exists():
+                        import json
+
+                        with open(schema_path) as f:
+                            input_schema = json.load(f)
+                        tool_def["function"]["parameters"] = input_schema
+                except Exception:
+                    pass  # Skip schema if not loadable
+
+            tools.append(tool_def)
+
+        return tools
 
     def list_skills(self) -> list[SkillSpec]:
         """Список всех зарегистрированных skills.

@@ -13,6 +13,7 @@ from __future__ import annotations
 from src.backend.infrastructure.clients.external.cdc.client import (
     CDCClient,  # S60 W2: re-export
     get_cdc_client,  # S60 W2: helper re-export
+    get_task_registry,  # S60 W2: re-export for test patching
     reset_cdc_client,  # S102 W1: test helper re-export
 )
 from src.backend.infrastructure.clients.external.cdc.events import (
@@ -35,5 +36,6 @@ __all__ = (
     "_LogMinerStrategy",
     "CDCClient",
     "get_cdc_client",
+    "get_task_registry",
     "reset_cdc_client",
 )

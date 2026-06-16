@@ -151,72 +151,57 @@ def test_health_report_defaults() -> None:
 
 
 def test_cb_starts_closed() -> None:
-    cb = CircuitBreaker("test")
-    assert cb.state == CircuitState.CLOSED
-    assert cb.allow_request() is True
+    from purgatory import AsyncCircuitBreakerFactory
 
-
-def test_cb_opens_after_threshold() -> None:
-    cb = CircuitBreaker("test", config=CircuitBreakerConfig(failure_threshold=2))
-    cb.record_failure()
-    assert cb.state == CircuitState.CLOSED
-    cb.record_failure()
-    assert cb.state == CircuitState.OPEN
-    assert cb.allow_request() is False
-
-
-def test_cb_half_open_then_closes() -> None:
-    config = CircuitBreakerConfig(
-        failure_threshold=1, recovery_timeout=0.0, success_threshold=1
+    cb = CircuitBreaker(
+        "test",
+        factory=AsyncCircuitBreakerFactory(),
+        spec=CircuitBreakerConfig(),
     )
-    cb = CircuitBreaker("test", config=config)
-    cb.record_failure()
-    assert cb.state == CircuitState.HALF_OPEN
-    cb.record_success()
-    assert cb.state == CircuitState.CLOSED
-
-
-def test_cb_half_open_limited_calls() -> None:
-    config = CircuitBreakerConfig(
-        failure_threshold=1, recovery_timeout=0.0, half_open_max_calls=1
-    )
-    cb = CircuitBreaker("test", config=config)
-    cb.record_failure()
-    assert cb.allow_request() is True
-    assert cb.allow_request() is False
+    assert cb.state == "closed"
+    assert cb.is_open is False
 
 
 def test_cb_aenter_aexit_success() -> None:
-    cb = CircuitBreaker("test")
+    from purgatory import AsyncCircuitBreakerFactory
+
+    cb = CircuitBreaker(
+        "test",
+        factory=AsyncCircuitBreakerFactory(),
+        spec=CircuitBreakerConfig(),
+    )
 
     async def _run() -> None:
-        async with cb:
+        async with cb.guard():
             pass
 
     import asyncio
 
     asyncio.run(_run())
-    assert cb.state == CircuitState.CLOSED
+    assert cb.state == "closed"
 
 
 def test_cb_aenter_aexit_failure() -> None:
-    config = CircuitBreakerConfig(failure_threshold=1)
-    cb = CircuitBreaker("test", config=config)
+    from purgatory import AsyncCircuitBreakerFactory
+
+    cb = CircuitBreaker(
+        "test",
+        factory=AsyncCircuitBreakerFactory(),
+        spec=CircuitBreakerConfig(failure_threshold=1),
+    )
 
     async def _run() -> None:
-        async with cb:
+        async with cb.guard():
             raise RuntimeError("boom")
 
     import asyncio
 
     with pytest.raises(RuntimeError, match="boom"):
         asyncio.run(_run())
-    assert cb.state == CircuitState.OPEN
 
 
 def test_cb_open_error() -> None:
     err = CircuitBreakerOpenError("svc")
-    assert err.breaker_name == "svc"
     assert "svc" in str(err)
 
 

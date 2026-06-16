@@ -24,7 +24,7 @@ class TestIncludeExtends:
             (tmppath / "b.yaml").write_text("route_id: b\nextends: ./a.yaml\n")
 
             with patch(
-                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
                 return_value=True,
             ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
@@ -43,7 +43,7 @@ class TestIncludeExtends:
             (tmppath / "b.yaml").write_text("route_id: b\ninclude:\n  - ./a.yaml\n")
 
             with patch(
-                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
                 return_value=True,
             ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
@@ -63,7 +63,7 @@ steps:
   - audit: {action: test}
 """
         with patch(
-            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
             return_value=False,
         ):
             pipeline = load_pipeline_from_yaml(yaml_str)
@@ -93,7 +93,7 @@ steps:
 """)
 
             with patch(
-                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
                 return_value=True,
             ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
@@ -129,7 +129,7 @@ steps:
 """)
 
             with patch(
-                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
                 return_value=True,
             ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
@@ -153,7 +153,7 @@ extends: ./self.yaml
 """)
 
             with patch(
-                "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+                "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
                 return_value=True,
             ):
                 from src.backend.dsl.yaml_loader import load_pipeline_from_file
@@ -172,7 +172,7 @@ steps:
   - audit: {action: test}
 """
         with patch(
-            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
             return_value=True,
         ):
             with pytest.raises(FileNotFoundError) as exc_info:
@@ -188,7 +188,7 @@ steps:
   - audit: {action: test}
 """
         with patch(
-            "src.backend.dsl.yaml_loader._is_route_composition_include_enabled",
+            "src.backend.dsl.yaml_loader.loaders._is_route_composition_include_enabled",
             return_value=True,
         ):
             with pytest.raises(FileNotFoundError) as exc_info:

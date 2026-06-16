@@ -23,6 +23,10 @@ __all__ = (
     "LoggerProtocol",
     "MongoExpressDialogStoreProtocol",
     "MongoExpressSessionStoreProtocol",
+    "RateLimiterProtocol",
+    "RedisCursorProtocol",
+    "RedisHashProtocol",
+    "RedisPubSubProtocol",
     "RedisSetProtocol",
     "SLOTrackerProtocol",
     "StreamClientProtocol",
@@ -95,6 +99,15 @@ class RedisPubSubProtocol(Protocol):
 
     def subscribe(self) -> AsyncIterator[Any]:
         """Выполнить операцию subscribe."""
+        ...
+
+
+@runtime_checkable
+class RateLimiterProtocol(Protocol):
+    """Контракт rate limiter (per-tenant / per-namespace)."""
+
+    async def check(self, identifier: str, policy: Any) -> dict[str, Any]:
+        """Проверить лимит и вернуть метаданные (remaining, reset и т.д.)."""
         ...
 
 

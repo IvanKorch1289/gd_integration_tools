@@ -8,11 +8,12 @@ CDCEvent (Pydantic-ish) + CDCSubscription (data classes).
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
 
+@dataclass
 class CDCEvent:
     """Стандартизированное CDC-событие."""
 
@@ -34,6 +35,7 @@ class CDCEvent:
         }
 
 
+@dataclass
 class CDCSubscription:
     """Описание подписки на изменения."""
 

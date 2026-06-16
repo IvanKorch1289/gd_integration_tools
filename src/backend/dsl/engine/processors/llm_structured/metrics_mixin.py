@@ -59,5 +59,5 @@ class MetricsMixin(_LLMStructuredProcessorProtocol):
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None

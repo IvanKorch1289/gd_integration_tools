@@ -130,6 +130,15 @@ class MailService:
         if not self.client.settings.template_folder:
             raise ValueError("Папка с шаблонами не настроена")
 
+        if (
+            not template_name
+            or template_name in {".", ".."}
+            or ".." in template_name
+            or template_name.startswith("/")
+            or "\\" in template_name
+        ):
+            raise ValueError(f"Недопустимое имя шаблона: {template_name}")
+
         template_path = self.client.settings.template_folder / template_name
         if not template_path.exists():
             raise FileNotFoundError(f"Шаблон не найден: {template_name}")
