@@ -29,7 +29,12 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # on well-formed documents.
 
 
-class SerializationMixin:
+from src.backend.dsl.processors.idp_pipeline_processor._protocol import (
+    _IDPPipelineProtocol,
+)
+
+
+class SerializationMixin(_IDPPipelineProtocol):
     """spec serialization (to_spec) для IDPPipelineProcessor. S65 W4 extraction."""
 
     __slots__ = ()

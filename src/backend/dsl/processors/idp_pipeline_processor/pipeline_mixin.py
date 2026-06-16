@@ -35,7 +35,12 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # on well-formed documents.
 
 
-class PipelineMixin:
+from src.backend.dsl.processors.idp_pipeline_processor._protocol import (
+    _IDPPipelineProtocol,
+)
+
+
+class PipelineMixin(_IDPPipelineProtocol):
     """pipeline execution (process + _run_pipeline) для IDPPipelineProcessor. S65 W4 extraction."""
 
     __slots__ = ()

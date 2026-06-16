@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from src.backend.dsl.processors.idp_pipeline_processor._protocol import (
+    _IDPPipelineProtocol,
+)
 from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult
 
 
-class RoutingMixin:
+class RoutingMixin(_IDPPipelineProtocol):
     """pipeline routing (_route) для IDPPipelineProcessor. S65 W4 extraction."""
 
     __slots__ = ()

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.dsl.processors.idp_pipeline_processor._protocol import (
+    _IDPPipelineProtocol,
+)
 from src.backend.dsl.processors.idp_pipeline_processor.helpers import DEFAULT_EXTRACTORS
 from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult
 
 
-class HelpersMixin:
+class HelpersMixin(_IDPPipelineProtocol):
     """pipeline helpers (_pattern_count + _result_to_dict) для IDPPipelineProcessor. S65 W4 extraction."""
 
     __slots__ = ()
