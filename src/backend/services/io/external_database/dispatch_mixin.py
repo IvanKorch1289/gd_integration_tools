@@ -38,7 +38,12 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-class DispatchMixin:
+from src.backend.services.io.external_database._protocol import (
+    _ExternalDatabaseProtocol,
+)
+
+
+class DispatchMixin(_ExternalDatabaseProtocol):
     """DB type dispatch (_execute_by_type + 4 type-specific executors) для ExternalDatabaseService. S63 W4 extraction."""
 
     __slots__ = ()
