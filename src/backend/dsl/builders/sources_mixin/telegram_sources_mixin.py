@@ -6,10 +6,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TypeVar
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
+
+_T = TypeVar("_T", bound=_RouteBuilderProtocol)
 
 
 class TelegramSourcesMixin:
@@ -23,14 +24,14 @@ class TelegramSourcesMixin:
 
     @classmethod
     def from_telegram(
-        cls,
+        cls: type[_T],
         route_id: str,
         bot_token: str,
         *,
         secret_token: str | None = None,
         allowed_updates: tuple[str, ...] | None = None,
         offset: int = 0,
-    ) -> RouteBuilder:
+    ) -> _T:
         """Telegram Bot webhook: регистрирует маршрут с Telegram-источником.
 
         S97 W4: использует :class:`TelegramWebhookSource` для Bot API
@@ -71,7 +72,7 @@ class TelegramSourcesMixin:
             allowed_updates=allowed_updates or ("message",),
             offset=offset,
         )
-        builder = cls.from_(  # type: ignore[return-value]
+        builder = cls.from_(
             route_id,
             source=f"telegram:{route_id}",
             description=f"Telegram Bot: {bot_token[:8]}...",

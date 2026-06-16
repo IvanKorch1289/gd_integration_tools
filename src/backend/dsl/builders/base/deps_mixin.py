@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -34,12 +33,12 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 """
 
 
-class DepsMixin:
+class DepsMixin(_RouteBuilderProtocol):
     """dependencies (depends — BIG 45 LOC) для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def depends(self, *deps: str | tuple[str, str]) -> RouteBuilder:
+    def depends(self, *deps: str | tuple[str, str]) -> Self:
         """Добавляет DI-зависимости к последнему processor (call_function/process_fn).
 
         Применимо к процессорам, имеющим атрибут ``_inject``

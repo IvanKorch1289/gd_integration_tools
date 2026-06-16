@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+from src.backend.core.security.capabilities.gate._protocol import (
+    _CapabilityGateProtocol,
+)
 
 """ADR-044 — runtime :class:`CapabilityGate` + subset-checker.
 
@@ -39,7 +38,7 @@ AuditCallback = Callable[[dict[str, object]], None]
 _DEFAULT_LRU_SIZE: Final[int] = 1024
 
 
-class AuditMixin:
+class AuditMixin(_CapabilityGateProtocol):
     """audit event emission для CapabilityGate. S54 W4 extraction."""
 
     __slots__ = ()

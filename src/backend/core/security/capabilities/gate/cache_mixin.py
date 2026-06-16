@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+from src.backend.core.security.capabilities.gate._protocol import (
+    _CapabilityGateProtocol,
+)
 
 """ADR-044 — runtime :class:`CapabilityGate` + subset-checker.
 
@@ -41,7 +40,7 @@ AuditCallback = Callable[[dict[str, object]], None]
 _DEFAULT_LRU_SIZE: Final[int] = 1024
 
 
-class CacheMixin:
+class CacheMixin(_CapabilityGateProtocol):
     """cache + invalidation (granted caches, plugin/tenant invalidation) для CapabilityGate. S54 W4 extraction."""
 
     __slots__ = ()

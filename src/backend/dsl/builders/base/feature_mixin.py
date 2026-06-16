@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -39,17 +38,17 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import BaseProcessor
 
 
-class FeatureMixin:
+class FeatureMixin(_RouteBuilderProtocol):
     """feature flags + AB testing для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def feature_flag(self, name: str) -> RouteBuilder:
+    def feature_flag(self, name: str) -> Self:
         """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
         self._feature_flag = name
         return self
 
-    def shadow_mode(self, processors: list[BaseProcessor]) -> RouteBuilder:
+    def shadow_mode(self, processors: list[BaseProcessor]) -> Self:
         """Исполняет вложенную ветку в shadow-режиме (без side effects)."""
         from src.backend.dsl.engine.processors.generic import ShadowModeProcessor
 
@@ -62,7 +61,7 @@ class FeatureMixin:
         *,
         split_percent: int = 50,
         key_fn: Callable[[Exchange[Any]], str] | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Стабильная маршрутизация X% трафика на вариант B."""
         from src.backend.dsl.engine.processors.generic import AbTestRouterProcessor
 
@@ -81,7 +80,7 @@ class FeatureMixin:
         processors: list[BaseProcessor],
         *,
         resolver: Callable[[str], bool] | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Выполняет ветку процессоров только при включённом feature flag.
 
         Не путать с ``feature_flag(name)`` (метаданная маршрута, отключает

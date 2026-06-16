@@ -19,9 +19,12 @@ from tenacity import (
 )
 
 from src.backend.core.config.constants import consts
+from src.backend.infrastructure.clients.transport.http._protocol import (
+    _HttpClientProtocol,
+)
 
 
-class RequestMixin:
+class RequestMixin(_HttpClientProtocol):
     """request execution (make_request BIG 118 LOC, retry check, final error handler) для HttpClient. S61 W4 extraction."""
 
     __slots__ = ()

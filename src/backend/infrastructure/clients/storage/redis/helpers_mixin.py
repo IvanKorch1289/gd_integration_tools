@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
 from collections.abc import Awaitable, Callable
-from typing import Literal
+from typing import Any, Literal
 
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from src.backend.infrastructure.clients.storage.redis._protocol import (
+    _RedisClientProtocol,
+)
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.resilience.client_breaker import CircuitOpen
 
@@ -22,7 +20,7 @@ redis_logger = get_logger("redis")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-class HelpersMixin:
+class HelpersMixin(_RedisClientProtocol):
     """general helpers (execute, limits/queue clients, key listing, value retrieval, invalidation) для RedisClient. S59 W3 extraction."""
 
     __slots__ = ()

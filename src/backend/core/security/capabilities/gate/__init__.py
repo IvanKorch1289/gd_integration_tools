@@ -55,6 +55,8 @@ _DEFAULT_LRU_SIZE: Final[int] = 1024
 
 
 class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
+    _cache: dict[tuple[str, str, str | None], bool]
+    _tenant_cache: dict[tuple[str, str, str, str | None], bool]
     """Capability Gate (4 mixins = 14 methods + 3 core)."""
 
     # S79 W2 fix: removed `__slots__ = ()` (S54 W4 decomp forgot про
@@ -71,12 +73,12 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         self._vocabulary = vocabulary or build_default_vocabulary()
         self._audit = audit
         self._declarations: dict[str, dict[str, CapabilityRef]] = {}
-        self._cache: dict[tuple[str, str, str | None], bool] = {}
+        self._cache = {}
         self._lru_size = lru_size
         # Per-tenant storage: tenant_id → principal_id → capability_name → ref.
         self._tenant_declarations: dict[str, dict[str, dict[str, CapabilityRef]]] = {}
         # Per-tenant LRU cache: (tenant, principal, capability, scope) → bool.
-        self._tenant_cache: dict[tuple[str, str, str, str | None], bool] = {}
+        self._tenant_cache = {}
         self._policy: "CapabilityPolicy | None" = policy
 
     @property

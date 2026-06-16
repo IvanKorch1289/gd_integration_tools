@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
+from src.backend.infrastructure.clients.storage.redis._protocol import (
+    _RedisClientProtocol,
+)
 from src.backend.infrastructure.logging.factory import get_logger
 
 redis_logger = get_logger("redis")
@@ -19,7 +17,7 @@ redis_logger = get_logger("redis")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-class StreamMixin:
+class StreamMixin(_RedisClientProtocol):
     """stream ops (publish, move, read, retry, stats, init, exists) для RedisClient. S59 W3 extraction."""
 
     __slots__ = ()
