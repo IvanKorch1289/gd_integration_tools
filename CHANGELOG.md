@@ -3525,6 +3525,20 @@ S42+ timeline + Owner.**
 
 ### Total: 28 commits across 29 documented waves
 
+## [Sprint 147] — 2026-06-15
+
+#### s147/w1-redis-protocol-fix
+- VER-122 caught incomplete S146 W1 commit (`7f3e10c`) — `_RedisClientProtocol`
+  imported from `_protocol.py` but the module was never created
+- Created `src/backend/infrastructure/clients/storage/redis/_protocol.py`
+  with inline Protocol class definition (93 LOC)
+- Fixed 14 collection errors (12085 tests now collected, +164 from S146 baseline)
+
+#### s147/w5-closure
+- ADR-0230: Sprint 147 closure
+- ADR-0229 post-mortem note (S146 W1 incomplete commit + VER-122 lesson)
+- 1 atomic code commit + 1 closure, 0 NEW layer violations
+
 ## [0.1.0] — 2025 — Initial release
 
 - Initial release of GD Integration Tools

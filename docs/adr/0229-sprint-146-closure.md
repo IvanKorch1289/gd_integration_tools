@@ -144,3 +144,20 @@ Pre-S146 HEAD: `aa7b05b` (S145 W5 closure). After S146 W5: 20 commits ahead of o
 - Skill: systematic-debugging
 - Skill: sprint-execution (Rule #130: W1 = fact-check, but skipped for known-issues S146)
 - Rule #124 (pre-existing failures: classify, verify, fix single root cause)
+
+## Post-Mortem (S147 W1)
+
+**S146 W1 commit `7f3e10c` was incomplete.** The commit added
+`from ._protocol import _RedisClientProtocol` to `redis/__init__.py` but
+never created the `_protocol.py` module itself. As a result, all 14
+collection errors mentioned in this ADR persisted past S146 closure.
+
+**S147 W1 (`90c9849`)** creates `redis/_protocol.py` with the inline
+Protocol class definition. Verified via `pytest --collect-only`:
+- HEAD pre-S147: 14 collection errors, 11921 tests collected
+- HEAD post-S147: 0 collection errors, 12085 tests collected (+164 tests now visible)
+
+**Lesson (VER-122):** ADR claim "14 collection errors → 0" must be
+verified by re-running the test collection BEFORE writing the closure
+ADR. Future sprints: every "fixed N fails" claim requires actual
+`pytest --collect-only` output, not design reasoning.
