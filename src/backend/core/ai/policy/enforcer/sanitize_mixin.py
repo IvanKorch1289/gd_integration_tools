@@ -3,12 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest, AIResponse
+    from src.backend.core.ai.policy.enforcer._protocol import _AIPolicyEnforcerProtocol
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 from src.backend.core.logging import get_logger
@@ -21,7 +17,12 @@ class SanitizeMixin:
 
     __slots__ = ()
 
-    async def sanitize_input(self, request: AIRequest, policy: AIPolicySpec) -> str:
+    if TYPE_CHECKING:
+        _protocol_self: _AIPolicyEnforcerProtocol
+
+    async def sanitize_input(
+        self: "_AIPolicyEnforcerProtocol", request: AIRequest, policy: AIPolicySpec
+    ) -> str:
         """Применить :attr:`AIPolicySpec.input_sanitizers` (PIITokenizer).
 
         Использует ``self._pii_tokenizer``, который является экземпляром
@@ -57,7 +58,7 @@ class SanitizeMixin:
         return getattr(result, "sanitized_text", prompt)
 
     async def sanitize_output(
-        self, response: AIResponse, policy: AIPolicySpec
+        self: "_AIPolicyEnforcerProtocol", response: AIResponse, policy: AIPolicySpec
     ) -> AIResponse:
         """Применить :attr:`AIPolicySpec.output_sanitizers` (PII redaction).
 

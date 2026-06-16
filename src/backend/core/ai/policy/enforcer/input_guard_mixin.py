@@ -3,11 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
+    from src.backend.core.ai.policy.enforcer._protocol import _AIPolicyEnforcerProtocol
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
@@ -29,7 +25,12 @@ class InputGuardMixin:
 
     __slots__ = ()
 
-    async def guard_input(self, prompt: str, policy: AIPolicySpec) -> list[GuardResult]:
+    if TYPE_CHECKING:
+        _protocol_self: _AIPolicyEnforcerProtocol
+
+    async def guard_input(
+        self: "_AIPolicyEnforcerProtocol", prompt: str, policy: AIPolicySpec
+    ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
         Поддерживаетые guard'ы:
@@ -51,7 +52,9 @@ class InputGuardMixin:
                 results.append(result)
         return results
 
-    async def _guard_input_one(self, prompt: str, ref: GuardRef) -> GuardResult | None:
+    async def _guard_input_one(
+        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef
+    ) -> GuardResult | None:
         """Apply single input guard ref.
 
         Returns GuardResult with verdict 'passed' if no block,
@@ -103,7 +106,7 @@ class InputGuardMixin:
         return None
 
     async def _guard_input_rebuff(
-        self, prompt: str, ref: GuardRef, on_block: str
+        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Rebuff input guard check."""
         try:
@@ -140,7 +143,7 @@ class InputGuardMixin:
             return GuardResult(guard_name=ref.name, verdict="passed")
 
     async def _guard_input_lakera(
-        self, prompt: str, ref: GuardRef, on_block: str
+        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Lakera input guard check."""
         try:
@@ -179,7 +182,7 @@ class InputGuardMixin:
             return GuardResult(guard_name=ref.name, verdict="passed")
 
     async def _guard_input_llm_guard(
-        self, prompt: str, ref: GuardRef, on_block: str
+        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """LLM Guard self-hosted input guard check (S35 W1)."""
         if self._llm_guard_client is None:
