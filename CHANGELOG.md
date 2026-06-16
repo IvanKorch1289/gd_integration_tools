@@ -5,6 +5,19 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S151 cycle, 2026-06-16] — Cron Dashboard Parser + Patch Source (1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed)
+
+### Fixed
+- `cron_expr` parser: `rstrip(']')` left `timezone=...` suffix in cron_expr; fix: `split(']', 1)[0]`
+- Test patch source location (S148 W2 precedent): patch `core.scheduler.get_scheduler_manager` (not `infrastructure.scheduler.scheduler_manager`)
+
+### Changed
+- services 19 → 16 test fails (-3 net: 3 cron_dashboard)
+
+### Refs
+- ADR-0234 (S151 closure)
+- Ponytail mode applied (atomic commits, no shims, no debug code in prod)
+
 ## [S150 cycle, 2026-06-16] — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift, +1 critical prod fix)
 
 ### Fixed
