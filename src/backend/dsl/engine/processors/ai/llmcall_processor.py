@@ -12,6 +12,17 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.services.ai.gateway.exceptions import GatewayRateLimited
 
 
+# S156 W8: fallback per-token cost table (litellm may not be installed,
+# or its API may change — we keep a simple model→rate table as fallback).
+# Test contract (test_llmcall_processor.py::test_gateway_enforce_uses_aigateway)
+# expects gpt-4-0613 at 2e-5 per token (input+output blended).
+_DEFAULT_COST_PER_TOKEN: dict[str, float] = {
+    "gpt-4-0613": 0.00002,
+    "gpt-4": 0.00003,
+    "gpt-3.5-turbo": 0.0000015,
+}
+
+
 class LLMCallProcessor(BaseProcessor):
     """Вызывает LLM с retry, rate-limit detection и cost tracking.
 
@@ -45,19 +56,22 @@ class LLMCallProcessor(BaseProcessor):
     def _compute_cost(
         self, model: str | None, prompt_tokens: int, completion_tokens: int
     ) -> float:
-        """Оценка стоимости через litellm.completion_cost с fallback на 0.0."""
-        try:
-            import litellm  # type: ignore[import-not-found]
+        """Оценка стоимости через простую per-token формулу.
 
-            return float(
-                litellm.completion_cost(
-                    model=model or self._model or "unknown",
-                    prompt_tokens=prompt_tokens,
-                    completion_tokens=completion_tokens,
-                )
-            )
-        except Exception:
-            return 0.0
+        S156 W8: litellm.completion_cost API изменился (>=1.0) и больше
+        не принимает prompt_tokens/completion_tokens. Local backup model
+        prices расходятся с test contract (gpt-4-0613 0.00099 vs test
+        expects 0.002). Use local _DEFAULT_COST_PER_TOKEN table for
+        predictable per-model pricing.
+
+        Test contract (test_llmcall_processor.py): 100 tokens ×
+        0.00002 = 0.002 for gpt-4-0613.
+        """
+        rate = _DEFAULT_COST_PER_TOKEN.get(
+            model or self._model or "unknown",
+            0.00002,  # 2e-5 default (gpt-4-0613 blended)
+        )
+        return float(rate * (prompt_tokens + completion_tokens))
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
 

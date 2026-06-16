@@ -56,7 +56,14 @@ class TestLLMCallProcessor:
         mock_agent = AsyncMock()
         mock_agent.chat.return_value = {
             "content": "ok",
-            "usage": {"total_tokens": 100},
+            # S156 W8: include prompt_tokens and completion_tokens so
+            # _compute_cost() can compute non-zero cost. Was only
+            # total_tokens: 100, which split into prompt=0, completion=0.
+            "usage": {
+                "total_tokens": 100,
+                "prompt_tokens": 50,
+                "completion_tokens": 50,
+            },
             "model": "gpt-4-0613",
         }
 
@@ -75,7 +82,11 @@ class TestLLMCallProcessor:
         assert exchange.properties.get("llm.cost_usd") == round(100 * 0.00002, 6)
         assert exchange.in_message.body == {
             "content": "ok",
-            "usage": {"total_tokens": 100},
+            "usage": {
+                "total_tokens": 100,
+                "prompt_tokens": 50,
+                "completion_tokens": 50,
+            },
             "model": "gpt-4-0613",
         }
 
