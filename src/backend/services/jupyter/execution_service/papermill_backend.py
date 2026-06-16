@@ -109,8 +109,10 @@ class PapermillExecutionBackend:
 
         # Lazy-import papermill (opt-in extra).
         try:
-            import papermill as pm
-            from papermill.exceptions import PapermillExecutionError as PMError
+            import papermill as pm  # type: ignore[import-not-found]
+            from papermill.exceptions import (  # type: ignore[import-not-found]
+                PapermillExecutionError as PMError,
+            )
         except ImportError as exc:
             from src.backend.services.jupyter.execution_service.errors import (
                 JupyterExecutionError,

@@ -8,7 +8,12 @@ from src.backend.services.jupyter.execution_service.errors import JupyterExecuti
 _logger = get_logger("services.jupyter.execution")
 
 
-class CoreMixin:
+from src.backend.services.jupyter.execution_service._protocol import (
+    _NotebookExecutionProtocol,
+)
+
+
+class CoreMixin(_NotebookExecutionProtocol):
     """public execute_notebook entry (78 LOC, BIG) для NotebookExecutionService. S60 W1 extraction."""
 
     __slots__ = ()

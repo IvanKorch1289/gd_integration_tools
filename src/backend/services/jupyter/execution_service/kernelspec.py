@@ -48,7 +48,7 @@ __all__ = ("KernelSpecDiscovery", "DEFAULT_FALLBACK_SPECS")
 
 # Default fallback если jupyter_client не установлен — single python3
 # spec для backward compat с pre-S75 кодом.
-DEFAULT_FALLBACK_SPECS: dict[str, dict[str, str]] = {
+DEFAULT_FALLBACK_SPECS: dict[str, dict[str, Any]] = {
     "python3": {
         "resource_dir": "",
         "display_name": "Python 3 (fallback)",
@@ -66,7 +66,7 @@ class KernelSpecDiscovery:
     """
 
     def __init__(self) -> None:
-        self._cache: dict[str, dict[str, str]] | None = None
+        self._cache: dict[str, dict[str, Any]] | None = None
 
     def discover_available(self) -> dict[str, dict[str, str]]:
         """Discover available kernelspecs на этом worker.
@@ -110,7 +110,7 @@ class KernelSpecDiscovery:
             return self._cache
 
         # Convert to our spec format (subset of jupyter_client fields)
-        normalized: dict[str, dict[str, str]] = {}
+        normalized: dict[str, dict[str, Any]] = {}
         for kernel_name, spec in raw_specs.items():
             argv = spec.get("argv", [])
             # argv may contain placeholders like {connection_file} — keep

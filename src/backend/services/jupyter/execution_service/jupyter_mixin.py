@@ -13,7 +13,12 @@ from src.backend.services.jupyter.execution_service.errors import JupyterExecuti
 _logger = get_logger("services.jupyter.execution")
 
 
-class JupyterBackendMixin:
+from src.backend.services.jupyter.execution_service._protocol import (
+    _NotebookExecutionProtocol,
+)
+
+
+class JupyterBackendMixin(_NotebookExecutionProtocol):
     """jupyter backend internals (server, upload, session, cell execution) для NotebookExecutionService. S60 W1 extraction."""
 
     __slots__ = ()
