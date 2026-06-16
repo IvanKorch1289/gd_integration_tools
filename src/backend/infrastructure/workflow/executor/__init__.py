@@ -72,7 +72,8 @@ __all__ = (
 class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin):
     """DSL step executor (4 mixins = 8 methods + 2 core)."""
 
-    __slots__ = ()
+    # S146 W2: decomp создал атрибуты в __init__, но __slots__ = ()
+    # блокировал их. Убрано __slots__ как в других post-decomp фиксах.
 
     def __init__(
         self, spec_loader: SpecLoader, *, timeout_per_step_s: float = 300.0
@@ -123,13 +124,13 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
         # 3) Dispatch по kind. Каждая ветка формирует свой StepResult.
         try:
             if step.kind == "sequential":
-                return await self._exec_sequential(step, state, instance)
+                return await self._exec_sequential(step, state, instance)  # type: ignore[misc]
             if step.kind == "branch":
-                return self._exec_branch(step, state)
+                return await self._exec_branch(step, state, instance)  # type: ignore[misc]
             if step.kind == "loop":
-                return self._exec_loop(step, state)
+                return await self._exec_loop(step, state, instance)  # type: ignore[misc]
             if step.kind == "for_each":
-                return await self._exec_for_each(step, state, instance)
+                return await self._exec_for_each(step, state, instance)  # type: ignore[misc]
             if step.kind == "sub_flow":
                 return self._exec_sub_flow(step, state, instance)
             if step.kind == "wait":
