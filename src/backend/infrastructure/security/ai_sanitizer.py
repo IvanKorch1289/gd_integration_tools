@@ -165,7 +165,7 @@ class AIDataSanitizer:
         if result.audit_events:
             try:
                 from src.backend.infrastructure.clients.storage.redis import (
-                    get_redis_client as redis_client,  # S71 W1 fix
+                    redis_client,  # S71 W1 fix
                 )
 
                 for event in result.audit_events:

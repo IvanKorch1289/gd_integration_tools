@@ -34,15 +34,15 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 
+if TYPE_CHECKING:
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
+
 Client: Any = None
 try:
     from fastmcp import Client
 except ImportError:
     pass
-
-if TYPE_CHECKING:
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("MCPToolProcessor",)
 

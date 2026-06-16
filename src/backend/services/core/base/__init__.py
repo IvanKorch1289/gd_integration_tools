@@ -29,10 +29,15 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
+from src.backend.services.core.base.cache_mixin import CacheMixin  # S61 W1: MRO
+from src.backend.services.core.base.crud_mixin import CrudMixin  # S61 W1: MRO
 from src.backend.services.core.base.helpers import (
     _is_orm_model,  # S61 W1: re-export
     create_service_class,  # S61 W1: re-export
     get_service_for_model,  # S61 W1: re-export
+)
+from src.backend.services.core.base.versioning_mixin import (
+    VersioningMixin,  # S61 W1: MRO
 )
 
 __all__ = (
@@ -48,7 +53,7 @@ class BaseService[
     ConcreteResponseSchema: BaseSchema,
     ConcreteRequestSchema: BaseSchema,
     ConcreteVersionSchema: BaseSchema,
-]:
+](CrudMixin, CacheMixin, VersioningMixin):
     """Базовый сервис для работы с репозиториями.
 
     Предоставляет CRUD-операции, кэширование, версионирование.
