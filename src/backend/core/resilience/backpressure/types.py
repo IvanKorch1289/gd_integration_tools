@@ -8,7 +8,7 @@ Classes: ConsumerControlProtocol, BackpressureState.
 """
 
 import time
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Protocol
 
 # ---------------------------------------------------------------------------
@@ -32,6 +32,7 @@ class ConsumerControlProtocol(Protocol):
         ...
 
 
+@dataclass
 class BackpressureState:
     """Текущее состояние backpressure.
 
