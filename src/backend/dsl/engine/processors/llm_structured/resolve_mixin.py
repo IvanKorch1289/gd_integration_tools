@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
 from src.backend.core.logging import get_logger
+from src.backend.dsl.engine.processors.llm_structured._protocol import (
+    _LLMStructuredProcessorProtocol,
+)
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -23,7 +21,7 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-class ResolveMixin:
+class ResolveMixin(_LLMStructuredProcessorProtocol):
     """resolve schema + prompt + provider для LLMStructuredProcessor. S65 W2 extraction."""
 
     __slots__ = ()

@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
 from src.backend.core.logging import get_logger
+from src.backend.dsl.engine.processors.llm_structured._protocol import (
+    _LLMStructuredProcessorProtocol,
+)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
@@ -21,7 +19,7 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-class SerializationMixin:
+class SerializationMixin(_LLMStructuredProcessorProtocol):
     """write_result + to_spec для LLMStructuredProcessor. S65 W2 extraction."""
 
     __slots__ = ()

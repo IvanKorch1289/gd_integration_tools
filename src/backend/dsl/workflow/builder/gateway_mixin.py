@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 from typing import TYPE_CHECKING, Self
+
+from src.backend.dsl.workflow.builder._protocol import _WorkflowBuilderProtocol
 
 if TYPE_CHECKING:
     from src.backend.dsl.workflow.gateways import BranchSpec
 
 
-class GatewayMixin:
+class GatewayMixin(_WorkflowBuilderProtocol):
     """gateway_xor + gateway_and + gateway_or для WorkflowBuilder. S58 W4 extraction."""
 
     __slots__ = ()
