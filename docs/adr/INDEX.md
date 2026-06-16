@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **183**; уникальных слотов: **182**.
+Всего ADR-файлов: **184**; уникальных слотов: **183**.
 
 ⚠️ Collision-слоты (1): ADR-0109. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -189,5 +189,6 @@
 | 0232 | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
 | 0233 | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
 | 0234 | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
+| 0235 | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

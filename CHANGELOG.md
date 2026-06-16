@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S152 cycle, 2026-06-16] — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed)
+
+### Fixed
+- `_filter_by_embedding_version` no-op stub (S140 W4, block 3.5 gap-ai-3.5)
+- `_extract_source_id` never implemented (S140 W4, block 3.3 gap-ai-3.3, ADR-0074)
+- `_format_context_with_sources` stub (S140 W4, no source markers)
+- Langfuse test: patch real `feature_flags` API (was patching non-existent `get_feature_flag_service`)
+
+### Changed
+- services 16 → 3 test fails (-13 net: 4 RAG filter + 4 RAG source + 5 langfuse)
+
+### Refs
+- ADR-0235 (S152 closure)
+- Ponytail mode applied (atomic commits, no shims, no debug code in prod)
+
 ## [S151 cycle, 2026-06-16] — Cron Dashboard Parser + Patch Source (1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed)
 
 ### Fixed
