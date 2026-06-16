@@ -5,6 +5,20 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [S150 cycle, 2026-06-16] — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift, +1 critical prod fix)
+
+### Fixed
+- **CRITICAL:** Cache decorator `redis_client` function-vs-instance shadowing (production bug, every `@_response_cache`-decorated method would fail with `AttributeError` since S147 W1)
+- `get_dq_monitor` singleton stub (S55 W4 decomp left as `NotImplementedError`, pre-existing)
+- e2b test/code drift (S74 W2 stub test, S75 W1 implemented E2BExecutionBackend, test never updated)
+
+### Changed
+- services 21 → 19 test fails (-2 net: 1 dq_monitor + 1 e2b)
+
+### Refs
+- ADR-0233 (S150 closure)
+- Ponytail mode applied (atomic commits, no shims, no debug code in prod)
+
 ## [S146 cycle, 2026-06-15] — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails)
 
 ### Added
