@@ -23,6 +23,7 @@ __all__ = (
     "LoggerProtocol",
     "MongoExpressDialogStoreProtocol",
     "MongoExpressSessionStoreProtocol",
+    "RateLimiterProtocol",  # S159 W2: added (test import contract)
     "RedisSetProtocol",
     "SLOTrackerProtocol",
     "StreamClientProtocol",
@@ -263,4 +264,18 @@ class SLOTrackerProtocol(Protocol):
 
     def get_report(self) -> dict[str, Any]:
         """Получить report."""
+        ...
+
+
+
+@runtime_checkable
+class RateLimiterProtocol(Protocol):
+    """Контракт rate-limiter'а (S159 W2: test import contract).
+
+    Methods:
+        check: Проверить rate-limit для identifier по policy.
+    """
+
+    async def check(self, identifier: str, policy: Any) -> dict[str, Any]:
+        """Проверить rate-limit, вернуть dict с метаданными (allowed, remaining, etc.)."""
         ...
