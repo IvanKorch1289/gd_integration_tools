@@ -108,7 +108,7 @@ class APIKeyManager:
                         continue
                 return result
 
-            all_data = await redis_client.execute("cache", _mget_keys)
+            all_data = await redis_client().execute("cache", _mget_keys)  # type: ignore[attr-defined]
             now = time.time()
 
             for info in all_data:
@@ -171,13 +171,13 @@ class APIKeyManager:
                 get_redis_client as redis_client,
             )
 
-            await redis_client.add_to_stream(
+            await redis_client().add_to_stream(  # type: ignore[attr-defined]
                 stream_name=_AUDIT_PREFIX + "events",
                 data={"event": "create", "client_id": client_id, "timestamp": str(now)},
             )
 
             # Сохраняем в Redis (без TTL — ключ живёт до ротации/удаления)
-            await redis_client._redis.set(
+            await redis_client()._redis.set(  # type: ignore[attr-defined]
                 f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
         except Exception as exc:
@@ -199,7 +199,7 @@ class APIKeyManager:
                 get_redis_client as redis_client,
             )
 
-            raw = await redis_client._redis.get(f"{_KEY_PREFIX}{client_id}")
+            raw = await redis_client()._redis.get(f"{_KEY_PREFIX}{client_id}")  # type: ignore[attr-defined]
             if not raw:
                 return None
 
@@ -215,11 +215,11 @@ class APIKeyManager:
             key_data["version"] = key_data.get("version", 1) + 1
             key_data["rotated_at"] = now
 
-            await redis_client._redis.set(
+            await redis_client()._redis.set(  # type: ignore[attr-defined]
                 f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
 
-            await redis_client.add_to_stream(
+            await redis_client().add_to_stream(  # type: ignore[attr-defined]
                 stream_name=_AUDIT_PREFIX + "events",
                 data={
                     "event": "rotate",
@@ -248,8 +248,8 @@ class APIKeyManager:
                 get_redis_client as redis_client,
             )
 
-            await redis_client._redis.delete(f"{_KEY_PREFIX}{client_id}")
-            await redis_client.add_to_stream(
+            await redis_client()._redis.delete(f"{_KEY_PREFIX}{client_id}")  # type: ignore[attr-defined]
+            await redis_client().add_to_stream(  # type: ignore[attr-defined]
                 stream_name=_AUDIT_PREFIX + "events",
                 data={
                     "event": "revoke",
@@ -273,9 +273,9 @@ class APIKeyManager:
             )
 
             result: list[dict[str, Any]] = []
-            keys = await redis_client.list_cache_keys(f"{_KEY_PREFIX}*")
+            keys = await redis_client().list_cache_keys(f"{_KEY_PREFIX}*")  # type: ignore[attr-defined]
             for redis_key in keys.get("keys", []):
-                raw = await redis_client._redis.get(redis_key)
+                raw = await redis_client()._redis.get(redis_key)  # type: ignore[attr-defined]
                 if raw:
                     data = orjson.loads(raw)
                     result.append(

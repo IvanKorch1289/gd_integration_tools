@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING, Self
-
+from src.backend.dsl.workflow.builder._protocol import _WorkflowBuilderProtocol
 from src.backend.dsl.workflow.spec import ActivityDeclaration, RetryPolicy
 
 if TYPE_CHECKING:
     pass
 
 
-class SlaMixin:
+class SlaMixin(_WorkflowBuilderProtocol):
     """SLA + activity config для WorkflowBuilder. S58 W4 extraction."""
 
     __slots__ = ()

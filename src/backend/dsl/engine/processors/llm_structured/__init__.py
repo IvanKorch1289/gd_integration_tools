@@ -95,7 +95,15 @@ class LLMStructuredProcessor(
         Affected 10 tests in ``test_llm_structured.py`` (TD-006 fix #1).
     """
 
-    __slots__ = ()
+    __slots__ = (
+        "_model",
+        "_output_schema_ref",
+        "_prompt_template",
+        "_retry",
+        "_temperature",
+        "_cost_budget_usd",
+        "_to",
+    )
 
     def __init__(
         self,
