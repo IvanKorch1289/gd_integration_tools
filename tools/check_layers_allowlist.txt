@@ -29,6 +29,7 @@ src/backend/core/clients/jupyter_hub.py	core	src.backend.infrastructure.clients.
 src/backend/core/clients/pool_health.py	core	src.backend.infrastructure.clients.pool_health
 src/backend/core/database/initializer.py	core	src.backend.infrastructure.database.session_manager
 src/backend/core/database/session.py	core	src.backend.infrastructure.database.session_manager
+src/backend/core/db/external_facade.py	core	src.backend.infrastructure.database.database.accessors
 src/backend/core/db/external_facade.py	core	src.backend.infrastructure.database.database.registry
 src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.profile_store_memory
 src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.token_registry
