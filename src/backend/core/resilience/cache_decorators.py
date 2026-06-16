@@ -157,9 +157,10 @@ def invalidate(
             # зависимости от infrastructure.
             try:
                 from src.backend.infrastructure.clients.storage.redis import (
-                    get_redis_client as redis_client,  # S71 W1 fix: redis_client is a __getattr__ shim, broken in 'from X import Y' syntax
+                    get_redis_client,
                 )
 
+                redis_client = get_redis_client()
                 await redis_client.cache_delete_pattern(key_pattern)
             except Exception as exc:
                 # Best-effort инвалидация; ошибки кеша не должны рушить
