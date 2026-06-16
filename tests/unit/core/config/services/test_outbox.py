@@ -237,6 +237,7 @@ class TestOutboxSettingsCustom:
         assert isinstance(dumped, dict)
         assert set(dumped) == {
             "enabled",
+            "use_redis_dedupe",
             "poll_interval_seconds",
             "batch_size",
             "max_retries",
@@ -615,7 +616,7 @@ class TestSettingsSafetyContract:
     exactly once on the class."""
 
     def test_field_count(self) -> None:
-        assert len(OutboxSettings.model_fields) == 6
+        assert len(OutboxSettings.model_fields) == 7
 
     def test_field_types(self) -> None:
         f = OutboxSettings.model_fields
