@@ -16,12 +16,28 @@ from src.backend.services.integrations.dadata import (
 
 
 @pytest.fixture(autouse=True)
-def _reset_singleton() -> Any:
+async def _reset_singleton() -> Any:
     import src.backend.services.integrations.dadata as _mod
 
     _mod._dadata_service_instance = None
+    # S153 W2: clear response cache memory backend between tests
+    # (decorator instance is module-level, memory persists across tests)
+    cache = _mod._response_cache
+    inner = getattr(cache, "_decorator", cache)  # unwrap provider
+    mem = getattr(inner, "memory_cache", None)
+    if mem is not None:
+        # S153 W2: TTLCache doesn't have clear(), reset internal dict
+        mem._cache.clear()
+    # S153 W2: also clear disk cache (persists across test runs in .cache/)
+    disk = getattr(inner, "disk_cache", None)
+    if disk is not None:
+        await disk.delete_pattern("cache:*")
     yield
     _mod._dadata_service_instance = None
+    if mem is not None:
+        mem._cache.clear()
+    if disk is not None:
+        await disk.delete_pattern("cache:*")
 
 
 @pytest.fixture()
