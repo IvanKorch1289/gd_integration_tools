@@ -28,6 +28,41 @@
       "title": "CapabilityRef",
       "type": "object"
     },
+    "_IPRestrictionModel": {
+      "additionalProperties": false,
+      "description": "Pydantic-модель для ``[security.ip_restriction]`` в route.toml.",
+      "properties": {
+        "allowed_ips": {
+          "description": "Разрешённые IP/CIDR для доступа к маршруту.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Ips",
+          "type": "array"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Включено ли ограничение.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "path_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Glob-паттерн пути. Если не задан — /api/v1/auto/<route_name>.",
+          "title": "Path Pattern"
+        }
+      },
+      "title": "_IPRestrictionModel",
+      "type": "object"
+    },
     "_RouteTimeoutModel": {
       "additionalProperties": false,
       "description": "Pydantic-обёртка над :class:`RouteTimeoutSpec` для парсинга TOML.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в ``[timeout]``\nсекции на этапе load (вместо silent ignore).",
@@ -92,6 +127,18 @@
       "additionalProperties": false,
       "description": "Pydantic-модель для секции ``[security]`` в route.toml.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в полях\nсекции на этапе load.",
       "properties": {
+        "ip_restriction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/_IPRestrictionModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Per-route IP-ограничения."
+        },
         "requires_permission": {
           "description": "Список required permissions в формате \"role:<role_name>\" или \"scope:<scope_name>\". При route_authz_requires_permission=True AuthorizationGateway проверяет наличие всех перечисленных permissions у principal перед dispatch на route.",
           "items": {

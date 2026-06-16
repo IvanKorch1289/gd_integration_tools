@@ -254,7 +254,9 @@ async def test_guard_output_unknown_guard_warns(mock_llama_runtime: MagicMock) -
     policy = MagicMock()
     policy.output_guards = [make_guard_ref("unknown_guard:xyz")]
 
-    with patch("src.backend.core.ai.policy.enforcer.output_guard_mixin.logger") as mock_log:
+    with patch(
+        "src.backend.core.ai.policy.enforcer.output_guard_mixin.logger"
+    ) as mock_log:
         await enforcer.guard_output(response, policy)
         mock_log.warning.assert_called()
     mock_llama_runtime.classify.assert_not_called()
@@ -315,7 +317,9 @@ async def test_guard_input_nemo_skipped() -> None:
     policy = MagicMock()
     policy.input_guards = [make_guard_ref("nemo:colang:topics")]
 
-    with patch("src.backend.core.ai.policy.enforcer.input_guard_mixin.logger") as mock_log:
+    with patch(
+        "src.backend.core.ai.policy.enforcer.input_guard_mixin.logger"
+    ) as mock_log:
         await enforcer.guard_input(prompt, policy)
         mock_log.warning.assert_called()
 
@@ -376,7 +380,9 @@ async def test_guard_input_llm_guard_no_client_warns() -> None:
     policy = MagicMock()
     policy.input_guards = [make_guard_ref("llm_guard:PromptInjection")]
 
-    with patch("src.backend.core.ai.policy.enforcer.input_guard_mixin.logger") as mock_log:
+    with patch(
+        "src.backend.core.ai.policy.enforcer.input_guard_mixin.logger"
+    ) as mock_log:
         results = await enforcer.guard_input(prompt, policy)
         mock_log.warning.assert_called()
     # Returns passed since client is None
@@ -397,7 +403,9 @@ async def test_guard_input_llm_guard_warns_on_error(
     policy = MagicMock()
     policy.input_guards = [make_guard_ref("llm_guard:PromptInjection", on_block="warn")]
 
-    with patch("src.backend.core.ai.policy.enforcer.input_guard_mixin.logger") as mock_log:
+    with patch(
+        "src.backend.core.ai.policy.enforcer.input_guard_mixin.logger"
+    ) as mock_log:
         results = await enforcer.guard_input(prompt, policy)
         mock_log.warning.assert_called()
     # warn mode: returns passed despite error

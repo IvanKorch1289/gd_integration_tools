@@ -5,6 +5,7 @@ Verifies:
 * ``emit_audit()`` sync wrapper вызывает ``AuditService.emit()``.
 * Re-export identity: ``core.audit.facade.AuditService is services.audit.audit_service.AuditService``.
 """
+
 from __future__ import annotations
 
 from src.backend.core.audit.facade import (

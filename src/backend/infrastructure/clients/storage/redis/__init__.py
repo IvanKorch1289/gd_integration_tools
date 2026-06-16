@@ -115,6 +115,15 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
         }
         return mapping[kind]
 
+    @property
+    def client(self) -> "RedisClient":
+        """Self-reference для backward-compat ``redis_client.client.*``.
+
+        S146 W2: некоторые caller'ы (ai_sanitizer, cache/factory) ожидают
+        доступ к RedisClient через ``.client``. Возвращаем ``self``.
+        """
+        return self
+
     def _resolve_retry_on_error(self) -> list[type[BaseException]]:
         """Резолвит ``retry_on_error`` из настроек в классы исключений.
 

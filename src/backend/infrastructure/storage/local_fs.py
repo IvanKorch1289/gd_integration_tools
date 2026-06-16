@@ -129,3 +129,14 @@ class LocalFSStorage(ObjectStorage):
                     await asyncio.to_thread(fh.write, chunk)
         await aiofiles.os.replace(str(tmp), str(path))
         return str(path)
+
+    async def healthcheck(self) -> bool:
+        """Проверяет доступность base_path (readable + writable)."""
+        try:
+            if not self._base.exists():
+                return False
+            if not os.access(str(self._base), os.R_OK | os.W_OK):
+                return False
+            return True
+        except Exception:
+            return False

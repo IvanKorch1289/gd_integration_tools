@@ -74,9 +74,7 @@ class BreakerSpec:
 class BreakerState:
     """Snapshot состояния breaker'а для persistence-слоя (Redis, etc).
 
-    Single source of truth для state-serialization. Re-exported из
-    ``core.utils.pybreaker_adapter`` (legacy back-compat) и
-    ``core.infrastructure.resilience.redis_breaker_storage``.
+    Single source of truth для state-serialization.
 
     Attributes:
         name: Уникальное имя breaker'а.

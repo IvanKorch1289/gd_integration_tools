@@ -1,17 +1,15 @@
-"""Исключения LiteLLM-шлюза."""
+"""Исключения LiteLLM-шлюза.
+
+Canonical location: core.ai.errors
+Этот модуль предоставляет backward-compat re-export.
+"""
 
 from __future__ import annotations
 
+from src.backend.core.ai.errors import (  # noqa: F401
+    GatewayError,
+    GatewayRateLimited,
+    GatewayUnavailable,
+)
+
 __all__ = ("GatewayError", "GatewayRateLimited", "GatewayUnavailable")
-
-
-class GatewayError(RuntimeError):
-    """Базовое исключение LiteLLM-шлюза."""
-
-
-class GatewayUnavailable(GatewayError):
-    """Шлюз отключён или библиотека ``litellm`` не установлена."""
-
-
-class GatewayRateLimited(GatewayError):
-    """Провайдер ответил 429 / rate-limit."""

@@ -1,4 +1,5 @@
 """S71 W3 — TD-S64-W4 closure tests for RedisDedupeStore fail_closed mode."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock

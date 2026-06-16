@@ -9,6 +9,7 @@
 4. ``TelegramWebhookSource.compute_webhook_url`` — base URL trailing slash.
 5. DSL ``RouteBuilder.from_telegram`` — instantiation + source binding.
 """
+
 from __future__ import annotations
 
 
@@ -82,10 +83,7 @@ def test_parse_update_callback_query() -> None:
     source = TelegramWebhookSource(
         bot_token="123:ABC", allowed_updates=("callback_query",)
     )
-    payload = {
-        "update_id": 101,
-        "callback_query": {"id": "cb1", "data": "btn_yes"},
-    }
+    payload = {"update_id": 101, "callback_query": {"id": "cb1", "data": "btn_yes"}}
     u = source.parse_update(payload)
     assert u is not None
     assert u.callback_query == "btn_yes"
@@ -101,10 +99,7 @@ def test_parse_update_filtered_out() -> None:
     source = TelegramWebhookSource(
         bot_token="123:ABC", allowed_updates=("callback_query",)
     )
-    payload = {
-        "update_id": 102,
-        "message": {"message_id": 1, "text": "/start"},
-    }
+    payload = {"update_id": 102, "message": {"message_id": 1, "text": "/start"}}
     u = source.parse_update(payload)
     assert u is None
 

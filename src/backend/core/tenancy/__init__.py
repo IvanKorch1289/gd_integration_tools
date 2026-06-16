@@ -15,6 +15,7 @@ __all__ = (
     "QuotaTracker",
     "TenantContext",
     "current_tenant",
+    "get_tenant_id",
     "set_tenant",
     "tenant_scope",
 )
@@ -62,6 +63,16 @@ def set_tenant(ctx: TenantContext) -> None:
             ``current_tenant()`` до выхода из ``tenant_scope``/задачи.
     """
     _current.set(ctx)
+
+
+def get_tenant_id() -> str:
+    """Вернуть tenant_id активного тенанта или пустую строку.
+
+    Convenience wrapper для использования в SQLAlchemy filters и других
+    местах, где нужен строковый tenant_id.
+    """
+    ctx = _current.get()
+    return ctx.tenant_id if ctx is not None else ""
 
 
 class tenant_scope:

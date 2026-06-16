@@ -28,6 +28,7 @@ class TestQuotaTracker:
         raw.incrby = AsyncMock(return_value=1)
         raw.expire = AsyncMock()
         import src.backend.infrastructure.clients.storage.redis as redis_mod
+
         monkeypatch.setattr(redis_mod, "get_redis_client", lambda: raw)
         result = await tracker.consume(
             "t1", "res", units=1, limit=10, period_seconds=60
@@ -43,6 +44,7 @@ class TestQuotaTracker:
         raw.incrby = AsyncMock(return_value=11)
         raw.expire = AsyncMock()
         import src.backend.infrastructure.clients.storage.redis as redis_mod
+
         monkeypatch.setattr(redis_mod, "get_redis_client", lambda: raw)
         with pytest.raises(QuotaExceeded):
             await tracker.consume("t1", "res", units=1, limit=10, period_seconds=60)
@@ -54,6 +56,7 @@ class TestQuotaTracker:
         raw = _make_raw()
         raw.incrby = AsyncMock(side_effect=ConnectionError("boom"))
         import src.backend.infrastructure.clients.storage.redis as redis_mod
+
         monkeypatch.setattr(redis_mod, "get_redis_client", lambda: raw)
         result = await tracker.consume(
             "t1", "res", units=1, limit=10, period_seconds=60

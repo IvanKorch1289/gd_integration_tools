@@ -17,6 +17,7 @@ Files:
 - infrastructure/observability/structlog_batching.py — INTENTIONAL fallback
 - workflows/worker.py — typer CLI basicConfig + WARNING constant
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -76,7 +77,9 @@ LEGITIMATE_STDLIB_FILES = (
     LEGITIMATE_STDLIB_FILES,
     ids=[t[0].split("/")[-1] for t in LEGITIMATE_STDLIB_FILES],
 )
-def test_legitimate_stdlib_use_has_marker(rel_path: str, marker_regex: str, reason: str) -> None:
+def test_legitimate_stdlib_use_has_marker(
+    rel_path: str, marker_regex: str, reason: str
+) -> None:
     """Каждый файл с legit stdlib use должен иметь marker (regex match)."""
     import re
 

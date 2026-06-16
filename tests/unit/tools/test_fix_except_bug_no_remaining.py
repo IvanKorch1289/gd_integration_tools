@@ -5,6 +5,7 @@
 не syntax error в Python 3.14). Если новый код вводит такой pattern
 — этот тест fail'нет, сигнализируя о semantic bug.
 """
+
 from __future__ import annotations
 
 import re
@@ -32,7 +33,7 @@ def _scan_for_legacy_except(root: Path) -> list[tuple[str, int, str]]:
             continue
         try:
             content = py_file.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         for m in PATTERN.finditer(content):
             line_no = content[: m.start()].count("\n") + 1
@@ -50,8 +51,7 @@ def test_no_legacy_except_a_b_in_src() -> None:
     findings = _scan_for_legacy_except(ROOT)
     if findings:
         msg = "\n".join(
-            f"  {path}:{line}: {match}"
-            for path, line, match in findings[:20]
+            f"  {path}:{line}: {match}" for path, line, match in findings[:20]
         )
         pytest.fail(
             f"Found {len(findings)} legacy 'except A, B:' patterns in src/. "

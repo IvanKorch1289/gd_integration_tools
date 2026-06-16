@@ -62,9 +62,9 @@ async def _start_event_bus(app: FastAPI) -> None:
             return
 
         bus = get_event_bus()
-        await bus.start(settings.cache.redis_url)
+        await bus.start(settings.redis.redis_url)
         app.state.event_bus = bus
-        _logger.info("EventBus started on %s", settings.cache.redis_url)
+        _logger.info("EventBus started on %s", settings.redis.redis_url)
     except Exception as exc:
         _logger.warning("EventBus startup skipped: %s", exc)
 

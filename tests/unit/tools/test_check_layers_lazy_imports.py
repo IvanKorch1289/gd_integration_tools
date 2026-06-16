@@ -39,9 +39,9 @@ def test_lazy_import_is_now_detected() -> None:
     # _imports() возвращает список (module, lineno, is_lazy)
     imports = list(check_layers._imports(tree))
     lazy_imports = [m for m, _, is_lazy in imports if is_lazy]
-    assert any(
-        "breaker" in m for m in lazy_imports
-    ), f"Expected lazy import of breaker module, got {imports}"
+    assert any("breaker" in m for m in lazy_imports), (
+        f"Expected lazy import of breaker module, got {imports}"
+    )
 
 
 def test_top_level_import_is_detected() -> None:
@@ -76,9 +76,9 @@ def test_type_checking_import_is_skipped() -> None:
     for _module, lineno, _is_lazy in check_layers._imports(tree):
         if lineno < 5:  # pragma: no cover — out of TYPE_CHECKING block
             continue
-        assert check_layers._is_in_type_checking_block(
-            tree, lineno
-        ), f"Line {lineno} should be in TYPE_CHECKING block"
+        assert check_layers._is_in_type_checking_block(tree, lineno), (
+            f"Line {lineno} should be in TYPE_CHECKING block"
+        )
 
 
 def test_violation_key_format() -> None:
@@ -110,9 +110,7 @@ def test_file_layer_detects_dsl() -> None:
     from pathlib import Path
 
     root = Path("src")
-    layer = check_layers._file_layer(
-        Path("src/backend/dsl/route/builder/foo.py"), root
-    )
+    layer = check_layers._file_layer(Path("src/backend/dsl/route/builder/foo.py"), root)
     assert layer == "dsl"
 
 
@@ -121,9 +119,7 @@ def test_file_layer_detects_workflows() -> None:
     from pathlib import Path
 
     root = Path("src")
-    layer = check_layers._file_layer(
-        Path("src/backend/workflows/registry.py"), root
-    )
+    layer = check_layers._file_layer(Path("src/backend/workflows/registry.py"), root)
     assert layer == "workflows"
 
 
@@ -174,13 +170,11 @@ def test_update_allowlist_merges_with_existing(tmp_path, monkeypatch) -> None:
     # Pre-populate allowlist with legacy entry
     legacy_entry = "extensions/legacy/file.py\t\textensions\t\tsrc.backend.services.foo"
     monkeypatch.setattr(check_layers, "ALLOWLIST_PATH", tmp_path / "allowlist.txt")
-    tmp_path.joinpath("allowlist.txt").write_text(
-        "# header\n" + legacy_entry + "\n"
-    )
+    tmp_path.joinpath("allowlist.txt").write_text("# header\n" + legacy_entry + "\n")
 
     # New violations to add
     new_violations = [
-        ("extensions/new/file.py", "extensions", "src.backend.services.bar"),
+        ("extensions/new/file.py", "extensions", "src.backend.services.bar")
     ]
     check_layers._save_allowlist(
         {check_layers._violation_key(v) for v in new_violations}
@@ -191,7 +185,8 @@ def test_update_allowlist_merges_with_existing(tmp_path, monkeypatch) -> None:
     assert legacy_entry in content, "legacy entry was dropped (regression)"
     # New entry added (verify with parsed keys, not raw tab chars)
     keys_in_file = [
-        line for line in content.splitlines()
+        line
+        for line in content.splitlines()
         if line.strip() and not line.startswith("#")
     ]
     assert any("extensions/new/file.py" in k for k in keys_in_file), (
@@ -240,12 +235,10 @@ def test_prune_allowlist_no_stale_returns_zero(tmp_path, monkeypatch) -> None:
     TAB = chr(9)
     current = f"extensions/current.py{TAB}extensions{TAB}src.backend.services.foo"
     monkeypatch.setattr(check_layers, "ALLOWLIST_PATH", tmp_path / "allowlist.txt")
-    tmp_path.joinpath("allowlist.txt").write_text(
-        "# header\n" + current + "\n"
-    )
+    tmp_path.joinpath("allowlist.txt").write_text("# header\n" + current + "\n")
 
     current_violations = [
-        ("extensions/current.py", "extensions", "src.backend.services.foo"),
+        ("extensions/current.py", "extensions", "src.backend.services.foo")
     ]
     removed = check_layers._prune_allowlist(
         {check_layers._violation_key(v) for v in current_violations}
@@ -266,7 +259,9 @@ def test_collect_all_violations_covers_src_and_extensions(tmp_path) -> None:
     has_ext = any(k.startswith("extensions/") for k in keys)
     # В реальном репо оба должны быть True, но для portability проверим
     # хотя бы что функция работает без exception.
-    assert has_src or has_ext, "Expected at least some violations from src/ or extensions/"
+    assert has_src or has_ext, (
+        "Expected at least some violations from src/ or extensions/"
+    )
 
 
 def test_framework_exceptions_list_exists() -> None:

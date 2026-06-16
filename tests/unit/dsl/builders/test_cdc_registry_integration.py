@@ -16,6 +16,7 @@ Note: ``CdcSourcesMixin`` is mixed into ``RouteBuilder`` via
 ``TransportSourcesMixin``. Direct call ``CdcSourcesMixin()`` fails
 (no ``__init__``). Tests use ``RouteBuilder.from_cdc_registry(...)``.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -72,9 +73,7 @@ def test_from_cdc_registry_fake() -> None:
 
 def test_from_cdc_registry_chains_with_dispatch() -> None:
     """``from_cdc_registry(...).dispatch_action(...).build()`` — end-to-end chain."""
-    builder = RouteBuilder.from_cdc_registry(
-        "orders.changes", "poll", profile="dev"
-    )
+    builder = RouteBuilder.from_cdc_registry("orders.changes", "poll", profile="dev")
     # Verify builder state — has source, route_id, source_instance
     assert hasattr(builder, "route_id")
     assert hasattr(builder, "source")
@@ -88,9 +87,7 @@ def test_legacy_from_cdc_still_works() -> None:
     Per S99 W3 lesson: split-brain consolidation, not deprecation. Legacy
     path оставлен для backward compat, новый preferred path — ``from_cdc_registry``.
     """
-    builder = RouteBuilder.from_cdc(
-        "test_legacy", "orders", dsn="postgresql://x"
-    )
+    builder = RouteBuilder.from_cdc("test_legacy", "orders", dsn="postgresql://x")
     assert builder.route_id == "test_legacy"
     assert "orders" in str(builder.source)
 

@@ -9,6 +9,10 @@ __all__ = (
     "AIFsError",
     "AIGatewayEnforcementRequiredError",
     "AIWorkspaceError",
+    "FsForbiddenWriteError",
+    "GatewayError",
+    "GatewayRateLimited",
+    "GatewayUnavailable",
     "GuardResult",
     "GuardrailViolationError",
     "MCPToolError",
@@ -141,3 +145,15 @@ class FsForbiddenWriteError(AIFsError):
         self.path = path
         self.reason = reason
         super().__init__(f"Forbidden write to {path!r}: {reason}")
+
+
+class GatewayError(RuntimeError):
+    """Базовое исключение LiteLLM-шлюза."""
+
+
+class GatewayUnavailable(GatewayError):
+    """Шлюз отключён или библиотека ``litellm`` не установлена."""
+
+
+class GatewayRateLimited(GatewayError):
+    """Провайдер ответил 429 / rate-limit."""

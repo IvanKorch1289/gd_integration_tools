@@ -6,6 +6,7 @@
 - Test override: set_notebook_execution_service_provider работает
 - Reset: reset_notebook_execution_service_overrides работает для test-isolation
 """
+
 from __future__ import annotations
 
 import ast
@@ -44,9 +45,7 @@ def _ast_notebook_service_in_init(src_path: Path) -> list[int]:
         "src/backend/dsl/engine/processors/notebook_export.py",
     ],
 )
-def test_notebook_processor_uses_di_not_init(
-    notebook_processor: str,
-) -> None:
+def test_notebook_processor_uses_di_not_init(notebook_processor: str) -> None:
     """NotebookExecutionService НЕ должен создаваться в __init__ процессора."""
     src = Path(notebook_processor)
     assert src.exists(), f"{src} not found"

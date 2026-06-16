@@ -51,7 +51,6 @@ class _HttpClientProtocol(Protocol):
 
     async def _prepare_request_kwargs(
         self,
-        *,
         data: dict[str, Any] | str | bytes | None = None,
         json_data: dict[str, Any] | list[Any] | None = None,
         files: Any | None = None,
@@ -59,7 +58,6 @@ class _HttpClientProtocol(Protocol):
 
     async def _build_headers(
         self,
-        *,
         auth_token: str | None,
         custom_headers: dict[str, str] | None,
         json_data: dict[str, Any] | list[Any] | None,

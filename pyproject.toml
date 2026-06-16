@@ -762,6 +762,12 @@ module = [
     "langchain_postgres",
     "aiobotocore",
     "aiobotocore.*",
+    "aioboto3",
+    "aioboto3.*",
+    "botocore",
+    "botocore.*",
+    "litellm",
+    "litellm.*",
     "presidio_anonymizer",
     "st_aggrid",
 ]

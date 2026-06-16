@@ -15,7 +15,10 @@ from src.backend.infrastructure.logging.factory import get_logger
 logger = get_logger(__name__)
 
 
-class CollectionMixin:
+from src.backend.services.ai.rag_service._protocol import _RAGServiceProtocol
+
+
+class CollectionMixin(_RAGServiceProtocol):
     """collection ops (delete/delete_collection/stats/count) для RAGService. S64 W4 extraction."""
 
     __slots__ = ()

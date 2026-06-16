@@ -48,20 +48,20 @@ async def test_vault_read_default_output_field_writes_full_dict() -> None:
     proc = VaultSecretProcessor(path="secret/data/db/password")
     ex = _exchange_with()
 
-    fake_sv = _fake_secret_value(
-        "secret/data/db/password", "super-secret", 3
-    )
+    fake_sv = _fake_secret_value("secret/data/db/password", "super-secret", 3)
     fake_backend = MagicMock()
     fake_backend.get = MagicMock(return_value=fake_sv)
 
-    with patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
-        return_value=MagicMock(),
-    ), patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
-        return_value=fake_backend,
-    ), patch(
-        "asyncio.to_thread", new=AsyncMock(return_value=fake_sv),
+    with (
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
+            return_value=fake_backend,
+        ),
+        patch("asyncio.to_thread", new=AsyncMock(return_value=fake_sv)),
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -84,15 +84,14 @@ async def test_vault_read_custom_output_field_writes_only_value() -> None:
 
     fake_sv = _fake_secret_value("secret/data/db/password", "pw123", 1)
 
-    with patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
-    ) as BackendCls, patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env"
+    with (
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
+        ) as BackendCls,
+        patch("src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env"),
     ):
         BackendCls.return_value.get = MagicMock(return_value=fake_sv)
-        with patch(
-            "asyncio.to_thread", new=AsyncMock(return_value=fake_sv),
-        ):
+        with patch("asyncio.to_thread", new=AsyncMock(return_value=fake_sv)):
             await proc.process(ex, context=MagicMock())
 
     assert ex.properties.get("db_password") == "pw123"
@@ -112,18 +111,19 @@ async def test_vault_read_with_version_uses_get_versioned() -> None:
     fake_backend = MagicMock()
     fake_backend.get_versioned = AsyncMock(return_value=fake_sv)
 
-    with patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
-        return_value=MagicMock(),
-    ), patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
-        return_value=fake_backend,
+    with (
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
+            return_value=fake_backend,
+        ),
     ):
         await proc.process(ex, context=MagicMock())
 
-    fake_backend.get_versioned.assert_awaited_once_with(
-        "secret/data/api/key", 7
-    )
+    fake_backend.get_versioned.assert_awaited_once_with("secret/data/api/key", 7)
     assert ex.properties["value"]["version"] == 7
 
 
@@ -136,14 +136,18 @@ async def test_vault_read_backend_exception_fails_exchange() -> None:
     proc = VaultSecretProcessor(path="secret/data/missing")
     ex = _exchange_with()
 
-    with patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
-        return_value=MagicMock(),
-    ), patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
-    ) as BackendCls, patch(
-        "asyncio.to_thread",
-        new=AsyncMock(side_effect=RuntimeError("connection refused")),
+    with (
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
+        ) as BackendCls,
+        patch(
+            "asyncio.to_thread",
+            new=AsyncMock(side_effect=RuntimeError("connection refused")),
+        ),
     ):
         BackendCls.return_value.get = MagicMock(
             side_effect=RuntimeError("connection refused")
@@ -166,12 +170,15 @@ async def test_vault_read_import_error_fails_exchange() -> None:
     # проверим более простой кейс: при попытке инстанцировать VaultBackend
     # с пустым config бросается исключение → exchange.fail.
 
-    with patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
-        return_value=MagicMock(),
-    ), patch(
-        "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
-        side_effect=ImportError("simulated: hvac not installed"),
+    with (
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
+            side_effect=ImportError("simulated: hvac not installed"),
+        ),
     ):
         await proc.process(ex, context=MagicMock())
 

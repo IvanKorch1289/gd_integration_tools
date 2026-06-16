@@ -39,9 +39,7 @@ class _StubSessionManager:
 import sys
 import types
 
-_stub_sm = types.ModuleType(
-    "src.backend.infrastructure.database.session_manager"
-)
+_stub_sm = types.ModuleType("src.backend.infrastructure.database.session_manager")
 _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defined]
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 

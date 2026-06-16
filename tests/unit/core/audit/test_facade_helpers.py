@@ -4,6 +4,7 @@ Subagent S105 W2 обнаружил 7 distinct patterns в legacy `_emit_audit`
 callsites. Path A = additive helpers в ``core/audit/facade.py`` для
 постепенной миграции. Эти тесты фиксируют контракты helpers.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,9 +18,7 @@ from src.backend.core.audit import facade
 @pytest.fixture
 def mock_audit_service() -> Any:
     """Mock ``get_unified_audit_service().emit()`` return value."""
-    mock_emit = patch(
-        "src.backend.core.audit.facade._base.get_unified_audit_service"
-    )
+    mock_emit = patch("src.backend.core.audit.facade._base.get_unified_audit_service")
     with mock_emit as mock_get:
         svc = mock_get.return_value
         yield svc
@@ -30,17 +29,19 @@ class TestEmitAuthorizationDecision:
 
     def test_allowed_decision(self, mock_audit_service: Any) -> None:
         """allowed=True → outcome=success."""
-        decision = type("D", (), {
-            "allowed": True,
-            "reason": "policy_match",
-            "matched_policy": "p1",
-            "scope_checked": "read",
-            "evaluated_at": "2026-06-13T12:00:00Z",
-        })()
+        decision = type(
+            "D",
+            (),
+            {
+                "allowed": True,
+                "reason": "policy_match",
+                "matched_policy": "p1",
+                "scope_checked": "read",
+                "evaluated_at": "2026-06-13T12:00:00Z",
+            },
+        )()
         facade.emit_authorization_decision(
-            decision=decision,
-            principal="user:alice",
-            resource="api:orders",
+            decision=decision, principal="user:alice", resource="api:orders"
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "authorization.decision"
@@ -52,29 +53,29 @@ class TestEmitAuthorizationDecision:
 
     def test_denied_decision(self, mock_audit_service: Any) -> None:
         """allowed=False → outcome=denied."""
-        decision = type("D", (), {
-            "allowed": False, "reason": "scope_mismatch",
-            "matched_policy": None, "scope_checked": "write",
-            "evaluated_at": "2026-06-13T12:00:00Z",
-        })()
+        decision = type(
+            "D",
+            (),
+            {
+                "allowed": False,
+                "reason": "scope_mismatch",
+                "matched_policy": None,
+                "scope_checked": "write",
+                "evaluated_at": "2026-06-13T12:00:00Z",
+            },
+        )()
         facade.emit_authorization_decision(
-            decision=decision,
-            principal="user:bob",
-            resource="api:admin",
+            decision=decision, principal="user:bob", resource="api:admin"
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["outcome"] == "denied"
         assert call.kwargs["details"]["allowed"] is False
 
-    def test_missing_decision_attrs_use_defaults(
-        self, mock_audit_service: Any,
-    ) -> None:
+    def test_missing_decision_attrs_use_defaults(self, mock_audit_service: Any) -> None:
         """Empty decision object → details=None values, no crash."""
         decision = type("D", (), {})()  # no attrs
         facade.emit_authorization_decision(
-            decision=decision,
-            principal="system",
-            resource="api:internal",
+            decision=decision, principal="system", resource="api:internal"
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "authorization.decision"
@@ -85,11 +86,9 @@ class TestEmitWafEvaluation:
     """Pattern A: WafDecision + outbound context."""
 
     def test_allowed_request(self, mock_audit_service: Any) -> None:
-        decision = type("D", (), {
-            "host": "api.example.com",
-            "allowed": True,
-            "reason": "rule_pass",
-        })()
+        decision = type(
+            "D", (), {"host": "api.example.com", "allowed": True, "reason": "rule_pass"}
+        )()
         facade.emit_waf_evaluation(
             decision=decision,
             plugin="core.waf",
@@ -105,11 +104,11 @@ class TestEmitWafEvaluation:
         assert call.kwargs["details"]["allowed"] is True
 
     def test_blocked_request(self, mock_audit_service: Any) -> None:
-        decision = type("D", (), {
-            "host": "evil.example.com",
-            "allowed": False,
-            "reason": "blocklist_match",
-        })()
+        decision = type(
+            "D",
+            (),
+            {"host": "evil.example.com", "allowed": False, "reason": "blocklist_match"},
+        )()
         facade.emit_waf_evaluation(
             decision=decision,
             plugin="core.waf",
@@ -142,9 +141,7 @@ class TestEmitCapabilityCheck:
         assert "tenant" not in call.kwargs["details"]
         assert "reason" not in call.kwargs["details"]
 
-    def test_denied_with_tenant_and_reason(
-        self, mock_audit_service: Any,
-    ) -> None:
+    def test_denied_with_tenant_and_reason(self, mock_audit_service: Any) -> None:
         facade.emit_capability_check(
             plugin="routes:admin",
             capability="db.write",
@@ -213,14 +210,16 @@ class TestEmitAiWorkspace:
     """Pattern A: dict-based (workspace_manager)."""
 
     def test_basic_event(self, mock_audit_service: Any) -> None:
-        facade.emit_ai_workspace({
-            "event": "workspace.create",
-            "actor": "user:alice",
-            "resource": "ws-1",
-            "action": "create",
-            "outcome": "success",
-            "isolation_level": "strict",
-        })
+        facade.emit_ai_workspace(
+            {
+                "event": "workspace.create",
+                "actor": "user:alice",
+                "resource": "ws-1",
+                "action": "create",
+                "outcome": "success",
+                "isolation_level": "strict",
+            }
+        )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "workspace.create"
         assert call.kwargs["actor"] == "user:alice"
@@ -238,14 +237,16 @@ class TestEmitAiWorkspace:
 
     def test_filters_canonical_keys(self, mock_audit_service: Any) -> None:
         """Canonical keys (actor/resource/action/outcome) NOT duplicated в details."""
-        facade.emit_ai_workspace({
-            "event": "workspace.delete",
-            "actor": "user:bob",
-            "resource": "ws-2",
-            "action": "delete",
-            "outcome": "success",
-            "extra_field": "extra_value",
-        })
+        facade.emit_ai_workspace(
+            {
+                "event": "workspace.delete",
+                "actor": "user:bob",
+                "resource": "ws-2",
+                "action": "delete",
+                "outcome": "success",
+                "extra_field": "extra_value",
+            }
+        )
         call = mock_audit_service.emit.call_args
         details = call.kwargs["details"]
         assert "actor" not in details
@@ -290,10 +291,7 @@ class TestEmitAuditSafe:
             side_effect=RuntimeError("service unavailable"),
         ):
             # Should not raise
-            result = facade.emit_audit_safe(
-                event="pii.tokenize",
-                outcome="failure",
-            )
+            result = facade.emit_audit_safe(event="pii.tokenize", outcome="failure")
             assert result is None
 
 

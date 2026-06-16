@@ -109,7 +109,9 @@ class TestSqlSensor:
                 trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
             )
         assert result is False
-        assert mock_connect.await_count >= 1  # S153 W4d: polling — multiple attempts until timeout
+        assert (
+            mock_connect.await_count >= 1
+        )  # S153 W4d: polling — multiple attempts until timeout
         mock_conn.close.assert_awaited()
 
     @pytest.mark.asyncio
@@ -250,7 +252,9 @@ class TestHttpSensor:
                 trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
             )
         assert result is False
-        assert MockClient.call_count >= 1  # S153 W4d: polling — multiple attempts until timeout
+        assert (
+            MockClient.call_count >= 1
+        )  # S153 W4d: polling — multiple attempts until timeout
         assert mock_client.request.await_count >= 1
 
     @pytest.mark.asyncio

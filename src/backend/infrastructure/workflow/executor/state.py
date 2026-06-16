@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.infrastructure.logging.factory import get_logger
@@ -22,6 +22,7 @@ StepKind = Literal[
 ]
 
 
+@dataclass
 class WorkflowStep:
     """Одна декларативная единица workflow-спека.
 
@@ -70,6 +71,7 @@ class WorkflowStep:
     until_expr: str | None = None
 
 
+@dataclass
 class WorkflowSpec:
     """Полная декларация workflow — собирается WorkflowBuilder-ом.
 

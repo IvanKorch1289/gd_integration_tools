@@ -68,7 +68,9 @@ async def test_upload_delegates_and_checks_write_capability() -> None:
         plugin="ext-1",
     )
 
-    loc = await facade.upload("docs/report.pdf", b"data", content_type="application/pdf")
+    loc = await facade.upload(
+        "docs/report.pdf", b"data", content_type="application/pdf"
+    )
 
     assert loc == "loc://docs/report.pdf"
     assert checks == [("ext-1", "storage.write", "docs/report.pdf")]

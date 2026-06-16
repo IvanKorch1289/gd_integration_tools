@@ -213,31 +213,34 @@ class PoolWarmup:
         )
         return result
 
-    async def _warmup_pg(self) -> None:
-        from sqlalchemy import text  # type: ignore[import-untyped,unused-ignore]
+    async def warmup_postgres(self, pool: Any) -> None:
+        """Прогреть готовый SQLAlchemy Engine/Connection pool."""
+        from sqlalchemy import text
 
-        # min_connections параллельных SELECT 1 — заставляет SQLAlchemy
-        # открыть требуемое число соединений в пуле.
         async def _ping() -> None:
-            async with self._pg.begin() as conn:
+            async with pool.begin() as conn:
                 await conn.execute(text("SELECT 1"))
 
         await asyncio.gather(*(_ping() for _ in range(self._min)))
+
+    async def warmup_redis(self, pool: Any) -> None:
+        """Прогреть готовый Redis client."""
+
+        async def _ping() -> None:
+            await pool.ping()
+
+        await asyncio.gather(*(_ping() for _ in range(self._min)))
+
+    async def _warmup_pg(self) -> None:
+        """Прогреть основной PG engine (конфигурированный в init)."""
+        await self.warmup_postgres(self._pg)
 
     async def _warmup_pg_replica(self) -> None:
-        from sqlalchemy import text  # type: ignore[import-untyped,unused-ignore]
-
-        async def _ping() -> None:
-            async with self._pg_replica.begin() as conn:
-                await conn.execute(text("SELECT 1"))
-
-        await asyncio.gather(*(_ping() for _ in range(self._min)))
+        await self.warmup_postgres(self._pg_replica)
 
     async def _warmup_redis(self) -> None:
-        async def _ping() -> None:
-            await self._redis.ping()
-
-        await asyncio.gather(*(_ping() for _ in range(self._min)))
+        """Прогреть основной Redis client (конфигурированный в init)."""
+        await self.warmup_redis(self._redis)
 
     async def _warmup_clickhouse(self) -> None:
         async def _ping() -> None:

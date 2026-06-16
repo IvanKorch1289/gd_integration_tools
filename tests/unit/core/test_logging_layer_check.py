@@ -15,7 +15,13 @@ from pathlib import Path
 def test_no_infrastructure_logging_imports_in_core() -> None:
     """core/* не должен импортировать infrastructure.logging.factory напрямую."""
     result = subprocess.run(
-        ["git", "grep", "-l", "from src.backend.infrastructure.logging.factory", "src/backend/core/"],
+        [
+            "git",
+            "grep",
+            "-l",
+            "from src.backend.infrastructure.logging.factory",
+            "src/backend/core/",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -28,7 +34,13 @@ def test_no_infrastructure_logging_imports_in_core() -> None:
 def test_no_infrastructure_logging_imports_in_services() -> None:
     """services/* не должен импортировать infrastructure.logging.factory напрямую."""
     result = subprocess.run(
-        ["git", "grep", "-l", "from src.backend.infrastructure.logging.factory", "src/backend/services/"],
+        [
+            "git",
+            "grep",
+            "-l",
+            "from src.backend.infrastructure.logging.factory",
+            "src/backend/services/",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -41,7 +53,13 @@ def test_no_infrastructure_logging_imports_in_services() -> None:
 def test_no_infrastructure_logging_imports_in_entrypoints() -> None:
     """entrypoints/* не должен импортировать infrastructure.logging.factory напрямую."""
     result = subprocess.run(
-        ["git", "grep", "-l", "from src.backend.infrastructure.logging.factory", "src/backend/entrypoints/"],
+        [
+            "git",
+            "grep",
+            "-l",
+            "from src.backend.infrastructure.logging.factory",
+            "src/backend/entrypoints/",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -54,7 +72,13 @@ def test_no_infrastructure_logging_imports_in_entrypoints() -> None:
 def test_no_infrastructure_logging_imports_in_dsl() -> None:
     """dsl/* не должен импортировать infrastructure.logging.factory напрямую."""
     result = subprocess.run(
-        ["git", "grep", "-l", "from src.backend.infrastructure.logging.factory", "src/backend/dsl/"],
+        [
+            "git",
+            "grep",
+            "-l",
+            "from src.backend.infrastructure.logging.factory",
+            "src/backend/dsl/",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -67,7 +91,13 @@ def test_no_infrastructure_logging_imports_in_dsl() -> None:
 def test_no_infrastructure_logging_imports_in_plugins() -> None:
     """plugins/* не должен импортировать infrastructure.logging.factory напрямую."""
     result = subprocess.run(
-        ["git", "grep", "-l", "from src.backend.infrastructure.logging.factory", "src/backend/plugins/"],
+        [
+            "git",
+            "grep",
+            "-l",
+            "from src.backend.infrastructure.logging.factory",
+            "src/backend/plugins/",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,

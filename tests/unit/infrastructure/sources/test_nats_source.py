@@ -33,9 +33,7 @@ from src.backend.infrastructure.sources.nats import NatsMessage, NatsSource
 
 
 def _make_fake_nats_msg(
-    subject: str = "orders.created",
-    data: bytes = b"{}",
-    reply: str | None = None,
+    subject: str = "orders.created", data: bytes = b"{}", reply: str | None = None
 ) -> MagicMock:
     """Создаёт mock NATS-сообщения."""
     msg = MagicMock()
@@ -163,9 +161,7 @@ async def test_stream_raises_when_already_running(
 
 
 @pytest.mark.asyncio
-async def test_stream_import_error_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_import_error_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """При отсутствии nats-py stream() немедленно поднимает ImportError."""
     # Удаляем nats из sys.modules (или подсовываем None)
     monkeypatch.delitem(sys.modules, "nats", raising=False)
@@ -190,14 +186,10 @@ async def test_stream_import_error_raises(
 
 
 @pytest.mark.asyncio
-async def test_stream_reconnect_exhausted(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_reconnect_exhausted(monkeypatch: pytest.MonkeyPatch) -> None:
     """При постоянной ошибке connect — RuntimeError после max_attempts."""
     _install_fake_nats(
-        monkeypatch,
-        [],
-        connect_raises=ConnectionError("nats unreachable"),
+        monkeypatch, [], connect_raises=ConnectionError("nats unreachable")
     )
 
     src = NatsSource(
@@ -245,9 +237,7 @@ async def test_stream_reconnects_after_initial_failure(
     monkeypatch.setitem(sys.modules, "nats", fake_nats)
 
     src = NatsSource(
-        subject="x",
-        max_reconnect_attempts=3,
-        reconnect_delay_seconds=0.01,
+        subject="x", max_reconnect_attempts=3, reconnect_delay_seconds=0.01
     )
 
     received: list[NatsMessage] = []
@@ -286,11 +276,11 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except (asyncio.TimeoutError, asyncio.CancelledError):
+    except asyncio.TimeoutError, asyncio.CancelledError:
         task.cancel()
         try:
             await task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
 
     assert len(received_events) >= 1
@@ -325,11 +315,11 @@ async def test_start_callback_error_does_not_stop(
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except (asyncio.TimeoutError, asyncio.CancelledError):
+    except asyncio.TimeoutError, asyncio.CancelledError:
         task.cancel()
         try:
             await task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
 
     # Проверяем: on_event был вызван хотя бы раз (и упал)

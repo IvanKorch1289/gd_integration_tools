@@ -30,6 +30,8 @@ violation (``core/ → entrypoints/``).
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.auth_selector import (
     require_auth,
@@ -79,7 +81,9 @@ class AuthGateway:
         effective = methods if methods is not None else self._default_method
         return await verify_request(request, methods=effective)
 
-    def require(self, methods: AuthMethod | list[AuthMethod] | None = None):
+    def require(
+        self, methods: AuthMethod | list[AuthMethod] | None = None
+    ) -> Callable[..., Any]:
         """Factory для FastAPI dependency (overrides default).
 
         Usage::

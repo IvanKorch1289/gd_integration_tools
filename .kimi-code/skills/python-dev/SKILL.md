@@ -134,4 +134,10 @@ make test           # pytest
 - Глобальные mutable state;
 - Magic numbers (выноси в `settings.py` / env);
 - Mixin-ы без явной композиции;
+- Protocol-сигнатуры, дублирующие concrete mixin: Protocol-методы пишем как
+  позиционные-only аргументы (без `*` / дефолтов) или через `# type: ignore[misc]`
+  при несовместимости;
+- Protocol-атрибуты (`_cache`, `_tenant_cache` и т.п.) не решают ``has-type``
+  само по себе — присваивайте в ``__init__`` конкретного хоста и используйте
+  локальные аннотации внутри mixin;
 - `# noqa` без обоснования в комментарии.

@@ -176,12 +176,12 @@ class ExternalDBFacade:
         """Lazy-resolve registry via getter or default import."""
         if self._registry_getter is not None:
             return self._registry_getter()
-        # Default: импорт через app bootstrap (singleton).
-        from src.backend.infrastructure.database.database.registry import (
-            get_default_external_registry,  # type: ignore[attr-defined]
+        # Default: lazy singleton реестра внешних БД (Wave 6.1).
+        from src.backend.infrastructure.database.database.accessors import (
+            get_external_db_registry,
         )
 
-        return get_default_external_registry()
+        return get_external_db_registry()
 
     # --- Public API ---
 

@@ -54,8 +54,7 @@ async def test_aigateway_invoke_blocks_when_enforce_false() -> None:
     )
 
     with patch(
-        "src.backend.core.config.features.feature_flags.ai_gateway_enforce",
-        False,
+        "src.backend.core.config.features.feature_flags.ai_gateway_enforce", False
     ):
         with pytest.raises(AIGatewayEnforcementRequiredError) as exc_info:
             await gateway.invoke(request)

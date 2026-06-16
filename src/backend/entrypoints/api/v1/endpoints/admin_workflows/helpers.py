@@ -52,7 +52,7 @@ def _bind_workflow_status() -> Any:
     return get_workflow_status_enum_provider()
 
 
-WorkflowStatus = _bind_workflow_status()
+WorkflowStatus: Any = _bind_workflow_status()
 
 
 def _instance_store() -> Any:

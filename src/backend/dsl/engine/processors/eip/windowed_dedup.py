@@ -113,9 +113,7 @@ class WindowedDedupProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет оконную дедупликацию к входящему exchange."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
-            )
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
             if not key:
@@ -201,9 +199,7 @@ class WindowedDedupProcessor(BaseProcessor):
             Десериализованное тело последнего сообщения или None.
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
-            )
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             redis_key = f"windowed:dedup:last:{self._prefix}:{key}"
             raw = await redis_client.execute("queue", lambda c: c.get(redis_key))
@@ -267,9 +263,7 @@ class WindowedCollectProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Добавляет сообщение в буфер; при смене окна — инжектирует батч."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
-            )
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
             if not key:
@@ -359,9 +353,7 @@ class WindowedCollectProcessor(BaseProcessor):
             Список дедублицированных тел сообщений.
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
-            )
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             buf_key = f"windowed:collect:buf:{key}"
             raw_items: list[bytes] = await redis_client.execute(

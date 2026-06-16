@@ -61,8 +61,8 @@ def test_build_augment_result_basic() -> None:
     ]
     result = build_augment_result(prompt="P", raw_results=raw, namespace="ns", top_k=5)
     assert result.used_results == 1
-    assert result.citations[0]["doc_id"] == "d1"
-    assert result.citations[0]["freshness"] == "fresh"
+    assert result.citations[0].source_doc == "d1"
+    assert result.citations[0].freshness == "fresh"
     assert result.worst_freshness is FreshnessLabel.FRESH
 
 
@@ -90,7 +90,7 @@ def test_build_augment_result_skips_expired_via_max_staleness() -> None:
     )
     assert result.used_results == 1
     assert result.skipped_expired == 1
-    assert result.citations[0]["doc_id"] == "d-new"
+    assert result.citations[0].source_doc == "d-new"
 
 
 def test_build_augment_result_tracks_distribution() -> None:

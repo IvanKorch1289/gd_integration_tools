@@ -22,7 +22,6 @@ from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
 )
-from src.backend.services.ai.rag_augment import AugmentResult, FreshnessLabel
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.core.cache.rag import ThreeTierRagCache
@@ -41,6 +40,7 @@ from src.backend.services.ai.rag_service.search_mixin import (
     _format_context_with_sources,  # S152 W2: re-export для tests
 )
 from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
+from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel
 
 __all__ = (
     "AugmentResult",
@@ -53,6 +53,7 @@ __all__ = (
 )
 
 
+@app_state_singleton("rag_service")
 def get_rag_service() -> RAGService:
     """S124 W2: восстановлено (потеряно при S64 W4 decomp).
 
@@ -60,7 +61,11 @@ def get_rag_service() -> RAGService:
     Используется lazy-импортом из hybrid_rag / semantic_cache /
     feedback_indexer / ai_agent.rag_mixin.
     """
-    return app_state_singleton.get_or_create("rag_service", RAGService)
+    # S133 W4: default store — memory-backed vector store для non-request
+    # контекстов (tests / DSL без зарегистрированного app.state).
+    from src.backend.core.vector_store.memory import InMemoryVectorStore
+
+    return RAGService(store=InMemoryVectorStore())
 
 
 class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):

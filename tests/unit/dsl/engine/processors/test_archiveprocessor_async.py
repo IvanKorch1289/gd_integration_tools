@@ -81,10 +81,7 @@ class TestArchiveProcessorNonBlockingZip:
         ex = _make_exchange(body=zip_bytes)
 
         start = time.monotonic()
-        await asyncio.gather(
-            proc.process(ex, AsyncMock()),
-            asyncio.sleep(SLEEP_S),
-        )
+        await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
         assert elapsed < MAX_PARALLEL_TOTAL_S, (
@@ -121,10 +118,7 @@ class TestArchiveProcessorNonBlockingZip:
         ex = _make_exchange(body=items)
 
         start = time.monotonic()
-        await asyncio.gather(
-            proc.process(ex, AsyncMock()),
-            asyncio.sleep(SLEEP_S),
-        )
+        await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
         assert elapsed < MAX_PARALLEL_TOTAL_S, (
@@ -158,10 +152,7 @@ class TestArchiveProcessorNonBlockingTar:
         ex = _make_exchange(body=tar_bytes)
 
         start = time.monotonic()
-        await asyncio.gather(
-            proc.process(ex, AsyncMock()),
-            asyncio.sleep(SLEEP_S),
-        )
+        await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
         assert elapsed < MAX_PARALLEL_TOTAL_S, (
@@ -194,10 +185,7 @@ class TestArchiveProcessorNonBlockingTar:
         ex = _make_exchange(body=items)
 
         start = time.monotonic()
-        await asyncio.gather(
-            proc.process(ex, AsyncMock()),
-            asyncio.sleep(SLEEP_S),
-        )
+        await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
         assert elapsed < MAX_PARALLEL_TOTAL_S, (
@@ -240,10 +228,7 @@ class TestArchiveProcessorFunctional:
         """TAR: create → extract round-trip возвращает исходные файлы."""
         create_proc = ArchiveProcessor(mode="create", format="tar")
         ex_create = _make_exchange(
-            body=[
-                {"name": "x.txt", "data": b"foo"},
-                {"name": "y.txt", "data": b"bar"},
-            ]
+            body=[{"name": "x.txt", "data": b"foo"}, {"name": "y.txt", "data": b"bar"}]
         )
         await create_proc.process(ex_create, AsyncMock())
         tar_bytes = ex_create.out_message.body

@@ -13,6 +13,7 @@ S93 W2 (fact-check): user/DEEP-RESEARCH список содержал "4× CB д
 Этот тест regression-блокирует попытки создать НЕ-genuinely-новый CB/retry
 implementation.
 """
+
 from __future__ import annotations
 
 import ast
@@ -34,7 +35,11 @@ def test_circuit_breaker_canonical_module_exists() -> None:
     canonical = PROJECT_ROOT / "src/backend/core/resilience/breaker.py"
     assert canonical.exists(), f"Canonical CB module missing: {canonical}"
     docstring = _read_docstring(canonical)
-    assert "V22.10.2" in docstring or "Single-Entry" in docstring or "canonical" in docstring.lower(), (
+    assert (
+        "V22.10.2" in docstring
+        or "Single-Entry" in docstring
+        or "canonical" in docstring.lower()
+    ), (
         f"Canonical CB docstring should mention 'canonical' or 'Single-Entry' / V22.10.2.\n"
         f"Got: {docstring[:200]}"
     )
@@ -114,13 +119,19 @@ def test_no_new_circuit_breaker_files_since_s93() -> None:
         "src/backend/entrypoints/middlewares/circuit_breaker.py",  # per-route middleware
     }
     found: list[Path] = []
-    for pattern in ("**/circuit_breaker*.py", "**/breaker*.py", "**/circuit_breakers*.py"):
+    for pattern in (
+        "**/circuit_breaker*.py",
+        "**/breaker*.py",
+        "**/circuit_breakers*.py",
+    ):
         for path in PROJECT_ROOT.glob(pattern):
-            if not any(skip in str(path) for skip in ("__pycache__", ".venv", "node_modules")):
+            if not any(
+                skip in str(path) for skip in ("__pycache__", ".venv", "node_modules")
+            ):
                 rel = str(path.relative_to(PROJECT_ROOT))
                 if rel not in known_locations:
                     found.append(path)
     assert not found, (
-        f"New circuit breaker files detected (not in known canonical+shim+facade+middleware):\n"
+        "New circuit breaker files detected (not in known canonical+shim+facade+middleware):\n"
         + "\n".join(f"  {p.relative_to(PROJECT_ROOT)}" for p in found)
     )

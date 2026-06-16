@@ -68,8 +68,11 @@ class DaskMixin:
         from src.backend.dsl.engine.processors.dask_compute import DaskComputeProcessor
 
         # DaskMixin — утилитарный класс (НЕ mixin в MRO RouteBuilder),
-        # поэтому создаём RouteBuilder напрямую.
-        builder = RouteBuilder(route_id=route_id)
+        # поэтому создаём RouteBuilder напрямую через .from_() (abstract
+        # attributes заполнены конструктором).
+        builder = RouteBuilder.from_(
+            route_id=route_id, source="dask:compute", description="Dask compute route"
+        )
 
         processor = DaskComputeProcessor(
             graph=list(graph),

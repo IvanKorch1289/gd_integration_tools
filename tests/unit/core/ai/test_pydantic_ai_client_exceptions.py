@@ -48,7 +48,9 @@ def test_pydantic_ai_client_reraise_unavailable() -> None:
 def test_pydantic_ai_client_reraise_rate_limit_case_insensitive() -> None:
     """Case-insensitive matching: "RATE LIMIT" тоже triggers."""
     with pytest.raises(GatewayRateLimited):
-        PydanticAIClient._reraise_normalized(Exception("RATE LIMIT hit on primary model"))
+        PydanticAIClient._reraise_normalized(
+            Exception("RATE LIMIT hit on primary model")
+        )
 
 
 def test_no_lazy_imports_in_methods() -> None:

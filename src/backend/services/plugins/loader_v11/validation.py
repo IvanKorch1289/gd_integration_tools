@@ -115,6 +115,7 @@ class ValidationMixin:
                     raise PluginInventoryConflictError(
                         plugin=manifest.name, kind=kind, name=name, owner=owner
                     )
+        return None
 
     def _record_owners(self, manifest: PluginManifestV11) -> None:
         """Запоминает имена из provides, чтобы детектить коллизии в будущем."""
@@ -128,3 +129,4 @@ class ValidationMixin:
         ):
             for name in names:
                 self._owners[kind][name] = manifest.name
+        return None

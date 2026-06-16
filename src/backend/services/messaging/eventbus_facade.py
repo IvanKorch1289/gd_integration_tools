@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.errors import ServiceError
@@ -24,6 +25,16 @@ __all__ = ("EventBusFacade",)
 _logger = get_logger("services.messaging.eventbus_facade")
 
 CapabilityChecker = Callable[[str, str, str | None], None]
+
+
+@dataclass
+class _SubscriptionRecord:
+    """Internal record for lifecycle-managed subscriptions."""
+
+    channel: str
+    handler: Any
+    topic_pattern: str | None = None
+    ack_mode: str = "auto"
 
 
 class EventBusFacade:
@@ -45,6 +56,7 @@ class EventBusFacade:
         self._bus = event_bus
         self._check = capability_check
         self._plugin = plugin
+        self._subscriptions: list[_SubscriptionRecord] = []
 
     def _assert_publish(self, channel: str) -> None:
         if self._check is not None:
@@ -85,6 +97,79 @@ class EventBusFacade:
                 "EventBusFacade subscribe failed channel=%s: %s", channel, exc
             )
             raise ServiceError(f"eventbus subscribe failed: {exc}") from exc
+
+    async def subscribe_with_lifecycle(
+        self,
+        channel: str,
+        handler: Any,
+        *,
+        topic_pattern: str | None = None,
+        ack_mode: str = "auto",
+    ) -> Any:
+        """Subscribe with lifecycle tracking for graceful shutdown.
+
+        Registers the handler and tracks it for cleanup via
+        ``unsubscribe_all()``. Used by DSL processor wiring and
+        startup hooks.
+
+        Args:
+            channel: EventBus channel to subscribe to.
+            handler: Async callback ``async (event) -> None``.
+            topic_pattern: Original DSL topic pattern (for metadata).
+            ack_mode: ``"auto"`` or ``"manual"``.
+
+        Returns:
+            Subscription handle or None.
+        """
+        self._assert_subscribe(channel)
+        try:
+            result = await self._bus.subscribe(channel, handler)
+            self._subscriptions.append(
+                _SubscriptionRecord(
+                    channel=channel,
+                    handler=handler,
+                    topic_pattern=topic_pattern,
+                    ack_mode=ack_mode,
+                )
+            )
+            _logger.info(
+                "EventBusFacade subscribe_with_lifecycle channel=%s pattern=%s",
+                channel,
+                topic_pattern,
+            )
+            return result
+        except Exception as exc:
+            _logger.warning(
+                "EventBusFacade subscribe_with_lifecycle failed channel=%s: %s",
+                channel,
+                exc,
+            )
+            raise ServiceError(f"eventbus subscribe failed: {exc}") from exc
+
+    async def unsubscribe_all(self) -> None:
+        """Unsubscribe all lifecycle-tracked subscriptions.
+
+        Called during graceful shutdown to clean up consumers.
+        Calls bus.unsubscribe() for each tracked handler.
+        """
+        count = len(self._subscriptions)
+        if count == 0:
+            return
+        _logger.info("EventBusFacade unsubscribe_all: %d subscriptions", count)
+        for sub in self._subscriptions:
+            try:
+                if hasattr(self._bus, "unsubscribe"):
+                    await self._bus.unsubscribe(sub.channel, sub.handler)
+            except Exception as exc:
+                _logger.warning(
+                    "EventBusFacade unsubscribe failed channel=%s: %s", sub.channel, exc
+                )
+        self._subscriptions.clear()
+
+    @property
+    def subscription_count(self) -> int:
+        """Number of active lifecycle-tracked subscriptions."""
+        return len(self._subscriptions)
 
     async def request(
         self,

@@ -133,7 +133,7 @@ class TestProcessorDeterminism:
             if processor_cls is None:
                 pytest.skip(f"{processor_name} not found")
             processor = processor_cls()
-        except (ImportError, TypeError):
+        except ImportError, TypeError:
             pytest.skip(f"Cannot instantiate {processor_name}")
 
         exc1, exc2 = Exchange(), Exchange()

@@ -11,6 +11,7 @@ S99 W1:
   1. Generate output НЕ содержит actionable TODO
   2. f-string substitution корректно работает (test against actual template)
 """
+
 from __future__ import annotations
 
 
@@ -21,14 +22,15 @@ def test_generate_template_no_todo() -> None:
     p = Path("src/backend/dsl/cli/generate.py")
     src = p.read_text()
     actionable_lines = [
-        line for line in src.splitlines()
+        line
+        for line in src.splitlines()
         if "TODO" in line
         and "S99 W1" not in line
         and "устаревший" not in line.lower()
         and "outdated" not in line.lower()
     ]
-    assert not actionable_lines, (
-        f"Actionable TODO found in {p}:\n  " + "\n  ".join(actionable_lines)
+    assert not actionable_lines, f"Actionable TODO found in {p}:\n  " + "\n  ".join(
+        actionable_lines
     )
 
 
@@ -75,6 +77,7 @@ def test_generate_template_not_implemented_error_uses_ptype() -> None:
     )
     # Check that {ptype} is interpolated into the error
     import re
+
     # Find the line(s) with f"{name!r} ... ptype ... not implemented"
     pattern = re.compile(r"f['\"]\\{name!r\\}[^'\"]*\\{ptype[^'\"]*not implemented")
     if not pattern.search(src):
@@ -82,7 +85,7 @@ def test_generate_template_not_implemented_error_uses_ptype() -> None:
         # Look at the block around "not implemented"
         idx = src.find("not implemented")
         if idx > 0:
-            block = src[max(0, idx - 500):idx]
+            block = src[max(0, idx - 500) : idx]
             assert "ptype" in block, (
                 f"{p} should reference {{ptype}} in NotImplementedError block. "
                 f"Current block: ...{block[-200:]}"

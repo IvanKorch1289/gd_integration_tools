@@ -111,6 +111,7 @@ class PolicyResolver:
         self._roots: list[Path] = roots or []
         self._cache: dict[tuple[str, str], AIPolicySpec] = {}
         self._policies: list[AIPolicySpec] | None = None
+        self._specific_cache: dict[tuple[str, str], AIPolicySpec | None] = {}
 
     async def resolve(self, workflow_id: str, tenant_id: str) -> AIPolicySpec | None:
         """Резолвер :class:`AIPolicySpec` по ``workflow_id`` + ``tenant_id``.

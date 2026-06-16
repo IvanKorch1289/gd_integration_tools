@@ -10,26 +10,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import Any
 
-__all__ = ("AugmentResult", "FreshnessLabel", "compute_freshness")
+from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel, RAGCitation
 
-
-class FreshnessLabel(StrEnum):
-    """Метка свежести retrieved-чанка.
-
-    Attributes:
-        FRESH: ingested_at < soft_threshold_hours.
-        STALE: soft_threshold_hours <= ingested_at < hard_threshold_hours.
-        EXPIRED: ingested_at >= hard_threshold_hours (отбрасывать).
-    """
-
-    FRESH = "fresh"
-    STALE = "stale"
-    EXPIRED = "expired"
+__all__ = ("AugmentResult", "FreshnessLabel", "RAGCitation", "compute_freshness")
 
 
 def compute_freshness(
@@ -63,45 +49,6 @@ def compute_freshness(
     return FreshnessLabel.EXPIRED
 
 
-@dataclass(slots=True)
-class AugmentResult:
-    """Структурированный результат :meth:`RAGService.augment`.
-
-    Attributes:
-        prompt: финальный prompt с inject'ом контекста.
-        citations: список ``{doc_id, chunk_idx, namespace, score, freshness}``.
-        used_results: число чанков, реально использованных в prompt
-            (после фильтрации по freshness).
-        skipped_expired: число чанков отброшенных как expired.
-        namespace: namespace из запроса (для UI badge).
-        top_k: использованный top_k параметр.
-        freshness_distribution: ``{fresh, stale, expired}`` → count.
-        worst_freshness: худшая метка из использованных (для UI badge).
-    """
-
-    prompt: str
-    citations: list[dict[str, Any]] = field(default_factory=list)
-    used_results: int = 0
-    skipped_expired: int = 0
-    namespace: str | None = None
-    top_k: int = 5
-    freshness_distribution: dict[str, int] = field(default_factory=dict)
-    worst_freshness: FreshnessLabel = FreshnessLabel.FRESH
-
-    def to_dict(self) -> dict[str, Any]:
-        """JSON-ready форма для API/UI."""
-        return {
-            "prompt": self.prompt,
-            "citations": self.citations,
-            "used_results": self.used_results,
-            "skipped_expired": self.skipped_expired,
-            "namespace": self.namespace,
-            "top_k": self.top_k,
-            "freshness_distribution": self.freshness_distribution,
-            "worst_freshness": self.worst_freshness.value,
-        }
-
-
 def build_augment_result(
     *,
     prompt: str,
@@ -124,7 +71,7 @@ def build_augment_result(
     Returns:
         :class:`AugmentResult`.
     """
-    citations: list[dict[str, Any]] = []
+    citations: list[RAGCitation] = []
     distribution = {label.value: 0 for label in FreshnessLabel}
     skipped = 0
     worst = FreshnessLabel.FRESH
@@ -163,14 +110,15 @@ def build_augment_result(
             worst = label
 
         citations.append(
-            {
-                "doc_id": meta.get("doc_id"),
-                "chunk_idx": meta.get("chunk_idx"),
-                "namespace": meta.get("namespace") or namespace,
-                "score": raw.get("score"),
-                "freshness": label.value,
-                "ingested_at": ingested_dt.isoformat() if ingested_dt else None,
-            }
+            RAGCitation(
+                source_doc=str(meta.get("doc_id") or raw.get("id") or ""),
+                chunk_id=str(raw.get("id") or ""),
+                chunk_idx=meta.get("chunk_idx"),
+                score=float(raw.get("score") or 0.0),
+                namespace=meta.get("namespace") or namespace,
+                freshness=label.value,
+                ingested_at=ingested_dt.isoformat() if ingested_dt else None,
+            )
         )
 
     return AugmentResult(

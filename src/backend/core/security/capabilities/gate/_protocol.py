@@ -21,9 +21,9 @@ class _CapabilityGateProtocol(Protocol):
     _audit: Any
     _declarations: dict[str, dict[str, CapabilityRef]]
     _cache: dict[tuple[str, str, str | None], bool]
+    _tenant_cache: dict[tuple[str, str, str, str | None], bool]
     _lru_size: int
     _tenant_declarations: dict[str, dict[str, dict[str, CapabilityRef]]]
-    _tenant_cache: dict[tuple[str, str, str, str | None], bool]
     _policy: CapabilityPolicy | None
 
     def _emit_audit(self, event: dict[str, object]) -> None: ...

@@ -239,7 +239,7 @@ class Sprints1821Flags(BaseSettings):
         description=(
             "K2 Sprint 21 Wave 3 (B-02 closure, ADR-NEW-13). Owner: K2 Resilience. "
             "Активирует core/resilience/rpa_policy.py::RPACallPolicy — композиция "
-            "tenacity retry + pybreaker + DLQ для browser_pool/cdc/file_watcher/"
+            "tenacity retry + circuit breaker + DLQ для browser_pool/cdc/file_watcher/"
             "webhook_scheduler/desktop_rpa_client. При False — call-сайты используют "
             "legacy ad-hoc try/except (события теряются без DLQ). "
             "default-OFF до миграции 5 callsites и toxiproxy-теста."
@@ -264,7 +264,7 @@ class Sprints1821Flags(BaseSettings):
         description=(
             "K2 Sprint 21 Wave 5 (G-07 closure). Owner: K2 Resilience. "
             "Активирует обёртку send()/execute_webhook() через RPACallPolicy — "
-            "tenacity retry + pybreaker per-host + DLQ при исчерпании budget. "
+            "tenacity retry + circuit breaker per-host + DLQ при исчерпании budget. "
             "При False — webhook вызовы используют legacy try/except (события теряются). "
             "default-OFF до интеграции с RPACallPolicy (W3) и chaos-теста 5xx burst."
         ),

@@ -18,6 +18,7 @@ NB: integration с ``RouteBuilder`` не тестируется намеренн
 ``RouteBuilder.__init__`` имеет pre-existing bug (TypeError on cls()).
 S97+ — отдельная задача фикс ``RouteBuilder``.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -108,8 +109,7 @@ def test_from_sse_multi_route_id_suffix() -> None:
     with patch("src.backend.infrastructure.sources.sse.SSESource"):
         try:
             builder = StreamingSSEMixin.from_sse_multi(
-                "my_streams",
-                ["https://a/sse", "https://b/sse"],
+                "my_streams", ["https://a/sse", "https://b/sse"]
             )
             assert builder is not None
         except (TypeError, AttributeError) as exc:
@@ -128,9 +128,7 @@ def test_from_sse_multi_idempotent_suffix() -> None:
 
     with patch("src.backend.infrastructure.sources.sse.SSESource"):
         try:
-            StreamingSSEMixin.from_sse_multi(
-                "already.multi", ["https://a/sse"]
-            )
+            StreamingSSEMixin.from_sse_multi("already.multi", ["https://a/sse"])
         except (TypeError, AttributeError) as exc:
             if "takes no arguments" in str(exc) or "from_" in str(exc):
                 pytest.skip(f"Pre-existing RouteBuilder.__init__ bug: {exc}")

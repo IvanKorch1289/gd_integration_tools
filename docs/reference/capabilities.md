@@ -22,6 +22,7 @@
 | `cache.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение кэша через CacheFacade (namespace по ':'). |
 | `cache.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Запись в кэш через CacheFacade (namespace по ':'). |
 | `code.execute` | ✅ | `ExactAliasMatcher` | ➖ | Запуск пользовательского кода в sandbox (e2b/pyodide) через CodeSandbox; прямой subprocess запрещён (V15 R-V15-4). |
+| `db.execute_procedure` | ✅ | `GlobScopeMatcher` | ➖ | Вызов stored procedure во внешней БД через ExternalDatabaseFacade. |
 | `db.read` | ✅ | `ExactAliasMatcher` | ➖ | Чтение из БД через DatabaseFacade (read-only-сессия). |
 | `db.write` | ✅ | `ExactAliasMatcher` | ➖ | Запись в БД через DatabaseFacade (rw-сессия). |
 | `fs.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение файлов через FSFacade (path-glob по '/'). |
@@ -43,5 +44,7 @@
 | `pii.write` | ✅ | `GlobScopeMatcher` | ➖ | Запись маскированных payload-ов в outbound LLM / RAG / DLQ / Langfuse traces; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
 | `secrets.read` | ✅ | `URISchemeMatcher` | ➖ | Чтение секрета через SecretsFacade (vault:// / env:// / kms://). |
 | `skill.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов AI skill через SkillRegistry (ADR-NEW-22, S26 W5); scope = skill-id pattern (``credit.score.calculate``, ``credit.*``) или '*' (S27 W3 DSL .skill_invoke()). |
+| `storage.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение из объектного хранилища через StorageFacade (key/prefix). |
+| `storage.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Запись/удаление в объектном хранилище через StorageFacade (key). |
 | `workflow.signal` | ✅ | `GlobScopeMatcher` | ➖ | Сигнал workflow через WorkflowFacade. |
 | `workflow.start` | ✅ | `GlobScopeMatcher` | ➖ | Запуск workflow через WorkflowFacade (workflow_id-glob). |

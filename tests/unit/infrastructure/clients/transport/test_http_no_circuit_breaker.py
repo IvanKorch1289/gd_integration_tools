@@ -110,12 +110,7 @@ class TestLayerLinterNoRegression:
         import subprocess
 
         result = subprocess.run(
-            [
-                str(_VENV_PYTHON),
-                "tools/check_layers.py",
-                "--root",
-                "extensions",
-            ],
+            [str(_VENV_PYTHON), "tools/check_layers.py", "--root", "extensions"],
             capture_output=True,
             text=True,
             timeout=60,

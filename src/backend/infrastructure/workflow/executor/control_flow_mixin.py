@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import asyncio
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
-
-from typing import Literal
+    from src.backend.infrastructure.workflow.executor._protocol import (
+        _DSLStepExecutorProtocol,
+    )
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
@@ -18,44 +19,85 @@ from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 
 _logger = get_logger("workflow.executor")
 
-# -- Declarative spec types (serializable, hot-reloadable) --------------
-
-StepKind = Literal[
-    "sequential",  # linear processors chain
-    "branch",  # if/else on predicate
-    "loop",  # while with max_iter
-    "for_each",  # map over collection
-    "sub_flow",  # spawn child workflow + pause
-    "wait",  # durable pause (next_attempt_at)
-    "compensate",  # rollback chain (failure-only)
-]
-
 
 class ControlFlowMixin:
     """branch + loop + for_each control flow для DSLStepExecutor. S61 W3 extraction."""
 
     __slots__ = ()
 
-    def _exec_branch(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
-        """if/else по predicate → выбираем branch, далее executeть inline."""
+    if TYPE_CHECKING:
+        _protocol_self: _DSLStepExecutorProtocol
+
+    async def _exec_branch(
+        self: "_DSLStepExecutorProtocol",
+        step: WorkflowStep,
+        state: WorkflowState,
+        instance: WorkflowInstanceRow,
+    ) -> StepResult:
+        """if/else по predicate → выбираем branch и выполняем sub-steps inline."""
         chosen = "then" if self._eval_predicate(step.predicate, state) else "else"
+        sub_steps = step.then_steps if chosen == "then" else step.else_steps
+
+        events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = [
+            (
+                WorkflowEventType.branch_taken,
+                {"chosen": chosen, "branch_name": step.name},
+                step.name,
+            )
+        ]
+
+        if not sub_steps:
+            return StepResult(
+                outcome=StepOutcome.CONTINUE,
+                events=events,
+                output_state={"branch_choice": chosen},
+            )
+
+        body = dict(state.exchange_snapshot)
+        for sub_step in sub_steps:
+            if sub_step.kind == "sequential":
+                for proc in sub_step.processors:
+                    try:
+                        result = await asyncio.wait_for(
+                            proc(body), timeout=self._timeout_per_step_s
+                        )
+                    except TimeoutError:
+                        return StepResult(
+                            outcome=StepOutcome.FAILED,
+                            error_message="branch sub-step processor timeout",
+                            events=events
+                            + [
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout"},
+                                    sub_step.name,
+                                )
+                            ],
+                        )
+                    if isinstance(result, dict):
+                        body = result
+            else:
+                _logger.warning(
+                    "branch sub-step kind=%s not supported inline, skipping",
+                    sub_step.kind,
+                )
+
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=[
-                (
-                    WorkflowEventType.branch_taken,
-                    {"chosen": chosen, "branch_name": step.name},
-                    step.name,
-                )
-            ],
-            output_state={"branch_choice": chosen},
+            events=events,
+            output_state={"branch_choice": chosen, "exchange_snapshot": body},
         )
 
-    def _exec_loop(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
+    async def _exec_loop(
+        self: "_DSLStepExecutorProtocol",
+        step: WorkflowStep,
+        state: WorkflowState,
+        instance: WorkflowInstanceRow,
+    ) -> StepResult:
         """while-loop: evaluate predicate → продолжать или выйти.
 
         Каждая итерация — event `loop_iter`. Hard-cap `max_iter` защищает
-        от infinite loop.
+        от infinite loop. Выполняет body_steps inline.
         """
         iter_count = state.loop_counters.get(step.name, 0)
         if iter_count >= step.max_iter:
@@ -85,20 +127,58 @@ class ControlFlowMixin:
                     )
                 ],
             )
+
+        events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = [
+            (
+                WorkflowEventType.loop_iter,
+                {"iter": iter_count + 1, "loop_name": step.name},
+                step.name,
+            )
+        ]
+
+        body = dict(state.exchange_snapshot)
+        for body_step in step.body_steps:
+            if body_step.kind == "sequential":
+                for proc in body_step.processors:
+                    try:
+                        result = await asyncio.wait_for(
+                            proc(body), timeout=self._timeout_per_step_s
+                        )
+                    except TimeoutError:
+                        return StepResult(
+                            outcome=StepOutcome.FAILED,
+                            error_message=f"loop body processor timeout at iter {iter_count}",
+                            events=events
+                            + [
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout", "iter": iter_count},
+                                    body_step.name,
+                                )
+                            ],
+                        )
+                    if isinstance(result, dict):
+                        body = result
+            else:
+                _logger.warning(
+                    "loop body step kind=%s not supported inline, skipping",
+                    body_step.kind,
+                )
+
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=[
-                (
-                    WorkflowEventType.loop_iter,
-                    {"iter": iter_count + 1, "loop_name": step.name},
-                    step.name,
-                )
-            ],
-            output_state={"loop_counters": {step.name: iter_count + 1}},
+            events=events,
+            output_state={
+                "loop_counters": {step.name: iter_count + 1},
+                "exchange_snapshot": body,
+            },
         )
 
     async def _exec_for_each(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
+        self: "_DSLStepExecutorProtocol",
+        step: WorkflowStep,
+        state: WorkflowState,
+        instance: WorkflowInstanceRow,
     ) -> StepResult:
         """Map body_steps over collection.
 
@@ -122,14 +202,105 @@ class ControlFlowMixin:
                 ],
             )
         total = len(collection)
+
+        events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = [
+            (
+                WorkflowEventType.step_started,
+                {"items": total, "parallel": step.parallel, "for_each": step.name},
+                step.name,
+            )
+        ]
+
+        if step.parallel:
+            semaphore = asyncio.Semaphore(step.max_concurrent)
+
+            async def _process_item(item: Any, idx: int) -> dict[str, Any]:
+                async with semaphore:
+                    body = dict(state.exchange_snapshot)
+                    body["current_item"] = item
+                    body["current_index"] = idx
+                    for body_step in step.body_steps:
+                        if body_step.kind == "sequential":
+                            for proc in body_step.processors:
+                                try:
+                                    result = await asyncio.wait_for(
+                                        proc(body), timeout=self._timeout_per_step_s
+                                    )
+                                except TimeoutError:
+                                    raise
+                                if isinstance(result, dict):
+                                    body = result
+                    return body
+
+            results = await asyncio.gather(
+                *[_process_item(item, idx) for idx, item in enumerate(collection)],
+                return_exceptions=True,
+            )
+
+            # Check for exceptions in results (gather with return_exceptions=True)
+            errors: list[Exception] = []
+            for idx, r in enumerate(results):
+                if isinstance(r, Exception):
+                    _logger.warning(
+                        "for_each item %d raised %s: %s", idx, type(r).__name__, r
+                    )
+                    errors.append(r)
+
+            if errors:
+                return StepResult(
+                    outcome=StepOutcome.FAILED,
+                    error_message=f"for_each: {len(errors)} items failed",
+                    events=events
+                    + [
+                        (
+                            WorkflowEventType.step_failed,
+                            {"reason": "item_error", "count": len(errors)},
+                            step.name,
+                        )
+                    ],
+                )
+
+            final_body = dict(state.exchange_snapshot)
+            for r in results:
+                if isinstance(r, dict):
+                    final_body.update(r)
+        else:
+            final_body = dict(state.exchange_snapshot)
+            for idx, item in enumerate(collection):
+                final_body["current_item"] = item
+                final_body["current_index"] = idx
+                for body_step in step.body_steps:
+                    if body_step.kind == "sequential":
+                        for proc in body_step.processors:
+                            try:
+                                result = await asyncio.wait_for(
+                                    proc(final_body), timeout=self._timeout_per_step_s
+                                )
+                            except TimeoutError:
+                                return StepResult(
+                                    outcome=StepOutcome.FAILED,
+                                    error_message=f"for_each sequential timeout at item {idx}",
+                                    events=events
+                                    + [
+                                        (
+                                            WorkflowEventType.step_failed,
+                                            {"reason": "timeout", "index": idx},
+                                            step.name,
+                                        )
+                                    ],
+                                )
+                            if isinstance(result, dict):
+                                final_body = result
+
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=[
+            events=events
+            + [
                 (
-                    WorkflowEventType.step_started,
-                    {"items": total, "parallel": step.parallel, "for_each": step.name},
+                    WorkflowEventType.step_finished,
+                    {"items": total, "completed": True},
                     step.name,
                 )
             ],
-            output_state={"for_each_count": total},
+            output_state={"for_each_count": total, "exchange_snapshot": final_body},
         )

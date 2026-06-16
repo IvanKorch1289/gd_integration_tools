@@ -228,8 +228,7 @@ async def test_leader_election_lock_not_acquired_skips_scheduler(
 
 @pytest.mark.asyncio
 async def test_stop_if_leader_calls_scheduler_stop(
-    reset_leader_flag: object,
-    mock_scheduler_manager: MagicMock,
+    reset_leader_flag: object, mock_scheduler_manager: MagicMock
 ) -> None:
     """``_stop_scheduler_if_leader()`` на leader → ``scheduler.stop()``."""
     _setup_infra._scheduler_leader_acquired = True
@@ -242,8 +241,7 @@ async def test_stop_if_leader_calls_scheduler_stop(
 
 @pytest.mark.asyncio
 async def test_stop_if_non_leader_skips_scheduler_stop(
-    reset_leader_flag: object,
-    mock_scheduler_manager: MagicMock,
+    reset_leader_flag: object, mock_scheduler_manager: MagicMock
 ) -> None:
     """``_stop_scheduler_if_leader()`` на non-leader → ``scheduler.stop()`` НЕ вызван.
 

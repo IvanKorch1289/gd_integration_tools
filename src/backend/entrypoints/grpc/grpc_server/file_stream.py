@@ -98,8 +98,13 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
             :class:`FileChunk` последовательно. Последний chunk имеет
             ``is_last=True`` и заполненный ``final_fingerprint``.
         """
-        # Late import: files_pb2 regen-зависимый
-        from src.backend.entrypoints.grpc.protobuf.files_pb2 import FileChunk
+        # Late import: files_pb2 regen-зависимый (модули protobuf — динамически
+        # генерируются protoc; mypy не видит message-классы).
+        from src.backend.entrypoints.grpc.protobuf import (
+            files_pb2,  # type: ignore[attr-defined]
+        )
+
+        FileChunk = files_pb2.FileChunk  # type: ignore[attr-defined]
 
         storage = self._get_storage() if self._get_storage else None
         if storage is None:
@@ -144,7 +149,11 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         Returns:
             :class:`FileUploadResponse` с file_id, object_uuid, size, fingerprint.
         """
-        from src.backend.entrypoints.grpc.protobuf.files_pb2 import FileUploadResponse
+        from src.backend.entrypoints.grpc.protobuf import (
+            files_pb2,  # type: ignore[attr-defined]
+        )
+
+        FileUploadResponse = files_pb2.FileUploadResponse  # type: ignore[attr-defined]
 
         storage = self._get_storage() if self._get_storage else None
         if storage is None:

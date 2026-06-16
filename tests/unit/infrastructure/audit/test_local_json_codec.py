@@ -100,10 +100,7 @@ def test_dumps_str_real_world_audit_record() -> None:
         "user_id": "user-456",
         "action": "login",
         "timestamp": datetime(2026, 6, 12, 14, 30, 0),
-        "metadata": {
-            "ip": "192.168.1.1",
-            "user_agent": "Mozilla/5.0",
-        },
+        "metadata": {"ip": "192.168.1.1", "user_agent": "Mozilla/5.0"},
     }
     result = dumps_str(record)
     parsed = json.loads(result)

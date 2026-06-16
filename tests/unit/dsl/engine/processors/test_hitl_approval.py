@@ -26,10 +26,11 @@ from src.backend.services.workflows.hitl_service import (
 )
 
 
-def _exchange(body: Any = None, properties: dict[str, Any] | None = None) -> Exchange[Any]:
+def _exchange(
+    body: Any = None, properties: dict[str, Any] | None = None
+) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}),
-        properties=properties or {},
+        in_message=Message(body=body, headers={}), properties=properties or {}
     )
 
 
@@ -43,9 +44,7 @@ async def test_approve_sets_hitl_approval_property() -> None:
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
     proc = HitlApprovalProcessor(
-        hitl_service=svc,
-        title="Approve transfer",
-        timeout_seconds=5.0,
+        hitl_service=svc, title="Approve transfer", timeout_seconds=5.0
     )
     ex = _exchange(body={"amount": 1000})
     ctx = _context()
@@ -75,9 +74,7 @@ async def test_reject_fails_exchange() -> None:
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
     proc = HitlApprovalProcessor(
-        hitl_service=svc,
-        title="Approve transfer",
-        timeout_seconds=5.0,
+        hitl_service=svc, title="Approve transfer", timeout_seconds=5.0
     )
     ex = _exchange(body={"amount": 1000})
     ctx = _context()
@@ -104,9 +101,7 @@ async def test_timeout_fails_exchange() -> None:
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
     proc = HitlApprovalProcessor(
-        hitl_service=svc,
-        title="Approve transfer",
-        timeout_seconds=0.05,
+        hitl_service=svc, title="Approve transfer", timeout_seconds=0.05
     )
     ex = _exchange(body={"amount": 1000})
     ctx = _context()
@@ -123,9 +118,7 @@ async def test_request_info_then_approve() -> None:
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
     proc = HitlApprovalProcessor(
-        hitl_service=svc,
-        title="Approve transfer",
-        timeout_seconds=5.0,
+        hitl_service=svc, title="Approve transfer", timeout_seconds=5.0
     )
     ex = _exchange(body={"amount": 1000})
     ctx = _context()
@@ -147,9 +140,7 @@ async def test_request_info_then_approve() -> None:
         second_id = pending[0].signal_id
         assert second_id != first_id
         await svc.resolve(
-            signal_id=second_id,
-            action=HitlAction.APPROVE,
-            resolved_by="op@bank.local",
+            signal_id=second_id, action=HitlAction.APPROVE, resolved_by="op@bank.local"
         )
 
     asyncio.create_task(_request_info_then_approve())
