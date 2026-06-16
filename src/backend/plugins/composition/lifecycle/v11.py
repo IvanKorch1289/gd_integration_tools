@@ -18,8 +18,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 
 app_logger = get_logger("application")
 

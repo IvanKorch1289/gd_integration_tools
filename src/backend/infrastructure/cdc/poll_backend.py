@@ -13,6 +13,7 @@ Production path: ``ListenNotifyCDCBackend`` (PG) или
 * Не обнаруживает DELETE.
 * Подходит для любой БД с поддержкой timestamp-колонок.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -99,9 +100,7 @@ class PollCDCBackend(CDCSource):
                 if self._stopped.is_set():
                     return
                 if not isinstance(raw, dict):
-                    _logger.warning(
-                        "PollCDCBackend feed: skip non-dict entry: %r", raw
-                    )
+                    _logger.warning("PollCDCBackend feed: skip non-dict entry: %r", raw)
                     continue
                 last_cursor = str(
                     raw.get("timestamp") or raw.get("cursor") or last_cursor
@@ -163,8 +162,7 @@ class PollCDCBackend(CDCSource):
                     timestamp=datetime.now(UTC),
                     new=raw.get("new"),
                     cursor=CDCCursor(
-                        value=str(raw.get("cursor", start_cursor.value)),
-                        backend="poll",
+                        value=str(raw.get("cursor", start_cursor.value)), backend="poll"
                     ),
                 )
         return

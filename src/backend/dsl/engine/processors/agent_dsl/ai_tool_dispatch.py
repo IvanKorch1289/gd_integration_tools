@@ -117,8 +117,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
                 "%s: query_property %r пуст — skip", self.name, self.query_property
             )
             exchange.set_property(
-                self.result_property,
-                {"dispatched": False, "reason": "empty_query"},
+                self.result_property, {"dispatched": False, "reason": "empty_query"}
             )
             return
 
@@ -264,9 +263,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
             )
             response = await gateway.invoke(request)
         except Exception as exc:
-            _logger.warning(
-                "%s: AIGateway.invoke failed (%s) — skip", self.name, exc
-            )
+            _logger.warning("%s: AIGateway.invoke failed (%s) — skip", self.name, exc)
             return None
 
         return self._parse_tool_selection(response.content)

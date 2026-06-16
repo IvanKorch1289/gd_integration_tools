@@ -27,17 +27,15 @@ from __future__ import annotations
 # Canonical re-exports (backward compat с pre-S107 callers)
 from src.backend.core.audit.facade._base import emit_audit, emit_audit_safe
 from src.backend.core.audit.facade.ai import emit_ai_workspace
-from src.backend.core.audit.facade.authorization import (
-    emit_authorization_decision,
-)
-from src.backend.core.audit.facade.banking import emit_banking_audit
-from src.backend.core.audit.facade.capability import emit_capability_check
-from src.backend.core.audit.facade.secrets import emit_secret_rotation
-from src.backend.core.audit.facade.waf import emit_waf_evaluation
 from src.backend.core.audit.facade.audit_service import (  # noqa: F401
     AuditService,
     get_unified_audit_service,
 )
+from src.backend.core.audit.facade.authorization import emit_authorization_decision
+from src.backend.core.audit.facade.banking import emit_banking_audit
+from src.backend.core.audit.facade.capability import emit_capability_check
+from src.backend.core.audit.facade.secrets import emit_secret_rotation
+from src.backend.core.audit.facade.waf import emit_waf_evaluation
 
 __all__ = (
     "AuditService",

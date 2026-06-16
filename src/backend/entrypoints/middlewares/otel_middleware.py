@@ -137,7 +137,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
                 span.set_attribute("http.status_code", response.status_code)
                 if response.status_code >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response.status_code}"))
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 pass
 
             # Post-response context: route_id/tenant могут быть выставлены
@@ -146,7 +146,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
-                except (AttributeError, TypeError):
+                except AttributeError, TypeError:
                     pass
             return response
 
@@ -219,9 +219,9 @@ class OtelMiddleware(BaseHTTPMiddleware):
         except Exception:  # pragma: no cover
             try:
                 span.set_attribute("error", True)
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 pass
         try:
             span.record_exception(exc)
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass

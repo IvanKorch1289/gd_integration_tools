@@ -38,12 +38,8 @@ def __getattr__(name: str) -> Any:
         import importlib
 
         if name == "LoggerProtocol":
-            mod = importlib.import_module(
-                "src.backend.infrastructure.logging.base"
-            )
+            mod = importlib.import_module("src.backend.infrastructure.logging.base")
         else:
-            mod = importlib.import_module(
-                "src.backend.infrastructure.logging.factory"
-            )
+            mod = importlib.import_module("src.backend.infrastructure.logging.factory")
         return getattr(mod, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

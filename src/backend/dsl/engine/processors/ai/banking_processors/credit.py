@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — credit.py part of banking_processors decomp.
 
 Classes: CreditScoreProcessor.
 
 Credit score processor.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

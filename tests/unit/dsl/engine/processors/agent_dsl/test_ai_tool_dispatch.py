@@ -20,10 +20,10 @@ import pytest
 from src.backend.dsl.builders.base import RouteBuilder
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
     AIToolDispatchProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 
 
 def _ex(body: str | None = None, **props: str) -> Exchange[str]:
@@ -44,8 +44,7 @@ def test_ai_tool_dispatch_dsl_registers_processor() -> None:
     """``RouteBuilder.ai_tool_dispatch(...)`` — добавляет AIToolDispatchProcessor."""
     b = RouteBuilder("test", source="kafka:orders")
     result = b.ai_tool_dispatch(
-        available_tool_ids=["order.get", "order.list"],
-        query="get order 123",
+        available_tool_ids=["order.get", "order.list"], query="get order 123"
     )
     assert isinstance(result, RouteBuilder)
     assert result is b
@@ -61,8 +60,7 @@ def test_ai_tool_dispatch_chainable_with_other_methods() -> None:
         RouteBuilder("test", source="kafka:orders")
         .set_property("user_query", "show my orders")
         .ai_tool_dispatch(
-            available_tool_ids=["order.list"],
-            query_property="user_query",
+            available_tool_ids=["order.list"], query_property="user_query"
         )
         .audit(action="tool_dispatched")
     )
@@ -94,9 +92,7 @@ def test_ai_tool_dispatch_accepts_query_only() -> None:
 
 def test_ai_tool_dispatch_accepts_query_property_only() -> None:
     """Только query_property — OK."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["x"], query_property="body.q"
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["x"], query_property="body.q")
     assert p.query is None
     assert p.query_property == "body.q"
 
@@ -106,10 +102,7 @@ def test_ai_tool_dispatch_accepts_query_property_only() -> None:
 
 def test_ai_tool_dispatch_capability_scope_is_sorted_join() -> None:
     """Scope = sorted joined tool_ids (whitelist fingerprint для audit)."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["c.b", "a.c", "b.a"],
-        query="x",
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["c.b", "a.c", "b.a"], query="x")
     scope = p._capability_scope(_ex())
     assert scope == "a.c,b.a,c.b"
 
@@ -129,8 +122,7 @@ def test_ai_tool_dispatch_inherits_base_ai_processor() -> None:
 async def test_ai_tool_dispatch_skeleton_writes_scaffold_result() -> None:
     """S107 W4 real LLM-wiring: при LLM unavailable → reason='no_selection'."""
     p = AIToolDispatchProcessor(
-        available_tool_ids=["order.get", "order.list"],
-        query="get order 123",
+        available_tool_ids=["order.get", "order.list"], query="get order 123"
     )
     ex = _ex()
     await p._run(ex, _ctx())
@@ -147,10 +139,7 @@ async def test_ai_tool_dispatch_skeleton_writes_scaffold_result() -> None:
 @pytest.mark.asyncio
 async def test_ai_tool_dispatch_skeleton_handles_empty_query_property() -> None:
     """Пустой query_property → result=empty_query (graceful)."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["x"],
-        query_property="missing",
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["x"], query_property="missing")
     ex = _ex()  # no property "missing"
     await p._run(ex, _ctx())
 
@@ -161,10 +150,7 @@ async def test_ai_tool_dispatch_skeleton_handles_empty_query_property() -> None:
 @pytest.mark.asyncio
 async def test_ai_tool_dispatch_skeleton_uses_dynamic_query() -> None:
     """query_property подхватывается из exchange."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["x"],
-        query_property="user_q",
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["x"], query_property="user_q")
     ex = _ex(user_q="show me X")
     await p._run(ex, _ctx())
 
@@ -184,8 +170,7 @@ def test_ai_tool_dispatch_resolve_tools_includes_unavailable_as_false() -> None:
     ``available: True`` (scaffold-режим).
     """
     p = AIToolDispatchProcessor(
-        available_tool_ids=["definitely_not_a_real_tool_xyz"],
-        query="x",
+        available_tool_ids=["definitely_not_a_real_tool_xyz"], query="x"
     )
     import json
 
@@ -196,10 +181,7 @@ def test_ai_tool_dispatch_resolve_tools_includes_unavailable_as_false() -> None:
 
 def test_ai_tool_dispatch_resolve_tools_scaffold_fallback_on_registry_error() -> None:
     """При ошибке импорта/резолва ToolRegistry — generic-описание (scaffold)."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["a", "b"],
-        query="x",
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["a", "b"], query="x")
     import json
     from unittest.mock import patch
 
@@ -245,7 +227,9 @@ def test_ai_tool_dispatch_omits_default_query_in_spec() -> None:
 
 
 @pytest.mark.asyncio
-async def test_ai_tool_dispatch_end_to_end_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_ai_tool_dispatch_end_to_end_happy_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """S108 W4: AIGateway returns valid tool_id+args → tool.callable invoked → result written.
 
     Full plugin discovery flow: mock AIGateway (returns LLM selection)
@@ -263,8 +247,7 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(monkeypatch: pytest.Monkey
     mock_gateway_instance = MagicMock()
     mock_gateway_instance.invoke = _mock_invoke
     monkeypatch.setattr(
-        "src.backend.core.ai.gateway.AIGateway",
-        lambda *a, **kw: mock_gateway_instance,
+        "src.backend.core.ai.gateway.AIGateway", lambda *a, **kw: mock_gateway_instance
     )
 
     # Mock tool callable — captures args for assertion
@@ -296,10 +279,7 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(monkeypatch: pytest.Monkey
         lambda: mock_registry,
     )
 
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["echo_tool"],
-        query="test query",
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["echo_tool"], query="test query")
     ex = _ex()
     await p._run(ex, _ctx())
 
@@ -324,15 +304,12 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
     from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
     async def _mock_invoke(request: AIRequest) -> AIResponse:
-        return AIResponse(
-            content='{"tool_id": "rogue_tool", "args": {"x": 1}}'
-        )
+        return AIResponse(content='{"tool_id": "rogue_tool", "args": {"x": 1}}')
 
     mock_gateway_instance = MagicMock()
     mock_gateway_instance.invoke = _mock_invoke
     monkeypatch.setattr(
-        "src.backend.core.ai.gateway.AIGateway",
-        lambda *a, **kw: mock_gateway_instance,
+        "src.backend.core.ai.gateway.AIGateway", lambda *a, **kw: mock_gateway_instance
     )
 
     # Registry: _resolve_tools_description calls registry.get("safe_tool")
@@ -368,9 +345,7 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
 @pytest.mark.asyncio
 async def test_ai_tool_dispatch_no_selection_when_llm_unavailable() -> None:
     """AIGateway.invoke fails → reason='no_selection' (graceful)."""
-    p = AIToolDispatchProcessor(
-        available_tool_ids=["x"], query="test"
-    )
+    p = AIToolDispatchProcessor(available_tool_ids=["x"], query="test")
     ex = _ex()
     # AIGateway raises (в test env) → catch в _ask_llm_for_tool_selection
     await p._run(ex, _ctx())
@@ -386,9 +361,7 @@ def test_ai_tool_dispatch_parse_tool_selection_handles_fences() -> None:
     parsed = p._parse_tool_selection('{"tool_id": "x", "args": {"k": 1}}')
     assert parsed == {"tool_id": "x", "args": {"k": 1}}
     # Test 2: JSON в markdown fence
-    parsed = p._parse_tool_selection(
-        '```json\n{"tool_id": "x", "args": {"k": 2}}\n```'
-    )
+    parsed = p._parse_tool_selection('```json\n{"tool_id": "x", "args": {"k": 2}}\n```')
     assert parsed == {"tool_id": "x", "args": {"k": 2}}
     # Test 3: с leading/trailing whitespace
     parsed = p._parse_tool_selection('  {"tool_id": "x"}  ')

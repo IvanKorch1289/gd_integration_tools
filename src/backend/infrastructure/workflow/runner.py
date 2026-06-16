@@ -43,9 +43,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.domain.models.workflow_instance import WorkflowStatus
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowEventStore,
@@ -212,7 +212,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):
+                except asyncio.CancelledError, Exception:
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )

@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W3 - l3_cache.py part of semantic_cache decomp.
 
 Per-class file split.
 
 Classes: L3RetrievalGraphCache.
 """
+
+from __future__ import annotations
 
 import asyncio
 import contextlib

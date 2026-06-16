@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """CDC client package (S60 W2 decomp from cdc.py 538 LOC).
 
 7 classes + 1 helper decomposed в 3 files (per concern):
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.infrastructure.clients.external.cdc import CDCClient`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.infrastructure.clients.external.cdc.client import (
     CDCClient,  # S60 W2: re-export

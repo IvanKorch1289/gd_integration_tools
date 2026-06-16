@@ -107,8 +107,7 @@ class RedisDedupeStore:
         except Exception as exc:
             if self._fail_closed:
                 logger.error(
-                    "RedisDedupeStore failed in fail-closed mode (re-raising): %s",
-                    exc,
+                    "RedisDedupeStore failed in fail-closed mode (re-raising): %s", exc
                 )
                 raise
             logger.warning("RedisDedupeStore failed (degrade to non-dup): %s", exc)

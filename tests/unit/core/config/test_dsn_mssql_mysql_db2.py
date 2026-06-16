@@ -11,15 +11,13 @@ Verifies DSN format для новых database types в ``DatabaseConnectionSett
     * Поля пула (``pool_size``, ``max_overflow``, ``pool_recycle`` и т.д.)
       берутся из YAML и не переопределяются в тестах.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.enums.database import DatabaseTypeChoices
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Fixtures

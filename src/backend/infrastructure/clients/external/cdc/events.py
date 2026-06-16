@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S60 W2 — events.py part of cdc decomp.
 
 Classes: CDCEvent, CDCSubscription.
 
 CDCEvent (Pydantic-ish) + CDCSubscription (data classes).
 """
+
+from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import field

@@ -13,6 +13,7 @@ Pre-S98: ``core/middleware/__init__.py:12`` содержал outdated TODO
 5. ``_resolve_chain_order`` diff algorithm.
 6. No TODO markers в ``core/middleware/__init__.py``.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -20,10 +21,7 @@ import pytest
 
 def test_middleware_registry_build_chain_works() -> None:
     """``build_chain`` actual implementation (S70 W1), not scaffold."""
-    from src.backend.core.middleware import (
-        MiddlewareRegistry,
-        RouteMiddlewareConfig,
-    )
+    from src.backend.core.middleware import MiddlewareRegistry, RouteMiddlewareConfig
 
     registry = MiddlewareRegistry()
     call_log: list[str] = []
@@ -32,14 +30,14 @@ def test_middleware_registry_build_chain_works() -> None:
         def factory(app, **kwargs):
             call_log.append(f"{name}:{kwargs.get('limit', 'default')}")
             return f"wrapped_by_{name}"
+
         return factory
 
     registry.register("rate_limit", make_mw("rate_limit"))
     registry.register("audit", make_mw("audit"))
 
     config = RouteMiddlewareConfig(
-        include=["rate_limit", "audit"],
-        overrides={"rate_limit": {"limit": 1000}},
+        include=["rate_limit", "audit"], overrides={"rate_limit": {"limit": 1000}}
     )
     result = registry.build_chain("app", config)
     # S70 W1: reduce-based wrap, outer → inner
@@ -112,9 +110,7 @@ def test_resolve_chain_order_diff() -> None:
 
     # include unknown → ValueError
     with pytest.raises(ValueError, match="не зарегистрированы"):
-        registry._resolve_chain_order(
-            RouteMiddlewareConfig(include=["nonexistent"])
-        )
+        registry._resolve_chain_order(RouteMiddlewareConfig(include=["nonexistent"]))
 
 
 def test_no_todo_in_middleware_init() -> None:
@@ -130,7 +126,8 @@ def test_no_todo_in_middleware_init() -> None:
     src = init_file.read_text()
     # Strip history/deletion lines (per-line filter)
     actionable_lines = [
-        line for line in src.splitlines()
+        line
+        for line in src.splitlines()
         if "TODO" in line
         and "Удалён" not in line
         and "устаревший" not in line.lower()
@@ -138,8 +135,7 @@ def test_no_todo_in_middleware_init() -> None:
         and "history" not in line.lower()
     ]
     assert not actionable_lines, (
-        f"Actionable TODO found in {init_file}:\n  "
-        + "\n  ".join(actionable_lines)
+        f"Actionable TODO found in {init_file}:\n  " + "\n  ".join(actionable_lines)
     )
     # Нет "scaffold-only" (этот label был до S70 W1, сейчас не актуален)
     assert "scaffold-only" not in src.lower(), (

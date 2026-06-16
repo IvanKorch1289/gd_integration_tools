@@ -43,10 +43,12 @@ from src.backend.core.logging import get_logger
 # `from src.backend.core.interfaces import CircuitBreakerConfig` still work):
 from src.backend.core.resilience.breaker import (  # noqa: E402
     BreakerSpec as CircuitBreakerConfig,
-    BreakerState as CircuitState,
-    CircuitBreaker,  # already aliased in breaker.__init__ for backward compat
-    CircuitOpen as CircuitBreakerOpenError,
 )
+from src.backend.core.resilience.breaker import BreakerState as CircuitState
+from src.backend.core.resilience.breaker import (
+    CircuitBreaker,  # already aliased in breaker.__init__ for backward compat
+)
+from src.backend.core.resilience.breaker import CircuitOpen as CircuitBreakerOpenError
 
 logger = get_logger(__name__)
 

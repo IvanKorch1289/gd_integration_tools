@@ -12,11 +12,9 @@
 
 from __future__ import annotations
 
-import asyncio
-import inspect
 from contextlib import asynccontextmanager
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -61,9 +59,7 @@ def test_smtp_source_does_not_import_deprecated_circuit_breaker() -> None:
     src = _read_smtp_source()
     # Find import statements: from X import Y, or import X
     import_lines = re.findall(
-        r"^(?:from\s+(\S+)\s+import|import\s+(\S+))",
-        src,
-        flags=re.MULTILINE,
+        r"^(?:from\s+(\S+)\s+import|import\s+(\S+))", src, flags=re.MULTILINE
     )
     for from_target, import_target in import_lines:
         # from src.backend.core.utils.circuit_breaker import ...

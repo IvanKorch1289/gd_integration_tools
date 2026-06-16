@@ -1,14 +1,13 @@
 """S75 W4 — tests для E2BExecutionBackend + KernelSpecDiscovery
 (FINAL_REPORT_V2 #2 + направление #1 multi-kernels closure)."""
+
 from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Mapping
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-
 
 # E2BExecutionBackend tests
 # ============================================================================
@@ -16,9 +15,7 @@ import pytest
 
 def test_e2b_backend_uses_env_api_key() -> None:
     """E2BExecutionBackend берёт E2B_API_KEY из env если не передан."""
-    from src.backend.services.jupyter.execution_service import (
-        E2BExecutionBackend,
-    )
+    from src.backend.services.jupyter.execution_service import E2BExecutionBackend
 
     os.environ["E2B_API_KEY"] = "e2b_test_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     backend = E2BExecutionBackend()
@@ -27,9 +24,7 @@ def test_e2b_backend_uses_env_api_key() -> None:
 
 def test_e2b_backend_no_api_key() -> None:
     """Без API key (no env, no arg) → api_key_configured = False."""
-    from src.backend.services.jupyter.execution_service import (
-        E2BExecutionBackend,
-    )
+    from src.backend.services.jupyter.execution_service import E2BExecutionBackend
 
     os.environ.pop("E2B_API_KEY", None)
     backend = E2BExecutionBackend()
@@ -38,9 +33,7 @@ def test_e2b_backend_no_api_key() -> None:
 
 def test_e2b_backend_explicit_api_key_overrides_env() -> None:
     """Explicit api_key arg приоритетнее env."""
-    from src.backend.services.jupyter.execution_service import (
-        E2BExecutionBackend,
-    )
+    from src.backend.services.jupyter.execution_service import E2BExecutionBackend
 
     os.environ["E2B_API_KEY"] = "e2b_env_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     backend = E2BExecutionBackend(
@@ -52,9 +45,7 @@ def test_e2b_backend_explicit_api_key_overrides_env() -> None:
 @pytest.mark.asyncio
 async def test_e2b_execute_raises_without_api_key() -> None:
     """execute_with_params без API key → E2BExecutionError (fail-loud)."""
-    from src.backend.services.jupyter.execution_service import (
-        E2BExecutionBackend,
-    )
+    from src.backend.services.jupyter.execution_service import E2BExecutionBackend
     from src.backend.services.jupyter.execution_service.e2b_backend import (
         E2BExecutionError,
     )
@@ -78,15 +69,12 @@ async def test_e2b_execute_raises_without_api_key() -> None:
 @pytest.mark.asyncio
 async def test_e2b_execute_notebook_not_found() -> None:
     """execute_with_params с несуществующим path → FileNotFoundError."""
-    from src.backend.services.jupyter.execution_service import (
-        E2BExecutionBackend,
-    )
+    from src.backend.services.jupyter.execution_service import E2BExecutionBackend
 
     backend = E2BExecutionBackend(api_key="e2b_test_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     with pytest.raises(FileNotFoundError, match="Notebook не найден"):
         await backend.execute_with_params(
-            notebook_path="/nonexistent/notebook.ipynb",
-            parameters={"x": 1},
+            notebook_path="/nonexistent/notebook.ipynb", parameters={"x": 1}
         )
 
 
@@ -133,10 +121,7 @@ def test_factory_creates_e2b_backend_with_key() -> None:
     )
 
     factory = ExecutionBackendFactory()
-    backend = factory.create(
-        "e2b",
-        api_key="e2b_test_cccccccccccccccccccccccccccccccc",
-    )
+    backend = factory.create("e2b", api_key="e2b_test_cccccccccccccccccccccccccccccccc")
     assert isinstance(backend, E2BExecutionBackend)
     assert backend.api_key_configured is True
 
@@ -147,13 +132,13 @@ def test_factory_creates_e2b_backend_with_key() -> None:
 
 def test_kernelspec_discovery_fallback() -> None:
     """Если jupyter_client не установлен → DEFAULT_FALLBACK_SPECS."""
+    # Simulate jupyter_client missing
+    import sys
+
     from src.backend.services.jupyter.execution_service import (
         DEFAULT_FALLBACK_SPECS,
         KernelSpecDiscovery,
     )
-
-    # Simulate jupyter_client missing
-    import sys
 
     original = sys.modules.get("jupyter_client.kernelspec")
     sys.modules["jupyter_client.kernelspec"] = None  # force ImportError
@@ -173,9 +158,7 @@ def test_kernelspec_discovery_fallback() -> None:
 
 def test_kernelspec_discovery_cached() -> None:
     """Первый вызов → discovery; второй → cache (same instance)."""
-    from src.backend.services.jupyter.execution_service import (
-        KernelSpecDiscovery,
-    )
+    from src.backend.services.jupyter.execution_service import KernelSpecDiscovery
 
     d = KernelSpecDiscovery()
     d.clear_cache()
@@ -186,9 +169,7 @@ def test_kernelspec_discovery_cached() -> None:
 
 def test_kernelspec_clear_cache() -> None:
     """clear_cache() → следующий call re-discovers."""
-    from src.backend.services.jupyter.execution_service import (
-        KernelSpecDiscovery,
-    )
+    from src.backend.services.jupyter.execution_service import KernelSpecDiscovery
 
     d = KernelSpecDiscovery()
     d.clear_cache()
@@ -201,13 +182,10 @@ def test_kernelspec_clear_cache() -> None:
 
 def test_kernelspec_filter_by_whitelist_empty() -> None:
     """Empty whitelist → all kernels."""
-    from src.backend.services.jupyter.execution_service import (
-        DEFAULT_FALLBACK_SPECS,
-        KernelSpecDiscovery,
-    )
-
     # Force fallback
     import sys
+
+    from src.backend.services.jupyter.execution_service import KernelSpecDiscovery
 
     original = sys.modules.get("jupyter_client.kernelspec")
     sys.modules["jupyter_client.kernelspec"] = None
@@ -229,12 +207,10 @@ def test_kernelspec_filter_by_whitelist_empty() -> None:
 
 def test_kernelspec_filter_by_whitelist_subset() -> None:
     """Whitelist filter применяется к discovered kernels."""
-    from src.backend.services.jupyter.execution_service import (
-        KernelSpecDiscovery,
-    )
-
     # Mock jupyter_client to return multi-kernel specs
     import sys
+
+    from src.backend.services.jupyter.execution_service import KernelSpecDiscovery
 
     mock_ksm = MagicMock()
     mock_ksm.get_all_specs.return_value = {
@@ -248,7 +224,14 @@ def test_kernelspec_filter_by_whitelist_subset() -> None:
             "resource_dir": "/kernels/ir",
             "display_name": "R",
             "language": "R",
-            "argv": ["R", "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"],
+            "argv": [
+                "R",
+                "--slave",
+                "-e",
+                "IRkernel::main()",
+                "--args",
+                "{connection_file}",
+            ],
         },
         "julia-1.6": {
             "resource_dir": "/kernels/julia-1.6",
@@ -284,11 +267,9 @@ def test_kernelspec_filter_by_whitelist_subset() -> None:
 
 def test_kernelspec_filter_whitelist_drift_warning() -> None:
     """Whitelist reference missing kernel → warning (не error)."""
-    from src.backend.services.jupyter.execution_service import (
-        KernelSpecDiscovery,
-    )
-
     import sys
+
+    from src.backend.services.jupyter.execution_service import KernelSpecDiscovery
 
     # Only python3 available
     mock_ksm = MagicMock()
@@ -298,7 +279,7 @@ def test_kernelspec_filter_whitelist_drift_warning() -> None:
             "display_name": "Python 3",
             "language": "python",
             "argv": ["python3", "-m", "ipykernel"],
-        },
+        }
     }
     fake_module = MagicMock()
     fake_module.KernelSpecManager = MagicMock(return_value=mock_ksm)
@@ -323,9 +304,7 @@ def test_kernelspec_filter_whitelist_drift_warning() -> None:
 
 def test_default_fallback_specs_structure() -> None:
     """DEFAULT_FALLBACK_SPECS имеет правильную structure (resource_dir, display_name, language, argv)."""
-    from src.backend.services.jupyter.execution_service import (
-        DEFAULT_FALLBACK_SPECS,
-    )
+    from src.backend.services.jupyter.execution_service import DEFAULT_FALLBACK_SPECS
 
     assert "python3" in DEFAULT_FALLBACK_SPECS
     spec = DEFAULT_FALLBACK_SPECS["python3"]

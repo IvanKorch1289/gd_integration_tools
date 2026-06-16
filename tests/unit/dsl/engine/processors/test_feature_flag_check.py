@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -105,9 +105,7 @@ async def test_feature_flag_disabled_continues_when_stop_disabled() -> None:
 @pytest.mark.asyncio
 async def test_feature_flag_custom_output_field() -> None:
     """``output_field="can_proceed"`` → результат в кастомном поле."""
-    proc = FeatureFlagCheckProcessor(
-        flag="experimental", output_field="can_proceed"
-    )
+    proc = FeatureFlagCheckProcessor(flag="experimental", output_field="can_proceed")
     ex = _exchange_with()
 
     with patch(

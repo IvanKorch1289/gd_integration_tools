@@ -44,7 +44,9 @@ def _bencode(data: Any) -> bytes:
             elif isinstance(k, (bytes, bytearray)):
                 kb = bytes(k)
             else:
-                raise TypeError(f"bencode dict key must be str/bytes, got {type(k).__name__}")
+                raise TypeError(
+                    f"bencode dict key must be str/bytes, got {type(k).__name__}"
+                )
             items.append((kb, v))
         items.sort(key=lambda kv: kv[0])
         return b"d" + b"".join(_bencode(k) + _bencode(v) for k, v in items) + b"e"
@@ -55,21 +57,21 @@ def _bdecode(data: bytes, pos: int = 0) -> tuple[Any, int]:
     """Parse bencoded bytes at ``pos`` → (value, new_pos). Recursive."""
     if pos >= len(data):
         raise ValueError("bencode: unexpected end of data")
-    c = data[pos:pos + 1]
+    c = data[pos : pos + 1]
     if c == b"i":
         end = data.index(b"e", pos)
         return int(data[pos + 1 : end]), end + 1
     if c == b"l":
         pos += 1
         out: list[Any] = []
-        while data[pos:pos + 1] != b"e":
+        while data[pos : pos + 1] != b"e":
             item, pos = _bdecode(data, pos)
             out.append(item)
         return out, pos + 1
     if c == b"d":
         pos += 1
         out_dict: dict[Any, Any] = {}
-        while data[pos:pos + 1] != b"e":
+        while data[pos : pos + 1] != b"e":
             k, pos = _bdecode(data, pos)
             v, pos = _bdecode(data, pos)
             out_dict[k] = v

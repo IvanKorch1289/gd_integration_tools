@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S61 W2 — jwt.py part of enrichment decomp.
 
 Classes: JwtSignProcessor, JwtVerifyProcessor.
 
 JWT sign + verify.
 """
+
+from __future__ import annotations
 
 import time
 from typing import Any

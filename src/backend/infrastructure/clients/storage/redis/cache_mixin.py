@@ -39,13 +39,13 @@ class CacheMixin:
             return value.decode()
         if isinstance(value, dict):
             return {
-                (k.decode() if isinstance(k, bytes) else k): RedisClient.decode(
+                (k.decode() if isinstance(k, bytes) else k): CacheMixin.decode(
                     v, _depth + 1
                 )
                 for k, v in value.items()
             }
         if isinstance(value, (list, tuple)):
-            items = [RedisClient.decode(item, _depth + 1) for item in value]
+            items = [CacheMixin.decode(item, _depth + 1) for item in value]
             return type(value)(items)
         return value
 

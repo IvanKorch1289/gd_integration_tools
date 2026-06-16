@@ -242,10 +242,7 @@ class OutboundHttpClient:
 
         try:
             coro = emit_waf_evaluation(
-                decision=decision,
-                plugin=self._plugin,
-                method=method,
-                url=url,
+                decision=decision, plugin=self._plugin, method=method, url=url
             )
             if asyncio.iscoroutine(coro):
                 try:

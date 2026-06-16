@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W1 - stream_reader.py part of backpressure decomp.
 
 AdaptiveStreamReader (3 methods).
 
 Classes: AdaptiveStreamReader.
 """
+
+from __future__ import annotations
 
 from src.backend.core.logging import get_logger
 

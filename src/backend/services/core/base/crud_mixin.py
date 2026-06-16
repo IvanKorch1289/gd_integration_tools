@@ -35,18 +35,14 @@ class CrudMixin:
             Схема ответа или ``None``.
         """
         async with self._service_error_boundary():
-            result: (
-                Any | None
-            ) = await self.helper._process_and_transfer(
+            result: Any | None = await self.helper._process_and_transfer(
                 "add", self.response_schema, data=data
             )
             entity_id = getattr(result, "id", None)
             await self._invalidate_entity_cache(entity_id=entity_id)
             return result
 
-    async def add_many(
-        self, data_list: list[dict[str, Any]]
-    ) -> list[Any | None]:
+    async def add_many(self, data_list: list[dict[str, Any]]) -> list[Any | None]:
         """Добавляет несколько объектов.
 
         При ошибке элемент записывается как ``None``, ошибка
@@ -88,9 +84,7 @@ class CrudMixin:
 
         return result
 
-    async def update(
-        self, key: str, value: int, data: dict[str, Any]
-    ) -> Any | None:
+    async def update(self, key: str, value: int, data: dict[str, Any]) -> Any | None:
         """Обновляет объект в репозитории.
 
         Args:
@@ -117,12 +111,7 @@ class CrudMixin:
         pagination: Params | None = None,
         by: str = "id",
         order: str = "asc",
-    ) -> (
-        Any
-        | list[Any]
-        | Page[Any]
-        | None
-    ):
+    ) -> Any | list[Any] | Page[Any] | None:
         """Получает объекты по ключу, фильтру или все.
 
         Args:

@@ -2,6 +2,7 @@
 
 Verifies backward-compat imports work + DeprecationWarning emitted.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -68,8 +69,8 @@ class TestSsoShimReExports:
         """Shim re-exports new-API require_sso_auth (registry-based)."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            from src.backend.services.admin.sso import require_sso_auth as shim_req
             from src.backend.core.auth import require_sso_auth as core_req
+            from src.backend.services.admin.sso import require_sso_auth as shim_req
 
         # Same identity (shim re-exports core)
         assert shim_req is core_req
@@ -114,15 +115,7 @@ class TestSsoShimDoesNotRegressCore:
     """Shim must not break core.auth imports."""
 
     def test_core_auth_still_importable(self) -> None:
-        from src.backend.core.auth import (
-            SsoRegistry,
-            SsoRegistryError,
-            GroupsToCapabilities,
-            IdpConfig,
-            require_sso_auth,
-            require_sso_capability,
-            RequireSsoAuthError,
-        )
+        from src.backend.core.auth import SsoRegistry, require_sso_auth
 
         # All symbols resolved
         assert SsoRegistry is not None

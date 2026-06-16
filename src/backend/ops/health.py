@@ -27,6 +27,7 @@ class CheckStatus(str, Enum):
     каждого индивидуального health-check. ``HealthStatus`` (overall)
     агрегирует несколько ``CheckStatus`` в один общий статус системы.
     """
+
     OK = "ok"
     DEGRADED = "degraded"
     FAILED = "failed"
@@ -39,6 +40,7 @@ class HealthStatus(str, Enum):
     DEGRADED = есть DEGRADED checks или non-critical FAILED,
     UNHEALTHY = хотя бы один critical check FAILED.
     """
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -56,6 +58,7 @@ class CheckResult:
         details: Доп. метаданные (e.g. ``{"rows": 42}`` для DB query).
         critical: True если failure приводит к UNHEALTHY overall.
     """
+
     name: str
     status: CheckStatus
     latency_ms: float
@@ -73,6 +76,7 @@ class HealthReport:
         results: dict name → :class:`CheckResult` для всех выполненных checks.
         timestamp: Unix timestamp момента формирования отчёта.
     """
+
     overall: HealthStatus
     results: dict[str, CheckResult]
     timestamp: float
@@ -150,6 +154,7 @@ class HealthCheck:
         critical: bool = True,
     ) -> HealthCheck:
         """Добавить HTTP check: ``HEAD/GET url`` через aiohttp."""
+
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             return await self._http_check(url)
 
@@ -166,6 +171,7 @@ class HealthCheck:
         critical: bool = True,
     ) -> HealthCheck:
         """Добавить TCP check: ``connect(host, port)`` через asyncio.open_connection."""
+
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             return await self._tcp_check(host, port)
 
@@ -185,6 +191,7 @@ class HealthCheck:
         Требует :meth:`set_db_executor` до :meth:`run`; иначе FAILED
         с ``{"reason": "no db_executor registered"}``.
         """
+
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             if self._db_executor is None:
                 return CheckStatus.FAILED, {"reason": "no db_executor registered"}
@@ -205,6 +212,7 @@ class HealthCheck:
         Требует :meth:`set_redis_executor` до :meth:`run`; иначе FAILED
         с ``{"reason": "no redis_executor registered"}``.
         """
+
         async def _run() -> tuple[CheckStatus, dict[str, Any]]:
             if self._redis_executor is None:
                 return CheckStatus.FAILED, {"reason": "no redis_executor registered"}

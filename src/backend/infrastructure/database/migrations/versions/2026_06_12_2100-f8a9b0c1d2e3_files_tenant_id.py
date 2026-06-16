@@ -36,7 +36,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 revision: str = "f8a9b0c1d2e3"
 down_revision: Union[str, None] = "e7f8a9b0c1d2"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -56,9 +55,7 @@ def upgrade() -> None:
         pass
 
     if inspector is not None:
-        existing_columns = {
-            col["name"] for col in inspector.get_columns("files")
-        }
+        existing_columns = {col["name"] for col in inspector.get_columns("files")}
         if "tenant_id" in existing_columns:
             return
 

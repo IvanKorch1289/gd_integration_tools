@@ -10,6 +10,7 @@ Replaces S18 W0 stub. Tests cover:
 * ``list_jobs`` — schedules + oneshot cache, missing-temporalio graceful.
 * ``_parse_cron_to_spec`` — 5-field validation, lazy import error.
 """
+
 from __future__ import annotations
 
 import sys
@@ -23,7 +24,6 @@ import pytest
 from src.backend.infrastructure.scheduler.temporal_scheduler_backend import (
     TemporalSchedulerBackend,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Helpers
@@ -140,7 +140,9 @@ async def test_schedule_cron_invalid_callable_raises() -> None:
 
     with pytest.raises(TypeError, match="must be str"):
         await backend.schedule_cron(
-            name="bad", cron_expr="* * * * *", callable_ref=42  # type: ignore[arg-type]
+            name="bad",
+            cron_expr="* * * * *",
+            callable_ref=42,  # type: ignore[arg-type]
         )
 
 
@@ -177,9 +179,7 @@ async def test_schedule_cron_replace_existing_missing_schedule() -> None:
     factory = _make_factory_with_client()
     client = factory.get_client.return_value
     # get_schedule_handle().delete() бросает (schedule не найден).
-    client.get_schedule_handle = MagicMock(
-        side_effect=Exception("schedule not found")
-    )
+    client.get_schedule_handle = MagicMock(side_effect=Exception("schedule not found"))
 
     fake_client_module = MagicMock()
     fake_client_module.ScheduleCronSpec = MagicMock(return_value=MagicMock())

@@ -14,6 +14,11 @@ from src.backend.services.scheduler.cron_dashboard_service import (
     ScheduledWorkflowSummary,
 )
 
+# ponytail: service делает `from core.scheduler import get_scheduler_manager`
+# INSIDE list_scheduled() function body, не на module level. Patch source
+# (S146 W3 / S148 W2 precedent — local import → patch source, not target).
+_PATCH_GET_SCHEDULER_MANAGER = "src.backend.core.scheduler.get_scheduler_manager"
+
 
 def _make_ch_result(rows: list[Any]) -> Any:
     res = MagicMock()
@@ -50,7 +55,7 @@ async def test_list_scheduled_returns_summaries(scheduler_mock: Any) -> None:
 
     service = CronDashboardService(clickhouse_client_factory=factory)
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        _PATCH_GET_SCHEDULER_MANAGER,
         return_value=scheduler_mock,
     ):
         items = await service.list_scheduled()
@@ -70,7 +75,7 @@ async def test_list_scheduled_empty(scheduler_mock: Any) -> None:
 
     service = CronDashboardService(clickhouse_client_factory=factory)
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        _PATCH_GET_SCHEDULER_MANAGER,
         return_value=scheduler_mock,
     ):
         items = await service.list_scheduled()
@@ -126,7 +131,7 @@ async def test_list_scheduled_trigger_without_cron(scheduler_mock: Any) -> None:
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        _PATCH_GET_SCHEDULER_MANAGER,
         return_value=scheduler_mock,
     ):
         items = await service.list_scheduled()
@@ -147,7 +152,7 @@ async def test_list_scheduled_trigger_without_timezone(scheduler_mock: Any) -> N
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        _PATCH_GET_SCHEDULER_MANAGER,
         return_value=scheduler_mock,
     ):
         items = await service.list_scheduled()

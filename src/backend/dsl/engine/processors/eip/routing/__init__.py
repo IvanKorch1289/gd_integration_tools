@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """EIP routing processors package (S63 W2 decomp from routing.py 496 LOC).
 
 6 processor classes decomposed в 5 files (per routing pattern):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.engine.processors.eip.routing import DynamicRouterProcessor`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.eip.routing.dynamic import (
     DynamicRouterProcessor,  # S63 W2: re-export

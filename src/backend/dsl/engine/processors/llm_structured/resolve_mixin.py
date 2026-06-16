@@ -78,7 +78,7 @@ class ResolveMixin:
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             entry = None
 
         if entry is not None:

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """RouteBuilder package (S57 W1 decomp from base.py 648 LOC).
 32 methods decomposed в 7 mixin files:
 - fluent_mixin.py (5), config_mixin.py (5), validation_mixin.py (4)
@@ -8,6 +6,9 @@ from __future__ import annotations
 Core (6) остается в __init__.py: from_, from_registered_source, _add, _add_lazy, process, build.
 Backward-compat: ``from src.backend.dsl.builders.base import RouteBuilder`` works.
 """
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
@@ -32,16 +33,14 @@ from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
 from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.builders.ip_restriction_mixin import IPRestrictionMixin
 from src.backend.dsl.builders.request_reply import RequestReplyMixin
+from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.sources_mixin import (
     SourcesMixin as TransportSourcesMixin,  # S97 W1: SSE, CDC, messaging, ...
 )
-from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
 from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (
-    BaseProcessor,
-    )
+from src.backend.dsl.engine.processors import BaseProcessor
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin
@@ -117,10 +116,7 @@ class RouteBuilder(
     )
 
     def __init__(
-        self,
-        route_id: str = "",
-        source: str = "",
-        description: str | None = None,
+        self, route_id: str = "", source: str = "", description: str | None = None
     ) -> None:
         """S97 W1: explicit __init__ чтобы ``cls(route_id=..., ...)`` работал.
 

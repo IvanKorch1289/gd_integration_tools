@@ -41,18 +41,12 @@ class GrpcChannelPool:
     """
 
     def __init__(
-        self,
-        *,
-        target: str,
-        secure: bool = True,
-        pooling: PoolingProfile | None = None,
+        self, *, target: str, secure: bool = True, pooling: PoolingProfile | None = None
     ) -> None:
         self._target = target
         self._secure = secure
         self._pooling = pooling or DEFAULT_POOLING_PROFILE
-        self._pool: asyncio.Queue[Any] = asyncio.Queue(
-            maxsize=self._pooling.max_size
-        )
+        self._pool: asyncio.Queue[Any] = asyncio.Queue(maxsize=self._pooling.max_size)
         self._created: int = 0
         self._lock = asyncio.Lock()
         self._started: bool = False
@@ -112,8 +106,7 @@ class GrpcChannelPool:
                         self._created += 1
                     else:
                         channel = await asyncio.wait_for(
-                            self._pool.get(),
-                            timeout=self._pooling.acquire_timeout_s,
+                            self._pool.get(), timeout=self._pooling.acquire_timeout_s
                         )
             # Liveness check
             try:
@@ -142,7 +135,5 @@ class GrpcChannelPool:
         import grpc
 
         if self._secure:
-            return grpc.aio.secure_channel(
-                self._target, grpc.ssl_channel_credentials()
-            )
+            return grpc.aio.secure_channel(self._target, grpc.ssl_channel_credentials())
         return grpc.aio.insecure_channel(self._target)

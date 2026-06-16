@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S66 W1 — processor.py part of event_store decomp.
 
 EventStoreProcessor (DSL pipeline integration).
 
 Classes: EventStoreProcessor.
 """
+
+from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar

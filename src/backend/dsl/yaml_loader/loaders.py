@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S62 W4 — loaders.py part of yaml_loader decomp.
 
 Funcs: load_pipeline_from_yaml, load_pipeline_from_file, load_all_from_directory.
 
 public loaders (yaml/file/directory).
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 

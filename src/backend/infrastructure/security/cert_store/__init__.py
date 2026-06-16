@@ -14,6 +14,7 @@ Backward-compat: ``from src.backend.infrastructure.security.cert_store import Ce
 
 from __future__ import annotations
 
+from src.backend.core.config.cert_store import cert_store_settings
 from src.backend.infrastructure.security.cert_store.backend_base import (
     CertBackend,  # S55 W1: re-export
 )
@@ -29,7 +30,6 @@ from src.backend.infrastructure.security.cert_store.backend_postgres import (
 from src.backend.infrastructure.security.cert_store.backend_vault import (
     VaultCertBackend,  # S55 W1: re-export
 )
-from src.backend.core.config.cert_store import cert_store_settings
 from src.backend.infrastructure.security.cert_store.models import (
     CertEntry,  # S55 W1: re-export
     _fingerprint,  # S55 W1: re-export
@@ -52,6 +52,7 @@ __all__ = (
 
 
 # --- Top-level re-exports (S55 W1 decomp: preserve original public surface) ---
+
 
 def create_cert_store() -> CertStore:
     """Фабрика по умолчанию — собирает store из глобальных настроек."""

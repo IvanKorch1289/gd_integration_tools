@@ -148,6 +148,19 @@ class Sprints2427Flags(BaseSettings):
         ),
     )
 
+    ai_skill_toml_enabled: bool = Field(
+        default=False,
+        title="K4 S26 W5: Skills Registry TOML frontmatter (ADR-NEW-22)",
+        description=(
+            "K4 Sprint 26 Wave 5 (PLAN.md V22.4 §S26, ADR-NEW-22). Owner: K4 AI/Data. "
+            "При True `core/skills/registry.py` загружает skill definitions из "
+            "TOML-файлов с frontmatter (name/description/policy/runtime) вместо "
+            "legacy Python-маркеров. CI check `tools/checks/check_skill_format.py` "
+            "валит при невалидном TOML. При False — fallback на Python discovery. "
+            "default-OFF до 100% skill migration + PoC credit_check_demo через TOML."
+        ),
+    )
+
     # ─── Sprint 27 — Agent DSL + MCP Gateway + Audit Unified ──────────────
     ai_agent_dsl_enabled: bool = Field(
         default=False,

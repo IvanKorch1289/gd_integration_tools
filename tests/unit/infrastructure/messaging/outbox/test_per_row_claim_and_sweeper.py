@@ -14,14 +14,13 @@ Integration tests (real PG + transactional behavior) — manual, через
 
 from __future__ import annotations
 
+# Stub для ``main_session_manager`` (тот же pattern что в test_claim_pending.py)
+import sys
+import types
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-# Stub для ``main_session_manager`` (тот же pattern что в test_claim_pending.py)
-import sys
-import types
 
 
 class _StubSessionManager:
@@ -38,9 +37,7 @@ class _StubSessionManager:
         return m
 
 
-_stub_sm = types.ModuleType(
-    "src.backend.infrastructure.database.session_manager"
-)
+_stub_sm = types.ModuleType("src.backend.infrastructure.database.session_manager")
 _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defined]
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
@@ -51,9 +48,7 @@ from src.backend.infrastructure.repositories.outbox import (  # noqa: E402
 
 
 def _make_fake_outbox_row(
-    row_id: int = 1,
-    status: str = "processing",
-    claimed_by: str | None = "worker-A",
+    row_id: int = 1, status: str = "processing", claimed_by: str | None = "worker-A"
 ) -> MagicMock:
     """Создаёт MagicMock, имитирующий row из SQL UPDATE RETURNING."""
     now = datetime.now(UTC)
@@ -144,12 +139,10 @@ async def test_claim_pending_sql_includes_status_processing(
     # Inspect 2nd execute call (UPDATE statement)
     update_call = fake_session.execute.call_args_list[1]
     update_sql = update_call.args[0]
-    update_params = update_call.args[1] if len(update_call.args) > 1 else update_call.kwargs
-    sql_text = (
-        update_sql.text
-        if hasattr(update_sql, "text")
-        else str(update_sql)
+    update_params = (
+        update_call.args[1] if len(update_call.args) > 1 else update_call.kwargs
     )
+    sql_text = update_sql.text if hasattr(update_sql, "text") else str(update_sql)
     # SQL должен содержать status = 'processing' (per-row claim)
     assert "status" in sql_text.lower()
     assert "processing" in sql_text.lower()
@@ -277,4 +270,8 @@ async def test_reset_stuck_processing_respects_threshold(
     params = call.args[1] if len(call.args) > 1 else call.kwargs
     cutoff = params["cutoff"]
     # cutoff должен быть ~now (threshold=0)
-    assert before_call - timedelta(seconds=1) <= cutoff <= after_call + timedelta(seconds=1)
+    assert (
+        before_call - timedelta(seconds=1)
+        <= cutoff
+        <= after_call + timedelta(seconds=1)
+    )

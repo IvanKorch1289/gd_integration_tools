@@ -82,12 +82,7 @@ class DaskMixin:
 
     @classmethod
     def dask_map(
-        cls,
-        route_id: str,
-        fn: str,
-        *,
-        output_to: str = "body",
-        **kwargs: Any,
+        cls, route_id: str, fn: str, *, output_to: str = "body", **kwargs: Any
     ) -> RouteBuilder:
         """Shortcut: одностeпенный graph с ``map`` операцией.
 

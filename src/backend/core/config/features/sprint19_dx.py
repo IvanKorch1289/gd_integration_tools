@@ -128,6 +128,20 @@ class Sprint19DXFlags(BaseSettings):
         ),
     )
 
+    banking_ai_processors_impl: bool = Field(
+        default=False,
+        title="K4 S19 W3: Banking AI processors - implementation layer (impl vs interface)",
+        description=(
+            "K4 Sprint 19 Wave 3 (S-L4-1 closure, sibling to banking_ai_processors_enabled). "
+            "Owner: K4 AI. "
+            "При True указывает, что implementation-слой (LLM calls, structured output, "
+            "instructor/litellm binding) активирован, в отличие от interface-флага "
+            "(banking_ai_processors_enabled) который контролирует registration в DSL. "
+            "Используется для staged rollout: interface first (mock), then impl (real LLM). "
+            "default-OFF до 100% integration tests на credit_check_demo route."
+        ),
+    )
+
     langmem_consolidation_impl: bool = Field(
         default=False,
         title="K4 S19 W4: LangMemService.consolidate() implementation (S-L4-3 closure)",

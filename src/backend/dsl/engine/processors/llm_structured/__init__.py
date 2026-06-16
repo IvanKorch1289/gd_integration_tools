@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """LLMStructuredProcessor package (S65 W2 decomp from llm_structured.py 485 LOC).
 
 10 methods decomposed в 4 mixin files:
@@ -13,6 +11,7 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

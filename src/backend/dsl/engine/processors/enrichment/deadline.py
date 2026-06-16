@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S61 W2 — deadline.py part of enrichment decomp.
 
 Classes: DeadlineProcessor.
 
 deadline enforcement.
 """
+
+from __future__ import annotations
 
 import time
 from typing import Any

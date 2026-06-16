@@ -29,7 +29,9 @@ def emit_ai_workspace(event: dict[str, object]) -> Any:
     """
     event_name = str(event.get("event", "ai_workspace.event"))
     details: dict[str, Any] = {
-        k: v for k, v in event.items() if k not in ("event", "actor", "resource", "action", "outcome")
+        k: v
+        for k, v in event.items()
+        if k not in ("event", "actor", "resource", "action", "outcome")
     }
     return emit_audit(
         event=event_name,

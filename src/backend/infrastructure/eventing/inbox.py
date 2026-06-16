@@ -62,7 +62,9 @@ class Inbox:
                 ``fail_mode="closed"``.
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client as redis_client,
+            )
         except ImportError as exc:
             if self.fail_mode == "closed":
                 raise InboxUnavailableError(

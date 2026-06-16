@@ -140,5 +140,40 @@ class Sprint19AIFlags(BaseSettings):
         ),
     )
 
+    adaptive_timeout_enabled: bool = Field(
+        default=False,
+        title="K2 S19 W15: Adaptive timeout per (endpoint, client_region, traffic_class)",
+        description=(
+            "K2 Sprint 19 Wave 15 (PLAN.md V22 §S19 W15, F-4 closure). Owner: K2 Resilience. "
+            "При True HTTP timeout вычисляется per-request на основе: "
+            "endpoint historical p99 + client_region latency profile + traffic_class SLA. "
+            "Replacement для fixed-timeout config. default-OFF до "
+            "12-hour production shadow-mode baseline."
+        ),
+    )
+
+    admin_react_mvp: bool = Field(
+        default=False,
+        title="K3 S19 W3: Admin UI React MVP (replace Streamlit 13_Cron_Builder + 14_Cron_Dashboard)",
+        description=(
+            "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, S-L4-2). Owner: K3 Frontend/Ops. "
+            "При True Streamlit pages 13_Cron_Builder + 14_Cron_Dashboard "
+            "redirect на new React admin at /admin/cron/* (separate SPA). "
+            "default-OFF до React SPA deployment + 100% Streamlit feature parity."
+        ),
+    )
+
+    adaptive_rag_strategy_enabled: bool = Field(
+        default=False,
+        title="K4 S19 W4: Adaptive RAG strategy (HyDE + query-decomposition fallback)",
+        description=(
+            "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W4, S-L4-4). Owner: K4 AI. "
+            "При True RAGService выбирает strategy per-query: simple lookup, "
+            "HyDE (hypothetical doc embeddings), или query-decomposition для "
+            "multi-hop questions. selection = classifier-based. "
+            "default-OFF до RAGAS eval shows +5% faithfulness на 500 gold-set."
+        ),
+    )
+
 
 __all__ = ("Sprint19AIFlags",)

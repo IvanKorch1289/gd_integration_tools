@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import asyncio
-import types
 
 import pytest
 
@@ -58,23 +57,16 @@ class _FakeRedis:
 
 @pytest.fixture
 def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
-    """Подменяет ``redis_client`` на in-memory fake для unified_rate_limiter.
+    """Подменяет ``get_redis_client`` на in-memory fake для unified_rate_limiter.
 
-    Инжектит fake-модуль в ``sys.modules`` чтобы ``from ... import redis_client``
-    в ``RedisRateLimiter.check()`` нашёл наш stub.
+    Production code (unified_rate_limiter.py:94) делает
+    ``from ... import get_redis_client as redis_client``, поэтому нужно
+    patchить функцию get_redis_client чтобы она возвращала fake-instance.
     """
-    import sys
-
     fake = _FakeRedis()
-    real_module = sys.modules.get("src.backend.infrastructure.clients.storage.redis")
-    fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
-    fake_module.redis_client = fake  # type: ignore[attr-defined]
-    sys.modules["src.backend.infrastructure.clients.storage.redis"] = fake_module
+    import src.backend.infrastructure.clients.storage.redis as redis_mod
+    monkeypatch.setattr(redis_mod, "get_redis_client", lambda: fake)
     yield fake
-    if real_module is not None:
-        sys.modules["src.backend.infrastructure.clients.storage.redis"] = real_module
-    else:
-        sys.modules.pop("src.backend.infrastructure.clients.storage.redis", None)
 
 
 def test_rate_limit_tenant_aware_defaults_false() -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.infrastructure.clients.transport.http.base import FilePart
 
 from collections.abc import Mapping
 from logging import DEBUG
@@ -11,7 +11,6 @@ from time import monotonic
 
 import httpx
 from tenacity import (
-    RetryError,
     before_sleep_log,
     retry,
     retry_if_exception,
@@ -112,31 +111,11 @@ class RequestMixin:
                 self.last_activity = monotonic()
 
         try:
-            result = await _do_request()
-            self.circuit_breaker.record_success()
-            return result
-        except RetryError as exc:
-            last_exception = exc.last_attempt.exception()
-            if not isinstance(last_exception, Exception):
-                last_exception = httpx.RequestError("Unknown error during retry")
-
-            self.circuit_breaker.record_failure()
-            await self.circuit_breaker.check_state(
-                max_failures=self.settings.circuit_breaker_max_failures,
-                reset_timeout=self.settings.circuit_breaker_reset_timeout,
-                exception_class=httpx.HTTPError,
-            )
-            if raise_for_status:
-                raise last_exception from exc
-            return await self._handle_final_error(last_exception, start_time)
+            async with self.circuit_breaker.guard():
+                result = await _do_request()
+                return result
         except Exception as exc:
             last_exception = exc
-            self.circuit_breaker.record_failure()
-            await self.circuit_breaker.check_state(
-                max_failures=self.settings.circuit_breaker_max_failures,
-                reset_timeout=self.settings.circuit_breaker_reset_timeout,
-                exception_class=httpx.HTTPError,
-            )
             if raise_for_status:
                 raise
             return await self._handle_final_error(exc, start_time)

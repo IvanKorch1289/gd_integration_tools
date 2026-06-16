@@ -50,7 +50,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except (orjson.JSONDecodeError, TypeError):
+                except orjson.JSONDecodeError, TypeError:
                     pass
 
             result = strategy.convert(input_data)

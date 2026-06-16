@@ -1,23 +1,17 @@
 """S76 W4 — tests для ToolsSpec whitelist/blacklist (FINAL_REPORT_V2 P0-B closure)."""
-from __future__ import annotations
 
-from unittest.mock import MagicMock
+from __future__ import annotations
 
 import pytest
 
-from src.backend.core.ai.policy.spec import (
-    AIPolicySpec,
-    ModelRouterSpec,
-    ToolsSpec,
-)
+from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
 from src.backend.core.ai.policy.enforcer.tools_policy import (
     ToolPolicyViolationError,
     check_tool_allowed,
     enforce_tool_policy,
     filter_tools_by_policy,
 )
-from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
-
+from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec, ToolsSpec
 
 # ToolsSpec data model tests
 # ============================================================================
@@ -34,8 +28,7 @@ def test_tools_spec_default_empty() -> None:
 def test_tools_spec_with_whitelist() -> None:
     """Whitelist configuration."""
     spec = ToolsSpec(
-        whitelist=["db.read.orders", "ai.invoke.credit_check"],
-        on_violation="warn",
+        whitelist=["db.read.orders", "ai.invoke.credit_check"], on_violation="warn"
     )
     assert len(spec.whitelist) == 2
     assert spec.on_violation == "warn"
@@ -43,10 +36,7 @@ def test_tools_spec_with_whitelist() -> None:
 
 def test_tools_spec_with_blacklist() -> None:
     """Blacklist configuration."""
-    spec = ToolsSpec(
-        blacklist=["fs.write", "shell.execute"],
-        on_violation="block",
-    )
+    spec = ToolsSpec(blacklist=["fs.write", "shell.execute"], on_violation="block")
     assert len(spec.blacklist) == 2
     assert spec.on_violation == "block"
 
@@ -105,10 +95,7 @@ def test_check_tool_allowed_blacklist_miss() -> None:
 
 def test_check_tool_allowed_blacklist_wins_over_whitelist() -> None:
     """Blacklist precedence над whitelist (security: deny takes priority)."""
-    spec = ToolsSpec(
-        whitelist=["db.read", "fs.write"],
-        blacklist=["fs.write"],
-    )
+    spec = ToolsSpec(whitelist=["db.read", "fs.write"], blacklist=["fs.write"])
     # fs.write в whitelist, но также в blacklist → blacklist wins
     assert check_tool_allowed("fs.write", spec) is False
     assert check_tool_allowed("db.read", spec) is True
@@ -128,6 +115,7 @@ def test_enforce_tool_policy_fail_default() -> None:
 def test_enforce_tool_policy_warn(caplog: pytest.LogCaptureFixture) -> None:
     """on_violation='warn' → log warning, allow invocation."""
     import logging
+
     caplog.set_level(logging.WARNING)
     spec = ToolsSpec(whitelist=["db.read"], on_violation="warn")
     # No exception raised

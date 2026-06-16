@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Banking AI processors package (S59 W1 decomp from banking_processors.py 552 LOC).
 
 11 classes decomposed в 7 files:
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.engine.processors.ai.banking_processors import CreditScoreProcessor`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.ai.banking_processors.base import (
     _BankingAIProcessor,  # S59 W1: re-export

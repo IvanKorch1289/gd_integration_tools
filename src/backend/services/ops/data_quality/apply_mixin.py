@@ -56,25 +56,7 @@ class DQCheckResult:
         return len(self.violations) == 0
 
 
-@dataclass(slots=True)
-class DQRemediationResult:
-    """Result of auto-remediation pass.
-
-    Attributes:
-        data: remediated data (same shape as input: dict или list of dicts).
-        violations: list of violations detected (до remediation).
-        fixes_applied: number of values that were actually changed.
-    """
-
-    data: Any
-    violations: list[DQViolation] = dataclass_field(default_factory=list)
-    fixes_applied: int = 0
-
-    @property
-    def is_clean(self) -> bool:
-        return len(self.violations) == 0
-
-
+# DQRemediationResult lives in __init__.py (S153 W1: 5x dedup)
 @dataclass(slots=True)
 class DQRule:
     """Правило проверки качества данных."""
@@ -272,7 +254,7 @@ class ApplyMixin:
             return None
         try:
             _dt.datetime.strptime(str(value), fmt)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return DQViolation(
                 rule.name,
                 rule.field,

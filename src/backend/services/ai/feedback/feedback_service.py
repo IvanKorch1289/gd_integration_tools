@@ -230,9 +230,7 @@ class AIFeedbackService:
         """
         return await self._repo.get(doc_id)
 
-    async def mark_indexed(
-        self, doc_id: str, rag_doc_id: str
-    ) -> AIFeedbackDoc:
+    async def mark_indexed(self, doc_id: str, rag_doc_id: str) -> AIFeedbackDoc:
         """Пометить ответ как проиндексированный в RAG.
 
         Args:
@@ -248,9 +246,7 @@ class AIFeedbackService:
         existing = await self._repo.get(doc_id)
         if existing is None:
             raise KeyError(doc_id)
-        updated = FeedbackDomainService.mark_indexed(
-            existing, rag_doc_id=rag_doc_id
-        )
+        updated = FeedbackDomainService.mark_indexed(existing, rag_doc_id=rag_doc_id)
         return await self._repo.update(updated)
 
     async def stats(self) -> dict[str, int]:

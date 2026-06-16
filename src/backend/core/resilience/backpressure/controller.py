@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W1 - controller.py part of backpressure decomp.
 
 StreamingBackpressureController (main controller, 11 methods).
 
 Classes: StreamingBackpressureController.
 """
+
+from __future__ import annotations
 
 import asyncio
 import time

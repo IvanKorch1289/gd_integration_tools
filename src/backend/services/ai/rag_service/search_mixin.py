@@ -5,10 +5,12 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
+from src.backend.infrastructure.logging.factory import get_logger
 
-def _filter_by_embedding_version(
-    results: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
+logger = get_logger(__name__)
+
+
+def _filter_by_embedding_version(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Filter retrieval results by embedding-version match.
 
     .. note::
@@ -21,9 +23,7 @@ def _filter_by_embedding_version(
     return results
 
 
-def _format_context_with_sources(
-    results: list[dict[str, Any]],
-) -> str:
+def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
     """Format retrieved chunks into a context string with [doc_id:chunk_idx] markers.
 
     .. note::

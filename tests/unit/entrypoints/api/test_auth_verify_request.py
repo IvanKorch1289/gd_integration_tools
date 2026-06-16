@@ -8,12 +8,10 @@
 - verify_request возвращает None если ни один verifier не сработал
 - verify_request returns first match (priority)
 """
+
 from __future__ import annotations
 
-import ast
 from pathlib import Path
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
@@ -24,12 +22,13 @@ def _read_source(rel_path: str) -> str:
 
 def test_verify_request_is_public() -> None:
     """verify_request должен быть публичным (без underscore prefix)."""
-    src = _read_source(
-        "src/backend/entrypoints/api/dependencies/auth_selector.py"
-    )
+    src = _read_source("src/backend/entrypoints/api/dependencies/auth_selector.py")
     assert "async def verify_request(" in src
     assert '"verify_request"' in src, "verify_request must be in __all__"
-    assert "_verify_request" not in src or "verify_request" in src.split("def verify_request")[1].split("__all__")[0]
+    assert (
+        "_verify_request" not in src
+        or "verify_request" in src.split("def verify_request")[1].split("__all__")[0]
+    )
 
 
 def test_auth_required_no_private_VERIFIERS_access() -> None:
@@ -39,7 +38,8 @@ def test_auth_required_no_private_VERIFIERS_access() -> None:
     if "_VERIFIERS" in src:
         # Должен быть только в комментарии
         lines_with_VERIFIERS = [
-            line for line in src.split("\n")
+            line
+            for line in src.split("\n")
             if "_VERIFIERS" in line and not line.strip().startswith("#")
         ]
         assert not lines_with_VERIFIERS, (
@@ -50,14 +50,11 @@ def test_auth_required_no_private_VERIFIERS_access() -> None:
 
 def test_verify_request_accepts_tuple_of_methods() -> None:
     """verify_request должен принимать tuple[AuthMethod, ...] (из _accepted_methods)."""
-    src = _read_source(
-        "src/backend/entrypoints/api/dependencies/auth_selector.py"
-    )
+    src = _read_source("src/backend/entrypoints/api/dependencies/auth_selector.py")
     # Type signature
-    assert (
-        "tuple[AuthMethod, ...]" in src
-        or "Sequence[AuthMethod]" in src
-    ), "verify_request must accept tuple[AuthMethod, ...]"
+    assert "tuple[AuthMethod, ...]" in src or "Sequence[AuthMethod]" in src, (
+        "verify_request must accept tuple[AuthMethod, ...]"
+    )
 
 
 def test_verify_request_handles_none() -> None:
@@ -65,9 +62,7 @@ def test_verify_request_handles_none() -> None:
     import asyncio
     from unittest.mock import MagicMock
 
-    from src.backend.entrypoints.api.dependencies.auth_selector import (
-        verify_request,
-    )
+    from src.backend.entrypoints.api.dependencies.auth_selector import verify_request
 
     request = MagicMock()
     request.state.auth = None
@@ -87,9 +82,7 @@ def test_verify_request_returns_none_for_unmatched() -> None:
     from unittest.mock import MagicMock
 
     from src.backend.core.auth import AuthMethod
-    from src.backend.entrypoints.api.dependencies.auth_selector import (
-        verify_request,
-    )
+    from src.backend.entrypoints.api.dependencies.auth_selector import verify_request
 
     request = MagicMock()
     request.state.auth = None
@@ -129,5 +122,8 @@ def test_verify_request_writes_to_request_state() -> None:
     finally:
         # Restore (хотя в реальности _VERIFIERS — module-level dict)
         # Удаляем наш mock чтобы не влиять на другие тесты
-        if AuthMethod.API_KEY in _VERIFIERS and _VERIFIERS[AuthMethod.API_KEY] is mock_verifier:
+        if (
+            AuthMethod.API_KEY in _VERIFIERS
+            and _VERIFIERS[AuthMethod.API_KEY] is mock_verifier
+        ):
             del _VERIFIERS[AuthMethod.API_KEY]

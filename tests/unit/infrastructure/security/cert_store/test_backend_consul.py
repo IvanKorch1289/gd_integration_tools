@@ -22,7 +22,6 @@ from src.backend.infrastructure.security.cert_store.backend_consul import (
     ConsulCertBackend,
 )
 
-
 # ---------------------------------------------------------------------------
 # CertStoreSettings enum tests
 # ---------------------------------------------------------------------------
@@ -31,9 +30,6 @@ from src.backend.infrastructure.security.cert_store.backend_consul import (
 class TestCertStoreSettingsConsulEnum:
     def test_consul_in_literal(self) -> None:
         """\"consul\" должен быть в Literal[...] валидных backend values."""
-        from typing import get_args
-
-        from pydantic import TypeAdapter
 
         # Use TypeAdapter to inspect Literal.
         from src.backend.core.config.cert_store import CertStoreSettings
@@ -139,11 +135,7 @@ class TestConsulCertBackendGet:
             store={"certs/my_service": json.dumps(payload).encode("utf-8")}
         )
 
-        with patch(
-            "consul.Consul",
-            return_value=client,
-            create=True,
-        ):
+        with patch("consul.Consul", return_value=client, create=True):
             backend = ConsulCertBackend()
             entry = await backend.get("my_service")
 
@@ -272,10 +264,10 @@ class TestConsulCertBackendListExpiring:
 
 class TestCertStoreFromSettingsDispatch:
     def test_consul_backend_dispatched_to_consul_cert_backend(self) -> None:
-        from src.backend.infrastructure.security.cert_store.store import CertStore
         from src.backend.infrastructure.security.cert_store.backend_consul import (
             ConsulCertBackend,
         )
+        from src.backend.infrastructure.security.cert_store.store import CertStore
 
         settings = CertStoreSettings.model_construct(
             backend="consul", vault_path="custom/certs"

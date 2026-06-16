@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W1 - bulkhead.py part of backpressure decomp.
 
 AdaptiveBulkhead (7 methods).
 
 Classes: AdaptiveBulkhead.
 """
+
+from __future__ import annotations
 
 import asyncio
 

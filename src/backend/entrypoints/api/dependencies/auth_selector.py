@@ -21,6 +21,7 @@ implementation to core.
         verify_request,
     )
 """
+
 from __future__ import annotations
 
 import warnings

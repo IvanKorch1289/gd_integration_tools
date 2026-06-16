@@ -15,11 +15,7 @@ __all__ = ("emit_authorization_decision",)
 
 
 def emit_authorization_decision(
-    *,
-    decision: Any,
-    principal: str,
-    resource: str,
-    action: str = "authorize",
+    *, decision: Any, principal: str, resource: str, action: str = "authorize"
 ) -> Any:
     """Emit audit event for authorization decision (Path A pattern A).
 

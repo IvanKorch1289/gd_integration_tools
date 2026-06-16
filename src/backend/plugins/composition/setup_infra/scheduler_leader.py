@@ -75,7 +75,9 @@ async def _start_scheduler_with_leader_election() -> None:
 
     from src.backend.infrastructure.clients.storage.redis_lock import RedisLock
 
-    lock = RedisLock(_SCHEDULER_LEADER_LOCK_KEY, ttl_seconds=_SCHEDULER_LEADER_LOCK_TTL_S)
+    lock = RedisLock(
+        _SCHEDULER_LEADER_LOCK_KEY, ttl_seconds=_SCHEDULER_LEADER_LOCK_TTL_S
+    )
     acquired = await lock.acquire(blocking_timeout=0)
     if not acquired:
         app_logger.info(
@@ -105,8 +107,7 @@ async def _start_scheduler_with_leader_election() -> None:
     # S71 W3: start heartbeat BEFORE scheduler, чтобы lock не expired
     # до того, как scheduler начнёт работать.
     _scheduler_heartbeat_task = asyncio.create_task(
-        _scheduler_heartbeat_loop(),
-        name="scheduler-leader-heartbeat",
+        _scheduler_heartbeat_loop(), name="scheduler-leader-heartbeat"
     )
     await get_scheduler_manager().start()
 
@@ -138,7 +139,7 @@ async def _scheduler_heartbeat_loop() -> None:
                 break
             try:
                 extended = await _scheduler_lock_handle.extend(
-                    additional_seconds=_SCHEDULER_LEADER_LOCK_TTL_S,
+                    additional_seconds=_SCHEDULER_LEADER_LOCK_TTL_S
                 )
                 if not extended:
                     app_logger.error(

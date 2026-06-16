@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — results.py part of banking_processors decomp.
 
 Classes: CreditScoreResult, FraudDetectionResult, RiskAssessmentResult, CustomerSegmentationResult, LoanEligibilityResult.
 
 5 Pydantic result schemas.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

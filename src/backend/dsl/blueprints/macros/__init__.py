@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """DSL blueprint macros package (S68 W1 decomp from macros.py 458 LOC).
 
 8 top-level macro blueprint funcs -> 8 files (per-macro file split):
@@ -9,6 +7,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.blueprints.macros import etl_pipeline`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.blueprints.macros.ai_qa_pipeline import (
     ai_qa_pipeline,  # S68 W1: re-export

@@ -74,9 +74,7 @@ async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
     return await gateway.invoke(request)
 
 
-async def _langgraph_checkpoint_get_activity(
-    thread_id: str,
-) -> dict[str, Any] | None:
+async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] | None:
     """Temporal activity для чтения LangGraph checkpoint по ``thread_id`` (S100 W1).
 
     Выполняется вне workflow-sandbox'а, поэтому может делать DB I/O.

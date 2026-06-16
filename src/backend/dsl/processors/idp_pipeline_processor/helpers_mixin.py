@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import (
-    DEFAULT_EXTRACTORS,
-)
+from src.backend.dsl.processors.idp_pipeline_processor.helpers import DEFAULT_EXTRACTORS
 from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult
 
 

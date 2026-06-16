@@ -32,11 +32,17 @@ class QueueSettings(BaseSettingsWithLoader):
         ..., description="Тип брокера сообщений", json_schema_extra={"example": "kafka"}
     )
     host: str = Field(
-        ..., description="Имя хоста брокера", json_schema_extra={"example": "broker.example.com"}
+        ...,
+        description="Имя хоста брокера",
+        json_schema_extra={"example": "broker.example.com"},
     )
     port: int = Field(..., ge=1, le=65535, description="Номер порта брокера")
     ui_port: int = Field(
-        ..., ge=1, le=65535, description="Номер порта UI брокера", json_schema_extra={"example": 9121}
+        ...,
+        ge=1,
+        le=65535,
+        description="Номер порта UI брокера",
+        json_schema_extra={"example": 9121},
     )
 
     # Блок настроек таймаутов и повторных подключений
@@ -72,16 +78,24 @@ class QueueSettings(BaseSettingsWithLoader):
 
     # Блок настроек SSL/TLS и аутентификации
     use_ssl: bool = Field(
-        ..., description="Включить SSL/TLS для безопасных соединений", json_schema_extra={"example": True}
+        ...,
+        description="Включить SSL/TLS для безопасных соединений",
+        json_schema_extra={"example": True},
     )
     ca_bundle: Path | None = Field(
-        ..., description="Путь к файлу CA сертификата", json_schema_extra={"example": "/path/to/ca.pem"}
+        ...,
+        description="Путь к файлу CA сертификата",
+        json_schema_extra={"example": "/path/to/ca.pem"},
     )
     username: str | None = Field(
-        ..., description="Имя пользователя для аутентификации", json_schema_extra={"example": "kafka-user"}
+        ...,
+        description="Имя пользователя для аутентификации",
+        json_schema_extra={"example": "kafka-user"},
     )
     password: str | None = Field(
-        ..., description="Пароль для аутентификации", json_schema_extra={"example": "securepassword123"}
+        ...,
+        description="Пароль для аутентификации",
+        json_schema_extra={"example": "securepassword123"},
     )
 
     # Блок настроек топиков
@@ -93,7 +107,7 @@ class QueueSettings(BaseSettingsWithLoader):
             "example": [
                 {"name": "queue1", "value": "creating-queue"},
                 {"name": "queue2", "value": "updating-queue"},
-            ],
+            ]
         },
     )
 
@@ -157,30 +171,46 @@ class TasksSettings(BaseSettingsWithLoader):
 
     # Блок настроек для задач
     task_max_attempts: int = Field(
-        ..., description="Максимальное количество попыток выполнения задачи", json_schema_extra={"example": 5}
+        ...,
+        description="Максимальное количество попыток выполнения задачи",
+        json_schema_extra={"example": 5},
     )
     task_seconds_delay: int = Field(
-        ..., description="Начальная задержка в секундах для задачи", json_schema_extra={"example": 60}
+        ...,
+        description="Начальная задержка в секундах для задачи",
+        json_schema_extra={"example": 60},
     )
     task_retry_jitter_factor: float = Field(
-        ..., description="Фактор случайности для экспоненциального отката", json_schema_extra={"example": 0.5}
+        ...,
+        description="Фактор случайности для экспоненциального отката",
+        json_schema_extra={"example": 0.5},
     )
     task_timeout_seconds: int = Field(
-        ..., description="Максимальное время выполнения задачи в секундах", json_schema_extra={"example": 3600}
+        ...,
+        description="Максимальное время выполнения задачи в секундах",
+        json_schema_extra={"example": 3600},
     )
 
     # Блок настроек для потоков (flows)
     flow_max_attempts: int = Field(
-        ..., description="Максимальное количество попыток выполнения потока", json_schema_extra={"example": 5}
+        ...,
+        description="Максимальное количество попыток выполнения потока",
+        json_schema_extra={"example": 5},
     )
     flow_seconds_delay: int = Field(
-        ..., description="Начальная задержка в секундах для потока", json_schema_extra={"example": 60}
+        ...,
+        description="Начальная задержка в секундах для потока",
+        json_schema_extra={"example": 60},
     )
     flow_retry_jitter_factor: float = Field(
-        ..., description="Фактор случайности для экспоненциального отката", json_schema_extra={"example": 0.5}
+        ...,
+        description="Фактор случайности для экспоненциального отката",
+        json_schema_extra={"example": 0.5},
     )
     flow_timeout_seconds: int = Field(
-        ..., description="Максимальное время выполнения потока в секундах", json_schema_extra={"example": 3600}
+        ...,
+        description="Максимальное время выполнения потока в секундах",
+        json_schema_extra={"example": 3600},
     )
 
 
@@ -197,7 +227,9 @@ class GRPCSettings(BaseSettingsWithLoader):
     # Блок настроек сокета и воркеров
     socket_path: str = Field(..., description="Путь к файлу сокета gRPC")
     max_workers: int = Field(
-        ..., description="Максимальное количество процессов воркеров gRPC", json_schema_extra={"example": 10}
+        ...,
+        description="Максимальное количество процессов воркеров gRPC",
+        json_schema_extra={"example": 10},
     )
 
     # TLS / mTLS (ADR-004). Для dev/unix-socket TLS может быть отключён.

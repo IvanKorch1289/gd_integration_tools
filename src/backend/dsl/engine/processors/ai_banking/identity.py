@@ -22,12 +22,12 @@ from typing import Any, TypeVar
 import orjson
 from pydantic import BaseModel, Field
 
-from src.backend.core.logging import get_logger
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.core.audit.facade import (
     emit_banking_audit,  # S109 W2: migrated to canonical facade
 )
+from src.backend.core.logging import get_logger
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.ai_banking._base import (
     _BankingAIProcessor,  # S50 W3: base class
 )

@@ -13,8 +13,4 @@ from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F4
     scheduler_manager,
 )
 
-__all__ = (
-    "SchedulerManager",
-    "get_scheduler_manager",
-    "scheduler_manager",
-)
+__all__ = ("SchedulerManager", "get_scheduler_manager", "scheduler_manager")

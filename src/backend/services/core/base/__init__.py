@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """BaseService package (S61 W1 decomp from base.py 526 LOC).
 
 16 methods decomposed в 3 mixin files + helpers.py:
@@ -13,6 +11,7 @@ Core (4) остается в __init__.py: __init__, _service_error_boundary, _en
 Backward-compat: ``from src.backend.services.core.base import BaseService`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
     pass
 
 from contextlib import asynccontextmanager
+
 from src.backend.core.errors import NotFoundError, ServiceError
 from src.backend.schemas.base import BaseSchema
 
@@ -27,6 +27,8 @@ from src.backend.schemas.base import BaseSchema
 def _is_orm_model(instance: Any) -> bool:
     cls = instance.__class__
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
+
+
 from src.backend.services.core.base.helpers import (
     _is_orm_model,  # S61 W1: re-export
     create_service_class,  # S61 W1: re-export

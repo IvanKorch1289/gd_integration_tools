@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """WorkflowBuilder package (S58 W4 decomp from builder.py 554 LOC).
 
 21 methods decomposed в 6 mixin files:
@@ -16,6 +14,7 @@ SagaBuilder (4 methods) preserved as separate class.
 Backward-compat: ``from src.backend.dsl.workflow.builder import WorkflowBuilder`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

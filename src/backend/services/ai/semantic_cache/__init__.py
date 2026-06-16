@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Semantic cache package (S67 W3 decomp from semantic_cache.py 461 LOC).
 
 2 classes + 2 funcs -> 3 files (per-class):
@@ -10,14 +8,15 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.services.ai.semantic_cache import SemanticCache`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.services.ai.semantic_cache.helpers import (
     get_l3_retrieval_cache,  # S67 W3: helper re-export
     get_semantic_cache,  # S67 W3: helper re-export
 )
 from src.backend.services.ai.semantic_cache.l3_cache import (
-    L3RetrievalGraphCache,  # S67 W3: re-export
     RAG_CACHE_INVALIDATE_CHANNEL,  # S124 W2: re-export for test_l3_retrieval
+    L3RetrievalGraphCache,  # S67 W3: re-export
 )
 from src.backend.services.ai.semantic_cache.semantic_cache import (
     SemanticCache,  # S67 W3: re-export

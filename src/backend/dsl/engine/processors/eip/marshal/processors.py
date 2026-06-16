@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S63 W3 — processors.py part of marshal decomp.
 
 MarshalProcessor + UnmarshalProcessor.
 """
+
+from __future__ import annotations
 
 import threading
 from typing import Any, ClassVar

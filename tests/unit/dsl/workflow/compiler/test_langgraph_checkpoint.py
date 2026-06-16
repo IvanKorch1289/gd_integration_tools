@@ -16,6 +16,7 @@ Pattern: activity-level тесты mock'ают ``get_langgraph_postgres_saver``
 ``temporalio.workflow.execute_activity`` через ``sys.modules`` injection
 (как в ``test_step_compilers.py``).
 """
+
 from __future__ import annotations
 
 import sys
@@ -33,6 +34,7 @@ from src.backend.dsl.workflow.compiler.activity_bridge import (
     _langgraph_checkpoint_put_activity,
     register_langgraph_checkpoint_activities,
 )
+
 # NOTE: ``AgentInvokeDeclaration`` is NOT imported at module-level because
 # Pydantic forward reference (MemoryScope) требует чтобы spec/__init__.py
 # полностью отработал ДО инстанцирования. Импорт внутри функции
@@ -178,8 +180,14 @@ def test_register_langgraph_checkpoint_activities_populates_cache() -> None:
     assert LANGGRAPH_CHECKPOINT_GET_ACTIVITY in bridge._cache
     assert LANGGRAPH_CHECKPOINT_PUT_ACTIVITY in bridge._cache
     # Each cached entry is the activity function (idempotent re-registration)
-    assert bridge._cache[LANGGRAPH_CHECKPOINT_GET_ACTIVITY] is _langgraph_checkpoint_get_activity
-    assert bridge._cache[LANGGRAPH_CHECKPOINT_PUT_ACTIVITY] is _langgraph_checkpoint_put_activity
+    assert (
+        bridge._cache[LANGGRAPH_CHECKPOINT_GET_ACTIVITY]
+        is _langgraph_checkpoint_get_activity
+    )
+    assert (
+        bridge._cache[LANGGRAPH_CHECKPOINT_PUT_ACTIVITY]
+        is _langgraph_checkpoint_put_activity
+    )
 
 
 def test_register_is_idempotent() -> None:
@@ -195,8 +203,7 @@ def test_register_is_idempotent() -> None:
 
 
 def _make_fake_temporal(
-    *,
-    execute_activity_handler: Any = None,
+    *, execute_activity_handler: Any = None
 ) -> tuple[SimpleNamespace, list[dict[str, Any]]]:
     """Build fake ``temporalio.workflow`` module with recorded execute_activity.
 
@@ -207,14 +214,8 @@ def _make_fake_temporal(
     """
     recorder: list[dict[str, Any]] = []
 
-    async def fake_execute_activity(
-        name: str, *args: Any, **kwargs: Any
-    ) -> Any:
-        call: dict[str, Any] = {
-            "name": name,
-            "args": args,
-            "kwargs": kwargs,
-        }
+    async def fake_execute_activity(name: str, *args: Any, **kwargs: Any) -> Any:
+        call: dict[str, Any] = {"name": name, "args": args, "kwargs": kwargs}
         recorder.append(call)
         if execute_activity_handler is not None:
             return await execute_activity_handler(name, *args, **kwargs)
@@ -228,17 +229,15 @@ def _make_declaration(durable: bool):  # type: ignore[no-untyped-def]
     # refs были в globals ПЕРЕД model_rebuild. Импортируем ВСЕ spec
     # submodules чтобы MemoryScope был в globals, потом rebuild.
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration  # noqa: F401
-    from src.backend.dsl.workflow.spec.policies import MemoryScope  # noqa: F401
     from src.backend.dsl.workflow.spec.advanced_declarations import (
         AgentInvokeDeclaration as _AdvAID,
     )
+    from src.backend.dsl.workflow.spec.policies import MemoryScope  # noqa: F401
+
     # Rebuild in the module's own globals so MemoryScope resolves.
     _AdvAID.model_rebuild()
     return AgentInvokeDeclaration(
-        agent_id="agent-test",
-        durable=durable,
-        max_turns=3,
-        timeout_s=60.0,
+        agent_id="agent-test", durable=durable, max_turns=3, timeout_s=60.0
     )
 
 
@@ -303,10 +302,7 @@ async def test_compile_agent_invoke_non_durable_skips_checkpoint(
     from src.backend.dsl.workflow.compiler import step_compilers
 
     decl = _make_declaration(durable=False)
-    ctx: dict[str, Any] = {
-        "_input": {"q": "hello"},
-        "_correlation_id": "corr-99",
-    }
+    ctx: dict[str, Any] = {"_input": {"q": "hello"}, "_correlation_id": "corr-99"}
 
     async def handler(name: str, *args: Any, **kwargs: Any) -> Any:
         return {"content": "ok"}
@@ -330,10 +326,7 @@ async def test_compile_agent_invoke_durable_thread_id_from_correlation_id(
     from src.backend.dsl.workflow.compiler import step_compilers
 
     decl = _make_declaration(durable=True)
-    ctx: dict[str, Any] = {
-        "_input": {},
-        "_correlation_id": "corr-xyz",
-    }
+    ctx: dict[str, Any] = {"_input": {}, "_correlation_id": "corr-xyz"}
 
     captured_thread_ids: list[str] = []
 
@@ -370,10 +363,7 @@ async def test_compile_agent_invoke_durable_degrades_when_saver_unavailable(
     from src.backend.dsl.workflow.compiler import step_compilers
 
     decl = _make_declaration(durable=True)
-    ctx: dict[str, Any] = {
-        "_input": {"q": "hi"},
-        "_correlation_id": "corr-degraded",
-    }
+    ctx: dict[str, Any] = {"_input": {"q": "hi"}, "_correlation_id": "corr-degraded"}
 
     async def handler(name: str, *args: Any, **kwargs: Any) -> Any:
         if name == LANGGRAPH_CHECKPOINT_GET_ACTIVITY:

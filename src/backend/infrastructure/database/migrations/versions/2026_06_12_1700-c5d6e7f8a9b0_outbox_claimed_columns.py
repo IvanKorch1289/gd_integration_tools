@@ -31,6 +31,7 @@ Per-row claim flow (S72 W2 implementation):
      clears claimed_by.
   3. Если worker dies → claimed_until expires → sweeper reset в pending.
 """
+
 # flake8: noqa
 from typing import Sequence, Union
 
@@ -47,8 +48,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # 1. Add 3 nullable columns для per-row claim metadata.
     op.add_column(
-        "outbox_messages",
-        sa.Column("claimed_by", sa.String(length=256), nullable=True),
+        "outbox_messages", sa.Column("claimed_by", sa.String(length=256), nullable=True)
     )
     op.add_column(
         "outbox_messages",
@@ -69,11 +69,7 @@ def upgrade() -> None:
     )
 
     # 3. Index для per-worker claim history introspection.
-    op.create_index(
-        "ix_outbox_messages_claimed_by",
-        "outbox_messages",
-        ["claimed_by"],
-    )
+    op.create_index("ix_outbox_messages_claimed_by", "outbox_messages", ["claimed_by"])
 
 
 def downgrade() -> None:

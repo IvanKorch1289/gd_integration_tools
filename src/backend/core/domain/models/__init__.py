@@ -20,6 +20,7 @@ References:
 - ``docs/migration/d5-models-to-core.md`` (B1-B3 plan)
 - ``docs/adr/0191-sprint-106-closure.md`` (S106 closure, planned)
 """
+
 from __future__ import annotations
 
 from src.backend.core.domain.models.base import (

@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W1 — HttpCallProcessor extracted from components.py.
 
 Per-processor file split.
 """
+
+from __future__ import annotations
 
 import contextlib
 from typing import Any

@@ -22,6 +22,7 @@ lazy import (нет блокирующих зависимостей).
     async for event in source.stream():
         process(event.data)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -112,7 +113,7 @@ class SSESource:
                 # Server closed stream cleanly — reconnect.
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 if self._stopped.is_set():
                     return
                 if (
@@ -145,10 +146,7 @@ class SSESource:
             request_headers["Last-Event-ID"] = self._last_event_id
 
         timeout = httpx.Timeout(
-            connect=10.0,
-            read=self._heartbeat_timeout_s,
-            write=10.0,
-            pool=10.0,
+            connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0
         )
 
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -165,9 +163,7 @@ class SSESource:
                     if not line:
                         # Empty line = end of event
                         if data_lines:
-                            yield self._make_event(
-                                data_lines, event_type, event_id
-                            )
+                            yield self._make_event(data_lines, event_type, event_id)
                             data_lines = []
                             event_type = "message"
                             event_id = None
@@ -191,10 +187,7 @@ class SSESource:
                     yield self._make_event(data_lines, event_type, event_id)
 
     def _make_event(
-        self,
-        data_lines: list[str],
-        event_type: str,
-        event_id: str | None,
+        self, data_lines: list[str], event_type: str, event_id: str | None
     ) -> SSEEvent:
         raw = "\n".join(data_lines)
         parsed: str | dict = raw
@@ -203,15 +196,11 @@ class SSESource:
 
             try:
                 parsed = json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 pass  # keep as raw string
         # Apply event_type filter (если задан)
         if self._event_type is not None and event_type != self._event_type:
             # Return sentinel — но async generator не может skip
             # Реализация: caller проверяет event.event_type
             pass
-        return SSEEvent(
-            data=parsed,
-            event_id=event_id,
-            event_type=event_type,
-        )
+        return SSEEvent(data=parsed, event_id=event_id, event_type=event_type)

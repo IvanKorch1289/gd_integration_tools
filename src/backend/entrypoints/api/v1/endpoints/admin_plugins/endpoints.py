@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S62 W1 — endpoints.py part of admin_plugins decomp.
 
 Funcs: list_plugins, get_plugin_manifest, toggle_plugin, list_plugin_versions, diff_plugin_versions, rollback_plugin, get_dependency_graph, scaffold_plugin_endpoint.
 
 8 endpoint funcs (list, get, toggle, versions, diff, rollback, graph, scaffold).
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

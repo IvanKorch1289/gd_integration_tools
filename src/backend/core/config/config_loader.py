@@ -134,9 +134,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         # stdlib logging не зависит от core.logging → safe fallback.
         from src.backend.core.logging import get_logger
 
-        get_logger(__name__).error(
-            "Ошибка в %s: %s", self.__class__.__name__, error
-        )
+        get_logger(__name__).error("Ошибка в %s: %s", self.__class__.__name__, error)
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):

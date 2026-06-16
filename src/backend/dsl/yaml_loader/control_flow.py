@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S62 W4 — control_flow.py part of yaml_loader decomp.
 
 Funcs: _materialize_control_flow_params.
 
 control flow params materialization.
 """
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -30,6 +30,7 @@ def _materialize_control_flow_params(
         / ``SagaStep`` объектами.
     """
     from src.backend.dsl.engine.processors import ChoiceBranch, SagaStep
+    from src.backend.dsl.yaml_loader.build import _build_sub
 
     materialized = dict(params)
 

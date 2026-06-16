@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+    from src.backend.services.ops.data_quality import DQRemediationResult
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 
@@ -54,25 +54,7 @@ class DQCheckResult:
         return len(self.violations) == 0
 
 
-@dataclass(slots=True)
-class DQRemediationResult:
-    """Result of auto-remediation pass.
-
-    Attributes:
-        data: remediated data (same shape as input: dict или list of dicts).
-        violations: list of violations detected (до remediation).
-        fixes_applied: number of values that were actually changed.
-    """
-
-    data: Any
-    violations: list[DQViolation] = dataclass_field(default_factory=list)
-    fixes_applied: int = 0
-
-    @property
-    def is_clean(self) -> bool:
-        return len(self.violations) == 0
-
-
+# DQRemediationResult lives in __init__.py (S153 W1: 5x dedup)
 @dataclass(slots=True)
 class DQRule:
     """Правило проверки качества данных."""
@@ -130,6 +112,7 @@ class RuleManagementMixin:
             DQRemediationResult с remediated data, list of detected violations,
             и counter применённых fixes.
         """
+        from src.backend.services.ops.data_quality import DQRemediationResult
         from src.backend.services.ops.dq_remediation import build_remediator
 
         records = data if isinstance(data, list) else [data]
@@ -179,6 +162,6 @@ class RuleManagementMixin:
         result_data = (
             remediated_records if isinstance(data, list) else remediated_records[0]
         )
-        return DQRemediationResult(
+        return DQRemediationResult(  # type: ignore[arg-type]
             data=result_data, violations=all_violations, fixes_applied=total_fixes
         )

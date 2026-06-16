@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S63 W2 — recipient_list.py part of routing decomp.
 
 Classes: RecipientListProcessor.
 
 RecipientListProcessor (send to dynamic list of recipients).
 """
+
+from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable

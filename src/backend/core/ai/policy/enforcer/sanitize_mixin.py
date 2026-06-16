@@ -11,6 +11,10 @@ if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest, AIResponse
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
+from src.backend.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class SanitizeMixin:
     """sanitize input/output (2 methods) для AIPolicyEnforcer. S67 W2 extraction."""

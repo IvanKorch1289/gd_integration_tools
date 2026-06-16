@@ -221,7 +221,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]
@@ -421,7 +421,9 @@ def main(argv: list[str] | None = None) -> int:
     @app.command()
     def lint_cmd(
         path: Path = typer.Argument(..., help="Каталог или *.dsl.yaml файл"),
-        strict: bool = typer.Option(False, "--strict", help="Strict-mode: warnings → errors (для CI)."),
+        strict: bool = typer.Option(
+            False, "--strict", help="Strict-mode: warnings → errors (для CI)."
+        ),
         as_json: bool = typer.Option(False, "--json", help="Вывод в JSON формате."),
     ) -> None:
         if not path.exists():
@@ -474,11 +476,24 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         issues = lint_path(path_arg, strict=strict)
         if as_json:
-            print(json.dumps([{
-                "code": iss.code, "severity": iss.severity, "message": iss.message,
-                "file": str(iss.file), "line": iss.line, "processor": iss.processor,
-                "suggestion": iss.suggestion,
-            } for iss in issues], indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    [
+                        {
+                            "code": iss.code,
+                            "severity": iss.severity,
+                            "message": iss.message,
+                            "file": str(iss.file),
+                            "line": iss.line,
+                            "processor": iss.processor,
+                            "suggestion": iss.suggestion,
+                        }
+                        for iss in issues
+                    ],
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(

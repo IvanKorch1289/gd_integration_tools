@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Airflow operators package (S65 W1 decomp from airflow_operators.py 485 LOC).
 
 6 classes + 1 helper → 7 files (per-class file split):
@@ -14,6 +12,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.orchestration.airflow_operators import BranchPythonOperator`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.orchestration.airflow_operators.branchdatetimeoperator import (
     BranchDateTimeOperator,  # S65 W1: re-export

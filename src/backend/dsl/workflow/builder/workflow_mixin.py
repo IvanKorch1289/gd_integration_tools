@@ -2,15 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.dsl.workflow.builder import SagaBuilder
 
 
 class WorkflowMixin:
@@ -24,6 +19,8 @@ class WorkflowMixin:
         Завершить вложенный chain нужно через :meth:`SagaBuilder.end_saga`,
         чтобы вернуть управление родительскому ``WorkflowBuilder``.
         """
+        from src.backend.dsl.workflow.builder import SagaBuilder
+
         return SagaBuilder(self)
 
     def build(self) -> WorkflowDeclaration:

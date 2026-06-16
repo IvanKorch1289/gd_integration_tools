@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W1 — cqrs.py part of event_store decomp.
 
 CQRS bus (Projection + CommandBus + QueryBus + CQRSMixin).
@@ -7,13 +5,18 @@ CQRS bus (Projection + CommandBus + QueryBus + CQRSMixin).
 Classes: Projection, CommandBus, QueryBus, CQRSMixin.
 """
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.processors.event_store.processor import EventStoreProcessor
 from src.backend.dsl.processors.event_store.store import EventStore, InMemoryEventStore
-from src.backend.dsl.processors.event_store.types import Event, EventStream  # S66 W1: cross-import
+from src.backend.dsl.processors.event_store.types import (  # S66 W1: cross-import
+    Event,
+    EventStream,
+)
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -114,7 +117,6 @@ class QueryBus:
                 f"(registered: {list(self._handlers.keys())})"
             )
         return await handler(params)
-
 
 
 class CQRSMixin:

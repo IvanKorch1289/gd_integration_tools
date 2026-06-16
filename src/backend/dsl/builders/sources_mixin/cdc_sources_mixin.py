@@ -75,10 +75,7 @@ class CdcSourcesMixin:
 
     @classmethod
     def from_cdc_registry(
-        cls,
-        route_id: str,
-        backend: str,
-        **kwargs: Any,
+        cls, route_id: str, backend: str, **kwargs: Any
     ) -> RouteBuilder:
         """S101 W1 — создать маршрут с CDC-source через :func:`get_cdc_source`.
 
@@ -112,9 +109,7 @@ class CdcSourcesMixin:
         from src.backend.core.cdc.registry import get_cdc_source
 
         source_instance = get_cdc_source(backend, **kwargs)
-        builder: RouteBuilder = cls(
-            route_id=route_id, source=f"cdc-registry:{backend}"
-        )
+        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc-registry:{backend}")
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 

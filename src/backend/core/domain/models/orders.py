@@ -4,8 +4,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.types import EmailType, UUIDType
 
 from src.backend.core.domain.models.base import BaseModel, nullable_str
-from .files import OrderFile
 from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+
+from .files import OrderFile
 
 __all__ = ("Order",)
 

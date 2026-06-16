@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S60 W2 — strategies.py part of cdc decomp.
 
 Classes: _CDCStrategy, _PollingStrategy, _ListenNotifyStrategy, _LogMinerStrategy.
 
 4 strategies: base _CDCStrategy + 3 concrete (Polling/ListenNotify/LogMiner).
 """
+
+from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -59,7 +59,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except (ImportError, ValueError, Exception):
+        except ImportError, ValueError, Exception:
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
@@ -71,7 +71,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except (ImportError, Exception):
+        except ImportError, Exception:
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 

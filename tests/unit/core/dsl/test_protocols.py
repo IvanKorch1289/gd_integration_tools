@@ -56,10 +56,7 @@ def test_pipeline_protocol_is_runtime_checkable() -> None:
 
 def test_execution_engine_protocol_is_runtime_checkable() -> None:
     """Duck-typed ExecutionEngine can be checked."""
-    from src.backend.core.dsl.protocols import (
-        ExecutionEngineProtocol,
-        PipelineProtocol,
-    )
+    from src.backend.core.dsl.protocols import ExecutionEngineProtocol, PipelineProtocol
 
     class FakeEngine:
         def run_pipeline(self, pipeline: PipelineProtocol) -> object:

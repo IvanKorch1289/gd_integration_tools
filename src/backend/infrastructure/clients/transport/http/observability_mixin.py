@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
+    from src.backend.infrastructure.clients.transport.http.base import FilePart
 
 from collections.abc import Mapping
 from time import monotonic

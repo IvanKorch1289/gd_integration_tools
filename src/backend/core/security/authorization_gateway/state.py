@@ -41,7 +41,6 @@ class AuthorizationDecision:
 
 # Type aliases for policy step and audit callback used across gateway mixins.
 PolicyDecider = Callable[
-    [str, str, str, dict[str, Any]],
-    Awaitable[AuthorizationReason],
+    [str, str, str, dict[str, Any]], Awaitable[AuthorizationReason]
 ]
 AuditCallback = Callable[[dict[str, Any]], None]

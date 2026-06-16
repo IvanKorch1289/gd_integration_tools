@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S60 W3 — pools.py part of setup_infra decomp.
 
 Funcs: _register_pools_in_unified_manager, _warmup_connection_pools, _redis_enabled, _s3_enabled, _clickhouse_enabled.
@@ -7,15 +5,19 @@ Funcs: _register_pools_in_unified_manager, _warmup_connection_pools, _redis_enab
 connection pool registration + backend enablement checks.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
-from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+from src.backend.infrastructure.clients.storage.elasticsearch import (
+    get_elasticsearch_client,
+)
 from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.database.database import get_db_initializer
-from src.backend.core.logging import get_logger
 
 app_logger = get_logger("application")
 
@@ -132,13 +134,13 @@ async def _register_pools_in_unified_manager() -> None:
     # query as liveness check).
     try:
         from src.backend.core.config.features import feature_flags
+
         if feature_flags.ai_gateway_enforce:
-            from src.backend.services.ai.gateway.client import (
-                get_litellm_gateway,
-            )
+            from src.backend.services.ai.gateway.client import get_litellm_gateway
             from src.backend.services.ai.gateway.pool_registration import (
                 register_litellm_pool,
             )
+
             gateway = get_litellm_gateway()
             register_litellm_pool(gateway, name="litellm_main", idle_timeout=60.0)
     except Exception as exc:

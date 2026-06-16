@@ -12,7 +12,11 @@ ASGI-сервером. Поддерживаются два бэкенда:
 
 from __future__ import annotations
 
+import uvicorn  # S146 W3: module-level import для test patchability
 from fastapi import FastAPI
+from granian import Granian  # S146 W3: module-level import для test patchability
+from granian.constants import HTTPModes, Interfaces, Loops, RuntimeModes
+from granian.log import LogLevels
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
@@ -41,13 +45,16 @@ _mount_mcp_http()
 
 
 def _run_uvicorn() -> None:
-    """Запуск приложения через uvicorn (dev по умолчанию).
+    """Запустить приложение через uvicorn (dev по умолчанию).
 
     Wave 7.5: backlog/keep-alive/loop конфигурируются через
     ``settings.app`` (listen_backlog, keep_alive_timeout). uvloop —
     активный event-loop для production-pofилей.
+
+    S146 W3: ``import uvicorn`` перенесён в module level для test
+    patchability (``patch("src.backend.main.uvicorn")`` теперь работает
+    без ``create=True``).
     """
-    import uvicorn
 
     is_dev = settings.app.environment in {"development", "testing"}
     uvicorn_kwargs: dict[str, object] = {
@@ -72,14 +79,14 @@ def _run_uvicorn() -> None:
 
 
 def _run_granian() -> None:
-    """Запуск приложения через granian (production по умолчанию).
+    """Запустить приложение через granian (production по умолчанию).
 
     Wave 7.5: ALPN-negotiated HTTP/2, настраиваемый backlog, runtime
     mode и threads через ``settings.app``. Loop фиксирован uvloop.
+
+    S146 W3: ``from granian import ...`` перенесён в module level для
+    test patchability (``patch("src.backend.main.Granian")`` работает).
     """
-    from granian import Granian
-    from granian.constants import HTTPModes, Interfaces, Loops, RuntimeModes
-    from granian.log import LogLevels
 
     http_mode = {"auto": HTTPModes.auto, "1": HTTPModes.http1, "2": HTTPModes.http2}[
         settings.app.granian_http

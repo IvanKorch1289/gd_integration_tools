@@ -83,18 +83,21 @@ class _InfraOp(BaseProcessor):
 
 class RedisSetProcessor(_InfraOp):
     """Redis SET с опциональным TTL (``params.ttl_seconds``)."""
+
     op_name: ClassVar[str] = "redis_set"
     compensatable: ClassVar[bool] = True
 
 
 class RedisGetProcessor(_InfraOp):
     """Redis GET по ключу (результат в ``properties[result_property]``)."""
+
     op_name: ClassVar[str] = "redis_get"
     compensatable: ClassVar[bool] = True
 
 
 class RedisDeleteProcessor(_InfraOp):
     """Redis DEL (идемпотентно: missing key → no-op)."""
+
     op_name: ClassVar[str] = "redis_delete"
     compensatable: ClassVar[bool] = True
 
@@ -104,12 +107,14 @@ class RedisDeleteProcessor(_InfraOp):
 
 class ClickHouseInsertProcessor(_InfraOp):
     """ClickHouse INSERT (batch). INSERT не имеет meaningful compensation."""
+
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
 
 
 class ClickHouseQueryProcessor(_InfraOp):
     """ClickHouse SELECT (read-only)."""
+
     op_name: ClassVar[str] = "clickhouse_query"
     compensatable: ClassVar[bool] = True
 
@@ -119,12 +124,14 @@ class ClickHouseQueryProcessor(_InfraOp):
 
 class ElasticsearchIndexProcessor(_InfraOp):
     """Elasticsearch INDEX/UPSERT документа. Индексирование необратимо."""
+
     op_name: ClassVar[str] = "es_index"
     compensatable: ClassVar[bool] = False  # индекс необратим
 
 
 class ElasticsearchSearchProcessor(_InfraOp):
     """Elasticsearch SEARCH (read-only)."""
+
     op_name: ClassVar[str] = "es_search"
     compensatable: ClassVar[bool] = True
 
@@ -134,12 +141,14 @@ class ElasticsearchSearchProcessor(_InfraOp):
 
 class MongoInsertProcessor(_InfraOp):
     """MongoDB INSERT документа (необратимо: нет meaningful compensation)."""
+
     op_name: ClassVar[str] = "mongo_insert"
     compensatable: ClassVar[bool] = False
 
 
 class MongoFindProcessor(_InfraOp):
     """MongoDB FIND (read-only, результат в ``properties[to_property]``)."""
+
     op_name: ClassVar[str] = "mongo_find"
     compensatable: ClassVar[bool] = True
 
@@ -149,36 +158,42 @@ class MongoFindProcessor(_InfraOp):
 
 class S3PutProcessor(_InfraOp):
     """S3 PUT объекта (требует aioboto3)."""
+
     op_name: ClassVar[str] = "s3_put"
     compensatable: ClassVar[bool] = True
 
 
 class S3GetProcessor(_InfraOp):
     """S104 W1 — S3 GET processor (требует aioboto3)."""
+
     op_name: ClassVar[str] = "s3_get"
     compensatable: ClassVar[bool] = False
 
 
 class S3DeleteProcessor(_InfraOp):
     """S111 W1 — S3 DELETE processor (idempotent: missing → no-op)."""
+
     op_name: ClassVar[str] = "s3_delete"
     compensatable: ClassVar[bool] = False  # delete необратим
 
 
 class S3ListProcessor(_InfraOp):
     """S111 W1 — S3 LIST processor (пагинация по префиксу)."""
+
     op_name: ClassVar[str] = "s3_list"
     compensatable: ClassVar[bool] = True  # read — обратимо
 
 
 class SftpGetProcessor(_InfraOp):
     """S104 W1 — SFTP GET processor (требует asyncssh)."""
+
     op_name: ClassVar[str] = "sftp_get"
     compensatable: ClassVar[bool] = False
 
 
 class SftpPutProcessor(_InfraOp):
     """S104 W1 — SFTP PUT processor (требует asyncssh)."""
+
     op_name: ClassVar[str] = "sftp_put"
     compensatable: ClassVar[bool] = True
 
@@ -194,6 +209,7 @@ class SqlExecProcessor(_InfraOp):
     отключена (``compensatable=False``) — DML нельзя автоматически
     откатить без явной inverse-операции в compensable spec'е.
     """
+
     op_name: ClassVar[str] = "sql_exec"
     compensatable: ClassVar[bool] = False  # DML не компенсируется
 
@@ -343,10 +359,7 @@ class InfrastructureDSL:
         )
 
     def s3_list(
-        self,
-        *,
-        prefix_from: str | None = None,
-        result_property: str = "s3_keys",
+        self, *, prefix_from: str | None = None, result_property: str = "s3_keys"
     ) -> RouteBuilder:
         """LIST ключей в S3 bucket с пагинацией по ``prefix_from``.
 
@@ -373,7 +386,7 @@ class InfrastructureDSL:
         remote_path: str,
         *,
         username: str | None = None,
-        password_from: str = "none",
+        password_from: str = "none",  # noqa: S107
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "sftp_object",
@@ -411,7 +424,7 @@ class InfrastructureDSL:
         *,
         body_from: str = "body",
         username: str | None = None,
-        password_from: str = "none",
+        password_from: str = "none",  # noqa: S107
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "sftp_result",

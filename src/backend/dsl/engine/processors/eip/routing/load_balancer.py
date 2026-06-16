@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S63 W2 — load_balancer.py part of routing decomp.
 
 Classes: LoadBalancerProcessor.
 
 LoadBalancerProcessor (round-robin / weighted).
 """
+
+from __future__ import annotations
 
 import asyncio
 from typing import Any

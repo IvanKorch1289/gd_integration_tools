@@ -20,16 +20,26 @@ class MailSettings(BaseSettingsWithLoader):
 
     # Блок настроек SMTP сервера
     host: str = Field(
-        ..., description="Имя хоста SMTP сервера", json_schema_extra={"example": "smtp.example.com"}
+        ...,
+        description="Имя хоста SMTP сервера",
+        json_schema_extra={"example": "smtp.example.com"},
     )
     port: int = Field(
-        ..., ge=1, le=65535, description="Номер порта SMTP сервера", json_schema_extra={"example": 587}
+        ...,
+        ge=1,
+        le=65535,
+        description="Номер порта SMTP сервера",
+        json_schema_extra={"example": 587},
     )
     use_tls: bool = Field(
-        ..., description="Включить STARTTLS для безопасных соединений", json_schema_extra={"example": True}
+        ...,
+        description="Включить STARTTLS для безопасных соединений",
+        json_schema_extra={"example": True},
     )
     validate_certs: bool = Field(
-        ..., description="Проверять SSL/TLS сертификаты сервера", json_schema_extra={"example": True}
+        ...,
+        description="Проверять SSL/TLS сертификаты сервера",
+        json_schema_extra={"example": True},
     )
     ca_bundle: Path | None = Field(
         ...,
@@ -44,18 +54,32 @@ class MailSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": "user@example.com"},
     )
     password: str = Field(
-        ..., description="Пароль для аутентификации SMTP", json_schema_extra={"example": "securepassword123"}
+        ...,
+        description="Пароль для аутентификации SMTP",
+        json_schema_extra={"example": "securepassword123"},
     )
 
     # Блок настроек таймаутов и пула соединений
     connection_pool_size: int = Field(
-        ..., ge=1, le=20, description="Размер пула соединений SMTP", json_schema_extra={"example": 5}
+        ...,
+        ge=1,
+        le=20,
+        description="Размер пула соединений SMTP",
+        json_schema_extra={"example": 5},
     )
     connect_timeout: int = Field(
-        ..., ge=5, le=30, description="Таймаут подключения в секундах", json_schema_extra={"example": 30}
+        ...,
+        ge=5,
+        le=30,
+        description="Таймаут подключения в секундах",
+        json_schema_extra={"example": 30},
     )
     command_timeout: int = Field(
-        ..., ge=5, le=300, description="Таймаут сетевой операции в секундах", json_schema_extra={"example": 30}
+        ...,
+        ge=5,
+        le=300,
+        description="Таймаут сетевой операции в секундах",
+        json_schema_extra={"example": 30},
     )
 
     # Блок настроек отправителя и шаблонов

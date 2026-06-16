@@ -4,14 +4,12 @@
 Вынесены в отдельный модуль для переиспользования между
 ``require_sso_auth`` (W3) и будущими SSO-aware слоями (W4+).
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-__all__ = (
-    "extract_tenant_id",
-    "extract_user_groups",
-)
+__all__ = ("extract_tenant_id", "extract_user_groups")
 
 
 def extract_tenant_id(auth: Any) -> str | None:

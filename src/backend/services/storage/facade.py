@@ -109,9 +109,7 @@ class StorageFacade:
         try:
             return await self._storage.list_keys(prefix)
         except Exception as exc:
-            _logger.warning(
-                "StorageFacade list_keys failed prefix=%s: %s", prefix, exc
-            )
+            _logger.warning("StorageFacade list_keys failed prefix=%s: %s", prefix, exc)
             raise ServiceError(f"storage list_keys failed: {exc}") from exc
 
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:

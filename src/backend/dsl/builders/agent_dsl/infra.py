@@ -188,18 +188,16 @@ class InfraMixin:
             isolated: При True запускать ReAct-агента в отдельном процессе
                 через :class:`ProcessPoolAgentSandbox`. Default False.
         """
+        from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
+            AgentGraphProcessor,
+        )
         from src.backend.services.ai.agent_sandbox import (
             InProcessAgentSandbox,
             get_process_pool_agent_sandbox,
         )
-        from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
-            AgentGraphProcessor,
-        )
 
         sandbox = (
-            get_process_pool_agent_sandbox()
-            if isolated
-            else InProcessAgentSandbox()
+            get_process_pool_agent_sandbox() if isolated else InProcessAgentSandbox()
         )
 
         return self._add(  # type: ignore[attr-defined]

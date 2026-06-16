@@ -11,9 +11,10 @@ Wave [s2/k1-2-jwt-jwks] — V7 Auth-стек R1 (JWT + JWKS).
 from __future__ import annotations
 
 import asyncio
-from src.backend.core.logging import get_logger
 import time
 from typing import Any, Protocol
+
+from src.backend.core.logging import get_logger
 
 __all__ = ("HttpJwksFetcher", "JwksCache", "JwksFetchError")
 

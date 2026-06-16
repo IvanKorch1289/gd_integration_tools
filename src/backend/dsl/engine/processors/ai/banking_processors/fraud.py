@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — fraud.py part of banking_processors decomp.
 
 Classes: FraudDetectionProcessor.
 
 Fraud detection processor.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

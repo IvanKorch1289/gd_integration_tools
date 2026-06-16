@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S62 W4 — resolve.py part of yaml_loader decomp.
 
 Funcs: _is_route_composition_include_enabled, _resolve_include_extends.
 
 include/extends resolution (153 LOC BIG).
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

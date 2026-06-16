@@ -35,6 +35,7 @@ Out of scope (future):
 * Workflow-level callback fallback: Temporal Activities могут быть
   использованы для sync Python work; сейчас backend ожидает workflows.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -54,10 +55,7 @@ class TemporalSchedulerBackend:
     """
 
     def __init__(
-        self,
-        client_factory: Any | None = None,
-        *,
-        namespace: str = "default",
+        self, client_factory: Any | None = None, *, namespace: str = "default"
     ) -> None:
         """Инициализация: lazy-bind к :class:`TemporalClientFactory`.
 
@@ -306,9 +304,7 @@ class TemporalSchedulerBackend:
                     {
                         "id": entry.schedule_id,
                         "kind": "cron",
-                        "workflow": (
-                            info.workflow_type if info else "unknown"
-                        ),
+                        "workflow": (info.workflow_type if info else "unknown"),
                         "status": "active",
                     }
                 )

@@ -69,10 +69,15 @@ class InputGuardMixin:
                     "(NeMo Python 3.14 incompat)",
                     name,
                     fallback,
-                    extra={"guard_ref": name, "fallback": fallback, "category": "policy_degradation"},
+                    extra={
+                        "guard_ref": name,
+                        "fallback": fallback,
+                        "category": "policy_degradation",
+                    },
                 )
                 # Delegate to llm_guard with mapped scanner
                 from src.backend.core.ai.policy.spec import GuardRef
+
                 mapped_ref = GuardRef(name=fallback, on_block=on_block)
                 return await self._guard_input_llm_guard(prompt, mapped_ref, on_block)
             logger.warning(

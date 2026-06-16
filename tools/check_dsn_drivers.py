@@ -24,12 +24,12 @@ bootstrap/CI.
 Exit code 0 — все drivers available;
 Exit code 1 — хотя бы один type requires missing driver.
 """
+
 from __future__ import annotations
 
 import argparse
 import importlib
 import sys
-from pathlib import Path
 from typing import NamedTuple
 
 # S106 W7: маппинг DSN type → (sync_driver, async_driver) modules.
@@ -121,11 +121,7 @@ def main() -> int:
     print(render_human(results))
 
     if args.ci:
-        missing = [
-            r
-            for r in results
-            if not r.sync_available or not r.async_available
-        ]
+        missing = [r for r in results if not r.sync_available or not r.async_available]
         return 1 if missing else 0
     return 0
 

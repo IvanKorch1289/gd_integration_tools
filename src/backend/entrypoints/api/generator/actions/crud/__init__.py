@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 from pydantic import BaseModel
+
 from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 from src.backend.dsl.commands.action_registry import action_handler_registry
 from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
@@ -32,10 +33,7 @@ from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import 
 from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (
     WriteMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.specs import (
-    CrudSpec,
-    HttpMethod,
-    )
+from src.backend.entrypoints.api.generator.specs import CrudSpec, HttpMethod
 
 __all__ = ("CrudMixin",)
 

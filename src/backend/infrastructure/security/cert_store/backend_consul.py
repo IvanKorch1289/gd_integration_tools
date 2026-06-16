@@ -67,9 +67,7 @@ class ConsulCertBackend(CertBackend):
                 import consul
 
                 self._client = consul.Consul(
-                    host=self._host,
-                    port=self._port,
-                    token=self._token,
+                    host=self._host, port=self._port, token=self._token
                 )
             return self._client
 
@@ -150,9 +148,7 @@ class ConsulCertBackend(CertBackend):
         try:
             await asyncio.to_thread(_put)
         except Exception as exc:
-            raise ConnectionError(
-                f"Consul put failed for {service_id}: {exc}"
-            ) from exc
+            raise ConnectionError(f"Consul put failed for {service_id}: {exc}") from exc
 
         return CertEntry(
             service_id=service_id,
@@ -190,7 +186,7 @@ class ConsulCertBackend(CertBackend):
         for key in keys or []:
             if not key.startswith(prefix):
                 continue
-            service_id = key[len(prefix):]
+            service_id = key[len(prefix) :]
             entry = await self.get(service_id)
             if entry and entry.expires_at <= before:
                 result.append(entry)

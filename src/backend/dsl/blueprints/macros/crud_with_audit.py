@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """S68 W1 - crud_with_audit blueprint extracted from macros.py.
 
 CRUD with audit trail.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline

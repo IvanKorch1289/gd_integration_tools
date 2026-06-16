@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Enrichment processors package (S61 W2 decomp from enrichment.py 523 LOC).
 
 8 processor classes decomposed в 5 files (per enrichment type):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.engine.processors.enrichment import GeoIpProcessor`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.enrichment.compression import (
     CompressProcessor,  # S61 W2: re-export

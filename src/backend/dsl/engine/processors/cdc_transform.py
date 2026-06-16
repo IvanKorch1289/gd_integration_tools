@@ -111,9 +111,7 @@ class TransformCdcEventProcessor(BaseProcessor):
         self._drop_unknown = drop_unknown
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         if body is None:
             return
@@ -143,9 +141,7 @@ class TransformCdcEventProcessor(BaseProcessor):
             self._project,
         )
 
-    def _shape_event(
-        self, ev: dict[str, Any], op: str, table: str
-    ) -> dict[str, Any]:
+    def _shape_event(self, ev: dict[str, Any], op: str, table: str) -> dict[str, Any]:
         """Применяет проекцию + include_* правила к одному событию."""
         if self._project:
             result: dict[str, Any] = {}
@@ -183,7 +179,14 @@ class TransformCdcEventProcessor(BaseProcessor):
         if self._include_new and "new" in ev:
             result["new"] = ev["new"]
         for k, v in ev.items():
-            if k in result or k in {"operation", "table", "old", "new", "timestamp", "ts"}:
+            if k in result or k in {
+                "operation",
+                "table",
+                "old",
+                "new",
+                "timestamp",
+                "ts",
+            }:
                 continue
             result[k] = v
         return result

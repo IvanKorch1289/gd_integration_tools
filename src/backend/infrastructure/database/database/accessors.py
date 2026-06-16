@@ -37,12 +37,22 @@ def get_smart_session_manager() -> Any:
     Если ``settings.database.replica_dsn`` не задан — manager создаётся
     без replica и работает в single-primary режиме, что эквивалентно
     прежнему поведению ``get_main_session_manager``.
+
+    S145 W3: используем module-level lookup для ``get_db_initializer`` —
+    иначе ``monkeypatch.setattr`` в tests/ не сможет подменить функцию
+    (импорт binds name в accessors.__dict__, не в database.__dict__).
     """
+    # S145 W3: use module-level lookup для monkeypatch-friendly access.
+    # ``from .initializer import get_db_initializer`` binds the name в
+    # accessors.__dict__ — ``monkeypatch.setattr(database, ...)`` patches
+    # database.__dict__, а не accessors.__dict__. Module-level lookup
+    # гарантирует test isolation.
+    from src.backend.infrastructure.database import database as _db_mod
     from src.backend.infrastructure.database.smart_session_manager import (
         SmartSessionManager,
     )
 
-    bundle = get_db_initializer().as_bundle()
+    bundle = _db_mod.get_db_initializer().as_bundle()
     return SmartSessionManager(
         primary_sessionmaker=bundle.async_session_maker,
         replica_sessionmaker=bundle.replica_session_maker,

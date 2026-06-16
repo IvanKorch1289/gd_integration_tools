@@ -46,10 +46,7 @@ from src.backend.core.logging import get_logger
 
 _logger = get_logger("services.jupyter.factory")
 
-__all__ = (
-    "BackendKind",
-    "ExecutionBackendFactory",
-)
+__all__ = ("BackendKind", "ExecutionBackendFactory")
 
 
 class BackendKind(str, Enum):
@@ -139,10 +136,7 @@ class ExecutionBackendFactory:
             raise ValueError(f"Unknown backend kind: {kind!r}")
 
     def from_config(
-        self,
-        *,
-        settings: JupyterHubSettings | None = None,
-        **kwargs: Any,
+        self, *, settings: JupyterHubSettings | None = None, **kwargs: Any
     ) -> Any:
         """Auto-detect backend from environment (JUPYTER_BACKEND).
 

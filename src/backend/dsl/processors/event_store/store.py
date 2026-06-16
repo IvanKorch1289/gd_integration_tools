@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W1 — store.py part of event_store decomp.
 
 event store (EventStore ABC + InMemoryEventStore impl).
@@ -7,14 +5,20 @@ event store (EventStore ABC + InMemoryEventStore impl).
 Classes: EventStore, InMemoryEventStore.
 """
 
+from __future__ import annotations
+
 import threading
 from typing import TYPE_CHECKING, Protocol
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.processors.event_store.types import Event, EventStream  # S66 W1: cross-import
+from src.backend.dsl.processors.event_store.types import (  # S66 W1: cross-import
+    Event,
+    EventStream,
+)
 
 if TYPE_CHECKING:
     from src.backend.dsl.processors.event_store.cqrs import Projection
+
     pass
 
 _log = get_logger(__name__)

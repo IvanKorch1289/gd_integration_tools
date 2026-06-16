@@ -286,11 +286,7 @@ class SourcesMixin:
         mod = importlib.import_module("src.backend.infrastructure.sources.nats")
         # Smoke-валидация конструктора (S50 W2 pattern, как from_webdav).
         mod.NatsSource(subject=subject, nats_url=nats_url)
-        return cls(
-            route_id=route_id,
-            source=f"nats:{subject}",
-            description=description,
-        )
+        return cls(route_id=route_id, source=f"nats:{subject}", description=description)
 
     @classmethod
     def from_mongo(

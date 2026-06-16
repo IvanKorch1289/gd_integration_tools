@@ -96,10 +96,7 @@ class FallbackObjectStorage(ObjectStorage):
         return isinstance(exc, self._fallback_exceptions)
 
     async def _with_fallback(
-        self,
-        op: str,
-        primary_call: Any,
-        secondary_call: Any,
+        self, op: str, primary_call: Any, secondary_call: Any
     ) -> Any:
         """Execute primary_call; при matched exception — secondary_call.
 

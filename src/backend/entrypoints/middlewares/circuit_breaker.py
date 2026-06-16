@@ -40,7 +40,7 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 
@@ -163,9 +163,7 @@ class CircuitBreakerMiddleware:
         # HALF_OPEN: allow 1 probe
         return True
 
-    def _record_failure(
-        self, state: RouteBreakerState, policy: BreakerPolicy
-    ) -> None:
+    def _record_failure(self, state: RouteBreakerState, policy: BreakerPolicy) -> None:
         """S81 W1 — record failure, transition state if threshold met."""
         now = time.time()
         state.failures.append(now)
@@ -180,8 +178,7 @@ class CircuitBreakerMiddleware:
                 state.state = BreakerState.OPEN
                 state.last_state_change = now
                 _logger.warning(
-                    "Circuit OPEN: threshold=%d reached",
-                    policy.failure_threshold,
+                    "Circuit OPEN: threshold=%d reached", policy.failure_threshold
                 )
 
     def _record_success(self, state: RouteBreakerState) -> None:

@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S68 W4 - claude.py part of ai_providers decomp.
 
 Anthropic Claude provider (extract_text, embeddings, chat).
 
 Classes: ClaudeProvider.
 """
+
+from __future__ import annotations
 
 import os
 from typing import Any
@@ -39,7 +39,7 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 

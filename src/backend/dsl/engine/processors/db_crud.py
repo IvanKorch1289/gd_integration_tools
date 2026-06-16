@@ -16,6 +16,7 @@ parameterized SQL из dict-входа:
 Использует :class:`DatabaseQueryProcessor` для actual execution (connection
 pool, retry policy, observability). В ``DbCrudProcessor`` только SQL build.
 """
+
 from __future__ import annotations
 
 from typing import Any, ClassVar
@@ -26,7 +27,13 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
-__all__ = ("CRUDOperation", "DbCrudProcessor", "build_delete_sql", "build_insert_sql", "build_upsert_sql")
+__all__ = (
+    "CRUDOperation",
+    "DbCrudProcessor",
+    "build_delete_sql",
+    "build_insert_sql",
+    "build_upsert_sql",
+)
 
 
 _logger = get_logger("dsl.db_crud")
@@ -79,14 +86,12 @@ def build_insert_sql(table: str, data: dict[str, Any]) -> tuple[str, dict[str, A
     table_q = _quote_identifier(table)
     cols_q = ", ".join(_quote_identifier(c) for c in cols)
     placeholders = ", ".join(f":{c}" for c in cols)
-    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"
+    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"  # noqa: S608
     return sql, dict(data)
 
 
 def build_upsert_sql(
-    table: str,
-    data: dict[str, Any],
-    conflict_keys: list[str],
+    table: str, data: dict[str, Any], conflict_keys: list[str]
 ) -> tuple[str, dict[str, Any]]:
     """Build UPSERT SQL (PostgreSQL ``ON CONFLICT ... DO UPDATE``).
 
@@ -122,7 +127,7 @@ def build_upsert_sql(
         )
         update_clause = f"DO UPDATE SET {update_set}"
     sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608
         f"ON CONFLICT ({conflict_q}) {update_clause}"
     )
     return sql, dict(data)
@@ -143,7 +148,7 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
         _quote_identifier(col)
     table_q = _quote_identifier(table)
     conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where.keys())
-    sql = f"DELETE FROM {table_q} WHERE {conditions}"
+    sql = f"DELETE FROM {table_q} WHERE {conditions}"  # noqa: S608
     return sql, dict(where)
 
 
@@ -183,7 +188,9 @@ class DbCrudProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=name or f"db_{operation.lower()}")
         if operation not in ("INSERT", "UPSERT", "DELETE"):
-            raise ValueError(f"operation must be INSERT|UPSERT|DELETE, got {operation!r}")
+            raise ValueError(
+                f"operation must be INSERT|UPSERT|DELETE, got {operation!r}"
+            )
         self._operation = operation
         self._table = table
         self._data = dict(data) if data else {}
@@ -192,24 +199,17 @@ class DbCrudProcessor(BaseProcessor):
         self._result_property = result_property
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         # 1. Build SQL
         if self._operation == "INSERT":
             sql, params = build_insert_sql(self._table, self._data)
         elif self._operation == "UPSERT":
-            sql, params = build_upsert_sql(
-                self._table, self._data, self._conflict_keys
-            )
+            sql, params = build_upsert_sql(self._table, self._data, self._conflict_keys)
         else:  # DELETE
             sql, params = build_delete_sql(self._table, self._where)
 
         _logger.info(
-            "db_crud: op=%s table=%s sql=%s",
-            self._operation,
-            self._table,
-            sql,
+            "db_crud: op=%s table=%s sql=%s", self._operation, self._table, sql
         )
 
         # 2. Execute via DatabaseQueryProcessor (reuses connection pool + retry)
@@ -218,7 +218,6 @@ class DbCrudProcessor(BaseProcessor):
         )
 
         query_proc = DatabaseQueryProcessor(
-            sql=sql,
-            result_property=self._result_property,
+            sql=sql, result_property=self._result_property
         )
         await query_proc.process(exchange, context)

@@ -34,6 +34,7 @@ Example::
 
 Wave: s125-w3-require-sso-auth
 """
+
 from __future__ import annotations
 
 import functools
@@ -47,11 +48,7 @@ from src.backend.core.auth.auth_context_helpers import (
 from src.backend.core.auth.sso_registry import SsoRegistry
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "RequireSsoAuthError",
-    "require_sso_auth",
-    "require_sso_capability",
-)
+__all__ = ("RequireSsoAuthError", "require_sso_auth", "require_sso_capability")
 
 _logger = get_logger(__name__)
 
@@ -67,10 +64,7 @@ class RequireSsoAuthError(PermissionError):
     """
 
 
-async def _resolve_user_capabilities(
-    registry: SsoRegistry,
-    auth: Any,
-) -> list[str]:
+async def _resolve_user_capabilities(registry: SsoRegistry, auth: Any) -> list[str]:
     """Resolve user groups → capabilities через SsoRegistry.
 
     Args:
@@ -92,17 +86,13 @@ async def _resolve_user_capabilities(
 
     idp_config = await registry.get(tenant_id)
     if idp_config is None:
-        raise RequireSsoAuthError(
-            f"IdP config not found for tenant '{tenant_id}'"
-        )
+        raise RequireSsoAuthError(f"IdP config not found for tenant '{tenant_id}'")
 
     user_groups = extract_user_groups(auth)
     return idp_config.groups_to_capabilities.resolve(user_groups)
 
 
-def require_sso_auth(
-    registry: SsoRegistry,
-) -> Callable[[_F], _F]:
+def require_sso_auth(registry: SsoRegistry) -> Callable[[_F], _F]:
     """Decorator factory: enforce SSO auth на handler'е.
 
     Handler должен принимать ``auth: AuthContext`` параметром
@@ -124,6 +114,7 @@ def require_sso_auth(
         RequireSsoAuthError: SSO validation failed.
         SsoRegistryError: Vault/schema error (propagated).
     """
+
     def decorator(func: _F) -> _F:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -150,8 +141,7 @@ def require_sso_auth(
 
 
 def require_sso_capability(
-    capability: str,
-    registry: SsoRegistry,
+    capability: str, registry: SsoRegistry
 ) -> Callable[[_F], _F]:
     """Decorator factory: enforce SSO auth + specific capability.
 
@@ -166,6 +156,7 @@ def require_sso_capability(
         RequireSsoAuthError: SSO validation failed or capability missing.
         SsoRegistryError: Vault/schema error (propagated).
     """
+
     def decorator(func: _F) -> _F:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -196,9 +187,7 @@ def require_sso_capability(
 
 
 def _extract_auth_from_args(
-    args: tuple[Any, ...],
-    kwargs: dict[str, Any],
-    func: Callable[..., Any],
+    args: tuple[Any, ...], kwargs: dict[str, Any], func: Callable[..., Any]
 ) -> Any | None:
     """Locate AuthContext-подобный объект в args/kwargs.
 

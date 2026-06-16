@@ -136,10 +136,8 @@ def build_default_registry() -> MiddlewareRegistry:
         CircuitBreakerMiddleware,
         {
             "default_policy": BreakerPolicy(
-                failure_threshold=5,
-                window_seconds=60.0,
-                reset_timeout=30.0,
-            ),
+                failure_threshold=5, window_seconds=60.0, reset_timeout=30.0
+            )
         },
         order=250,
     )

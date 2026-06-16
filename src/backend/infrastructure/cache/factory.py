@@ -32,7 +32,9 @@ logger = get_logger("infrastructure.cache.factory")
 
 def _redis_client() -> Redis:
     """Достаёт raw redis-клиент из инфраструктурного синглтона."""
-    from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
+    from src.backend.infrastructure.clients.storage.redis import (
+        get_redis_client as redis_client,
+    )
 
     raw = getattr(redis_client, "_raw_client", None) or getattr(
         redis_client, "client", None

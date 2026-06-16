@@ -91,7 +91,8 @@ async def test_invalidate_calls_redis_delete_pattern(
 
     import src.backend.infrastructure.clients.storage.redis as redis_mod
 
-    monkeypatch.setattr(redis_mod, "redis_client", FakeRedis(), raising=False)
+    fake_redis = FakeRedis()
+    monkeypatch.setattr(redis_mod, "get_redis_client", lambda: fake_redis)
 
     @invalidate("bki:*")
     async def update(uid: int) -> str:

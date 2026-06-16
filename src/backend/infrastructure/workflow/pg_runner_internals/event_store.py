@@ -26,7 +26,6 @@ native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallba
 """
 
 import hashlib
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -38,9 +37,7 @@ from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
 )
-from src.backend.core.domain.models.workflow_instance import (
-    WorkflowInstance,
-)
+from src.backend.core.domain.models.workflow_instance import WorkflowInstance
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
@@ -52,7 +49,7 @@ _logger = get_logger("workflow.pg_runner_internals")
 # ─────────────────────────────── DTO ───────────────────────────────
 
 
-@dataclass(slots=True, frozen=True)
+# S153 W4d: убран @dataclass — custom __init__ + slots/frozen → super() TypeError
 class WorkflowEventStore:
     """Append-only event store для durable workflows."""
 

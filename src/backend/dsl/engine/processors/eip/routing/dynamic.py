@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S63 W2 — dynamic.py part of routing decomp.
 
 Classes: DynamicRouterProcessor.
 
 DynamicRouterProcessor (runtime-decided routing).
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any

@@ -53,14 +53,8 @@ DEFAULT_FALLBACK_SPECS: dict[str, dict[str, str]] = {
         "resource_dir": "",
         "display_name": "Python 3 (fallback)",
         "language": "python",
-        "argv": [
-            "python3",
-            "-m",
-            "ipykernel_launcher",
-            "-f",
-            "{connection_file}",
-        ],
-    },
+        "argv": ["python3", "-m", "ipykernel_launcher", "-f", "{connection_file}"],
+    }
 }
 
 
@@ -109,8 +103,7 @@ class KernelSpecDiscovery:
             raw_specs = ksm.get_all_specs()
         except Exception as exc:  # noqa: BLE001
             _logger.warning(
-                "KernelSpecManager.get_all_specs() failed: %s — "
-                "fallback to defaults",
+                "KernelSpecManager.get_all_specs() failed: %s — fallback to defaults",
                 exc,
             )
             self._cache = dict(DEFAULT_FALLBACK_SPECS)
@@ -136,10 +129,7 @@ class KernelSpecDiscovery:
         )
         return self._cache
 
-    def filter_by_whitelist(
-        self,
-        whitelist: list[str],
-    ) -> dict[str, dict[str, str]]:
+    def filter_by_whitelist(self, whitelist: list[str]) -> dict[str, dict[str, str]]:
         """Filter discovered kernels by explicit whitelist.
 
         Args:
@@ -156,17 +146,14 @@ class KernelSpecDiscovery:
         if not whitelist:
             return all_kernels
         filtered = {
-            name: spec
-            for name, spec in all_kernels.items()
-            if name in whitelist
+            name: spec for name, spec in all_kernels.items() if name in whitelist
         }
         # Whitelist entries которых нет в discovery → warning (config
         # drift: settings reference kernel, но не installed).
         missing = set(whitelist) - set(filtered.keys())
         if missing:
             _logger.warning(
-                "Kernel whitelist contains kernels not installed locally: %s",
-                missing,
+                "Kernel whitelist contains kernels not installed locally: %s", missing
             )
         return filtered
 

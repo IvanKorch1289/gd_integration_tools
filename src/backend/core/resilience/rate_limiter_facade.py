@@ -19,6 +19,7 @@ S104 W2 = canonical re-export of unified facade через ``core/`` —
 аналогично S95 W4 AuthGateway + S103 W3 AuditFacade pattern.
 Real ResilienceCoordinator consolidation — S105+ (multi-sprint).
 """
+
 from __future__ import annotations
 
 # Canonical re-export of unified rate limiter.
@@ -29,9 +30,4 @@ from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa
     get_rate_limiter,
 )
 
-__all__ = (
-    "RateLimit",
-    "RateLimitExceeded",
-    "RedisRateLimiter",
-    "get_rate_limiter",
-)
+__all__ = ("RateLimit", "RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter")

@@ -19,7 +19,6 @@ TD-S67-feature-flag-deprecation).
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -29,14 +28,9 @@ from joserfc.jwk import ECKey, OctKey, RSAKey
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
+from src.backend.core.logging import get_logger
 
-__all__ = (
-    "JwtBackend",
-    "JwtClaims",
-    "JwtVerificationError",
-    "encode",
-    "decode",
-)
+__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "encode", "decode")
 
 _logger = get_logger(__name__)
 
@@ -84,11 +78,7 @@ def encode(
     import time as _time
 
     now = int(_time.time())
-    full_claims: dict[str, Any] = {
-        "sub": subject,
-        "iat": now,
-        "exp": now + expires_in,
-    }
+    full_claims: dict[str, Any] = {"sub": subject, "iat": now, "exp": now + expires_in}
     if issuer:
         full_claims["iss"] = issuer
     if claims:

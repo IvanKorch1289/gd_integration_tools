@@ -1,22 +1,17 @@
 """S80 W4 — tests для LiteLLM pool registration в PoolHealthMonitor
 (FINAL_REPORT_V2 P1 #6 closure: 'Добавить connection pool для LiteLLM Gateway')."""
+
 from __future__ import annotations
 
-import asyncio
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.backend.infrastructure.clients.pool_health import (
-    PoolHealthMonitor,
-    get_pool_monitor,
-)
+from src.backend.infrastructure.clients.pool_health import PoolHealthMonitor
 from src.backend.services.ai.gateway.pool_registration import (
-    register_litellm_pool,
     _litellm_ping,
+    register_litellm_pool,
 )
-
 
 # _litellm_ping tests
 # ============================================================================
@@ -25,7 +20,7 @@ from src.backend.services.ai.gateway.pool_registration import (
 @pytest.mark.asyncio
 async def test_litellm_ping_no_litellm_returns_false() -> None:
     """Если litellm не установлен → False."""
-    from src.backend.services.ai.gateway import pool_registration as mod
+
     # Force ImportError
     with patch.dict("sys.modules", {"litellm": None}):
         gateway = MagicMock()
@@ -82,8 +77,7 @@ def test_register_litellm_pool_custom_idle_timeout() -> None:
     monitor = PoolHealthMonitor()
     gateway = MagicMock()
     register_litellm_pool(
-        gateway, monitor=monitor,
-        name="litellm_fast", idle_timeout=30.0,
+        gateway, monitor=monitor, name="litellm_fast", idle_timeout=30.0
     )
     entry = monitor._pools["litellm_fast"]
     assert entry.idle_timeout == 30.0

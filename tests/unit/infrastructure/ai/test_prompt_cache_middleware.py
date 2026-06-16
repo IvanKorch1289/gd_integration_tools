@@ -18,7 +18,6 @@ from src.backend.infrastructure.ai.prompt_cache_middleware import (
     is_anthropic_cacheable,
 )
 
-
 # ---------------------------------------------------------------------------
 # is_anthropic_cacheable tests
 # ---------------------------------------------------------------------------
@@ -70,9 +69,7 @@ class TestInjectPromptCache:
     def test_injects_user_content_for_anthropic(self) -> None:
         """Anthropic user content → list с cache_control."""
         messages = [{"role": "user", "content": "Hello, world!"}]
-        result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022"
-        )
+        result = inject_prompt_cache(messages, "anthropic/claude-3-5-sonnet-20241022")
         assert result != messages  # new list
         assert result[0]["role"] == "user"
         content = result[0]["content"]
@@ -86,9 +83,7 @@ class TestInjectPromptCache:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hi"},
         ]
-        result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022"
-        )
+        result = inject_prompt_cache(messages, "anthropic/claude-3-5-sonnet-20241022")
         sys_content = result[0]["content"]
         assert isinstance(sys_content, list)
         assert sys_content[0]["cache_control"]["type"] == "ephemeral"
@@ -104,9 +99,7 @@ class TestInjectPromptCache:
                 ],
             }
         ]
-        result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022"
-        )
+        result = inject_prompt_cache(messages, "anthropic/claude-3-5-sonnet-20241022")
         last_block = result[0]["content"][-1]
         assert last_block["text"] == "block 2"
         assert "cache_control" in last_block
@@ -199,6 +192,7 @@ class TestIsOpenAICacheable:
         from src.backend.infrastructure.ai.prompt_cache_middleware import (
             is_openai_cacheable,
         )
+
         assert is_openai_cacheable(model) is True
 
     @pytest.mark.parametrize(
@@ -215,16 +209,17 @@ class TestIsOpenAICacheable:
         from src.backend.infrastructure.ai.prompt_cache_middleware import (
             is_openai_cacheable,
         )
+
         assert is_openai_cacheable(model) is False
 
     @pytest.mark.parametrize(
-        "model",
-        ["", "anthropic/claude-3-5-sonnet", "gemini/gemini-pro", "gpt-4o"],
+        "model", ["", "anthropic/claude-3-5-sonnet", "gemini/gemini-pro", "gpt-4o"]
     )
     def test_non_openai_returns_false(self, model: str) -> None:
         from src.backend.infrastructure.ai.prompt_cache_middleware import (
             is_openai_cacheable,
         )
+
         assert is_openai_cacheable(model) is False
 
 
@@ -261,9 +256,7 @@ class TestInjectOpenAIPromptCache:
         )
 
         messages = [{"role": "user", "content": "Hello"}]
-        kwargs = inject_openai_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet"
-        )
+        kwargs = inject_openai_prompt_cache(messages, "anthropic/claude-3-5-sonnet")
         assert kwargs == {}
 
     def test_disabled_config_returns_empty(self) -> None:
@@ -318,12 +311,7 @@ class TestInjectOpenAIPromptCache:
             inject_openai_prompt_cache,
         )
 
-        messages = [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": "block 1"}],
-            }
-        ]
+        messages = [{"role": "user", "content": [{"type": "text", "text": "block 1"}]}]
         kwargs = inject_openai_prompt_cache(messages, "openai/gpt-4o")
         assert "prompt_cache_key" in kwargs
 

@@ -22,8 +22,4 @@ from src.backend.services.core.base import (  # noqa: F401
     get_service_for_model,
 )
 
-__all__ = (
-    "BaseService",
-    "create_service_class",
-    "get_service_for_model",
-)
+__all__ = ("BaseService", "create_service_class", "get_service_for_model")

@@ -5,6 +5,7 @@
 - NeMo guard без fallback → warning + return None
 - NeMo guard с fallback → delegate to llm_guard (mocked)
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
@@ -14,8 +15,8 @@ import pytest
 from src.backend.core.ai.errors import GuardResult
 from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
 from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
-    InputGuardMixin,
     _NEMO_TO_LLM_GUARD_FALLBACK,
+    InputGuardMixin,
 )
 from src.backend.core.ai.policy.spec import GuardRef
 
@@ -32,9 +33,7 @@ def test_nemo_fallback_map_is_populated() -> None:
     """Mapping NeMo → llm_guard scanner names существует."""
     assert "nemo:colang:topics" in _NEMO_TO_LLM_GUARD_FALLBACK
     assert "nemo:moderation" in _NEMO_TO_LLM_GUARD_FALLBACK
-    assert all(
-        v.startswith("llm_guard:") for v in _NEMO_TO_LLM_GUARD_FALLBACK.values()
-    )
+    assert all(v.startswith("llm_guard:") for v in _NEMO_TO_LLM_GUARD_FALLBACK.values())
 
 
 @pytest.mark.asyncio
@@ -58,9 +57,7 @@ async def test_nemo_guard_with_fallback_delegates_to_llm_guard() -> None:
     ref = GuardRef(name="nemo:colang:topics", on_block="warn")
 
     expected_result = GuardResult(
-        verdict="passed",
-        guard_name="llm_guard:BanTopics",
-        categories=[],
+        verdict="passed", guard_name="llm_guard:BanTopics", categories=[]
     )
 
     with patch.object(

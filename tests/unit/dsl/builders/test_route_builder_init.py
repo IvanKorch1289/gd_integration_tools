@@ -19,9 +19,8 @@ _protocol, _transport_config, _feature_flag).
 7. ``build()`` работает на instantiated builder.
 8. ``_add(processor)`` — fluent chain.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 
 def test_route_builder_init_with_args() -> None:
@@ -37,11 +36,14 @@ def test_route_builder_init_with_args() -> None:
     assert b.source == "kafka:orders"
     assert b.description == "Order creation consumer"
 
+
 def test_from_creates_builder() -> None:
     """``RouteBuilder.from_`` создаёт валидный instance."""
     from src.backend.dsl.builders.base import RouteBuilder
 
-    b = RouteBuilder.from_("etl.import", source="timer:300s", description="Periodic ETL")
+    b = RouteBuilder.from_(
+        "etl.import", source="timer:300s", description="Periodic ETL"
+    )
     assert b.route_id == "etl.import"
     assert b.source == "timer:300s"
     assert b.description == "Periodic ETL"

@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W3 — base.py part of grpc_server decomp.
 
 Classes: BaseGRPCServicer.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W1 — PollingConsumerProcessor extracted from components.py.
 
 Per-processor file split.
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any

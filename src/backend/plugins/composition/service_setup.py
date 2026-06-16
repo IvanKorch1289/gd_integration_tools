@@ -104,9 +104,7 @@ def _register_storage_facade() -> None:
             gate = get_service(CapabilityGate)
             capability_check = getattr(gate, "check", None)
         return StorageFacade(
-            storage=storage,
-            capability_check=capability_check,
-            plugin="system",
+            storage=storage, capability_check=capability_check, plugin="system"
         )
 
     register_factory(StorageFacade, _factory)
@@ -156,7 +154,9 @@ def _register_cache_facade() -> None:
 def _register_external_database_facade() -> None:
     """Регистрирует ``ExternalDatabaseFacade`` в svcs с capability-check."""
     from src.backend.core.svcs_registry import has_service, register_factory
-    from src.backend.infrastructure.database.external_database_facade import ExternalDatabaseFacade
+    from src.backend.infrastructure.database.external_database_facade import (
+        ExternalDatabaseFacade,
+    )
 
     if has_service(ExternalDatabaseFacade):
         return

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S61 W2 — webhook.py part of enrichment decomp.
 
 Classes: WebhookSignProcessor, WebhookSignVerifyProcessor.
@@ -7,11 +5,16 @@ Classes: WebhookSignProcessor, WebhookSignVerifyProcessor.
 webhook sign + verify.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+logger = get_logger(__name__)
 
 
 class WebhookSignProcessor(BaseProcessor):

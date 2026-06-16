@@ -7,6 +7,7 @@
 * ``report_human()`` / ``report_json()`` — форматы вывода.
 * ``main()`` — CLI: default exit 0, --strict exit 1 при callsites.
 """
+
 from __future__ import annotations
 
 import json
@@ -16,11 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.check_audit_deprecation import (
-    AuditDeprecationChecker,
-    main,
-)
-
+from tools.check_audit_deprecation import AuditDeprecationChecker, main
 
 # ──────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -54,9 +51,7 @@ def temp_source_tree(tmp_path: Path) -> Path:
     (tmp_path / "tools").mkdir()
 
     # 1. Facade (должен быть excluded).
-    (src / "core/audit/facade.py").write_text(
-        "def emit_audit():\n    pass\n"
-    )
+    (src / "core/audit/facade.py").write_text("def emit_audit():\n    pass\n")
 
     # 2. Legacy callsites в production коде.
     (src / "app/legacy.py").write_text(
@@ -70,20 +65,15 @@ def temp_source_tree(tmp_path: Path) -> Path:
 
     # 3. Tests (должны быть excluded).
     (src / "tests/test_app.py").write_text(
-        "def test_emit():\n"
-        "    _emit_audit()  # noqa\n"
+        "def test_emit():\n    _emit_audit()  # noqa\n"
     )
 
     # 4. Testkit (должен быть excluded).
-    (src / "testkit/helper.py").write_text(
-        "def _emit_audit():\n    pass\n"
-    )
+    (src / "testkit/helper.py").write_text("def _emit_audit():\n    pass\n")
 
     # 5. __pycache__ (должен быть excluded).
     (src / "app/__pycache__").mkdir()
-    (src / "app/__pycache__/cached.py").write_text(
-        "def _emit_audit():\n    pass\n"
-    )
+    (src / "app/__pycache__/cached.py").write_text("def _emit_audit():\n    pass\n")
 
     return tmp_path
 
@@ -222,7 +212,8 @@ def test_main_strict_exit_one_with_callsites(temp_source_tree: Path) -> None:
     try:
         sys.argv = [
             "check_audit_deprecation",
-            "--root", str(temp_source_tree),
+            "--root",
+            str(temp_source_tree),
             "--strict",
         ]
         exit_code = main()

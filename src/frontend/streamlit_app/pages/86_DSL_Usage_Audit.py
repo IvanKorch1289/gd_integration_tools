@@ -9,18 +9,17 @@
 с флагом ``feature_flags.dsl_usage_audit_enabled = True``.
 """
 
+# NOTE (S93 W2-C11): PYTHONPATH=$(pwd) устанавливается manage.py run-frontend.
+# Прямой запуск `streamlit run` без PYTHONPATH упадёт с ImportError.
+
 from __future__ import annotations
 
 import sys
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
-
-# NOTE (S93 W2-C11): PYTHONPATH=$(pwd) устанавливается manage.py run-frontend.
-# Прямой запуск `streamlit run` без PYTHONPATH упадёт с ImportError.
-
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("DSL Usage Audit", ":bar_chart:")
 st.header(":bar_chart: DSL Usage Audit")
@@ -45,7 +44,11 @@ def run_audit(top: int = 20) -> dict:
     from pathlib import Path
 
     # S93 W2-C11: project_root from PYTHONPATH (manage.py run-frontend sets it).
-    project_root = Path.cwd() if Path.cwd().name == "gd_integration_tools" else Path(__file__).resolve().parents[4]
+    project_root = (
+        Path.cwd()
+        if Path.cwd().name == "gd_integration_tools"
+        else Path(__file__).resolve().parents[4]
+    )
     audit_script = project_root / "tools" / "audit" / "dsl_usage_audit.py"
     if not audit_script.exists():
         return {"error": f"Audit script not found: {audit_script}"}

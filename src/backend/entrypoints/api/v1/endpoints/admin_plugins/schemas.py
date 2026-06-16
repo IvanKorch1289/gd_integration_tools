@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S62 W1 — schemas.py part of admin_plugins decomp.
 
 11 Pydantic schemas for plugin admin API.
 """
+
+from __future__ import annotations
 
 from typing import Any
 

@@ -11,6 +11,7 @@ DEEP-RESEARCH claim "HTTP drain ⏳" (S92, 2026-06-12) был УСТАРЕВШИ
 Этот файл — regression-guard: если drain path сломан (например, при
 future refactor), тест сломается.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -23,8 +24,7 @@ def test_lifespan_calls_ending_in_finally() -> None:
     """``lifespan()`` содержит ``await ending()`` в finally-блоке."""
     src = Path("src/backend/plugins/composition/lifecycle/lifespan.py").read_text()
     assert "await ending()" in src, (
-        "V2 P0 #10 regression: lifespan не вызывает await ending() — "
-        "HTTP drain сломан."
+        "V2 P0 #10 regression: lifespan не вызывает await ending() — HTTP drain сломан."
     )
     # finally block: must be present around ending()
     assert "finally:" in src, "V2 P0 #10: finally block отсутствует"
@@ -46,7 +46,7 @@ def test_uvicorn_graceful_shutdown_supported() -> None:
     uvicorn CLI. Если uvicorn отсутствует — skip (некоторые envs).
     """
     try:
-        import uvicorn  # type: ignore[import-not-found]
+        import uvicorn  # type: ignore[import-not-found]  # noqa: F401
     except ImportError:
         pytest.skip("uvicorn не установлен")
 

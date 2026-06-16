@@ -253,9 +253,7 @@ class SsoRegistry:
                         exc,
                     )
                     return self._cache[tenant]
-                _logger.error(
-                    "SsoRegistry load failed for %r: %s", tenant, exc
-                )
+                _logger.error("SsoRegistry load failed for %r: %s", tenant, exc)
                 return None
             # SsoRegistrySchemaError propagates (caller decides).
             self._cache[tenant] = config
@@ -312,9 +310,7 @@ def _parse_idp_config(raw: dict[str, Any]) -> IdpConfig:
         x509_cert=raw["x509_cert"],
         slo_url=raw.get("slo_url"),
         allow_create_user=raw.get("allow_create_user", False),
-        groups_to_capabilities=GroupsToCapabilities(
-            mappings=groups_to_caps_raw,
-        ),
+        groups_to_capabilities=GroupsToCapabilities(mappings=groups_to_caps_raw),
     )
 
 

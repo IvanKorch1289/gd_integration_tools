@@ -16,11 +16,8 @@ from __future__ import annotations
 
 import warnings
 
-import pytest
-
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase
-
 
 # ── Canonical: tenant_filter ──
 
@@ -31,6 +28,7 @@ def test_canonical_tenant_filter_imports_work() -> None:
         TenantMixin,
         apply_tenant_filter,
     )
+
     assert TenantMixin is not None
     assert callable(apply_tenant_filter)
 
@@ -57,6 +55,7 @@ def test_canonical_tenant_mixin_adds_tenant_id_column() -> None:
 def test_canonical_apply_tenant_filter_is_idempotent() -> None:
     """Повторный вызов ``apply_tenant_filter`` — no-op (per S88 W2)."""
     from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
+
     # Просто проверяем что повторный вызов не raise'ит
     apply_tenant_filter()
     apply_tenant_filter()
@@ -66,6 +65,7 @@ def test_canonical_apply_tenant_filter_is_idempotent() -> None:
 def test_canonical_tenant_mixin_string_column_type() -> None:
     """TenantMixin.tenant_id — String(64) column (через MappedColumn.column)."""
     from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+
     descriptor = TenantMixin.__dict__.get("tenant_id")
     assert descriptor is not None
     # MappedColumn exposes underlying Column via .column attribute
@@ -82,6 +82,7 @@ def test_shim_tenant_filter_emits_deprecation_warning() -> None:
     # Используем importlib.reload для trigger warning (cached modules
     # обычно не re-warn при повторном import).
     import importlib
+
     import src.backend.infrastructure.database.tenant_filter as shim
 
     importlib.reload(shim)
@@ -89,6 +90,7 @@ def test_shim_tenant_filter_emits_deprecation_warning() -> None:
         warnings.simplefilter("always")
         # Re-raise to trigger warning again
         from src.backend.infrastructure.database.tenant_filter import TenantMixin
+
         # Check any DeprecationWarning was raised
         dep_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
         # At minimum один deprecation warning должен был сработать при
@@ -102,9 +104,8 @@ def test_shim_tenant_filter_emits_deprecation_warning() -> None:
 def test_shim_tenant_filter_reexports_tenant_mixin() -> None:
     """Shim re-export'ит TenantMixin ИЗ canonical (identity check)."""
     from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin as Canonical
-    from src.backend.infrastructure.database.tenant_filter import (
-        TenantMixin as Shim,
-    )
+    from src.backend.infrastructure.database.tenant_filter import TenantMixin as Shim
+
     # Shim re-export'ит тот же класс (identity через __mro__ check)
     assert Shim is Canonical or Shim.__mro__ == Canonical.__mro__
 
@@ -117,6 +118,7 @@ def test_shim_tenant_filter_reexports_apply_tenant_filter() -> None:
     from src.backend.infrastructure.database.tenant_filter import (
         apply_tenant_filter as Shim,
     )
+
     assert Shim is Canonical
 
 
@@ -126,6 +128,7 @@ def test_shim_tenant_filter_reexports_apply_tenant_filter() -> None:
 def test_canonical_dialect_types_imports_work() -> None:
     """``core.database.dialect_types`` экспортирует json_b + uuid_t."""
     from src.backend.core.database.dialect_types import json_b, uuid_t
+
     assert callable(json_b)
     assert callable(uuid_t)
 
@@ -133,6 +136,7 @@ def test_canonical_dialect_types_imports_work() -> None:
 def test_canonical_json_b_returns_sqlalchemy_type() -> None:
     """json_b() возвращает SQLAlchemy Type (не None, не bare class)."""
     from src.backend.core.database.dialect_types import json_b
+
     result = json_b()
     # TypeEngine имеет __visit_name__ attribute
     assert hasattr(result, "__visit_name__")
@@ -143,6 +147,7 @@ def test_canonical_json_b_returns_sqlalchemy_type() -> None:
 def test_canonical_uuid_t_returns_sqlalchemy_type() -> None:
     """uuid_t() возвращает SQLAlchemy Type."""
     from src.backend.core.database.dialect_types import uuid_t
+
     result = uuid_t()
     assert hasattr(result, "__visit_name__")
     # postgresql.UUID имеет __visit_name__ = "UUID" (или "String" для SQLite variant)
@@ -152,6 +157,7 @@ def test_canonical_uuid_t_returns_sqlalchemy_type() -> None:
 def test_canonical_json_b_and_uuid_t_are_callable_factories() -> None:
     """json_b / uuid_t — factory functions (каждый call = new instance)."""
     from src.backend.core.database.dialect_types import json_b, uuid_t
+
     a, b = json_b(), json_b()
     c, d = uuid_t(), uuid_t()
     # Разные инстансы
@@ -165,18 +171,16 @@ def test_canonical_json_b_and_uuid_t_are_callable_factories() -> None:
 def test_shim_compat_reexports_json_b() -> None:
     """``migrations._compat`` re-export'ит json_b ИЗ canonical."""
     from src.backend.core.database.dialect_types import json_b as Canonical
-    from src.backend.infrastructure.database.migrations._compat import (
-        json_b as Shim,
-    )
+    from src.backend.infrastructure.database.migrations._compat import json_b as Shim
+
     assert Shim is Canonical
 
 
 def test_shim_compat_reexports_uuid_t() -> None:
     """``migrations._compat`` re-export'ит uuid_t ИЗ canonical."""
     from src.backend.core.database.dialect_types import uuid_t as Canonical
-    from src.backend.infrastructure.database.migrations._compat import (
-        uuid_t as Shim,
-    )
+    from src.backend.infrastructure.database.migrations._compat import uuid_t as Shim
+
     assert Shim is Canonical
 
 

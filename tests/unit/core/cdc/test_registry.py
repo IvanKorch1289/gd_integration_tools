@@ -11,6 +11,7 @@ Coverage:
 * Factory использует lazy import (backends можно создавать без
   pre-loading модуля).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -62,8 +63,9 @@ def test_get_cdc_source_fake_returns_fake_cdc_source() -> None:
 
 def test_get_cdc_source_fake_with_events() -> None:
     """``get_cdc_source("fake", events=[...])`` passes events to FakeCDCSource."""
-    from src.backend.core.cdc.source import CDCCursor, CDCEvent
     from datetime import UTC, datetime
+
+    from src.backend.core.cdc.source import CDCCursor, CDCEvent
 
     event = CDCEvent(
         operation="INSERT",

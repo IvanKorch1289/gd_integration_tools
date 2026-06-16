@@ -117,5 +117,16 @@ class DQRule:
     enabled: bool = True
 
 
+_dq_monitor_instance: DataQualityMonitor | None = None
+
+
 def get_dq_monitor() -> DataQualityMonitor:
-    raise NotImplementedError  # заменяется декоратором
+    """Возвращает singleton :class:`DataQualityMonitor`.
+
+    Реализация: lazy-init module-level singleton (S150 W3 closes
+    S55 W4 stub — pre-existing NotImplementedError).
+    """
+    global _dq_monitor_instance
+    if _dq_monitor_instance is None:
+        _dq_monitor_instance = DataQualityMonitor()
+    return _dq_monitor_instance

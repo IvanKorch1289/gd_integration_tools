@@ -17,8 +17,4 @@ from src.backend.infrastructure.observability.metrics_registry import (  # noqa:
     metrics_registry,
 )
 
-__all__ = (
-    "DEFAULT_LABELS",
-    "MetricsRegistry",
-    "metrics_registry",
-)
+__all__ = ("DEFAULT_LABELS", "MetricsRegistry", "metrics_registry")

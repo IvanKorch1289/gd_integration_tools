@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W4 - client.py part of ad_directory_client decomp.
 
 Per-class file split.
 
 Classes: AdDirectoryClient.
 """
+
+from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence

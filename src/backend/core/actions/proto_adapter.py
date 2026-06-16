@@ -25,13 +25,14 @@ Layer policy: модуль живёт в ``src/core/actions/`` и не импо�
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 import types
 import typing
 from dataclasses import dataclass, field
 from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
+
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "ProtoField",

@@ -124,12 +124,7 @@ class VariableBackend(Protocol):
     async def get(self, key: str, scope: VariableScope) -> Any | None: ...
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        scope: VariableScope,
-        *,
-        ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None: ...
 
     async def delete(self, key: str, scope: VariableScope) -> bool: ...
@@ -167,12 +162,7 @@ class InMemoryVariableBackend:
         return value
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        scope: VariableScope,
-        *,
-        ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         expires_at = (_now() + ttl) if ttl else 0.0
         self._store[(str(scope), key)] = (value, expires_at)
@@ -244,12 +234,7 @@ class ConsulVariableBackend:
         return raw
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        scope: VariableScope,
-        *,
-        ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         path = self._key_path(key, scope)
         from src.backend.core.config.consul_config import ConsulConfigStore
@@ -292,7 +277,7 @@ class ConsulVariableBackend:
             store = ConsulConfigStore(host=self.host, port=self.port)
             client = store._get_client()  # noqa: SLF001
             _, keys = client.kv.get(prefix, recurse=True, keys=True)
-            return [k[len(prefix):] for k in (keys or []) if k.startswith(prefix)]
+            return [k[len(prefix) :] for k in (keys or []) if k.startswith(prefix)]
 
         try:
             return await asyncio.to_thread(_sync_list)
@@ -341,11 +326,10 @@ class PostgresVariableBackend:
         )
 
         stmt = select(
-            dsl_variables.c.value, dsl_variables.c.ttl_seconds, dsl_variables.c.updated_at
-        ).where(
-            dsl_variables.c.scope == str(scope),
-            dsl_variables.c.key == key,
-        )
+            dsl_variables.c.value,
+            dsl_variables.c.ttl_seconds,
+            dsl_variables.c.updated_at,
+        ).where(dsl_variables.c.scope == str(scope), dsl_variables.c.key == key)
         result = await self.session.execute(stmt)
         row = result.first()
         if row is None:
@@ -360,12 +344,7 @@ class PostgresVariableBackend:
         return value
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        scope: VariableScope,
-        *,
-        ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         if self.session is None:
             return
@@ -403,8 +382,7 @@ class PostgresVariableBackend:
         )
 
         stmt = delete(dsl_variables).where(
-            dsl_variables.c.scope == str(scope),
-            dsl_variables.c.key == key,
+            dsl_variables.c.scope == str(scope), dsl_variables.c.key == key
         )
         result = await self.session.execute(stmt)
         await self.session.commit()
@@ -479,7 +457,9 @@ class DSLVariableStore:
 
     async def get(self, key: str, scope: VariableScope | str = "global") -> Any | None:
         """Lookup chain: scope fallback × backends."""
-        scope_obj = scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        scope_obj = (
+            scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        )
         for try_scope in self._scopes_to_try(scope_obj):
             for backend in self.backends:
                 value = await backend.get(key, try_scope)
@@ -503,13 +483,17 @@ class DSLVariableStore:
         ttl: float | None = None,
     ) -> None:
         """Write to FIRST backend in the list (write-through)."""
-        scope_obj = scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        scope_obj = (
+            scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        )
         if not self.backends:
             raise RuntimeError("DSLVariableStore: no backends configured")
         await self.backends[0].set(key, value, scope_obj, ttl=ttl)
 
     async def delete(self, key: str, scope: VariableScope | str = "global") -> bool:
-        scope_obj = scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        scope_obj = (
+            scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        )
         deleted = False
         for backend in self.backends:
             if await backend.delete(key, scope_obj):
@@ -517,7 +501,9 @@ class DSLVariableStore:
         return deleted
 
     async def list_keys(self, scope: VariableScope | str = "global") -> list[str]:
-        scope_obj = scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        scope_obj = (
+            scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
+        )
         keys: set[str] = set()
         for backend in self.backends:
             keys.update(await backend.list_keys(scope_obj))

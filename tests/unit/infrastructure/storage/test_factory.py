@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -130,9 +129,7 @@ def test_get_object_storage_s3_returns_fallback_wrapper(
     # в test env — реальный ``import s3`` фейлит, поэтому inject mock).
     fake_s3 = types.ModuleType("src.backend.infrastructure.storage.s3")
     fake_s3.S3ObjectStorage = _FakeS3ObjectStorage  # type: ignore[attr-defined]
-    monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.storage.s3", fake_s3
-    )
+    monkeypatch.setitem(sys.modules, "src.backend.infrastructure.storage.s3", fake_s3)
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )
@@ -177,9 +174,7 @@ def test_get_object_storage_s3_init_failure_returns_bare_local(
 
     fake_s3 = types.ModuleType("src.backend.infrastructure.storage.s3")
     fake_s3.S3ObjectStorage = _BrokenS3ObjectStorage  # type: ignore[attr-defined]
-    monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.storage.s3", fake_s3
-    )
+    monkeypatch.setitem(sys.modules, "src.backend.infrastructure.storage.s3", fake_s3)
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )

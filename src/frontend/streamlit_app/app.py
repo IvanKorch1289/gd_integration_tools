@@ -6,6 +6,7 @@ NOTE (S93 W2-C11): Запускать через `python manage.py run-frontend`
 устанавливает PYTHONPATH=$(pwd) в env. Прямой запуск `streamlit run` без
 PYTHONPATH упадёт с ImportError на ``from src.frontend...``.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

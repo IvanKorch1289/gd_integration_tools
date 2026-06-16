@@ -14,7 +14,6 @@ S66 W4 fact-check: код РЕАЛЬНО делает ``executemany`` per column
 from __future__ import annotations
 
 import inspect
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -68,9 +67,7 @@ async def test_batch_update_uses_executemany_not_cycle() -> None:
             lambda: lambda: registry,
         )
 
-        processor = BatchUpdateProcessor(
-            table="users", items=items, key_field="id"
-        )
+        processor = BatchUpdateProcessor(table="users", items=items, key_field="id")
         exchange = MagicMock()
         exchange.in_message.body = items
         exchange.in_message.headers = {}

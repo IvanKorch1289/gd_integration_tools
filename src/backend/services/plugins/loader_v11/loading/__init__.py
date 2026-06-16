@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """LoadingMixin package (S63 W1 decomp from loading.py 496 LOC).
 
 5 methods decomposed в 2 mixin files + state.py:
@@ -12,6 +10,7 @@ No core methods.
 Backward-compat: ``from src.backend.services.plugins.loader_v11.loading import LoadingMixin`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

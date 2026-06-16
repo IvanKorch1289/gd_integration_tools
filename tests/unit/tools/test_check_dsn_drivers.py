@@ -6,6 +6,7 @@ Verifies DSN driver availability check tool:
 - Tool runs in human-readable + --ci mode
 - Exit code 1 если any driver missing (--ci mode)
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -23,8 +24,6 @@ _spec.loader.exec_module(_check_mod)
 DSN_DRIVER_MAP = _check_mod.DSN_DRIVER_MAP
 check_all_drivers = _check_mod.check_all_drivers
 render_human = _check_mod.render_human
-
-import pytest
 
 
 def test_dsn_map_covers_all_types() -> None:
@@ -87,10 +86,7 @@ def test_tool_runs_in_human_mode() -> None:
     tools_dir = Path(__file__).resolve().parents[3] / "tools"
     check_file = tools_dir / "check_dsn_drivers.py"
     result = subprocess.run(
-        [sys.executable, str(check_file)],
-        capture_output=True,
-        text=True,
-        timeout=30,
+        [sys.executable, str(check_file)], capture_output=True, text=True, timeout=30
     )
     assert result.returncode == 0
     assert "DSN driver availability" in result.stdout

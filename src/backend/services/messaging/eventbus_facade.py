@@ -65,7 +65,9 @@ class EventBusFacade:
         try:
             await self._bus.publish(channel, event)
         except Exception as exc:
-            _logger.warning("EventBusFacade publish failed channel=%s: %s", channel, exc)
+            _logger.warning(
+                "EventBusFacade publish failed channel=%s: %s", channel, exc
+            )
             raise ServiceError(f"eventbus publish failed: {exc}") from exc
 
     async def subscribe(self, channel: str, handler: Any) -> Any:
@@ -79,7 +81,9 @@ class EventBusFacade:
         try:
             return await self._bus.subscribe(channel, handler)
         except Exception as exc:
-            _logger.warning("EventBusFacade subscribe failed channel=%s: %s", channel, exc)
+            _logger.warning(
+                "EventBusFacade subscribe failed channel=%s: %s", channel, exc
+            )
             raise ServiceError(f"eventbus subscribe failed: {exc}") from exc
 
     async def request(
@@ -102,7 +106,9 @@ class EventBusFacade:
                 channel, payload, timeout=timeout, correlation_id=correlation_id
             )
         except Exception as exc:
-            _logger.warning("EventBusFacade request failed channel=%s: %s", channel, exc)
+            _logger.warning(
+                "EventBusFacade request failed channel=%s: %s", channel, exc
+            )
             raise ServiceError(f"eventbus request failed: {exc}") from exc
 
     async def publish_generic(
@@ -117,9 +123,7 @@ class EventBusFacade:
 
         self._assert_publish(channel)
         event = GenericEvent(
-            topic=topic,
-            payload=payload,
-            correlation_id=correlation_id,
+            topic=topic, payload=payload, correlation_id=correlation_id
         )
         try:
             await self._bus.publish(channel, event)

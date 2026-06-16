@@ -91,10 +91,7 @@ class MessagingFacade:
                 f"Available: {list(self._adapters.keys())}"
             )
         message = NotificationMessage(
-            recipient=recipient,
-            subject=subject,
-            body=body,
-            metadata=metadata or {},
+            recipient=recipient, subject=subject, body=body, metadata=metadata or {}
         )
         try:
             return await adapter.send(message)
@@ -108,12 +105,7 @@ class MessagingFacade:
             raise ServiceError(f"messaging send failed: {exc}") from exc
 
     async def send_email(
-        self,
-        to: str,
-        subject: str,
-        body: str,
-        *,
-        html: bool = False,
+        self, to: str, subject: str, body: str, *, html: bool = False
     ) -> str:
         """Convenience method for email notifications."""
         metadata = {"html": html} if html else {}
@@ -121,23 +113,13 @@ class MessagingFacade:
             "email", to, subject=subject, body=body, metadata=metadata
         )
 
-    async def send_telegram(
-        self,
-        chat_id: str,
-        text: str,
-    ) -> str:
+    async def send_telegram(self, chat_id: str, text: str) -> str:
         """Convenience method for Telegram notifications."""
         return await self.send("telegram", chat_id, body=text)
 
-    async def send_webhook(
-        self,
-        url: str,
-        payload: dict[str, Any],
-    ) -> str:
+    async def send_webhook(self, url: str, payload: dict[str, Any]) -> str:
         """Convenience method for webhook notifications."""
-        return await self.send(
-            "webhook", url, body=str(payload), metadata=payload
-        )
+        return await self.send("webhook", url, body=str(payload), metadata=payload)
 
     async def is_available(self, channel: str) -> bool:
         """Check if channel is available."""

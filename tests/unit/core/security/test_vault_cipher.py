@@ -10,11 +10,13 @@ import pytest
 # S124 W2: vault_cipher module not yet implemented. Honest skip
 # (TD-0246). See ADR-0208 plan for details.
 pytest.skip(
-    "src.backend.core.security.vault_cipher not implemented",
-    allow_module_level=True,
+    "src.backend.core.security.vault_cipher not implemented", allow_module_level=True
 )
 
-from src.backend.core.security.vault_cipher import VaultCipherError, VaultTransitCipher  # noqa: E402, F401
+from src.backend.core.security.vault_cipher import (  # noqa: E402, F401
+    VaultCipherError,
+    VaultTransitCipher,
+)
 
 
 @pytest.fixture(autouse=True)

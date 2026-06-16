@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """YAML loader package (S62 W4 decomp from yaml_loader.py 495 LOC).
 
 10 top-level funcs decomposed в 4 files (per concern):
@@ -11,6 +9,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.yaml_loader import load_pipeline_from_yaml`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.yaml_loader.build import (
     _apply_processor,  # S62 W4: re-export

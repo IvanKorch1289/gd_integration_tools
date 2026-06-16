@@ -28,11 +28,7 @@ class VaultSecretMixin:
     __slots__ = ()
 
     def vault_read(
-        self,
-        path: str,
-        *,
-        output_field: str = "value",
-        version: int = 0,
+        self, path: str, *, output_field: str = "value", version: int = 0
     ) -> RouteBuilder:
         """Прочитать Vault KV v2 secret и положить в ``exchange.properties``.
 
@@ -49,11 +45,7 @@ class VaultSecretMixin:
         from src.backend.dsl.engine.processors.vault_secret import VaultSecretProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            VaultSecretProcessor(
-                path=path,
-                output_field=output_field,
-                version=version,
-            )
+            VaultSecretProcessor(path=path, output_field=output_field, version=version)
         )
 
 

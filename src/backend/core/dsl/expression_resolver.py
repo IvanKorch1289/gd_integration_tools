@@ -23,11 +23,7 @@ from typing import Any
 from src.backend.core.dsl.variables import DSLVariableStore, VariableScope
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "ExpressionResolver",
-    "ExpressionResolutionError",
-    "resolve_expression",
-)
+__all__ = ("ExpressionResolver", "ExpressionResolutionError", "resolve_expression")
 
 _logger = get_logger("core.dsl.expression_resolver")
 
@@ -121,9 +117,7 @@ def _resolve_env(value: str) -> str:
     return re.sub(r"\$\{env:([A-Z_][A-Z0-9_]*)\}", _sub_env, value)
 
 
-async def _async_sub(
-    pattern: re.Pattern[str], value: str, replace: Any
-) -> str:
+async def _async_sub(pattern: re.Pattern[str], value: str, replace: Any) -> str:
     """Async version of ``re.sub`` (since replace is async)."""
     result: list[str] = []
     last_end = 0

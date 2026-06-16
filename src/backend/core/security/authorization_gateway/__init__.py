@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Authorization gateway package (S60 W4 decomp from authorization_gateway.py 530 LOC).
 
 9 methods decomposed в 4 mixin files + state.py:
@@ -14,6 +12,7 @@ Core (5) остается в __init__.py: __init__, authorize (91 LOC, BIG), _fi
 Backward-compat: ``from src.backend.core.security.authorization_gateway import AuthorizationGateway`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
@@ -59,12 +58,7 @@ __all__ = (
 class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
     """Authorization gateway (4 mixins = 4 methods + 5 core)."""
 
-    __slots__ = (
-        "_capability_gateway",
-        "_policies",
-        "_audit",
-        "_enabled",
-    )
+    __slots__ = ("_capability_gateway", "_policies", "_audit", "_enabled")
 
     def __init__(
         self,

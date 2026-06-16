@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W2 — registers_integrations.py part of setup.py decomp.
 
 integration registrations (AI, analytics, search, RAG, etc.).
@@ -7,6 +5,7 @@ integration registrations (AI, analytics, search, RAG, etc.).
 Functions: _register_ai, _register_analytics_clickhouse, _register_search_elasticsearch, _register_notebooks_wave_9_1, _register_rag_vector_db_llm, _register_agent_memory, _register_web_search_perplexity_tavily, _register_anomaly_detection.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 

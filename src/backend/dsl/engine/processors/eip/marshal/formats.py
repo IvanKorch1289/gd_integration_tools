@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S63 W3 — formats.py part of marshal decomp.
 
 5 data format classes (Json/Xml/Csv/MessagePack/Pickle) + 3 helpers.
 """
+
+from __future__ import annotations
 
 import csv
 import io

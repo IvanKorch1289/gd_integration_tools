@@ -2,6 +2,7 @@
 
 Validates SSO session auth + groups-to-capabilities RBAC.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -16,12 +17,12 @@ from src.backend.core.auth import (
     IdpConfig,
     SsoRegistry,
 )
-from src.backend.core.auth.sso_registry import SsoRegistryError
 from src.backend.core.auth.require_sso_auth import (
     RequireSsoAuthError,
     require_sso_auth,
     require_sso_capability,
 )
+from src.backend.core.auth.sso_registry import SsoRegistryError
 
 
 def _make_auth_context(
@@ -33,9 +34,7 @@ def _make_auth_context(
     return AuthContext(method=method, principal=principal, metadata=metadata)
 
 
-def _make_idp_config(
-    mappings: dict[str, list[str]] | None = None,
-) -> IdpConfig:
+def _make_idp_config(mappings: dict[str, list[str]] | None = None) -> IdpConfig:
     """Build IdpConfig with given group→capability mappings."""
     return IdpConfig(
         entity_id="https://idp.example.com",
@@ -51,7 +50,7 @@ def mock_registry() -> AsyncMock:
     registry = AsyncMock(spec=SsoRegistry)
     registry.get = AsyncMock(
         return_value=_make_idp_config(
-            mappings={"admins": ["admin:read", "admin:write"]},
+            mappings={"admins": ["admin:read", "admin:write"]}
         )
     )
     return registry
@@ -77,9 +76,7 @@ class TestRequireSsoAuthDecorator:
         assert result == "ok:alice"
 
     @pytest.mark.asyncio
-    async def test_rejects_non_saml_auth_method(
-        self, mock_registry: AsyncMock
-    ) -> None:
+    async def test_rejects_non_saml_auth_method(self, mock_registry: AsyncMock) -> None:
         @require_sso_auth(mock_registry)
         async def handler(auth: AuthContext) -> str:
             return "ok"
@@ -89,10 +86,9 @@ class TestRequireSsoAuthDecorator:
             await handler(auth=auth)
 
     @pytest.mark.asyncio
-    async def test_resolves_groups_via_registry(
-        self, mock_registry: AsyncMock
-    ) -> None:
+    async def test_resolves_groups_via_registry(self, mock_registry: AsyncMock) -> None:
         """Registry должен быть вызван с tenant_id из metadata."""
+
         @require_sso_auth(mock_registry)
         async def handler(auth: AuthContext) -> str:
             return "ok"
@@ -104,9 +100,7 @@ class TestRequireSsoAuthDecorator:
         mock_registry.get.assert_awaited_once_with("bank-1")
 
     @pytest.mark.asyncio
-    async def test_propagates_registry_error(
-        self, mock_registry: AsyncMock
-    ) -> None:
+    async def test_propagates_registry_error(self, mock_registry: AsyncMock) -> None:
         """SsoRegistryError должен propagate."""
         mock_registry.get.side_effect = SsoRegistryError("vault misconfig")
 
@@ -114,9 +108,7 @@ class TestRequireSsoAuthDecorator:
         async def handler(auth: AuthContext) -> str:
             return "ok"
 
-        auth = _make_auth_context(
-            metadata={"tenant_id": "acme", "groups": ["admins"]}
-        )
+        auth = _make_auth_context(metadata={"tenant_id": "acme", "groups": ["admins"]})
         with pytest.raises(SsoRegistryError):
             await handler(auth=auth)
 
@@ -163,9 +155,7 @@ class TestRequireSsoCapabilityDecorator:
         async def handler(auth: AuthContext) -> str:
             return "ok"
 
-        auth = _make_auth_context(
-            metadata={"tenant_id": "acme", "groups": ["admins"]}
-        )
+        auth = _make_auth_context(metadata={"tenant_id": "acme", "groups": ["admins"]})
         result = await handler(auth=auth)
         assert result == "ok"
 
@@ -179,18 +169,14 @@ class TestRequireSsoCapabilityDecorator:
 
         # User has "users" group, no mapping -> no caps
         mock_registry.get.return_value = _make_idp_config(
-            mappings={"admins": ["admin:read", "admin:write"]},
+            mappings={"admins": ["admin:read", "admin:write"]}
         )
-        auth = _make_auth_context(
-            metadata={"tenant_id": "acme", "groups": ["users"]}
-        )
+        auth = _make_auth_context(metadata={"tenant_id": "acme", "groups": ["users"]})
         with pytest.raises(RequireSsoAuthError, match="admin:write"):
             await handler(auth=auth)
 
     @pytest.mark.asyncio
-    async def test_rejects_non_saml_method(
-        self, mock_registry: AsyncMock
-    ) -> None:
+    async def test_rejects_non_saml_method(self, mock_registry: AsyncMock) -> None:
         @require_sso_capability("admin:read", mock_registry)
         async def handler(auth: AuthContext) -> str:
             return "ok"
@@ -203,17 +189,13 @@ class TestRequireSsoCapabilityDecorator:
             await handler(auth=auth)
 
     @pytest.mark.asyncio
-    async def test_handles_missing_groups_claim(
-        self, mock_registry: AsyncMock
-    ) -> None:
+    async def test_handles_missing_groups_claim(self, mock_registry: AsyncMock) -> None:
         @require_sso_capability("admin:read", mock_registry)
         async def handler(auth: AuthContext) -> str:
             return "ok"
 
         # No "groups" key in metadata
-        auth = _make_auth_context(
-            metadata={"tenant_id": "acme"}
-        )
+        auth = _make_auth_context(metadata={"tenant_id": "acme"})
         with pytest.raises(RequireSsoAuthError, match="admin:read"):
             await handler(auth=auth)
 

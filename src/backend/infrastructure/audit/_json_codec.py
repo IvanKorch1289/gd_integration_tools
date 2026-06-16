@@ -28,9 +28,7 @@ from typing import Any
 try:
     import orjson
 
-    def dumps_str(
-        value: Any, *, sort_keys: bool = False, indent: bool = False
-    ) -> str:
+    def dumps_str(value: Any, *, sort_keys: bool = False, indent: bool = False) -> str:
         """Локальный orjson-based JSON сериализатор (UTF-8 str).
 
         S68 W3: replaces infrastructure/audit/ reverse import
@@ -48,9 +46,7 @@ except ImportError:
     # Fallback для environments без orjson (dev-light, tests).
     import json
 
-    def dumps_str(
-        value: Any, *, sort_keys: bool = False, indent: bool = False
-    ) -> str:
+    def dumps_str(value: Any, *, sort_keys: bool = False, indent: bool = False) -> str:
         """Fallback stdlib JSON сериализатор (если orjson недоступен)."""
         kwargs: dict[str, Any] = {"default": str}
         if sort_keys:

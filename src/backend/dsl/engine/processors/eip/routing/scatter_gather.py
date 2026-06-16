@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S63 W2 — scatter_gather.py part of routing decomp.
 
 Classes: ScatterGatherProcessor.
 
 ScatterGatherProcessor (fan-out + aggregate).
 """
+
+from __future__ import annotations
 
 import asyncio
 from typing import Any

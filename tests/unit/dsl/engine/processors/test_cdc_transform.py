@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,7 +12,6 @@ from src.backend.dsl.engine.processors.cdc_transform import (
     _normalize_operation,
     _normalize_timestamp,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Stubs (matching pattern from test_cdc_capture.py)
@@ -188,9 +186,7 @@ class TestTransformCdcEventProcess:
 
     @pytest.mark.asyncio
     async def test_project(self) -> None:
-        proc = TransformCdcEventProcessor(
-            project=["id", "table", "operation"],
-        )
+        proc = TransformCdcEventProcessor(project=["id", "table", "operation"])
         exchange = _Exchange()
         exchange.in_message.body = [
             {
@@ -209,10 +205,7 @@ class TestTransformCdcEventProcess:
     @pytest.mark.asyncio
     async def test_project_with_timestamp_alias(self) -> None:
         """Поле 'ts' в project → берёт timestamp_field."""
-        proc = TransformCdcEventProcessor(
-            project=["table", "ts"],
-            timestamp_field="ts",
-        )
+        proc = TransformCdcEventProcessor(project=["table", "ts"], timestamp_field="ts")
         exchange = _Exchange()
         exchange.in_message.body = [
             {
@@ -243,9 +236,7 @@ class TestTransformCdcEventProcess:
     async def test_keep_unknown_when_disabled(self) -> None:
         proc = TransformCdcEventProcessor(drop_unknown=False)
         exchange = _Exchange()
-        exchange.in_message.body = [
-            {"operation": "", "table": "orders", "new": {}},
-        ]
+        exchange.in_message.body = [{"operation": "", "table": "orders", "new": {}}]
         await proc.process(exchange, _Context())
         assert len(exchange.in_message.body) == 1
         assert exchange.in_message.body[0]["operation"] == "UNKNOWN"
@@ -256,7 +247,7 @@ class TestTransformCdcEventProcess:
         proc = TransformCdcEventProcessor()
         exchange = _Exchange()
         exchange.in_message.body = [
-            {"operation": "INSERT", "source": "kafka_topic_a", "new": {}},
+            {"operation": "INSERT", "source": "kafka_topic_a", "new": {}}
         ]
         await proc.process(exchange, _Context())
         assert exchange.in_message.body[0]["table"] == "kafka_topic_a"
@@ -317,12 +308,7 @@ class TestTransformCdcEventProcess:
         exchange = _Exchange()
         dt = datetime(2026, 4, 19, 12, 0, 0, tzinfo=UTC)
         exchange.in_message.body = [
-            {
-                "operation": "INSERT",
-                "table": "x",
-                "timestamp": dt,
-                "new": {},
-            }
+            {"operation": "INSERT", "table": "x", "timestamp": dt, "new": {}}
         ]
         await proc.process(exchange, _Context())
         assert exchange.in_message.body[0]["timestamp"] == dt.isoformat()
@@ -336,8 +322,7 @@ class TestTransformCdcEventProcess:
 class TestToSpec:
     def test_spec_with_filter_and_project(self) -> None:
         proc = TransformCdcEventProcessor(
-            operations=["INSERT"],
-            project=["id", "table"],
+            operations=["INSERT"], project=["id", "table"]
         )
         spec = proc.to_spec()
         assert "cdc_transform" in spec

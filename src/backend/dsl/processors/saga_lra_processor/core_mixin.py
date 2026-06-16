@@ -13,6 +13,10 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.processors.saga_lra_processor.state import (
+    SagaCallable,
+    SagaStepSpec,
+)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

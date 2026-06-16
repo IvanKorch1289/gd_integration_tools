@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """S68 W1 - webhook_relay blueprint extracted from macros.py.
 
 webhook relay blueprint (source + sink).
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline

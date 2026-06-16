@@ -25,7 +25,6 @@ Sprint 4 К3-B §3 — удалены 4 legacy-файла (985 LOC), Mongo-пр�
 native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallback.
 """
 
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
@@ -53,7 +52,8 @@ _logger = get_logger("workflow.pg_runner_internals")
 # ─────────────────────────────── DTO ───────────────────────────────
 
 
-@dataclass(slots=True, frozen=True)
+# S153 W4d: убран @dataclass — класс имеет custom __init__ + slots/frozen
+# конфликтуют с custom __init__ (TypeError: super() obj not instance of type)
 class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 

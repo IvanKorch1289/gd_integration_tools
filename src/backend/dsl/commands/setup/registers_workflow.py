@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W2 — registers_workflow.py part of setup.py decomp.
 
 workflow/notification registrations (webhook, replay, scheduled, etc.).
@@ -7,6 +5,7 @@ workflow/notification registrations (webhook, replay, scheduled, etc.).
 Functions: _register_webhook_scheduler, _register_web_automation_multi_protocol, _register_data_export_excel_csv_pdf, _register_notifications_email_express_webhook_telegram, _register_message_replay, _register_webhook_relay, _register_scheduled_reports, _register_data_quality, _register_importgateway_w24.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 

@@ -23,6 +23,7 @@ Telegram updates через Bot API webhook (HTTPS endpoint).
 DSL wrapper в :mod:`dsl.builders.sources_mixin.telegram_sources_mixin`
 (S97 W4 добавлен) — ``RouteBuilder.from_telegram(bot_id)``.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -104,10 +105,7 @@ class TelegramWebhookSource:
             return None  # type filter
 
         return TelegramUpdate(
-            update_id=update_id,
-            message=msg_text,
-            callback_query=cb_data,
-            raw=payload,
+            update_id=update_id, message=msg_text, callback_query=cb_data, raw=payload
         )
 
     def compute_webhook_url(self, public_base_url: str) -> str:

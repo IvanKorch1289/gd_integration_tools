@@ -50,6 +50,7 @@ class FormatConvertProcessor(
         (S133 W1 confirmed in ``test_converters_mixin.py::TestToJson::test_to_json_basic``).
         Same pattern as S132 W2 ``LLMStructuredProcessor`` MRO fix.
     """
+
     """Format conversions (3 mixins = 33 format methods + 5 core)."""
 
     # State attrs (S53 W1: class-level annotations for mypy MRO)

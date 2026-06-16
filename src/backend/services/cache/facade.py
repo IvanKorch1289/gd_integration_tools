@@ -156,10 +156,7 @@ class UnifiedCacheFacade:
         self._assert("cache.write", namespace)
         full_pattern = self._full_key(namespace, pattern)
 
-        for name, backend in (
-            ("primary", self._primary),
-            ("memory", self._memory),
-        ):
+        for name, backend in (("primary", self._primary), ("memory", self._memory)):
             if backend is None:
                 continue
             try:
