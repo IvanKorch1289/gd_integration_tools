@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -34,6 +34,7 @@ class EventStream(str, Enum):
     CUSTOM = "custom"
 
 
+@dataclass
 class Event:
     """Immutable domain event.
 
