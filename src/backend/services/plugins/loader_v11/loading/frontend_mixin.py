@@ -1,25 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
 
 # Note: LoadedPluginV11 is also defined locally below (S52 W3 leftover from original imports_block)
-
-
 from src.backend.core.logging import get_logger
+from src.backend.services.plugins.loader_v11.loading._protocol import _LoadingProtocol
 
 _logger = get_logger("services.plugins.loader_v11")
 
 
-class FrontendMixin:
+class FrontendMixin(_LoadingProtocol):
     """frontend page mount/unmount + page prefix для LoadingMixin. S63 W1 extraction."""
 
     __slots__ = ()
