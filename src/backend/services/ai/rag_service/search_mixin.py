@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
+
+logger = logging.getLogger(__name__)
 
 
 def _filter_by_embedding_version(
@@ -11,14 +14,44 @@ def _filter_by_embedding_version(
 ) -> list[dict[str, Any]]:
     """Filter retrieval results by embedding-version match.
 
-    .. note::
-        S140 W4 stub (post factcheck): embedding-version tracking not
-        yet implemented. Currently a no-op pass-through. To upgrade:
-        compare each result's metadata.embedding_version against
-        self._embedder.version and drop mismatches. Stored metadata
-        field is reserved (see ``ingest_mixin.upsert``).
+    S152 W1: имплементирован (S140 W4 был no-op stub). Сравнивает
+    ``chunk.metadata.embedding_model`` с текущим ``rag_settings.embedding_model``.
+    Legacy chunks (без ``embedding_model``) пропускаются всегда.
+
+    Strict mode (``rag_settings.embedding_strict_mode=True``): mismatch → drop.
+    Warn mode: mismatch → pass + log warning (counter increment через logger).
     """
-    return results
+    from src.backend.core.config import rag
+
+    current_model = getattr(rag.rag_settings, "embedding_model", None)
+    if not current_model:
+        return results
+
+    strict = bool(getattr(rag.rag_settings, "embedding_strict_mode", False))
+    filtered: list[dict[str, Any]] = []
+    for hit in results:
+        chunk_model = (hit.get("metadata") or {}).get("embedding_model")
+        if chunk_model is None or chunk_model == current_model:
+            # legacy (no provenance) OR match → pass
+            filtered.append(hit)
+            continue
+        # mismatch
+        if strict:
+            logger.debug(
+                "RAG filter: drop chunk id=%s (model=%s != current=%s)",
+                hit.get("id"),
+                chunk_model,
+                current_model,
+            )
+            continue
+        logger.warning(
+            "RAG filter warn: chunk id=%s model=%s != current=%s (passing в warn mode)",
+            hit.get("id"),
+            chunk_model,
+            current_model,
+        )
+        filtered.append(hit)
+    return filtered
 
 
 def _format_context_with_sources(
