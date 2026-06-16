@@ -42,7 +42,7 @@ class NbClientExecutionBackend:
         )
 
         svc = NotebookExecutionService.__new__(NotebookExecutionService)
-        nb = svc._build_ipynb(notebook_path, cells)
+        nb: Any = svc._build_ipynb(notebook_path, cells)
 
         client = nbclient.NotebookClient(
             nb,

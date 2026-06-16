@@ -12,7 +12,12 @@ from src.backend.services.jupyter.execution_service.errors import JupyterExecuti
 _logger = get_logger("services.jupyter.execution")
 
 
-class IOMixin:
+from src.backend.services.jupyter.execution_service._protocol import (
+    _NotebookExecutionProtocol,
+)
+
+
+class IOMixin(_NotebookExecutionProtocol):
     """export + execute + build_ipynb I/O methods для NotebookExecutionService. S60 W1 extraction."""
 
     __slots__ = ()
@@ -145,7 +150,7 @@ class IOMixin:
         return result
 
     @staticmethod
-    def _build_ipynb(notebook_path: str, cells: list[dict[str, Any]]) -> dict[str, Any]:
+    def _build_ipynb(notebook_path: str, cells: list[dict[str, Any]]) -> Any:
         """Build validated .ipynb JSON structure via nbformat.
 
         Falls back to manual JSON if nbformat is not installed.
