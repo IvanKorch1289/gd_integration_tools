@@ -67,7 +67,10 @@ class DQRule:
     enabled: bool = True
 
 
-class CheckMixin:
+from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
+
+
+class CheckMixin(_DataQualityProtocol):
     """capability check (check, _check_rule) для DataQualityMonitor. S55 W4 extraction."""
 
     __slots__ = ()

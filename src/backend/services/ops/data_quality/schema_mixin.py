@@ -68,7 +68,10 @@ class DQRule:
     enabled: bool = True
 
 
-class SchemaMixin:
+from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
+
+
+class SchemaMixin(_DataQualityProtocol):
     """schema inference + statistics для DataQualityMonitor. S55 W4 extraction."""
 
     __slots__ = ()
