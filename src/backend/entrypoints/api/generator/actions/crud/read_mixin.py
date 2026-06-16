@@ -3,9 +3,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass
+    from collections.abc import Awaitable, Callable, Sequence
 
-from collections.abc import Awaitable, Callable, Sequence
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+        _CrudMixinProtocol,
+    )
+    from src.backend.entrypoints.api.generator.specs import (
+        CrudSpec,
+        HttpMethod,
+        RouteDecorator,
+    )
 
 from fastapi import Request, status
 from fastapi_pagination import Params
@@ -18,11 +25,6 @@ from src.backend.entrypoints.api.generator.reflection import (
     query_parameter,
     request_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import (
-    CrudSpec,
-    HttpMethod,
-    RouteDecorator,
-)
 
 
 class ReadMixin:
@@ -30,8 +32,11 @@ class ReadMixin:
 
     __slots__ = ()
 
+    if TYPE_CHECKING:
+        _protocol_self: _CrudMixinProtocol
+
     def _register_route(
-        self,
+        self: "_CrudMixinProtocol",
         *,
         path: str,
         endpoint: Callable[..., Awaitable[Any]],
@@ -60,7 +65,7 @@ class ReadMixin:
             tags=list(tags) or None,
         )
 
-    def _register_get_all(self, spec: CrudSpec) -> None:
+    def _register_get_all(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register get all."""
 
         async def endpoint(
@@ -120,7 +125,7 @@ class ReadMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_get_by_id(self, spec: CrudSpec) -> None:
+    def _register_get_by_id(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register get by id."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:
@@ -161,7 +166,7 @@ class ReadMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_get_first_or_last(self, spec: CrudSpec) -> None:
+    def _register_get_first_or_last(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
         """Выполнить операцию  register get first or last."""
 
         async def endpoint(
