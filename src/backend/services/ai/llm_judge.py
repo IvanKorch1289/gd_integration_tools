@@ -155,7 +155,7 @@ class LLMJudge:
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
         try:
@@ -175,7 +175,7 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except ImportError, AttributeError, ConnectionError:
+        except (ImportError, AttributeError, ConnectionError):
             pass
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
@@ -192,7 +192,7 @@ class LLMJudge:
             records = await redis_client.read_stream(
                 stream_name="llm_calls", count=limit
             )
-        except ImportError, AttributeError, ConnectionError:
+        except (ImportError, AttributeError, ConnectionError):
             return verdicts
 
         for record in records or []:

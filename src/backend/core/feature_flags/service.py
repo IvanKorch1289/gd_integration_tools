@@ -70,12 +70,12 @@ class FeatureFlagService:
         if overridden is not None:
             try:
                 return int(overridden)  # type: ignore[arg-type]
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 return default
         value = getattr(self._static, flag_key, default)
         try:
             return int(value)  # type: ignore[arg-type]
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return default
 
     def has_override(self, flag_key: str, *, tenant_id: str | None = None) -> bool:
