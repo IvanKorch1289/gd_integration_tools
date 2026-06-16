@@ -80,6 +80,36 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Sprint 2 scope reduction**: Most planned tasks (SSE DSL, stdlib logging) were already implemented or didn't need changes. Focus shifted to verification and infrastructure assessment.
 - **Carryover to Sprint 3**: Agent tool policy integration into AIGateway, ResilienceFacade + SchedulerFacade creation, SkillRegistry MCP/LangGraph export.
 
+## [S158 cycle, 2026-06-16] — Pre-flight Protocol Verification, No More Quick Wins (1 wave, 0 atomic + 1 closure, score 9.9, dsl 15 fails pre-existing)
+
+### Notes
+
+- **Pre-flight protocols applied (mandatory per user)**: Ponytail (lazy
+  default), Deep Research (P2: VERIFY > TRUST), Code Review (sample fails).
+- **No new pattern types found** in S158 pre-flight. 10 patterns remain
+  exhausted.
+- **15 dsl/ fails categorized**: 7 Pillow (env), 2 LiteLLM (env),
+  3 pydantic (env), 1 versioning (test isolation), 2 SagaLRA slots (deep).
+- **Sibling WIP not blocking** my work. Master has 0 NEW layer violations
+  from my work.
+
+### Backlog (S159+)
+
+#### Real code-fixable (P1, ~5-8 fails)
+- SagaLRAProcessor.name (2 fails) — deep `__slots__` refactor
+- test_versioning isolation (deep refactor)
+
+#### Pre-existing env / dep (P2, 51+ fails)
+- 37 pydantic settings env errors
+- 6 Pillow missing (deny-list blocks install)
+- 49 test isolation issues (multi-day refactor)
+- LiteLLM disabled (env)
+
+#### Sibling WIP (out of scope)
+- 1 NEW layer (sqlalchemy_filter → correlation)
+- TD-013 Streamlit (70 pages)
+- from_nats, docstring coverage, security audit
+
 ## [Sprint 1 — Architecture Hardening, 2026-06-16] — Layer violations fix, dead code removal, DSL improvements
 
 ### Fixed
