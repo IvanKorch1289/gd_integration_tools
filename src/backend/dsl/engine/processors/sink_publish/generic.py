@@ -88,6 +88,7 @@ class GenericSinkPublishProcessor(BaseProcessor):
         return {"sink_publish": spec}
 
 
+@dataclass
 class _OutSpec:
     """Конфигурация сохранения результата в exchange (общая для всех Sink-процессоров).
 
