@@ -24,10 +24,12 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
     """Создаёт свежий экземпляр LangfusePromptStorage с нужным флагом.
 
     Синглтон сбрасывается перед каждым тестом через этот хелпер.
-    Патчим модульный атрибут feature_flags.prompt_registry_langfuse напрямую.
+    Патчим ``feature_flags.prompt_registry_langfuse`` напрямую (S152 W3:
+    production использует ``feature_flags`` модуль, а не абстрактный
+    ``get_feature_flag_service``).
 
     Args:
-        langfuse_flag: Значение feature_flags.prompt_registry_langfuse.
+        langfuse_flag: Значение ``feature_flags.prompt_registry_langfuse``.
 
     Returns:
         Новый экземпляр LangfusePromptStorage.
@@ -37,9 +39,11 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
     # Сбрасываем синглтон
     mod._instance = None
 
-    # Патчим get_feature_flag_service в модуле
-    with patch.object(mod, "get_feature_flag_service") as mock_ff:
-        mock_ff.return_value.is_enabled.return_value = langfuse_flag
+    # ponytail: патчим реальное API (feature_flags) а не выдуманный
+    # get_feature_flag_service (S152 W3 — production uses module-level
+    # `from src.backend.core.config.features import feature_flags`).
+    with patch.object(mod, "feature_flags") as mock_ff:
+        mock_ff.prompt_registry_langfuse = langfuse_flag
         storage = mod.LangfusePromptStorage()
 
     return storage
@@ -159,12 +163,12 @@ async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
     mock_langfuse_class = MagicMock(return_value=mock_langfuse_instance)
 
     with (
-        patch.object(mod, "get_feature_flag_service") as mock_ff,
+        patch.object(mod, "feature_flags") as mock_ff,
         patch.dict(
             "sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)}
         ),
     ):
-        mock_ff.return_value.is_enabled.return_value = True
+        mock_ff.prompt_registry_langfuse = True
         storage = mod.LangfusePromptStorage()
         # При включённом флаге и доступном SDK — Langfuse должен быть инициализирован
         assert storage._langfuse_available is True, (
