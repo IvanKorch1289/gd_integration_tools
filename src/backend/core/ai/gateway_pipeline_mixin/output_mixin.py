@@ -42,10 +42,14 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 
-class OutputMixin:
+from src.backend.core.ai.gateway_pipeline_mixin._protocol import _PipelineStepsProtocol
+
+
+class OutputMixin(_PipelineStepsProtocol):
     """output sanitization + guards + LLM gateway (_apply_output_guards, _apply_output_sanitizers, _resolve_llm_gateway) для PipelineStepsMixin. S56 W2 extraction."""
 
     __slots__ = ()
+    _llm_gateway: Any
 
     async def _apply_output_guards(
         self, response: AIResponse, policy: AIPolicySpec | None
@@ -129,9 +133,11 @@ class OutputMixin:
 
     def _resolve_llm_gateway(self) -> Any:
         """Lazy-резолв :class:`LiteLLMGateway` через DI singleton."""
-        if self._llm_gateway is not None:
-            return self._llm_gateway
+        gateway: Any | None = self._llm_gateway
+        if gateway is not None:
+            return gateway
         from src.backend.services.ai.gateway import get_litellm_gateway
 
-        self._llm_gateway = get_litellm_gateway()
-        return self._llm_gateway
+        gateway = get_litellm_gateway()
+        self._llm_gateway = gateway
+        return gateway

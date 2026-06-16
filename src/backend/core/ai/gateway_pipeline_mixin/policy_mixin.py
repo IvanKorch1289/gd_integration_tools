@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 
-class PolicyMixin:
+from src.backend.core.ai.gateway_pipeline_mixin._protocol import _PipelineStepsProtocol
+
+
+class PolicyMixin(_PipelineStepsProtocol):
     """policy + capability checks (_resolve_policy, _check_capability, _language_from_policy) для PipelineStepsMixin. S56 W2 extraction."""
 
     __slots__ = ()

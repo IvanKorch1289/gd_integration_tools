@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 
-class ObservabilityMixin:
+from src.backend.core.ai.gateway_pipeline_mixin._protocol import _PipelineStepsProtocol
+
+
+class ObservabilityMixin(_PipelineStepsProtocol):
     """audit + cost tracking (_audit_emit, _cost_track) для PipelineStepsMixin. S56 W2 extraction."""
 
     __slots__ = ()
