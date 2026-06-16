@@ -3561,6 +3561,29 @@ S42+ timeline + Owner.**
 - 2 atomic test-only commits + 1 closure, 0 NEW layer violations
 - 3 pre-existing design conflicts remain (Rule #124 OUT OF SCOPE)
 
+## [Sprint 149] — 2026-06-15
+
+#### s149/w1-redis-slots
+- RedisClient.__slots__ = () regression from S43-45 refactor (commit 58f4d73):
+  empty slots + no __dict__ = AttributeError on first __init__ assignment
+- Fixed: declared actual slot names matching __init__ instance attrs
+- Bonus: test_dedupe_store_factory.py patched wrong path
+  (infrastructure path) — lifecycle imports from core.storage.redis
+  compat shim. Patched the actual import path the production code uses
+- Fixed 2 fails (1 code + 1 test in 1 commit per Rule #124)
+
+#### s149/w2-invoker-mixin
+- S68 W3 invoker decomp lost import of `_is_async_iterator` in run_mixin.py
+- Streaming invocations silently failed (NameError) — task_registry only
+  logs warning, not traceback. Debug instrumentation added to find root
+  cause, then reverted (Ponytail: no debug code in prod)
+- Fixed 2 streaming fails with 1-line import
+
+#### s149/w5-closure
+- ADR-0232: Sprint 149 closure
+- 2 atomic commits + 1 closure, 0 NEW layer violations
+- 24 services test fails remain (separate issues, dedicated sprint)
+
 ## [0.1.0] — 2025 — Initial release
 
 - Initial release of GD Integration Tools
