@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
 from src.backend.core.logging import get_logger
+from src.backend.dsl.engine.processors.llm_structured._protocol import (
+    _LLMStructuredProcessorProtocol,
+)
 
 if TYPE_CHECKING:
     pass
@@ -21,7 +19,7 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-class MetricsMixin:
+class MetricsMixin(_LLMStructuredProcessorProtocol):
     """cost estimation + token extraction для LLMStructuredProcessor. S65 W2 extraction."""
 
     __slots__ = ()
@@ -39,7 +37,7 @@ class MetricsMixin:
         if raw_response is None:
             return None
         try:
-            import litellm
+            import litellm  # type: ignore[import-not-found]
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None

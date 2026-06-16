@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -37,12 +36,12 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 from src.backend.dsl.engine.processors import SetHeaderProcessor
 
 
-class ConfigMixin:
+class ConfigMixin(_RouteBuilderProtocol):
     """configuration (with_timeout, with_retries, with_headers, with_auth, set_header) для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def with_timeout(self, seconds: float) -> RouteBuilder:
+    def with_timeout(self, seconds: float) -> Self:
         """Переопределяет timeout последнего step.
 
         Применимо к процессорам, имеющим атрибут ``_timeout`` или ``timeout``
@@ -68,7 +67,7 @@ class ConfigMixin:
 
     def with_retries(
         self, max_attempts: int, *, backoff: str | float | None = None
-    ) -> RouteBuilder:
+    ) -> Self:
         """Переопределяет количество попыток retry для предыдущего step.
 
         Применимо к процессорам, имеющим атрибут ``_max_attempts``,
@@ -100,9 +99,7 @@ class ConfigMixin:
             )
         return self
 
-    def with_headers(
-        self, headers: dict[str, str], *, mode: str = "merge"
-    ) -> RouteBuilder:
+    def with_headers(self, headers: dict[str, str], *, mode: str = "merge") -> Self:
         """Переопределяет HTTP-заголовки предыдущего step.
 
         Args:
@@ -141,7 +138,7 @@ class ConfigMixin:
         token: str | None = None,
         api_key: str | None = None,
         mtls_cert: str | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Переопределяет auth для предыдущего step.
 
         Поддерживается ровно один способ за вызов:
@@ -180,6 +177,6 @@ class ConfigMixin:
             return self
         return self
 
-    def set_header(self, key: str, value: Any) -> RouteBuilder:
+    def set_header(self, key: str, value: Any) -> Self:
         """Устанавливает заголовок в in_message."""
         return self._add(SetHeaderProcessor(key=key, value=value))

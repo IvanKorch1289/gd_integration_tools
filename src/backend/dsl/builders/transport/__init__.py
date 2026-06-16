@@ -10,11 +10,9 @@ Backward-compat: ``from src.backend.dsl.builders.transport import TransportMixin
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
-
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 from src.backend.dsl.builders.transport.external import ExternalMixin
 from src.backend.dsl.builders.transport.persistence import PersistenceMixin
 from src.backend.dsl.builders.transport.proxy import ProxyMixin
@@ -23,7 +21,12 @@ from src.backend.dsl.builders.transport.sources import SourcesMixin
 
 
 class TransportMixin(
-    SourcesMixin, ExternalMixin, ProxyMixin, PersistenceMixin, SinksMixin
+    SourcesMixin,
+    ExternalMixin,
+    ProxyMixin,
+    PersistenceMixin,
+    SinksMixin,
+    _RouteBuilderProtocol,
 ):
     """Поведенческий миксин transport / storage / sink.
 
@@ -42,9 +45,9 @@ class TransportMixin(
         interval_seconds: float | None = None,
         cron: str | None = None,
         max_fires: int | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Scheduled event source: интервал или cron-выражение."""
-        return self._add_lazy(  # type: ignore[attr-defined]
+        return self._add_lazy(
             "src.backend.dsl.engine.processors.components",
             "TimerProcessor",
             interval_seconds=interval_seconds,

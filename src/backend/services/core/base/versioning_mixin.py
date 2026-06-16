@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 from src.backend.core.decorators.caching import response_cache
 from src.backend.core.logging import get_logger
+from src.backend.services.core.base._protocol import _BaseServiceProtocol
 
 logger = get_logger("services.core.base.versioning")
 from src.backend.schemas.base import BaseSchema
@@ -17,7 +15,7 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-class VersioningMixin:
+class VersioningMixin(_BaseServiceProtocol):
     """versioning (all versions, latest, restore, changes) для BaseService. S61 W1 extraction."""
 
     __slots__ = ()

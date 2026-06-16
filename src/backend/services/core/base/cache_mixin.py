@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
+from typing import Any
 
 from src.backend.core.decorators.caching import response_cache
 from src.backend.core.di.providers import get_cache_invalidator_provider
+from src.backend.services.core.base._protocol import _BaseServiceProtocol
 
 
 def _is_orm_model(instance: Any) -> bool:
@@ -15,7 +12,7 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-class CacheMixin:
+class CacheMixin(_BaseServiceProtocol):
     """cache invalidation helper для BaseService. S61 W1 extraction."""
 
     __slots__ = ()

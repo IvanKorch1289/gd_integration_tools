@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -34,12 +33,12 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 """
 
 
-class ComplianceMixin:
+class ComplianceMixin(_RouteBuilderProtocol):
     """multi-tenant + compliance (tenant_scope, mask, compliance_labels, lineage) для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def lineage(self, tag: str = "step") -> RouteBuilder:
+    def lineage(self, tag: str = "step") -> Self:
         """Записывает шаг в `_lineage` property (data governance)."""
         from src.backend.dsl.engine.processors.generic import LineageTrackerProcessor
 
@@ -51,7 +50,7 @@ class ComplianceMixin:
         header: str = "x-tenant-id",
         body_path: str | None = None,
         required: bool = True,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",
@@ -63,7 +62,7 @@ class ComplianceMixin:
 
     def mask(
         self, *, patterns: list[str] | None = None, replacement: str = "***"
-    ) -> RouteBuilder:
+    ) -> Self:
         """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",
@@ -72,7 +71,7 @@ class ComplianceMixin:
             replacement=replacement,
         )
 
-    def compliance_labels(self, *, labels: list[str]) -> RouteBuilder:
+    def compliance_labels(self, *, labels: list[str]) -> Self:
         """Compliance-метки на Exchange (PII/PCI/FIN/GDPR)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business",

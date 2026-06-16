@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -41,20 +40,20 @@ from src.backend.dsl.engine.processors import (
 )
 
 
-class ValidationMixin:
+class ValidationMixin(_RouteBuilderProtocol):
     """logging + validation + property setters для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def set_property(self, key: str, value: Any) -> RouteBuilder:
+    def set_property(self, key: str, value: Any) -> Self:
         """Устанавливает runtime-свойство Exchange."""
         return self._add(SetPropertyProcessor(key=key, value=value))
 
-    def log(self, level: str = "info") -> RouteBuilder:
+    def log(self, level: str = "info") -> Self:
         """Логирование текущего состояния Exchange (для отладки)."""
         return self._add(LogProcessor(level=level))
 
-    def validate(self, model: type) -> RouteBuilder:
+    def validate(self, model: type) -> Self:
         """Pydantic-валидация body; при ошибке Exchange останавливается."""
         return self._add(ValidateProcessor(model=model))
 

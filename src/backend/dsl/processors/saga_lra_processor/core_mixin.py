@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
-
 import asyncio
 import inspect
 import uuid
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.processors.saga_lra_processor._protocol import (
+    _SagaLRAProcessorProtocol,
+)
 from src.backend.dsl.processors.saga_lra_processor.state import (
     SagaCallable,
     SagaStepSpec,
@@ -50,10 +47,19 @@ _VALID_STATES = frozenset(
 )
 
 
-class CoreMixin:
+class CoreMixin(_SagaLRAProcessorProtocol):
     """core lifecycle methods (state + invoke) для SagaLRAProcessor. S58 W2 extraction."""
 
-    __slots__ = ()
+    __slots__ = (
+        "_steps",
+        "_timeout_seconds",
+        "_per_step_timeout",
+        "_result_property",
+        "_state_property",
+        "_fail_fast",
+        "_on_state_change",
+        "_saga_id",
+    )
 
     def __init__(
         self,

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -37,7 +36,7 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 from src.backend.dsl.engine.processors import BaseProcessor
 
 
-class ResilienceMixin:
+class ResilienceMixin(_RouteBuilderProtocol):
     """resilience (bulkhead, cost_tracker, outbox) для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
@@ -50,7 +49,7 @@ class ResilienceMixin:
         *,
         wait: bool = True,
         timeout: float | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
         from src.backend.dsl.engine.processors.generic import BulkheadProcessor
 
@@ -64,13 +63,13 @@ class ResilienceMixin:
             )
         )
 
-    def cost_tracker(self) -> RouteBuilder:
+    def cost_tracker(self) -> Self:
         """Инициализация cost-словаря в properties (LLM-токены, HTTP, DB, USD)."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business", "CostTrackerProcessor"
         )
 
-    def outbox(self, *, topic: str) -> RouteBuilder:
+    def outbox(self, *, topic: str) -> Self:
         """Transactional Outbox: запись события в outbox-таблицу."""
         return self._add_lazy(
             "src.backend.dsl.engine.processors.business", "OutboxProcessor", topic=topic

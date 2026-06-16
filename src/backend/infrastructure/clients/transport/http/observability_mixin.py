@@ -10,8 +10,12 @@ from time import monotonic
 
 import httpx
 
+from src.backend.infrastructure.clients.transport.http._protocol import (
+    _HttpClientProtocol,
+)
 
-class ObservabilityMixin:
+
+class ObservabilityMixin(_HttpClientProtocol):
     """observability (log request/response, update metrics, process response) для HttpClient. S61 W4 extraction."""
 
     __slots__ = ()

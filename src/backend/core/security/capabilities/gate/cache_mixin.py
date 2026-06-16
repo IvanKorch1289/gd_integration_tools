@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+from src.backend.core.security.capabilities.gate._protocol import (
+    _CapabilityGateProtocol,
+)
 
 """ADR-044 — runtime :class:`CapabilityGate` + subset-checker.
 
@@ -41,7 +40,7 @@ AuditCallback = Callable[[dict[str, object]], None]
 _DEFAULT_LRU_SIZE: Final[int] = 1024
 
 
-class CacheMixin:
+class CacheMixin(_CapabilityGateProtocol):
     """cache + invalidation (granted caches, plugin/tenant invalidation) для CapabilityGate. S54 W4 extraction."""
 
     __slots__ = ()
@@ -60,23 +59,23 @@ class CacheMixin:
 
     def _cache_granted(self, key: tuple[str, str, str | None]) -> None:
         """Положить granted-результат в LRU (с ограничением размера)."""
-        if len(self._cache) >= self._lru_size:
+        if len(self._cache) >= self._lru_size:  # type: ignore[has-type]
             # Простейший LRU: выбрасываем самый старый ключ
             # (порядок dict'а сохраняет insertion order).
-            oldest = next(iter(self._cache))
-            self._cache.pop(oldest, None)
-        self._cache[key] = True
+            oldest = next(iter(self._cache))  # type: ignore[has-type]
+            self._cache.pop(oldest, None)  # type: ignore[has-type]
+        self._cache[key] = True  # type: ignore[has-type]
 
     def _tenant_cache_granted(self, key: tuple[str, str, str, str | None]) -> None:
         """Положить granted-результат в per-tenant LRU."""
-        if len(self._tenant_cache) >= self._lru_size:
-            oldest = next(iter(self._tenant_cache))
-            self._tenant_cache.pop(oldest, None)
-        self._tenant_cache[key] = True
+        if len(self._tenant_cache) >= self._lru_size:  # type: ignore[has-type]
+            oldest = next(iter(self._tenant_cache))  # type: ignore[has-type]
+            self._tenant_cache.pop(oldest, None)  # type: ignore[has-type]
+        self._tenant_cache[key] = True  # type: ignore[has-type]
 
     def _invalidate_plugin(self, plugin: str) -> None:
         """Удалить из кэша все granted-записи для плагина."""
-        self._cache = {key: v for key, v in self._cache.items() if key[0] != plugin}
+        self._cache = {key: v for key, v in self._cache.items() if key[0] != plugin}  # type: ignore[has-type]
 
     def _invalidate_tenant(self, tenant: str, principal: str | None = None) -> None:
         """Удалить из per-tenant кэша записи для (tenant, principal).
@@ -84,12 +83,14 @@ class CacheMixin:
         Если ``principal=None`` — удаляются все записи для tenant'а.
         """
         if principal is None:
-            self._tenant_cache = {
-                key: v for key, v in self._tenant_cache.items() if key[0] != tenant
-            }
-        else:
-            self._tenant_cache = {
+            self._tenant_cache = {  # type: ignore[has-type]
                 key: v
                 for key, v in self._tenant_cache.items()
+                if key[0] != tenant  # type: ignore[has-type]
+            }
+        else:
+            self._tenant_cache = {  # type: ignore[has-type]
+                key: v
+                for key, v in self._tenant_cache.items()  # type: ignore[has-type]
                 if not (key[0] == tenant and key[1] == principal)
             }

@@ -66,7 +66,7 @@ from src.backend.dsl.builders.base.validation_mixin import (
 __all__ = ("RouteBuilder", "get_route_builder")
 
 
-class RouteBuilder(
+class RouteBuilder(  # type: ignore[misc]
     AIRPAMixin,
     BatchMixin,
     CollectionMixin,

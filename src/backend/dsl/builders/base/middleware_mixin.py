@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
-
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 from src.backend.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
@@ -13,7 +11,7 @@ from src.backend.dsl.engine.middleware import (
 )
 
 
-class MiddlewareMixin:
+class MiddlewareMixin(_RouteBuilderProtocol):
     """per-route middleware configuration для RouteBuilder."""
 
     __slots__ = ()
@@ -24,7 +22,7 @@ class MiddlewareMixin:
 
     def middleware(
         self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any
-    ) -> RouteBuilder:
+    ) -> Self:
         """Добавляет middleware в pipeline (per-route override).
 
         Args:

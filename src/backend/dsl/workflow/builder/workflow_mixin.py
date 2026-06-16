@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.backend.dsl.workflow.builder._protocol import _WorkflowBuilderProtocol
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 if TYPE_CHECKING:
     from src.backend.dsl.workflow.builder import SagaBuilder
 
 
-class WorkflowMixin:
+class WorkflowMixin(_WorkflowBuilderProtocol):
     """saga + final build для WorkflowBuilder. S58 W4 extraction."""
 
     __slots__ = ()

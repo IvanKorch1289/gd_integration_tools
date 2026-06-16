@@ -6,13 +6,15 @@ MRO composition: TransportMixin → SourcesMixin → ExternalMixin → ProxyMixi
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+    pass
+
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 
-class SourcesMixin:
+class SourcesMixin(_RouteBuilderProtocol):
     """Stateless mixin. Uses self._add / self._add_lazy via MRO."""
 
     __slots__ = ()
@@ -27,7 +29,7 @@ class SourcesMixin:
         max_files: int = 1000,
         sort_by: str = "name",
         result_property: str = "directory_scan_result",
-    ) -> RouteBuilder:
+    ) -> Self:
         """Сканирует директорию и возвращает список файлов, подходящих под glob.
 
         S35 GAP-INT-3: batch file processing.
@@ -46,7 +48,7 @@ class SourcesMixin:
             DirectoryScanProcessor,
         )
 
-        return self._add(  # type: ignore[attr-defined]
+        return self._add(
             DirectoryScanProcessor(
                 path=path,
                 pattern=pattern,
@@ -67,7 +69,7 @@ class SourcesMixin:
         *,
         nats_url: str = "nats://localhost:4222",
         description: str | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Точка входа: маршрут из NATS JetStream durable consumer.
 
         Создаёт :class:`RouteBuilder` с источником NATS JetStream
@@ -119,7 +121,7 @@ class SourcesMixin:
         processed_marker_path: str | None = None,
         marker_dedup: bool = True,
         description: str | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8).
 
         Сканирует папку на WebDAV-сервере (Nextcloud / OwnCloud / любой
@@ -167,9 +169,9 @@ class SourcesMixin:
         *,
         payload: dict[str, Any] | None = None,
         result_property: str = "polled_data",
-    ) -> RouteBuilder:
+    ) -> Self:
         """Periodically вызывает action, результат → body."""
-        return self._add_lazy(  # type: ignore[attr-defined]
+        return self._add_lazy(
             "src.backend.dsl.engine.processors.components",
             "PollingConsumerProcessor",
             source_action=source_action,
@@ -185,7 +187,7 @@ class SourcesMixin:
         headers: dict[str, str] | None = None,
         payload_property: str | None = None,
         result_property: str = "nats_js_publish_result",
-    ) -> RouteBuilder:
+    ) -> Self:
         """Публикует payload в NATS JetStream (Sink step).
 
         Добавляет шаг публикации в NATS JetStream subject.
@@ -222,7 +224,7 @@ class SourcesMixin:
         if headers:
             config["headers"] = dict(headers)
 
-        return self._add(  # type: ignore[attr-defined]
+        return self._add(
             GenericSinkPublishProcessor(
                 kind="nats_js",
                 config=config,
@@ -239,7 +241,7 @@ class SourcesMixin:
         *,
         nats_url: str = "nats://localhost:4222",
         description: str | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Точка входа: маршрут из NATS core (sub, без JetStream) — S106 W4.
 
         Создаёт :class:`RouteBuilder` с источником NATS core (без
@@ -299,7 +301,7 @@ class SourcesMixin:
         full_document_lookup: bool = False,
         pipeline: list[dict[str, Any]] | None = None,
         description: str | None = None,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Точка входа: маршрут из MongoDB change-streams — S106 W4.
 
         Создаёт :class:`RouteBuilder` с источником MongoDB change

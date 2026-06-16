@@ -50,7 +50,14 @@ class WorkflowBuilder(
 ):
     """Workflow DSL builder (6 mixins = 17 methods + 4 core)."""
 
-    __slots__ = ()
+    __slots__ = (
+        "_name",
+        "_description",
+        "_steps",
+        "_default_timeout_s",
+        "_default_retry_policy",
+        "_sla",
+    )
 
     def __init__(self, name: str, *, description: str | None = None) -> None:
         self._name = name

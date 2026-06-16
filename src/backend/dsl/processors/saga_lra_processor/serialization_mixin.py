@@ -2,13 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
-
-
-from typing import TYPE_CHECKING
-
 from src.backend.core.logging import get_logger
+from src.backend.dsl.processors.saga_lra_processor._protocol import (
+    _SagaLRAProcessorProtocol,
+)
 from src.backend.dsl.processors.saga_lra_processor.state import SagaStepSpec
 
 if TYPE_CHECKING:
@@ -42,7 +39,7 @@ _VALID_STATES = frozenset(
 )
 
 
-class SerializationMixin:
+class SerializationMixin(_SagaLRAProcessorProtocol):
     """step normalization + result publishing для SagaLRAProcessor. S58 W2 extraction."""
 
     __slots__ = ()
