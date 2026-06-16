@@ -35,7 +35,10 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class LlmInvocationMixin:
+from src.backend.core.ai.gateway_pipeline_mixin._protocol import _PipelineStepsProtocol
+
+
+class LlmInvocationMixin(_PipelineStepsProtocol):
     """LLM invocation (_render_prompt, _invoke_llm, _extract_completion, _provider_from_model) для PipelineStepsMixin. S56 W2 extraction."""
 
     __slots__ = ()

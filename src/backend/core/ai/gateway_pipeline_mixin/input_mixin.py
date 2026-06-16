@@ -42,10 +42,14 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 
-class InputMixin:
+from src.backend.core.ai.gateway_pipeline_mixin._protocol import _PipelineStepsProtocol
+
+
+class InputMixin(_PipelineStepsProtocol):
     """input sanitization + guards (_apply_input_sanitizers, _apply_input_guards, _resolve_sanitizer) для PipelineStepsMixin. S56 W2 extraction."""
 
     __slots__ = ()
+    _sanitizer: Any
 
     async def _apply_input_sanitizers(
         self, request: AIRequest, policy: AIPolicySpec | None
@@ -121,15 +125,17 @@ class InputMixin:
 
     def _resolve_sanitizer(self) -> Any | None:
         """Lazy-резолв sanitizer'а через DI или фабрику Presidio."""
-        if self._sanitizer is not None:
-            return self._sanitizer
+        sanitizer: Any | None = self._sanitizer
+        if sanitizer is not None:
+            return sanitizer
         try:
             from src.backend.services.ai.pii.presidio_analyzer import (
                 get_presidio_sanitizer_adapter,
             )
 
-            self._sanitizer = get_presidio_sanitizer_adapter()
+            sanitizer = get_presidio_sanitizer_adapter()
         except Exception as exc:
             logger.debug("AIGateway: PresidioSanitizerAdapter недоступен (%s)", exc)
-            self._sanitizer = None
-        return self._sanitizer
+            sanitizer = None
+        self._sanitizer = sanitizer
+        return sanitizer
