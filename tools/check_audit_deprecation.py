@@ -74,6 +74,7 @@ LEGITIMATE_MIXIN_FILES = (
     "src/backend/core/security/authorization_gateway/__init__.py",
     "src/backend/core/security/authorization_gateway/audit_mixin.py",
     "src/backend/core/security/capabilities/gate/__init__.py",
+    "src/backend/core/security/capabilities/gate/_protocol.py",
     "src/backend/core/security/capabilities/gate/audit_mixin.py",
     "src/backend/core/security/capabilities/gate/check_mixin.py",
     "src/backend/core/security/capabilities/gate/declaration_mixin.py",

@@ -142,20 +142,19 @@ def test_scan_excludes_pycache(temp_source_tree: Path) -> None:
 
 
 def test_real_codebase_finds_legacy_callsites() -> None:
-    """На реальном codebase: ≥ 1 callsite (sanity, не точная цифра)."""
+    """На реальном codebase: legacy callsites мигрированы в facade (sanity)."""
     # tests/unit/tools/test_check_audit_deprecation.py → 4 уровня вверх = repo root.
     repo_root = Path(__file__).parent.parent.parent.parent
     checker = AuditDeprecationChecker(root=repo_root)
     checker.scan()
 
-    # Per S105 subagent-2 finding: 77 callsites в 23 файлах.
-    # S108 W3 + S109 W1-W4 reduced TD-004: 73 → 29 callsites (-60%).
-    # Floor 20 reflects post-S109 baseline (mixin internals — functional completion).
-    assert checker.total_callsites >= 20, (
-        f"Expected ≥ 20 callsites (post-S109 baseline), got {checker.total_callsites}. "
+    # S155: все legacy callsites мигрированы; остаются только allowlisted
+    # mixin-internal stubs / Protocol declarations.
+    assert checker.total_callsites == 0, (
+        f"Expected 0 non-allowlisted callsites, got {checker.total_callsites}. "
         f"Files: {sorted(checker._results.keys())[:5]}..."
     )
-    assert checker.total_files >= 5
+    assert checker.total_files == 0
 
 
 # ──────────────────────────────────────────────────────────────────────

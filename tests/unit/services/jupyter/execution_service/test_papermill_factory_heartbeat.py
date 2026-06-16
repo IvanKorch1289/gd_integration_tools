@@ -208,13 +208,16 @@ def test_factory_create_hub_with_settings() -> None:
     assert isinstance(backend, NotebookExecutionService)
 
 
-def test_factory_create_e2b_not_implemented() -> None:
-    """Factory.create('e2b') → NotImplementedError (S74 W3+ stub)."""
-    from src.backend.services.jupyter.execution_service import ExecutionBackendFactory
+def test_factory_create_e2b_returns_backend() -> None:
+    """Factory.create('e2b') → E2BExecutionBackend (S75 W1 implemented)."""
+    from src.backend.services.jupyter.execution_service import (
+        E2BExecutionBackend,
+        ExecutionBackendFactory,
+    )
 
     factory = ExecutionBackendFactory()
-    with pytest.raises(NotImplementedError, match="E2B notebook ExecutionBackend"):
-        factory.create("e2b")
+    backend = factory.create("e2b")
+    assert isinstance(backend, E2BExecutionBackend)
 
 
 def test_factory_create_unknown_kind() -> None:

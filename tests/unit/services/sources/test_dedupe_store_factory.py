@@ -41,7 +41,7 @@ async def test_make_dedupe_store_redis_returns_redis_store() -> None:
             "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings
         ),
         patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
         ),
     ):
@@ -71,7 +71,7 @@ async def test_make_dedupe_store_propagates_redis_get_client_error() -> None:
             "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings
         ),
         patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
         ),
     ):

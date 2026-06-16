@@ -39,11 +39,11 @@ def _load_module():
 
 
 def test_legitimate_mixin_files_constant_exists() -> None:
-    """``LEGITIMATE_MIXIN_FILES`` — constant с 8 mixin-файлами (S111 W3)."""
+    """``LEGITIMATE_MIXIN_FILES`` — constant с 9 mixin/stub файлами (S111 W3 + S155)."""
     mod = _load_module()
     assert hasattr(mod, "LEGITIMATE_MIXIN_FILES")
     assert isinstance(mod.LEGITIMATE_MIXIN_FILES, tuple)
-    assert len(mod.LEGITIMATE_MIXIN_FILES) == 8
+    assert len(mod.LEGITIMATE_MIXIN_FILES) == 9
 
     # Все файлы — внутри ``src/backend/core/security/`` или ``core/net/``.
     for path in mod.LEGITIMATE_MIXIN_FILES:
@@ -62,6 +62,7 @@ def test_legitimate_mixin_files_contain_expected_dual_emit_files() -> None:
         "src/backend/core/security/authorization_gateway/__init__.py",
         "src/backend/core/security/authorization_gateway/audit_mixin.py",
         "src/backend/core/security/capabilities/gate/__init__.py",
+        "src/backend/core/security/capabilities/gate/_protocol.py",
         "src/backend/core/security/capabilities/gate/audit_mixin.py",
         "src/backend/core/security/capabilities/gate/check_mixin.py",
         "src/backend/core/security/capabilities/gate/declaration_mixin.py",
@@ -89,7 +90,7 @@ def test_audit_deprecation_checker_exits_zero_in_strict() -> None:
 
 
 def test_audit_deprecation_checker_json_includes_allowlist_count() -> None:
-    """``--json`` вывод содержит ``allowlisted_files`` field = 8."""
+    """``--json`` вывод содержит ``allowlisted_files`` field = 9."""
     result = subprocess.run(
         [".venv/bin/python", str(_TOOL_PATH), "--json"],
         cwd=_REPO_ROOT,
@@ -100,7 +101,7 @@ def test_audit_deprecation_checker_json_includes_allowlist_count() -> None:
     assert result.returncode == 0
     data = json.loads(result.stdout)
     assert "allowlisted_files" in data
-    assert data["allowlisted_files"] == 8
+    assert data["allowlisted_files"] == 9
     # После allowlist: 0 files with legacy, 0 callsites.
     assert data["total_callsites"] == 0
     assert data["files_with_legacy"] == 0
@@ -116,8 +117,8 @@ def test_audit_deprecation_checker_show_allowlist_flag() -> None:
         timeout=60,
     )
     assert result.returncode == 0
-    assert "LEGITIMATE_MIXIN_FILES (8 files)" in result.stdout
-    # Все 8 файлов перечислены.
+    assert "LEGITIMATE_MIXIN_FILES (9 files)" in result.stdout
+    # Все 9 файлов перечислены.
     for path in (
         "src/backend/core/net/outbound_http.py",
         "src/backend/core/security/activity_capability_guard.py",
