@@ -3539,6 +3539,28 @@ S42+ timeline + Owner.**
 - ADR-0229 post-mortem note (S146 W1 incomplete commit + VER-122 lesson)
 - 1 atomic code commit + 1 closure, 0 NEW layer violations
 
+## [Sprint 148] — 2026-06-15
+
+#### s148/w1-outbox-tests
+- Pre-existing test/code drift: `OutboxSettings.use_redis_dedupe` added
+  S64 W4 but tests never updated to expect 7 fields
+- Added `use_redis_dedupe` to expected sets in test_outbox.py
+  (test_model_dump_is_json_safe, test_field_count)
+- Fixed 2 fails (test-only change, 0 production code)
+
+#### s148/w2-validator-tests
+- Pre-existing test bug: `monkeypatch.setattr(validator_module, ...)` failed
+  because constants are imported via `from _helpers import` pattern in
+  infrastructure_checks.py, creating local binding in infrastructure_checks
+- Patched infrastructure_checks namespace directly (importer's binding)
+  per standard Python monkeypatch pattern
+- Fixed 2 fails (test-only change, 0 production code)
+
+#### s148/w5-closure
+- ADR-0231: Sprint 148 closure
+- 2 atomic test-only commits + 1 closure, 0 NEW layer violations
+- 3 pre-existing design conflicts remain (Rule #124 OUT OF SCOPE)
+
 ## [0.1.0] — 2025 — Initial release
 
 - Initial release of GD Integration Tools
