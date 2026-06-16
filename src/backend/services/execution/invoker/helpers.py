@@ -13,7 +13,7 @@ from src.backend.core.interfaces.invoker import (
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.core.interfaces.invoker import Invoker
+    from src.backend.services.execution.invoker.invoker import Invoker
 
 _logger = get_logger("services.execution.invoker")
 
