@@ -7,6 +7,7 @@ Funcs: _normalize_choice_branches.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -18,6 +19,7 @@ from src.backend.dsl.engine.processors.control_flow.saga import _serialize_sub
 _cf_logger = get_logger("dsl.control_flow")
 
 
+@dataclass
 class ChoiceBranch:
     """Одна ветка ``ChoiceProcessor`` с предикатом или JMESPath-выражением.
 
