@@ -64,7 +64,9 @@ class TransactionContext:
                 await self._bundle.__aexit__(exc_type, exc_val, exc_tb)
                 self._in_transaction = False
 
-    async def query(self, sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    async def query(
+        self, sql: str, params: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Run SELECT внутри transaction."""
         if not self._in_transaction:
             raise RuntimeError("TransactionContext.query: not in transaction")
@@ -76,7 +78,9 @@ class TransactionContext:
             raise RuntimeError("TransactionContext.execute: not in transaction")
         return await _execute_impl(self._bundle, sql, params or {})
 
-    async def call_procedure(self, name: str, params: dict[str, Any] | None = None) -> Any:
+    async def call_procedure(
+        self, name: str, params: dict[str, Any] | None = None
+    ) -> Any:
         """Call stored procedure внутри transaction."""
         if not self._in_transaction:
             raise RuntimeError("TransactionContext.call_procedure: not in transaction")
@@ -88,7 +92,9 @@ class TransactionContext:
 # ---------------------------------------------------------------------------
 
 
-async def _query_impl(bundle: Any, sql: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+async def _query_impl(
+    bundle: Any, sql: str, params: dict[str, Any]
+) -> list[dict[str, Any]]:
     """SELECT → list[dict]."""
     # DatabaseBundle exposes ``session`` (SQLAlchemy AsyncSession).
     session = getattr(bundle, "session", None) or getattr(bundle, "_session", None)
@@ -115,7 +121,9 @@ async def _execute_impl(bundle: Any, sql: str, params: dict[str, Any]) -> int:
 async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -> Any:
     """Call stored procedure via existing call_procedure helper."""
     # Look up call_procedure on bundle or session.
-    fn = getattr(bundle, "call_procedure", None) or getattr(bundle, "_call_procedure", None)
+    fn = getattr(bundle, "call_procedure", None) or getattr(
+        bundle, "_call_procedure", None
+    )
     if fn is None:
         # Fallback: route through the existing db_call_procedure processor path
         # or just raise — implementation depends on dialect.
@@ -129,7 +137,6 @@ async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -
 
 
 import asyncio  # noqa: E402  (kept at bottom to avoid top-level cost)
-
 
 # ---------------------------------------------------------------------------
 # Façade
@@ -179,10 +186,7 @@ class ExternalDBFacade:
     # --- Public API ---
 
     async def query(
-        self,
-        profile: str,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, profile: str, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """SELECT через профиль внешней БД.
 
@@ -202,10 +206,7 @@ class ExternalDBFacade:
         return await _query_impl(bundle, sql, params or {})
 
     async def execute(
-        self,
-        profile: str,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, profile: str, sql: str, params: dict[str, Any] | None = None
     ) -> int:
         """INSERT / UPDATE / DELETE → rowcount."""
         registry = self._get_registry()
@@ -213,10 +214,7 @@ class ExternalDBFacade:
         return await _execute_impl(bundle, sql, params or {})
 
     async def call_procedure(
-        self,
-        profile: str,
-        name: str,
-        params: dict[str, Any] | None = None,
+        self, profile: str, name: str, params: dict[str, Any] | None = None
     ) -> Any:
         """Call stored procedure через профиль внешней БД."""
         registry = self._get_registry()
@@ -224,9 +222,7 @@ class ExternalDBFacade:
         return await _call_procedure_impl(bundle, name, params or {})
 
     @asynccontextmanager
-    async def transaction(
-        self, profile: str
-    ) -> AsyncIterator[TransactionContext]:
+    async def transaction(self, profile: str) -> AsyncIterator[TransactionContext]:
         """Async context manager для транзакции.
 
         Usage::

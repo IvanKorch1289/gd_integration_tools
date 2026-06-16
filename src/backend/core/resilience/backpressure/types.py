@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W1 - types.py part of backpressure decomp.
 
 core types (protocol + state dataclass).
 
 Classes: ConsumerControlProtocol, BackpressureState.
 """
+
+from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field

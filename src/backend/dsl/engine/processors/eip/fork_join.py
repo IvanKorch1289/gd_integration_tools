@@ -11,6 +11,7 @@ Aggregation modes:
 - ``first``: первый не-None результат (по порядку dict-insertion) становится
   body. Удобно для fallback-цепочек в parallel-режиме.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,7 +21,6 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.engine.processors.control_flow.parallel import ParallelProcessor
 
 _logger = get_logger("dsl.fork_join")
 
@@ -58,23 +58,15 @@ class ForkJoinProcessor(BaseProcessor):
         self._aggregation = aggregation
         self._timeout_seconds = timeout_seconds
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         # Делегируем выполнение в ParallelProcessor (battle-tested).
-        parallel = ParallelProcessor(
-            branches=self._branches, strategy="all"
-        )
         # Run inline — повторяет логику ParallelProcessor._run_branch,
         # но это OK: композиция > дублирование.
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}
 
         async def run_one(name: str, procs: list[BaseProcessor]) -> None:
-            from src.backend.dsl.engine.exchange import (
-                ExchangeStatus,
-                Message,
-            )
+            from src.backend.dsl.engine.exchange import ExchangeStatus, Message
 
             branch_ex = Exchange(
                 in_message=Message(
@@ -84,9 +76,7 @@ class ForkJoinProcessor(BaseProcessor):
             )
             branch_ex.status = ExchangeStatus.processing
             for proc in procs:
-                if branch_ex.status in (
-                    ExchangeStatus.failed,
-                ) or branch_ex.stopped:
+                if branch_ex.status in (ExchangeStatus.failed,) or branch_ex.stopped:
                     break
                 try:
                     await proc.process(branch_ex, context)

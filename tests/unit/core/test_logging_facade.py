@@ -12,11 +12,9 @@ Tests:
 
 from __future__ import annotations
 
-import importlib
 import sys
 
 import pytest
-
 
 pytestmark = pytest.mark.unit
 
@@ -46,7 +44,9 @@ def test_core_logging_returns_same_function_as_infrastructure() -> None:
     Backward-compat: любой код через facade получает ту же реализацию.
     """
     from src.backend.core.logging import get_logger as core_get_logger
-    from src.backend.infrastructure.logging.factory import get_logger as infra_get_logger
+    from src.backend.infrastructure.logging.factory import (
+        get_logger as infra_get_logger,
+    )
 
     assert core_get_logger is infra_get_logger
 

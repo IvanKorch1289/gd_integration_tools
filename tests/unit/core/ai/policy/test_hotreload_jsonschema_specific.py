@@ -1,5 +1,6 @@
 """S77 W4 — tests для hot-reload + JSON-Schema + specificity-based resolution
 (FINAL_REPORT_V2 P0-C closure, ADR-0067)."""
+
 from __future__ import annotations
 
 import asyncio
@@ -10,21 +11,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from src.backend.core.ai.policy.spec import (
-    AIPolicySpec,
-    ModelRouterSpec,
-    ToolsSpec,
-)
 from src.backend.core.ai.policy.jsonschema_export import (
     export_aipolicy_json_schema,
     export_default_policy_yaml,
     validate_aipolicy_dict,
 )
+from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec
 from src.backend.core.ai.policy.specificity import (
     compute_specificity,
     find_specific_match,
 )
-
 
 # JSON-Schema export tests
 # ============================================================================
@@ -146,7 +142,7 @@ def test_find_specific_match_no_match() -> None:
             workflow_pattern="credit_*",
             tenant_pattern="*",
             model_router=ModelRouterSpec(primary="openai/gpt-4"),
-        ),
+        )
     ]
     assert find_specific_match(policies, "fraud_check", "user") is None
 
@@ -167,9 +163,7 @@ def test_find_specific_match_picks_most_specific() -> None:
     )
     # premium_* more specific than *
     result = find_specific_match(
-        [global_policy, premium_policy],
-        "credit_check",
-        "premium_user",
+        [global_policy, premium_policy], "credit_check", "premium_user"
     )
     assert result is not None
     assert result.name == "premium"
@@ -191,9 +185,7 @@ def test_find_specific_match_falls_back_to_global() -> None:
     )
     # basic_user doesn't match premium_*
     result = find_specific_match(
-        [global_policy, premium_policy],
-        "credit_check",
-        "basic_user",
+        [global_policy, premium_policy], "credit_check", "basic_user"
     )
     assert result is not None
     assert result.name == "global"
@@ -315,13 +307,12 @@ def test_resolver_reload_clears_specific_cache(policy_roots: tuple[Path, Path]) 
 def test_hotreload_event_dataclass() -> None:
     """PolicyReloadEvent frozen dataclass works."""
     from src.backend.core.ai.policy.hotreload import (
-        PolicyReloadEvent,
         PolicyReloadAction,
+        PolicyReloadEvent,
     )
 
     event = PolicyReloadEvent(
-        path=Path("/policies/test.policy.yaml"),
-        action=PolicyReloadAction.MODIFIED,
+        path=Path("/policies/test.policy.yaml"), action=PolicyReloadAction.MODIFIED
     )
     assert event.path == Path("/policies/test.policy.yaml")
     assert event.action == PolicyReloadAction.MODIFIED

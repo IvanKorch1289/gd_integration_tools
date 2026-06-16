@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.clients.transport.http import HttpClient
 
 
 async def get_http_client() -> AsyncGenerator[HttpClient]:

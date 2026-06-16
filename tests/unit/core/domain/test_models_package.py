@@ -6,11 +6,8 @@ Verifies:
 - Internal imports use relative ``.base`` (no leaks to old path).
 - No regression in User/DslSnapshot/CertRecord tables (metadata reflection).
 """
+
 from __future__ import annotations
-
-import warnings
-
-import pytest
 
 
 class TestCoreDomainModelsPackage:
@@ -24,10 +21,7 @@ class TestCoreDomainModelsPackage:
             CertHistory,
             CertRecord,
             DslSnapshot,
-            LangMemEpisodic,
-            LangMemProcedural,
             OutboxMessage,
-            RuleEngineBase,
             RuleEngineRulesetORM,
             User,
             mapper_registry,
@@ -109,8 +103,11 @@ class TestCoreDomainModelsPackage:
         """S106 W5: shims hard deleted, canonical path is the only one."""
         # After W5, old path does NOT exist
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent.parent
-        old_models = project_root / "src" / "backend" / "infrastructure" / "database" / "models"
+        old_models = (
+            project_root / "src" / "backend" / "infrastructure" / "database" / "models"
+        )
         assert not old_models.exists(), (
             f"Old models dir should be removed: {old_models}"
         )
@@ -121,8 +118,13 @@ class TestCoreDomainModelsPackage:
 
         # 7 Risk A models register tables in `metadata`
         table_names = set(metadata.tables.keys())
-        expected = {"users", "dsl_snapshots", "certs", "cert_history",
-                    "outbox_messages"}
+        expected = {
+            "users",
+            "dsl_snapshots",
+            "certs",
+            "cert_history",
+            "outbox_messages",
+        }
         assert expected.issubset(table_names), (
             f"Missing tables: {expected - table_names}"
         )
@@ -134,9 +136,12 @@ class TestCoreDomainModelsPackage:
 
         assert OrderKind is Direct
         assert OrderKind.__tablename__ == "orderkinds"
-        assert "OrderKind" in __import__(
-            "src.backend.core.domain.models", fromlist=["__all__"]
-        ).__all__
+        assert (
+            "OrderKind"
+            in __import__(
+                "src.backend.core.domain.models", fromlist=["__all__"]
+            ).__all__
+        )
 
     def test_orders_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2b): Order moved to core.domain.models."""
@@ -145,9 +150,12 @@ class TestCoreDomainModelsPackage:
 
         assert Order is Direct
         assert Order.__tablename__ == "orders"
-        assert "Order" in __import__(
-            "src.backend.core.domain.models", fromlist=["__all__"]
-        ).__all__
+        assert (
+            "Order"
+            in __import__(
+                "src.backend.core.domain.models", fromlist=["__all__"]
+            ).__all__
+        )
 
     def test_orders_orderkind_relationship_after_move(self) -> None:
         """Order ↔ OrderKind bi-directional relationship works post-move."""
@@ -157,12 +165,8 @@ class TestCoreDomainModelsPackage:
         assert hasattr(Order, "order_kind")
         assert hasattr(OrderKind, "orders")
         # FK constraint name in Order points to orderkinds.id
-        fk_columns = [
-            col for col in Order.__table__.c
-            if col.foreign_keys
-        ]
-        fk_targets = {list(col.foreign_keys)[0].target_fullname
-                      for col in fk_columns}
+        fk_columns = [col for col in Order.__table__.c if col.foreign_keys]
+        fk_targets = {list(col.foreign_keys)[0].target_fullname for col in fk_columns}
         assert any("orderkinds" in t for t in fk_targets), (
             f"FK→orderkinds missing: {fk_targets}"
         )
@@ -170,10 +174,8 @@ class TestCoreDomainModelsPackage:
     def test_files_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2c): File + OrderFile moved to core.domain.models."""
         from src.backend.core.domain.models import File, OrderFile
-        from src.backend.core.domain.models.files import (
-            File as DirectFile,
-            OrderFile as DirectOrderFile,
-        )
+        from src.backend.core.domain.models.files import File as DirectFile
+        from src.backend.core.domain.models.files import OrderFile as DirectOrderFile
 
         assert File is DirectFile
         assert OrderFile is DirectOrderFile
@@ -192,18 +194,22 @@ class TestCoreDomainModelsPackage:
     def test_workflow_models_in_canonical_package(self) -> None:
         """S106 W4 (D5 B3): WorkflowInstance + WorkflowEvent moved."""
         from src.backend.core.domain.models import (
-            WorkflowInstance,
             WorkflowEvent,
-            WorkflowStatus,
             WorkflowEventType,
-        )
-        from src.backend.core.domain.models.workflow_instance import (
-            WorkflowInstance as DirectI,
-            WorkflowStatus as DirectS,
+            WorkflowInstance,
+            WorkflowStatus,
         )
         from src.backend.core.domain.models.workflow_event import (
             WorkflowEvent as DirectE,
+        )
+        from src.backend.core.domain.models.workflow_event import (
             WorkflowEventType as DirectT,
+        )
+        from src.backend.core.domain.models.workflow_instance import (
+            WorkflowInstance as DirectI,
+        )
+        from src.backend.core.domain.models.workflow_instance import (
+            WorkflowStatus as DirectS,
         )
 
         assert WorkflowInstance is DirectI
@@ -215,10 +221,7 @@ class TestCoreDomainModelsPackage:
 
     def test_workflow_native_enum_preserved(self) -> None:
         """Native PG Enum (WorkflowStatus, WorkflowEventType) preserved post-move."""
-        from src.backend.core.domain.models import (
-            WorkflowStatus,
-            WorkflowEventType,
-        )
+        from src.backend.core.domain.models import WorkflowEventType, WorkflowStatus
 
         # Enum members preserved
         assert WorkflowStatus.pending.value == "pending"
@@ -228,20 +231,14 @@ class TestCoreDomainModelsPackage:
 
     def test_workflow_fk_cross_reference_preserved(self) -> None:
         """WorkflowEvent.workflow_id → workflow_instances.id FK preserved."""
-        from src.backend.core.domain.models import (
-            WorkflowEvent,
-            WorkflowInstance,
-        )
+        from src.backend.core.domain.models import WorkflowEvent
 
         fk_cols = [c for c in WorkflowEvent.__table__.c if c.foreign_keys]
-        fk_targets = {
-            list(c.foreign_keys)[0].target_fullname for c in fk_cols
-        }
+        fk_targets = {list(c.foreign_keys)[0].target_fullname for c in fk_cols}
         assert "workflow_instances.id" in fk_targets
         # ONDELETE CASCADE preserved
         workflow_id_fk = [
-            c.foreign_keys for c in WorkflowEvent.__table__.c
-            if c.name == "workflow_id"
+            c.foreign_keys for c in WorkflowEvent.__table__.c if c.name == "workflow_id"
         ][0]
         ondelete = list(workflow_id_fk)[0].ondelete
         assert ondelete == "CASCADE"

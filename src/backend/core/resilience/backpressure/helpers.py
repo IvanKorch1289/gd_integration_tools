@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W1 - helpers.py part of backpressure decomp.
 
 Module-level helpers (singleton access).
 
 Functions: get_streaming_controller.
 """
+
+from __future__ import annotations
 
 from src.backend.core.resilience.backpressure.controller import (
     StreamingBackpressureController,

@@ -21,8 +21,8 @@ from sqlalchemy.orm import Mapped, configure_mappers, mapped_column
 
 pytest.importorskip("aiosqlite")
 
-from src.backend.core.errors import NotFoundError
 from src.backend.core.domain.models.base import BaseModel
+from src.backend.core.errors import NotFoundError
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 
@@ -262,9 +262,7 @@ async def test_update_returned_object_usable_in_caller(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_delete_returns_object_id(
-    repo: SQLAlchemyRepository[_TestItem],
-) -> None:
+async def test_delete_returns_object_id(repo: SQLAlchemyRepository[_TestItem]) -> None:
     """S83 W2: delete() возвращает ID удалённого объекта (был None)."""
     created = await repo.add(data={"name": "to-delete"})
     obj_id = created.id
@@ -324,9 +322,7 @@ async def test_update_idempotent_on_repeated_calls(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_delete_idempotent(
-    repo: SQLAlchemyRepository[_TestItem],
-) -> None:
+async def test_delete_idempotent(repo: SQLAlchemyRepository[_TestItem]) -> None:
     """S83 W4: повторный delete() возвращает None (no error)."""
     created = await repo.add(data={"name": "once"})
     obj_id = created.id

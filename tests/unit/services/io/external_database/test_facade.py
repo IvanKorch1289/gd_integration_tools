@@ -20,13 +20,17 @@ import pytest
 
 from src.backend.core.errors import DatabaseError
 from src.backend.core.security.capabilities import CapabilityDeniedError
-from src.backend.infrastructure.database.external_database_facade import ExternalDatabaseFacade
+from src.backend.infrastructure.database.external_database_facade import (
+    ExternalDatabaseFacade,
+)
 
 
 class _FakeResult:
     """Фейковый SQLAlchemy Result."""
 
-    def __init__(self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0) -> None:
+    def __init__(
+        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0
+    ) -> None:
         self._rows = rows or []
         self.rowcount = rowcount
 
@@ -40,14 +44,18 @@ class _FakeResult:
 class _FakeSession:
     """Фейковая SQLAlchemy AsyncSession."""
 
-    def __init__(self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0) -> None:
+    def __init__(
+        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0
+    ) -> None:
         self._rows = rows or []
         self._rowcount = rowcount
         self.execute = AsyncMock(side_effect=self._execute)
         self.committed = False
         self.rolled_back = False
 
-    async def _execute(self, stmt: Any, params: dict[str, Any] | None = None) -> _FakeResult:
+    async def _execute(
+        self, stmt: Any, params: dict[str, Any] | None = None
+    ) -> _FakeResult:
         return _FakeResult(rows=self._rows, rowcount=self._rowcount)
 
     async def commit(self) -> None:
@@ -80,10 +88,7 @@ class _FakeManager:
 
 
 def _make_facade(
-    session: _FakeSession,
-    *,
-    capability_check: Any = None,
-    plugin: str = "ext-1",
+    session: _FakeSession, *, capability_check: Any = None, plugin: str = "ext-1"
 ) -> ExternalDatabaseFacade:
     def _factory(profile: str) -> _FakeManager:
         return _FakeManager(session)
@@ -130,7 +135,9 @@ async def test_execute_delegates_and_checks_write_capability() -> None:
 
 
 @pytest.mark.asyncio
-async def test_call_procedure_delegates_and_checks_execute_procedure_capability() -> None:
+async def test_call_procedure_delegates_and_checks_execute_procedure_capability() -> (
+    None
+):
     """call_procedure вызывает capability_check db.execute_procedure.<profile>."""
     checks: list[tuple[str, str, str | None]] = []
     session = _FakeSession(rows=[{"r": 1}])
@@ -192,7 +199,10 @@ async def test_query_without_permission_raises_capability_denied() -> None:
     def _deny(plugin: str, capability: str, scope: str | None = None) -> None:
         if capability == "db.read":
             raise CapabilityDeniedError(
-                plugin=plugin, capability=capability, requested_scope=scope, declared_scope=None
+                plugin=plugin,
+                capability=capability,
+                requested_scope=scope,
+                declared_scope=None,
             )
 
     facade = _make_facade(_FakeSession(), capability_check=_deny)
@@ -225,9 +235,7 @@ async def test_call_procedure_builds_mssql_sql() -> None:
     session.execute = AsyncMock(side_effect=_capture)
     facade = _make_facade(session)
 
-    await facade.call_procedure(
-        "mssql_prod", "recalc", {"user_id": 5}, dialect="mssql"
-    )
+    await facade.call_procedure("mssql_prod", "recalc", {"user_id": 5}, dialect="mssql")
 
     sql, params = calls[0]
     assert "EXEC public.recalc" in sql

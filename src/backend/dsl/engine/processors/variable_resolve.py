@@ -24,8 +24,8 @@ from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from src.backend.core.dsl.expression_resolver import (
-    ExpressionResolver,
     ExpressionResolutionError,
+    ExpressionResolver,
 )
 from src.backend.core.dsl.variables import DSLVariableStore, VariableScope
 from src.backend.core.logging import get_logger
@@ -115,7 +115,9 @@ class VariableResolveProcessor(BaseProcessor):
                         # For walk: regex needs to know scope, so we
                         # do simple substitution here.
                         replaced = await self._resolve_in_string(node, resolver, scope)
-                        resolved_count += node.count("${var(") - replaced.count("${var(")
+                        resolved_count += node.count("${var(") - replaced.count(
+                            "${var("
+                        )
                         return replaced
                     except ExpressionResolutionError as exc:
                         unresolved.append(str(exc))
@@ -151,10 +153,7 @@ class VariableResolveProcessor(BaseProcessor):
         self, value: str, resolver: ExpressionResolver, scope: VariableScope
     ) -> str:
         """Resolve ``${var('key', ...)}`` tokens in a string, with scope override."""
-        from src.backend.core.dsl.expression_resolver import (
-            _VAR_PATTERN,
-            _async_sub,
-        )
+        from src.backend.core.dsl.expression_resolver import _VAR_PATTERN, _async_sub
 
         async def _replace_var(match: re.Match[str]) -> str:
             key = match.group(1)

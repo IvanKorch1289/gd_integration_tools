@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """IntegrationCoreMixin package (S62 W3 decomp from integration_core.py 498 LOC).
 
 15 methods decomposed в 4 mixin files:
@@ -13,6 +11,7 @@ No core methods (all 15 are public).
 Backward-compat: ``from src.backend.dsl.builders.integration_core import IntegrationCoreMixin`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

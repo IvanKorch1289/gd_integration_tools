@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """ExternalDatabaseService package (S63 W4 decomp from external_database.py 492 LOC).
 
 15 methods decomposed в 5 mixin files + state.py:
@@ -15,6 +13,7 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.services.io.external_database import ExternalDatabaseService`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +22,7 @@ if TYPE_CHECKING:
 
 import re
 from typing import Final
+
 from src.backend.core.logging import get_logger
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).

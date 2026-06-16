@@ -27,6 +27,7 @@ implementation в core (избежание downward layer violation:
     @router.get("/protected", dependencies=[Depends(require_auth(AuthMethod.JWT))])
     async def protected(): ...
 """
+
 from __future__ import annotations
 
 import base64

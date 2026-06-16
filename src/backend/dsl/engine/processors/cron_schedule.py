@@ -10,6 +10,7 @@ wiring (apscheduler adapter + Temporal Schedule client) — S103+ W3+
 
 S103 W2 = "facade pattern": DSL method exists, real backend = future sprint.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

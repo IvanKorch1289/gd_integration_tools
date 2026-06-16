@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W4 - state.py part of ad_directory_client decomp.
 
 Per-class file split.
 
 Classes: AdAuthError, AdServerConfig, AdSearchEntry.
 """
+
+from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """IDPPipelineProcessor package (S65 W4 decomp from idp_pipeline_processor.py 472 LOC).
 
 1 god-class (7 methods) + 2 small classes + 10 funcs → 4 mixins + state.py + helpers.py.
@@ -7,6 +5,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.processors.idp_pipeline_processor import IDPPipelineProcessor`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

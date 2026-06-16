@@ -27,11 +27,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.frontend.streamlit_app.api_clients import APIClient
     # TYPE_CHECKING-only for type hints (cycle-safe, no runtime
     # backend import from frontend per layer rules).
-    from src.backend.dsl.workflow.spec import WorkflowDeclaration
-    from src.backend.dsl.workflow.visualize import to_mermaid
+    from src.frontend.streamlit_app.api_clients import APIClient
 
 
 __all__ = ("render_workflow_templates",)

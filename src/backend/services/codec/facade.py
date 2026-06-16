@@ -38,7 +38,9 @@ class CodecFacade:
 
     def _check_format(self, fmt: str) -> None:
         if fmt not in SUPPORTED_FORMATS:
-            raise ValueError(f"Unsupported format: {fmt}. Use one of: {SUPPORTED_FORMATS}")
+            raise ValueError(
+                f"Unsupported format: {fmt}. Use one of: {SUPPORTED_FORMATS}"
+            )
 
     async def encode(self, data: Any, *, fmt: str = "json") -> bytes:
         """Encode data to bytes in specified format.
@@ -135,6 +137,7 @@ class CodecFacade:
         if self._msgpack_available is None:
             try:
                 import msgpack  # noqa: F401
+
                 self._msgpack_available = True
             except ImportError:
                 self._msgpack_available = False
@@ -150,6 +153,7 @@ class CodecFacade:
         if self._msgpack_available is None:
             try:
                 import msgpack  # noqa: F401
+
                 self._msgpack_available = True
             except ImportError:
                 self._msgpack_available = False

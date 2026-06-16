@@ -19,19 +19,19 @@ from pydash import get
 
 from src.backend.core.decorators.caching import response_cache
 from src.backend.core.errors import NotFoundError
+from src.backend.core.integrations.skb import APISKBService, get_skb_service
 from src.backend.core.interfaces.order_storage import OrderStorageProtocol
 from src.backend.core.interfaces.repositories import (
     FileRepositoryProtocol,
     OrderRepositoryProtocol,
 )
+from src.backend.core.services.base_service import BaseService
 from src.backend.schemas.base import BaseSchema
 from src.backend.schemas.route_schemas.orders import (
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from src.backend.core.services.base_service import BaseService
-from src.backend.core.integrations.skb import APISKBService, get_skb_service
 
 if TYPE_CHECKING:
     pass
@@ -114,8 +114,8 @@ class OrderService(
     def _delete_order_index_async(self, value: int) -> None:
         """Wave 9.3.2: удаление документа из ES (fire-and-forget)."""
         try:
-            from src.backend.core.utils.task_registry import get_task_registry
             from src.backend.core.io.indexers import get_order_indexer
+            from src.backend.core.utils.task_registry import get_task_registry
 
             get_task_registry().create_task(
                 get_order_indexer().delete_one(value),

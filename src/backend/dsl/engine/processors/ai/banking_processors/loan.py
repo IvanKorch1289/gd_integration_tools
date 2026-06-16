@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — loan.py part of banking_processors decomp.
 
 Classes: LoanEligibilityProcessor.
 
 Loan eligibility processor.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

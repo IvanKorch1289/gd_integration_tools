@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Backpressure + adaptive bulkhead package (S67 W1 decomp from backpressure.py 465 LOC).
 
 5 classes + 1 func -> 5 files (per-concern):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.core.resilience.backpressure import StreamingBackpressureController`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.core.resilience.backpressure.bulkhead import (
     AdaptiveBulkhead,  # S67 W1: re-export

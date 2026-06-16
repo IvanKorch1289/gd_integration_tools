@@ -11,6 +11,9 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.core.ai.errors import GuardrailViolationError
+from src.backend.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class HandleMixin:

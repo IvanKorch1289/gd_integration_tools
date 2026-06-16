@@ -75,8 +75,8 @@ async def lifespan(app: FastAPI):
 
     # Lazy import of run_startup to defer composition-package import-bugs
     # (see test_outbox_dispatcher_cutover.py for stubbing strategy).
-    from src.backend.plugins.composition.lifecycle.startup import run_startup
     from src.backend.plugins.composition.lifecycle.shutdown import run_shutdown
+    from src.backend.plugins.composition.lifecycle.startup import run_startup
 
     startup_completed = False
     try:
@@ -88,18 +88,14 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         if not startup_completed:
             app_logger.critical(
-                "Критическая ошибка при запуске приложения: %s",
-                str(exc),
-                exc_info=True,
+                "Критическая ошибка при запуске приложения: %s", str(exc), exc_info=True
             )
             raise RuntimeError(
                 "Остановка приложения из-за ошибки инициализации"
             ) from exc
 
         app_logger.critical(
-            "Критическая ошибка во время работы приложения: %s",
-            str(exc),
-            exc_info=True,
+            "Критическая ошибка во время работы приложения: %s", str(exc), exc_info=True
         )
         raise
     finally:

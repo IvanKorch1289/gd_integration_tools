@@ -129,9 +129,7 @@ class NatsSource:
 
         async with self._lock:
             if self._running or self._nc is not None:
-                raise RuntimeError(
-                    f"NatsSource(subject={self._subject!r}) уже запущен"
-                )
+                raise RuntimeError(f"NatsSource(subject={self._subject!r}) уже запущен")
             self._nc = None
             self._running = True
 
@@ -159,8 +157,7 @@ class NatsSource:
                                 # Timeout / cursor closed — нормальное завершение
                                 # подписки, останавливаем outer loop, не reconnect.
                                 logger.debug(
-                                    "NatsSource.next_msg ended "
-                                    "(subject=%s): %s",
+                                    "NatsSource.next_msg ended (subject=%s): %s",
                                     self._subject,
                                     fetch_exc,
                                 )
@@ -178,9 +175,7 @@ class NatsSource:
                         try:
                             await sub.unsubscribe()
                         except Exception as exc:
-                            logger.debug(
-                                "NatsSource: unsubscribe error: %s", exc
-                            )
+                            logger.debug("NatsSource: unsubscribe error: %s", exc)
                     # Reset attempts на успешном завершении цикла
                     reconnect_attempts = 0
                 except Exception as conn_exc:
@@ -199,9 +194,7 @@ class NatsSource:
                     reconnect_attempts += 1
                     await asyncio.sleep(self._reconnect_delay_seconds)
         except GeneratorExit:
-            logger.debug(
-                "NatsSource: iterator закрыт (subject=%s)", self._subject
-            )
+            logger.debug("NatsSource: iterator закрыт (subject=%s)", self._subject)
         finally:
             self._running = False
             await self._close()
@@ -222,18 +215,13 @@ class NatsSource:
                 kind=self.kind,
                 payload=nats_msg.data,
                 event_time=nats_msg.timestamp,
-                metadata={
-                    "subject": nats_msg.subject,
-                    "reply": nats_msg.reply,
-                },
+                metadata={"subject": nats_msg.subject, "reply": nats_msg.reply},
             )
             try:
                 await on_event(event)
             except Exception as exc:
                 logger.error(
-                    "NatsSource on_event failed (subject=%s): %s",
-                    self._subject,
-                    exc,
+                    "NatsSource on_event failed (subject=%s): %s", self._subject, exc
                 )
 
     async def stop(self) -> None:

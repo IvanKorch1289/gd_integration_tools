@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """DSLStepExecutor package (S61 W3 decomp from executor.py 514 LOC).
 
 4 classes decomposed в 4 mixin files + state.py:
@@ -14,12 +12,12 @@ Core (2) остается в __init__.py: __init__, execute_next (82 LOC, BIG).
 Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLStepExecutor`` works.
 """
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Literal
 
 if TYPE_CHECKING:
     pass
-from typing import Literal
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.logging.factory import get_logger
@@ -27,10 +25,7 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )
-from src.backend.infrastructure.workflow.runner import (
-    StepOutcome,
-    StepResult,
-)
+from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 
 _logger = get_logger("workflow.executor")
 
@@ -63,6 +58,8 @@ from src.backend.infrastructure.workflow.executor.state import (
 from src.backend.infrastructure.workflow.executor.sub_flow_mixin import (
     SubFlowMixin,  # S61 W3: MRO
 )
+
+SpecLoader = Callable[[str], WorkflowSpec]
 
 __all__ = (
     "DSLStepExecutor",

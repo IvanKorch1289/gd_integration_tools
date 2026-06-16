@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """EIP marshal processors package (S63 W3 decomp from marshal.py 494 LOC).
 
 8 classes + 3 helpers decomposed в 3 files (per concern):
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.engine.processors.eip.marshal import MarshalProcessor`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.eip.marshal.base import (
     DataFormat,  # S63 W3: re-export

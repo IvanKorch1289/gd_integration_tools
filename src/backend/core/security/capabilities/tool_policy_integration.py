@@ -45,21 +45,17 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from src.backend.core.logging import get_logger
-from src.backend.core.security.capabilities.errors import (
-    CapabilityDeniedError,
-)
 from src.backend.core.ai.policy.enforcer.tools_policy import (
     ToolPolicyViolationError,
     check_tool_allowed,
     enforce_tool_policy,
 )
+from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
 if TYPE_CHECKING:
-    from src.backend.core.security.capabilities.gate import (
-        CapabilityGate,
-    )
     from src.backend.core.ai.policy.spec import ToolsSpec
+    from src.backend.core.security.capabilities.gate import CapabilityGate
 
 _logger = get_logger("core.security.capabilities.tool_integration")
 
@@ -122,10 +118,7 @@ def check_tool_with_policy(
         gate.check(plugin, tool_name, scope)
     except CapabilityDeniedError as exc:
         _logger.warning(
-            "CapabilityGate denied tool=%s for plugin=%s: %s",
-            tool_name,
-            plugin,
-            exc,
+            "CapabilityGate denied tool=%s for plugin=%s: %s", tool_name, plugin, exc
         )
         raise
 
@@ -209,9 +202,7 @@ def filter_tools_with_gate(
         # Layer 2: AIPolicySpec.tools
         if not check_tool_allowed(tool_name, policy):
             _logger.debug(
-                "AIPolicySpec.tools dropped tool=%s for plugin=%s",
-                tool_name,
-                plugin,
+                "AIPolicySpec.tools dropped tool=%s for plugin=%s", tool_name, plugin
             )
             continue
         allowed.append(tool_name)

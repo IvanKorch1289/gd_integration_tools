@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+    from src.backend.services.ops.data_quality import DQRemediationResult
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 

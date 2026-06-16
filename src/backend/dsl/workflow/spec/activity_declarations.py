@@ -32,6 +32,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.backend.dsl.workflow.spec.policies import RetryPolicy
+
 
 class ActivityDeclaration(BaseModel):
     """Декларация atomic-задачи (Temporal activity).

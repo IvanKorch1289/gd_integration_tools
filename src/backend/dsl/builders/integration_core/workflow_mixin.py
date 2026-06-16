@@ -196,9 +196,7 @@ class WorkflowOpsMixin:
         Returns:
             RouteBuilder с добавленным ``SubWorkflowProcessor``.
         """
-        from src.backend.dsl.engine.processors.sub_workflow import (
-            SubWorkflowProcessor,
-        )
+        from src.backend.dsl.engine.processors.sub_workflow import SubWorkflowProcessor
 
         return self._add(  # type: ignore[attr-defined]
             SubWorkflowProcessor(

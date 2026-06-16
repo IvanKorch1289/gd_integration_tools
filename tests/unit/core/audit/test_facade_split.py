@@ -16,11 +16,7 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
-
 
 # ── Package structure ──
 
@@ -28,6 +24,7 @@ import pytest
 def test_facade_package_exists_with_init() -> None:
     """``core/audit/facade`` — package (not module), имеет __init__.py."""
     import src.backend.core.audit.facade as facade_pkg
+
     assert hasattr(facade_pkg, "__file__") or hasattr(facade_pkg, "__path__")
     # Package должен иметь __path__ (packages have it, modules don't)
     assert hasattr(facade_pkg, "__path__")
@@ -68,6 +65,7 @@ def test_all_8_helpers_reexported_from_package() -> None:
         emit_waf_evaluation,
         get_unified_audit_service,
     )
+
     # Smoke: all 10 symbols exist
     assert callable(emit_audit)
     assert callable(emit_audit_safe)
@@ -87,6 +85,7 @@ def test_audit_service_reexport_preserves_identity() -> None:
     from src.backend.services.audit.audit_service import (
         AuditService as Canonical_AuditService,
     )
+
     assert Facade_AuditService is Canonical_AuditService
 
 
@@ -99,6 +98,7 @@ def test_capability_helper_lives_in_capability_submodule() -> None:
     from src.backend.core.audit.facade.capability import (
         emit_capability_check as Submodule,
     )
+
     # Identity check: facade.__init__ re-export = same function
     assert Facade is Submodule
 
@@ -108,40 +108,42 @@ def test_authorization_helper_lives_in_authorization_submodule() -> None:
     from src.backend.core.audit.facade.authorization import (
         emit_authorization_decision as Submodule,
     )
+
     assert Facade is Submodule
 
 
 def test_waf_helper_lives_in_waf_submodule() -> None:
     from src.backend.core.audit.facade import emit_waf_evaluation as Facade
     from src.backend.core.audit.facade.waf import emit_waf_evaluation as Submodule
+
     assert Facade is Submodule
 
 
 def test_secrets_helper_lives_in_secrets_submodule() -> None:
     from src.backend.core.audit.facade import emit_secret_rotation as Facade
-    from src.backend.core.audit.facade.secrets import (
-        emit_secret_rotation as Submodule,
-    )
+    from src.backend.core.audit.facade.secrets import emit_secret_rotation as Submodule
+
     assert Facade is Submodule
 
 
 def test_ai_helper_lives_in_ai_submodule() -> None:
     from src.backend.core.audit.facade import emit_ai_workspace as Facade
     from src.backend.core.audit.facade.ai import emit_ai_workspace as Submodule
+
     assert Facade is Submodule
 
 
 def test_banking_helper_lives_in_banking_submodule() -> None:
     from src.backend.core.audit.facade import emit_banking_audit as Facade
-    from src.backend.core.audit.facade.banking import (
-        emit_banking_audit as Submodule,
-    )
+    from src.backend.core.audit.facade.banking import emit_banking_audit as Submodule
+
     assert Facade is Submodule
 
 
 def test_base_module_exports_emit_audit_and_safe() -> None:
     """``_base`` module содержит ``emit_audit`` + ``emit_audit_safe``."""
     from src.backend.core.audit.facade._base import emit_audit, emit_audit_safe
+
     assert callable(emit_audit)
     assert callable(emit_audit_safe)
 
@@ -202,9 +204,7 @@ def test_authorization_decision_helper_translates_dataclass() -> None:
         mock_audit = MagicMock()
         mock_svc.return_value = mock_audit
         emit_authorization_decision(
-            decision=FakeDecision(),
-            principal="user:alice",
-            resource="orders",
+            decision=FakeDecision(), principal="user:alice", resource="orders"
         )
 
     call_kwargs = mock_audit.emit.call_args.kwargs

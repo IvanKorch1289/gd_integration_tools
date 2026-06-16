@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S63 W3 — base.py part of marshal decomp.
 
 DataFormat base class (4 methods).
 """
+
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any

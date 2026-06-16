@@ -23,12 +23,7 @@ import pytest
 from joserfc import jwt as joserfc_jwt
 from joserfc.jwk import OctKey
 
-from src.backend.core.auth.jwt_backend import (
-    encode,
-    decode,
-    JwtVerificationError,
-)
-
+from src.backend.core.auth.jwt_backend import JwtVerificationError, decode, encode
 
 SECRET = "test-secret-very-long-32-bytes!"
 
@@ -50,7 +45,9 @@ def test_encode_includes_iat_and_exp_claims() -> None:
     after = int(time.time())
 
     # Decode без проверки подписи (мы только в payload).
-    claims = joserfc_jwt.decode(token, key=OctKey.import_key(SECRET), algorithms=["HS256"]).claims
+    claims = joserfc_jwt.decode(
+        token, key=OctKey.import_key(SECRET), algorithms=["HS256"]
+    ).claims
 
     assert claims["sub"] == "alice"
     assert claims["role"] == "user"
@@ -77,7 +74,9 @@ def test_encode_with_issuer() -> None:
     token, _ = encode(
         subject="alice", claims=None, secret=SECRET, issuer="https://example.com"
     )
-    claims = joserfc_jwt.decode(token, key=OctKey.import_key(SECRET), algorithms=["HS256"]).claims
+    claims = joserfc_jwt.decode(
+        token, key=OctKey.import_key(SECRET), algorithms=["HS256"]
+    ).claims
     assert claims["iss"] == "https://example.com"
 
 

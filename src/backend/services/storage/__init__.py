@@ -27,8 +27,6 @@ def get_storage_facade(*, plugin: str = "extension") -> StorageFacade:
     if plugin != "extension":
         # Return a facade view with the caller plugin name.
         return StorageFacade(
-            storage=facade._storage,
-            capability_check=facade._check,
-            plugin=plugin,
+            storage=facade._storage, capability_check=facade._check, plugin=plugin
         )
     return facade

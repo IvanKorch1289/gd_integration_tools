@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S63 W2 — multicast.py part of routing decomp.
 
 Classes: MulticastProcessor, MulticastRoutesProcessor.
 
 MulticastProcessor + MulticastRoutesProcessor (1-to-many routing).
 """
+
+from __future__ import annotations
 
 import asyncio
 from typing import Any

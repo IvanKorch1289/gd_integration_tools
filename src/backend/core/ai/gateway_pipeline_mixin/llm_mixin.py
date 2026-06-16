@@ -212,9 +212,7 @@ class LlmInvocationMixin:
             # использует prompt_cache_key parameter (НЕ cache_control).
             openai_cache_kwargs = inject_openai_prompt_cache(messages, model)
             kwargs.update(openai_cache_kwargs)
-        response = await gw.acompletion(
-            messages, model=model, stream=False, **kwargs
-        )
+        response = await gw.acompletion(messages, model=model, stream=False, **kwargs)
 
         content, tokens_prompt, tokens_completion, model_used = (
             self._extract_completion(response, fallback_model=model)

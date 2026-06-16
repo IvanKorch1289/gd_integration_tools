@@ -236,13 +236,12 @@ class MongoSource:
                                 self._resume_token = token
 
                             yield MongoChangeEvent(
-                                operation_type=change.get(
-                                    "operationType", "unknown"
-                                ),
+                                operation_type=change.get("operationType", "unknown"),
                                 database=self._config.database,
-                                collection=change.get(
-                                    "ns", {}
-                                ).get("coll", self._config.collection) or "",
+                                collection=change.get("ns", {}).get(
+                                    "coll", self._config.collection
+                                )
+                                or "",
                                 document_key=change.get("documentKey"),
                                 full_document=change.get("fullDocument"),
                                 resume_token=token,
@@ -253,8 +252,7 @@ class MongoSource:
                             await change_stream.close()
                         except Exception as exc:
                             logger.debug(
-                                "MongoSource: change_stream.close error: %s",
-                                exc,
+                                "MongoSource: change_stream.close error: %s", exc
                             )
 
                     # Reset attempts на успешном завершении цикла.
@@ -278,14 +276,9 @@ class MongoSource:
                             f"exhausted"
                         ) from conn_exc
                     reconnect_attempts += 1
-                    await asyncio.sleep(
-                        self._config.reconnect_delay_seconds
-                    )
+                    await asyncio.sleep(self._config.reconnect_delay_seconds)
         except GeneratorExit:
-            logger.debug(
-                "MongoSource: iterator закрыт (db=%s)",
-                self._config.database,
-            )
+            logger.debug("MongoSource: iterator закрыт (db=%s)", self._config.database)
         finally:
             self._running = False
             await self._close()

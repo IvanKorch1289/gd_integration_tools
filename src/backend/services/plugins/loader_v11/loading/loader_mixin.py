@@ -13,14 +13,14 @@ from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
 from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.compat_checker import CompatViolation
 from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
+from src.backend.services.plugins.loader_v11.discovery import LoadedPluginV11
+from src.backend.services.plugins.loader_v11.validation import (
+    PluginInventoryConflictError,
+)
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,
     load_plugin_manifest,
-)
-from src.backend.services.plugins.loader_v11.discovery import LoadedPluginV11
-from src.backend.services.plugins.loader_v11.validation import (
-    PluginInventoryConflictError,
 )
 
 _logger = get_logger("services.plugins.loader_v11")

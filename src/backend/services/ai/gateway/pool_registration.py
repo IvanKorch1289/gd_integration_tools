@@ -114,13 +114,8 @@ def register_litellm_pool(
         return await _litellm_ping(gateway)
 
     monitor.register_pool(
-        name=name,
-        pool=pool_ref,
-        ping_callable=_ping,
-        idle_timeout=idle_timeout,
+        name=name, pool=pool_ref, ping_callable=_ping, idle_timeout=idle_timeout
     )
     _logger.info(
-        "Registered LiteLLM pool: name=%s, idle_timeout=%.1fs",
-        name,
-        idle_timeout,
+        "Registered LiteLLM pool: name=%s, idle_timeout=%.1fs", name, idle_timeout
     )

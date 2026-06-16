@@ -128,18 +128,13 @@ def enforce_tool_policy(tool_name: str, spec: "ToolsSpec") -> None:
         )
     else:
         # Defensive: unknown on_violation → fail (safe default)
-        _logger.error(
-            "Unknown on_violation=%r — defaulting to fail",
-            spec.on_violation,
-        )
+        _logger.error("Unknown on_violation=%r — defaulting to fail", spec.on_violation)
         raise ToolPolicyViolationError(
             f"Tool {tool_name!r} blocked per policy (unknown on_violation)"
         )
 
 
-def filter_tools_by_policy(
-    tool_names: Iterable[str], spec: "ToolsSpec"
-) -> list[str]:
+def filter_tools_by_policy(tool_names: Iterable[str], spec: "ToolsSpec") -> list[str]:
     """Filter list of tool names per spec (whitelist/blacklist).
 
     Useful для AIGateway initialize: pre-compute allowed tool set,

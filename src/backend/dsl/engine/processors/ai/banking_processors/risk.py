@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — risk.py part of banking_processors decomp.
 
 Classes: RiskAssessmentProcessor.
 
 Risk assessment processor.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

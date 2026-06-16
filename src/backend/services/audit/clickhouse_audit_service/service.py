@@ -1,14 +1,15 @@
-from __future__ import annotations
-
 """S68 W2 - service.py part of clickhouse_audit_service decomp.
 
 Classes: ClickHouseAuditService.
 """
 
+from __future__ import annotations
+
 import threading
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.services.audit.clickhouse_audit_service.state import AuditEvent
 
 if TYPE_CHECKING:
     pass

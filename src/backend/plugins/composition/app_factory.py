@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from src.backend.core.config.settings import settings
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.v1.routers import get_v1_routers
 from src.backend.entrypoints.graphql.schema import graphql_router
 from src.backend.entrypoints.grpc.proto_viewer import proto_viewer_router
@@ -18,7 +19,6 @@ from src.backend.infrastructure.application.index import root_page
 from src.backend.infrastructure.application.monitoring import setup_monitoring
 from src.backend.infrastructure.application.telemetry import setup_tracing
 from src.backend.infrastructure.clients.messaging.stream import get_stream_client
-from src.backend.core.logging import get_logger
 from src.backend.plugins.composition.lifecycle import lifespan
 from src.backend.utilities.admin_panel.setup_admin import setup_admin
 

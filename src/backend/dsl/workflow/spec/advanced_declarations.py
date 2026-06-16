@@ -32,6 +32,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.backend.dsl.workflow.spec.policies import MemoryScope
+
 
 class SensorDeclaration(BaseModel):
     """Periodic-предикат с poll-интервалом (Airflow-style sensor).

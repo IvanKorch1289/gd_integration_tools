@@ -3,6 +3,7 @@
 Добавляет ``from_sse`` метод в RouteBuilder — обёртка над
 :class:`SSESource` для регистрации SSE-источника в DSL route.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -168,7 +169,9 @@ class StreamingSSEMixin:
             for u in urls
         ]
         # Multi-source route_id suffix для disambiguation.
-        multi_route_id = f"{route_id}.multi" if not route_id.endswith(".multi") else route_id
+        multi_route_id = (
+            f"{route_id}.multi" if not route_id.endswith(".multi") else route_id
+        )
 
         # S97 W1: same as from_sse — use cls.from_ (no-args cls() deprecated).
         builder = cls.from_(  # type: ignore[return-value]

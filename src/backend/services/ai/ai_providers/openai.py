@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S68 W4 - openai.py part of ai_providers decomp.
 
 OpenAI provider (extract_text, embeddings, chat).
 
 Classes: OpenAIProvider.
 """
+
+from __future__ import annotations
 
 import os
 from typing import Any
@@ -49,7 +49,7 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 

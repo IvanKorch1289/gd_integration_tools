@@ -170,7 +170,7 @@ def _rule_total_positive(result: IDPResult, _text: str) -> str | None:
     raw = result.fields["total"].replace(",", "")
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return f"total is not numeric: {result.fields['total']!r}"
     if value <= 0:
         return f"total must be > 0, got {value}"

@@ -21,7 +21,6 @@ Layer-correct placement
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -29,6 +28,7 @@ from src.backend.core.audit.schema.ai_invocation import (
     AIInvocationEvent,
     AIInvocationEventType,
 )
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.audit.interfaces import AuditBackend, LangfuseCallbackBackend

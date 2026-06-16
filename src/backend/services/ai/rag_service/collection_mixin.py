@@ -10,6 +10,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
     pass
 
+from src.backend.infrastructure.logging.factory import get_logger
+
+logger = get_logger(__name__)
+
 
 class CollectionMixin:
     """collection ops (delete/delete_collection/stats/count) для RAGService. S64 W4 extraction."""

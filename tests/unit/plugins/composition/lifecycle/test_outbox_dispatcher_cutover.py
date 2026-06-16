@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-import types
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -97,13 +96,12 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.infrastructure.messaging.outbox.lifecycle.start_outbox_dispatcher": AsyncMock(),
         "src.backend.core.messaging.outbox.FakeOutbox": MagicMock(),
         "src.backend.core.messaging.outbox.OutboxEvent": MagicMock(),
-        "src.backend.infrastructure.repositories.outbox.claim_pending": AsyncMock(return_value=[]),
+        "src.backend.infrastructure.repositories.outbox.claim_pending": AsyncMock(
+            return_value=[]
+        ),
         "src.backend.infrastructure.repositories.outbox.mark_sent": AsyncMock(),
     }
-    for full_name, stub_obj in {
-        **module_level_stubs,
-        **lazy_stubs,
-    }.items():
+    for full_name, stub_obj in {**module_level_stubs, **lazy_stubs}.items():
         # ВАЖНО: всегда перезаписываем (override уже-loaded real module).
         # pytest может заранее загрузить real модули через autouse fixtures.
         _existing = sys.modules.get(full_name)
@@ -127,9 +125,7 @@ def _load_lifespan_isolated() -> ModuleType:
         / "lifecycle"
     )
     startup_path = lifecycle_dir / "startup.py"
-    spec = importlib.util.spec_from_file_location(
-        "_startup_isolated", startup_path
-    )
+    spec = importlib.util.spec_from_file_location("_startup_isolated", startup_path)
     assert spec is not None and spec.loader is not None
     startup_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(startup_module)
@@ -140,9 +136,7 @@ def _load_lifespan_isolated() -> ModuleType:
     # 5. Загружаем lifespan.py напрямую (минуя __init__.py).
     # lifespan.py ре-экспортирует ``_register_outbox_dispatcher`` из startup.
     lifespan_path = lifecycle_dir / "lifespan.py"
-    spec = importlib.util.spec_from_file_location(
-        "_lifespan_isolated", lifespan_path
-    )
+    spec = importlib.util.spec_from_file_location("_lifespan_isolated", lifespan_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -168,6 +162,7 @@ print(
 # Pre-stub outbox_repo module (BEFORE any test runs, ensure real
 # outbox.py is not loaded by accidental pytest collection).
 import types as _types
+
 _outbox_stub = _types.ModuleType("src.backend.infrastructure.repositories.outbox")
 _outbox_stub.claim_pending = AsyncMock(return_value=[])
 _outbox_stub.mark_sent = AsyncMock()
@@ -198,8 +193,7 @@ def enable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Включает ``outbox_settings.enabled = True`` (для теста new path)."""
     settings = MagicMock(enabled=True)
     monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings",
-        settings,
+        "src.backend.core.config.services.outbox.outbox_settings", settings
     )
 
 
@@ -208,16 +202,13 @@ def disable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Оставляет ``outbox_settings.enabled = False`` (для теста legacy path)."""
     settings = MagicMock(enabled=False)
     monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings",
-        settings,
+        "src.backend.core.config.services.outbox.outbox_settings", settings
     )
 
 
 @pytest.mark.asyncio
 async def test_cutover_legacy_path_when_disabled(
-    fresh_app: MagicMock,
-    disable_dispatcher: None,
-    mock_lifespan_logger: MagicMock,
+    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock
 ) -> None:
     """``enabled=False`` → ``start_outbox_worker`` (legacy)."""
     with patch(
@@ -229,9 +220,7 @@ async def test_cutover_legacy_path_when_disabled(
 
 @pytest.mark.asyncio
 async def test_cutover_dispatcher_path_when_enabled(
-    fresh_app: MagicMock,
-    enable_dispatcher: None,
-    mock_lifespan_logger: MagicMock,
+    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock
 ) -> None:
     """``enabled=True`` → ``start_outbox_dispatcher`` (S64 W1+W3 path)."""
     # Verify fixture applied
@@ -262,9 +251,7 @@ async def test_cutover_dispatcher_path_when_enabled(
 
 @pytest.mark.asyncio
 async def test_cutover_legacy_worker_exception_does_not_raise(
-    fresh_app: MagicMock,
-    disable_dispatcher: None,
-    mock_lifespan_logger: MagicMock,
+    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock
 ) -> None:
     """``start_outbox_worker()`` raises → log warning, не raise.
 
@@ -280,9 +267,7 @@ async def test_cutover_legacy_worker_exception_does_not_raise(
 
 @pytest.mark.asyncio
 async def test_cutover_dispatcher_exception_does_not_raise(
-    fresh_app: MagicMock,
-    enable_dispatcher: None,
-    mock_lifespan_logger: MagicMock,
+    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock
 ) -> None:
     """``start_outbox_dispatcher()`` raises → log warning, не raise.
 

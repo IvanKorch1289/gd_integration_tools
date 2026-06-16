@@ -1,24 +1,24 @@
-from __future__ import annotations
-
 """S68 W3 - invoker.py part of invoker decomp.
 
 Classes: Invoker.
 """
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import asyncio
+from typing import Any
 
+from src.backend.core.di.contexts import DispatchContext
+from src.backend.core.di.dependencies import get_reply_registry_singleton
+from src.backend.core.interfaces.action_dispatcher import ActionDispatcher
+from src.backend.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
 from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationResponse,
 )
-from src.backend.core.di.contexts import DispatchContext
-from src.backend.core.di.dependencies import get_reply_registry_singleton
-
-if TYPE_CHECKING:
-    pass
-
+from src.backend.core.types.invocation_command import ActionCommandSchema
+from src.backend.services.execution.action_dispatcher import get_action_dispatcher
 from src.backend.services.execution.invoker.deferred_mixin import (
     DeferredMixin,  # S54 W3: MRO
 )

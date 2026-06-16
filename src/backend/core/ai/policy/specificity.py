@@ -98,9 +98,7 @@ def compute_specificity(pattern: str, value: str) -> int:
 
 
 def find_specific_match(
-    policies: "list[AIPolicySpec]",
-    workflow_id: str,
-    tenant_id: str,
+    policies: "list[AIPolicySpec]", workflow_id: str, tenant_id: str
 ) -> "AIPolicySpec | None":
     """Find MOST specific match in policy list.
 

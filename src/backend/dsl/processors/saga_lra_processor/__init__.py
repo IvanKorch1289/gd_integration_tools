@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """SagaLRAProcessor package (S58 W2 decomp from saga_lra_processor.py 587 LOC).
 
 9 methods decomposed в 4 mixin files (3 small classes в state.py):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

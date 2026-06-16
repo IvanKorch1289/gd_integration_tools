@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Jupyter execution service package (S60 W1 decomp from execution_service.py 571 LOC).
 
 10 methods decomposed в 3 mixin files + 2 helper files (errors + backend):
@@ -14,14 +12,15 @@ Core (2) остается в __init__.py: __init__, _server_to_ws_url.
 Backward-compat: ``from src.backend.services.jupyter.execution_service import NotebookExecutionService`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.core.clients.jupyter_hub import JupyterHubClient
+from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("services.jupyter.execution")
@@ -29,12 +28,24 @@ _logger = get_logger("services.jupyter.execution")
 from src.backend.services.jupyter.execution_service.backend import (
     NbClientExecutionBackend,  # S60 W1: re-export
 )
+from src.backend.services.jupyter.execution_service.core_mixin import (
+    CoreMixin,  # S60 W1: MRO
+)
 from src.backend.services.jupyter.execution_service.e2b_backend import (  # S75 W1
     E2BExecutionBackend,  # S75 W1: re-export
+)
+from src.backend.services.jupyter.execution_service.errors import (
+    JupyterExecutionError,  # S60 W1: re-export
 )
 from src.backend.services.jupyter.execution_service.factory import (  # S74 W2
     BackendKind,  # S74 W2: re-export
     ExecutionBackendFactory,  # S74 W2: re-export
+)
+from src.backend.services.jupyter.execution_service.io_mixin import (
+    IOMixin,  # S60 W1: MRO
+)
+from src.backend.services.jupyter.execution_service.jupyter_mixin import (
+    JupyterBackendMixin,  # S60 W1: MRO
 )
 from src.backend.services.jupyter.execution_service.kernelspec import (  # S75 W3
     DEFAULT_FALLBACK_SPECS,  # S75 W3: re-export
@@ -42,18 +53,6 @@ from src.backend.services.jupyter.execution_service.kernelspec import (  # S75 W
 )
 from src.backend.services.jupyter.execution_service.papermill_backend import (  # S74 W1
     PapermillExecutionBackend,  # S74 W1: re-export
-)
-from src.backend.services.jupyter.execution_service.core_mixin import (
-    CoreMixin,  # S60 W1: MRO
-)
-from src.backend.services.jupyter.execution_service.errors import (
-    JupyterExecutionError,  # S60 W1: re-export
-)
-from src.backend.services.jupyter.execution_service.io_mixin import (
-    IOMixin,  # S60 W1: MRO
-)
-from src.backend.services.jupyter.execution_service.jupyter_mixin import (
-    JupyterBackendMixin,  # S60 W1: MRO
 )
 
 __all__ = (

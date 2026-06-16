@@ -76,9 +76,7 @@ class AgentMetricsService:
         if self._initialized:
             return
         try:
-            from src.backend.core.observability.metrics import (
-                metrics_registry,
-            )
+            from src.backend.core.observability.metrics import metrics_registry
 
             self._histogram = metrics_registry.histogram(
                 "agent_execution_seconds",

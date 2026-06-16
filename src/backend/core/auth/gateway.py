@@ -27,12 +27,10 @@ violation (``core/ → entrypoints/``).
         # canonical: one import path, stable contract
         ctx = await verify_request(request, methods=AuthMethod.JWT)
 """
+
 from __future__ import annotations
 
-from src.backend.core.auth import (
-    AuthContext,
-    AuthMethod,
-)
+from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.auth_selector import (
     require_auth,
     set_default_auth,
@@ -59,7 +57,9 @@ class AuthGateway:
 
     __slots__ = ("_default_method",)
 
-    def __init__(self, default_method: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY) -> None:
+    def __init__(
+        self, default_method: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY
+    ) -> None:
         self._default_method = default_method
 
     async def verify(

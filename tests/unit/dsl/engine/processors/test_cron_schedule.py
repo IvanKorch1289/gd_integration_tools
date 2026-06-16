@@ -2,24 +2,19 @@
 
 DSL skeleton: validates registration, validation, chainable.
 """
+
 from __future__ import annotations
 
 import pytest
 
 from src.backend.dsl.builders.base import RouteBuilder
-from src.backend.dsl.engine.processors.cron_schedule import (
-    CronScheduleProcessor,
-)
+from src.backend.dsl.engine.processors.cron_schedule import CronScheduleProcessor
 
 
 def test_cron_schedule_dsl_registers_processor() -> None:
     """``RouteBuilder.cron_schedule(...)`` — добавляет CronScheduleProcessor в pipeline."""
     b = RouteBuilder("test", source="timer:cron")
-    result = b.cron_schedule(
-        "nightly",
-        cron_expr="*/5 * * * *",
-        workflow_name="etl",
-    )
+    result = b.cron_schedule("nightly", cron_expr="*/5 * * * *", workflow_name="etl")
     assert isinstance(result, RouteBuilder)
     assert result is b  # chainable, returns self
     assert len(b._processors) == 1
@@ -84,9 +79,7 @@ def test_cron_schedule_processor_validates_name() -> None:
 def test_cron_schedule_processor_validates_workflow() -> None:
     """``CronScheduleProcessor`` — workflow_name обязателен."""
     with pytest.raises(ValueError) as exc:
-        CronScheduleProcessor(
-            name="x", cron_expr="*/5 * * * *", workflow_name=""
-        )
+        CronScheduleProcessor(name="x", cron_expr="*/5 * * * *", workflow_name="")
     assert "workflow_name" in str(exc.value).lower()
 
 
@@ -110,7 +103,5 @@ def test_cron_schedule_processor_to_dict() -> None:
 
 def test_cron_schedule_processor_kind() -> None:
     """``kind`` — ``\"cron_schedule\"`` для runtime dispatch."""
-    p = CronScheduleProcessor(
-        name="x", cron_expr="*/5 * * * *", workflow_name="y"
-    )
+    p = CronScheduleProcessor(name="x", cron_expr="*/5 * * * *", workflow_name="y")
     assert p.kind == "cron_schedule"

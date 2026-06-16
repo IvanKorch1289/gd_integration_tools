@@ -1,10 +1,11 @@
-from __future__ import annotations
 """S60 W3 — lifecycle.py part of setup_infra decomp.
 
 Funcs: _register_default_degradation_features, perform_infrastructure_operation, starting, ending.
 
 lifecycle orchestrators (degradation features + perform + starting/ending).
 """
+
+from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from inspect import isawaitable
@@ -30,11 +31,8 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
 app_logger = get_logger("application")
 
 OperationItem = tuple[
-    str,
-    Callable[[], Any] | Callable[[], Awaitable[Any]],
-    Callable[[], bool] | None,
+    str, Callable[[], Any] | Callable[[], Awaitable[Any]], Callable[[], bool] | None
 ]
-
 
 
 def _register_default_degradation_features() -> None:
@@ -84,7 +82,6 @@ def _register_default_degradation_features() -> None:
     )
 
 
-
 async def perform_infrastructure_operation(components: list[OperationItem]) -> None:
     """
     Последовательно выполняет startup/shutdown операции инфраструктуры.
@@ -123,13 +120,11 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
             raise
 
 
-
 async def starting() -> None:
     """
     Инициализирует инфраструктурные зависимости приложения.
     """
     await perform_infrastructure_operation(starting_operations)
-
 
 
 async def ending() -> None:
@@ -139,14 +134,21 @@ async def ending() -> None:
     await perform_infrastructure_operation(ending_operations)
 
 
-
 starting_operations: list[OperationItem] = [
-    ("register_default_degradation_features", _register_default_degradation_features, None),
+    (
+        "register_default_degradation_features",
+        _register_default_degradation_features,
+        None,
+    ),
     ("register_health_checks", _register_health_checks, None),
     ("register_pools_in_unified_manager", _register_pools_in_unified_manager, None),
     ("warmup_connection_pools", _warmup_connection_pools, None),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
-    ("start_scheduler_with_leader_election", _start_scheduler_with_leader_election, _redis_enabled),
+    (
+        "start_scheduler_with_leader_election",
+        _start_scheduler_with_leader_election,
+        _redis_enabled,
+    ),
 ]
 
 ending_operations: list[OperationItem] = [

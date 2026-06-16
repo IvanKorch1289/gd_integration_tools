@@ -23,6 +23,7 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy_continuum import version_class, versioning_manager
 
+from src.backend.core.domain.models.base import Base, BaseModel
 from src.backend.dsl.audit_versioning import (
     OP_DELETE,
     OP_INSERT,
@@ -30,7 +31,6 @@ from src.backend.dsl.audit_versioning import (
     Versioning,
     VersioningError,
 )
-from src.backend.core.domain.models.base import Base, BaseModel
 
 # === Test models (module-level для корректной SQLAlchemy registration) ===
 

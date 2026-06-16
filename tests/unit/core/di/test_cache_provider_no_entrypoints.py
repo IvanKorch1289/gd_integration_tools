@@ -6,12 +6,11 @@
 - Runtime: get_rag_cache_provider не падает, возвращает None без app
 - Core facade: get_three_tier_rag_cache_from_state() работает
 """
+
 from __future__ import annotations
 
 import ast
 from pathlib import Path
-
-import pytest
 
 from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 

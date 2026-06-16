@@ -36,7 +36,7 @@ from src.backend.core.interfaces.invoker import (
 )
 from src.backend.core.logging import get_logger
 from src.backend.core.types.invocation_command import ActionCommandSchema
-from src.backend.services.execution.invoker.helpers import _is_async_iterator  # S149 W2: missing import (S68 W3 decomp lost it)
+from src.backend.services.execution.invoker.helpers import _is_async_iterator
 
 logger = get_logger("services.execution.invoker")
 

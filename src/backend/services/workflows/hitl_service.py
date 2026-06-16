@@ -109,9 +109,7 @@ class HitlSignalStore(Protocol):
         self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal: ...
 
-    async def wait_for(
-        self, signal_id: str, timeout: float | None = None
-    ) -> bool: ...
+    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool: ...
 
 
 class InMemoryHitlSignalStore:
@@ -215,9 +213,7 @@ class HitlService:
     async def get(self, signal_id: str) -> HitlPendingSignal | None:
         return await self._store.get(signal_id)
 
-    async def wait_for(
-        self, signal_id: str, timeout: float | None = None
-    ) -> bool:
+    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
         return await self._store.wait_for(signal_id, timeout=timeout)
 
     async def resolve(

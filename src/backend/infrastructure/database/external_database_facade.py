@@ -63,9 +63,7 @@ class ExternalDatabaseTransactionContext:
         result = await self._session.execute(text(sql), params or {})
         return [dict(row) for row in result.mappings().all()]
 
-    async def execute(
-        self, sql: str, params: dict[str, Any] | None = None
-    ) -> int:
+    async def execute(self, sql: str, params: dict[str, Any] | None = None) -> int:
         """INSERT/UPDATE/DELETE внутри транзакции."""
         self._assert_write()
         result = await self._session.execute(text(sql), params or {})
@@ -125,10 +123,7 @@ class ExternalDatabaseFacade:
         return self._session_manager_factory(profile)
 
     async def query(
-        self,
-        profile: str,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, profile: str, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """SELECT через профиль внешней БД."""
         self._assert_read(profile)
@@ -148,10 +143,7 @@ class ExternalDatabaseFacade:
             ) from exc
 
     async def execute(
-        self,
-        profile: str,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, profile: str, sql: str, params: dict[str, Any] | None = None
     ) -> int:
         """INSERT/UPDATE/DELETE через профиль внешней БД с auto-commit."""
         self._assert_write(profile)
@@ -185,9 +177,7 @@ class ExternalDatabaseFacade:
         """Вызов stored procedure через профиль внешней БД с auto-commit."""
         self._assert_execute_procedure(profile)
         manager = self._get_manager(profile)
-        sql = _build_procedure_sql(
-            name, params or {}, schema=schema, dialect=dialect
-        )
+        sql = _build_procedure_sql(name, params or {}, schema=schema, dialect=dialect)
         try:
             async with (
                 manager.create_session() as session,

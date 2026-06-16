@@ -152,9 +152,7 @@ async def stop_outbox_worker() -> None:
     logger.info("Outbox worker stopped")
 
 
-async def sweep_stuck_once(
-    *, threshold_seconds: int = 300, limit: int = 1000
-) -> int:
+async def sweep_stuck_once(*, threshold_seconds: int = 300, limit: int = 1000) -> int:
     """S72 W3 (TD-S64-W1) — одна итерация sweeper job'а.
 
     Wraps :func:`outbox_repo.reset_stuck_processing` для periodic
@@ -180,8 +178,7 @@ async def sweep_stuck_once(
     from src.backend.infrastructure.repositories import outbox as outbox_repo
 
     reset_count = await outbox_repo.reset_stuck_processing(
-        threshold_seconds=threshold_seconds,
-        limit=limit,
+        threshold_seconds=threshold_seconds, limit=limit
     )
     if reset_count > 0:
         logger.info(

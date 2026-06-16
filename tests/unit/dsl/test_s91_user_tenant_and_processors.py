@@ -6,10 +6,7 @@ V2 P0 #7 fix: 10 processors замість 'del context' використову�
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # V2 P0 #6: User TenantMixin
@@ -20,9 +17,7 @@ import pytest
 def test_user_is_tenant_aware() -> None:
     """User успадковує TenantMixin → _is_tenant_aware повертає True."""
     from src.backend.core.domain.models.users import User
-    from src.backend.infrastructure.database.tenant_filter import (
-        _is_tenant_aware,
-    )
+    from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
 
     assert _is_tenant_aware(User) is True
 
@@ -31,7 +26,6 @@ def test_user_is_tenant_aware() -> None:
 def test_user_mro_includes_tenant_mixin() -> None:
     """User MRO містить TenantMixin перед BaseModel."""
     from src.backend.core.domain.models.users import User
-    from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in User.__mro__]
     assert "TenantMixin" in mro_names
@@ -43,8 +37,9 @@ def test_user_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_user_tenant_id_column_present() -> None:
     """User має tenant_id mapped_column через TenantMixin."""
-    from src.backend.core.domain.models.users import User
     from sqlalchemy import inspect
+
+    from src.backend.core.domain.models.users import User
 
     mapper = inspect(User)
     columns = {col.key for col in mapper.columns}
@@ -97,17 +92,15 @@ def test_processors_use_underscore_context() -> None:
         if "_ = context" in source or "_=context" in source:
             count += 1
 
-    assert count == 10, (
-        f"Expected 10 processors with '_ = context', found {count}"
-    )
+    assert count == 10, f"Expected 10 processors with '_ = context', found {count}"
 
 
 @pytest.mark.unit
 def test_processors_signature_intact() -> None:
     """Сигнатура _run/process(self, exchange, context) збережена у всіх 10 processors."""
+    import ast
     import importlib
     import inspect
-    import ast
 
     for module_name in PROCESSOR_FILES_WITH_CONTEXT:
         module = importlib.import_module(module_name)

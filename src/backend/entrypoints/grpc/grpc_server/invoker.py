@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W3 — invoker.py part of grpc_server decomp.
 
 Classes: InvokerGRPCServicer.
 """
+
+from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.core.di.providers import get_grpc_logger_provider
+from src.backend.entrypoints.grpc.grpc_server._safe_error import _safe_error
 from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
     InvokeResponse as InvokerInvokeResponse,
 )

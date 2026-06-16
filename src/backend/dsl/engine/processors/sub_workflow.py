@@ -126,9 +126,7 @@ class SubWorkflowProcessor(BaseProcessor):
 
         return await create_workflow_backend(kind="auto")
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Делегирует на :class:`InvokeWorkflowProcessor` (mode=async-api)."""
         from src.backend.dsl.engine.processors.invoke_workflow import (
             InvokeWorkflowProcessor,
@@ -140,7 +138,10 @@ class SubWorkflowProcessor(BaseProcessor):
         args_with_parent: dict[str, Any] = dict(self.args)
         if parent_wf_id is not None and "_parent_workflow_id" not in args_with_parent:
             args_with_parent["_parent_workflow_id"] = parent_wf_id
-        if parent_corr_id is not None and "_parent_correlation_id" not in args_with_parent:
+        if (
+            parent_corr_id is not None
+            and "_parent_correlation_id" not in args_with_parent
+        ):
             args_with_parent["_parent_correlation_id"] = parent_corr_id
 
         delegate = InvokeWorkflowProcessor(

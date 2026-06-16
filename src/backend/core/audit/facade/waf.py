@@ -14,13 +14,7 @@ from src.backend.core.audit.facade._base import emit_audit
 __all__ = ("emit_waf_evaluation",)
 
 
-def emit_waf_evaluation(
-    *,
-    decision: Any,
-    plugin: str,
-    method: str,
-    url: str,
-) -> Any:
+def emit_waf_evaluation(*, decision: Any, plugin: str, method: str, url: str) -> Any:
     """Emit audit event for WAF evaluation (Path A pattern A, WAF-specific).
 
     Used by ``core/net/outbound_http.py``. Translates ``WafDecision``

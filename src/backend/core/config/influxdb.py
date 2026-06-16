@@ -19,20 +19,12 @@ class InfluxDBSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="INFLUXDB_", extra="forbid")
 
     url: str = Field(
-        default="http://localhost:8086",
-        description="HTTP URL InfluxDB-сервера.",
+        default="http://localhost:8086", description="HTTP URL InfluxDB-сервера."
     )
-    token: str = Field(
-        default="",
-        description="InfluxDB API-токен.",
-    )
-    org: str = Field(
-        default="default",
-        description="InfluxDB организация.",
-    )
+    token: str = Field(default="", description="InfluxDB API-токен.")
+    org: str = Field(default="default", description="InfluxDB организация.")
     bucket: str = Field(
-        default="metrics",
-        description="Bucket по умолчанию для записи.",
+        default="metrics", description="Bucket по умолчанию для записи."
     )
 
 

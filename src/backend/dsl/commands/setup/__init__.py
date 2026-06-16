@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Action handler registration package (S66 W2 decomp from setup.py 854 LOC).
 
 26 funcs (1 helper + 25 registers + 1 orchestrator) → 5 files (per-concern):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.commands.setup import register_action_handlers`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.commands.setup.helpers import (
     _register_crud_actions,  # S66 W2: re-export

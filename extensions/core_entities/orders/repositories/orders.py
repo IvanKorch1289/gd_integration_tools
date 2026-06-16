@@ -16,8 +16,8 @@ from extensions.core_entities.orderkinds.repositories.orderkinds import (
     get_order_kind_repo,
 )
 from extensions.core_entities.orders.domain.models import Order
-from src.backend.core.errors import NotFoundError
 from src.backend.core.database.session import main_session_manager
+from src.backend.core.errors import NotFoundError
 from src.backend.core.repositories.base import SQLAlchemyRepository
 
 __all__ = ("OrderRepository", "get_order_repo")

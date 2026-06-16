@@ -20,8 +20,8 @@ from typing import TYPE_CHECKING
 from src.backend.core.ai.fs_facade import AIFsFacade
 from src.backend.core.ai.sandbox import CodeSandbox, NoOpSandbox
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager
-from src.backend.core.svcs_registry import get_service, has_service, register_factory
 from src.backend.core.logging import get_logger
+from src.backend.core.svcs_registry import get_service, has_service, register_factory
 
 if TYPE_CHECKING:
     from fastapi import FastAPI

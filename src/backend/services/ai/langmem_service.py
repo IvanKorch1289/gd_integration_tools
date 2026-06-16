@@ -65,9 +65,7 @@ class LangMemService:
     def _ensure_session_factory(self) -> Any:
         if self._session_factory is not None:
             return self._session_factory
-        from src.backend.core.database.initializer import (
-            get_db_initializer,
-        )
+        from src.backend.core.database.initializer import get_db_initializer
 
         self._session_factory = get_db_initializer().async_session_maker
         return self._session_factory

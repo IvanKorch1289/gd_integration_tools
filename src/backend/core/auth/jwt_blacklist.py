@@ -21,9 +21,10 @@ Wave [s2/k1-2-jwt-jwks] + [wave:s18/k1-w4-jwt-blacklist-batch-revoke].
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 import time
 from typing import Any, Protocol
+
+from src.backend.core.logging import get_logger
 
 __all__ = ("JwtBlacklistProtocol", "RedisJwtBlacklist")
 
@@ -140,7 +141,7 @@ class RedisJwtBlacklist:
             return False
         try:
             iat_int = int(iat)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             _logger.warning(
                 "JWT blacklist is_iat_revoked: некорректный iat=%r — skip", iat
             )
@@ -154,6 +155,6 @@ class RedisJwtBlacklist:
             return False
         try:
             threshold = int(value)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return iat_int < threshold

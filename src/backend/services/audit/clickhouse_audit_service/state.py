@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S68 W2 - state.py part of clickhouse_audit_service decomp.
 
 Classes: AuditEvent.
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime

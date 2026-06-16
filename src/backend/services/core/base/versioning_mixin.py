@@ -5,8 +5,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-
 from src.backend.core.decorators.caching import response_cache
+from src.backend.core.logging import get_logger
+
+logger = get_logger("services.core.base.versioning")
 from src.backend.schemas.base import BaseSchema
 
 

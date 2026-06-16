@@ -105,9 +105,7 @@ class PapermillExecutionBackend:
             PermissionError: output_path не writable.
         """
         if not os.path.exists(notebook_path):
-            raise FileNotFoundError(
-                f"Template notebook не найден: {notebook_path}"
-            )
+            raise FileNotFoundError(f"Template notebook не найден: {notebook_path}")
 
         # Lazy-import papermill (opt-in extra).
         try:

@@ -172,9 +172,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         try:
             await bcast.stop()
         except Exception as bcast_stop_exc:
-            _logger.warning(
-                "FeatureFlagBroadcaster shutdown error: %s", bcast_stop_exc
-            )
+            _logger.warning("FeatureFlagBroadcaster shutdown error: %s", bcast_stop_exc)
 
     # ── 13. TaskRegistry graceful cancel ──
     # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных

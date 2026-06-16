@@ -195,9 +195,7 @@ async def build_and_run_agent(
         ai_gateway = AIGateway()  # enforce instance для downstream hooks  # noqa: F841
 
         tools = [_make_action_tool(action) for action in tool_actions]
-        llm = build_chat_model(
-            gateway=gateway, model=model, temperature=temperature
-        )
+        llm = build_chat_model(gateway=gateway, model=model, temperature=temperature)
 
         checkpointer: Any | None = None
         if durable:

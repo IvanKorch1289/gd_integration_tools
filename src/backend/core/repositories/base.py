@@ -27,8 +27,4 @@ from src.backend.infrastructure.repositories.base import (  # noqa: F401
     get_repository_for_model,
 )
 
-__all__ = (
-    "AbstractRepository",
-    "SQLAlchemyRepository",
-    "get_repository_for_model",
-)
+__all__ = ("AbstractRepository", "SQLAlchemyRepository", "get_repository_for_model")

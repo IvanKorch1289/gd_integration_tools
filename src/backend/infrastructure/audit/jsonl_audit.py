@@ -17,6 +17,7 @@ from typing import Any
 import orjson
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
+
 # S68 W3: local JSON codec (replaces dsl.codec import — TD-S65-W4).
 from src.backend.infrastructure.audit._json_codec import dumps_str
 

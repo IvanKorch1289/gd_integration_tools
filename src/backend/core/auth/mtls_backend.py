@@ -17,11 +17,12 @@
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
+
+from src.backend.core.logging import get_logger
 
 __all__ = ("MtlsBackend", "MtlsConfig", "MtlsVerificationError", "ParsedClientCert")
 

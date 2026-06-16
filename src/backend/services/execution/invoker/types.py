@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S68 W3 - types.py part of invoker decomp.
 
 Classes: InvocationMode.
 """
+
+from __future__ import annotations
 
 from enum import StrEnum
 from typing import TYPE_CHECKING

@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S68 W1 - polling_etl blueprint extracted from macros.py.
 
 polling-based ETL (interval trigger).
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any

@@ -31,12 +31,13 @@ backend'ы (R2.1 + legacy adapter) подключаются через registry.
 Feature flag ``feature_flags.cdc_enabled`` гейтит runtime registry
 (default-OFF, как и остальные CDC backends).
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.core.cdc.source import CDCSource, FakeCDCSource
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "SUPPORTED_BACKENDS",
@@ -85,8 +86,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
     """
     if backend not in SUPPORTED_BACKENDS:
         raise ValueError(
-            f"Unknown CDC backend: {backend!r}. "
-            f"Supported: {sorted(SUPPORTED_BACKENDS)}"
+            f"Unknown CDC backend: {backend!r}. Supported: {sorted(SUPPORTED_BACKENDS)}"
         )
 
     if backend == "poll":
@@ -121,9 +121,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         )
     if backend == "adapter":
         # Legacy: wraps CDCClient в CDCSource Protocol.
-        from src.backend.infrastructure.cdc.cdc_client_adapter import (
-            CDCClientAdapter,
-        )
+        from src.backend.infrastructure.cdc.cdc_client_adapter import CDCClientAdapter
 
         return CDCClientAdapter(
             profile=kwargs["profile"],

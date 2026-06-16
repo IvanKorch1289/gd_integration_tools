@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """AI providers package (S68 W4 decomp from ai_providers.py 443 LOC).
 
 4 provider classes + 1 func -> 5 files (per-provider split):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.services.ai.ai_providers import ClaudeProvider`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.services.ai.ai_providers.claude import (
     ClaudeProvider,  # S68 W4: re-export

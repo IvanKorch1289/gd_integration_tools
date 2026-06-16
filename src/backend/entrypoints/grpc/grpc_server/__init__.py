@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """gRPC server package (S65 W3 decomp from grpc_server.py 480 LOC).
 
 3 servicers + 1 interceptor + 3 funcs → 5 files (per-concern):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.entrypoints.grpc.grpc_server import OrderGRPCServicer`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.entrypoints.grpc.grpc_server._safe_error import (
     _safe_error,  # S65 W3: top-level func re-export

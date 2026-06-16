@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.backend.services.core.base import BaseService
 
 from src.backend.core.interfaces.db_model import DBModelProtocol
 from src.backend.core.interfaces.repositories import RepositoryProtocol
@@ -55,4 +58,6 @@ def create_service_class(
     repo: type[RepositoryProtocol],
 ) -> BaseService:
     """Фабрика для создания экземпляра BaseService."""
+    from src.backend.services.core.base import BaseService
+
     return BaseService(repo, response_schema, request_schema, version_schema)

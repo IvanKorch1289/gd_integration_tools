@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
-
 import asyncio
 import json
 import uuid
+from typing import Any
 
 import httpx
 
@@ -149,9 +148,7 @@ class JupyterBackendMixin:
                                 timeout=HEARTBEAT_TIMEOUT_S,
                             )
                             last_pong_time = now
-                            _logger.debug(
-                                "WS heartbeat OK (kernel=%s)", kernel_id
-                            )
+                            _logger.debug("WS heartbeat OK (kernel=%s)", kernel_id)
                         except asyncio.TimeoutError:
                             _logger.warning(
                                 "WS heartbeat timeout (kernel=%s) — "
@@ -248,7 +245,7 @@ class JupyterBackendMixin:
                 heartbeat_task.cancel()
                 try:
                     await heartbeat_task
-                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                except asyncio.CancelledError, Exception:  # noqa: BLE001
                     pass
 
         return outputs

@@ -5,11 +5,11 @@
 - manage.py run-frontend: устанавливает PYTHONPATH=$(pwd)
 - Импорты резолвятся с PYTHONPATH=project_root
 """
+
 from __future__ import annotations
 
 import ast
 import os
-import subprocess
 from pathlib import Path
 
 import pytest

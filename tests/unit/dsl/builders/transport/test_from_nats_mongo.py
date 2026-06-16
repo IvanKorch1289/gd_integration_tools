@@ -20,16 +20,12 @@ from src.backend.dsl.builders.base import RouteBuilder
 from src.backend.infrastructure.sources.mongo import MongoSource, MongoSourceConfig
 from src.backend.infrastructure.sources.nats import NatsSource
 
-
 # ── from_nats ──
 
 
 def test_from_nats_creates_route_builder_with_nats_source_uri() -> None:
     """``RouteBuilder.from_nats(...)`` — source URI = ``nats:{subject}``."""
-    route = RouteBuilder.from_nats(
-        "metrics.consumer",
-        subject="metrics.app.>",
-    )
+    route = RouteBuilder.from_nats("metrics.consumer", subject="metrics.app.>")
     assert isinstance(route, RouteBuilder)
     assert route.source == "nats:metrics.app.>"
     assert route.route_id == "metrics.consumer"
@@ -37,9 +33,7 @@ def test_from_nats_creates_route_builder_with_nats_source_uri() -> None:
 
 def test_from_nats_with_description() -> None:
     """Description пробрасывается в RouteBuilder."""
-    route = RouteBuilder.from_nats(
-        "x", subject="y", description="metrics intake"
-    )
+    route = RouteBuilder.from_nats("x", subject="y", description="metrics intake")
     assert route.description == "metrics intake"
 
 
@@ -129,9 +123,7 @@ def test_from_mongo_with_pipeline() -> None:
 def test_from_mongo_smoke_validates_constructor() -> None:
     """``from_mongo`` создаёт MongoSource для smoke-валидации."""
     cfg = MongoSourceConfig(
-        connection_url="mongodb://localhost:27017",
-        database="shop",
-        collection="orders",
+        connection_url="mongodb://localhost:27017", database="shop", collection="orders"
     )
     src = MongoSource(cfg)
     assert src.source_id == "mongo:shop/orders"
@@ -140,18 +132,14 @@ def test_from_mongo_smoke_validates_constructor() -> None:
 
 def test_from_mongo_source_rejects_empty_connection_url() -> None:
     """MongoSource с пустым connection_url → ValueError."""
-    cfg = MongoSourceConfig(
-        connection_url="", database="db", collection="c"
-    )
+    cfg = MongoSourceConfig(connection_url="", database="db", collection="c")
     with pytest.raises(ValueError, match="connection_url обязателен"):
         MongoSource(cfg)
 
 
 def test_from_mongo_source_rejects_empty_database() -> None:
     """MongoSource с пустым database → ValueError."""
-    cfg = MongoSourceConfig(
-        connection_url="mongodb://x", database="", collection="c"
-    )
+    cfg = MongoSourceConfig(connection_url="mongodb://x", database="", collection="c")
     with pytest.raises(ValueError, match="database обязателен"):
         MongoSource(cfg)
 

@@ -7,11 +7,10 @@
 - infrastructure/clients/transport/http_httpx.py: явный комментарий что
   `import logging` retained for `logging.DEBUG` constant (tenacity hook).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -25,7 +24,9 @@ def test_saml_backend_uses_core_logger() -> None:
 
 def test_http_init_no_dead_debug_import() -> None:
     """`from logging import DEBUG` удалён — не использовался."""
-    src = (PROJECT_ROOT / "src/backend/infrastructure/clients/transport/http/__init__.py").read_text()
+    src = (
+        PROJECT_ROOT / "src/backend/infrastructure/clients/transport/http/__init__.py"
+    ).read_text()
     assert "from logging import DEBUG" not in src
     assert "import logging" not in src
 
@@ -36,7 +37,9 @@ def test_http_httpx_keeps_stdlib_for_DEBUG_constant() -> None:
     Uses ``before_sleep_log(logger, logging.DEBUG)`` — `logging.DEBUG`
     is a stdlib constant. Не swap'им, оставляем комментарий.
     """
-    src = (PROJECT_ROOT / "src/backend/infrastructure/clients/transport/http_httpx.py").read_text()
+    src = (
+        PROJECT_ROOT / "src/backend/infrastructure/clients/transport/http_httpx.py"
+    ).read_text()
     assert "import logging" in src
     assert "logging.DEBUG" in src
     # Уже factory.get_logger

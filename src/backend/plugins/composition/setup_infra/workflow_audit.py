@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S60 W3 — workflow_audit.py part of setup_infra decomp.
 
 Funcs: _init_workflow_audit_sink, _close_workflow_audit_sink.
@@ -7,9 +5,10 @@ Funcs: _init_workflow_audit_sink, _close_workflow_audit_sink.
 workflow audit sink init/close.
 """
 
+from __future__ import annotations
 
-from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 
 app_logger = get_logger("application")
 

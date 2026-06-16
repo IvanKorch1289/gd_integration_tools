@@ -23,10 +23,16 @@ class RedisSettings(BaseSettingsWithLoader):
 
     # Основные параметры подключения
     host: str = Field(
-        ..., description="Хост или IP-адрес сервера Redis", json_schema_extra={"example": "redis.example.com"}
+        ...,
+        description="Хост или IP-адрес сервера Redis",
+        json_schema_extra={"example": "redis.example.com"},
     )
     port: int = Field(
-        ..., ge=1, le=65535, description="Порт сервера Redis", json_schema_extra={"example": 6379}
+        ...,
+        ge=1,
+        le=65535,
+        description="Порт сервера Redis",
+        json_schema_extra={"example": 6379},
     )
     password: str | None = Field(
         ...,
@@ -34,35 +40,61 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": "securepassword123"},
     )
     encoding: str = Field(
-        ..., description="Кодировка для сериализации данных", json_schema_extra={"example": "utf-8"}
+        ...,
+        description="Кодировка для сериализации данных",
+        json_schema_extra={"example": "utf-8"},
     )
 
     # Параметры баз данных
     db_cache: int = Field(
-        ..., ge=0, description="Номер базы данных для кэширования", json_schema_extra={"example": 0}
+        ...,
+        ge=0,
+        description="Номер базы данных для кэширования",
+        json_schema_extra={"example": 0},
     )
     db_queue: int = Field(
-        ..., ge=0, description="Номер базы данных для управления очередями", json_schema_extra={"example": 1}
+        ...,
+        ge=0,
+        description="Номер базы данных для управления очередями",
+        json_schema_extra={"example": 1},
     )
     db_limits: int = Field(
-        ..., ge=0, description="Номер базы данных для ограничений скорости", json_schema_extra={"example": 2}
+        ...,
+        ge=0,
+        description="Номер базы данных для ограничений скорости",
+        json_schema_extra={"example": 2},
     )
     db_tasks: int = Field(
-        ..., ge=0, description="Номер базы данных для Celery", json_schema_extra={"example": 3}
+        ...,
+        ge=0,
+        description="Номер базы данных для Celery",
+        json_schema_extra={"example": 3},
     )
 
     # Параметры производительности
     cache_expire_seconds: int = Field(
-        ..., ge=60, description="Время жизни кэша по умолчанию в секундах", json_schema_extra={"example": 300}
+        ...,
+        ge=60,
+        description="Время жизни кэша по умолчанию в секундах",
+        json_schema_extra={"example": 300},
     )
     max_connections: int = Field(
-        ..., ge=1, description="Максимальное количество соединений в пуле", json_schema_extra={"example": 20}
+        ...,
+        ge=1,
+        description="Максимальное количество соединений в пуле",
+        json_schema_extra={"example": 20},
     )
     socket_timeout: int | None = Field(
-        ..., ge=1, description="Таймаут операций с сокетом в секундах", json_schema_extra={"example": 10}
+        ...,
+        ge=1,
+        description="Таймаут операций с сокетом в секундах",
+        json_schema_extra={"example": 10},
     )
     socket_connect_timeout: int | None = Field(
-        ..., ge=1, description="Таймаут установления соединения в секундах", json_schema_extra={"example": 5}
+        ...,
+        ge=1,
+        description="Таймаут установления соединения в секундах",
+        json_schema_extra={"example": 5},
     )
     retry_on_timeout: bool | None = Field(
         ...,
@@ -70,7 +102,9 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": False},
     )
     socket_keepalive: bool | None = Field(
-        ..., description="Включить TCP keepalive для соединений", json_schema_extra={"example": True}
+        ...,
+        description="Включить TCP keepalive для соединений",
+        json_schema_extra={"example": True},
     )
     # Sprint 0 (Redis cluster + pipelining): расширение pool-параметров.
     # ``retry_on_error`` — список квалифицированных имён классов исключений
@@ -87,12 +121,19 @@ class RedisSettings(BaseSettingsWithLoader):
             "автоматически выполняет retry. Применяется и к single-node, "
             "и к cluster-режиму. Пустой список — отключает встроенный retry."
         ),
-        json_schema_extra={"example": ["redis.exceptions.ConnectionError", "redis.exceptions.TimeoutError"]},
+        json_schema_extra={
+            "example": [
+                "redis.exceptions.ConnectionError",
+                "redis.exceptions.TimeoutError",
+            ]
+        },
     )
 
     # Параметры безопасности
     use_ssl: bool = Field(
-        ..., description="Включить SSL/TLS для безопасных соединений", json_schema_extra={"example": False}
+        ...,
+        description="Включить SSL/TLS для безопасных соединений",
+        json_schema_extra={"example": False},
     )
     ca_bundle: str | None = Field(
         ...,
@@ -102,13 +143,19 @@ class RedisSettings(BaseSettingsWithLoader):
 
     # Параметры потоков
     main_stream: str | None = Field(
-        ..., description="Имя основного потока Redis", json_schema_extra={"example": "example-stream"}
+        ...,
+        description="Имя основного потока Redis",
+        json_schema_extra={"example": "example-stream"},
     )
     dlq_stream: str | None = Field(
-        ..., description="Имя потока DLQ Redis", json_schema_extra={"example": "dlq-example-stream"}
+        ...,
+        description="Имя потока DLQ Redis",
+        json_schema_extra={"example": "dlq-example-stream"},
     )
     max_stream_len: int = Field(
-        ..., description="Максимальный размер потока Redis", json_schema_extra={"example": 100000}
+        ...,
+        description="Максимальный размер потока Redis",
+        json_schema_extra={"example": 100000},
     )
     approximate_trimming_stream: bool = Field(
         ...,
@@ -116,16 +163,24 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": True},
     )
     retention_hours_stream: int = Field(
-        ..., description="Время хранения потоков Redis в часах", json_schema_extra={"example": 24}
+        ...,
+        description="Время хранения потоков Redis в часах",
+        json_schema_extra={"example": 24},
     )
     max_retries: int = Field(
         ...,
         description="Максимальное количество попыток чтения сообщения в потоке",
         json_schema_extra={"example": 1},
     )
-    ttl_hours: int = Field(..., description="Время жизни сообщений в потоке", json_schema_extra={"example": 1})
+    ttl_hours: int = Field(
+        ...,
+        description="Время жизни сообщений в потоке",
+        json_schema_extra={"example": 1},
+    )
     health_check_interval: int = Field(
-        ..., description="Интервал проверки работоспособности", json_schema_extra={"example": 600}
+        ...,
+        description="Интервал проверки работоспособности",
+        json_schema_extra={"example": 600},
     )
     streams: list[dict[str, str]] = Field(
         ...,
@@ -135,7 +190,7 @@ class RedisSettings(BaseSettingsWithLoader):
             "example": [
                 {"name": "stream1", "value": "creating-stream"},
                 {"name": "stream2", "value": "updating-stream"},
-            ],
+            ]
         },
     )
 

@@ -13,17 +13,19 @@ Backward-compat: ``from src.backend.core.security.capabilities.gate import Capab
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Final
+
 from src.backend.core.security.capabilities.errors import (
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.policy import CapabilityPolicy
 from src.backend.core.security.capabilities.vocabulary import (
+    CapabilityVocabulary,
     build_default_vocabulary,  # S79 W2 fix: S54 W4 decomp forgot import
 )
-from src.backend.core.security.capabilities.vocabulary import CapabilityVocabulary
 
 if TYPE_CHECKING:
     pass

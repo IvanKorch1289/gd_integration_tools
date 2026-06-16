@@ -23,8 +23,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.core.database.dialect_types import json_b
-from .base import BaseModel
 from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+
+from .base import BaseModel
 
 __all__ = ("DslSnapshot",)
 

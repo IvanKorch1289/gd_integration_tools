@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W1 — S3WriteProcessor extracted from components.py.
 
 Per-processor file split.
 """
+
+from __future__ import annotations
 
 from typing import Any
 

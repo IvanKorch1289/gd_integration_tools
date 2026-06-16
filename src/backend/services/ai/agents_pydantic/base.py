@@ -159,9 +159,7 @@ class BasePydanticAgent(Generic[ResultT]):
         # S85 W2 (V2 P0 #1): pre-flight enforcement check.
         # Bypass через LiteLLMGateway запрещён. Если ai_gateway_enforce=False
         # — бросаем AIGatewayEnforcementRequiredError.
-        from src.backend.core.ai.errors import (
-            AIGatewayEnforcementRequiredError,
-        )
+        from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.ai_gateway_enforce:

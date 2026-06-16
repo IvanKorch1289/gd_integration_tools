@@ -31,12 +31,12 @@ Test data:
 * Verify: ``SELECT COUNT(*) FROM dsl_snapshots WHERE tenant_id IS NULL`` — 0.
 * Verify: ``SELECT COUNT(*) FROM workflow_events WHERE tenant_id IS NULL`` — 0.
 """
+
 from __future__ import annotations
 
 from typing import Sequence, Union
 
 from alembic import op
-
 
 revision: str = "a1b2c3d4e5f6"
 down_revision: Union[str, None] = "f8a9b0c1d2e3"

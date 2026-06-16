@@ -214,15 +214,14 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
 
         # S85 W1 (V2 P0 #1): enforcement is mandatory, scaffold-режим запрещён.
         if not feature_flags.ai_gateway_enforce:
-            from src.backend.core.ai.errors import (
-                AIGatewayEnforcementRequiredError,
-            )
+            from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
 
             raise AIGatewayEnforcementRequiredError(
                 "ai_gateway_enforce=False is no longer supported (S85). "
                 "Set feature_flags.ai_gateway_enforce=True."
             )
         return await self._enforced_invoke(request)
+
     # `_enforced_invoke` extracted в gateway_orchestrator_mixin.py (T-P1.1c)
 
     # S85 W1 (V2 P0 #1): _legacy_invoke удалён. Pass-through scaffold

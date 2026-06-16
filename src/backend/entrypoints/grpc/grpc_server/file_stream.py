@@ -33,11 +33,7 @@ from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (T
 # Late import: files_pb2 (с DownloadFile/UploadFile) regen-зависимый.
 # Rule #105: late import для circular avoidance + optional codegen deps.
 
-__all__ = (
-    "FileStreamConfig",
-    "FileStreamGRPCServicer",
-    "compute_sha256",
-)
+__all__ = ("FileStreamConfig", "FileStreamGRPCServicer", "compute_sha256")
 
 
 @dataclass(slots=True)
@@ -131,9 +127,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
             yield FileChunk(  # type: ignore[operator]
                 sequence=sequence,
                 data=chunk_data,
-                final_fingerprint=(
-                    fingerprint.hexdigest() if is_last else ""
-                ),
+                final_fingerprint=(fingerprint.hexdigest() if is_last else ""),
                 is_last=is_last,
             )
             sequence += 1
@@ -150,9 +144,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         Returns:
             :class:`FileUploadResponse` с file_id, object_uuid, size, fingerprint.
         """
-        from src.backend.entrypoints.grpc.protobuf.files_pb2 import (
-            FileUploadResponse,
-        )
+        from src.backend.entrypoints.grpc.protobuf.files_pb2 import FileUploadResponse
 
         storage = self._get_storage() if self._get_storage else None
         if storage is None:
@@ -166,9 +158,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         async for request in request_iterator:
             if context.cancelled():
                 self.logger.warning(
-                    "UploadFile cancelled: file_id=%s, chunks=%d",
-                    file_id,
-                    total_chunks,
+                    "UploadFile cancelled: file_id=%s, chunks=%d", file_id, total_chunks
                 )
                 return FileUploadResponse(error="cancelled")  # type: ignore[operator]
             file_id = request.file_id or file_id

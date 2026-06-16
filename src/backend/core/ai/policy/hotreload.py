@@ -45,11 +45,7 @@ if TYPE_CHECKING:
 
 _logger = get_logger("core.ai.policy.hotreload")
 
-__all__ = (
-    "PolicyReloadAction",
-    "PolicyReloadEvent",
-    "watch_policy_files",
-)
+__all__ = ("PolicyReloadAction", "PolicyReloadEvent", "watch_policy_files")
 
 
 class PolicyReloadAction(str, Enum):
@@ -160,10 +156,7 @@ async def watch_policy_files(
                 resolver.reload()
             except Exception as exc:  # noqa: BLE001
                 _logger.warning(
-                    "resolver.reload() failed after %s %s: %s",
-                    action,
-                    path,
-                    exc,
+                    "resolver.reload() failed after %s %s: %s", action, path, exc
                 )
                 # Continue (не raise — другие файлы могут быть valid)
 
@@ -174,9 +167,5 @@ async def watch_policy_files(
                 except Exception as exc:  # noqa: BLE001
                     _logger.warning("on_reload callback failed: %s", exc)
 
-            _logger.info(
-                "Policy %s: %s (resolver reloaded)",
-                action.value,
-                path,
-            )
+            _logger.info("Policy %s: %s (resolver reloaded)", action.value, path)
             yield event

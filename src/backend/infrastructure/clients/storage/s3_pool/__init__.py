@@ -8,8 +8,12 @@ Backward-compat: ``from src.backend.infrastructure.clients.storage.s3_pool impor
 """
 
 from __future__ import annotations
-from src.backend.core.config.settings import settings  # S71 W1 fix: S56 W3 decomp lost this import
 
+from typing import Any
+
+from src.backend.core.config.settings import (
+    settings,  # S71 W1 fix: S56 W3 decomp lost this import
+)
 from src.backend.infrastructure.clients.storage.s3_pool.base import (
     BaseS3Client,  # S56 W3: re-export
 )

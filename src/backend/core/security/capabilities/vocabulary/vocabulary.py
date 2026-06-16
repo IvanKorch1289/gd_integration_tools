@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """S62 W2 — vocabulary.py part of vocabulary decomp.
 
 CapabilityVocabulary (7 methods).
 """
 
+from __future__ import annotations
 
 from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
 from src.backend.core.security.capabilities.models import CapabilityRef

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """AD directory client package (S67 W4 decomp from ad_directory_client.py 457 LOC).
 
 4 classes -> 2 files (per-concern):
@@ -9,6 +7,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.services.auth.ad_directory_client import AdDirectoryClient`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.services.auth.ad_directory_client.client import (
     AdDirectoryClient,  # S67 W4: re-export

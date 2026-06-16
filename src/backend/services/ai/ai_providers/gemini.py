@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S68 W4 - gemini.py part of ai_providers decomp.
 
 Google Gemini provider (extract_text, embeddings, chat).
 
 Classes: GeminiProvider.
 """
+
+from __future__ import annotations
 
 import os
 from typing import Any
@@ -40,7 +40,7 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 

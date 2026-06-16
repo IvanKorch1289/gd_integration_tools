@@ -91,7 +91,9 @@ class HealthCheck:
         """
         if not getattr(settings.redis, "enabled", True):
             return True
-        from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
+        from src.backend.infrastructure.clients.storage.redis import (
+            get_redis_client as redis_client,
+        )
 
         return await redis_client.check_connection("cache")
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Event store + CQRS package (S66 W1 decomp from event_store.py 468 LOC).
 
 9 classes + 3 funcs → 5 files (per-concern):
@@ -12,6 +10,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.dsl.processors.event_store import EventStore`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.processors.event_store.cqrs import (
     CommandBus,  # S66 W1: re-export

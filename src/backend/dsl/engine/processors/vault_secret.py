@@ -75,17 +75,14 @@ class VaultSecretProcessor(BaseProcessor):
         self._output_field = output_field
         self._version = version
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Читает Vault secret асинхронно, пишет в exchange.properties."""
         try:
             from src.backend.infrastructure.secrets.vault_backend import VaultBackend
             from src.backend.infrastructure.secrets.vault_client import VaultConfig
         except ImportError as exc:
             exchange.fail(
-                f"vault dependencies not installed: {exc}. "
-                "Install [secrets] extra."
+                f"vault dependencies not installed: {exc}. Install [secrets] extra."
             )
             return
 
@@ -100,8 +97,7 @@ class VaultSecretProcessor(BaseProcessor):
                 secret = await asyncio.to_thread(backend.get, self._path)
         except Exception as exc:  # noqa: BLE001
             _logger.warning(
-                "vault_read failed",
-                extra={"path": self._path, "error": str(exc)},
+                "vault_read failed", extra={"path": self._path, "error": str(exc)}
             )
             exchange.fail(f"Vault read failed for {self._path!r}: {exc}")
             return

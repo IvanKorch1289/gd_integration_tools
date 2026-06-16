@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """RAGService package (S64 W4 decomp from rag_service.py 478 LOC).
 
 14 methods decomposed в 4 mixin files + state.py:
@@ -14,16 +12,17 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.services.ai.rag_service import RAGService`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
-from src.backend.services.ai.rag_augment import AugmentResult, FreshnessLabel
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
 )
+from src.backend.services.ai.rag_augment import AugmentResult, FreshnessLabel
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.core.cache.rag import ThreeTierRagCache
@@ -43,7 +42,15 @@ from src.backend.services.ai.rag_service.search_mixin import (
 )
 from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
 
-__all__ = ("AugmentResult", "FreshnessLabel", "RAGCitation", "RAGService")
+__all__ = (
+    "AugmentResult",
+    "FreshnessLabel",
+    "RAGCitation",
+    "RAGService",
+    "_extract_source_id",
+    "_filter_by_embedding_version",
+    "_format_context_with_sources",
+)
 
 
 def get_rag_service() -> RAGService:

@@ -23,18 +23,13 @@ class LineageSettings(BaseSettingsWithLoader):
         description="URL OpenLineage-совместимого сервера (Marquez).",
     )
     namespace: str = Field(
-        default="gd_integration_tools",
-        description="Namespace для lineage событий.",
+        default="gd_integration_tools", description="Namespace для lineage событий."
     )
     timeout_s: float = Field(
-        default=5.0,
-        ge=0.1,
-        description="HTTP-таймаут для POST batch'ей (сек).",
+        default=5.0, ge=0.1, description="HTTP-таймаут для POST batch'ей (сек)."
     )
     batch_size: int = Field(
-        default=100,
-        ge=1,
-        description="Размер batch'а перед flush.",
+        default=100, ge=1, description="Размер batch'а перед flush."
     )
     max_queue: int = Field(
         default=10_000,
@@ -42,8 +37,7 @@ class LineageSettings(BaseSettingsWithLoader):
         description="Максимальный размер in-memory очереди событий.",
     )
     auth_token: str | None = Field(
-        default=None,
-        description="Опциональный Bearer-токен для авторизации.",
+        default=None, description="Опциональный Bearer-токен для авторизации."
     )
 
 

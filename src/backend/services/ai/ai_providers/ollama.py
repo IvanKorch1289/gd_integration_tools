@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S68 W4 - ollama.py part of ai_providers decomp.
 
 Ollama local provider (extract_text, embeddings, chat).
 
 Classes: OllamaProvider.
 """
+
+from __future__ import annotations
 
 import os
 from typing import Any
@@ -37,7 +37,7 @@ class OllamaProvider:
             return response.get("message", {}).get("content", "") or response.get(
                 "response", ""
             )
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return ""
 
     async def embeddings(

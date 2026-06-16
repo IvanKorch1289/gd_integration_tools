@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
     pass
 
+from src.backend.infrastructure.logging.factory import get_logger
+
+logger = get_logger(__name__)
+
 
 class IngestMixin:
     """ingest ops (_cache_key + chunk_text + _embed + ingest + _invalidate_namespace) для RAGService. S64 W4 extraction."""

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # File
 # ---------------------------------------------------------------------------
@@ -26,7 +25,6 @@ def test_file_is_tenant_aware() -> None:
 def test_file_mro_includes_tenant_mixin() -> None:
     """File MRO містить TenantMixin після BaseModel."""
     from src.backend.core.domain.models.files import File
-    from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in File.__mro__]
     assert "TenantMixin" in mro_names
@@ -37,8 +35,9 @@ def test_file_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_file_tenant_id_column_present() -> None:
     """File має tenant_id mapped_column через TenantMixin."""
-    from src.backend.core.domain.models.files import File
     from sqlalchemy import inspect
+
+    from src.backend.core.domain.models.files import File
 
     mapper = inspect(File)
     columns = {col.key for col in mapper.columns}
@@ -63,7 +62,6 @@ def test_orderkind_is_tenant_aware() -> None:
 def test_orderkind_mro_includes_tenant_mixin() -> None:
     """OrderKind MRO містить TenantMixin після BaseModel."""
     from src.backend.core.domain.models.orderkinds import OrderKind
-    from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
     mro_names = [cls.__name__ for cls in OrderKind.__mro__]
     assert "TenantMixin" in mro_names
@@ -74,8 +72,9 @@ def test_orderkind_mro_includes_tenant_mixin() -> None:
 @pytest.mark.unit
 def test_orderkind_tenant_id_column_present() -> None:
     """OrderKind має tenant_id mapped_column через TenantMixin."""
-    from src.backend.core.domain.models.orderkinds import OrderKind
     from sqlalchemy import inspect
+
+    from src.backend.core.domain.models.orderkinds import OrderKind
 
     mapper = inspect(OrderKind)
     columns = {col.key for col in mapper.columns}
@@ -108,15 +107,11 @@ def test_files_migration_chain() -> None:
 @pytest.mark.unit
 def test_tenant_isolated_models_count() -> None:
     """4/7 моделей мають TenantMixin (Order, User, File, OrderKind)."""
-    from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
-    from src.backend.core.domain.models.orders import Order
-    from src.backend.core.domain.models.users import User
     from src.backend.core.domain.models.files import File
     from src.backend.core.domain.models.orderkinds import OrderKind
+    from src.backend.core.domain.models.orders import Order
+    from src.backend.core.domain.models.users import User
+    from src.backend.infrastructure.database.tenant_filter import _is_tenant_aware
 
-    tenant_aware = [
-        m
-        for m in [Order, User, File, OrderKind]
-        if _is_tenant_aware(m)
-    ]
+    tenant_aware = [m for m in [Order, User, File, OrderKind] if _is_tenant_aware(m)]
     assert len(tenant_aware) == 4

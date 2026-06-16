@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Capability vocabulary package (S62 W2 decomp from vocabulary.py 509 LOC).
 
 2 classes + 1 BIG function → 3 files:
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.core.security.capabilities.vocabulary import build_default_vocabulary`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.core.security.capabilities.vocabulary.defaults import (
     build_default_vocabulary,  # S62 W2: re-export

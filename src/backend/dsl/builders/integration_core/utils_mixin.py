@@ -219,11 +219,7 @@ class UtilsMixin:
         )
 
     def jq_query(
-        self,
-        expr: str,
-        *,
-        to: str = "body.jq_result",
-        mode: str = "all",
+        self, expr: str, *, to: str = "body.jq_result", mode: str = "all"
     ) -> RouteBuilder:
         """JMESPath query via jq processor.
 
@@ -366,11 +362,7 @@ class UtilsMixin:
         )
 
     def ics_calendar(
-        self,
-        mode: str,
-        *,
-        source: str = "body",
-        to: str = "body.events",
+        self, mode: str, *, source: str = "body", to: str = "body.events"
     ) -> RouteBuilder:
         """Parse/render iCalendar (RFC 5545) data.
 

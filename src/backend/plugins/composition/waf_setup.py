@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.core.net.waf import WafPolicy
 from src.backend.core.svcs_registry import has_service, register_factory
-from src.backend.core.logging import get_logger
 
 __all__ = ("register_outbound_http_client", "register_waf_policy", "waf_audit_callback")
 

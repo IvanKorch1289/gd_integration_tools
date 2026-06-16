@@ -26,7 +26,9 @@ def _render_body() -> None:
     try:
         import streamlit_autorefresh
 
-        streamlit_autorefresh.st_autorefresh(interval=30_000, key="cron_dashboard_refresh")
+        streamlit_autorefresh.st_autorefresh(
+            interval=30_000, key="cron_dashboard_refresh"
+        )
     except ImportError:
         pass
 
@@ -37,13 +39,19 @@ def _render_body() -> None:
     client = get_api_client()
 
     try:
-        rows = asyncio.run(client.list_schedules()) if hasattr(client, "list_schedules") else []
+        rows = (
+            asyncio.run(client.list_schedules())
+            if hasattr(client, "list_schedules")
+            else []
+        )
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось получить список schedules: {exc}")
         rows = []
 
     if not rows:
-        st.info("Нет scheduled workflows. Создайте через 13_Cron_Builder или manage.py.")
+        st.info(
+            "Нет scheduled workflows. Создайте через 13_Cron_Builder или manage.py."
+        )
         return
 
     # Top-level metrics
@@ -63,7 +71,9 @@ def _render_body() -> None:
     # Schedule table + actions per row
     for row in rows:
         name = row.get("name", "?")
-        with st.expander(f"⏰ {name} — {row.get('cron_expr', '?')} ({row.get('tz', 'UTC')})"):
+        with st.expander(
+            f"⏰ {name} — {row.get('cron_expr', '?')} ({row.get('tz', 'UTC')})"
+        ):
             st.write(
                 {
                     "Name": name,
@@ -78,25 +88,33 @@ def _render_body() -> None:
             action_cols = st.columns(4)
             if action_cols[0].button("Pause", key=f"pause_{name}"):
                 try:
-                    asyncio.run(client.pause_schedule(name)) if hasattr(client, "pause_schedule") else None
+                    asyncio.run(client.pause_schedule(name)) if hasattr(
+                        client, "pause_schedule"
+                    ) else None
                     st.success(f"Paused {name}")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Ошибка pause: {exc}")
             if action_cols[1].button("Resume", key=f"resume_{name}"):
                 try:
-                    asyncio.run(client.resume_schedule(name)) if hasattr(client, "resume_schedule") else None
+                    asyncio.run(client.resume_schedule(name)) if hasattr(
+                        client, "resume_schedule"
+                    ) else None
                     st.success(f"Resumed {name}")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Ошибка resume: {exc}")
             if action_cols[2].button("Run now", key=f"run_{name}"):
                 try:
-                    asyncio.run(client.run_schedule_now(name)) if hasattr(client, "run_schedule_now") else None
+                    asyncio.run(client.run_schedule_now(name)) if hasattr(
+                        client, "run_schedule_now"
+                    ) else None
                     st.success(f"Triggered {name}")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Ошибка run-now: {exc}")
             if action_cols[3].button("Delete", key=f"delete_{name}"):
                 try:
-                    asyncio.run(client.delete_schedule(name)) if hasattr(client, "delete_schedule") else None
+                    asyncio.run(client.delete_schedule(name)) if hasattr(
+                        client, "delete_schedule"
+                    ) else None
                     st.success(f"Deleted {name}")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Ошибка delete: {exc}")

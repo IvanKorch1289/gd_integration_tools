@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """S68 W1 - format_bridge blueprint extracted from macros.py.
 
 format conversion bridge (JSON/XML/CSV/...).
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline

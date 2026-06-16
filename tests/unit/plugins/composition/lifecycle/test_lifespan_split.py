@@ -25,7 +25,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Isolated module loader
 # ─────────────────────────────────────────────────────────────────────────────
@@ -117,9 +116,7 @@ def shutdown_module() -> ModuleType:
 def lifespan_module(startup_module: ModuleType) -> ModuleType:
     """Load lifespan.py isolated (after startup, since it re-exports from it)."""
     # Регистрируем startup в sys.modules чтобы lifespan.py нашёл его.
-    sys.modules[
-        "src.backend.plugins.composition.lifecycle.startup"
-    ] = startup_module
+    sys.modules["src.backend.plugins.composition.lifecycle.startup"] = startup_module
     return _load_isolated("lifespan.py")
 
 

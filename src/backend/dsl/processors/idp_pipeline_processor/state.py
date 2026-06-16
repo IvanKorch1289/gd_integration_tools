@@ -32,7 +32,9 @@ class _FieldPattern:
 
     name: str
     pattern: str
-    regex: str = field(init=False)  # alias for pattern (used by DEFAULT_EXTRACTORS public API)
+    regex: str = field(
+        init=False
+    )  # alias for pattern (used by DEFAULT_EXTRACTORS public API)
 
     def __post_init__(self) -> None:
         self.regex = self.pattern  # public API: extracted regexes

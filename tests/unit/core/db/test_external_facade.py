@@ -9,15 +9,12 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
-from contextlib import asynccontextmanager
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.backend.core.db.external_facade import ExternalDBFacade, TransactionContext
-
 
 # ---------------------------------------------------------------------------
 # Mock helpers

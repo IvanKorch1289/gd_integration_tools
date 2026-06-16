@@ -138,9 +138,7 @@ class E2BExecutionBackend:
         import os
 
         if not os.path.exists(notebook_path):
-            raise FileNotFoundError(
-                f"Notebook не найден: {notebook_path}"
-            )
+            raise FileNotFoundError(f"Notebook не найден: {notebook_path}")
 
         # Lazy-import papermill для .ipynb parsing
         try:
@@ -182,9 +180,7 @@ class E2BExecutionBackend:
         try:
             sandbox_id, cells_executed, errors = await loop.run_in_executor(
                 None,
-                lambda: self._execute_sync(
-                    nb, params_cells, code_cells, parameters
-                ),
+                lambda: self._execute_sync(nb, params_cells, code_cells, parameters),
             )
         except E2BExecutionError:
             raise
@@ -244,17 +240,13 @@ class E2BExecutionBackend:
             )
             sandbox_id = sb.get_info().sandbox_id
         except Exception as exc:  # noqa: BLE001
-            raise E2BExecutionError(
-                f"E2B sandbox creation failed: {exc}"
-            ) from exc
+            raise E2BExecutionError(f"E2B sandbox creation failed: {exc}") from exc
 
         try:
             # Phase 1: parameter injection (run params_cells first
             # с injected values)
             for cell in params_cells:
-                injected_source = self._inject_parameters(
-                    cell.source, parameters
-                )
+                injected_source = self._inject_parameters(cell.source, parameters)
                 execution = sb.run_code(injected_source)
                 if execution.error:
                     errors.append(

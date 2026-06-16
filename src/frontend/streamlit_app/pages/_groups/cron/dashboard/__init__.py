@@ -24,8 +24,6 @@ Streamlit-discoverable entry-point'ом, теперь thin wrapper, делеги
 
 from __future__ import annotations
 
-from src.frontend.streamlit_app.pages._groups.cron.dashboard.render import (
-    render,
-)
+from src.frontend.streamlit_app.pages._groups.cron.dashboard.render import render
 
 __all__ = ("render",)

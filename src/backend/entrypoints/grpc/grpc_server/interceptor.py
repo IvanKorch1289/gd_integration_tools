@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W3 — interceptor.py part of grpc_server decomp.
 
 Classes: AuthInterceptor.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

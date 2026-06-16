@@ -167,10 +167,7 @@ def _advisory_lock_key(worker_id: str) -> int:
 
 
 async def claim_pending(
-    limit: int = 100,
-    *,
-    worker_id: str,
-    lease_seconds: int = 300,
+    limit: int = 100, *, worker_id: str, lease_seconds: int = 300
 ) -> list[OutboxMessage]:
     """Multi-instance safe атомарный claim batch pending outbox-сообщений.
 
@@ -239,8 +236,7 @@ async def claim_pending(
         got_lock = bool(
             (
                 await session.execute(
-                    text("SELECT pg_try_advisory_xact_lock(:k)"),
-                    {"k": lock_key},
+                    text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
                 )
             ).scalar()
         )
@@ -306,9 +302,7 @@ async def claim_pending(
 
 
 async def reset_stuck_processing(
-    *,
-    threshold_seconds: int = 300,
-    limit: int = 1000,
+    *, threshold_seconds: int = 300, limit: int = 1000
 ) -> int:
     """S72 W3 — TD-S64-W1 closure, sweeper job (ADR-0087).
 

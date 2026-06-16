@@ -1,7 +1,7 @@
 """Tests для core.auth.gateway (S95 W4 AuthGateway facade)."""
+
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 import pytest

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S62 W4 — build.py part of yaml_loader decomp.
 
 Funcs: _build_pipeline, _is_allowed_processor, _build_sub, _apply_processor.
@@ -7,10 +5,13 @@ Funcs: _build_pipeline, _is_allowed_processor, _build_sub, _apply_processor.
 pipeline building (build_pipeline + processor gating + sub-pipeline + apply processor).
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.yaml_loader.control_flow import _materialize_control_flow_params
 
 # Sentinel for "not set" to distinguish from None
 _MISSING = object()

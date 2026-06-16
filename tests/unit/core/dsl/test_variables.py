@@ -14,22 +14,19 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Any
 
 import pytest
 
 from src.backend.core.dsl.expression_resolver import (
-    ExpressionResolver,
     ExpressionResolutionError,
+    ExpressionResolver,
     resolve_expression,
 )
 from src.backend.core.dsl.variables import (
     DSLVariableStore,
     InMemoryVariableBackend,
-    VariableNotFoundError,
     VariableScope,
 )
-
 
 # ---------------------------------------------------------------------------
 # VariableScope tests
@@ -144,9 +141,7 @@ class TestInMemoryVariableBackend:
         await backend.set("k", "global", VariableScope.global_scope())
         await backend.set("k", "tenant", VariableScope.for_tenant("acme"))
         assert await backend.get("k", VariableScope.global_scope()) == "global"
-        assert (
-            await backend.get("k", VariableScope.for_tenant("acme")) == "tenant"
-        )
+        assert await backend.get("k", VariableScope.for_tenant("acme")) == "tenant"
 
 
 # ---------------------------------------------------------------------------
@@ -251,16 +246,14 @@ class TestExpressionResolver:
         store = DSLVariableStore(backends=[InMemoryVariableBackend()])
         await store.set("api.key", "tenant-key", scope="tenant:acme")
         resolver = ExpressionResolver(store)
-        result = await resolver.resolve(
-            "${var('api.key', scope='tenant:acme')}"
-        )
+        result = await resolver.resolve("${var('api.key', scope='tenant:acme')}")
         assert result == "tenant-key"
 
     @pytest.mark.asyncio
     async def test_resolve_var_with_default_double_quoted(self) -> None:
         store = DSLVariableStore(backends=[InMemoryVariableBackend()])
         resolver = ExpressionResolver(store)
-        result = await resolver.resolve('${var(\'missing\', default="fallback-dq")}')
+        result = await resolver.resolve("${var('missing', default=\"fallback-dq\")}")
         assert result == "fallback-dq"
 
     @pytest.mark.asyncio
@@ -331,16 +324,18 @@ class TestVariableResolveProcessor:
         # Reconfigure default singleton to use our store.
         DSLVariableStore.configure(store.backends)
 
+        from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange, Message
         from src.backend.dsl.engine.processors.variable_resolve import (
             VariableResolveProcessor,
         )
-        from src.backend.dsl.engine.context import ExecutionContext
 
         processor = VariableResolveProcessor.__new__(VariableResolveProcessor)
         processor.__init__(scope="global", fail_on_unresolved=False)
 
-        exchange = Exchange(in_message=Message(body={"endpoint": "${var('api.url')}", "method": "GET"}))
+        exchange = Exchange(
+            in_message=Message(body={"endpoint": "${var('api.url')}", "method": "GET"})
+        )
         await processor.process(exchange, ExecutionContext())
 
         assert exchange.in_message.body == {
@@ -357,11 +352,11 @@ class TestVariableResolveProcessor:
         await store.set("name", "World", scope="global")
         DSLVariableStore.configure(store.backends)
 
+        from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange, Message
         from src.backend.dsl.engine.processors.variable_resolve import (
             VariableResolveProcessor,
         )
-        from src.backend.dsl.engine.context import ExecutionContext
 
         processor = VariableResolveProcessor.__new__(VariableResolveProcessor)
         processor.__init__(scope="global", fail_on_unresolved=False)
@@ -381,11 +376,11 @@ class TestVariableResolveProcessor:
         store = DSLVariableStore(backends=[InMemoryVariableBackend()])
         DSLVariableStore.configure(store.backends)
 
+        from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange, Message
         from src.backend.dsl.engine.processors.variable_resolve import (
             VariableResolveProcessor,
         )
-        from src.backend.dsl.engine.context import ExecutionContext
 
         processor = VariableResolveProcessor.__new__(VariableResolveProcessor)
         processor.__init__(scope="global", fail_on_unresolved=False)
@@ -402,11 +397,11 @@ class TestVariableResolveProcessor:
         store = DSLVariableStore(backends=[InMemoryVariableBackend()])
         DSLVariableStore.configure(store.backends)
 
+        from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange, Message
         from src.backend.dsl.engine.processors.variable_resolve import (
             VariableResolveProcessor,
         )
-        from src.backend.dsl.engine.context import ExecutionContext
 
         processor = VariableResolveProcessor.__new__(VariableResolveProcessor)
         processor.__init__(scope="global", fail_on_unresolved=True)
@@ -418,11 +413,11 @@ class TestVariableResolveProcessor:
     @pytest.mark.asyncio
     async def test_non_dict_body_skipped(self) -> None:
         """Non-dict body is left untouched."""
+        from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange, Message
         from src.backend.dsl.engine.processors.variable_resolve import (
             VariableResolveProcessor,
         )
-        from src.backend.dsl.engine.context import ExecutionContext
 
         processor = VariableResolveProcessor.__new__(VariableResolveProcessor)
         processor.__init__(scope="global", fail_on_unresolved=False)
@@ -446,10 +441,10 @@ class TestVariableMixin:
 
     def test_mixin_is_chainable(self) -> None:
         """Verify _add_lazy returns self for chainable builders."""
-        from src.backend.dsl.builders.variable_mixin import VariableMixin
-
         # Static check: methods return self via _add_lazy.
         import inspect
+
+        from src.backend.dsl.builders.variable_mixin import VariableMixin
 
         sig = inspect.signature(VariableMixin.variable)
         # variable(*, default, scope, name) — kwargs-only.

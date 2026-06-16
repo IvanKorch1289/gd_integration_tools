@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """HttpClient package (S61 W4 decomp from http.py 514 LOC).
 
 17 methods decomposed в 4 mixin files + base.py + factory.py:
@@ -15,6 +13,7 @@ Core (2) остается в __init__.py: __init__, close.
 Backward-compat: ``from src.backend.infrastructure.clients.transport.http import HttpClient`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

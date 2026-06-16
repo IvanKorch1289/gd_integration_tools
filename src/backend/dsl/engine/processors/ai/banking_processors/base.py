@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S59 W1 — base.py part of banking_processors decomp.
 
 Classes: _BankingAIProcessor.
 
 _BankingAIProcessor (5 methods, base for all processors).
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 

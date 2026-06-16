@@ -71,17 +71,15 @@ def test_get_db_initializer_no_nameerror() -> None:
     Проверяем ТОЛЬКО NameError, не пытаемся реально создать engine
     (SQLAlchemy нужен реальный URL, не MagicMock).
     """
+    from unittest.mock import MagicMock, patch
+
     from src.backend.infrastructure.database.database import accessors
-    from unittest.mock import patch, MagicMock
 
     # Подменяем DatabaseInitializer на stub, чтобы не требовать
     # реальный SQLAlchemy engine (нужен живой PostgreSQL).
     fake_instance = MagicMock()
     with patch.object(
-        accessors,
-        "DatabaseInitializer",
-        return_value=fake_instance,
-        create=True,
+        accessors, "DatabaseInitializer", return_value=fake_instance, create=True
     ):
         accessors.get_db_initializer.cache_clear()
         try:
@@ -97,8 +95,9 @@ def test_get_db_initializer_no_nameerror() -> None:
 
 def test_get_external_db_registry_no_nameerror() -> None:
     """``get_external_db_registry()`` НЕ падает с ``NameError``."""
+    from unittest.mock import MagicMock, patch
+
     from src.backend.infrastructure.database.database import accessors
-    from unittest.mock import patch, MagicMock
 
     fake_instance = MagicMock()
     # Подменяем ОБА: ExternalDatabaseRegistry (целевой fix) и
@@ -106,12 +105,15 @@ def test_get_external_db_registry_no_nameerror() -> None:
     # конфигурацию с валидацией профилей — не наша забота в этом тесте).
     fake_settings = MagicMock()
     fake_settings.external_databases.profiles = {}
-    with patch.object(
-        accessors,
-        "ExternalDatabaseRegistry",
-        return_value=fake_instance,
-        create=True,
-    ), patch.object(accessors, "settings", fake_settings):
+    with (
+        patch.object(
+            accessors,
+            "ExternalDatabaseRegistry",
+            return_value=fake_instance,
+            create=True,
+        ),
+        patch.object(accessors, "settings", fake_settings),
+    ):
         accessors.get_external_db_registry.cache_clear()
         try:
             result = accessors.get_external_db_registry()

@@ -154,7 +154,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                     raw_id = cid.removeprefix("outbox_msg_id:")
                     try:
                         await outbox_repo.mark_sent(int(raw_id))
-                    except (ValueError, TypeError):
+                    except ValueError, TypeError:
                         return
 
             async def _deliverer(event: OutboxEvent) -> None:
@@ -162,9 +162,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                 await _publish(
                     event.action,
                     event.payload,
-                    {
-                        "correlation_id": event.correlation_id or "",
-                    },
+                    {"correlation_id": event.correlation_id or ""},
                 )
 
             await start_outbox_dispatcher(
@@ -299,9 +297,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
             else:
                 _logger.info(*_payload)
     except ProductionConfigError as cfg_exc:
-        _logger.critical(
-            "Конфигурация production не прошла валидацию: %s", cfg_exc
-        )
+        _logger.critical("Конфигурация production не прошла валидацию: %s", cfg_exc)
         raise
     except Exception as cfg_exc:
         _logger.warning(
@@ -355,9 +351,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
                     host, _, port = node_entry.strip().partition(":")
                     if not host:
                         continue
-                    parsed_nodes.append(
-                        ClusterNode(host=host, port=int(port or 6379))
-                    )
+                    parsed_nodes.append(ClusterNode(host=host, port=int(port or 6379)))
 
                 cluster_password = os.environ.get("REDIS_CLUSTER_PASSWORD") or None
                 adapter = RedisClusterAdapter(
@@ -373,8 +367,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
                 )
                 app.state.redis_cluster_adapter = adapter
                 _logger.info(
-                    "RedisClusterAdapter зарегистрирован: nodes=%d",
-                    len(parsed_nodes),
+                    "RedisClusterAdapter зарегистрирован: nodes=%d", len(parsed_nodes)
                 )
         except Exception as rc_exc:
             _logger.warning(
@@ -507,9 +500,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
         populate_from_actions(schema_registry)
         populate_from_manifests(schema_registry)
         app.state.schema_registry = schema_registry
-        _logger.info(
-            "ServiceSchemaRegistry заполнен: %s", schema_registry.summary()
-        )
+        _logger.info("ServiceSchemaRegistry заполнен: %s", schema_registry.summary())
     except Exception as sr_exc:
         _logger.warning("ServiceSchemaRegistry bootstrap skipped: %s", sr_exc)
 

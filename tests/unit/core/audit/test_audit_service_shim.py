@@ -32,9 +32,7 @@ def test_audit_service_three_paths_resolve_to_same_class() -> None:
 
 def test_get_unified_audit_service_three_paths_resolve_to_same_function() -> None:
     """All 3 import paths дают одну и ту же функцию."""
-    from src.backend.core.audit.facade import (
-        get_unified_audit_service as FacadeGet,
-    )
+    from src.backend.core.audit.facade import get_unified_audit_service as FacadeGet
     from src.backend.core.audit.facade.audit_service import (
         get_unified_audit_service as CanonicalGet,
     )
@@ -48,9 +46,7 @@ def test_get_unified_audit_service_three_paths_resolve_to_same_function() -> Non
 
 def test_audit_service_singleton_via_shim() -> None:
     """get_unified_audit_service через shim возвращает тот же singleton."""
-    from src.backend.services.audit.audit_service import (
-        get_unified_audit_service,
-    )
+    from src.backend.services.audit.audit_service import get_unified_audit_service
 
     svc1 = get_unified_audit_service()
     svc2 = get_unified_audit_service()

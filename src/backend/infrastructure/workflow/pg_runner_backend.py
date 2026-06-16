@@ -28,13 +28,13 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
+from src.backend.core.domain.models.workflow_event import WorkflowEventType
+from src.backend.core.domain.models.workflow_instance import WorkflowStatus
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,
 )
-from src.backend.core.domain.models.workflow_event import WorkflowEventType
-from src.backend.core.domain.models.workflow_instance import WorkflowStatus
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowEventStore,

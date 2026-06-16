@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Setup infrastructure package (S60 W3 decomp from setup_infra.py 534 LOC).
 
 13 top-level funcs decomposed в 4 files (per concern):
@@ -11,6 +9,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.plugins.composition.setup_infra import perform_infrastructure_operation`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.plugins.composition.setup_infra.health import (
     _get_watcher_manager,  # S60 W3: re-export

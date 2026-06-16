@@ -38,9 +38,9 @@ from typing import Any
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.core.workflow.builder import WorkflowBuilder
 from src.backend.core.workflow.builder import (
     DurableWorkflowProcessor,
+    WorkflowBuilder,
     WorkflowStep,
 )
 

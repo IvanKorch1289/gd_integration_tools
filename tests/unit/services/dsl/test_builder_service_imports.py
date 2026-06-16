@@ -19,15 +19,12 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-
 _TARGET_FILE = "src/backend/services/dsl/builder_service.py"
 _TOP_LEVEL_DSL_IMPORTS: tuple[str, ...] = (
     "from src.backend.dsl.commands.registry import route_registry",
     "from src.backend.dsl.yaml_store import YAMLStore",
 )
-_TYPECHECKING_DSL_IMPORT: str = (
-    "from src.backend.dsl.engine.pipeline import Pipeline"
-)
+_TYPECHECKING_DSL_IMPORT: str = "from src.backend.dsl.engine.pipeline import Pipeline"
 
 
 def _parse_builder_service() -> ast.Module:
@@ -80,12 +77,10 @@ def test_top_level_dsl_imports() -> None:
                     if "src.backend.dsl" in child.module:
                         names = {alias.name for alias in child.names}
                         assert "route_registry" not in names, (
-                            "route_registry должен быть в top-level, "
-                            "не в TYPE_CHECKING"
+                            "route_registry должен быть в top-level, не в TYPE_CHECKING"
                         )
                         assert "YAMLStore" not in names, (
-                            "YAMLStore должен быть в top-level, "
-                            "не в TYPE_CHECKING"
+                            "YAMLStore должен быть в top-level, не в TYPE_CHECKING"
                         )
 
 
@@ -114,8 +109,7 @@ def test_type_checking_imports() -> None:
     )
     imported_names = {alias.name for alias in pipeline_node.names}
     assert "Pipeline" in imported_names, (
-        f"Ожидался импорт Pipeline из dsl.engine.pipeline, "
-        f"найдено: {imported_names}"
+        f"Ожидался импорт Pipeline из dsl.engine.pipeline, найдено: {imported_names}"
     )
 
 

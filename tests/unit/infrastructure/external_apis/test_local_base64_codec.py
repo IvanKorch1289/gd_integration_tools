@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import base64
 
-import pytest
-
 from src.backend.infrastructure.external_apis._base64_codec import (
     decode_base64,
     encode_base64,
@@ -81,10 +79,8 @@ def test_decode_base64_returns_str_not_bytes() -> None:
 
 def test_api_parity_with_dsl_codec() -> None:
     """API parity: same input → same output as dsl/codec/base64."""
-    from src.backend.dsl.codec.base64 import (
-        decode_base64 as dsl_decode,
-        encode_base64 as dsl_encode,
-    )
+    from src.backend.dsl.codec.base64 import decode_base64 as dsl_decode
+    from src.backend.dsl.codec.base64 import encode_base64 as dsl_encode
 
     test_input = "S69 W1 parity test"
     assert encode_base64(test_input) == dsl_encode(test_input)

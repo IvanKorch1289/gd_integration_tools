@@ -1,8 +1,8 @@
 """Tests для PollCDCBackend S93 W4 — feed mode (in-memory CDC)."""
+
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -71,6 +71,7 @@ async def test_poll_cdc_feed_skips_non_dict() -> None:
 @pytest.mark.asyncio
 async def test_poll_cdc_feed_respects_stop() -> None:
     """backend.close() во время feed consume → stop."""
+
     async def slow_feed():
         for i in range(10):
             await asyncio.sleep(0.01)

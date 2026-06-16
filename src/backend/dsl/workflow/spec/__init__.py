@@ -11,10 +11,6 @@ Backward-compat: ``from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from pydantic import Field
-
 from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,  # S56 W1: re-export
     PauseDeclaration,  # S56 W1: re-export
@@ -38,6 +34,7 @@ from src.backend.dsl.workflow.spec.policies import (
 )
 from src.backend.dsl.workflow.spec.workflow import (
     WorkflowDeclaration,  # S56 W1: re-export
+    WorkflowStep,  # S56 W1: re-export
 )
 
 __all__ = (
@@ -59,19 +56,3 @@ __all__ = (
     "EscalateDeclaration",
     "WorkflowDeclaration",
 )
-
-WorkflowStep = Annotated[
-    ActivityDeclaration
-    | SagaDeclaration
-    | SignalWaitDeclaration
-    | SleepDeclaration
-    | PauseDeclaration
-    | ResumeDeclaration
-    | SensorDeclaration
-    | AgentInvokeDeclaration
-    | ReflectDeclaration
-    | CheckpointDeclaration
-    | GuardrailDeclaration
-    | EscalateDeclaration,
-    Field(discriminator="type"),
-]

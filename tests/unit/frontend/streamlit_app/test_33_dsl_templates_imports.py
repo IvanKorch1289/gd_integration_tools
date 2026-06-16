@@ -24,8 +24,6 @@ import re
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 
 def _page_path() -> Path:
     """Вернуть абсолютный путь к Streamlit-странице 33_DSL_Templates.py.
@@ -71,7 +69,9 @@ def test_dsl_imports_top_level() -> None:
     top_section = "\n".join(source.split("\n")[17:27])
 
     # 2 стабильных dsl imports должны быть в top-level
-    assert "from src.backend.dsl.workflow.spec import WorkflowDeclaration" in top_section
+    assert (
+        "from src.backend.dsl.workflow.spec import WorkflowDeclaration" in top_section
+    )
     assert "from src.backend.dsl.workflow.visualize import to_mermaid" in top_section
 
     # Проверяем, что они идут ДО frontend imports (alphabetical/sectioned)
@@ -180,9 +180,7 @@ def test_graceful_degradation_when_dsl_unavailable() -> None:
     # внутри try/except — значит регрессия.
     # Простая проверка: count try/except ImportError для visualize spec
     # должно быть 0 (template_registry_compat — единственное исключение).
-    import_error_blocks = re.findall(
-        r"except\s+ImportError", source
-    )
+    import_error_blocks = re.findall(r"except\s+ImportError", source)
     assert len(import_error_blocks) == 1, (
         f"Expected 1 ImportError except (template_registry_compat fallback), "
         f"got {len(import_error_blocks)}"
@@ -245,7 +243,9 @@ def test_top_level_imports_section_structure() -> None:
     assert "from src.backend.dsl.workflow.spec import WorkflowDeclaration" in joined
     assert "from src.backend.dsl.workflow.visualize import to_mermaid" in joined
     assert "from src.frontend.streamlit_app.api_clients import get_api_client" in joined
-    assert "from src.frontend.streamlit_app.shared.components import setup_page" in joined
+    assert (
+        "from src.frontend.streamlit_app.shared.components import setup_page" in joined
+    )
 
 
 # ── Test 8: dsl imports are not duplicated ────────────────────────────
@@ -316,10 +316,7 @@ def test_mermaid_rendering_has_try_except_around_to_mermaid() -> None:
                 value = child.value
                 if isinstance(value, ast.Call):
                     func = value.func
-                    if (
-                        isinstance(func, ast.Name)
-                        and func.id == "to_mermaid"
-                    ):
+                    if isinstance(func, ast.Name) and func.id == "to_mermaid":
                         found = True
                         break
         if found:

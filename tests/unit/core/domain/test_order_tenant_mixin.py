@@ -92,8 +92,8 @@ def test_order_existing_fields_preserved() -> None:
 def test_order_relationships_preserved() -> None:
     """Order.relationships — order_kind, files — збережені після S89."""
     # Import related models для SQLAlchemy mapper initialization
-    from src.backend.core.domain.models.orderkinds import OrderKind
     from src.backend.core.domain.models.files import OrderFile
+    from src.backend.core.domain.models.orderkinds import OrderKind
 
     # SQLAlchemy relationships
     rels = Order.__mapper__.relationships

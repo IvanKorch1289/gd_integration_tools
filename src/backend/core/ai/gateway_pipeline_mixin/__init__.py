@@ -42,6 +42,7 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 """
 
 from typing import TYPE_CHECKING
+
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:

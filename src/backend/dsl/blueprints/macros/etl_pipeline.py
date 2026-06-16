@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S68 W1 - etl_pipeline blueprint extracted from macros.py.
 
 ETL pipeline blueprint (extract-transform-load).
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any

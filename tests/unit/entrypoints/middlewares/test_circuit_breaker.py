@@ -2,9 +2,9 @@
 
 FINAL_REPORT_V2 P1 #8 closure: 'Вернуть CircuitBreakerMiddleware'.
 S81 W1 design: per-route state, sliding window, BreakerPolicy config."""
+
 from __future__ import annotations
 
-import asyncio
 import time
 from unittest.mock import MagicMock
 
@@ -16,7 +16,6 @@ from src.backend.entrypoints.middlewares.circuit_breaker import (
     CircuitBreakerMiddleware,
     RouteBreakerState,
 )
-
 
 # BreakerPolicy tests
 # ============================================================================
@@ -180,10 +179,7 @@ def test_route_policies_prefix_match() -> None:
 
 def test_excluded_statuses_not_counted_as_failures() -> None:
     """4xx statuses (excluded) — not counted as failures."""
-    policy = BreakerPolicy(
-        failure_threshold=2,
-        excluded_statuses=(404,),
-    )
+    policy = BreakerPolicy(failure_threshold=2, excluded_statuses=(404,))
     m = _make_middleware(default_policy=policy)
     # Simulate: 5x 404s (would normally trip circuit)
     for _ in range(5):
@@ -244,7 +240,5 @@ def _make_middleware(
     """Create CircuitBreakerMiddleware для unit testing."""
     app_mock = MagicMock()
     return CircuitBreakerMiddleware(
-        app_mock,
-        default_policy=default_policy,
-        route_policies=route_policies,
+        app_mock, default_policy=default_policy, route_policies=route_policies
     )

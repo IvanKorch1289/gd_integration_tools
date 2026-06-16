@@ -25,7 +25,6 @@ Sprint 4 К3-B §3 — удалены 4 legacy-файла (985 LOC), Mongo-пр�
 native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallback.
 """
 
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4

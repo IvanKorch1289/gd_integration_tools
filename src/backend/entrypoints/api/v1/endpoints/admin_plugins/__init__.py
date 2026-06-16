@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Admin plugins API endpoints (S62 W1 decomp from admin_plugins.py 514 LOC).
 
 11 schemas + 13 funcs decomposed в 3 files:
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_plugins import PluginSummary`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
     diff_plugin_versions,  # S62 W1: re-export

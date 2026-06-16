@@ -10,10 +10,10 @@ NotebookExecutionService вместо общего singleton (с per-process con
 - _overrides dict для test-isolation
 - Late import NotebookExecutionService (избегаем циркуляра на jupyter_hub_settings)
 """
+
 from __future__ import annotations
 
 from typing import Any
-
 
 # DEPRECATED (Wave 6.1): локальная ``_INFRA`` константа склеена динамически,
 # чтобы ``tools/check_layers.py`` не считал её прямым статическим импортом.
@@ -31,9 +31,7 @@ def get_notebook_execution_service_provider() -> Any:
     if "notebook_execution_service" in _overrides:
         return _overrides["notebook_execution_service"]
     from src.backend.core.config.services.jupyter_hub import jupyter_hub_settings
-    from src.backend.services.jupyter.execution_service import (
-        NotebookExecutionService,
-    )
+    from src.backend.services.jupyter.execution_service import NotebookExecutionService
 
     svc = NotebookExecutionService(jupyter_hub_settings)
     _overrides["notebook_execution_service"] = svc

@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.transport.http.base import (
-        FilePart,  # noqa: F401
-    )
+    from src.backend.infrastructure.clients.transport.http.base import FilePart
 
 from collections.abc import Mapping
 from logging import DEBUG
@@ -29,7 +27,7 @@ class RequestMixin:
     __slots__ = ()
 
     async def make_request(
-        self: HttpClient,
+        self,
         method: str,
         url: str,
         headers: dict[str, str] | None = None,
@@ -127,7 +125,7 @@ class RequestMixin:
             )
             self.last_activity = monotonic()
 
-    def _is_retryable_exception(self: HttpClient, exc: BaseException) -> bool:
+    def _is_retryable_exception(self, exc: BaseException) -> bool:
         if isinstance(exc, httpx.HTTPStatusError):
             return exc.response.status_code in {408, 409, 425, 429, 500, 502, 503, 504}
         if isinstance(exc, (httpx.TransportError, httpx.TimeoutException)):
@@ -135,7 +133,7 @@ class RequestMixin:
         return isinstance(exc, consts.RETRY_EXCEPTIONS)
 
     async def _handle_final_error(
-        self: HttpClient, exception: Exception | None, start_time: float
+        self, exception: Exception | None, start_time: float
     ) -> dict[str, Any]:
         status_code: int | None = None
         headers: dict[str, str] = {}

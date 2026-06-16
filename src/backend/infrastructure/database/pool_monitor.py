@@ -94,7 +94,7 @@ class PoolMonitor:
                 "total_connections": total,
                 "utilization_pct": round(utilization, 1),
             }
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return None
 
     def get_current_stats(self) -> dict[str, Any]:

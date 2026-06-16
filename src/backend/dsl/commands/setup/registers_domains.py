@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W2 — registers_domains.py part of setup.py decomp.
 
 domain entity registrations (orders, files, dadata, admin, etc.).
@@ -7,6 +5,7 @@ domain entity registrations (orders, files, dadata, admin, etc.).
 Functions: _register_orders, _register_files, _register_skb_api, _register_dadata, _register_tech, _register_admin, _register_servicedsl_auto_register.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 from src.backend.dsl.commands.setup.helpers import (

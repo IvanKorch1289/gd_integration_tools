@@ -1946,10 +1946,7 @@ class RouteBuilder:
         ...
 
     def s3_list(
-        self,
-        *,
-        prefix_from: Union[str, None] = ...,
-        result_property: str = ...,
+        self, *, prefix_from: Union[str, None] = ..., result_property: str = ...
     ) -> RouteBuilder:
         """LIST ключей в S3 bucket с пагинацией по ``prefix_from``."""
         ...

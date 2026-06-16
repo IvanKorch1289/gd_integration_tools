@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S62 W1 — helpers.py part of admin_plugins decomp.
 
 Funcs: _check_flag_enabled, _get_plugin_registry, _mock_plugins, _mock_manifest, _get_version_service.
 
 5 helpers (flag check, registry, mock data, version service).
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

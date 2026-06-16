@@ -1,7 +1,6 @@
 """Tests для DSL db_insert/db_upsert/db_delete (S95 W1)."""
-from __future__ import annotations
 
-from typing import Any
+from __future__ import annotations
 
 import pytest
 
@@ -12,7 +11,6 @@ from src.backend.dsl.engine.processors.db_crud import (
     build_upsert_sql,
 )
 
-
 # ─────────── SQL Builder Tests (no DB) ───────────
 
 
@@ -20,7 +18,9 @@ def test_build_insert_sql_basic() -> None:
     sql, params = build_insert_sql(
         "users", {"id": 1, "name": "Alice", "email": "a@b.com"}
     )
-    assert sql == 'INSERT INTO "users" ("id", "name", "email") VALUES (:id, :name, :email)'
+    assert (
+        sql == 'INSERT INTO "users" ("id", "name", "email") VALUES (:id, :name, :email)'
+    )
     assert params == {"id": 1, "name": "Alice", "email": "a@b.com"}
 
 
@@ -46,9 +46,7 @@ def test_build_insert_sql_rejects_empty_data() -> None:
 
 def test_build_upsert_sql_basic() -> None:
     sql, params = build_upsert_sql(
-        "users",
-        {"id": 1, "name": "Alice", "email": "a@b.com"},
-        conflict_keys=["id"],
+        "users", {"id": 1, "name": "Alice", "email": "a@b.com"}, conflict_keys=["id"]
     )
     assert "INSERT INTO" in sql
     assert 'ON CONFLICT ("id")' in sql
@@ -62,11 +60,7 @@ def test_build_upsert_sql_basic() -> None:
 
 def test_build_upsert_sql_do_nothing_when_all_conflict_keys() -> None:
     """Если все columns = conflict_keys → DO NOTHING (idempotent insert)."""
-    sql, _ = build_upsert_sql(
-        "users",
-        {"id": 1},
-        conflict_keys=["id"],
-    )
+    sql, _ = build_upsert_sql("users", {"id": 1}, conflict_keys=["id"])
     assert "DO NOTHING" in sql
     assert "DO UPDATE" not in sql
 
@@ -92,10 +86,11 @@ def test_build_delete_sql_basic() -> None:
 
 
 def test_build_delete_sql_multiple_conditions() -> None:
-    sql, params = build_delete_sql(
-        "sessions", {"user_id": 1, "active": False}
+    sql, params = build_delete_sql("sessions", {"user_id": 1, "active": False})
+    assert (
+        sql
+        == 'DELETE FROM "sessions" WHERE "user_id" = :user_id AND "active" = :active'
     )
-    assert sql == 'DELETE FROM "sessions" WHERE "user_id" = :user_id AND "active" = :active'
     assert params == {"user_id": 1, "active": False}
 
 
@@ -114,9 +109,7 @@ def test_build_delete_sql_rejects_unsafe_identifier() -> None:
 
 def test_processor_insert_creates_with_correct_params() -> None:
     proc = DbCrudProcessor(
-        operation="INSERT",
-        table="orders",
-        data={"id": 1, "status": "new"},
+        operation="INSERT", table="orders", data={"id": 1, "status": "new"}
     )
     assert proc._operation == "INSERT"
     assert proc._table == "orders"
@@ -125,18 +118,11 @@ def test_processor_insert_creates_with_correct_params() -> None:
 
 def test_processor_upsert_validates_conflict_keys() -> None:
     with pytest.raises(ValueError, match="operation must be"):
-        DbCrudProcessor(
-            operation="INVALID",
-            table="x",
-        )
+        DbCrudProcessor(operation="INVALID", table="x")
 
 
 def test_processor_delete_keeps_where() -> None:
-    proc = DbCrudProcessor(
-        operation="DELETE",
-        table="logs",
-        where={"level": "debug"},
-    )
+    proc = DbCrudProcessor(operation="DELETE", table="logs", where={"level": "debug"})
     assert proc._operation == "DELETE"
     assert proc._where == {"level": "debug"}
 
@@ -152,7 +138,9 @@ def test_processor_name_auto() -> None:
     """Default name = 'db_<operation>' (lowercase)."""
     proc = DbCrudProcessor(operation="INSERT", table="t", data={"a": 1})
     assert proc.name == "db_insert"
-    proc2 = DbCrudProcessor(operation="UPSERT", table="t", data={"a": 1}, conflict_keys=["a"])
+    proc2 = DbCrudProcessor(
+        operation="UPSERT", table="t", data={"a": 1}, conflict_keys=["a"]
+    )
     assert proc2.name == "db_upsert"
     proc3 = DbCrudProcessor(operation="DELETE", table="t", where={"a": 1})
     assert proc3.name == "db_delete"
@@ -184,7 +172,8 @@ def test_dsl_persistence_total_method_count() -> None:
     from src.backend.dsl.builders.transport.persistence import PersistenceMixin
 
     methods = [
-        m for m in dir(PersistenceMixin)
+        m
+        for m in dir(PersistenceMixin)
         if not m.startswith("_") and callable(getattr(PersistenceMixin, m, None))
     ]
     # 9 original: db_query, db_query_external, jdbc_query, db_call_procedure,

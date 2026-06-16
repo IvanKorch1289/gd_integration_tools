@@ -20,9 +20,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, Message
-from src.backend.dsl.engine.processors.redis_lock_processor import (
-    RedisLockProcessor,
-)
+from src.backend.dsl.engine.processors.redis_lock_processor import RedisLockProcessor
 
 
 def _exchange_with() -> Exchange[Any]:
@@ -74,9 +72,7 @@ async def test_redis_lock_acquired_writes_property() -> None:
 @pytest.mark.asyncio
 async def test_redis_lock_acquired_with_blocking_timeout() -> None:
     """blocking_timeout=0 → non-blocking acquire."""
-    proc = RedisLockProcessor(
-        key="orders.cron", ttl_seconds=60, blocking_timeout=0.0
-    )
+    proc = RedisLockProcessor(key="orders.cron", ttl_seconds=60, blocking_timeout=0.0)
     ex = _exchange_with()
 
     fake_cls = MagicMock()
@@ -91,8 +87,7 @@ async def test_redis_lock_acquired_with_blocking_timeout() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock",
-        new=fake_cls,
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -152,14 +147,11 @@ async def test_redis_lock_custom_key_prefix() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock",
-        new=fake_cls,
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
     ):
         await proc.process(ex, context=MagicMock())
 
-    fake_cls.assert_called_once_with(
-        "backup", ttl_seconds=60, key_prefix="etl"
-    )
+    fake_cls.assert_called_once_with("backup", ttl_seconds=60, key_prefix="etl")
 
 
 # ─── Failure paths ─────────────────────────────────────────────────────────
@@ -212,12 +204,7 @@ def test_redis_lock_to_spec_minimal() -> None:
     """Default значения опускаются в spec."""
     proc = RedisLockProcessor(key="x")
     spec = proc.to_spec()
-    assert spec == {
-        "redis_lock": {
-            "key": "x",
-            "ttl_seconds": 60,
-        }
-    }
+    assert spec == {"redis_lock": {"key": "x", "ttl_seconds": 60}}
 
 
 def test_redis_lock_to_spec_full() -> None:

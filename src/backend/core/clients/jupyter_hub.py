@@ -13,9 +13,4 @@ from src.backend.infrastructure.clients.external.jupyter_hub import (  # noqa: F
     JupyterHubUser,
 )
 
-__all__ = (
-    "JupyterHubClient",
-    "JupyterHubError",
-    "JupyterHubServer",
-    "JupyterHubUser",
-)
+__all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubServer", "JupyterHubUser")

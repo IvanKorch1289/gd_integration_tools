@@ -25,7 +25,9 @@ logger = get_logger("core.redis_coordinator")
 
 def _get_raw_redis() -> Any:
     """Возвращает raw Redis client (обходит обёртки)."""
-    from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
+    from src.backend.infrastructure.clients.storage.redis import (
+        get_redis_client as redis_client,
+    )
 
     return getattr(redis_client, "_raw_client", None) or redis_client
 
@@ -58,7 +60,7 @@ class RedisHash:
             value = value.decode()
         try:
             return orjson.loads(value)
-        except (orjson.JSONDecodeError, ValueError):
+        except orjson.JSONDecodeError, ValueError:
             return value
 
     async def delete(self, field: str) -> bool:
@@ -75,7 +77,7 @@ class RedisHash:
             val_str = v.decode() if isinstance(v, bytes) else v
             try:
                 result[key_str] = orjson.loads(val_str)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 result[key_str] = val_str
         return result
 
@@ -198,7 +200,7 @@ class RedisPubSub:
                     data = data.decode()
                 try:
                     yield orjson.loads(data)
-                except (orjson.JSONDecodeError, ValueError, TypeError):
+                except orjson.JSONDecodeError, ValueError, TypeError:
                     yield data
         finally:
             await pubsub.unsubscribe(self._channel)

@@ -33,6 +33,9 @@ redis_logger = get_logger("redis")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
+from src.backend.infrastructure.clients.storage.redis._protocol import (
+    _RedisClientProtocol,  # S146 W1: re-export для test imports
+)
 from src.backend.infrastructure.clients.storage.redis.cache_mixin import (
     CacheMixin,  # S59 W3: MRO
 )
@@ -44,9 +47,6 @@ from src.backend.infrastructure.clients.storage.redis.helpers_mixin import (
 )
 from src.backend.infrastructure.clients.storage.redis.stream_mixin import (
     StreamMixin,  # S59 W3: MRO
-)
-from src.backend.infrastructure.clients.storage.redis._protocol import (
-    _RedisClientProtocol,  # S146 W1: re-export для test imports
 )
 
 __all__ = (

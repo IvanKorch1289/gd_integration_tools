@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S67 W3 - semantic_cache.py part of semantic_cache decomp.
 
 Per-class file split.
 
 Classes: SemanticCache.
 """
+
+from __future__ import annotations
 
 import hashlib
 import time

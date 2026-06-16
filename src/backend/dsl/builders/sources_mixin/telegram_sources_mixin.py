@@ -3,6 +3,7 @@
 Добавляет ``from_telegram`` метод в RouteBuilder — обёртка над
 :class:`TelegramWebhookSource` для регистрации Telegram webhook в DSL route.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

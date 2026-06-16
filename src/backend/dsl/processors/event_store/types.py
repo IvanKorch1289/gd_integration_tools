@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S66 W1 — types.py part of event_store decomp.
 
 core data types (EventStream + Event).
 
 Classes: EventStream, Event.
 """
+
+from __future__ import annotations
 
 import time
 import uuid

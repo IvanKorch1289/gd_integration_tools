@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S66 W2 — orchestrator.py part of setup.py decomp.
 
 main register_action_handlers() orchestrator.
@@ -7,6 +5,7 @@ main register_action_handlers() orchestrator.
 Functions: register_action_handlers.
 """
 
+from __future__ import annotations
 
 from src.backend.dsl.commands.setup.registers_domains import (
     _register_admin,  # S66 W2: orchestrator cross-import

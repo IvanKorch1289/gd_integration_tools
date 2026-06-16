@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """AIPolicyEnforcer package (S67 W2 decomp from enforcer.py 462 LOC).
 
 1 god-class (12 methods) -> 4 mixins + 1 core:
@@ -13,6 +11,7 @@ Core (1) remains in __init__.py: __init__.
 Backward-compat: ``from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer`` works.
 """
 
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
@@ -23,9 +22,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from src.backend.core.ai.policy.spec import (
-        ToolsSpec,  # S76 W3
-    )
+
+    from src.backend.core.ai.policy.spec import ToolsSpec  # S76 W3
     from src.backend.core.messaging.dlq import DLQWriter
 from src.backend.core.ai.policy.enforcer.handle_mixin import HandleMixin  # S67 W2: MRO
 from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
@@ -74,11 +72,7 @@ class AIPolicyEnforcer(InputGuardMixin, OutputGuardMixin, HandleMixin, SanitizeM
         self._llm_guard_client = llm_guard_client
         self._dlq_writer = dlq_writer
 
-    def filter_tools(
-        self,
-        tool_names: Iterable[str],
-        spec: "ToolsSpec",
-    ) -> list[str]:
+    def filter_tools(self, tool_names: Iterable[str], spec: "ToolsSpec") -> list[str]:
         """S76 W3 — pre-init filter tool list per AIPolicySpec.tools.
 
         Convenience method wrapping

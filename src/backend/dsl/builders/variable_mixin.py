@@ -56,9 +56,7 @@ class VariableMixin:
             self (chainable).
         """
         return self.variable_resolve(  # type: ignore[attr-defined,return-value]
-            scope=scope,
-            fail_on_unresolved=False,
-            name=name or f"variable:{key}",
+            scope=scope, fail_on_unresolved=False, name=name or f"variable:{key}"
         )
 
     def variable_resolve(

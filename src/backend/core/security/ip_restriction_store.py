@@ -73,8 +73,7 @@ class IPRestrictionStore:
             if admin_routes is not None:
                 self._admin_routes = list(admin_routes)
                 self._admin_patterns = [
-                    re.compile(fnmatch.translate(route))
-                    for route in self._admin_routes
+                    re.compile(fnmatch.translate(route)) for route in self._admin_routes
                 ]
         logger.info(
             "IP restriction admin config updated: %d ips, %d routes",
@@ -90,9 +89,7 @@ class IPRestrictionStore:
         enabled: bool = True,
     ) -> None:
         """Устанавливает per-route IP-правило."""
-        rule = IPRestrictionRule(
-            allowed_ips=frozenset(allowed_ips), enabled=enabled
-        )
+        rule = IPRestrictionRule(allowed_ips=frozenset(allowed_ips), enabled=enabled)
         with self._state_lock:
             self._route_rules[path_pattern] = rule
         logger.info(

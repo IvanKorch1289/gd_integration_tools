@@ -1,11 +1,12 @@
-from __future__ import annotations
-
 """S58 W2 — state.py part of saga_lra_processor decomp.
 
 3 small classes: SagaState, SagaLRAError, SagaCompensationError.
 """
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from src.backend.core.logging import get_logger
 
@@ -13,6 +14,18 @@ if TYPE_CHECKING:
     pass
 
 _lra_logger = get_logger("dsl.saga_lra_processor")
+
+
+SagaCallable = Callable[..., Awaitable[Any] | Any]
+
+
+class SagaStepSpec(TypedDict):
+    """Нормализованная спецификация шага Saga LRA."""
+
+    name: str
+    action: SagaCallable
+    compensation: SagaCallable | None
+
 
 # ── State machine constants ────────────────────────────────────────────
 

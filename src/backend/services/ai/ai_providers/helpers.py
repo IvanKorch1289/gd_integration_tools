@@ -3,6 +3,14 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from src.backend.core.logging import get_logger
+from src.backend.services.ai.ai_providers.claude import ClaudeProvider
+from src.backend.services.ai.ai_providers.gemini import GeminiProvider
+from src.backend.services.ai.ai_providers.ollama import OllamaProvider
+from src.backend.services.ai.ai_providers.openai import OpenAIProvider
+
+logger = get_logger("services.ai.ai_providers.helpers")
+
 
 def register_extended_providers(agent: Any) -> int:
     """Регистрирует OpenAI/Claude/Gemini/Ollama в ``agent._providers``.

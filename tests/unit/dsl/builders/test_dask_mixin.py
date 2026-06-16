@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from src.backend.dsl.builders.base import RouteBuilder
 from src.backend.dsl.builders.dask_mixin import DaskMixin
 from src.backend.dsl.engine.processors.dask_compute import DaskComputeProcessor
-
 
 # --------------------------------------------------------------------------- #
 # DaskMixin.dask_compute
@@ -19,15 +16,13 @@ from src.backend.dsl.engine.processors.dask_compute import DaskComputeProcessor
 class TestDaskComputeMethod:
     def test_returns_route_builder(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route",
-            graph=[{"op": "map", "fn": "os.path:join"}],
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
         )
         assert isinstance(result, RouteBuilder)
 
     def test_adds_dask_processor(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route",
-            graph=[{"op": "map", "fn": "os.path:join"}],
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
         )
         assert len(result._processors) == 1
         assert isinstance(result._processors[0], DaskComputeProcessor)
@@ -74,8 +69,7 @@ class TestDaskComputeMethod:
 
     def test_n_workers_default(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route",
-            graph=[{"op": "map", "fn": "os.path:join"}],
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
         )
         proc = result._processors[0]
         # n_workers передаётся в _backend, не сохраняется в instance attr
@@ -108,8 +102,6 @@ class TestMixinShape:
     def test_does_not_modify_class_state(self) -> None:
         """Calling dask_compute doesn't add class-level state."""
         before = set(DaskMixin.__dict__.keys())
-        DaskMixin.dask_compute(
-            "test.x", graph=[{"op": "map", "fn": "os.path:join"}]
-        )
+        DaskMixin.dask_compute("test.x", graph=[{"op": "map", "fn": "os.path:join"}])
         after = set(DaskMixin.__dict__.keys())
         assert before == after

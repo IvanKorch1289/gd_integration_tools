@@ -6,12 +6,15 @@ S102 W3 honest verification: DEEP-RESEARCH claim "4/7 моделей tenant-isol
 Этот файл — regression-guard: если какая-то модель потеряет TenantMixin
 (например, при будущем MRO refactor), тест сломается.
 """
+
 from __future__ import annotations
 
 import pytest
 
-from src.backend.infrastructure.database.tenant_filter import TenantMixin, _is_tenant_aware
-
+from src.backend.infrastructure.database.tenant_filter import (
+    TenantMixin,
+    _is_tenant_aware,
+)
 
 # Все 7 моделей должны иметь TenantMixin. Если новая модель добавлена —
 # добавить в list. Если существующая модель теряет mixin (refactor) —

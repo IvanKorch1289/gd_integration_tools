@@ -12,10 +12,10 @@
    (НЕ из entrypoints shim, чтобы extensions не лезли в private).
 5. AuthGateway OO class — re-exports core.auth.auth_selector.
 """
+
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
 
 import pytest
 
@@ -65,7 +65,9 @@ def test_entrypoints_shim_is_deprecated() -> None:
         assert any(
             "S96 W1" in str(w.message) and "core.auth.gateway" in str(w.message)
             for w in deprecation_warnings
-        ), f"Expected S96 W1 deprecation, got: {[str(w.message) for w in deprecation_warnings]}"
+        ), (
+            f"Expected S96 W1 deprecation, got: {[str(w.message) for w in deprecation_warnings]}"
+        )
 
 
 def test_entrypoints_shim_re_exports_core() -> None:
@@ -96,8 +98,8 @@ def test_entrypoints_shim_hides_private_verifiers() -> None:
 
 def test_auth_gateway_oo_class() -> None:
     """AuthGateway — OO class с pre-configured defaults."""
-    from src.backend.core.auth.gateway import AuthGateway
     from src.backend.core.auth import AuthMethod
+    from src.backend.core.auth.gateway import AuthGateway
 
     gw = AuthGateway(default_method=AuthMethod.JWT)
     assert gw._default_method is AuthMethod.JWT
@@ -108,8 +110,8 @@ def test_auth_gateway_oo_class() -> None:
 
 def test_auth_gateway_require_factory() -> None:
     """AuthGateway.require() — factory для FastAPI dependency."""
-    from src.backend.core.auth.gateway import AuthGateway
     from src.backend.core.auth import AuthMethod
+    from src.backend.core.auth.gateway import AuthGateway
 
     gw = AuthGateway()
     dep = gw.require(methods=AuthMethod.API_KEY)

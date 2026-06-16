@@ -20,8 +20,9 @@ from pydantic import SecretStr
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import BaseModel
 from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+
+from .base import BaseModel
 
 __all__ = ("User",)
 

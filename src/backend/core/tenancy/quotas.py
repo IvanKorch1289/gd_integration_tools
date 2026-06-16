@@ -64,10 +64,8 @@ class QuotaTracker:
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client,
+                get_redis_client as redis_client,
             )
-
-            redis_client = get_redis_client()
         except ImportError:
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 

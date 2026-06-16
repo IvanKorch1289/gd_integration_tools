@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy import String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from src.backend.infrastructure.database import tenant_filter as tf_module
 from src.backend.infrastructure.database.tenant_filter import (
@@ -61,13 +61,9 @@ def test_filter_ignores_when_no_tenant_id() -> None:
 
     # Викликаємо listener напряму (він прихований через _filter_by_tenant)
     # Ми можемо знайти його через event registry
-    from sqlalchemy import event
 
     # Apply_tenant_filter вже зареєстрував listeners idempotently.
     # Тестуємо через _filter_by_tenant прямо:
-    from src.backend.infrastructure.database.tenant_filter import (
-        _is_tenant_aware as _aware,
-    )
 
     # Перевіряємо що listener не додає WHERE коли tenant_id = ""
     tenant_id = tenant_id_var.get()
@@ -101,7 +97,6 @@ def test_is_tenant_aware_for_non_tenant_entity() -> None:
 
 def test_session_event_listeners_registered() -> None:
     """Listeners зареєстровані на Session class для do_orm_execute + before_flush."""
-    from sqlalchemy import event as sa_event
 
     # Перевіряємо що Session має зареєстровані listeners
     # event.contains() повертає True якщо listener зареєстрований

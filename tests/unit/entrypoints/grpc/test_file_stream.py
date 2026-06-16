@@ -92,7 +92,6 @@ from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # noqa: E402
     compute_sha256,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Mock context
 # --------------------------------------------------------------------------- #
@@ -136,17 +135,11 @@ class _MockStorage:
     async def get_metadata(self, file_id: int) -> dict[str, Any] | None:
         return self.files.get(file_id)
 
-    async def read(
-        self, meta: dict[str, Any], *, offset: int = 0
-    ) -> bytes:
+    async def read(self, meta: dict[str, Any], *, offset: int = 0) -> bytes:
         return meta["data"][offset:]
 
     async def write(
-        self,
-        file_id: int,
-        filename: str,
-        data: bytes,
-        object_uuid: str,
+        self, file_id: int, filename: str, data: bytes, object_uuid: str
     ) -> None:
         self.files[file_id] = {
             "filename": filename,
@@ -216,9 +209,7 @@ class TestServicerInit:
     def test_custom_config(self) -> None:
         cfg = FileStreamConfig(chunk_size=1024)
         storage = _MockStorage()
-        servicer = FileStreamGRPCServicer(
-            config=cfg, get_storage=lambda: storage
-        )
+        servicer = FileStreamGRPCServicer(config=cfg, get_storage=lambda: storage)
         assert servicer._config.chunk_size == 1024
 
 
@@ -239,9 +230,7 @@ class TestDownloadFile:
             "object_uuid": "uuid-1",
         }
         cfg = FileStreamConfig(chunk_size=64 * 1024)
-        servicer = FileStreamGRPCServicer(
-            config=cfg, get_storage=lambda: storage
-        )
+        servicer = FileStreamGRPCServicer(config=cfg, get_storage=lambda: storage)
         context = _MockContext()
         request = _request(file_id=1)
 
@@ -322,9 +311,7 @@ class TestDownloadFile:
             "object_uuid": "uuid-1",
         }
         cfg = FileStreamConfig(chunk_size=64 * 1024)
-        servicer = FileStreamGRPCServicer(
-            config=cfg, get_storage=lambda: storage
-        )
+        servicer = FileStreamGRPCServicer(config=cfg, get_storage=lambda: storage)
         # Cancel after first chunk
         context = _MockContext(cancelled=False)
 
@@ -355,9 +342,7 @@ class TestDownloadFile:
             "object_uuid": "uuid-1",
         }
         cfg = FileStreamConfig(chunk_size=64 * 1024)
-        servicer = FileStreamGRPCServicer(
-            config=cfg, get_storage=lambda: storage
-        )
+        servicer = FileStreamGRPCServicer(config=cfg, get_storage=lambda: storage)
         context = _MockContext()
         request = _request(file_id=1, offset=64 * 1024)  # skip first 64KB
 
@@ -383,8 +368,12 @@ class TestUploadFile:
         context = _MockContext()
 
         async def request_iter() -> Any:
-            yield _upload_req(file_id=1, filename="hello.txt", data=b"he", seq=0, last=False)
-            yield _upload_req(file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True)
+            yield _upload_req(
+                file_id=1, filename="hello.txt", data=b"he", seq=0, last=False
+            )
+            yield _upload_req(
+                file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True
+            )
 
         response = await servicer.UploadFile(request_iter(), context)
 
@@ -405,7 +394,9 @@ class TestUploadFile:
         context = _MockContext()
 
         async def request_iter() -> Any:
-            yield _upload_req(file_id=1, filename="empty.txt", data=b"", seq=0, last=True)
+            yield _upload_req(
+                file_id=1, filename="empty.txt", data=b"", seq=0, last=True
+            )
 
         response = await servicer.UploadFile(request_iter(), context)
         assert response.size_bytes == 0
@@ -428,13 +419,13 @@ class TestUploadFile:
         """File larger than max_file_size → error response."""
         storage = _MockStorage()
         cfg = FileStreamConfig(max_file_size=10)  # tiny limit
-        servicer = FileStreamGRPCServicer(
-            config=cfg, get_storage=lambda: storage
-        )
+        servicer = FileStreamGRPCServicer(config=cfg, get_storage=lambda: storage)
         context = _MockContext()
 
         async def request_iter() -> Any:
-            yield _upload_req(file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True)
+            yield _upload_req(
+                file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True
+            )
 
         response = await servicer.UploadFile(request_iter(), context)
         assert "max size" in response.error
@@ -458,9 +449,7 @@ class TestUploadFile:
         assert 1 not in storage.files
 
 
-def _upload_req(
-    file_id: int, filename: str, data: bytes, seq: int, last: bool
-) -> Any:
+def _upload_req(file_id: int, filename: str, data: bytes, seq: int, last: bool) -> Any:
     req = type("R", (), {})()
     req.file_id = file_id
     req.filename = filename

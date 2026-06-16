@@ -1,18 +1,17 @@
 """S78 W4 — tests для tools/check_streamlit_security.py (P0-D closure)."""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
 
 import pytest
-import tomllib
 
 from tools.check_streamlit_security import (
     SecurityCheck,
     SecurityCheckResult,
     check_streamlit_config,
 )
-
 
 # Default config (project's) tests
 # ============================================================================
@@ -59,9 +58,7 @@ def test_check_default_config_headless() -> None:
 
 def test_check_xsrf_disabled_fails() -> None:
     """xsrfProtection=False → fail."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -85,9 +82,7 @@ gatherUsageStats = false
 
 def test_check_cors_disabled_warns() -> None:
     """enableCORS=False → fail (warns about cross-origin)."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -109,9 +104,7 @@ gatherUsageStats = false
 
 def test_check_cors_wildcard_fails() -> None:
     """corsAllowedOrigins с wildcard → fail."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -135,9 +128,7 @@ gatherUsageStats = false
 
 def test_check_cors_empty_allowlist_fails() -> None:
     """enableCORS=True без allowlist → fail."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -159,9 +150,7 @@ gatherUsageStats = false
 
 def test_check_gather_usage_default_fails() -> None:
     """gatherUsageStats=True (default) → fail."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -181,9 +170,7 @@ enableXsrfProtection = true
 
 def test_check_headless_false_fails() -> None:
     """headless=False → fail."""
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 port = 8501
@@ -212,9 +199,7 @@ def test_security_check_dataclass_frozen() -> None:
     """SecurityCheck is frozen (immutable)."""
     from dataclasses import FrozenInstanceError
 
-    check = SecurityCheck(
-        name="test", passed=True, detail="test detail"
-    )
+    check = SecurityCheck(name="test", passed=True, detail="test detail")
     with pytest.raises(FrozenInstanceError):
         check.name = "modified"  # type: ignore[misc]
 
@@ -272,9 +257,7 @@ def test_cli_main_bad_config_returns_1(capsys: pytest.CaptureFixture[str]) -> No
     """CLI: bad config returns exit code 1."""
     from tools.check_streamlit_security import main
 
-    with tempfile.NamedTemporaryFile(
-        suffix=".toml", delete=False, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False, mode="w") as f:
         f.write("""
 [server]
 enableXsrfProtection = false

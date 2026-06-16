@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """S65 W2 — ImageResizeProcessor extracted from rpa/operations.py.
 
 Per-processor file split.
 """
+
+from __future__ import annotations
 
 import asyncio
 from typing import Any

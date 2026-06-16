@@ -68,9 +68,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
         Bypass через LiteLLMGateway запрещён.
         """
         # S85 W2: enforcement gate
-        from src.backend.core.ai.errors import (
-            AIGatewayEnforcementRequiredError,
-        )
+        from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.ai_gateway_enforce:

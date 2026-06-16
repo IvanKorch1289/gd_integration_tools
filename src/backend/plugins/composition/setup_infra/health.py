@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """S60 W3 — health.py part of setup_infra decomp.
 
 Funcs: _get_watcher_manager, _register_health_checks.
@@ -7,13 +5,15 @@ Funcs: _get_watcher_manager, _register_health_checks.
 health check registration (132 LOC main func + helper).
 """
 
+from __future__ import annotations
+
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.database.database import get_db_initializer
-from src.backend.core.logging import get_logger
 from src.backend.plugins.composition.setup_infra.pools import _clickhouse_enabled
 
 app_logger = get_logger("application")

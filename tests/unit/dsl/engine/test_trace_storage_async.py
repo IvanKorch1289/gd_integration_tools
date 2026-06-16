@@ -26,11 +26,11 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.tracer import TraceEvent
 from src.backend.dsl.engine.trace_storage import (
     InMemoryTraceStorage,
     JsonFileTraceStorage,
 )
+from src.backend.dsl.engine.tracer import TraceEvent
 
 # Достаточно большой интервал, чтобы flaky-timing не прошёл,
 # но достаточно маленький, чтобы тест не был медленным.
@@ -103,10 +103,7 @@ class TestJsonFileTraceStorageNonBlocking:
         monkeypatch.setattr(Path, "open", _make_slow_path_open(SLEEP_S, real_open))
 
         start = time.monotonic()
-        await asyncio.gather(
-            storage.read_recent("r1", 10),
-            asyncio.sleep(SLEEP_S),
-        )
+        await asyncio.gather(storage.read_recent("r1", 10), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
         assert elapsed < MAX_PARALLEL_TOTAL_S, (

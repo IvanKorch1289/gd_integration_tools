@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.exchange import ExchangeStatus
+from src.backend.dsl.processors.saga_lra_processor.state import (
+    SagaCompensationError,
+    SagaLRAError,
+)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

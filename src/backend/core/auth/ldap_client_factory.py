@@ -23,9 +23,9 @@ process (per-env). Это соответствует pattern других core c
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.services.auth.ad_directory_client import (
     AdDirectoryClient,
     AdServerConfig,

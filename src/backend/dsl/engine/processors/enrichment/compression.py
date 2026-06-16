@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S61 W2 — compression.py part of enrichment decomp.
 
 Classes: CompressProcessor, DecompressProcessor.
 
 compression + decompression.
 """
+
+from __future__ import annotations
 
 from typing import Any
 

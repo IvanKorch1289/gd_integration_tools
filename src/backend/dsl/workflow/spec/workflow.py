@@ -29,7 +29,43 @@ from __future__ import annotations
 """
 
 
+from typing import Annotated
+
 from pydantic import BaseModel, ConfigDict, Field
+
+from src.backend.dsl.workflow.spec.activity_declarations import (
+    ActivityDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
+    SagaDeclaration,
+    SignalWaitDeclaration,
+    SleepDeclaration,
+)
+from src.backend.dsl.workflow.spec.advanced_declarations import (
+    AgentInvokeDeclaration,
+    CheckpointDeclaration,
+    EscalateDeclaration,
+    GuardrailDeclaration,
+    ReflectDeclaration,
+    SensorDeclaration,
+)
+from src.backend.dsl.workflow.spec.policies import RetryPolicy, SlaPolicy
+
+WorkflowStep = Annotated[
+    ActivityDeclaration
+    | SagaDeclaration
+    | SignalWaitDeclaration
+    | SleepDeclaration
+    | PauseDeclaration
+    | ResumeDeclaration
+    | SensorDeclaration
+    | AgentInvokeDeclaration
+    | ReflectDeclaration
+    | CheckpointDeclaration
+    | GuardrailDeclaration
+    | EscalateDeclaration,
+    Field(discriminator="type"),
+]
 
 
 class WorkflowDeclaration(BaseModel):

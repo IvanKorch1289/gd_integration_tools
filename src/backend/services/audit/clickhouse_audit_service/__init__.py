@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """ClickHouse audit service package (S68 W2 decomp from clickhouse_audit_service.py 455 LOC).
 
 2 classes + 4 funcs -> 3 files (per-concern):
@@ -10,6 +8,7 @@ from __future__ import annotations
 Backward-compat: ``from src.backend.services.audit.clickhouse_audit_service import ClickHouseAuditService`` works.
 """
 
+from __future__ import annotations
 
 from src.backend.services.audit.clickhouse_audit_service.helpers import (
     _make_default_event_id,  # S68 W2: helper re-export

@@ -14,10 +14,10 @@ from typing import Any
 
 import pytest
 
-from src.backend.services.ai.agent_sandbox import AgentSandboxResult
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
+from src.backend.services.ai.agent_sandbox import AgentSandboxResult
 
 
 def _exchange(body: Any = None, correlation_id: str = "cid-1") -> Exchange[Any]:
@@ -130,9 +130,7 @@ def test_to_spec_serializes_isolated() -> None:
 def test_to_spec_omits_isolated_default() -> None:
     """to_spec не включает isolated при default False."""
     proc = AgentGraphProcessor(
-        graph_type="react",
-        prompt_inline="Do something",
-        tool_actions=["db.query"],
+        graph_type="react", prompt_inline="Do something", tool_actions=["db.query"]
     )
     spec = proc.to_spec()
     assert "isolated" not in spec["agent_graph"]

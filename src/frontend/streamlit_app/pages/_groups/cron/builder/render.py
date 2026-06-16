@@ -103,7 +103,7 @@ def _render_body() -> None:
                         dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
                         weekday_name = dt.strftime("%A")
                         st.write(f"{idx}. **{dt.isoformat()}** ({weekday_name})")
-                    except (ValueError, AttributeError):
+                    except ValueError, AttributeError:
                         st.write(f"{idx}. {dt_str}")
             else:
                 st.error(f"Невалидное выражение: {body.get('error', 'unknown')}")
@@ -144,7 +144,9 @@ def _render_body() -> None:
             "python manage.py workflow dryrun --schedule '" + expression + "'",
             language="bash",
         )
-        st.caption("Скопируйте команду и выполните в shell — proceeds без регистрации job.")
+        st.caption(
+            "Скопируйте команду и выполните в shell — proceeds без регистрации job."
+        )
 
 
 def render() -> None:

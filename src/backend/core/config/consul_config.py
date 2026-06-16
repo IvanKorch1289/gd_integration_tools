@@ -17,9 +17,10 @@ Usage::
 
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
 from collections.abc import Callable
 from typing import Any
+
+from src.backend.core.logging import get_logger
 
 _logger = get_logger("core.config.consul")
 

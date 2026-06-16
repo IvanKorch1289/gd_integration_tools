@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """S66 W2 — helpers.py part of setup.py decomp.
 
 shared helper (CRUD actions registration).
 
 Functions: _register_crud_actions.
 """
+
+from __future__ import annotations
 
 from collections.abc import Callable
 
