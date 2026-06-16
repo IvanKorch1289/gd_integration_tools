@@ -200,9 +200,16 @@ class LLMCallProcessor(BaseProcessor):
             exchange.fail(f"LLM rate limit: {exc}")
             return
         except (TimeoutError, ConnectionError) as exc:
-            exchange.fail(
-                f"LLM call failed after {self._max_retries + 1} attempts: {exc}"
-            )
+            # S156 W5: detect rate-limit in wrapped ConnectionError
+            # (RuntimeError("rate limit 429") is re-raised as ConnectionError
+            # at line 193). Test contract expects "LLM rate limit" prefix.
+            msg = str(exc)
+            if "rate limit" in msg.lower():
+                exchange.fail(f"LLM rate limit: {msg}")
+            else:
+                exchange.fail(
+                    f"LLM call failed after {self._max_retries + 1} attempts: {exc}"
+                )
             return
 
         if isinstance(result, dict):
