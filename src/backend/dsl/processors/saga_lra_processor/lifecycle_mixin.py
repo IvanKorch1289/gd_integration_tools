@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
-
 import asyncio
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.processors.saga_lra_processor._protocol import (
+    _SagaLRAProcessorProtocol,
+)
 from src.backend.dsl.processors.saga_lra_processor.state import (
     SagaLRAError,
     SagaStepSpec,
@@ -48,7 +45,7 @@ _VALID_STATES = frozenset(
 )
 
 
-class LifecycleMixin:
+class LifecycleMixin(_SagaLRAProcessorProtocol):
     """saga action + compensation для SagaLRAProcessor. S58 W2 extraction."""
 
     __slots__ = ()
