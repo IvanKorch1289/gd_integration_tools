@@ -3,12 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIResponse
+    from src.backend.core.ai.policy.enforcer._protocol import _AIPolicyEnforcerProtocol
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
@@ -22,8 +18,11 @@ class OutputGuardMixin:
 
     __slots__ = ()
 
+    if TYPE_CHECKING:
+        _protocol_self: _AIPolicyEnforcerProtocol
+
     async def guard_output(
-        self, response: AIResponse, policy: AIPolicySpec
+        self: "_AIPolicyEnforcerProtocol", response: AIResponse, policy: AIPolicySpec
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.output_guards` к ``response.content``.
 
@@ -45,7 +44,7 @@ class OutputGuardMixin:
         return results
 
     async def _guard_output_one(
-        self, response: AIResponse, ref: GuardRef
+        self: "_AIPolicyEnforcerProtocol", response: AIResponse, ref: GuardRef
     ) -> GuardResult | None:
         """Apply single output guard ref."""
         name = ref.name.lower()

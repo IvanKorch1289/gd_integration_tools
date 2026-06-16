@@ -3,12 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
+    from src.backend.core.ai.policy.enforcer._protocol import _AIPolicyEnforcerProtocol
 
 from src.backend.core.ai.errors import GuardrailViolationError
 from src.backend.core.logging import get_logger
@@ -21,8 +16,16 @@ class HandleMixin:
 
     __slots__ = ()
 
+    if TYPE_CHECKING:
+        _protocol_self: _AIPolicyEnforcerProtocol
+
     def _handle_guard_block(
-        self, *, guard_name: str, flagged: list[str], on_block: str, content: str
+        self: "_AIPolicyEnforcerProtocol",
+        *,
+        guard_name: str,
+        flagged: list[str],
+        on_block: str,
+        content: str,
     ) -> None:
         """Handle guard block according to on_block policy."""
         if on_block == "fail":
@@ -54,7 +57,10 @@ class HandleMixin:
         )
 
     async def _publish_dlq(
-        self, guard_name: str, flagged: list[str], content: str
+        self: "_AIPolicyEnforcerProtocol",
+        guard_name: str,
+        flagged: list[str],
+        content: str,
     ) -> None:
         """Publish blocked content to DLQ (fire-and-forget)."""
         if self._dlq_writer is None:
