@@ -6,15 +6,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from typing import Self
 
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 
-class IPRestrictionMixin:
+class IPRestrictionMixin(_RouteBuilderProtocol):
     """Per-route IP-ограничения через RouteBuilder."""
 
     __slots__ = ()
@@ -25,7 +23,7 @@ class IPRestrictionMixin:
         *,
         path_pattern: str | None = None,
         enabled: bool = True,
-    ) -> RouteBuilder:
+    ) -> Self:
         """Ограничивает доступ к маршруту по IP/CIDR.
 
         Args:

@@ -6,10 +6,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TypeVar
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
+
+_T = TypeVar("_T", bound=_RouteBuilderProtocol)
 
 
 class StreamingSSEMixin:
@@ -22,7 +23,7 @@ class StreamingSSEMixin:
 
     @classmethod
     def from_sse(
-        cls,
+        cls: type[_T],
         route_id: str,
         url: str,
         *,
@@ -32,7 +33,7 @@ class StreamingSSEMixin:
         heartbeat_timeout_s: float = 60.0,
         reconnect_max_retries: int | None = None,
         parse_json: bool = True,
-    ) -> RouteBuilder:
+    ) -> _T:
         """SSE consumer: регистрирует маршрут с SSE-источником.
 
         S94 W4: использует :class:`SSESource` для long-poll HTTP-stream.
@@ -79,7 +80,7 @@ class StreamingSSEMixin:
         )
         # S97 W1: RouteBuilder.__init__ теперь принимает (route_id, source, description).
         # Bind source через object.__setattr__ (slot declaration в __slots__).
-        builder = cls.from_(  # type: ignore[return-value]
+        builder = cls.from_(
             route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}"
         )
         object.__setattr__(builder, "_sse_source", source)
@@ -87,7 +88,7 @@ class StreamingSSEMixin:
 
     @classmethod
     def from_sse_multi(
-        cls,
+        cls: type[_T],
         route_id: str,
         urls: list[str],
         *,
@@ -97,7 +98,7 @@ class StreamingSSEMixin:
         heartbeat_timeout_s: float = 60.0,
         reconnect_max_retries: int | None = None,
         parse_json: bool = True,
-    ) -> RouteBuilder:
+    ) -> _T:
         """S96 W4: multi-stream SSE consumer — subscribe N URLs параллельно.
 
         Каждый URL подписывается отдельно через :class:`SSESource`,
@@ -174,10 +175,10 @@ class StreamingSSEMixin:
         )
 
         # S97 W1: same as from_sse — use cls.from_ (no-args cls() deprecated).
-        builder = cls.from_(  # type: ignore[return-value]
+        builder = cls.from_(
             multi_route_id,
             source=f"sse-multi:{multi_route_id}",
             description=f"SSE multi: {len(urls)} streams ({merge_strategy})",
         )
         object.__setattr__(builder, "_sse_multi_source", (sources, merge_strategy))
-        return builder  # type: ignore[return-value]
+        return builder

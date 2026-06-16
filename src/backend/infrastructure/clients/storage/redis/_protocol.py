@@ -1,10 +1,7 @@
 """Structural protocol for RedisClient mixins.
 
-Module extracted by S147 W2 to resolve the S146 W1 broken import
-(``from ._protocol import _RedisClientProtocol`` without the module
-existing). Keeping the protocol in its own module breaks the circular
-dependency between ``RedisClient`` and its mixins and gives mypy enough
-information about the attributes/helpers the mixins use.
+Breaks the circular dependency between ``RedisClient`` and its mixins and
+gives mypy enough information about the attributes/helpers the mixins use.
 """
 
 from __future__ import annotations
@@ -44,9 +41,9 @@ class _RedisClientProtocol(Protocol):
 
     async def close(self) -> None: ...
 
-    async def ensure_connected(self) -> bool: ...
+    async def ensure_connected(self) -> None: ...
 
-    async def check_connection(self) -> bool: ...
+    async def check_connection(self, kind: RedisKind) -> bool: ...
 
     async def execute(
         self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]]

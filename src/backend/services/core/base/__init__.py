@@ -55,7 +55,16 @@ class BaseService[
     S61 W1 MRO: 3 mixins (cache/crud/versioning) + 4 core.
     """
 
-    __slots__ = ()
+    HelperMethods: type[Any]
+
+    __slots__ = (
+        "repo",
+        "response_schema",
+        "request_schema",
+        "version_schema",
+        "table_name",
+        "helper",
+    )
 
     def __init__(
         self,
@@ -83,7 +92,7 @@ class BaseService[
         self.helper = self.HelperMethods(repo)
 
     @asynccontextmanager
-    async def _service_error_boundary():
+    async def _service_error_boundary(self):
         """Контекстный менеджер для единообразной обработки ошибок.
 
         Пробрасывает ``NotFoundError`` без изменений,

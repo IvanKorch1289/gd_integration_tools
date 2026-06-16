@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Self
 
-if TYPE_CHECKING:
-    from src.backend.dsl.builders.base import RouteBuilder
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
 """Base-модуль RouteBuilder.
 
@@ -42,25 +41,23 @@ from src.backend.dsl.engine.processors import (
 )
 
 
-class FluentMixin:
+class FluentMixin(_RouteBuilderProtocol):
     """fluent chaining (to, process_fn, include + internal helpers) для RouteBuilder. S57 W1 extraction."""
 
     __slots__ = ()
 
-    def to(self, processor: BaseProcessor) -> RouteBuilder:
+    def to(self, processor: BaseProcessor) -> Self:
         """Алиас для process() — fluent naming."""
         return self._add(processor)
 
-    def process_fn(
-        self, func: ProcessorCallable, *, name: str | None = None
-    ) -> RouteBuilder:
+    def process_fn(self, func: ProcessorCallable, *, name: str | None = None) -> Self:
         """Добавляет обычную функцию или coroutine как процессор.
 
         Функция принимает (exchange, context) и модифицирует exchange in-place.
         """
         return self._add(CallableProcessor(func=func, name=name))
 
-    def include(self, other: Pipeline) -> RouteBuilder:
+    def include(self, other: Pipeline) -> Self:
         """Включает все процессоры из другого Pipeline (композиция)."""
         self._processors.extend(other.processors)
         return self

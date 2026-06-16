@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
-from typing import Literal
+from typing import Any, Literal
 
 from redis.asyncio import Redis
 
+from src.backend.infrastructure.clients.storage.redis._protocol import (
+    _RedisClientProtocol,
+)
 from src.backend.infrastructure.logging.factory import get_logger
 
 redis_logger = get_logger("redis")
@@ -17,7 +15,7 @@ redis_logger = get_logger("redis")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-class CacheMixin:
+class CacheMixin(_RedisClientProtocol):
     """cache ops (decode + simple + bulk + pattern delete) для RedisClient. S59 W3 extraction."""
 
     __slots__ = ()

@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
-
+from typing import Any
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
 from src.backend.core.decorators.caching import response_cache
 from src.backend.core.logging import get_logger
+from src.backend.services.core.base._protocol import _BaseServiceProtocol
 
 _logger = get_logger(__name__)
 
@@ -20,7 +17,7 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-class CrudMixin:
+class CrudMixin(_BaseServiceProtocol):
     """CRUD operations (add/add_many/update/get/get_or_add/get_first_or_last_with_limit/delete) для BaseService. S61 W1 extraction."""
 
     __slots__ = ()

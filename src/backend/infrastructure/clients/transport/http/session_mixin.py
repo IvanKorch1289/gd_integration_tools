@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 import asyncio
 from time import monotonic
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.clients.transport.http._protocol import (
+    _HttpClientProtocol,
+)
 
 
-class SessionMixin:
+class SessionMixin(_HttpClientProtocol):
     """session lifecycle (ensure, create, purger, close, connection purger) для HttpClient. S61 W4 extraction."""
 
     __slots__ = ()
+
+    if TYPE_CHECKING:
+        purger_task: Any | None
 
     async def _ensure_session(self) -> None:
         async with self.session_lock:

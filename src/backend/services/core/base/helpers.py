@@ -11,11 +11,6 @@ from src.backend.schemas.base import BaseSchema
 
 
 def _is_orm_model(instance: Any) -> bool:
-    cls = instance.__class__
-    return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
-
-
-def _is_orm_model(instance: Any) -> bool:
     """Структурная проверка ORM-модели без зависимости от infrastructure.
 
     Проект использует SQLAlchemy DeclarativeBase: у любой модели есть
