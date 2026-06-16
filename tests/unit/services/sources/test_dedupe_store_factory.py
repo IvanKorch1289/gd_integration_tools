@@ -42,13 +42,19 @@ async def test_make_dedupe_store_redis_returns_redis_store() -> None:
     fake_redis_client_singleton.get_client = AsyncMock(
         return_value=fake_redis_instance
     )
+    # S149 W1: lifecycle.py imports `get_redis_client` from
+    # ``core.storage.redis`` (compat shim) NOT directly from
+    # ``infrastructure.clients.storage.redis``. Patch the actual
+    # import path the production code uses. Standard monkeypatch
+    # pattern: patch where the name is looked up, not where it
+    # originally lives.
     with (
         patch(
             "src.backend.core.config.services.outbox.outbox_settings",
             new=fake_settings,
         ),
         patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
         ),
     ):
@@ -79,7 +85,7 @@ async def test_make_dedupe_store_propagates_redis_get_client_error() -> None:
             new=fake_settings,
         ),
         patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
         ),
     ):

@@ -61,7 +61,14 @@ __all__ = (
 class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     """Redis client (4 mixins = 25 methods + 4 core)."""
 
-    __slots__ = ()
+    # S149 W1: declare slots matching ``__init__`` instance attributes.
+    # ``__slots__ = ()`` declared in S43-45 refactor (commit 58f4d73) left
+    # the class with no ``__dict__`` AND no slot names — so ``__init__``
+    # raised ``AttributeError: 'RedisClient' object has no attribute
+    # 'settings' and no __dict__ for setting new attributes`` on the very
+    # first attribute assignment. Pre-existing bug masked by tests that
+    # either stubbed ``__init__`` or never exercised ``RedisClient()``.
+    __slots__ = ("settings", "logger", "_clients", "_locks", "_breakers")
 
     def __init__(self, settings: RedisSettings) -> None:
         """Args:
