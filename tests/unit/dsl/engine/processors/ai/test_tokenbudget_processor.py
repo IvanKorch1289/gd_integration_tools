@@ -67,7 +67,9 @@ class TestTokenBudgetProcessor:
     async def test_fallback_char_truncation(self) -> None:
         exchange = _Exchange(body="x" * 5000)
         proc = TokenBudgetProcessor(max_tokens=100)
-        proc._encoder = None
+        # S156 W10: force fallback path. Was 'proc._encoder = None' which
+        # got overwritten by _get_encoder() auto-importing tiktoken.
+        proc._get_encoder = lambda: None  # type: ignore[method-assign]
 
         await proc.process(exchange, _Context())
         assert len(exchange.in_message.body) <= 400 + len("\n...[truncated]")

@@ -172,7 +172,9 @@ class TestTokenBudgetProcessor:
         exchange.in_message.body = "x" * 50000  # very long string
 
         processor = TokenBudgetProcessor(max_tokens=100)
-        processor._encoder = None  # Force no encoder
+        # S156 W10: force fallback path. Was 'processor._encoder = None'
+        # which got overwritten by _get_encoder() auto-importing tiktoken.
+        processor._get_encoder = lambda: None  # type: ignore[method-assign]
 
         await processor.process(exchange, _Context())
 
