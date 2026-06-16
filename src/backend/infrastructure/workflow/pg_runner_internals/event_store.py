@@ -52,7 +52,7 @@ _logger = get_logger("workflow.pg_runner_internals")
 # ─────────────────────────────── DTO ───────────────────────────────
 
 
-@dataclass(slots=True, frozen=True)
+# S153 W4d: убран @dataclass — custom __init__ + slots/frozen → super() TypeError
 class WorkflowEventStore:
     """Append-only event store для durable workflows."""
 

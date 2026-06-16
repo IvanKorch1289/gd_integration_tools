@@ -53,7 +53,8 @@ _logger = get_logger("workflow.pg_runner_internals")
 # ─────────────────────────────── DTO ───────────────────────────────
 
 
-@dataclass(slots=True, frozen=True)
+# S153 W4d: убран @dataclass — класс имеет custom __init__ + slots/frozen
+# конфликтуют с custom __init__ (TypeError: super() obj not instance of type)
 class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 
