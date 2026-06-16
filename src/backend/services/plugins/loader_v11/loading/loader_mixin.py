@@ -14,6 +14,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.compat_checker import CompatViolation
 from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
 from src.backend.services.plugins.loader_v11.discovery import LoadedPluginV11
+from src.backend.services.plugins.loader_v11.loading._protocol import _LoadingProtocol
 from src.backend.services.plugins.loader_v11.validation import (
     PluginInventoryConflictError,
 )
@@ -26,7 +27,7 @@ from src.backend.services.plugins.manifest_v11 import (
 _logger = get_logger("services.plugins.loader_v11")
 
 
-class LoaderMixin:
+class LoaderMixin(_LoadingProtocol):
     """plugin loading internals (_load_one BIG 253 LOC + _instantiate) для LoadingMixin. S63 W1 extraction."""
 
     __slots__ = ()
