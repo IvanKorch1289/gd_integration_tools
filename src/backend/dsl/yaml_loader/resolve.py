@@ -47,8 +47,14 @@ def _resolve_include_extends(
     if _visited is None:
         _visited = set()
 
+    # S157 W2: use module attribute lookup (not local binding) so that
+    # monkeypatching yaml_loader._is_route_composition_include_enabled
+    # in tests takes effect. Was 'if not _is_route_composition_include_enabled():'
+    # which used the local binding from 'from ... import' and ignored patches.
+    from src.backend.dsl.yaml_loader import _is_route_composition_include_enabled as _flag_check
+
     # If feature flag is off, return data as-is
-    if not _is_route_composition_include_enabled():
+    if not _flag_check():
         return data
 
     # Work on a copy to avoid mutating the original

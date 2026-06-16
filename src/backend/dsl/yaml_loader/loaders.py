@@ -53,8 +53,13 @@ def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pip
     if not isinstance(data, dict):
         raise ValueError("YAML root must be a mapping (dict)")
 
-    # Resolve include:/extends: if feature flag is enabled
-    if _is_route_composition_include_enabled():
+    # S157 W2: use module attribute lookup (not local binding) so that
+    # monkeypatching yaml_loader._is_route_composition_include_enabled
+    # in tests takes effect. Was 'if _is_route_composition_include_enabled():'
+    # which used the local binding from 'from ... import' and ignored patches.
+    from src.backend.dsl import yaml_loader as _yaml_loader
+
+    if _yaml_loader._is_route_composition_include_enabled():
         data = _resolve_include_extends(data, base_path)
 
     from src.backend.dsl.versioning import CURRENT_VERSION, apply_migrations
