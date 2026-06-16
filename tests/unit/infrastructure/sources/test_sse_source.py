@@ -1,4 +1,5 @@
 """Tests для SSESource + DSL from_sse builder (S94 W4)."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -56,13 +57,9 @@ class _FakeAsyncClient:
 @pytest.mark.asyncio
 async def test_sse_parses_simple_event() -> None:
     """Простое SSE-событие парсится в SSEEvent."""
-    _FakeAsyncClient._shared_resp = _make_sse_response(
-        ["data: hello world", "", ""]
-    )
+    _FakeAsyncClient._shared_resp = _make_sse_response(["data: hello world", "", ""])
     with patch("httpx.AsyncClient", _FakeAsyncClient):
-        source = SSESource(
-            url="https://example.com/events", reconnect_max_retries=0
-        )
+        source = SSESource(url="https://example.com/events", reconnect_max_retries=0)
         events: list[SSEEvent] = []
         async for evt in source.stream():
             events.append(evt)
@@ -82,9 +79,7 @@ async def test_sse_parses_named_event_with_id() -> None:
     )
     with patch("httpx.AsyncClient", _FakeAsyncClient):
         source = SSESource(
-            url="https://example.com/events",
-            parse_json=True,
-            reconnect_max_retries=0,
+            url="https://example.com/events", parse_json=True, reconnect_max_retries=0
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():
@@ -108,9 +103,7 @@ async def test_sse_multi_line_data() -> None:
     )
     with patch("httpx.AsyncClient", _FakeAsyncClient):
         source = SSESource(
-            url="https://example.com/events",
-            parse_json=False,
-            reconnect_max_retries=0,
+            url="https://example.com/events", parse_json=False, reconnect_max_retries=0
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():
@@ -130,9 +123,7 @@ async def test_sse_handles_keep_alive_comments() -> None:
     )
     with patch("httpx.AsyncClient", _FakeAsyncClient):
         source = SSESource(
-            url="https://example.com/events",
-            parse_json=False,
-            reconnect_max_retries=0,
+            url="https://example.com/events", parse_json=False, reconnect_max_retries=0
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():

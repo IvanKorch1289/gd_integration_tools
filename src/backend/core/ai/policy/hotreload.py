@@ -32,7 +32,7 @@ async for event in watch_policy_files(resolver, paths=[Path("ai_policies")]):
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -74,7 +74,7 @@ async def watch_policy_files(
     *,
     paths: list[Path] | None = None,
     stop_event: asyncio.Event | None = None,
-    on_reload: "callable | None" = None,
+    on_reload: Callable[[PolicyReloadEvent], None] | None = None,
 ) -> AsyncIterator[PolicyReloadEvent]:
     """Async generator, watch'ит policy files и reload'ит resolver.
 

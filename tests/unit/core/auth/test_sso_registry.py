@@ -96,10 +96,7 @@ def test_path_for_uses_default_prefix() -> None:
 def test_path_for_respects_custom_prefix() -> None:
     """Custom prefix → ``<prefix>/<tenant>/idp``."""
     fake = _FakeVaultClient()
-    registry = SsoRegistry(
-        vault_path_prefix="custom/prefix",
-        vault_client=fake,
-    )
+    registry = SsoRegistry(vault_path_prefix="custom/prefix", vault_client=fake)
     assert registry._path_for("bank1") == "custom/prefix/bank1/idp"
 
 
@@ -296,7 +293,9 @@ async def test_get_raises_schema_error_on_invalid_x509_cert_type() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_hvac_vault_client_requires_env_or_args(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_hvac_vault_client_requires_env_or_args(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """HvacVaultClient без VAULT_ADDR/VAULT_TOKEN → SsoRegistryVaultError."""
     monkeypatch.delenv("VAULT_ADDR", raising=False)
     monkeypatch.delenv("VAULT_TOKEN", raising=False)
@@ -329,10 +328,7 @@ def test_groups_to_capabilities_resolve_union() -> None:
 def test_groups_to_capabilities_resolve_dedup() -> None:
     """Дубликаты cap-scope'ов из разных groups → дедупликация first-seen."""
     g2c = GroupsToCapabilities(
-        mappings={
-            "group_a": ["x:read", "y:write"],
-            "group_b": ["y:write", "z:delete"],
-        }
+        mappings={"group_a": ["x:read", "y:write"], "group_b": ["y:write", "z:delete"]}
     )
     caps = g2c.resolve(["group_a", "group_b"])
     assert caps == ["x:read", "y:write", "z:delete"]
@@ -340,9 +336,7 @@ def test_groups_to_capabilities_resolve_dedup() -> None:
 
 def test_groups_to_capabilities_resolve_empty_input() -> None:
     """Empty groups list → empty caps list."""
-    g2c = GroupsToCapabilities(
-        mappings={"admins": ["admin.feature_flag:write"]}
-    )
+    g2c = GroupsToCapabilities(mappings={"admins": ["admin.feature_flag:write"]})
     assert g2c.resolve([]) == []
 
 

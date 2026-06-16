@@ -193,10 +193,7 @@ def test_dual_emit_calls_both_callback_and_facade(
             }
         )
 
-    monkeypatch.setattr(
-        "src.backend.core.audit.facade.emit_audit",
-        fake_emit_audit,
-    )
+    monkeypatch.setattr("src.backend.core.audit.facade.emit_audit", fake_emit_audit)
 
     context = _build_context()
     context.audit = audit_cb

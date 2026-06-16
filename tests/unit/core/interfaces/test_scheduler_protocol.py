@@ -7,7 +7,6 @@ Wave ``[wave:s18/w0-goal-driven-sweep-8-scheduler-backend-protocol]``.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -175,6 +174,7 @@ async def test_temporal_backend_start_returns_none() -> None:
     # В unit-тесте не делаем await (требует live Temporal server) — только
     # проверяем что метод существует и async.
     import inspect
+
     assert inspect.iscoroutinefunction(backend.start)
 
 

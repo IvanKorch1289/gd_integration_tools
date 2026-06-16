@@ -40,9 +40,7 @@ class CacheProcessor(BaseProcessor):
         exchange.set_property("_cache_ttl", self._ttl)
 
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                redis_client,
-            )
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             cached = await redis_client.get(key)
             if cached is not None:

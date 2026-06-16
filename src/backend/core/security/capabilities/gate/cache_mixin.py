@@ -59,38 +59,40 @@ class CacheMixin(_CapabilityGateProtocol):
 
     def _cache_granted(self, key: tuple[str, str, str | None]) -> None:
         """Положить granted-результат в LRU (с ограничением размера)."""
-        if len(self._cache) >= self._lru_size:  # type: ignore[has-type]
+        cache: dict[tuple[str, str, str | None], bool] = self._cache  # type: ignore[has-type]
+        if len(cache) >= self._lru_size:
             # Простейший LRU: выбрасываем самый старый ключ
             # (порядок dict'а сохраняет insertion order).
-            oldest = next(iter(self._cache))  # type: ignore[has-type]
-            self._cache.pop(oldest, None)  # type: ignore[has-type]
-        self._cache[key] = True  # type: ignore[has-type]
+            oldest = next(iter(cache))
+            cache.pop(oldest, None)
+        cache[key] = True
 
     def _tenant_cache_granted(self, key: tuple[str, str, str, str | None]) -> None:
         """Положить granted-результат в per-tenant LRU."""
-        if len(self._tenant_cache) >= self._lru_size:  # type: ignore[has-type]
-            oldest = next(iter(self._tenant_cache))  # type: ignore[has-type]
-            self._tenant_cache.pop(oldest, None)  # type: ignore[has-type]
-        self._tenant_cache[key] = True  # type: ignore[has-type]
+        tenant_cache: dict[tuple[str, str, str, str | None], bool] = self._tenant_cache  # type: ignore[has-type]
+        if len(tenant_cache) >= self._lru_size:
+            oldest = next(iter(tenant_cache))
+            tenant_cache.pop(oldest, None)
+        tenant_cache[key] = True
 
     def _invalidate_plugin(self, plugin: str) -> None:
         """Удалить из кэша все granted-записи для плагина."""
-        self._cache = {key: v for key, v in self._cache.items() if key[0] != plugin}  # type: ignore[has-type]
+        cache: dict[tuple[str, str, str | None], bool] = self._cache  # type: ignore[has-type]
+        self._cache = {key: v for key, v in cache.items() if key[0] != plugin}
 
     def _invalidate_tenant(self, tenant: str, principal: str | None = None) -> None:
         """Удалить из per-tenant кэша записи для (tenant, principal).
 
         Если ``principal=None`` — удаляются все записи для tenant'а.
         """
+        tenant_cache: dict[tuple[str, str, str, str | None], bool] = self._tenant_cache  # type: ignore[has-type]
         if principal is None:
             self._tenant_cache = {  # type: ignore[has-type]
-                key: v
-                for key, v in self._tenant_cache.items()
-                if key[0] != tenant  # type: ignore[has-type]
+                key: v for key, v in tenant_cache.items() if key[0] != tenant
             }
         else:
             self._tenant_cache = {  # type: ignore[has-type]
                 key: v
-                for key, v in self._tenant_cache.items()  # type: ignore[has-type]
+                for key, v in tenant_cache.items()
                 if not (key[0] == tenant and key[1] == principal)
             }

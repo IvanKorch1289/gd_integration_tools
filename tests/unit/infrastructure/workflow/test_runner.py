@@ -487,3 +487,71 @@ def test_on_notify_queue_full_drops_silently() -> None:
     )
     # Queue still has just the original item.
     assert runner._pending_instance_ids.qsize() == 1
+
+
+# ── Regression: RES-1 semaphore release on PAUSE ───────────────────
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_paused_workflow_releases_semaphore() -> None:
+    """Regression: RES-1 — semaphore must be released when workflow PAUSES.
+
+    The async with self._semaphore context manager in _execute_one() guarantees
+    release regardless of StepOutcome (PAUSE, DONE, CONTINUE, FAILED).
+    This test verifies that after a PAUSE, the semaphore is available for
+    new executions.
+    """
+    runner, state_store, _es, executor = _build_runner(max_concurrent=2)
+
+    # Create a mock workflow instance
+    instance = MagicMock(name="instance")
+    instance.id = uuid.uuid4()
+    instance.route_id = "test_route"
+    instance.locked_by = runner._config.worker_id
+    instance.locked_until = datetime.now(UTC)
+
+    # Mock state
+    state = MagicMock(name="state")
+    state.current_step = 0
+    state.exchange_snapshot = {}
+    state.loop_counters = {}
+    state.branch_choices = {}
+    state.attempts = 0
+
+    # Mock executor to return PAUSE outcome
+    pause_result = StepResult(
+        outcome=StepOutcome.PAUSE, events=[], next_attempt_at=datetime.now(UTC)
+    )
+    executor.execute_next = AsyncMock(return_value=pause_result)
+
+    # Mock state_store to return our state
+    state_store.load = AsyncMock(return_value=state)
+    state_store.update_status = AsyncMock()
+
+    # Mock event_store
+    _es.append = MagicMock()
+
+    # Verify semaphore starts with 2 slots
+    assert runner._semaphore._value == 2  # type: ignore[attr-defined]
+
+    # Execute one workflow that will PAUSE
+    await runner._execute_one(instance.id)
+
+    # After PAUSE, semaphore should be released (value back to 2)
+    assert runner._semaphore._value == 2  # type: ignore[attr-defined]
+
+    # Execute another workflow to confirm semaphore is available
+    instance2 = MagicMock(name="instance2")
+    instance2.id = uuid.uuid4()
+    instance2.route_id = "test_route"
+    instance2.locked_by = runner._config.worker_id
+    instance2.locked_until = datetime.now(UTC)
+
+    await runner._execute_one(instance2.id)
+
+    # Semaphore should still be released
+    assert runner._semaphore._value == 2  # type: ignore[attr-defined]
+
+    # Verify both workflows were processed
+    assert executor.execute_next.call_count == 2

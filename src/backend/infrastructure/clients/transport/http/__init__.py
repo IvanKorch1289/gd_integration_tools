@@ -56,8 +56,13 @@ __all__ = (
 )
 
 
-class HttpClient(SessionMixin, RequestMixin, PrepMixin, ObservabilityMixin):
-    """HTTP client (4 mixins = 15 methods + 2 core)."""
+class HttpClient(SessionMixin, PrepMixin, RequestMixin, ObservabilityMixin):
+    """HTTP client (4 mixins = 15 methods + 2 core).
+
+    S61 W4 MRO: PrepMixin ДО RequestMixin, чтобы concrete ``_prepare_request_kwargs``
+    брался из PrepMixin, а Protocol в RequestMixin/ObservabilityMixin оставался
+    structural shape (без конфликта signature).
+    """
 
     __slots__ = (
         "settings",

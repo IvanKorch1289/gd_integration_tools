@@ -43,7 +43,7 @@ def test_auth_required_no_private_VERIFIERS_access() -> None:
             if "_VERIFIERS" in line and not line.strip().startswith("#")
         ]
         assert not lines_with_VERIFIERS, (
-            f"auth_required.py uses _VERIFIERS (private):\n"
+            "auth_required.py uses _VERIFIERS (private):\n"
             + "\n".join(lines_with_VERIFIERS)
         )
 

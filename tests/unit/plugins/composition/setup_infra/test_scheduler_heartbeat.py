@@ -1,4 +1,5 @@
 """S71 W3 — TD-S64-W2 closure tests for scheduler leader lock auto-extend."""
+
 from __future__ import annotations
 
 import asyncio

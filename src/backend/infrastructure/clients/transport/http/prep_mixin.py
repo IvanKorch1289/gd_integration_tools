@@ -50,9 +50,9 @@ class PrepMixin:
 
     async def _prepare_request_kwargs(
         self,
-        data: dict[str, Any] | str | bytes | None,
-        json_data: dict[str, Any] | list[Any] | None,
-        files: Mapping[str, FilePart] | None,
+        data: dict[str, Any] | str | bytes | None = None,
+        json_data: dict[str, Any] | list[Any] | None = None,
+        files: Mapping[str, FilePart] | None = None,
     ) -> dict[str, Any]:
         """Готовит httpx-совместимые kwargs (``content`` / ``data`` / ``files``)."""
         if json_data is not None and (data is not None or files is not None):

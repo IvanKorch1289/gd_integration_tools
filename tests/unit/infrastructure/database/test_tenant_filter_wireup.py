@@ -70,6 +70,7 @@ def test_is_tenant_aware_false_without_tenant_id() -> None:
 
 def test_is_tenant_aware_real_class() -> None:
     """Real class without tenant_id → False."""
+
     class PlainEntity:
         id: int
 
@@ -78,6 +79,7 @@ def test_is_tenant_aware_real_class() -> None:
 
 def test_is_tenant_aware_tenant_mixin_subclass() -> None:
     """Subclass of TenantMixin → True."""
+
     class TenantAware(TenantMixin):
         pass
 

@@ -1,4 +1,5 @@
 """S98 W4 — stdlib logging cleanup: config_loader.py uses core.logging."""
+
 from __future__ import annotations
 
 

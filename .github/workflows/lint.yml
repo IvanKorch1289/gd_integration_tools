@@ -43,6 +43,11 @@ jobs:
       - name: Ruff check (lint)
         run: uv run ruff check src tests
 
+      - name: Ruff F821 gate (undefined names)
+        # S141: F821 (undefined name) — системный паттерн дефектов.
+        # Блокирующий шаг для предотвращения regressions.
+        run: uv run ruff check --select F821 src
+
       - name: Ruff format check
         run: uv run ruff format --check src tests
 

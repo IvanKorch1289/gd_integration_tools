@@ -8,6 +8,7 @@ S96 W2: ``tool_policy_integration.py:172`` имел ``\\`tools\\``` (legacy esca
 Этот тест собирает ВСЕ модули core/security/capabilities/ и проверяет
 что ``compileall`` не выдаёт SyntaxWarning.
 """
+
 from __future__ import annotations
 
 import py_compile
@@ -68,6 +69,4 @@ def test_tool_policy_integration_docstring_renders_clean() -> None:
         f"Found legacy \\` escape in docstring:\n{docstring[:200]}"
     )
     # Правильный pattern: double-backtick reST literal
-    assert "``tools``" in docstring, (
-        "Expected reST literal ``tools`` in docstring"
-    )
+    assert "``tools``" in docstring, "Expected reST literal ``tools`` in docstring"

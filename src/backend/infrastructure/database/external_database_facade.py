@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import text
 
@@ -66,7 +66,11 @@ class ExternalDatabaseTransactionContext:
     async def execute(self, sql: str, params: dict[str, Any] | None = None) -> int:
         """INSERT/UPDATE/DELETE внутри транзакции."""
         self._assert_write()
-        result = await self._session.execute(text(sql), params or {})
+        from sqlalchemy.engine.cursor import CursorResult
+
+        result = cast(
+            CursorResult[Any], await self._session.execute(text(sql), params or {})
+        )
         return result.rowcount or 0
 
     async def call_procedure(
@@ -153,7 +157,11 @@ class ExternalDatabaseFacade:
                 manager.create_session() as session,
                 manager.transaction(session),
             ):
-                result = await session.execute(text(sql), params or {})
+                from sqlalchemy.engine.cursor import CursorResult
+
+                result = cast(
+                    CursorResult[Any], await session.execute(text(sql), params or {})
+                )
                 return result.rowcount or 0
         except DatabaseError:
             raise

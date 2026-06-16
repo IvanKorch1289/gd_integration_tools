@@ -19,10 +19,11 @@ from src.backend.dsl.builders.eventbus_mixin import EventBusPublishProcessor
 from src.backend.dsl.engine.exchange import Exchange, Message
 
 
-def _exchange(body: Any = None, properties: dict[str, Any] | None = None) -> Exchange[Any]:
+def _exchange(
+    body: Any = None, properties: dict[str, Any] | None = None
+) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}),
-        properties=properties or {},
+        in_message=Message(body=body, headers={}), properties=properties or {}
     )
 
 
@@ -43,9 +44,7 @@ async def test_noop_when_feature_flag_off(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.asyncio
-async def test_fallback_when_bus_not_started(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_fallback_when_bus_not_started(monkeypatch: pytest.MonkeyPatch) -> None:
     """Если EventBus не стартовал — событие падает в properties."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.eventbus_dsl_enabled",
@@ -70,9 +69,7 @@ async def test_fallback_when_bus_not_started(
 
 
 @pytest.mark.asyncio
-async def test_publish_when_bus_started(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_publish_when_bus_started(monkeypatch: pytest.MonkeyPatch) -> None:
     """EventBus запущен → публикация в брокер, без fallback."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.eventbus_dsl_enabled",
@@ -131,9 +128,7 @@ async def test_property_payload_ref(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_publish_failure_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_publish_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """При исключении publish — fallback в properties."""
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.eventbus_dsl_enabled",

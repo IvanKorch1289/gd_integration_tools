@@ -50,10 +50,15 @@ _logger = get_logger(
 __all__ = ("LoadedPluginV11", "PluginInventoryConflictError", "PluginLoaderV11")
 
 
-class PluginLoaderV11(DiscoveryMixin, LoadingMixin, ValidationMixin):
+class PluginLoaderV11(DiscoveryMixin, ValidationMixin, LoadingMixin):
     """In-tree plugin loader (3 mixins = 9 internal methods + 5 public).
 
     ADR-042 R1.2: V11 plugin loader (in-tree extensions/<name>/, no entry_points).
+
+    S133 W4 MRO: ValidationMixin ДО LoadingMixin, чтобы concrete реализации
+    ``_check_inventory_collisions`` / ``_record_owners`` из ValidationMixin
+    брались до Protocol-заглушек в ``_LoadingProtocol`` (иначе mypy считает
+    класс abstract).
     """
 
     # State attrs set in __init__ (S52 W3: class-level annotations for mypy MRO)

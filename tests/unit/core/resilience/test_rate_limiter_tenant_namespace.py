@@ -65,6 +65,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
     """
     fake = _FakeRedis()
     import src.backend.infrastructure.clients.storage.redis as redis_mod
+
     monkeypatch.setattr(redis_mod, "get_redis_client", lambda: fake)
     yield fake
 

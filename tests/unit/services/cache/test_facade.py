@@ -49,9 +49,7 @@ def primary() -> _SimpleBackend:
 
 
 @pytest.fixture()
-def facade(
-    primary: _SimpleBackend, tmp_path: Path
-) -> UnifiedCacheFacade:
+def facade(primary: _SimpleBackend, tmp_path: Path) -> UnifiedCacheFacade:
     def _check(plugin: str, capability: str, scope: str | None = None) -> None:
         assert plugin == "test_plugin"
         if capability not in {"cache.read", "cache.write"}:
@@ -136,7 +134,10 @@ async def test_set_without_permission(facade: UnifiedCacheFacade) -> None:
     def _check_denied(plugin: str, capability: str, scope: str | None = None) -> None:
         if capability != "cache.read":
             raise CapabilityDeniedError(
-                plugin=plugin, capability=capability, requested_scope=scope, declared_scope=None
+                plugin=plugin,
+                capability=capability,
+                requested_scope=scope,
+                declared_scope=None,
             )
 
     facade._check = _check_denied  # noqa: SLF001
@@ -149,7 +150,10 @@ async def test_get_without_permission(facade: UnifiedCacheFacade) -> None:
     def _check_write(plugin: str, capability: str, scope: str | None = None) -> None:
         if capability != "cache.write":
             raise CapabilityDeniedError(
-                plugin=plugin, capability=capability, requested_scope=scope, declared_scope=None
+                plugin=plugin,
+                capability=capability,
+                requested_scope=scope,
+                declared_scope=None,
             )
 
     facade._check = _check_write  # noqa: SLF001

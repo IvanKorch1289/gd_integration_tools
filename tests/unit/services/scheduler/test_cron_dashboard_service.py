@@ -54,10 +54,7 @@ async def test_list_scheduled_returns_summaries(scheduler_mock: Any) -> None:
         return None
 
     service = CronDashboardService(clickhouse_client_factory=factory)
-    with patch(
-        _PATCH_GET_SCHEDULER_MANAGER,
-        return_value=scheduler_mock,
-    ):
+    with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
         items = await service.list_scheduled()
 
     assert len(items) == 2
@@ -74,10 +71,7 @@ async def test_list_scheduled_empty(scheduler_mock: Any) -> None:
         return None
 
     service = CronDashboardService(clickhouse_client_factory=factory)
-    with patch(
-        _PATCH_GET_SCHEDULER_MANAGER,
-        return_value=scheduler_mock,
-    ):
+    with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
         items = await service.list_scheduled()
     assert items == []
 
@@ -130,10 +124,7 @@ async def test_list_scheduled_trigger_without_cron(scheduler_mock: Any) -> None:
         }
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
-    with patch(
-        _PATCH_GET_SCHEDULER_MANAGER,
-        return_value=scheduler_mock,
-    ):
+    with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
         items = await service.list_scheduled()
     assert items[0].cron_expr == ""
     assert items[0].timezone == "UTC"
@@ -151,10 +142,7 @@ async def test_list_scheduled_trigger_without_timezone(scheduler_mock: Any) -> N
         }
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
-    with patch(
-        _PATCH_GET_SCHEDULER_MANAGER,
-        return_value=scheduler_mock,
-    ):
+    with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
         items = await service.list_scheduled()
     assert items[0].cron_expr == "0 0 * * *"
     assert items[0].timezone == "UTC"

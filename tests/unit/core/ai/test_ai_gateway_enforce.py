@@ -3,6 +3,7 @@
 V2 P0 #1 reports default=False, но S25 W1 уже выставил default=True.
 W3 — CI guard: если default изменится на False → test fail.
 """
+
 from __future__ import annotations
 
 import pytest

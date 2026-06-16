@@ -122,10 +122,27 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         examples=[1.0],
     )
 
+    replica_dsn: str | None = Field(
+        default=None,
+        description="DSN read-replica для async-подключения (S38.1).",
+        examples=["postgresql+asyncpg://user:pwd@replica:5432/test"],
+    )
+
+    pool_use_lifo: bool = Field(
+        default=False,
+        description="SQLAlchemy pool_use_lifo: True — LIFO, False — FIFO (default).",
+        examples=[False],
+    )
+
     @computed_field(description="URL асинхронного подключения")
     def async_connection_url(self) -> str:
         """Формирует DSN для асинхронного драйвера."""
         return self._build_dsn(is_async=True)
+
+    @computed_field(description="URL асинхронного подключения к read-replica")
+    def replica_async_connection_url(self) -> str | None:
+        """Возвращает DSN read-replica если задана."""
+        return self.replica_dsn
 
     @computed_field(description="URL синхронного подключения")
     def sync_connection_url(self) -> str:

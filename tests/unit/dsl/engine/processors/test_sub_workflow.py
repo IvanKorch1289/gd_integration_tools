@@ -40,8 +40,7 @@ def test_sub_workflow_dsl_registers_processor() -> None:
     """``RouteBuilder.sub_workflow(...)`` — добавляет SubWorkflowProcessor в pipeline."""
     b = RouteBuilder("test", source="kafka:orders")
     result = b.sub_workflow(
-        "notifications.send_receipt",
-        args={"order_id": "123", "channel": "email"},
+        "notifications.send_receipt", args={"order_id": "123", "channel": "email"}
     )
     assert isinstance(result, RouteBuilder)
     assert result is b
@@ -75,15 +74,10 @@ def test_sub_workflow_chainable() -> None:
 
 def test_sub_workflow_to_spec_minimal() -> None:
     """``to_spec()`` — минимальный YAML при дефолтных namespace/task_queue/etc."""
-    p = SubWorkflowProcessor(
-        name="notifications.send", args={"order_id": "1"}
-    )
+    p = SubWorkflowProcessor(name="notifications.send", args={"order_id": "1"})
     spec = p.to_spec()
     assert spec == {
-        "sub_workflow": {
-            "name": "notifications.send",
-            "args": {"order_id": "1"},
-        }
+        "sub_workflow": {"name": "notifications.send", "args": {"order_id": "1"}}
     }
 
 
@@ -143,9 +137,7 @@ async def test_sub_workflow_process_uses_async_api_mode() -> None:
     backend.await_completion = AsyncMock()
 
     p = SubWorkflowProcessor(
-        name="notifications.send",
-        args={"order_id": "1"},
-        backend=backend,
+        name="notifications.send", args={"order_id": "1"}, backend=backend
     )
     exchange = _ex(body={"unrelated": "x"})
     await p.process(exchange, _ctx())
@@ -171,16 +163,10 @@ async def test_sub_workflow_injects_parent_ids_into_args() -> None:
     ``_parent_correlation_id=corr-456``.
     """
     backend = MagicMock()
-    backend.start_workflow = AsyncMock(
-        return_value=MagicMock(workflow_id="child-1")
-    )
+    backend.start_workflow = AsyncMock(return_value=MagicMock(workflow_id="child-1"))
 
-    p = SubWorkflowProcessor(
-        name="x", args={"order_id": "1"}, backend=backend
-    )
-    exchange = _ex(
-        workflow_id="parent-123", correlation_id="corr-456"
-    )
+    p = SubWorkflowProcessor(name="x", args={"order_id": "1"}, backend=backend)
+    exchange = _ex(workflow_id="parent-123", correlation_id="corr-456")
     await p.process(exchange, _ctx())
 
     call_kwargs = backend.start_workflow.await_args.kwargs
@@ -195,14 +181,10 @@ async def test_sub_workflow_preserves_explicit_parent_in_args() -> None:
     """``process()`` — если user явно задал ``_parent_workflow_id`` в args,
     auto-injection НЕ перезаписывает (явное > неявное)."""
     backend = MagicMock()
-    backend.start_workflow = AsyncMock(
-        return_value=MagicMock(workflow_id="child-1")
-    )
+    backend.start_workflow = AsyncMock(return_value=MagicMock(workflow_id="child-1"))
 
     p = SubWorkflowProcessor(
-        name="x",
-        args={"_parent_workflow_id": "explicit-parent"},
-        backend=backend,
+        name="x", args={"_parent_workflow_id": "explicit-parent"}, backend=backend
     )
     exchange = _ex(workflow_id="parent-123")
     await p.process(exchange, _ctx())
@@ -215,13 +197,9 @@ async def test_sub_workflow_preserves_explicit_parent_in_args() -> None:
 async def test_sub_workflow_no_parent_ids_in_exchange() -> None:
     """``process()`` — если parent ids отсутствуют, args не загрязняются мусором."""
     backend = MagicMock()
-    backend.start_workflow = AsyncMock(
-        return_value=MagicMock(workflow_id="child-1")
-    )
+    backend.start_workflow = AsyncMock(return_value=MagicMock(workflow_id="child-1"))
 
-    p = SubWorkflowProcessor(
-        name="x", args={"order_id": "1"}, backend=backend
-    )
+    p = SubWorkflowProcessor(name="x", args={"order_id": "1"}, backend=backend)
     exchange = _ex()
     await p.process(exchange, _ctx())
 

@@ -1,4 +1,5 @@
 """Tests для ForkJoinProcessor (S93 W5) + DSL builder fork_join()."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -27,7 +28,7 @@ class _SetBody(BaseProcessor):
     """Test processor: заменяет body."""
 
     def __init__(self, body: Any) -> None:
-        super().__init__(name=f"set_body")
+        super().__init__(name="set_body")
         self._body = body
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -54,18 +55,12 @@ def context() -> ExecutionContext:
 async def test_fork_join_collect_aggregation(context: ExecutionContext) -> None:
     """collect (default): body = {branch_name: result} dict."""
     proc = ForkJoinProcessor(
-        branches={
-            "a": [_SetBody({"a-val": 1})],
-            "b": [_SetBody({"b-val": 2})],
-        },
+        branches={"a": [_SetBody({"a-val": 1})], "b": [_SetBody({"b-val": 2})]},
         aggregation="collect",
     )
     exchange = Exchange(in_message=Message(body={"orig": 1}, headers={}))
     await proc.process(exchange, context)
-    assert exchange.in_message.body == {
-        "a": {"a-val": 1},
-        "b": {"b-val": 2},
-    }
+    assert exchange.in_message.body == {"a": {"a-val": 1}, "b": {"b-val": 2}}
     assert exchange.get_property("fork_join_results") == {
         "a": {"a-val": 1},
         "b": {"b-val": 2},
@@ -127,10 +122,7 @@ async def test_fork_join_first_aggregation(context: ExecutionContext) -> None:
 async def test_fork_join_first_skips_none(context: ExecutionContext) -> None:
     """first: пропускает None значения."""
     proc = ForkJoinProcessor(
-        branches={
-            "none_branch": [_SetBody(None)],
-            "real_branch": [_SetBody({"v": 1})],
-        },
+        branches={"none_branch": [_SetBody(None)], "real_branch": [_SetBody({"v": 1})]},
         aggregation="first",
     )
     exchange = Exchange(in_message=Message(body="orig", headers={}))
@@ -139,13 +131,12 @@ async def test_fork_join_first_skips_none(context: ExecutionContext) -> None:
 
 
 @pytest.mark.asyncio
-async def test_fork_join_branch_failure_fails_exchange(context: ExecutionContext) -> None:
+async def test_fork_join_branch_failure_fails_exchange(
+    context: ExecutionContext,
+) -> None:
     """Любой branch fail → exchange fail (не silent drop)."""
     proc = ForkJoinProcessor(
-        branches={
-            "ok": [_SetProperty("k", "v")],
-            "broken": [_FailProcessor("kaboom")],
-        },
+        branches={"ok": [_SetProperty("k", "v")], "broken": [_FailProcessor("kaboom")]}
     )
     exchange = Exchange(in_message=Message(body={}, headers={}))
     await proc.process(exchange, context)
@@ -163,10 +154,7 @@ async def test_fork_join_empty_branches_raises() -> None:
 def test_fork_join_invalid_aggregation_raises() -> None:
     """Неизвестная aggregation → ValueError."""
     with pytest.raises(ValueError, match="aggregation must be one of"):
-        ForkJoinProcessor(
-            branches={"a": [_SetProperty("k", 1)]},
-            aggregation="bogus",
-        )
+        ForkJoinProcessor(branches={"a": [_SetProperty("k", 1)]}, aggregation="bogus")
 
 
 def test_fork_join_dsl_builder_method_exists() -> None:

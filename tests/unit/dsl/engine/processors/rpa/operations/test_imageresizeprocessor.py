@@ -221,9 +221,7 @@ def _install_raising_pil_open(
     monkeypatch.setattr(_real_pil_image, "open", _factory)
 
 
-async def _passthrough_to_thread(
-    func: Any, *args: Any, **kwargs: Any
-) -> Any:
+async def _passthrough_to_thread(func: Any, *args: Any, **kwargs: Any) -> Any:
     """Подмена ``asyncio.to_thread`` — выполняет func синхронно.
 
     Нужна для теста, который провоцирует синхронное исключение в resize.

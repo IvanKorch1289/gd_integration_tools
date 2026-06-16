@@ -14,15 +14,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any, AsyncIterator
 
+from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.gateway.callbacks import (
     CostTrackingCallback,
     FallbackTrackingCallback,
-)
-from src.backend.services.ai.gateway.exceptions import (
-    GatewayRateLimited,
-    GatewayUnavailable,
 )
 
 __all__ = ("LiteLLMGateway", "get_litellm_gateway")

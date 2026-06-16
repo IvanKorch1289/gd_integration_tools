@@ -51,9 +51,7 @@ def _make_storage(
 
     # Helper: configure AsyncMock with either return_value or side_effect=Exception
     def _configure(
-        mock: AsyncMock,
-        return_value: Any,
-        raises: BaseException | None,
+        mock: AsyncMock, return_value: Any, raises: BaseException | None
     ) -> None:
         if raises is not None:
             mock.side_effect = raises
@@ -95,6 +93,7 @@ def _make_storage(
 
 # === DOWNLOAD ===
 
+
 @pytest.mark.asyncio
 async def test_download_primary_success() -> None:
     """Primary returns data → no fallback."""
@@ -135,6 +134,7 @@ async def test_download_both_fail_raises_secondary_exc() -> None:
 
 # === UPLOAD ===
 
+
 @pytest.mark.asyncio
 async def test_upload_primary_success_no_fallback() -> None:
     primary = _make_storage(upload_return="s3://bucket/key1")
@@ -161,6 +161,7 @@ async def test_upload_primary_fail_uses_secondary() -> None:
 
 # === DELETE ===
 
+
 @pytest.mark.asyncio
 async def test_delete_primary_success() -> None:
     primary = _make_storage()
@@ -185,6 +186,7 @@ async def test_delete_primary_fail_uses_secondary() -> None:
 
 
 # === EXISTS ===
+
 
 @pytest.mark.asyncio
 async def test_exists_primary_success() -> None:
@@ -211,6 +213,7 @@ async def test_exists_primary_fail_uses_secondary() -> None:
 
 # === LIST_KEYS ===
 
+
 @pytest.mark.asyncio
 async def test_list_keys_primary_fail_uses_secondary() -> None:
     primary = _make_storage(list_raises=ConnectionError("S3"))
@@ -223,6 +226,7 @@ async def test_list_keys_primary_fail_uses_secondary() -> None:
 
 
 # === PRESIGNED_URL ===
+
 
 @pytest.mark.asyncio
 async def test_presigned_url_primary_fail_uses_secondary() -> None:
@@ -237,15 +241,14 @@ async def test_presigned_url_primary_fail_uses_secondary() -> None:
 
 # === FALLBACK_EXCEPTIONS FILTER ===
 
+
 @pytest.mark.asyncio
 async def test_fallback_exceptions_filter_excludes_keyerror() -> None:
     """KeyError от primary НЕ триггерит fallback (логическая ошибка, не network)."""
     primary = _make_storage(download_raises=KeyError("missing"))
     secondary = _make_storage(download_return=b"should_not_be_used")
     fb = FallbackObjectStorage(
-        primary,
-        secondary,
-        fallback_exceptions=(ConnectionError, OSError),
+        primary, secondary, fallback_exceptions=(ConnectionError, OSError)
     )
 
     with pytest.raises(KeyError):
@@ -260,9 +263,7 @@ async def test_fallback_exceptions_filter_includes_connectionerror() -> None:
     primary = _make_storage(download_raises=ConnectionError("S3"))
     secondary = _make_storage(download_return=b"sec")
     fb = FallbackObjectStorage(
-        primary,
-        secondary,
-        fallback_exceptions=(ConnectionError,),
+        primary, secondary, fallback_exceptions=(ConnectionError,)
     )
 
     result = await fb.download("key1")
@@ -271,6 +272,7 @@ async def test_fallback_exceptions_filter_includes_connectionerror() -> None:
 
 
 # === SUPPORTS_PRESIGNED / HEALTHCHECK ===
+
 
 def test_supports_presigned_delegates_to_primary() -> None:
     primary = _make_storage(supports_presigned=False)
@@ -296,6 +298,7 @@ async def test_healthcheck_primary_fail_secondary_ok() -> None:
 
 
 # === METRICS / COUNT ===
+
 
 @pytest.mark.asyncio
 async def test_fallback_count_accumulates_across_calls() -> None:

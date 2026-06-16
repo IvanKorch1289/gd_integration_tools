@@ -1,22 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
-from typing import TYPE_CHECKING
-
-from src.backend.services.ai.rag_augment import AugmentResult, build_augment_result
+from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.services.ai.rag_augment import build_augment_result
 from src.backend.services.ai.rag_service.search_mixin import (
     _format_context_with_sources,
 )
-from src.backend.services.ai.rag_service.state import RAGCitation
-
-if TYPE_CHECKING:  # pragma: no cover
-    pass
-
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.services.ai.rag_types import AugmentResult, RAGCitation
 
 logger = get_logger(__name__)
 
@@ -25,6 +14,7 @@ from src.backend.services.ai.rag_service._protocol import _RAGServiceProtocol
 
 
 class AugmentMixin(_RAGServiceProtocol):
+    pass
     """prompt augmentation (3 augment variants) для RAGService. S64 W4 extraction."""
 
     __slots__ = ()

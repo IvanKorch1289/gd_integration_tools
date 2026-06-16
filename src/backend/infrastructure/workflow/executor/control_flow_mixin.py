@@ -65,8 +65,13 @@ class ControlFlowMixin:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message="branch sub-step processor timeout",
-                            events=events + [
-                                (WorkflowEventType.step_failed, {"reason": "timeout"}, sub_step.name)
+                            events=events
+                            + [
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout"},
+                                    sub_step.name,
+                                )
                             ],
                         )
                     if isinstance(result, dict):
@@ -143,8 +148,13 @@ class ControlFlowMixin:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message=f"loop body processor timeout at iter {iter_count}",
-                            events=events + [
-                                (WorkflowEventType.step_failed, {"reason": "timeout", "iter": iter_count}, body_step.name)
+                            events=events
+                            + [
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout", "iter": iter_count},
+                                    body_step.name,
+                                )
                             ],
                         )
                     if isinstance(result, dict):
@@ -232,10 +242,7 @@ class ControlFlowMixin:
             for idx, r in enumerate(results):
                 if isinstance(r, Exception):
                     _logger.warning(
-                        "for_each item %d raised %s: %s",
-                        idx,
-                        type(r).__name__,
-                        r,
+                        "for_each item %d raised %s: %s", idx, type(r).__name__, r
                     )
                     errors.append(r)
 
@@ -243,8 +250,13 @@ class ControlFlowMixin:
                 return StepResult(
                     outcome=StepOutcome.FAILED,
                     error_message=f"for_each: {len(errors)} items failed",
-                    events=events + [
-                        (WorkflowEventType.step_failed, {"reason": "item_error", "count": len(errors)}, step.name)
+                    events=events
+                    + [
+                        (
+                            WorkflowEventType.step_failed,
+                            {"reason": "item_error", "count": len(errors)},
+                            step.name,
+                        )
                     ],
                 )
 
@@ -268,8 +280,13 @@ class ControlFlowMixin:
                                 return StepResult(
                                     outcome=StepOutcome.FAILED,
                                     error_message=f"for_each sequential timeout at item {idx}",
-                                    events=events + [
-                                        (WorkflowEventType.step_failed, {"reason": "timeout", "index": idx}, step.name)
+                                    events=events
+                                    + [
+                                        (
+                                            WorkflowEventType.step_failed,
+                                            {"reason": "timeout", "index": idx},
+                                            step.name,
+                                        )
                                     ],
                                 )
                             if isinstance(result, dict):
@@ -277,7 +294,8 @@ class ControlFlowMixin:
 
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=events + [
+            events=events
+            + [
                 (
                     WorkflowEventType.step_finished,
                     {"items": total, "completed": True},

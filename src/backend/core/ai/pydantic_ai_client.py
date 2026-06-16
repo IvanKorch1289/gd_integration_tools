@@ -28,11 +28,8 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.gateway.exceptions import (
-    GatewayRateLimited,
-    GatewayUnavailable,
-)
 
 if TYPE_CHECKING:
     from pydantic import BaseModel

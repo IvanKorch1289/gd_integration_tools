@@ -32,9 +32,7 @@ from src.backend.services.plugins.registries import (  # noqa: F401  (smoke)
 
 # ── Константы инварианта ──────────────────────────────────────────────
 
-REGISTR_PATH = Path(
-    "src/backend/services/plugins/registries.py"
-)
+REGISTR_PATH = Path("src/backend/services/plugins/registries.py")
 # Регулярка для строк `from src.backend.dsl.<...> import <...>`
 DSL_FROM_RE = re.compile(r"^\s*from\s+(src\.backend\.dsl\.[\w.]+)\s+import\s+(.+?)\s*$")
 # Модули, которые осознанно reverse-импортируются (style cleanup, не violation close).
@@ -49,11 +47,15 @@ EXPECTED_DSL_MODULES: frozenset[str] = frozenset(
 
 def _read_registries_source() -> str:
     """Читает исходник registries.py как UTF-8 текст (без зависимостей от cwd)."""
-    repo_root = Path(__file__).resolve().parents[4]  # tests/unit/services/plugins/ → repo root
+    repo_root = (
+        Path(__file__).resolve().parents[4]
+    )  # tests/unit/services/plugins/ → repo root
     return (repo_root / REGISTR_PATH).read_text(encoding="utf-8")
 
 
-def _parse_dsl_imports(source: str) -> tuple[list[ast.ImportFrom], list[ast.ImportFrom]]:
+def _parse_dsl_imports(
+    source: str,
+) -> tuple[list[ast.ImportFrom], list[ast.ImportFrom]]:
     """Возвращает (top_level_imports, type_checking_imports) — все ``from src.backend.dsl``.
 
     Разделение через обход AST: TC-блок → узлы внутри, не входят в ``tree.body``.
@@ -214,7 +216,9 @@ class TestAdapterSmoke:
         assert reg is not None
         # Проверяем, что тип ActionHandlerSpec доступен (нужен в runtime регистра).
         assert isinstance(
-            ActionHandlerSpec(action="x", service_getter=lambda: None, service_method="call"),
+            ActionHandlerSpec(
+                action="x", service_getter=lambda: None, service_method="call"
+            ),
             ActionHandlerSpec,
         )
 
@@ -223,12 +227,14 @@ class TestAdapterSmoke:
         from src.backend.dsl.engine.processors import BaseProcessor
 
         assert BaseProcessor is not None
+
         # issubclass-check, как в ProcessorRegistryAdapter.register_class().
         class _Dummy(BaseProcessor):  # type: ignore[misc]
             async def process(self, ctx):  # type: ignore[override]
                 return ctx
 
         assert issubclass(_Dummy, BaseProcessor)
+
         # Не-BaseProcessor класс должен fail issubclass.
         class _NotProcessor:
             pass

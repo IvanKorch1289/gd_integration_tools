@@ -10,28 +10,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import Any
 
-from src.backend.services.ai.rag_service.state import RAGCitation
+from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel, RAGCitation
 
-__all__ = ("AugmentResult", "FreshnessLabel", "compute_freshness")
-
-
-class FreshnessLabel(StrEnum):
-    """Метка свежести retrieved-чанка.
-
-    Attributes:
-        FRESH: ingested_at < soft_threshold_hours.
-        STALE: soft_threshold_hours <= ingested_at < hard_threshold_hours.
-        EXPIRED: ingested_at >= hard_threshold_hours (отбрасывать).
-    """
-
-    FRESH = "fresh"
-    STALE = "stale"
-    EXPIRED = "expired"
+__all__ = ("AugmentResult", "FreshnessLabel", "RAGCitation", "compute_freshness")
 
 
 def compute_freshness(
@@ -63,57 +47,6 @@ def compute_freshness(
     if age_hours < hard_hours:
         return FreshnessLabel.STALE
     return FreshnessLabel.EXPIRED
-
-
-@dataclass(slots=True)
-class AugmentResult:
-    """Структурированный результат :meth:`RAGService.augment`.
-
-    Attributes:
-        prompt: финальный prompt с inject'ом контекста.
-        citations: список структурированных ссылок на источники.
-        used_results: число чанков, реально использованных в prompt
-            (после фильтрации по freshness).
-        skipped_expired: число чанков отброшенных как expired.
-        namespace: namespace из запроса (для UI badge).
-        top_k: использованный top_k параметр.
-        freshness_distribution: ``{fresh, stale, expired}`` → count.
-        worst_freshness: худшая метка из использованных (для UI badge).
-    """
-
-    prompt: str
-    citations: list[RAGCitation] = field(default_factory=list)
-    used_results: int = 0
-    skipped_expired: int = 0
-    namespace: str | None = None
-    top_k: int = 5
-    freshness_distribution: dict[str, int] = field(default_factory=dict)
-    worst_freshness: FreshnessLabel = FreshnessLabel.FRESH
-
-    def to_dict(self) -> dict[str, Any]:
-        """JSON-ready форма для API/UI."""
-        return {
-            "prompt": self.prompt,
-            "citations": [
-                {
-                    "source_doc": c.source_doc,
-                    "doc_id": c.source_doc,
-                    "chunk_id": c.chunk_id,
-                    "chunk_idx": c.chunk_idx,
-                    "namespace": c.namespace,
-                    "score": c.score,
-                    "freshness": c.freshness,
-                    "ingested_at": c.ingested_at,
-                }
-                for c in self.citations
-            ],
-            "used_results": self.used_results,
-            "skipped_expired": self.skipped_expired,
-            "namespace": self.namespace,
-            "top_k": self.top_k,
-            "freshness_distribution": self.freshness_distribution,
-            "worst_freshness": self.worst_freshness.value,
-        }
 
 
 def build_augment_result(

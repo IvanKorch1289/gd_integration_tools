@@ -52,7 +52,10 @@ class SequentialMixin:
                 _logger.warning(
                     "step processor timed out after %.1fs",
                     self._timeout_per_step_s,
-                    extra={"step_name": step.name, "processor": getattr(proc, "__name__", str(proc))},
+                    extra={
+                        "step_name": step.name,
+                        "processor": getattr(proc, "__name__", str(proc)),
+                    },
                 )
                 return StepResult(
                     outcome=StepOutcome.FAILED,
@@ -60,7 +63,10 @@ class SequentialMixin:
                     events=[
                         (
                             WorkflowEventType.step_failed,
-                            {"reason": "processor_timeout", "timeout_s": self._timeout_per_step_s},
+                            {
+                                "reason": "processor_timeout",
+                                "timeout_s": self._timeout_per_step_s,
+                            },
                             step.name,
                         )
                     ],

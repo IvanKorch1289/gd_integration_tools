@@ -11,33 +11,58 @@ logger = get_logger(__name__)
 
 
 def _filter_by_embedding_version(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Filter retrieval results by embedding-version match.
+    """Filter retrieval results by embedding-model match.
 
-    .. note::
-        S140 W4 stub (post factcheck): embedding-version tracking not
-        yet implemented. Currently a no-op pass-through. To upgrade:
-        compare each result's metadata.embedding_version against
-        self._embedder.version and drop mismatches. Stored metadata
-        field is reserved (see ``ingest_mixin.upsert``).
+    Block 3.5 (gap-ai-3.5, ADR-0074): если ``rag_settings.embedding_strict_mode``,
+    отбрасывает chunks, у которых ``metadata.embedding_model`` задан и не
+    совпадает с ``rag_settings.embedding_model``. Legacy-chunks без поля
+    ``embedding_model`` пропускаются. В non-strict режиме pass-through с
+    warn-only (counter инкрементируется вызывающей стороной).
     """
-    return results
+    from src.backend.core.config.rag import rag_settings
+
+    if not rag_settings.embedding_strict_mode:
+        return results
+
+    current_model = rag_settings.embedding_model
+    filtered: list[dict[str, Any]] = []
+    for hit in results:
+        meta = hit.get("metadata") or {}
+        chunk_model = meta.get("embedding_model")
+        if chunk_model is not None and chunk_model != current_model:
+            logger.debug(
+                "RAG embedding mismatch dropped in strict mode: "
+                "chunk_model=%s current_model=%s",
+                chunk_model,
+                current_model,
+            )
+            continue
+        filtered.append(hit)
+    return filtered
 
 
 def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
     """Format retrieved chunks into a context string with [doc_id:chunk_idx] markers.
 
-    .. note::
-        S140 W4 stub: minimal format — concatenates documents with
-        index markers. Full version would include source paths, scores,
-        freshness labels (see FreshnessLabel in rag_augment.py).
+    Если ``rag_settings.source_attribution_enabled`` (default True), каждый chunk
+    дополняется маркером ``[источник: <source_id>]`` с приоритетом
+    metadata.source > filename > doc_id > id. Chunks без document пропускаются.
     """
+    from src.backend.core.config.rag import rag_settings
+
     parts: list[str] = []
     for hit in results:
+        document = hit.get("document", "")
+        if not document:
+            continue
         meta = hit.get("metadata") or {}
         doc_id = meta.get("doc_id", "?")
         chunk_idx = meta.get("chunk_idx", 0)
-        document = hit.get("document", "")
-        parts.append(f"[{doc_id}:{chunk_idx}] {document}")
+        if rag_settings.source_attribution_enabled:
+            source_id = _extract_source_id(hit)
+            parts.append(f"[{doc_id}:{chunk_idx}] [источник: {source_id}] {document}")
+        else:
+            parts.append(f"[{doc_id}:{chunk_idx}] {document}")
     return "\n\n".join(parts)
 
 

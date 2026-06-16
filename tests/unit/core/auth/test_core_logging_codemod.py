@@ -3,6 +3,7 @@
 Проверяет что 5 файлов в core/auth/ переведены с stdlib logging на
 core.logging facade (structured logging, Graylog routing, etc).
 """
+
 from __future__ import annotations
 
 from pathlib import Path

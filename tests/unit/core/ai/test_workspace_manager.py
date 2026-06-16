@@ -45,8 +45,7 @@ async def test_create_new_emits_audit_event(
         captured_events.append(event)
 
     monkeypatch.setattr(
-        "src.backend.core.ai.workspace_manager.emit_ai_workspace",
-        _capture,
+        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture
     )
 
     manager = AIWorkspaceManager(root=workspace_root)
@@ -94,8 +93,7 @@ async def test_cleanup_expired_removes_old_workspaces(
         captured_events.append(event)
 
     monkeypatch.setattr(
-        "src.backend.core.ai.workspace_manager.emit_ai_workspace",
-        _capture,
+        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture
     )
 
     manager = AIWorkspaceManager(root=workspace_root, ttl_seconds=0.001)
@@ -106,7 +104,9 @@ async def test_cleanup_expired_removes_old_workspaces(
     assert removed == 1
     assert not h1.path.exists()
     # Verify cleanup audit-event was emitted
-    cleanup_events = [e for e in captured_events if e.get("event") == "ai_workspace.cleanup"]
+    cleanup_events = [
+        e for e in captured_events if e.get("event") == "ai_workspace.cleanup"
+    ]
     assert len(cleanup_events) == 1
     assert cleanup_events[0]["tenant"] == "t1"
     assert int(cleanup_events[0]["freed_bytes"]) > 0  # type: ignore[arg-type]

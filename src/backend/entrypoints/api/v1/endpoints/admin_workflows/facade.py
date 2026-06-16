@@ -45,7 +45,7 @@ from src.backend.schemas.workflow import (
 )
 from src.backend.workflows.registry import workflow_registry
 
-WorkflowStatus = helpers.WorkflowStatus
+WorkflowStatus: Any = helpers.WorkflowStatus
 _list_instances_filtered = helpers._list_instances_filtered
 _row_to_schema = helpers._row_to_schema
 _instance_store = helpers._instance_store

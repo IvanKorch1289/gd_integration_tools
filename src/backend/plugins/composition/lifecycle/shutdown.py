@@ -29,7 +29,7 @@ semantics exactly.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 
@@ -42,7 +42,7 @@ _logger = get_logger("application.shutdown")
 __all__ = ("run_shutdown",)
 
 
-async def run_shutdown(app: FastAPI, task_registry: object) -> None:
+async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     """Run the full shutdown phase (moved from lifespan() finally block).
 
     Same ordering, same error semantics as the original lifespan() finally-block.
@@ -76,7 +76,10 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         _logger.debug("OutboxStuckMonitor stop skipped: %s", exc)
 
     # ── 3. DSL YAML watcher ──
-    await stop_dsl_yaml_watcher(app)
+    try:
+        await stop_dsl_yaml_watcher(app)
+    except Exception as watcher_exc:
+        _logger.warning("DSL YAML watcher shutdown error: %s", watcher_exc)
 
     # ── 4. AI Safety cleanup-loop ──
     # Wave 1.6 (S1): остановка ДО V11-loaders, плагины могут писать в
@@ -92,7 +95,10 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     # R1.fin (V11): shutdown в обратном порядке (route → plugin) ДО Wave 4
     # PluginLoader, чтобы их on_shutdown успел отработать до закрытия общих
     # ресурсов.
-    await shutdown_v11_loaders(app)
+    try:
+        await shutdown_v11_loaders(app)
+    except Exception as v11_exc:
+        _logger.warning("V11 loaders shutdown error: %s", v11_exc)
 
     # ── 6. PluginLoader graceful shutdown ──
     plugin_loader = getattr(app.state, "plugin_loader", None)
@@ -102,7 +108,17 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         except Exception as plugin_exc:
             _logger.warning("Plugin shutdown error: %s", plugin_exc)
 
-    # ── 7. Infrastructure ending() ──
+    # ── 7. EventBus lifecycle subscriptions cleanup ──
+    # S141: unsubscribe all lifecycle-tracked subscriptions before
+    # infrastructure ending.
+    try:
+        event_bus_facade = getattr(app.state, "eventbus_facade", None)
+        if event_bus_facade is not None:
+            await event_bus_facade.unsubscribe_all()
+    except Exception as eb_exc:
+        _logger.debug("EventBusFacade unsubscribe_all skipped: %s", eb_exc)
+
+    # ── 8. Infrastructure ending() ──
     try:
         from src.backend.plugins.composition.setup_infra import ending
 
@@ -116,7 +132,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
 
     _logger.info("Приложение остановлено")
 
-    # ── 8. LogSink final flush + close ──
+    # ── 9. LogSink final flush + close ──
     # Wave 2.5: делается после ``ending()`` и финального лога, чтобы
     # зафиксировать в sink-ах все события штатной остановки.
     try:
@@ -126,7 +142,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     except Exception as sink_exc:
         _logger.warning("LogSink shutdown error: %s", sink_exc)
 
-    # ── 9. pyrate_limiter Leaker shutdown-hook ──
+    # ── 10. pyrate_limiter Leaker shutdown-hook ──
     # Sprint 1 V16 Step 3.4: pyrate_limiter Leaker shutdown-hook.
     # Singleton Limiter из get_default_limiter() запускает фоновую
     # `_leaker.aio_leak_task`, которая течёт без явной остановки.
@@ -138,7 +154,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     except Exception as leaker_exc:
         _logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
 
-    # ── 10. OTel metrics shutdown ──
+    # ── 11. OTel metrics shutdown ──
     # Sprint 16 K2 W3 (L3-P0-1): graceful shutdown OTel MeterProvider.
     try:
         from src.backend.infrastructure.observability.otel import shutdown_otel_metrics
@@ -147,7 +163,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
     except Exception as metrics_stop_exc:
         _logger.warning("OTel metrics shutdown skipped: %s", metrics_stop_exc)
 
-    # ── 11. RedisClusterAdapter close ──
+    # ── 12. RedisClusterAdapter close ──
     cluster_adapter = getattr(app.state, "redis_cluster_adapter", None)
     if cluster_adapter is not None:
         try:
@@ -155,7 +171,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         except Exception as rc_close_exc:
             _logger.warning("RedisClusterAdapter close error: %s", rc_close_exc)
 
-    # ── 11b. EventBus stop (S133 W4) ──
+    # ── 12b. EventBus stop (S133 W4) ──
     bus = getattr(app.state, "event_bus", None)
     if bus is not None:
         try:
@@ -163,7 +179,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         except Exception as bus_stop_exc:
             _logger.warning("EventBus shutdown error: %s", bus_stop_exc)
 
-    # ── 12. FeatureFlagBroadcaster stop ──
+    # ── 13. FeatureFlagBroadcaster stop ──
     # Sprint 17 K5 W1 (D9): graceful stop ДО task_registry.shutdown_all,
     # чтобы subscriber-task успел отписаться от Redis pub/sub корректно
     # (а не быть отменённым).
@@ -174,7 +190,7 @@ async def run_shutdown(app: FastAPI, task_registry: object) -> None:
         except Exception as bcast_stop_exc:
             _logger.warning("FeatureFlagBroadcaster shutdown error: %s", bcast_stop_exc)
 
-    # ── 13. TaskRegistry graceful cancel ──
+    # ── 14. TaskRegistry graceful cancel ──
     # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
     # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех
     # задачи, которые ещё могли логировать остановку, успели завершиться.

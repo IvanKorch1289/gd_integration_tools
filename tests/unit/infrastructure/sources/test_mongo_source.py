@@ -113,8 +113,7 @@ def _install_fake_motor(
 
 
 def _install_fake_motor_with_full_control(
-    monkeypatch: pytest.MonkeyPatch,
-    change_stream_factory,
+    monkeypatch: pytest.MonkeyPatch, change_stream_factory
 ) -> None:
     """Устанавливает fake motor с настраиваемой change-stream factory.
 
@@ -197,9 +196,7 @@ def test_source_id_format() -> None:
 def test_kind_is_cdc() -> None:
     """SourceKind.CDC для MongoDB change-streams."""
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
     assert src.kind.value == "cdc"
 
@@ -207,9 +204,7 @@ def test_kind_is_cdc() -> None:
 def test_resume_token_initially_none() -> None:
     """resume_token = None до первого event'а."""
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
     assert src.resume_token is None
 
@@ -223,23 +218,17 @@ async def test_stream_emits_events(monkeypatch: pytest.MonkeyPatch) -> None:
     """MongoSource.stream() эмитит MongoChangeEvent для каждого change."""
     events = [
         _make_fake_change_event(
-            operation="insert",
-            doc_id="doc-1",
-            resume_token={"_data": "tok-1"},
+            operation="insert", doc_id="doc-1", resume_token={"_data": "tok-1"}
         ),
         _make_fake_change_event(
-            operation="update",
-            doc_id="doc-1",
-            resume_token={"_data": "tok-2"},
+            operation="update", doc_id="doc-1", resume_token={"_data": "tok-2"}
         ),
     ]
     _install_fake_motor(monkeypatch, events)
 
     src = MongoSource(
         MongoSourceConfig(
-            connection_url="mongodb://localhost",
-            database="db1",
-            collection="orders",
+            connection_url="mongodb://localhost", database="db1", collection="orders"
         )
     )
 
@@ -259,17 +248,13 @@ async def test_stream_emits_events(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_stream_saves_resume_token(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_saves_resume_token(monkeypatch: pytest.MonkeyPatch) -> None:
     """После yield первого event'а _resume_token сохранён в src."""
     events = [_make_fake_change_event(resume_token={"_data": "tok-99"})]
     _install_fake_motor(monkeypatch, events)
 
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
 
     assert src.resume_token is None
@@ -286,9 +271,7 @@ async def test_stream_passes_resume_token_to_watch(
 ) -> None:
     """При resume_token != None → coll.watch(resume_after=...) используется."""
     cfg = MongoSourceConfig(
-        connection_url="mongodb://localhost",
-        database="db1",
-        collection="orders",
+        connection_url="mongodb://localhost", database="db1", collection="orders"
     )
     src = MongoSource(cfg)
     src._resume_token = {"_data": "saved-tok"}
@@ -335,9 +318,7 @@ async def test_stream_passes_resume_token_to_watch(
 
 
 @pytest.mark.asyncio
-async def test_stream_db_level_watch(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_db_level_watch(monkeypatch: pytest.MonkeyPatch) -> None:
     """При пустой collection → db.watch() (не coll.watch)."""
     events = [_make_fake_change_event()]
     _install_fake_motor(monkeypatch, events)
@@ -355,9 +336,7 @@ async def test_stream_db_level_watch(
 
 
 @pytest.mark.asyncio
-async def test_stream_full_document_lookup(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_full_document_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
     """full_document_lookup=True → watch(full_document=updateLookup)."""
     cfg = MongoSourceConfig(
         connection_url="mongodb://localhost",
@@ -410,9 +389,7 @@ async def test_stream_full_document_lookup(
 
 
 @pytest.mark.asyncio
-async def test_stream_import_error_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_import_error_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """При отсутствии motor stream() немедленно поднимает ImportError."""
     monkeypatch.delitem(sys.modules, "motor", raising=False)
     monkeypatch.delitem(sys.modules, "motor.motor_asyncio", raising=False)
@@ -429,9 +406,7 @@ async def test_stream_import_error_raises(
     monkeypatch.setattr(builtins, "__import__", fake_import)
 
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
 
     with pytest.raises(ImportError, match="motor not installed"):
@@ -440,14 +415,10 @@ async def test_stream_import_error_raises(
 
 
 @pytest.mark.asyncio
-async def test_stream_reconnect_exhausted(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_stream_reconnect_exhausted(monkeypatch: pytest.MonkeyPatch) -> None:
     """При постоянной ошибке client → RuntimeError после max_attempts."""
     _install_fake_motor(
-        monkeypatch,
-        [],
-        client_raises=ConnectionError("mongo unreachable"),
+        monkeypatch, [], client_raises=ConnectionError("mongo unreachable")
     )
 
     src = MongoSource(
@@ -538,9 +509,7 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     src = MongoSource(
         MongoSourceConfig(
-            connection_url="mongodb://localhost",
-            database="shop",
-            collection="orders",
+            connection_url="mongodb://localhost", database="shop", collection="orders"
         )
     )
 
@@ -560,11 +529,11 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except (asyncio.TimeoutError, asyncio.CancelledError):
+    except asyncio.TimeoutError, asyncio.CancelledError:
         task.cancel()
         try:
             await task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
 
     assert len(received_events) >= 1
@@ -579,9 +548,7 @@ async def test_stop_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
     _install_fake_motor(monkeypatch, [])
 
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
     await src.stop()
     await src.stop()
@@ -593,9 +560,7 @@ async def test_stop_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_health_initially_false() -> None:
     """health() == False до запуска stream()."""
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
     assert await src.health() is False
 
@@ -606,9 +571,7 @@ async def test_health_ping_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     _install_fake_motor(monkeypatch, [])
 
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
 
     fake_client = MagicMock()
@@ -622,15 +585,11 @@ async def test_health_ping_ok(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_health_ping_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     """health() == False если client.ping() падает."""
     src = MongoSource(
-        MongoSourceConfig(
-            connection_url="mongodb://localhost", database="db1"
-        )
+        MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
 
     fake_client = MagicMock()
-    fake_client.admin.command = AsyncMock(
-        side_effect=ConnectionError("mongo down")
-    )
+    fake_client.admin.command = AsyncMock(side_effect=ConnectionError("mongo down"))
     src._client = fake_client
 
     assert await src.health() is False
@@ -639,11 +598,7 @@ async def test_health_ping_fail(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_mongochangeevent_defaults() -> None:
     """MongoChangeEvent c минимальными полями — дефолты работают."""
-    ev = MongoChangeEvent(
-        operation_type="insert",
-        database="db1",
-        collection="orders",
-    )
+    ev = MongoChangeEvent(operation_type="insert", database="db1", collection="orders")
     assert ev.document_key is None
     assert ev.full_document is None
     assert ev.resume_token is None

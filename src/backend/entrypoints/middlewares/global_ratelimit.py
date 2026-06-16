@@ -34,9 +34,12 @@ Per-tenant identifier (S18 W7):
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
+from src.backend.core.interfaces.ratelimit_gateway import (
+    RateLimitChecker,
+    RateLimitConfig,
+)
 from src.backend.core.logging import get_logger
 
 __all__ = (
@@ -50,50 +53,6 @@ __all__ = (
 )
 
 _logger = get_logger("entrypoints.middlewares.global_ratelimit")
-
-
-@dataclass(frozen=True, slots=True)
-class RateLimitConfig:
-    """Per-route rate-limit configuration.
-
-    Attributes:
-        max_per_window: Maximum requests allowed per window.
-        window_seconds: Duration of the rate-limit window in seconds.
-    """
-
-    max_per_window: int
-    window_seconds: float
-
-
-@runtime_checkable
-class RateLimitChecker(Protocol):
-    """Контракт rate-limit-проверки.
-
-    Реализация (carryover S17) обёртывает ``fastapi-limiter`` поверх
-    Redis. Для unit-тестов используется [FakeRateLimitChecker].
-    """
-
-    async def check(self, identifier: str) -> tuple[bool, int, int]:
-        """Проверить лимит для идентификатора.
-
-        Args:
-            identifier: Уникальный ключ (tenant_id/client_ip/correlation_id).
-
-        Returns:
-            (allowed, remaining, retry_after_seconds). Если allowed=False —
-            ``retry_after_seconds`` указывает через сколько сек повторить.
-        """
-
-    async def check_route_override(self, route: str) -> RateLimitConfig | None:
-        """Возвращает per-route override для заданного route.
-
-        Args:
-            route: The route path to check for override.
-
-        Returns:
-            :class:`RateLimitConfig` если есть override для route,
-            иначе ``None``.
-        """
 
 
 class FakeRateLimitChecker:

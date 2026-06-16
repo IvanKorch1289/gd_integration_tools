@@ -19,10 +19,11 @@ from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.storage.s3 import FromS3Processor, ToS3Processor
 
 
-def _exchange(body: Any = None, properties: dict[str, Any] | None = None) -> Exchange[Any]:
+def _exchange(
+    body: Any = None, properties: dict[str, Any] | None = None
+) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}),
-        properties=properties or {},
+        in_message=Message(body=body, headers={}), properties=properties or {}
     )
 
 
@@ -38,7 +39,9 @@ async def test_to_s3_uploads_via_facade(monkeypatch: pytest.MonkeyPatch) -> None
     class _FakeFacade:
         plugin: str = ""
 
-        async def upload(self, key: str, data: bytes, content_type: str | None = None) -> str:
+        async def upload(
+            self, key: str, data: bytes, content_type: str | None = None
+        ) -> str:
             calls.append({"key": key, "data": data, "content_type": content_type})
             return f"loc://{key}"
 
@@ -92,7 +95,9 @@ async def test_to_s3_fails_exchange_on_backend_error(
     """Ошибка StorageFacade помечает exchange failed."""
 
     class _FakeFacade:
-        async def upload(self, key: str, data: bytes, content_type: str | None = None) -> str:
+        async def upload(
+            self, key: str, data: bytes, content_type: str | None = None
+        ) -> str:
             raise RuntimeError("s3 down")
 
     monkeypatch.setattr(

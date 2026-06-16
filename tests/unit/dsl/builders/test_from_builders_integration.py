@@ -7,6 +7,7 @@ S98 W3: тесты для топ-5 builders (from_cdc, from_kafka, from_rabbit,
 from_file, from_webhook) + comprehensive chainable test — реальный DSL
 integration через RouteBuilder (НЕ _FakeRouteBuilder).
 """
+
 from __future__ import annotations
 
 
@@ -39,9 +40,7 @@ def test_route_builder_from_rabbit() -> None:
     """``RouteBuilder.from_rabbit`` создаёт builder + rabbit source."""
     from src.backend.dsl.builders.base import RouteBuilder
 
-    b = RouteBuilder.from_rabbit(
-        "jobs.queue", queue="jobs", url="amqp://rabbit:5672"
-    )
+    b = RouteBuilder.from_rabbit("jobs.queue", queue="jobs", url="amqp://rabbit:5672")
     assert b.route_id == "jobs.queue"
 
 
@@ -85,10 +84,7 @@ def test_all_from_builders_return_route_builder() -> None:
             "from_registered_source",
             lambda: RouteBuilder.from_registered_source("test2", "test_source"),
         ),
-        (
-            "from_sse",
-            lambda: RouteBuilder.from_sse("test3", "https://example.com/sse"),
-        ),
+        ("from_sse", lambda: RouteBuilder.from_sse("test3", "https://example.com/sse")),
         (
             "from_sse_multi",
             lambda: RouteBuilder.from_sse_multi(
@@ -102,10 +98,7 @@ def test_all_from_builders_return_route_builder() -> None:
         (
             "from_kafka",
             lambda: RouteBuilder.from_kafka(
-                "test5",
-                topic="t",
-                bootstrap_servers="kafka:9092",
-                group_id="g1",
+                "test5", topic="t", bootstrap_servers="kafka:9092", group_id="g1"
             ),
         ),
         (

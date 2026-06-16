@@ -24,9 +24,7 @@ class _FakeManager:
     def __init__(self) -> None:
         self.pools: dict[str, dict[str, Any]] = {}
 
-    def register(
-        self, name: str, pool: Any, ping_fn: Any, kind: str, **_: Any
-    ) -> None:
+    def register(self, name: str, pool: Any, ping_fn: Any, kind: str, **_: Any) -> None:
         self.pools[name] = {"pool": pool, "ping_fn": ping_fn, "kind": kind}
 
     def list_pools(self) -> list[str]:
@@ -38,6 +36,7 @@ def fake_manager(monkeypatch: Any) -> _FakeManager:
     """Singleton fake manager wired into the lazy-imported accessor."""
     manager = _FakeManager()
     import src.backend.infrastructure.clients.unified_pool_manager as upm
+
     monkeypatch.setattr(upm, "get_unified_pool_manager", lambda: manager)
     return manager
 
