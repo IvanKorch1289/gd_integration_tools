@@ -23,28 +23,11 @@ __all__ = (
     "LoggerProtocol",
     "MongoExpressDialogStoreProtocol",
     "MongoExpressSessionStoreProtocol",
-    "RateLimiterProtocol",
-    "RedisCursorProtocol",
-    "RedisHashProtocol",
-    "RedisPubSubProtocol",
     "RedisSetProtocol",
     "SLOTrackerProtocol",
     "StreamClientProtocol",
     "VaultRefresherProtocol",
 )
-
-
-@runtime_checkable
-class RateLimiterProtocol(Protocol):
-    """Контракт rate-limiter'а для webhook/inbound endpoints.
-
-    Реализация: ``infrastructure.resilience.unified_rate_limiter
-    .RedisRateLimiter`` (singleton ``get_rate_limiter()``).
-    """
-
-    async def check(self, identifier: str, policy: Any) -> dict[str, Any]:
-        """Выполнить операцию check."""
-        ...
 
 
 @runtime_checkable
