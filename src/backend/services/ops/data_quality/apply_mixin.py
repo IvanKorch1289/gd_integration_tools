@@ -69,7 +69,10 @@ class DQRule:
     enabled: bool = True
 
 
-class ApplyMixin:
+from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
+
+
+class ApplyMixin(_DataQualityProtocol):
     """rule application (_apply_rule — the BIG method, 263 LOC) для DataQualityMonitor. S55 W4 extraction."""
 
     __slots__ = ()

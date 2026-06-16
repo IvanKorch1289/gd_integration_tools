@@ -67,7 +67,10 @@ class DQRule:
     enabled: bool = True
 
 
-class RuleManagementMixin:
+from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
+
+
+class RuleManagementMixin(_DataQualityProtocol):
     """rule management (add_rules, list_rules, remediate) для DataQualityMonitor. S55 W4 extraction."""
 
     __slots__ = ()
