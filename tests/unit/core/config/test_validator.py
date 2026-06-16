@@ -375,10 +375,15 @@ class TestFeatureFlagDependencyUnmet:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """С временно добавленной зависимостью правило отрабатывает."""
-        from src.backend.core.config import validator as validator_module
+        # Patch the IMPORT location: `infrastructure_checks` does
+        # `from _helpers import _FEATURE_FLAG_DEPENDENCIES`, which creates
+        # a local binding in infrastructure_checks namespace (NOT shared
+        # with the source module). Standard Python monkeypatch pattern:
+        # patch the importer's binding, not the source.
+        from src.backend.core.config.validator import infrastructure_checks
 
         monkeypatch.setattr(
-            validator_module,
+            infrastructure_checks,
             "_FEATURE_FLAG_DEPENDENCIES",
             {"foo_strict": ("foo_enabled",)},
         )
@@ -396,10 +401,10 @@ class TestFeatureFlagDependencyUnmet:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Зависимость в _FEATURE_FLAG_DEPENDENCIES_CRITICAL → CRITICAL severity."""
-        from src.backend.core.config import validator as validator_module
+        from src.backend.core.config.validator import infrastructure_checks
 
         monkeypatch.setattr(
-            validator_module,
+            infrastructure_checks,
             "_FEATURE_FLAG_DEPENDENCIES_CRITICAL",
             {"bar_strict": ("bar_enabled",)},
         )
