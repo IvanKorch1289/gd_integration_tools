@@ -5,6 +5,40 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 1 — Architecture Hardening, 2026-06-16] — Layer violations fix, dead code removal, DSL improvements
+
+### Fixed
+
+- **BUG-1: console_json.py syntax error** (`infrastructure/logging/backends/console_json.py:53`): Fixed Python 2 style `except TypeError, ValueError:` → `except (TypeError, ValueError):`. Was blocking entire logging import chain.
+- **P0-1: core → entrypoints layer violation** (`core/interfaces/ratelimit_gateway.py`): Moved `RateLimitChecker` Protocol and `RateLimitConfig` from `entrypoints/middlewares/global_ratelimit.py` to `core/interfaces/ratelimit_gateway.py`. Updated entrypoints to import from core. Reduced violations by 1.
+- **P0-2: core → services violations (partial)** (`core/ai/errors.py`): Moved `GatewayError`, `GatewayUnavailable`, `GatewayRateLimited` from `services/ai/gateway/exceptions.py` to `core/ai/errors.py`. Updated `pydantic_ai_client.py` and `gateway/client.py` to import from core. Reduced violations by 1.
+- **core → infrastructure violation** (`core/tenancy/__init__.py`): Added `get_tenant_id()` function to core/tenancy, updated `sqlalchemy_filter.py` to import from core instead of infrastructure. Reduced violations by 1.
+- **RateLimiterProtocol dead code** (`core/interfaces/multi_protocol.py`): Removed unused `RateLimiterProtocol` class (duplicate of `RateLimiter` Protocol in core/resilience).
+
+### Added
+
+- **EventBus subscribe wiring** (`services/messaging/eventbus_facade.py`): Added `subscribe_with_lifecycle()` and `unsubscribe_all()` methods to EventBusFacade. Subscriptions tracked for graceful shutdown.
+- **EventBus shutdown hook** (`plugins/composition/lifecycle/shutdown.py`): Added step 7 for EventBus cleanup during shutdown.
+- **Step-level timeout** (`infrastructure/workflow/executor/sequential_mixin.py`): Each processor call now wrapped with `asyncio.wait_for(timeout=self._timeout_per_step_s)`.
+- **for_each/branch/loop implementation** (`infrastructure/workflow/executor/control_flow_mixin.py`): Implemented inline execution of sub-steps for branch, loop, and for_each control flow primitives.
+- **F821 lint gate** (`.github/workflows/lint.yml`): Added blocking step `ruff check --select F821 src`.
+- **LocalFSStorage healthcheck** (`infrastructure/storage/local_fs.py`): Added `async def healthcheck() -> bool` method.
+- **Workflow regression test** (`tests/unit/infrastructure/workflow/test_runner.py`): Added `test_paused_workflow_releases_semaphore`.
+- **EventBus integration tests** (`tests/integration/test_eventbus_e2e.py`): 5 tests covering subscribe_with_lifecycle, publish→receive, unsubscribe_all, error handling, full integration.
+
+### Removed
+
+- **pybreaker dead code** (545 lines): Deleted `core/utils/pybreaker_adapter.py` (414 lines), `infrastructure/resilience/redis_breaker_storage.py` (131 lines), `tests/unit/core/utils/test_pybreaker_adapter.py`, `tests/unit/infrastructure/resilience/test_redis_breaker_storage.py`. Removed `pybreaker_enabled` flag from `core/config/v11.py`.
+- **rate_limiter_facade duplicate** (33 lines): Deleted `core/resilience/rate_limiter_facade.py` and `tests/unit/core/resilience/test_rate_limiter_facade.py`.
+
+### Architecture
+
+- **Layer violations**: 85 → 82 (-3)
+- **Dead code**: -545 lines (pybreaker) + -33 lines (rate_limiter_facade) = -578 lines net
+- **New facade methods**: 2 (EventBusFacade.subscribe_with_lifecycle, unsubscribe_all)
+- **New tests**: 6 (1 regression + 5 integration)
+- **Console_json.py**: Fixed pre-existing Python 2 syntax error blocking logging imports
+
 ## [S155 cycle, 2026-06-16] — Pattern-Based @dataclass Fixes (5 waves, 3 atomic + 1 closure, score 9.9 → 9.9, dsl/ 77→34 fails -56%, 0 NEW layer violations)
 
 ### Fixed
