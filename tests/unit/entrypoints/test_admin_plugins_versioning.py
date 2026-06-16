@@ -33,8 +33,8 @@ def test_versions_returns_empty_without_loader() -> None:
 
     app = _build_app()
     with (
-        patch.object(mod, "_check_flag_enabled", lambda: None),
-        patch.object(mod, "_get_version_service", lambda: None),
+        patch.object(mod.endpoints, "_check_flag_enabled", lambda: None),
+        patch.object(mod.endpoints, "_get_version_service", lambda: None),
     ):
         client = TestClient(app)
         r = client.get("/api/v1/admin/plugins/demo/versions")
@@ -49,8 +49,8 @@ def test_diff_returns_503_when_service_missing() -> None:
 
     app = _build_app()
     with (
-        patch.object(mod, "_check_flag_enabled", lambda: None),
-        patch.object(mod, "_get_version_service", lambda: None),
+        patch.object(mod.endpoints, "_check_flag_enabled", lambda: None),
+        patch.object(mod.endpoints, "_get_version_service", lambda: None),
     ):
         client = TestClient(app)
         r = client.get(
@@ -65,8 +65,8 @@ def test_rollback_returns_503_when_service_missing() -> None:
 
     app = _build_app()
     with (
-        patch.object(mod, "_check_flag_enabled", lambda: None),
-        patch.object(mod, "_get_version_service", lambda: None),
+        patch.object(mod.endpoints, "_check_flag_enabled", lambda: None),
+        patch.object(mod.endpoints, "_get_version_service", lambda: None),
     ):
         client = TestClient(app)
         r = client.post(
@@ -80,7 +80,7 @@ def test_dependency_graph_empty_for_missing_dir(tmp_path, monkeypatch) -> None:
 
     monkeypatch.chdir(tmp_path)
     app = _build_app()
-    with patch.object(mod, "_check_flag_enabled", lambda: None):
+    with patch.object(mod.endpoints, "_check_flag_enabled", lambda: None):
         client = TestClient(app)
         r = client.get("/api/v1/admin/plugins/dependency-graph")
         assert r.status_code == 200
@@ -91,7 +91,7 @@ def test_scaffold_dry_run_returns_plan() -> None:
     import src.backend.entrypoints.api.v1.endpoints.admin_plugins as mod
 
     app = _build_app()
-    with patch.object(mod, "_check_flag_enabled", lambda: None):
+    with patch.object(mod.endpoints, "_check_flag_enabled", lambda: None):
         client = TestClient(app)
         r = client.post(
             "/api/v1/admin/plugins/scaffold",
@@ -122,7 +122,7 @@ def test_dependency_graph_with_real_extension(tmp_path, monkeypatch) -> None:
     )
 
     app = _build_app()
-    with patch.object(mod, "_check_flag_enabled", lambda: None):
+    with patch.object(mod.endpoints, "_check_flag_enabled", lambda: None):
         client = TestClient(app)
         r = client.get("/api/v1/admin/plugins/dependency-graph")
         assert r.status_code == 200
@@ -150,7 +150,7 @@ def test_scaffold_real_create_invokes_codegen(tmp_path, monkeypatch) -> None:
 
     app = _build_app()
     with (
-        patch.object(mod, "_check_flag_enabled", lambda: None),
+        patch.object(mod.endpoints, "_check_flag_enabled", lambda: None),
         patch.object(codegen_mod, "scaffold_plugin", _fake_scaffold),
     ):
         client = TestClient(app)

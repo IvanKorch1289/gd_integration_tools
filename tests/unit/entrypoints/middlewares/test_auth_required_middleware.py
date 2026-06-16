@@ -72,15 +72,15 @@ def _add_middleware(
     public_prefixes: tuple[str, ...] = DEFAULT_PUBLIC_PATH_PREFIXES,
 ) -> None:
     """Подменяет _VERIFIERS на тестовый набор и подключает middleware."""
-    import src.backend.entrypoints.api.dependencies.auth_selector as auth_selector
+    import src.backend.core.auth.auth_selector as core_auth_selector
 
     if verifiers is not None:
-        original = auth_selector._VERIFIERS
-        auth_selector._VERIFIERS = verifiers  # type: ignore[assignment]
+        original = core_auth_selector._VERIFIERS
+        core_auth_selector._VERIFIERS = verifiers  # type: ignore[assignment]
 
         @app.on_event("shutdown")
         def _restore() -> None:
-            auth_selector._VERIFIERS = original  # type: ignore[assignment]
+            core_auth_selector._VERIFIERS = original  # type: ignore[assignment]
 
     app.add_middleware(AuthRequiredMiddleware, public_prefixes=public_prefixes)
 

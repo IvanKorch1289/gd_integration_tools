@@ -17,6 +17,7 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
     list_plugin_versions,  # S62 W1: re-export
     list_plugins,  # S62 W1: re-export
     rollback_plugin,  # S62 W1: re-export
+    router,  # S62 W1: re-export for tests
     scaffold_plugin_endpoint,  # S62 W1: re-export
     toggle_plugin,  # S62 W1: re-export
 )
@@ -42,6 +43,7 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
 )
 
 __all__ = (
+    "router",
     "PluginSummary",
     "PluginManifest",
     "PluginToggleRequest",

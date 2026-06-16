@@ -39,6 +39,7 @@ logger = helpers.logger
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
 
 
+@router.get("", response_model=list[PluginSummary])
 async def list_plugins() -> list[PluginSummary]:
     """Возвращает список плагинов из реестра.
 
@@ -73,6 +74,7 @@ async def list_plugins() -> list[PluginSummary]:
         return _mock_plugins()
 
 
+@router.get("/{name}/manifest", response_model=PluginManifest)
 async def get_plugin_manifest(name: str) -> PluginManifest:
     """Возвращает манифест плагина по имени.
 
@@ -112,6 +114,7 @@ async def get_plugin_manifest(name: str) -> PluginManifest:
         )
 
 
+@router.post("/{name}/toggle", response_model=PluginToggleResponse)
 async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleResponse:
     """Включает или отключает плагин по имени.
 
@@ -164,6 +167,7 @@ async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleRes
         )
 
 
+@router.get("/{name}/versions", response_model=PluginVersionsResponse)
 async def list_plugin_versions(name: str) -> PluginVersionsResponse:
     """Перечислить все локально установленные версии плагина."""
     _check_flag_enabled()
@@ -174,6 +178,7 @@ async def list_plugin_versions(name: str) -> PluginVersionsResponse:
     return PluginVersionsResponse(plugin=name, versions=[v.to_dict() for v in versions])
 
 
+@router.get("/{name}/diff", response_model=PluginDiffResponse)
 async def diff_plugin_versions(
     name: str, from_version: str, to_version: str
 ) -> PluginDiffResponse:
@@ -192,6 +197,7 @@ async def diff_plugin_versions(
     return PluginDiffResponse(**result)
 
 
+@router.post("/{name}/rollback", response_model=PluginRollbackResponse)
 async def rollback_plugin(
     name: str, body: PluginRollbackRequest
 ) -> PluginRollbackResponse:
@@ -207,6 +213,7 @@ async def rollback_plugin(
     return PluginRollbackResponse(**result.to_dict())
 
 
+@router.get("/dependency-graph", response_model=PluginDependencyGraph)
 async def get_dependency_graph() -> PluginDependencyGraph:
     """Собрать граф из ``plugin.toml::compatibility.requires_plugins``."""
     _check_flag_enabled()
@@ -241,6 +248,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     return PluginDependencyGraph(nodes=nodes, edges=edges)
 
 
+@router.post("/scaffold", response_model=PluginScaffoldResponse)
 async def scaffold_plugin_endpoint(
     body: PluginScaffoldRequest,
 ) -> PluginScaffoldResponse:

@@ -5,6 +5,23 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 2 — DSL & Agent Platform, 2026-06-16] — DSL verification, agent tool policy infrastructure
+
+### Verified
+
+- **SSE DSL**: `from_sse` and `from_sse_multi` already exist in `dsl/builders/sources_mixin/sse_sources_mixin.py`. SSE handler exists in `entrypoints/sse/handler.py` with GET /events/stream and POST /events/invoke endpoints.
+- **Stdlib logging**: Only 1 remaining file (`dsl/engine/context.py`) uses stdlib logging as type annotation for `logging.Logger | None` attribute. No actual logging usage.
+
+### Architecture
+
+- **Agent tool policy**: Infrastructure exists (`tools_policy.py` with `enforce_tool_policy`, `tool_policy_integration.py` with `check_tool_with_policy`). Not yet integrated into AIGateway invoke path (carryover for Sprint 3).
+- **RateLimiterProtocol**: Removed dead `RateLimiterProtocol` from `core/interfaces/multi_protocol.py` (duplicate of `RateLimiter` Protocol in core/resilience).
+
+### Notes
+
+- **Sprint 2 scope reduction**: Most planned tasks (SSE DSL, stdlib logging) were already implemented or didn't need changes. Focus shifted to verification and infrastructure assessment.
+- **Carryover to Sprint 3**: Agent tool policy integration into AIGateway, ResilienceFacade + SchedulerFacade creation, SkillRegistry MCP/LangGraph export.
+
 ## [Sprint 1 — Architecture Hardening, 2026-06-16] — Layer violations fix, dead code removal, DSL improvements
 
 ### Fixed
