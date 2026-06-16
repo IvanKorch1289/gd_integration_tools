@@ -107,8 +107,18 @@ class JsonFileTraceStorage:
         self._dir.mkdir(parents=True, exist_ok=True)
 
     def _file_for(self, route_id: str) -> Path:
-        # Sanitize route_id: replace path separators.
-        safe = route_id.replace("/", "_").replace("\\", "_")
+        # Sanitize route_id: drop NUL bytes, replace path separators
+        # and parent-dir references ("..") with "_" (S156 W7).
+        safe = (
+            route_id
+            .replace("\x00", "")
+            .replace("..", "_")
+            .replace("/", "_")
+            .replace("\\", "_")
+        )
+        # empty/whitespace-only route_id → "_default" prefix.
+        if not safe.strip("_ \t\n"):
+            safe = "_default"
         return self._dir / f"{safe}.jsonl"
 
     async def append(self, event: TraceEvent) -> None:
