@@ -19,6 +19,7 @@ class _HttpClientProtocol(Protocol):
     purger_task: Any | None
     _metrics_lock: Any
     circuit_breaker: Any
+    metrics: Any
 
     def _create_new_session(self) -> None: ...
 
