@@ -29,7 +29,12 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-class ProfileMixin:
+from src.backend.services.io.external_database._protocol import (
+    _ExternalDatabaseProtocol,
+)
+
+
+class ProfileMixin(_ExternalDatabaseProtocol):
     """profile settings lookup для ExternalDatabaseService. S63 W4 extraction."""
 
     __slots__ = ()
