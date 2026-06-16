@@ -54,23 +54,55 @@ def _filter_by_embedding_version(
     return filtered
 
 
+def _extract_source_id(chunk: dict[str, Any]) -> str:
+    """Extract source-id from chunk по priority: source > filename > doc_id > id.
+
+    S152 W2: имплементирован (раньше отсутствовал, S140 W4 не дописал).
+    Priority из ADR-0074 block 3.3.
+    """
+    meta = chunk.get("metadata") or {}
+    for key in ("source", "filename", "doc_id"):
+        val = meta.get(key)
+        if val:
+            return str(val)
+    chunk_id = chunk.get("id")
+    return str(chunk_id) if chunk_id else ""
+
+
 def _format_context_with_sources(
     results: list[dict[str, Any]],
 ) -> str:
-    """Format retrieved chunks into a context string with [doc_id:chunk_idx] markers.
+    """Format retrieved chunks into a context string.
 
-    .. note::
-        S140 W4 stub: minimal format — concatenates documents with
-        index markers. Full version would include source paths, scores,
-        freshness labels (see FreshnessLabel in rag_augment.py).
+    S152 W2: имплементирован source attribution (S140 W4 был stub без
+    source markers). Формат:
+
+    * ``source_attribution_enabled=True`` (default): ``[источник: <src>]\n\n
+      [<doc_id>:<chunk_idx>] <document>`` per chunk (joined by blank line).
+    * ``source_attribution_enabled=False``: passthrough
+      ``[<doc_id>:<chunk_idx>] <document>``.
+    * Chunks без ``document`` field пропускаются.
     """
+    from src.backend.core.config import rag
+
+    attribution = bool(
+        getattr(rag.rag_settings, "source_attribution_enabled", True)
+    )
     parts: list[str] = []
     for hit in results:
+        document = hit.get("document")
+        if not document:
+            continue
         meta = hit.get("metadata") or {}
         doc_id = meta.get("doc_id", "?")
         chunk_idx = meta.get("chunk_idx", 0)
-        document = hit.get("document", "")
-        parts.append(f"[{doc_id}:{chunk_idx}] {document}")
+        if attribution:
+            source_id = _extract_source_id(hit)
+            parts.append(
+                f"[источник: {source_id}]\n\n[{doc_id}:{chunk_idx}] {document}"
+            )
+        else:
+            parts.append(f"[{doc_id}:{chunk_idx}] {document}")
     return "\n\n".join(parts)
 
 

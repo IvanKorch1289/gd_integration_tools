@@ -37,7 +37,9 @@ from src.backend.services.ai.rag_service.collection_mixin import (
 from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 W4: MRO
 from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
+    _extract_source_id,  # S152 W2: re-export для tests
     _filter_by_embedding_version,  # S152 W1: re-export для tests
+    _format_context_with_sources,  # S152 W2: re-export для tests
 )
 from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
 
