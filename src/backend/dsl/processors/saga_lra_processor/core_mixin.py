@@ -59,6 +59,7 @@ class CoreMixin(_SagaLRAProcessorProtocol):
         "_fail_fast",
         "_on_state_change",
         "_saga_id",
+        "name",  # S159 W4: added — BaseProcessor.__init__ sets self.name
     )
 
     def __init__(
@@ -83,7 +84,9 @@ class CoreMixin(_SagaLRAProcessorProtocol):
                 f"получено {per_step_timeout_seconds!r}"
             )
         normalized = self._normalize_steps(steps)
-        super().__init__(name=name or f"saga_lra({len(normalized)} steps)")
+        # S159 W4: BaseProcessor is NOT in MRO (Protocol chain),
+        # so super().__init__() never sets self.name. Set it here.
+        self.name = name or f"saga_lra({len(normalized)} steps)"
         self._steps: list[SagaStepSpec] = normalized
         self._timeout_seconds = float(timeout_seconds)
         self._per_step_timeout = (

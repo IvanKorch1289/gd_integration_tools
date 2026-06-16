@@ -30,13 +30,13 @@ def pytest_configure(config: pytest.Config) -> None:
     """
     test_env = {
         "DB_USERNAME": "test_user",
-        "DB_PASSWORD": "***",
+        "DB_PASSWORD": "test_password_1234",
         "DB_HOST": "localhost",
         "DB_PORT": "5432",
         "DB_NAME": "test_db",
-        "MONGO_URI": "mongodb://localhost:27017/test",
+        "MONGO_URI": "mongodb://test_user:***@localhost:27017/test",
         "MONGO_USERNAME": "test_user",
-        "MONGO_PASSWORD": "***",
+        "MONGO_PASSWORD": "test_password_1234",
         "MONGO_HOST": "localhost",
         "MONGO_PORT": "27017",
         "MONGO_NAME": "test_db",
