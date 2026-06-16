@@ -41,7 +41,7 @@ class CacheProcessor(BaseProcessor):
 
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             cached = await redis_client.get(key)

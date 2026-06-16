@@ -49,7 +49,7 @@ class CacheWriteProcessor(BaseProcessor):
 
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             data = orjson.dumps(body, default=str).decode()

@@ -114,7 +114,7 @@ class WindowedDedupProcessor(BaseProcessor):
         """Применяет оконную дедупликацию к входящему exchange."""
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
@@ -202,7 +202,7 @@ class WindowedDedupProcessor(BaseProcessor):
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             redis_key = f"windowed:dedup:last:{self._prefix}:{key}"
@@ -268,7 +268,7 @@ class WindowedCollectProcessor(BaseProcessor):
         """Добавляет сообщение в буфер; при смене окна — инжектирует батч."""
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
@@ -360,7 +360,7 @@ class WindowedCollectProcessor(BaseProcessor):
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             buf_key = f"windowed:collect:buf:{key}"

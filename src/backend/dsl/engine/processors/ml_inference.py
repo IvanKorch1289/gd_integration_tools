@@ -180,7 +180,7 @@ class StreamingLLMProcessor(BaseProcessor):
     ) -> None:
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             await redis_client.add_to_stream(

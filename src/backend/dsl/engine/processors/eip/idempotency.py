@@ -34,7 +34,7 @@ class IdempotentConsumerProcessor(BaseProcessor):
         """Filter duplicate messages using Redis deduplication."""
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                redis_client,
             )
 
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
