@@ -18,16 +18,16 @@ class TestRegisterDefaultEventSchemas:
         reg = ServiceSchemaRegistry()
         with (
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
+                "src.backend.core.messaging.event_bus.OrderEvent"
             ) as mock_order,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
+                "src.backend.core.messaging.event_bus.PipelineEvent"
             ) as mock_pipe,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
+                "src.backend.core.messaging.event_bus.FlagEvent"
             ) as mock_flag,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
+                "src.backend.core.messaging.event_bus.RouteEvent"
             ) as mock_route,
         ):
             mock_order.__name__ = "OrderEvent"
@@ -49,16 +49,16 @@ class TestRegisterDefaultEventSchemas:
         reg = ServiceSchemaRegistry()
         with (
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.OrderEvent"
+                "src.backend.core.messaging.event_bus.OrderEvent"
             ) as mock_order,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.PipelineEvent"
+                "src.backend.core.messaging.event_bus.PipelineEvent"
             ) as mock_pipe,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.FlagEvent"
+                "src.backend.core.messaging.event_bus.FlagEvent"
             ) as mock_flag,
             patch(
-                "src.backend.infrastructure.clients.messaging.event_bus.RouteEvent"
+                "src.backend.core.messaging.event_bus.RouteEvent"
             ) as mock_route,
         ):
             mock_order.__name__ = "OrderEvent"
