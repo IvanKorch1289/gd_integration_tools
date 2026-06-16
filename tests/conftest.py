@@ -42,6 +42,8 @@ def pytest_configure(config: pytest.Config) -> None:
         "MONGO_NAME": "test_db",
         "VAULT_ENABLED": "false",
         "LITELLM_ENABLED": "false",
+        "DADATA_API_KEY": "test_dadata_api_key_with_32_chars_xx",
+        "SKB_API_KEY": "test_skb_api_key_with_32_chars_xxxxxx",
     }
     for key, value in test_env.items():
         os.environ.setdefault(key, value)
