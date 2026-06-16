@@ -13,7 +13,16 @@ from src.backend.core.config.settings import settings
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.dsl.codec.json import json_dumps, json_loads
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-from src.backend.infrastructure.clients.storage.redis import get_redis_client as redis_client
+from src.backend.infrastructure.clients.storage.redis import (
+    get_redis_client as _get_redis_client,
+)
+
+# ponytail: helper to access the singleton client (avoids shadowing the
+# factory function name with a module-level instance — S150 W1 root cause).
+def _redis_client() -> Any:
+    return _get_redis_client()
+
+
 from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.backend.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.backend.infrastructure.decorators.caching.storage.disk import DiskTTLCache
@@ -129,7 +138,7 @@ class CachingDecorator:
             return
 
         try:
-            await redis_client.cache_delete(*cache_keys)
+            await _redis_client().cache_delete(*cache_keys)
         except Exception as exc:
             self.logger.error(
                 "Ошибка инвалидации Redis cache: %s", str(exc), exc_info=True
@@ -144,7 +153,7 @@ class CachingDecorator:
         match_pattern = self._pattern(pattern)
 
         try:
-            await redis_client.cache_delete_pattern(match_pattern)
+            await _redis_client().cache_delete_pattern(match_pattern)
         except Exception as exc:
             self.logger.error(
                 "Ошибка pattern invalidation Redis cache: %s", str(exc), exc_info=True
@@ -262,12 +271,12 @@ class CachingDecorator:
             return
 
         try:
-            await redis_client.cache_set(key, json_dumps(value), self.expire)
+            await _redis_client().cache_set(key, json_dumps(value), self.expire)
             self._mark_redis_success()
         except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
             self._mark_redis_failure()
         except Exception as exc:
-            redis_client.logger.warning(
+            _redis_client().logger.warning(
                 "Неизвестная ошибка при фоновом обновлении Redis кэша: %s", exc
             )
 
@@ -275,11 +284,11 @@ class CachingDecorator:
         # 1. Redis
         if self._redis_is_available():
             try:
-                data = await redis_client.cache_get(key)
+                data = await _redis_client().cache_get(key)
                 if data is not None:
                     value = json_loads(data)
                     if self.renew_ttl:
-                        await redis_client.cache_set(key, data, self.expire)
+                        await _redis_client().cache_set(key, data, self.expire)
                     self._mark_redis_success()
 
                     if self.memory_cache:
@@ -396,7 +405,7 @@ class CachingDecorator:
             return
 
         try:
-            await redis_client.cache_set(key, json_dumps(result), self.expire)
+            await _redis_client().cache_set(key, json_dumps(result), self.expire)
             self._mark_redis_success()
         except (RedisConnectionError, RedisTimeoutError, RedisError, OSError) as exc:
             self._mark_redis_failure()
