@@ -32,6 +32,25 @@ _SOAP_BREAKER = get_breaker_registry().get_or_create(
     BreakerSpec(name="soap_async", failure_threshold=5, recovery_timeout=60.0),
 )
 
+# S163 W10: retry для call(). Pattern из smtp.py:233-241 + ftp.py W8.
+# Retry при httpx/сетевых ошибках + TimeoutError. 3 попытки, exponential backoff.
+try:
+    from src.backend.infrastructure.resilience.retry import make_async_retry
+except ImportError:  # pragma: no cover
+    make_async_retry = None  # type: ignore[assignment]
+
+_soap_retry = (
+    make_async_retry(
+        max_attempts=3,
+        initial_backoff=1.0,
+        multiplier=2.0,
+        max_backoff=10.0,
+        on=(Exception,),  # httpx.HTTPError + OSError + TimeoutError
+    )
+    if make_async_retry is not None
+    else (lambda f: f)
+)
+
 
 @dataclass(slots=True)
 class AsyncSoapClient:
@@ -50,10 +69,10 @@ class AsyncSoapClient:
     soap_action: str = ""
     timeout: float = 30.0
 
-    async def call(
+    async def _do_call(
         self, envelope_xml: str, headers: dict[str, str] | None = None
     ) -> str:
-        """Отправляет SOAP-envelope, возвращает raw XML-ответ."""
+        """Внутренняя SOAP call с retry-обёрткой."""
         import httpx
 
         hdr = {
@@ -62,13 +81,20 @@ class AsyncSoapClient:
         }
         if headers:
             hdr.update(headers)
+        async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
+            resp = await client.post(
+                self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
+            )
+            resp.raise_for_status()
+            return resp.text
+
+    @_soap_retry
+    async def call(
+        self, envelope_xml: str, headers: dict[str, str] | None = None
+    ) -> str:
+        """Отправляет SOAP-envelope, возвращает raw XML-ответ."""
         async with _SOAP_BREAKER.guard():
-            async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
-                resp = await client.post(
-                    self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
-                )
-                resp.raise_for_status()
-                return resp.text
+            return await self._do_call(envelope_xml, headers)
 
     @staticmethod
     def parse_envelope(xml_str: str) -> Any:
