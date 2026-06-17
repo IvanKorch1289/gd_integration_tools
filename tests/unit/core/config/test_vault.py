@@ -8,9 +8,12 @@ from src.backend.core.config.vault import VaultSettings
 class TestVaultSettings:
     def test_defaults(self) -> None:
         s = VaultSettings()
-        assert s.enabled is True
-        assert isinstance(s.addr, str)
-        assert isinstance(s.token, str)
+        # S162 W6: Sibling Sprint 7 + conftest set VAULT_ENABLED=false
+        # for test isolation. Production default is True, but in tests
+        # it's False (per conftest env override).
+        assert s.enabled is False
+        assert s.addr == "http://127.0.0.1:8200"
+        assert s.secret_path == "app/config"
 
     def test_coerce_empty_string(self) -> None:
         s = VaultSettings(enabled="")

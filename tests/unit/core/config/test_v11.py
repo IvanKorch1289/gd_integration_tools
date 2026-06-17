@@ -17,7 +17,8 @@ class TestV11Settings:
         assert s.extensions_dir == Path("extensions")
         assert s.routes_dir == Path("routes")
         assert s.core_version == "0.2.0"
-        assert s.pybreaker_enabled is False
+        # S162 W6: pybreaker_enabled was removed from V11Settings (sibling
+        # Sprint 7 cleanup). Canonical location is canonical CB module.
 
     def test_custom_values(self) -> None:
         s = V11Settings(plugin_loader_enabled=True, core_version="1.0.0")
