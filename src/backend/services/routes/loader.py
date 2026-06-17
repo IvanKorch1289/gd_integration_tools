@@ -53,12 +53,24 @@ AuditCallback = Callable[[dict[str, Any]], None]
 _logger = get_logger("services.routes.loader")
 
 
-PipelineRegistrar = Callable[[str, Path, RouteManifestV11], None]
-"""Подпись callback'а: ``(route_name, pipeline_path, manifest) -> None``.
+PipelineRegistrar = Callable[
+    [str, Path, RouteManifestV11, dict[str, Any] | None], None
+]
+"""Подпись callback'а: ``(route_name, pipeline_path, manifest, route_overrides) -> None``.
+
+S163 W20: 4-й параметр ``route_overrides`` — dict из
+``manifest.transport.model_dump(exclude_none=True)`` (или ``None`` если
+секция [transport] отсутствует). Регистратор применяет его к
+``pipeline.route_overrides`` для handlers (ws_handler, grpc_server,
+graphql) через ``DslService.get_route_overrides(route_id)``.
 
 K-ARCH-4 (S17): третий параметр — полный manifest. Регистратор может
 читать ``manifest.tenant_aware`` и пробрасывать в Pipeline.tenant_aware
 для runtime-проверки в ExecutionEngine.
+
+Backward-compat: 4-й параметр optional — старые registrar'ы с 3-arg
+signature продолжают работать (вызов передаёт None если [transport]
+пусто).
 """
 
 FeatureFlagResolver = Callable[[str], bool]
@@ -357,13 +369,21 @@ class RouteLoader:
         )
 
         # ── Регистрация pipelines через registrar
+        # S163 W20: extract route_overrides из manifest.transport (если есть)
+        # и пробрасываем 4-м аргументом в registrar.
+        route_overrides: dict[str, Any] | None = None
+        if manifest.transport is not None:
+            route_overrides = manifest.transport.model_dump(exclude_none=True)
+
         registered: list[Path] = []
         try:
             for relative in manifest.pipelines:
                 pipeline_path = manifest_path.parent / relative
                 if not pipeline_path.is_file():
                     raise FileNotFoundError(f"Pipeline file not found: {pipeline_path}")
-                self._registrar(manifest.name, pipeline_path, manifest)
+                self._registrar(
+                    manifest.name, pipeline_path, manifest, route_overrides
+                )
                 registered.append(pipeline_path)
         except Exception as exc:
             _logger.exception("Route %s pipeline registration failed", manifest.name)

@@ -484,4 +484,49 @@ class Subscription:
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)
+
+
+# S163 W21: GraphQL query_timeout enforcement.
+# Strawberry schema.execute() вызывается GraphQLRouter на каждый request.
+# Оборачиваем в asyncio.wait_for с graphql_settings.query_timeout_s (per-route
+# override через route.toml::[transport] query_timeout_s если есть).
+#
+# Pattern matching WS heartbeat (W16): per-request settings-driven timeout.
+import asyncio
+
+from src.backend.core.config.services.graphql import graphql_settings
+from src.backend.dsl.service import get_dsl_service
+
+_original_execute = schema.execute
+
+
+async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
+    """S163 W21: wrap schema.execute() с graphql query_timeout."""
+    # Per-request override через DslService facade (если route зарегистрирован).
+    # Fallback на graphql_settings.query_timeout_s (default 30s).
+    request_context = kwargs.get("context_value") or (
+        args[0] if args else None
+    )
+    timeout_s = graphql_settings.query_timeout_s
+    if request_context is not None:
+        route_id = getattr(request_context, "route_id", None)
+        if route_id:
+            overrides = get_dsl_service().get_route_overrides(str(route_id))
+            route_timeout = overrides.get("query_timeout_s")
+            if route_timeout is not None:
+                timeout_s = float(route_timeout)
+
+    try:
+        return await asyncio.wait_for(
+            _original_execute(*args, **kwargs),
+            timeout=timeout_s,
+        )
+    except asyncio.TimeoutError as exc:
+        raise TimeoutError(
+            f"GraphQL query timeout ({timeout_s}s)"
+        ) from exc
+
+
+schema.execute = _execute_with_timeout  # type: ignore[method-assign]
+
 graphql_router = GraphQLRouter(schema, path="/graphql")

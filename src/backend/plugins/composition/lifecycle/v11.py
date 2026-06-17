@@ -15,6 +15,7 @@ Total: 232 LOC extracted.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -122,18 +123,29 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
                     capabilities=tuple(entry.manifest.capabilities),
                 )
 
-        def _registrar(route_name: str, pipeline_path: Path, manifest: object) -> None:
+        def _registrar(
+            route_name: str,
+            pipeline_path: Path,
+            manifest: object,
+            route_overrides: dict[str, Any] | None = None,
+        ) -> None:
             """Делегирует загрузку pipeline-файла в ``route_registry``.
 
             K-ARCH-4 (S17): пробрасывает ``manifest.tenant_aware`` в
             ``Pipeline.tenant_aware``. ExecutionEngine на старте
             ``execute()`` валидирует наличие tenant_id в
             RequestContext / TenantContext и валит с
-            ``TenantContextRequiredError``, если декларация не выполнена.
+            :class:`TenantContextRequiredError`, если декларация не выполнена.
+
+            S163 W20: применяет ``route_overrides`` (из manifest.transport)
+            к ``pipeline.route_overrides`` для per-route overrides handlers.
             """
             pipeline = load_pipeline_from_file(pipeline_path)
             if bool(getattr(manifest, "tenant_aware", False)):
                 pipeline.tenant_aware = True
+            if route_overrides:
+                # Merge поверх существующих overrides (например, из DSL setters).
+                pipeline.route_overrides.update(route_overrides)
             route_registry.register(pipeline)
 
         loader = RouteLoader(

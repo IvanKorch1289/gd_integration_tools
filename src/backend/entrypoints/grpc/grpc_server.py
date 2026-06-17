@@ -441,8 +441,17 @@ async def serve() -> None:
         executor,
         options=[
             ("grpc.so_reuseport", 1),
-            ("grpc.max_send_message_length", 100 * 1024 * 1024),
-            ("grpc.max_receive_message_length", 100 * 1024 * 1024),
+            # S163 W19: use settings.grpc.* instead of hardcoded 100MB.
+            # Per W13 GRPCSettings — max_message_size_bytes, keepalive_*,
+            # max_concurrent_streams.
+            (
+                "grpc.max_send_message_length",
+                settings.grpc.max_message_size_bytes,
+            ),
+            (
+                "grpc.max_receive_message_length",
+                settings.grpc.max_message_size_bytes,
+            ),
         ],
         interceptors=interceptors,
     )
