@@ -17,6 +17,7 @@ DSL-маршрут (``DslService.dispatch(route_id=...)``).
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -99,7 +100,7 @@ async def dispatch_action_or_dsl(
             event_type и т.п.) — попадут в ``DispatchContext.attributes``.
 
     Returns:
-        :class:`BridgeResult`. Поле ``via`` показывает, какой путь
+        :class:`BridgeResult``. Поле ``via`` показывает, какой путь
         отработал.
     """
     if is_dispatcher_enabled_for(transport):
@@ -114,23 +115,50 @@ async def dispatch_action_or_dsl(
         if result is not None:
             return result
 
-    # S163 W15: per-action timeout via route_overrides (DSL with_message_timeout).
-    # Если route определён и имеет override ``message_timeout_s`` —
-    # оборачиваем DSL-fallback в asyncio.wait_for.
-    # Используем facade DslService (entrypoints → dsl.service уже в allowlist).
-    import asyncio
+    # S163 W25: per-action concurrency limit (Option B для G4).
+    # Если route имеет override ``pool_size`` — лимитируем in-flight concurrent
+    # message dispatches per action_id (НЕ per-connection, т.к. action_id
+    # в WS привязан к message, не к connection).
+    # Используем asyncio.Semaphore: try-acquire без блокировки.
 
     from src.backend.dsl.service import get_dsl_service
 
     overrides = get_dsl_service().get_route_overrides(dsl_route_id)
     action_timeout_s = overrides.get("message_timeout_s")
+    pool_size = overrides.get("pool_size")
 
-    if action_timeout_s is None:
-        return await _dispatch_dsl(
-            dsl_route_id=dsl_route_id, payload=payload, headers=headers
-        )
+    semaphore: asyncio.Semaphore | None = None
+    if isinstance(pool_size, int) and pool_size > 0:
+        semaphore = _get_or_create_route_semaphore(dsl_route_id, pool_size)
+        # Non-blocking try-acquire.
+        if semaphore.locked():
+            return BridgeResult(
+                success=False,
+                error=f"route pool exhausted ({pool_size} concurrent)",
+                via="dsl",
+                error_code="route_pool_full",
+            )
+        # Acquire synchronously via internal state (lock-free for asyncio).
+        # NOTE: asyncio.Semaphore has no public non-blocking acquire in 3.14.
+        # Workaround: use wait_for with tiny timeout — if can't acquire
+        # immediately, return pool_full.
+        try:
+            await asyncio.wait_for(semaphore.acquire(), timeout=0.001)
+        except asyncio.TimeoutError:
+            return BridgeResult(
+                success=False,
+                error=f"route pool exhausted ({pool_size} concurrent)",
+                via="dsl",
+                error_code="route_pool_full",
+            )
 
     try:
+        # S163 W15: per-action timeout via route_overrides (DSL with_message_timeout).
+        if action_timeout_s is None:
+            return await _dispatch_dsl(
+                dsl_route_id=dsl_route_id, payload=payload, headers=headers
+            )
+
         return await asyncio.wait_for(
             _dispatch_dsl(
                 dsl_route_id=dsl_route_id, payload=payload, headers=headers
@@ -144,6 +172,27 @@ async def dispatch_action_or_dsl(
             via="dsl",
             error_code="action_timeout",
         )
+    finally:
+        # S163 W25: release semaphore после dispatch.
+        if semaphore is not None and semaphore.locked() is False:
+            semaphore.release()
+
+
+def _get_or_create_route_semaphore(
+    route_id: str, pool_size: int
+) -> "asyncio.Semaphore":
+    """S163 W25: lazy-init semaphore для per-route concurrency limit."""
+    global _route_semaphores  # noqa: PLW0603
+
+    sem = _route_semaphores.get(route_id)
+    if sem is None or sem._value != pool_size:  # type: ignore[attr-defined]
+        sem = asyncio.Semaphore(pool_size)
+        _route_semaphores[route_id] = sem
+    return sem
+
+
+_route_semaphores: dict[str, "asyncio.Semaphore"] = {}
+"""S163 W25: per-route semaphores (lazy-init). Key: route_id."""
 
 
 async def _try_dispatcher(
