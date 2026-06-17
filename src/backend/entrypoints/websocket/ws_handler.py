@@ -8,6 +8,10 @@
 
 S163 W13: добавлены max_connections check и per-message timeout
 через :class:`WSSettings`. Раньше WS не имел settings вообще.
+
+S163 W33: option (A) bind at handshake — extract ``action_id`` из
+``?action_id=xxx`` query param при connect, enforce per-route
+``pool_size`` через :func:`get_dsl_service().get_route_overrides`.
 """
 
 from uuid import uuid4
@@ -18,7 +22,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.backend.entrypoints.websocket.ws_manager import ws_manager
+from src.backend.entrypoints.websocket.ws_manager import (
+    DEFAULT_ACTION_ID,
+    ws_manager,
+)
+from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("ws_router",)
 
@@ -53,6 +61,31 @@ async def _ws_heartbeat_loop(
         return  # normal cleanup on connection close
 
 
+def _resolve_pool_limit(action_id: str | None) -> int | None:
+    """S163 W33: resolve effective pool limit для action_id.
+
+    Returns:
+        ``pool_size`` override из ``DslService.get_route_overrides()``
+        если задан, иначе ``None`` (нет лимита на per-action уровне —
+        только global ``ws_settings.max_connections``).
+    """
+    if not action_id or action_id == DEFAULT_ACTION_ID:
+        return None
+    try:
+        overrides = get_dsl_service().get_route_overrides(action_id)
+    except Exception as exc:
+        logger.debug(
+            "get_route_overrides failed for action_id=%s: %s",
+            action_id,
+            exc,
+        )
+        return None
+    pool_size = overrides.get("pool_size")
+    if isinstance(pool_size, int) and pool_size > 0:
+        return pool_size
+    return None
+
+
 ws_router = APIRouter(tags=["WebSocket"])
 
 
@@ -63,22 +96,56 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     S163 W13: max_connections check через ws_settings.max_connections.
     Reject нового клиента с code 1008 если pool переполнен.
 
+    S163 W33: per-action pool enforcement через ``?action_id=xxx`` query
+    param. Если action_id передан, проверяется route_overrides["pool_size"]
+    и текущий count в ws_manager. Reject с code 1008 если переполнен.
+
     Протокол сообщений (JSON):
         Запрос: ``{"action": "route_id", "payload": {...}}``
         Ответ: ``{"action": "route_id", "result": ..., "error": null}``
         Подписка: ``{"action": "subscribe", "groups": ["topic1"]}``
+
+    Client contract (W33):
+        Connect with ``?action_id=<route_id>`` для bind к route pool.
+        Без action_id — попадает в DEFAULT pool (limited by
+        ``ws_settings.max_connections`` только).
     """
-    # S163 W13: pool-overflow protection (R-V15-14 connection pool).
+    # S163 W33: extract action_id из query params (option A bind at handshake).
+    action_id_param = websocket.query_params.get("action_id") or None
+
+    # S163 W13: pool-overflow protection (global, R-V15-14 connection pool).
     if ws_manager.active_count >= ws_settings.max_connections:
         await websocket.close(code=1008, reason="WS pool full")
         logger.warning(
-            "WS rejected: max_connections=%d reached",
+            "WS rejected: max_connections=%d reached (action_id=%s)",
             ws_settings.max_connections,
+            action_id_param or "<default>",
         )
         return
 
+    # S163 W33: per-action pool enforcement.
+    bound_action: str = (
+        action_id_param if action_id_param else DEFAULT_ACTION_ID
+    )
+    pool_limit = _resolve_pool_limit(action_id_param)
+    if pool_limit is not None:
+        current = ws_manager.action_count(bound_action)
+        if current >= pool_limit:
+            await websocket.close(
+                code=1008,
+                reason=f"route pool full ({pool_limit} concurrent)",
+            )
+            logger.warning(
+                "WS rejected: route pool full action_id=%s limit=%d",
+                bound_action,
+                pool_limit,
+            )
+            return
+
     client_id = uuid4().hex
-    await ws_manager.connect(websocket, client_id)
+    await ws_manager.connect(
+        websocket, client_id, action_id=action_id_param
+    )
 
     # S163 W16: heartbeat task (background ping per connection).
     # Отправляет {"action": "ping"} каждые heartbeat_interval_s секунд.
@@ -153,8 +220,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     )
                     continue
                 await ws_manager.send_json(
-                    client_id,
-                    {"action": action, "result": bridge.data, "error": bridge.error},
+                    client_id, {"action": action, "result": bridge.data, "error": bridge.error}
                 )
             except Exception as exc:
                 logger.exception("WS ошибка обработки action=%s: %s", action, exc)
@@ -163,10 +229,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 )
 
     except WebSocketDisconnect:
-        ws_manager.disconnect(client_id)
+        ws_manager.disconnect(client_id, action_id=bound_action)
     except Exception as exc:
         logger.exception("WS ошибка: %s", exc)
-        ws_manager.disconnect(client_id)
+        ws_manager.disconnect(client_id, action_id=bound_action)
     finally:
         # S163 W16: cancel heartbeat task при закрытии connection.
         if heartbeat_task is not None and not heartbeat_task.done():

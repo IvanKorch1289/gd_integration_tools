@@ -5,6 +5,26 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 19 — RPA Test Coverage & Code Quality, 2026-06-17] — Document, system, operation processor tests
+
+### Added
+
+- **Document processor tests** (`tests/unit/dsl/engine/processors/rpa/operations/test_document_processors.py`): 5 new tests for PdfReadProcessor, PdfMergeProcessor, WordReadProcessor, WordWriteProcessor, ExcelReadProcessor.
+- **System processor tests** (`tests/unit/dsl/engine/processors/rpa/test_system_processors.py`): 2 new tests for ShellExecProcessor, EmailComposeProcessor.
+- **Operation processor tests** (`tests/unit/dsl/engine/processors/rpa/operations/test_operation_processors.py`): 6 new tests for FileMoveProcessor, RegexProcessor, TemplateRenderProcessor, HashProcessor, EncryptProcessor, DecryptProcessor.
+- **RPA utils module** (`dsl/engine/processors/rpa/utils.py`): Shared write_to_target() utility for exchange property/body/header routing.
+
+### Verified
+
+- **RPA domain**: 29 source files, 61 DSL builder methods, 30+ processor classes, 12 test files.
+- **DSL coverage**: Every builder method has a corresponding processor. No orphaned methods.
+- **Test coverage**: Strong for browser (8 processors), desktop RPA, OCR service, browser cookies, session pool, and resilience policy.
+
+### Notes
+
+- **Ponytail applied**: Minimal test implementations following existing patterns.
+- **Architecture status**: RPA domain is production-ready with comprehensive test coverage.
+
 ## [Sprint 18 — DSL Processors & Facades Verification, 2026-06-17] — RegionRouting, Supervisor processors
 
 ### Added
