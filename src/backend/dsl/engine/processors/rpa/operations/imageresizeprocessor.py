@@ -71,6 +71,9 @@ class ImageResizeProcessor(BaseProcessor):
 
         result = await asyncio.to_thread(_resize)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+        # W34: observability trace.
+        exchange.set_property("image_resized", True)
+        exchange.set_property("image_format", self._format)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""

@@ -77,6 +77,8 @@ class PdfReadProcessor(BaseProcessor):
             except ImportError:
                 result["tables"] = []
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+        # W34: observability trace.
+        exchange.set_property("pdf_pages", len(pages))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
@@ -122,6 +124,8 @@ class PdfMergeProcessor(BaseProcessor):
 
         result = await asyncio.to_thread(_merge)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+        # W34: observability trace.
+        exchange.set_property("pdf_merged", True)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
@@ -163,7 +167,10 @@ class WordReadProcessor(BaseProcessor):
         except Exception as exc:
             exchange.fail(f"word_read failed: {exc}")
             return
+        # W34: extract paragraph count for observability.
+        paragraphs = result.get("paragraphs", []) if isinstance(result, dict) else []
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+        exchange.set_property("word_paragraphs", len(paragraphs))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
@@ -212,6 +219,8 @@ class WordWriteProcessor(BaseProcessor):
             exchange.fail(f"word_write failed: {exc}")
             return
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+        # W34: observability trace.
+        exchange.set_property("word_written", True)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
@@ -262,6 +271,8 @@ class ExcelReadProcessor(BaseProcessor):
             exchange.fail(f"excel_read failed: {exc}")
             return
         exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
+        # W34: observability trace.
+        exchange.set_property("excel_rows", len(data))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""

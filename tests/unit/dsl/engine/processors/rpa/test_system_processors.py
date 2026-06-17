@@ -40,7 +40,10 @@ class TestEmailComposeProcessor:
     @pytest.mark.asyncio
     async def test_process_composes_email(self) -> None:
         # S164 W1: updated to match actual EmailComposeProcessor API
-        # (uses body_template, не body).
+        # (uses body_template, не body). Mock smtp_client to avoid
+        # network dependency в test environment.
+        from src.backend.infrastructure.clients.transport import smtp as smtp_mod
+
         processor = EmailComposeProcessor(
             to="test@example.com",
             subject="Test",
@@ -51,6 +54,8 @@ class TestEmailComposeProcessor:
         exchange.in_message.body = {"name": "World"}
         exchange.set_property = MagicMock()
 
-        await processor.process(exchange, MagicMock())
+        with patch.object(smtp_mod, "smtp_client") as mock_smtp:
+            mock_smtp.send_email = AsyncMock()
+            await processor.process(exchange, MagicMock())
 
         exchange.set_property.assert_called()
