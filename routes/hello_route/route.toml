@@ -8,5 +8,13 @@ feature_flag = { enabled = true, gate = "hello_route_enabled" }
 slo = { p95_ms = 500, timeout_ms = 5000 }
 schedule = "never"
 
+# S163 W17: per-transport overrides (читаются DslService.get_route_overrides).
+# Дефолты — из WSSettings / GRPCSettings / GraphQLSettings.
+[transport]
+pool_size = 100              # WS max_connections, gRPC max_concurrent_streams
+message_timeout_s = 5.0      # WS per-message timeout
+max_message_size = 65536    # WS max message size (bytes)
+default_timeout_s = 30.0    # gRPC unary call timeout
+
 [feature_flags]
 default = ["default"]
