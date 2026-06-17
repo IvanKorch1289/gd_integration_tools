@@ -19,8 +19,11 @@ class TestFileMoveProcessor:
 
     @pytest.mark.asyncio
     async def test_process_moves_file(self) -> None:
-        processor = FileMoveProcessor(source="a.txt", destination="b.txt")
+        # S164 W1: updated to match actual FileMoveProcessor API (src/dst/mode).
+        processor = FileMoveProcessor(src="a.txt", dst="b.txt", mode="move")
         exchange = MagicMock(spec=Exchange)
+        exchange.in_message = MagicMock()
+        exchange.in_message.body = None  # параметры переданы в __init__
         exchange.set_property = MagicMock()
 
         with patch("shutil.move") as mock_move:

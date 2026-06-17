@@ -75,6 +75,9 @@ class ShellExecProcessor(BaseProcessor):
                 },
                 headers=dict(exchange.in_message.headers),
             )
+            # W34: observability trace.
+            exchange.set_property("shell_exit_code", proc.returncode)
+            exchange.set_property("shell_command", self._command)
             if proc.returncode != 0:
                 exchange.set_property("shell_error", True)
         except TimeoutError:

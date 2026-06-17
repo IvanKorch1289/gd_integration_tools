@@ -5,6 +5,19 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 21 — Final Audit & Remaining Tasks, 2026-06-17] — Dead code analysis, feature flag verification
+
+### Verified
+
+- **ocr_processor.py**: Behind feature flag `rpa_ocr_enabled` (default-OFF). Not dead code.
+- **desktop_session_pool.py**: Behind feature flag `desktop_rpa_session_pool_enabled` (default-OFF). Not dead code.
+- **Banking processors**: Intentional delegation stubs (Citrix, Terminal3270, Appium, EmailDriven, KeystrokeReplay). Property-setting only, downstream delegation to windows-worker sidecar.
+
+### Notes
+
+- **Ponytail applied**: No unnecessary changes where existing patterns are correct.
+- **Architecture status**: All critical issues resolved. Feature flags control disabled functionality.
+
 ## [Sprint 20 — RPA Critical & Security Fixes, 2026-06-17] — Syntax error, blocking I/O, SSTI, Zip Slip
 
 ### Fixed

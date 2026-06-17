@@ -40,6 +40,9 @@ class TemplateRenderProcessor(BaseProcessor):
             env = SandboxedEnvironment()
             result = env.from_string(self._template).render(**variables)
             exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+            # W34: observability trace — все RPA processors должны оставлять
+            # хотя бы один set_property call (test contract).
+            exchange.set_property("template_rendered", True)
         except Exception as exc:
             exchange.fail(f"Template render failed: {exc}")
 

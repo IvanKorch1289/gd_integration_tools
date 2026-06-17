@@ -17,11 +17,14 @@ class TestShellExecProcessor:
 
     @pytest.mark.asyncio
     async def test_process_executes_shell(self) -> None:
-        processor = ShellExecProcessor(command="echo hello")
+        # S164 W1: updated to match actual ShellExecProcessor API.
+        processor = ShellExecProcessor(command="echo", allowed_commands=["echo"])
         exchange = MagicMock(spec=Exchange)
+        exchange.in_message = MagicMock()
+        exchange.in_message.body = "hello"
         exchange.set_property = MagicMock()
 
-        with patch("asyncio.create_subprocess_shell", new_callable=AsyncMock) as mock_proc:
+        with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_proc:
             mock_process = MagicMock()
             mock_process.communicate = AsyncMock(return_value=(b"hello\n", b""))
             mock_process.returncode = 0
@@ -36,12 +39,16 @@ class TestEmailComposeProcessor:
 
     @pytest.mark.asyncio
     async def test_process_composes_email(self) -> None:
+        # S164 W1: updated to match actual EmailComposeProcessor API
+        # (uses body_template, не body).
         processor = EmailComposeProcessor(
             to="test@example.com",
             subject="Test",
-            body="Hello"
+            body_template="Hello {name}",
         )
         exchange = MagicMock(spec=Exchange)
+        exchange.in_message = MagicMock()
+        exchange.in_message.body = {"name": "World"}
         exchange.set_property = MagicMock()
 
         await processor.process(exchange, MagicMock())
