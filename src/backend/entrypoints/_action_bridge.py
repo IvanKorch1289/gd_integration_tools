@@ -117,11 +117,12 @@ async def dispatch_action_or_dsl(
     # S163 W15: per-action timeout via route_overrides (DSL with_message_timeout).
     # Если route определён и имеет override ``message_timeout_s`` —
     # оборачиваем DSL-fallback в asyncio.wait_for.
+    # Используем facade DslService (entrypoints → dsl.service уже в allowlist).
     import asyncio
 
-    from src.backend.dsl.commands.registry import route_registry
+    from src.backend.dsl.service import get_dsl_service
 
-    overrides = route_registry.get_route_overrides(dsl_route_id)
+    overrides = get_dsl_service().get_route_overrides(dsl_route_id)
     action_timeout_s = overrides.get("message_timeout_s")
 
     if action_timeout_s is None:

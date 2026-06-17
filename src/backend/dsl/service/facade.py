@@ -70,6 +70,21 @@ class DslService:
         return route_registry.get_route_feature_flags()
 
     @staticmethod
+    def get_route_overrides(route_id: str) -> dict[str, Any]:
+        """S163 W15: возвращает route_overrides из Pipeline (или {}).
+
+        Используется handlers (ws_handler, grpc_server, graphql) для
+        per-action override стандартных settings (timeout/pool/msg_size).
+
+        Args:
+            route_id: Идентификатор маршрута.
+
+        Returns:
+            Dict с override values (e.g. ``{"pool_size": 50, "message_timeout_s": 5.0}``).
+        """
+        return route_registry.get_route_overrides(route_id)
+
+    @staticmethod
     def toggle_feature_flag(flag_name: str, *, enable: bool) -> None:
         """Включает/отключает feature-флаг.
 
