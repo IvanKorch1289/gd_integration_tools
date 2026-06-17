@@ -37,6 +37,7 @@ from src.backend.core.config.services.watermark import (
 )
 from src.backend.core.config.services.websocket import WSSettings, ws_settings  # S163 W13
 from src.backend.core.config.services.graphql import GraphQLSettings, graphql_settings  # S163 W13
+from src.backend.core.config.services.rpa import RPASettings, rpa_settings  # S164 W4
 
 __all__ = (
     "BreakerProfile",
@@ -50,6 +51,7 @@ __all__ = (
     "LogStorageSettings",
     "MailSettings",
     "QueueSettings",
+    "RPASettings",  # S164 W4
     "RedisSettings",
     "ResilienceSettings",
     "SMSSettings",
@@ -67,6 +69,7 @@ __all__ = (
     "mail_settings",
     "queue_settings",
     "redis_settings",
+    "rpa_settings",  # S164 W4
     "resilience_settings",
     "sms_settings",
     "snapshot_settings",

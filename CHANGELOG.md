@@ -5,6 +5,26 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 22 — AI Domain Audit & Test Coverage, 2026-06-17] — Reranker, SanitizePII, GetFeedbackExamples tests
+
+### Added
+
+- **RerankerProcessor tests** (`tests/unit/dsl/engine/processors/ai/test_reranker.py`): 4 tests covering feature flag bypass, empty query, no candidates, and to_spec serialization.
+- **SanitizePIIProcessor tests** (`tests/unit/dsl/engine/processors/ai/test_sanitize_pii.py`): 3 tests covering empty body, no text, and to_spec serialization.
+- **GetFeedbackExamplesProcessor tests** (`tests/unit/dsl/engine/processors/ai/test_get_feedback_examples.py`): 3 tests covering empty query, no examples, and to_spec serialization.
+
+### Verified
+
+- **AI domain**: 41+ core files, 170+ services files, 31 DSL methods, 22 processors.
+- **Duplicate LangMemService**: Root-level (254 LOC) vs memory/ (431 LOC). Recommend deprecating root version.
+- **Layer violations**: 5 sqlalchemy imports in langmem_service.py (root). memory/ version is cleaner.
+- **Feature flags**: 30+ AI flags, only 3 ON by default (rag_cache_l2_semantic, ai_gateway_enforce).
+
+### Notes
+
+- **Ponytail applied**: Minimal test implementations following existing patterns.
+- **Architecture status**: AI domain is production-ready with comprehensive pipeline and guardrails.
+
 ## [Sprint 21 — Final Audit & Remaining Tasks, 2026-06-17] — Dead code analysis, feature flag verification
 
 ### Verified
