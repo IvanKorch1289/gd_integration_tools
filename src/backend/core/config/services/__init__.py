@@ -35,6 +35,8 @@ from src.backend.core.config.services.watermark import (
     WatermarkSettings,
     watermark_settings,
 )
+from src.backend.core.config.services.websocket import WSSettings, ws_settings  # S163 W13
+from src.backend.core.config.services.graphql import GraphQLSettings, graphql_settings  # S163 W13
 
 __all__ = (
     "BreakerProfile",
@@ -42,6 +44,7 @@ __all__ = (
     "FallbackPolicy",
     "FileStorageSettings",
     "GRPCSettings",
+    "GraphQLSettings",  # S163 W13
     "InvokerSettings",
     "JupyterHubSettings",
     "LogStorageSettings",
@@ -52,9 +55,11 @@ __all__ = (
     "SMSSettings",
     "SnapshotSettings",
     "TasksSettings",
+    "WSSettings",  # S163 W13
     "WatermarkSettings",
     "cache_settings",
     "fs_settings",
+    "graphql_settings",  # S163 W13
     "grpc_settings",
     "invoker_settings",
     "jupyter_hub_settings",
@@ -67,4 +72,5 @@ __all__ = (
     "snapshot_settings",
     "tasks_settings",
     "watermark_settings",
+    "ws_settings",  # S163 W13
 )

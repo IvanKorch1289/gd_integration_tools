@@ -219,6 +219,9 @@ class GRPCSettings(BaseSettingsWithLoader):
     Настройки конфигурации для gRPC сервисов.
 
     Этот класс содержит параметры для настройки пути к сокету и максимального количества воркеров.
+
+    S163 W13: расширен per-call timeout, message_size, keepalive (R-V15-14).
+    DSL override (per-method): ``route.toml::[transport.grpc.<method>]`` (S163 W14).
     """
 
     yaml_group: ClassVar[str] = "grpc"
@@ -230,6 +233,33 @@ class GRPCSettings(BaseSettingsWithLoader):
         ...,
         description="Максимальное количество процессов воркеров gRPC",
         json_schema_extra={"example": 10},
+    )
+
+    # S163 W13: connection-pool/timing settings (R-V15-14, R-V15-6).
+    default_timeout_s: float = Field(
+        default=30.0,
+        gt=0,
+        description="Default timeout для unary gRPC calls (секунды).",
+    )
+    max_message_size_bytes: int = Field(
+        default=4 * 1024 * 1024,  # 4 MB
+        gt=0,
+        description="Макс. размер входящего сообщения (bytes). Защита от OOM.",
+    )
+    keepalive_time_s: float = Field(
+        default=30.0,
+        gt=0,
+        description="Interval between keepalive pings (seconds).",
+    )
+    keepalive_timeout_s: float = Field(
+        default=10.0,
+        gt=0,
+        description="Time without response before considering connection dead.",
+    )
+    max_concurrent_streams: int = Field(
+        default=100,
+        gt=0,
+        description="Макс. concurrent streams per connection (HTTP/2 flow control).",
     )
 
     # TLS / mTLS (ADR-004). Для dev/unix-socket TLS может быть отключён.
