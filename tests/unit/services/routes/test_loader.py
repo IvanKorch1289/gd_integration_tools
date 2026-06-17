@@ -80,7 +80,18 @@ def _build_loader(
 ) -> tuple[RouteLoader, list[tuple[str, Path, Any]]]:
     registered: list[tuple[str, Path, Any]] = []
 
-    def registrar(route_name: str, pipeline_path: Path, manifest: Any) -> None:
+    def registrar(
+        route_name: str,
+        pipeline_path: Path,
+        manifest: Any,
+        route_overrides: dict[str, Any] | None = None,
+    ) -> None:
+        """S163 W32 fix: добавлен 4-й параметр route_overrides (optional).
+
+        PipelineRegistrar signature extended в S163 W20 до
+        Callable[[str, Path, RouteManifestV11, dict[str, Any] | None], None].
+        Test helper обновлён для backward-compat.
+        """
         registered.append((route_name, pipeline_path, manifest))
 
     loader = RouteLoader(
