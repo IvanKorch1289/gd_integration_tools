@@ -163,7 +163,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     try:
         while True:
             # S163 W13: per-message timeout (защита от slow clients).
-            import asyncio
+            # S164 W34: removed inner `import asyncio` — module-level
+            # import (line 19) provides asyncio. Inner import делало
+            # asyncio local → UnboundLocalError на следующей итерации loop.
 
             try:
                 data = await asyncio.wait_for(
