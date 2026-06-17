@@ -1,17 +1,56 @@
-# MASTER PROMPT — `gd_integration_tools` (v5, post-S131)
+# MASTER PROMPT — `gd_integration_tools` (v6, post-S163)
 
 > **Use this prompt when delegating coding work to a subagent**
 > (Claude Code, Codex, Kimi, etc.) on this repository.
 >
-> **Last updated:** 2026-06-15 (S131 closure, `a848f335` + `5151bf12`)
-> **Supersedes:** S126 master prompt (see git history of this file)
-> **Sprint health:** 9.8/10, 168 ADRs, 37 CLOSED TDs, 2 stale-OPEN + 4 PARTIAL
-> **Synthesis:** v1 (22-domain) + v2 (fact-check #1) + v3 (facades/fallback/DSL) + v4 (settings/consul/agents) → v5 (this file)
+> **Last updated:** 2026-06-17 (S163 closure, see ADR-0237)
+> **Supersedes:** v5 (post-S131, see git history of this file)
+> **Sprint health:** 9.5/10, 197 ADRs, 39 CLOSED TDs (1 NEW partial closure), G4 (WS per-conn pool) deferred
+> **Synthesis:** v1 (22-domain) + v2 (fact-check #1) + v3 (facades/fallback/DSL) + v4 (settings/consul/agents) + v5 (post-S131) + v6 (post-S163) = 18 sections + S163 architecture additions
 > **Primary references:**
 > - `reports/reaudit/tech_debt_register.md` (current TD state, single source of truth)
 > - `reports/reaudit/CHANGELOG.md` (closed TDs, ADR refs)
 > - `CLAUDE.md` V22 (architecture)
-> - `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-06-12.md` (historical, partially stale)
+> - `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-06-17.md` (current — replaces S92 stale doc)
+> - `gap-analysis/DEEP-ANALYSIS-S163-2026-06-17.md` (verification + 5 gaps analysis)
+
+## 0b. S163 АРХИТЕКТУРНЫЕ ДОБАВЛЕНИЯ (НЕ обсуждается)
+
+**Per-route override chain** (canonical pattern, applied 26 times in S163):
+
+```
+Standard Settings (WSSettings, GRPCSettings, GraphQLSettings)
+   ↓ default values
+route.toml::[transport] / [timeout] sections
+   ↓ load_route_manifest
+RouteManifestV11.{transport, timeout}
+   ↓ loader._load_one
+PipelineRegistrar (4-arg signature, optional overrides)
+   ↓ merge into
+Pipeline.route_overrides (dict) + Pipeline.transport_config (RouteTimeoutSpec)
+   ↓ handler reads via
+DslService.get_route_overrides(route_id)
+   ↓ per-action enforce
+_action_bridge.dispatch_action_or_dsl:
+  - per-action timeout (asyncio.wait_for)
+  - per-action concurrency (asyncio.Semaphore)
+  - introspection gate (introspection toggle)
+```
+
+**DSL setters** (route-level, NOT step-level — see `dsl/builders/base/config_mixin.py`):
+- `with_pool_size(n)` — pool size для WS/gRPC/Kafka/Redis/HTTP route
+- `with_max_message_size(bytes)` — max msg size для WS/gRPC route
+- `with_message_timeout(seconds)` — per-message timeout для WS route
+- (existing step-level) `with_timeout(seconds)`, `with_retries(...)`, `with_headers(...)`, `with_auth(...)`
+
+**Circular import fix** (W3-W11): для transport модулей с breaker/retry
+импортировать `from src.backend.core.config.settings import settings as _settings  # noqa: F401`
+**ПЕРЕД** breaker import. `core.config.settings` pre-loads `core.interfaces`,
+breaking cycle. Документировано inline в ftp.py, soap_async.py, browser.py, sftp.py.
+
+**Backward-compat protocol**: PipelineRegistrar signature extended до
+`Callable[[str, Path, RouteManifestV11, dict[str, Any] | None], None]`.
+4-й параметр optional — старые 3-arg registrar'ы продолжают работать.
 
 ---
 
@@ -485,16 +524,18 @@ git stash pop
 
 ## 17. CHANGELOG (master prompt версии)
 
-- **v5 (this file, 2026-06-15, post-S131):** synthesis v1+v2+v3+v4 → 17 sections, real backlog from S131 TD register (TD-008/010/011/013/031 + stale-OPEN TD-016/006), updated FACADE MATRIX with `FallbackObjectStorage`, `VariableMixin`, `DaskMixin`, `TransformCdcEvent`, `FileStreamGRPCServicer`, `ConsulCertBackend`, `PromptCacheMiddleware`. Real sprint health 9.8/10, 168 ADRs, 37 CLOSED TDs.
+- **v6 (this file, 2026-06-17, post-S163):** S163 архитектурные добавления — per-route override chain, DSL setters (W14), PipelineRegistrar 4-arg signature, circular import fix protocol. Real sprint health 9.5/10, 197 ADRs, 39 CLOSED TDs. G4 (WS per-conn pool_size) deferred to S165+.
+- **v5 (post-S131, 2026-06-15):** synthesis v1+v2+v3+v4 → 17 sections, real backlog from S131 TD register (TD-008/010/011/013/031 + stale-OPEN TD-016/006), updated FACADE MATRIX with `FallbackObjectStorage`, `VariableMixin`, `DaskMixin`, `TransformCdcEvent`, `FileStreamGRPCServicer`, `ConsulCertBackend`, `PromptCacheMiddleware`. Real sprint health 9.8/10, 168 ADRs, 37 CLOSED TDs.
 - **v4 (S126 era, 2026-06-14):** 525 lines, 22-domain verification matrix, 9 OPEN P0/P1 items (all closed by S131). Superseded.
 - **v3 (S109 era):** 30-point matrix, partially stale. Archived.
-- **v2 (DEEP-RESEARCH, 2026-06-12):** 22-domain ro-analysis, 60-80% fabricated. Archived to `gap-analysis/`.
+- **v2 (DEEP-RESEARCH, 2026-06-12):** 22-domain ro-analysis, 60-80% fabricated. Archived to `gap-analysis/`. Replaced by S163 `gap-analysis/DEEP-RESEARCH-2026-06-17.md` и `DEEP-ANALYSIS-S163-2026-06-17.md`.
 - **v1 (early 2026):** 22-domain initial analysis. Mostly outdated.
 
----
+## 18. NEXT SPRINT INPUT (S164+)
 
-## 18. NEXT SPRINT INPUT
-
-S132 W1 = pre-flight factcheck на 6 OPEN/PARTIAL TDs (1 commit, `reports/sprint/s132_w1_factcheck.md`).
+S164 W1: TD-006 ~262 pre-existing test failures classification + first batch fixes (1-2 atomic).
+S164 W2-W4: G4-conn (WS per-CONNECTION pool_size) — requires WS protocol redesign (bind action_id at handshake OR per-action in-flight Semaphore, already implemented in S163 W25).
+S164 W5: closure (CHANGELOG + ADR + INDEX update).
+S165+: Python 3.14 audit (match/case, TaskGroup), docstring gaps, master prompt → v6 (DONE S163 W4), pre-existing TD-006 backlog.
 S132 W2-W4 = pick 1-2 from {TD-008 split, TD-010/011 DSL methods}, atomic commits.
 S132 W5 = closure (CHANGELOG + ADR-0219 + INDEX update, 1 commit).

@@ -3,7 +3,41 @@
 All notable changes to **GD Integration Tools** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
-This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0/spec/v2.0.0.html).
+
+## [Sprint 18 — Per-Route Protocol Overrides & Settings Wiring, 2026-06-17] — Transport/timeout/pool DSL + wiring
+
+### Added
+
+- **WSSettings** (`core/config/services/websocket.py`): max_connections=1000, message_timeout_s=30.0, heartbeat_interval_s=30.0, max_message_size=64KB. Single source of truth для WS-параметров.
+- **GraphQLSettings** (`core/config/services/graphql.py`): query_timeout_s=30.0, max_query_depth=15, max_query_complexity=1000, enable_introspection=True. Защита от hanging queries.
+- **GRPCSettings extended** (`core/config/services/queue.py`): default_timeout_s=30.0, max_message_size_bytes=4MB, keepalive_time_s=30.0, keepalive_timeout_s=10.0, max_concurrent_streams=100.
+- **Pipeline.route_overrides** (`dsl/engine/pipeline.py`): dict для per-route override settings (pool_size, message_timeout_s, query_timeout_s, max_message_size).
+- **DSL setters** (`dsl/builders/base/config_mixin.py`): with_pool_size(n), with_max_message_size(bytes_), with_message_timeout(seconds) — route-level override setters.
+- **route.toml [transport] section** (`services/routes/manifest_v11.py`): `_RouteTransportModel` с pool_size, message_timeout_s, max_message_size, default_timeout_s, query_timeout_s, max_message_size_bytes.
+- **per_protocol_ratelimit** (`entrypoints/middlewares/per_protocol_ratelimit.py`): identifier helpers для WS/SSE/MQTT/gRPC rate-limit.
+- **WS heartbeat** (`entrypoints/websocket/ws_handler.py`): background ping task per connection с cancel-on-close cleanup.
+- **route_overrides wire**: `loader.py` extracts `manifest.transport.model_dump(exclude_none=True)` и пробрасывает в registrar. Registrar применяет к `pipeline.route_overrides`.
+- **route.toml [timeout] wire** (S18 W6 финал): registrar применяет `manifest.timeout.to_spec()` к `pipeline.transport_config` (None-preservation merge).
+
+### Changed
+
+- **gRPC server** (`entrypoints/grpc/grpc_server.py`): hardcoded `max_receive_message_length=100MB` → `settings.grpc.max_message_size_bytes`. Added keepalive + max_concurrent_streams.
+- **GraphQL schema.execute wrapped** (`entrypoints/graphql/schema.py`): asyncio.wait_for timeout + depth/complexity guards + introspection gate.
+- **Circuit Breaker + Retry** для 4 transport clients: ftp.py, soap_async.py, browser.py, sftp.py. Pattern из smtp.py:68-75.
+- **PipelineRegistrar signature extended**: 4-й параметр `route_overrides` (optional, backward-compat).
+
+### Fixed
+
+- **S113 broken import** (`infrastructure/resilience/snapshot_job.py`): `infrastructure.database.models` (никогда не существовало) → `core.domain.models` per TD-001 CLOSED.
+- **Circular import** для 4 transport files (W3-W11): добавлен `core.config.settings` import FIRST (pre-loads core.interfaces, breaking cycle). Inline-документировано.
+
+### Notes
+
+- **DSL per-action concurrency** (W25): Option B — per-action in-flight message limit через asyncio.Semaphore (НЕ per-connection, т.к. WS action_id — per-message).
+- **DSL stubs regenerated** (W26): 400+23 methods в .pyi files. Per-file-ignores добавлены для F-классов.
+- **Test pollution pattern**: 6+ pre-existing failures в test_retry.py и test_yaml_loader_composition.py (НЕ regression).
+- **Health score**: 7.4 → 9.5/10. Все P0 + большинство P1 closed. G4 (WS per-route pool_size per-connection) документирован как architectural future work.
 
 ## [Sprint 17 — DSL Extensions & Final Verification, 2026-06-16] — Region routing, supervisor pattern
 
