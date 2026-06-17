@@ -109,6 +109,7 @@ class RouteBuilder(  # type: ignore[misc]
         "_middlewares",
         "_processors",
         "_protocol",
+        "_route_overrides",  # S163 W14: dict for route-level overrides
         "_transport_config",
         "description",
         "route_id",
@@ -140,6 +141,7 @@ class RouteBuilder(  # type: ignore[misc]
         object.__setattr__(self, "_protocol", None)
         object.__setattr__(self, "_transport_config", None)
         object.__setattr__(self, "_feature_flag", None)
+        object.__setattr__(self, "_route_overrides", {})  # S163 W14
 
     @classmethod
     def from_(

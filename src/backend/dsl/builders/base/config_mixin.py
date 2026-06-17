@@ -25,8 +25,8 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
   и проходит ``mypy`` strict.
 * mixin'ы **не имеют** instance-атрибутов; всё состояние живёт в
   ``RouteBuilder`` (``route_id``, ``source``, ``description``,
-  ``_processors``, ``_protocol``, ``_transport_config``,
-  ``_feature_flag``).
+  ``_processors``, ``_protocol``, ``_transport_config``, ``_feature_flag``,
+  ``_route_overrides``).
 * приватные утилиты (``_add``, ``_add_lazy``, ``_last_processor_or_raise``,
   ``_set_first_attr``, ``_validate_action_names``) живут на
   ``RouteBuilder`` и доступны через ``self``.
@@ -37,7 +37,7 @@ from src.backend.dsl.engine.processors import SetHeaderProcessor
 
 
 class ConfigMixin(_RouteBuilderProtocol):
-    """configuration (with_timeout, with_retries, with_headers, with_auth, set_header) для RouteBuilder. S57 W1 extraction."""
+    """configuration (with_timeout, with_retries, with_headers, with_auth, with_pool_size, with_max_message_size, with_message_timeout, set_header) для RouteBuilder. S57 W1 extraction; S163 W14 — добавлены route-level override setters."""
 
     __slots__ = ()
 
@@ -180,3 +180,84 @@ class ConfigMixin(_RouteBuilderProtocol):
     def set_header(self, key: str, value: Any) -> Self:
         """Устанавливает заголовок в in_message."""
         return self._add(SetHeaderProcessor(key=key, value=value))
+
+    # --- S163 W14: route-level override setters ---
+    # Хранят значения в ``self._route_overrides`` (dict на RouteBuilder).
+    # Используются per-step processors (через ``self.builder._route_overrides.get(...)``)
+    # для override стандартных settings (timeout/pool/max_message_size/etc).
+    #
+    # Per-ROUTE override (НЕ per-step как ``with_timeout``):
+    #   builder.from_("...").with_pool_size(50).proxy(...)  # pool=50 для всего route
+    #
+    # vs per-STEP override (existing):
+    #   builder.from_("...").proxy(...).with_timeout(5.0)  # timeout только для proxy step
+
+    def with_pool_size(self, n: int) -> Self:
+        """Route-level override: pool size для всех транспортов в route.
+
+        Используется в:
+          * WS: max_connections (WSSettings.max_connections)
+          * gRPC: max_concurrent_streams (GRPCSettings.max_concurrent_streams)
+          * Kafka/Redis: pool_size из соответствующих settings
+          * HTTP: max_connections через httpx.Limits
+
+        Args:
+            n: Размер пула (≥ 1).
+
+        Returns:
+            Self для chain.
+        """
+        if not isinstance(n, int) or n < 1:
+            raise ValueError(f"with_pool_size: n должен быть int ≥ 1, получено {n!r}")
+        self._route_overrides["pool_size"] = n
+        return self
+
+    def with_max_message_size(self, bytes_: int) -> Self:
+        """Route-level override: max message size для WS/gRPC роутов.
+
+        Используется в:
+          * WS: WSSettings.max_message_size (default 64KB)
+          * gRPC: GRPCSettings.max_message_size_bytes (default 4MB)
+
+        Args:
+            bytes_: Максимальный размер сообщения в байтах (≥ 1).
+
+        Returns:
+            Self для chain.
+        """
+        if not isinstance(bytes_, int) or bytes_ < 1:
+            raise ValueError(
+                f"with_max_message_size: bytes_ должен быть int ≥ 1, получено {bytes_!r}"
+            )
+        self._route_overrides["max_message_size"] = bytes_
+        return self
+
+    def with_message_timeout(self, seconds: float) -> Self:
+        """Route-level override: per-message timeout для WS роутов.
+
+        Используется в ws_handler через WSSettings.message_timeout_s.
+
+        Args:
+            seconds: Таймаут на одно WS-сообщение (секунды, > 0).
+
+        Returns:
+            Self для chain.
+        """
+        if not isinstance(seconds, (int, float)) or seconds <= 0:
+            raise ValueError(
+                f"with_message_timeout: seconds должен быть > 0, получено {seconds!r}"
+            )
+        self._route_overrides["message_timeout_s"] = float(seconds)
+        return self
+
+    def get_route_override(self, key: str, default: Any = None) -> Any:
+        """Читает route-level override (используется processors/handlers).
+
+        Args:
+            key: Имя параметра (e.g., 'pool_size', 'max_message_size').
+            default: Default если override не задан.
+
+        Returns:
+            Значение override или default.
+        """
+        return self._route_overrides.get(key, default)
