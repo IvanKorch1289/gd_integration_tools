@@ -46,4 +46,5 @@ class DecryptProcessor(BaseProcessor):
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
-        return {"decrypt": {"key": self._key}}
+        # ponytail: don't leak encryption key in serialized spec
+        return {"decrypt": {"key": "***"}}

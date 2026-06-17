@@ -54,6 +54,7 @@ class ArchiveProcessor(BaseProcessor):
 
     def _extract(self, data: bytes) -> list[dict[str, Any]]:
         import io
+        import os
 
         files = []
         if self._format == "zip":
@@ -62,13 +63,17 @@ class ArchiveProcessor(BaseProcessor):
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
                 for info in zf.infolist():
                     if not info.is_dir():
-                        files.append(
-                            {
-                                "name": info.filename,
-                                "data": zf.read(info),
-                                "size": info.file_size,
-                            }
-                        )
+                        # ponytail: sanitize filename to prevent Zip Slip
+                        name = info.filename
+                        name = os.path.basename(name)
+                        if name and not name.startswith("."):
+                            files.append(
+                                {
+                                    "name": name,
+                                    "data": zf.read(info),
+                                    "size": info.file_size,
+                                }
+                            )
         else:
             import tarfile
 
@@ -76,13 +81,17 @@ class ArchiveProcessor(BaseProcessor):
                 for member in tf.getmembers():
                     if member.isfile():
                         f = tf.extractfile(member)
-                        files.append(
-                            {
-                                "name": member.name,
-                                "data": f.read() if f else b"",
-                                "size": member.size,
-                            }
-                        )
+                        # ponytail: sanitize filename to prevent Zip Slip
+                        name = member.name
+                        name = os.path.basename(name)
+                        if name and not name.startswith("."):
+                            files.append(
+                                {
+                                    "name": name,
+                                    "data": f.read() if f else b"",
+                                    "size": member.size,
+                                }
+                            )
         return files
 
     def _create(self, items: list[dict[str, Any]]) -> bytes:

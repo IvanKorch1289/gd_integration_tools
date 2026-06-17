@@ -46,14 +46,17 @@ class FileMoveProcessor(BaseProcessor):
             exchange.fail("file_move requires src and dst")
             return
         try:
+            # ponytail: wrap blocking I/O in asyncio.to_thread to avoid blocking event loop
+            import asyncio
+
             if self._mode == "move":
-                shutil.move(src, dst)
+                await asyncio.to_thread(shutil.move, src, dst)
             elif self._mode == "rename":
                 import os
 
-                os.rename(src, dst)
+                await asyncio.to_thread(os.rename, src, dst)
             else:
-                shutil.copy2(src, dst)
+                await asyncio.to_thread(shutil.copy2, src, dst)
             exchange.set_property(
                 "file_operation", {"mode": self._mode, "src": src, "dst": dst}
             )

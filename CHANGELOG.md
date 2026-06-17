@@ -5,6 +5,21 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 20 — RPA Critical & Security Fixes, 2026-06-17] — Syntax error, blocking I/O, SSTI, Zip Slip
+
+### Fixed
+
+- **CRITICAL: Syntax error in browser_cookies_store.py:117**: Fixed Python 2 `except TypeError, json.JSONDecodeError:` to `except (TypeError, json.JSONDecodeError):`. Module was previously unimportable.
+- **CRITICAL: Blocking I/O in filemoveprocessor.py**: Wrapped `shutil.move()`, `os.rename()`, `shutil.copy2()` in `asyncio.to_thread()` to avoid blocking event loop.
+- **CRITICAL: Encryption key leak in to_spec()**: Replaced Fernet encryption key with `***` placeholder in `encryptprocessor.py` and `decryptprocessor.py` to prevent key exposure in logs/DSL catalog.
+- **HIGH: Jinja2 SSTI vulnerability in templaterenderprocessor.py**: Replaced `Template()` with `SandboxedEnvironment()` to prevent Server-Side Template Injection.
+- **HIGH: Zip Slip vulnerability in archiveprocessor.py**: Added `os.path.basename()` sanitization to prevent path traversal via crafted archive entries.
+
+### Notes
+
+- **Ponytail applied**: Minimal fixes following existing patterns.
+- **Security status**: All critical security vulnerabilities in RPA domain fixed.
+
 ## [Sprint 19 — RPA Test Coverage & Code Quality, 2026-06-17] — Document, system, operation processor tests
 
 ### Added

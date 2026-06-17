@@ -29,14 +29,16 @@ class TemplateRenderProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
         try:
-            from jinja2 import Template
+            from jinja2.sandbox import SandboxedEnvironment
         except ImportError:
             exchange.fail("jinja2 not installed: pip install Jinja2")
             return
         body = exchange.in_message.body
         variables = body if isinstance(body, dict) else {"body": body}
         try:
-            result = Template(self._template).render(**variables)
+            # ponytail: use SandboxedEnvironment to prevent SSTI
+            env = SandboxedEnvironment()
+            result = env.from_string(self._template).render(**variables)
             exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
         except Exception as exc:
             exchange.fail(f"Template render failed: {exc}")
