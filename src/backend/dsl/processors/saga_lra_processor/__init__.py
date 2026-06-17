@@ -75,4 +75,10 @@ __all__ = ("SagaCompensationError", "SagaLRAError", "SagaLRAProcessor", "SagaSta
 class SagaLRAProcessor(CoreMixin, LifecycleMixin, SerializationMixin, ExecutionMixin):
     """Saga LRA processor (4 mixins = 6 methods + 3 core)."""
 
-    __slots__ = ()
+    # S159 W4: removed __slots__ = (). Python's __slots__ is silently
+    # ignored when any parent class in MRO has __dict__ (BaseProcessor
+    # has none, but the mixin chain introduces __dict__). This caused
+    # 'super().__init__(name=...)' to fail with AttributeError.
+    # Per Deep Research P2 (VERIFY > TRUST): the test contract requires
+    # self.name to be settable. Ponytail default: remove the silent
+    # trap instead of chasing parent __slots__ propagation.

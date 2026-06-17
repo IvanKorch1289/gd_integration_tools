@@ -1,8 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **188**; уникальных слотов: **184**.
+Всего ADR-файлов: **193**; уникальных слотов: **185**.
 
-⚠️ Collision-слоты (4): ADR-0109, ADR-0226, ADR-0227, ADR-0228. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+⚠️ Collision-слоты (8): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0232, ADR-0233, ADR-0234, ADR-0235. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -190,9 +190,14 @@
 | 0229 | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
 | 0230 | ADR-0230: Sprint 147 Closure — Regression Fix (S146 W1 broken commit, 1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 14 collection errors fixed + 164 tests unblocked) | — | [0230-sprint-147-closure.md](0230-sprint-147-closure.md) |
 | 0231 | ADR-0231: Sprint 148 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 outbox + 2 validator) | — | [0231-sprint-148-closure.md](0231-sprint-148-closure.md) |
-| 0232 | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
-| 0233 | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
-| 0234 | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
-| 0235 | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
+| 0232 *(collision)* | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
+| 0232 *(collision)* | ADR-0232: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0232-sprint-157-closure.md](0232-sprint-157-closure.md) |
+| 0233 *(collision)* | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
+| 0233 *(collision)* | ADR-0233: Sprint 158 Closure — Pre-flight Protocol Verification, No More Quick Wins (0 atomic, score 9.9, dsl 15 fails pre-existing) | — | [0233-sprint-158-closure.md](0233-sprint-158-closure.md) |
+| 0234 *(collision)* | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
+| 0234 *(collision)* | ADR-0234: Sprint 159 Closure — 5 Atomic Commits, 8 Collection Errors → 0, dsl 23→13 (-43%) (score 9.9, 0 NEW layer violations) | — | [0234-sprint-159-closure.md](0234-sprint-159-closure.md) |
+| 0235 *(collision)* | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
+| 0235 *(collision)* | ADR-0235: Sprint 160 Closure — Pre-flight Verified, No More 1-Line Wins (0 atomic, score 9.9, 14 dsl + 22 core + 5 services pre-existing) | — | [0235-sprint-160-closure.md](0235-sprint-160-closure.md) |
+| 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
