@@ -5,6 +5,18 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 10 — HITL & Pooling Assessment, 2026-06-16] — HITL verification, PoolingProfile assessment
+
+### Verified
+
+- **HITL approval processor**: Already exists in `dsl/engine/processors/hitl_approval.py` with full implementation including HitlService integration, Temporal signals, and approval/reject/request_info flow.
+- **PoolingProfile**: Already used by HTTP, gRPC, IMAP, Redis clients. DB and S3 clients use their own pooling mechanisms (SQLAlchemy pool, aioboto3 session).
+
+### Notes
+
+- **Ponytail applied**: No unnecessary changes where existing implementations are complete.
+- **Deep research**: Verified HITL and PoolingProfile implementations are production-ready.
+
 ## [Sprint 9 — Layer Violation Fix, 2026-06-16] — Core → services violation fix
 
 ### Fixed
