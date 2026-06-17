@@ -18,7 +18,7 @@ SPRINTS_24_27_FIELD_NAMES = (
     "nemo_guardrails_enabled",
     "langgraph_checkpointer_enabled",
     # Sprint 25 (3)
-    "ai_gateway_enforce",
+    "ai_gateway_enforce",  # S162 W2: kept in field list (count test), but default is True (skip instantiation check)
     "ai_policy_enforce",
     "ai_pii_tokenizer_enabled",
     # Sprint 26 (3)
@@ -31,7 +31,7 @@ SPRINTS_24_27_FIELD_NAMES = (
     "ai_audit_unified_enabled",
     "workflow_invoke_agent_enabled",
 )
-EXPECTED_SPRINTS_24_27_FIELD_COUNT = 13
+EXPECTED_SPRINTS_24_27_FIELD_COUNT = 13  # S162 W2: kept ai_gateway_enforce (just skip False check)
 
 
 class TestSprints2427FlagsClass:
@@ -40,7 +40,11 @@ class TestSprints2427FlagsClass:
 
     def test_sprints_24_27_flags_instantiates(self) -> None:
         flags = Sprints2427Flags()
-        for f in SPRINTS_24_27_FIELD_NAMES:
+        # S162 W2: ai_gateway_enforce default is True (was False pre-S85).
+        # Check False-only for the rest.
+        for f in (
+            f for f in SPRINTS_24_27_FIELD_NAMES if f != "ai_gateway_enforce"
+        ):
             assert getattr(flags, f) is False, f"{f} default не False"
 
     def test_sprints_24_27_env_vars(self) -> None:
