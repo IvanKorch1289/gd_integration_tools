@@ -36,6 +36,7 @@ import httpx
 
 from src.backend.core.logging import get_logger
 from src.backend.core.net.migration_helper import make_http_client
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
 __all__ = (
     "DesktopRPASessionPool",
@@ -45,6 +46,20 @@ __all__ = (
 )
 
 _logger = get_logger(__name__)
+
+
+# S164 W2: shared Circuit Breaker для pool (lazy-init для
+# избежания side-effects при module-load).
+def _get_pool_breaker():
+    """Module-level CB singleton per purge pattern."""
+    return get_breaker_registry().get_or_create(
+        "desktop_rpa_pool",
+        BreakerSpec(
+            name="desktop_rpa_pool",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
 
 
 @dataclass(slots=True)
@@ -78,6 +93,10 @@ class DesktopRPASessionPool:
         timeout: connect+read timeout (default 30s).
         ttl_seconds: idle TTL до закрытия (default 1800s = 30min).
         max_sessions: верхний лимит pool (default 16).
+
+    S164 W2 — Circuit Breaker (shared singleton, lazy-init):
+        ``acquire()`` обёрнут в CB через :func:`_get_pool_breaker`.
+        healthcheck() через ``GET /health`` sidecar endpoint.
     """
 
     def __init__(
@@ -168,35 +187,85 @@ class DesktopRPASessionPool:
     async def acquire(self, app_name: str) -> AsyncIterator[httpx.AsyncClient]:
         """Лизит httpx-client для ``app_name`` (session affinity).
 
+        S164 W2: Circuit Breaker guard на acquire. Если pool_breaker
+        open — при acquire бросает CircuitOpen (или аналог).
+
         Использование::
 
             async with pool.acquire("notepad") as client:
                 response = await client.post("/rpa/click", json={...})
         """
-        async with self._lock:
-            session = await self._get_or_create(app_name)
-            session.in_use = True
+        from src.backend.core.resilience.breaker import CircuitOpen
+
+        breaker = _get_pool_breaker()
+        breaker_guard = breaker.guard()
+        await breaker_guard.__aenter__()
         try:
-            yield session.client
-        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
-            # Stale handle — закрыть и пометить для reconnect на следующий acquire
+            async with self._lock:
+                session = await self._get_or_create(app_name)
+                session.in_use = True
+            try:
+                yield session.client
+            except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+                # Stale handle — закрыть и пометить для reconnect на следующий acquire
+                _logger.warning(
+                    "desktop_rpa_pool: stale connection для %s — reconnect (%s)",
+                    app_name,
+                    exc,
+                )
+                try:
+                    await session.client.aclose()
+                except Exception as exc:
+                    _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
+                async with self._lock:
+                    self._sessions.pop(app_name, None)
+                raise
+            finally:
+                async with self._lock:
+                    if app_name in self._sessions:
+                        self._sessions[app_name].in_use = False
+                        self._sessions[app_name].last_used_at = time.monotonic()
+        except CircuitOpen as exc:
             _logger.warning(
-                "desktop_rpa_pool: stale connection для %s — reconnect (%s)",
+                "desktop_rpa_pool: breaker open, refusing acquire(%s): %s",
                 app_name,
                 exc,
             )
-            try:
-                await session.client.aclose()
-            except Exception as exc:
-                _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
-            async with self._lock:
-                self._sessions.pop(app_name, None)
             raise
         finally:
-            async with self._lock:
-                if app_name in self._sessions:
-                    self._sessions[app_name].in_use = False
-                    self._sessions[app_name].last_used_at = time.monotonic()
+            await breaker_guard.__aexit__(None, None, None)
+
+    async def healthcheck(self, app_name: str = "default") -> bool:
+        """S164 W2: lightweight healthcheck via sidecar ``GET /health``.
+
+        Args:
+            app_name: app для проверки (default = первый в pool или
+                ``"default"`` для pool-level check).
+
+        Returns:
+            ``True`` если sidecar отвечает 200 OK, ``False`` при любой ошибке.
+        """
+        async with self.acquire(app_name) as client:
+            try:
+                # Short timeout для healthcheck (5s).
+                response = await client.get(
+                    "/health", timeout=httpx.Timeout(5.0)
+                )
+                healthy = response.status_code == 200
+                _logger.debug(
+                    "desktop_rpa_pool.healthcheck(%s): status=%d, healthy=%s",
+                    app_name,
+                    response.status_code,
+                    healthy,
+                )
+                return healthy
+            except Exception as exc:
+                _logger.debug(
+                    "desktop_rpa_pool.healthcheck(%s) failed: %s",
+                    app_name,
+                    exc,
+                )
+                return False
 
     async def reconnect(self, app_name: str) -> None:
         """Принудительный recreate session по app_name."""

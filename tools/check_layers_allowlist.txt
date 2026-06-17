@@ -203,6 +203,7 @@ src/backend/services/plugins/loader.py	services	src.backend.dsl.engine.plugin_re
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
+src/backend/services/rpa/desktop_rpa_client.py	services	src.backend.infrastructure.resilience.retry
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.commands.registry
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
 src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secrets

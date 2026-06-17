@@ -5,6 +5,11 @@ Wave: ``[wave:s8/k3-rpa-windows-desktop]``. Обращается к sidecar'у
 ``click`` / ``type`` / ``screenshot`` действий через pywinauto.
 
 Используется из DSL-шага ``.desktop_rpa(app, action, params)``.
+
+S164 W2 — Circuit Breaker + Retry (per ПРАВИЛО 6):
+    ``execute()`` обёрнут в shared CB + tenacity retry с exponential
+    backoff + jitter. Module-level singleton (не per-instance, т.к.
+    client создаётся per-call в DesktopRpaProcessor).
 """
 
 from __future__ import annotations
@@ -14,6 +19,8 @@ from typing import Any
 import httpx
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+from src.backend.infrastructure.resilience.retry import make_async_retry
 
 __all__ = ("DesktopRpaClient", "DesktopRpaError")
 
@@ -29,6 +36,58 @@ SUPPORTED_ACTIONS: dict[str, str] = {
 
 class DesktopRpaError(RuntimeError):
     """Ошибка вызова desktop-RPA sidecar'а."""
+
+
+# S164 W2: shared Circuit Breaker для всех instances DesktopRpaClient.
+# Module-level singleton per purge pattern (smtp.py uses per-instance,
+# но DesktopRpaClient создаётся per-call в DSL processor — instance
+# breaker был бы short-lived и ineffective).
+def _get_desktop_rpa_breaker():
+    """Lazy-init CB singleton (avoid module-load side effects)."""
+    return get_breaker_registry().get_or_create(
+        "desktop_rpa_client",
+        BreakerSpec(
+            name="desktop_rpa_client",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
+
+
+# S164 W2: retry decorator (3 attempts, exponential 1s → 8s + jitter).
+# ``on=(httpx.HTTPError, DesktopRpaError)`` — retry на transport + sidecar
+# ошибки. Не retry на InvalidAction (programmer error).
+async def _execute_with_protection(
+    url: str,
+    *,
+    params: dict[str, Any],
+    headers: dict[str, str],
+    timeout: float,
+    plugin: str,
+) -> httpx.Response:
+    """Internal helper: CB + retry wrapped HTTP POST.
+
+    Lives outside class because retry decorator must be module-level
+    (per S163 W3 W11 pitfall: ``@self.<attr>`` causes NameError — class
+    body executes before __init__).
+    """
+    breaker = _get_desktop_rpa_breaker()
+    async with breaker.guard():
+        from src.backend.core.net.migration_helper import make_http_client
+
+        async with make_http_client(
+            timeout=timeout, plugin=plugin
+        ) as http:
+            return await http.post(url, json=params, headers=headers)
+
+
+_execute_with_retry = make_async_retry(
+    max_attempts=3,
+    initial_backoff=1.0,
+    multiplier=2.0,
+    max_backoff=8.0,
+    on=(httpx.HTTPError, DesktopRpaError),
+)(_execute_with_protection)
 
 
 class DesktopRpaClient:
@@ -72,15 +131,17 @@ class DesktopRpaClient:
         if self._api_key:
             headers["X-API-Key"] = self._api_key
 
-        from src.backend.core.net.migration_helper import make_http_client
-
-        async with make_http_client(
-            timeout=self._timeout, plugin="services/rpa/desktop_rpa"
-        ) as http:
-            try:
-                response = await http.post(url, json=params, headers=headers)
-            except httpx.HTTPError as exc:
-                raise DesktopRpaError(f"transport error к {url}: {exc}") from exc
+        # S164 W2: wrapped CB + retry.
+        try:
+            response = await _execute_with_retry(
+                url,
+                params=params,
+                headers=headers,
+                timeout=self._timeout,
+                plugin="services/rpa/desktop_rpa",
+            )
+        except httpx.HTTPError as exc:
+            raise DesktopRpaError(f"transport error к {url}: {exc}") from exc
 
         if response.status_code == 503:
             raise DesktopRpaError(
