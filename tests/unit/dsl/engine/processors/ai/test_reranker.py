@@ -21,8 +21,12 @@ class TestRerankerProcessor:
         exchange.properties = {}
         exchange.set_property = MagicMock()
 
-        with patch("src.backend.dsl.engine.processors.ai.reranker.feature_flags") as mock_flags:
-            mock_flags.reranking_pipeline_enabled = False
+        # S164 W1: patch the feature_flags module attribute directly
+        # (lazy import + module side_effect unreliable across pytest versions).
+        with patch(
+            "src.backend.core.config.features.feature_flags.reranking_pipeline_enabled",
+            False,
+        ):
             await processor.process(exchange, MagicMock())
 
         exchange.set_property.assert_called_with("reranked_results", [])
@@ -36,8 +40,10 @@ class TestRerankerProcessor:
         exchange.properties = {}
         exchange.set_property = MagicMock()
 
-        with patch("src.backend.dsl.engine.processors.ai.reranker.feature_flags") as mock_flags:
-            mock_flags.reranking_pipeline_enabled = True
+        with patch(
+            "src.backend.core.config.features.feature_flags.reranking_pipeline_enabled",
+            True,
+        ):
             await processor.process(exchange, MagicMock())
 
         exchange.set_property.assert_called_with("reranked_results", [])
@@ -51,8 +57,10 @@ class TestRerankerProcessor:
         exchange.properties = {"vector_results": []}
         exchange.set_property = MagicMock()
 
-        with patch("src.backend.dsl.engine.processors.ai.reranker.feature_flags") as mock_flags:
-            mock_flags.reranking_pipeline_enabled = True
+        with patch(
+            "src.backend.core.config.features.feature_flags.reranking_pipeline_enabled",
+            True,
+        ):
             await processor.process(exchange, MagicMock())
 
         exchange.set_property.assert_called_with("reranked_results", [])
