@@ -850,6 +850,10 @@ ignore = [
 "src/frontend/streamlit_app/api_client.py" = ["BLE001"]
 # Backend services: BLE001+S110 intentional (resilience, circuit breakers, fail-soft).
 "src/backend/**" = ["BLE001", "S110", "S101", "S112"]
+# S163 W26: автогенерированные .pyi stubs — игнор всех F-классов
+# (unused imports, undefined names — могут быть forward refs).
+"src/backend/dsl/workflow/builder.pyi" = ["F", "I001"]
+"src/backend/dsl/builders/base.pyi" = ["F", "I001"]  # S163 W26: см. выше
 # Wave-6.1 lazy ``@app_state_singleton`` (E402: import после класса).
 "src/backend/dsl/engine/plugin_registry.py" = ["E402"]
 "src/backend/dsl/engine/tracer.py" = ["E402"]
