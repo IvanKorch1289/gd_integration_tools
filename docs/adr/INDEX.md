@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **192**; уникальных слотов: **184**.
+Всего ADR-файлов: **193**; уникальных слотов: **185**.
 
 ⚠️ Collision-слоты (8): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0232, ADR-0233, ADR-0234, ADR-0235. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -198,5 +198,6 @@
 | 0234 *(collision)* | ADR-0234: Sprint 159 Closure — 5 Atomic Commits, 8 Collection Errors → 0, dsl 23→13 (-43%) (score 9.9, 0 NEW layer violations) | — | [0234-sprint-159-closure.md](0234-sprint-159-closure.md) |
 | 0235 *(collision)* | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
 | 0235 *(collision)* | ADR-0235: Sprint 160 Closure — Pre-flight Verified, No More 1-Line Wins (0 atomic, score 9.9, 14 dsl + 22 core + 5 services pre-existing) | — | [0235-sprint-160-closure.md](0235-sprint-160-closure.md) |
+| 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
