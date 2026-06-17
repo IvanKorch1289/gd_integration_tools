@@ -1,5 +1,26 @@
 """LangMem service — long-term memory (episodic / semantic / procedural).
 
+.. deprecated:: S164 W3
+    Этот модуль DEPRECATED — оставлен для backward-compatibility.
+    Canonical implementation: ``src.backend.services.ai.memory.langmem_service``
+    (с новыми API: ``remember_episode``, ``remember_fact``, ``remember_procedure``).
+
+    Sprint 22 audit identified two separate LangMemService implementations:
+    * This module (``ai.langmem_service``) — Sprint 4 MVP scaffold.
+    * ``ai.memory.langmem_service`` — Sprint 13+ canonical (3-tier with
+      feature-flag + in-memory fallback).
+
+    Per master prompt §0 "Single-Entry per Concern" — два имплементации
+    одного домена должны быть объединены. Refactor в S165+ (требует
+    миграции 5 consumers: langmem_admin endpoint, scheduler, setup_ai_2026,
+    package internals).
+
+    Использование для нового кода: импортировать из canonical location:
+
+        from src.backend.services.ai.memory.langmem_service import (
+            get_langmem_service, LangMemService,
+        )
+
 MVP-каркас (Шаг 4). Sprint 4/5 добавит:
 * интеграцию с пакетом ``langmem`` (auto-consolidation);
 * sync с :class:`AgentMemoryService` (short-term Mongo).
@@ -23,6 +44,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.backend.core.logging import get_logger
+import warnings
+
+warnings.warn(
+    "src.backend.services.ai.langmem_service is deprecated, use "
+    "src.backend.services.ai.memory.langmem_service instead (S164 W3).",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 logger = get_logger(__name__)
 
