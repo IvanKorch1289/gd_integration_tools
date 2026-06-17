@@ -15,7 +15,6 @@ src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.serv
 src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.rebuff_client
-src/backend/core/ai/pydantic_ai_client.py	core	src.backend.services.ai.gateway.exceptions
 src/backend/core/audit/facade/audit_service.py	core	src.backend.infrastructure.observability.correlation
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/ad_directory.py	core	src.backend.services.auth.ad_directory_client
