@@ -28,7 +28,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.services.ai.gateway.exceptions import (  # S162 W7: use canonical path
+from src.backend.core.ai.errors import (
     GatewayRateLimited,
     GatewayUnavailable,
 )

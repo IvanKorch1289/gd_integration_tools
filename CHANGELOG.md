@@ -5,6 +5,17 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 9 — Layer Violation Fix, 2026-06-16] — Core → services violation fix
+
+### Fixed
+
+- **Core → services layer violation in pydantic_ai_client.py**: Updated import to use canonical path `core.ai.errors` instead of `services.ai.gateway.exceptions`. Reduced violations from 30 to 29.
+
+### Notes
+
+- **Ponytail applied**: Minimal fix, shortest working diff.
+- **Deep research**: Found 18 TODO/FIXME markers (mostly documentation or scaffolding), 30 core → services violations (29 remaining after fix).
+
 ## [Sprint 8 — Dead Code Cleanup, 2026-06-16] — Dead code after raise removal
 
 ### Fixed
