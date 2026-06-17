@@ -9,8 +9,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
-
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -57,8 +55,10 @@ class EpisodicMemory:
         from src.backend.services.ai.langmem_models import LangMemEpisodic
 
         async with self._session_factory() as session:
+            from sqlalchemy import select as sa_select
+
             stmt = (
-                select(LangMemEpisodic)
+                sa_select(LangMemEpisodic)
                 .order_by(LangMemEpisodic.occurred_at.desc())
                 .limit(limit)
             )

@@ -22,8 +22,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
-
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -158,8 +156,10 @@ class LangMemService:
         factory = self._ensure_session_factory()
         async with factory() as session:
             if kind == "episodic":
+                from sqlalchemy import select as sa_select
+
                 stmt = (
-                    select(LangMemEpisodic)
+                    sa_select(LangMemEpisodic)
                     .order_by(LangMemEpisodic.occurred_at.desc())
                     .limit(limit)
                 )
@@ -180,8 +180,10 @@ class LangMemService:
                     for r in rows
                 ]
             if kind == "procedural":
+                from sqlalchemy import select as sa_select
+
                 stmt = (
-                    select(LangMemProcedural)
+                    sa_select(LangMemProcedural)
                     .order_by(LangMemProcedural.updated_at.desc())
                     .limit(limit)
                 )
@@ -229,13 +231,13 @@ class LangMemService:
 
         factory = self._ensure_session_factory()
         async with factory() as session:
-            from sqlalchemy import func
+            from sqlalchemy import func, select as sa_select
 
             episodic_count = (
-                await session.execute(select(func.count(LangMemEpisodic.id)))
+                await session.execute(sa_select(func.count(LangMemEpisodic.id)))
             ).scalar() or 0
             procedural_count = (
-                await session.execute(select(func.count(LangMemProcedural.id)))
+                await session.execute(sa_select(func.count(LangMemProcedural.id)))
             ).scalar() or 0
         return {
             "episodic_count": int(episodic_count),

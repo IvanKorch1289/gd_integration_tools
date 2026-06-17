@@ -183,6 +183,23 @@ class LLMCallProcessor(BaseProcessor):
 
         # K3 W1: замена custom retry-loop на tenacity через make_async_retry.
         # GatewayRateLimited — non-retryable, обрабатывается отдельно.
+        # S164 W1 (AI-R2): Circuit Breaker guard на _chat_with_retry —
+        # repeated LLM failures не должны дойти до retry-loop (cost control).
+        from src.backend.core.resilience.breaker import (
+            BreakerSpec,
+            CircuitOpen,
+            get_breaker_registry,
+        )
+
+        _llm_breaker = get_breaker_registry().get_or_create(
+            "llm_call_processor",
+            BreakerSpec(
+                name="llm_call_processor",
+                failure_threshold=5,
+                recovery_timeout=30.0,
+            ),
+        )
+
         _retryable = (TimeoutError, ConnectionError)
 
         @make_async_retry(
@@ -192,20 +209,25 @@ class LLMCallProcessor(BaseProcessor):
             on=_retryable,
         )
         async def _chat_with_retry() -> Any:
-            """Выполняет один LLM-запрос; tenacity перехватывает transient ошибки."""
-            try:
-                return await agent.chat(
-                    messages=[{"role": "user", "content": prompt}],
-                    provider=self._provider,
-                    model=self._model or "default",
-                )
-            except GatewayRateLimited:
-                # Rate-limit — non-retryable, пробрасываем как есть.
-                raise
-            except RuntimeError as exc:
-                # Остальные RuntimeError считаем transient — оборачиваем
-                # в ConnectionError, чтобы tenacity их поймал.
-                raise ConnectionError(str(exc)) from exc
+            """Выполняет один LLM-запрос; tenacity перехватывает transient ошибки.
+
+            S164 W1: wrapped в Circuit Breaker (CB открывается при 5
+            consecutive failures → CircuitOpen). Non-retryable errors
+            (GatewayRateLimited, ValueError) пробрасываются как есть.
+            """
+            async with _llm_breaker.guard():
+                try:
+                    return await agent.chat(
+                        messages=[{"role": "user", "content": prompt}],
+                        provider=self._provider,
+                        model=self._model or "default",
+                    )
+                except (GatewayRateLimited, ValueError):
+                    # Non-retryable + non-CB-failing — propagate.
+                    raise
+                except RuntimeError as exc:
+                    # Transient → CB counts + tenacity retries.
+                    raise ConnectionError(str(exc)) from exc
 
         try:
             result = await _chat_with_retry()

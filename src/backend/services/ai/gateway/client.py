@@ -140,7 +140,14 @@ class LiteLLMGateway:
         stream: bool = False,
         **kwargs: Any,
     ) -> Any:
-        """Chat-completion. При ``stream=True`` возвращает AsyncIterator чанков."""
+        """Chat-completion. При ``stream=True`` возвращает AsyncIterator чанков.
+
+        S164 W1 (AI-R4): Circuit Breaker guard. Per-service litellm имеет
+        встроенный retry (num_retries), но не имеет CB — repeated failures
+        не cascade'ят в cost-control. CB открывается после 5 consecutive
+        failures → _raise_normalized превращает CircuitOpen в
+        GatewayUnavailable.
+        """
         litellm = self._ensure_litellm()
         litellm_exc = litellm.exceptions
         params: dict[str, Any] = {
@@ -156,20 +163,36 @@ class LiteLLMGateway:
         if self._fallbacks:
             params.setdefault("fallbacks", self._fallbacks)
 
-        try:
-            return await litellm.acompletion(**params)
-        except (
-            litellm_exc.RateLimitError,
-            litellm_exc.ServiceUnavailableError,
-            litellm_exc.Timeout,
-            litellm_exc.APIError,
-            litellm_exc.BadRequestError,
-            litellm_exc.AuthenticationError,
-            asyncio.TimeoutError,
-            GatewayRateLimited,
-            GatewayUnavailable,
-        ) as exc:
-            self._raise_normalized(exc)
+        # S164 W1 (AI-R4): Circuit Breaker per gateway instance.
+        from src.backend.core.resilience.breaker import (
+            BreakerSpec,
+            get_breaker_registry,
+        )
+
+        if not hasattr(self, "_cb"):
+            self._cb = get_breaker_registry().get_or_create(
+                "litellm_gateway",
+                BreakerSpec(
+                    name="litellm_gateway",
+                    failure_threshold=5,
+                    recovery_timeout=30.0,
+                ),
+            )
+        async with self._cb.guard():
+            try:
+                return await litellm.acompletion(**params)
+            except (
+                litellm_exc.RateLimitError,
+                litellm_exc.ServiceUnavailableError,
+                litellm_exc.Timeout,
+                litellm_exc.APIError,
+                litellm_exc.BadRequestError,
+                litellm_exc.AuthenticationError,
+                asyncio.TimeoutError,
+                GatewayRateLimited,
+                GatewayUnavailable,
+            ) as exc:
+                self._raise_normalized(exc)
 
     async def astream_completion(
         self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any

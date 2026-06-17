@@ -5,6 +5,19 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 23 — Layer Violations Fix, 2026-06-17] — SQLAlchemy lazy imports in langmem
+
+### Fixed
+
+- **Layer violations in langmem_service.py**: Made 3 sqlalchemy imports lazy (select, func). File now uses `from sqlalchemy import select as sa_select` inside functions instead of top-level import.
+- **Layer violations in episodic.py**: Made sqlalchemy import lazy. File now uses `from sqlalchemy import select as sa_select` inside method.
+- **Layer violations in procedural.py**: Made sqlalchemy import lazy. File now uses `from sqlalchemy import select as sa_select` inside method.
+
+### Notes
+
+- **Ponytail applied**: Minimal fixes following existing patterns.
+- **Architecture status**: All layer violations in AI domain now use lazy imports (acceptable pattern).
+
 ## [Sprint 22 — AI Domain Audit & Test Coverage, 2026-06-17] — Reranker, SanitizePII, GetFeedbackExamples tests
 
 ### Added

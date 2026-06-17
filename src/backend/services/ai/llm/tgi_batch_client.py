@@ -3,6 +3,10 @@
 Использует ``OutboundHttpClient`` (WAF strict policy R-V15-5) для
 параллельных HTTP-запросов к TGI-серверу. Capability:
 ``net.outbound.tgi_server:external``.
+
+S164 W1 (AI-R1): Circuit Breaker + Retry для TGI HTTP-вызовов (ПРАВИЛО 6).
+Module-level singleton CB per S163-W3 pattern (tgi_batch_client создаётся
+per-call → shared breaker для всех instances).
 """
 
 from __future__ import annotations
@@ -11,10 +15,24 @@ import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
 __all__ = ("TgiBatchClient",)
 
 logger = get_logger(__name__)
+
+
+# S164 W1: shared Circuit Breaker (lazy-init, module-level).
+def _get_tgi_breaker():
+    """Module-level CB singleton per purge pattern (smtp.py)."""
+    return get_breaker_registry().get_or_create(
+        "tgi_batch_client",
+        BreakerSpec(
+            name="tgi_batch_client",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
 
 
 class TgiBatchClient:
@@ -36,24 +54,27 @@ class TgiBatchClient:
     async def _single_completion(
         self, prompt: str, *, max_tokens: int, temperature: float
     ) -> str:
-        async with self._semaphore:
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": max_tokens,
-                    "temperature": temperature,
-                    "return_full_text": False,
-                },
-            }
-            response = await self._client.post(
-                f"{self._url}/generate", json=payload, timeout=self._timeout
-            )
-            data = response.json() if hasattr(response, "json") else response
-            if isinstance(data, list) and data:
-                return str(data[0].get("generated_text", ""))
-            if isinstance(data, dict):
-                return str(data.get("generated_text", ""))
-            return ""
+        # S164 W1 (AI-R1): CB guard + retry для TGI HTTP POST.
+        breaker = _get_tgi_breaker()
+        async with breaker.guard():
+            async with self._semaphore:
+                payload = {
+                    "inputs": prompt,
+                    "parameters": {
+                        "max_new_tokens": max_tokens,
+                        "temperature": temperature,
+                        "return_full_text": False,
+                    },
+                }
+                response = await self._client.post(
+                    f"{self._url}/generate", json=payload, timeout=self._timeout
+                )
+                data = response.json() if hasattr(response, "json") else response
+                if isinstance(data, list) and data:
+                    return str(data[0].get("generated_text", ""))
+                if isinstance(data, dict):
+                    return str(data.get("generated_text", ""))
+                return ""
 
     async def batch_completions(
         self,

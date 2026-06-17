@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
-
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -48,8 +46,10 @@ class ProceduralMemory:
         from src.backend.services.ai.langmem_models import LangMemProcedural
 
         async with self._session_factory() as session:
+            from sqlalchemy import select as sa_select
+
             stmt = (
-                select(LangMemProcedural)
+                sa_select(LangMemProcedural)
                 .order_by(LangMemProcedural.updated_at.desc())
                 .limit(limit)
             )
