@@ -3,7 +3,24 @@
 All notable changes to **GD Integration Tools** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
-This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0/spec/v2.0.0.html).
+This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Sprint 18 — DSL Processors & Facades Verification, 2026-06-17] — RegionRouting, Supervisor processors
+
+### Added
+
+- **RegionRoutingProcessor** (`dsl/engine/processors/region_routing.py`): New DSL processor for health-check based failover between primary/fallback regions. Includes `to_spec()` for YAML serialization.
+- **SupervisorProcessor** (`dsl/engine/processors/supervisor.py`): New DSL processor for automatic restart with exponential backoff. Includes `to_spec()` for YAML serialization.
+
+### Verified
+
+- **SecretsFacade**: Already exists in `services/secrets/facade.py` with capability-checked `get_secret()` and `set_secret()` methods.
+- **AuditFacade**: Already exists in `core/audit/facade/` with `AuditService` and per-domain helpers (emit_audit, emit_authorization_decision, emit_waf_evaluation, emit_capability_check, emit_secret_rotation, emit_ai_workspace, emit_banking_audit).
+
+### Notes
+
+- **Ponytail applied**: Minimal implementations following existing patterns.
+- **Architecture status**: DSL coverage expanded with new processors. Facades verified as complete.
 
 ## [Sprint 18 — Per-Route Protocol Overrides & Settings Wiring, 2026-06-17] — Transport/timeout/pool DSL + wiring
 

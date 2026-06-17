@@ -1,15 +1,22 @@
-"""Regression test: S127 W1 — verify HttpClient dead-code removal.
+"""Regression test: HttpClient circuit breaker wiring.
 
-S127 W1 removed the unused ``self.circuit_breaker = get_circuit_breaker()``
-from ``HttpClient.__init__``. The instance attribute was created but never
-referenced anywhere in the transport/http package, so it was pure dead
-code (and the ``core.utils.circuit_breaker`` import that fed it is
-deprecated since S38 — removed in Sprint 43 CB consolidation).
+History:
+* S127 W1 removed the unused ``self.circuit_breaker = get_circuit_breaker()``
+  from ``HttpClient.__init__``. The instance attribute was pure dead code
+  (and ``core.utils.circuit_breaker`` import that fed it was deprecated).
+* S140-W5 (``924a48d``) re-added the assignment as part of CB consolidation
+  (S43), making ``self.circuit_breaker`` actively used in
+  ``request_mixin.py:117`` (``async with self.circuit_breaker.guard()``).
+* S163 W31: test updated — verify CB IS correctly wired (positive test),
+  not absent. Matches current canonical pattern.
 
-This test enforces the cleanup:
-1. ``HttpClient`` must not reference ``circuit_breaker`` (static check).
-2. The deprecated shim has been removed.
-3. The canonical ``core.resilience.breaker`` is the only future path.
+Tests enforce:
+1. ``HttpClient`` must use the canonical ``core.resilience.breaker`` import
+   (NOT the deprecated ``core.utils.circuit_breaker`` shim).
+2. ``self.circuit_breaker = get_breaker_registry().get_or_create(...)``
+   IS present (since S140-W5 brought back as active code).
+3. The canonical ``core.resilience.breaker`` symbols are importable.
+4. The deprecated shim was removed.
 """
 
 from __future__ import annotations
@@ -52,23 +59,26 @@ class TestHttpClientDeadCodeRemoved:
             "core.utils.circuit_breaker shim (S127 W1 cleanup)."
         )
 
-    def test_no_circuit_breaker_attribute(self) -> None:
-        """Verify no ``self.circuit_breaker = ...`` assignment remains."""
-        tree = _http_init_tree()
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Assign):
-                continue
-            for target in node.targets:
-                if (
-                    isinstance(target, ast.Attribute)
-                    and isinstance(target.value, ast.Name)
-                    and target.value.id == "self"
-                    and target.attr == "circuit_breaker"
-                ):
-                    pytest.fail(
-                        "HttpClient must NOT assign self.circuit_breaker — "
-                        "the instance attribute was dead code (S127 W1)."
-                    )
+    def test_circuit_breaker_attribute_wired(self) -> None:
+        """S163 W31: verify ``self.circuit_breaker`` IS wired (S140-W5+).
+
+        S140-W5 (``924a48d``) restored ``self.circuit_breaker = ...`` as
+        actively-used CB (see ``request_mixin.py:117`` where it's used via
+        ``async with self.circuit_breaker.guard():``). The test now verifies
+        CB IS wired correctly (positive assertion), not that it's absent.
+
+        Если кто-то в будущем случайно удалит assignment, ``RequestMixin``
+        сломается at runtime (AttributeError на .guard()). Этот test — guard
+        против такого регресса.
+        """
+        src = _http_init_source()
+        assert (
+            "self.circuit_breaker = get_breaker_registry()" in src
+        ), (
+            "HttpClient must wire self.circuit_breaker через canonical "
+            "core.resilience.breaker (S140-W5+ pattern). If вы reverted к "
+            "dead-code, RequestMixin сломается."
+        )
 
     def test_canonical_circuit_breaker_still_importable(self) -> None:
         """Canonical CB stays available for future migration."""
