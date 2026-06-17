@@ -20,7 +20,7 @@ class TestAIFlagsClass:
             "langmem_enabled",
             "mcp_tools_input_schema_strict",
             "langfuse_v3",
-            "rag_cache_l2_semantic",
+            # "rag_cache_l2_semantic",  # S162 W2: default changed to True
             "rag_cache_l3_retrieval",
             "ai_workspace_ttl_cleanup",
             "prompt_registry_langfuse",
@@ -42,8 +42,8 @@ class TestAIFlagsClass:
     def test_ai_field_count(self) -> None:
         fields = AIFlags.model_fields
         names = list(fields.keys())
-        # 9 K6 — AI fields
-        assert len(names) == 9
+        # S162 W2: was 9, sibling Sprint 1 added a field (now 10).
+        assert len(names) == 10
         assert "search_provider_searxng" in names
         assert "multimodal_rag_enabled" in names
 
