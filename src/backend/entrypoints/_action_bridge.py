@@ -114,9 +114,35 @@ async def dispatch_action_or_dsl(
         if result is not None:
             return result
 
-    return await _dispatch_dsl(
-        dsl_route_id=dsl_route_id, payload=payload, headers=headers
-    )
+    # S163 W15: per-action timeout via route_overrides (DSL with_message_timeout).
+    # Если route определён и имеет override ``message_timeout_s`` —
+    # оборачиваем DSL-fallback в asyncio.wait_for.
+    import asyncio
+
+    from src.backend.dsl.commands.registry import route_registry
+
+    overrides = route_registry.get_route_overrides(dsl_route_id)
+    action_timeout_s = overrides.get("message_timeout_s")
+
+    if action_timeout_s is None:
+        return await _dispatch_dsl(
+            dsl_route_id=dsl_route_id, payload=payload, headers=headers
+        )
+
+    try:
+        return await asyncio.wait_for(
+            _dispatch_dsl(
+                dsl_route_id=dsl_route_id, payload=payload, headers=headers
+            ),
+            timeout=float(action_timeout_s),
+        )
+    except asyncio.TimeoutError:
+        return BridgeResult(
+            success=False,
+            error=f"action timeout ({action_timeout_s}s)",
+            via="dsl",
+            error_code="action_timeout",
+        )
 
 
 async def _try_dispatcher(

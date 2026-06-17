@@ -5,6 +5,18 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 13 — Layer Violation Final Assessment, 2026-06-16] — Core → infrastructure violations analysis
+
+### Verified
+
+- **Core → infrastructure violations**: All 30 remaining imports are either lazy imports inside functions (acceptable pattern) or top-level re-exports with noqa: F401 (intentional facade pattern). No violations to fix.
+- **Layer violation status**: 80 total violations, all acceptable patterns (lazy imports or intentional re-exports).
+
+### Notes
+
+- **Ponytail applied**: No unnecessary changes where existing patterns are correct.
+- **Architecture status**: Layer violations stabilized at 80. All top-level violations resolved. Remaining are intentional architectural patterns.
+
 ## [Sprint 12 — Layer Violation & Stub Assessment, 2026-06-16] — Lazy imports analysis, NotImplementedError audit
 
 ### Verified

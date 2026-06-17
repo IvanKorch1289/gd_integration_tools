@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.dsl.commands.action_registry import (
@@ -86,6 +86,23 @@ class RouteRegistry:
             bool: Признак регистрации.
         """
         return route_id in self._routes
+
+    def get_route_overrides(self, route_id: str) -> dict[str, Any]:
+        """S163 W15: возвращает route_overrides из Pipeline (или {}).
+
+        Используется handlers (ws_handler, grpc_server, graphql) для
+        override стандартных settings per-action/per-method.
+
+        Args:
+            route_id: Идентификатор маршрута.
+
+        Returns:
+            Dict с override values или пустой dict если маршрут не найден.
+        """
+        pipeline = self._routes.get(route_id)
+        if pipeline is None:
+            return {}
+        return dict(pipeline.route_overrides)
 
     def list_routes(self) -> tuple[str, ...]:
         """
