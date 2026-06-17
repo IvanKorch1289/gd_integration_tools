@@ -439,3 +439,67 @@ class ControlFlowMixin:
             to_err=to_err,
             on_err=on_err,
         )
+
+    def region_routing(
+        self,
+        primary: str,
+        fallback: str | None = None,
+        *,
+        health_check_interval: float = 30.0,
+    ) -> RouteBuilder:
+        """Region routing с health-check based failover.
+
+        Позволяет настраивать region routing через DSL для распределённых
+        deployments с primary/fallback регионами.
+
+        Args:
+            primary: Primary region name (e.g., "eu-west-1").
+            fallback: Fallback region name (e.g., "eu-central-1"). If None, no fallback.
+            health_check_interval: Seconds between health checks (default 30).
+
+        Example::
+
+            builder.from_("http://api.example.com")
+                .region_routing(
+                    primary="eu-west-1",
+                    fallback="eu-central-1",
+                    health_check_interval=15.0,
+                )
+                .proxy(...)
+        """
+        self._route_overrides["region_routing"] = {
+            "primary": primary,
+            "fallback": fallback,
+            "health_check_interval": health_check_interval,
+        }
+        return self  # type: ignore[return-value]
+
+    def supervisor(
+        self,
+        *,
+        max_restarts: int = 3,
+        timeout: float = 60.0,
+        backoff: float = 2.0,
+    ) -> RouteBuilder:
+        """Supervisor pattern для fault-tolerant execution.
+
+        Позволяет настраивать supervisor через DSL для автоматического
+        перезапуска упавших процессов с exponential backoff.
+
+        Args:
+            max_restarts: Maximum restart attempts (default 3).
+            timeout: Timeout for each restart attempt (seconds, default 60).
+            backoff: Backoff multiplier between restarts (default 2.0).
+
+        Example::
+
+            builder.from_("ws://stream.example.com")
+                .supervisor(max_restarts=5, timeout=120.0, backoff=1.5)
+                .websocket(...)
+        """
+        self._route_overrides["supervisor"] = {
+            "max_restarts": max_restarts,
+            "timeout": timeout,
+            "backoff": backoff,
+        }
+        return self  # type: ignore[return-value]

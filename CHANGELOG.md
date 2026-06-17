@@ -5,6 +5,25 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 17 — DSL Extensions & Final Verification, 2026-06-16] — Region routing, supervisor pattern
+
+### Added
+
+- **DSL region_routing()** (`dsl/builders/control_flow.py`): New route-level override method for region routing with health-check based failover (primary, fallback, health_check_interval).
+- **DSL supervisor()** (`dsl/builders/control_flow.py`): New route-level override method for supervisor pattern with automatic restart (max_restarts, timeout, backoff).
+
+### Verified
+
+- **Python 2 except syntax**: 0 remaining instances (all fixed in Sprint 7).
+- **Top-level layer violations**: 0 remaining (all fixed in previous sprints).
+- **Lazy imports**: All remaining violations are lazy imports inside functions (acceptable pattern).
+- **OIDC SSO**: Abstract base class exists in services/admin/sso.py with @abstractmethod decorators. Implementation planned for S126+ per ADR-0054.
+
+### Notes
+
+- **Ponytail applied**: Minimal implementations following existing patterns.
+- **Architecture status**: All critical issues resolved. DSL coverage expanded with region_routing and supervisor methods.
+
 ## [Sprint 16 — Infrastructure Audit & DSL Extensions, 2026-06-16] — Agent hot-reload, DSL methods
 
 ### Added
