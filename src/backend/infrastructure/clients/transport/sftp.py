@@ -33,6 +33,25 @@ __all__ = ("BaseSftpClient", "SftpClient", "_resolve_known_hosts", "get_sftp_cli
 
 logger = get_logger(__name__)
 
+# S163 W11: retry helper для data-transfer operations (см. ftp.py W8).
+# Module-level decorator (аналогично soap_async.py W10).
+try:
+    from src.backend.infrastructure.resilience.retry import make_async_retry
+except ImportError:  # pragma: no cover
+    make_async_retry = None  # type: ignore[assignment]
+
+_sftp_retry = (
+    make_async_retry(
+        max_attempts=3,
+        initial_backoff=1.0,
+        multiplier=2.0,
+        max_backoff=10.0,
+        on=(OSError, ConnectionError, TimeoutError),
+    )
+    if make_async_retry is not None
+    else (lambda f: f)
+)
+
 
 def _resolve_known_hosts() -> tuple[()] | str:
     """Возвращает значение ``known_hosts`` для ``asyncssh.connect``.
@@ -109,6 +128,23 @@ class SftpClient(BaseSftpClient):
             BreakerSpec(name="sftp", failure_threshold=5, recovery_timeout=60.0),
         )
 
+    @_sftp_retry
+    async def _do_upload(self, local_path: str, remote_path: str) -> None:
+        """Внутренняя upload-операция с retry-обёрткой."""
+        import asyncssh
+
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            await sftp.put(local_path, remote_path)
+
     async def upload(self, local_path: str, remote_path: str) -> None:
         """Загружает файл на SFTP-сервер.
 
@@ -116,21 +152,26 @@ class SftpClient(BaseSftpClient):
             local_path: Путь к локальному файлу.
             remote_path: Путь на удалённом сервере.
         """
+        async with self._breaker.guard():
+            await self._do_upload(local_path, remote_path)
+            logger.info("SFTP upload: %s → %s:%s", local_path, self.host, remote_path)
+
+    @_sftp_retry
+    async def _do_download(self, remote_path: str, local_path: str) -> None:
+        """Внутренняя download-операция с retry-обёрткой."""
         import asyncssh
 
-        async with self._breaker.guard():
-            async with (
-                asyncssh.connect(
-                    self.host,
-                    port=self.port,
-                    username=self.username,
-                    password=self.password,
-                    known_hosts=_resolve_known_hosts(),
-                ) as conn,
-                conn.start_sftp_client() as sftp,
-            ):
-                await sftp.put(local_path, remote_path)
-                logger.info("SFTP upload: %s → %s:%s", local_path, self.host, remote_path)
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            await sftp.get(remote_path, local_path)
 
     async def download(self, remote_path: str, local_path: str) -> None:
         """Скачивает файл с SFTP-сервера.
@@ -139,21 +180,9 @@ class SftpClient(BaseSftpClient):
             remote_path: Путь на удалённом сервере.
             local_path: Путь для сохранения локально.
         """
-        import asyncssh
-
         async with self._breaker.guard():
-            async with (
-                asyncssh.connect(
-                    self.host,
-                    port=self.port,
-                    username=self.username,
-                    password=self.password,
-                    known_hosts=_resolve_known_hosts(),
-                ) as conn,
-                conn.start_sftp_client() as sftp,
-            ):
-                await sftp.get(remote_path, local_path)
-                logger.info("SFTP download: %s:%s → %s", self.host, remote_path, local_path)
+            await self._do_download(remote_path, local_path)
+            logger.info("SFTP download: %s:%s → %s", self.host, remote_path, local_path)
 
     async def list_dir(self, remote_path: str = ".") -> list[dict[str, Any]]:
         """Возвращает список файлов в директории.
@@ -190,6 +219,24 @@ class SftpClient(BaseSftpClient):
                     if entry.filename not in (".", "..")
                 ]
 
+    @_sftp_retry
+    async def _do_download_bytes(self, remote_path: str) -> bytes:
+        """Внутренняя download_bytes-операция с retry-обёрткой."""
+        import asyncssh
+
+        async with (
+            asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+            sftp.open(remote_path, "rb") as f,
+        ):
+            return await f.read()
+
     async def download_bytes(self, remote_path: str) -> bytes:
         """Скачивает файл как bytes.
 
@@ -199,21 +246,8 @@ class SftpClient(BaseSftpClient):
         Returns:
             Содержимое файла.
         """
-        import asyncssh
-
         async with self._breaker.guard():
-            async with (
-                asyncssh.connect(
-                    self.host,
-                    port=self.port,
-                    username=self.username,
-                    password=self.password,
-                    known_hosts=_resolve_known_hosts(),
-                ) as conn,
-                conn.start_sftp_client() as sftp,
-                sftp.open(remote_path, "rb") as f,
-            ):
-                return await f.read()
+            return await self._do_download_bytes(remote_path)
 
 
 def get_sftp_client(
