@@ -62,9 +62,22 @@ class WSSettings(BaseSettingsWithLoader):
 
     # Max message size (защита от OOM при больших payload).
     max_message_size: int = Field(
-        default=65536,  # 64 KB
+        default=65536,  # 64KB
         gt=0,
-        description="Макс. размер одного WS-сообщения в байтах.",
+        description="Максимальный размер одного WS-сообщения (bytes).",
+    )
+
+    # ── Rate limiting (S164 W36) ────────────────────────────────────
+
+    rate_limit_per_minute: int = Field(
+        default=600,
+        gt=0,
+        description="Лимит WS-сообщений per minute per tenant/user/IP identifier.",
+    )
+    rate_limit_burst: int = Field(
+        default=10,
+        gt=0,
+        description="Token-bucket burst size для rate limiting.",
     )
 
 
