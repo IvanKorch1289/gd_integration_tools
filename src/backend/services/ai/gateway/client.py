@@ -265,6 +265,31 @@ class LiteLLMGateway:
             logger.debug("acost_estimate failed: %s", exc)
             return 0.0
 
+    async def healthcheck(self, *, model: str | None = None) -> bool:
+        """S164 W2 (AI-R4 healthcheck): lightweight Liveness check.
+
+        Calls acompletion с минимальными tokens. ``True`` если gateway
+        отвечает в timeout, ``False`` при любой ошибке (недоступен,
+        rate-limited, circuit-open, и т.п.).
+
+        Args:
+            model: Модель для healthcheck (default = ``self._default_model``).
+
+        Returns:
+            ``True`` если gateway operational, ``False`` otherwise.
+        """
+        try:
+            await self.acompletion(
+                messages=[{"role": "user", "content": "ping"}],
+                model=model,
+                max_tokens=1,
+                timeout=5.0,
+            )
+            return True
+        except Exception as exc:
+            logger.debug("litellm_gateway.healthcheck failed: %s", exc)
+            return False
+
     def _raise_normalized(self, exc: Exception) -> None:
         """Нормализует исключения litellm к доменным."""
         if isinstance(exc, (GatewayRateLimited, GatewayUnavailable)):

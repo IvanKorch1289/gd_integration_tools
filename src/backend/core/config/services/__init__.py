@@ -38,6 +38,7 @@ from src.backend.core.config.services.watermark import (
 from src.backend.core.config.services.websocket import WSSettings, ws_settings  # S163 W13
 from src.backend.core.config.services.graphql import GraphQLSettings, graphql_settings  # S163 W13
 from src.backend.core.config.services.rpa import RPASettings, rpa_settings  # S164 W4
+from src.backend.core.config.services.llm import LLMSettings, llm_settings  # S164 W2
 
 __all__ = (
     "BreakerProfile",
@@ -49,6 +50,7 @@ __all__ = (
     "InvokerSettings",
     "JupyterHubSettings",
     "LogStorageSettings",
+    "LLMSettings",  # S164 W2
     "MailSettings",
     "QueueSettings",
     "RPASettings",  # S164 W4
@@ -66,6 +68,7 @@ __all__ = (
     "invoker_settings",
     "jupyter_hub_settings",
     "log_settings",
+    "llm_settings",  # S164 W2
     "mail_settings",
     "queue_settings",
     "redis_settings",
