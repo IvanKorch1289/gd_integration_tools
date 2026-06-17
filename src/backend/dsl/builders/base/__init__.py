@@ -211,6 +211,10 @@ class RouteBuilder(  # type: ignore[misc]
     def build(self, *, validate_actions: bool = True) -> Pipeline:
         """Собирает Pipeline из накопленных процессоров.
         Финальный вызов в fluent-chain.
+
+        S163 W15: копирует ``self._route_overrides`` в Pipeline для handlers
+        (ws_handler/grpc_server/graphql) — per-route override settings.
+
         Args:
             validate_actions: Если True (default), проверяет что все
                 dispatch_action имена зарегистрированы в ActionHandlerRegistry.
@@ -227,4 +231,5 @@ class RouteBuilder(  # type: ignore[misc]
             transport_config=self._transport_config,
             feature_flag=self._feature_flag,
             middlewares=list(self._middlewares),
+            route_overrides=dict(self._route_overrides),  # S163 W15
         )

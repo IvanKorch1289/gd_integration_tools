@@ -36,6 +36,13 @@ class Pipeline:
             invariant в начале ``execute()`` и валит с
             :class:`TenantContextRequiredError` если tenant_id
             отсутствует.
+        route_overrides: S163 W15 — per-route override settings
+            (``pool_size``, ``max_message_size``, ``message_timeout_s``).
+            Устанавливаются через ``RouteBuilder.with_pool_size()`` и т.п.
+            (см. ``dsl/builders/base/config_mixin.py``). Читаются handlers
+            (ws_handler, grpc_server, graphql) для override стандартных
+            settings (``WSSettings``, ``GRPCSettings``, ``GraphQLSettings``).
+            Дефолт — пустой dict (handlers используют settings defaults).
     """
 
     route_id: str
@@ -47,6 +54,7 @@ class Pipeline:
     feature_flag: str | None = None
     tenant_aware: bool = False
     middlewares: list[Any] = field(default_factory=list)
+    route_overrides: dict[str, Any] = field(default_factory=dict)  # S163 W15
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """

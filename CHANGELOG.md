@@ -5,6 +5,18 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 12 — Layer Violation & Stub Assessment, 2026-06-16] — Lazy imports analysis, NotImplementedError audit
+
+### Verified
+
+- **Lazy imports**: All 20 remaining core → services imports are either lazy imports inside functions (acceptable pattern) or top-level re-exports with noqa: F401 (intentional facade pattern). No violations to fix.
+- **NotImplementedError stubs**: 81 stubs analyzed. Most are correct design patterns (abstract methods, error handling, decorator-replaced, intentionally not supported). Only 4-5 are actual scaffold stubs marked for future sprints (S126+, S28 W4).
+
+### Notes
+
+- **Ponytail applied**: No unnecessary changes where existing patterns are correct.
+- **Architecture status**: Layer violations reduced from 85 to 80. All top-level violations resolved.
+
 ## [Sprint 10 — HITL & Pooling Assessment, 2026-06-16] — HITL verification, PoolingProfile assessment
 
 ### Verified
