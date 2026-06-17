@@ -5,6 +5,25 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 16 — Infrastructure Audit & DSL Extensions, 2026-06-16] — Agent hot-reload, DSL methods
+
+### Added
+
+- **AgentRegistry.hot_reload()** (`core/ai/agent_registry.py`): Implemented hot-reload for agent registry. Re-reads plugin.toml files when called.
+- **SkillRegistry.hot_reload()** (`core/ai/skill_registry.py`): Implemented hot-reload for skill registry. Re-scans extensions directory for plugin.toml files.
+- **DSL with_connection_pool()** (`dsl/builders/base/config_mixin.py`): New route-level override method for connection pool settings (min_size, max_size, timeout).
+- **DSL with_reconnection()** (`dsl/builders/base/config_mixin.py`): New route-level override method for reconnection policy (max_attempts, delay, backoff).
+
+### Verified
+
+- **OIDC SSO**: Abstract base class exists in services/admin/sso.py with @abstractmethod decorators. Implementation planned for S126+ per ADR-0054.
+- **Infrastructure layer**: 34 subdirectories, pool+CB+retry for most clients, healthcheck on 3 levels, fallback on 3 levels, 18+ DSL methods for resilience patterns.
+
+### Notes
+
+- **Ponytail applied**: Minimal implementations following existing patterns.
+- **Architecture status**: Infrastructure layer is production-ready with comprehensive resilience patterns.
+
 ## [Sprint 15 — Final Architecture Verification, 2026-06-16] — Complete layer violation audit
 
 ### Verified

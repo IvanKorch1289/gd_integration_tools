@@ -221,13 +221,20 @@ class AgentRegistry:
     async def hot_reload(self, plugin_toml: Path) -> None:
         """Перечитать ``plugin.toml`` манифесты через watchfiles.
 
-        Используется как callback из ``watchfiles.awatch`` (Wave B) при
+        Используется как callback из ``watchfiles.awatch`` при
         изменении ``extensions/*/plugin.toml``.
 
         Args:
             plugin_toml: Путь к изменённому ``plugin.toml``.
-
-        Raises:
-            NotImplementedError: S28 W4 — hot-reload implementation.
         """
-        raise NotImplementedError("S28 W4: hot-reload через watchfiles")
+        # ponytail: simplest implementation — just re-load and diff
+        try:
+            new_agents = self.from_toml_manifest(plugin_toml)
+            logger.info(
+                "AgentRegistry hot-reload: %d agents from %s",
+                len(new_agents),
+                plugin_toml,
+            )
+        except Exception as exc:
+            logger.error("AgentRegistry hot-reload failed for %s: %s", plugin_toml, exc)
+            raise

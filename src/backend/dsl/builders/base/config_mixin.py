@@ -261,3 +261,72 @@ class ConfigMixin(_RouteBuilderProtocol):
             Значение override или default.
         """
         return self._route_overrides.get(key, default)
+
+    def with_connection_pool(
+        self, min_size: int = 2, max_size: int = 20, timeout: float = 5.0
+    ) -> Self:
+        """Route-level override: connection pool settings для всех транспортов.
+
+        Позволяет настраивать min/max размер пула и timeout через DSL.
+
+        Args:
+            min_size: Минимальный размер пула (≥ 0).
+            max_size: Максимальный размер пула (≥ 1).
+            timeout: Timeout ожидания соединения (секунды, > 0).
+
+        Returns:
+            Self для chain.
+
+        Example::
+
+            builder.from_("http://api.example.com")
+                .with_connection_pool(min_size=5, max_size=50, timeout=10.0)
+                .proxy(...)
+        """
+        if not isinstance(min_size, int) or min_size < 0:
+            raise ValueError(f"with_connection_pool: min_size должен быть int ≥ 0, получено {min_size!r}")
+        if not isinstance(max_size, int) or max_size < 1:
+            raise ValueError(f"with_connection_pool: max_size должен быть int ≥ 1, получено {max_size!r}")
+        if not isinstance(timeout, (int, float)) or timeout <= 0:
+            raise ValueError(f"with_connection_pool: timeout должен быть > 0, получено {timeout!r}")
+        self._route_overrides["connection_pool"] = {
+            "min_size": min_size,
+            "max_size": max_size,
+            "timeout": timeout,
+        }
+        return self
+
+    def with_reconnection(
+        self, max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0
+    ) -> Self:
+        """Route-level override: reconnection policy для всех транспортов.
+
+        Позволяет настраивать количество попыток переподключения,
+        начальную задержку и коэффициент backoff через DSL.
+
+        Args:
+            max_attempts: Максимальное количество попыток переподключения (≥ 1).
+            delay: Начальная задержка между попытками (секунды, > 0).
+            backoff: Коэффициент умножения задержки (≥ 1.0).
+
+        Returns:
+            Self для chain.
+
+        Example::
+
+            builder.from_("ws://stream.example.com")
+                .with_reconnection(max_attempts=5, delay=2.0, backoff=1.5)
+                .websocket(...)
+        """
+        if not isinstance(max_attempts, int) or max_attempts < 1:
+            raise ValueError(f"with_reconnection: max_attempts должен быть int ≥ 1, получено {max_attempts!r}")
+        if not isinstance(delay, (int, float)) or delay <= 0:
+            raise ValueError(f"with_reconnection: delay должен быть > 0, получено {delay!r}")
+        if not isinstance(backoff, (int, float)) or backoff < 1.0:
+            raise ValueError(f"with_reconnection: backoff должен быть ≥ 1.0, получено {backoff!r}")
+        self._route_overrides["reconnection"] = {
+            "max_attempts": max_attempts,
+            "delay": delay,
+            "backoff": backoff,
+        }
+        return self

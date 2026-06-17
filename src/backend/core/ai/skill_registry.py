@@ -301,13 +301,27 @@ class SkillRegistry:
     async def hot_reload(self) -> None:
         """Перечитать ``plugin.toml`` манифесты через watchfiles.
 
-        Используется как callback из ``watchfiles.awatch`` (Wave B) при
+        Используется как callback из ``watchfiles.awatch`` при
         изменении ``extensions/*/plugin.toml``.
-
-        Raises:
-            NotImplementedError: S26 W5.
         """
-        raise NotImplementedError("S26 W5: hot-reload через watchfiles")
+        # ponytail: simplest implementation — just re-load from all known plugins
+        import logging
+        from pathlib import Path
+
+        _logger = logging.getLogger(__name__)
+        try:
+            # Re-scan extensions directory for plugin.toml files
+            extensions_dir = Path("extensions")
+            if extensions_dir.exists():
+                for plugin_dir in extensions_dir.iterdir():
+                    if plugin_dir.is_dir():
+                        plugin_toml = plugin_dir / "plugin.toml"
+                        if plugin_toml.exists():
+                            self.from_toml_manifest(plugin_toml)
+            _logger.info("SkillRegistry hot-reload: %d skills total", len(self._skills))
+        except Exception as exc:
+            _logger.error("SkillRegistry hot-reload failed: %s", exc)
+            raise
 
     def export_to_mcp(self) -> list[Any]:
         """Экспортировать skills с ``"mcp"`` в :attr:`SkillSpec.protocols`.
