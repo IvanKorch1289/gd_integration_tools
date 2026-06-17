@@ -12,6 +12,7 @@ S163 W13: добавлены max_connections check и per-message timeout
 
 from uuid import uuid4
 
+import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from src.backend.core.config.services.websocket import ws_settings
@@ -22,6 +23,35 @@ from src.backend.entrypoints.websocket.ws_manager import ws_manager
 __all__ = ("ws_router",)
 
 logger = get_logger(__name__)
+
+
+async def _ws_heartbeat_loop(
+    websocket: WebSocket, *, client_id: str, interval_s: float
+) -> None:
+    """S163 W16: периодический ping для keepalive WS connection.
+
+    Отправляет ``{"action": "ping"}`` каждые ``interval_s`` секунд.
+    Клиент должен ответить ``{"action": "pong"}`` — main loop
+    обрабатывает pong как обычное сообщение (no-op на стороне сервера).
+
+    Heartbeat-task отменяется при закрытии connection (через
+    ``asyncio.CancelledError`` в finally).
+    """
+    try:
+        while True:
+            await asyncio.sleep(interval_s)
+            try:
+                await websocket.send_json({"action": "ping"})
+            except Exception as exc:  # connection closed
+                logger.debug(
+                    "WS heartbeat stopped client_id=%s reason=%s",
+                    client_id,
+                    exc,
+                )
+                return
+    except asyncio.CancelledError:
+        return  # normal cleanup on connection close
+
 
 ws_router = APIRouter(tags=["WebSocket"])
 
@@ -49,6 +79,19 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
     client_id = uuid4().hex
     await ws_manager.connect(websocket, client_id)
+
+    # S163 W16: heartbeat task (background ping per connection).
+    # Отправляет {"action": "ping"} каждые heartbeat_interval_s секунд.
+    # Клиент должен ответить {"action": "pong"} в течение message_timeout_s.
+    heartbeat_task: asyncio.Task[None] | None = None
+    if ws_settings.heartbeat_interval_s > 0:
+        heartbeat_task = asyncio.create_task(
+            _ws_heartbeat_loop(
+                websocket=websocket,
+                client_id=client_id,
+                interval_s=ws_settings.heartbeat_interval_s,
+            )
+        )
 
     try:
         while True:
@@ -124,3 +167,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     except Exception as exc:
         logger.exception("WS ошибка: %s", exc)
         ws_manager.disconnect(client_id)
+    finally:
+        # S163 W16: cancel heartbeat task при закрытии connection.
+        if heartbeat_task is not None and not heartbeat_task.done():
+            heartbeat_task.cancel()
