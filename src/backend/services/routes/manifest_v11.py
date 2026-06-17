@@ -39,6 +39,41 @@ class _RouteTimeoutModel(BaseModel):
     write: float | None = Field(default=None, gt=0)
     total: float | None = Field(default=None, gt=0)
 
+
+class _RouteTransportModel(BaseModel):
+    """S163 W17: per-transport overrides в ``[transport]`` секции route.toml.
+
+    Override values для стандартных settings (WSSettings, GRPCSettings,
+    GraphQLSettings и т.п.) на уровне route. Читаются handlers через
+    ``DslService.get_route_overrides(route_id)``.
+
+    Example route.toml::
+
+        [transport]
+        pool_size = 100              # WS max_connections, gRPC max_concurrent_streams
+        message_timeout_s = 15.0     # WS per-message timeout
+        max_message_size = 131072    # WS max_message_size
+        default_timeout_s = 30.0     # gRPC unary call timeout
+        max_message_size_bytes = 4194304  # gRPC max incoming message
+        query_timeout_s = 10.0       # GraphQL query timeout
+
+    Не все поля применимы ко всем transports (handlers фильтруют по имени).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    # Pool / concurrency.
+    pool_size: int | None = Field(default=None, gt=0)
+
+    # Timeouts (seconds).
+    message_timeout_s: float | None = Field(default=None, gt=0)
+    default_timeout_s: float | None = Field(default=None, gt=0)
+    query_timeout_s: float | None = Field(default=None, gt=0)
+
+    # Message size limits (bytes).
+    max_message_size: int | None = Field(default=None, gt=0)
+    max_message_size_bytes: int | None = Field(default=None, gt=0)
+
     def to_spec(self) -> RouteTimeoutSpec:
         """Конвертация pydantic-модели → frozen dataclass."""
         return RouteTimeoutSpec(
@@ -136,6 +171,7 @@ class RouteManifestV11(BaseModel):
     capabilities: tuple[CapabilityRef, ...] = ()
     security: _SecurityModel | None = None
     timeout: _RouteTimeoutModel | None = None
+    transport: _RouteTransportModel | None = None  # S163 W17
 
     @field_validator("requires_core")
     @classmethod
