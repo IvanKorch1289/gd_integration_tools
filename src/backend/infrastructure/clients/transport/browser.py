@@ -3,6 +3,11 @@
 Поддерживает: navigation, clicks, form fill, extraction, screenshots.
 Human-like: random delays, viewport randomization.
 Anti-detection: stealth mode, user-agent rotation.
+
+S163 W5: добавлен per-instance Circuit Breaker (canonical pattern из smtp.py).
+Каждая network-операция (navigate/extract/click/screenshot/fill_form/
+run_scenario) обёрнута в ``async with self._breaker.guard():``.
+Lifecycle-методы (start/stop) — без обёртки.
 """
 
 from __future__ import annotations
@@ -11,6 +16,14 @@ import asyncio
 import random
 from typing import Any
 
+# NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).
+# ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
+# breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
+from src.backend.core.config.settings import settings as _settings  # noqa: F401
+from src.backend.core.resilience.breaker import (
+    BreakerSpec,
+    get_breaker_registry,
+)
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("BrowserClient", "get_browser_client")
@@ -26,7 +39,11 @@ _USER_AGENTS = [
 
 
 class BrowserClient:
-    """Async browser automation через Playwright."""
+    """Async browser automation через Playwright.
+
+    S163 W5: per-instance Circuit Breaker через ``get_breaker_registry()``.
+    Дефолт: failure_threshold=5, recovery_timeout=60s.
+    """
 
     def __init__(
         self,
@@ -43,8 +60,14 @@ class BrowserClient:
         self._human_delays = human_like_delays
         self._playwright: Any = None
         self._browser: Any = None
+        # S163 W5: per-instance Circuit Breaker (canonical pattern из smtp.py).
+        self._breaker = get_breaker_registry().get_or_create(
+            "browser",
+            BreakerSpec(name="browser", failure_threshold=5, recovery_timeout=60.0),
+        )
 
     async def start(self) -> None:
+        """Запуск Playwright (lifecycle — без breaker)."""
         from playwright.async_api import async_playwright
 
         self._playwright = await async_playwright().start()
@@ -57,6 +80,7 @@ class BrowserClient:
         )
 
     async def stop(self) -> None:
+        """Остановка Playwright (lifecycle — без breaker)."""
         if self._browser:
             await self._browser.close()
         if self._playwright:
@@ -94,152 +118,159 @@ class BrowserClient:
     async def navigate(
         self, url: str, wait_until: str = "domcontentloaded"
     ) -> dict[str, Any]:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            response = await page.goto(
-                url, wait_until=wait_until, timeout=self._timeout
-            )
-            await self._human_delay()
-            return {
-                "url": page.url,
-                "status": response.status if response else 0,
-                "title": await page.title(),
-            }
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                response = await page.goto(
+                    url, wait_until=wait_until, timeout=self._timeout
+                )
+                await self._human_delay()
+                return {
+                    "url": page.url,
+                    "status": response.status if response else 0,
+                    "title": await page.title(),
+                }
+            finally:
+                await ctx.close()
 
     async def extract_text(self, url: str, selector: str) -> list[str]:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
-            await self._human_delay()
-            elements = await page.query_selector_all(selector)
-            texts = [await el.inner_text() for el in elements]
-            return texts
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await self._human_delay()
+                elements = await page.query_selector_all(selector)
+                texts = [await el.inner_text() for el in elements]
+                return texts
+            finally:
+                await ctx.close()
 
     async def extract_table(self, url: str, selector: str) -> list[dict[str, str]]:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
-            await self._human_delay()
-            return await page.evaluate(f"""
-                () => {{
-                    const table = document.querySelector('{selector}');
-                    if (!table) return [];
-                    const headers = [...table.querySelectorAll('th')].map(th => th.innerText.trim());
-                    return [...table.querySelectorAll('tbody tr')].map(tr => {{
-                        const cells = [...tr.querySelectorAll('td')].map(td => td.innerText.trim());
-                        return Object.fromEntries(headers.map((h, i) => [h, cells[i] || '']));
-                    }});
-                }}
-            """)
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await self._human_delay()
+                return await page.evaluate(f"""
+                    () => {{
+                        const table = document.querySelector('{selector}');
+                        if (!table) return [];
+                        const headers = [...table.querySelectorAll('th')].map(th => th.innerText.trim());
+                        return [...table.querySelectorAll('tbody tr')].map(tr => {{
+                            const cells = [...tr.querySelectorAll('td')].map(td => td.innerText.trim());
+                            return Object.fromEntries(headers.map((h, i) => [h, cells[i] || '']));
+                        }});
+                    }}
+                """)
+            finally:
+                await ctx.close()
 
     async def fill_form(
         self, url: str, fields: dict[str, str], submit_selector: str | None = None
     ) -> dict[str, Any]:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
-            for selector, value in fields.items():
-                await self._human_delay(50, 200)
-                await page.fill(selector, value)
-            if submit_selector:
-                await self._human_delay(200, 500)
-                await page.click(submit_selector)
-                await page.wait_for_load_state("domcontentloaded")
-            return {"url": page.url, "title": await page.title()}
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                for selector, value in fields.items():
+                    await self._human_delay(50, 200)
+                    await page.fill(selector, value)
+                if submit_selector:
+                    await self._human_delay(200, 500)
+                    await page.click(submit_selector)
+                    await page.wait_for_load_state("domcontentloaded")
+                return {"url": page.url, "title": await page.title()}
+            finally:
+                await ctx.close()
 
     async def click(self, url: str, selector: str) -> dict[str, Any]:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
-            await self._human_delay()
-            await page.click(selector)
-            await page.wait_for_load_state("domcontentloaded")
-            return {"url": page.url, "title": await page.title()}
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await self._human_delay()
+                await page.click(selector)
+                await page.wait_for_load_state("domcontentloaded")
+                return {"url": page.url, "title": await page.title()}
+            finally:
+                await ctx.close()
 
     async def screenshot(self, url: str, full_page: bool = True) -> bytes:
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
-            await self._human_delay()
-            return await page.screenshot(full_page=full_page)
-        finally:
-            await ctx.close()
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await self._human_delay()
+                return await page.screenshot(full_page=full_page)
+            finally:
+                await ctx.close()
 
     async def run_scenario(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Выполняет сценарий из списка шагов."""
-        ctx = await self._new_context()
-        page = await ctx.new_page()
-        results: list[dict[str, Any]] = []
+        async with self._breaker.guard():
+            ctx = await self._new_context()
+            page = await ctx.new_page()
+            results: list[dict[str, Any]] = []
 
-        try:
-            for step in steps:
-                action = step.get("action", "")
-                await self._human_delay()
+            try:
+                for step in steps:
+                    action = step.get("action", "")
+                    await self._human_delay()
 
-                if action == "navigate":
-                    resp = await page.goto(
-                        step["url"],
-                        wait_until="domcontentloaded",
-                        timeout=self._timeout,
-                    )
-                    results.append(
-                        {
-                            "action": "navigate",
-                            "url": page.url,
-                            "status": resp.status if resp else 0,
-                        }
-                    )
+                    if action == "navigate":
+                        resp = await page.goto(
+                            step["url"],
+                            wait_until="domcontentloaded",
+                            timeout=self._timeout,
+                        )
+                        results.append(
+                            {
+                                "action": "navigate",
+                                "url": page.url,
+                                "status": resp.status if resp else 0,
+                            }
+                        )
 
-                elif action == "click":
-                    await page.click(step["selector"])
-                    results.append({"action": "click", "selector": step["selector"]})
+                    elif action == "click":
+                        await page.click(step["selector"])
+                        results.append({"action": "click", "selector": step["selector"]})
 
-                elif action == "fill":
-                    await page.fill(step["selector"], step["value"])
-                    results.append({"action": "fill", "selector": step["selector"]})
+                    elif action == "fill":
+                        await page.fill(step["selector"], step["value"])
+                        results.append({"action": "fill", "selector": step["selector"]})
 
-                elif action == "wait":
-                    await page.wait_for_selector(
-                        step["selector"], timeout=step.get("timeout", self._timeout)
-                    )
-                    results.append({"action": "wait", "selector": step["selector"]})
+                    elif action == "wait":
+                        await page.wait_for_selector(
+                            step["selector"], timeout=step.get("timeout", self._timeout)
+                        )
+                        results.append({"action": "wait", "selector": step["selector"]})
 
-                elif action == "extract":
-                    elements = await page.query_selector_all(step["selector"])
-                    texts = [await el.inner_text() for el in elements]
-                    results.append({"action": "extract", "data": texts})
+                    elif action == "extract":
+                        elements = await page.query_selector_all(step["selector"])
+                        texts = [await el.inner_text() for el in elements]
+                        results.append({"action": "extract", "data": texts})
 
-                elif action == "screenshot":
-                    data = await page.screenshot(full_page=step.get("full_page", True))
-                    results.append({"action": "screenshot", "size": len(data)})
+                    elif action == "screenshot":
+                        data = await page.screenshot(full_page=step.get("full_page", True))
+                        results.append({"action": "screenshot", "size": len(data)})
 
-                elif action == "scroll":
-                    await page.evaluate("window.scrollBy(0, window.innerHeight)")
-                    results.append({"action": "scroll"})
+                    elif action == "scroll":
+                        await page.evaluate("window.scrollBy(0, window.innerHeight)")
+                        results.append({"action": "scroll"})
 
-                elif action == "keyboard":
-                    await page.keyboard.press(step["key"])
-                    results.append({"action": "keyboard", "key": step["key"]})
+                    elif action == "keyboard":
+                        await page.keyboard.press(step["key"])
+                        results.append({"action": "keyboard", "key": step["key"]})
 
-            return results
-        finally:
-            await ctx.close()
+                return results
+            finally:
+                await ctx.close()
 
 
 _browser_client: BrowserClient | None = None
