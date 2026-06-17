@@ -28,7 +28,10 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
+from src.backend.services.ai.gateway.exceptions import (  # S162 W7: use canonical path
+    GatewayRateLimited,
+    GatewayUnavailable,
+)
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
