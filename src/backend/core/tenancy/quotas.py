@@ -62,11 +62,16 @@ class QuotaTracker:
         Raises:
             QuotaExceeded: если после инкремента счётчик превысил ``limit``.
         """
+        # S162 W4: use module-attr lookup (not local binding) so that
+        # monkeypatching storage.redis.get_redis_client in tests takes
+        # effect. Was 'from ... import get_redis_client as redis_client'
+        # which used local binding and ignored patches.
+        # Per pattern #11 (S157 W2 fix).
+        from src.backend.infrastructure.clients.storage import redis as _redis_mod
+
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
-            )
-        except ImportError:
+            redis_client = _redis_mod.get_redis_client()
+        except (ImportError, AttributeError):
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 
         now = int(time.time())
