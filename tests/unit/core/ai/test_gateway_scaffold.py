@@ -45,10 +45,16 @@ def test_ai_response_dataclass_defaults() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.xfail(
+    reason="S162 W8: S85 changed contract — ai_gateway_enforce=False no "
+    "longer supported (raises AIGatewayEnforcementRequiredError). "
+    "Test was for deprecated scaffold path.",
+    strict=True,
+)
 async def test_invoke_pass_through_when_flag_off(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """При ``ai_gateway_enforce=False`` invoke возвращает scaffold-AIResponse."""
+    """S162 W8: deprecated post-S85. Kept as xfail for traceability."""
     from src.backend.core.config import features as features_module
 
     monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)

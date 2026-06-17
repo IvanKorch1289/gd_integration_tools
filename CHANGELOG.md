@@ -5,6 +5,17 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 8 — Dead Code Cleanup, 2026-06-16] — Dead code after raise removal
+
+### Fixed
+
+- **Dead code after raise in sms.py**: Removed unreachable code after `NotImplementedError` in MTS and Megafon provider stubs (lines 111-120, 127-141).
+
+### Notes
+
+- **Ponytail applied**: Minimal fix, shortest working diff.
+- **Deep research**: Found 81 NotImplementedError stubs (most are abstract methods or decorator-replaced), dead code after raise, missing type annotations.
+
 ## [Sprint 7 — Critical Bug Fixes, 2026-06-16] — Python 2 except syntax, blocking I/O
 
 ### Fixed

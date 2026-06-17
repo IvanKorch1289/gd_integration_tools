@@ -108,37 +108,12 @@ class SMSAdapter:
             raise NotImplementedError(
                 "MTS SMS provider — endpoint/payload unverified, S40-W6 audit"
             )
-            headers = {"Authorization": f"Bearer {creds}"}
-            payload = {
-                "messages": [{"to": recipient, "from": self._sender_id, "text": body}]
-            }
-            response = await client.request(
-                "POST", PROVIDER_ENDPOINTS["mts"], json=payload, headers=headers
-            )
-            if response.status_code >= 400:
-                raise RuntimeError(f"MTS send failed: {response.status_code}")
-            return
 
         # TODO(S40-W6): подтвердить endpoint и формат МегаФон.
         if self._provider == "megafon":
             raise NotImplementedError(
                 "МегаФон SMS provider — endpoint/payload unverified, S40-W6 audit"
             )
-            headers = {"Authorization": creds}
-            megafon_payload: dict[str, Any] = {
-                "destination": recipient,
-                "sender": self._sender_id,
-                "text": body,
-            }
-            response = await client.request(
-                "POST",
-                PROVIDER_ENDPOINTS["megafon"],
-                json=megafon_payload,
-                headers=headers,
-            )
-            if response.status_code >= 400:
-                raise RuntimeError(f"MegaFon send failed: {response.status_code}")
-            return
 
         raise AssertionError(f"Unreachable: provider={self._provider}")
 
