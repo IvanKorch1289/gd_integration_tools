@@ -65,11 +65,20 @@ class TgiBatchClient:
     ) -> list[str]:
         if not prompts:
             return []
-        tasks = [
-            self._single_completion(p, max_tokens=max_tokens, temperature=temperature)
-            for p in prompts
-        ]
-        return await asyncio.gather(*tasks)
+        # S163 W28: asyncio.TaskGroup (Python 3.11+) вместо asyncio.gather
+        # для structured параллелизма. Преимущества:
+        # - Если одна task raises, остальные отменяются (clean cancellation)
+        # - ExceptionGroup вместо first exception (Py3.11+)
+        async with asyncio.TaskGroup() as tg:
+            tg_tasks = [
+                tg.create_task(
+                    self._single_completion(
+                        p, max_tokens=max_tokens, temperature=temperature
+                    )
+                )
+                for p in prompts
+            ]
+        return [t.result() for t in tg_tasks]  # type: ignore[union-attr]  # noqa
 
     async def _single_embedding(self, text: str) -> list[float]:
         async with self._semaphore:
