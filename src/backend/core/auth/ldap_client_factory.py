@@ -26,10 +26,6 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.services.auth.ad_directory_client import (
-    AdDirectoryClient,
-    AdServerConfig,
-)
 
 __all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
 
@@ -37,7 +33,7 @@ _logger = get_logger(__name__)
 
 # Singleton cache. ``None`` = ещё не инстанцирован.
 # ``False`` = инстанциация провалилась (не enable'нули) → кэшируем False.
-_ad_client_instance: AdDirectoryClient | None = None
+_ad_client_instance: Any | None = None  # ponytail: Any to avoid import at module level
 _ad_client_attempted: bool = False
 
 
@@ -98,6 +94,12 @@ def get_ad_client(
     if not settings.is_configured():
         _logger.debug("get_ad_client: ldap_settings not configured, no client")
         return None
+
+    # ponytail: lazy imports to avoid layer violation (core → services)
+    from src.backend.services.auth.ad_directory_client import (
+        AdDirectoryClient,
+        AdServerConfig,
+    )
 
     # Конструируем AdServerConfig → AdDirectoryClient
     config = AdServerConfig(
