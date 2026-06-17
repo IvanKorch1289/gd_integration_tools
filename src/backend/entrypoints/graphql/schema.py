@@ -491,8 +491,11 @@ schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscrip
 # Оборачиваем в asyncio.wait_for с graphql_settings.query_timeout_s (per-route
 # override через route.toml::[transport] query_timeout_s если есть).
 #
-# Pattern matching WS heartbeat (W16): per-request settings-driven timeout.
+# S163 W23: дополнительно enforce max_query_depth + max_query_complexity
+# (защита от deeply-nested / expensive queries) и enable_introspection gate.
+# Pattern matching WS heartbeat (W16): per-request settings-driven checks.
 import asyncio
+import re
 
 from src.backend.core.config.services.graphql import graphql_settings
 from src.backend.dsl.service import get_dsl_service
@@ -500,22 +503,116 @@ from src.backend.dsl.service import get_dsl_service
 _original_execute = schema.execute
 
 
+def _check_query_depth(query: str | None, max_depth: int) -> None:
+    """S163 W23: отклоняет GraphQL queries глубже max_depth.
+
+    Простой подсчёт по вложенности braces (фильтр на строки с field args).
+    Production: использовать strawberry-graphql-django cost-analyzer или graphql-core.
+    Здесь — pragmatic guard для defense-in-depth (защита от OOM).
+    """
+    if query is None:
+        return
+    # Count max nesting depth by balanced braces heuristic.
+    # Реальный depth требует AST parsing, но для защиты от OOM
+    # достаточно отклонить запросы с подозрительно глубокой вложенностью.
+    depth = 0
+    max_seen = 0
+    for ch in query:
+        if ch == "{":
+            depth += 1
+            max_seen = max(max_seen, depth)
+        elif ch == "}":
+            depth -= 1
+    if max_seen > max_depth:
+        raise ValueError(
+            f"GraphQL query depth ({max_seen}) exceeds limit ({max_depth})"
+        )
+
+
+def _check_query_complexity(query: str | None, max_complexity: int) -> None:
+    """S163 W23: отклоняет queries с complexity > max_complexity.
+
+    Complexity estimation: длина запроса * коэффициент вложенности.
+    Production: graphql-cost-analysis или strawberry-graphql-django cost directives.
+    Здесь — pragmatic guard.
+    """
+    if query is None:
+        return
+    # Heuristic: complexity ≈ max(brace_depth) * sqrt(length).
+    # Гарантирует: глубокие + длинные запросы отклоняются.
+    depth = 0
+    max_seen = 0
+    for ch in query:
+        if ch == "{":
+            depth += 1
+            max_seen = max(max_seen, depth)
+        elif ch == "}":
+            depth -= 1
+    estimated_complexity = max_seen * int(len(query) ** 0.5)
+    if estimated_complexity > max_complexity:
+        raise ValueError(
+            f"GraphQL query complexity ({estimated_complexity}) "
+            f"exceeds limit ({max_complexity})"
+        )
+
+
+def _is_introspection_query(query: str | None) -> bool:
+    """S163 W23: detect __schema / __type introspection queries."""
+    if query is None:
+        return False
+    # Strip whitespace + check for introspection keywords.
+    stripped = re.sub(r"\s+", "", query)
+    return "__schema" in stripped or "__type" in stripped
+
+
 async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
-    """S163 W21: wrap schema.execute() с graphql query_timeout."""
-    # Per-request override через DslService facade (если route зарегистрирован).
-    # Fallback на graphql_settings.query_timeout_s (default 30s).
+    """S163 W21+W23: wrap schema.execute() с graphql validations."""
+    # ── Per-request override через DslService facade.
     request_context = kwargs.get("context_value") or (
         args[0] if args else None
     )
-    timeout_s = graphql_settings.query_timeout_s
+    overrides: dict[str, object] = {}
     if request_context is not None:
         route_id = getattr(request_context, "route_id", None)
         if route_id:
             overrides = get_dsl_service().get_route_overrides(str(route_id))
-            route_timeout = overrides.get("query_timeout_s")
-            if route_timeout is not None:
-                timeout_s = float(route_timeout)
 
+    # ── Per-request timeout (W21).
+    timeout_s = graphql_settings.query_timeout_s
+    route_timeout = overrides.get("query_timeout_s")
+    if route_timeout is not None:
+        timeout_s = float(route_timeout)
+
+    # ── Per-request introspection gate (W23).
+    if not graphql_settings.enable_introspection:
+        # Per-route override may override (route может explicitly allow).
+        if overrides.get("enable_introspection", False) is False:
+            query_str = kwargs.get("query") or (
+                args[0] if args else None
+            )
+            if _is_introspection_query(
+                query_str if isinstance(query_str, str) else None
+            ):
+                raise ValueError(
+                    "GraphQL introspection is disabled by configuration"
+                )
+
+    # ── Per-request depth limit (W23).
+    max_depth = overrides.get(
+        "max_query_depth", graphql_settings.max_query_depth
+    )
+    query_str = kwargs.get("query") or (args[0] if args else None)
+    if isinstance(query_str, str):
+        _check_query_depth(query_str, int(max_depth))
+
+    # ── Per-request complexity limit (W23).
+    max_complexity = overrides.get(
+        "max_query_complexity", graphql_settings.max_query_complexity
+    )
+    if isinstance(query_str, str):
+        _check_query_complexity(query_str, int(max_complexity))
+
+    # ── Execute с timeout.
     try:
         return await asyncio.wait_for(
             _original_execute(*args, **kwargs),

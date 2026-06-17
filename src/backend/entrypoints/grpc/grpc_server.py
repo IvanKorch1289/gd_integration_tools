@@ -452,6 +452,24 @@ async def serve() -> None:
                 "grpc.max_receive_message_length",
                 settings.grpc.max_message_size_bytes,
             ),
+            # S163 W22: apply keepalive + concurrent_streams settings.
+            # (HTTP/2 flow control via grpc.http2.max_concurrent_streams.)
+            (
+                "grpc.keepalive_time_ms",
+                int(settings.grpc.keepalive_time_s * 1000),
+            ),
+            (
+                "grpc.keepalive_timeout_ms",
+                int(settings.grpc.keepalive_timeout_s * 1000),
+            ),
+            (
+                "grpc.keepalive_permit_without_calls",
+                1,  # allow pings without active streams
+            ),
+            (
+                "grpc.http2.max_concurrent_streams",
+                settings.grpc.max_concurrent_streams,
+            ),
         ],
         interceptors=interceptors,
     )

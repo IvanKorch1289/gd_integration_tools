@@ -139,13 +139,35 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
 
             S163 W20: применяет ``route_overrides`` (из manifest.transport)
             к ``pipeline.route_overrides`` для per-route overrides handlers.
+
+            S163 W24: применяет ``manifest.timeout`` (из route.toml::[timeout])
+            к ``pipeline.transport_config`` для outbound httpx clients +
+            TimeoutMiddleware (S18 W6).
             """
+            from src.backend.core.utils.route_timeout import RouteTimeoutSpec
+
             pipeline = load_pipeline_from_file(pipeline_path)
             if bool(getattr(manifest, "tenant_aware", False)):
                 pipeline.tenant_aware = True
             if route_overrides:
                 # Merge поверх существующих overrides (например, из DSL setters).
                 pipeline.route_overrides.update(route_overrides)
+            # W24: apply [timeout] from manifest to Pipeline.transport_config.
+            manifest_timeout = getattr(manifest, "timeout", None)
+            if manifest_timeout is not None:
+                timeout_spec = manifest_timeout.to_spec()
+                # Merge с существующим transport_config (не перезаписываем None поля).
+                if pipeline.transport_config is None:
+                    pipeline.transport_config = timeout_spec
+                else:
+                    # Fill только None поля (не override явных значений).
+                    for field_name in ("connect", "read", "write", "total"):
+                        if getattr(pipeline.transport_config, field_name, None) is None:
+                            setattr(
+                                pipeline.transport_config,
+                                field_name,
+                                getattr(timeout_spec, field_name, None),
+                            )
             route_registry.register(pipeline)
 
         loader = RouteLoader(

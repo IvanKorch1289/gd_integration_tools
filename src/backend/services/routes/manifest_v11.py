@@ -39,6 +39,16 @@ class _RouteTimeoutModel(BaseModel):
     write: float | None = Field(default=None, gt=0)
     total: float | None = Field(default=None, gt=0)
 
+    def to_spec(self) -> RouteTimeoutSpec:
+        """S163 W24 fix: конвертация pydantic-модели → frozen dataclass.
+
+        NOTE: после W17 (добавление _RouteTransportModel) to_spec случайно
+        попал в неправильный класс. W24 переносит обратно.
+        """
+        return RouteTimeoutSpec(
+            connect=self.connect, read=self.read, write=self.write, total=self.total
+        )
+
 
 class _RouteTransportModel(BaseModel):
     """S163 W17: per-transport overrides в ``[transport]`` секции route.toml.
@@ -73,12 +83,6 @@ class _RouteTransportModel(BaseModel):
     # Message size limits (bytes).
     max_message_size: int | None = Field(default=None, gt=0)
     max_message_size_bytes: int | None = Field(default=None, gt=0)
-
-    def to_spec(self) -> RouteTimeoutSpec:
-        """Конвертация pydantic-модели → frozen dataclass."""
-        return RouteTimeoutSpec(
-            connect=self.connect, read=self.read, write=self.write, total=self.total
-        )
 
 
 class RouteManifestError(ValueError):
