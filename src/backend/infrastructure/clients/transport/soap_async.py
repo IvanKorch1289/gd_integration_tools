@@ -11,16 +11,34 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+# NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).
+# ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
+# breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
+from src.backend.core.config.settings import settings as _settings  # noqa: F401
+from src.backend.core.resilience.breaker import (
+    BreakerSpec,
+    get_breaker_registry,
+)
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("AsyncSoapClient",)
 
 logger = get_logger("transport.soap_async")
 
+# S163 W4: единый canonical breaker для всех SOAP-вызовов (per endpoint можно
+# расширить позже через Settings.endpoint). Pattern matching smtp.py:68-75.
+_SOAP_BREAKER = get_breaker_registry().get_or_create(
+    "soap_async",
+    BreakerSpec(name="soap_async", failure_threshold=5, recovery_timeout=60.0),
+)
+
 
 @dataclass(slots=True)
 class AsyncSoapClient:
     """Минимальный async SOAP-клиент.
+
+    S163 W4: обёрнут в ``_SOAP_BREAKER.guard()`` для защиты от каскадных
+    failures при недоступности SOAP-эндпоинта.
 
     Attrs:
         endpoint: URL SOAP-сервиса (ConcretePort).
@@ -44,12 +62,13 @@ class AsyncSoapClient:
         }
         if headers:
             hdr.update(headers)
-        async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
-            resp = await client.post(
-                self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
-            )
-            resp.raise_for_status()
-            return resp.text
+        async with _SOAP_BREAKER.guard():
+            async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
+                resp = await client.post(
+                    self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
+                )
+                resp.raise_for_status()
+                return resp.text
 
     @staticmethod
     def parse_envelope(xml_str: str) -> Any:
