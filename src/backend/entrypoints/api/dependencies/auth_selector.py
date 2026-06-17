@@ -28,8 +28,9 @@ import warnings
 
 # Re-export public API из канонической локации.
 # Эти импорты идут ПОСЛЕ warnings, чтобы import-time message сработал.
+# S162 W5: removed _VERIFIERS from re-exports — private symbol
+# must not leak through backward-compat shim. Per S93 W3 pattern.
 from src.backend.core.auth.auth_selector import (  # noqa: E402
-    _VERIFIERS,
     AuthContext,
     AuthMethod,
     require_auth,
@@ -48,7 +49,6 @@ warnings.warn(
 __all__ = (
     "AuthContext",
     "AuthMethod",
-    "_VERIFIERS",
     "require_auth",
     "set_default_auth",
     "verify_request",
