@@ -133,15 +133,19 @@ class TestNotImplemented:
 
     def test_export_to_mcp(self) -> None:
         reg = SkillRegistry()
-        with pytest.raises(NotImplementedError):
-            reg.export_to_mcp()
+        # S162 W1: Sibling Sprint 7 implemented export_to_mcp.
+        # The method now returns a list (possibly empty).
+        result = reg.export_to_mcp()
+        assert isinstance(result, list)
 
     def test_export_to_langgraph(self) -> None:
         reg = SkillRegistry()
-        with pytest.raises(NotImplementedError):
-            reg.export_to_langgraph()
+        # S162 W1: Sibling Sprint 7 implemented export_to_langgraph.
+        result = reg.export_to_langgraph()
+        assert isinstance(result, list)
 
     def test_export_to_openai_tools(self) -> None:
         reg = SkillRegistry()
-        with pytest.raises(NotImplementedError):
-            reg.export_to_openai_tools()
+        # S162 W1: Sibling Sprint 7 implemented export_to_openai_tools.
+        result = reg.export_to_openai_tools()
+        assert isinstance(result, list)

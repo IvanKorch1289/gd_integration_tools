@@ -84,11 +84,13 @@ async def test_skill_registry_invoke_raises_key_error_for_unknown_skill() -> Non
 
 
 def test_skill_registry_export_methods_not_implemented() -> None:
-    """auto-export методы поднимают NotImplementedError в scaffold-фазе."""
+    """auto-export методы: S162 W1, Sibling Sprint 7 реализовал.
+
+    Was originally scaffold (NotImplementedError). After Sibling Sprint 7
+    implementation, methods return lists. Test now verifies they work
+    without raising.
+    """
     registry = SkillRegistry()
-    with pytest.raises(NotImplementedError):
-        registry.export_to_mcp()
-    with pytest.raises(NotImplementedError):
-        registry.export_to_langgraph()
-    with pytest.raises(NotImplementedError):
-        registry.export_to_openai_tools()
+    assert isinstance(registry.export_to_mcp(), list)
+    assert isinstance(registry.export_to_langgraph(), list)
+    assert isinstance(registry.export_to_openai_tools(), list)
