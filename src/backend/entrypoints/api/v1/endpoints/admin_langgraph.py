@@ -38,7 +38,19 @@ async def _inspector() -> Any:
     return CheckpointInspector(saver_wrapper=saver)
 
 
-@router.get("/checkpoints")
+@router.get(
+    "/checkpoints",
+    summary="Список LangGraph sessions с last-checkpoint",
+    description=(
+        "Возвращает пагинированный список активных LangGraph сессий "
+        "с last-checkpoint metadata (id, updated_at, checkpoint_count). "
+        "Требует feature_flags.langgraph_checkpoint_ui=True."
+    ),
+    responses={
+        200: {"description": "Session list with metadata."},
+        404: {"description": "Feature flag disabled."},
+    },
+)
 async def list_checkpoints(limit: int = 50, offset: int = 0) -> dict[str, Any]:
     """Список активных LangGraph сессий с последним чекпоинтом."""
     _guard_enabled()
@@ -58,7 +70,18 @@ async def list_checkpoints(limit: int = 50, offset: int = 0) -> dict[str, Any]:
     }
 
 
-@router.get("/checkpoints/{session_id}")
+@router.get(
+    "/checkpoints/{session_id}",
+    summary="State LangGraph сессии (текущий чекпоинт)",
+    description=(
+        "Возвращает state одной LangGraph сессии (current checkpoint). "
+        "404 если session не найдена или feature flag disabled."
+    ),
+    responses={
+        200: {"description": "Session state returned."},
+        404: {"description": "Session not found OR feature flag disabled."},
+    },
+)
 async def get_session_state(session_id: str) -> dict[str, Any]:
     """State одной сессии (текущий чекпоинт)."""
     _guard_enabled()
@@ -77,7 +100,19 @@ async def get_session_state(session_id: str) -> dict[str, Any]:
     }
 
 
-@router.post("/checkpoints/{session_id}/restore")
+@router.post(
+    "/checkpoints/{session_id}/restore",
+    summary="Установить checkpoint_id как активный (time-travel)",
+    description=(
+        "POST endpoint для time-travel в LangGraph: устанавливает "
+        "checkpoint_id как активный для сессии. 404 если checkpoint не найден. "
+        "Требует feature_flags.langgraph_checkpoint_ui=True."
+    ),
+    responses={
+        200: {"description": "Checkpoint restored successfully."},
+        404: {"description": "Checkpoint not found OR feature flag disabled."},
+    },
+)
 async def restore_checkpoint(session_id: str, checkpoint_id: str) -> dict[str, Any]:
     """Установить активный чекпоинт сессии (time-travel)."""
     _guard_enabled()
