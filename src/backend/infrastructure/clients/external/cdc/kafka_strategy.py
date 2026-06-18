@@ -21,6 +21,10 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from src.backend.core.resilience.breaker import (
+    BreakerSpec,
+    get_breaker_registry,
+)
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,
     CDCSubscription,
@@ -57,9 +61,18 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         self._group_id = group_id
         self._auto_offset_reset = auto_offset_reset
         self._consumer: Any = None
+        # S168 W2: Circuit Breaker per ПРАВИЛО 6 (Rule 6 stability).
+        self._breaker = get_breaker_registry().get_or_create(
+            "cdc-kafka-debezium",
+            BreakerSpec(
+                name="cdc-kafka-debezium",
+                failure_threshold=5,
+                recovery_timeout=30.0,
+            ),
+        )
 
     async def _get_consumer(self) -> Any:
-        """Lazy import + singleton consumer."""
+        """Lazy import + singleton consumer + CB guard (Rule 6)."""
         if self._consumer is not None:
             return self._consumer
         try:
@@ -67,15 +80,18 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         except ImportError:
             logger.error("CDC Kafka: aiokafka not installed")
             raise
-        consumer = AIOKafkaConsumer(
-            *[],  # topics added per-subscription
-            bootstrap_servers=self._bootstrap_servers,
-            group_id=self._group_id,
-            auto_offset_reset=self._auto_offset_reset,
-            enable_auto_commit=False,  # manual commit after dispatch
-            value_deserializer=lambda b: json.loads(b.decode("utf-8")),
-        )
-        await consumer.start()
+        # S168 W2: CB guards consumer.start() — if Kafka unreachable
+        # too many times, open circuit, fail fast instead of hanging.
+        async with self._breaker.guard():
+            consumer = AIOKafkaConsumer(
+                *[],  # topics added per-subscription
+                bootstrap_servers=self._bootstrap_servers,
+                group_id=self._group_id,
+                auto_offset_reset=self._auto_offset_reset,
+                enable_auto_commit=False,  # manual commit after dispatch
+                value_deserializer=lambda b: json.loads(b.decode("utf-8")),
+            )
+            await consumer.start()
         self._consumer = consumer
         return consumer
 
