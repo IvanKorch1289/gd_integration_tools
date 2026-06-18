@@ -45,6 +45,18 @@ def unregister_nats_source(source_id: str) -> None:
 @router.get(
     "/consumers",
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    summary="Список NATS JetStream consumers",
+    description=(
+        "Возвращает список всех зарегистрированных NATS JetStream consumers "
+        "с текущим lag-снапшотом (delivered/ack-pending/num-pending). "
+        "Требует прав OPERATOR или READ_ONLY. Endpoint сканирует реестр "
+        "_REGISTRY (populated by register_nats_source при startup)."
+    ),
+    responses={
+        200: {"description": "Consumer list with lag snapshots."},
+        401: {"description": "Unauthenticated."},
+        403: {"description": "Forbidden — insufficient admin role."},
+    },
 )
 async def list_consumers() -> dict[str, Any]:
     """Список всех зарегистрированных NATS consumers с lag-снапшотами."""
@@ -71,6 +83,18 @@ async def list_consumers() -> dict[str, Any]:
 @router.get(
     "/consumers/{stream}/{durable}/info",
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    summary="Детальный consumer_info для stream/durable",
+    description=(
+        "Возвращает детальный consumer_info для указанной пары "
+        "stream/durable. Source_id формируется как `nats_js:{stream}:{durable}`. "
+        "404 если consumer не зарегистрирован."
+    ),
+    responses={
+        200: {"description": "Consumer info returned."},
+        401: {"description": "Unauthenticated."},
+        403: {"description": "Forbidden — insufficient admin role."},
+        404: {"description": "NATS consumer not registered (unknown stream/durable)."},
+    },
 )
 async def get_consumer_info(stream: str, durable: str) -> dict[str, Any]:
     """Детальный consumer_info для указанного stream/durable."""
