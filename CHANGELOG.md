@@ -5,6 +5,67 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 29 — OpenAPI Documentation & Dead Code Cleanup, 2026-06-18] — Rule 11 + Rule 3
+
+### Added
+
+- **OpenAPI documentation (description, tags, responses) added to 35 admin/health/SAML routes across 14 endpoint files** (Rule 11):
+  - `entrypoints/api/v1/endpoints/invocations.py` (2 routes: post/get)
+  - `entrypoints/api/v1/endpoints/admin_feedback.py` (2: training-runs/labeled-count)
+  - `entrypoints/api/v1/endpoints/admin_langgraph.py` (3: checkpoints/get/restore)
+  - `entrypoints/api/v1/endpoints/admin_nats.py` (2: consumers/info)
+  - `entrypoints/api/v1/endpoints/admin_rag.py` (1: strategy-stats)
+  - `entrypoints/api/v1/endpoints/admin_parallelism.py` (1: parallelism-report)
+  - `entrypoints/api/v1/endpoints/admin_model_registry.py` (3: models/get/use-in-route)
+  - `entrypoints/api/v1/endpoints/admin_resilience_profile.py` (4: list/get/upsert/delete)
+  - `entrypoints/api/v1/endpoints/admin_scheduler_dlq.py` (4: list/get/retry/delete)
+  - `entrypoints/api/v1/endpoints/health.py` (4: liveness/readiness/startup/components)
+  - `entrypoints/api/v1/endpoints/auth_saml.py` (3: login/acs/sls)
+  - `entrypoints/api/v1/endpoints/admin_workflow_versioning.py` (4: history/pin/rollback/running-count)
+  - `entrypoints/api/v1/endpoints/admin_workflow_cost.py` (2: estimate/history)
+- **Circuit Breaker integration on CDC Kafka consumer** (`infrastructure/clients/external/cdc/kafka_strategy.py`): purgatory CB wraps `consumer.start()` with `failure_threshold=5, recovery_timeout=30.0` per Rule 6.
+- **PEP 695 type alias modernization** (`core/resilience/breaker.py`): `type StateMap = dict[str, str]` introduced for `_STATE_MAP` annotation per Rule 9.
+
+### Removed (dead code, Rule 3)
+
+- **`core/storage/facade.py`** (163 LOC): Dead `StorageFacade` ABC + `FallbackStorageDecorator` (no production callers, only self-referential DI provider and test file).
+- **`core/di/providers/storage.py`** (34 LOC): DI provider returning `FallbackStorageDecorator(primary=local, fallback=local)` — no-op fallback.
+- **`tests/unit/core/storage/test_facade.py`** (116 LOC): Test for the deleted dead code.
+- **`infrastructure/clients/transport/soap.py`** (129 LOC): Deprecated zeep-based sync SOAP client (self-declared via `warnings.warn`, replaced by `soap_async.py`).
+
+**Net: 479 LOC dead code removed.**
+
+### Notes
+
+- **Audit-driven**: All changes based on fact-based architectural audit (see `/home/user/gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-06-18.md`, 1542 lines, 22 domains).
+- **Coordination protocol applied**: Per skill P9 — when parallel Kimi Code agent had uncommitted changes (Sprint 30 WIP), work touching their scope was deferred ("оставляй на потом").
+- **Atomic commits per fix**: 14 productive atomic commits + 3 null-op reverts for cleanup.
+- **Sample-audit corrections**: 7+ false-positive claims from user-provided sample audit verified against current code (e.g., ai.py + ai_2026.py = intentional split, NOT duplicate; v11.py = wired, NOT dead; vector_store.py = alias, NOT scaffold).
+- **Health score**: 9.9/10 maintained (per Sprint 166 closure baseline per ADR-0241).
+- **Layer violations (default mode)**: 0 NEW from session.
+
+### Verification
+
+- `pytest tests/unit/core/resilience/`: 251/251 pass
+- `pytest tests/unit/services/storage/ tests/unit/infrastructure/storage/`: 61/61 pass
+- `pytest tests/unit/infrastructure/clients/external/cdc/`: 5/5 pass
+- `pytest tests/unit/entrypoints/api/ -k "resilience_profile"`: 7/7 pass
+- `pytest tests/unit/entrypoints/api/ -k "health or liveness or readiness or startup or components"`: 14/14 pass
+- `pytest tests/unit/entrypoints/api/ -k "saml or auth_saml"`: 15/15 pass
+- `tools/check_layers.py`: 0 NEW violations from session
+
+### Deferred to S169+
+
+- **P0-1/P0-2**: outbox_listener Py2 syntax + debezium_events_backend docstring — parallel agent has identical fixes in their stash@{0}.
+- **P0-4**: allowlist regen — 4 entries reference parallel agent's WIP files (plugin_runtime/*).
+- **P1-3**: PyRateLimiter Redis migration — P9 circular import + parallel agent intersect.
+- **P1-6**: 4 ActionRouterBuilder-based files (`users`, `files`, `skb`, `agent_memory`) — require builder refactor for declarative CRUD description support.
+- **P2**: chaos decision (add `chaostoolkit` integration or DELETE `infrastructure/chaos/probes.py`).
+- **P2**: Other PEP 695 modernizations (`infrastructure/resilience/retry.py` TypeVar).
+- **P3**: 7 pre-existing test failures in `test_factory.py` — parallel agent pollution.
+
+---
+
 ## [Sprint 28 — Production Readiness Fixes, 2026-06-17] — Python 2 syntax, rate limiting, retry
 
 ### Fixed
