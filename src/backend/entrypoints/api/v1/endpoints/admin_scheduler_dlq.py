@@ -50,6 +50,19 @@ def _require_store() -> SchedulerDLQStore:
     "",
     response_model=list[dict[str, Any]],
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))],
+    summary="Список failed scheduler jobs (DLQ)",
+    description=(
+        "Возвращает последние failed jobs из Scheduler DLQ (Dead Letter Queue). "
+        "Сортировка: новейшие сверху. Query param limit (1-500, default 50). "
+        "503 если store не инициализирован (scheduler_dlq_enabled=False). "
+        "Доступ: Operator или Super-Admin."
+    ),
+    tags=["Admin / Scheduler"],
+    responses={
+        200: {"description": "Список DLQ entries (failed jobs)."},
+        403: {"description": "User lacks Operator/Super-Admin role."},
+        503: {"description": "DLQ store не инициализирован."},
+    },
 )
 async def list_failed_jobs(
     limit: int = Query(default=50, ge=1, le=500),
@@ -69,6 +82,17 @@ async def list_failed_jobs(
             )
         )
     ],
+    summary="Получить DLQ-запись по id",
+    description=(
+        "Возвращает детали одной DLQ-записи: job_id, error, retry_count, "
+        "first_failed_at, last_attempt_at. 404 если entry не найден."
+    ),
+    tags=["Admin / Scheduler"],
+    responses={
+        200: {"description": "DLQ entry dict."},
+        404: {"description": "Entry не найден."},
+        503: {"description": "DLQ store не инициализирован."},
+    },
 )
 async def get_failed_job(entry_id: str) -> dict[str, Any]:
     """Возвращает одну DLQ-запись по id."""
@@ -85,6 +109,18 @@ async def get_failed_job(entry_id: str) -> dict[str, Any]:
     "/{entry_id}/retry",
     response_model=dict[str, Any],
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))],
+    summary="Retry failed scheduler job",
+    description=(
+        "Инкрементирует retry_count DLQ-записи и (если APScheduler доступен "
+        "через get_scheduler_manager) пытается reschedule_job. "
+        "Возвращает обновлённую запись + reschedule_attempted boolean."
+    ),
+    tags=["Admin / Scheduler"],
+    responses={
+        200: {"description": "Updated entry + reschedule_attempted."},
+        404: {"description": "Entry не найден."},
+        503: {"description": "DLQ store не инициализирован."},
+    },
 )
 async def retry_failed_job(entry_id: str) -> dict[str, Any]:
     """Помечает retry_count++ и (если scheduler доступен) пытается перезапустить job.
@@ -120,6 +156,18 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
     "/{entry_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))],
+    summary="Удалить DLQ-запись",
+    description=(
+        "Удаляет DLQ-запись из in-memory store. "
+        "204 на успех, 404 если entry не найден. "
+        "Доступ: Operator или Super-Admin."
+    ),
+    tags=["Admin / Scheduler"],
+    responses={
+        204: {"description": "Entry удалён (no content)."},
+        404: {"description": "Entry не найден."},
+        503: {"description": "DLQ store не инициализирован."},
+    },
 )
 async def delete_failed_job(entry_id: str) -> None:
     """Удаляет DLQ-запись из in-memory store."""
