@@ -182,14 +182,24 @@ class ClickHouseClient:
         return self._client
 
     async def execute(self, query: str, params: dict[str, Any] | None = None) -> str:
-        """Выполняет произвольный SQL-запрос."""
-        client = await self._ensure_client()
-        request_params = {"database": self._database, "query": query}
-        if params:
-            request_params.update(params)
-        response = await client.get("/", params=request_params)
-        response.raise_for_status()
-        return response.text
+        """Выполняет произвольный SQL-запрос с retry на transient errors."""
+        from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+        @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=1, max=10),
+            retry=retry_if_exception_type((ConnectionError, TimeoutError, OSError)),
+        )
+        async def _execute_with_retry() -> str:
+            client = await self._ensure_client()
+            request_params = {"database": self._database, "query": query}
+            if params:
+                request_params.update(params)
+            response = await client.get("/", params=request_params)
+            response.raise_for_status()
+            return response.text
+
+        return await _execute_with_retry()
 
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
@@ -281,7 +291,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 

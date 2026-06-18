@@ -27,6 +27,7 @@ from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationStatus,
 )
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.invocation_api import (
     InvocationRequestSchema,
     InvocationResponseSchema,
@@ -47,6 +48,7 @@ async def post_invocation(
     request_body: InvocationRequestSchema,
     response: Response,
     invoker: Invoker = Depends(get_invoker_dep),
+    _rate_limit: None = Depends(get_default_rate_limiter()),
 ) -> InvocationResponseSchema:
     """Универсальный вход для всех режимов :class:`InvocationMode`.
 

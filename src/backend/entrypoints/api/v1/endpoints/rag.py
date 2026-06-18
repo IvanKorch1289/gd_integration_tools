@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.config.rag import rag_settings
@@ -26,6 +26,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.services.ai.document_parsers import parse_document, sniff_mime
 from src.backend.services.ai.rag_service import get_rag_service
 
@@ -449,6 +450,7 @@ async def rag_upload(
     ],
     namespace: Annotated[str, Form()] = "default",
     metadata_json: Annotated[str | None, Form()] = None,
+    _rate_limit: None = Depends(get_default_rate_limiter()),
 ) -> UploadResponse:
     """Принимает multipart-файл, парсит, шардирует и грузит в RAG."""
     return await _FACADE.upload(
