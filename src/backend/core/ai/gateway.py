@@ -222,6 +222,39 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             )
         return await self._enforced_invoke(request)
 
+    # S166 W2: Sandbox integration для AI-generated code (Rule 10).
+    # Per skill: Sandbox = CodeSandbox Protocol. When AIGateway runs
+    # tools that execute agent-generated code (e.g. via tool dispatch),
+    # delegate to self._sandbox.run() instead of executing in main loop.
+    async def run_agent_code(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> Any:
+        """S166 W2: execute AI-generated code in sandbox (Rule 10).
+
+        Returns:
+            SandboxResult с stdout/stderr/exit_code/artifacts.
+
+        Raises:
+            RuntimeError: если no sandbox configured.
+        """
+        from src.backend.core.ai.sandbox import NoOpSandbox
+
+        sandbox = getattr(self, "_sandbox", None) or NoOpSandbox()
+        # Map timeout_seconds -> timeout_s per CodeSandbox Protocol.
+        return await sandbox.run(code, timeout_s=timeout_seconds)
+
+    def attach_sandbox(self, sandbox: Any) -> None:
+        """S166 W2: attach CodeSandbox implementation (Rule 10).
+
+        Usage:
+            from src.backend.infrastructure.ai.e2b_sandbox import E2BSandbox
+            gateway.attach_sandbox(E2BSandbox(...))
+        """
+        self._sandbox = sandbox
+
     # `_enforced_invoke` extracted в gateway_orchestrator_mixin.py (T-P1.1c)
 
     # S85 W1 (V2 P0 #1): _legacy_invoke удалён. Pass-through scaffold
