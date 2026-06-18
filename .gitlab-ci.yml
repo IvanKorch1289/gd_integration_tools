@@ -1,0 +1,186 @@
+# GitLab CI/CD Configuration — mirrors GitHub Actions workflows
+# Синхронизировано с .github/workflows/ (lint, test, type, security)
+
+stages:
+  - lint
+  - test
+  - type-check
+  - security
+
+variables:
+  PYTHON_VERSION: "3.14"
+
+# ──────────────────────────────────────────────────────────────────────
+# Stage 1: Lint (mirrors .github/workflows/lint.yml)
+# ──────────────────────────────────────────────────────────────────────
+
+lint:
+  stage: lint
+  image: python:${PYTHON_VERSION}
+  timeout: 15m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    # Ruff check (lint)
+    - uv run ruff check src tests
+    
+    # Ruff F821 gate (undefined names) — blocking
+    - uv run ruff check --select F821 src
+    
+    # Ruff format check
+    - uv run ruff format --check src tests
+    
+    # Compatibility gate (syntax errors, deprecated modules)
+    - uv run python tools/check_compat.py
+    
+    # Python compileall gate
+    - uv run python -m compileall -q src scripts tools
+    
+    # Architectural layers gate
+    - uv run python tools/check_layers.py
+    
+    # Temporal sandbox gate
+    - uv run python tools/s86_workflow_sandbox_guard.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ──────────────────────────────────────────────────────────────────────
+# Stage 2: Test (mirrors .github/workflows/test.yml)
+# ──────────────────────────────────────────────────────────────────────
+
+pytest:
+  stage: test
+  image: python:${PYTHON_VERSION}
+  timeout: 30m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    # Run pytest with coverage
+    - uv run pytest tests
+        --cov=src/backend
+        --cov-report=xml
+        --cov-report=term
+        --maxfail=20
+    
+    # Coverage gate (75% threshold)
+    - uv run python tools/check_coverage_gate.py
+        --coverage-xml coverage.xml
+        --baseline .baselines/coverage.json
+        --threshold 75
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 14 days
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ──────────────────────────────────────────────────────────────────────
+# Stage 3: Type Check (mirrors .github/workflows/type.yml)
+# ──────────────────────────────────────────────────────────────────────
+
+mypy:
+  stage: type-check
+  image: python:${PYTHON_VERSION}
+  timeout: 20m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    - make type-check
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+pyright:
+  stage: type-check
+  image: python:${PYTHON_VERSION}
+  timeout: 15m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    - uv tool run pyright src/backend/core
+  allow_failure: true  # informational, not blocking
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ──────────────────────────────────────────────────────────────────────
+# Stage 4: Security (mirrors .github/workflows/security.yml)
+# ──────────────────────────────────────────────────────────────────────
+
+bandit:
+  stage: security
+  image: python:${PYTHON_VERSION}
+  timeout: 15m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    - uv run bandit -r src/backend -f json -o bandit-report.json || true
+    - uv run bandit -r src/backend -f sarif -o bandit-report.sarif || true
+  artifacts:
+    paths:
+      - bandit-report.json
+      - bandit-report.sarif
+    expire_in: 14 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+pip-audit:
+  stage: security
+  image: python:${PYTHON_VERSION}
+  timeout: 10m
+  before_script:
+    - pip install uv
+    - uv sync
+  script:
+    # BLOCKING: pip-audit with exit code on vulnerabilities
+    - uv run pip-audit --ignore-vuln CVE-2025-69872
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+gitleaks:
+  stage: security
+  image: zricethezav/gitleaks:latest
+  timeout: 10m
+  script:
+    - gitleaks detect --source=. --report-format=json --report-path=gitleaks-report.json || true
+  artifacts:
+    paths:
+      - gitleaks-report.json
+    expire_in: 14 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+trivy:
+  stage: security
+  image: aquasec/trivy:latest
+  timeout: 10m
+  script:
+    - trivy fs --format json --output trivy-report.json . || true
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 14 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
