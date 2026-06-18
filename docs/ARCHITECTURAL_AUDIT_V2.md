@@ -455,21 +455,15 @@ class RouteBuilder(
 
 ---
 
-## DOMAIN 21: frontend/
+## DOMAIN 21: frontend/ — DELETED
 
-**СТАТУС: SCAFFOLD**
+**СТАТУС: DELETED**
 
-**ФАЙЛЫ**: 1
+**Удалено в этой сессии:**
+- `frontend/admin-react/` — React MVP, дублировал Streamlit app, устаревшие зависимости (react 18.2.0) [ТОЧНО]
+- `frontend/` — пустая директория удалена [ТОЧНО]
 
-**А. Существует:**
-- admin-react/ (React MVP) [ТОЧНО]
-- Vulnerable deps (react 18.2.0) [ТОЧНО]
-
-**В. Проблема:**
-- Дублирует Streamlit app [ТОЧНО]
-- Устаревшие зависимости [ТОЧНО]
-
-**Д. Рекомендация:** УДАЛИТЬ admin-react/, оставить Streamlit
+**Решение:** Оставить только Streamlit app в `src/frontend/streamlit_app/`
 
 ---
 
@@ -562,33 +556,43 @@ class RouteBuilder(
 
 ## АУДИТ НАСТРОЕК
 
-| Параметр | Кол-во | Проблема |
-|----------|--------|----------|
-| pool_size | 15+ | Дублируется в 5 Settings-классах |
-| timeout | 30+ | Magic values в services/ |
-| retry | 20+ | Разные default значения |
+| Дублирующиеся поля | Файлы | Проблема |
+|-------------------|-------|----------|
+| pool_size | core/config/database.py, services/io/ | Дублируется в 5 Settings-классах |
+| timeout | core/config/services/*.py | Magic values в services/ |
+| retry | core/config/resilience.py | Разные default значения |
+
+| Inline magic values | Файл:Строка | Замена |
+|--------------------|-------------|--------|
+| timeout=30.0 | services/rpa/desktop_session_pool.py:60 | settings.rpa.timeout |
+| timeout=60.0 | services/jupyter/execution_service/e2b_backend.py:34 | settings.jupyter.timeout |
+| recovery_timeout=30.0 | services/rpa/desktop_rpa_client.py:51 | settings.rpa.recovery_timeout |
 
 ---
 
 ## АУДИТ PYTHON 3.14
 
-| Паттерн | Кол-во | Рекомендация |
-|---------|--------|--------------|
-| except A, B: | 42 | FIXED |
-| sync open() в async | 5 | aiofiles |
-| TypeAlias (устаревший) | ~20 | PEP 695 type X = ... |
-| gather() без TaskGroup | ~15 | asyncio.TaskGroup |
-| match/case (не используется) | 0 | Рассмотреть |
+| Файл | Строка | Паттерн | Рекомендация |
+|------|--------|---------|--------------|
+| infrastructure/workflow/runner.py | 314 | asyncio.Semaphore | OK (async) |
+| services/jupyter/execution_service/io_mixin.py | 97 | sync open() | aiofiles.open() |
+| services/ai/rag/multimodal/embedders.py | 120 | Image.open() | Pillow sync — OK (CPU-bound) |
+| services/plugins/versioning.py | 286 | path.open("rb") | aiofiles.open() |
+| infrastructure/external_apis/mail.py | 147 | async with open() | aiofiles.open() |
+| ~20 файлов | N/A | TypeAlias | PEP 695 type X = ... |
+| ~15 файлов | N/A | asyncio.gather() | asyncio.TaskGroup |
 
 ---
 
 ## ПРОБЕЛЫ В ДОКУМЕНТАЦИИ
 
-| Домен | Public | Без docstring | % |
-|-------|--------|---------------|---|
-| core/ | 1860 | 234 | 12% |
-| dsl/ | ~2000 | ~400 | ~20% |
-| infrastructure/ | ~1500 | ~300 | ~20% |
+| Домен | Public symbols | Без docstring | % | Приоритет |
+|-------|---------------|---------------|---|-----------|
+| core/ | 1860 | 216 | 11% | Medium (добавлены в этой сессии) |
+| dsl/ | ~2000 | ~400 | ~20% | Medium |
+| infrastructure/ | ~1500 | ~300 | ~20% | Medium |
+| services/ | ~1200 | ~200 | ~17% | Low |
+| entrypoints/ | ~500 | ~50 | ~10% | Low |
 
 ---
 
@@ -607,3 +611,73 @@ class RouteBuilder(
 | 5 dependency security updates | ✓ |
 | OSINT agent extension | ✓ |
 | Deleted analysis/, gap-analysis/, reports/ | ✓ |
+| Deleted frontend/admin-react/ | ✓ |
+| Deleted dev/cocoindex/ | ✓ |
+| Added docstrings to core/ symbols | ✓ |
+
+---
+
+## ОБНОВЛЁННЫЙ МАСТЕР-ПРОМПТ ДЛЯ АГЕНТА-РАЗРАБОТЧИКА
+
+### Архитектурные правила (15 абсолютных ограничений)
+
+1. **Фасад**: Использовать единый интерфейс для каждой capability
+2. **Слои**: entrypoints → services → core/interfaces; plugins → core/interfaces
+3. **Нет мёртвого кода**: Удалять или реализовывать в текущем спринте
+4. **Библиотеки**: purgatory (CB), tenacity (retry), limits (rate limit), instructor (LLM)
+5. **Полнота DSL**: Каждая capability должна иметь RouteBuilder mixin
+6. **Устойчивость**: pool + CB + retry + healthcheck для каждого клиента
+7. **Настройки**: Один Settings-класс на домен, без дублирования
+8. **Документация**: Google-style docstrings для всех публичных символов
+9. **Python 3.14**: PEP 695, TaskGroup, match/case, pathlib
+10. **Агентская изоляция**: E2B sandbox + token/cost budget
+11. **FastAPI**: OpenAPI docs, rate limiting через middleware
+12. **Производительность**: Async I/O, batch операции, streaming
+13. **FileWatcher**: watchfiles (inotify/kqueue), не polling
+14. **CDC**: Реальный Kafka consumer, типизированные события
+15. **Нулевой техдолг**: TODO только с issue ID
+
+### Self-review чеклист (перед каждым merge)
+
+```bash
+# 1. Синтаксис
+python3 -c "import ast; [ast.parse(f.read_text()) for f in Path('src').rglob('*.py')]"
+
+# 2. Lint
+make lint
+
+# 3. Типы
+make type-check
+
+# 4. Тесты
+make test
+
+# 5. WAF violations
+grep -rn "import httpx\|from httpx" src/backend/services --include="*.py" | grep -v outbound_http
+
+# 6. TODO without issue ID
+grep -rn "# TODO$" src/backend --include="*.py"
+```
+
+### Zero-regression policy
+
+- Перед изменением: запустить `pytest -x` — все тесты должны проходить
+- После изменения: запустить `pytest -x` снова — ноль новых падений
+- Если тест падает — исправить в том же PR
+
+### Формат sprint retrospective
+
+```markdown
+## Sprint Retro — [ДАТА]
+
+### Закрыто
+- [x] P0: Исправлен ...
+
+### Не закрыто
+- [ ] P1: ... (issue #NNN)
+
+### Метрики
+- Test coverage: было X% → стало Y%
+- mypy errors: было X → стало Y
+- TODO без issue ID: было X → стало 0
+```
