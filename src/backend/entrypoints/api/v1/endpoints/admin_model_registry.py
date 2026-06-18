@@ -57,7 +57,23 @@ async def _composite() -> Any:
     return CompositeModelRegistry(backends)
 
 
-@router.get("/models")
+@router.get(
+    "/models",
+    summary="Composite-список AI моделей из всех backends",
+    description=(
+        "Возвращает список моделей из всех зарегистрированных "
+        "model registry backends (MLflow, HuggingFace Hub). "
+        "Требует feature-flag ai_model_registry_ui. "
+        "Возвращает 404 если feature OFF, 503 если ни один backend "
+        "не доступен."
+    ),
+    tags=["admin", "model_registry"],
+    responses={
+        200: {"description": "Composite list моделей + backend ids."},
+        404: {"description": "feature_flag ai_model_registry_ui = OFF."},
+        503: {"description": "Ни один backend не доступен."},
+    },
+)
 async def list_models() -> dict[str, Any]:
     """Composite-список моделей из всех зарегистрированных backends."""
     _guard_enabled()
@@ -70,7 +86,21 @@ async def list_models() -> dict[str, Any]:
     }
 
 
-@router.get("/models/{name}")
+@router.get(
+    "/models/{name}",
+    summary="Конкретная AI модель по имени",
+    description=(
+        "Возвращает детали конкретной модели по name. "
+        "Опциональный query param version (latest production если None). "
+        "404 если feature_flag OFF или model not found."
+    ),
+    tags=["admin", "model_registry"],
+    responses={
+        200: {"description": "Model details (name, version, metadata)."},
+        404: {"description": "feature OFF или model not found."},
+        503: {"description": "Backend недоступен."},
+    },
+)
 async def get_model(name: str, version: str | None = None) -> dict[str, Any]:
     """Конкретная версия модели (или latest production)."""
     _guard_enabled()
@@ -83,7 +113,22 @@ async def get_model(name: str, version: str | None = None) -> dict[str, Any]:
     return model.model_dump()
 
 
-@router.post("/models/{name}/use-in-route")
+@router.post(
+    "/models/{name}/use-in-route",
+    summary="Генерирует DSL snippet для использования модели в route",
+    description=(
+        "Генерирует готовый DSL snippet ``.llm_call(provider=..., model=...)`` "
+        "для указанной модели. Используется в Admin UI для copy-paste "
+        "готового DSL вызова в route definition. "
+        "404 если feature OFF или model not found."
+    ),
+    tags=["admin", "model_registry"],
+    responses={
+        200: {"description": "Model info + DSL snippet для вставки в route."},
+        404: {"description": "feature OFF или model not found."},
+        503: {"description": "Backend недоступен."},
+    },
+)
 async def use_in_route(name: str, version: str | None = None) -> dict[str, Any]:
     """Сгенерировать DSL snippet для .llm_call с этой моделью."""
     _guard_enabled()
