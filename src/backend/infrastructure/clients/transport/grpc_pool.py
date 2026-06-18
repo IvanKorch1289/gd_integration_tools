@@ -26,9 +26,29 @@ from typing import Any
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
 from src.backend.infrastructure.logging.factory import get_logger
 
+# S165 W4: Purgatory Circuit Breaker для gRPC (Rule 6).
+# Per skill: per-pool long-lived manager → per-pool CB keyed by target.
+# Module-level per-target CB factory to avoid circular imports.
+from src.backend.core.resilience.breaker import (  # noqa: E402
+    BreakerSpec,
+    get_breaker_registry,
+)
+
 __all__ = ("GrpcChannelPool",)
 
 _logger = get_logger("infrastructure.clients.transport.grpc_pool")
+
+
+def _get_grpc_breaker(target: str) -> Any:
+    """S165 W4: Per-target module-level CB for gRPC pool (per-pool pattern)."""
+    return get_breaker_registry().get_or_create(
+        f"grpc_pool_{target}",
+        BreakerSpec(
+            name=f"grpc_pool_{target}",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
 
 
 class GrpcChannelPool:
