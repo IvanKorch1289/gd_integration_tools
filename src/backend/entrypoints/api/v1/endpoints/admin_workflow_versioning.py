@@ -63,7 +63,20 @@ def _to_response(v: Any) -> WorkflowVersionResponse:
     )
 
 
-@router.get("/{workflow_id}/history", response_model=list[WorkflowVersionResponse])
+@router.get(
+    "/{workflow_id}/history",
+    response_model=list[WorkflowVersionResponse],
+    summary="История версий workflow",
+    description=(
+        "Возвращает все зарегистрированные версии workflow (semver + "
+        "register/pin timestamps). Используется для audit trail и "
+        "rollback selection. Read-only endpoint."
+    ),
+    tags=["Admin / Workflow Versioning"],
+    responses={
+        200: {"description": "Список версий workflow (может быть пустым)."},
+    },
+)
 async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse]:
     """Возвращает все зарегистрированные версии workflow."""
     from src.backend.dsl.workflow.versioning import get_global_registry
@@ -72,7 +85,22 @@ async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse
     return [_to_response(v) for v in history]
 
 
-@router.post("/{workflow_id}/pin", response_model=WorkflowVersionResponse)
+@router.post(
+    "/{workflow_id}/pin",
+    response_model=WorkflowVersionResponse,
+    summary="Pin версию как default для workflow",
+    description=(
+        "Помечает указанную semver как default для workflow_id. "
+        "Query param semver (X.Y или X.Y.Z формат, regex validation). "
+        "400 если semver invalid, 404 если version не зарегистрирована."
+    ),
+    tags=["Admin / Workflow Versioning"],
+    responses={
+        200: {"description": "Pinned version dict."},
+        400: {"description": "Invalid semver format."},
+        404: {"description": "Version не зарегистрирована."},
+    },
+)
 async def pin_workflow_version(
     workflow_id: str, semver: str = Query(..., min_length=3, max_length=20)
 ) -> WorkflowVersionResponse:
@@ -94,7 +122,21 @@ async def pin_workflow_version(
     return _to_response(updated)
 
 
-@router.post("/{workflow_id}/rollback", response_model=RollbackResponse)
+@router.post(
+    "/{workflow_id}/rollback",
+    response_model=RollbackResponse,
+    summary="Rollback workflow на предыдущую default версию",
+    description=(
+        "Откатить default version на предыдущую зарегистрированную. "
+        "400 если нет предыдущей default-версии (single version case). "
+        "Возвращает rolled_back=true + new_default version."
+    ),
+    tags=["Admin / Workflow Versioning"],
+    responses={
+        200: {"description": "Rollback success: rolled_back=True + new_default."},
+        400: {"description": "Невозможно rollback (нет предыдущей версии)."},
+    },
+)
 async def rollback_workflow_version(workflow_id: str) -> RollbackResponse:
     """Откатить default на предыдущую версию."""
     from src.backend.dsl.workflow.versioning import get_global_registry
@@ -111,7 +153,22 @@ async def rollback_workflow_version(workflow_id: str) -> RollbackResponse:
     return RollbackResponse(rolled_back=True, new_default=_to_response(new_default))
 
 
-@router.get("/{workflow_id}/running-count", response_model=RunningCountResponse)
+@router.get(
+    "/{workflow_id}/running-count",
+    response_model=RunningCountResponse,
+    summary="Running executions per workflow version",
+    description=(
+        "Sprint 12 K3 W8 — count running executions per version. "
+        "Под капотом обращается к Temporal Client (lazy import; при отсутствии "
+        "SDK или connection возвращает пустой dict). Используется для "
+        "rollback safety check."
+    ),
+    tags=["Admin / Workflow Versioning"],
+    responses={
+        200: {"description": "Running count per version (может быть пустым)."},
+        503: {"description": "Temporal Client недоступен."},
+    },
+)
 async def get_running_count(workflow_id: str) -> RunningCountResponse:
     """Sprint 12 K3 W8 — count running executions per version.
 
