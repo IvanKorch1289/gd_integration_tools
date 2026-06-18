@@ -49,9 +49,12 @@ src/backend/core/net/outbound_http.py	core	src.backend.infrastructure.observabil
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/metrics.py	core	src.backend.infrastructure.observability.metrics_registry
+src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_v11
 src/backend/core/plugin_runtime/dependency_resolver.py	core	src.backend.services.plugins.manifest_v11
+src/backend/core/plugin_runtime/manifest.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/plugin_runtime/manifest.py	core	src.backend.services.plugins.manifest_v11
+src/backend/core/plugin_runtime/sandbox.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/plugin_runtime/sandbox.py	core	src.backend.services.plugins.manifest_v11
 src/backend/core/repositories/base.py	core	src.backend.infrastructure.repositories.base
 src/backend/core/resilience/breaker.py	core	src.backend.infrastructure.observability
