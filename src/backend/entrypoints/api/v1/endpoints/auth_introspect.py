@@ -1,8 +1,10 @@
 """JWT Introspection endpoint (RFC 7662) — Sprint 16 DoD-7.
 
 POST ``/auth/introspect`` — OAuth2-стиль проверка активности токена.
-Reuse: :func:`get_jwt_backend_provider` (singleton joserfc backend) →
-:meth:`JwtBackend.decode` (sig + claims + blacklist check).
+
+S165 W2: refactored to use AuthFacade (Rule 1: single entry per
+auth concern). Replaces direct ``get_jwt_backend_provider()`` + ``JwtBackend.decode()``
+with ``AuthFacade.verify_request()``.
 
 Response per RFC 7662 §2.2: ``{"active": true|false, ...}``. Для inactive
 токенов (истёкших / отозванных / с неверной подписью) возвращается
@@ -15,10 +17,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Form, HTTPException, status
+from fastapi import APIRouter, Form
 
-from src.backend.core.auth.jwt_backend import JwtVerificationError
-from src.backend.core.di.providers import get_jwt_backend_provider
+from src.backend.core.auth.facade import get_auth_facade
 from src.backend.core.logging import get_logger
 
 __all__ = ("router",)
@@ -27,54 +28,39 @@ _logger = get_logger(__name__)
 router = APIRouter()
 
 _INTROSPECT_FIELDS = (
-    "scope",
-    "client_id",
-    "username",
-    "token_type",
-    "exp",
-    "iat",
-    "nbf",
-    "sub",
-    "aud",
-    "iss",
-    "jti",
+    "scope", "client_id", "username", "token_type",
+    "exp", "iat", "nbf", "sub", "aud", "iss", "jti",
 )
 
 
 @router.post("/introspect", summary="OAuth2 Token Introspection (RFC 7662)")
 async def introspect(
     token: str = Form(..., description="JWT для проверки"),
-    token_type_hint: str | None = Form(
-        None, description="Игнорируется (only access_token)"
-    ),
+    token_type_hint: str | None = Form(None, description="Игнорируется (only access_token)"),
 ) -> dict[str, Any]:
-    """RFC 7662 token introspection.
-
-    Args:
-        token: JWT-токен.
-        token_type_hint: Optional hint (только ``access_token``).
-
-    Returns:
-        ``{"active": True, scope?, sub?, exp?, jti?, ...}`` для валидных;
-        ``{"active": False}`` для истёкших / отозванных / неверных.
-    """
-    del token_type_hint  # access_token only
-    backend = get_jwt_backend_provider()
-    if backend is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="JWT backend not configured",
-        )
+    """RFC 7662 token introspection (S165 W2: AuthFacade-backed)."""
+    del token_type_hint
+    auth = get_auth_facade()
     try:
-        claims = await backend.decode(token)
-    except JwtVerificationError as exc:
+        result = await auth.verify_request(token, method="jwt")
+    except Exception as exc:
         _logger.info("Introspect rejected: %s", exc)
         return {"active": False}
 
+    if not result.is_authenticated:
+        return {"active": False}
+
     response: dict[str, Any] = {"active": True}
-    raw = claims.raw or {}
-    for key in _INTROSPECT_FIELDS:
-        value = raw.get(key)
-        if value is not None:
-            response[key] = value
+    # Raw RFC 7662 fields via facade.jwt (best-effort enrichment).
+    backend = auth.jwt
+    if backend is not None:
+        try:
+            claims = await backend.decode(token)
+            raw = claims.raw or {}
+            for key in _INTROSPECT_FIELDS:
+                value = raw.get(key)
+                if value is not None:
+                    response[key] = value
+        except Exception:
+            pass
     return response
