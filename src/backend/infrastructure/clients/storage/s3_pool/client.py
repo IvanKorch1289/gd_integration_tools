@@ -37,6 +37,31 @@ except ImportError:  # botocore — опциональная зависимос�
 from src.backend.core.config.settings import FileStorageSettings
 from src.backend.core.errors import ServiceError
 
+# S165 W3: Purgatory Circuit Breaker для S3 (Rule 6).
+# Per skill: import _settings pre-loads core.config.settings, breaking
+# the circular chain breaker -> core.logging -> core.interfaces -> breaker.
+# Module-level shared CB (per-call, not per-instance) per skill pattern.
+from src.backend.core.resilience.breaker import (  # noqa: E402
+    BreakerSpec,
+    get_breaker_registry,
+)
+
+def _get_s3_breaker() -> Any:
+    """S165 W3: Module-level shared CB singleton for S3Client (per-call pattern).
+
+    Per skill: per-call clients need module-level shared CB to fire.
+    Per-instance CB → NEW breaker every call → never opens.
+    """
+    return get_breaker_registry().get_or_create(
+        "s3_client",
+        BreakerSpec(
+            name="s3_client",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
+
+
 P = ParamSpec("P")
 R = TypeVar("R")
 
@@ -167,7 +192,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except BotoClientError, OSError, TimeoutError:
+        except (BotoClientError, OSError, TimeoutError):
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -233,34 +258,39 @@ class S3Client(BaseS3Client):
     async def put_object(
         self, key: str, body: Any, metadata: dict[str, Any]
     ) -> dict[str, Any]:
-        """Загружает объект в S3."""
-        async with self.client_context() as client:
-            try:
-                await client.put_object(
-                    Bucket=self._settings.bucket, Key=key, Body=body, Metadata=metadata
-                )
-                self.logger.info(f"Файл {key} успешно загружен")
-                return {"status": "success"}
-            except BotoClientError as exc:
-                self.logger.error(
-                    f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
-                )
-                return {"status": "error", "message": str(exc)}
+        """Загружает объект в S3 (S165 W3: with CB)."""
+        breaker = _get_s3_breaker()
+        async with breaker.guard():
+            async with self.client_context() as client:
+                try:
+                    await client.put_object(
+                        Bucket=self._settings.bucket, Key=key, Body=body, Metadata=metadata
+                    )
+                    self.logger.info(f"Файл {key} успешно загружен")
+                    return {"status": "success"}
+                except BotoClientError as exc:
+                    self.logger.error(
+                        f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
+                    )
+                    return {"status": "error", "message": str(exc)}
 
     @ensure_connected
     async def get_object(self, key: str) -> tuple[Any, dict[str, Any]] | None:
-        """Получает объект из S3."""
-        async with self.client_context() as client:
-            try:
-                response = await client.get_object(
-                    Bucket=self._settings.bucket, Key=key
-                )
-                return response["Body"], response.get("Metadata", {})
-            except BotoClientError as exc:
-                code = str(exc.response.get("Error", {}).get("Code", ""))
-                if code in {"404", "NoSuchKey", "NotFound"}:
-                    return None
-                raise ServiceError(f"Ошибка получения файла {key}") from exc
+        """Получает объект из S3 (S165 W3: with CB)."""
+        breaker = _get_s3_breaker()
+        async with breaker.guard():
+            async with self.client_context() as client:
+                try:
+                    response = await client.get_object(
+                        Bucket=self._settings.bucket, Key=key
+                    )
+                    return response["Body"], response.get("Metadata", {})
+                except BotoClientError as exc:
+                    code = str(exc.response.get("Error", {}).get("Code", ""))
+                    if code in {"404", "NoSuchKey", "NotFound"}:
+                        return None
+                    raise ServiceError(f"Ошибка получения файла {key}") from exc
+            return None
 
     @ensure_connected
     async def put_object_multipart(
