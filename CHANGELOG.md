@@ -5,6 +5,22 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 27 — TODO/FIXME Cleanup, 2026-06-17] — Remove closed TODO marker
+
+### Fixed
+
+- **Removed closed TODO in _common.py**: Removed "TODO S40 Wave 4.2" marker that was already completed (closed, refactored to direct calls). TODO count reduced from 10 to 9.
+
+### Verified
+
+- **Remaining 9 TODOs**: All are planned features (S40-W6, S94, S165+) or historical notes. No immediate action needed.
+- **Layer violations**: 0 top-level (all lazy imports or intentional patterns).
+
+### Notes
+
+- **Ponytail applied**: Minimal fix following existing patterns.
+- **Architecture status**: TODO/FIXME count at acceptable level (9 remaining, all planned).
+
 ## [Sprint 26 — Final Layer Violations Fix, 2026-06-17] — desktop_rpa_client lazy import
 
 ### Fixed
