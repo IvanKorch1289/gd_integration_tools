@@ -256,6 +256,58 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
         )
 
 
+
+
+# S165 W7: Consul KV source для non-secret runtime-config (Rule 7 hot-reload)
+
+
+def _is_consul_enabled() -> bool:
+    """Решить, активировать ли ConsulConfigSettingsSource.
+
+    Приоритет: env-override (``CONSUL_ENABLED``) → default ``False``
+    (opt-in для production, default-OFF на dev_light).
+    """
+    from os import getenv
+
+    raw = getenv("CONSUL_ENABLED")
+    if raw is not None and raw.strip():
+        return raw.strip().lower() not in {"0", "false", "no"}
+    return False
+
+
+class ConsulConfigSettingsSource(FilteredSettingsSource):
+    """Consul KV source для hot-reload runtime-config (Rule 7).
+
+    Загружает keys с префиксом ``runtime/{yaml_group}/``.
+    На prod: opt-in через ``CONSUL_ENABLED=true`` + ``CONSUL_ADDR``.
+    """
+
+    def _load_data(self) -> dict[str, Any]:
+        """Load data from Consul KV. Fail-silent if unreachable."""
+        if not _is_consul_enabled():
+            return {}
+
+        from os import getenv
+
+        consul_addr = getenv("CONSUL_ADDR")
+        if not consul_addr:
+            return {}
+
+        try:
+            from src.backend.core.config.consul_config import ConsulConfigStore
+
+            host = consul_addr.split("://")[-1].split(":")[0]
+            store = ConsulConfigStore(host=host)
+            prefix = f"runtime/{self.yaml_group}/"
+            data: dict[str, Any] = {}
+            for key, value in store.items(prefix):
+                field_name = key[len(prefix):] if key.startswith(prefix) else key
+                data[field_name] = value
+            return data
+        except Exception:
+            return {}
+
+
 class BaseSettingsWithLoader(BaseSettings):
     """Base class for configuration models with multi-source loading support.
 
