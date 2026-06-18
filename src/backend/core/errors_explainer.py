@@ -21,6 +21,17 @@ __all__ = ("ErrorExplainer", "ExplainedError", "error_explainer", "explain_error
 
 @dataclass(slots=True)
 class ExplainedError:
+    """User-friendly error explanation with actionable remediation steps.
+
+    Attributes:
+        title: Short error title.
+        what_happened: Description of what went wrong.
+        why: Root cause explanation.
+        how_to_fix: List of actionable steps to resolve.
+        original: Original error message (optional).
+        docs_url: Link to relevant documentation (optional).
+    """
+
     title: str
     what_happened: str
     why: str

@@ -20,9 +20,19 @@ class RealClock:
     """
 
     def monotonic(self) -> float:
+        """Get monotonic clock value (seconds since arbitrary point).
+
+        Returns:
+            Monotonic time in seconds.
+        """
         return _time.monotonic()
 
     def time(self) -> float:
+        """Get wall-clock time (Unix epoch seconds).
+
+        Returns:
+            Current time as Unix timestamp.
+        """
         return _time.time()
 
 
@@ -41,9 +51,19 @@ class FakeClock:
         self._wall = wall_start
 
     def monotonic(self) -> float:
+        """Get fake monotonic clock value.
+
+        Returns:
+            Fake monotonic time in seconds.
+        """
         return self._mono
 
     def time(self) -> float:
+        """Get fake wall-clock time.
+
+        Returns:
+            Fake Unix timestamp.
+        """
         return self._wall
 
     def advance(self, seconds: float) -> None:

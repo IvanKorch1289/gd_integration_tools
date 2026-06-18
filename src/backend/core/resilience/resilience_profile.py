@@ -78,6 +78,11 @@ class ResilienceProfile:
     bulkhead: BulkheadPolicy | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert profile to dictionary for JSON serialization.
+
+        Returns:
+            Dictionary representation of the profile.
+        """
         from dataclasses import asdict
 
         return asdict(self)

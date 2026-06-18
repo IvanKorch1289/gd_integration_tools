@@ -18,6 +18,12 @@ class Bulkhead:
         self._semaphores: dict[str, asyncio.Semaphore] = {}
 
     def register(self, service: str, max_concurrent: int = 10) -> None:
+        """Register a service with max concurrent limit.
+
+        Args:
+            service: Service identifier.
+            max_concurrent: Maximum concurrent calls allowed.
+        """
         self._semaphores[service] = asyncio.Semaphore(max_concurrent)
 
     async def acquire(self, service: str, timeout: float = 30.0) -> bool:
@@ -32,10 +38,20 @@ class Bulkhead:
             return False
 
     def release(self, service: str) -> None:
+        """Release a semaphore slot for a service.
+
+        Args:
+            service: Service identifier.
+        """
         if service in self._semaphores:
             self._semaphores[service].release()
 
     def stats(self) -> dict[str, dict[str, int]]:
+        """Get statistics for all registered services.
+
+        Returns:
+            Dict mapping service names to their semaphore stats.
+        """
         return {
             name: {"available": sem._value, "locked": sem.locked()}
             for name, sem in self._semaphores.items()
