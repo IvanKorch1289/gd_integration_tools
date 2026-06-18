@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **197**; уникальных слотов: **186**.
+Всего ADR-файлов: **199**; уникальных слотов: **188**.
 
 ⚠️ Collision-слоты (11): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -203,5 +203,7 @@
 | 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
 | 0237 *(collision)* | ADR-0237: Sprint 163 Closure — Per-Route Protocol Overrides & Settings Wiring | — | [0237-sprint-163-closure.md](0237-sprint-163-closure.md) |
 | 0237 *(collision)* | ADR-0237: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0237-sprint-165-closure.md](0237-sprint-165-closure.md) |
+| 0239 | ADR-0239: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0239-sprint-165-closure.md](0239-sprint-165-closure.md) |
+| 0241 | ADR-0241: Sprint 166 Final Closure — Kafka CDC + Sandbox + Docs (3 atomic, score 9.9, 0 NEW violations) | — | [0241-sprint-166-final-closure.md](0241-sprint-166-final-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
