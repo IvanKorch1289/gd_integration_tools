@@ -1,32 +1,37 @@
-# gd_integration_tools — документация
+# gd_integration_tools
 
-Документация структурирована по [Diátaxis](https://diataxis.fr) на 4 квадранта:
+Universal domain-agnostic integration platform (Python 3.14+, Apache-Camel/Airflow-style).
 
-```{toctree}
-:maxdepth: 2
-:caption: Содержание
+**Public API**: at subpackage level (`src.backend.core`, `src.backend.services`, `src.backend.dsl`, `src.backend.entrypoints`).
 
-tutorials/index
-how-to/index
-reference/index
-explanation/index
+## Quick Links
+
+- [Architecture](ARCHITECTURE.md)
+- [Domain DSL](dsl/index.md) — RouteBuilder + WorkflowBuilder
+- [AI Platform](ai/index.md) — AIGateway + PydanticAI + MultiAgent
+- [ADRs](adr/index.md) — 190+ Architecture Decision Records
+
+## Layers
+
+```
+src/frontend/  →  src/backend/entrypoints/  →  src/backend/services/  →  src/backend/infrastructure/
+                                                       ↓
+                                                  src/backend/core/  (interfaces, DI)
 ```
 
-## Быстрый вход
+## Status (S164)
 
-* **Новички** → начните с [Tutorials](tutorials/index.md).
-* **Решаете конкретную задачу** → откройте [How-To Guides](how-to/index.md).
-* **Ищете API/Schema** → [Reference](reference/index.md).
-* **Хотите понять архитектуру** → [Explanation](explanation/index.md).
+| Domain | Status | Notes |
+|---|---|---|
+| DSL builders | ✅ | 18 processors, 13 mixins, fluent API |
+| AI Gateway | ✅ | 9-step pipeline, SkillRegistry |
+| Workflows | ✅ | LiteTemporal + Temporal |
+| Auth facade | ✅ | S164 W35 (JWT/API-key/OAuth2) |
+| Storage facade | ✅ | S164 W37 (Rule 1) |
+| Cache facade | 🟡 | S164 W38 pending |
+| External HTTP | ✅ | httpx + purgatory CB + tenacity |
+| CDC | 🟡 | Polling + Listen/Notify OK, Debezium scaffold |
+| Agent isolation | 🟡 | E2B sandbox scaffold |
+| Notifications | 🟡 | Email only, Telegram/Push scaffold |
 
-## Связанные документы
-
-* [PLAN.md](https://github.com/crazyivan1289/gd_integration_tools/blob/master/PLAN.md) — главный roadmap.
-* [ADR](https://github.com/crazyivan1289/gd_integration_tools/tree/master/docs/adr) — принятые архитектурные решения.
-* [CLAUDE.md](https://github.com/crazyivan1289/gd_integration_tools/blob/master/CLAUDE.md) — режим работы AI-агента.
-
-## Indices
-
-* {ref}`genindex`
-* {ref}`modindex`
-* {ref}`search`
+See [ADRs](adr/index.md) for detailed decisions.

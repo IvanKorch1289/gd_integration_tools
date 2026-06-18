@@ -1,0 +1,72 @@
+site_name: gd_integration_tools
+site_description: Universal domain-agnostic integration platform (Python 3.14+)
+site_author: Korch Development
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.index
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    primary: indigo
+    accent: indigo
+
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-\.]+'
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_symbol_type_heading: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            merge_init_into_class: false
+            docstring_section_style: table
+            show_if_no_docstring: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Architecture: ARCHITECTURE.md
+  - Domain DSL: dsl/
+  - AI Platform: ai/
+  - Workflows: workflows/
+  - EntryPoints: entrypoints/
+  - Operations: ops/
+  - ADRs: adr/
+
+extra:
+  generator: false
