@@ -63,7 +63,22 @@ def _is_safe_return_to(url: str, allowed_host: str | None) -> bool:
     return allowed_host is not None and parsed.netloc == allowed_host
 
 
-@router.get("/login", summary="SAML SP-initiated SSO login")
+@router.get(
+    "/login",
+    summary="SAML SP-initiated SSO login",
+    description=(
+        "Инициирует SP-initiated SAML SSO flow. Query param return_to — "
+        "same-origin URL для post-login redirect (защита от open-redirect: "
+        "external URL отклоняются). Генерирует AuthnRequest ID + RelayState, "
+        "возвращает 302 redirect на IdP SSO URL с SAMLRequest и RelayState "
+        "параметрами. Используется при входе в Admin UI через SSO provider."
+    ),
+    tags=["Auth / SAML"],
+    responses={
+        302: {"description": "Redirect на IdP SSO URL с SAMLRequest."},
+        500: {"description": "SAML handler не сконфигурирован."},
+    },
+)
 async def saml_login(
     request: Request, return_to: str | None = None
 ) -> RedirectResponse:
@@ -90,7 +105,23 @@ async def saml_login(
     return RedirectResponse(url=result.redirect_url, status_code=302)
 
 
-@router.post("/acs", summary="SAML Assertion Consumer Service")
+@router.post(
+    "/acs",
+    summary="SAML Assertion Consumer Service",
+    description=(
+        "Принимает SAMLResponse от IdP через HTTP-POST binding (form-data). "
+        "Верифицирует подпись через handler.consume_acs (validator-factory "
+        "из app.state). Возвращает JSON с principal/session_index и "
+        "HttpOnly+Secure session-cookie 'saml_session' в Set-Cookie. "
+        "401 при replay/invalid signature/expired."
+    ),
+    tags=["Auth / SAML"],
+    responses={
+        200: {"description": "Login success: principal + session_index."},
+        401: {"description": "Auth failed: replay, invalid signature, expired."},
+        500: {"description": "SAML handler не сконфигурирован."},
+    },
+)
 async def saml_acs(request: Request, response: Response) -> dict:
     """Принять SAMLResponse от IdP.
 
@@ -159,7 +190,20 @@ async def saml_acs(request: Request, response: Response) -> dict:
     }
 
 
-@router.get("/sls", summary="SAML Single Logout Service")
+@router.get(
+    "/sls",
+    summary="SAML Single Logout Service",
+    description=(
+        "SLO endpoint — invalidate local session, перенаправляет на IdP SLO. "
+        "При отсутствии IdP SLO возвращает 200 с очисткой cookie 'saml_session'. "
+        "Используется при logout из Admin UI."
+    ),
+    tags=["Auth / SAML"],
+    responses={
+        200: {"description": "Session cleared (cookie deleted)."},
+        302: {"description": "Redirect на IdP SLO URL."},
+    },
+)
 async def saml_sls(request: Request) -> Response:
     """SLO — invalidate session, redirect на IdP SLO.
 
