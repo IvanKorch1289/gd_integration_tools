@@ -114,6 +114,15 @@ class GrpcChannelPool:
         if not self._started:
             raise RuntimeError(f"GrpcChannelPool not started: {self._target}")
 
+        # S165 W6: Purgatory CB integration (Rule 6).
+        # Per skill: nested `async with self._lock:` requires manual CB
+        # __aenter__/__aexit__ (per-call shared CB).
+        from src.backend.core.resilience.breaker import CircuitOpen
+
+        breaker = _get_grpc_breaker(self._target)
+        breaker_guard = breaker.guard()
+        await breaker_guard.__aenter__()
+
         channel: Any | None = None
         try:
             try:
@@ -150,6 +159,7 @@ class GrpcChannelPool:
                     except Exception:
                         pass
                     self._created -= 1
+            await breaker_guard.__aexit__(None, None, None)
 
     def _create_channel(self) -> Any:
         import grpc
