@@ -15,9 +15,29 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.logging.factory import get_logger
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
+# S165 W5: Purgatory Circuit Breaker для Kafka DLQ writer (Rule 6).
+# Per skill: import settings pre-loads core.config.settings, breaking
+# the circular chain breaker -> core.logging -> core.interfaces -> breaker.
+from src.backend.core.resilience.breaker import (  # noqa: E402
+    BreakerSpec,
+    get_breaker_registry,
+)
+
 __all__ = ("KafkaDLQWriter",)
 
 logger = get_logger(__name__)
+
+
+def _get_kafka_dlq_breaker() -> Any:
+    """S165 W5: Module-level shared CB singleton for Kafka DLQ writer (per-call)."""
+    return get_breaker_registry().get_or_create(
+        "kafka_dlq_writer",
+        BreakerSpec(
+            name="kafka_dlq_writer",
+            failure_threshold=5,
+            recovery_timeout=30.0,
+        ),
+    )
 
 
 class KafkaDLQWriter:
@@ -49,15 +69,18 @@ class KafkaDLQWriter:
         Key = ``dlq_id`` (для idempotent-семантики с idempotent producer).
         """
         topic = f"{self._topic_prefix}{envelope.transport}"
-        try:
-            await self._producer.send_and_wait(
-                topic,
-                value=self._serializer(envelope),
-                key=envelope.dlq_id.encode("utf-8"),
-            )
-        except Exception as _:
-            logger.exception(
-                "dlq.kafka.write_failed",
-                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
-            )
-            raise
+        # S165 W5: wrap Kafka send with Purgatory CB (Rule 6).
+        breaker = _get_kafka_dlq_breaker()
+        async with breaker.guard():
+            try:
+                await self._producer.send_and_wait(
+                    topic,
+                    value=self._serializer(envelope),
+                    key=envelope.dlq_id.encode("utf-8"),
+                )
+            except Exception as _:
+                logger.exception(
+                    "dlq.kafka.write_failed",
+                    extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
+                )
+                raise
