@@ -36,7 +36,19 @@ def _no_store_headers() -> dict[str, str]:
     return {"Cache-Control": "no-store"}
 
 
-@router.get("/liveness", summary="Kubernetes liveness probe (process-only)")
+@router.get(
+    "/liveness",
+    summary="Kubernetes liveness probe (process-only)",
+    description=(
+        "Возвращает 200 пока процесс жив. НЕ зависит от внешней инфры "
+        "(DB/Redis/Cache). K8s перезапускает контейнер при N подряд "
+        "неудачных проверках. Liveness не должна падать при сбоях "
+        "DB/Redis: иначе уйдёт в crashloop, хотя fallback мог бы "
+        "сохранить функциональность."
+    ),
+    tags=["Health"],
+    responses={200: {"description": "Процесс жив."}},
+)
 async def liveness_probe() -> JSONResponse:
     """Возвращает 200 пока процесс жив. Не зависит от внешней инфры.
 
@@ -51,7 +63,21 @@ async def liveness_probe() -> JSONResponse:
 
 
 @router.get(
-    "/readiness", summary="Kubernetes readiness probe (graceful degradation aware)"
+    "/readiness",
+    summary="Kubernetes readiness probe (graceful degradation aware)",
+    description=(
+        "Возвращает 200 при работающем сервисе, в т.ч. через fallback'и. "
+        "Логика: 503 'initializing' если lifespan ещё не завершён; "
+        "503 'not_ready' если любой компонент down (CB OPEN и fallback упал); "
+        "200 'degraded' если хотя бы один компонент degraded (под остаётся "
+        "в K8s трафике); иначе 200 'ready'. Cache-Control: no-store для "
+        "обхода LB-кэша."
+    ),
+    tags=["Health"],
+    responses={
+        200: {"description": "Готов (или degraded с fallback'ами)."},
+        503: {"description": "Не готов (initializing или critical component down)."},
+    },
 )
 async def readiness_probe(request: Request) -> JSONResponse:
     """Возвращает 200 при работающем сервисе, в т.ч. через fallback'и.
@@ -115,7 +141,20 @@ async def readiness_probe(request: Request) -> JSONResponse:
     return JSONResponse(content=payload, headers=_no_store_headers())
 
 
-@router.get("/startup", summary="Kubernetes startup probe")
+@router.get(
+    "/startup",
+    summary="Kubernetes startup probe",
+    description=(
+        "Возвращает 200 когда DSL-маршруты и actions зарегистрированы "
+        "(lifespan завершён). Медленный startup probe предотвращает "
+        "преждевременный рестарт контейнера во время инициализации."
+    ),
+    tags=["Health"],
+    responses={
+        200: {"description": "Started: routes и actions count."},
+        503: {"description": "Starting: lifespan ещё не завершён."},
+    },
+)
 async def startup_probe(request: Request) -> JSONResponse:
     """Возвращает 200 когда DSL-маршруты и actions зарегистрированы.
 
@@ -142,7 +181,23 @@ async def startup_probe(request: Request) -> JSONResponse:
     )
 
 
-@router.get("/components", summary="Detailed component health")
+@router.get(
+    "/components",
+    summary="Detailed component health (HealthAggregator + ResilienceCoordinator)",
+    description=(
+        "Расширенный отчёт per-компонент + per-chain. Query mode: "
+        "'fast' (default, SLA <100ms) — PING per component; "
+        "'deep' (SLA <2s) — smoke-operation + per-chain breaker_state / "
+        "last_used_backend / degradation. 200 при ok/degraded, 503 при "
+        "down, 400 при invalid mode."
+    ),
+    tags=["Health"],
+    responses={
+        200: {"description": "Component statuses (fast или deep mode)."},
+        400: {"description": "Invalid mode (не 'fast' и не 'deep')."},
+        503: {"description": "Критические компоненты down."},
+    },
+)
 async def components_health(mode: str = "fast") -> JSONResponse:
     """Расширенный отчёт через ``HealthAggregator`` + ``ResilienceCoordinator``.
 
