@@ -56,7 +56,24 @@ def _serialize_decimal(value: Decimal) -> str:
     return f"{value:.6f}"
 
 
-@router.post("/estimate", response_model=CostEstimateResponse)
+@router.post(
+    "/estimate",
+    response_model=CostEstimateResponse,
+    summary="Pre-run cost estimation для workflow",
+    description=(
+        "Sprint 12 K3 W3 — оценивает стоимость выполнения workflow "
+        "на основе historical samples. Body: workflow_id, version, "
+        "input_size_bytes, sample_period_days. Возвращает p50/p95 duration, "
+        "estimated LLM tokens + cost, compute seconds, storage bytes. "
+        "Используется в Admin UI для pre-flight budget check."
+    ),
+    tags=["Admin / Workflow Cost"],
+    responses={
+        200: {"description": "Cost estimate breakdown."},
+        422: {"description": "Invalid request (workflow_id, version, etc.)."},
+        500: {"description": "Estimator error (no samples, etc.)."},
+    },
+)
 async def estimate_workflow_cost(request: CostEstimateRequest) -> CostEstimateResponse:
     """Sprint 12 K3 W3 — pre-run estimation для workflow."""
     from src.backend.services.workflows.cost_estimator import WorkflowCostEstimator
@@ -94,7 +111,20 @@ async def estimate_workflow_cost(request: CostEstimateRequest) -> CostEstimateRe
     )
 
 
-@router.get("/history/{workflow_id}")
+@router.get(
+    "/history/{workflow_id}",
+    summary="Историческая стоимость workflow за период",
+    description=(
+        "Возвращает daily cost breakdown для workflow_id за последние "
+        "period_days дней (1-90, default 7). Используется в Admin UI "
+        "trend page для cost optimization decisions."
+    ),
+    tags=["Admin / Workflow Cost"],
+    responses={
+        200: {"description": "Daily cost history dict."},
+        422: {"description": "Invalid period_days (1-90)."},
+    },
+)
 async def get_workflow_cost_history(
     workflow_id: str, period_days: int = Query(7, ge=1, le=90)
 ) -> dict[str, Any]:
