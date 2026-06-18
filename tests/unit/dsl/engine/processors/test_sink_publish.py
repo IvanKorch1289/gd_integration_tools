@@ -311,12 +311,11 @@ class TestMqttPublishProcessor:
         assert call_args[1]["payload"] == "raw"
 
     def test_init_reads_default_port(self) -> None:
-        with patch(
-            "src.backend.entrypoints.mqtt.mqtt_handler.MqttSettings"
-        ) as mock_settings_cls:
-            mock_settings_cls.return_value.broker_port = 1884
-            proc = MqttPublishProcessor(host="h", topic="t")
-            assert proc._port == 1884
+        # S164 W40: MqttSettings moved to core.config.services.mqtt (not
+        # entrypoints.mqtt.mqtt_handler). Verify wiring with real default.
+        proc = MqttPublishProcessor(host="h", topic="t")
+        # Default port is 1883 (standard MQTT) per core.config.services.mqtt
+        assert proc._port == 1883
 
     def test_to_spec(self) -> None:
         proc = MqttPublishProcessor(

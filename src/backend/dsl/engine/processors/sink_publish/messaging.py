@@ -20,6 +20,11 @@ from src.backend.dsl.engine.processors.sink_publish.generic import (
     _store_result,
 )
 
+# S164 W40: MqttSettings import (was missing — sibling's MQTT processor
+# referenced undefined symbol). Per Rule 8 (no dead code) + Rule 15
+# (zero TD): fix import.
+from src.backend.core.config.services.mqtt import MqttSettings
+
 
 @dataclass(slots=True)
 class MqPublishProcessor(BaseProcessor):
