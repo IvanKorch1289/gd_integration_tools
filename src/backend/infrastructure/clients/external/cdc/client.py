@@ -16,6 +16,9 @@ from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
 )
+from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (
+    _KafkaDebeziumStrategy,  # S166 W1: cross-import (S167 W1.1 wired)
+)
 from src.backend.infrastructure.clients.external.cdc.strategies import (
     _CDCStrategy,  # S60 W2: cross-import
     _ListenNotifyStrategy,  # S60 W2: cross-import
@@ -41,13 +44,14 @@ _cdc_lock = threading.Lock()
 class CDCClient:
     """Клиент CDC — управление подписками на изменения.
 
-    Поддерживает 3 стратегии: polling, listen_notify, logminer.
+    Поддерживает 4 стратегии: polling, listen_notify, logminer, kafka.
     """
 
     _STRATEGIES: dict[str, type[_CDCStrategy]] = {
         "polling": _PollingStrategy,
         "listen_notify": _ListenNotifyStrategy,
         "logminer": _LogMinerStrategy,
+        "kafka": _KafkaDebeziumStrategy,  # S166 W1: re-added в S167 W1.1
     }
 
     def __init__(self) -> None:

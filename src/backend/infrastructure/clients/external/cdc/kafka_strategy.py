@@ -25,12 +25,15 @@ from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,
     CDCSubscription,
 )
+from src.backend.infrastructure.clients.external.cdc.strategies import (
+    _CDCStrategy,  # S167 W1.1: enforce Protocol contract (ABC base)
+)
 from src.backend.infrastructure.logging.factory import get_logger
 
 logger = get_logger("infrastructure.clients.cdc.kafka")
 
 
-class _KafkaDebeziumStrategy:
+class _KafkaDebeziumStrategy(_CDCStrategy):
     """S166 W1: Kafka consumer для Debezium CDC topics (Rule 14).
 
     Per audit recommendation: aiokafka consumer с offset management.
