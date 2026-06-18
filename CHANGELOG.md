@@ -5,6 +5,25 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 24 — Entry points Domain Audit & Fixes, 2026-06-17] — Syntax error, dead code cleanup
+
+### Fixed
+
+- **CRITICAL: Syntax error in ws_auth.py:91**: Fixed Python 2 `except ImportError, AttributeError, ConnectionError:` to `except (ImportError, AttributeError, ConnectionError):`. File was previously unimportable.
+- **HIGH: Dead code in grpc/grpc_server.py**: Deleted 510 LOC monolithic duplicate of decompacted `grpc_server/` package. Contained hardcoded 100MB message size bug.
+
+### Verified
+
+- **Entry points domain**: 190+ files, 20 subdirectories, 8 protocols (REST, gRPC, GraphQL, WS, SSE, MCP, SOAP, MQTT).
+- **Rate limiting**: 4-tier system (global, per-protocol, WS-specific, login-specific).
+- **Auth**: Defense-in-depth via AuthRequiredMiddleware (6 methods).
+- **OpenAPI**: Auto-generated via FastAPI; admin schemas endpoint supports jsonschema/openapi/asyncapi export.
+
+### Notes
+
+- **Ponytail applied**: Minimal fixes following existing patterns.
+- **Architecture status**: Entry points domain is production-ready with comprehensive protocol coverage.
+
 ## [Sprint 23 — Layer Violations Fix, 2026-06-17] — SQLAlchemy lazy imports in langmem
 
 ### Fixed
