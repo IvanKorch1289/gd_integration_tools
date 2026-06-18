@@ -140,7 +140,9 @@ async def register_protocol_providers() -> None:
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
-        from src.backend.infrastructure.notifications.gateway import get_gateway
+        from src.backend.core.notifications import (
+            get_gateway,  # S167 W1.3: ADR-0207 facade (was infrastructure.notifications)
+        )
         from src.backend.services.ops.notification_adapters import (
             EmailNotificationAdapter,
             ExpressNotificationAdapter,

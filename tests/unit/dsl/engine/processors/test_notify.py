@@ -20,7 +20,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 @pytest.mark.asyncio
 async def test_notify_success() -> None:
     with patch(
-        "src.backend.infrastructure.notifications.gateway.get_gateway"
+        "src.backend.core.notifications.get_gateway"
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
@@ -47,7 +47,7 @@ async def test_notify_missing_recipient() -> None:
 @pytest.mark.asyncio
 async def test_notify_uses_body_recipient() -> None:
     with patch(
-        "src.backend.infrastructure.notifications.gateway.get_gateway"
+        "src.backend.core.notifications.get_gateway"
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
@@ -65,7 +65,7 @@ async def test_notify_uses_body_recipient() -> None:
 @pytest.mark.asyncio
 async def test_notify_failed_status_sets_error() -> None:
     with patch(
-        "src.backend.infrastructure.notifications.gateway.get_gateway"
+        "src.backend.core.notifications.get_gateway"
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="failed", error="timeout")
@@ -83,7 +83,7 @@ async def test_notify_failed_status_sets_error() -> None:
 @pytest.mark.asyncio
 async def test_notify_with_context_property() -> None:
     with patch(
-        "src.backend.infrastructure.notifications.gateway.get_gateway"
+        "src.backend.core.notifications.get_gateway"
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
