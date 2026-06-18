@@ -15,7 +15,22 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/admin/feedback", tags=["admin", "feedback"])
 
 
-@router.get("/training-runs")
+@router.get(
+    "/training-runs",
+    summary="Последние DSPy training runs",
+    description=(
+        "Возвращает список завершённых DSPy training runs с метаданными "
+        "(id, dataset, model, accuracy, started_at, finished_at). "
+        "В production runs хранятся в LangfusePromptStorage; пока возвращается "
+        "пустой список — отображается заголовок «Нет завершённых runs». "
+        "Используется в Admin UI /admin/feedback dashboard."
+    ),
+    tags=["admin", "feedback"],
+    responses={
+        200: {"description": "Список training runs (может быть пустой)."},
+        500: {"description": "Ошибка чтения из storage backend."},
+    },
+)
 async def list_training_runs(limit: int = 10) -> dict[str, Any]:
     """Последние DSPy training runs (in-memory stub; storage TBD).
 
@@ -25,7 +40,20 @@ async def list_training_runs(limit: int = 10) -> dict[str, Any]:
     return {"runs": [], "count": 0, "limit": limit}
 
 
-@router.get("/labeled-count")
+@router.get(
+    "/labeled-count",
+    summary="Кол-во labeled feedback per tenant",
+    description=(
+        "Возвращает количество labeled feedback (использованных для "
+        "DSPy fine-tuning) per tenant_id или глобально (если tenant_id=None). "
+        "Используется в Admin UI для отображения прогресса разметки."
+    ),
+    tags=["admin", "feedback"],
+    responses={
+        200: {"description": "Count of labeled feedback (может быть 0)."},
+        500: {"description": "Ошибка чтения из feedback service."},
+    },
+)
 async def labeled_count(tenant_id: str | None = None) -> dict[str, Any]:
     """Кол-во labeled feedback (по tenant'у или глобально)."""
     try:
