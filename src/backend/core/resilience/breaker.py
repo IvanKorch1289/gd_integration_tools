@@ -51,7 +51,9 @@ logger = get_logger(__name__)
 # ловить ``CircuitOpen`` без импорта внутренних модулей purgatory.
 CircuitOpen = OpenedState
 
-_STATE_MAP: Final[dict[str, str]] = {
+# S168 W4: PEP 695 type alias для clarity и DRY.
+type StateMap = dict[str, str]
+_STATE_MAP: Final[StateMap] = {
     "closed": "closed",
     "opened": "open",
     "half-opened": "half_open",
