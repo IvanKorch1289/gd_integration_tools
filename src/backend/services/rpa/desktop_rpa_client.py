@@ -20,7 +20,6 @@ import httpx
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
-from src.backend.infrastructure.resilience.retry import make_async_retry
 
 __all__ = ("DesktopRpaClient", "DesktopRpaError")
 
@@ -81,13 +80,20 @@ async def _execute_with_protection(
             return await http.post(url, json=params, headers=headers)
 
 
-_execute_with_retry = make_async_retry(
-    max_attempts=3,
-    initial_backoff=1.0,
-    multiplier=2.0,
-    max_backoff=8.0,
-    on=(httpx.HTTPError, DesktopRpaError),
-)(_execute_with_protection)
+def _get_execute_with_retry() -> Any:
+    """Lazy-initialized retry wrapper for _execute_with_protection."""
+    from src.backend.infrastructure.resilience.retry import make_async_retry
+
+    return make_async_retry(
+        max_attempts=3,
+        initial_backoff=1.0,
+        multiplier=2.0,
+        max_backoff=8.0,
+        on=(httpx.HTTPError, DesktopRpaError),
+    )(_execute_with_protection)
+
+
+_execute_with_retry = None  # Will be lazily initialized
 
 
 class DesktopRpaClient:
@@ -133,6 +139,9 @@ class DesktopRpaClient:
 
         # S164 W2: wrapped CB + retry.
         try:
+            global _execute_with_retry
+            if _execute_with_retry is None:
+                _execute_with_retry = _get_execute_with_retry()
             response = await _execute_with_retry(
                 url,
                 params=params,
