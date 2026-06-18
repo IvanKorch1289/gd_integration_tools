@@ -51,7 +51,7 @@ class LangFuseReader:
         try:
             from langfuse import Langfuse
 
-            from src.backend.core.config.ai_2026 import langfuse_settings
+            from src.backend.core.config.ai_stack import langfuse_settings
 
             if not langfuse_settings.enabled:
                 return None

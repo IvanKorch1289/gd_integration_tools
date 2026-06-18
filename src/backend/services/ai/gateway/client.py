@@ -39,7 +39,7 @@ class LiteLLMGateway:
         cost_tracking: bool | None = None,
         model_registry: Any | None = None,
     ) -> None:
-        from src.backend.core.config.ai_2026 import litellm_gateway_settings as cfg
+        from src.backend.core.config.ai_stack import litellm_gateway_settings as cfg
 
         self._default_model = default_model or cfg.default_model
         self._fallbacks = list(fallback_models or cfg.fallback_models)
@@ -117,7 +117,7 @@ class LiteLLMGateway:
     def _select_cost_callback(self) -> Any:
         """Wave D.5: LangFuse как primary cost-tracker если включён."""
         try:
-            from src.backend.core.config.ai_2026 import langfuse_settings
+            from src.backend.core.config.ai_stack import langfuse_settings
         except Exception as _:  # noqa: BLE001
             return self._cost_callback
         if not langfuse_settings.enabled:

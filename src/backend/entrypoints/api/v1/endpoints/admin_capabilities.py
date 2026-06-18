@@ -112,7 +112,7 @@ async def get_capability_graph() -> dict[str, Any]:
         return {"nodes": [], "edges": []}
 
     try:
-        from src.backend.services.plugins.manifest_v11 import (
+        from src.backend.services.plugins.manifest_toml import (
             PluginManifestError,
             load_plugin_manifest,
         )

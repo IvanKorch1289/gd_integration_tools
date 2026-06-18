@@ -19,10 +19,10 @@ pytestmark = pytest.mark.integration
 
 def test_authz_passthrough_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     """При tool_authz_enabled=False все actions допускаются."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", False, raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", False, raising=True)
     assert _check_mcp_tool_authz("custom.action") is None
     assert _check_mcp_tool_authz("admin.purge") is None
 
@@ -31,13 +31,13 @@ def test_authz_deny_when_enabled_and_not_in_allowlist(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При tool_authz_enabled=True без allowlist + не-public namespace → deny."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_allowlist", [], raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_allowlist", [], raising=True)
     monkeypatch.setattr(
-        ai_2026.mcp_settings,
+        ai_stack.mcp_settings,
         "tool_public_namespaces",
         ["system", "health"],
         raising=True,
@@ -54,18 +54,18 @@ def test_authz_allow_when_in_explicit_allowlist(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """action_name в tool_allowlist → allow."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(
-        ai_2026.mcp_settings,
+        ai_stack.mcp_settings,
         "tool_allowlist",
         ["credit.score.calculate", "rag.retrieve"],
         raising=True,
     )
     monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_public_namespaces", [], raising=True
+        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True
     )
 
     assert _check_mcp_tool_authz("credit.score.calculate") is None
@@ -75,13 +75,13 @@ def test_authz_allow_when_in_explicit_allowlist(
 
 def test_authz_allow_when_namespace_is_public(monkeypatch: pytest.MonkeyPatch) -> None:
     """action в public namespace → allow."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_allowlist", [], raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_allowlist", [], raising=True)
     monkeypatch.setattr(
-        ai_2026.mcp_settings,
+        ai_stack.mcp_settings,
         "tool_public_namespaces",
         ["system", "health", "tech"],
         raising=True,
@@ -97,15 +97,15 @@ def test_authz_handles_action_without_namespace(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """action без точки в имени (legacy) корректно обрабатывается."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
-    monkeypatch.setattr(ai_2026.mcp_settings, "tool_authz_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_allowlist", ["legacy_action"], raising=True
+        ai_stack.mcp_settings, "tool_allowlist", ["legacy_action"], raising=True
     )
     monkeypatch.setattr(
-        ai_2026.mcp_settings, "tool_public_namespaces", [], raising=True
+        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True
     )
 
     assert _check_mcp_tool_authz("legacy_action") is None

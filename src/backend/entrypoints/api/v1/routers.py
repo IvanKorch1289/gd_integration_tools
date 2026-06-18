@@ -115,10 +115,10 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.backend.entrypoints.api.v1.endpoints.tech import router as tech_router
     from src.backend.entrypoints.api.v1.endpoints.users import router as users_router
-    from src.backend.entrypoints.api.v1.endpoints.v11_inventory import (
+    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         plugins_router as v11_plugins_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.v11_inventory import (
+    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         routes_router as v11_routes_router,
     )
 

@@ -55,11 +55,11 @@ async def test_chat_passthrough_when_gate_disabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При policy_gate_enabled=False _policy_gate возвращает None (continue)."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_2026.ai_agent_settings, "policy_gate_enabled", False, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", False, raising=True
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
@@ -73,11 +73,11 @@ async def test_chat_allows_when_gateway_returns_allow(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """gate=True + gateway.allow → _policy_gate возвращает None (continue)."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_2026.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
     )
     gateway = _build_gateway(allowed=True)
     monkeypatch.setattr(
@@ -96,11 +96,11 @@ async def test_chat_denies_when_gateway_returns_deny(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """gate=True + gateway.deny → возвращает deny-envelope с correlation_id."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_2026.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
     )
     gateway = _build_gateway(allowed=False)
     monkeypatch.setattr(
@@ -123,11 +123,11 @@ async def test_fail_closed_when_gateway_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """gate=True + gateway is None → fail-closed deny."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_2026.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
     )
     monkeypatch.setattr(
         AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: None)
@@ -144,11 +144,11 @@ async def test_fail_closed_when_gateway_unavailable(
 @pytest.mark.asyncio
 async def test_fail_closed_when_gateway_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """gate=True + gateway.authorize raises → fail-closed deny."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_2026.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
     )
     gateway = _build_gateway(allowed=True, raise_exc=RuntimeError("boom"))
     monkeypatch.setattr(

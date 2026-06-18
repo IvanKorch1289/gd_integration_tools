@@ -20,7 +20,8 @@ Async фасад над JupyterHub API ``/hub/api`` с:
 
 Архитектура:
     * ``JupyterHubSettings`` — конфигурация (см. core/config/services/jupyter_hub.py).
-    * ``JupyterHubClient`` — этот модуль; thin wrapper над ``httpx.AsyncClient``.
+    * ``JupyterHubClient`` — этот модуль; wrapper над ``OutboundHttpClient``
+      (ADR-NEW-23: все исходящие HTTP через OutboundHttpClient с WAF).
     * Нет дополнительных зависимостей — используем ``httpx`` (уже в проекте).
 
 Ограничения:
@@ -32,9 +33,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
+from src.backend.core.net.outbound_http import OutboundHttpClient
+from src.backend.core.net.waf import WafPolicy
 from src.backend.infrastructure.logging.factory import get_logger
 
 __all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubUser", "JupyterHubServer")
@@ -109,6 +110,9 @@ class JupyterHubUser:
 class JupyterHubClient:
     """Async HTTP клиент JupyterHub REST API.
 
+    Использует ``OutboundHttpClient`` (ADR-NEW-23) вместо прямого
+    ``httpx.AsyncClient`` для соблюдения WAF-политики.
+
     Args:
         settings: Конфигурация подключения (url, token, timeouts, retries).
 
@@ -123,7 +127,7 @@ class JupyterHubClient:
 
     def __init__(self, settings: JupyterHubSettings) -> None:
         self._settings = settings
-        self._http: httpx.AsyncClient | None = None
+        self._http: OutboundHttpClient | None = None
 
     async def __aenter__(self) -> JupyterHubClient:
         self._http = self._build_client()
@@ -135,24 +139,21 @@ class JupyterHubClient:
             self._http = None
 
     @property
-    def http(self) -> httpx.AsyncClient:
+    def http(self) -> OutboundHttpClient:
         """Возвращает активный HTTP клиент или создаёт временный."""
         if self._http is None:
             self._http = self._build_client()
         return self._http
 
-    def _build_client(self) -> httpx.AsyncClient:
-        """Собирает ``httpx.AsyncClient`` с таймаутами и auth-заголовком."""
-        transport = httpx.AsyncHTTPTransport(retries=self._settings.max_retries)
-        timeout = httpx.Timeout(
-            self._settings.timeout_seconds, connect=self._settings.connect_timeout
-        )
-        return httpx.AsyncClient(
+    def _build_client(self) -> OutboundHttpClient:
+        """Собирает ``OutboundHttpClient`` с WAF-политикой и auth-заголовком."""
+        policy = WafPolicy(verify_ssl=self._settings.ssl_verify)
+        return OutboundHttpClient(
             base_url=self._settings.base_url.rstrip("/"),
             headers={"Authorization": f"token {self._settings.api_token}"},
-            timeout=timeout,
-            transport=transport,
-            verify=self._settings.ssl_verify,
+            policy=policy,
+            max_retries=self._settings.max_retries,
+            timeout=self._settings.timeout_seconds,
         )
 
     # ── Health / Info ──
@@ -288,20 +289,7 @@ class JupyterHubClient:
         """Низкоуровневый запрос с логированием и обработкой ошибок."""
         try:
             resp = await self.http.request(method, path, json=json)
-        except httpx.HTTPStatusError as exc:
-            _logger.warning(
-                "JupyterHub API error %s %s → %s: %s",
-                method,
-                path,
-                exc.response.status_code,
-                exc.response.text,
-            )
-            raise JupyterHubError(
-                f"JupyterHub API {method} {path}: {exc.response.text}",
-                status_code=exc.response.status_code,
-                response_body=exc.response.text,
-            ) from exc
-        except httpx.RequestError as exc:
+        except Exception as exc:
             _logger.warning("JupyterHub request error %s %s: %s", method, path, exc)
             raise JupyterHubError(
                 f"JupyterHub request error {method} {path}: {exc}"

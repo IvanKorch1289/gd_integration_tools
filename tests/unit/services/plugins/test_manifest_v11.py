@@ -1,5 +1,5 @@
 # ruff: noqa: S101
-"""Unit-тесты PluginManifestV11 + CapabilityRef (ADR-042 / ADR-044)."""
+"""Unit-тесты PluginManifest + CapabilityRef (ADR-042 / ADR-044)."""
 
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ from src.backend.core.security.capabilities import (
     CAPABILITY_NAME_PATTERN,
     CapabilityRef,
 )
-from src.backend.services.plugins.manifest_v11 import (
+from src.backend.services.plugins.manifest_toml import (
     PluginManifestError,
-    PluginManifestV11,
+    PluginManifest,
     PluginProvides,
     load_plugin_manifest,
 )
@@ -95,12 +95,12 @@ class TestCapabilityRef:
             )
 
 
-# ── PluginManifestV11 ─────────────────────────────────────────────────
+# ── PluginManifest ─────────────────────────────────────────────────
 
 
-class TestPluginManifestV11:
+class TestPluginManifest:
     def test_minimal_valid(self) -> None:
-        m = PluginManifestV11(
+        m = PluginManifest(
             name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
         )
         assert m.tenant_aware is False
@@ -109,7 +109,7 @@ class TestPluginManifestV11:
         assert m.config == {}
 
     def test_full_construction(self) -> None:
-        m = PluginManifestV11(
+        m = PluginManifest(
             name="credit",
             version="1.0.0",
             requires_core=">=0.2,<0.3",
@@ -132,7 +132,7 @@ class TestPluginManifestV11:
     )
     def test_invalid_plugin_name(self, bad_name: str) -> None:
         with pytest.raises(ValidationError):
-            PluginManifestV11(
+            PluginManifest(
                 name=bad_name,
                 version="1.0.0",
                 requires_core=">=0.1",
@@ -144,7 +144,7 @@ class TestPluginManifestV11:
     )
     def test_invalid_requires_core(self, bad_spec: str) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            PluginManifestV11(
+            PluginManifest(
                 name="x",
                 version="1.0.0",
                 requires_core=bad_spec,
@@ -153,7 +153,7 @@ class TestPluginManifestV11:
         assert "requires_core" in str(exc_info.value).lower()
 
     def test_is_compatible_with_core_within_range(self) -> None:
-        m = PluginManifestV11(
+        m = PluginManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.2,<0.3",
@@ -165,7 +165,7 @@ class TestPluginManifestV11:
 
     def test_extra_field_forbidden(self) -> None:
         with pytest.raises(ValidationError):
-            PluginManifestV11.model_validate(
+            PluginManifest.model_validate(
                 {
                     "name": "x",
                     "version": "1.0.0",

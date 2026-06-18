@@ -10,7 +10,7 @@ async def test_endpoint_returns_disabled_when_langfuse_off() -> None:
     from fastapi import FastAPI
     from httpx import ASGITransport, AsyncClient
 
-    from src.backend.core.config import ai_2026 as cfg
+    from src.backend.core.config import ai_stack as cfg
     from src.backend.entrypoints.api.v1.endpoints.ai_costs import router
 
     original = cfg.langfuse_settings.enabled
@@ -35,7 +35,7 @@ async def test_link_endpoint_returns_disabled_without_host() -> None:
     from fastapi import FastAPI
     from httpx import ASGITransport, AsyncClient
 
-    from src.backend.core.config import ai_2026 as cfg
+    from src.backend.core.config import ai_stack as cfg
     from src.backend.entrypoints.api.v1.endpoints.ai_costs import router
 
     original_host = cfg.langfuse_settings.host

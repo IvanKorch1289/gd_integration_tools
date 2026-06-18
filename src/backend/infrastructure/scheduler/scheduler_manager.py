@@ -287,7 +287,7 @@ def get_scheduler_manager() -> SchedulerManager:
 
     # S19 K4 W4b: LangMem consolidation — register only when cron expr is set
     try:
-        from src.backend.core.config.ai_2026 import langmem_settings
+        from src.backend.core.config.ai_stack import langmem_settings
 
         if langmem_settings.consolidation_schedule_cron:
             manager.schedule_cron(

@@ -250,7 +250,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 heartbeat_task.cancel()
                 try:
                     await heartbeat_task
-                except asyncio.CancelledError, Exception:  # noqa: BLE001
+                except (asyncio.CancelledError, Exception):  # noqa: BLE001
                     pass
 
         return outputs

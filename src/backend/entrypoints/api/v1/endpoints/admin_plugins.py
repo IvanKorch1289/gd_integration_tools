@@ -338,7 +338,7 @@ def _get_version_service() -> Any | None:
     try:
         from src.backend.main import app as fastapi_app
 
-        loader = getattr(fastapi_app.state, "plugin_loader_v11", None)
+        loader = getattr(fastapi_app.state, "plugin_loader_v1", None)
         if loader is None:
             return None
         from src.backend.services.plugins.versioning import PluginVersionService
@@ -377,7 +377,7 @@ async def diff_plugin_versions(
     if service is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="PluginVersionService недоступен (PluginLoaderV11 не запущен)",
+            detail="PluginVersionService недоступен (PluginLoader не запущен)",
         )
     try:
         result = service.diff(name, from_version=from_version, to_version=to_version)
@@ -430,7 +430,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     if not extensions_dir.is_dir():
         return PluginDependencyGraph()
 
-    from src.backend.services.plugins.manifest_v11 import (
+    from src.backend.services.plugins.manifest_toml import (
         PluginManifestError,
         load_plugin_manifest,
     )

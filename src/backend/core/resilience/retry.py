@@ -79,8 +79,17 @@ def with_retry(
     final_policy = policy or RetryPolicy()
 
     def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        """Decorator that adds retry logic to async functions.
+
+        Args:
+            func: Async function to wrap with retry logic.
+
+        Returns:
+            Wrapped function with retry capability.
+        """
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            """Wrapper that implements retry logic with budget tracking."""
             budget = final_policy.budget
             if budget is not None:
                 await budget.record_attempt()

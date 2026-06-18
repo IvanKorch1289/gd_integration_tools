@@ -6,7 +6,7 @@
 
 В отличие от прежней реализации (hardcoded ``ChatOpenAI``), сейчас:
 
-* Модель/fallback-chain/timeout берутся из :mod:`core.config.ai_2026`
+* Модель/fallback-chain/timeout берутся из :mod:`core.config.ai_stack`
   через :class:`LiteLLMGateway` — единый шлюз LLM.
 * Cost-tracking автоматически подключается через ``litellm.success_callback``
   (см. :mod:`services.ai.gateway.callbacks`).

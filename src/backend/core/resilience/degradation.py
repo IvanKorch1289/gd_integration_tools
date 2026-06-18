@@ -157,11 +157,22 @@ class DegradationManager:
         return self._manual_mode if self._manual_mode is not None else self.mode()
 
     def register(self, name: str, fallback: Callable[..., Any] | None = None) -> None:
+        """Register a component for degradation tracking.
+
+        Args:
+            name: Component identifier (e.g. "database", "redis").
+            fallback: Optional callable to invoke when component is degraded.
+        """
         self._components[name] = ComponentState(name=name)
         if fallback:
             self._fallbacks[name] = fallback
 
     def report_failure(self, name: str) -> None:
+        """Report a component failure. After 3 failures, marks component as degraded.
+
+        Args:
+            name: Component identifier.
+        """
         if name not in self._components:
             self.register(name)
         state = self._components[name]
@@ -173,6 +184,11 @@ class DegradationManager:
             logger.warning("Component '%s' degraded — activating fallback", name)
 
     def report_success(self, name: str) -> None:
+        """Report a component success. Resets failure count and recovers if degraded.
+
+        Args:
+            name: Component identifier.
+        """
         if name not in self._components:
             self.register(name)
         state = self._components[name]
@@ -183,6 +199,14 @@ class DegradationManager:
         state.fallback_active = False
 
     def get_fallback(self, name: str) -> Callable[..., Any] | None:
+        """Get fallback callable for a degraded component.
+
+        Args:
+            name: Component identifier.
+
+        Returns:
+            Fallback callable if component is degraded, None otherwise.
+        """
         return (
             self._fallbacks.get(name)
             if name in self._components and self._components[name].fallback_active
@@ -190,9 +214,24 @@ class DegradationManager:
         )
 
     def is_available(self, name: str) -> bool:
+        """Check if a component is available.
+
+        Args:
+            name: Component identifier.
+
+        Returns:
+            True if component is available, False if degraded.
+        """
         return self._components.get(name, ComponentState(name=name)).available
 
     def mode(self) -> DegradationMode:
+        """Calculate current degradation mode based on critical component status.
+
+        Returns:
+            DEGRADED if any critical component is down,
+            EMERGENCY if 2+ critical components are down,
+            NORMAL otherwise.
+        """
         critical = ["database", "redis"]
         critical_down = sum(
             1

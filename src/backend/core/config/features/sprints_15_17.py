@@ -222,10 +222,10 @@ class Sprints1517Flags(BaseSettings):
 
     routes_tenant_aware_strict: bool = Field(
         default=False,
-        title="K3 S17 W0: RouteManifestV11.tenant_aware строгий (K-ARCH-4)",
+        title="K3 S17 W0: RouteManifest.tenant_aware строгий (K-ARCH-4)",
         description=(
             "K3 Sprint 17 Wave W0 (K-ARCH-4). Owner: K3 Routes. ETA: S17. "
-            "Активирует пробрасывание RouteManifestV11.tenant_aware в "
+            "Активирует пробрасывание RouteManifest.tenant_aware в "
             "TenantContext.current_tenant() через RouteLoader. DSL шаги "
             "crud_* / proxy / dispatch_action получают tenant-фильтр. "
             "End-to-end test: tenant A не видит данные tenant B. "

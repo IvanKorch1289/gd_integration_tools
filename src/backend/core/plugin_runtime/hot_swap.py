@@ -10,7 +10,7 @@
     3. Модуль ``entry_class`` принудительно reload-ится через
        ``importlib.reload`` (захватывает изменения исходников
        без рестарта Python-процесса).
-    4. ``PluginLoaderV11`` перечитывает ``plugin.toml`` и заново
+    4. ``PluginLoader`` перечитывает ``plugin.toml`` и заново
        выполняет полный lifecycle: проверка ``requires_core`` →
        capability allocation → ``on_load`` → регистрация
        ``actions/repositories/processors``.
@@ -107,7 +107,7 @@ class HotSwapResult:
 class PluginLoaderProtocol(Protocol):
     """Минимальный контракт PluginLoader для hot_swap.
 
-    Совместим с :class:`PluginLoaderV11` из ``services/plugins/loader_v11.py``,
+    Совместим с :class:`PluginLoader` из ``services/plugins/loader.py``,
     но описан как Protocol, чтобы избежать импорта infrastructure/services
     из ``core/``.
     """
@@ -167,7 +167,7 @@ async def hot_swap(
     1. Найти текущую запись плагина в ``loader.loaded`` по имени.
     2. Сохранить ``old_version`` и dotted-name модуля ``entry_class``.
     3. Выполнить graceful shutdown через ``loader.shutdown_all()``
-       (текущая реализация PluginLoaderV11 не имеет per-plugin unload,
+       (текущая реализация PluginLoader не имеет per-plugin unload,
        поэтому здесь делается full shutdown + reload — это безопасно
        для in-tree dev-режима; production-вариант появится в S8).
     4. Reload модуля ``entry_class`` через :func:`importlib.reload`.
@@ -177,7 +177,7 @@ async def hot_swap(
 
     Args:
         plugin_name: Имя плагина (как в ``plugin.toml::name``).
-        loader: Экземпляр :class:`PluginLoaderV11` (или совместимый).
+        loader: Экземпляр :class:`PluginLoader` (или совместимый).
         extensions_dir: Каталог extensions/ — резерв под per-plugin reload
             (S8). В текущей версии не используется.
 
@@ -220,11 +220,11 @@ async def hot_swap(
     if module_name:
         _reload_module(module_name)
 
-    # Полная переподпись плагинов (PluginLoaderV11.discover_and_load
+    # Полная переподпись плагинов (PluginLoader.discover_and_load
     # идемпотентен в части owner-tracking, но capability-gate работает
     # на чистом старте — поэтому повторно регистрируем всё).
     # Resetting внутреннего реестра loader — деликатно: используем _loaded
-    # через атрибут (контракт PluginLoaderV11).
+    # через атрибут (контракт PluginLoader).
     loaded_dict = getattr(loader, "_loaded", None)
     if isinstance(loaded_dict, dict):
         loaded_dict.clear()

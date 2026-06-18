@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.config import ai_2026
+from src.backend.core.config import ai_stack
 from src.backend.core.config.features import feature_flags
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
@@ -64,14 +64,14 @@ def _resolve_auth_provider() -> Any | None:
         JWTAuthProvider instance или None если недоступен / не настроен.
     """
     try:
-        if not ai_2026.mcp_settings.tool_authz_enabled:
+        if not ai_stack.mcp_settings.tool_authz_enabled:
             return None
 
         if JWTVerifier is None:
             logger.debug("FastMCP 3.x JWTVerifier not available")
             return None
 
-        auth_config = ai_2026.mcp_settings
+        auth_config = ai_stack.mcp_settings
         issuer_url = getattr(auth_config, "sso_issuer_url", None)
         audience = getattr(auth_config, "sso_audience", "mcp-gateway")
 

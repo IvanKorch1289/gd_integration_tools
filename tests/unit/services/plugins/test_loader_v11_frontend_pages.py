@@ -1,4 +1,4 @@
-"""Sprint 3 — unit-тесты frontend pages auto-discovery в PluginLoaderV11.
+"""Sprint 3 — unit-тесты frontend pages auto-discovery в PluginLoader.
 
 Проверяют:
 
@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 
 from src.backend.core.security.capabilities import CapabilityGate
-from src.backend.services.plugins.loader_v11 import PluginLoaderV11
+from src.backend.services.plugins.loader import PluginLoader
 
 
 class _FakeActions:
@@ -85,8 +85,8 @@ def _write_plugin(extensions_dir: Path, *, name: str, with_pages: bool = True) -
 
 def _build_loader(
     extensions_dir: Path, streamlit_pages_dir: Path | None = None
-) -> PluginLoaderV11:
-    return PluginLoaderV11(
+) -> PluginLoader:
+    return PluginLoader(
         extensions_dir=extensions_dir,
         capability_gate=CapabilityGate(),
         action_registry=_FakeActions(),

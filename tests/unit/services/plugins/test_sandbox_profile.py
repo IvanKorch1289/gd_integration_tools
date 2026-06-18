@@ -19,7 +19,7 @@ from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxError,
 )
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_v11 import PluginManifestV11, PluginSandbox
+from src.backend.services.plugins.manifest_toml import PluginManifest, PluginSandbox
 
 
 class FakeSandbox:
@@ -44,8 +44,8 @@ def _make_manifest(
     *,
     sandbox: PluginSandbox | None = None,
     capabilities: tuple[CapabilityRef, ...] = (),
-) -> PluginManifestV11:
-    return PluginManifestV11(
+) -> PluginManifest:
+    return PluginManifest(
         name="demo",
         version="1.0.0",
         requires_core=">=0.2,<1.0",

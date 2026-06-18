@@ -32,7 +32,7 @@ import pytest
 from src.backend.core.ai.sandbox import SandboxResult
 from src.backend.core.plugin_runtime.sandbox import PluginSandboxAdapter
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_v11 import PluginManifestV11, PluginSandbox
+from src.backend.services.plugins.manifest_toml import PluginManifest, PluginSandbox
 
 _BASELINES = Path(__file__).parent / "baselines"
 _BASELINES.mkdir(parents=True, exist_ok=True)
@@ -52,7 +52,7 @@ class _FakeSandbox:
 
 
 def _make_adapter() -> PluginSandboxAdapter:
-    manifest = PluginManifestV11(
+    manifest = PluginManifest(
         name="perf_demo",
         version="1.0.0",
         requires_core=">=0.2,<1.0",

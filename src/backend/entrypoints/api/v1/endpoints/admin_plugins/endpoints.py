@@ -188,7 +188,7 @@ async def diff_plugin_versions(
     if service is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="PluginVersionService недоступен (PluginLoaderV11 не запущен)",
+            detail="PluginVersionService недоступен (PluginLoader не запущен)",
         )
     try:
         result = service.diff(name, from_version=from_version, to_version=to_version)
@@ -223,7 +223,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     if not extensions_dir.is_dir():
         return PluginDependencyGraph()
 
-    from src.backend.services.plugins.manifest_v11 import (
+    from src.backend.services.plugins.manifest_toml import (
         PluginManifestError,
         load_plugin_manifest,
     )

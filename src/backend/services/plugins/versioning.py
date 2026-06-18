@@ -23,7 +23,7 @@
     result = await service.rollback("credit_pipeline", to_version="1.0.0")
 
 Зависимости:
-    - PluginLoaderV11 (для discovery + smoke-check);
+    - PluginLoader (для discovery + smoke-check);
     - hot_swap (для атомарной reload);
     - plugin_migration_diff (для diff endpoint).
 """

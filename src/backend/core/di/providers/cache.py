@@ -130,7 +130,7 @@ def get_rag_cache_provider() -> Any:
 
     Wave S32 W4: lazy-резолв RAG-кэша через
     ``_get_three_tier_cache()`` (rag_cache_admin). Кэш регистрируется
-    в ``setup_ai_2026.py`` при ``rag_cache_settings`` (default-OFF).
+    в ``setup_ai_stack.py`` при ``rag_cache_settings`` (default-OFF).
     Override через :func:`set_rag_cache_provider` имеет приоритет.
     """
     if "rag_cache" in _overrides:

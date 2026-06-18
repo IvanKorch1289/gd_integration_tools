@@ -56,7 +56,7 @@ class RLMFeedbackProcessor:
     ) -> None:
         self._langmem = langmem_service
         if reindex_threshold is None:
-            from src.backend.core.config.ai_2026 import langmem_settings
+            from src.backend.core.config.ai_stack import langmem_settings
 
             reindex_threshold = langmem_settings.rlm_reindex_threshold
         self._reindex_threshold = int(reindex_threshold)
@@ -135,7 +135,7 @@ class RLMFeedbackProcessor:
     @staticmethod
     def adjust_score(*, score: float, boost: int, penalty: int) -> float:
         """Re-rank: ``score * (1 + (boost - penalty) * factor)``."""
-        from src.backend.core.config.ai_2026 import langmem_settings
+        from src.backend.core.config.ai_stack import langmem_settings
 
         if not langmem_settings.rlm_enabled:
             return score

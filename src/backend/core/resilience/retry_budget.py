@@ -103,6 +103,11 @@ class RetryBudget:
             self._retries.popleft()
 
     def stats(self) -> dict[str, Any]:
+        """Get current retry budget statistics.
+
+        Returns:
+            Dict with name, total_in_window, retries_in_window, ratio, max_ratio.
+        """
         return {
             "name": self.name,
             "total_in_window": len(self._total),

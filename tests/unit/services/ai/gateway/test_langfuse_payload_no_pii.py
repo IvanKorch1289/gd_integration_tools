@@ -61,7 +61,7 @@ class TestLangFuseV3Anonymization:
         self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
     ) -> None:
         """LangFuseCallbackV3 маскирует input/output при sanitize_traces=True."""
-        from src.backend.core.config import ai_2026, features
+        from src.backend.core.config import ai_stack, features
         from src.backend.core.di import providers
         from src.backend.services.ai.gateway.langfuse_callback_v3 import (
             LangFuseCallbackV3,
@@ -70,9 +70,9 @@ class TestLangFuseV3Anonymization:
         monkeypatch.setattr(
             features.feature_flags, "presidio_pii_enabled", True, raising=True
         )
-        monkeypatch.setattr(ai_2026.langfuse_settings, "enabled", True, raising=True)
+        monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:
@@ -117,7 +117,7 @@ class TestLangFuseV3Anonymization:
         self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
     ) -> None:
         """При sanitize_traces=False payload проходит без анонимизации."""
-        from src.backend.core.config import ai_2026, features
+        from src.backend.core.config import ai_stack, features
         from src.backend.core.di import providers
         from src.backend.services.ai.gateway.langfuse_callback_v3 import (
             LangFuseCallbackV3,
@@ -126,9 +126,9 @@ class TestLangFuseV3Anonymization:
         monkeypatch.setattr(
             features.feature_flags, "presidio_pii_enabled", True, raising=True
         )
-        monkeypatch.setattr(ai_2026.langfuse_settings, "enabled", True, raising=True)
+        monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_2026.langfuse_settings, "sanitize_traces", False, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", False, raising=True
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:
@@ -158,7 +158,7 @@ class TestLangFuseV3Anonymization:
         self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
     ) -> None:
         """При PRESIDIO_PII_ENABLED=False payload не анонимизируется (single source)."""
-        from src.backend.core.config import ai_2026, features
+        from src.backend.core.config import ai_stack, features
         from src.backend.core.di import providers
         from src.backend.services.ai.gateway.langfuse_callback_v3 import (
             LangFuseCallbackV3,
@@ -167,9 +167,9 @@ class TestLangFuseV3Anonymization:
         monkeypatch.setattr(
             features.feature_flags, "presidio_pii_enabled", False, raising=True
         )
-        monkeypatch.setattr(ai_2026.langfuse_settings, "enabled", True, raising=True)
+        monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_2026.langfuse_settings, "sanitize_traces", True, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:

@@ -89,7 +89,7 @@ def _build_loader(
         """S163 W32 fix: добавлен 4-й параметр route_overrides (optional).
 
         PipelineRegistrar signature extended в S163 W20 до
-        Callable[[str, Path, RouteManifestV11, dict[str, Any] | None], None].
+        Callable[[str, Path, RouteManifest, dict[str, Any] | None], None].
         Test helper обновлён для backward-compat.
         """
         registered.append((route_name, pipeline_path, manifest))

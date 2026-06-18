@@ -59,7 +59,7 @@ class ExperimentalFlags(BaseSettings):
             "K1 Sprint 4 Wave E. Включает CapabilityGate-проверку до вызова "
             "Temporal-activity (V15 R-V15-1). При False декоратор "
             "capability_guarded_activity превращается в NoOp. "
-            "default-OFF до интеграции с PluginLoaderV11 runtime-контекстом."
+            "default-OFF до интеграции с PluginLoader runtime-контекстом."
         ),
     )
 

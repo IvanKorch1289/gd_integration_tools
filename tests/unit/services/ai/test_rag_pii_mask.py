@@ -53,11 +53,11 @@ async def test_ingest_passthrough_when_flag_off(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При pii_mask_on_ingest=False текст идёт в rag.ingest без маскирования."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_2026.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True
     )
 
     rag_mock = AsyncMock()
@@ -76,12 +76,12 @@ async def test_ingest_passthrough_when_flag_off(
 @pytest.mark.asyncio
 async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) -> None:
     """При pii_mask_on_ingest=True текст маскируется + metadata указывает версию sanitizer."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.core.di import providers
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_2026.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
     )
     providers.set_ai_sanitizer_provider(_StubSanitizer())
     try:
@@ -115,12 +115,12 @@ async def test_ingest_graceful_on_sanitizer_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При sanitize_text exception ingest продолжается + metadata содержит pii_mask_error."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.core.di import providers
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_2026.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
     )
     providers.set_ai_sanitizer_provider(_FailingSanitizer())
     try:

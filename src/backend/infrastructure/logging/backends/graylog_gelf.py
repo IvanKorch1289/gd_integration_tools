@@ -249,7 +249,7 @@ class GraylogGelfLogSink(LogSink):
             self._worker_task.cancel()
             try:
                 await self._worker_task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
         await asyncio.to_thread(self._close_sockets)
 

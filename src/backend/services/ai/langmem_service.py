@@ -12,7 +12,7 @@
 
     Per master prompt §0 "Single-Entry per Concern" — два имплементации
     одного домена должны быть объединены. Refactor в S165+ (требует
-    миграции 5 consumers: langmem_admin endpoint, scheduler, setup_ai_2026,
+    миграции 5 consumers: langmem_admin endpoint, scheduler, setup_ai_stack,
     package internals).
 
     Использование для нового кода: импортировать из canonical location:
@@ -78,7 +78,7 @@ class LangMemService:
         self._embedder = embedder
         self._collection = qdrant_collection
         if enabled is None:
-            from src.backend.core.config.ai_2026 import langmem_settings
+            from src.backend.core.config.ai_stack import langmem_settings
 
             enabled = langmem_settings.enabled
         self._enabled = bool(enabled)
@@ -238,7 +238,7 @@ class LangMemService:
         Возвращает :class:`ConsolidationReport.to_dict()`.
         """
         self._ensure_enabled()
-        from src.backend.core.config.ai_2026 import langmem_settings
+        from src.backend.core.config.ai_stack import langmem_settings
         from src.backend.services.ai.memory.langmem.consolidation import (
             ConsolidationEngine,
         )

@@ -139,7 +139,7 @@ class AIFeedbackService:
     async def _maybe_apply_rlm(*, doc_id: str, label: Any) -> None:
         """Wave D.6: оптинально подаёт feedback в RLMFeedbackProcessor."""
         try:
-            from src.backend.core.config.ai_2026 import langmem_settings
+            from src.backend.core.config.ai_stack import langmem_settings
         except Exception as _:
             return
         if not langmem_settings.rlm_enabled:

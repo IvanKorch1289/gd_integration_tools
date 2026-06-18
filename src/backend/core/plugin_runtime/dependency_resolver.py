@@ -15,9 +15,9 @@
     первыми».
 
 Контракт:
-    * Вход: ``dict[name, PluginManifestV11]`` — уже отфильтрованный по
+    * Вход: ``dict[name, PluginManifest]`` — уже отфильтрованный по
       ``enabled``/``feature-flag``/``compat_blocked``;
-    * Выход: ``tuple[PluginManifestV11, ...]`` в bootstrap-порядке;
+    * Выход: ``tuple[PluginManifest, ...]`` в bootstrap-порядке;
     * ``PluginDependencyCycleError`` — циклическая зависимость;
     * ``KeyError`` — ``requires_plugins`` указывает на плагин, которого
       нет во входном словаре (compat_checker должен такие случаи
@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+    from src.backend.services.plugins.manifest_toml import PluginManifest
 
 __all__ = ("PluginDependencyCycleError", "PluginGraphResolver")
 
@@ -64,8 +64,8 @@ class PluginGraphResolver:
     """
 
     def resolve(
-        self, manifests: Mapping[str, PluginManifestV11]
-    ) -> tuple[PluginManifestV11, ...]:
+        self, manifests: Mapping[str, PluginManifest]
+    ) -> tuple[PluginManifest, ...]:
         """Сортирует плагины по dependency-графу.
 
         Args:

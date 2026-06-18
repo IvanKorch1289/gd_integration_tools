@@ -36,7 +36,7 @@ async def get_ai_costs(
     window_hours: int = Query(default=24, ge=1, le=24 * 30),
 ) -> dict[str, Any]:
     """Возвращает топ-N cost-строк через LangFuseReader."""
-    from src.backend.core.config.ai_2026 import langfuse_settings
+    from src.backend.core.config.ai_stack import langfuse_settings
     from src.backend.services.ai.costs.langfuse_reader import LangFuseReader
 
     if not langfuse_settings.enabled:
@@ -65,7 +65,7 @@ async def get_ai_cost_alerts(
     group_by: Literal["route", "tenant", "provider"] = Query(default="route"),
 ) -> dict[str, Any]:
     """Возвращает аномалии cost за окно ``window_minutes``."""
-    from src.backend.core.config.ai_2026 import langfuse_settings
+    from src.backend.core.config.ai_stack import langfuse_settings
     from src.backend.services.ai.costs.alerts import CostAlertService
 
     if not langfuse_settings.enabled:
@@ -89,7 +89,7 @@ async def get_ai_cost_alerts(
 )
 async def get_langfuse_deeplink() -> dict[str, Any]:
     """Возвращает deep-link на LangFuse Web UI (для embed/sidebar)."""
-    from src.backend.core.config.ai_2026 import langfuse_settings
+    from src.backend.core.config.ai_stack import langfuse_settings
 
     base = (langfuse_settings.deep_link_base or langfuse_settings.host or "").rstrip(
         "/"

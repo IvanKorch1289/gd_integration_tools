@@ -75,7 +75,7 @@ class LLMStreamingService:
         self, gateway: Any | None = None, *, chunk_size: int | None = None
     ) -> None:
         self._gateway = gateway
-        from src.backend.core.config.ai_2026 import streaming_llm_settings
+        from src.backend.core.config.ai_stack import streaming_llm_settings
 
         self._chunk_size = (
             chunk_size if chunk_size is not None else streaming_llm_settings.chunk_size

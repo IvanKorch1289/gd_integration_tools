@@ -17,22 +17,22 @@ from src.backend.core.plugin_runtime import (
     PluginDependencyCycleError,
     PluginGraphResolver,
 )
-from src.backend.services.plugins.manifest_v11 import (
+from src.backend.services.plugins.manifest_toml import (
     PluginCompatibility,
-    PluginManifestV11,
+    PluginManifest,
 )
 
 
 def _make_manifest(
     name: str, *, requires: dict[str, str] | None = None
-) -> PluginManifestV11:
-    """Утилита: минимальный PluginManifestV11 с заданными зависимостями.
+) -> PluginManifest:
+    """Утилита: минимальный PluginManifest с заданными зависимостями.
 
     ``requires`` — mapping ``имя_плагина → PEP-440 spec``. Для тестов
     resolver важны только ключи (имена), spec задаётся валидный
     (``">=0.0"``) но не проверяется логикой topo-sort.
     """
-    return PluginManifestV11(
+    return PluginManifest(
         name=name,
         version="1.0.0",
         requires_core=">=0.2,<1.0",

@@ -1,0 +1,25 @@
+# V11 plugin manifest — extensions/osint_agent
+name = "osint_agent"
+version = "0.1.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.osint_agent.plugin.OsintAgentPlugin"
+tenant_aware = true
+description = "OSINT agent: web-search + LLM report generation by INN"
+trust_tier = "B"
+
+[[capabilities]]
+name = "net.outbound"
+scope = "*.perplexity.ai"
+
+[[capabilities]]
+name = "ai.llm"
+
+[provides]
+actions = [
+    "osint_agent.report",
+]
+repositories = []
+processors = []
+sources = []
+sinks = []
+schemas = []

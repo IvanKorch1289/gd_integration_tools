@@ -71,7 +71,7 @@ async def test_register_single_tool_passes_native_input_schema() -> None:
 
 @pytest.mark.asyncio
 async def test_legacy_description_inline_when_flag_enabled() -> None:
-    from src.backend.core.config import ai_2026 as cfg
+    from src.backend.core.config import ai_stack as cfg
     from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.entrypoints.mcp.mcp_server import _register_single_tool
 

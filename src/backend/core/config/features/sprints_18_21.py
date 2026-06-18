@@ -124,14 +124,13 @@ class Sprints1821Flags(BaseSettings):
     )
 
     eventbus_dsl_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S18 W4: RouteBuilder .to_eventbus()/.from_eventbus() DSL",
         description=(
             "K3 Sprint 18 Wave 4 (V22 NEW, PLAN.md §S18). Owner: K3 DSL. "
             "При True активирует RouteBuilder.to_eventbus(topic, payload_ref) + "
             ".from_eventbus(topic_pattern, ack_mode) + 2 step-type (eventbus_publish / "
-            "eventbus_subscribe). EventBus production backend — S19 W12 (R1.8). "
-            "default-OFF до integration теста через EventBusBackend facade."
+            "eventbus_subscribe). EventBus production backend — S19 W12 (R1.8)."
         ),
     )
 
@@ -199,7 +198,7 @@ class Sprints1821Flags(BaseSettings):
             "registry (path-prefix → total seconds) и применяет route-specific cap "
             "вместо global settings.secure.request_timeout. Fallback на global "
             "default при отсутствии match. Source-of-truth: "
-            "RouteManifestV11.timeout (RouteTimeoutSpec dataclass) либо DSL "
+            "RouteManifest.timeout (RouteTimeoutSpec dataclass) либо DSL "
             ".policy.timeout(total=...). default-OFF до wiring RouteLoader → "
             "TimeoutMiddleware registry в lifespan + smoke-test на realistic "
             "route matrix."

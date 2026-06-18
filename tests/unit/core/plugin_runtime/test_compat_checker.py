@@ -20,16 +20,16 @@ from src.backend.core.plugin_runtime.compat_checker import (
     PluginConflictError,
     check_compatibility,
 )
-from src.backend.services.plugins.manifest_v11 import (
+from src.backend.services.plugins.manifest_toml import (
     PluginCompatibility,
-    PluginManifestV11,
+    PluginManifest,
 )
 
 
 def _make_manifest(
     name: str, version: str, *, compatibility: PluginCompatibility | None = None
-) -> PluginManifestV11:
-    return PluginManifestV11(
+) -> PluginManifest:
+    return PluginManifest(
         name=name,
         version=version,
         requires_core=">=0.2,<1.0",

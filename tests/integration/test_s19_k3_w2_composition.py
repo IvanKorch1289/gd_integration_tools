@@ -1,7 +1,7 @@
 """S19 K3 W2: smoke tests for route composition include:/extends: (wave:s19/k3-w2-route-composition-include).
 
 DoD checkpoint:
-    1. routes/composition_demo/route.toml загружается через RouteManifestV11
+    1. routes/composition_demo/route.toml загружается через RouteManifest
     2. load_pipeline_from_file работает с include+extends при feature flag=True
     3. Cycle detection raises RuntimeError для extends-циклов
     4. Cycle detection raises RuntimeError для include-циклов

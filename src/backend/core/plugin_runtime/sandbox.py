@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
     from src.backend.core.ai.sandbox import CodeSandbox, SandboxResult
     from src.backend.core.ai.workspace_manager import WorkspaceHandle
-    from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+    from src.backend.services.plugins.manifest_toml import PluginManifest
 
 __all__ = ("PluginSandboxAdapter", "PluginSandboxError", "ResourceLimitsExceeded")
 
@@ -187,7 +187,7 @@ class PluginSandboxAdapter:
         self,
         *,
         sandbox: CodeSandbox,
-        manifest: PluginManifestV11,
+        manifest: PluginManifest,
         capability_check: Callable[[str, str, str | None], None] | None = None,
     ) -> None:
         self._sandbox = sandbox

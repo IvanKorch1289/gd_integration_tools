@@ -92,7 +92,7 @@ async def get_saga_history(
     for row in getattr(result, "result_rows", []):
         try:
             payload = json.loads(row[4]) if row[4] else {}
-        except TypeError, json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             payload = {}
         records.append(
             SagaHistoryRecord(

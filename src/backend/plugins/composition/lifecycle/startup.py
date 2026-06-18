@@ -214,7 +214,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
     from src.backend.plugins.composition.lifecycle.protocols import (
         register_protocol_providers,
     )
-    from src.backend.plugins.composition.lifecycle.v11 import (
+    from src.backend.plugins.composition.lifecycle.plugin_loader import (
         bootstrap_v11_plugin_loader,
         bootstrap_v11_route_loader,
         start_v11_hot_reload,

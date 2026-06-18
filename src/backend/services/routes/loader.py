@@ -31,9 +31,9 @@ from src.backend.core.security.capabilities import (
     check_capabilities_subset,
 )
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
-from src.backend.services.routes.manifest_v11 import (
+from src.backend.services.routes.manifest_toml import (
     RouteManifestError,
-    RouteManifestV11,
+    RouteManifest,
     load_route_manifest,
 )
 
@@ -54,7 +54,7 @@ _logger = get_logger("services.routes.loader")
 
 
 PipelineRegistrar = Callable[
-    [str, Path, RouteManifestV11, dict[str, Any] | None], None
+    [str, Path, RouteManifest, dict[str, Any] | None], None
 ]
 """Подпись callback'а: ``(route_name, pipeline_path, manifest, route_overrides) -> None``.
 
@@ -101,7 +101,7 @@ class LoadedRoute:
     manifest_path: Path
     status: str  # "enabled" | "disabled" | "failed" | "skipped"
     reason: str | None = None
-    manifest: RouteManifestV11 | None = None
+    manifest: RouteManifest | None = None
     registered_pipelines: tuple[Path, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:

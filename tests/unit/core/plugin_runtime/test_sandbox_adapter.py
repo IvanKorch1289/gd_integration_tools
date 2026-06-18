@@ -14,7 +14,7 @@ from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxError,
 )
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_v11 import PluginManifestV11, PluginSandbox
+from src.backend.services.plugins.manifest_toml import PluginManifest, PluginSandbox
 
 
 class _StubSandbox:
@@ -29,8 +29,8 @@ class _StubSandbox:
         return SandboxResult(stdout="", stderr="", exit_code=0)
 
 
-def _manifest(sandbox: PluginSandbox | None) -> PluginManifestV11:
-    return PluginManifestV11(
+def _manifest(sandbox: PluginSandbox | None) -> PluginManifest:
+    return PluginManifest(
         name="demo",
         version="1.0.0",
         requires_core=">=0.2,<1.0",

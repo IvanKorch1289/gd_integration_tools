@@ -28,7 +28,7 @@ app: FastAPI = create_app()
 def _mount_mcp_http() -> None:
     """Wave D.4: монтирует FastMCP HTTP transport если ``MCP_HTTP_ENABLED=true``."""
     try:
-        from src.backend.core.config.ai_2026 import mcp_settings
+        from src.backend.core.config.ai_stack import mcp_settings
     except Exception as _:
         return
     if not mcp_settings.http_enabled:

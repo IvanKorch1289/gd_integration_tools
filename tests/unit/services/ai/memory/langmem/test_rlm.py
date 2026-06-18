@@ -58,14 +58,14 @@ async def test_unclear_label_leaves_counters_unchanged() -> None:
 
 
 def test_adjust_score_disabled_when_flag_off(monkeypatch) -> None:  # noqa: ANN001
-    from src.backend.core.config import ai_2026 as cfg
+    from src.backend.core.config import ai_stack as cfg
 
     monkeypatch.setattr(cfg.langmem_settings, "rlm_enabled", False)
     assert RLMFeedbackProcessor.adjust_score(score=0.8, boost=5, penalty=0) == 0.8
 
 
 def test_adjust_score_applies_factor_when_enabled(monkeypatch) -> None:  # noqa: ANN001
-    from src.backend.core.config import ai_2026 as cfg
+    from src.backend.core.config import ai_stack as cfg
 
     monkeypatch.setattr(cfg.langmem_settings, "rlm_enabled", True)
     monkeypatch.setattr(cfg.langmem_settings, "rlm_boost_factor", 0.1)

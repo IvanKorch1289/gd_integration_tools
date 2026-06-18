@@ -17,8 +17,8 @@ Fallback chain провайдеров — deferred (по AskUserQuestion 2026-04
 Сейчас один provider per adapter; нужен второй — зарегистрировать второй
 adapter с другим `kind` (например, "sms_backup").
 
-Scaffolding-реализация: URL и payload-форматы помечены `# TODO: verify` —
-заказчик подтверждает при интеграции.
+Scaffolding-реализация: URL и payload-форматы требуют верификации при интеграции
+с конкретным SMS-провайдером.
 """
 
 from __future__ import annotations

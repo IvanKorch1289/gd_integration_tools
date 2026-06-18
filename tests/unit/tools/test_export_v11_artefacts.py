@@ -18,7 +18,7 @@ def test_plugin_schema_export_valid_json(tmp_path: Path) -> None:
     out = mod.export_plugin_schema(target)
     assert out == target
     payload = json.loads(target.read_text(encoding="utf-8"))
-    assert payload["title"] == "PluginManifestV11"
+    assert payload["title"] == "PluginManifest"
     # Обязательные поля присутствуют.
     required = set(payload["required"])
     assert {"name", "version", "requires_core", "entry_class"} <= required
@@ -29,7 +29,7 @@ def test_route_schema_export_valid_json(tmp_path: Path) -> None:
     out = mod.export_route_schema(target)
     assert out == target
     payload = json.loads(target.read_text(encoding="utf-8"))
-    assert payload["title"] == "RouteManifestV11"
+    assert payload["title"] == "RouteManifest"
     required = set(payload["required"])
     assert {"name", "version", "requires_core", "pipelines"} <= required
 

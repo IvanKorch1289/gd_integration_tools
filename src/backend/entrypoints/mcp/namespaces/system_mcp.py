@@ -73,7 +73,7 @@ def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(

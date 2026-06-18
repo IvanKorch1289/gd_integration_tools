@@ -102,7 +102,7 @@ class ConsolidationEngine:
         self, *, since: datetime | None = None, batch_size: int = 50
     ) -> ConsolidationReport:
         """Главный entrypoint. Возвращает :class:`ConsolidationReport`."""
-        from src.backend.core.config.ai_2026 import langmem_settings
+        from src.backend.core.config.ai_stack import langmem_settings
 
         report = ConsolidationReport()
         langmem = self._ensure_langmem()

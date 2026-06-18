@@ -2,7 +2,7 @@
 
 Управляет default-OFF feature-flag для bootstrap saga-деклараций
 (``orders_saga`` + ``payments_saga``). По умолчанию выключено —
-плагины подключают свои workflow декларации через PluginLoaderV11,
+плагины подключают свои workflow декларации через PluginLoader,
 ядро не диктует доменно-специфичные саги.
 
 См. PLAN.md V16 §4 Sprint 4 К3-B (Workflow & Orchestration).

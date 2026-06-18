@@ -64,7 +64,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
     legacy_inline = False
     try:
-        from src.backend.core.config.ai_2026 import mcp_settings
+        from src.backend.core.config.ai_stack import mcp_settings
 
         legacy_inline = bool(mcp_settings.legacy_description_schema)
     except Exception as _:
@@ -107,7 +107,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -146,7 +146,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
         Причина деная (str) либо None.
     """
     try:
-        from src.backend.core.config.ai_2026 import mcp_settings
+        from src.backend.core.config.ai_stack import mcp_settings
     except Exception as _:
         return None
     if not mcp_settings.tool_authz_enabled:

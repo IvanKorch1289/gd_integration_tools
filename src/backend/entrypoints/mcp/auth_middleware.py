@@ -35,7 +35,7 @@ class _DummyHeadersRequest:
 async def _verify(scope: dict[str, Any]) -> bool:
     """Возвращает True, если запрос успешно прошёл API_KEY или JWT auth."""
     from src.backend.core.auth.auth_selector import _verify_api_key, _verify_jwt
-    from src.backend.core.config.ai_2026 import mcp_settings
+    from src.backend.core.config.ai_stack import mcp_settings
 
     raw_headers = scope.get("headers") or []
     headers: dict[str, str] = {}

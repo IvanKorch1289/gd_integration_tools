@@ -114,6 +114,7 @@ class Breaker:
 
     @property
     def is_open(self) -> bool:
+        """Check if circuit breaker is in open state (failing fast)."""
         return self._state == "open"
 
     def _set_state(self, state: str) -> None:
@@ -150,6 +151,16 @@ class BreakerRegistry:
     def get_or_create(
         self, name: str, spec: BreakerSpec | None = None, *, host: str = "default"
     ) -> Breaker:
+        """Get existing breaker or create new one.
+
+        Args:
+            name: Unique breaker identifier.
+            spec: Breaker configuration (threshold, recovery_timeout).
+            host: Host identifier for metrics.
+
+        Returns:
+            Breaker instance.
+        """
         breaker = self._breakers.get(name)
         if breaker is None:
             breaker = Breaker(name, self._factory, spec or BreakerSpec(), host=host)
@@ -159,9 +170,22 @@ class BreakerRegistry:
         return breaker
 
     def get(self, name: str) -> Breaker | None:
+        """Get existing breaker by name.
+
+        Args:
+            name: Breaker identifier.
+
+        Returns:
+            Breaker instance or None if not found.
+        """
         return self._breakers.get(name)
 
     def list_states(self) -> dict[str, str]:
+        """List all breaker states.
+
+        Returns:
+            Dict mapping breaker names to their current states.
+        """
         return {name: br.state for name, br in self._breakers.items()}
 
     # purgatory listener: (name, event_type, event)

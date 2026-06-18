@@ -4,7 +4,7 @@
     Унифицированная модель ``RouteTimeoutSpec`` для per-route таймаутов.
     Используется в двух местах:
 
-    * :class:`services.routes.manifest_v11.RouteManifestV11.timeout` —
+    * :class:`services.routes.manifest_toml.RouteManifest.timeout` —
       загружается из ``route.toml::[timeout]``;
     * :class:`dsl.builders.policy_mixin.PolicyChain.timeout` —
       Python fluent API ``.policy.timeout(connect=..., read=...,
@@ -49,7 +49,7 @@ class RouteTimeoutSpec:
 
     Notes:
         Frozen dataclass — безопасно использовать в pydantic-моделях
-        (RouteManifestV11) и DSL builders без риска мутации.
+        (RouteManifest) и DSL builders без риска мутации.
         ``slots=True`` снижает memory overhead для большого числа routes.
     """
 

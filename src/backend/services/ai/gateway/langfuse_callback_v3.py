@@ -59,7 +59,7 @@ class LangFuseCallbackV3:
         try:
             from langfuse import Langfuse
 
-            from src.backend.core.config.ai_2026 import langfuse_settings
+            from src.backend.core.config.ai_stack import langfuse_settings
 
             if not langfuse_settings.enabled:
                 logger.debug("LangFuse v3 disabled via langfuse_settings.enabled=False")
@@ -151,7 +151,7 @@ def _maybe_anonymize_v3(
     :func:`anonymize_trace_payload`).
     """
     try:
-        from src.backend.core.config.ai_2026 import langfuse_settings
+        from src.backend.core.config.ai_stack import langfuse_settings
     except Exception as _:
         return input_messages, output_text, span_metadata
     if not langfuse_settings.sanitize_traces:

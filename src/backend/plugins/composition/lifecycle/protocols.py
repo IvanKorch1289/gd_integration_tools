@@ -181,11 +181,11 @@ async def register_protocol_providers() -> None:
 
     # К4 MVP (Sprint S5): AI Stack 2026 single-hook регистрация.
     try:
-        from src.backend.plugins.composition.setup_ai_2026 import (
-            register_ai_2026_providers,
+        from src.backend.plugins.composition.setup_ai_stack import (
+            register_ai_stack_providers,
         )
 
-        await register_ai_2026_providers()
+        await register_ai_stack_providers()
     except Exception as exc:
         app_logger.debug("AI 2026 providers registration skipped: %s", exc)
 

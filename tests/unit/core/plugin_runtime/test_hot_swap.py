@@ -28,7 +28,7 @@ from src.backend.core.plugin_runtime.hot_swap import (
 
 @dataclass
 class _FakeEntry:
-    """Минимальная имитация LoadedPluginV11 для unit-тестов."""
+    """Минимальная имитация LoadedPlugin для unit-тестов."""
 
     name: str
     version: str = "1.0.0"
@@ -39,7 +39,7 @@ class _FakeEntry:
 
 
 class _FakeLoader:
-    """Имитация PluginLoaderV11 для unit-тестов.
+    """Имитация PluginLoader для unit-тестов.
 
     Возвращает заранее подготовленные entries, считает количество
     вызовов shutdown_all + discover_and_load.

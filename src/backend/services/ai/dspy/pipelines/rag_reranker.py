@@ -47,7 +47,7 @@ def _resolve_bge_reranker() -> Any:
         return _reranker_cache
 
     try:
-        from src.backend.core.config.ai_2026 import bge_settings
+        from src.backend.core.config.ai_stack import bge_settings
     except Exception as _:  # noqa: BLE001
         _reranker_unavailable = True
         return None

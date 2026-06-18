@@ -36,7 +36,7 @@ async def test_sse_endpoint_returns_503_when_disabled() -> None:
 
 @pytest.mark.asyncio
 async def test_sse_generates_events_when_enabled() -> None:
-    from src.backend.core.config import ai_2026 as ai_cfg
+    from src.backend.core.config import ai_stack as ai_cfg
 
     class _FakeService:
         async def astream(

@@ -1,0 +1,14 @@
+# OSINT Agent Route: INN -> web-search -> LLM report
+route_id: osint_agent
+source:
+  http:
+    method: POST
+    path: /api/v1/osint/report
+steps:
+  - call_function:
+      ref: extensions.osint_agent.functions.osint_workflow:run_osint
+      result_property: osint_report
+to:
+  response:
+    code: 200
+    body: ${osint_report}

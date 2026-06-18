@@ -100,7 +100,7 @@ def _get_version_service() -> Any | None:
     try:
         from src.backend.main import app as fastapi_app
 
-        loader = getattr(fastapi_app.state, "plugin_loader_v11", None)
+        loader = getattr(fastapi_app.state, "plugin_loader_v1", None)
         if loader is None:
             return None
         from src.backend.services.plugins.versioning import PluginVersionService

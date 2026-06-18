@@ -94,6 +94,14 @@ def cached(
     """
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+        """Decorator that caches async function results.
+
+        Args:
+            func: Async function to cache.
+
+        Returns:
+            Cached version of the function.
+        """
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("@cached поддерживает только async-функции")
 

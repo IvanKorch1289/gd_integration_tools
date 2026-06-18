@@ -47,14 +47,14 @@ class TestResolveAuthProvider:
 
     def test_returns_none_when_auth_disabled(self) -> None:
         with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_2026",
+            "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(mcp_settings=MagicMock(tool_authz_enabled=False)),
         ):
             assert _resolve_auth_provider() is None
 
     def test_returns_none_when_issuer_missing(self) -> None:
         with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_2026",
+            "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
                 mcp_settings=MagicMock(tool_authz_enabled=True, sso_issuer_url=None)
             ),
@@ -64,7 +64,7 @@ class TestResolveAuthProvider:
     def test_returns_verifier_when_configured(self) -> None:
         mock_verifier = MagicMock()
         with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_2026",
+            "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
                 mcp_settings=MagicMock(
                     tool_authz_enabled=True, sso_issuer_url="https://sso.local"
@@ -80,7 +80,7 @@ class TestResolveAuthProvider:
 
     def test_returns_none_on_jwt_verifier_import_error(self) -> None:
         with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_2026",
+            "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
                 mcp_settings=MagicMock(
                     tool_authz_enabled=True, sso_issuer_url="https://sso.local"

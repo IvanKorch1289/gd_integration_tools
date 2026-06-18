@@ -2,8 +2,8 @@
 
 Покрытие:
     * RouteTimeoutSpec frozen dataclass (immutable, slots).
-    * RouteManifestV11 парсит ``[timeout]`` секцию.
-    * RouteManifestV11 без ``[timeout]`` → ``manifest.timeout is None``.
+    * RouteManifest парсит ``[timeout]`` секцию.
+    * RouteManifest без ``[timeout]`` → ``manifest.timeout is None``.
     * Невалидный timeout (отрицательный) → RouteManifestError.
     * PolicyChain.timeout(seconds=X) — backward-compat alias для total.
     * PolicyChain.timeout(total=X) — основной keyword.
@@ -21,7 +21,7 @@ import pytest
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.utils.route_timeout import RouteTimeoutSpec
-from src.backend.services.routes.manifest_v11 import (
+from src.backend.services.routes.manifest_toml import (
     RouteManifestError,
     load_route_manifest,
 )
@@ -91,7 +91,7 @@ def _write_manifest(tmp_path: Path, content: str) -> Path:
 
 
 class TestManifestTimeoutParsing:
-    """RouteManifestV11.timeout parsing из ``route.toml``."""
+    """RouteManifest.timeout parsing из ``route.toml``."""
 
     def test_parses_full_timeout_block(self, tmp_path: Path) -> None:
         path = _write_manifest(tmp_path, _VALID_MANIFEST)

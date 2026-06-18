@@ -126,7 +126,7 @@ def _build_workflow_tool(
         """
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps(
                 {"error": "invalid JSON payload", "raw": payload}
             ).decode()

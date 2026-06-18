@@ -103,7 +103,7 @@ async def llm_stream(request: Request, payload: StreamRequest) -> StreamingRespo
     маршрут зарегистрирован декларативно). Endpoint всегда доступен при
     включённом ``LITELLM_ENABLED=true``.
     """
-    from src.backend.core.config.ai_2026 import litellm_gateway_settings
+    from src.backend.core.config.ai_stack import litellm_gateway_settings
 
     if not litellm_gateway_settings.enabled:
         raise HTTPException(

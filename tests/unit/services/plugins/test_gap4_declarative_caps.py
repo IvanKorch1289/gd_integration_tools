@@ -3,9 +3,9 @@
 
 Покрывает:
 
-* ``PluginTenantDecl`` + ``PluginManifestV11.tenants``: парсинг TOML,
+* ``PluginTenantDecl`` + ``PluginManifest.tenants``: парсинг TOML,
   валидация грамматики и vocabulary, ``extra="forbid"``.
-* ``PluginLoaderV11._load_one``: вызовы ``gate.declare_tenant`` для
+* ``PluginLoader._load_one``: вызовы ``gate.declare_tenant`` для
   каждой capability каждого tenant'а, warning при ``tenant_aware=true``
   без ``[[tenants]]``, backward compat без секции.
 * ``load_plugin_manifest`` raises ``PluginManifestError`` при
@@ -40,14 +40,14 @@ from src.backend.core.security.capabilities.vocabulary import (
     CapabilityVocabulary,
     build_default_vocabulary,
 )
-from src.backend.services.plugins.loader_v11 import PluginLoaderV11
-from src.backend.services.plugins.manifest_v11 import (
+from src.backend.services.plugins.loader import PluginLoader
+from src.backend.services.plugins.manifest_toml import (
     PluginManifestError,
-    PluginManifestV11,
+    PluginManifest,
     PluginTenantDecl,
     load_plugin_manifest,
 )
-from tests.unit.services.plugins.test_loader_v11 import (
+from tests.unit.services.plugins.test_loader import (
     _build_loader,
     _FakeActions,
     _FakeProcessors,
@@ -83,14 +83,14 @@ def _build_loader_with_custom_vocab(
     *,
     core_version: str = "0.2.0",
     vocab: CapabilityVocabulary | None = None,
-) -> tuple[PluginLoaderV11, _FakeActions, _FakeRepos, _FakeProcessors]:
+) -> tuple[PluginLoader, _FakeActions, _FakeRepos, _FakeProcessors]:
     actions = _FakeActions()
     repos = _FakeRepos()
     processors = _FakeProcessors()
     gate = CapabilityGate(
         vocabulary=vocab if vocab is not None else _build_vocab_with_optional_scope()
     )
-    loader = PluginLoaderV11(
+    loader = PluginLoader(
         extensions_dir=tmp_path,
         capability_gate=gate,
         action_registry=actions,
@@ -140,21 +140,21 @@ class TestPluginTenantDecl:
             )
 
 
-# ── PluginManifestV11.tenants (unit) ──────────────────────────────────
+# ── PluginManifest.tenants (unit) ──────────────────────────────────
 
 
 @pytest.mark.unit
-class TestPluginManifestV11Tenants:
-    """Unit-тесты ``PluginManifestV11.tenants`` — поле + model_validator."""
+class TestPluginManifestTenants:
+    """Unit-тесты ``PluginManifest.tenants`` — поле + model_validator."""
 
     def test_default_empty(self) -> None:
-        m = PluginManifestV11(
+        m = PluginManifest(
             name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
         )
         assert m.tenants == ()
 
     def test_round_trip_via_model_validate(self) -> None:
-        m = PluginManifestV11.model_validate(
+        m = PluginManifest.model_validate(
             {
                 "name": "x",
                 "version": "0.1.0",
@@ -175,7 +175,7 @@ class TestPluginManifestV11Tenants:
     def test_unknown_capability_rejected(self) -> None:
         """Vocabulary check: имя из DEFAULT_CAPABILITY_CATALOG."""
         with pytest.raises(ValidationError) as exc_info:
-            PluginManifestV11.model_validate(
+            PluginManifest.model_validate(
                 {
                     "name": "x",
                     "version": "0.1.0",
@@ -193,7 +193,7 @@ class TestPluginManifestV11Tenants:
     def test_bad_grammar_rejected_at_field_validator(self) -> None:
         """Грамматика: BAD_NAME отвергается в field_validator (PluginTenantDecl)."""
         with pytest.raises(ValidationError) as exc_info:
-            PluginManifestV11.model_validate(
+            PluginManifest.model_validate(
                 {
                     "name": "x",
                     "version": "0.1.0",
@@ -210,7 +210,7 @@ class TestPluginManifestV11Tenants:
 
     def test_empty_tenants_section_does_not_warn_in_model(self) -> None:
         """Пустой tenants — backward compat, НЕ raise."""
-        m = PluginManifestV11.model_validate(
+        m = PluginManifest.model_validate(
             {
                 "name": "x",
                 "version": "0.1.0",
@@ -224,7 +224,7 @@ class TestPluginManifestV11Tenants:
     @pytest.mark.parametrize("cap_name", list(DEFAULT_CAPABILITY_CATALOG)[:3])
     def test_all_catalog_caps_accepted(self, cap_name: str) -> None:
         """Sanity: первые 3 имени из каталога проходят validator."""
-        m = PluginManifestV11.model_validate(
+        m = PluginManifest.model_validate(
             {
                 "name": "x",
                 "version": "0.1.0",
@@ -241,7 +241,7 @@ class TestPluginManifestV11Tenants:
 
 @pytest.mark.unit
 class TestLoadPluginManifestTenants:
-    """TOML → ``PluginManifestV11`` с ``[[tenants]]`` секцией."""
+    """TOML → ``PluginManifest`` с ``[[tenants]]`` секцией."""
 
     def test_load_toml_with_tenants(self, tmp_path: Path) -> None:
         path = tmp_path / "plugin.toml"
@@ -312,11 +312,11 @@ class TestLoadPluginManifestTenants:
         assert m.tenants == ()
 
 
-# ── PluginLoaderV11 integration ───────────────────────────────────────
+# ── PluginLoader integration ───────────────────────────────────────
 
 
 @pytest.mark.unit
-class TestPluginLoaderV11TenantsIntegration:
+class TestPluginLoaderTenantsIntegration:
     """Интеграция ``[[tenants]]`` → ``gate.declare_tenant``.
 
     NB: в default vocabulary все capabilities ``scope_required=True``,
@@ -355,7 +355,7 @@ class TestPluginLoaderV11TenantsIntegration:
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         # caplog captures loader warnings о skipped capabilities.
-        with caplog.at_level(logging.WARNING, logger="services.plugins.loader_v11"):
+        with caplog.at_level(logging.WARNING, logger="services.plugins.loader"):
             loaded = await loader.discover_and_load()
         # Плагин всё равно грузится.
         assert loaded[0].status == "loaded"
@@ -401,7 +401,7 @@ class TestPluginLoaderV11TenantsIntegration:
         gate = loader._gate
 
         # Slice 1 limitation: declare_tenant для scope_required=True
-        # capabilities skip'ится (см. loader_v11.py try/except).
+        # capabilities skip'ится (см. loader.py try/except).
         # Плагин грузится, но check_tenant возвращает False.
         assert (
             gate.check_tenant("mq.publish", "tenant_a", "dummy_default_vocab") is False
@@ -457,7 +457,7 @@ class TestPluginLoaderV11TenantsIntegration:
             isolated_extensions_dir, name="dummy_orphan", manifest_extra=manifest_extra
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
-        with caplog.at_level(logging.WARNING, logger="services.plugins.loader_v11"):
+        with caplog.at_level(logging.WARNING, logger="services.plugins.loader"):
             await loader.discover_and_load()
         warnings = [r for r in caplog.records if r.levelname == "WARNING"]
         assert any(
@@ -471,7 +471,7 @@ class TestPluginLoaderV11TenantsIntegration:
         """``tenant_aware=false`` + пустой tenants → НЕ warning (backward compat)."""
         _write_extension(isolated_extensions_dir, name="dummy_default")
         loader, *_ = _build_loader(isolated_extensions_dir)
-        with caplog.at_level(logging.WARNING, logger="services.plugins.loader_v11"):
+        with caplog.at_level(logging.WARNING, logger="services.plugins.loader"):
             await loader.discover_and_load()
         # Не должно быть нашего специфического warning (могут быть другие
         # warning'и от core-инфраструктуры, но не наш текст).
@@ -483,7 +483,7 @@ class TestPluginLoaderV11TenantsIntegration:
     async def test_loaded_plugin_to_dict_contains_tenants(
         self, isolated_extensions_dir: Path
     ) -> None:
-        """``LoadedPluginV11.to_dict()`` содержит секцию ``tenants``."""
+        """``LoadedPlugin.to_dict()`` содержит секцию ``tenants``."""
         manifest_extra = textwrap.dedent(
             """
             [[tenants]]
@@ -517,12 +517,12 @@ class TestPluginLoaderV11TenantsIntegration:
             gate.vocabulary.validate_ref(ref)
 
 
-# ── Helper fixture (переиспользует паттерн test_loader_v11) ──────────
+# ── Helper fixture (переиспользует паттерн test_loader) ──────────
 
 
 @pytest.fixture
 def isolated_extensions_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Изолированный tmp_path importable как top-level (см. test_loader_v11)."""
+    """Изолированный tmp_path importable как top-level (см. test_loader)."""
     import sys
 
     monkeypatch.syspath_prepend(str(tmp_path))

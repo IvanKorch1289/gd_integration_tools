@@ -37,7 +37,7 @@ def _chunker_fingerprint() -> str:
     ``RAG_INGEST_CHUNKER_FINGERPRINT_VERSION`` или параметров chunker.
     """
     try:
-        from src.backend.core.config.ai_2026 import rag_ingest_settings
+        from src.backend.core.config.ai_stack import rag_ingest_settings
         from src.backend.core.config.rag import rag_settings
 
         version = rag_ingest_settings.chunker_fingerprint_version
@@ -171,7 +171,7 @@ def _resolve_embedding_provenance() -> dict[str, Any]:
     не блокирует ingest (existing chunks остаются без provenance).
     """
     try:
-        from src.backend.core.config.ai_2026 import rag_ingest_settings
+        from src.backend.core.config.ai_stack import rag_ingest_settings
         from src.backend.core.config.rag import rag_settings
     except Exception as _:
         return {}
@@ -205,7 +205,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
         ``(content_text, {"pii_masked": False})``.
     """
     try:
-        from src.backend.core.config.ai_2026 import rag_ingest_settings
+        from src.backend.core.config.ai_stack import rag_ingest_settings
     except Exception as _:
         return content_text, {"pii_masked": False}
     if not rag_ingest_settings.pii_mask_on_ingest:
@@ -238,7 +238,7 @@ def get_rag_ingest_service() -> RagIngestService:
     global _singleton
     if _singleton is None:
         try:
-            from src.backend.core.config.ai_2026 import rag_ingest_settings
+            from src.backend.core.config.ai_stack import rag_ingest_settings
             from src.backend.services.ai.rag_ingest_store import (
                 build_ingest_state_store,
             )

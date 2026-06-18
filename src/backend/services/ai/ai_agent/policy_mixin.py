@@ -52,7 +52,7 @@ class PolicyMixin:
         ``ai.llm.policy.gate.unavailable``. Никогда allow-on-error.
         """
         try:
-            from src.backend.core.config.ai_2026 import ai_agent_settings
+            from src.backend.core.config.ai_stack import ai_agent_settings
         except Exception as _:
             return None
         if not ai_agent_settings.policy_gate_enabled:

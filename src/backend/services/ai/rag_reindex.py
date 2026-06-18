@@ -70,7 +70,7 @@ class RagReindexService:
         Args:
             namespace: логическая партиция RAG-коллекции.
             since_chunker_hash: ожидаемый актуальный fingerprint;
-                если ``None`` — берётся текущий из ``ai_2026`` config.
+                если ``None`` — берётся текущий из ``ai_stack`` config.
             limit: максимум chunks для сканирования.
         """
         from src.backend.services.ai.rag_ingest_service import _chunker_fingerprint

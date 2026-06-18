@@ -1,4 +1,4 @@
-"""Unit-тесты trust_tier field в PluginManifestV11 (S18 W12, ADR-NEW-6).
+"""Unit-тесты trust_tier field в PluginManifest (S18 W12, ADR-NEW-6).
 
 Покрытие:
     * default trust_tier = "B" (secure-by-default).
@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+from src.backend.services.plugins.manifest_toml import PluginManifest
 
 _BASE_FIELDS = {
     "name": "test_plugin",
@@ -31,20 +31,20 @@ _BASE_FIELDS = {
 class TestTrustTierField:
     def test_default_is_tier_b(self) -> None:
         """secure-by-default: новые плагины без декларации = Tier-B."""
-        manifest = PluginManifestV11(**_BASE_FIELDS)
+        manifest = PluginManifest(**_BASE_FIELDS)
         assert manifest.trust_tier == "B"
 
     def test_explicit_tier_a(self) -> None:
-        manifest = PluginManifestV11(**_BASE_FIELDS, trust_tier="A")
+        manifest = PluginManifest(**_BASE_FIELDS, trust_tier="A")
         assert manifest.trust_tier == "A"
 
     def test_explicit_tier_b(self) -> None:
-        manifest = PluginManifestV11(**_BASE_FIELDS, trust_tier="B")
+        manifest = PluginManifest(**_BASE_FIELDS, trust_tier="B")
         assert manifest.trust_tier == "B"
 
     def test_invalid_tier_rejected(self) -> None:
         with pytest.raises(ValidationError):
-            PluginManifestV11(**_BASE_FIELDS, trust_tier="C")  # type: ignore[arg-type]
+            PluginManifest(**_BASE_FIELDS, trust_tier="C")  # type: ignore[arg-type]
 
 
 def _read_trust_tier(path: Path) -> str | None:

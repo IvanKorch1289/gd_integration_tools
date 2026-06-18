@@ -2,8 +2,8 @@
 
 Назначение:
     Дополняет :mod:`semver_checker` (одиночный плагин vs ядро) проверкой
-    cross-plugin compatibility (см. ``PluginManifestV11.compatibility``).
-    Вызывается :class:`PluginLoaderV11` после parse всех ``plugin.toml``,
+    cross-plugin compatibility (см. ``PluginManifest.compatibility``).
+    Вызывается :class:`PluginLoader` после parse всех ``plugin.toml``,
     но до ``on_load``. Если найден конфликт — оба плагина уходят в
     статус ``"failed"`` с reason ``compat_conflict``.
 
@@ -30,7 +30,7 @@
 
 Зависимости:
     - packaging (PEP-440 specifiers + Version);
-    - PluginManifestV11 (из services/plugins/manifest_v11.py).
+    - PluginManifest (из services/plugins/manifest_toml.py).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ from packaging.version import InvalidVersion, Version
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+    from src.backend.services.plugins.manifest_toml import PluginManifest
 
 __all__ = ("CompatViolation", "PluginConflictError", "check_compatibility")
 
@@ -107,7 +107,7 @@ def _try_parse_spec(value: str) -> SpecifierSet | None:
 
 
 def _check_pair(
-    manifest: PluginManifestV11, other: PluginManifestV11
+    manifest: PluginManifest, other: PluginManifest
 ) -> list[CompatViolation]:
     """Проверяет одну пару (manifest, other) на pair-wise конфликты."""
     violations: list[CompatViolation] = []
@@ -146,7 +146,7 @@ def _check_pair(
 
 
 def _check_core(
-    manifest: PluginManifestV11, core_version: str | None
+    manifest: PluginManifest, core_version: str | None
 ) -> CompatViolation | None:
     """Проверяет дополнительный `incompatible_core_versions` ограничитель."""
     if not core_version:
@@ -169,7 +169,7 @@ def _check_core(
 
 
 def _check_required(
-    manifest: PluginManifestV11, by_name: dict[str, PluginManifestV11]
+    manifest: PluginManifest, by_name: dict[str, PluginManifest]
 ) -> list[CompatViolation]:
     """Проверяет обязательные ``requires_plugins`` ссылки."""
     violations: list[CompatViolation] = []
@@ -206,7 +206,7 @@ def _check_required(
 
 
 def check_compatibility(
-    manifests: Sequence[PluginManifestV11] | Iterable[PluginManifestV11],
+    manifests: Sequence[PluginManifest] | Iterable[PluginManifest],
     *,
     core_version: str | None = None,
 ) -> tuple[CompatViolation, ...]:
@@ -221,7 +221,7 @@ def check_compatibility(
         Кортеж нарушений (пустой при отсутствии конфликтов).
     """
     materialised = tuple(manifests)
-    by_name: dict[str, PluginManifestV11] = {m.name: m for m in materialised}
+    by_name: dict[str, PluginManifest] = {m.name: m for m in materialised}
     violations: list[CompatViolation] = []
 
     for manifest in materialised:

@@ -92,7 +92,7 @@ def test_check_mcp_tool_authz_disabled_allows_all() -> None:
     fake_settings.tool_allowlist = []
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_2026.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
     ):
         result = _check_mcp_tool_authz("any.random.action")
     assert result is None
@@ -106,7 +106,7 @@ def test_check_mcp_tool_authz_allowlist_passes() -> None:
     fake_settings.tool_allowlist = ["orders.get"]
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_2026.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
     ):
         result = _check_mcp_tool_authz("orders.get")
     assert result is None
@@ -120,7 +120,7 @@ def test_check_mcp_tool_authz_denies_unknown_action() -> None:
     fake_settings.tool_allowlist = []
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_2026.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
     ):
         result = _check_mcp_tool_authz("forbidden.deep.action")
     # Any non-None string means denied; the specific reason varies by

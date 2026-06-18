@@ -81,7 +81,7 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.plugins.composition.lifecycle.protocols.register_protocol_providers": MagicMock(),
         "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader": AsyncMock(),
         "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_route_loader": AsyncMock(),
-        "src.backend.plugins.composition.lifecycle.v11.shutdown_v11_loaders": AsyncMock(),
+        "src.backend.plugins.composition.lifecycle.v11.shutdown_plugin_loaders": AsyncMock(),
         "src.backend.plugins.composition.lifecycle.v11.start_v11_hot_reload": AsyncMock(),
         "src.backend.plugins.composition.lifecycle.watchers.start_dsl_yaml_watcher": MagicMock(),
         "src.backend.plugins.composition.lifecycle.watchers.stop_dsl_yaml_watcher": MagicMock(),

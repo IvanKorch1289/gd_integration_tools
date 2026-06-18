@@ -31,7 +31,7 @@ class Pipeline:
         tenant_aware: Если ``True`` — pipeline требует наличия
             ``tenant_id`` в RequestContext / TenantContext на момент
             выполнения. K-ARCH-4 (S17): RouteLoader пробрасывает
-            значение из ``RouteManifestV11.tenant_aware`` через
+            значение из ``RouteManifest.tenant_aware`` через
             ``pipeline_registrar``. ExecutionEngine проверяет
             invariant в начале ``execute()`` и валит с
             :class:`TenantContextRequiredError` если tenant_id

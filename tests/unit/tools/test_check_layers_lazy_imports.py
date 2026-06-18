@@ -146,7 +146,7 @@ def test_test_files_in_extensions_are_excluded() -> None:
         test_file = root / "extensions" / "ext1" / "tests" / "test_x.py"
         test_file.parent.mkdir(parents=True)
         test_file.write_text(
-            "from src.backend.services.plugins.manifest_v11 import load_plugin_manifest\n"
+            "from src.backend.services.plugins.manifest_toml import load_plugin_manifest\n"
         )
 
         prod_violations = check_layers._check_file(prod_file, root)

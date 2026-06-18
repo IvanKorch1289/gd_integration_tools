@@ -33,12 +33,12 @@ def test_fallback_to_token_overlap_when_reranker_disabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При reranker_enabled=False используется token-overlap heuristic."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", False, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", False, raising=True)
     _reset_reranker_cache()
 
     example = {
@@ -58,12 +58,12 @@ def test_fallback_to_token_overlap_when_reranker_disabled(
 @pytest.mark.unit
 def test_bge_reranker_used_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
     """При reranker_enabled=True + FlagEmbedding доступен → используется BGE."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     captured: dict[str, Any] = {}
@@ -101,12 +101,12 @@ def test_bge_reranker_used_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None
 def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """ImportError FlagEmbedding → token-overlap + counter inc."""
     import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     captured: list[str] = []
@@ -146,12 +146,12 @@ def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> N
 def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """FlagReranker.compute_score raises (CUDA OOM) → fallback + counter inc."""
     import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     captured: list[str] = []
@@ -188,12 +188,12 @@ def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> 
 def test_reranker_unavailable_early_return(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает early return при _reranker_unavailable=True (line 44)."""
     import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
     mod._reranker_unavailable = True
 
@@ -213,12 +213,12 @@ def test_reranker_unavailable_early_return(monkeypatch: pytest.MonkeyPatch) -> N
 def test_reranker_cache_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает reuse _reranker_cache (line 46)."""
     import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     init_calls = 0
@@ -251,10 +251,10 @@ def test_fallback_on_bge_settings_import_error(monkeypatch: pytest.MonkeyPatch) 
     )
 
     _reset_reranker_cache()
-    monkeypatch.delitem(sys.modules, "src.backend.core.config.ai_2026", raising=False)
+    monkeypatch.delitem(sys.modules, "src.backend.core.config.ai_stack", raising=False)
 
-    fake_mod = ModuleType("src.backend.core.config.ai_2026")
-    monkeypatch.setitem(sys.modules, "src.backend.core.config.ai_2026", fake_mod)
+    fake_mod = ModuleType("src.backend.core.config.ai_stack")
+    monkeypatch.setitem(sys.modules, "src.backend.core.config.ai_stack", fake_mod)
 
     example = {
         "query": "credit",
@@ -273,12 +273,12 @@ def test_fallback_on_bge_settings_import_error(monkeypatch: pytest.MonkeyPatch) 
 def test_fallback_on_flag_reranker_init_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает except при инициализации FlagReranker (lines 80-84)."""
     import src.backend.services.ai.dspy.pipelines.rag_reranker as mod
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     class _BrokenInitReranker:
@@ -329,12 +329,12 @@ def test_forward_empty_query_or_candidates() -> None:
 @pytest.mark.unit
 def test_forward_compute_score_returns_scalar(monkeypatch: pytest.MonkeyPatch) -> None:
     """Покрывает scores = [scores] когда compute_score возвращает scalar (line 132)."""
-    from src.backend.core.config import ai_2026
+    from src.backend.core.config import ai_stack
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
 
-    monkeypatch.setattr(ai_2026.bge_settings, "reranker_enabled", True, raising=True)
+    monkeypatch.setattr(ai_stack.bge_settings, "reranker_enabled", True, raising=True)
     _reset_reranker_cache()
 
     class _ScalarReranker:

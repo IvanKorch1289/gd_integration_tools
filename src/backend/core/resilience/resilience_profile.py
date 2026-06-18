@@ -109,14 +109,53 @@ class ResilienceProfileStore(Protocol):
 
     async def get(
         self, name: str, *, tenant_id: str | None = None
-    ) -> ResilienceProfile | None: ...
+    ) -> ResilienceProfile | None:
+        """Get a resilience profile by name.
+
+        Args:
+            name: Profile identifier.
+            tenant_id: Optional tenant for per-tenant resolution.
+
+        Returns:
+            Profile if found, None otherwise.
+        """
+        ...
 
     async def list(
         self, *, tenant_id: str | None = None
-    ) -> list[ResilienceProfile]: ...
+    ) -> list[ResilienceProfile]:
+        """List all resilience profiles.
+
+        Args:
+            tenant_id: Optional tenant filter.
+
+        Returns:
+            List of profiles.
+        """
+        ...
 
     async def upsert(
         self, profile: ResilienceProfile, *, tenant_id: str | None = None
-    ) -> ResilienceProfile: ...
+    ) -> ResilienceProfile:
+        """Create or update a resilience profile.
 
-    async def delete(self, name: str, *, tenant_id: str | None = None) -> bool: ...
+        Args:
+            profile: Profile to upsert.
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            Upserted profile.
+        """
+        ...
+
+    async def delete(self, name: str, *, tenant_id: str | None = None) -> bool:
+        """Delete a resilience profile.
+
+        Args:
+            name: Profile identifier.
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        ...

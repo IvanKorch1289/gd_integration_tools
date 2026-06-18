@@ -2,7 +2,7 @@
 
 Покрытие (DoD: 5+ assertion checkpoints):
     1. routes/health_proxy_demo/route.toml загружается через
-       RouteManifestV11 (без полного RouteLoader, чтобы не запускать
+       RouteManifest (без полного RouteLoader, чтобы не запускать
        lifespan).
     2. routes/echo_demo/route.toml загружается аналогично.
     3. MetricsRegistry singleton доступен + tenant_id label обязателен.
@@ -97,9 +97,9 @@ class TestS18ComponentsSmoke:
         assert hasattr(RouteBuilder, "from_eventbus")
 
     def test_plugin_trust_tier_field(self) -> None:
-        """S18 W12 (ADR-NEW-6): PluginManifestV11.trust_tier."""
-        from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+        """S18 W12 (ADR-NEW-6): PluginManifest.trust_tier."""
+        from src.backend.services.plugins.manifest_toml import PluginManifest
 
         # Поле объявлено в model.
-        fields = PluginManifestV11.model_fields
+        fields = PluginManifest.model_fields
         assert "trust_tier" in fields

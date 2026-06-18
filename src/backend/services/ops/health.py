@@ -64,10 +64,20 @@ class ProcessorHealthResult:
 
 
 async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
-    """Выполнить HTTP GET и вернуть (status_code, text)."""
-    import httpx
+    """Perform HTTP GET and return (status_code, text).
 
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+    Uses OutboundHttpClient for WAF compliance.
+
+    Args:
+        url: Target URL.
+        timeout: Request timeout in seconds.
+
+    Returns:
+        Tuple of (status_code, response_text).
+    """
+    from src.backend.core.net.outbound_http import OutboundHttpClient
+
+    async with OutboundHttpClient(timeout=timeout) as client:
         resp = await client.get(url)
         return resp.status_code, resp.text
 

@@ -8,7 +8,7 @@
       registry. Miss → fallback на global default.
 
 Источник registry (build at lifespan):
-    Из :class:`RouteManifestV11.timeout` (``[timeout].total``) либо из
+    Из :class:`RouteManifest.timeout` (``[timeout].total``) либо из
     DSL ``.policy.timeout(total=...)``. Wiring (RouteLoader →
     TimeoutMiddleware) — отдельная wave; сейчас registry опционален.
 """
