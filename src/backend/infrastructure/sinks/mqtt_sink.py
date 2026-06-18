@@ -26,9 +26,9 @@ __all__ = ("MqttSink",)
 
 def _default_mqtt_port() -> int:
     """Returns default MQTT port from MqttSettings."""
-    from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+    from src.backend.core.config.services.mqtt import mqtt_settings
 
-    return MqttSettings().broker_port
+    return mqtt_settings.broker_port
 
 
 @dataclass(slots=True)

@@ -233,10 +233,10 @@ class SinksMixin:
         См. :class:`MqttPublishProcessor` и
         :class:`~src.backend.infrastructure.sinks.mqtt_sink.MqttSink`.
         """
-        from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+        from src.backend.core.config.services.mqtt import mqtt_settings as _mqtt_settings
 
         if port is None:
-            port = MqttSettings().broker_port
+            port = _mqtt_settings.broker_port
         from src.backend.dsl.engine.processors.sink_publish import MqttPublishProcessor
 
         return self._add(  # type: ignore[attr-defined]

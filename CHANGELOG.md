@@ -5,6 +5,23 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 25 — Layer Violations Fix & External DB Audit, 2026-06-17] — MqttSettings migration, logging imports
+
+### Fixed
+
+- **Layer violation in mqtt_sink.py**: Moved `MqttSettings` from `entrypoints/mqtt/mqtt_handler.py` to `core/config/services/mqtt.py`. Updated imports in 4 files (mqtt_sink.py, mqtt_handler.py, messaging.py, sinks.py).
+- **Layer violations in ai/rag_service/**: Fixed 6 logging imports from `infrastructure.logging.factory` to `core.logging` in augment_mixin.py, collection_mixin.py, ingest_mixin.py, search_mixin.py, l3_cache.py, semantic_cache.py.
+
+### Verified
+
+- **External DB connections**: ExternalDatabaseFacade uses SQLAlchemy `text()` with bind parameters. No pypika needed — raw SQL is safer and simpler.
+- **Query building**: Current approach (raw SQL + bind params) prevents SQL injection. SQLAlchemy Core API available if programmatic building needed.
+
+### Notes
+
+- **Ponytail applied**: Minimal fixes following existing patterns.
+- **Architecture status**: Layer violations reduced from 11 to 4 (remaining are lazy imports or intentional patterns).
+
 ## [Sprint 24 — Entry points Domain Audit & Fixes, 2026-06-17] — Syntax error, dead code cleanup
 
 ### Fixed

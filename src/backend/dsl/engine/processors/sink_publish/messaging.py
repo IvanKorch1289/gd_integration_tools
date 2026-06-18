@@ -149,7 +149,7 @@ class MqttPublishProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         """Сохраняет MQTT broker config; клиент создаётся при ``process``."""
-        from src.backend.entrypoints.mqtt.mqtt_handler import MqttSettings
+        from src.backend.core.config.services.mqtt import mqtt_settings as _mqtt_settings
 
         if port is None:
             port = MqttSettings().broker_port

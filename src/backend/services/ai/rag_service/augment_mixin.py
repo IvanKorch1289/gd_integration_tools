@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.services.ai.rag_augment import build_augment_result
 from src.backend.services.ai.rag_service.search_mixin import (
     _format_context_with_sources,
