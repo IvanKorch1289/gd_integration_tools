@@ -84,7 +84,21 @@ def _profile_from_payload(name: str, payload: ResilienceProfileIn) -> Resilience
 
 
 @router.get(
-    "", dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))]
+    "",
+    dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    summary="Список resilience profiles (global + per-tenant)",
+    description=(
+        "Возвращает список ResilienceProfile (retry + CB + rate_limit + "
+        "bulkhead политики). Опциональный query param tenant_id: если задан — "
+        "только per-tenant профили, иначе — global. Используется Admin UI "
+        "для observability resilience configuration."
+    ),
+    tags=["Admin / Resilience"],
+    responses={
+        200: {"description": "Список profile dicts."},
+        401: {"description": "Missing/invalid admin credentials."},
+        403: {"description": "User lacks Operator/Read-Only role."},
+    },
 )
 async def list_profiles(
     tenant_id: str | None = None,
@@ -97,6 +111,17 @@ async def list_profiles(
 @router.get(
     "/{name}",
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    summary="Получить effective resilience profile по имени",
+    description=(
+        "Возвращает effective ResilienceProfile: если есть per-tenant override "
+        "(tenant_id query param), возвращает его, иначе — global. "
+        "404 если profile не найден ни в одном scope."
+    ),
+    tags=["Admin / Resilience"],
+    responses={
+        200: {"description": "Profile dict."},
+        404: {"description": "Profile не найден."},
+    },
 )
 async def get_profile(
     name: str,
@@ -112,7 +137,23 @@ async def get_profile(
     return profile.to_dict()
 
 
-@router.put("/{name}", dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))])
+@router.put(
+    "/{name}",
+    dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))],
+    summary="Upsert resilience profile (global или per-tenant)",
+    description=(
+        "Создаёт или обновляет ResilienceProfile. Опциональный query param "
+        "tenant_id: если задан — per-tenant override, иначе — global. "
+        "Validation через pydantic (max_attempts 1-10, base_delay_ms 10-5000, etc.). "
+        "Требует Operator role."
+    ),
+    tags=["Admin / Resilience"],
+    responses={
+        200: {"description": "Saved profile dict."},
+        403: {"description": "User lacks Operator role."},
+        422: {"description": "Validation error (invalid retry/CB parameters)."},
+    },
+)
 async def upsert_profile(
     name: str,
     payload: ResilienceProfileIn,
@@ -124,7 +165,21 @@ async def upsert_profile(
     return saved.to_dict()
 
 
-@router.delete("/{name}", dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))])
+@router.delete(
+    "/{name}",
+    dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))],
+    summary="Удалить resilience profile (global или per-tenant)",
+    description=(
+        "Удаляет ResilienceProfile. Опциональный tenant_id для per-tenant "
+        "scope. Возвращает {\"deleted\": true/false} в зависимости от "
+        "существования. Требует Operator role."
+    ),
+    tags=["Admin / Resilience"],
+    responses={
+        200: {"description": "{\"deleted\": bool}."},
+        403: {"description": "User lacks Operator role."},
+    },
+)
 async def delete_profile(
     name: str,
     tenant_id: str | None = None,
