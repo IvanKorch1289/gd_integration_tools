@@ -16,6 +16,21 @@ router = APIRouter(prefix="/admin/routes", tags=["Admin / DSL Parallelism"])
 @router.get(
     "/{name}/parallelism-report",
     dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    summary="Parallelism analysis для DSL маршрута",
+    description=(
+        "Возвращает ParallelismReport для указанного route: "
+        "total_steps, parallel_groups, critical_path, estimated_speedup, "
+        "suggested_optimizations, dependencies. Используется для "
+        "выявления bottleneck'ов и возможностей параллелизации в DSL "
+        "маршрутах. Доступ: Operator или Read-Only admin role."
+    ),
+    tags=["Admin / DSL Parallelism"],
+    responses={
+        200: {"description": "ParallelismReport с метриками и рекомендациями."},
+        401: {"description": "Missing/invalid admin credentials."},
+        403: {"description": "User lacks Operator/Read-Only role."},
+        404: {"description": f"Route не найден."},
+    },
 )
 async def parallelism_report(name: str) -> dict[str, Any]:
     """Возвращает :class:`ParallelismReport` для указанного маршрута."""
