@@ -1,8 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **193**; уникальных слотов: **185**.
+Всего ADR-файлов: **197**; уникальных слотов: **186**.
 
-⚠️ Collision-слоты (8): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0232, ADR-0233, ADR-0234, ADR-0235. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+⚠️ Collision-слоты (11): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -187,8 +187,10 @@
 | 0227 *(collision)* | ADR-0227: Sprint 156 Closure — Pattern Exhaustion + Honest Scope (2 atomic commits attempted, score 9.9 → 9.9, 0 NEW layer violations, scope-limited) | — | [0227-sprint-156-closure.md](0227-sprint-156-closure.md) |
 | 0228 *(collision)* | ADR-0228: Sprint 145 Closure — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix) | — | [0228-sprint-145-closure.md](0228-sprint-145-closure.md) |
 | 0228 *(collision)* | ADR-0228: Sprint 156 Final Closure — 6 Atomic Commits, 30 Tests Restored, Pattern Catalogue Truly Exhausted (S156 W5-W11, score 9.9, dsl 39→9 fails -77%) | — | [0228-sprint-156-final-closure.md](0228-sprint-156-final-closure.md) |
-| 0229 | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
-| 0230 | ADR-0230: Sprint 147 Closure — Regression Fix (S146 W1 broken commit, 1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 14 collection errors fixed + 164 tests unblocked) | — | [0230-sprint-147-closure.md](0230-sprint-147-closure.md) |
+| 0229 *(collision)* | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
+| 0229 *(collision)* | ADR-0229: Sprint 157 Closure — 1 Atomic Commit, 6 Tests Restored (yaml_loader module-attr fix, score 9.9, dsl 23→16 fails -30%) | — | [0229-sprint-157-closure.md](0229-sprint-157-closure.md) |
+| 0230 *(collision)* | ADR-0230: Sprint 147 Closure — Regression Fix (S146 W1 broken commit, 1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 14 collection errors fixed + 164 tests unblocked) | — | [0230-sprint-147-closure.md](0230-sprint-147-closure.md) |
+| 0230 *(collision)* | ADR-0230: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0230-sprint-157-closure.md](0230-sprint-157-closure.md) |
 | 0231 | ADR-0231: Sprint 148 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 outbox + 2 validator) | — | [0231-sprint-148-closure.md](0231-sprint-148-closure.md) |
 | 0232 *(collision)* | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
 | 0232 *(collision)* | ADR-0232: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0232-sprint-157-closure.md](0232-sprint-157-closure.md) |
@@ -199,5 +201,7 @@
 | 0235 *(collision)* | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
 | 0235 *(collision)* | ADR-0235: Sprint 160 Closure — Pre-flight Verified, No More 1-Line Wins (0 atomic, score 9.9, 14 dsl + 22 core + 5 services pre-existing) | — | [0235-sprint-160-closure.md](0235-sprint-160-closure.md) |
 | 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
+| 0237 *(collision)* | ADR-0237: Sprint 163 Closure — Per-Route Protocol Overrides & Settings Wiring | — | [0237-sprint-163-closure.md](0237-sprint-163-closure.md) |
+| 0237 *(collision)* | ADR-0237: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0237-sprint-165-closure.md](0237-sprint-165-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
