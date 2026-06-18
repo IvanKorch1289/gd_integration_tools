@@ -27,7 +27,22 @@ def _get_selector() -> Any:
     return _selector_instance
 
 
-@router.get("/strategy-stats")
+@router.get(
+    "/strategy-stats",
+    summary="Adaptive RAG strategy stats для dashboard",
+    description=(
+        "Возвращает счётчики выбора каждой стратегии "
+        "(vector_search / keyword_search / hybrid / reranker) "
+        "AdaptiveStrategySelector + текущее значение feature-flag "
+        "adaptive_rag_strategy. Используется в Streamlit "
+        "Admin dashboard для observability retriever selection."
+    ),
+    tags=["admin", "rag"],
+    responses={
+        200: {"description": "Stats по каждой стратегии + feature_flag state."},
+        500: {"description": "Ошибка инициализации AdaptiveStrategySelector."},
+    },
+)
 async def strategy_stats() -> dict[str, Any]:
     """Возвращает stats() селектора + текущий feature-flag."""
     from src.backend.core.config.features import feature_flags
