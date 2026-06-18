@@ -113,6 +113,18 @@ router.add_api_route(
     methods=["POST"],
     response_model=InvocationResponseSchema,
     summary="Выполнить action через Invoker",
+    description=(
+        "POST invocations execute the named action через configured Invoker "
+        "и возвращают немедленный InvocationResponseSchema со status + "
+        "result/error. Async actions возвращают invocation_id для polling "
+        "через GET /invocations/{invocation_id}."
+    ),
+    tags=["Invocations"],
+    responses={
+        422: {"description": "Validation error (invalid payload)."},
+        429: {"description": "Rate limit exceeded (per default rate limiter)."},
+        500: {"description": "Internal server error."},
+    },
     name="post_invocation",
 )
 router.add_api_route(
@@ -121,5 +133,16 @@ router.add_api_route(
     methods=["GET"],
     response_model=InvocationResponseSchema,
     summary="Получить результат async/streaming-вызова (polling)",
+    description=(
+        "GET invocation by ID для polling async/streaming results. "
+        "Returns current status + result (if completed) или error. "
+        "Status PENDING → retry with exponential backoff. "
+        "Status COMPLETED → result populated, polling stops."
+    ),
+    tags=["Invocations"],
+    responses={
+        404: {"description": "Invocation not found или expired."},
+        429: {"description": "Rate limit exceeded."},
+    },
     name="get_invocation",
 )
