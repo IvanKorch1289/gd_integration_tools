@@ -170,25 +170,47 @@ class ProcessPoolAgentSandbox:
         temperature: float,
         durable: bool,
         session_id: str | None,
+        max_wall_time_s: float = 600.0,
     ) -> AgentSandboxResult:
+        """Запускает ReAct agent в subprocess с timeout enforcement (S168 W10 P1-6).
+
+        Args:
+            max_wall_time_s: Hard wall-clock timeout (default 600s = 10 min).
+                При превышении — ``asyncio.TimeoutError`` → AgentSandboxResult
+                с success=False, error="wall_time_exceeded".
+                Pер per AgentLimits.max_wall_time_s spec (S28 W3).
+        """
         if self._closed:
             raise RuntimeError("ProcessPoolAgentSandbox already shut down")
 
         loop = asyncio.get_running_loop()
         try:
-            result = await loop.run_in_executor(
-                self._executor,
-                _sync_run_react,
-                prompt,
-                tool_actions,
-                model,
-                temperature,
-                durable,
-                session_id,
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    self._executor,
+                    _sync_run_react,
+                    prompt,
+                    tool_actions,
+                    model,
+                    temperature,
+                    durable,
+                    session_id,
+                ),
+                timeout=max_wall_time_s,
             )
             success = "error" not in result
             return AgentSandboxResult(
                 success=success, data=result, backend="process_pool"
+            )
+        except asyncio.TimeoutError:
+            _logger.warning(
+                "ProcessPoolAgentSandbox: wall_time_exceeded after %.1fs",
+                max_wall_time_s,
+            )
+            return AgentSandboxResult(
+                success=False,
+                data={"error": f"wall_time_exceeded after {max_wall_time_s:.1f}s"},
+                backend="process_pool",
             )
         except Exception as exc:
             _logger.warning("ProcessPoolAgentSandbox run failed: %s", exc)
