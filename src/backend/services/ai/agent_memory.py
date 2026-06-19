@@ -148,7 +148,11 @@ class AgentMemoryService:
             self._trim_counter = 0
 
     async def _trim_messages(self, session_id: str) -> None:
-        """Удаляет излишние сообщения, оставляя только _max_messages последних."""
+        """Trim messages to keep only max_messages most recent.
+
+        Args:
+            session_id: Session identifier.
+        """
         async with self._trim_lock:
             client = self._client()
             keep_doc = await client.find(
