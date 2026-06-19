@@ -49,6 +49,10 @@ src/backend/core/net/outbound_http.py	core	src.backend.infrastructure.observabil
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/metrics.py	core	src.backend.infrastructure.observability.metrics_registry
+src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_toml
+src/backend/core/plugin_runtime/dependency_resolver.py	core	src.backend.services.plugins.manifest_toml
+src/backend/core/plugin_runtime/manifest.py	core	src.backend.services.plugins.manifest_toml
+src/backend/core/plugin_runtime/sandbox.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/repositories/base.py	core	src.backend.infrastructure.repositories.base
 src/backend/core/resilience/breaker.py	core	src.backend.infrastructure.observability
 src/backend/core/resilience/cache_decorators.py	core	src.backend.infrastructure.clients.storage.redis
@@ -66,7 +70,6 @@ src/backend/core/storage/redis.py	core	src.backend.infrastructure.clients.storag
 src/backend/core/tenancy/quotas.py	core	src.backend.infrastructure.clients.storage
 src/backend/core/workflow/builder.py	core	src.backend.infrastructure.workflow.builder
 src/backend/core/workflow/builder.py	core	src.backend.infrastructure.workflow.executor
-src/backend/dsl/agents/fastmcp_server.py	dsl	src.backend.workflows.registry
 src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.service
 src/backend/entrypoints/api/generator/actions/__init__.py	entrypoints	src.backend.dsl.commands.action_registry
 src/backend/entrypoints/api/generator/actions/crud/__init__.py	entrypoints	src.backend.dsl.commands.action_registry
@@ -86,7 +89,7 @@ src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py	entrypoints	src.
 src/backend/entrypoints/api/v1/endpoints/admin_tenants.py	entrypoints	src.backend.infrastructure.audit.event_log
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.dsl.workflow.versioning
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.infrastructure.workflow.factory
-src/backend/entrypoints/api/v1/endpoints/admin_workflows/facade.py	entrypoints	src.backend.workflows.registry
+src/backend/entrypoints/api/v1/endpoints/admin_workflows/facade.py	entrypoints	src.backend.infrastructure.workflow.registry
 src/backend/entrypoints/api/v1/endpoints/admin_workflows/helpers.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.execution_engine
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.yaml_loader
@@ -128,7 +131,7 @@ src/backend/entrypoints/mcp/namespaces/analytics_mcp.py	entrypoints	src.backend.
 src/backend/entrypoints/mcp/namespaces/credit_mcp.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/mcp/namespaces/system_mcp.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/mcp/workflow_tools.py	entrypoints	src.backend.dsl.commands.registry
-src/backend/entrypoints/mcp/workflow_tools.py	entrypoints	src.backend.workflows.registry
+src/backend/entrypoints/mcp/workflow_tools.py	entrypoints	src.backend.infrastructure.workflow.registry
 src/backend/entrypoints/middlewares/admin_ip.py	entrypoints	src.backend.dsl.codec.converters
 src/backend/entrypoints/middlewares/api_key.py	entrypoints	src.backend.dsl.codec.converters
 src/backend/entrypoints/middlewares/webhook_signature.py	entrypoints	src.backend.infrastructure.security.signatures
@@ -165,6 +168,8 @@ src/backend/infrastructure/sinks/mqtt_sink.py	infrastructure	src.backend.dsl.cod
 src/backend/infrastructure/sinks/webhook_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/sinks/ws_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backend.dsl.codec.json
+src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.commands.setup
+src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.routes
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
 src/backend/services/codec/facade.py	services	src.backend.dsl.codec.json
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_registry
@@ -196,8 +201,6 @@ src/backend/services/schema_registry/populator.py	services	src.backend.dsl.comma
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
 src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secrets
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
-src/backend/workflows/worker.py	workflows	src.backend.dsl.commands.setup
-src/backend/workflows/worker.py	workflows	src.backend.dsl.routes
 src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/18_Workflow_Versioning.py	frontend	src.backend.dsl.workflow.versioning
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.spec
