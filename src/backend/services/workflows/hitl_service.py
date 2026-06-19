@@ -181,17 +181,38 @@ class InMemoryHitlSignalStore:
         self._events: dict[str, asyncio.Event] = {}
 
     async def put(self, signal: HitlPendingSignal) -> None:
+        """Store a HITL signal.
+
+        Args:
+            signal: Signal to store.
+        """
         async with self._lock:
             self._store[signal.signal_id] = signal
             self._events.setdefault(signal.signal_id, asyncio.Event())
 
     async def get(self, signal_id: str) -> HitlPendingSignal | None:
+        """Get signal by ID.
+
+        Args:
+            signal_id: Signal identifier.
+
+        Returns:
+            Signal if found, None otherwise.
+        """
         async with self._lock:
             return self._store.get(signal_id)
 
     async def list_pending(
         self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
+        """List pending signals.
+
+        Args:
+            tenant_id: Optional tenant filter.
+
+        Returns:
+            List of pending signals.
+        """
         async with self._lock:
             items = [s for s in self._store.values() if not s.is_resolved]
         if tenant_id is not None:
@@ -201,6 +222,20 @@ class InMemoryHitlSignalStore:
     async def mark_resolved(
         self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal:
+        """Mark signal as resolved.
+
+        Args:
+            signal_id: Signal identifier.
+            action: Resolution action.
+            resolved_by: Resolver identity.
+
+        Returns:
+            Updated signal.
+
+        Raises:
+            KeyError: If signal not found.
+            ValueError: If signal already resolved.
+        """
         async with self._lock:
             signal = self._store.get(signal_id)
             if signal is None:
@@ -258,22 +293,47 @@ class HitlService:
         self._caller = caller_name
 
     async def register_pending(self, signal: HitlPendingSignal) -> None:
-        """Зафиксировать pending signal (вызывается workflow-activity).
+        """Register a pending signal (called by workflow activity).
 
-        В реальном пайплайне эта запись делается activity'ом внутри
-        Temporal workflow ДО ``wait_signal``.
+        Args:
+            signal: Pending signal to register.
         """
         await self._store.put(signal)
 
     async def list_pending(
         self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
+        """List pending signals.
+
+        Args:
+            tenant_id: Optional tenant filter.
+
+        Returns:
+            List of pending signals.
+        """
         return await self._store.list_pending(tenant_id=tenant_id)
 
     async def get(self, signal_id: str) -> HitlPendingSignal | None:
+        """Get signal by ID.
+
+        Args:
+            signal_id: Signal identifier.
+
+        Returns:
+            Signal if found, None otherwise.
+        """
         return await self._store.get(signal_id)
 
     async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+        """Wait for signal resolution.
+
+        Args:
+            signal_id: Signal identifier.
+            timeout: Optional timeout in seconds.
+
+        Returns:
+            True if resolved, False if timeout.
+        """
         return await self._store.wait_for(signal_id, timeout=timeout)
 
     async def resolve(
@@ -284,20 +344,19 @@ class HitlService:
         resolved_by: str,
         payload: dict[str, Any] | None = None,
     ) -> HitlPendingSignal:
-        """Разрешить pending signal.
+        """Resolve a pending HITL signal.
 
         Args:
-            signal_id: идентификатор pending signal.
-            action: :class:`HitlAction` (approve/reject/request_info).
-            resolved_by: имя оператора.
-            payload: опц. дополнительные данные (e.g. operator comment).
+            signal_id: Signal identifier.
+            action: Resolution action (approve/reject/request_info).
+            resolved_by: Operator name.
+            payload: Optional additional data.
 
         Returns:
-            Обновлённый :class:`HitlPendingSignal`.
+            Updated HitlPendingSignal.
 
         Raises:
-            ValueError: invalid action или signal уже resolved.
-            KeyError: signal_id не найден.
+            ValueError: If invalid action or signal already resolved.
         """
         if action not in HitlAction.all():
             raise ValueError(f"Invalid action {action!r}; allowed: {HitlAction.all()}")
