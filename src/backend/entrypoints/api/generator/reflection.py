@@ -24,6 +24,15 @@ __all__ = (
 def build_model_parameters(
     model_cls: type[BaseModel] | None, source: Literal["path", "query"]
 ) -> list[Parameter]:
+    """Build FastAPI parameters from Pydantic model.
+
+    Args:
+        model_cls: Pydantic model class.
+        source: Parameter source ('path' or 'query').
+
+    Returns:
+        List of FastAPI Parameters.
+    """
     if model_cls is None:
         return []
 
@@ -54,6 +63,14 @@ def build_model_parameters(
 
 
 def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
+    """Build FastAPI parameters from InvocationSpec.
+
+    Args:
+        spec: Invocation specification.
+
+    Returns:
+        List of FastAPI Parameters.
+    """
     fields = set(spec.source_fields)
     parameters: list[Parameter] = []
 
@@ -97,6 +114,11 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
 
 
 def request_parameter() -> Parameter:
+    """Build Request parameter.
+
+    Returns:
+        FastAPI Request parameter.
+    """
     from fastapi import Request
 
     return Parameter(
@@ -105,6 +127,16 @@ def request_parameter() -> Parameter:
 
 
 def path_parameter(name: str, annotation: Any, description: str) -> Parameter:
+    """Build path parameter.
+
+    Args:
+        name: Parameter name.
+        annotation: Type annotation.
+        description: Parameter description.
+
+    Returns:
+        FastAPI Path parameter.
+    """
     return Parameter(
         name=name,
         kind=Parameter.KEYWORD_ONLY,
@@ -116,6 +148,17 @@ def path_parameter(name: str, annotation: Any, description: str) -> Parameter:
 def query_parameter(
     name: str, annotation: Any, default_value: Any, description: str
 ) -> Parameter:
+    """Build query parameter.
+
+    Args:
+        name: Parameter name.
+        annotation: Type annotation.
+        default_value: Default value.
+        description: Parameter description.
+
+    Returns:
+        FastAPI Query parameter.
+    """
     return Parameter(
         name=name,
         kind=Parameter.KEYWORD_ONLY,
