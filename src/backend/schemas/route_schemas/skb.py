@@ -1,87 +1,20 @@
-from uuid import UUID, uuid4
+"""DEPRECATED: re-export shim (S168 W17 P2-10).
 
-from pydantic import Field
+SKB route schemas moved to
+src.backend.extensions.skb.schemas.route per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-from src.backend.core.enums.skb import ResponseTypeChoices
-from src.backend.schemas.base import BaseSchema
+from extensions.skb.schemas import route as _route_module  # noqa: E402,F401
 
-__all__ = (
-    "APISKBOrderSchemaIn",
-    "SKBResultQuerySchema",
-    "SKBOrdersListQuerySchema",
-    "SKBObjectsByAddressQuerySchema",
+__all__ = getattr(_route_module, "__all__", ())
+
+warnings.warn(
+    "src.backend.schemas.route_schemas.skb is deprecated "
+    "(S168 W17 P2-10), use "
+    "extensions.skb.schemas.route instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
 )
-
-
-class APISKBOrderSchemaIn(BaseSchema):
-    """
-    Схема входящего тела запроса для создания запроса в СКБ-Техно.
-
-    Используется endpoint-ом создания нового запроса в СКБ.
-    Поля `Id` и `OrderId` генерируются автоматически, если клиент их не передал.
-
-    Attributes:
-        Id: Уникальный идентификатор запроса.
-        OrderId: Уникальный идентификатор заказа.
-        Number: Номер запроса.
-        Priority: Приоритет запроса.
-        RequestType: Тип запроса.
-    """
-
-    Id: UUID = Field(
-        default_factory=uuid4, description="Уникальный идентификатор запроса."
-    )
-    OrderId: UUID = Field(
-        default_factory=uuid4, description="Уникальный идентификатор заказа."
-    )
-    Number: str = Field(description="Номер запроса.")
-    Priority: int = Field(default=80, description="Приоритет запроса.")
-    RequestType: str = Field(description="Тип запроса.")
-
-
-class SKBResultQuerySchema(BaseSchema):
-    """
-    Схема query-параметров для получения результата запроса из СКБ-Техно.
-
-    Attributes:
-        order_uuid: UUID ранее созданного запроса.
-        response_type: Формат ответа - JSON или PDF.
-    """
-
-    order_uuid: UUID = Field(description="UUID ранее созданного запроса.")
-    response_type: ResponseTypeChoices = Field(
-        default=ResponseTypeChoices.json, description="Формат ответа: JSON или PDF."
-    )
-
-
-class SKBOrdersListQuerySchema(BaseSchema):
-    """
-    Схема query-параметров для получения списка заказов из СКБ-Техно.
-
-    Attributes:
-        take: Количество записей для выборки.
-        skip: Количество записей, которые нужно пропустить.
-    """
-
-    take: int | None = Field(
-        default=None, ge=1, description="Количество записей для выборки."
-    )
-    skip: int | None = Field(
-        default=None, ge=0, description="Количество записей, которые нужно пропустить."
-    )
-
-
-class SKBObjectsByAddressQuerySchema(BaseSchema):
-    """
-    Схема query-параметров для поиска объектов недвижимости по адресу.
-
-    Endpoint сохраняет текущий внешний контракт:
-    это POST-запрос, но параметры передаются через query string.
-
-    Attributes:
-        query: Адрес объекта.
-        comment: Дополнительный комментарий.
-    """
-
-    query: str = Field(description="Адрес объекта.")
-    comment: str | None = Field(default=None, description="Дополнительный комментарий.")

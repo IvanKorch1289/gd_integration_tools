@@ -1,29 +1,20 @@
-from pydantic import Field
+"""DEPRECATED: re-export shim (S168 W17 P2-10).
 
-from src.backend.schemas.base import BaseSchema
+DaData route schemas moved to
+src.backend.extensions.dadata.schemas.route per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-__all__ = ("DadataGeolocateQuerySchema",)
+from extensions.dadata.schemas import route as _route_module  # noqa: E402,F401
 
+__all__ = getattr(_route_module, "__all__", ())
 
-class DadataGeolocateQuerySchema(BaseSchema):
-    """
-    Схема query-параметров для получения геолокации по координатам через DaData.
-
-    Внешний контракт оставлен совместимым с текущим endpoint-ом:
-    метод POST, параметры передаются через query string.
-
-    Attributes:
-        lat: Широта.
-        lon: Долгота.
-        count_results: Количество результатов в ответе.
-        radius_metres: Радиус поиска в метрах.
-    """
-
-    lat: float = Field(description="Широта.")
-    lon: float = Field(description="Долгота.")
-    count_results: int | None = Field(
-        default=10, ge=1, le=50, description="Количество результатов в ответе."
-    )
-    radius_metres: int | None = Field(
-        default=500, ge=1, description="Радиус поиска в метрах."
-    )
+warnings.warn(
+    "src.backend.schemas.route_schemas.dadata is deprecated "
+    "(S168 W17 P2-10), use "
+    "extensions.dadata.schemas.route instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)

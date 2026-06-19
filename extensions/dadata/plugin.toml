@@ -1,0 +1,8 @@
+# S168 W17 P2-10: DaData extension manifest.
+[plugin]
+name = "dadata"
+version = "1.0.0"
+description = "DaData.ru geolocation API schemas (S168 W17 P2-10 migration)"
+
+[dependencies]
+# No hard deps — pure Pydantic schemas

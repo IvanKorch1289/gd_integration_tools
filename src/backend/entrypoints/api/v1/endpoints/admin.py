@@ -7,7 +7,7 @@ from src.backend.entrypoints.api.generator.actions import (
 from src.backend.infrastructure.cache.metrics_collector import (
     get_cache_metrics_snapshot,
 )
-from src.backend.schemas.route_schemas.admin import (
+from extensions.core_admin.schemas.route import (
     AdminCacheInvalidatePatternSchema,
     AdminCacheInvalidateTableSchema,
     AdminCacheInvalidateTagsSchema,

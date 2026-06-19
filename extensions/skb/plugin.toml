@@ -1,0 +1,8 @@
+# S168 W17 P2-10: SKB extension manifest.
+[plugin]
+name = "skb"
+version = "1.0.0"
+description = "СКБ-Техно integration schemas (S168 W17 P2-10 migration)"
+
+[dependencies]
+# No hard deps — pure Pydantic schemas

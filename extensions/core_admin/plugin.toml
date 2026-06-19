@@ -1,0 +1,8 @@
+# S168 W17 P2-10: core_admin extension manifest.
+[plugin]
+name = "core_admin"
+version = "1.0.0"
+description = "Cross-cutting admin schemas (cache, feature flags, route toggles) — S168 W17 P2-10"
+
+[dependencies]
+# No hard deps — pure Pydantic schemas

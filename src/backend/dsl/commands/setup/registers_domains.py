@@ -73,7 +73,7 @@ def _register_files() -> None:
 
 
 def _register_skb_api() -> None:
-    from src.backend.schemas.route_schemas.skb import (
+    from extensions.skb.schemas.route import (
         APISKBOrderSchemaIn,
         SKBObjectsByAddressQuerySchema,
         SKBOrdersListQuerySchema,
@@ -117,7 +117,7 @@ def _register_skb_api() -> None:
 
 
 def _register_dadata() -> None:
-    from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
+    from extensions.dadata.schemas.route import DadataGeolocateQuerySchema
     from src.backend.services.integrations.dadata import get_dadata_service
 
     action_handler_registry.register(
