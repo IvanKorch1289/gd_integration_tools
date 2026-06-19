@@ -36,6 +36,14 @@ class RateLimiterPolicy:
     window_seconds: int
 
     def as_rate_limit(self, identifier: str) -> RateLimit:
+        """Convert policy to RateLimit instance.
+
+        Args:
+            identifier: Rate limit identifier.
+
+        Returns:
+            RateLimit instance.
+        """
         return RateLimit(
             limit=self.limit,
             window_seconds=self.window_seconds,
@@ -60,9 +68,27 @@ class ResourceRateLimiter:
         self._presets = dict(self.DEFAULTS)
 
     def set_policy(self, resource: str, policy: RateLimiterPolicy) -> None:
+        """Set rate limit policy for a resource.
+
+        Args:
+            resource: Resource identifier.
+            policy: Rate limit policy.
+        """
         self._presets[resource] = policy
 
     async def acquire(self, resource: str, identifier: str) -> dict:
+        """Acquire rate limit slot for a resource.
+
+        Args:
+            resource: Resource identifier.
+            identifier: Client identifier.
+
+        Returns:
+            Rate limit check result.
+
+        Raises:
+            KeyError: If resource not found.
+        """
         policy = self._presets.get(resource)
         if policy is None:
             raise KeyError(f"Unknown RL resource: {resource}")

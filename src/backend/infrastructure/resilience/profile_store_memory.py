@@ -27,6 +27,15 @@ class InMemoryResilienceProfileStore:
     async def get(
         self, name: str, *, tenant_id: str | None = None
     ) -> ResilienceProfile | None:
+        """Get resilience profile by name.
+
+        Args:
+            name: Profile name.
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            Profile if found, None otherwise.
+        """
         async with self._lock:
             if tenant_id is not None:
                 tenant_override = self._data.get((tenant_id, name))
@@ -35,6 +44,14 @@ class InMemoryResilienceProfileStore:
             return self._data.get((None, name))
 
     async def list(self, *, tenant_id: str | None = None) -> list[ResilienceProfile]:
+        """List all resilience profiles.
+
+        Args:
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            List of profiles.
+        """
         async with self._lock:
             # effective: tenant override (если есть) перекрывает global.
             effective: dict[str, ResilienceProfile] = {}
@@ -50,10 +67,28 @@ class InMemoryResilienceProfileStore:
     async def upsert(
         self, profile: ResilienceProfile, *, tenant_id: str | None = None
     ) -> ResilienceProfile:
+        """Create or update a resilience profile.
+
+        Args:
+            profile: Profile to upsert.
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            Upserted profile.
+        """
         async with self._lock:
             self._data[(tenant_id, profile.name)] = profile
             return profile
 
     async def delete(self, name: str, *, tenant_id: str | None = None) -> bool:
+        """Delete a resilience profile.
+
+        Args:
+            name: Profile name.
+            tenant_id: Optional tenant scope.
+
+        Returns:
+            True if deleted, False if not found.
+        """
         async with self._lock:
             return self._data.pop((tenant_id, name), None) is not None

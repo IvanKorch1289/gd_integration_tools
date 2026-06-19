@@ -1,4 +1,4 @@
-"""Unit tests for src.backend.workflows.worker."""
+"""Unit tests for src.backend.infrastructure.workflow.worker."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from src.backend.workflows.worker import (
+from src.backend.infrastructure.workflow.worker import (
     NoOpStepExecutor,
     _bootstrap,
     _readiness_check,
@@ -205,19 +205,19 @@ async def test_run_worker_full_lifecycle() -> None:
     event_mock = MagicMock()
     event_mock.wait = AsyncMock()
     with (
-        patch("src.backend.workflows.worker.asyncio.Event", return_value=event_mock),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
         patch(
-            "src.backend.workflows.worker._bootstrap", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock
         ) as boot,
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
         ) as shut,
-        patch("src.backend.workflows.worker._resolve_listener_dsn", return_value=None),
-        patch("src.backend.workflows.worker.asyncio.get_running_loop") as mock_get_loop,
+        patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
     ):
         mock_loop = MagicMock()
         mock_get_loop.return_value = mock_loop
@@ -246,20 +246,20 @@ async def test_run_worker_with_listen() -> None:
     event_mock = MagicMock()
     event_mock.wait = AsyncMock()
     with (
-        patch("src.backend.workflows.worker.asyncio.Event", return_value=event_mock),
-        patch("src.backend.workflows.worker._bootstrap", new_callable=AsyncMock),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
+        patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
         ),
         patch(
-            "src.backend.workflows.worker._resolve_listener_dsn",
+            "src.backend.infrastructure.workflow.worker._resolve_listener_dsn",
             return_value="postgresql://localhost/db",
         ),
-        patch("src.backend.workflows.worker.asyncio.get_running_loop") as mock_get_loop,
+        patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
     ):
         mock_loop = MagicMock()
         mock_get_loop.return_value = mock_loop
@@ -282,18 +282,18 @@ async def test_run_worker_runner_stop_timeout() -> None:
     event_mock = MagicMock()
     event_mock.wait = AsyncMock()
     with (
-        patch("src.backend.workflows.worker.asyncio.Event", return_value=event_mock),
-        patch("src.backend.workflows.worker._bootstrap", new_callable=AsyncMock),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
+        patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
         ),
-        patch("src.backend.workflows.worker._resolve_listener_dsn", return_value=None),
+        patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
         patch.dict(os.environ, {"SHUTDOWN_GRACE_SECONDS": "1"}),
-        patch("src.backend.workflows.worker.asyncio.get_running_loop") as mock_get_loop,
+        patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
     ):
         mock_loop = MagicMock()
         mock_get_loop.return_value = mock_loop
@@ -315,17 +315,17 @@ async def test_run_worker_runner_stop_error() -> None:
     event_mock = MagicMock()
     event_mock.wait = AsyncMock()
     with (
-        patch("src.backend.workflows.worker.asyncio.Event", return_value=event_mock),
-        patch("src.backend.workflows.worker._bootstrap", new_callable=AsyncMock),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
+        patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
         ),
-        patch("src.backend.workflows.worker._resolve_listener_dsn", return_value=None),
-        patch("src.backend.workflows.worker.asyncio.get_running_loop") as mock_get_loop,
+        patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
+        patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
     ):
         mock_loop = MagicMock()
         mock_get_loop.return_value = mock_loop
@@ -346,7 +346,7 @@ async def test_run_worker_runner_stop_error() -> None:
 
 
 def test_cli_run() -> None:
-    with patch("src.backend.workflows.worker.asyncio.run") as mock_run:
+    with patch("src.backend.infrastructure.workflow.worker.asyncio.run") as mock_run:
         result = runner.invoke(
             app,
             [
@@ -365,7 +365,7 @@ def test_cli_run() -> None:
 
 
 def test_cli_status() -> None:
-    with patch("src.backend.workflows.worker.asyncio.run") as mock_run:
+    with patch("src.backend.infrastructure.workflow.worker.asyncio.run") as mock_run:
         result = runner.invoke(app, ["status"])
         assert result.exit_code == 0
         mock_run.assert_called_once()
@@ -378,6 +378,6 @@ def test_cli_drain() -> None:
 
 
 def test_main() -> None:
-    with patch("src.backend.workflows.worker.app") as mock_app:
+    with patch("src.backend.infrastructure.workflow.worker.app") as mock_app:
         main()
         mock_app.assert_called_once()
