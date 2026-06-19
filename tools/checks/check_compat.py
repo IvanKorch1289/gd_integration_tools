@@ -2,7 +2,7 @@
 
 Назначение:
     Сканирует ``extensions/`` (или указанный каталог), парсит каждый
-    ``plugin.toml`` через :class:`PluginManifestV11`, запускает
+    ``plugin.toml`` через :class:`PluginManifest`, запускает
     :func:`check_compatibility` и завершает с ``exit 1`` при наличии
     нарушений.
 
@@ -25,9 +25,9 @@ import sys
 from pathlib import Path
 
 from src.backend.core.plugin_runtime.compat_checker import check_compatibility
-from src.backend.services.plugins.manifest_v11 import (
+from src.backend.services.plugins.manifest_toml import (
     PluginManifestError,
-    PluginManifestV11,
+    PluginManifest,
     load_plugin_manifest,
 )
 
@@ -35,9 +35,9 @@ _OK = "[OK]"
 _ERR = "[ERROR]"
 
 
-def _collect_manifests(plugins_dir: Path) -> list[PluginManifestV11]:
+def _collect_manifests(plugins_dir: Path) -> list[PluginManifest]:
     """Прочитать все валидные ``plugin.toml`` из каталога."""
-    manifests: list[PluginManifestV11] = []
+    manifests: list[PluginManifest] = []
     for child in sorted(plugins_dir.iterdir()):
         manifest_path = child / "plugin.toml"
         if not manifest_path.is_file():

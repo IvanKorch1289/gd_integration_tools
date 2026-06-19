@@ -26,8 +26,8 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from src.backend.core.security.capabilities import build_default_vocabulary
-from src.backend.services.plugins.manifest_v11 import PluginManifestV11
-from src.backend.services.routes.manifest_v11 import RouteManifestV11
+from src.backend.services.plugins.manifest_toml import PluginManifest
+from src.backend.services.routes.manifest_toml import RouteManifest
 
 __all__ = (
     "export_capability_catalog",
@@ -46,7 +46,7 @@ def export_plugin_schema(
 ) -> Path:
     """Дамп JSON-Schema для ``plugin.toml`` (ADR-042)."""
     target.parent.mkdir(parents=True, exist_ok=True)
-    schema = PluginManifestV11.model_json_schema()
+    schema = PluginManifest.model_json_schema()
     target.write_text(
         json.dumps(schema, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -57,7 +57,7 @@ def export_plugin_schema(
 def export_route_schema(target: Path = SCHEMAS_DIR / "route.toml.schema.json") -> Path:
     """Дамп JSON-Schema для ``route.toml`` (ADR-043)."""
     target.parent.mkdir(parents=True, exist_ok=True)
-    schema = RouteManifestV11.model_json_schema()
+    schema = RouteManifest.model_json_schema()
     target.write_text(
         json.dumps(schema, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
