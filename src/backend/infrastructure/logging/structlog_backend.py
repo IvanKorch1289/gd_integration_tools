@@ -68,32 +68,82 @@ class StructlogLogger(LoggerProtocol):
             return msg, {**kwargs, "args": list(args)}
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log debug message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.debug(formatted, **merged)
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log info message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.info(formatted, **merged)
 
     def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log warning message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.warning(formatted, **merged)
 
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log error message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.error(formatted, **merged)
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log exception with traceback.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         # stdlib-семантика: exception() по умолчанию exc_info=True
         merged.setdefault("exc_info", True)
         self._inner.exception(formatted, **merged)
 
     def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log critical message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.critical(formatted, **merged)
 
     def log(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log message at specified level.
+
+        Args:
+            level: Logging level.
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.log(level, formatted, **merged)
 
