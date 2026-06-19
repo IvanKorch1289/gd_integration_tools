@@ -65,14 +65,38 @@ class MongoFeedbackRepository:
             logger.warning("MongoFeedbackRepository: ensure_indexes failed: %s", exc)
 
     async def save(self, doc: AIFeedbackDoc) -> AIFeedbackDoc:
+        """Save feedback document.
+
+        Args:
+            doc: Feedback document to save.
+
+        Returns:
+            Saved document.
+        """
         await self._client().insert_one(_COLLECTION, _model_to_doc(doc))
         return doc
 
     async def get(self, doc_id: str) -> AIFeedbackDoc | None:
+        """Get feedback document by ID.
+
+        Args:
+            doc_id: Document ID.
+
+        Returns:
+            Document or None if not found.
+        """
         raw = await self._client().find_one(_COLLECTION, {"_id": doc_id})
         return _doc_to_model(raw) if raw else None
 
     async def update(self, doc: AIFeedbackDoc) -> AIFeedbackDoc:
+        """Update feedback document.
+
+        Args:
+            doc: Document to update.
+
+        Returns:
+            Updated document.
+        """
         payload = _model_to_doc(doc)
         modified = await self._client().update_one(
             _COLLECTION, query={"_id": doc.id}, update=payload, upsert=False
