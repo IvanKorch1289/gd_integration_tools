@@ -17,36 +17,88 @@ __all__ = ("BaseLoggerBackend", "LoggerProtocol")
 
 
 class LoggerProtocol(ABC):
-    """Протокол логгера — минимальный интерфейс для бизнес-кода.
+    """Logger protocol — minimal interface for business code.
 
-    Сигнатура ``info/debug/...`` повторяет stdlib ``logging.Logger``:
-    позиционные ``*args`` для printf-style formatting (``logger.info("x %s", y)``)
-    и keyword ``**kwargs`` для structlog binding (``logger.info("x", key=value)``).
-    Без ``*args`` статические анализаторы (pyright) блокируют широко
-    используемый printf-style в 60+ call-sites проекта.
+    Signature matches stdlib logging.Logger with printf-style formatting
+    and keyword args for structlog binding.
     """
 
     @abstractmethod
-    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log debug message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
-    def info(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log info message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
-    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log warning message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log error message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
-    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log critical message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None: ...
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log exception with traceback.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
+        ...
 
     @abstractmethod
     def bind(self, **kwargs: Any) -> "LoggerProtocol":
-        """Возвращает логгер с привязанным контекстом."""
+        """Return logger with bound context.
+
+        Args:
+            **kwargs: Context key-value pairs.
+
+        Returns:
+            Logger with bound context.
+        """
         ...
 
 
