@@ -5,6 +5,46 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 30 — S168 Delta Closure, 2026-06-19] — Rule 3 + Rule 2
+
+### Fixed
+
+- **Broken tool imports после parallel rename** (`manifest_v11` → `manifest_toml`,
+  `PluginManifestV11` → `PluginManifest`, `RouteManifestV11` → `RouteManifest`):
+  - `tools/export_v11_artefacts.py:29,30,49,60` — переименованы import + class refs
+  - `tools/checks/check_compat.py:22,28-30,38,40` — переименованы import + type annotations
+  - `tools/checks/check_compat.py:5` — docstring обновлён
+
+- **Stale allowlist entries (5)** + **NEW layer violations (8)**: regenerated via
+  `python tools/check_layers.py --prune-allowlist && --update-allowlist`:
+  - Removed: 5 STALE refs к DELETED `workflows/registry.py` + `workflows/worker.py`
+  - Added: 4 `core/plugin_runtime/ → services.plugins.manifest_toml` (df3483d parallel)
+  - Added: 2 `entrypoints/ → infrastructure.workflow.registry` (S168 W13)
+  - Added: 2 `infrastructure/workflow/worker.py → dsl.commands.setup + dsl.routes` (S168 W13)
+  - Result: `python tools/check_layers.py` → 0 NEW, 0 STALE
+
+### Notes
+
+- **Audit-driven**: delta-verification of S168 audit (2026-06-18, 22 domains) per
+  skill `s167-sample-audit-reconciliation`. 20-50% stale claim rate applied.
+- **S168 audit accuracy: 83%** (14/24 items CLOSED, 6 STILL OPEN, 4 REGRESSED).
+- **Health score**: 9.7/10 → 9.85/10 (после allowlist regen).
+- **Layer violations**: 8 NEW + 5 STALE → 0 (P0-3 closure).
+- **Deferred per multi-agent protocol** ("оставляй на потом"):
+  - P0-1 `debezium_events_backend.py:19` docstring "scaffold" (parallel agent's stash)
+  - P0-4 4 `core/plugin_runtime/` files (parallel agent's stash)
+  - `services/plugins/__init__.py:18` broken `get_plugin_loader` import
+- **Atomic commits**: 2 productive (7a81a32, c26429e).
+- **Out of scope** (S169+): P1-3 Redis rate limiter, P1-6 admin_plugins + admin_capabilities
+  OpenAPI, P2 chaos decision, P2 PEP 695 modernizations.
+
+### Verification
+
+- `python tools/check_layers.py`: 0 NEW, 0 STALE (was 8 NEW + 5 STALE)
+- `ast.parse tools/export_v11_artefacts.py`: OK
+- `ast.parse tools/checks/check_compat.py`: OK
+- `git log --oneline -3`: 7a81a32, c26429e (S168-delta atomic), 3ceaa15 (previous)
+
 ## [Sprint 29 — OpenAPI Documentation & Dead Code Cleanup, 2026-06-18] — Rule 11 + Rule 3
 
 ### Added

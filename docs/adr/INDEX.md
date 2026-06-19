@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **199**; уникальных слотов: **188**.
+Всего ADR-файлов: **203**; уникальных слотов: **192**.
 
 ⚠️ Collision-слоты (11): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -205,5 +205,9 @@
 | 0237 *(collision)* | ADR-0237: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0237-sprint-165-closure.md](0237-sprint-165-closure.md) |
 | 0239 | ADR-0239: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0239-sprint-165-closure.md](0239-sprint-165-closure.md) |
 | 0241 | ADR-0241: Sprint 166 Final Closure — Kafka CDC + Sandbox + Docs (3 atomic, score 9.9, 0 NEW violations) | — | [0241-sprint-166-final-closure.md](0241-sprint-166-final-closure.md) |
+| 0242 | S168 W11 P2-11: Decision: mkdocs-material (primary) + Sphinx (deprecated) | — | [0242-s168-w11-mkdocs-vs-sphinx-decision.md](0242-s168-w11-mkdocs-vs-sphinx-decision.md) |
+| 0243 | S168 W11 P2-3: ADR dedup plan (11 collision-slots) | — | [0243-s168-w11-adr-dedup-plan.md](0243-s168-w11-adr-dedup-plan.md) |
+| 0244 | S168 W11 P2-10: Domain leakage to extensions — migration plan | — | [0244-s168-w11-domain-leakage-migration-plan.md](0244-s168-w11-domain-leakage-migration-plan.md) |
+| 0245 | ADR-0245: S168 Delta Closure — Tool Import Fix + Allowlist Regen (2 atomic, score 9.85, 0 NEW violations) | — | [0245-s168-delta-closure.md](0245-s168-delta-closure.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
