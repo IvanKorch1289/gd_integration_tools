@@ -27,6 +27,7 @@ Lazy-init pattern:
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.sanitization import SanitizationResult
@@ -216,6 +217,9 @@ class PresidioSanitizerAdapter:
     ) -> SanitizationResult:
         """Async-маскирование через Presidio.
 
+        S168 W9 P0-6: Presidio (spaCy NLP) — CPU-bound. Offloaded to
+        ``asyncio.to_thread`` чтобы не блокировать event loop (Rule 12).
+
         Raises:
             RuntimeError: если Presidio недоступен в production (`PRESIDIO_PII_ENABLED=True`,
                 но `presidio_analyzer` не установлен или модель ru_core_news_lg не загружена).
@@ -227,26 +231,33 @@ class PresidioSanitizerAdapter:
                 "недоступен. Установите extra `[ai-safety]` и выполните "
                 "`make pii-bootstrap` (загрузка ru_core_news_lg)."
             )
-        return self._presidio_sanitize_sync(
-            text, language=language or self._default_language
+        return await asyncio.to_thread(
+            self._presidio_sanitize_sync,
+            text,
+            language=language or self._default_language,
         )
 
     async def sanitize_messages_async(
         self, messages: list[dict[str, str]]
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
-        """Async-версия sanitize_messages."""
+        """Async-версия sanitize_messages.
+
+        S168 W9 P0-6: ``asyncio.to_thread`` offload для каждой message
+        (parallel через TaskGroup даёт <2× ускорения на типичном N=10).
+        """
         if not self._ensure_initialized():
             raise RuntimeError(
                 "PresidioSanitizerAdapter.sanitize_messages_async требует "
                 "доступный Presidio. См. `make pii-bootstrap`."
             )
-
         full_mapping: dict[str, str] = {}
         sanitized: list[dict[str, str]] = []
         for msg in messages:
             content = msg.get("content", "")
-            result = self._presidio_sanitize_sync(
-                content, language=self._default_language
+            result = await asyncio.to_thread(
+                self._presidio_sanitize_sync,
+                content,
+                language=self._default_language,
             )
             full_mapping.update(result.replacements)
             sanitized.append({**msg, "content": result.sanitized_text})
