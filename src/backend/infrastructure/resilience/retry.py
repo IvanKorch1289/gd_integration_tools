@@ -89,10 +89,19 @@ def make_async_retry(
     """
 
     def decorator(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        """Decorator that adds retry logic to async functions.
+
+        Args:
+            fn: Async function to wrap with retry logic.
+
+        Returns:
+            Wrapped function with retry capability.
+        """
         import functools
 
         @functools.wraps(fn)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            """Wrapper that implements retry logic with backoff."""
             retrying = AsyncRetrying(
                 stop=stop_after_attempt(max_attempts),
                 wait=wait_exponential(

@@ -165,6 +165,11 @@ class BulkheadRegistry:
             return bh
 
     def list_names(self) -> list[str]:
+        """Get list of registered bulkhead names.
+
+        Returns:
+            Sorted list of bulkhead names.
+        """
         return sorted(self._items.keys())
 
 

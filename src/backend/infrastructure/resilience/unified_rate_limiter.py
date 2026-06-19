@@ -138,6 +138,11 @@ _instance: RedisRateLimiter | None = None
 
 
 def get_rate_limiter() -> RedisRateLimiter:
+    """Get singleton RedisRateLimiter instance.
+
+    Returns:
+        RedisRateLimiter singleton.
+    """
     global _instance
     if _instance is None:
         _instance = RedisRateLimiter()

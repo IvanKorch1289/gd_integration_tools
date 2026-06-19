@@ -92,6 +92,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
     # -- lifecycle -----------------------------------------------------
 
     async def start(self) -> None:
+        """Start the HTTP upstream client with connection pool."""
         if self._client is not None:
             return
         import httpx  # локальный импорт, чтобы не держать при import'е модуля
@@ -126,6 +127,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
         )
 
     async def stop(self) -> None:
+        """Stop the HTTP upstream client and close connections."""
         if self._client is None:
             return
         try:
@@ -135,6 +137,14 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
             self._started = False
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Check upstream health.
+
+        Args:
+            mode: Health check mode ('fast' or 'full').
+
+        Returns:
+            HealthResult with status.
+        """
         if self._client is None:
             return HealthResult.failed(error="client not started", mode=mode)
 
@@ -184,6 +194,11 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
 
     @property
     def profile(self) -> UpstreamProfile:
+        """Get upstream profile configuration.
+
+        Returns:
+            UpstreamProfile instance.
+        """
         return self._profile
 
     async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
@@ -223,12 +238,18 @@ class UpstreamRegistry:
 
     @classmethod
     def instance(cls) -> UpstreamRegistry:
+        """Get singleton UpstreamRegistry instance.
+
+        Returns:
+            UpstreamRegistry singleton.
+        """
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
+        """Reset singleton instance (for testing)."""
         cls._instance = None
 
     def register(
@@ -261,6 +282,11 @@ class UpstreamRegistry:
             raise KeyError(f"Upstream '{name}' not registered") from None
 
     def names(self) -> list[str]:
+        """Get list of registered upstream names.
+
+        Returns:
+            Sorted list of upstream names.
+        """
         return sorted(self._upstreams.keys())
 
 

@@ -71,6 +71,11 @@ class ClientCircuitBreaker:
         )
 
     def is_open(self) -> bool:
+        """Check if circuit breaker is in open state.
+
+        Returns:
+            True if breaker is open (failing fast).
+        """
         return self._breaker.is_open
 
     @asynccontextmanager
