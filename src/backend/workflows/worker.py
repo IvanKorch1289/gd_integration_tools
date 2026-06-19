@@ -235,7 +235,7 @@ async def _run_worker(
         DurableWorkflowRunner,
         RunnerConfig,
     )
-    from src.backend.workflows.worker_probes import WorkerProbesServer
+    from src.backend.infrastructure.workflow.worker_probes import WorkerProbesServer
 
     await _bootstrap()
 

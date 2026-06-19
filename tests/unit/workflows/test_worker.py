@@ -212,7 +212,7 @@ async def test_run_worker_full_lifecycle() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
+        patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ) as shut,
@@ -251,7 +251,7 @@ async def test_run_worker_with_listen() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
+        patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),
@@ -287,7 +287,7 @@ async def test_run_worker_runner_stop_timeout() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
+        patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),
@@ -320,7 +320,7 @@ async def test_run_worker_runner_stop_error() -> None:
         patch(
             "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
         ) as Runner,
-        patch("src.backend.workflows.worker_probes.WorkerProbesServer") as Probes,
+        patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
             "src.backend.workflows.worker._shutdown_connectors", new_callable=AsyncMock
         ),
