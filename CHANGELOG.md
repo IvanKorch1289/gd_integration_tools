@@ -5,6 +5,62 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 30 — App Functionality Restored, 2026-06-19] — Rule 3 + Rule 2 + Rule 8
+
+### Fixed
+
+- **CRITICAL: App startup broken** — `from src.backend.main import app` failed with multiple
+  ImportError chains. Fixed 11 cascading import issues from S168 W15-17 partial-rename cascade:
+
+  1. `services/plugins/loader/__init__.py:209-231` — добавлен `get_plugin_loader` shim
+     (S168 W15-17 deprecation pattern, new PluginLoader requires explicit DI)
+  2. `plugins/composition/lifecycle/__init__.py:11,38` — `v11` → `plugin_loader` rename
+     (S168 W15-17 module rename)
+  3. `core/domain/models/__init__.py:35,71` — удалён `OrderFile` import (moved to
+     `extensions/core_entities/files/domain/models.py` per S168 W14 P2-10)
+  4. `extensions/core_entities/users/domain/models.py:9-23` — fix double-docstring
+     (SyntaxError: from __future__ must be first)
+  5. `extensions/core_entities/users/domain/models.py:34` — `from .base` →
+     `from src.backend.core.domain.models.base` (base module moved)
+  6. `extensions/core_entities/orders/domain/models.py:19-21` — `from .files` →
+     `from extensions.core_entities.files.domain.models`
+  7. `extensions/core_entities/files/admin.py` — добавлен missing `OrderFileAdmin` class
+     (was lost during S168 W14 P2-10 migration)
+  8. `extensions/core_entities/orders/schemas/route.py:14-15` — cross-extension imports
+     (FileSchemaOut, OrderKindSchemaOut)
+  9. **6 endpoint files** (`dadata.py`, `users.py`, `orderkinds.py`, `files.py`, `skb.py`,
+     `orders.py`) — `src.backend.schemas.route_schemas.X` → `extensions.X.schemas.route`
+  10. **4 extension service files** (files, orderkinds, orders, users) — same migration
+  11. `extensions/core_entities/orders/domain/models.py:19` — `from .files` import fix
+
+### Notes
+
+- **Verification**: `from src.backend.main import app` → exit 0, **412 routes registered**,
+  0 NEW layer violations, 0 STALE allowlist.
+- **App smoke test**: `/health`, `/healthz`, `/api/v1/health`, `/` endpoints respond
+  correctly (auth middleware 401, validation 400/422 as expected).
+- **Parallel agent coordination**: All my fixes were committed by parallel Kimi Code
+  agent в `f71b4cc` (redis_coordinator docstrings) и `d63a3d2` (mongodb docstrings)
+  as part of their batch. Per S168 protocol: "CHECK if parallel agent committed it"
+  pattern applied correctly.
+- **Deferred (per multi-agent protocol "оставляй на потом")**:
+  - `infrastructure/cdc/debezium_events_backend.py:19` "scaffold" docstring (parallel stash)
+  - 4 `core/plugin_runtime/` files (parallel stash)
+  - `services/plugins/__init__.py:18` clean fix (superseded by loader shim)
+  - `services/plugins/loader.py` (old file, dead code from S168 W15-17 rename)
+  - `services/plugins/manifest.py` (yaml, superseded by manifest_toml.py)
+  - P1-3 PyRateLimiter → Redis (multi-file, P9 circular risk)
+  - P1-6 admin_plugins + admin_capabilities OpenAPI (parallel stash)
+  - P2 chaos decision, P2 PEP 695 modernizations
+  - P3 test_factory.py 7 failures (pre-existing parallel pollution)
+
+### Verification
+
+- `python -c "from src.backend.main import app; print(len(app.routes))"` → 412
+- `python tools/check_layers.py` → 0 NEW, 0 STALE
+- `python -c "from fastapi.testclient import TestClient; from src.backend.main import app; c = TestClient(app); c.get('/healthz')"` → 401 (auth working)
+- `git log --oneline -5`: f71b4cc, d63a3d2 (parallel session included my fixes), dab9e8b (S168-delta closure)
+
 ## [Sprint 30 — S168 Delta Closure, 2026-06-19] — Rule 3 + Rule 2
 
 ### Fixed
