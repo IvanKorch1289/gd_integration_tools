@@ -291,3 +291,72 @@ class PersistenceMixin:
             params_from=params_from,
             result_property=result_property,
         )
+
+    def lookup(
+        self,
+        key_from: str,
+        *,
+        target: str,
+        result_property: str = "lookup_result",
+    ) -> "RouteBuilder":
+        """Chainable lookup DSL method (S168 W10 P1-1, per master prompt).
+
+        Сейчас: thin wrapper над ``data_store_get`` (in-memory dict lookup).
+        Per master prompt: "first-class lookup-with-merge" pattern.
+        Семантика: берёт key из property key_from, ищет в in-memory
+        data_store, результат кладёт в result_property.
+
+        Args:
+            key_from: имя property в Exchange для ключа lookup.
+            target: имя property для значения (для backward-compat).
+            result_property: имя property для сохранения результата.
+
+        Returns:
+            RouteBuilder для chainable pattern.
+
+        Example::
+
+            builder.from_http("/users").lookup("user_id", target="user")
+        """
+        # Используем существующий DataStoreGetProcessor (data_store_get).
+        # key_from — property с ключом, target — deprecated (для future
+        # multi-source lookup).
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.data_store",
+            "DataStoreGetProcessor",
+            key_property=key_from,
+            result_property=result_property,
+        )
+
+    def merge(
+        self,
+        source_property: str,
+        *,
+        target_property: str = "merge_result",
+        strategy: str = "merge_dicts",
+    ) -> "RouteBuilder":
+        """Chainable merge DSL method (S168 W10 P1-1, per master prompt).
+
+        Per master prompt: "first-class merge with on, strategy"
+        pattern. Семантика: deep-merge dict из source_property в
+        target_property (default body, или explicit target_property).
+        Strategy ∈ {``merge_dicts``, ``list``, ``custom``} per
+        :class:`MergeStrategy` (api_composition.py:157).
+
+        Args:
+            source_property: имя property с dict для merge.
+            target_property: имя property для сохранения результата.
+            strategy: merge strategy — ``merge_dicts`` (default, dict.update),
+                ``list`` (list of dicts), ``custom`` (per processor).
+
+        Example::
+
+            builder.lookup("user_id").merge("user", target_property="body")
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.eip.dict_ops",
+            "PydashMergeProcessor",
+            source_property=source_property,
+            target_property=target_property,
+            strategy=strategy,
+        )
