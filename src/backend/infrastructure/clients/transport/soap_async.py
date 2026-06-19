@@ -72,7 +72,14 @@ class AsyncSoapClient:
     async def _do_call(
         self, envelope_xml: str, headers: dict[str, str] | None = None
     ) -> str:
-        """Внутренняя SOAP call с retry-обёрткой."""
+        """Внутренняя SOAP call с retry-обёрткой.
+
+        S168 W10 P1-7: добавлен ``httpx.Limits`` для connection pool
+        (по умолчанию httpx 100/20 — risk of FD exhaustion под burst).
+        Per-call client оставлен для backward-compat (custom cert/timeout
+        per endpoint), но с явным ``Limits`` чтобы не выходить за
+        разумные границы.
+        """
         import httpx
 
         hdr = {
@@ -81,7 +88,15 @@ class AsyncSoapClient:
         }
         if headers:
             hdr.update(headers)
-        async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
+        # S168 W10 P1-7: явный connection pool limits
+        # (max_connections=50, max_keepalive_connections=20 — SOAP burst
+        # обычно ≤20 RPS; httpx default 100/20 перебор для per-call).
+        limits = httpx.Limits(
+            max_connections=50, max_keepalive_connections=20
+        )
+        async with httpx.AsyncClient(
+            http2=True, timeout=self.timeout, limits=limits
+        ) as client:
             resp = await client.post(
                 self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
             )
