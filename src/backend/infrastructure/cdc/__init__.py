@@ -10,9 +10,9 @@ Backends:
 * :class:`ListenNotifyCDCBackend` — PostgreSQL `LISTEN/NOTIFY`. **Status:
   production-ready** для PG-only сценариев с small payload.
 * :class:`DebeziumEventsCDCBackend` — Kafka topic с Debezium-сообщениями.
-  **Status: scaffold** — требует поднятия Kafka+Debezium-connectора;
-  методы ``consume`` / ``commit_offset`` / ``replay`` логируют намерение,
-  но не подключаются к реальному Kafka. Полная реализация — Sprint R3.4.
+  **Status: PRODUCTION READY (S62 W2 + S168 W2 CB)** — реальный
+  ``aiokafka.AIOKafkaConsumer`` с subscribe/ack/replay loop + Circuit Breaker
+  (S168 W2). Полная реализация завершена, см. ``debezium_events_backend.py``.
 
 Включение CDC в runtime: через feature-flag
 ``feature_flags.cdc_enabled`` (default-OFF).
