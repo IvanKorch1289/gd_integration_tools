@@ -61,6 +61,11 @@ class AuditEventLog:
         logger.info("AuditEventLog stopped")
 
     async def emit(self, event: AuditEvent) -> None:
+        """Emit an audit event.
+
+        Args:
+            event: Audit event to emit.
+        """
         if not event.correlation_id:
             event.correlation_id = get_correlation_id()
         if not event.tenant_id:
