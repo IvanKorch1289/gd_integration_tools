@@ -31,8 +31,10 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import ParamSpec, TypeVar
+from typing import ParamSpec
 
+# S168 W11 P2-2: PEP 695 type alias для R (TypeVar → type alias).
+# P (ParamSpec) остаётся ParamSpec — нет PEP 695 эквивалента для ParamSpec.
 from tenacity import (
     AsyncRetrying,
     retry_if_exception_type,
@@ -46,8 +48,14 @@ __all__ = ("async_retry", "make_async_retry")
 
 logger = get_logger("resilience.retry")
 
+# S168 W11 P2-2: PEP 695 type alias (replaces TypeVar("R")).
+# Используем TypeAliasType (backward-compat with 3.12+; в 3.14 можно
+# использовать ``type R = object`` syntax, но он не работает если
+# ParamSpec() присваивание идёт в том же блоке).
+from typing import TypeAliasType
+
 P = ParamSpec("P")
-R = TypeVar("R")
+R = TypeAliasType("R", object)
 
 
 def make_async_retry(
