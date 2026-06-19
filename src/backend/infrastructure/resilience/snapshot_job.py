@@ -45,6 +45,8 @@ __all__ = (
     "register_snapshot_job",
     "run_snapshot_now",
     "sync_pg_to_sqlite",
+    "SnapshotJob",
+    "get_snapshot_job",
 )
 
 logger = get_logger(__name__)
@@ -349,3 +351,80 @@ def register_snapshot_job(scheduler: Any) -> None:
         snapshot_cfg.interval_minutes,
         len(snapshot_cfg.tables),
     )
+
+
+
+# ──────────────────────────────────────────────────────────────────────
+# S168 W11 P2-5: SnapshotJob class wrapper (minimal class-ification).
+# ──────────────────────────────────────────────────────────────────────
+#
+# Per master prompt v8 P2-5: "wrap in SnapshotJob class with private
+# _persist(), _restore(), _rotate() to make state explicit and enable
+# DI for testing". This commit adds the CLASS SHELL only — module-level
+# state and functions остаются canonical (backward-compat).
+# Full class-ification (state migration) — separate WIP.
+# ──────────────────────────────────────────────────────────────────────
+
+import threading
+
+
+class SnapshotJob:
+    """S168 W11 P2-5: thin class wrapper around module-level state.
+
+    Per Ponytail minimum, current implementation:
+    - module-level state (per S168) maintained для backward-compat
+    - class holds reference to global state via read-only properties
+    - ``run_once()`` метод delegates to module-level ``run_snapshot_now()``
+
+    Migration path (separate WIP):
+    - Move _last_sync_ts, _last_sync_duration, _last_sync_rows to instance
+    - Add ``_persist()``, ``_restore()``, ``_rotate()`` methods
+    - DI for testing (replace module-level state with mockable instance)
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._last_run_at: float | None = None
+        self._last_duration_s: float = 0.0
+        self._last_rows: dict[str, int] = {}
+
+    @property
+    def last_run_at(self) -> float | None:
+        """Timestamp последнего успешного snapshot (UNIX epoch)."""
+        return self._last_run_at
+
+    @property
+    def last_duration_s(self) -> float:
+        return self._last_duration_s
+
+    @property
+    def last_rows(self) -> dict[str, int]:
+        return dict(self._last_rows)
+
+    def run_once(self) -> dict[str, int]:
+        """Запустить snapshot sync (delegates to module-level run_snapshot_now).
+
+        Returns:
+            dict[table_name, row_count] для replicated tables.
+        """
+        with self._lock:
+            result = run_snapshot_now()
+            self._last_run_at = time.time()
+            self._last_duration_s = _last_sync_duration
+            self._last_rows = dict(_last_sync_rows)
+        return result
+
+
+_snapshot_job_singleton: SnapshotJob | None = None
+
+
+def get_snapshot_job() -> SnapshotJob:
+    """Singleton accessor для SnapshotJob instance (S168 W11 P2-5).
+
+    Returns:
+        module-level singleton (lazy-initialized).
+    """
+    global _snapshot_job_singleton
+    if _snapshot_job_singleton is None:
+        _snapshot_job_singleton = SnapshotJob()
+    return _snapshot_job_singleton
