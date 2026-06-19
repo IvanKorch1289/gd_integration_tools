@@ -1,10 +1,14 @@
-"""Unit tests for src.backend.workflows.dicts."""
+"""Unit tests for ProcessingResult TypedDict (S168 W13 P2-7).
+
+S168 W12 P2-7: ProcessingResult moved from src.backend.workflows.dicts
+to src.backend.schemas.processing_result. Tests updated to new location.
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from src.backend.workflows.dicts import ProcessingResult
+from src.backend.schemas.processing_result import ProcessingResult
 
 
 @pytest.mark.unit
@@ -51,6 +55,6 @@ class TestProcessingResult:
         assert result.get("nonexistent", "default") == "default"
 
     def test_all_exported(self) -> None:
-        from src.backend.workflows import dicts as dicts_module
+        from src.backend.schemas import processing_result as module
 
-        assert dicts_module.__all__ == ("ProcessingResult",)
+        assert module.__all__ == ("ProcessingResult",)

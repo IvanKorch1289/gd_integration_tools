@@ -101,6 +101,14 @@ class SemanticCache:
     ttl_seconds: int = 3600
 
     async def get(self, query: str) -> Any | None:
+        """Get cached value for query.
+
+        Args:
+            query: Query string.
+
+        Returns:
+            Cached value or None if not found.
+        """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
@@ -117,6 +125,12 @@ class SemanticCache:
             return None
 
     async def set(self, query: str, value: str) -> None:
+        """Set cached value for query.
+
+        Args:
+            query: Query string.
+            value: Value to cache.
+        """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,

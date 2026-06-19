@@ -113,19 +113,54 @@ class SecretBrokerImpl:
         self._subscribers: dict[str, list[SubscriberCallback]] = {}
 
     def get_secret(self, name: str) -> SecretValue:
+        """Get secret value with capability check.
+
+        Args:
+            name: Secret name.
+
+        Returns:
+            SecretValue from backend.
+
+        Raises:
+            CapabilityDenied: If capability check fails.
+        """
         if self._check is not None:
             self._check(self._plugin, "secrets.read", name)
         return self._backend.get(name)
 
     def get_versioned(self, name: str, version: int) -> SecretValue:
+        """Get secret value by version with capability check.
+
+        Args:
+            name: Secret name.
+            version: Version number.
+
+        Returns:
+            SecretValue from backend.
+
+        Raises:
+            CapabilityDenied: If capability check fails.
+        """
         if self._check is not None:
             self._check(self._plugin, "secrets.read", name)
         return self._backend.get_versioned(name, version)
 
     def subscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
+        """Subscribe to secret rotation events.
+
+        Args:
+            name: Secret name to watch.
+            callback: Callback to invoke on rotation.
+        """
         self._subscribers.setdefault(name, []).append(callback)
 
     def unsubscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
+        """Unsubscribe from secret rotation events.
+
+        Args:
+            name: Secret name.
+            callback: Callback to remove.
+        """
         if name in self._subscribers:
             try:
                 self._subscribers[name].remove(callback)

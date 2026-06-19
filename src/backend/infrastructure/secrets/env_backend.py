@@ -32,6 +32,17 @@ class EnvBackend:
         self._prefix = prefix
 
     def get(self, name: str) -> SecretValue:
+        """Get secret value from environment.
+
+        Args:
+            name: Secret name (e.g. 'db/postgres').
+
+        Returns:
+            SecretValue with name, value, and version.
+
+        Raises:
+            KeyError: If secret not found in environment.
+        """
         env_name = self._env_name(name)
         value = os.environ.get(env_name)
         if value is None:
@@ -39,6 +50,15 @@ class EnvBackend:
         return SecretValue(name=name, value=value, version=0)
 
     def get_versioned(self, name: str, version: int) -> SecretValue:
+        """Get secret value by name and version (env ignores version).
+
+        Args:
+            name: Secret name.
+            version: Version number (ignored for env backend).
+
+        Returns:
+            SecretValue with current value.
+        """
         # Env не version-aware; вернуть текущий снимок.
         return self.get(name)
 

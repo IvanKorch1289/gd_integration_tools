@@ -76,12 +76,18 @@ class TemplateRegistry:
 
     @classmethod
     def instance(cls) -> TemplateRegistry:
+        """Get singleton TemplateRegistry instance.
+
+        Returns:
+            TemplateRegistry singleton.
+        """
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
+        """Reset singleton instance (for testing)."""
         cls._instance = None
 
     # -- Регистрация ---------------------------------------------------
@@ -176,13 +182,34 @@ class TemplateRegistry:
     # -- Introspection -------------------------------------------------
 
     def keys(self) -> list[str]:
+        """Get all registered template keys.
+
+        Returns:
+            Sorted list of template keys.
+        """
         return sorted(self._entries.keys())
 
     def locales_of(self, key: str) -> list[str]:
+        """Get available locales for a template.
+
+        Args:
+            key: Template key.
+
+        Returns:
+            Sorted list of locale codes.
+        """
         entry = self._entries.get(key)
         return sorted(entry.locales.keys()) if entry else []
 
     def is_registered(self, key: str) -> bool:
+        """Check if template is registered.
+
+        Args:
+            key: Template key.
+
+        Returns:
+            True if registered, False otherwise.
+        """
         return key in self._entries
 
 

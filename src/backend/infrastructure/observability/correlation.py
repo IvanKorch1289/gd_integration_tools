@@ -36,6 +36,13 @@ def set_correlation_context(
     request_id: str | None = None,
     tenant_id: str | None = None,
 ) -> None:
+    """Set correlation context variables for logging.
+
+    Args:
+        correlation_id: Optional correlation ID.
+        request_id: Optional request ID.
+        tenant_id: Optional tenant ID.
+    """
     bind: dict[str, str] = {}
     if correlation_id:
         correlation_id_var.set(correlation_id)
@@ -51,18 +58,38 @@ def set_correlation_context(
 
 
 def get_correlation_id() -> str:
+    """Get current correlation ID from context.
+
+    Returns:
+        Correlation ID string.
+    """
     return correlation_id_var.get()
 
 
 def get_request_id() -> str:
+    """Get current request ID from context.
+
+    Returns:
+        Request ID string.
+    """
     return request_id_var.get()
 
 
 def get_tenant_id() -> str:
+    """Get current tenant ID from context.
+
+    Returns:
+        Tenant ID string.
+    """
     return tenant_id_var.get()
 
 
 def new_correlation_id() -> str:
+    """Generate and set a new correlation ID.
+
+    Returns:
+        New correlation ID string.
+    """
     cid = uuid.uuid4().hex[:16]
     correlation_id_var.set(cid)
     return cid

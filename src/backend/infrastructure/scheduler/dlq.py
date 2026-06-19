@@ -92,6 +92,11 @@ class SchedulerDLQEntry:
         self.retry_count += 1
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert DLQ entry to dictionary.
+
+        Returns:
+            Dictionary representation of the entry.
+        """
         return {
             "id": self.id,
             "job_id": self.job_id,
@@ -138,14 +143,35 @@ class SchedulerDLQStore:
         return items
 
     def get(self, entry_id: str) -> SchedulerDLQEntry | None:
+        """Get DLQ entry by ID.
+
+        Args:
+            entry_id: Entry identifier.
+
+        Returns:
+            SchedulerDLQEntry or None if not found.
+        """
         with self._lock:
             return self._entries.get(entry_id)
 
     def delete(self, entry_id: str) -> bool:
+        """Delete DLQ entry by ID.
+
+        Args:
+            entry_id: Entry identifier.
+
+        Returns:
+            True if deleted, False if not found.
+        """
         with self._lock:
             return self._entries.pop(entry_id, None) is not None
 
     def size(self) -> int:
+        """Get number of entries in DLQ.
+
+        Returns:
+            Entry count.
+        """
         with self._lock:
             return len(self._entries)
 

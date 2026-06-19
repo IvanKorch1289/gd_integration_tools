@@ -103,17 +103,24 @@ class NotificationGateway:
 
     @classmethod
     def instance(cls) -> NotificationGateway:
+        """Get singleton NotificationGateway instance.
+
+        Returns:
+            NotificationGateway singleton.
+        """
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
+        """Reset singleton instance (for testing)."""
         cls._instance = None
 
     # -- Lifecycle ----------------------------------------------------
 
     async def start(self) -> None:
+        """Start the notification gateway and router."""
         if self._started:
             return
         await self._router.start()
@@ -124,6 +131,7 @@ class NotificationGateway:
         )
 
     async def stop(self) -> None:
+        """Stop the notification gateway and router."""
         if not self._started:
             return
         await self._router.stop()
@@ -145,6 +153,11 @@ class NotificationGateway:
         _logger.debug("channel adapter registered", extra={"kind": kind})
 
     def channel_kinds(self) -> list[str]:
+        """Get list of registered channel kinds.
+
+        Returns:
+            Sorted list of channel kind identifiers.
+        """
         return sorted(self._channels.keys())
 
     # -- Send API -----------------------------------------------------
