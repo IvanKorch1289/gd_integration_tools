@@ -41,7 +41,15 @@ def _h(text: str) -> str:
 
 
 def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
-    """Hash-based embedder (offline/unit). Не ML-grade, но стабильный."""
+    """Hash-based embedder (offline/unit). Not ML-grade, but stable.
+
+    Args:
+        text: Text to embed.
+        dim: Embedding dimension.
+
+    Returns:
+        Embedding vector.
+    """
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
         vec[int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim] += 1.0  # noqa: S324
@@ -50,6 +58,15 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
+    """Calculate cosine similarity between two vectors.
+
+    Args:
+        a: First vector.
+        b: Second vector.
+
+    Returns:
+        Cosine similarity (0.0 to 1.0).
+    """
     if not a or not b or len(a) != len(b):
         return 0.0
     dot = sum(x * y for x, y in zip(a, b))
@@ -59,22 +76,44 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
 
 class InMemoryQdrantFallback:
-    """Минимальный in-memory Qdrant-substitute: get/create/upsert/search."""
+    """Minimal in-memory Qdrant substitute: get/create/upsert/search."""
 
     def __init__(self) -> None:
         self._coll: dict[str, dict[str, dict[str, Any]]] = {}
         self._vec: dict[str, dict[str, list[float]]] = {}
 
     def get_collection(self, name: str) -> dict[str, Any]:
+        """Get collection by name.
+
+        Args:
+            name: Collection name.
+
+        Returns:
+            Collection info dict.
+
+        Raises:
+            ValueError: If collection not found.
+        """
         if name not in self._coll:
             raise ValueError(f"collection {name!r} not found")
         return {"name": name}
 
     def create_collection(self, name: str, **_kwargs: Any) -> None:
+        """Create collection.
+
+        Args:
+            name: Collection name.
+        """
         self._coll.setdefault(name, {})
         self._vec.setdefault(name, {})
 
     def upsert(self, collection_name: str, points: Any) -> None:
+        """Upsert points into collection.
+
+        Args:
+            collection_name: Collection name.
+            points: Points to upsert.
+        """
         coll = self._coll.setdefault(collection_name, {})
         vecs = self._vec.setdefault(collection_name, {})
         for p in points:
