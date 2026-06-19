@@ -35,6 +35,15 @@ class CacheEnvelope:
 
     @staticmethod
     def _calc_deadline(seconds: int | None, now: float) -> float | None:
+        """Calculate deadline from seconds and current time.
+
+        Args:
+            seconds: Duration in seconds.
+            now: Current time.
+
+        Returns:
+            Deadline or None if no duration.
+        """
         if seconds is None or seconds <= 0:
             return None
         return now + seconds
@@ -43,6 +52,16 @@ class CacheEnvelope:
     def create(
         cls, value: Any, ttl_seconds: int | None, stale_if_error_seconds: int = 0
     ) -> "CacheEnvelope":
+        """Create a new cache envelope.
+
+        Args:
+            value: Cached value.
+            ttl_seconds: TTL in seconds.
+            stale_if_error_seconds: Stale-if-error duration.
+
+        Returns:
+            New CacheEnvelope instance.
+        """
         now = time.monotonic()
         fresh_until = cls._calc_deadline(ttl_seconds, now)
 
@@ -60,6 +79,11 @@ class CacheEnvelope:
         )
 
     def renew(self) -> "CacheEnvelope":
+        """Renew envelope with fresh timestamps.
+
+        Returns:
+            New CacheEnvelope with fresh timestamps.
+        """
         return self.create(
             value=self.value,
             ttl_seconds=self.ttl_seconds,
@@ -67,18 +91,47 @@ class CacheEnvelope:
         )
 
     def is_fresh(self, now: float | None = None) -> bool:
+        """Check if envelope is fresh.
+
+        Args:
+            now: Current time (monotonic).
+
+        Returns:
+            True if fresh.
+        """
         current = time.monotonic() if now is None else now
         return self.fresh_until is None or self.fresh_until > current
 
     def is_alive(self, now: float | None = None) -> bool:
+        """Check if envelope is alive (not expired).
+
+        Args:
+            now: Current time (monotonic).
+
+        Returns:
+            True if alive.
+        """
         current = time.monotonic() if now is None else now
         return self.stale_until is None or self.stale_until > current
 
     def is_stale(self, now: float | None = None) -> bool:
+        """Check if envelope is stale (alive but not fresh).
+
+        Args:
+            now: Current time (monotonic).
+
+        Returns:
+            True if stale.
+        """
         current = time.monotonic() if now is None else now
         return self.is_alive(current) and not self.is_fresh(current)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert envelope to dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "__cache_envelope__": True,
             "value": self.value,
