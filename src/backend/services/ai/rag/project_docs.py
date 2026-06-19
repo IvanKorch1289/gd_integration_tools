@@ -380,20 +380,3 @@ class DocsIndexer:
             logger.warning("docs_indexer.search_failed: %s", exc)
             return []
         return [_hit(r) for r in results]
-
-
-# S168 W11 P2-9: re-export from new canonical location
-# (services/ai/rag/project_docs.py). Per master prompt v8 P2-9:
-# "Move src/backend/ai/rag/docs_indexer.py into
-# src/backend/services/ai/rag/project_docs.py".
-#
-# Per Ponytail minimum: this commit does NOT delete this file.
-# Callers (2: ai/rag/__init__.py, tests/unit/ai/rag/test_docs_indexer.py)
-# продолжат работать через re-export. Actual deletion — separate WIP.
-from src.backend.services.ai.rag.project_docs import (  # noqa: E402,F401
-    DocsIndexer,
-    InMemoryQdrantFallback,
-    __all__ as __project_docs_all__,
-)
-
-__all__ = list(__project_docs_all__) + ["project_docs_module"]
