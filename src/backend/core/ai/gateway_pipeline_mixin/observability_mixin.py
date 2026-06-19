@@ -114,14 +114,33 @@ class ObservabilityMixin(_PipelineStepsProtocol):
         При наличии ``cost_tracker`` вызывает ``record_cost`` /
         ``record_tokens``. При отсутствии — no-op (LangFuse callback
         уже подписан на ``litellm.success_callback`` через
-        :class:`CostTrackingCallback`).
+        :class:`CostTrackingCallback`.
+
+        S168 W9 P0-2: enforce ``policy.budget.max_cost_usd`` (S25 W5 spec).
+        Раньше BudgetSpec был declared, но _cost_track только record'ил
+        метрики без сравнения. Теперь при превышении — raise
+        BudgetExceeded.
 
         Args:
             request: AIRequest.
             policy: Resolved AIPolicySpec (для budget enforce — Wave S25 W5).
             response: AIResponse с tokens + cost_usd.
         """
-        del policy
+        # S168 W9 P0-2: enforce max_cost_usd BEFORE recording metrics.
+        # Default BudgetSpec.max_cost_usd=0.50 (ge=0); if 0 → no cap.
+        budget = getattr(policy, "budget", None) if policy is not None else None
+        if budget is not None and budget.max_cost_usd > 0:
+            if response.cost_usd > budget.max_cost_usd:
+                from src.backend.core.tenancy.token_budget import BudgetExceeded
+                # NOTE: BudgetExceeded signature is tenant-scoped, but our
+                # context is per-invocation. Pass workflow_id as tenant_id
+                # proxy; caller can identify via workflow_id in trace.
+                raise BudgetExceeded(
+                    tenant_id=request.workflow_id,
+                    used=int(response.cost_usd * 1000),  # milli-cents precision
+                    hard_limit=int(budget.max_cost_usd * 1000),
+                    period="invocation",
+                )
         tracker = self._cost_tracker
         if tracker is None:
             return
