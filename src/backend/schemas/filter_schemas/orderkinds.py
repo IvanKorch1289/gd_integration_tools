@@ -1,40 +1,20 @@
-import importlib
+"""DEPRECATED: re-export shim (S168 W15 P2-10).
 
-from fastapi_filter.contrib.sqlalchemy import Filter
+Orderkinds filter schemas moved to
+src.backend.extensions.core_entities.orderkinds.schemas.filter per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
-# на этапе определения класса. Используем importlib — статический
-# AST-линтер слоёв не считает динамический импорт layer-violation.
-OrderKind = importlib.import_module(
-    "src." + "backend.core.domain.models.orderkinds"
-).OrderKind
+from extensions.core_entities.orderkinds.schemas import filter as _filter_module  # noqa: E402,F401
 
-__all__ = ("OrderKindFilter",)
+__all__ = getattr(_filter_module, "__all__", ())
 
-
-class OrderKindFilter(Filter):
-    """
-    Фильтр для модели OrderKind.
-
-    Атрибуты:
-        name__like (str | None): Фильтр по названию вида заказа с использованием оператора LIKE.
-        description__like (str | None): Фильтр по описанию вида заказа с использованием оператора LIKE.
-        skb_uuid__like (str | None): Фильтр по UUID SKB с использованием оператора LIKE.
-
-    Константы:
-        model: Модель, к которой применяется фильтр (OrderKind).
-    """
-
-    name__like: str | None = None
-    description__like: str | None = None
-    skb_uuid__like: str | None = None
-
-    class Constants(Filter.Constants):
-        """
-        Константы для фильтра.
-
-        Атрибуты:
-            model: Модель, к которой применяется фильтр.
-        """
-
-        model = OrderKind
+warnings.warn(
+    "src.backend.schemas.filter_schemas.orderkinds is deprecated "
+    "(S168 W15 P2-10), use "
+    "extensions.core_entities.orderkinds.schemas.filter instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)

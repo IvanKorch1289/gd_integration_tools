@@ -1,39 +1,20 @@
-import importlib
-from uuid import UUID
+"""DEPRECATED: re-export shim (S168 W15 P2-10).
 
-from fastapi_filter.contrib.sqlalchemy import Filter
+Files filter schemas moved to
+src.backend.extensions.core_entities.files.schemas.filter per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
-# на этапе определения класса. Используем importlib — статический
-# AST-линтер слоёв (`tools/check_layers.py`) не считает динамический
-# импорт layer-violation. Это адекватный компромисс для архитектурной
-# особенности fastapi_filter (filter ↔ ORM-связь).
-File = importlib.import_module("src." + "backend.core.domain.models.files").File
+from extensions.core_entities.files.schemas import filter as _filter_module  # noqa: E402,F401
 
-__all__ = ("FileFilter",)
+__all__ = getattr(_filter_module, "__all__", ())
 
-
-class FileFilter(Filter):
-    """
-    Фильтр для модели File.
-
-    Атрибуты:
-        name (str | None): Фильтр по имени файла.
-        object_uuid__like (UUID | None): Фильтр по UUID объекта с использованием оператора LIKE.
-
-    Константы:
-        model: Модель, к которой применяется фильтр.
-    """
-
-    name: str | None = None
-    object_uuid__like: UUID | None = None
-
-    class Constants(Filter.Constants):
-        """
-        Константы для фильтра.
-
-        Атрибуты:
-            model: Модель, к которой применяется фильтр.
-        """
-
-        model = File
+warnings.warn(
+    "src.backend.schemas.filter_schemas.files is deprecated "
+    "(S168 W15 P2-10), use "
+    "extensions.core_entities.files.schemas.filter instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
