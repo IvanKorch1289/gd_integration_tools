@@ -14,6 +14,24 @@
     * ``PoolExhaustionProbe`` — временное снижение max_size пула до 0.
     * ``PartitionProbe`` — временное отключение health-check для пула.
 
+S168 W11 P2-1 DECISION (per master prompt v8):
+    KEEP custom probes. Decision rationale:
+    - 4 probe types integrated with project-specific concerns
+      (pool exhaustion, partition simulation)
+    - test coverage: tests/unit/infrastructure/test_chaos_probes.py
+    - lightweight (294 LOC, no external deps)
+    - feature-flag controlled (chaos_engineering_enabled default False)
+
+    REJECTED alternatives:
+    - chaostoolkit: heavier framework, focuses on full experiment
+      definitions (steady-state hypothesis, rollback). Not aligned
+      with our use case (lightweight in-process fault injection).
+    - chaos-mesh: requires Kubernetes deployment, not relevant.
+
+    Migration path: extract probe types to interface if chaostoolkit
+    adoption needed in future. Per Ponytail minimum, no change required
+    now — current implementation matches use case.
+
 Использование::
 
     # В middleware / processor / handler
