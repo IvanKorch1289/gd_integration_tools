@@ -39,7 +39,7 @@
 │                    Инфраструктура                            │
 │  PostgreSQL │ Redis/KeyDB │ S3/MinIO │ RabbitMQ │ Kafka     │
 │  MongoDB │ Elasticsearch │ ClickHouse │ Qdrant │ LangFuse   │
-│  WAF proxy │ CDC │ DSL durable workflows                    │
+│  WAF proxy │ CDC │ Temporal workflows                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -241,13 +241,16 @@ route = (
 - **Qdrant** + **sentence-transformers** — RAG stack
 - **RabbitMQ** / Kafka / Redis Streams (FastStream-унификация)
 - **gRPC** / GraphQL (Strawberry) / SOAP (Zeep)
-- **DSL durable workflows** (заменили Prefect, ADR-031)
+- **Temporal** — workflow orchestration (primary engine)
+- **DSL durable workflows** (LiteTemporalBackend для dev_light)
 - **LangChain** / LangGraph / LangFuse / LangMem — AI
 - **FastMCP** — Model Context Protocol
 - **Prometheus** / OpenTelemetry / Grafana — observability
 - **Granian** (prod ASGI) / **uvicorn** (dev) / **uvloop** / **msgspec**
 - **polars** (заменил pandas, ADR-008) / DuckDB
 - **Docker** / **uv** (пакетный менеджер)
+- **APScheduler** — cron и фоновые задачи
+- **Consul KV** — feature flags и конфигурация
 
 ## Требования
 
@@ -354,7 +357,7 @@ gd_integration_tools/
 │   │   ├── mcp/             # FastMCP server
 │   │   ├── cdc/             # Change Data Capture
 │   │   ├── filewatcher/     # FS monitoring → DSL trigger
-│   │   └── middlewares/     # 26 ASGI middleware
+│   │   └── middlewares/     # 33 ASGI middleware
 │   ├── services/              # Бизнес-логика
 │   │   ├── ai/              # AIAgentService, RAGService, HybridRAGSearch
 │   │   ├── core/            # OrderService, UserService, FileService
@@ -362,30 +365,54 @@ gd_integration_tools/
 │   │   └── ops/             # AdminService
 │   └── infrastructure/       # DB, cache, storage, messaging, observability
 │       ├── database/        # PostgreSQL (SQLAlchemy async)
-│       ├── cache/           # Redis/KeyDB
-│       ├── storage/        # S3/MinIO/LocalFS
-│       ├── eventing/        # RabbitMQ/Kafka/Redis Streams/NATS
+│       ├── cache/           # Redis/KeyDB + tiered + RAG cache
+│       ├── storage/        # S3/MinIO/LocalFS + fallback chain
+│       ├── eventing/        # CloudEvents, Outbox, Inbox, Schema Registry
 │       ├── messaging/       # Outbox + FastStream
 │       ├── observability/   # OTel, Prometheus, Graylog, Watchdog
 │       ├── secrets/        # Vault + env fallback
-│       ├── workflow/        # Temporal Lite + LiteTemporalBackend
-│       └── audit/          # ClickHouse + Graylog
+│       ├── workflow/        # Temporal + LiteTemporalBackend + PG runner
+│       ├── cdc/            # Debezium, Polling, Listen/Notify
+│       ├── resilience/     # Circuit Breaker, Rate Limiter, Bulkhead, Retry
+│       ├── scheduler/      # APScheduler + Temporal scheduler
+│       ├── notifications/  # Email, Telegram, Slack, SMS, Webhook
+│       └── clients/        # HTTP, gRPC, SOAP, WebSocket pools
 │
 ├── extensions/               # V11 plugin system: plugin.toml + BasePlugin
+│   ├── core_entities/       # Orders, Users, Files, OrderKinds
+│   ├── credit_pipeline/     # Credit scoring pipeline
+│   ├── osint_agent/         # OSINT agent (INN → web-search → LLM report)
 │   └── example_plugin/     # Эталонный плагин
 │
 ├── routes/                   # DSL routes как «лёгкие плагины»
 │   └── <route>/route.toml + *.dsl.yaml
 │
-├── frontend/                 # React admin UI
 ├── src/frontend/
-│   └── streamlit_app/        # Streamlit developer portal (80+ pages)
+│   └── streamlit_app/        # Streamlit developer portal (36+ pages)
+│
+├── ops/                      # Operations: backup, compose, prometheus
+│   ├── backup/              # Backup scripts
+│   ├── compose/             # Docker Compose configs
+│   └── prometheus/          # Prometheus configs
+│
+├── make/                     # Makefile includes (modular)
+│   ├── agent.mk             # Agent targets
+│   ├── codegen.mk           # Code generation
+│   ├── docker.mk            # Docker targets
+│   ├── docs.mk              # Documentation
+│   ├── quality.mk           # Lint, type-check, test
+│   ├── runtime.mk           # Dev/prod run targets
+│   └── security.mk          # Security audit
 │
 ├── tools/                    # 30+ codegen/migration/check утилит
-├── tests/                    # unit/integration/e2e/chaos
+├── tests/                    # unit/integration/e2e/chaos (1451 files)
 ├── testkit/                  # Публичный API для plugin authors
-├── ai_policies/             # AI policies (промпты, guards, sanitizers)
-└── docs/                    # Sphinx: ADR/tutorials/how-to/explanation
+├── config_profiles/          # Environment configs (dev, staging, prod)
+├── config/                   # Vocabularies
+├── deploy/                   # Helm + K8s manifests
+├── dashboards/               # Grafana dashboards
+├── ai_policies/              # AI policies (промпты, guards, sanitizers)
+└── docs/                     # ADR/tutorials/how-to/explanation
 ```
 
 ## Как добавить новый action (для новых разработчиков)
