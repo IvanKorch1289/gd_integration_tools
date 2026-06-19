@@ -172,6 +172,12 @@ class RedisIngestStateStore:
         return self.KEY_TASK.format(task_id=task_id)
 
     async def create(self, task_id: str, payload: dict[str, Any]) -> None:
+        """Create a new ingest task in Redis.
+
+        Args:
+            task_id: Task identifier.
+            payload: Initial task data.
+        """
         client = self._ensure_client()
         raw = orjson.dumps(payload)
         key = self._task_key(task_id)
@@ -189,6 +195,12 @@ class RedisIngestStateStore:
             logger.debug("RedisIngestStateStore.create failed: %s", exc)
 
     async def update(self, task_id: str, **fields: Any) -> None:
+        """Update task fields in Redis.
+
+        Args:
+            task_id: Task identifier.
+            **fields: Fields to update.
+        """
         snapshot = await self.get(task_id)
         if snapshot is None:
             snapshot = dict(fields)
@@ -203,6 +215,14 @@ class RedisIngestStateStore:
             logger.debug("RedisIngestStateStore.update failed: %s", exc)
 
     async def get(self, task_id: str) -> dict[str, Any] | None:
+        """Get task from Redis.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            Task data or None if not found.
+        """
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._task_key(task_id))
@@ -219,6 +239,14 @@ class RedisIngestStateStore:
             return None
 
     async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
+        """List recent tasks from Redis.
+
+        Args:
+            limit: Maximum number of tasks.
+
+        Returns:
+            List of recent task data.
+        """
         client = self._ensure_client()
         limit = max(int(limit), 0)
         try:
