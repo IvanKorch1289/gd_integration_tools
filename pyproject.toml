@@ -304,9 +304,7 @@ sources-mq-nats = [
 lsp = [
     "pygls>=2.0.0",  # S16 K3 W1: LSP server для DSL (route.toml + workflow.yaml)
 ]
-circuit-breaker = [
-    "pybreaker>=1.2.0",  # S16 K2 W4: pybreaker заменяет custom CB (state via Redis backend)
-]
+# S168 W9 P0-7: pybreaker удалён (dead dep, 0 imports). Purgatory — canonical CB.
 perf = [
     "locust>=2.43.4,<3.0.0",
     "pytest-benchmark>=5,<6",
