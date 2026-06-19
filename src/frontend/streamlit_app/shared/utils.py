@@ -35,8 +35,16 @@ def format_duration(ms: int) -> str:
 
 
 def chunked(iterable: list[Any], size: int) -> list[list[Any]]:
-    """Разбить список на чанки заданного размера."""
-    return [iterable[i : i + size] for i in range(0, len(iterable), size)]
+    """Разбить список на чанки заданного размера.
+
+    S168 W9 P1-12: использует ``itertools.batched`` (Python 3.12+) для
+    chunking. Сохранена сигнатура и return type для backward-compat
+    (callers ожидают ``list[list[Any]]``). itertools.batched
+    возвращает tuples — оборачиваем в ``list(...)`` для стабильного API.
+    """
+    import itertools
+
+    return [list(chunk) for chunk in itertools.batched(iterable, size)]
 
 
 __all__ = ["sanitize_label", "format_bytes", "format_duration", "chunked"]
