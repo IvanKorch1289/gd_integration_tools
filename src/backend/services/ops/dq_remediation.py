@@ -55,13 +55,21 @@ _log = get_logger(__name__)
 
 
 class Remediator(ABC):
-    """Base interface для всех remediation strategies."""
+    """Base interface for all remediation strategies."""
 
     name: str = "base"
 
     @abstractmethod
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
-        """Apply remediation. Returns remediated value (or original if N/A)."""
+        """Apply remediation.
+
+        Args:
+            value: Input value.
+            params: Remediation parameters.
+
+        Returns:
+            Remediated value (or original if N/A).
+        """
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name!r})"
@@ -71,14 +79,28 @@ class Remediator(ABC):
 
 
 class NullDefaultRemediator(Remediator):
-    """Replace ``None`` / empty-string / empty-collection с ``params['default']``."""
+    """Replace None/empty-string/empty-collection with params['default']."""
 
     name = "null_default"
 
     def __init__(self, default: Any = None) -> None:
+        """Initialize with default value.
+
+        Args:
+            default: Default value for None/empty.
+        """
         self.default = default
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Replace None/empty with default.
+
+        Args:
+            value: Input value.
+            params: Parameters with optional 'default' override.
+
+        Returns:
+            Default value if input is None/empty, else original.
+        """
         default = params.get("default", self.default)
         if value is None or value == "" or value == [] or value == {}:
             _log.debug("DQ remediator: replacing null/empty %r → %r", value, default)
@@ -90,7 +112,7 @@ class NullDefaultRemediator(Remediator):
 
 
 class RangeClipRemediator(Remediator):
-    """Clip numeric value в [min, max] range.
+    """Clip numeric value to [min, max] range.
 
     Non-numeric values: passed through unchanged.
     """
@@ -98,10 +120,25 @@ class RangeClipRemediator(Remediator):
     name = "range_clip"
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
+        """Initialize with min/max bounds.
+
+        Args:
+            min: Minimum value (None for no lower bound).
+            max: Maximum value (None for no upper bound).
+        """
         self.min = min
         self.max = max
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Clip numeric value to range.
+
+        Args:
+            value: Input value.
+            params: Parameters with optional min/max overrides.
+
+        Returns:
+            Clipped value or original if non-numeric.
+        """
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             return value
         lo = params.get("min", self.min)
