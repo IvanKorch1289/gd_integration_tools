@@ -30,7 +30,6 @@ if TYPE_CHECKING:
 else:
     _PipelineStepsMixin = object
 
-
 class EnforcedInvokeMixin(_PipelineStepsMixin):
     """9-step pipeline orchestrator (ADR-NEW-19, S25 W1..W5 + S27 W2..W5).
 
@@ -67,6 +66,17 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         await ctx._emit(
             "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
         )
+
+        # Шаг 1.5 (S168 W9 P0-1): enforce tool policy per AIPolicySpec.tools.
+        # ToolsSpec declared in S76, but never wired — agents could call any
+        # tool regardless of whitelist/blacklist. Now enforced per
+        # ``enforce_tool_policy(tool_name=request.workflow_id, spec=policy.tools)``.
+        # on_violation ∈ {fail, warn, block} per spec.
+        if policy is not None and getattr(policy, "tools", None) is not None:
+            from src.backend.core.ai.policy.enforcer.tools_policy import (
+                enforce_tool_policy,
+            )
+            enforce_tool_policy(request.workflow_id, policy.tools)
 
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
         await self._check_capability(request)
