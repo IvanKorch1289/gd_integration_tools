@@ -105,14 +105,29 @@ class TechService:
             return await health_check.check_s3_bucket()
 
     async def check_graylog(self) -> bool:
+        """Check Graylog health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_graylog()
 
     async def check_smtp(self) -> bool:
+        """Check SMTP health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_smtp()
 
     async def check_rabbitmq(self) -> bool:
+        """Check RabbitMQ health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_rabbitmq()
 
