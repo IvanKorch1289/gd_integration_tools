@@ -70,13 +70,64 @@ class TokenRegistryProtocol(Protocol):
     * in-memory testkit (см. ``tests/fixtures``).
     """
 
-    async def store(self, key: str, token_map: TokenMap, ttl_s: int) -> None: ...
-    async def retrieve(self, key: str) -> TokenMap | None: ...
-    async def delete(self, key: str) -> None: ...
-    async def cleanup_expired(self) -> int: ...
+    async def store(self, key: str, token_map: TokenMap, ttl_s: int) -> None:
+        """Store token map with TTL.
 
-    def encrypt_value(self, plaintext: str) -> EncryptedValue: ...
-    def decrypt_value(self, value: EncryptedValue) -> str | None: ...
+        Args:
+            key: Storage key.
+            token_map: Token map to store.
+            ttl_s: Time-to-live in seconds.
+        """
+        ...
+
+    async def retrieve(self, key: str) -> TokenMap | None:
+        """Retrieve token map by key.
+
+        Args:
+            key: Storage key.
+
+        Returns:
+            TokenMap or None if not found/expired.
+        """
+        ...
+
+    async def delete(self, key: str) -> None:
+        """Delete token map by key.
+
+        Args:
+            key: Storage key.
+        """
+        ...
+
+    async def cleanup_expired(self) -> int:
+        """Cleanup expired token maps.
+
+        Returns:
+            Number of deleted entries.
+        """
+        ...
+
+    def encrypt_value(self, plaintext: str) -> EncryptedValue:
+        """Encrypt plaintext value.
+
+        Args:
+            plaintext: Value to encrypt.
+
+        Returns:
+            EncryptedValue with ciphertext and metadata.
+        """
+        ...
+
+    def decrypt_value(self, value: EncryptedValue) -> str | None:
+        """Decrypt encrypted value.
+
+        Args:
+            value: EncryptedValue to decrypt.
+
+        Returns:
+            Decrypted plaintext or None if decryption fails.
+        """
+        ...
 
 
 @runtime_checkable

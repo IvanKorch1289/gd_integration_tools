@@ -36,16 +36,38 @@ class EnvSecretsBackend(SecretsBackend):
                 self._cache = {}
 
     async def get_secret(self, key: str) -> str | None:
+        """Get secret value from environment or cache.
+
+        Args:
+            key: Secret key.
+
+        Returns:
+            Secret value or None if not found.
+        """
         if key in self._cache:
             return self._cache[key]
         return os.environ.get(key)
 
     async def set_secret(self, key: str, value: str) -> None:
+        """Set secret value in environment and cache.
+
+        Args:
+            key: Secret key.
+            value: Secret value.
+        """
         self._cache[key] = value
         os.environ[key] = value
         self._flush()
 
     async def delete_secret(self, key: str) -> bool:
+        """Delete secret from environment and cache.
+
+        Args:
+            key: Secret key.
+
+        Returns:
+            True if secret existed, False otherwise.
+        """
         existed = key in self._cache or key in os.environ
         self._cache.pop(key, None)
         os.environ.pop(key, None)
@@ -53,6 +75,14 @@ class EnvSecretsBackend(SecretsBackend):
         return existed
 
     async def list_keys(self, prefix: str | None = None) -> list[str]:
+        """List all secret keys with optional prefix filter.
+
+        Args:
+            prefix: Optional key prefix to filter by.
+
+        Returns:
+            Sorted list of matching keys.
+        """
         keys = set(self._cache) | set(os.environ)
         if prefix is not None:
             keys = {k for k in keys if k.startswith(prefix)}

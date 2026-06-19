@@ -82,6 +82,14 @@ class VaultCertBackend(CertBackend):
         return client
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Get certificate from Vault.
+
+        Args:
+            service_id: Service identifier.
+
+        Returns:
+            CertEntry or None if not found.
+        """
         try:
             client = self._client()
             data = await asyncio.to_thread(
@@ -112,6 +120,18 @@ class VaultCertBackend(CertBackend):
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Save certificate to Vault.
+
+        Args:
+            service_id: Service identifier.
+            pem: PEM certificate string.
+            expires_at: Certificate expiration time.
+            description: Optional description.
+            uploaded_by: Optional uploader identifier.
+
+        Returns:
+            Saved CertEntry with incremented version.
+        """
         prev = await self.get(service_id)
         version = (prev.version + 1) if prev else 1
         fp = _fingerprint(pem)

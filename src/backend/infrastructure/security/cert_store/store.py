@@ -75,6 +75,14 @@ class CertStore:
 
     @classmethod
     def from_settings(cls, settings: CertStoreSettings) -> CertStore:
+        """Create CertStore from settings.
+
+        Args:
+            settings: Certificate store settings.
+
+        Returns:
+            Configured CertStore instance.
+        """
         backend: CertBackend
         match settings.backend:
             case "vault":
@@ -94,6 +102,14 @@ class CertStore:
         return cls(backend=backend, settings=settings)
 
     async def get(self, service_id: str) -> str | None:
+        """Get PEM certificate for a service.
+
+        Args:
+            service_id: Service identifier.
+
+        Returns:
+            PEM string or None if not found.
+        """
         cached = self._cache.get(service_id)
         if cached:
             return cached.pem
@@ -104,6 +120,14 @@ class CertStore:
         return None
 
     async def get_entry(self, service_id: str) -> CertEntry | None:
+        """Get full certificate entry for a service.
+
+        Args:
+            service_id: Service identifier.
+
+        Returns:
+            CertEntry or None if not found.
+        """
         cached = self._cache.get(service_id)
         if cached:
             return cached
@@ -121,6 +145,18 @@ class CertStore:
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Store a certificate.
+
+        Args:
+            service_id: Service identifier.
+            pem: PEM certificate string.
+            expires_at: Certificate expiration time.
+            description: Optional description.
+            uploaded_by: Optional uploader identifier.
+
+        Returns:
+            Stored CertEntry.
+        """
         entry = await self._backend.save(
             service_id,
             pem,
@@ -133,9 +169,22 @@ class CertStore:
         return entry
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """Get certificate history for a service.
+
+        Args:
+            service_id: Service identifier.
+
+        Returns:
+            List of historical CertEntry objects.
+        """
         return await self._backend.history(service_id)
 
     async def get_expiring_soon(self) -> list[CertEntry]:
+        """Get certificates expiring within warning threshold.
+
+        Returns:
+            List of expiring CertEntry objects.
+        """
         deadline = datetime.now(tz=UTC) + timedelta(
             days=self._settings.expire_warn_days
         )
