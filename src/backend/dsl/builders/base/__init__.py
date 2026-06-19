@@ -32,6 +32,8 @@ from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
 from src.backend.dsl.builders.infrastructure_dsl import InfrastructureDSL
 from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.builders.ip_restriction_mixin import IPRestrictionMixin
+from src.backend.dsl.builders.notebook import NotebookMixin
+from src.backend.dsl.builders.policy_mixin import PolicyMixin
 from src.backend.dsl.builders.request_reply import RequestReplyMixin
 from src.backend.dsl.builders.saga_lra import SagaLRAMixin
 from src.backend.dsl.builders.sources_mixin import (
@@ -39,6 +41,7 @@ from src.backend.dsl.builders.sources_mixin import (
 )
 from src.backend.dsl.builders.template_engine import TemplateEngineChainMixin
 from src.backend.dsl.builders.template_engine_mixin import TemplateEngineMixin
+from src.backend.dsl.builders.variable_mixin import VariableMixin
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import BaseProcessor
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
@@ -90,6 +93,9 @@ class RouteBuilder(  # type: ignore[misc]
     PlanExecuteMixin,
     ReflectionLoopMixin,
     RouterSpecialistMixin,
+    NotebookMixin,  # S168 W9 P0-3: wired per ARCHITECTURAL_AUDIT_V2.md:102-117
+    VariableMixin,  # S168 W9 P0-3
+    PolicyMixin,  # S168 W9 P0-3
     FluentMixin,
     ConfigMixin,
     ValidationMixin,
@@ -101,7 +107,14 @@ class RouteBuilder(  # type: ignore[misc]
     IPRestrictionMixin,
     TransportSourcesMixin,  # S97 W1: SSE/CDC/messaging builders (orphan в S94)
 ):
-    """RouteBuilder — DSL core (7 mixins = 26 methods + 6 core)."""
+    """RouteBuilder — DSL core (10 mixins = 32+ methods + 6 core).
+
+    S168 W9 P0-3: added NotebookMixin, VariableMixin, PolicyMixin to MRO
+    (per ARCHITECTURAL_AUDIT_V2.md:102-117). Раньше они были defined
+    but not wired → fluent DSL chain ``route.notebook_execute()`` /
+    ``route.set_variable()`` / ``route.policy.cache()`` выбрасывали
+    AttributeError. Теперь доступны как route-level methods.
+    """
 
     __slots__ = (
         "_description",
