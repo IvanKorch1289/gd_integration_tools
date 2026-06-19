@@ -13,7 +13,7 @@ from starlette.routing import Route
 from starlette.testclient import TestClient
 
 from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
-from src.backend.workflows import worker_probes as wp
+from src.backend.infrastructure.workflow import worker_probes as wp  # S168 W13: moved from src/backend/workflows/
 
 
 @pytest.fixture(autouse=True)

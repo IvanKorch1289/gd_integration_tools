@@ -9,11 +9,13 @@ import pytest
 from pydantic import ValidationError
 
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.routes.manifest_v11 import (
+from src.backend.services.routes.manifest_toml import (  # S168 W15-17: v11 → toml
     RouteManifestError,
-    RouteManifestV11,
+    RouteManifest,
     load_route_manifest,
 )
+# Backward-compat alias (test still uses old name)
+RouteManifestV11 = RouteManifest
 
 VALID_TOML = """
 name = "credit_pipeline"

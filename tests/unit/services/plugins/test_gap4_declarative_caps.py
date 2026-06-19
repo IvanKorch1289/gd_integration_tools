@@ -47,12 +47,12 @@ from src.backend.services.plugins.manifest_toml import (
     PluginTenantDecl,
     load_plugin_manifest,
 )
-from tests.unit.services.plugins.test_loader import (
+from tests.unit.services.plugins.test_loader_v11_frontend_pages import (  # S168 W15-17: test_loader → test_loader_v11_frontend_pages
     _build_loader,
     _FakeActions,
     _FakeProcessors,
     _FakeRepos,
-    _write_extension,
+    _write_plugin as _write_extension,  # S168 W15-17: renamed _write_extension → _write_plugin
 )
 
 
