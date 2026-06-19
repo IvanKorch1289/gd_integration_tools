@@ -38,13 +38,45 @@ __all__ = (
 class IngestStateStore(Protocol):
     """Async-протокол хранилища состояний ingest-задач."""
 
-    async def create(self, task_id: str, payload: dict[str, Any]) -> None: ...
+    async def create(self, task_id: str, payload: dict[str, Any]) -> None:
+        """Create a new ingest task.
 
-    async def update(self, task_id: str, **fields: Any) -> None: ...
+        Args:
+            task_id: Task identifier.
+            payload: Initial task data.
+        """
+        ...
 
-    async def get(self, task_id: str) -> dict[str, Any] | None: ...
+    async def update(self, task_id: str, **fields: Any) -> None:
+        """Update task fields.
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]: ...
+        Args:
+            task_id: Task identifier.
+            **fields: Fields to update.
+        """
+        ...
+
+    async def get(self, task_id: str) -> dict[str, Any] | None:
+        """Get task by ID.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            Task data or None if not found.
+        """
+        ...
+
+    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
+        """List recent tasks.
+
+        Args:
+            limit: Maximum number of tasks.
+
+        Returns:
+            List of recent task data.
+        """
+        ...
 
 
 class InMemoryIngestStateStore:
@@ -56,11 +88,23 @@ class InMemoryIngestStateStore:
         self._lock = asyncio.Lock()
 
     async def create(self, task_id: str, payload: dict[str, Any]) -> None:
+        """Create a new ingest task.
+
+        Args:
+            task_id: Task identifier.
+            payload: Initial task data.
+        """
         async with self._lock:
             self._tasks[task_id] = dict(payload)
             self._order.append(task_id)
 
     async def update(self, task_id: str, **fields: Any) -> None:
+        """Update task fields.
+
+        Args:
+            task_id: Task identifier.
+            **fields: Fields to update.
+        """
         async with self._lock:
             entry = self._tasks.get(task_id)
             if entry is None:
@@ -68,10 +112,26 @@ class InMemoryIngestStateStore:
             entry.update(fields)
 
     async def get(self, task_id: str) -> dict[str, Any] | None:
+        """Get task by ID.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            Task data or None if not found.
+        """
         entry = self._tasks.get(task_id)
         return dict(entry) if entry is not None else None
 
     async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
+        """List recent tasks.
+
+        Args:
+            limit: Maximum number of tasks.
+
+        Returns:
+            List of recent task data.
+        """
         recent_ids = list(reversed(self._order))[: max(int(limit), 0)]
         return [dict(self._tasks[tid]) for tid in recent_ids if tid in self._tasks]
 
