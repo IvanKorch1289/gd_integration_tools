@@ -5,6 +5,63 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 30 — Security Patch: Dependabot 7 Vulnerabilities, 2026-06-19] — Rule 14
+
+### Security Fixed
+
+7 Dependabot vulnerabilities закрыты через dependency bumps (без code changes):
+
+**HIGH severity (3):**
+- **starlette 1.2.1 → 1.3.1** (CVE-2026-54283, GHSA-82w8-qh3p-5jfq): `request.form()` теперь
+  enforces `max_fields` + `max_part_size` для `application/x-www-form-urlencoded` (ранее
+  silently ignored). Fixes DoS на ВСЕ FastAPI HTTP endpoints (412 routes).
+- **cryptography 48.0.0 → 48.0.1** (GHSA-537c-gmf6-5ccf): OpenSSL wheels обновлены
+  для устранения OOB Read. Affects mtls backend, PEM validation, auth flows.
+- **vite 6.4.2 → 6.4.3** (CVE-2026-53571, GHSA-fx2h-pf6j-xcff): `server.fs.deny` bypass
+  через Windows alternate paths (8.3 short names, NTFS streams) blocked.
+  Affects src/frontend/admin-react/ dev server only.
+
+**MEDIUM severity (3):**
+- **pypdf 6.13.1 → 6.13.3** (GHSA-jm82-fx9c-mx94): `MAX_DECLARED_STREAM_LENGTH` теперь
+  enforced (CWE-400, CWE-770). Affects PDF processing pipeline.
+- **launch-editor** (transitive via vite → 2.14.1+, CVE-2026-53632): UNC path handling
+  hardened (CWE-73, CWE-522). Windows-only NTLMv2 leak blocked.
+- **js-yaml 4.1.1 → 4.2.0** (CVE-2026-53550, GHSA-h67p-54hq-rp68): Quadratic complexity
+  в merge key handling fixed. Transitive via vite.
+
+**LOW severity (1):**
+- **starlette 1.2.1 → 1.3.1** (CVE-2026-54282, GHSA-jp82-jpqv-5vv3): URL authority poisoning
+  fixed. **Auto-resolved by HIGH fix #191** (both fixed в 1.3.1).
+
+### Changed
+
+- **pyproject.toml**: комментарии обновлены для starlette (1.3.1+ уже в constraints)
+- **src/frontend/admin-react/package.json**: `"vite": "^6.4.2"` → `"^6.4.3"`
+- **src/frontend/admin-react/package-lock.json**: vite + transitive updates
+- **uv.lock**: starlette, cryptography, pypdf updates (50 +/63 -)
+- **pybreaker**: REMOVED (transitive cleanup, dead dep per master_prompt v8 P0-7)
+
+### Notes
+
+- **Verification**: `npm audit` → "found 0 vulnerabilities"
+- **App smoke test**: `from src.backend.main import app` → 412 routes, exit 0
+- **Dependabot alerts auto-close** after next scheduled scan (post-merge)
+- **Pre-existing user warning** (не security): StarletteDeprecationWarning
+  HTTP_422_UNPROCESSABLE_ENTITY → _CONTENT in execution_engine.py:4 — non-critical,
+  out of scope
+- **Pattern**: S168 W14 + df3483d был comprehensive fix; current 7 alerts — vulnerabilities
+  published 2026-06-15+ (newer than previous batch)
+
+### Verification
+
+- `npm audit` (admin-react) → "found 0 vulnerabilities"
+- `python -c "import starlette; print(starlette.__version__)"` → 1.3.1
+- `python -c "import cryptography; print(cryptography.__version__)"` → 48.0.1
+- `python -c "import pypdf; print(pypdf.__version__)"` → 6.13.3
+- `python -c "from src.backend.main import app; print(len(app.routes))"` → 412
+- `python tools/check_layers.py` → 0 NEW, 0 STALE
+- `gh api .../dependabot/alerts` → 7 OPEN (will auto-close on next scan)
+
 ## [Sprint 30 — App Functionality Restored, 2026-06-19] — Rule 3 + Rule 2 + Rule 8
 
 ### Fixed
