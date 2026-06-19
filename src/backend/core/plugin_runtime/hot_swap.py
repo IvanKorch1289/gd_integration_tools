@@ -107,7 +107,7 @@ class HotSwapResult:
 class PluginLoaderProtocol(Protocol):
     """Минимальный контракт PluginLoader для hot_swap.
 
-    Совместим с :class:`PluginLoader` из ``services/plugins/loader.py``,
+    Совместим с :class:`PluginLoader` из ``services/plugins/loader/`` (S168 W15-17: пакет),
     но описан как Protocol, чтобы избежать импорта infrastructure/services
     из ``core/``.
     """
