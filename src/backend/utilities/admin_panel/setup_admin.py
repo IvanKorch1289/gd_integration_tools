@@ -3,7 +3,7 @@ from sqladmin import Admin
 
 from src.backend.infrastructure.database.database import get_db_initializer
 from src.backend.utilities.admin_panel.files import FileAdmin, OrderFileAdmin
-from src.backend.utilities.admin_panel.orderkinds import OrderKindAdmin
+from extensions.core_entities.orderkinds.admin import OrderKindAdmin
 from src.backend.utilities.admin_panel.orders import OrderAdmin
 from src.backend.utilities.admin_panel.users import UserAdmin
 

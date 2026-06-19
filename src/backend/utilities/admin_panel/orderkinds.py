@@ -1,25 +1,21 @@
-from sqladmin import ModelView
+"""DEPRECATED: re-export shim (S168 W14 P2-10).
 
-from src.backend.core.domain.models.orderkinds import OrderKind
-from src.backend.utilities.admin_panel.base import BaseAdmin
+OrderKindAdmin moved to
+src.backend.extensions.core_entities.orderkinds.admin per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
+from extensions.core_entities.orderkinds.admin import (  # noqa: E402,F401
+    OrderKindAdmin,
+)
+
+warnings.warn(
+    "src.backend.utilities.admin_panel.orderkinds is deprecated "
+    "(S168 W14 P2-10), use "
+    "extensions.core_entities.orderkinds.admin instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = ("OrderKindAdmin",)
-
-
-class OrderKindAdmin(ModelView, BaseAdmin, model=OrderKind):
-    """
-    Административная панель для модели OrderKind.
-
-    Атрибуты:
-        column_list (List[str]): Список колонок, отображаемых в таблице.
-        column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
-        column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
-        column_filters (List[str]): Список колонок, по которым можно фильтровать.
-        form_create_rules (List[str]): Список полей, отображаемых в форме создания.
-    """
-
-    column_list = ["id", "name", "skb_uuid", "created_at", "updated_at"]
-    column_searchable_list = ["id", "name", "skb_uuid"]
-    column_sortable_list = ["id", "name", "skb_uuid", "created_at", "updated_at"]
-    column_filters = ["name", "skb_uuid"]
-    form_create_rules = ["name", "skb_uuid"]
