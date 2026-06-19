@@ -47,29 +47,61 @@ class _Serializer(Protocol):
 
 
 class PickleSerializer:
-    """Сериализатор через ``pickle`` (default, универсальный)."""
+    """Pickle serializer (default, universal)."""
 
     def dumps(self, obj: Any) -> bytes:
+        """Serialize object to bytes.
+
+        Args:
+            obj: Object to serialize.
+
+        Returns:
+            Serialized bytes.
+        """
         return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
     def loads(self, data: bytes) -> Any:
+        """Deserialize bytes to object.
+
+        Args:
+            data: Serialized bytes.
+
+        Returns:
+            Deserialized object.
+        """
         # S301: pickle используется для сериализации собственных данных
         # из доверенного CacheBackend; входные данные контролируются приложением.
         return pickle.loads(data)  # noqa: S301
 
 
 class JsonSerializer:
-    """Сериализатор через ``json`` (человекочитаемый, ограниченный типами)."""
+    """JSON serializer (human-readable, limited types)."""
 
     def dumps(self, obj: Any) -> bytes:
+        """Serialize object to JSON bytes.
+
+        Args:
+            obj: Object to serialize.
+
+        Returns:
+            JSON bytes.
+        """
         return json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8")
 
     def loads(self, data: bytes) -> Any:
+        """Deserialize JSON bytes to object.
+
+        Args:
+            data: JSON bytes.
+
+        Returns:
+            Deserialized object.
+        """
         return json.loads(data)
 
 
 class OrjsonSerializer:
-    """Сериализатор через ``orjson`` (быстрый, опциональный)."""
+    """Orjson serializer (fast, optional)."""
 
     def __init__(self) -> None:
         import orjson  # noqa: PLC0415
@@ -77,9 +109,25 @@ class OrjsonSerializer:
         self._mod = orjson
 
     def dumps(self, obj: Any) -> bytes:
-        return self._mod.dumps(obj, default=str)
+        """Serialize object to orjson bytes.
+
+        Args:
+            obj: Object to serialize.
+
+        Returns:
+            Serialized bytes.
+        """
+        return self._mod.dumps(obj)
 
     def loads(self, data: bytes) -> Any:
+        """Deserialize orjson bytes to object.
+
+        Args:
+            data: Serialized bytes.
+
+        Returns:
+            Deserialized object.
+        """
         return self._mod.loads(data)
 
 
@@ -144,7 +192,16 @@ class QueryResultCache:
         sql: str,
         params: dict[str, Any] | tuple[Any, ...] | list[Any] | None = None,
     ) -> Any | None:
-        """Вернуть закэшированный результат или ``None``."""
+        """Get cached query result.
+
+        Args:
+            profile: Database profile name.
+            sql: SQL query string.
+            params: Query parameters.
+
+        Returns:
+            Cached result or None if not found.
+        """
         key = self._make_key(profile, sql, params)
         raw = await self._backend.get(key)
         if raw is None:
@@ -183,10 +240,14 @@ class QueryResultCache:
             await self._index_add(profile, tables, key)
 
     async def invalidate_table(self, profile: str, table: str) -> int:
-        """Инвалидировать все ключи, связанные с таблицей.
+        """Invalidate all keys associated with a table.
+
+        Args:
+            profile: Database profile name.
+            table: Table name.
 
         Returns:
-            Количество удалённых ключей.
+            Number of deleted keys.
         """
         idx_key = self._index_key(profile, table)
         raw = await self._backend.get(idx_key)
@@ -208,7 +269,11 @@ class QueryResultCache:
         return len(keys)
 
     async def invalidate_profile(self, profile: str) -> None:
-        """Инвалидировать весь кэш профиля (через ``delete_pattern``)."""
+        """Invalidate all cache entries for a profile.
+
+        Args:
+            profile: Database profile name.
+        """
         pattern = f"{self._prefix}:{profile}:*"
         await self._backend.delete_pattern(pattern)
         # Также чистим индексы
