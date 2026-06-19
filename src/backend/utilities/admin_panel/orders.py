@@ -1,46 +1,21 @@
-from sqladmin import ModelView
+"""DEPRECATED: re-export shim (S168 W14 P2-10).
 
-from src.backend.core.domain.models.orders import Order
-from src.backend.utilities.admin_panel.base import BaseAdmin
+OrderAdmin moved to
+src.backend.extensions.core_entities.orders.admin per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
+from extensions.core_entities.orders.admin import (  # noqa: E402,F401
+    OrderAdmin,
+)
+
+warnings.warn(
+    "src.backend.utilities.admin_panel.orders is deprecated "
+    "(S168 W14 P2-10), use "
+    "extensions.core_entities.orders.admin instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = ("OrderAdmin",)
-
-
-class OrderAdmin(ModelView, BaseAdmin, model=Order):
-    """
-    Административная панель для модели Order.
-
-    Атрибуты:
-        column_list (List[str]): Список колонок, отображаемых в таблице.
-        column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
-        column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
-        page_size (int): Количество элементов на странице по умолчанию.
-        page_size_options (List[int]): Список доступных вариантов количества элементов на странице.
-        column_filters (List[str]): Список колонок, по которым можно фильтровать.
-        form_create_rules (List[str]): Список полей, отображаемых в форме создания.
-    """
-
-    column_list = [
-        "id",
-        "object_uuid",
-        "pledge_cadastral_number",
-        "pledge_gd_id",
-        "created_at",
-        "updated_at",
-    ]
-    column_searchable_list = [
-        "id",
-        "object_uuid",
-        "pledge_cadastral_number",
-        "pledge_gd_id",
-    ]
-    column_sortable_list = [
-        "id",
-        "object_uuid",
-        "pledge_cadastral_number",
-        "pledge_gd_id",
-        "created_at",
-        "updated_at",
-    ]
-    column_filters = ["object_uuid", "pledge_cadastral_number", "pledge_gd_id"]
-    form_create_rules = ["object_uuid", "pledge_cadastral_number", "pledge_gd_id"]
