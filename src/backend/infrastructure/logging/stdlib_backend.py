@@ -32,39 +32,102 @@ class StdlibLogger(LoggerProtocol):
 
     @property
     def name(self) -> str:
+        """Get logger name.
+
+        Returns:
+            Logger name string.
+        """
         return self._inner.name
 
     @property
     def level(self) -> int:
+        """Get logger level.
+
+        Returns:
+            Logger level as integer.
+        """
         return self._inner.level
 
     @property
     def handlers(self) -> list[logging.Handler]:
+        """Get logger handlers.
+
+        Returns:
+            List of handlers.
+        """
         return self._inner.handlers
 
     @property
     def parent(self) -> logging.Logger | None:
+        """Get parent logger.
+
+        Returns:
+            Parent logger or None.
+        """
         return self._inner.parent
 
     def setLevel(self, level: int) -> None:  # noqa: N802 — stdlib API
+        """Set logger level.
+
+        Args:
+            level: Logging level.
+        """
         self._inner.setLevel(level)
 
     def addHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+        """Add a handler.
+
+        Args:
+            handler: Handler to add.
+        """
         self._inner.addHandler(handler)
 
     def removeHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+        """Remove a handler.
+
+        Args:
+            handler: Handler to remove.
+        """
         self._inner.removeHandler(handler)
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log debug message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         self._inner.debug(msg, *args, **kwargs)
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log info message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         self._inner.info(msg, *args, **kwargs)
 
     def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log warning message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         self._inner.warning(msg, *args, **kwargs)
 
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log error message.
+
+        Args:
+            msg: Message format string.
+            *args: Format arguments.
+            **kwargs: Additional keyword arguments.
+        """
         self._inner.error(msg, *args, **kwargs)
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:

@@ -32,11 +32,33 @@ class DegradationStateStore(Protocol):
 
     async def persist(
         self, mode: DegradationMode, transition: DegradationTransition
-    ) -> None: ...
+    ) -> None:
+        """Persist degradation state.
 
-    async def load_current(self) -> DegradationMode | None: ...
+        Args:
+            mode: Current degradation mode.
+            transition: Transition to record.
+        """
+        ...
 
-    async def load_history(self, n: int = 20) -> list[DegradationTransition]: ...
+    async def load_current(self) -> DegradationMode | None:
+        """Load current degradation mode.
+
+        Returns:
+            Current mode or None if not persisted.
+        """
+        ...
+
+    async def load_history(self, n: int = 20) -> list[DegradationTransition]:
+        """Load recent transition history.
+
+        Args:
+            n: Number of recent transitions to load.
+
+        Returns:
+            List of transitions.
+        """
+        ...
 
 
 class InMemoryDegradationStateStore:

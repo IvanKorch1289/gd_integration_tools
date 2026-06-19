@@ -92,6 +92,26 @@ class LLMResult:
     is_fallback: bool = False
 
 
+# ── PydanticAI Model adapter (S168 W16 P1-5) ──────────────────────────────
+#
+# Per master prompt v8 P1-5: "implement full pydantic_ai.models.Model
+# Protocol (missing request/request_stream)".
+#
+# LiteLLMModelAdapter wraps the existing LiteLLMGateway и
+# provides pydantic_ai.models.Model interface for Agent integration.
+#
+# Lazy import: pydantic_ai optional (ai-2026 extra in pyproject.toml).
+# Falls back gracefully если pydantic_ai не установлен.
+# ────────────────────────────────────────────────────────────────────────────
+
+try:
+    from pydantic_ai.models import Model as _PydanticAIModel
+    _PYDANTIC_AI_AVAILABLE = True
+except ImportError:  # pragma: no cover — optional dep
+    _PydanticAIModel = None  # type: ignore[assignment,misc]
+    _PYDANTIC_AI_AVAILABLE = False
+
+
 # ── Main client ────────────────────────────────────────────────────────────
 
 
@@ -385,3 +405,249 @@ class PydanticAIClient:
                 histogram.labels(**labels).observe(value)
         except Exception:
             pass
+
+
+# ── LiteLLMModelAdapter (S168 W16 P1-5) ────────────────────────────────────
+#
+# S168 W16 P1-5: full pydantic_ai.models.Model Protocol implementation.
+# Wraps existing LiteLLMGateway. Default-OFF — instantiates only when
+# pydantic_ai is installed И user explicitly creates the adapter.
+# ────────────────────────────────────────────────────────────────────────────
+
+if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
+    from collections.abc import AsyncGenerator
+    from contextlib import asynccontextmanager
+    from typing import Any as _Any
+
+    from pydantic_ai.messages import (
+        ModelMessage as _ModelMessage,
+        ModelRequest as _ModelRequest,
+        ModelResponse as _ModelResponse,
+        ModelResponsePart as _ModelResponsePart,
+        TextPart as _TextPart,
+    )
+    from pydantic_ai.models import (
+        ModelRequestParameters as _ModelRequestParameters,
+        ModelSettings as _ModelSettings,
+        StreamedResponse as _StreamedResponse,
+    )
+    from pydantic_ai.models import (
+        ModelRequestContext as _ModelRequestContext,
+    )
+    from pydantic_ai.usage import RequestUsage as _RequestUsage, Usage as _Usage
+    try:
+        from pydantic_ai.tools import AbstractNativeTool as _AbstractNativeTool  # type: ignore[attr-defined]
+    except ImportError:  # pragma: no cover — version-specific
+        _AbstractNativeTool = object  # type: ignore[assignment,misc]
+
+    class LiteLLMModelAdapter(_PydanticAIModel):  # type: ignore[misc]
+        """S168 W16 P1-5: pydantic_ai Model adapter поверх LiteLLMGateway.
+
+        Реализует полный pydantic_ai.models.Model Protocol
+        (per master prompt v8 P1-5: request, request_stream,
+        prepare_request, supported_builtin_tools, supported_native_tools).
+
+        Args:
+            gateway: :class:`LiteLLMGateway` для выполнения HTTP.
+            model_name: primary model name (e.g. "gpt-4o", "claude-3-5-sonnet").
+            provider: provider label (e.g. "openai", "anthropic", "litellm").
+        """
+
+        def __init__(
+            self,
+            *,
+            gateway: _Any,
+            model_name: str,
+            provider: str = "litellm",
+        ) -> None:
+            self._gateway = gateway
+            self._model_name = model_name
+            self._provider = provider
+
+        @property
+        def model_name(self) -> str:
+            return self._model_name
+
+        @property
+        def provider(self) -> str:
+            return self._provider
+
+        @property
+        def base_url(self) -> str | None:
+            return None
+
+        @property
+        def system(self) -> str | None:
+            return "openai-chat"  # default для chat models
+
+        async def request(
+            self,
+            messages: list[_ModelMessage],
+            model_settings: _ModelSettings | None,
+            model_request_parameters: _ModelRequestParameters,
+        ) -> _ModelResponse:
+            """S168 W16 P1-5: non-streaming request — wraps LiteLLMGateway."""
+            from pydantic_ai.models import ModelResponse as _Resp
+
+            # Convert pydantic_ai messages → LiteLLM-compatible dict list
+            last_msg = messages[-1] if messages else None
+            if isinstance(last_msg, _ModelRequest):
+                # Use parts (text only — tool calls separate path)
+                content = "".join(
+                    part.content for part in last_msg.parts
+                    if hasattr(part, "content") and isinstance(part.content, str)
+                )
+            else:
+                content = ""
+
+            response = await self._gateway.acompletion(
+                model=self._model_name,
+                messages=[{"role": "user", "content": content}],
+            )
+
+            # Wrap в pydantic_ai ModelResponse
+            text = self._extract_text(response)
+            return _Resp(
+                parts=[_TextPart(text)],  # type: ignore[list-item]
+                model_name=self._model_name,
+                usage=_Usage(requests=1),
+            )
+
+        async def request_stream(
+            self,
+            messages: list[_ModelMessage],
+            model_settings: _ModelSettings | None,
+            model_request_parameters: _ModelRequestParameters,
+            run_context: _Any | None = None,
+        ) -> AsyncGenerator[_StreamedResponse]:
+            """S168 W16 P1-5: streaming request — yields LiteLLM chunks."""
+            last_msg = messages[-1] if messages else None
+            if isinstance(last_msg, _ModelRequest):
+                content = "".join(
+                    part.content for part in last_msg.parts
+                    if hasattr(part, "content") and isinstance(part.content, str)
+                )
+            else:
+                content = ""
+
+            async for chunk in await self._gateway.astream(
+                model=self._model_name,
+                messages=[{"role": "user", "content": content}],
+            ):
+                text = self._extract_text(chunk)
+                if text:
+                    yield _SimpleStreamedResponse(  # type: ignore[misc]
+                        model_name=self._model_name,
+                        text=text,
+                    )
+
+        def customize_request_parameters(
+            self, model_request_parameters: _ModelRequestParameters
+        ) -> _ModelRequestParameters:
+            return model_request_parameters
+
+        def prepare_request(
+            self,
+            model_settings: _ModelSettings | None,
+            model_request_parameters: _ModelRequestParameters,
+        ) -> tuple[_ModelSettings | None, _ModelRequestParameters]:
+            return (model_settings, model_request_parameters)
+
+        def prepare_messages(
+            self, messages: list[_ModelMessage]
+        ) -> list[_ModelMessage]:
+            return messages
+
+        async def count_tokens(
+            self,
+            messages: list[_ModelMessage],
+            model_settings: _ModelSettings | None,
+            model_request_parameters: _ModelRequestParameters,
+        ) -> _RequestUsage:
+            # Approximate: 1 token per 4 chars
+            total = 0
+            for msg in messages:
+                if isinstance(msg, _ModelRequest):
+                    for part in msg.parts:
+                        if hasattr(part, "content") and isinstance(part.content, str):
+                            total += len(part.content) // 4
+            return _RequestUsage(input_tokens=total)
+
+        @property
+        def supported_builtin_tools(self) -> frozenset[type[_AbstractNativeTool]]:  # type: ignore[valid-type]
+            return frozenset()
+
+        @property
+        def supported_native_tools(self) -> frozenset[type[_AbstractNativeTool]]:  # type: ignore[valid-type]
+            return frozenset()
+
+        async def compact_messages(
+            self,
+            request_context: _ModelRequestContext,
+            *,
+            instructions: str | None = None,
+        ) -> _ModelResponse | None:
+            return None  # No-op: no compact logic
+
+        @property
+        def label(self) -> str:
+            return f"{self._provider}:{self._model_name}"
+
+        @property
+        def model_id(self) -> str:
+            return f"{self._provider}:{self._model_name}"
+
+        @property
+        def profile(self) -> _Any:
+            return None
+
+        @property
+        def settings(self) -> _ModelSettings | None:
+            return None
+
+        @staticmethod
+        def _extract_text(response: _Any) -> str:
+            """Извлекает текст из LiteLLM response (model-agnostic)."""
+            if isinstance(response, str):
+                return response
+            if isinstance(response, dict):
+                # OpenAI format
+                choices = response.get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "")
+                # Anthropic format
+                content = response.get("content", [])
+                if content and isinstance(content, list):
+                    return "".join(
+                        block.get("text", "")
+                        for block in content
+                        if isinstance(block, dict)
+                    )
+            # Pydantic-like
+            if hasattr(response, "choices") and response.choices:
+                return response.choices[0].message.content or ""
+            return str(response)
+
+    class _SimpleStreamedResponse(_StreamedResponse):  # type: ignore[misc]
+        """Minimal StreamedResponse for LiteLLMModelAdapter."""
+
+        def __init__(self, *, model_name: str, text: str) -> None:
+            self._model_name = model_name
+            self._text = text
+
+        async def _get_event_iterator(self) -> AsyncGenerator[_ModelResponsePart]:
+            yield _TextPart(self._text)  # type: ignore[misc]
+
+        @property
+        def model_name(self) -> str:
+            return self._model_name
+
+        @property
+        def provider(self) -> str:
+            return "litellm"
+
+        @property
+        def usage(self) -> _RequestUsage:
+            return _RequestUsage(input_tokens=0, output_tokens=len(self._text) // 4)
+
+    __all__ += ("LiteLLMModelAdapter", "_SimpleStreamedResponse")
