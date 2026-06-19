@@ -98,6 +98,15 @@ class AgentMemoryService:
     async def get_conversation(
         self, session_id: str, last_n: int = 20
     ) -> list[dict[str, Any]]:
+        """Get conversation history for a session.
+
+        Args:
+            session_id: Session identifier.
+            last_n: Number of recent messages.
+
+        Returns:
+            List of message dicts.
+        """
         client = self._client()
         docs = await client.find(
             _MESSAGES,
@@ -115,6 +124,14 @@ class AgentMemoryService:
         content: str,
         metadata: dict[str, Any] | None = None,
     ) -> None:
+        """Add a message to conversation history.
+
+        Args:
+            session_id: Session identifier.
+            role: Message role (user/assistant/system).
+            content: Message content.
+            metadata: Optional metadata.
+        """
         client = self._client()
         doc = {
             "session_id": session_id,
@@ -149,15 +166,34 @@ class AgentMemoryService:
                 )
 
     async def clear_conversation(self, session_id: str) -> None:
+        """Clear all messages for a session.
+
+        Args:
+            session_id: Session identifier.
+        """
         client = self._client()
         await client.collection(_MESSAGES).delete_many({"session_id": session_id})
 
     async def get_scratchpad(self, session_id: str) -> str:
+        """Get scratchpad content for a session.
+
+        Args:
+            session_id: Session identifier.
+
+        Returns:
+            Scratchpad content string.
+        """
         client = self._client()
         doc = await client.find_one(_SCRATCHPAD, {"session_id": session_id})
         return doc.get("content", "") if doc else ""
 
     async def set_scratchpad(self, session_id: str, content: str) -> None:
+        """Set scratchpad content for a session.
+
+        Args:
+            session_id: Session identifier.
+            content: Scratchpad content.
+        """
         client = self._client()
         await client.update_one(
             _SCRATCHPAD,
@@ -171,6 +207,14 @@ class AgentMemoryService:
         )
 
     async def get_facts(self, session_id: str) -> dict[str, str]:
+        """Get all facts for a session.
+
+        Args:
+            session_id: Session identifier.
+
+        Returns:
+            Dict mapping fact keys to values.
+        """
         client = self._client()
         docs = await client.find(
             _FACTS,
