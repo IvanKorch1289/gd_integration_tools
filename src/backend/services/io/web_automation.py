@@ -18,26 +18,71 @@ logger = get_logger(__name__)
 
 
 class WebAutomationService:
-    """Web automation — парсинг, заполнение форм, мониторинг, сценарии."""
+    """Web automation — parsing, form filling, monitoring, scenarios."""
 
     def __init__(self, client: BrowserClientProtocol | None = None) -> None:
         self._client = client or get_browser_client_provider()
 
     async def navigate(self, url: str) -> dict[str, Any]:
+        """Navigate to URL.
+
+        Args:
+            url: Target URL.
+
+        Returns:
+            Navigation result dict.
+        """
         return await self._client.navigate(url)
 
     async def click(self, url: str, selector: str) -> dict[str, Any]:
+        """Navigate and click element.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector to click.
+
+        Returns:
+            Click result dict.
+        """
         return await self._client.click(url, selector)
 
     async def fill_form(
         self, url: str, fields: dict[str, str], submit: str | None = None
     ) -> dict[str, Any]:
+        """Fill form fields and optionally submit.
+
+        Args:
+            url: Target URL.
+            fields: Dict of selector -> value pairs.
+            submit: Optional submit button selector.
+
+        Returns:
+            Form result dict.
+        """
         return await self._client.fill_form(url, fields, submit)
 
     async def extract_text(self, url: str, selector: str) -> list[str]:
+        """Extract text from elements.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector.
+
+        Returns:
+            List of text content.
+        """
         return await self._client.extract_text(url, selector)
 
     async def extract_table(self, url: str, selector: str) -> list[dict[str, str]]:
+        """Extract table data.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector for table.
+
+        Returns:
+            List of row dicts.
+        """
         return await self._client.extract_table(url, selector)
 
     async def screenshot(self, url: str) -> bytes:
