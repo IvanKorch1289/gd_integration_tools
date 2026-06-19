@@ -41,6 +41,16 @@ class SqliteDocStore(DocStoreBackend):
     async def insert(
         self, namespace: str, doc: dict[str, Any], *, doc_id: str | None = None
     ) -> str:
+        """Insert or replace a document.
+
+        Args:
+            namespace: Document namespace (table name).
+            doc: Document data.
+            doc_id: Optional document ID (auto-generated if None).
+
+        Returns:
+            Document ID.
+        """
         table = await self._ensure_namespace(namespace)
         if doc_id is None:
             doc_id = str(uuid.uuid4())
@@ -56,6 +66,15 @@ class SqliteDocStore(DocStoreBackend):
         return doc_id
 
     async def get(self, namespace: str, doc_id: str) -> dict[str, Any] | None:
+        """Get a document by ID.
+
+        Args:
+            namespace: Document namespace.
+            doc_id: Document ID.
+
+        Returns:
+            Document dict or None if not found.
+        """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
@@ -66,6 +85,16 @@ class SqliteDocStore(DocStoreBackend):
         return orjson.loads(row[0]) if row else None
 
     async def update(self, namespace: str, doc_id: str, patch: dict[str, Any]) -> bool:
+        """Update a document with partial patch.
+
+        Args:
+            namespace: Document namespace.
+            doc_id: Document ID.
+            patch: Fields to update.
+
+        Returns:
+            True if updated, False if not found.
+        """
         existing = await self.get(namespace, doc_id)
         if existing is None:
             return False
@@ -74,6 +103,15 @@ class SqliteDocStore(DocStoreBackend):
         return True
 
     async def delete(self, namespace: str, doc_id: str) -> bool:
+        """Delete a document by ID.
+
+        Args:
+            namespace: Document namespace.
+            doc_id: Document ID.
+
+        Returns:
+            True if deleted, False if not found.
+        """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
@@ -91,6 +129,17 @@ class SqliteDocStore(DocStoreBackend):
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        """Find documents with optional filters.
+
+        Args:
+            namespace: Document namespace.
+            filters: Optional field filters.
+            limit: Maximum results.
+            offset: Results offset.
+
+        Returns:
+            List of matching documents.
+        """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
@@ -105,6 +154,15 @@ class SqliteDocStore(DocStoreBackend):
         return docs
 
     async def count(self, namespace: str, filters: dict[str, Any] | None = None) -> int:
+        """Count documents with optional filters.
+
+        Args:
+            namespace: Document namespace.
+            filters: Optional field filters.
+
+        Returns:
+            Document count.
+        """
         if filters is None:
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:

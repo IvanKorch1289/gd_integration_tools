@@ -62,6 +62,16 @@ class LocalFSStorage(ObjectStorage):
     async def upload(
         self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
+        """Upload data to local filesystem.
+
+        Args:
+            key: Object key (relative path).
+            data: Binary data to upload.
+            content_type: MIME type (unused for local FS).
+
+        Returns:
+            Absolute path to uploaded file.
+        """
         path = self._safe_path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(path.suffix + ".tmp")
@@ -71,11 +81,24 @@ class LocalFSStorage(ObjectStorage):
         return str(path)
 
     async def download(self, key: str) -> bytes:
+        """Download data from local filesystem.
+
+        Args:
+            key: Object key (relative path).
+
+        Returns:
+            File contents as bytes.
+        """
         path = self._safe_path(key)
         async with aiofiles.open(path, "rb") as fh:
             return await fh.read()
 
     async def delete(self, key: str) -> None:
+        """Delete object from local filesystem.
+
+        Args:
+            key: Object key (relative path).
+        """
         path = self._safe_path(key)
         try:
             await aiofiles.os.remove(str(path))
@@ -83,10 +106,26 @@ class LocalFSStorage(ObjectStorage):
             pass
 
     async def exists(self, key: str) -> bool:
+        """Check if object exists in local filesystem.
+
+        Args:
+            key: Object key (relative path).
+
+        Returns:
+            True if object exists, False otherwise.
+        """
         path = self._safe_path(key)
         return await aiofiles.os.path.exists(str(path))
 
     async def list_keys(self, prefix: str = "") -> list[str]:
+        """List all object keys with given prefix.
+
+        Args:
+            prefix: Key prefix to filter by.
+
+        Returns:
+            Sorted list of matching keys.
+        """
         return await asyncio.to_thread(self._list_sync, prefix)
 
     def _list_sync(self, prefix: str) -> list[str]:
@@ -102,6 +141,15 @@ class LocalFSStorage(ObjectStorage):
         return sorted(result)
 
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        """Get presigned URL for object (returns file:// URI for local FS).
+
+        Args:
+            key: Object key (relative path).
+            expires_in: Expiration time in seconds (unused for local FS).
+
+        Returns:
+            File URI string.
+        """
         path = self._safe_path(key)
         return path.as_uri()
 

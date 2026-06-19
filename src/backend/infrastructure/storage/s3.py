@@ -221,6 +221,16 @@ class S3ObjectStorage(ObjectStorage):
     async def upload(
         self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
+        """Upload data to S3.
+
+        Args:
+            key: Object key.
+            data: Binary data to upload.
+            content_type: MIME type.
+
+        Returns:
+            S3 object key.
+        """
         full_key = self._safe_key(key)
         params: dict[str, Any] = {"Bucket": self._bucket, "Key": full_key, "Body": data}
         if content_type:
@@ -333,6 +343,17 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 upload_stream failed: {exc}") from exc
 
     async def download(self, key: str) -> bytes:
+        """Download data from S3.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            File contents as bytes.
+
+        Raises:
+            FileNotFoundError: If object not found.
+        """
         full_key = self._safe_key(key)
         async with self._open() as s3:
             try:
@@ -348,6 +369,11 @@ class S3ObjectStorage(ObjectStorage):
                 return await stream.read()
 
     async def delete(self, key: str) -> None:
+        """Delete object from S3.
+
+        Args:
+            key: Object key.
+        """
         full_key = self._safe_key(key)
         async with self._open() as s3:
             try:
@@ -359,6 +385,14 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 delete failed: {exc}") from exc
 
     async def exists(self, key: str) -> bool:
+        """Check if object exists in S3.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            True if object exists, False otherwise.
+        """
         full_key = self._safe_key(key)
         async with self._open() as s3:
             try:
@@ -373,6 +407,14 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 head failed: {exc}") from exc
 
     async def list_keys(self, prefix: str = "") -> list[str]:
+        """List all object keys with given prefix.
+
+        Args:
+            prefix: Key prefix to filter by.
+
+        Returns:
+            Sorted list of matching keys.
+        """
         full_prefix = self._safe_key(prefix) if prefix else (self._prefix or "")
         keys: list[str] = []
         async with self._open() as s3:
@@ -393,6 +435,15 @@ class S3ObjectStorage(ObjectStorage):
         return sorted(keys)
 
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        """Generate presigned URL for S3 object.
+
+        Args:
+            key: Object key.
+            expires_in: URL expiration time in seconds.
+
+        Returns:
+            Presigned URL string.
+        """
         full_key = self._safe_key(key)
         async with self._open() as s3:
             try:
@@ -412,6 +463,11 @@ class S3ObjectStorage(ObjectStorage):
         return str(url)
 
     def supports_presigned(self) -> bool:
+        """Check if backend supports presigned URLs.
+
+        Returns:
+            True for S3, False for LocalFS.
+        """
         return True
 
     # ── health probe ─────────────────────────────────────────────────────

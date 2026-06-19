@@ -42,13 +42,36 @@ class S3ClientProtocol(Protocol):
     удовлетворяет этому протоколу.
     """
 
-    async def get_object_bytes(self, key: str) -> bytes | None: ...
+    async def get_object_bytes(self, key: str) -> bytes | None:
+        """Get object bytes from S3.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            Object bytes or None if not found.
+        """
+        ...
 
     async def put_object(
         self, key: str, data: bytes, content_type: str | None = None
-    ) -> None: ...
+    ) -> None:
+        """Put object to S3.
 
-    async def delete_object(self, key: str) -> None: ...
+        Args:
+            key: Object key.
+            data: Object bytes.
+            content_type: Optional MIME type.
+        """
+        ...
+
+    async def delete_object(self, key: str) -> None:
+        """Delete object from S3.
+
+        Args:
+            key: Object key.
+        """
+        ...
 
 
 class CacheClientProtocol(Protocol):
@@ -58,11 +81,40 @@ class CacheClientProtocol(Protocol):
     Позволяет подменить Redis на in-memory для тестов.
     """
 
-    async def get(self, key: str) -> bytes | None: ...
+    async def get(self, key: str) -> bytes | None:
+        """Get value from cache.
 
-    async def set(self, key: str, value: bytes, ex: int | None = None) -> Any: ...
+        Args:
+            key: Cache key.
 
-    async def delete(self, key: str) -> Any: ...
+        Returns:
+            Cached bytes or None if not found.
+        """
+        ...
+
+    async def set(self, key: str, value: bytes, ex: int | None = None) -> Any:
+        """Set value in cache.
+
+        Args:
+            key: Cache key.
+            value: Value to cache.
+            ex: Optional TTL in seconds.
+
+        Returns:
+            Redis response.
+        """
+        ...
+
+    async def delete(self, key: str) -> Any:
+        """Delete value from cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            Redis response.
+        """
+        ...
 
 
 class S3CacheAdapter:
