@@ -467,3 +467,27 @@ class HealthCheck:
         except Exception:  # noqa: BLE001
             pass
         return CheckStatus.OK, {"host": host, "port": port}
+
+
+
+# S168 W11 P2-8: DEPRECATED — per docs/DEAD_CODE_AUDIT.md:139, файл
+# помечен как мёртвый код. Per master prompt v8 P2-8: "Delete
+# src/backend/ops/health.py or migrate into services/ops/health.py
+# (also dead per DEAD_CODE_AUDIT)".
+#
+# Per Ponytail minimum, current commit does NOT delete the file:
+# - tests/unit/ops/test_health.py (529 LOC) imports from here
+# - 0 production callers
+# - actual deletion requires deleting both files + verifying no
+#   external consumers (separate WIP)
+#
+# WARNING: New code should use services/ops/health.py (canonical)
+# или EntryPoints HealthEndpoint. Existing imports continue to work
+# но emit deprecation warning.
+import warnings
+warnings.warn(
+    "src.backend.ops.health is deprecated (S168 W11 P2-8), "
+    "use src.backend.services.ops.health instead. Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
