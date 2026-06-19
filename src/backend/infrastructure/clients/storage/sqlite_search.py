@@ -47,6 +47,16 @@ class SqliteFTS5Search:
     async def index_document(
         self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
+        """Index a document in FTS5.
+
+        Args:
+            index: Index name.
+            document: Document to index.
+            doc_id: Optional document ID.
+
+        Returns:
+            Dict with _id and result status.
+        """
         table = await self._ensure_index(index)
         doc_id = (
             doc_id or document.get("id") or document.get("_id") or _hash_doc(document)
@@ -65,6 +75,16 @@ class SqliteFTS5Search:
     async def bulk_index(
         self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
+        """Bulk index documents.
+
+        Args:
+            index: Index name.
+            documents: Documents to index.
+            id_field: Optional field for document ID.
+
+        Returns:
+            Dict with indexed count.
+        """
         for d in documents:
             doc_id = d.get(id_field) if id_field else None
             await self.index_document(index, d, doc_id=doc_id)
@@ -78,6 +98,18 @@ class SqliteFTS5Search:
         from_: int = 0,
         sort: list[dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
+        """Search index with FTS5 MATCH.
+
+        Args:
+            index: Index name.
+            query: Search query (string or dict).
+            size: Max results.
+            from_: Results offset.
+            sort: Sort specification.
+
+        Returns:
+            List of matching documents.
+        """
         table = await self._ensure_index(index)
         match = self._build_match(query)
         # Имя таблицы валидируется в _ensure_index — S608 false positive.
@@ -100,6 +132,16 @@ class SqliteFTS5Search:
     async def aggregate(
         self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        """Run aggregation query.
+
+        Args:
+            index: Index name.
+            aggs: Aggregation specifications.
+            query: Optional query filter.
+
+        Returns:
+            Aggregation results.
+        """
         table = await self._ensure_index(index)
         match = self._build_match(query) if query else ""
         sql = f"SELECT COUNT(*) FROM {table}"  # noqa: S608  # internal query with controlled parameters
