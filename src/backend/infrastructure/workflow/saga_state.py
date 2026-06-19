@@ -58,11 +58,28 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
     cache_ok = True
 
     def load_dialect_impl(self, dialect: Any) -> Any:
+        """Load dialect-specific UUID type implementation.
+
+        Args:
+            dialect: SQLAlchemy dialect.
+
+        Returns:
+            Dialect-specific type descriptor.
+        """
         if dialect.name == "postgresql":
             return dialect.type_descriptor(postgresql.UUID(as_uuid=True))
         return dialect.type_descriptor(String(36))
 
     def process_bind_param(self, value: Any, dialect: Any) -> Any:
+        """Process value before binding to database.
+
+        Args:
+            value: Python value to bind.
+            dialect: SQLAlchemy dialect.
+
+        Returns:
+            Processed value for database.
+        """
         if value is None:
             return None
         if dialect.name == "postgresql":
@@ -70,6 +87,15 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
         return str(value) if isinstance(value, uuid.UUID) else str(value)
 
     def process_result_value(self, value: Any, dialect: Any) -> Any:
+        """Process value after reading from database.
+
+        Args:
+            value: Database value.
+            dialect: SQLAlchemy dialect.
+
+        Returns:
+            Processed Python value.
+        """
         if value is None:
             return None
         if isinstance(value, uuid.UUID):

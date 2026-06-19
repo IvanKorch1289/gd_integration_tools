@@ -84,6 +84,15 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
     async def execute_next(
         self, *, instance: WorkflowInstanceRow, state: WorkflowState
     ) -> StepResult:
+        """Execute the next step in a workflow instance.
+
+        Args:
+            instance: Current workflow instance row.
+            state: Current workflow state.
+
+        Returns:
+            StepResult with outcome and events.
+        """
         # 1) Hot-reload: подгружаем fresh spec.
         try:
             spec = self._spec_loader(instance.route_id)

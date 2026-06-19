@@ -118,6 +118,11 @@ class DurableWorkflowProcessor:
 
     @property
     def spec(self) -> WorkflowSpec:
+        """Get the workflow specification.
+
+        Returns:
+            Workflow specification.
+        """
         return self._spec
 
     def __repr__(self) -> str:  # pragma: no cover

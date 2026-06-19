@@ -108,7 +108,17 @@ class StepExecutor(Protocol):
 
     async def execute_next(
         self, *, instance: WorkflowInstanceRow, state: WorkflowState
-    ) -> StepResult: ...
+    ) -> StepResult:
+        """Execute the next step in a workflow instance.
+
+        Args:
+            instance: Current workflow instance row.
+            state: Current workflow state.
+
+        Returns:
+            StepResult with events to append.
+        """
+        ...
 
 
 # -- Конфиг + Runner ----------------------------------------------------
@@ -182,6 +192,7 @@ class DurableWorkflowRunner:
     # -- Lifecycle --------------------------------------------------
 
     async def start(self) -> None:
+        """Start the workflow runner with listener, backup poll, and dispatcher."""
         if self._running:
             return
         self._running = True
@@ -206,6 +217,7 @@ class DurableWorkflowRunner:
         )
 
     async def stop(self) -> None:
+        """Stop the workflow runner and wait for active executions to complete."""
         self._running = False
         for task in (self._listen_task, self._backup_task):
             if task is not None:

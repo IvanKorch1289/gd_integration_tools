@@ -87,6 +87,11 @@ class StepAuditEvent:
     ts: float = field(default_factory=time.time)
 
     def to_row(self) -> dict[str, Any]:
+        """Convert audit event to dictionary for database storage.
+
+        Returns:
+            Dictionary representation of the audit event.
+        """
         return {
             "event_id": self.event_id,
             "workflow_id": self.workflow_id,

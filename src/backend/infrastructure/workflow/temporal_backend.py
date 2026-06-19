@@ -60,12 +60,29 @@ def build_temporal_data_converter() -> Any:
         encoding = "json/canonical"
 
         def to_payload(self, value: Any) -> Payload | None:
+            """Encode Python value to Temporal Payload.
+
+            Args:
+                value: Python value to encode.
+
+            Returns:
+                Temporal Payload or None.
+            """
             return Payload(
                 metadata={"encoding": self.encoding.encode("utf-8")},
                 data=canonical_json_bytes(value),
             )
 
         def from_payload(self, payload: Payload, type_hint: type | None = None) -> Any:
+            """Decode Temporal Payload to Python value.
+
+            Args:
+                payload: Temporal Payload to decode.
+                type_hint: Optional type hint for decoding.
+
+            Returns:
+                Decoded Python value.
+            """
             import orjson  # lazy — orjson быстрее на decode
 
             return orjson.loads(payload.data) if payload.data else None

@@ -348,9 +348,19 @@ class WorkflowBuilder:
     # -- Introspection ----------------------------------------------
 
     def step_count(self) -> int:
+        """Get the number of steps in this workflow.
+
+        Returns:
+            Step count.
+        """
         return len(self._steps)
 
     def name(self) -> str:
+        """Get the workflow name.
+
+        Returns:
+            Workflow name.
+        """
         return self._name
 
     def __repr__(self) -> str:  # pragma: no cover
