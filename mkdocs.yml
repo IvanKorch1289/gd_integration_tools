@@ -75,6 +75,14 @@ nav:
   - Operations: ops/
   - Migration: migration/
   - ADRs: adr/
+  - API Reference: api/
+  - Architecture Details: architecture/
+  - Configuration: config/
+  - Deployment: deployment/
+  - Backends: backends.md
+  - Analysis: analysis/
+  - Lessons Learned: lessons/
+  - Security: security/
 
 extra:
   generator: false
