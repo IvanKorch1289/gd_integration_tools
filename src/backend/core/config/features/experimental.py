@@ -33,7 +33,7 @@ class ExperimentalFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     eventbus_facade: bool = Field(
-        default=False,
+        default=True,
         title="EventBus: единая абстракция (Kafka/RabbitMQ/NATS)",
         description=(
             "K7 Wave 1. Owner: K7 EventBus. ETA: S2-W1. "
@@ -43,7 +43,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     eventbus_file_watcher: bool = Field(
-        default=False,
+        default=True,
         title="EventBus: FileWatcherSource через watchfiles.awatch",
         description=(
             "K7 Wave 4. Owner: K7 EventBus. ETA: S2-W4. "
@@ -53,7 +53,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     activity_capability_gate_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Sprint 4 Wave E: capability-проверка для Temporal activities",
         description=(
             "K1 Sprint 4 Wave E. Включает CapabilityGate-проверку до вызова "
@@ -64,7 +64,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     ai_workflow_activity_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Sprint 4 Wave C: LLM-activity wrapper для Temporal",
         description=(
             "K4 Sprint 4 Wave C. Включает регистрацию llm_activity в Temporal "
@@ -75,7 +75,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     openfeature_external: bool = Field(
-        default=False,
+        default=True,
         title="Sprint 7 T5: OpenFeature external provider (Flagsmith)",
         description=(
             "Sprint 7 Team T5. Owner: T5 Plugin/Platform. ETA: S7. "
@@ -88,7 +88,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     plugin_semver_strict: bool = Field(
-        default=False,
+        default=True,
         title="K1: Plugin semver strict-режим (requires_core обязан иметь верхний bound)",
         description=(
             "K1 Wave 5 (S3-W5). Owner: K1 Plugin/Platform. ETA: S3-W5. "
@@ -99,7 +99,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     frontend_plugin_marketplace: bool = Field(
-        default=False,
+        default=True,
         title="K5: Plugin Marketplace Streamlit UI (таблица плагинов + toggle)",
         description=(
             "K5 Wave 3. Owner: K5 DSL. ETA: S3-W3. "

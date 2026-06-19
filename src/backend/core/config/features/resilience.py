@@ -34,7 +34,7 @@ class ResilienceFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     k8s_hpa_exporter: bool = Field(
-        default=False,
+        default=True,
         title="K2: Prometheus k8s HPA exporter (container-level auto-scaler)",
         description=(
             "K2 Wave 4. Owner: K2 Net&WAF. ETA: S3-W4. "
@@ -45,7 +45,7 @@ class ResilienceFlags(BaseSettings):
     )
 
     otel_asyncpg: bool = Field(
-        default=False,
+        default=True,
         title="Resilience: OTel auto-instrumentation для asyncpg",
         description=(
             "K3 Wave 1. Owner: K3 Resilience. ETA: S2-W1. "
@@ -55,7 +55,7 @@ class ResilienceFlags(BaseSettings):
     )
 
     task_watchdog_deadline: bool = Field(
-        default=False,
+        default=True,
         title="Resilience: TaskWatchdog deadline-эскалация для asyncio-задач",
         description=(
             "K3 Wave 2. Owner: K3 Resilience. ETA: S2-W2. "
@@ -65,7 +65,7 @@ class ResilienceFlags(BaseSettings):
     )
 
     pool_health_monitor: bool = Field(
-        default=False,
+        default=True,
         title="Storage: ConnectionPoolHealthMonitor (idle ping + reuse-on-demand)",
         description=(
             "K8 Wave 5. Owner: K8 Storage. ETA: S2-W5. "
@@ -75,7 +75,7 @@ class ResilienceFlags(BaseSettings):
     )
 
     auto_scaler_process_level: bool = Field(
-        default=False,
+        default=True,
         title="Resilience: AutoScaler process-level (multi-process replication-safe)",
         description=(
             "K2 Wave 6. Owner: K2 Net&WAF. ETA: S3-W6. "
@@ -87,7 +87,7 @@ class ResilienceFlags(BaseSettings):
     )
 
     auto_scaler_task_level: bool = Field(
-        default=False,
+        default=True,
         title="Resilience: AutoScaler task-level (asyncio-friendly)",
         description=(
             "K2 Wave 6. Owner: K2 Net&WAF. ETA: S3-W6. "

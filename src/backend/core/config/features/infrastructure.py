@@ -59,7 +59,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 5 — К4 AI+RAG ─────────────────────────────────────────────
     rag_cache_l3_retrieval_invalidation: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W1: L3 retrieval cache + Redis pub/sub invalidation",
         description=(
             "K4 Sprint 5 Wave 1. Owner: K4 AI/RAG. ETA: S5-W1. "
@@ -69,7 +69,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     multipart_rag_ingest: bool = Field(
-        default=False,
+        default=True,
         title="K4 W1: Bulk RAG ingest endpoint + Streamlit UI (multipart/form-data)",
         description=(
             "S19 K4 W1. Owner: K4 AI/RAG. "
@@ -82,7 +82,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     multimodal_rag_docling: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W3: Multimodal RAG (docling + PaddleOCR/EasyOCR)",
         description=(
             "K4 Sprint 5 Wave 3. Owner: K4 AI/RAG. ETA: S5-W3. "
@@ -92,7 +92,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     langgraph_postgres_checkpoint: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W2: LangGraph Postgres checkpoints (AsyncPostgresSaver)",
         description=(
             "K4 Sprint 5 Wave 2. Owner: K4 AI/RAG. ETA: S5-W2. "
@@ -101,7 +101,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     dsl_expose_mcp: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W8: DSL expose_mcp = true в route.toml + MCP auto-registration",
         description=(
             "K4 Sprint 5 Wave 8. Owner: K4 AI/RAG. ETA: S5-W8. "
@@ -111,7 +111,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     rlm_hierarchical_memory: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W4: RLM-toolkit MemGPT-style hierarchical memory",
         description=(
             "K4 Sprint 5 Wave 4. Owner: K4 AI/RAG. ETA: S5-W4. "
@@ -120,7 +120,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     unmask_pii_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W6: .unmask_pii (vault-key restore) processor",
         description=(
             "K4 Sprint 5 Wave 6. Owner: K4 AI/RAG. ETA: S5-W6. "
@@ -129,7 +129,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     mem0ai_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W5: mem0ai memory backend для DSL .memory_*",
         description=(
             "K4 Sprint 5 Wave 5. Owner: K4 AI/RAG. ETA: S5-W5. "
@@ -138,7 +138,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     langfuse_mcp_prompt: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W8: LangFuse prompts → @mcp.prompt auto-registration",
         description=(
             "K4 Sprint 5 Wave 8. Owner: K4 AI/RAG. ETA: S5-W8. "
@@ -148,7 +148,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 5 — К5 Frontend ───────────────────────────────────────────
     frontend_workflow_logs_page: bool = Field(
-        default=False,
+        default=True,
         title="K5 S5 W1: Streamlit 50_Workflow_Logs.py + APIClient list_step_logs",
         description=(
             "K5 Sprint 5 Wave 1. Owner: K5 Frontend. ETA: S5-W1. "
@@ -158,7 +158,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     rpa_ocr_enabled: bool = Field(
-        default=False,
+        default=True,
         title="S18 W0: pytesseract OCR processor (services/rpa/ocr_processor)",
         description=(
             "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-2-ocr]. "
@@ -170,7 +170,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     cdc_enabled: bool = Field(
-        default=False,
+        default=True,
         title="S18 W0: включить CDC backends (Poll/Listen-Notify/Debezium)",
         description=(
             "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-7-cdc-status-doc]. "
@@ -183,7 +183,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 10 — DSL Blueprint Expansion + DX Wizards ─────────────────
     compression_brotli: bool = Field(
-        default=False,
+        default=True,
         title="K2 S10 W2: BrotliCompressionMiddleware (Accept-Encoding: br)",
         description=(
             "K2 Sprint 10 Wave 2 (wave:s10/k2-w2-brotli-compression). "
@@ -195,7 +195,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     dsl_complexity_check_blocking: bool = Field(
-        default=False,
+        default=True,
         title="K3 S10 W2: dsl-complexity-check blocking gate в CI",
         description=(
             "K3 Sprint 10 Wave 2 (wave:s10/k3-w2-dsl-complexity-budget). "
@@ -208,7 +208,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     mock_llm_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S10 W1: Mock-LLM provider (deterministic, cost=0)",
         description=(
             "K4 Sprint 10 Wave 1 (wave:s10/k4-w1-mock-llm-provider). "
@@ -221,7 +221,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     dsl_jinja_macros: bool = Field(
-        default=False,
+        default=True,
         title="K3 S10 W7: Jinja2-over-YAML loader (macros + include)",
         description=(
             "K3 Sprint 10 Wave 7 (wave:s10/k3-w7-dsl-jinja-macros). "
@@ -235,7 +235,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     dsl_step_trace: bool = Field(
-        default=False,
+        default=True,
         title="K3 S10 W8: StepTrace + OTel span attributes для processors",
         description=(
             "K3 Sprint 10 Wave 8 (wave:s10/k3-w8-dsl-step-tracing). "
@@ -249,7 +249,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 8 — Rule Engine persistence ───────────────────────────────
     rule_engine_hot_reload: bool = Field(
-        default=False,
+        default=True,
         title="K3 S8: hot-reload ruleset из БД через rule-engine registry",
         description=(
             "K3 Sprint 8 (wave:s8/k3-rule-engine-finale). Owner: K3 DSL/Workflow. "
@@ -262,7 +262,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 8 — HTTP/3 + WebTransport opt-in ──────────────────────────
     http3_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S8: HTTP/3 + WebTransport entrypoint (aioquic)",
         description=(
             "K3 Sprint 8 (wave:s8/k3-http3-opt-in). Owner: K3 DSL/Workflow. "
@@ -276,7 +276,7 @@ class InfrastructureFlags(BaseSettings):
 
     # ─── Sprint 9 — GAP closure feature flags ─────────────────────────────
     route_loader_hot_reload: bool = Field(
-        default=False,
+        default=True,
         title="K3 S9 W1: RouteLoader hot-reload full-cycle (GAP-DSL-1)",
         description=(
             "K3 Sprint 9 Wave 1 (wave:s9/k3-w1-route-loader-hot-reload). "
@@ -288,7 +288,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     streamlit_page_renumber: bool = Field(
-        default=False,
+        default=True,
         title="K5 S9 W2: Streamlit pages renumbering (GAP-DSL-2)",
         description=(
             "K5 Sprint 9 Wave 2 (wave:s9/k5-w2-streamlit-page-renumber). "
@@ -299,7 +299,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     hitl_panel_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S9: HITL (Human-in-the-Loop) panel для workflow (GAP-WF-4.5)",
         description=(
             "K3 Sprint 9 (wave:s9/k3-hitl-panel). Owner: K3 DSL+Workflow. "
@@ -310,7 +310,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     tenant_token_budget_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S9: Token budget per tenant для AI/LLM (GAP-3.2)",
         description=(
             "K4 Sprint 9 (wave:s9/k4-tenant-token-budget). Owner: K4 AI/Data. "
@@ -321,7 +321,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     saml_sp_initiated_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S9: SAML SP-initiated SSO (GAP-1.5)",
         description=(
             "K1 Sprint 9 (wave:s9/k1-saml-sp-initiated). Owner: K1 Security. "
@@ -332,7 +332,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     lazy_processor_loading: bool = Field(
-        default=False,
+        default=True,
         title="K3 S9: Lazy processor loading (GAP-PERF-6.3)",
         description=(
             "K3 Sprint 9 (wave:s9/k3-lazy-processor-loading). Owner: K3 DSL. "
@@ -343,7 +343,7 @@ class InfrastructureFlags(BaseSettings):
     )
 
     clickhouse_bulk_writer_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S9: ClickHouse bulk writer (GAP-INF-2.3)",
         description=(
             "K2 Sprint 9 (wave:s9/k2-clickhouse-bulk-writer). Owner: K2 Infra. "

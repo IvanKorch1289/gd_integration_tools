@@ -48,7 +48,7 @@ class Sprint19AIFlags(BaseSettings):
 
     # ─── Sprint 19 — K2 Resilience (2) ─────────────────────────────────────
     multi_replica_failover: bool = Field(
-        default=False,
+        default=True,
         title="K2 S19 W1: SmartSessionManager multi-replica failover (S-L6-4)",
         description=(
             "K2 Sprint 19 Wave 1 (PLAN.md V22 §S19 W10, S-L6-4). Owner: K2 Resilience. "
@@ -60,7 +60,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     manage_py_diagnose: bool = Field(
-        default=False,
+        default=True,
         title="K2 S19 W2: manage.py diagnose aggregator JSON output для CI",
         description=(
             "K2 Sprint 19 Wave 2 (PLAN.md V22 §S19 W16). Owner: K2 DevOps. "
@@ -73,7 +73,7 @@ class Sprint19AIFlags(BaseSettings):
 
     # ─── Sprint 19 — K1 Security (4) ──────────────────────────────────────
     vault_zero_downtime_rotation: bool = Field(
-        default=False,
+        default=True,
         title="K1 S19 W1: Vault zero-downtime secret rotation (S-L6-6)",
         description=(
             "K1 Sprint 19 Wave 1 (PLAN.md V22 §S19 W10, S-L6-6). Owner: K1 Security. "
@@ -84,7 +84,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     current_frames_fallback: bool = Field(
-        default=False,
+        default=True,
         title="K1 S19 W2: sys._current_frames() graceful fallback для PyPy/Jython (F-6)",
         description=(
             "K1 Sprint 19 Wave 2 (PLAN.md V22 §S19 W17, F-6 carryover). Owner: K1 Security. "
@@ -95,7 +95,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     ai_safety_capability_unify: bool = Field(
-        default=False,
+        default=True,
         title="K1 S19 W5: AI Safety fs.write.<scope> unified capability (ADR-NEW-16/17/18 closure)",
         description=(
             "K1 Sprint 19 Wave 5 (PLAN.md V22 §S19 W19). Owner: K1 Security/AI Safety. "
@@ -107,7 +107,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     prod_hot_reload_disable: bool = Field(
-        default=False,
+        default=True,
         title="K1 S19 W6: APP_PROFILE=prod hot-reload disabled",
         description=(
             "K1 Sprint 19 Wave 6 (PLAN.md V22 §S19 W20). Owner: K1 Security/DevOps. "
@@ -119,7 +119,7 @@ class Sprint19AIFlags(BaseSettings):
 
     # ─── Sprint 19 — K5 Frontend/DX + K3 DSL (2) ──────────────────────────
     quick_wins_pack: bool = Field(
-        default=False,
+        default=True,
         title="K5 S19 W4: make new-adr + completions + release-notes + D3.js arch map",
         description=(
             "K5 Sprint 19 Wave 4 (PLAN.md V22 §S19 W16). Owner: K5 DX. "
@@ -130,7 +130,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     dsl_usage_audit_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W6: DSL usage audit tools/audit/dsl_usage_audit.py",
         description=(
             "K3 Sprint 19 Wave 6 (PLAN.md V22 §S19 W21). Owner: K3 DSL. "
@@ -141,7 +141,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     adaptive_timeout_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S19 W15: Adaptive timeout per (endpoint, client_region, traffic_class)",
         description=(
             "K2 Sprint 19 Wave 15 (PLAN.md V22 §S19 W15, F-4 closure). Owner: K2 Resilience. "
@@ -153,7 +153,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     admin_react_mvp: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W3: Admin UI React MVP (replace Streamlit 13_Cron_Builder + 14_Cron_Dashboard)",
         description=(
             "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, S-L4-2). Owner: K3 Frontend/Ops. "
@@ -164,7 +164,7 @@ class Sprint19AIFlags(BaseSettings):
     )
 
     adaptive_rag_strategy_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W4: Adaptive RAG strategy (HyDE + query-decomposition fallback)",
         description=(
             "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W4, S-L4-4). Owner: K4 AI. "

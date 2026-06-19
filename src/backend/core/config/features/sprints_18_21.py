@@ -75,7 +75,7 @@ class Sprints1821Flags(BaseSettings):
 
     # ─── Sprint 18 — Operational + Security GAP Carryover (backbone) ──────
     waf_strict_zero_allowlist: bool = Field(
-        default=False,
+        default=True,
         title="K1 S18 W1: WAF strict — нулевой allowlist (все :external через make_http_client)",
         description=(
             "K1 Sprint 18 Wave 1 (PLAN.md V22 §S18). Owner: K1 Security. "
@@ -89,7 +89,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     failing_tests_quarantined_off: bool = Field(
-        default=False,
+        default=True,
         title="K2 S18 W2: failing tests quarantine off (~91 pre-existing tests triage)",
         description=(
             "K2 Sprint 18 Wave 2 (PLAN.md V22 §S18). Owner: K2 Resilience+Quality. "
@@ -100,7 +100,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     sandbox_amortised_final: bool = Field(
-        default=False,
+        default=True,
         title="K1 S18 W5: plugin trust 2-tier (Tier-A signed / Tier-B sandboxed) — ADR-NEW-6",
         description=(
             "K1 Sprint 18 Wave 5 (ADR-NEW-6 / B-4, PLAN.md V22 §S18). Owner: K1 Security. "
@@ -113,7 +113,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     core_entities_legacy_off: bool = Field(
-        default=False,
+        default=True,
         title="K3 S18 W3: core_entities legacy removal (users/orders/orderkinds final cleanup)",
         description=(
             "K3 Sprint 18 Wave 3 (PLAN.md V22 §S18). Owner: K3 Routes. "
@@ -135,7 +135,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     langfuse_production_wired: bool = Field(
-        default=False,
+        default=True,
         title="K4 S18 W1: LangFuse production wiring + cost dashboard",
         description=(
             "K4 Sprint 18 Wave 1 (PLAN.md V22 §S18). Owner: K4 AI/Data. "
@@ -147,7 +147,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     opa_runtime_query_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S18 W3: OPA runtime-query + Casbin tenant-scoped enforcer (S-L8-1/S-L8-2)",
         description=(
             "K1 Sprint 18 Wave 3 (PLAN.md V22 §S18, S-L8-1, S-L8-2). Owner: K1 Security. "
@@ -175,7 +175,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     pii_response_middleware_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S18 W1: PIIMaskingResponseMiddleware (S-L8-4) — глобальная маскировка JSON-ответов",
         description=(
             "K3 Sprint 18 Wave 1 (PLAN.md V22 §S18 W5, S-L8-4). Owner: K3 DSL/Routes. "
@@ -190,7 +190,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     per_route_timeout_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S18 W2: per-route timeout (route.toml [timeout] + DSL .policy.timeout)",
         description=(
             "K3 Sprint 18 Wave 2 (PLAN.md V22 §S18 W6, P0 Gateway-centralization gap). "
@@ -207,7 +207,7 @@ class Sprints1821Flags(BaseSettings):
 
     # ─── Sprint 21 — Resilience & Multi-tenancy ───────────────────────────
     rls_postgres_enforce: bool = Field(
-        default=False,
+        default=True,
         title="K1 S21 W1: PostgreSQL Row-Level Security + SET LOCAL tenant_id",
         description=(
             "K1 Sprint 21 Wave 1 (B-03/G-08, ADR-NEW-12). Owner: K1 Security. "
@@ -221,7 +221,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     tenant_cache_prefix_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S21 W2: TenantCacheBackend wrapper с auto-prefix tenant:{id}:",
         description=(
             "K1 Sprint 21 Wave 2 (B-03 closure). Owner: K1 Security. "
@@ -233,7 +233,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     rpa_resilience_wrapper_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S21 W3: RPACallPolicy единый resilience-фасад для RPA/CDC/FileWatcher",
         description=(
             "K2 Sprint 21 Wave 3 (B-02 closure, ADR-NEW-13). Owner: K2 Resilience. "
@@ -246,7 +246,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     scheduler_dlq_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S21 W4: APScheduler EVENT_JOB_ERROR → DLQ writer (G-09)",
         description=(
             "K2 Sprint 21 Wave 4 (G-09 closure). Owner: K2 Resilience. "
@@ -258,7 +258,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     webhook_resilience_policy_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S21 W5: WebhookSink + webhook_scheduler через RPACallPolicy (G-07)",
         description=(
             "K2 Sprint 21 Wave 5 (G-07 closure). Owner: K2 Resilience. "
@@ -270,7 +270,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     desktop_rpa_session_pool_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S21 W6: DesktopRPASessionPool persistent httpx-AsyncClient (F-12/B-09)",
         description=(
             "K3 Sprint 21 Wave 6 (F-12 + B-09 closure). Owner: K3 RPA. "
@@ -283,7 +283,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     browser_cookies_redis_persist: bool = Field(
-        default=False,
+        default=True,
         title="K3 S21 W7: Browser session cookies persistence через Redis hash (G-06)",
         description=(
             "K3 Sprint 21 Wave 7 (G-06 closure). Owner: K3 RPA. "
@@ -295,7 +295,7 @@ class Sprints1821Flags(BaseSettings):
     )
 
     workflow_state_sqlite_persist: bool = Field(
-        default=False,
+        default=True,
         title="K3 S21 W8: WorkflowState SQLAlchemy + saga compensating persistence (ADR-NEW-14)",
         description=(
             "K3 Sprint 21 Wave 8 (B-05 closure, ADR-NEW-14, carryover S17 K-OPS-1). "

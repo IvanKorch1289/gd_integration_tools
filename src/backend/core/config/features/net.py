@@ -29,7 +29,7 @@ class NetFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     metering_per_host: bool = Field(
-        default=False,
+        default=True,
         title="K2: per-host outbound metering (request_count, error_rate, p50/p95)",
         description=(
             "K2 Wave 1. Owner: K2 Net&WAF. ETA: S3-W1. "
@@ -40,7 +40,7 @@ class NetFlags(BaseSettings):
     )
 
     connection_reuse_manager: bool = Field(
-        default=False,
+        default=True,
         title="K2: ConnectionReuseManager (idle ping + auto-recycle по lifetime)",
         description=(
             "K2 Wave 2. Owner: K2 Resilience. ETA: S3-W2. "
@@ -52,7 +52,7 @@ class NetFlags(BaseSettings):
     )
 
     waf_outbound_via_facade: bool = Field(
-        default=False,
+        default=True,
         title="WAF: внешние HTTP через OutboundHttpClient",
         description=(
             "K2 Wave 3. Owner: K2 Net&WAF. ETA: S2-W2. "

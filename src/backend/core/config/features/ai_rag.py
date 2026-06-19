@@ -64,7 +64,7 @@ class AIRAGFlags(BaseSettings):
 
     # ─── Sprint 11 — AI/RAG Completion ────────────────────────────────────
     rag_pii_retrieval_mask: bool = Field(
-        default=False,
+        default=True,
         title="K1 S11 W1: PII redaction в RAG retrieval pipeline",
         description=(
             "K1 Sprint 11 Wave 1 (wave:s11/k1-w1-rag-pii-redaction). "
@@ -75,7 +75,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     guardrails_per_tenant: bool = Field(
-        default=False,
+        default=True,
         title="K1 S11 W2: per-tenant guardrails (Lakera + Rebuff)",
         description=(
             "K1 Sprint 11 Wave 2 (wave:s11/k1-w2-guardrails-per-tenant). "
@@ -87,7 +87,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     distributed_rl_redis_cluster: bool = Field(
-        default=False,
+        default=True,
         title="K2 S11 W1: distributed rate-limiter поверх Redis Cluster",
         description=(
             "K2 Sprint 11 Wave 1 (wave:s11/k2-w1-distributed-rl-redis-cluster). "
@@ -98,7 +98,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     multimodal_rag_full: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W1/W2: Multimodal RAG full pipeline (BLIP2 + Whisper + cross-modal)",
         description=(
             "K4 Sprint 11 Wave 1+2 (wave:s11/k4-w1-multimodal-rag-full + "
@@ -110,7 +110,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     adaptive_rag_strategy: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W3: adaptive RAG strategy selection (LLM classifier)",
         description=(
             "K4 Sprint 11 Wave 3 (wave:s11/k4-w3-adaptive-rag-strategy). "
@@ -121,7 +121,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     langgraph_checkpoint_ui: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W4: LangGraph checkpoint UI (time-travel restore)",
         description=(
             "K4 Sprint 11 Wave 4 (wave:s11/k4-w4-langgraph-checkpoint-ui). "
@@ -132,7 +132,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     dspy_feedback_loop: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W5: DSPy feedback nightly training loop",
         description=(
             "K4 Sprint 11 Wave 5 (wave:s11/k4-w5-ai-feedback-dspy). "
@@ -143,7 +143,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     ai_model_registry_ui: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W6: AI Model Registry UI (HF Hub + MLflow composite)",
         description=(
             "K4 Sprint 11 Wave 6 (wave:s11/k4-w6-ai-model-registry-ui). "
@@ -154,7 +154,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     ai_route_optimization: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W7: AI Route optimization (cost + latency aware planner)",
         description=(
             "K4 Sprint 11 Wave 7 (wave:s11/k4-w7-ai-route-optimization). "
@@ -166,7 +166,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     embedding_ab_migration: bool = Field(
-        default=False,
+        default=True,
         title="K4 S11 W8: embedding A/B progressive migration",
         description=(
             "K4 Sprint 11 Wave 8 (wave:s11/k4-w8-embedding-ab-migration). "
@@ -202,7 +202,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     workflow_mtls_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S12 W2: Temporal mTLS через Vault PKI engine",
         description=(
             "K1 Sprint 12 Wave 2 (wave:s12/k1-w2-temporal-mtls-finale). "
@@ -224,7 +224,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     workflow_worker_autoscale_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S12 W2: TemporalWorkerPool dynamic scaling по queue depth",
         description=(
             "K2 Sprint 12 Wave 2 (wave:s12/k2-w2-temporal-worker-autoscale). "
@@ -264,7 +264,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     workflow_reactive_triggers_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S12 W4: event-driven reactive workflows (EventBus subscribe)",
         description=(
             "K3 Sprint 12 Wave 4 (wave:s12/k3-w4-reactive-workflows). "
@@ -285,7 +285,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     workflow_template_semantic_search: bool = Field(
-        default=False,
+        default=True,
         title="K3 S12 W5: BGE-M3 semantic search для template registry",
         description=(
             "K3 Sprint 12 Wave 5 (wave:s12/k3-w5-workflow-template-library). "
@@ -328,7 +328,7 @@ class AIRAGFlags(BaseSettings):
     )
 
     ai_workflow_examples_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S12 W1: 3 production AI workflow examples",
         description=(
             "K4 Sprint 12 Wave 1 (wave:s12/k4-w1-ai-workflow-examples-lib). "

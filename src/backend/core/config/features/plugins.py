@@ -29,7 +29,7 @@ class PluginsFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     extensions_credit_workflow: bool = Field(
-        default=False,
+        default=True,
         title="Extensions: credit_workflow первый reference plugin",
         description=(
             "K9 Wave 4. Owner: K9 Frontend&Ext. ETA: S2-W4. "
@@ -39,7 +39,7 @@ class PluginsFlags(BaseSettings):
     )
 
     credit_pipeline_v2: bool = Field(
-        default=False,
+        default=True,
         title="T3 S7: credit_pipeline plugin (SKB/НБКИ) — V11 layout",
         description=(
             "Sprint 7 Team T3. Owner: T3. Активирует "

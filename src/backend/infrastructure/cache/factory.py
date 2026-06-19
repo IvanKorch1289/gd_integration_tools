@@ -32,13 +32,10 @@ logger = get_logger("infrastructure.cache.factory")
 
 def _redis_client() -> Redis:
     """Достаёт raw redis-клиент из инфраструктурного синглтона."""
-    from src.backend.infrastructure.clients.storage.redis import (
-        get_redis_client as redis_client,
-    )
+    from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
-    raw = getattr(redis_client, "_raw_client", None) or getattr(
-        redis_client, "client", None
-    )
+    client = get_redis_client()  # get singleton INSTANCE (not function)
+    raw = getattr(client, "_raw_client", None) or getattr(client, "client", None)
     if raw is None:  # pragma: no cover — sanity
         raise RuntimeError(
             "redis_client не инициализирован: создайте backend после старта DI."

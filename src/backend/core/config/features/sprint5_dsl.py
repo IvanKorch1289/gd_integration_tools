@@ -52,7 +52,7 @@ class Sprint5DSLFlags(BaseSettings):
 
     # ─── Sprint 5 — К3 DSL+Workflow ───────────────────────────────────────
     proc_html_template: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W1: HtmlTemplateProcessor (Jinja2 HTML rendering)",
         description=(
             "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
@@ -61,7 +61,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_jsonpath: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W1: JsonPathProcessor (jsonpath-ng query)",
         description=(
             "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
@@ -70,7 +70,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_jq: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W1: JqProcessor (jmespath query)",
         description=(
             "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
@@ -79,7 +79,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_regex_extractor: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W1: RegexExtractorProcessor (re.findall)",
         description=(
             "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
@@ -88,7 +88,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_webhook_signature: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W2: WebhookSignatureProcessor (standardwebhooks HMAC verify)",
         description=(
             "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
@@ -98,7 +98,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_zip_archive: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W2: ZipArchiveProcessor (stdlib zipfile pack/unpack)",
         description=(
             "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
@@ -107,7 +107,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_pdf_template: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W2: PdfTemplateProcessor (reportlab PDF rendering)",
         description=(
             "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
@@ -116,7 +116,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_ldap_query: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W3: LdapQueryProcessor (ldap3 search)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
@@ -125,7 +125,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_webdav: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W3: WebDavProcessor (webdav4 upload/download)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
@@ -134,7 +134,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_ics_calendar: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W3: IcsCalendarProcessor (ics.py calendar parse/render)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
@@ -143,7 +143,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_unit_conversion: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W3: UnitConversionProcessor (pint quantity convert)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
@@ -152,7 +152,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_geo: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W3: GeoProcessor (geopy distance/geocoding)",
         description=(
             "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
@@ -161,7 +161,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     proc_rate_convert: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W4: RateConvertProcessor (currency rates через WAF httpx)",
         description=(
             "K3 Sprint 5 Wave 4. Owner: K3 DSL. ETA: S5-W4. "
@@ -171,7 +171,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     db_call_procedure_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W8: DSL .db_call_procedure(name, params, schema)",
         description=(
             "K3 Sprint 5 Wave 8. Owner: K3 DSL. ETA: S5-W8. "
@@ -181,7 +181,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     policy_chainable_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W7: .policy.cache().policy.circuit_breaker() chainable",
         description=(
             "K3 Sprint 5 Wave 7. Owner: K3 DSL. ETA: S5-W7. "
@@ -191,7 +191,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     web_search_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W9: .web_search(engine, query, max_results) builder",
         description=(
             "K3 Sprint 5 Wave 9. Owner: K3 DSL. ETA: S5-W9. "
@@ -200,7 +200,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     workflow_step_log_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W11: StepAuditMiddleware → ClickHouse workflow_step_log",
         description=(
             "K3 Sprint 5 Wave 11. Owner: K3 DSL. ETA: S5-W11. "
@@ -210,7 +210,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     workflow_dryrun_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W10: manage.py workflow dryrun (record/replay)",
         description=(
             "K3 Sprint 5 Wave 10. Owner: K3 DSL. ETA: S5-W10. "
@@ -219,7 +219,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     cdc_postgres_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W5: CDC Postgres logical replication (psycopg3+pgoutput)",
         description=(
             "K3 Sprint 5 Wave 5. Owner: K3 DSL. ETA: S5-W5. "
@@ -229,7 +229,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     result_unwrap_processor: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W12: ResultUnwrapProcessor (result>=0.17 monad)",
         description=(
             "K3 Sprint 5 Wave 12. Owner: K3 DSL. ETA: S5-W12. "
@@ -238,7 +238,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     blueprint_cdc_enrich: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W8: Blueprint macro cdc_enrich (auto-add CDC headers to JSON)",
         description=(
             "K3 Sprint 5 Wave 8. Owner: K3 DSL. ETA: S5-W8. "
@@ -250,7 +250,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     blueprint_ai_pipeline: bool = Field(
-        default=False,
+        default=True,
         title="K4 S5 W9: Blueprint macro ai_pipeline (LLM call → RAG → structured output)",
         description=(
             "K4 Sprint 5 Wave 9. Owner: K4 AI. ETA: S5-W9. "
@@ -263,7 +263,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     blueprint_saga_compensation: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W6: Blueprint saga_with_compensation",
         description=(
             "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
@@ -272,7 +272,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     taskgroup_processors: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W13: asyncio.TaskGroup migration в parallel/streaming/batch",
         description=(
             "K3 Sprint 5 Wave 13. Owner: K3 DSL. ETA: S5-W13. "
@@ -282,7 +282,7 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     invoke_workflow_reply_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S5 W14: .invoke_workflow reply-channels (correlation_id routing)",
         description=(
             "K3 Sprint 5 Wave 14. Owner: K3 DSL. ETA: S5-W14. "

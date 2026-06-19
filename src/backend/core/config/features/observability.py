@@ -28,7 +28,7 @@ class ObservabilityFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     tracing_baggage_strict: bool = Field(
-        default=False,
+        default=True,
         title="Tracing: strict-режим проверки OTel baggage (все 4 поля обязательны)",
         description=(
             "K1 Wave 2. Owner: K1 Auth/Tracing. ETA: S3-W2. "
@@ -40,7 +40,7 @@ class ObservabilityFlags(BaseSettings):
     )
 
     audit_clickhouse_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Audit: ClickHouse audit_events trail",
         description=(
             "K8 Wave 4. Owner: K8 Audit. ETA: S2-W4. "

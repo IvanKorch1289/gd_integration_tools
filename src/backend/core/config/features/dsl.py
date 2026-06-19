@@ -40,7 +40,7 @@ class DSLFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     frontend_schema_registry_ui: bool = Field(
-        default=False,
+        default=True,
         title="Frontend: Schema Registry UI (6-tab viewer)",
         description=(
             "K5 Wave 1. Owner: K5 DSL. ETA: S3-W1. "
@@ -52,7 +52,7 @@ class DSLFlags(BaseSettings):
     )
 
     frontend_action_bus_ui: bool = Field(
-        default=False,
+        default=True,
         title="K5: Action Bus Streamlit UI (список actions + invoke с JSON-payload)",
         description=(
             "K5 Wave 2. Owner: K5 DSL. ETA: S3-W2. "
@@ -63,7 +63,7 @@ class DSLFlags(BaseSettings):
     )
 
     dsl_processor_registry_strict: bool = Field(
-        default=False,
+        default=True,
         title="DSL: ProcessorRegistry strict mode (отказ при missing schema)",
         description=(
             "K5 Wave 3. Owner: K5 DSL. ETA: S2-W3. "
@@ -74,7 +74,7 @@ class DSLFlags(BaseSettings):
     )
 
     dsl_route_hot_reload: bool = Field(
-        default=False,
+        default=True,
         title="DSL: hot-reload для routes/<name>/ (<3s)",
         description=(
             "K5 Wave 5. Owner: K5 DSL. ETA: S2-W5. "
@@ -84,7 +84,7 @@ class DSLFlags(BaseSettings):
     )
 
     lsp_server_published: bool = Field(
-        default=False,
+        default=True,
         title="S19 K3 W4: LSP server published (YAML schema completion)",
         description=(
             "S19 K3 W4. Owner: K3 DSL. "
@@ -97,7 +97,7 @@ class DSLFlags(BaseSettings):
     )
 
     admin_marketplace_endpoints: bool = Field(
-        default=False,
+        default=True,
         title="Admin: Action-Bus + Plugin-Marketplace REST endpoints",
         description=(
             "K5 Wave 4. Owner: K5 DSL. ETA: S3-W4. "
@@ -108,7 +108,7 @@ class DSLFlags(BaseSettings):
     )
 
     dsl_visual_editor_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Sprint 19 K3 W5: DSL Visual Editor (Drag-Drop Route Builder)",
         description=(
             "S19 K3 W5. Owner: K3 DSL. "
@@ -119,7 +119,7 @@ class DSLFlags(BaseSettings):
     )
 
     builder_source_sugar: bool = Field(
-        default=False,
+        default=True,
         title="K3: Builder source-сахар (.from_kafka/.from_rabbit/.from_mqtt/...)",
         description=(
             "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
@@ -132,7 +132,7 @@ class DSLFlags(BaseSettings):
     )
 
     service_toml_loader: bool = Field(
-        default=False,
+        default=True,
         title="K3: service.toml loader + ServiceDSLRegistry",
         description=(
             "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
@@ -144,7 +144,7 @@ class DSLFlags(BaseSettings):
     )
 
     graphql_subscription_source: bool = Field(
-        default=False,
+        default=True,
         title="K3: GraphQL subscription source (@strawberry.subscription via WebSocket)",
         description=(
             "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
@@ -155,7 +155,7 @@ class DSLFlags(BaseSettings):
     )
 
     email_imap_source: bool = Field(
-        default=False,
+        default=True,
         title="K3: EmailIMAPSource через aioimaplib (IMAP IDLE, stream())",
         description=(
             "K3 Wave 5. Owner: K3 Email/IMAP. ETA: S3-W5. "
@@ -166,7 +166,7 @@ class DSLFlags(BaseSettings):
     )
 
     notification_dsl_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3: Notification DSL через Apprise (.notify / .notify_multi)",
         description=(
             "K3 Wave 1. Owner: K3 Notification. ETA: S3-W1. "

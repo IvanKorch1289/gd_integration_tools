@@ -43,7 +43,7 @@ class Sprints2427Flags(BaseSettings):
 
     # ─── K4 — Sprint 24 AI Safety Hardening (ADR-NEW-16/17/18) ─────────────
     presidio_pii_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S24 W1: Presidio + ru NER PII layer (ADR-NEW-16)",
         description=(
             "K4 Sprint 24 Wave 1 (gap-2026-05-22 P0-1, ADR-NEW-16). Owner: K4 AI/Data. "
@@ -57,7 +57,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     nemo_guardrails_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S24 W2: NeMo Guardrails + Llama Guard 3 defense-in-depth (ADR-NEW-17)",
         description=(
             "K4 Sprint 24 Wave 2 (gap-2026-05-22 P0-2, ADR-NEW-17). Owner: K4 AI/Data. "
@@ -70,7 +70,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     langgraph_checkpointer_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S24 W3: LangGraph PostgresCheckpointer + Mem0 unified memory (ADR-NEW-18)",
         description=(
             "K4 Sprint 24 Wave 3 (gap-2026-05-22 P0-3, ADR-NEW-18). Owner: K4 AI/Data. "
@@ -97,7 +97,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     ai_policy_enforce: bool = Field(
-        default=False,
+        default=True,
         title="K2 S25 W2: AIPolicySpec + PolicyResolver обязательная резолюция (ADR-NEW-20)",
         description=(
             "K2 Sprint 25 Wave 2 (ADR-NEW-20). Owner: K2 DSL + К4 AI. "
@@ -110,7 +110,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     ai_pii_tokenizer_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S25 W4: PIITokenizer reversible mask/unmask round-trip (ADR-NEW-21)",
         description=(
             "K1 Sprint 25 Wave 4 (ADR-NEW-21). Owner: K1 Security. "
@@ -126,7 +126,7 @@ class Sprints2427Flags(BaseSettings):
 
     # ─── Sprint 26 — Prompts Pipeline + Skills Registry (ADR-NEW-22) ──────
     ai_prompt_sweep_strict: bool = Field(
-        default=False,
+        default=True,
         title="K4 S26 W1: AST-checker блокирует hardcoded `system_prompt=` (sweep)",
         description=(
             "K4 Sprint 26 Wave 1 (PLAN.md V22.4 §S26). Owner: K4 AI/Data. "
@@ -138,7 +138,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     ai_prompt_eval_blocking: bool = Field(
-        default=False,
+        default=True,
         title="K4 S26 W4: RAGAS CI-gate blocking mode (faithfulness/answer_relevancy)",
         description=(
             "K4 Sprint 26 Wave 4 (PLAN.md V22.4 §S26). Owner: K4 AI/Data + К3 CI. "
@@ -149,7 +149,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     ai_skill_toml_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S26 W5: Skills Registry TOML frontmatter (ADR-NEW-22)",
         description=(
             "K4 Sprint 26 Wave 5 (PLAN.md V22.4 §S26, ADR-NEW-22). Owner: K4 AI/Data. "
@@ -163,7 +163,7 @@ class Sprints2427Flags(BaseSettings):
 
     # ─── Sprint 27 — Agent DSL + MCP Gateway + Audit Unified ──────────────
     ai_agent_dsl_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S27 W1: Agent DSL processors (agent_run/branch/loop/parallel)",
         description=(
             "K2 Sprint 27 Wave 1 (PLAN.md V22.4 §S27). Owner: K2 DSL + К4 AI. "
@@ -176,7 +176,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     mcp_gateway_namespaces_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S27 W4: MCP Gateway domain namespaces + trusted external (ADR-NEW-23)",
         description=(
             "K3 Sprint 27 Wave 4 (ADR-NEW-23). Owner: K3 Frontend/Ops + К1 Security. "
@@ -190,7 +190,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     ai_audit_unified_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S27 W5: AI Audit Unified Schema `ai.invocation.*` (ADR-NEW-24)",
         description=(
             "K3 Sprint 27 Wave 5 (ADR-NEW-24). Owner: K3 Frontend/Ops + К1 Security. "
@@ -204,7 +204,7 @@ class Sprints2427Flags(BaseSettings):
     )
 
     workflow_invoke_agent_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S27 W6: WorkflowBuilder.invoke_agent() — LangGraph через Temporal activity",
         description=(
             "K2 Sprint 27 Wave 6 (R-V15-9 «AI-функции через Workflow DSL»). "

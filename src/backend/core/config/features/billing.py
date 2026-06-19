@@ -31,7 +31,7 @@ class BillingFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     per_tenant_billing_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S7: per-tenant billing/quotas (rpm/rpd/tokens/cost_usd)",
         description=(
             "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
@@ -44,7 +44,7 @@ class BillingFlags(BaseSettings):
     )
 
     supply_chain_finale_strict: bool = Field(
-        default=False,
+        default=True,
         title="K1 S7: supply-chain finale (cosign sign для SBOM+wheels+image)",
         description=(
             "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
@@ -57,7 +57,7 @@ class BillingFlags(BaseSettings):
     )
 
     openfeature_flagsmith_backend: bool = Field(
-        default=False,
+        default=True,
         title="K1 S7: OpenFeature SDK через FlagsmithProvider (external)",
         description=(
             "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
@@ -70,7 +70,7 @@ class BillingFlags(BaseSettings):
     )
 
     extensions_core_entities: bool = Field(
-        default=False,
+        default=True,
         title="Extensions: core_entities (users/orders/orderkinds/files) вынесен",
         description=(
             "K9 Wave 3. Owner: K9 Frontend&Ext. ETA: S2-W3. "

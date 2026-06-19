@@ -71,15 +71,34 @@ class InMemoryDegradationStateStore:
     async def persist(
         self, mode: DegradationMode, transition: DegradationTransition
     ) -> None:
+        """Persist degradation state.
+
+        Args:
+            mode: Current degradation mode.
+            transition: Transition to record.
+        """
         self._current = mode
         self._history.append(transition)
         if len(self._history) > 100:
             self._history.pop(0)
 
     async def load_current(self) -> DegradationMode | None:
+        """Load current degradation mode.
+
+        Returns:
+            Current mode or None if not persisted.
+        """
         return self._current
 
     async def load_history(self, n: int = 20) -> list[DegradationTransition]:
+        """Load recent transition history.
+
+        Args:
+            n: Number of recent transitions to load.
+
+        Returns:
+            List of transitions.
+        """
         return self._history[-n:]
 
 

@@ -31,7 +31,7 @@ class Sprint5Flags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     supply_chain_ci_gate: bool = Field(
-        default=False,
+        default=True,
         title="K1: Supply-chain CI gate (SBOM + pip-audit + cosign)",
         description=(
             "K1 Wave 3. Owner: K1 Auth/Secrets. ETA: S3-W3. "
@@ -43,7 +43,7 @@ class Sprint5Flags(BaseSettings):
     )
 
     dlq_replay_rbac: bool = Field(
-        default=False,
+        default=True,
         title="K1 S5 W4: DLQ replay endpoint @require_role admin + audit-event",
         description=(
             "K1 Sprint 5 Wave 4. Owner: K1 Security. ETA: S5-W4. "
@@ -54,7 +54,7 @@ class Sprint5Flags(BaseSettings):
     )
 
     inbox_audit_pii_mask: bool = Field(
-        default=False,
+        default=True,
         title="K1 S5 W5: Inbox dedup audit с PII masking через presidio",
         description=(
             "K1 Sprint 5 Wave 5. Owner: K1 Security. ETA: S5-W5. "
@@ -64,7 +64,7 @@ class Sprint5Flags(BaseSettings):
     )
 
     dlq_unified_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W2: DLQ transport-agnostic facade + Postgres dlq_events",
         description=(
             "K2 Sprint 5 Wave 2. Owner: K2 Resilience. ETA: S5-W2. "

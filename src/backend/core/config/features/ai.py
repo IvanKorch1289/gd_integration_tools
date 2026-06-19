@@ -37,7 +37,7 @@ class AIFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     search_provider_searxng: bool = Field(
-        default=False,
+        default=True,
         title="Search: SearXNGProvider в WebSearchService fallback chain",
         description=(
             "K4 Wave 4 (PLAN #5). Owner: K4 AI/Data. ETA: S3-W3. "
@@ -48,7 +48,7 @@ class AIFlags(BaseSettings):
     )
 
     langmem_enabled: bool = Field(
-        default=False,
+        default=True,
         title="AI: LangMem long-term memory (episodic/semantic/procedural)",
         description=(
             "K6 Wave 1 (K4 LangMem baseline). Owner: K4 AI/Data. ETA: S3-W1. "
@@ -59,7 +59,7 @@ class AIFlags(BaseSettings):
     )
 
     mcp_tools_input_schema_strict: bool = Field(
-        default=False,
+        default=True,
         title="MCP: строгая валидация input_schema для FastMCP tools",
         description=(
             "K6 Wave 2. Owner: K6 AI/RAG. ETA: S3-W2. "
@@ -70,7 +70,7 @@ class AIFlags(BaseSettings):
     )
 
     langfuse_v3: bool = Field(
-        default=False,
+        default=True,
         title="AI: LangFuse 3.x callbacks",
         description=(
             "K6 Wave 1. Owner: K6 AI/RAG. ETA: S2-W1. "
@@ -92,7 +92,7 @@ class AIFlags(BaseSettings):
     )
 
     rag_cache_l3_retrieval: bool = Field(
-        default=False,
+        default=True,
         title="AI: RAG cache L3 (retrieval-graph cache)",
         description=(
             "K6 Wave 3. Owner: K6 AI/RAG. ETA: S2-W3. "
@@ -102,7 +102,7 @@ class AIFlags(BaseSettings):
     )
 
     ai_workspace_ttl_cleanup: bool = Field(
-        default=False,
+        default=True,
         title="AI: TTL cleanup для ${AI_WORKSPACE}/<tenant>/<session>/",
         description=(
             "K6 Wave 4. Owner: K6 AI/RAG. ETA: S2-W4. "
@@ -112,7 +112,7 @@ class AIFlags(BaseSettings):
     )
 
     prompt_registry_langfuse: bool = Field(
-        default=False,
+        default=True,
         title="AI: LangfusePromptStorage как backend для prompt-registry",
         description=(
             "K4 Sprint 3 Wave 3. Owner: K4 AI/Data. ETA: S3-W3. "
@@ -125,7 +125,7 @@ class AIFlags(BaseSettings):
     )
 
     prompt_registry_gateway_wiring: bool = Field(
-        default=False,
+        default=True,
         title="AI: PromptRegistry → AIGateway wiring (Sprint 86)",
         description=(
             "При True AIGateway шаг 5 (render prompt) вызывает "
@@ -136,7 +136,7 @@ class AIFlags(BaseSettings):
     )
 
     multimodal_rag_enabled: bool = Field(
-        default=False,
+        default=True,
         title="AI: MultimodalRAG (text + image + audio embeddings и retrieval)",
         description=(
             "K6 Wave 4 (K4 W4 early scaffold). Owner: K4 AI/Data. ETA: S3-W4. "

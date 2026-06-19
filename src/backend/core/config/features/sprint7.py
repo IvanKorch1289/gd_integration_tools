@@ -35,7 +35,7 @@ class Sprint7Flags(BaseSettings):
 
     # ─── Sprint 7 — К4 AI+RAG (multi-agent + voice/image) ─────────────────
     multi_agent_supervisor_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S7: LangGraph multi-agent supervisor (handoff между специализированными агентами)",
         description=(
             "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
@@ -48,7 +48,7 @@ class Sprint7Flags(BaseSettings):
     )
 
     voice_image_gen_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S7: Voice (Whisper STT + Coqui TTS) + Image generation wrappers",
         description=(
             "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
@@ -60,7 +60,7 @@ class Sprint7Flags(BaseSettings):
     )
 
     voice_stt_tts_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S7: Whisper STT + Coqui TTS wrappers (voice pipeline)",
         description=(
             "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
@@ -72,7 +72,7 @@ class Sprint7Flags(BaseSettings):
 
     # ─── Sprint 7 — K3 DSL+Workflow ────────────────────────────────────────
     dsl_blueprints_migrate: bool = Field(
-        default=False,
+        default=True,
         title="K3 S7: deprecation-warning для legacy импортов src.backend.dsl.macros",
         description=(
             "K3 Sprint 7 (wave:s7/k3-dsl-blueprints-migrate). Owner: K3 DSL/Workflow. "
@@ -84,7 +84,7 @@ class Sprint7Flags(BaseSettings):
     )
 
     workflow_versioning_strict: bool = Field(
-        default=False,
+        default=True,
         title="K3 S7: strict workflow versioning + Temporal patched-API integration",
         description=(
             "K3 Sprint 7 (wave:s7/k3-workflow-versioning). Owner: K3 DSL/Workflow. "

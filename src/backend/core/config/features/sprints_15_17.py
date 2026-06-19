@@ -47,7 +47,7 @@ class Sprints1517Flags(BaseSettings):
 
     # ─── Sprint 15 — DX Tooling + Innovation ──────────────────────────────
     sandbox_amortised_psutil: bool = Field(
-        default=False,
+        default=True,
         title="K1 S15 W2: amortised psutil snapshots в PluginSandboxAdapter (F-2)",
         description=(
             "K1 Sprint 15 Wave 2 (wave:s15/k1-w3-sandbox-overhead-reduction). "
@@ -60,7 +60,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     arch_map_llm_search_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K5 S15 W4: Architecture map LLM-search (semantic code navigation)",
         description=(
             "K5 Sprint 15 Wave 4 (wave:s15/k5-w4-arch-map-llm). Owner: K5 DX. "
@@ -72,7 +72,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     ai_pr_review_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S15 W6: AI PR-review (CI gate, code-suggestion diff comments)",
         description=(
             "K4 Sprint 15 Wave 6 (wave:s15/k4-w6-ai-pr-review). Owner: K4 AI. "
@@ -85,7 +85,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     dsl_visual_editor_drag_drop: bool = Field(
-        default=False,
+        default=True,
         title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
         description=(
             "K3 Sprint 15 Wave 10 (wave:s15/k3-w2-dsl-visual-editor-finale). "
@@ -97,7 +97,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     changelog_autogen_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K5 S15 W15: changelog autogen из wave-tags (make release-notes)",
         description=(
             "K5 Sprint 15 Wave 15 (wave:s15/k5-w4-changelog-autogen). "
@@ -111,7 +111,7 @@ class Sprints1517Flags(BaseSettings):
 
     # ─── Sprint 17 — GAP P0 Closure + Centralization Hardening ────────────
     config_validator_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S17 W4: ConfigValidator startup-fail при production-unsafe конфиге",
         description=(
             "K1 Sprint 17 Wave W4 (D14). Owner: K1 Security. ETA: S17. "
@@ -124,7 +124,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     metrics_registry_strict: bool = Field(
-        default=False,
+        default=True,
         title="K2 S17 W1: MetricsRegistry strict (отказ при inline Counter/Histogram/Gauge)",
         description=(
             "K2 Sprint 17 Wave W1+W2 (D11). Owner: K2 Observability. ETA: S17. "
@@ -136,7 +136,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     task_registry_strict: bool = Field(
-        default=False,
+        default=True,
         title="K2 S17 W3: TaskRegistry obligatory (CI gate fail-on-orphans)",
         description=(
             "K2 Sprint 17 Wave W3 (D13a). Owner: K2 Observability. ETA: S17. "
@@ -148,7 +148,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     authz_gateway_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K1 S17 W2: AuthorizationGateway единый фасад (Casbin+OPA+CapabilityGate)",
         description=(
             "K1 Sprint 17 Wave W2 (ADR-NEW-1+ADR-NEW-4, K-ARCH-1+K-ARCH-2). "
@@ -162,7 +162,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     audit_correlation_required: bool = Field(
-        default=False,
+        default=True,
         title="K3 S17 W3: audit_correlation_id required for all write-events (D12)",
         description=(
             "K3 Sprint 17 Wave 3 (wave:s17/k3-w3-audit-correlation). Owner: K3 Observability. "
@@ -174,7 +174,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     apscheduler_metrics: bool = Field(
-        default=False,
+        default=True,
         title="K2 S17 W4: APScheduler Prometheus metrics (D13b)",
         description=(
             "K2 Sprint 17 Wave 4 (wave:s17/k2-w4-apscheduler-metrics). Owner: K2 Workflow. "
@@ -186,7 +186,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     tenant_feature_flag_ui: bool = Field(
-        default=False,
+        default=True,
         title="K5 S17 W1: per-tenant feature-flag toggle REST + Streamlit UI (D9)",
         description=(
             "K5 Sprint 17 Wave W1 (D9). Owner: K5 Frontend. ETA: S17. "
@@ -197,7 +197,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     resilience_coordinator_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S17 W5: ResilienceCoordinator class (12 fallback chains в lifespan)",
         description=(
             "K2 Sprint 17 Wave W5. Owner: K2 Resilience. ETA: S17. "
@@ -208,7 +208,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     routes_capability_gate_strict: bool = Field(
-        default=False,
+        default=True,
         title="K3 S17 W0: routes capability-gate strict (K-ARCH-3)",
         description=(
             "K3 Sprint 17 Wave W0 (K-ARCH-3). Owner: K3 Routes. ETA: S17. "
@@ -221,7 +221,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     routes_tenant_aware_strict: bool = Field(
-        default=False,
+        default=True,
         title="K3 S17 W0: RouteManifest.tenant_aware строгий (K-ARCH-4)",
         description=(
             "K3 Sprint 17 Wave W0 (K-ARCH-4). Owner: K3 Routes. ETA: S17. "
@@ -234,7 +234,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     call_function_whitelist_strict: bool = Field(
-        default=False,
+        default=True,
         title="K1 S17 W3: call_function whitelist обязателен в production (K-ARCH-5)",
         description=(
             "K1 Sprint 17 Wave W3 (K-ARCH-5). Owner: K1 Security. ETA: S17. "
@@ -246,7 +246,7 @@ class Sprints1517Flags(BaseSettings):
     )
 
     saga_state_persistence_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K3 S17 W4: Saga state persistence в PostgreSQL (K-OPS-1)",
         description=(
             "K3 Sprint 17 Wave W4 (K-OPS-1). Owner: K3 Routes. ETA: S17. "

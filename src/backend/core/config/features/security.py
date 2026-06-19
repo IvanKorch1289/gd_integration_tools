@@ -36,7 +36,7 @@ class SecurityFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     vault_rotation_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Secrets: scheduled Vault secret rotation hook (без рестарта)",
         description=(
             "K1 Wave 1. Owner: K1 Auth/Secrets. ETA: S3-W1. "

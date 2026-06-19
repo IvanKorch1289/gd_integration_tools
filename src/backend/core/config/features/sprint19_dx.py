@@ -43,7 +43,7 @@ class Sprint19DXFlags(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     workflow_versioning_routes: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W1: workflow SemVer versioning in route.toml [requires_workflows]",
         description=(
             "K3 Sprint 19 Wave 1 (PLAN.md V22 §S19 W1, Func-rec #1). Owner: K3 DSL/Workflow. "
@@ -56,7 +56,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     route_composition_include: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W2: route composition via include:/extends: с cycle detection",
         description=(
             "K3 Sprint 19 Wave 2 (PLAN.md V22 §S19 W2, Func-rec #2). Owner: K3 DSL. "
@@ -68,7 +68,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     route_authz_requires_permission: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W3: AuthorizationGateway route-level requires_permission",
         description=(
             "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, Func-rec #3). Owner: K3 DSL/Security. "
@@ -80,7 +80,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     rag_multipart_ingest: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W1: RAG bulk-ingest multipart endpoint + Streamlit UI",
         description=(
             "K4 Sprint 19 Wave 1 (PLAN.md V22 §S19 W4, Func-rec #4). Owner: K4 AI/RAG. "
@@ -92,7 +92,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     reranking_pipeline_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W2: RerankerProcessor cross-encoder reranking pipeline",
         description=(
             "K4 Sprint 19 Wave 2 (PLAN.md V22 §S19 W5, Func-rec #5). Owner: K4 AI/RAG. "
@@ -104,7 +104,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     rpa_session_persistence: bool = Field(
-        default=False,
+        default=True,
         title="K5 S19 W1: RPA browser session persistence via Redis (S-L5-2 closure)",
         description=(
             "K5 Sprint 19 Wave 1 (PLAN.md V22 §S19 W6, Func-rec #6, S-L5-2 closure). Owner: K5 RPA. "
@@ -116,7 +116,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     banking_ai_processors_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W3: Banking AI processors - CreditScore, FraudDetection, RiskAssessment, CustomerSegmentation, LoanEligibility",
         description=(
             "K4 Sprint 19 Wave 3 (S-L4-1 closure). Owner: K4 AI. "
@@ -129,7 +129,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     banking_ai_processors_impl: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W3: Banking AI processors - implementation layer (impl vs interface)",
         description=(
             "K4 Sprint 19 Wave 3 (S-L4-1 closure, sibling to banking_ai_processors_enabled). "
@@ -143,7 +143,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     langmem_consolidation_impl: bool = Field(
-        default=False,
+        default=True,
         title="K4 S19 W4: LangMemService.consolidate() implementation (S-L4-3 closure)",
         description=(
             "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W9, S-L4-3 closure). Owner: K4 AI/RAG. "
@@ -155,7 +155,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     vscode_extension_published: bool = Field(
-        default=False,
+        default=True,
         title="K5 S19 W2: VSCode extension .vsix published (ADR R1.14)",
         description=(
             "K5 Sprint 19 Wave 2 (PLAN.md V22 §S19 W10). Owner: K5 Frontend/DX. "
@@ -166,7 +166,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     lsp_server_strict: bool = Field(
-        default=False,
+        default=True,
         title="K3 S19 W4: DSL LSP server YAML schema completion + diagnostics",
         description=(
             "K3 Sprint 19 Wave 4 (PLAN.md V22 §S19 W11). Owner: K3 DSL/LSP. "
@@ -177,7 +177,7 @@ class Sprint19DXFlags(BaseSettings):
     )
 
     testkit_public_api: bool = Field(
-        default=False,
+        default=True,
         title="K5 S19 W3: src/testkit/ public API для extensions/plugin authors (S-L10-1)",
         description=(
             "K5 Sprint 19 Wave 3 (PLAN.md V22 §S19 W14, S-L10-1). Owner: K5 DX. "

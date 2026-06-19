@@ -36,7 +36,7 @@ class Sprint5K2Flags(BaseSettings):
 
     # ─── Sprint 5 — К2 Resilience+Perf ────────────────────────────────────
     inbox_fail_closed: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W3: Inbox dedup fail-closed (Redis-error → InboxUnavailable)",
         description=(
             "K2 Sprint 5 Wave 3. Owner: K2 Resilience. ETA: S5-W3. "
@@ -46,7 +46,7 @@ class Sprint5K2Flags(BaseSettings):
     )
 
     tenacity_finalized: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W6: Tenacity unification финал (RetryPolicy/Budget → make_async_retry)",
         description=(
             "K2 Sprint 5 Wave 6. Owner: K2 Resilience. ETA: S5-W6. "
@@ -56,7 +56,7 @@ class Sprint5K2Flags(BaseSettings):
     )
 
     per_tenant_rate_limit: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W7: per-tenant namespace в RateLimiter (scope=tenant)",
         description=(
             "K2 Sprint 5 Wave 7. Owner: K2 Resilience. ETA: S5-W7. "
@@ -66,7 +66,7 @@ class Sprint5K2Flags(BaseSettings):
     )
 
     graylog_chain_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W5: Graylog fallback chain (TCP→HTTPS→disk)",
         description=(
             "K2 Sprint 5 Wave 5. Owner: K2 Resilience. ETA: S5-W5. "
@@ -77,7 +77,7 @@ class Sprint5K2Flags(BaseSettings):
     )
 
     genai_chain_enabled: bool = Field(
-        default=False,
+        default=True,
         title="K2 S5 W5: GenAI provider fallback chain (primary→secondary→degraded)",
         description=(
             "K2 Sprint 5 Wave 5. Owner: K2 Resilience. ETA: S5-W5. "
