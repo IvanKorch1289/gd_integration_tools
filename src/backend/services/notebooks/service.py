@@ -40,6 +40,18 @@ class NotebookService:
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> Notebook:
+        """Create a new notebook.
+
+        Args:
+            title: Notebook title.
+            content: Initial content.
+            created_by: Author name.
+            tags: Optional tags.
+            metadata: Optional metadata.
+
+        Returns:
+            Created notebook.
+        """
         notebook = Notebook(
             title=title,
             tags=list(tags or []),
@@ -56,17 +68,42 @@ class NotebookService:
         return notebook
 
     async def get(self, notebook_id: str) -> Notebook | None:
+        """Get notebook by ID.
+
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            Notebook or None if not found.
+        """
         return await self._repo.get(notebook_id)
 
     async def get_version(
         self, notebook_id: str, version: int
     ) -> NotebookVersion | None:
+        """Get a specific version of a notebook.
+
+        Args:
+            notebook_id: Notebook ID.
+            version: Version number.
+
+        Returns:
+            NotebookVersion or None if not found.
+        """
         notebook = await self._repo.get(notebook_id)
         if notebook is None:
             return None
         return next((v for v in notebook.versions if v.version == version), None)
 
     async def list_versions(self, notebook_id: str) -> list[NotebookVersion]:
+        """List all versions of a notebook.
+
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            List of NotebookVersion objects.
+        """
         notebook = await self._repo.get(notebook_id)
         if notebook is None:
             return []
@@ -75,6 +112,17 @@ class NotebookService:
     async def update_content(
         self, *, notebook_id: str, content: str, user: str, summary: str | None = None
     ) -> Notebook | None:
+        """Update notebook content (append new version).
+
+        Args:
+            notebook_id: Notebook ID.
+            content: New content.
+            user: Author name.
+            summary: Optional version summary.
+
+        Returns:
+            Updated notebook or None if not found.
+        """
         notebook = await self._repo.append_version(notebook_id, content, user, summary)
         if notebook is not None:
             _trigger_rag_index(notebook)
