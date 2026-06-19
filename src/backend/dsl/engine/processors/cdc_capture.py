@@ -39,7 +39,7 @@ except ImportError:
 __all__ = ("CDCCaptureProcessor",)
 
 
-_ALLOWED_STRATEGIES = {"polling", "listen_notify", "logminer"}
+_ALLOWED_STRATEGIES = frozenset({"polling", "listen_notify", "logminer", "kafka"})
 
 
 class CDCCaptureProcessor(BaseProcessor):
@@ -50,7 +50,8 @@ class CDCCaptureProcessor(BaseProcessor):
         tables: Список таблиц для отслеживания изменений.
         strategy: Стратегия обнаружения — ``"polling"`` (любая БД),
             ``"listen_notify"`` (PostgreSQL LISTEN/NOTIFY),
-            ``"logminer"`` (Oracle LogMiner).
+            ``"logminer"`` (Oracle LogMiner),
+            ``"kafka"`` (Debezium через Kafka topic; S62 W2).
         result_property: Ключ ``Exchange.properties``, в который записать
             список CDC-событий. Также пишется в ``out_message.body``.
         interval: Интервал polling в секундах (default 5.0).
