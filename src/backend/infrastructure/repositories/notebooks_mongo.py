@@ -64,10 +64,26 @@ class MongoNotebookRepository:
             logger.warning("MongoNotebookRepository: ensure_indexes failed: %s", exc)
 
     async def create(self, notebook: Notebook) -> Notebook:
+        """Create a notebook.
+
+        Args:
+            notebook: Notebook to create.
+
+        Returns:
+            Created notebook.
+        """
         await self._client().insert_one(_COLLECTION, _notebook_to_doc(notebook))
         return notebook
 
     async def get(self, notebook_id: str) -> Notebook | None:
+        """Get notebook by ID.
+
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            Notebook or None if not found.
+        """
         doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
         return _doc_to_notebook(doc) if doc else None
 
@@ -78,6 +94,17 @@ class MongoNotebookRepository:
         changed_by: str,
         summary: str | None = None,
     ) -> Notebook | None:
+        """Append a new version to notebook.
+
+        Args:
+            notebook_id: Notebook ID.
+            content: Version content.
+            changed_by: Author name.
+            summary: Optional version summary.
+
+        Returns:
+            Updated notebook or None if not found.
+        """
         client = self._client()
         existing = await client.find_one(
             _COLLECTION, {"_id": notebook_id, "is_deleted": {"$ne": True}}
