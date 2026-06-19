@@ -650,4 +650,4 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         def usage(self) -> _RequestUsage:
             return _RequestUsage(input_tokens=0, output_tokens=len(self._text) // 4)
 
-    __all__ += ("LiteLLMModelAdapter", "_SimpleStreamedResponse")
+    __all__ = ("LiteLLMModelAdapter", "_SimpleStreamedResponse")
