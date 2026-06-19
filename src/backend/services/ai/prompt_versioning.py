@@ -100,19 +100,74 @@ class PromptComparison:
 class PromptVersionStore(Protocol):
     """Backend для хранения prompt versions."""
 
-    async def create(self, version: PromptVersion) -> PromptVersion: ...
+    async def create(self, version: PromptVersion) -> PromptVersion:
+        """Create a new prompt version.
 
-    async def get(self, name: str, version: int) -> PromptVersion | None: ...
+        Args:
+            version: Version to create.
 
-    async def list_versions(self, name: str) -> list[PromptVersion]: ...
+        Returns:
+            Created version.
+        """
+        ...
 
-    async def list_names(self) -> list[str]: ...
+    async def get(self, name: str, version: int) -> PromptVersion | None:
+        """Get prompt version by name and version.
 
-    async def set_active(self, name: str, version: int) -> PromptVersion: ...
+        Args:
+            name: Prompt name.
+            version: Version number.
+
+        Returns:
+            Version if found, None otherwise.
+        """
+        ...
+
+    async def list_versions(self, name: str) -> list[PromptVersion]:
+        """List all versions for a prompt.
+
+        Args:
+            name: Prompt name.
+
+        Returns:
+            List of versions.
+        """
+        ...
+
+    async def list_names(self) -> list[str]:
+        """List all prompt names.
+
+        Returns:
+            List of prompt names.
+        """
+        ...
+
+    async def set_active(self, name: str, version: int) -> PromptVersion:
+        """Set active version for a prompt.
+
+        Args:
+            name: Prompt name.
+            version: Version to activate.
+
+        Returns:
+            Activated version.
+        """
+        ...
 
     async def update_metrics(
         self, name: str, version: int, metrics: dict[str, float]
-    ) -> PromptVersion: ...
+    ) -> PromptVersion:
+        """Update metrics for a prompt version.
+
+        Args:
+            name: Prompt name.
+            version: Version number.
+            metrics: Metrics to update.
+
+        Returns:
+            Updated version.
+        """
+        ...
 
 
 class InMemoryPromptVersionStore:
@@ -123,6 +178,17 @@ class InMemoryPromptVersionStore:
         self._lock = asyncio.Lock()
 
     async def create(self, version: PromptVersion) -> PromptVersion:
+        """Create a new prompt version.
+
+        Args:
+            version: Version to create.
+
+        Returns:
+            Created version.
+
+        Raises:
+            ValueError: If version already exists.
+        """
         async with self._lock:
             key = (version.name, version.version)
             if key in self._store:
@@ -133,19 +199,53 @@ class InMemoryPromptVersionStore:
             return version
 
     async def get(self, name: str, version: int) -> PromptVersion | None:
+        """Get prompt version by name and version.
+
+        Args:
+            name: Prompt name.
+            version: Version number.
+
+        Returns:
+            Version if found, None otherwise.
+        """
         async with self._lock:
             return self._store.get((name, version))
 
     async def list_versions(self, name: str) -> list[PromptVersion]:
+        """List all versions for a prompt.
+
+        Args:
+            name: Prompt name.
+
+        Returns:
+            Sorted list of versions.
+        """
         async with self._lock:
             items = [v for (n, _), v in self._store.items() if n == name]
         return sorted(items, key=lambda v: v.version)
 
     async def list_names(self) -> list[str]:
+        """List all prompt names.
+
+        Returns:
+            Sorted list of prompt names.
+        """
         async with self._lock:
             return sorted({name for name, _ in self._store.keys()})
 
     async def set_active(self, name: str, version: int) -> PromptVersion:
+        """Set active version for a prompt.
+
+        Args:
+            name: Prompt name.
+            version: Version to activate.
+
+        Returns:
+            Activated version.
+
+        Raises:
+            KeyError: If version not found.
+        """
         async with self._lock:
             key = (name, version)
             if key not in self._store:
@@ -160,6 +260,16 @@ class InMemoryPromptVersionStore:
     async def update_metrics(
         self, name: str, version: int, metrics: dict[str, float]
     ) -> PromptVersion:
+        """Update metrics for a prompt version.
+
+        Args:
+            name: Prompt name.
+            version: Version number.
+            metrics: Metrics to update.
+
+        Returns:
+            Updated version.
+        """
         async with self._lock:
             key = (name, version)
             if key not in self._store:
