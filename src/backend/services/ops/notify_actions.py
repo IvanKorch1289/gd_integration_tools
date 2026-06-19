@@ -50,28 +50,92 @@ class NotifyGatewayActions:
         return await gateway.send(channel=channel, **kwargs)
 
     async def send(self, *, channel: str = "email", **kwargs: Any) -> Any:
-        """Универсальный send — channel передаётся в kwargs."""
+        """Universal send — channel passed in kwargs.
+
+        Args:
+            channel: Notification channel.
+            **kwargs: Additional arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel=channel, **kwargs)
 
     async def email(self, **kwargs: Any) -> Any:
+        """Send email notification.
+
+        Args:
+            **kwargs: Email arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="email", **kwargs)
 
     async def telegram(self, **kwargs: Any) -> Any:
+        """Send Telegram notification.
+
+        Args:
+            **kwargs: Telegram arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="telegram", **kwargs)
 
     async def slack(self, **kwargs: Any) -> Any:
+        """Send Slack notification.
+
+        Args:
+            **kwargs: Slack arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="slack", **kwargs)
 
     async def teams(self, **kwargs: Any) -> Any:
+        """Send Teams notification.
+
+        Args:
+            **kwargs: Teams arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="teams", **kwargs)
 
     async def sms(self, **kwargs: Any) -> Any:
+        """Send SMS notification.
+
+        Args:
+            **kwargs: SMS arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="sms", **kwargs)
 
     async def webhook(self, **kwargs: Any) -> Any:
+        """Send webhook notification.
+
+        Args:
+            **kwargs: Webhook arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="webhook", **kwargs)
 
     async def express(self, **kwargs: Any) -> Any:
+        """Send express notification.
+
+        Args:
+            **kwargs: Express arguments.
+
+        Returns:
+            Gateway send result.
+        """
         return await self._send(channel="express", **kwargs)
 
 
