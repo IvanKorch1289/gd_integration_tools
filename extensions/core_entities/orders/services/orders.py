@@ -27,7 +27,8 @@ from src.backend.core.interfaces.repositories import (
 )
 from src.backend.core.services.base_service import BaseService
 from src.backend.schemas.base import BaseSchema
-from src.backend.schemas.route_schemas.orders import (
+from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
+
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,

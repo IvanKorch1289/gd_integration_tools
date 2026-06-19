@@ -5,7 +5,7 @@ from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from extensions.core_entities.users.schemas.filter import UserFilter
-from src.backend.schemas.route_schemas.users import (
+from extensions.core_entities.users.schemas.route import (  # S168 W15-17 P2-10
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,

@@ -12,7 +12,7 @@ from src.backend.entrypoints.api.generator.actions import (
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from extensions.core_entities.files.schemas.filter import FileFilter
-from src.backend.schemas.route_schemas.files import (
+from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,

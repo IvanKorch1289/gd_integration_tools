@@ -8,7 +8,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.schemas.route_schemas.skb import (
+from extensions.skb.schemas.route import (  # S168 W15-17 P2-10
     APISKBOrderSchemaIn,
     SKBObjectsByAddressQuerySchema,
     SKBOrdersListQuerySchema,

@@ -6,9 +6,8 @@ master prompt v8 P2-10.
 
 Раньше это был re-export shim; теперь это canonical location.
 Backward-compat re-export остаётся в src/backend/core/domain/models/users.py.
-"""
 
-"""ORM-модель пользователя.
+ORM-модель пользователя.
 
 Пароли хешируются через ``argon2-cffi`` (A2 / ADR-003). Старая схема
 ``passlib + PasswordType(pbkdf2_sha512)`` удалена:
@@ -32,7 +31,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
-from .base import BaseModel
+from src.backend.core.domain.models.base import BaseModel  # S168 W14 P2-10: from src.backend.core.domain.models.base (not .base)
 
 __all__ = ("User",)
 

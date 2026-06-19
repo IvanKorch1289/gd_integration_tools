@@ -5,7 +5,9 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
+from extensions.dadata.schemas.route import (  # S168 W17 P2-10
+    DadataGeolocateQuerySchema,
+)
 from src.backend.services.integrations.dadata import get_dadata_service
 
 __all__ = ("router",)

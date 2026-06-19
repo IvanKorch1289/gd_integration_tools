@@ -11,8 +11,8 @@ from uuid import UUID
 from pydantic import Field
 
 from src.backend.schemas.base import BaseSchema
-from src.backend.schemas.route_schemas.files import FileSchemaOut
-from src.backend.schemas.route_schemas.orderkinds import OrderKindSchemaOut
+from extensions.core_entities.files.schemas.route import FileSchemaOut  # S168 W15-17
+from extensions.core_entities.orderkinds.schemas.route import OrderKindSchemaOut  # S168 W15-17
 
 __all__ = (
     "OrderSchemaIn",

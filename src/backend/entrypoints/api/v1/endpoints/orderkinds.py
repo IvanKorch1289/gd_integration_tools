@@ -19,7 +19,7 @@ from src.backend.entrypoints.api.generator.invocation import (
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from extensions.core_entities.orderkinds.schemas.filter import OrderKindFilter
-from src.backend.schemas.route_schemas.orderkinds import (
+from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P2-10
     OrderKindSchemaIn,
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,

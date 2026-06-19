@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from src.backend.plugins.composition.lifecycle import (  # noqa: F401
     bootstrap,
+    plugin_loader,  # S168 W15-17: renamed from v11.py → plugin_loader.py
     protocols,
     shutdown,
     signals,
     startup,
-    v11,
     watchers,
 )
 from src.backend.plugins.composition.lifecycle import lifespan as lifespan_module
@@ -38,10 +38,10 @@ __all__ = (
     "get_task_registry",
     "bootstrap",
     "lifespan_module",
+    "plugin_loader",  # S168 W15-17: was v11
     "protocols",
     "shutdown",
     "signals",
     "startup",
-    "v11",
     "watchers",
 )
