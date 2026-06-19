@@ -75,6 +75,18 @@ class WebhookSignatureMiddleware(BaseHTTPMiddleware):
         return any(path.startswith(p) for p in self._prefixes)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+        """Process webhook signature verification.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+
+        Raises:
+            HTTPException: If signature invalid.
+        """
         if not self._is_protected(request.url.path):
             return await call_next(request)
 

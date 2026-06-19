@@ -37,6 +37,18 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
         ]
 
     async def dispatch(self, request: Request, call_next):
+        """Process admin IP restriction.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+
+        Raises:
+            HTTPException: If IP not allowed.
+        """
         path = request.url.path
         client_ip = request.client.host if request.client else None
 

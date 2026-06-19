@@ -95,6 +95,15 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
         )
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+        """Process authentication for requests.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+        """
         if is_path_public(request.url.path, self.public_prefixes):
             return await call_next(request)
 

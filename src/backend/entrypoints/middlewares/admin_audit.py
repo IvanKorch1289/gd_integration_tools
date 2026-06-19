@@ -56,6 +56,15 @@ class AdminAuditMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Process admin audit for requests.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+        """
         path = request.url.path
         method = request.method
         if not _is_admin_action(path, method):

@@ -39,6 +39,11 @@ class HitlAction:
 
     @classmethod
     def all(cls) -> tuple[str, ...]:
+        """Get all HITL action types.
+
+        Returns:
+            Tuple of action type strings.
+        """
         return (cls.APPROVE, cls.REJECT, cls.REQUEST_INFO)
 
 
@@ -74,9 +79,19 @@ class HitlPendingSignal:
 
     @property
     def is_resolved(self) -> bool:
+        """Check if signal is resolved.
+
+        Returns:
+            True if resolved, False if pending.
+        """
         return self.resolved_at is not None
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert signal to dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "signal_id": self.signal_id,
             "workflow_id": self.workflow_id,
@@ -97,19 +112,64 @@ class HitlPendingSignal:
 class HitlSignalStore(Protocol):
     """Backend-агностичное хранилище pending signals."""
 
-    async def put(self, signal: HitlPendingSignal) -> None: ...
+    async def put(self, signal: HitlPendingSignal) -> None:
+        """Store a HITL signal.
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None: ...
+        Args:
+            signal: Signal to store.
+        """
+        ...
+
+    async def get(self, signal_id: str) -> HitlPendingSignal | None:
+        """Get signal by ID.
+
+        Args:
+            signal_id: Signal identifier.
+
+        Returns:
+            Signal if found, None otherwise.
+        """
+        ...
 
     async def list_pending(
         self, *, tenant_id: str | None = None
-    ) -> list[HitlPendingSignal]: ...
+    ) -> list[HitlPendingSignal]:
+        """List pending signals.
+
+        Args:
+            tenant_id: Optional tenant filter.
+
+        Returns:
+            List of pending signals.
+        """
+        ...
 
     async def mark_resolved(
         self, signal_id: str, *, action: str, resolved_by: str
-    ) -> HitlPendingSignal: ...
+    ) -> HitlPendingSignal:
+        """Mark signal as resolved.
 
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool: ...
+        Args:
+            signal_id: Signal identifier.
+            action: Resolution action.
+            resolved_by: Resolver identity.
+
+        Returns:
+            Updated signal.
+        """
+        ...
+
+    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+        """Wait for signal resolution.
+
+        Args:
+            signal_id: Signal identifier.
+            timeout: Optional timeout in seconds.
+
+        Returns:
+            True if resolved, False if timeout.
+        """
+        ...
 
 
 class InMemoryHitlSignalStore:

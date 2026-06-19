@@ -33,6 +33,7 @@ _logger = get_logger("workflow.sla_alerting")
 
 
 class SlaBreachLevel(StrEnum):
+    """SLA breach severity levels."""
     NONE = "none"
     SOFT = "soft"
     HARD = "hard"
@@ -61,6 +62,11 @@ class SlaBreachRecord:
     detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert breach record to dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "workflow_id": self.workflow_id,
             "level": self.level.value,

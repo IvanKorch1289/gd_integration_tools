@@ -42,6 +42,15 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Process data masking for response bodies.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response with masked PII.
+        """
         response = await call_next(request)
 
         content_type = response.headers.get("content-type", "")

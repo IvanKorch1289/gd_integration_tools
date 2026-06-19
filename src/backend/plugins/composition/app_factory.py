@@ -115,6 +115,14 @@ def _configure_business_routers(app: FastAPI) -> None:
         "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]
     )
     async def admin_legacy_redirect(path: str):
+        """Redirect legacy admin API paths to v1 admin API.
+
+        Args:
+            path: Legacy admin path.
+
+        Returns:
+            Redirect response to /api/v1/admin/{path}.
+        """
         # Защита от open redirect: валидируем что path только относительный
         from urllib.parse import urlparse
 

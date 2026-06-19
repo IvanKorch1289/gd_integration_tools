@@ -84,6 +84,15 @@ class DegradationMiddleware(BaseHTTPMiddleware):
         self._retry_after = retry_after
 
     async def dispatch(self, request: Request, call_next):
+        """Process degradation mode checks.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+        """
         from src.backend.core.resilience.degradation import (
             DegradationMode,
             degradation_manager,

@@ -33,6 +33,15 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Process HTTP caching for GET responses.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response with cache headers.
+        """
         if request.method != "GET":
             return await call_next(request)
 

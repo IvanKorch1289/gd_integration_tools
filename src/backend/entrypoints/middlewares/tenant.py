@@ -34,6 +34,15 @@ class TenantMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Process tenant context from header.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+        """
         tenant_id = request.headers.get(_TENANT_HEADER)
 
         if not tenant_id:

@@ -46,6 +46,15 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
         self._sample_rate = max(0.0, min(1.0, sample_rate))
 
     async def dispatch(self, request: Request, call_next: Any) -> Response:
+        """Process audit logging for requests.
+
+        Args:
+            request: HTTP request.
+            call_next: Next middleware/endpoint.
+
+        Returns:
+            HTTP response.
+        """
         if request.url.path in self._skip_paths:
             return await call_next(request)
 
