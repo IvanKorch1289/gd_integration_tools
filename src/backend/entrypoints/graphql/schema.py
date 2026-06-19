@@ -35,7 +35,16 @@ from typing import Any
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON
+from strawberry.scalars import JSON  # noqa: F401  # re-exported below
+
+# S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
+# to dsl_result.py. Re-exported here для backward-compat (existing
+# callers: tests/unit/entrypoints/graphql/test_schema.py).
+from src.backend.entrypoints.graphql.dsl_result import (  # noqa: E402,F401
+    DslResult,
+    ActionResult,
+    dispatch_action as _dispatch_action,
+)
 from strawberry.types import Info
 
 from src.backend.core.logging import get_logger
@@ -102,55 +111,6 @@ class UserType:
     is_active: bool = True
     created_at: datetime | None = None
     updated_at: datetime | None = None
-
-
-@strawberry.type
-class DslResult:
-    """Результат выполнения DSL-маршрута."""
-
-    route_id: str
-    status: str
-    result: JSON | None = None
-    error: str | None = None
-
-
-@strawberry.type
-class ActionResult:
-    """Результат выполнения action через ActionHandlerRegistry."""
-
-    action: str
-    success: bool
-    data: JSON | None = None
-    error: str | None = None
-
-
-async def _dispatch_action(
-    action: str, payload: dict[str, Any] | None = None
-) -> ActionResult:
-    """Диспетчеризует action через общий `dispatch_action()`.
-
-    IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
-    с `source="graphql"`. Meta и correlation_id — автоматически.
-    """
-    from src.backend.entrypoints.base import dispatch_action as _unified_dispatch
-
-    try:
-        result = await _unified_dispatch(
-            action=action, payload=payload, source="graphql"
-        )
-        data = result
-        if hasattr(result, "model_dump"):
-            data = result.model_dump(mode="json")
-        elif hasattr(result, "__dict__"):
-            data = result.__dict__
-        return ActionResult(action=action, success=True, data=data)
-    except KeyError:
-        return ActionResult(
-            action=action, success=False, error=f"Action '{action}' не зарегистрирован"
-        )
-    except Exception as exc:
-        logger.exception("GraphQL action error: %s", exc)
-        return ActionResult(action=action, success=False, error=str(exc))
 
 
 def _schema_to_order(data: Any) -> OrderType:
