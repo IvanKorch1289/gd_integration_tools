@@ -90,6 +90,11 @@ class BrowserClient:
         logger.info("Browser stopped")
 
     async def _new_context(self) -> Any:
+        """Create new browser context with stealth settings.
+
+        Returns:
+            Playwright browser context.
+        """
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
                 "width": random.randint(  # noqa: S311  # non-cryptographic use
@@ -110,6 +115,12 @@ class BrowserClient:
         return await self._browser.new_context(**ctx_kwargs)
 
     async def _human_delay(self, min_ms: int = 100, max_ms: int = 500) -> None:
+        """Add human-like delay between actions.
+
+        Args:
+            min_ms: Minimum delay in milliseconds.
+            max_ms: Maximum delay in milliseconds.
+        """
         if self._human_delays:
             await asyncio.sleep(
                 random.randint(min_ms, max_ms) / 1000  # noqa: S311  # non-cryptographic use
@@ -118,6 +129,15 @@ class BrowserClient:
     async def navigate(
         self, url: str, wait_until: str = "domcontentloaded"
     ) -> dict[str, Any]:
+        """Navigate to URL.
+
+        Args:
+            url: Target URL.
+            wait_until: Wait condition.
+
+        Returns:
+            Dict with url, status, title.
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
@@ -135,6 +155,15 @@ class BrowserClient:
                 await ctx.close()
 
     async def extract_text(self, url: str, selector: str) -> list[str]:
+        """Extract text from elements matching selector.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector.
+
+        Returns:
+            List of text content from matching elements.
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
@@ -148,6 +177,15 @@ class BrowserClient:
                 await ctx.close()
 
     async def extract_table(self, url: str, selector: str) -> list[dict[str, str]]:
+        """Extract table data as list of dicts.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector for table.
+
+        Returns:
+            List of row dicts with header keys.
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
@@ -171,6 +209,16 @@ class BrowserClient:
     async def fill_form(
         self, url: str, fields: dict[str, str], submit_selector: str | None = None
     ) -> dict[str, Any]:
+        """Fill form fields and optionally submit.
+
+        Args:
+            url: Target URL.
+            fields: Dict of selector -> value pairs.
+            submit_selector: Optional submit button selector.
+
+        Returns:
+            Dict with final url and title.
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
@@ -188,6 +236,15 @@ class BrowserClient:
                 await ctx.close()
 
     async def click(self, url: str, selector: str) -> dict[str, Any]:
+        """Navigate to URL and click element.
+
+        Args:
+            url: Target URL.
+            selector: CSS selector to click.
+
+        Returns:
+            Dict with final url and title.
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
@@ -201,6 +258,15 @@ class BrowserClient:
                 await ctx.close()
 
     async def screenshot(self, url: str, full_page: bool = True) -> bytes:
+        """Take screenshot of URL.
+
+        Args:
+            url: Target URL.
+            full_page: Capture full page.
+
+        Returns:
+            Screenshot bytes (PNG).
+        """
         async with self._breaker.guard():
             ctx = await self._new_context()
             page = await ctx.new_page()
