@@ -47,11 +47,25 @@ class RedisHash:
         self._key = key
 
     async def set(self, field: str, value: Any) -> None:
+        """Set a field value in the hash.
+
+        Args:
+            field: Field name.
+            value: Value to set (JSON-serialized if not string).
+        """
         raw = _get_raw_redis()
         payload = orjson.dumps(value).decode() if not isinstance(value, str) else value
         await raw.hset(self._key, field, payload)
 
     async def get(self, field: str) -> Any:
+        """Get a field value from the hash.
+
+        Args:
+            field: Field name.
+
+        Returns:
+            Field value or None if not found.
+        """
         raw = _get_raw_redis()
         value = await raw.hget(self._key, field)
         if value is None:
@@ -64,11 +78,24 @@ class RedisHash:
             return value
 
     async def delete(self, field: str) -> bool:
+        """Delete a field from the hash.
+
+        Args:
+            field: Field name.
+
+        Returns:
+            True if deleted, False if not found.
+        """
         raw = _get_raw_redis()
         result = await raw.hdel(self._key, field)
         return bool(result)
 
     async def all(self) -> dict[str, Any]:
+        """Get all fields and values from the hash.
+
+        Returns:
+            Dictionary of all field-value pairs.
+        """
         raw = _get_raw_redis()
         data = await raw.hgetall(self._key)
         result: dict[str, Any] = {}
@@ -82,6 +109,14 @@ class RedisHash:
         return result
 
     async def exists(self, field: str) -> bool:
+        """Check if field exists in the hash.
+
+        Args:
+            field: Field name.
+
+        Returns:
+            True if field exists.
+        """
         raw = _get_raw_redis()
         return bool(await raw.hexists(self._key, field))
 
@@ -93,14 +128,35 @@ class RedisSet:
         self._key = key
 
     async def add(self, *members: str) -> int:
+        """Add members to the set.
+
+        Args:
+            members: Members to add.
+
+        Returns:
+            Number of members added.
+        """
         raw = _get_raw_redis()
         return await raw.sadd(self._key, *members)
 
     async def remove(self, *members: str) -> int:
+        """Remove members from the set.
+
+        Args:
+            members: Members to remove.
+
+        Returns:
+            Number of members removed.
+        """
         raw = _get_raw_redis()
         return await raw.srem(self._key, *members)
 
     async def members(self) -> set[str]:
+        """Get all members of the set.
+
+        Returns:
+            Set of member strings.
+        """
         raw = _get_raw_redis()
         values = await raw.smembers(self._key)
         return {
@@ -108,10 +164,23 @@ class RedisSet:
         }
 
     async def is_member(self, member: str) -> bool:
+        """Check if member is in the set.
+
+        Args:
+            member: Member to check.
+
+        Returns:
+            True if member is in the set.
+        """
         raw = _get_raw_redis()
         return bool(await raw.sismember(self._key, member))
 
     async def size(self) -> int:
+        """Get the number of members in the set.
+
+        Returns:
+            Set size.
+        """
         raw = _get_raw_redis()
         return int(await raw.scard(self._key) or 0)
 
@@ -128,6 +197,11 @@ class RedisCursor:
         self._key = key
 
     async def get(self) -> str | None:
+        """Get current cursor value.
+
+        Returns:
+            Cursor value or None if not set.
+        """
         raw = _get_raw_redis()
         value = await raw.get(self._key)
         if value is None:
@@ -135,6 +209,14 @@ class RedisCursor:
         return value.decode() if isinstance(value, bytes) else str(value)
 
     async def get_or_init(self, default: str) -> str:
+        """Get cursor or initialize with default.
+
+        Args:
+            default: Default value if cursor not set.
+
+        Returns:
+            Current or initialized cursor value.
+        """
         current = await self.get()
         if current is not None:
             return current
@@ -143,9 +225,13 @@ class RedisCursor:
         return (await self.get()) or default
 
     async def try_advance(self, new_value: str) -> bool:
-        """Атомарно устанавливает new_value ТОЛЬКО если new > current (lexicographic).
+        """Atomically advance cursor if new > current (lexicographic).
 
-        Returns True если обновление произошло.
+        Args:
+            new_value: New cursor value.
+
+        Returns:
+            True if advancement occurred.
         """
         script = """
         local current = redis.call('get', KEYS[1])
@@ -180,6 +266,14 @@ class RedisPubSub:
         self._channel = channel
 
     async def publish(self, message: Any) -> int:
+        """Publish a message to the channel.
+
+        Args:
+            message: Message to publish (JSON-serialized if not string).
+
+        Returns:
+            Number of subscribers that received the message.
+        """
         raw = _get_raw_redis()
         payload = (
             orjson.dumps(message).decode() if not isinstance(message, str) else message

@@ -204,3 +204,29 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
                 _logger.exception("Plugin %s on_shutdown failed", entry.name)
             self._unmount_frontend_pages(entry.name)
             self._gate.revoke(entry.name)
+
+
+# Backward-compat singleton accessor (S168 W15-17 deprecation shim).
+# The new PluginLoader requires explicit DI (extensions_dir, capability_gate,
+# action_registry, repository_registry, processor_registry, core_version);
+# use the constructor directly. This function is kept for startup.py:421
+# which expects a get_plugin_loader() singleton. If app.state.plugin_loader
+# is set, returns it; otherwise raises (caught by try/except in startup,
+# falls back to bootstrap_v11_plugin_loader).
+from src.backend.core.di.app_state import app_state_singleton  # noqa: E402
+
+
+def _empty_plugin_loader_factory() -> "PluginLoader":
+    """Factory для app_state_singleton — raises с понятной ошибкой."""
+    raise RuntimeError(
+        "PluginLoader требует explicit DI. Use PluginLoader("
+        "extensions_dir=..., capability_gate=..., action_registry=..., "
+        "repository_registry=..., processor_registry=..., core_version=..."
+        ") constructor или set app.state.plugin_loader в startup."
+    )
+
+
+@app_state_singleton("plugin_loader", factory=_empty_plugin_loader_factory)
+def get_plugin_loader() -> "PluginLoader":
+    """Singleton-accessor (backward compat, see app_state_singleton)."""
+    raise RuntimeError("unreachable — see app_state_singleton decorator")
