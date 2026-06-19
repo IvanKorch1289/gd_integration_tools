@@ -40,6 +40,14 @@ class DiskCacheBackend(CacheBackend):
         return self._base / digest[:2] / digest
 
     async def get(self, key: str) -> bytes | None:
+        """Get value from disk cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            Cached bytes or None if not found.
+        """
         path = self._safe_path(key)
         try:
             async with aiofiles.open(path, "rb") as fh:
@@ -51,6 +59,13 @@ class DiskCacheBackend(CacheBackend):
             return None
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
+        """Set value in disk cache.
+
+        Args:
+            key: Cache key.
+            value: Value to cache.
+            ttl: Ignored (disk backend has no per-key TTL).
+        """
         del ttl  # disk backend ignores per-key TTL
         path = self._safe_path(key)
         try:
@@ -63,6 +78,11 @@ class DiskCacheBackend(CacheBackend):
             _logger.debug("DiskCache set failed key=%s: %s", key, exc)
 
     async def delete(self, *keys: str) -> None:
+        """Delete values from disk cache.
+
+        Args:
+            keys: Cache keys to delete.
+        """
         for key in keys:
             path = self._safe_path(key)
             try:
@@ -73,6 +93,11 @@ class DiskCacheBackend(CacheBackend):
                 _logger.debug("DiskCache delete failed key=%s: %s", key, exc)
 
     async def delete_pattern(self, pattern: str) -> None:
+        """Delete values matching pattern (no-op for disk cache).
+
+        Args:
+            pattern: Glob pattern (ignored, disk cache doesn't support pattern delete).
+        """
         def _sync() -> None:
             for path in self._base.rglob("*"):
                 if path.is_file() and not path.name.endswith(".tmp"):
@@ -84,6 +109,14 @@ class DiskCacheBackend(CacheBackend):
         # maintaining an index. delete_pattern is a no-op for disk fallback.
 
     async def exists(self, key: str) -> bool:
+        """Check if key exists in disk cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            True if key exists, False otherwise.
+        """
         path = self._safe_path(key)
         try:
             return await aiofiles.os.path.exists(str(path))

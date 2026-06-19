@@ -57,9 +57,24 @@ class MemcachedBackend(CacheBackend):
         return key.encode("utf-8")
 
     async def get(self, key: str) -> bytes | None:
+        """Get value from Memcached.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            Cached bytes or None if not found.
+        """
         return await self._client.get(self._to_bytes(key))
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
+        """Set value in Memcached.
+
+        Args:
+            key: Cache key.
+            value: Value to cache.
+            ttl: TTL in seconds (uses default_ttl if None).
+        """
         await self._client.set(
             self._to_bytes(key),
             value,
@@ -67,16 +82,39 @@ class MemcachedBackend(CacheBackend):
         )
 
     async def delete(self, *keys: str) -> None:
+        """Delete values from Memcached.
+
+        Args:
+            keys: Cache keys to delete.
+        """
         for key in keys:
             await self._client.delete(self._to_bytes(key))
 
     async def delete_pattern(self, pattern: str) -> None:
+        """Delete values matching pattern (no-op for Memcached).
+
+        Args:
+            pattern: Glob pattern (ignored, Memcached doesn't support pattern delete).
+        """
         _logger.warning(
             "memcached: delete_pattern не поддерживается (нет KEYS/SCAN), no-op"
         )
 
     async def exists(self, key: str) -> bool:
+        """Check if key exists in Memcached.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            True if key exists, False otherwise.
+        """
         return (await self._client.get(self._to_bytes(key))) is not None
 
     async def close(self) -> Any:
+        """Close Memcached connection.
+
+        Returns:
+            Close response.
+        """
         return await self._client.close()

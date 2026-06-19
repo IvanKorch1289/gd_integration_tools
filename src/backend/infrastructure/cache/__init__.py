@@ -12,6 +12,7 @@ from src.backend.infrastructure.cache.backends import (
     RedisBackend,
 )
 from src.backend.infrastructure.cache.factory import create_cache_backend
+from src.backend.infrastructure.cache.tiered import TieredCacheBackend
 from src.backend.infrastructure.cache.invalidator import (
     CacheBackendProtocol,
     CacheInvalidator,

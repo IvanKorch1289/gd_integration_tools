@@ -124,6 +124,13 @@ class L2SemanticRagCache:
         return raw
 
     async def set(self, query: str, value: Any, *, tenant: str | None = None) -> None:
+        """Set value in semantic cache with embedding.
+
+        Args:
+            query: Query string.
+            value: Value to cache.
+            tenant: Optional tenant scope.
+        """
         client = self._ensure_client()
         if not client:
             return

@@ -47,6 +47,15 @@ class L3RetrievalCache:
     async def get(
         self, query: str, *, namespace: str | None = None
     ) -> list[dict[str, Any]] | None:
+        """Get cached retrieval results.
+
+        Args:
+            query: Query string.
+            namespace: Optional namespace scope.
+
+        Returns:
+            List of cached chunks or None if not found.
+        """
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._key(query, namespace=namespace))
@@ -68,6 +77,13 @@ class L3RetrievalCache:
     async def set(
         self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
     ) -> None:
+        """Set retrieval results in cache.
+
+        Args:
+            query: Query string.
+            chunks: List of chunk dictionaries.
+            namespace: Optional namespace scope.
+        """
         client = self._ensure_client()
         try:
             await client.cache_set(
@@ -77,6 +93,12 @@ class L3RetrievalCache:
             logger.debug("L3 cache set failed: %s", exc)
 
     async def invalidate(self, query: str, *, namespace: str | None = None) -> None:
+        """Invalidate cache entry.
+
+        Args:
+            query: Query string.
+            namespace: Optional namespace scope.
+        """
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, namespace=namespace))
@@ -84,6 +106,11 @@ class L3RetrievalCache:
             logger.debug("L3 cache invalidate failed: %s", exc)
 
     async def flush(self) -> int:
+        """Flush all cache entries.
+
+        Returns:
+            Number of deleted entries.
+        """
         client = self._ensure_client()
         try:
 

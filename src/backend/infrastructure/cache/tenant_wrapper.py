@@ -89,21 +89,54 @@ class TenantCacheBackend(CacheBackend):
         return prefix + pattern
 
     async def get(self, key: str) -> bytes | None:
+        """Get value with tenant-scoped key.
+
+        Args:
+            key: Cache key (will be prefixed with tenant).
+
+        Returns:
+            Cached bytes or None if not found.
+        """
         return await self._wrapped.get(self._scoped(key))
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
+        """Set value with tenant-scoped key.
+
+        Args:
+            key: Cache key (will be prefixed with tenant).
+            value: Value to cache.
+            ttl: Optional TTL in seconds.
+        """
         await self._wrapped.set(self._scoped(key), value, ttl=ttl)
 
     async def delete(self, *keys: str) -> None:
+        """Delete values with tenant-scoped keys.
+
+        Args:
+            keys: Cache keys to delete.
+        """
         if not keys:
             return
         scoped = tuple(self._scoped(k) for k in keys)
         await self._wrapped.delete(*scoped)
 
     async def delete_pattern(self, pattern: str) -> None:
+        """Delete values matching pattern with tenant scope.
+
+        Args:
+            pattern: Glob pattern to match keys.
+        """
         await self._wrapped.delete_pattern(self._scoped_pattern(pattern))
 
     async def exists(self, key: str) -> bool:
+        """Check if tenant-scoped key exists.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            True if key exists, False otherwise.
+        """
         return await self._wrapped.exists(self._scoped(key))
 
 

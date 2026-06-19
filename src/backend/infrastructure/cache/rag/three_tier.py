@@ -74,6 +74,13 @@ class ThreeTierRagCache:
     async def store_chunks(
         self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
     ) -> None:
+        """Store retrieval chunks in L3 cache.
+
+        Args:
+            query: Query string.
+            chunks: List of chunk dictionaries.
+            namespace: Optional namespace scope.
+        """
         if self._l3_enabled:
             await self._l3.set(query, chunks, namespace=namespace)
 

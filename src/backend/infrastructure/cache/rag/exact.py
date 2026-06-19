@@ -64,6 +64,13 @@ class L1ExactCache:
             return None
 
     async def set(self, query: str, value: Any, *, tenant: str | None = None) -> None:
+        """Set value in L1 exact cache.
+
+        Args:
+            query: Query string.
+            value: Value to cache.
+            tenant: Optional tenant scope.
+        """
         client = self._ensure_client()
         try:
             await client.cache_set(
@@ -73,6 +80,12 @@ class L1ExactCache:
             logger.debug("L1 cache set failed: %s", exc)
 
     async def invalidate(self, query: str, *, tenant: str | None = None) -> None:
+        """Invalidate L1 cache entry.
+
+        Args:
+            query: Query string.
+            tenant: Optional tenant scope.
+        """
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, tenant=tenant))

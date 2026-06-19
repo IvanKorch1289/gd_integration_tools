@@ -36,24 +36,57 @@ class RedisBackend(CacheBackend):
         self._client = client
 
     async def get(self, key: str) -> bytes | None:
+        """Get value from Redis cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            Cached bytes or None if not found.
+        """
         return await self._client.get(key)
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
+        """Set value in Redis cache.
+
+        Args:
+            key: Cache key.
+            value: Value to cache.
+            ttl: Optional TTL in seconds.
+        """
         if ttl is not None:
             await self._client.set(key, value, ex=ttl)
         else:
             await self._client.set(key, value)
 
     async def delete(self, *keys: str) -> None:
+        """Delete values from Redis cache.
+
+        Args:
+            keys: Cache keys to delete.
+        """
         if keys:
             await self._client.delete(*keys)
 
     async def delete_pattern(self, pattern: str) -> None:
+        """Delete values matching pattern using SCAN.
+
+        Args:
+            pattern: Glob pattern to match keys.
+        """
         # SCAN вместо KEYS — безопаснее для больших keyspace.
         async for key in self._client.scan_iter(match=pattern, count=200):
             await self._client.delete(key)
 
     async def exists(self, key: str) -> bool:
+        """Check if key exists in Redis cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            True if key exists, False otherwise.
+        """
         return bool(await self._client.exists(key))
 
     # ── Tag-index support (for tag-based invalidation) ──────────────────────

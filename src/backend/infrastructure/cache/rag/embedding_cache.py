@@ -23,6 +23,14 @@ class EmbeddingVectorCache:
         return hashlib.sha256(query.encode("utf-8")).hexdigest()
 
     def get(self, query: str) -> list[float] | None:
+        """Get cached embedding vector for query.
+
+        Args:
+            query: Query string.
+
+        Returns:
+            Cached embedding vector or None if not found/expired.
+        """
         key = self._key(query)
         with self._lock:
             entry = self._store.get(key)
@@ -35,6 +43,12 @@ class EmbeddingVectorCache:
             return list(vector)
 
     def set(self, query: str, vector: list[float]) -> None:
+        """Cache embedding vector for query.
+
+        Args:
+            query: Query string.
+            vector: Embedding vector to cache.
+        """
         key = self._key(query)
         with self._lock:
             while len(self._store) >= self._maxsize:
