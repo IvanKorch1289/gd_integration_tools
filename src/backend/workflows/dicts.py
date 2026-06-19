@@ -1,28 +1,18 @@
-from typing import Any, TypedDict
+"""DEPRECATED: re-export shim (S168 W12 P2-7).
+
+Moved to src.backend.schemas.processing_result. Will be removed в S169+.
+"""
+import warnings
+from src.backend.schemas.processing_result import (  # noqa: F401
+    ProcessingResult,
+)
+
+warnings.warn(
+    "src.backend.workflows.dicts is deprecated (S168 W12 P2-7), "
+    "use src.backend.schemas.processing_result instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = ("ProcessingResult",)
-
-
-class ProcessingResult(TypedDict):
-    """
-    Типизированный словарь для представления результатов обработки заказа.
-
-    Атрибуты:
-        success (bool): Флаг успешности выполнения операции.
-        order_id (str): Уникальный идентификатор заказа.
-        result_data (Dict): Словарь с дополнительными данными результата.
-        error_message (str | None): Сообщение об ошибке (при наличии).
-
-    Пример использования:
-        >>> result: ProcessingResult = {
-        ...     "success": True,
-        ...     "order_id": "12345",
-        ...     "result_data": {"status": "completed"},
-        ...     "error_message": None
-        ... }
-    """
-
-    success: bool
-    order_id: str
-    result_data: dict[str, Any] | None
-    error_message: str | None
