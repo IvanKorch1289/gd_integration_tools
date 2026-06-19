@@ -128,6 +128,15 @@ class ClickHouseQueryBuilder:
         return self
 
     def where_in(self, col: str, values: list[Any]) -> ClickHouseQueryBuilder:
+        """WHERE IN clause with parametrized values.
+
+        Args:
+            col: Column name.
+            values: List of values.
+
+        Returns:
+            Self for chaining.
+        """
         if not values:
             # WHERE col IN () — заведомо false; используем 1=0.
             self._wheres.append(Condition("1=0", ()))
@@ -137,14 +146,40 @@ class ClickHouseQueryBuilder:
         return self
 
     def where_between(self, col: str, start: Any, end: Any) -> ClickHouseQueryBuilder:
+        """WHERE BETWEEN clause with parametrized values.
+
+        Args:
+            col: Column name.
+            start: Range start.
+            end: Range end.
+
+        Returns:
+            Self for chaining.
+        """
         self._wheres.append(Condition(f"{col} BETWEEN %s AND %s", (start, end)))
         return self
 
     def group_by(self, *cols: str) -> ClickHouseQueryBuilder:
+        """GROUP BY clause.
+
+        Args:
+            cols: Columns to group by.
+
+        Returns:
+            Self for chaining.
+        """
         self._group_by.extend(cols)
         return self
 
     def having(self, *conditions: Condition | str) -> ClickHouseQueryBuilder:
+        """HAVING clause.
+
+        Args:
+            conditions: Conditions to apply.
+
+        Returns:
+            Self for chaining.
+        """
         for c in conditions:
             if isinstance(c, str):
                 self._havings.append(Condition(c, ()))
@@ -153,11 +188,29 @@ class ClickHouseQueryBuilder:
         return self
 
     def order_by(self, *cols: str, desc: bool = False) -> ClickHouseQueryBuilder:
+        """ORDER BY clause.
+
+        Args:
+            cols: Columns to order by.
+            desc: Descending order.
+
+        Returns:
+            Self for chaining.
+        """
         for c in cols:
             self._order_by.append((c, desc))
         return self
 
     def limit(self, n: int, offset: int = 0) -> ClickHouseQueryBuilder:
+        """LIMIT clause.
+
+        Args:
+            n: Maximum rows.
+            offset: Rows offset.
+
+        Returns:
+            Self for chaining.
+        """
         self._limit = n
         self._offset = offset
         return self
