@@ -1,35 +1,21 @@
-from sqladmin import ModelView
+"""DEPRECATED: re-export shim (S168 W14 P2-10).
 
-from src.backend.core.domain.models.users import User
-from src.backend.utilities.admin_panel.base import BaseAdmin
+UserAdmin moved to
+src.backend.extensions.core_entities.users.admin per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
+from extensions.core_entities.users.admin import (  # noqa: E402,F401
+    UserAdmin,
+)
+
+warnings.warn(
+    "src.backend.utilities.admin_panel.users is deprecated "
+    "(S168 W14 P2-10), use "
+    "extensions.core_entities.users.admin instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = ("UserAdmin",)
-
-
-class UserAdmin(ModelView, BaseAdmin, model=User):
-    """
-    Административный интерфейс для модели User.
-
-    Атрибуты:
-        column_list (List[str]): Список колонок, отображаемых в таблице.
-        column_searchable_list (List[str]): Список колонок, по которым возможен поиск.
-        column_sortable_list (List[str]): Список колонок, по которым возможна сортировка.
-        page_size (int): Количество записей на странице по умолчанию.
-        page_size_options (List[int]): Варианты количества записей на странице.
-        column_filters (List[str]): Список колонок, по которым возможна фильтрация.
-        form_create_rules (List[str]): Список полей, отображаемых в форме создания.
-    """
-
-    column_list = [
-        "id",
-        "username",
-        "email",
-        "is_active",
-        "is_superuser",
-        "created_at",
-        "updated_at",
-    ]
-    column_searchable_list = ["id", "username", "email"]
-    column_sortable_list = ["id", "username", "email", "created_at", "updated_at"]
-    column_filters = ["username", "email"]
-    form_create_rules = ["username", "password", "email", "is_active", "is_superuser"]

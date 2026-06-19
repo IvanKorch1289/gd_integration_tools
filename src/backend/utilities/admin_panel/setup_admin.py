@@ -5,7 +5,7 @@ from src.backend.infrastructure.database.database import get_db_initializer
 from src.backend.utilities.admin_panel.files import FileAdmin, OrderFileAdmin
 from extensions.core_entities.orderkinds.admin import OrderKindAdmin
 from src.backend.utilities.admin_panel.orders import OrderAdmin
-from src.backend.utilities.admin_panel.users import UserAdmin
+from extensions.core_entities.users.admin import UserAdmin
 
 __all__ = ("setup_admin",)
 
