@@ -50,7 +50,7 @@ def test_workflows_worker_keeps_stdlib_for_basicConfig() -> None:
     S94 W1 explicit: только getLogger() заменяется; basicConfig/logging.WARNING
     constants остаются как stdlib API.
     """
-    src = (PROJECT_ROOT / "src/backend/workflows/worker.py").read_text()
+    src = (PROJECT_ROOT / "src/backend/infrastructure/workflow/worker.py").read_text()
     # basicConfig + logging.WARNING — legit stdlib usage
     assert "logging.basicConfig" in src
     # И есть core.logging.get_logger для самого worker

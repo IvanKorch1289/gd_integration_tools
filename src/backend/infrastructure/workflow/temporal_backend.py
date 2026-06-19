@@ -159,7 +159,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
 
         ``namespace`` — Temporal namespace (1:1 с tenant_id; "global" →
         "default" для backward-compat). Workflow class должен быть
-        зарегистрирован в Worker (см. ``services/workflows/worker.py``
+        зарегистрирован в Worker (см. ``infrastructure/workflow/worker.py``
         в Wave D.3).
         """
         target_namespace = "default" if namespace == "global" else namespace

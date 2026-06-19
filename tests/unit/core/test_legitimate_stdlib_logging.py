@@ -65,7 +65,7 @@ LEGITIMATE_STDLIB_FILES = (
         "intentional stdlib fallback for structlog",
     ),
     (
-        "src/backend/workflows/worker.py",
+        "src/backend/infrastructure/workflow/worker.py",
         r"logging\.basicConfig",
         "typer CLI basicConfig setup",
     ),
