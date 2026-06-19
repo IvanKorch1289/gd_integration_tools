@@ -29,7 +29,7 @@ runner = CliRunner()
 
 
 def test_build_spec_loader_found() -> None:
-    with patch("src.backend.workflows.registry.workflow_registry") as reg:
+    with patch("src.backend.infrastructure.workflow.registry.workflow_registry") as reg:
         reg.get_spec.return_value = {"steps": []}
         loader = build_spec_loader()
         assert loader("route_1") == {"steps": []}
@@ -37,7 +37,7 @@ def test_build_spec_loader_found() -> None:
 
 
 def test_build_spec_loader_not_found() -> None:
-    with patch("src.backend.workflows.registry.workflow_registry") as reg:
+    with patch("src.backend.infrastructure.workflow.registry.workflow_registry") as reg:
         reg.get_spec.return_value = None
         loader = build_spec_loader()
         with pytest.raises(KeyError):

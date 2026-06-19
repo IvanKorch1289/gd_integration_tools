@@ -13,7 +13,7 @@ from src.backend.entrypoints.mcp.workflow_tools import (
     _trigger_and_maybe_wait,
     register_workflow_tools,
 )
-from src.backend.workflows.registry import WorkflowDescriptor
+from src.backend.infrastructure.workflow.registry import WorkflowDescriptor
 
 
 class TestSanitizeToolName:

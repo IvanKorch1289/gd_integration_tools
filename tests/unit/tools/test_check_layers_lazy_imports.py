@@ -119,7 +119,7 @@ def test_file_layer_detects_workflows() -> None:
     from pathlib import Path
 
     root = Path("src")
-    layer = check_layers._file_layer(Path("src/backend/workflows/registry.py"), root)
+    layer = check_layers._file_layer(Path("src/backend/infrastructure/workflow/registry.py"), root)
     assert layer == "workflows"
 
 

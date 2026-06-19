@@ -34,7 +34,7 @@ from uuid import UUID
 import orjson
 
 from src.backend.core.logging import get_logger
-from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
+from src.backend.infrastructure.workflow.registry import WorkflowDescriptor, workflow_registry
 
 if TYPE_CHECKING:
     from pydantic import BaseModel

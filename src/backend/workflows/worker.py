@@ -72,7 +72,7 @@ def build_spec_loader() -> Callable[[str], Any]:
     конвертируется executor'ом в ``StepOutcome.FAILED`` — runner увидит
     событие ``step_failed`` с причиной ``spec_not_found``.
     """
-    from src.backend.workflows.registry import workflow_registry
+    from src.backend.infrastructure.workflow.registry import workflow_registry
 
     def _loader(route_id: str) -> Any:
         spec = workflow_registry.get_spec(route_id)

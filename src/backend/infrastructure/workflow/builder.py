@@ -53,7 +53,7 @@
     )
 
     # Регистрация → workflow доступен через REST/gRPC/SOAP/Rabbit/Kafka/MCP.
-    from src.backend.workflows.registry import workflow_registry
+    from src.backend.infrastructure.workflow.registry import workflow_registry
     workflow_registry.register(spec, route_id="orders.skb_flow")
 
 Паттерн совместим с существующим :class:`RouteBuilder` из ``src/dsl/builder.py``
