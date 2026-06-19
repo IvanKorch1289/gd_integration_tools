@@ -99,6 +99,60 @@ class ConfigMixin(_RouteBuilderProtocol):
             )
         return self
 
+    def with_circuit_breaker(
+        self,
+        name: str,
+        *,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 30.0,
+    ) -> Self:
+        """Переопределяет Circuit Breaker для предыдущего step (S168 W10 P1-4).
+
+        Symmetric с ``with_timeout``/``with_retries``: mutates
+        ``_circuit_breaker`` / ``breaker_name`` / ``circuit_breaker_name``
+        на последнем processor (per ``_set_first_attr`` convention).
+
+        Args:
+            name: Имя BreakerSpec в ``BreakerRegistry`` (canonical через
+                ``get_breaker_registry().get_or_create(name, spec)``).
+            failure_threshold: Количество failures до open state.
+            recovery_timeout: Seconds до half-open attempt.
+
+        Raises:
+            ValueError: если предыдущий processor не поддерживает CB.
+
+        Example::
+
+            builder.http_call("https://api.example.com").with_circuit_breaker(
+                "external_api", failure_threshold=3, recovery_timeout=60.0
+            )
+        """
+        # P9 fix: import via importlib to break circular chain
+        # (breaker → core.logging → infrastructure.logging → core.interfaces → breaker).
+        import importlib
+        _breaker_mod = importlib.import_module(
+            "src.backend.core.resilience.breaker"
+        )
+        BreakerSpec = _breaker_mod.BreakerSpec
+
+        last = self._last_processor_or_raise()
+        spec = BreakerSpec(
+            name=name,
+            failure_threshold=failure_threshold,
+            recovery_timeout=recovery_timeout,
+        )
+        applied = self._set_first_attr(
+            last,
+            ("_circuit_breaker", "breaker_name", "circuit_breaker_name"),
+            spec,
+        )
+        if applied is None:
+            raise ValueError(
+                f"with_circuit_breaker: processor {type(last).__name__} "
+                f"не поддерживает атрибут circuit_breaker"
+            )
+        return self
+
     def with_headers(self, headers: dict[str, str], *, mode: str = "merge") -> Self:
         """Переопределяет HTTP-заголовки предыдущего step.
 
