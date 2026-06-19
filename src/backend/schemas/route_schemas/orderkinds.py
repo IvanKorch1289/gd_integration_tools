@@ -1,52 +1,20 @@
-from datetime import datetime
+"""DEPRECATED: re-export shim (S168 W15 P2-10).
 
-from src.backend.schemas.base import BaseSchema
+OrderKind route schemas moved to
+src.backend.extensions.core_entities.orderkinds.schemas.route per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-__all__ = ("OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut")
+from extensions.core_entities.orderkinds.schemas import route as _route_module  # noqa: E402,F401
 
+__all__ = getattr(_route_module, "__all__", ())
 
-class OrderKindSchemaIn(BaseSchema):
-    """
-    Схема для входящих данных вида запроса.
-
-    Атрибуты:
-        name (str | None): Название вида запроса. По умолчанию None.
-        description (str | None): Описание вида запроса. По умолчанию None.
-        skb_uuid (str | None): Уникальный идентификатор SKB. По умолчанию None.
-    """
-
-    name: str | None = None
-    description: str | None = None
-    skb_uuid: str | None = None
-
-
-class OrderKindSchemaOut(OrderKindSchemaIn):
-    """
-    Схема для исходящих данных вида запроса.
-
-    Наследует атрибуты из OrderKindSchemaIn и добавляет дополнительные поля.
-
-    Атрибуты:
-        id (int): Уникальный идентификатор вида запроса.
-        created_at (datetime): Время создания записи.
-        updated_at (datetime): Время последнего обновления записи.
-    """
-
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-
-class OrderKindVersionSchemaOut(OrderKindSchemaOut):
-    """
-    Схема для исходящих данных версии вида запроса.
-
-    Наследует атрибуты из OrderKindSchemaOut и добавляет дополнительные поля.
-
-    Атрибуты:
-        operation_type (int): Тип операции (создание, обновление, удаление).
-        transaction_id (int): Идентификатор транзакции.
-    """
-
-    operation_type: int
-    transaction_id: int
+warnings.warn(
+    "src.backend.schemas.route_schemas.orderkinds is deprecated "
+    "(S168 W15 P2-10), use "
+    "extensions.core_entities.orderkinds.schemas.route instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
