@@ -46,6 +46,7 @@ class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixi
     """Data Quality Monitor (4 mixins = 8 methods + 2 core)."""
 
     def __init__(self) -> None:
+        """Initialize data quality monitor."""
         self._rules: list[DQRule] = []
         self._inferred_schemas: dict[str, dict[str, str]] = {}
         self._stats: dict[str, dict[str, Any]] = defaultdict(
@@ -55,6 +56,11 @@ class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixi
         self._numeric_history: dict[str, list[float]] = defaultdict(list)
 
     def add_rule(self, rule: DQRule) -> None:
+        """Add a data quality rule.
+
+        Args:
+            rule: DQRule to add.
+        """
         self._rules.append(rule)
 
 
@@ -77,12 +83,18 @@ class DQViolation:
 
 @dataclass
 class DQCheckResult:
+    """Data quality check result."""
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0
 
     @property
     def is_clean(self) -> bool:
+        """Check if no violations found.
+
+        Returns:
+            True if no violations.
+        """
         return len(self.violations) == 0
 
 
