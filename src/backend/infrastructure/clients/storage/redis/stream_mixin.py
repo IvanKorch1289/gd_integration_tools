@@ -23,6 +23,14 @@ class StreamMixin(_RedisClientProtocol):
     __slots__ = ()
 
     async def _stream_exists(self, stream_name: str) -> bool:
+        """Check if Redis stream exists.
+
+        Args:
+            stream_name: Stream name.
+
+        Returns:
+            True if stream exists.
+        """
         async def op(conn: Redis) -> bool:
             return await conn.type(stream_name) == b"stream"
 
@@ -51,6 +59,11 @@ class StreamMixin(_RedisClientProtocol):
                 )
 
     async def _initialize_stream(self, stream_name: str) -> None:
+        """Initialize a Redis stream with optional maxlen and retention.
+
+        Args:
+            stream_name: Stream name to initialize.
+        """
         async def op(conn: Redis) -> None:
             xadd_args: dict[str, Any] = {}
             if self.settings.max_stream_len:
