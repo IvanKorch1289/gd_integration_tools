@@ -267,6 +267,21 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
                 f"@{self.host}:{self.port}/{self.name}"
             )
 
+        # S168 W10 P1-8: ClickHouse support (analytics path).
+        # ClickHouse НЕ использует SQLAlchemy ORM fabric — он
+        # аналитическая column-store с другим protocol (HTTP/TCP).
+        # ``clickhouse_connect`` предоставляет async client напрямую
+        # (см. infrastructure/clients/storage/clickhouse.py).
+        # Здесь мы только сигнализируем support: factory/dialect
+        # роутинг отделён, реальная интеграция — отдельный WIP.
+        if self.type == DatabaseTypeChoices.clickhouse:
+            # placeholder URL: не используется SQLAlchemy, но сигнализирует
+            # ``is_async=True`` для downstream dialector.
+            return (
+                f"clickhouse://{self.username}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
+            )
+
         raise NotImplementedError(f"Поддержка СУБД '{self.type}' не реализована")
 
     @model_validator(mode="after")

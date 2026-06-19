@@ -14,6 +14,8 @@ class DatabaseTypeChoices(str, Enum):
         mssql (str): Microsoft SQL Server (S104 W3).
         mysql (str): MySQL / MariaDB (S104 W3).
         db2 (str): IBM Db2 (S104 W3).
+        clickhouse (str): ClickHouse (S168 W10 P1-8; analytics path,
+            ``clickhouse_connect`` driver).
     """
 
     postgresql = "postgresql"
@@ -22,6 +24,7 @@ class DatabaseTypeChoices(str, Enum):
     mssql = "mssql"  # S104 W3
     mysql = "mysql"  # S104 W3
     db2 = "db2"  # S104 W3
+    clickhouse = "clickhouse"  # S168 W10 P1-8 (analytics)
 
 
 class IsolationLevelChoices(str, Enum):
