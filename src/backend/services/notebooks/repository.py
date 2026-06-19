@@ -21,11 +21,29 @@ def _utc_now() -> datetime:
 
 @runtime_checkable
 class NotebookRepository(Protocol):
-    """Контракт хранилища notebooks (in-memory или Mongo)."""
+    """Notebook repository contract (in-memory or Mongo)."""
 
-    async def create(self, notebook: Notebook) -> Notebook: ...
+    async def create(self, notebook: Notebook) -> Notebook:
+        """Create a notebook.
 
-    async def get(self, notebook_id: str) -> Notebook | None: ...
+        Args:
+            notebook: Notebook to create.
+
+        Returns:
+            Created notebook.
+        """
+        ...
+
+    async def get(self, notebook_id: str) -> Notebook | None:
+        """Get notebook by ID.
+
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            Notebook or None if not found.
+        """
+        ...
 
     async def append_version(
         self,
@@ -33,11 +51,34 @@ class NotebookRepository(Protocol):
         content: str,
         changed_by: str,
         summary: str | None = None,
-    ) -> Notebook | None: ...
+    ) -> Notebook | None:
+        """Append a new version to notebook.
+
+        Args:
+            notebook_id: Notebook ID.
+            content: Version content.
+            changed_by: Author name.
+            summary: Optional version summary.
+
+        Returns:
+            Updated notebook or None if not found.
+        """
+        ...
 
     async def restore_version(
         self, notebook_id: str, version: int, changed_by: str
-    ) -> Notebook | None: ...
+    ) -> Notebook | None:
+        """Restore notebook to a specific version.
+
+        Args:
+            notebook_id: Notebook ID.
+            version: Version number to restore.
+            changed_by: Author name.
+
+        Returns:
+            Updated notebook or None if not found.
+        """
+        ...
 
     async def list_all(
         self,
@@ -46,7 +87,19 @@ class NotebookRepository(Protocol):
         include_deleted: bool = False,
         limit: int = 100,
         offset: int = 0,
-    ) -> list[Notebook]: ...
+    ) -> list[Notebook]:
+        """List all notebooks with optional filters.
+
+        Args:
+            tag: Optional tag filter.
+            include_deleted: Include soft-deleted notebooks.
+            limit: Maximum results.
+            offset: Results offset.
+
+        Returns:
+            List of notebooks.
+        """
+        ...
 
     async def soft_delete(self, notebook_id: str) -> bool: ...
 
