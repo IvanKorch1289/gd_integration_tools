@@ -45,12 +45,14 @@ class EventSchemaValidationError(BaseError):
 
 
 class OrderEvent(BaseModel):
+    """Order event payload."""
     order_id: int
     action: str
     payload: dict[str, Any] = {}
 
 
 class PipelineEvent(BaseModel):
+    """Pipeline execution event payload."""
     route_id: str
     status: str
     correlation_id: str
@@ -58,11 +60,13 @@ class PipelineEvent(BaseModel):
 
 
 class FlagEvent(BaseModel):
+    """Feature flag change event payload."""
     name: str
     enabled: bool
 
 
 class RouteEvent(BaseModel):
+    """Route event payload."""
     route_id: str
     action: str
 
@@ -145,11 +149,16 @@ class EventBus:
             logger.debug("jsonschema not installed; skipping EventBus validation")
 
     async def publish(self, channel: str, event: BaseModel) -> None:
-        """Публикует событие в канал.
+        """Publish event to channel.
 
-        S13 K3 W3: перед публикацией вызывает :meth:`_validate_event` —
-        если для канала зарегистрирована JSON-Schema, payload валидируется.
-        На fail — :class:`EventSchemaValidationError`.
+        Validates event against registered schema if available.
+
+        Args:
+            channel: Channel name.
+            event: Event to publish.
+
+        Raises:
+            EventSchemaValidationError: If schema validation fails.
         """
         self._validate_event(channel, event)
 
@@ -163,6 +172,13 @@ class EventBus:
     async def publish_order_event(
         self, order_id: int, action: str, payload: dict[str, Any] | None = None
     ) -> None:
+        """Publish order event.
+
+        Args:
+            order_id: Order ID.
+            action: Order action.
+            payload: Optional event payload.
+        """
         await self.publish(
             "events.orders",
             OrderEvent(order_id=order_id, action=action, payload=payload or {}),
@@ -175,6 +191,14 @@ class EventBus:
         correlation_id: str,
         duration_ms: float | None = None,
     ) -> None:
+        """Publish pipeline event.
+
+        Args:
+            route_id: Route identifier.
+            status_: Pipeline status.
+            correlation_id: Correlation ID.
+            duration_ms: Optional duration in milliseconds.
+        """
         await self.publish(
             "events.pipeline",
             PipelineEvent(
@@ -186,6 +210,12 @@ class EventBus:
         )
 
     async def publish_flag_event(self, name: str, enabled: bool) -> None:
+        """Publish feature flag event.
+
+        Args:
+            name: Feature flag name.
+            enabled: New flag state.
+        """
         await self.publish("events.flags", FlagEvent(name=name, enabled=enabled))
 
     async def publish_route_event(self, route_id: str, action: str) -> None:
