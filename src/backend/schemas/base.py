@@ -8,23 +8,9 @@
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic.alias_generators import to_camel
 
 __all__ = ("EmailSchema", "BaseSchema", "FileResponse", "PaginatedResult")
-
-
-def to_camelcase(string: str) -> str:
-    """Преобразует snake_case в camelCase.
-
-    Args:
-        string: Строка в snake_case.
-
-    Returns:
-        Строка в camelCase.
-    """
-    return "".join(
-        word.capitalize() if index else word
-        for index, word in enumerate(string.split("_"))
-    )
 
 
 class EmailSchema(BaseModel):
@@ -53,7 +39,9 @@ class BaseSchema(BaseModel):
         from_attributes=True,
         use_enum_values=True,
         validate_assignment=True,
-        alias_generator=to_camelcase,
+        # S168 W10 P1-13: Pydantic v2 native ``to_camel`` заменяет custom
+        # ``to_camelcase`` функцию. 13 LOC reduction + stdlib-backed.
+        alias_generator=to_camel,
         populate_by_name=True,
         arbitrary_types_allowed=True,
     )
