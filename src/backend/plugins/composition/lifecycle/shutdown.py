@@ -59,7 +59,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     # К3: shutdown workflow runtime до stop_dsl_yaml_watcher, чтобы worker'ы
     # успели завершить свои workflow до закрытия DSL.
     try:
-        from src.backend.workflows.outbox_worker import stop_outbox_worker
+        from src.backend.infrastructure.workflow.outbox_worker import stop_outbox_worker
 
         await stop_outbox_worker()
     except Exception as wf_stop_exc:

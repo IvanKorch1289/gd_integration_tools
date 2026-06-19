@@ -102,7 +102,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                 start_outbox_dispatcher,
             )
             from src.backend.infrastructure.repositories import outbox as outbox_repo
-            from src.backend.workflows.outbox_worker import _publish
+            from src.backend.infrastructure.workflow.outbox_worker import _publish
 
             _worker_id = _os.environ.get("HOSTNAME") or _socket.gethostname()
 
@@ -179,7 +179,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
             )
         else:
             # Legacy APScheduler worker (default, backwards-compat).
-            from src.backend.workflows.outbox_worker import start_outbox_worker
+            from src.backend.infrastructure.workflow.outbox_worker import start_outbox_worker
 
             start_outbox_worker(interval_seconds=5, batch_size=100)
             _logger.info(

@@ -91,8 +91,8 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.core.config.services.outbox.outbox_settings": MagicMock(
             enabled=False
         ),
-        "src.backend.workflows.outbox_worker.start_outbox_worker": MagicMock(),
-        "src.backend.workflows.outbox_worker._publish": AsyncMock(),
+        "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker": MagicMock(),
+        "src.backend.infrastructure.workflow.outbox_worker._publish": AsyncMock(),
         "src.backend.infrastructure.messaging.outbox.lifecycle.start_outbox_dispatcher": AsyncMock(),
         "src.backend.core.messaging.outbox.FakeOutbox": MagicMock(),
         "src.backend.core.messaging.outbox.OutboxEvent": MagicMock(),
@@ -212,7 +212,7 @@ async def test_cutover_legacy_path_when_disabled(
 ) -> None:
     """``enabled=False`` → ``start_outbox_worker`` (legacy)."""
     with patch(
-        "src.backend.workflows.outbox_worker.start_outbox_worker"
+        "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker"
     ) as mock_legacy:
         await _lifespan._register_outbox_dispatcher(fresh_app)
         mock_legacy.assert_called_once_with(interval_seconds=5, batch_size=100)
@@ -258,7 +258,7 @@ async def test_cutover_legacy_worker_exception_does_not_raise(
     Outbox не должен блокировать startup (best-effort).
     """
     with patch(
-        "src.backend.workflows.outbox_worker.start_outbox_worker",
+        "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker",
         side_effect=RuntimeError("RabbitMQ unavailable"),
     ):
         # НЕ должно raise-нуть

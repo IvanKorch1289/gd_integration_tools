@@ -1,7 +1,9 @@
 """Outbox-модель для transactional messaging pattern.
 
 Событие записывается в `outbox_messages` в той же транзакции, что и
-изменения бизнес-данных. Фоновый worker (``src/workflows/outbox_worker.py``)
+изменения бизнес-данных. Фоновый worker (``src/backend/workflows/outbox_worker.py`` (deprecated, moved to
+    ``src/backend/infrastructure/workflow/outbox_worker.py`` per
+    master prompt v8 P2-7))
 периодически читает записи со ``status='pending'`` и публикует их в брокер
 (Kafka/RabbitMQ/Redis Streams), затем помечает ``status='sent'``.
 
