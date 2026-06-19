@@ -25,29 +25,98 @@ class _RedisClientProtocol(Protocol):
     _locks: dict[RedisKind, Any]
     _breakers: dict[RedisKind, Any]
 
-    def _resolve_retry_on_error(self) -> list[type[BaseException]]: ...
+    def _resolve_retry_on_error(self) -> list[type[BaseException]]:
+        """Resolve retry-on-error exception types.
 
-    def _base_url(self) -> str: ...
+        Returns:
+            List of exception types to retry on.
+        """
+        ...
 
-    def _db_for_kind(self, kind: RedisKind) -> int: ...
+    def _base_url(self) -> str:
+        """Get base Redis URL.
 
-    def _build_client(self, kind: RedisKind) -> Redis: ...
+        Returns:
+            Redis URL string.
+        """
+        ...
+
+    def _db_for_kind(self, kind: RedisKind) -> int:
+        """Get database number for Redis kind.
+
+        Args:
+            kind: Redis kind identifier.
+
+        Returns:
+            Database number.
+        """
+        ...
+
+    def _build_client(self, kind: RedisKind) -> Redis:
+        """Build Redis client for kind.
+
+        Args:
+            kind: Redis kind identifier.
+
+        Returns:
+            Redis client instance.
+        """
+        ...
 
     async def get_client(
         self, kind: RedisKind, force_reconnect: bool = False
-    ) -> Redis: ...
+    ) -> Redis:
+        """Get Redis client for kind.
 
-    async def reset_client(self, kind: RedisKind) -> None: ...
+        Args:
+            kind: Redis kind identifier.
+            force_reconnect: Force reconnection.
 
-    async def close(self) -> None: ...
+        Returns:
+            Redis client instance.
+        """
+        ...
 
-    async def ensure_connected(self) -> None: ...
+    async def reset_client(self, kind: RedisKind) -> None:
+        """Reset Redis client for kind.
 
-    async def check_connection(self, kind: RedisKind) -> bool: ...
+        Args:
+            kind: Redis kind identifier.
+        """
+        ...
+
+    async def close(self) -> None:
+        """Close all Redis connections."""
+        ...
+
+    async def ensure_connected(self) -> None:
+        """Ensure all Redis connections are active."""
+        ...
+
+    async def check_connection(self, kind: RedisKind) -> bool:
+        """Check Redis connection health.
+
+        Args:
+            kind: Redis kind identifier.
+
+        Returns:
+            True if connected.
+        """
+        ...
 
     async def execute(
         self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]]
-    ) -> Any: ...
+    ) -> Any:
+        """Execute operation with Redis client.
+
+        Args:
+            kind: Redis kind identifier.
+            operation: Async operation to execute.
+
+        Returns:
+            Operation result.
+        """
+        ...
 
     async def _safe_close(self, client: Redis | None) -> None: ...
 

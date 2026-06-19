@@ -33,11 +33,24 @@ class _FallbackStats:
     latencies: list[float] = field(default_factory=list)
 
     def record(self, latency_ms: float) -> None:
+        """Record a latency sample.
+
+        Args:
+            latency_ms: Latency in milliseconds.
+        """
         self.latencies.append(latency_ms)
         if len(self.latencies) > 10000:
             self.latencies = self.latencies[-5000:]
 
     def percentile(self, p: float) -> float:
+        """Calculate percentile from recorded latencies.
+
+        Args:
+            p: Percentile (0-100).
+
+        Returns:
+            Latency at percentile.
+        """
         if not self.latencies:
             return 0.0
         sorted_lat = sorted(self.latencies)
@@ -46,6 +59,11 @@ class _FallbackStats:
 
     @property
     def samples(self) -> int:
+        """Get number of recorded samples.
+
+        Returns:
+            Sample count.
+        """
         return len(self.latencies)
 
 
@@ -66,6 +84,12 @@ class RouteStats:
         self.error_count = 0
 
     def record(self, latency_ms: float, is_error: bool = False) -> None:
+        """Record a latency sample with error flag.
+
+        Args:
+            latency_ms: Latency in milliseconds.
+            is_error: Whether this was an error.
+        """
         self.total_count += 1
         if is_error:
             self.error_count += 1
@@ -76,17 +100,35 @@ class RouteStats:
             self._fallback.record(latency_ms)
 
     def percentile(self, p: float) -> float:
+        """Calculate percentile from recorded latencies.
+
+        Args:
+            p: Percentile (0-100).
+
+        Returns:
+            Latency at percentile in milliseconds.
+        """
         if self._hdr is not None:
             return float(self._hdr.get_value_at_percentile(p))
         return self._fallback.percentile(p)
 
     @property
     def samples(self) -> int:
+        """Get number of recorded samples.
+
+        Returns:
+            Sample count.
+        """
         if self._hdr is not None:
             return int(self._hdr.get_total_count())
         return self._fallback.samples
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert stats to dictionary.
+
+        Returns:
+            Dictionary with total, errors, error_rate, p50_ms, p95_ms, p99_ms.
+        """
         return {
             "total": self.total_count,
             "errors": self.error_count,
@@ -120,7 +162,11 @@ class SLOTracker:
             pass
 
     def get_report(self) -> dict[str, Any]:
-        """Возвращает SLO-отчёт по всем маршрутам."""
+        """Get SLO report for all routes.
+
+        Returns:
+            Dictionary mapping route IDs to their stats.
+        """
         return {
             route_id: stats.to_dict()
             for route_id, stats in sorted(self._stats.items())
