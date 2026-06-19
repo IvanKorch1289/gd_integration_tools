@@ -17,12 +17,18 @@ per-user / per-IP identifier (extracted via ``ws_identifier`` из
     2. ``X-User-ID`` header → ``ws:user:<id>``
     3. client IP → ``ws:ip:<addr>``
 
-Алгоритм: token-bucket via ``limits`` library (per master prompt
-§0 "Single-Entry per Concern" — единый rate-limiter).
+Алгоритм: fixed-window via Redis INCR/EXPIRE (per master prompt
+§0 "Single-Entry per Concern" — единый rate-limiter, ``unified_rate_limiter``).
+
+S168 W11 P1-3 follow-up: миграция с in-memory token-bucket на
+``RedisRateLimiter`` (multi-instance safe). Token-bucket semantics
+заменены на fixed-window (60s window, ``rate_limit_per_minute`` limit).
+``rate_limit_burst`` (legacy token-bucket) deprecated, оставлен
+для backward-compat в settings.
 
 Settings (WSSettings, S164 W36):
     * ``rate_limit_per_minute`` — default 600/min per identifier.
-    * ``rate_limit_burst`` — default 10 (token-bucket burst).
+    * ``rate_limit_burst`` — DEPRECATED (legacy token-bucket, ignored).
     * ``enabled`` — feature-flag (default ``True``).
 
 Per-route override: route.toml::[transport.ws] rate_limit_per_minute
@@ -31,13 +37,16 @@ Per-route override: route.toml::[transport.ws] rate_limit_per_minute
 
 from __future__ import annotations
 
-import time
-from collections import defaultdict
 from typing import Any
 
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints.middlewares.per_protocol_ratelimit import ws_identifier
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
+    RateLimit,
+    RateLimitExceeded,
+    get_rate_limiter,
+)
 
 __all__ = ("WSRateLimitMiddleware",)
 
@@ -47,26 +56,22 @@ logger = get_logger(__name__)
 class WSRateLimitMiddleware:
     """S164 W36: ASGI middleware для WebSocket rate limiting.
 
-    Implements token-bucket per identifier (tenant/user/IP). Configuration
-    via :class:`WSSettings` (``rate_limit_per_minute``, ``rate_limit_burst``).
+    Implements fixed-window per identifier (tenant/user/IP) via
+    :class:`RedisRateLimiter`. Configuration via :class:`WSSettings`.
+
+    S168 W11 P1-3 follow-up: multi-instance safe via Redis (atomic INCR/EXPIRE).
+    Fail-open при недоступности Redis (consistent с webhook/handler.py).
 
     Note:
-        Production deployment может использовать ``limits`` library directly
-        (per master prompt §0 — single-entry per concern). MVP-реализация
-        — in-memory dict, sufficient для single-instance dev/CI.
-
-        Для multi-instance production — Redis-backed bucket через
-        ``core.resilience.unified_rate_limiter`` (TODO S165+).
+        Legacy token-bucket (in-memory) replaced by Redis fixed-window.
+        Burst semantics изменились: вместо ``burst`` per-second
+        допускается ``rate_limit_per_minute`` per-60s window.
     """
 
     def __init__(self, app: Any, *, enabled: bool = True) -> None:
         self.app = app
         self._enabled = enabled and ws_settings.heartbeat_interval_s > 0
-        # Per-identifier bucket state.
-        # Format: {identifier: (tokens: float, last_refill_ts: float)}
-        self._buckets: dict[str, tuple[float, float]] = defaultdict(
-            lambda: (float(ws_settings.rate_limit_burst), time.monotonic())
-        )
+        self._limiter = get_rate_limiter()
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         """ASGI middleware entrypoint."""
@@ -75,7 +80,7 @@ class WSRateLimitMiddleware:
             return
 
         identifier = ws_identifier(scope)
-        if not self._check_rate_limit(identifier):
+        if not await self._check_rate_limit(identifier):
             logger.warning(
                 "WSRateLimit: rate limit exceeded for %s",
                 identifier,
@@ -86,23 +91,29 @@ class WSRateLimitMiddleware:
 
         await self.app(scope, receive, send)
 
-    def _check_rate_limit(self, identifier: str) -> bool:
-        """Token-bucket check. ``True`` если request allowed, ``False`` если exceeded.
+    async def _check_rate_limit(self, identifier: str) -> bool:
+        """Fixed-window check via Redis. ``True`` если request allowed.
 
-        Refill rate = ``rate_limit_per_minute / 60`` tokens/sec.
-        Burst size = ``rate_limit_burst``.
+        Returns:
+            True if request allowed (under rate limit), False if exceeded.
         """
-        now = time.monotonic()
-        refill_rate = ws_settings.rate_limit_per_minute / 60.0
-        burst = ws_settings.rate_limit_burst
-
-        tokens, last_refill = self._buckets[identifier]
-        # Refill: elapsed seconds * refill_rate, capped at burst.
-        elapsed = now - last_refill
-        new_tokens = min(burst, tokens + elapsed * refill_rate)
-        if new_tokens >= 1.0:
-            self._buckets[identifier] = (new_tokens - 1.0, now)
+        try:
+            await self._limiter.check(
+                identifier,
+                RateLimit(
+                    limit=ws_settings.rate_limit_per_minute,
+                    window_seconds=60,
+                    key_prefix="ws",
+                ),
+            )
+        except RateLimitExceeded:
+            return False
+        except Exception as exc:
+            # Fail-open: allow request if Redis unavailable (consistent with
+            # webhook/handler.py pattern). Log for observability.
+            logger.warning(
+                "WSRateLimit: Redis failed (fail-open) for %s: %s",
+                identifier, exc,
+            )
             return True
-        # Rate limit exceeded.
-        self._buckets[identifier] = (new_tokens, now)
-        return False
+        return True
