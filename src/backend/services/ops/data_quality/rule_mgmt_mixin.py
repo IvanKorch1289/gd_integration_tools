@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 
 class DQSeverity(str, Enum):
+    """Data quality violation severity levels."""
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -36,6 +37,7 @@ class DQSeverity(str, Enum):
 
 @dataclass(slots=True)
 class DQViolation:
+    """Data quality violation record."""
     rule: str
     field: str
     severity: DQSeverity
@@ -45,12 +47,18 @@ class DQViolation:
 
 @dataclass(slots=True)
 class DQCheckResult:
+    """Data quality check result."""
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0
 
     @property
     def is_clean(self) -> bool:
+        """Check if no violations found.
+
+        Returns:
+            True if no violations.
+        """
         return len(self.violations) == 0
 
 
@@ -76,6 +84,11 @@ class RuleManagementMixin(_DataQualityProtocol):
     __slots__ = ()
 
     def add_rules(self, rules: list[DQRule]) -> None:
+        """Add data quality rules.
+
+        Args:
+            rules: List of DQRule objects to add.
+        """
         self._rules.extend(rules)
 
     def list_rules(self) -> list[dict[str, Any]]:
