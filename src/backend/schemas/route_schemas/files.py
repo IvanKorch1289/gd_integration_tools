@@ -1,52 +1,21 @@
-from datetime import datetime
-from uuid import UUID
+"""DEPRECATED: re-export shim (S168 W15 P2-10).
 
-from src.backend.schemas.base import BaseSchema
+File route schemas moved to
+src.backend.extensions.core_entities.files.schemas.route per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-__all__ = ("FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut")
+from extensions.core_entities.files.schemas import route as _route_module  # noqa: E402,F401
 
+# Re-export all public symbols from new location
+__all__ = getattr(_route_module, "__all__", ())
 
-class FileSchemaIn(BaseSchema):
-    """
-    Схема для входящих данных файла.
-
-    Атрибуты:
-        object_uuid (UUID | None): Уникальный идентификатор объекта, связанного с файлом.
-                                  По умолчанию None.
-    """
-
-    object_uuid: UUID | None = None
-
-
-class FileSchemaOut(FileSchemaIn):
-    """
-    Схема для исходящих данных файла.
-
-    Наследует атрибуты из FileSchemaIn и добавляет дополнительные поля.
-
-    Атрибуты:
-        id (int): Уникальный идентификатор файла.
-        name (str | None): Название файла. Может быть пустым.
-        created_at (datetime): Время создания файла.
-        updated_at (datetime): Время последнего обновления файла.
-    """
-
-    id: int
-    name: str | None
-    created_at: datetime
-    updated_at: datetime
-
-
-class FileVersionSchemaOut(FileSchemaOut):
-    """
-    Схема для исходящих данных версии данных файла.
-
-    Наследует атрибуты из FileSchemaOut и добавляет дополнительные поля.
-
-    Атрибуты:
-        operation_type (int): Тип операции (создание, обновление, удаление).
-        transaction_id (int): Идентификатор транзакции.
-    """
-
-    operation_type: int
-    transaction_id: int
+warnings.warn(
+    "src.backend.schemas.route_schemas.files is deprecated "
+    "(S168 W15 P2-10), use "
+    "extensions.core_entities.files.schemas.route instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
+)
