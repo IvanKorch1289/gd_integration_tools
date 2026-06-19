@@ -21,21 +21,40 @@ logger = get_logger(__name__)
 
 
 class BaseSearchProvider(ABC):
-    """Абстрактный поисковый провайдер."""
+    """Abstract search provider interface."""
 
     name: str = "base"
 
     @abstractmethod
     async def search(
         self, query: str, max_results: int = 5
-    ) -> list[dict[str, Any]]: ...
+    ) -> list[dict[str, Any]]:
+        """Search for query.
+
+        Args:
+            query: Search query.
+            max_results: Maximum results.
+
+        Returns:
+            List of search results.
+        """
+        ...
 
     @abstractmethod
-    async def deep_research(self, query: str) -> dict[str, Any]: ...
+    async def deep_research(self, query: str) -> dict[str, Any]:
+        """Perform deep research on query.
+
+        Args:
+            query: Research query.
+
+        Returns:
+            Research results.
+        """
+        ...
 
 
 class PerplexityProvider(BaseSearchProvider):
-    """Поиск через Perplexity API."""
+    """Perplexity search provider."""
 
     name = "perplexity"
 
@@ -44,6 +63,15 @@ class PerplexityProvider(BaseSearchProvider):
         self._model = model
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
+        """Search via Perplexity API.
+
+        Args:
+            query: Search query.
+            max_results: Maximum results.
+
+        Returns:
+            List of search results with content and citations.
+        """
         from src.backend.core.net.migration_helper import make_http_client
 
         async with make_http_client(timeout=30, plugin="perplexity") as client:
@@ -63,12 +91,20 @@ class PerplexityProvider(BaseSearchProvider):
             return [{"content": content, "citations": citations, "provider": self.name}]
 
     async def deep_research(self, query: str) -> dict[str, Any]:
+        """Perform deep research via Perplexity.
+
+        Args:
+            query: Research query.
+
+        Returns:
+            Research results with query and provider info.
+        """
         results = await self.search(query, max_results=10)
         return {"query": query, "results": results, "provider": self.name}
 
 
 class TavilyProvider(BaseSearchProvider):
-    """Поиск через Tavily API."""
+    """Tavily search provider."""
 
     name = "tavily"
 
@@ -76,6 +112,15 @@ class TavilyProvider(BaseSearchProvider):
         self._api_key = api_key
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
+        """Search via Tavily API.
+
+        Args:
+            query: Search query.
+            max_results: Maximum results.
+
+        Returns:
+            List of search results.
+        """
         from src.backend.core.net.migration_helper import make_http_client
 
         async with make_http_client(timeout=30, plugin="tavily") as client:
@@ -102,6 +147,14 @@ class TavilyProvider(BaseSearchProvider):
             ]
 
     async def deep_research(self, query: str) -> dict[str, Any]:
+        """Perform deep research via Tavily.
+
+        Args:
+            query: Research query.
+
+        Returns:
+            Research results with query and provider info.
+        """
         from src.backend.core.net.migration_helper import make_http_client
 
         async with make_http_client(timeout=60, plugin="tavily") as client:
@@ -120,17 +173,15 @@ class TavilyProvider(BaseSearchProvider):
 
 
 class SearXNGProvider(BaseSearchProvider):
-    """Поиск через self-hosted SearXNG meta-search (free, unlimited).
+    """SearXNG meta-search provider (self-hosted, free, unlimited).
 
-    Согласно research-отчёту 2026-05-13 (`vault/research-2026-05-13-search-engines.md`),
-    SearXNG — production-ready free кандидат: privacy-first, self-hosted,
-    агрегирует Google/Bing/DuckDuckGo/Wikipedia. Подходит для банковской/air-gap
-    среды без зависимости от cloud-providers.
+    Privacy-first, aggregates Google/Bing/DuckDuckGo/Wikipedia.
+    Suitable for air-gapped environments.
 
     Args:
-        base_url: URL self-hosted SearXNG instance (например, http://searxng:8080).
-        engines: список engines (по умолчанию google,bing,duckduckgo).
-        timeout: HTTP timeout в секундах.
+        base_url: SearXNG instance URL.
+        engines: Search engines to use.
+        timeout: HTTP timeout in seconds.
     """
 
     name = "searxng"
@@ -143,6 +194,15 @@ class SearXNGProvider(BaseSearchProvider):
         self._timeout = timeout
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
+        """Search via SearXNG.
+
+        Args:
+            query: Search query.
+            max_results: Maximum results.
+
+        Returns:
+            List of search results.
+        """
         from src.backend.core.net.migration_helper import make_http_client
 
         params = {"q": query, "format": "json", "engines": ",".join(self._engines)}
@@ -171,18 +231,36 @@ class SearXNGProvider(BaseSearchProvider):
 
 
 class WebSearchService:
-    """Универсальный сервис поиска с fallback chain."""
+    """Universal search service with fallback chain."""
 
     def __init__(self, providers: list[BaseSearchProvider] | None = None) -> None:
         self._providers = providers or []
 
     def add_provider(self, provider: BaseSearchProvider) -> None:
+        """Add a search provider.
+
+        Args:
+            provider: Provider to add.
+        """
+        self._providers.append(provider)
         self._providers.append(provider)
 
     async def query(
         self, query: str, max_results: int = 5, provider: str | None = None
     ) -> list[dict[str, Any]]:
-        """Поиск через указанный провайдер или fallback chain."""
+        """Search via specified provider or fallback chain.
+
+        Args:
+            query: Search query.
+            max_results: Maximum results.
+            provider: Optional provider name.
+
+        Returns:
+            List of search results.
+
+        Raises:
+            ValueError: If specified provider not found.
+        """
         if provider:
             for p in self._providers:
                 if p.name == provider:
@@ -204,6 +282,15 @@ class WebSearchService:
     async def deep_research(
         self, query: str, provider: str | None = None
     ) -> dict[str, Any]:
+        """Perform deep research via specified provider or fallback chain.
+
+        Args:
+            query: Research query.
+            provider: Optional provider name.
+
+        Returns:
+            Research results.
+        """
         if provider:
             for p in self._providers:
                 if p.name == provider:
