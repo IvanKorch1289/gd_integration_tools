@@ -39,18 +39,55 @@ class SchemaRegistry:
     _avro_cache: dict[str, str] = field(default_factory=dict)
 
     def register_json(self, subject: str, schema: dict[str, Any]) -> None:
+        """Register a JSON schema for a subject.
+
+        Args:
+            subject: Schema subject identifier.
+            schema: JSON Schema dictionary.
+        """
         self._json_cache[subject] = schema
 
     def register_avro(self, subject: str, schema_str: str) -> None:
+        """Register an Avro schema for a subject.
+
+        Args:
+            subject: Schema subject identifier.
+            schema_str: Avro schema as JSON string.
+        """
         self._avro_cache[subject] = schema_str
 
     def get_json(self, subject: str) -> dict[str, Any] | None:
+        """Get JSON schema by subject.
+
+        Args:
+            subject: Schema subject identifier.
+
+        Returns:
+            JSON Schema dictionary or None if not found.
+        """
         return self._json_cache.get(subject)
 
     def get_avro(self, subject: str) -> str | None:
+        """Get Avro schema by subject.
+
+        Args:
+            subject: Schema subject identifier.
+
+        Returns:
+            Avro schema string or None if not found.
+        """
         return self._avro_cache.get(subject)
 
     def validate_json(self, subject: str, payload: Any) -> None:
+        """Validate payload against JSON schema.
+
+        Args:
+            subject: Schema subject identifier.
+            payload: Payload to validate.
+
+        Raises:
+            SchemaRegistryError: If schema not found or validation fails.
+        """
         schema = self.get_json(subject)
         if not schema:
             raise SchemaRegistryError(f"JSON schema not found: {subject}")
@@ -66,6 +103,18 @@ class SchemaRegistry:
             raise SchemaRegistryError(f"{subject}: {exc}") from exc
 
     def validate_avro(self, subject: str, payload: bytes) -> dict[str, Any]:
+        """Validate and decode Avro payload.
+
+        Args:
+            subject: Schema subject identifier.
+            payload: Avro-encoded bytes.
+
+        Returns:
+            Decoded payload dictionary.
+
+        Raises:
+            SchemaRegistryError: If schema not found or validation fails.
+        """
         schema_str = self.get_avro(subject)
         if not schema_str:
             raise SchemaRegistryError(f"Avro schema not found: {subject}")

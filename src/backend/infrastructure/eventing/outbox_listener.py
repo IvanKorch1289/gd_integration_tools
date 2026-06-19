@@ -97,6 +97,7 @@ class OutboxListener:
         self._lock = asyncio.Lock()
 
     async def start(self) -> None:
+        """Start the outbox listener with LISTEN/NOTIFY + backup polling."""
         if self._started:
             return
         try:
@@ -118,6 +119,7 @@ class OutboxListener:
         )
 
     async def stop(self) -> None:
+        """Stop the outbox listener and clean up resources."""
         if not self._started:
             return
         self._started = False

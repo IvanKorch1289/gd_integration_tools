@@ -32,6 +32,7 @@ class CloudEvent:
     traceparent: str | None = None  # OTEL propagation
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert CloudEvent to dictionary for serialization."""
         out = {
             "specversion": self.specversion,
             "id": self.id,
