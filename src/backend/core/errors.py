@@ -28,7 +28,7 @@ _HTTP_TO_GRPC_STATUS: dict[int, int] = {
     status.HTTP_401_UNAUTHORIZED: 16,  # UNAUTHENTICATED
     status.HTTP_403_FORBIDDEN: 7,  # PERMISSION_DENIED
     status.HTTP_404_NOT_FOUND: 5,  # NOT_FOUND
-    status.HTTP_422_UNPROCESSABLE_ENTITY: 3,  # INVALID_ARGUMENT
+    status.HTTP_422_UNPROCESSABLE_CONTENT: 3,  # INVALID_ARGUMENT (starlette 1.3.0+)
     status.HTTP_500_INTERNAL_SERVER_ERROR: 13,  # INTERNAL
     status.HTTP_503_SERVICE_UNAVAILABLE: 14,  # UNAVAILABLE
 }
@@ -101,7 +101,7 @@ class UnprocessableError(BaseError):
 
     def __init__(self, *_: Any, message: str = "Validation error") -> None:
         super().__init__(
-            message=message, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+            message=message, status_code=status.HTTP_422_UNPROCESSABLE_CONTENT  # starlette 1.3.0+
         )
 
 

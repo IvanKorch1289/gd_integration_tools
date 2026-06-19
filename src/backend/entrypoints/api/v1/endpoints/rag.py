@@ -306,7 +306,7 @@ class _RAGFacade:
 
         if not text.strip():
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,  # starlette 1.3.0+
                 detail="Не удалось извлечь текст из файла.",
             )
 
