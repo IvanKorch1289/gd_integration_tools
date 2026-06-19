@@ -104,6 +104,15 @@ async def list_profiles(
     tenant_id: str | None = None,
     store: ResilienceProfileStore = Depends(get_resilience_profile_store),
 ) -> dict[str, Any]:
+    """List resilience profiles.
+
+    Args:
+        tenant_id: Optional tenant scope filter.
+        store: Profile store dependency.
+
+    Returns:
+        Dict with profiles list.
+    """
     profiles = await store.list(tenant_id=tenant_id)
     return {"profiles": [p.to_dict() for p in profiles]}
 
@@ -128,6 +137,19 @@ async def get_profile(
     tenant_id: str | None = None,
     store: ResilienceProfileStore = Depends(get_resilience_profile_store),
 ) -> dict[str, Any]:
+    """Get resilience profile by name.
+
+    Args:
+        name: Profile name.
+        tenant_id: Optional tenant scope.
+        store: Profile store dependency.
+
+    Returns:
+        Profile dict.
+
+    Raises:
+        HTTPException: If profile not found.
+    """
     profile = await store.get(name, tenant_id=tenant_id)
     if profile is None:
         raise HTTPException(
@@ -160,6 +182,17 @@ async def upsert_profile(
     tenant_id: str | None = None,
     store: ResilienceProfileStore = Depends(get_resilience_profile_store),
 ) -> dict[str, Any]:
+    """Create or update resilience profile.
+
+    Args:
+        name: Profile name.
+        payload: Profile configuration.
+        tenant_id: Optional tenant scope.
+        store: Profile store dependency.
+
+    Returns:
+        Saved profile dict.
+    """
     profile = _profile_from_payload(name, payload)
     saved = await store.upsert(profile, tenant_id=tenant_id)
     return saved.to_dict()
@@ -185,5 +218,15 @@ async def delete_profile(
     tenant_id: str | None = None,
     store: ResilienceProfileStore = Depends(get_resilience_profile_store),
 ) -> dict[str, bool]:
+    """Delete resilience profile.
+
+    Args:
+        name: Profile name.
+        tenant_id: Optional tenant scope.
+        store: Profile store dependency.
+
+    Returns:
+        Dict with deleted status.
+    """
     deleted = await store.delete(name, tenant_id=tenant_id)
     return {"deleted": deleted}

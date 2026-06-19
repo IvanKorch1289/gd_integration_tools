@@ -76,6 +76,14 @@ class RedisNxBackend(Backend):
         return body_key, status_key
 
     async def get_stored_response(self, idempotency_key: str) -> JSONResponse | None:
+        """Get stored response for idempotency key.
+
+        Args:
+            idempotency_key: Idempotency key.
+
+        Returns:
+            Stored JSONResponse or None if not found.
+        """
         body_key, status_key = self._response_keys(idempotency_key)
         payload = await self._redis.get(body_key)
         if payload is None:
@@ -87,6 +95,13 @@ class RedisNxBackend(Backend):
     async def store_response_data(
         self, idempotency_key: str, payload: dict, status_code: int
     ) -> None:
+        """Store response data for idempotency key.
+
+        Args:
+            idempotency_key: Idempotency key.
+            payload: Response body.
+            status_code: HTTP status code.
+        """
         body_key, status_key = self._response_keys(idempotency_key)
         body_bytes = encode_json(payload)
         await self._redis.set(body_key, body_bytes, ex=self._response_ttl)
@@ -105,6 +120,11 @@ class RedisNxBackend(Backend):
         return not bool(reserved)
 
     async def clear_idempotency_key(self, idempotency_key: str) -> None:
+        """Clear idempotency key.
+
+        Args:
+            idempotency_key: Idempotency key.
+        """
         await self._redis.delete(self._pending_key(idempotency_key))
 
 
