@@ -15,7 +15,7 @@ from src.backend.dsl.commands.setup.helpers import (
 
 def _register_orders() -> None:
     from extensions.core_entities.orders.services.orders import get_order_service
-    from src.backend.schemas.route_schemas.orders import OrderIdQuerySchema
+    from extensions.core_entities.orders.schemas.route import OrderIdQuerySchema
 
     _register_crud_actions("orders", get_order_service)
 

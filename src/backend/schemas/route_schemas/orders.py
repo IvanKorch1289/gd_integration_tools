@@ -1,118 +1,20 @@
-from datetime import datetime
-from typing import Any
-from uuid import UUID
+"""DEPRECATED: re-export shim (S168 W15 P2-10).
 
-from pydantic import Field
+Order route schemas moved to
+src.backend.extensions.core_entities.orders.schemas.route per
+master prompt v8 P2-10. Will be removed в S169+.
+"""
+import warnings
 
-from src.backend.schemas.base import BaseSchema
-from src.backend.schemas.route_schemas.files import FileSchemaOut
-from src.backend.schemas.route_schemas.orderkinds import OrderKindSchemaOut
+from extensions.core_entities.orders.schemas import route as _route_module  # noqa: E402,F401
 
-__all__ = (
-    "OrderSchemaIn",
-    "OrderSchemaOut",
-    "OrderVersionSchemaOut",
-    "OrderIdQuerySchema",
-    "OrderIdPathSchema",
+__all__ = getattr(_route_module, "__all__", ())
+
+warnings.warn(
+    "src.backend.schemas.route_schemas.orders is deprecated "
+    "(S168 W15 P2-10), use "
+    "extensions.core_entities.orders.schemas.route instead. "
+    "Will be removed в S169+.",
+    DeprecationWarning,
+    stacklevel=2,
 )
-
-
-class OrderSchemaIn(BaseSchema):
-    """
-    Схема для входящих данных заказа.
-
-    Attributes:
-        pledge_gd_id: Идентификатор объекта залога в GD.
-        pledge_cadastral_number: Кадастровый номер объекта залога.
-        order_kind_id: Идентификатор вида запроса.
-        email_for_answer: Email для отправки результата.
-    """
-
-    pledge_gd_id: int | None = Field(
-        default=None, description="Идентификатор объекта залога в GD."
-    )
-    pledge_cadastral_number: str | None = Field(
-        default=None, description="Кадастровый номер объекта залога."
-    )
-    order_kind_id: int | None = Field(
-        default=None, description="Идентификатор вида запроса."
-    )
-    email_for_answer: str | None = Field(
-        default=None, description="Электронная почта для отправки ответа."
-    )
-
-
-class OrderSchemaOut(OrderSchemaIn):
-    """
-    Схема для исходящих данных заказа.
-
-    Attributes:
-        id: Уникальный идентификатор заказа.
-        order_kind_id: Идентификатор вида запроса.
-        order_kind: Информация о виде запроса.
-        is_active: Флаг активности заказа.
-        is_send_to_gd: Флаг отправки результата в ГД.
-        errors: Ошибки обработки заказа.
-        response_data: Данные ответа по заказу.
-        object_uuid: UUID объекта заказа.
-        created_at: Дата создания заказа.
-        updated_at: Дата последнего обновления заказа.
-        files: Список файлов, связанных с заказом.
-    """
-
-    id: int = Field(..., description="Идентификатор запроса.")
-    order_kind_id: int | None = Field(
-        default=None, description="Идентификатор вида запроса."
-    )
-    order_kind: OrderKindSchemaOut | None = Field(
-        default=None, description="Информация о виде запроса."
-    )
-    is_active: bool = Field(default=True, description="Активен ли запрос.")
-    is_send_to_gd: bool = Field(default=False, description="Отправлен ли запрос в ГД.")
-    errors: dict[str, Any] | str | None = Field(
-        default=None, description="Сообщения об ошибках."
-    )
-    response_data: dict[str, Any] | str | None = Field(
-        default=None, description="Данные ответа."
-    )
-    object_uuid: UUID = Field(..., description="UUID объекта.")
-    created_at: datetime = Field(..., description="Дата создания.")
-    updated_at: datetime = Field(..., description="Дата последнего обновления.")
-    files: list[FileSchemaOut] = Field(
-        default_factory=list, description="Список файлов, связанных с запросом."
-    )
-
-
-class OrderVersionSchemaOut(OrderSchemaOut):
-    """
-    Схема версии заказа.
-
-    Attributes:
-        operation_type: Тип операции.
-        transaction_id: Идентификатор транзакции.
-    """
-
-    operation_type: int = Field(..., description="Тип операции.")
-    transaction_id: int = Field(..., description="Идентификатор транзакции.")
-
-
-class OrderIdQuerySchema(BaseSchema):
-    """
-    Query-схема для action-роутов, где order_id передаётся в query string.
-
-    Attributes:
-        order_id: Идентификатор заказа.
-    """
-
-    order_id: int = Field(description="Идентификатор заказа.")
-
-
-class OrderIdPathSchema(BaseSchema):
-    """
-    Path-схема для action-роутов, где order_id передаётся в path.
-
-    Attributes:
-        order_id: Идентификатор заказа.
-    """
-
-    order_id: int = Field(description="Идентификатор заказа.")
