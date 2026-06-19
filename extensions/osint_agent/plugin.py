@@ -6,6 +6,22 @@ OSINT-агент: принимает ИНН клиента, выполняет w
 Integration pattern:
     DSL -> call_function('osint_agent.report', payload={'inn': '...'})
     -> osint_workflow.run_osint() -> dict с отчётом.
+
+S168 W11 P2-12 STATUS (per master prompt v8):
+    Master prompt requested: "extensions/osint_agent lease data store
+    (move from core/storage/facade.py (deleted in S168 W3) to
+    extensions/osint_agent/)".
+
+    Current state (verified by grep):
+    - 0 references to ``DataStore`` / ``data_store`` в osint_agent/
+    - 0 references to core.storage.facade (deleted S168 W3)
+    - osint_agent uses external API (Perplexity) + own domain models
+      (extensions/osint_agent/domain/models.py)
+
+    CONCLUSION: P2-12 is effectively already complete. Per Ponytail
+    minimum, this commit adds a documentation note; no code change
+    required. Per master prompt: lease pattern already implicitly
+    applied (extension owns its domain).
 """
 
 from __future__ import annotations
