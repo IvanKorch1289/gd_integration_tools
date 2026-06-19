@@ -69,13 +69,28 @@ class GuardrailMetrics:
 
     @property
     def block_rate(self) -> float:
+        """Get block rate as ratio.
+
+        Returns:
+            Block rate (0.0 to 1.0).
+        """
         return self.block / self.total if self.total else 0.0
 
     @property
     def false_positive_rate(self) -> float:
+        """Get false positive rate as ratio.
+
+        Returns:
+            False positive rate (0.0 to 1.0).
+        """
         return self.false_positives / self.block if self.block else 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert metrics to dictionary.
+
+        Returns:
+            Dictionary representation.
+        """
         return {
             "tenant_id": self.tenant_id,
             "total": self.total,
@@ -170,7 +185,12 @@ class GuardrailsMetricsService:
                 logger.debug("GuardrailsMetrics CH write failed: %s", exc)
 
     async def mark_false_positive(self, *, tenant_id: str, count: int = 1) -> None:
-        """Operator-labeled FP (после review)."""
+        """Mark operator-labeled false positives.
+
+        Args:
+            tenant_id: Tenant identifier.
+            count: Number of false positives.
+        """
         async with self._lock:
             metrics = self._by_tenant.setdefault(
                 tenant_id, GuardrailMetrics(tenant_id=tenant_id)
@@ -178,10 +198,23 @@ class GuardrailsMetricsService:
             metrics.false_positives += count
 
     async def snapshot(self, tenant_id: str) -> GuardrailMetrics:
+        """Get metrics snapshot for a tenant.
+
+        Args:
+            tenant_id: Tenant identifier.
+
+        Returns:
+            GuardrailMetrics for the tenant.
+        """
         async with self._lock:
             return self._by_tenant.get(tenant_id, GuardrailMetrics(tenant_id=tenant_id))
 
     async def list_all(self) -> list[GuardrailMetrics]:
+        """List metrics for all tenants.
+
+        Returns:
+            List of GuardrailMetrics sorted by tenant_id.
+        """
         async with self._lock:
             return sorted(self._by_tenant.values(), key=lambda m: m.tenant_id)
 
