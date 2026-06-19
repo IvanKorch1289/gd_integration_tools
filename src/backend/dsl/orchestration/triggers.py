@@ -158,6 +158,108 @@ class IntervalTrigger:
         except Exception:
             _log.exception("IntervalTrigger %s: dispatch failed", self.name)
 
+    async def tick(self) -> bool:
+        """Manual tick — возвращает True если trigger должен dispatch'ить сейчас.
+
+        S168 W10 P1-2: helper для CronTrigger. APScheduler CronTrigger
+        сам вычисляет next_fire_time; мы используем её для проверки.
+        """
+        return True
+
+
+class CronTrigger:
+    """Cron-выражение для периодического запуска route (S168 W10 P1-2).
+
+    Uses APScheduler ``CronTrigger.from_crontab`` (canonical scheduler;
+    already in deps as ``apscheduler>=3.11.0,<4.0.0``).
+
+    Отличие от ``RouteBuilder.schedule(cron=...)``:
+    - ``schedule(cron=...)`` — defers single execution до next cron tick.
+    - ``from_cron(cron_expr)`` — real periodic dispatch (loop until stop).
+
+    Args:
+        name: имя trigger (для логов).
+        route_id: route для dispatch.
+        cron_expr: 5-field cron expression (e.g. ``"*/5 * * * *"``).
+        timezone_name: IANA timezone name (default UTC).
+        payload: factory для payload.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        route_id: str,
+        cron_expr: str,
+        *,
+        timezone_name: str = "UTC",
+        payload: dict[str, Any] | Callable[[], dict[str, Any]] | None = None,
+    ) -> None:
+        from apscheduler.triggers.cron import CronTrigger as _APSCron
+
+        self.name = name
+        self.route_id = route_id
+        self.cron_expr = cron_expr
+        self.timezone_name = timezone_name
+        self._payload = payload or {}
+        self._aps_trigger = _APSCron.from_crontab(
+            cron_expr, timezone=timezone_name
+        )
+        self._task: asyncio.Task[None] | None = None
+        self._stop = asyncio.Event()
+
+    async def start(self) -> None:
+        """Запускает background loop: вычисляет next_fire_time, sleep до tick."""
+        import datetime as _dt
+
+        async def _loop() -> None:
+            while not self._stop.is_set():
+                now = _dt.datetime.now(_dt.timezone.utc)
+                next_fire = self._aps_trigger.get_next_fire_time(
+                    None, now
+                )
+                if next_fire is None:
+                    return  # cron expression yields no future fire
+                sleep_s = max(0.0, (next_fire - now).total_seconds())
+                try:
+                    await asyncio.wait_for(self._stop.wait(), timeout=sleep_s)
+                except asyncio.TimeoutError:
+                    pass
+                if self._stop.is_set():
+                    return
+                await self._dispatch()
+
+        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")
+        _log.info(
+            "CronTrigger: %s started (route=%s, cron=%r, tz=%s)",
+            self.name,
+            self.route_id,
+            self.cron_expr,
+            self.timezone_name,
+        )
+
+    async def stop(self) -> None:
+        """Signal stop event, cancel task."""
+        self._stop.set()
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._task = None
+        _log.info("CronTrigger: %s stopped", self.name)
+
+    async def _dispatch(self) -> None:
+        from src.backend.dsl.service import get_dsl_service
+
+        body = self._payload() if callable(self._payload) else self._payload
+        try:
+            await get_dsl_service().dispatch(
+                route_id=self.route_id, body=body, headers={"x-trigger": self.name}
+            )
+        except Exception:
+            _log.exception("CronTrigger %s: dispatch failed", self.name)
+
 
 # ── WebhookTrigger ─────────────────────────────────────────────────
 

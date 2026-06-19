@@ -53,6 +53,44 @@ class SourcesEIPsMixin(EIPMixinBase):
         get_trigger_registry().register(trigger)
         return self  # type: ignore
 
+    def from_cron(
+        self,
+        cron_expr: str,
+        *,
+        timezone_name: str = "UTC",
+        payload: dict[str, Any] | None = None,
+    ) -> "RouteBuilder":
+        """Camel-style ``from(\"cron:*/5 * * * *\")`` — cron periodic trigger (S168 W10 P1-2).
+
+        Real periodic dispatch (loop until stop) per ``cron_expr``.
+        Отличие от ``RouteBuilder.schedule(cron=...)`` (который defers
+        single execution): ``from_cron`` запускает route каждый cron tick
+        бесконечно (до stop trigger'а или shutdown приложения).
+
+        Args:
+            cron_expr: 5-field cron expression (e.g. ``"*/5 * * * *"``).
+            timezone_name: IANA timezone (default UTC).
+            payload: static dict для payload.
+
+        Example::
+
+            builder.from_cron("*/5 * * * *", timezone_name="Europe/Moscow")
+        """
+        from src.backend.dsl.orchestration.triggers import (
+            CronTrigger,
+            get_trigger_registry,
+        )
+
+        trigger = CronTrigger(
+            name=f"cron_{id(self)}",
+            route_id=getattr(self, "_route_id", "_pending_"),
+            cron_expr=cron_expr,
+            timezone_name=timezone_name,
+            payload=payload,
+        )
+        get_trigger_registry().register(trigger)
+        return self  # type: ignore
+
     def from_webhook(self, path: str, *, method: str = "POST") -> "RouteBuilder":
         """Camel-style ``from(\"http:host/path\")`` — HTTP webhook trigger.
 
