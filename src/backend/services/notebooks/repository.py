@@ -101,9 +101,20 @@ class NotebookRepository(Protocol):
         """
         ...
 
-    async def soft_delete(self, notebook_id: str) -> bool: ...
+    async def soft_delete(self, notebook_id: str) -> bool:
+        """Soft delete a notebook.
 
-    async def ensure_indexes(self) -> None: ...
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        ...
+
+    async def ensure_indexes(self) -> None:
+        """Create indexes (idempotent)."""
+        ...
 
 
 class InMemoryNotebookRepository:
@@ -118,11 +129,27 @@ class InMemoryNotebookRepository:
         self._lock = asyncio.Lock()
 
     async def create(self, notebook: Notebook) -> Notebook:
+        """Create a notebook.
+
+        Args:
+            notebook: Notebook to create.
+
+        Returns:
+            Created notebook (deep copy).
+        """
         async with self._lock:
             self._docs[notebook.id] = notebook.model_copy(deep=True)
             return self._docs[notebook.id]
 
     async def get(self, notebook_id: str) -> Notebook | None:
+        """Get notebook by ID.
+
+        Args:
+            notebook_id: Notebook ID.
+
+        Returns:
+            Notebook (deep copy) or None if not found.
+        """
         async with self._lock:
             doc = self._docs.get(notebook_id)
             return doc.model_copy(deep=True) if doc else None
@@ -134,6 +161,17 @@ class InMemoryNotebookRepository:
         changed_by: str,
         summary: str | None = None,
     ) -> Notebook | None:
+        """Append a new version to notebook.
+
+        Args:
+            notebook_id: Notebook ID.
+            content: Version content.
+            changed_by: Author name.
+            summary: Optional version summary.
+
+        Returns:
+            Updated notebook or None if not found/deleted.
+        """
         async with self._lock:
             doc = self._docs.get(notebook_id)
             if doc is None or doc.is_deleted:
