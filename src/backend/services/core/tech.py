@@ -21,41 +21,86 @@ class TechService:
     """
 
     async def get_log_storage_link(self) -> HTMLResponse:
+        """Get link to log storage.
+
+        Returns:
+            HTML response with link.
+        """
         return generate_link_page(
             f"{settings.logging.host}:{settings.logging.port}", "Хранилище логов"
         )
 
     async def get_file_storage_link(self) -> HTMLResponse:
+        """Get link to file storage.
+
+        Returns:
+            HTML response with link.
+        """
         return generate_link_page(
             f"{settings.storage.interface_endpoint}", "Файловое хранилище"
         )
 
     async def get_queue_monitor_link(self) -> HTMLResponse:
+        """Get link to queue monitor.
+
+        Returns:
+            HTML response with link.
+        """
         return generate_link_page(settings.queue.queue_ui_url, "Мониторинг очередей")
 
     async def get_langfuse_link(self) -> HTMLResponse:
+        """Get link to LangFuse.
+
+        Returns:
+            HTML response with link.
+        """
         return generate_link_page(
             settings.app.langfuse_url, "LangFuse — LLM Observability"
         )
 
     async def get_langgraph_link(self) -> HTMLResponse:
+        """Get link to LangGraph Studio.
+
+        Returns:
+            HTML response with link.
+        """
         return generate_link_page(
             settings.app.langgraph_url, "LangGraph Studio — AI Agents"
         )
 
     async def check_database(self) -> bool:
+        """Check database health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_database()
 
     async def check_redis(self) -> bool:
+        """Check Redis health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_redis()
 
     async def check_s3(self) -> bool:
+        """Check S3 health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3()
 
     async def check_s3_bucket(self) -> bool:
+        """Check S3 bucket health.
+
+        Returns:
+            True if healthy.
+        """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3_bucket()
 
