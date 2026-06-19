@@ -37,17 +37,31 @@ logger = get_logger(__name__)
 
 
 class CsvExporter:
-    """CSV (RFC 4180-совместимый)."""
+    """CSV (RFC 4180-compatible) exporter."""
 
     format_name = "csv"
     mime_type = "text/csv"
 
     def get_extension(self) -> str:
+        """Get file extension.
+
+        Returns:
+            File extension string.
+        """
         return "csv"
 
     def export(
         self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
+        """Export data to CSV format.
+
+        Args:
+            data: List of dictionaries to export.
+            options: Optional export options (delimiter, encoding).
+
+        Returns:
+            CSV bytes.
+        """
         if not data:
             return b""
         opts = options or {}
@@ -67,17 +81,31 @@ class CsvExporter:
 
 
 class ExcelExporter:
-    """XLSX через openpyxl. Автоматически подгоняет ширину колонок."""
+    """XLSX via openpyxl with auto column width."""
 
     format_name = "xlsx"
     mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     def get_extension(self) -> str:
+        """Get file extension.
+
+        Returns:
+            File extension string.
+        """
         return "xlsx"
 
     def export(
         self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
+        """Export data to Excel format.
+
+        Args:
+            data: List of dictionaries to export.
+            options: Optional export options (sheet_name).
+
+        Returns:
+            Excel bytes.
+        """
         if not data:
             return b""
         try:
@@ -115,17 +143,31 @@ class ExcelExporter:
 
 
 class PdfExporter:
-    """PDF через reportlab. Landscape A4, табличный layout."""
+    """PDF via reportlab. Landscape A4, tabular layout."""
 
     format_name = "pdf"
     mime_type = "application/pdf"
 
     def get_extension(self) -> str:
+        """Get file extension.
+
+        Returns:
+            File extension string.
+        """
         return "pdf"
 
     def export(
         self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
+        """Export data to PDF format.
+
+        Args:
+            data: List of dictionaries to export.
+            options: Optional export options (title).
+
+        Returns:
+            PDF bytes.
+        """
         if not data:
             return b""
         try:
@@ -177,17 +219,31 @@ class PdfExporter:
 
 
 class JsonExporter:
-    """Pretty-printed JSON (orjson с indent)."""
+    """Pretty-printed JSON (orjson with indent)."""
 
     format_name = "json"
     mime_type = "application/json"
 
     def get_extension(self) -> str:
+        """Get file extension.
+
+        Returns:
+            File extension string.
+        """
         return "json"
 
     def export(
         self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
+        """Export data to JSON format.
+
+        Args:
+            data: List of dictionaries to export.
+            options: Optional export options (indent).
+
+        Returns:
+            JSON bytes.
+        """
         opts = options or {}
         indent = opts.get("indent", 2)
         # json.dumps для читаемости; orjson медленнее с indent у некоторых версий.
@@ -197,17 +253,31 @@ class JsonExporter:
 
 
 class ParquetExporter:
-    """Apache Parquet через polars (pyarrow backend)."""
+    """Apache Parquet via polars (pyarrow backend)."""
 
     format_name = "parquet"
     mime_type = "application/octet-stream"
 
     def get_extension(self) -> str:
+        """Get file extension.
+
+        Returns:
+            File extension string.
+        """
         return "parquet"
 
     def export(
         self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
+        """Export data to Parquet format.
+
+        Args:
+            data: List of dictionaries to export.
+            options: Optional export options.
+
+        Returns:
+            Parquet bytes.
+        """
         if not data:
             return b""
         import polars as pl
@@ -259,6 +329,16 @@ class ExportFacade:
         delimiter: str = ",",
         encoding: str = "utf-8",
     ) -> bytes:
+        """Export rows to CSV.
+
+        Args:
+            rows: Data rows.
+            delimiter: CSV delimiter.
+            encoding: Output encoding.
+
+        Returns:
+            CSV bytes.
+        """
         return _EXPORTERS["csv"].export(
             rows, options={"delimiter": delimiter, "encoding": encoding}
         )
@@ -266,17 +346,52 @@ class ExportFacade:
     async def to_excel(
         self, rows: list[dict[str, Any]], *, sheet_name: str = "Data"
     ) -> bytes:
+        """Export rows to Excel.
+
+        Args:
+            rows: Data rows.
+            sheet_name: Worksheet name.
+
+        Returns:
+            Excel bytes.
+        """
         return _EXPORTERS["xlsx"].export(rows, options={"sheet_name": sheet_name})
 
     async def to_pdf(
         self, rows: list[dict[str, Any]], *, title: str = "Report"
     ) -> bytes:
+        """Export rows to PDF.
+
+        Args:
+            rows: Data rows.
+            title: Report title.
+
+        Returns:
+            PDF bytes.
+        """
         return _EXPORTERS["pdf"].export(rows, options={"title": title})
 
     async def to_json(self, rows: list[dict[str, Any]], *, indent: int = 2) -> bytes:
+        """Export rows to JSON.
+
+        Args:
+            rows: Data rows.
+            indent: JSON indentation.
+
+        Returns:
+            JSON bytes.
+        """
         return _EXPORTERS["json"].export(rows, options={"indent": indent})
 
     async def to_parquet(self, rows: list[dict[str, Any]]) -> bytes:
+        """Export rows to Parquet.
+
+        Args:
+            rows: Data rows.
+
+        Returns:
+            Parquet bytes.
+        """
         return _EXPORTERS["parquet"].export(rows)
 
 
