@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **204**; уникальных слотов: **193**.
+Всего ADR-файлов: **205**; уникальных слотов: **194**.
 
 ⚠️ Collision-слоты (11): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
@@ -210,5 +210,6 @@
 | 0244 | S168 W11 P2-10: Domain leakage to extensions — migration plan | — | [0244-s168-w11-domain-leakage-migration-plan.md](0244-s168-w11-domain-leakage-migration-plan.md) |
 | 0245 | ADR-0245: S168 Delta Closure — Tool Import Fix + Allowlist Regen (2 atomic, score 9.85, 0 NEW violations) | — | [0245-s168-delta-closure.md](0245-s168-delta-closure.md) |
 | 0246 | ADR-0246: Sprint 30 Security Patch — 7 Dependabot Vulnerabilities Fixed | — | [0246-s30-security-patch.md](0246-s30-security-patch.md) |
+| 0247 | ADR-0247: S169 W2 Feature Pack — RLM, DI Scope, Per-Invoke Tool Policy, Linter Cleanup | — | [0247-s30-rlm-di-scope-tool-policy.md](0247-s30-rlm-di-scope-tool-policy.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
