@@ -11,6 +11,7 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("DSL Debugger", "🐛")
@@ -48,9 +49,7 @@ if mode == "Step-through Debugger":
             st.error(f"Invalid JSON: {exc}")
         else:
             try:
-                from src.backend.services.dsl_portal import execute_route
-
-                result = execute_route(route_id, body)
+                result = DSLRoutesClient().execute_registered_route(route_id, body)
 
                 col_result, col_trace = st.columns([1, 1])
                 with col_result:

@@ -87,3 +87,20 @@ class DSLRoutesClient(BaseAPIClient):
             return result if isinstance(result, list) else []
         except Exception:  # noqa: BLE001
             return []
+
+    def execute_registered_route(
+        self, route_id: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """POST /api/v1/dsl/execute-registered — выполнить зарегистрированный route.
+
+        P6 thin-client миграция: вызывает HTTP endpoint вместо прямого импорта
+        ``dsl_portal.builder_facade.execute_route``.
+        """
+        try:
+            return self._request(
+                "POST",
+                "/api/v1/dsl/execute-registered",
+                json={"route_id": route_id, "body": body or {}},
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {"status": "error", "error": str(exc), "body": None, "trace": []}

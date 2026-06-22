@@ -47,6 +47,24 @@ class InlineDSLResponse(BaseModel):
     trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class ExecuteRegisteredRequest(BaseModel):
+    """Запрос на выполнение зарегистрированного route по ID."""
+
+    route_id: str = Field(..., description="Идентификатор зарегистрированного route")
+    body: dict[str, Any] = Field(
+        default_factory=dict, description="Payload для Exchange body"
+    )
+
+
+class ExecuteRegisteredResponse(BaseModel):
+    """Результат выполнения зарегистрированного route."""
+
+    status: str
+    body: Any = None
+    error: str | None = None
+    trace: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class _DSLConsoleFacade:
     """Адаптер для inline-выполнения DSL pipeline."""
 
@@ -112,6 +130,46 @@ class _DSLConsoleFacade:
         except Exception as exc:
             return InlineDSLResponse(status="error", error=str(exc))
 
+    async def execute_registered_route(
+        self,
+        *,
+        route_id: str,
+        body: dict[str, Any] | None = None,
+    ) -> ExecuteRegisteredResponse:
+        """Выполняет зарегистрированный route по route_id."""
+        body = body or {}
+        try:
+            from src.backend.dsl.engine.execution_engine import ExecutionEngine
+            from src.backend.services.dsl_portal.builder_facade import (
+                get_route_pipeline,
+            )
+
+            pipeline = get_route_pipeline(route_id)
+            if pipeline is None:
+                return ExecuteRegisteredResponse(
+                    status="failed",
+                    error=f"route {route_id!r} не найден",
+                )
+
+            engine = ExecutionEngine()
+            exchange = await engine.execute(pipeline, body=body)
+
+            result = (
+                exchange.out_message.body
+                if exchange.out_message
+                else exchange.in_message.body
+            )
+            trace = list(exchange.properties.get("_trace", []))
+
+            return ExecuteRegisteredResponse(
+                status=exchange.status.value,
+                body=result,
+                error=exchange.error,
+                trace=trace,
+            )
+        except Exception as exc:
+            return ExecuteRegisteredResponse(status="error", error=str(exc))
+
 
 _FACADE = _DSLConsoleFacade()
 
@@ -140,6 +198,21 @@ builder.add_actions(
             body_model=InlineDSLRequest,
             response_model=InlineDSLResponse,
             tags=("DSL Console",),
-        )
+        ),
+        ActionSpec(
+            name="execute_registered_route",
+            method="POST",
+            path="/dsl/execute-registered",
+            summary="Выполнить зарегистрированный route",
+            description=(
+                "Выполняет route по route_id из реестра. "
+                "Возвращает результат выполнения и trace."
+            ),
+            service_getter=_get_facade,
+            service_method="execute_registered_route",
+            body_model=ExecuteRegisteredRequest,
+            response_model=ExecuteRegisteredResponse,
+            tags=("DSL Console",),
+        ),
     ]
 )
