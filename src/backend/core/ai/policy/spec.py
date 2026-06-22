@@ -27,7 +27,7 @@ __all__ = (
 
 
 class ModelRouterSpec(BaseModel):
-    """Описание fallback chain моделей.
+    """Описание fallback chain моделей + RLM strategy.
 
     Attributes:
         primary: Канонический идентификатор модели (LiteLLM-формат:
@@ -39,12 +39,26 @@ class ModelRouterSpec(BaseModel):
         timeout_s: Per-call таймаут в секундах.
         retry_attempts: Количество повторных попыток primary до перехода
             на fallback chain.
+        router_strategy: S169 W2 (RLM) — стратегия выбора модели.
+            ``"failover"`` (default) — primary + fallback при ошибках
+            (LiteLLMGateway.acompletion(fallbacks=...)).
+            ``"complexity"`` — weak model (``cheap_model``) для простых
+            запросов (короткий prompt, factual, single-step), primary
+            для сложных (multi-step reasoning, long context).
+            Implementation deferred to S170+ (per audit backlog P1-2).
+        cheap_model: RLM weak model для ``router_strategy="complexity"``.
+            Должен быть значительно дешевле primary (например
+            ``"openai/gpt-4o-mini"`` vs ``"openai/gpt-4o"``,
+            ``"anthropic/claude-3-haiku"`` vs ``"anthropic/claude-3.5-sonnet"``).
+            Если None — strategy degrades to ``"failover"`` behaviour.
     """
 
     primary: str
     fallback: list[str] = Field(default_factory=list)
     timeout_s: float = 30.0
     retry_attempts: int = 2
+    router_strategy: Literal["failover", "complexity"] = "failover"  # S169 W2
+    cheap_model: str | None = None  # S169 W2 (RLM weak model)
 
 
 class SanitizerRef(BaseModel):
