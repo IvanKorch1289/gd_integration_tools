@@ -106,6 +106,20 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         rendered = await self._render_prompt(request, policy, sanitized)
         ctx.rendered = rendered
 
+        # P0-1 (S36-W5): per-invoke tool policy enforcement (S76 W3 follow-up).
+        # Проверяется ``AIPolicySpec.tools.whitelist/blacklist`` перед LLM call.
+        # Semantic ``tool_name = request.workflow_id`` (per docs/cookbooks/01).
+        # Skip если whitelist+blacklist пустые (backward-compat с pre-S76).
+        if (
+            policy is not None
+            and (policy.tools.whitelist or policy.tools.blacklist)
+        ):
+            from src.backend.core.ai.policy.enforcer.tools_policy import (
+                enforce_tool_policy,
+            )
+
+            enforce_tool_policy(request.workflow_id, policy.tools)
+
         # Шаг 6: invoke LLM
         completion = await self._invoke_llm(rendered, policy, request.stream)
         ctx.completion = completion
