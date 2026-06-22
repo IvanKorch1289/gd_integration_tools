@@ -206,3 +206,4 @@ src/backend/services/schema_registry/populator.py	services	src.backend.dsl.comma
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
 src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secrets
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
+src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
