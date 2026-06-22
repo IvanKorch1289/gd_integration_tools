@@ -7,7 +7,7 @@ import json
 import streamlit as st
 import yaml as _yaml
 
-from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
+from src.backend.services.dsl_portal import dry_run_route, waterfall_lines
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 setup_page("DSL Dry-Run", ":fast_forward:")

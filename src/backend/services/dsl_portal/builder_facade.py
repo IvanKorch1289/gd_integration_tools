@@ -8,6 +8,10 @@
 право: ``services → dsl`` через registries — допустимый паттерн,
 а ``services → entrypoints`` для агрегатора audit-стрима — узкое
 ис­ключение, оформленное allowlist'ом ``check_layers``).
+
+S44 W2: добавлены символы для миграции 12 frontend→dsl imports (deep-audit S2):
+- get_global_registry, WorkflowDeclaration, to_mermaid, compute_step_diff,
+  to_graphviz, dry_run_route, waterfall_lines.
 """
 
 from __future__ import annotations
@@ -15,20 +19,35 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
+from src.backend.dsl.workflow.spec import WorkflowDeclaration
+from src.backend.dsl.workflow.versioning import get_global_registry
+from src.backend.dsl.workflow.visualize import (
+    compute_step_diff,
+    to_graphviz,
+    to_mermaid,
+)
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 __all__ = (
     "Pipeline",
+    "WorkflowDeclaration",
+    "compute_step_diff",
+    "dry_run_route",
     "execute_route",
+    "get_global_registry",
     "get_route_pipeline",
     "list_audit_records",
     "list_recent_trace_events",
     "list_route_ids",
     "load_pipeline_from_yaml",
+    "to_graphviz",
+    "to_mermaid",
+    "waterfall_lines",
 )
 
 

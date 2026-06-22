@@ -21,7 +21,7 @@ st.caption(
 
 
 try:
-    from src.backend.dsl.workflow.versioning import get_global_registry
+    from src.backend.services.dsl_portal import get_global_registry
 
     registry = get_global_registry()
     all_ids = sorted(registry.all_workflow_ids())

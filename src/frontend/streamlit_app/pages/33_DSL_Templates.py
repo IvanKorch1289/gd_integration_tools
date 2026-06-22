@@ -19,8 +19,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.dsl.workflow.spec import WorkflowDeclaration
-from src.backend.dsl.workflow.visualize import to_mermaid
+from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
@@ -78,14 +77,12 @@ def _render_route_blueprints() -> None:
 
 def _render_workflow_templates() -> None:
     """Sprint 12 K3 W5 + K5 W1 — workflow templates с Mermaid preview."""
-    try:
-        from src.backend.dsl.workflow.template_registry_compat import (  # type: ignore[import-not-found]  # noqa: I001  # noqa: E501
-            get_template_registry,
-        )
-    except ImportError:
-        from src.backend.services.workflows.template_registry import (
-            get_template_registry,
-        )
+    # S44 W2: прямой импорт из services (был try/except с мёртвым
+    # ``dsl.workflow.template_registry_compat``, модуль не существует,
+    # всегда падал в fallback). Удалено: dead code.
+    from src.backend.services.workflows.template_registry import (
+        get_template_registry,
+    )
 
     registry = get_template_registry()
     all_templates = registry.load_all()

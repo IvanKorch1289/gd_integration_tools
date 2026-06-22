@@ -25,8 +25,11 @@ def render_workflow_diff() -> None:
         "Color-coded: зелёный=added, красный=removed, оранжевый=modified."
     )
     try:
-        from src.backend.dsl.workflow.versioning import get_global_registry
-        from src.backend.dsl.workflow.visualize import compute_step_diff, to_graphviz
+        from src.backend.services.dsl_portal import (
+            compute_step_diff,
+            get_global_registry,
+            to_graphviz,
+        )
 
         registry = get_global_registry()
         all_wf_ids = sorted(registry.all_workflow_ids())

@@ -28,20 +28,34 @@ from __future__ import annotations
 
 from src.backend.services.dsl_portal.builder_facade import (
     Pipeline,
+    WorkflowDeclaration,
+    compute_step_diff,
+    dry_run_route,
     execute_route,
+    get_global_registry,
     get_route_pipeline,
     list_audit_records,
     list_recent_trace_events,
     list_route_ids,
     load_pipeline_from_yaml,
+    to_graphviz,
+    to_mermaid,
+    waterfall_lines,
 )
 
 __all__ = (
     "Pipeline",
+    "WorkflowDeclaration",
+    "compute_step_diff",
+    "dry_run_route",
     "execute_route",
+    "get_global_registry",
     "get_route_pipeline",
     "list_audit_records",
     "list_recent_trace_events",
     "list_route_ids",
     "load_pipeline_from_yaml",
+    "to_graphviz",
+    "to_mermaid",
+    "waterfall_lines",
 )

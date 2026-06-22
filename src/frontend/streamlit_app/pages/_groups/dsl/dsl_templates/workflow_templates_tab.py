@@ -50,18 +50,11 @@ def render_workflow_templates(client: "APIClient") -> None:
     """
     import streamlit as st
 
-    try:
-        # S142 W2: lazy import moved into function (was module-level
-        # before, caused layer violation frontend->backend. Now
-        # imports happen on first render only, not at page-import
-        # time. TYPE_CHECKING keeps the type hint for static analysis.
-        from src.backend.dsl.workflow.template_registry_compat import (  # type: ignore[import-not-found]  # noqa: I001  # noqa: E501
-            get_template_registry,
-        )
-    except ImportError:
-        from src.backend.services.workflows.template_registry import (
-            get_template_registry,
-        )
+    # S44 W2: прямой импорт из services (был try/except с мёртвым
+    # ``dsl.workflow.template_registry_compat``, модуль не существует).
+    from src.backend.services.workflows.template_registry import (
+        get_template_registry,
+    )
 
     registry = get_template_registry()
     all_templates = registry.load_all()
@@ -111,10 +104,8 @@ def _render_template_card(tmpl, client: "APIClient") -> None:
         st.code(yaml_text, language="yaml")
     with tab_graph:
         try:
-            # S142 W2: lazy import for WorkflowDeclaration + to_mermaid
-            # (was module-level, caused layer violation).
-            from src.backend.dsl.workflow.spec import WorkflowDeclaration
-            from src.backend.dsl.workflow.visualize import to_mermaid
+            # S44 W2: facade import (was lazy direct dsl, layer violation).
+            from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
 
             decl = WorkflowDeclaration.model_validate(tmpl.raw)
             mermaid = to_mermaid(decl)
