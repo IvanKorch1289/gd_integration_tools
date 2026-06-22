@@ -21,7 +21,7 @@ _logger = get_logger(__name__)
 class AdaptiveBulkhead:
     """Bulkhead с динамическим max_concurrent.
 
-    Дополнение к :class:`core.resilience.bulkhead.Bulkhead`. При устойчивой
+    Дополнение к :class:`infrastructure.resilience.bulkhead.Bulkhead`. При устойчивой
     нагрузке выше HighWatermark — увеличивает max_concurrent (до max).
     При устойчиво низкой — уменьшает (до min).
 

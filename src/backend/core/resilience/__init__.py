@@ -35,7 +35,6 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.core.resilience.bulkhead import Bulkhead, get_bulkhead
 from src.backend.core.resilience.cache_decorators import (
     cached,
     invalidate,
