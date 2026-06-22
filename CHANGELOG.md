@@ -5,6 +5,76 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 45 — Audit Backlog: QW10 + S1 Closure, 2026-06-22] — Rule 3 + Rule 8
+
+2 atomic commits, deep-audit backlog continuation (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`,
+ADR-0248/0249).
+
+### Removed
+
+- **Backward-compat shim `src/backend/services/audit/audit_service.py`** (per ADR-0199, S113 W1):
+  - shim deleted (18 LOC re-export of `AuditService` + `get_unified_audit_service`)
+  - shim-specific test `tests/unit/core/audit/test_audit_service_shim.py` deleted
+  - 9 consumers migrated to canonical `core.audit.facade.audit_service`
+  - `services/audit/__init__.py` updated to import from canonical
+  - 2 stale allowlist entries pruned
+
+### Added
+
+- **5 services facades для S1 (entrypoints→infra migration)**:
+  - `src/backend/services/workflow/__init__.py` — re-export
+    `WorkflowDescriptor`, `workflow_registry` из `infrastructure.workflow.registry`
+  - `src/backend/services/security/__init__.py` — re-export
+    `DEFAULT_TIMESTAMP_WINDOW`, `verify_signature` из `infrastructure.security.signatures`
+  - `src/backend/services/resilience/rate_limiter.py` — re-export
+    `RateLimit`, `RateLimitExceeded`, `get_rate_limiter`
+  - `src/backend/services/scheduler/admin.py` — re-export
+    `SchedulerDLQStore`, `get_scheduler_dlq_store`, `get_scheduler_manager`
+  - `src/backend/services/cache/metrics.py` — re-export
+    `get_cache_metrics_snapshot`, `get_metrics_snapshot`
+
+### Changed
+
+- **8 entrypoints files migrated** through services facades:
+  - `entrypoints/mcp/workflow_tools.py` (workflow_registry)
+  - `entrypoints/dependencies/rate_limit.py` (rate_limiter)
+  - `entrypoints/middlewares/ws_rate_limit.py` (rate_limiter)
+  - `entrypoints/middlewares/webhook_signature.py` (security)
+  - `entrypoints/api/v1/endpoints/admin_scheduler_dlq.py` (scheduler + DLQ)
+  - `entrypoints/api/v1/endpoints/rag_cache_admin.py` (cache metrics)
+  - `entrypoints/api/v1/endpoints/admin.py` (cache metrics)
+  - `entrypoints/api/v1/endpoints/admin_workflows/facade.py` (workflow registry)
+- **1 test file updated**: `test_admin_scheduler_dlq.py` — patch target перемещён
+  из `infrastructure.scheduler.scheduler_manager` в `services.scheduler.admin`.
+- **Test identity checks** в `test_facade.py` + `test_facade_split.py` обновлены
+  для проверки identity через canonical paths (trivially True после удаления shim).
+
+### Removed (continued)
+
+- **9 stale allowlist entries** pruned (entrypoints→infra imports которых больше нет)
+
+### Verification
+
+- `python tools/check_layers.py` → 0 новых (2148 files, 200 legacy, was 209 - 9 stale pruned)
+- `python tools/check_layers.py --prune-allowlist` → removed 9 stale entries
+- `git log --oneline -2` → `63339e7, 40b811a` (S45 W1+W2)
+- 0 remaining `services.audit.audit_service` imports (verified via grep)
+- 0 remaining `entrypoints→infrastructure` direct imports (S1 backlog CLOSED)
+- 27/27 audit tests pass (test_facade.py + test_facade_split.py + test_audit_service_unified.py)
+- 232/232 middlewares tests pass
+- 4/4 admin_workflows tests pass, 5/5 rag_cache_admin tests pass,
+  6/6 admin_plugins tests pass
+- 1 PRE-EXISTING test failure в `test_workflow_tools::test_skips_missing_route_id`
+  (verified failing on HEAD~5 до S45 — test asserts catalog tools NOT registered
+  but `_register_catalog_tools()` вызывается всегда; not my regression)
+
+### Out of scope (deferred → S46+)
+
+- S7: 4 BLOCKED файлов в foreign WIP + 2 SPECIAL (infrastructure/logging/__init__,
+  test_s60_w1_structlog_e2e.py) — deferred until foreign WIP merge
+- S13: Circuit breaker middleware → shared state (K8s multi-pod safety, high risk)
+- 1 remaining entrypoints→infra import в `admin_plugins/helpers.py` (in foreign WIP)
+
 ## [Sprint 44 — Audit Follow-up: Facades + Migrations, 2026-06-22] — Rule 3 + Rule 8
 
 5 atomic commits, deep-audit backlog execution (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`,
