@@ -44,9 +44,11 @@ class HttpCallProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.backend.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import (
+            get_http_client_dependency,
+        )
 
-        client = HttpClient()
+        client = get_http_client_dependency()
 
         json_body = None
         if self._method in ("POST", "PUT", "PATCH") and self._body_from_exchange:

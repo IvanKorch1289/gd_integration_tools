@@ -120,21 +120,15 @@ class AuditEventLog:
     ) -> list[dict[str, Any]]:
         """SELECT с фильтрами для audit_events / audit_log.
 
-        S61 W4: defense-in-depth pattern для защиты от SQL injection.
-        ClickHouse HTTP API не поддерживает ``?`` placeholders в SELECT
-        (в отличие от PostgreSQL asyncpg), поэтому bound parameters
-        требуют перехода на ``{name:Type}`` syntax + отдельный query.
-        Здесь — три уровня защиты (см. ``tests/unit/infrastructure/audit/
-        test_event_log.py::test_query_escapes_injection_attempts``):
+        ponytail: S61 W4 defense-in-depth был заменён на полноценные
+        bound parameters через ClickHouse {name} syntax вместо _escape().
+        ClickHouse HTTP API поддерживает {name} placeholders, которые
+        корректно экранируются на уровне протокола.
 
-        1. ``_safe_ident`` — allowlist для table name (``audit_events`` /
-           ``audit_log``). Любое другое значение → ``ValueError``.
-        2. ``_escape`` — single quote → double quote, backslash → double
-           backslash (стандарт ClickHouse string-literal escaping).
-        3. ``safe_limit`` — ``int(limit)`` bounded к [1, 10000].
-
-        Bound parameters на HTTP-уровне — out of scope (S62+ candidate,
-        требует refactor ``clickhouse.py::query()`` для передачи params).
+        Защита от SQL injection:
+        1. _safe_ident — allowlist для table name (audit_events / audit_log)
+        2. Bound parameters через ClickHouse {name} syntax
+        3. safe_limit — int(limit) bounded к [1, 10000]
         """
         from src.backend.infrastructure.clients.storage.clickhouse import (
             get_clickhouse_client,
@@ -142,26 +136,14 @@ class AuditEventLog:
 
         client = get_clickhouse_client()
 
-        # SQL injection protection: sanitize identifiers + escape string values
-        def _escape(value: str) -> str:
-            """Escape single quotes for ClickHouse string literals.
-
-            ClickHouse string escaping rules (https://clickhouse.com/docs/en/sql-reference/syntax#string):
-            * single quote (') — escape as double quote ('')
-            * backslash (\\) — escape as double backslash (\\\\)
-            Другие символы (newline, control chars) — passed through,
-            так как _safe_ident не пускает table name из user input.
-            """
-            return str(value).replace("'", "''").replace("\\", "\\\\")
-
         def _safe_ident(name: str, allowed: set[str]) -> str:
-            """Allowlist validation для имён колонок/таблиц."""
+            """Allowlist validation для table name."""
             if name not in allowed:
                 raise ValueError(f"Invalid identifier: {name}")
             return name
 
         # Валидация table name через allowlist
-        _safe_table = _safe_ident(self._table, {"audit_events", "audit_log"})
+        safe_table = _safe_ident(self._table, {"audit_events", "audit_log"})
 
         # Валидация limit (int, bounded)
         try:
@@ -169,17 +151,23 @@ class AuditEventLog:
         except (TypeError, ValueError):
             safe_limit = 100
 
+        # Build query с bound parameters через {name} syntax
+        params: dict[str, Any] = {}
         conditions = []
+
         if entity_type:
-            conditions.append(f"entity_type = '{_escape(entity_type)}'")
+            params["entity_type"] = entity_type
+            conditions.append("entity_type = {entity_type:String}")
         if entity_id:
-            conditions.append(f"entity_id = '{_escape(entity_id)}'")
+            params["entity_id"] = entity_id
+            conditions.append("entity_id = {entity_id:String}")
         if who:
-            conditions.append(f"who = '{_escape(who)}'")
+            params["who"] = who
+            conditions.append("who = {who:String}")
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-        sql = f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # _safe_table allowlisted, _escape санирует string-литералы, safe_limit — int  # noqa: S608  # internal query with controlled parameters
-        return await client.query(sql)
+        sql = f"SELECT * FROM {safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # noqa: S608
+        return await client.query(sql, params)
 
 
 _audit_log: AuditEventLog | None = None

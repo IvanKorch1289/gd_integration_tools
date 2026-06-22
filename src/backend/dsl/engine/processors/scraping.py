@@ -169,9 +169,11 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.infrastructure.clients.transport.http import HttpClient
+            from src.backend.infrastructure.clients.transport.http import (
+                get_http_client_dependency,
+            )
 
-            client = HttpClient()
+            client = get_http_client_dependency()
             response = await client.make_request(
                 method="GET", url=url, response_type="text", headers=_stealth_headers()
             )
@@ -254,7 +256,9 @@ class PaginateProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Crawl multiple pages and collect items."""
-        from src.backend.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import (
+            get_http_client_dependency,
+        )
 
         url = self._start_url
         if not url:
@@ -284,7 +288,7 @@ class PaginateProcessor(BaseProcessor):
             exchange.fail("selectolax not installed")
             return
 
-        client = HttpClient()
+        client = get_http_client_dependency()
         all_items: list[Any] = []
         visited: set[str] = set()
 
@@ -392,7 +396,9 @@ class ApiProxyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Forward exchange to external API with optional transformation."""
-        from src.backend.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import (
+            get_http_client_dependency,
+        )
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):
@@ -419,7 +425,7 @@ class ApiProxyProcessor(BaseProcessor):
             if isinstance(body, dict):
                 json_body = body
 
-        client = HttpClient()
+        client = get_http_client_dependency()
         try:
             result = await client.make_request(
                 method=self._method,

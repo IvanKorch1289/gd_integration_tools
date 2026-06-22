@@ -4,6 +4,9 @@
 debug-dump). Атомарность достигается через write-temp + rename
 для режима ``"write"``; для ``"append"`` — обычный async-append
 через ``aiofiles`` (если есть) или ``asyncio.to_thread``.
+
+ ponytail: добавлена path traversal protection через base_dir restriction
+ и валидацию против ``..`` в пути.
 """
 
 from __future__ import annotations
@@ -28,6 +31,8 @@ class FileSink(Sink):
     Args:
         sink_id: Уникальный идентификатор.
         path: Путь к файлу.
+        base_dir: Опциональная base directory для ограничения записи.
+            Если указана, ``path`` должен быть внутри неё.
         mode: ``"append"`` (NDJSON по строке на payload) или
             ``"write"`` (атомарная замена через write-temp+rename).
         encoding: Кодировка текста (``"utf-8"`` по умолчанию).
@@ -36,14 +41,37 @@ class FileSink(Sink):
 
     sink_id: str
     path: str
+    base_dir: str | None = None
     mode: Literal["append", "write"] = "append"
     encoding: str = "utf-8"
     ensure_dir: bool = True
     kind: SinkKind = field(default=SinkKind.FILE, init=False)
 
+    def _safe_path(self, target: Path) -> Path:
+        """Валидирует path против traversal атак.
+
+        Raises:
+            ValueError: Если path выходит за пределы base_dir или содержит ``..``.
+        """
+        if ".." in target.parts:
+            raise ValueError(f"Path traversal detected: {target!r}")
+        if self.base_dir is not None:
+            base = Path(self.base_dir).resolve()
+            resolved = target.resolve()
+            if not str(resolved).startswith(str(base)):
+                raise ValueError(
+                    f"Path {target!r} outside base_dir {self.base_dir!r}"
+                )
+        return target
+
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` (JSON если dict/list) и пишет в файл."""
         target = Path(self.path)
+        try:
+            target = self._safe_path(target)
+        except ValueError as exc:
+            return SinkResult(ok=False, details={"error": str(exc)})
+
         if self.ensure_dir:
             target.parent.mkdir(parents=True, exist_ok=True)
 
@@ -85,6 +113,10 @@ class FileSink(Sink):
     async def health(self) -> bool:
         """Доступна ли parent-директория для записи."""
         target = Path(self.path)
+        try:
+            target = self._safe_path(target)
+        except ValueError:
+            return False
         parent = target.parent
         if self.ensure_dir:
             try:

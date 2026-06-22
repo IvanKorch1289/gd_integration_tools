@@ -152,9 +152,13 @@ async def test_query_with_filters(
     )
     assert result == [{"who": "alice"}]
     sql = fake_clickhouse.query.call_args[0][0]
-    assert "entity_type = 'order'" in sql
-    assert "entity_id = '1'" in sql
-    assert "who = 'alice'" in sql
+    params = fake_clickhouse.query.call_args[0][1]
+    assert "{entity_type:String}" in sql
+    assert "{entity_id:String}" in sql
+    assert "{who:String}" in sql
+    assert params.get("entity_type") == "order"
+    assert params.get("entity_id") == "1"
+    assert params.get("who") == "alice"
     assert "LIMIT 10" in sql
 
 
@@ -195,56 +199,42 @@ async def test_query_escapes_quotes(
 ) -> None:
     await fresh_audit_log.query(who="O'Brien")
     sql = fake_clickhouse.query.call_args[0][0]
-    assert "O''Brien" in sql
+    params = fake_clickhouse.query.call_args[0][1]
+    assert "{who:String}" in sql
+    assert params.get("who") == "O'Brien"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("malicious_who", "expected_substring"),
+    "malicious_who",
     [
-        # classic quote-escape (already covered, but parametrized for clarity)
-        ("O'Brien", "O''Brien"),
-        # single quote injection attempt — must be escaped, never terminated.
-        # Input `'; DROP TABLE ...` (1 quote) → escaped `''; DROP TABLE ...` (2 quotes).
-        ("'; DROP TABLE audit_events; --", "''; DROP TABLE audit_events; --"),
-        # backslash injection — ClickHouse treats \ as escape in strings
-        ("path\\to\\file", "path\\\\to\\\\file"),
-        # combined: backslash-then-quote (worst case)
-        ("x\\'; DROP TABLE", "x\\\\''; DROP TABLE"),
-        # newline / control char — passed through, _escape doesn't strip
-        ("line1\nline2", "line1\nline2"),
+        "O'Brien",
+        "'; DROP TABLE audit_events; --",
+        "path\\to\\file",
+        "x\\'; DROP TABLE",
+        "line1\nline2",
     ],
 )
 async def test_query_escapes_injection_attempts(
     fresh_audit_log: AuditEventLog,
     fake_clickhouse: MagicMock,
     malicious_who: str,
-    expected_substring: str,
 ) -> None:
-    """S61 W4: defense-in-depth — _escape must neutralize classic SQLi vectors.
+    """S61 W4: parameterized queries protect against SQLi.
 
-    Note: this is NOT parameterized query protection. ClickHouse HTTP API
-    does not support `?` placeholders in SELECT; parametrization would
-    require {name:Type} syntax + client.get(..., params={...}) and is
-    out of scope for a single query() method. Defense layers:
-    1. _safe_ident allowlist (table name) — ValueError on unknown.
-    2. _escape (single quote → double, backslash → double).
-    3. safe_limit int-bounded.
-    All string values flow through _escape; verify here that injection
-    attempts cannot terminate the string literal.
+    With {name:String} bound parameters, ClickHouse handles escaping
+    at the protocol level. We verify that:
+    1. SQL uses {name:String} placeholders
+    2. Params dict contains the raw (unescaped) malicious value
+    3. The injection attempt cannot affect SQL structure
     """
     await fresh_audit_log.query(who=malicious_who)
     sql = fake_clickhouse.query.call_args[0][0]
-    assert expected_substring in sql
-    # Sanity: `who = '...'` literal must contain an even number of single
-    # quotes (escaped pairs + closing). If `_escape` ever forgot to double
-    # a quote, the literal would terminate early → odd count.
-    start = sql.find("who = '")
-    assert start >= 0, f"who clause not found in SQL: {sql!r}"
-    end = sql.find("' ORDER BY", start)
-    assert end > start, f"closing quote not found: {sql!r}"
-    inner = sql[start + len("who = '") : end]
-    assert inner.count("'") % 2 == 0, f"Odd quote count in literal: {inner!r}"
+    params = fake_clickhouse.query.call_args[0][1]
+    assert "{who:String}" in sql
+    assert params.get("who") == malicious_who
+    # SQL must NOT contain the raw malicious string (it's in params only)
+    assert malicious_who not in sql
 
 
 @pytest.mark.asyncio

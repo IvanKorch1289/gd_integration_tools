@@ -67,7 +67,7 @@ class L2SemanticRagCache:
         return self._embedder
 
     async def _embed(self, text: str) -> list[float]:
-        cached = self._embedding_cache.get(text)
+        cached = await self._embedding_cache.get(text)
         if cached is not None:
             return cached
         embedder = self._ensure_embedder()
@@ -80,7 +80,7 @@ class L2SemanticRagCache:
             return []
         vector = list(result[0]) if result else []
         if vector:
-            self._embedding_cache.set(text, vector)
+            await self._embedding_cache.set(text, vector)
         return vector
 
     async def get(self, query: str, *, tenant: str | None = None) -> Any | None:

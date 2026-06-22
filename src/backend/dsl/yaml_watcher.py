@@ -16,12 +16,17 @@ ADR-041 ``fs-watcher-unification``).
 * Public API (``DSLYamlWatcher``, ``PipelineLoader``) сохранён —
   существующие импортёры (``manage.py``, ``plugins/composition/lifecycle``,
   тесты) продолжают работать без правок.
+
+ ponytail: добавлено кеширование по content hash. Раньше при любом
+ изменении файла перечитывались И перепарсивались ВСЕ YAML. Теперь
+ отслеживается hash контента и перепарсиваются только изменившиеся.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -53,6 +58,13 @@ def _is_yaml_path(path: str) -> bool:
     return any(path.endswith(suffix) for suffix in _YAML_SUFFIXES)
 
 
+def _file_hash(path: Path) -> str:
+    """Compute SHA-256 hash of file content for change detection."""
+    h = hashlib.sha256()
+    h.update(path.read_bytes())
+    return h.hexdigest()
+
+
 class DSLYamlWatcher:
     """watchfiles-based hot-reload для DSL-маршрутов из YAML.
 
@@ -81,6 +93,8 @@ class DSLYamlWatcher:
         self._task: asyncio.Task[None] | None = None
         self._stop_event: asyncio.Event = asyncio.Event()
         self._yaml_route_ids: dict[Path, str] = {}
+        self._file_hashes: dict[Path, str] = {}
+        self._pipeline_cache: dict[Path, Pipeline] = {}
 
     async def start(self) -> None:
         """Поднимает async-consumer поверх ``awatch``.
@@ -132,13 +146,18 @@ class DSLYamlWatcher:
     def _sync_reload_all(self) -> dict[str, Any]:
         snapshot = self._registry.snapshot_state()
         old_yaml_ids = dict(self._yaml_route_ids)
+        old_hashes = dict(self._file_hashes)
+        old_cache = dict(self._pipeline_cache)
         try:
-            new_yaml_ids = self._collect_and_apply()
+            new_yaml_ids, new_hashes = self._collect_and_apply(incremental=False)
             self._yaml_route_ids = new_yaml_ids
+            self._file_hashes = new_hashes
             return {"loaded": len(new_yaml_ids), "errors": []}
         except Exception as exc:
             self._registry.restore_state(snapshot)
             self._yaml_route_ids = old_yaml_ids
+            self._file_hashes = old_hashes
+            self._pipeline_cache = old_cache
             logger.error("DSLYamlWatcher.reload_all failed: %s", exc)
             return {"loaded": 0, "errors": [str(exc)]}
 
@@ -151,24 +170,29 @@ class DSLYamlWatcher:
         if not self._dir.exists():
             return
         loaded: dict[Path, str] = {}
+        hashes: dict[Path, str] = {}
+        cache: dict[Path, Pipeline] = {}
         for path in sorted(self._iter_yaml_files()):
             try:
                 pipeline = self._loader(path)
                 self._registry.register(pipeline)
                 loaded[path] = pipeline.route_id
+                hashes[path] = _file_hash(path)
+                cache[path] = pipeline
             except Exception as exc:
                 logger.error(
                     "DSLYamlWatcher: initial load failed for %s: %s", path, exc
                 )
         self._yaml_route_ids = loaded
+        self._file_hashes = hashes
+        self._pipeline_cache = cache
 
     async def _consume_loop(self) -> None:
         """Цикл потребления file-event'ов через ``awatch``.
 
         Дебаунс делегирован ``watchfiles`` (ничего не блокирует loop).
-        Каждая итерация — атомарный rescan каталога: гарантирует
-        консистентность при удалениях, переименованиях и параллельных
-        правках.
+        Каждая итерация — инкрементальное обновление: проверяем hash
+        и перепарсиваем только изменившиеся файлы.
         """
         try:
             async for changes in awatch(
@@ -179,14 +203,61 @@ class DSLYamlWatcher:
             ):
                 if not any(_is_yaml_path(path) for _, path in changes):
                     continue
-                await asyncio.to_thread(self._sync_reload_all)
+                await asyncio.to_thread(self._sync_reload_incremental, changes)
         except asyncio.CancelledError:
             raise
         except Exception as exc:
             logger.error("DSLYamlWatcher consume_loop crashed: %s", exc, exc_info=True)
             raise
 
-    def _collect_and_apply(self) -> dict[Path, str]:
+    def _sync_reload_incremental(self, changes: set[tuple[str, str]]) -> None:
+        """Инкрементальное обновление только изменившихся файлов.
+
+        - определяет какие файлы реально изменились по hash;
+        - перепарсивает только их;
+        - удаляет пропавшие файлы из registry.
+        """
+        changed_paths = {Path(path) for _, path in changes if _is_yaml_path(path)}
+        if not changed_paths:
+            return
+
+        snapshot = self._registry.snapshot_state()
+        old_yaml_ids = dict(self._yaml_route_ids)
+        old_hashes = dict(self._file_hashes)
+        old_cache = dict(self._pipeline_cache)
+
+        try:
+            for path in changed_paths:
+                if not path.exists():
+                    if path in self._yaml_route_ids:
+                        rid = self._yaml_route_ids[path]
+                        self._registry.unregister(rid)
+                        del self._yaml_route_ids[path]
+                        del self._file_hashes[path]
+                        self._pipeline_cache.pop(path, None)
+                else:
+                    new_hash = _file_hash(path)
+                    old_hash = self._file_hashes.get(path)
+                    if new_hash != old_hash:
+                        pipeline = self._loader(path)
+                        self._registry.register(pipeline)
+                        self._yaml_route_ids[path] = pipeline.route_id
+                        self._file_hashes[path] = new_hash
+                        self._pipeline_cache[path] = pipeline
+
+            still_owned = set(self._yaml_route_ids.values())
+            for old_path, old_rid in old_yaml_ids.items():
+                if old_rid not in still_owned and old_path not in self._yaml_route_ids:
+                    self._registry.unregister(old_rid)
+
+        except Exception as exc:
+            self._registry.restore_state(snapshot)
+            self._yaml_route_ids = old_yaml_ids
+            self._file_hashes = old_hashes
+            self._pipeline_cache = old_cache
+            logger.error("DSLYamlWatcher incremental reload failed: %s", exc)
+
+    def _collect_and_apply(self, incremental: bool = True) -> tuple[dict[Path, str], dict[Path, str]]:
         """Полный rescan + atomic apply.
 
         - грузит все валидные YAML-файлы;
@@ -194,18 +265,20 @@ class DSLYamlWatcher:
         - регистрирует/обновляет загруженные.
 
         Returns:
-            dict[Path, str]: новый ``path -> route_id`` mapping.
+            tuple[dict[Path, str], dict[Path, str]]: (path -> route_id mapping, path -> hash mapping)
 
         Raises:
             Exception: При ошибке загрузки любого файла — поднимается
-            наверх, ``_sync_reload_all`` откатит снапшот.
+            наверх, caller откатит снапшот.
         """
         current_files = sorted(self._iter_yaml_files())
         new_yaml_ids: dict[Path, str] = {}
+        new_hashes: dict[Path, str] = {}
         new_pipelines: list[Pipeline] = []
         for path in current_files:
             pipeline = self._loader(path)
             new_yaml_ids[path] = pipeline.route_id
+            new_hashes[path] = _file_hash(path)
             new_pipelines.append(pipeline)
 
         still_owned = set(new_yaml_ids.values())
@@ -216,7 +289,7 @@ class DSLYamlWatcher:
         for pipeline in new_pipelines:
             self._registry.register(pipeline)
 
-        return new_yaml_ids
+        return new_yaml_ids, new_hashes
 
     def _iter_yaml_files(self) -> list[Path]:
         if not self._dir.exists():
