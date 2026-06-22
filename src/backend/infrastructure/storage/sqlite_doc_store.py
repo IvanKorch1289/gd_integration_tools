@@ -131,6 +131,10 @@ class SqliteDocStore(DocStoreBackend):
     ) -> list[dict[str, Any]]:
         """Find documents with optional filters.
 
+        ponytail: Исправлена memory exhaustion — раньше при наличии фильтров
+        загружалось до 1M строк в память, затем фильтрация в Python.
+        Теперь фильтрация перенесена на SQL-уровень через json_extract.
+
         Args:
             namespace: Document namespace.
             filters: Optional field filters.
@@ -142,16 +146,21 @@ class SqliteDocStore(DocStoreBackend):
         """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
-            cursor = await db.execute(
-                f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608  # internal query with controlled parameters
-                (limit if filters is None else 1_000_000, offset),
-            )
+            if filters:
+                conditions, params = zip(*filters.items())
+                where_clause = " AND ".join(
+                    f"json_extract(body, '$.{key}') = ?" for key in conditions
+                )
+                sql = f"SELECT body FROM {table} WHERE {where_clause} ORDER BY doc_id LIMIT ? OFFSET ?"  # noqa: S608  # table name allowlisted via _ensure_namespace
+                query_params = (*params, limit, offset)
+                cursor = await db.execute(sql, query_params)
+            else:
+                cursor = await db.execute(
+                    f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608  # table name allowlisted via _ensure_namespace
+                    (limit, offset),
+                )
             rows = await cursor.fetchall()
-        docs = [orjson.loads(row[0]) for row in rows]
-        if filters:
-            docs = [d for d in docs if all(d.get(k) == v for k, v in filters.items())]
-            docs = docs[:limit]
-        return docs
+        return [orjson.loads(row[0]) for row in rows]
 
     async def count(self, namespace: str, filters: dict[str, Any] | None = None) -> int:
         """Count documents with optional filters.
