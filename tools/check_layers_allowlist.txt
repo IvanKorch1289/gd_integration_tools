@@ -3,8 +3,6 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.builder
-extensions/core_entities/orders/workflows/orders_saga.py	extensions	src.backend.dsl.workflow.spec
 extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.builder
 extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl.workflow.spec
 src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
@@ -106,6 +104,7 @@ src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.b
 src/backend/entrypoints/api/v1/endpoints/rag_cache_admin.py	entrypoints	src.backend.infrastructure.cache.rag.metrics
 src/backend/entrypoints/asyncapi/exporter.py	entrypoints	src.backend.infrastructure.clients.messaging.stream
 src/backend/entrypoints/base.py	entrypoints	src.backend.dsl.commands.registry
+src/backend/entrypoints/dependencies/rate_limit.py	entrypoints	src.backend.infrastructure.resilience.unified_rate_limiter
 src/backend/entrypoints/email/imap_monitor.py	entrypoints	src.backend.dsl.service
 src/backend/entrypoints/filewatcher/watcher_manager.py	entrypoints	src.backend.dsl.service
 src/backend/entrypoints/graphql/auto_schema.py	entrypoints	src.backend.dsl.commands.action_registry
@@ -135,6 +134,7 @@ src/backend/entrypoints/mcp/workflow_tools.py	entrypoints	src.backend.infrastruc
 src/backend/entrypoints/middlewares/admin_ip.py	entrypoints	src.backend.dsl.codec.converters
 src/backend/entrypoints/middlewares/api_key.py	entrypoints	src.backend.dsl.codec.converters
 src/backend/entrypoints/middlewares/webhook_signature.py	entrypoints	src.backend.infrastructure.security.signatures
+src/backend/entrypoints/middlewares/ws_rate_limit.py	entrypoints	src.backend.infrastructure.resilience.unified_rate_limiter
 src/backend/entrypoints/mqtt/mqtt_handler.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/soap/soap_handler.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/soap/soap_handler.py	entrypoints	src.backend.dsl.service
@@ -191,8 +191,6 @@ src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.reg
 src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
-src/backend/services/plugins/loader.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/plugins/loader.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
