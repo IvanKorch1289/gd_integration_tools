@@ -23,7 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.security.signatures import (
+from src.backend.services.security import (
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,
 )

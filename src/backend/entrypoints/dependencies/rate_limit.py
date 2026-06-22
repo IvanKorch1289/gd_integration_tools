@@ -28,7 +28,7 @@ from src.backend.core.decorators.limiting_callbacks import (
     default_callback,
     default_identifier,
 )
-from src.backend.infrastructure.resilience.unified_rate_limiter import (
+from src.backend.services.resilience.rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

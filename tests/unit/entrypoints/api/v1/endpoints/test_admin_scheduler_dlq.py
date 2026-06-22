@@ -156,7 +156,7 @@ async def test_retry_failed_job_with_scheduler(sample_entry: SchedulerDLQEntry) 
     mock_manager.scheduler = mock_scheduler
 
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.services.scheduler.admin.get_scheduler_manager",
         return_value=mock_manager,
     ):
         result = await mod.retry_failed_job(sample_entry.id)

@@ -23,7 +23,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
-from src.backend.infrastructure.scheduler.dlq import (
+from src.backend.services.scheduler.admin import (
     SchedulerDLQStore,
     get_scheduler_dlq_store,
 )
@@ -137,7 +137,7 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
 
     reschedule_attempted = False
     try:
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
+        from src.backend.services.scheduler.admin import (
             get_scheduler_manager,
         )
 

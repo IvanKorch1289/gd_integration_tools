@@ -16,7 +16,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
-from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
+from src.backend.services.cache.metrics import get_metrics_snapshot
 
 __all__ = ("record_invalidation_event", "router", "get_three_tier_cache")
 

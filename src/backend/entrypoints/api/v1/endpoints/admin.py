@@ -4,7 +4,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.infrastructure.cache.metrics_collector import (
+from src.backend.services.cache.metrics import (
     get_cache_metrics_snapshot,
 )
 from extensions.core_admin.schemas.route import (
