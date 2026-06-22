@@ -16,7 +16,7 @@ dependencies = [
     "alembic>=1.13.3,<2.0.0",
     "greenlet>=3.1.1,<4.0.0",
     "python-dotenv>=1.0.1,<2.0.0",
-    "fastapi-filter>=2.0.0,<3.0.0",
+    "fastapi-filter>=3.0.0,<4.0.0",
     "python-multipart>=0.0.18",
     "sqladmin>=0.25.1,<1.0.0",  # SECURITY: DoS fix (vulnerable <= 0.25.0)
     "argon2-cffi>=23.1.0,<24.0.0",
