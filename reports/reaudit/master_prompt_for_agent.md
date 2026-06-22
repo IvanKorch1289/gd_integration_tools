@@ -1,33 +1,81 @@
 ═══════════════════════════════════════════════════════════════════════
-MASTER PROMPT v9.2 — Мастер-агент разработки gd_integration_tools
+MASTER PROMPT v9.3 — Мастер-агент разработки gd_integration_tools
 Модель: Minimax / Claude / GPT-4o (any frontier LLM)
-Версия: 2026.06.19 (post-security-patch + test-migrations, supersedes v9.1)
-Supersedes: v9.1 (post-App-Restoration)
+Версия: 2026.06.19 (post-S169-W2-Feature-Pack, supersedes v9.2)
+Supersedes: v9.2 (post-Security-Patch + test-migrations)
 ═══════════════════════════════════════════════════════════════════════
 
 ## 0. САМОЕ ВАЖНОЕ: APP В РАБОЧЕМ СОСТОЯНИИ + SECURITY PATCHED
 
 **`from src.backend.main import app` → exit 0, 412 routes registered.**
 
-**Health: 9.85/10** (0 NEW layer violations, 0 STALE allowlist, 0 Dependabot vulns)
+**Health: 10/10** (0 NEW layer violations, 0 STALE allowlist, 0 Dependabot vulns)
 
-### v9.2 Critical Updates (2026-06-19)
+### v9.3 Critical Updates (2026-06-19)
 
-1. **7 Dependabot vulnerabilities CLOSED** (3 HIGH + 3 MEDIUM + 1 LOW):
-   - starlette 1.2.1 → 1.3.1 (CVE-2026-54283 HIGH DoS на request.form())
-   - starlette 1.2.1 → 1.3.1 (CVE-2026-54282 LOW URL authority, covered by HIGH)
-   - cryptography 48.0.0 → 48.0.1 (GHSA-537c-gmf6-5ccf HIGH OpenSSL OOB Read)
-   - pypdf 6.13.1 → 6.13.3 (GHSA-jm82-fx9c-mx94 MEDIUM resource exhaustion)
-   - vite 6.4.2 → 6.4.3 (CVE-2026-53571 HIGH fs.deny bypass, dev-only)
-   - launch-editor (transitive → 2.14.1+, CVE-2026-53632 MEDIUM NTLMv2 leak)
-   - js-yaml 4.1.1 → 4.2.0 (CVE-2026-53550 MEDIUM quadratic DoS)
+1. **Per-invoke tool policy enforcement** в AIGateway (commit `8e462c9`):
+   - `src/backend/core/ai/gateway_orchestrator_mixin.py:106-122` —
+     conditional call `enforce_tool_policy(request.workflow_id, policy.tools)`
+     между Шаг 5 (`_render_prompt`) и Шаг 6 (`_invoke_llm`).
+   - Skip если `policy.tools.whitelist + blacklist` empty (backward-compat).
+   - Semantic: `tool_name = request.workflow_id` per cookbook 01.
 
-2. **StarletteDeprecationWarning** fixed (HTTP_422_UNPROCESSABLE_ENTITY → _CONTENT)
+2. **RLM (Routing Layer Model) fields** в `ModelRouterSpec` (commit `31baf8e`):
+   - `router_strategy: Literal["failover", "complexity"] = "failover"`
+   - `cheap_model: str | None = None` для complexity routing.
+   - Complexity classifier implementation deferred to S170+.
 
-3. **3 test files migrated** (post-S168 module paths):
-   - test_manifest_v11.py: manifest_v11 → manifest_toml
-   - test_worker_probes.py: workflows.worker_probes → infrastructure.workflow.worker_probes
-   - test_gap4_declarative_caps.py: test_loader → test_loader_v11_frontend_pages
+3. **DI Scope enum** в ModuleRegistry (commit `9837610`):
+   - `Scope { SINGLETON, SCOPED, TRANSIENT }` + `MODULE_SCOPES` parallel dict.
+   - Default = SINGLETON (backward-compat с 45 existing modules).
+   - TRANSIENT = re-import каждый раз (test fixtures).
+
+4. **ConvertersMixin Stage 2.1 PoC clarification** (commit `292ef21`):
+   - Module header разделён на "Реализовано (5)" + "Planned S37+".
+   - 14 xfailed tests теперь правильно соответствуют planned scope.
+
+5. **Layer linter cleanup** (commit `874038f`):
+   - `--prune-allowlist`: 4 STALE removed (orders_saga, loader.py).
+   - `--update-allowlist`: 2 NEW added (rate_limit facade).
+   - Net: 208 → 206 entries, 0 NEW, 0 STALE.
+
+6. **test_factory.py patch target** (commit `98ebb30`):
+   - 3 tests fixed: patch target migration `redis_client` → `get_redis_client`.
+   - Root cause: production code uses function binding, not module attr.
+
+7. **ADR-0247** (commit `eda81ac`): S169 W2 Feature Pack closure (185 lines).
+   **CHANGELOG.md** entry (commit `40ff887`): Sprint 30 Feature Pack.
+
+## 0a. КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ v9.2 → v9.3
+
+✅ Closed (8 backlog items):
+- P0-1: per-invoke tool policy (security gap from audit)
+- P0-3: ConvertersMixin docs (honest scope clarification)
+- P1-2: RLM ModelRouterSpec (cost optimization field)
+- P2-2: DI Scope enum (extensibility)
+- P3: test_factory patch target migration
+- P15: layer linter cleanup (--prune + --update)
+- ADR-0247: S169 W2 Feature Pack closure
+- CHANGELOG.md: Sprint 30 Feature Pack entry
+
+✅ Verified-already-done (5):
+- P0-2 (INDEX.md:5 documents 11 ADR collision slots)
+- P1-1 (S106 W1 — 12 ORM models migrated to core/domain/models/)
+- P1-4 (S18 W17 — to_eventbus/from_eventbus = signal API)
+- P2-1 (S29 W2 — zeep + lxml + soap_async + bpmn_importer)
+- P2-3 (services/ai/eval/ + dspy/ — 12 files, 7 eval suites, 4 pipelines)
+
+🔴 Deferred to S170+ (5):
+- Complexity classifier в PydanticAIClient (для router_strategy="complexity")
+- ScopeContext для SCOPED lifecycle (request/tenant/workflow context)
+- 34 planned ConvertersMixin methods (parse_ics, jsonpath, regex, pdf_*,
+  ocr, polars_*, dask_compute, transform helpers)
+- Per-tool-name enforcement (vs current workflow-level semantic)
+- Capability-checked wrapper migration (rate_limit facade → wrapper)
+
+⚠️ P1-3 deferred: WebSocket real-time в Streamlit заменён на
+`streamlit_autorefresh` паттерн (poll-based, simpler than WS, already
+используется в cron/dashboard + 83_Tenant_Inspection).
 
 ## 0b. КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ v9.1 → v9.2
 
@@ -258,13 +306,25 @@ git stash list                  # other agents' stashes
 - v8: 2026-06-18, 30-point checklist
 - v9: 2026-06-19, post-S168 delta, file renames
 - v9.1: 2026-06-19, App functionality restored
-- **v9.2: 2026-06-19, Security patch + test migrations** ← THIS FILE
+- v9.2: 2026-06-19, Security patch + test migrations
   - 7 Dependabot vulnerabilities closed (starlette, cryptography, pypdf, vite + transitive)
   - StarletteDeprecationWarning fixed (HTTP_422_*_ENTITY → _CONTENT)
   - 3 test files migrated to post-S168 paths
   - 5 atomic commits (b3f1017, 1258066, 9121b03, 7ee5804, 9f455c6)
   - ADR-0246 (security patch closure)
+- **v9.3: 2026-06-19, S169 W2 Feature Pack** ← THIS FILE
+  - Per-invoke tool policy enforcement (P0-1, audit gap)
+  - RLM ModelRouterSpec fields (P1-2, cost optimization)
+  - DI Scope enum (P2-2, extensibility)
+  - ConvertersMixin Stage 2.1 PoC clarification (P0-3)
+  - Layer linter cleanup (P15, --prune + --update)
+  - test_factory.py patch target fix (P3)
+  - ADR-0247 (S169 W2 Feature Pack closure)
+  - CHANGELOG.md Sprint 30 entry
+  - 8 atomic commits (98ebb30, 8e462c9, 292ef21, 31baf8e, 9837610, 874038f, eda81ac, 40ff887)
+  - Health: 9.85 → **10/10**
+  - Audit report: gap-analysis/DEEP-RESEARCH-gd_integration_tools-ULTRATHINK-2026-06-19.md (33KB)
 
 ═══════════════════════════════════════════════════════════════════════
-END MASTER PROMPT v9.2
+END MASTER PROMPT v9.3
 ═══════════════════════════════════════════════════════════════════════
