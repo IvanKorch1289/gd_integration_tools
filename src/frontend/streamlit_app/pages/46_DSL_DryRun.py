@@ -7,7 +7,7 @@ import json
 import streamlit as st
 import yaml as _yaml
 
-from src.backend.services.dsl_portal import dry_run_route, waterfall_lines
+from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
 setup_page("DSL Dry-Run", ":fast_forward:")
@@ -67,32 +67,41 @@ if run:
             st.error(f"JSON parse error: {exc}")
             st.stop()
 
-    result = dry_run_route(route, sample_payload=payload, seed=int(seed))
+    result = DSLRoutesClient().dry_run(route, sample_payload=payload, seed=int(seed))
+
+    if result.get("error"):
+        st.error(f"Dry-run error: {result['error']}")
+        st.stop()
 
     st.success(
-        f"Dry-run завершён за {result.total_ms:.2f}ms ({len(result.steps)} steps)"
+        f"Dry-run завершён за {result.get('total_ms', 0):.2f}ms "
+        f"({len(result.get('steps', []))} steps)"
     )
 
     # Waterfall (ASCII).
     st.subheader("Waterfall")
-    st.code("\n".join(waterfall_lines(result, width=40)), language="text")
+    waterfall = result.get("waterfall", [])
+    if waterfall:
+        st.code("\n".join(waterfall), language="text")
+    else:
+        st.info("No waterfall data")
 
     # Таблица per-step.
     st.subheader("Per-step latency")
     rows = [
         {
-            "idx": s.index,
-            "step": s.label,
-            "duration_ms": s.duration_ms,
-            "output_preview": s.output_preview,
-            "notes": "; ".join(s.notes),
+            "idx": s.get("index"),
+            "step": s.get("label"),
+            "duration_ms": s.get("duration_ms"),
+            "output_preview": s.get("output_preview"),
+            "notes": "; ".join(s.get("notes") or []),
         }
-        for s in result.steps
+        for s in result.get("steps", [])
     ]
     dataframe_view(rows, hide_index=True)
 
     with st.expander("Raw JSON result"):
-        st.json(result.to_dict())
+        st.json(result)
 
 st.divider()
 st.markdown(

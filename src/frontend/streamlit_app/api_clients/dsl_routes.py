@@ -104,3 +104,29 @@ class DSLRoutesClient(BaseAPIClient):
             )
         except Exception as exc:  # noqa: BLE001
             return {"status": "error", "error": str(exc), "body": None, "trace": []}
+
+    def dry_run(
+        self,
+        route: dict[str, Any],
+        sample_payload: Any = None,
+        seed: int = 0,
+    ) -> dict[str, Any]:
+        """POST /api/v1/dsl/dry-run — эмуляция выполнения route.
+
+        P6 thin-client миграция: вызывает HTTP endpoint вместо прямого импорта
+        ``dsl_portal.dry_run_route``.
+        """
+        try:
+            return self._request(
+                "POST",
+                "/api/v1/dsl/dry-run",
+                json={"route": route, "sample_payload": sample_payload, "seed": seed},
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "error": str(exc),
+                "route_id": None,
+                "total_ms": 0.0,
+                "steps": [],
+                "waterfall": [],
+            }

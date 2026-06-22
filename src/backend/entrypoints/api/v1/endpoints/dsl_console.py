@@ -65,6 +65,26 @@ class ExecuteRegisteredResponse(BaseModel):
     trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class DryRunRequest(BaseModel):
+    """Запрос на dry-run выполнение DSL route."""
+
+    route: dict[str, Any] = Field(..., description="Route dict из YAML.safe_load")
+    sample_payload: Any = Field(
+        default=None, description="Sample payload для эмуляции"
+    )
+    seed: int = Field(default=0, description="Seed для deterministic latency")
+
+
+class DryRunResponse(BaseModel):
+    """Результат dry-run выполнения."""
+
+    route_id: str | None = None
+    total_ms: float = 0.0
+    steps: list[dict[str, Any]] = Field(default_factory=list)
+    waterfall: list[str] = Field(default_factory=list)
+    error: str | None = None
+
+
 class _DSLConsoleFacade:
     """Адаптер для inline-выполнения DSL pipeline."""
 
@@ -170,6 +190,27 @@ class _DSLConsoleFacade:
         except Exception as exc:
             return ExecuteRegisteredResponse(status="error", error=str(exc))
 
+    async def dry_run(
+        self,
+        *,
+        route: dict[str, Any],
+        sample_payload: Any = None,
+        seed: int = 0,
+    ) -> DryRunResponse:
+        """Выполняет route в dry-run режиме (эмуляция, без side-effects)."""
+        try:
+            from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
+
+            result = dry_run_route(route, sample_payload=sample_payload, seed=seed)
+            return DryRunResponse(
+                route_id=result.route_id,
+                total_ms=result.total_ms,
+                steps=[s.__dict__ for s in result.steps],
+                waterfall=waterfall_lines(result, width=40),
+            )
+        except Exception as exc:
+            return DryRunResponse(error=str(exc))
+
 
 _FACADE = _DSLConsoleFacade()
 
@@ -212,6 +253,21 @@ builder.add_actions(
             service_method="execute_registered_route",
             body_model=ExecuteRegisteredRequest,
             response_model=ExecuteRegisteredResponse,
+            tags=("DSL Console",),
+        ),
+        ActionSpec(
+            name="dry_run_route",
+            method="POST",
+            path="/dsl/dry-run",
+            summary="Dry-run выполнение DSL route",
+            description=(
+                "Эмулирует выполнение route без side-effects. "
+                "Возвращает per-step latency и waterfall data."
+            ),
+            service_getter=_get_facade,
+            service_method="dry_run",
+            body_model=DryRunRequest,
+            response_model=DryRunResponse,
             tags=("DSL Console",),
         ),
     ]
