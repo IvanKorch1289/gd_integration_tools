@@ -1490,3 +1490,49 @@ from gd_integration_tools.core.workflow.backend import WorkflowBackend  # extend
 ### Sprint Status
 
 **CLOSED** (3 atomic commits, 7 audit corrections, 0 regressions)
+
+
+---
+
+## CLOSURE LOG (Sprint 44, 2026-06-22) — Audit Follow-up Execution
+
+### Commits Applied (5 atomic, all merged to master)
+
+| Commit | Hash | Scope | LOC | Description |
+|---|---|---|---|---|
+| `c14dcb6` | feat(s44-w1) | 4 files | +79 / -6 | 2 core facades (web_search + llm_gateway) + extensions migration |
+| `03ce5bd` | refactor(s44-w2) | 9 files | +61 / -44 | dsl_portal facade extension + 6 streamlit migrations + dead code removal |
+| `83ec464` | refactor(s44-w3) | 3 files | +43 / -3 | outbox_monitor facade + 96_Outbox migration |
+| `df367db` | refactor(s44-w4) | 216 files | +216 / -376 | S7 mechanical logger migration (canonical core.logging) |
+| `5af8308` | fix(s44-w5) | 3 files | +38 / -10 | QW2 string-bypass removal + log_indexer facade |
+| **Total S44** | | **235 files** | **+437 / -439** | |
+
+### Audit Backlog Status (post-S44)
+
+| ID | Status | Notes |
+|---|---|---|
+| QW1 (AsyncFunctionDef) | ✅ S43 | 4a431bf |
+| QW2 (audit/event_log.py:22) | ✅ S44 W5 | 5af8308 |
+| QW3 (11 schemas shims) | ✅ S43 | 16f1970 |
+| QW4 (_build_credit_pipeline_agents) | ❌ KEEP | false positive — reference impl |
+| QW5 (_integration_group_*.py) | ❌ KEEP | false positive — files don't exist |
+| QW7 (P7 core/ai logger) | ✅ S43 | b287fdf |
+| QW9 (outdated docstrings) | ❌ KEEP | false positive — already accurate |
+| QW10 (services/audit shim) | ⏸️ DEFER | 9 consumers, multi-file refactor |
+| S1 (entrypoints→infra) | ⏸️ DEFER | 8 SAFE files, larger scope |
+| S2 (frontend→dsl/infra) | ✅ S44 W2+W3 | 12/12 closed |
+| SDK gap (extensions facades) | ✅ S44 W1 | web_search + llm_gateway |
+| S7 (226 logger imports) | ✅ S44 W4 | 216/226 (95.6%, 4 blocked + 2 special) |
+| S13 (CB middleware) | ⏸️ DEFER | high risk, K8s multi-pod |
+
+### Verification
+
+- `python tools/check_layers.py` → 0 новых (2144 files, 204 legacy baseline)
+- 0 remaining `frontend→dsl` imports
+- 0 remaining `frontend→infrastructure` imports
+- 0 remaining `infrastructure→services` dynamic-import bypass (QW2 fixed)
+- 95.6% of S7 logger backlog migrated
+
+### Sprint Status
+
+**S44 CLOSED** (5 atomic commits, 235 files touched, +437/-439 LOC net, 0 regressions)

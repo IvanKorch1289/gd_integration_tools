@@ -5,6 +5,65 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 44 — Audit Follow-up: Facades + Migrations, 2026-06-22] — Rule 3 + Rule 8
+
+5 atomic commits, deep-audit backlog execution (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`,
+ADR-0248).
+
+### Added
+
+- **2 core facades (extensions SDK)**:
+  - `src/backend/core/integrations/web_search.py` — re-export `get_web_search_service`
+    + `WebSearchService` для extensions (closes SDK gap из audit).
+  - `src/backend/core/ai/llm_gateway.py` — re-export `get_litellm_gateway` + `LiteLLMGateway`.
+- **`src/backend/core/observability/log_indexer.py`** — facade для infrastructure доступа
+  к `LogIndexer` (заменяет string-bypass dynamic import).
+- **`src/backend/services/messaging/outbox_monitor.py`** — frontend facade для
+  `infrastructure.messaging.outbox.stuck_monitor.default_stuck_monitor`.
+
+### Changed
+
+- **`src/backend/services/dsl_portal/builder_facade.py`** — расширен facade с +6 новыми
+  re-exports из `dsl.workflow.*` и `dsl.engine.dry_run`:
+  `WorkflowDeclaration`, `get_global_registry`, `to_mermaid`, `compute_step_diff`,
+  `to_graphviz`, `dry_run_route`, `waterfall_lines`. `__all__` extended.
+- **`extensions/osint_agent/functions/osint_workflow.py`** — 2 lazy imports
+  перенаправлены через core facades (`web_search`, `llm_gateway`).
+- **6 streamlit pages** migrated через `services.dsl_portal`:
+  `15_Workflow_Cost_Estimation`, `18_Workflow_Versioning`, `33_DSL_Templates`,
+  `46_DSL_DryRun`, `_editor/workflow_diff`, `_groups/.../workflow_templates_tab`.
+- **`96_Outbox_Stuck_Monitor.py`** — import через `services.messaging.outbox_monitor` facade.
+- **216 files** в `src/backend/` мигрированы с `infrastructure.logging.factory.get_logger`
+  на canonical `core.logging.get_logger` path (95.6% of S7 backlog, mechanical sed).
+
+### Removed
+
+- **String-bypass layer linter в `infrastructure/audit/event_log.py:22`**:
+  удалены `import importlib` и `_LOG_INDEXER_MOD = "src." + "backend.services..."`,
+  заменены на facade import. Восстановлен V22 invariant (no dynamic import circumvention).
+- **Dead code** в `33_DSL_Templates.py` и `workflow_templates_tab.py`:
+  удалён `try/except ImportError` для модуля `dsl.workflow.template_registry_compat`
+  (модуль не существует, всегда падал в fallback).
+
+### Verification
+
+- `python tools/check_layers.py` → 0 новых (2144 files, 204 legacy, +2 facade entries)
+- `python tools/check_layers.py --prune-allowlist` → removed 11 stale (W2: frontend→dsl)
+- 0 remaining `frontend→dsl` или `frontend→infrastructure` imports (S2 backlog CLOSED)
+- 0 remaining `infrastructure→services` dynamic-import bypass (QW2 CLOSED)
+- `git log --oneline -9` → 5af8308, df367db, 83ec464, 03ce5bd, c14dcb6 (S44) +
+  9341ffa, 16f1970, b287fdf, 4a431bf (S43)
+
+### Out of scope (deferred → S45+)
+
+- QW10: `services/audit/audit_service.py` backward-compat shim (9 consumers,
+  multi-file refactor)
+- S1: 8 entrypoints→infra imports (workflow_registry, ratelimiter, signature, DLQ,
+  cache metrics) — через services facades
+- S13: Circuit breaker middleware → shared state (K8s multi-pod safety, high risk)
+- S7: 4 BLOCKED files в foreign WIP + 2 SPECIAL (infrastructure/logging/__init__,
+  test file) — deferred to S45 after foreign WIP merge
+
 ## [Sprint 43 — Deep-Audit Quick Wins, 2026-06-22] — Rule 14 + Rule 3 + Rule 8
 
 3 atomic commits, deep-audit follow-up (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`).
