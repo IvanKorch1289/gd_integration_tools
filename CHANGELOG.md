@@ -118,6 +118,103 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `python -c "from fastapi.testclient import TestClient; from src.backend.main import app; c = TestClient(app); c.get('/healthz')"` → 401 (auth working)
 - `git log --oneline -5`: f71b4cc, d63a3d2 (parallel session included my fixes), dab9e8b (S168-delta closure)
 
+## [Sprint 30 — S169 W2 Feature Pack: RLM + DI Scope + Per-Invoke Tool Policy, 2026-06-19] — Rule 7 + Rule 8
+
+### Added
+
+- **Per-invoke tool policy enforcement** в AIGateway (`commit 8e462c9`):
+  - `src/backend/core/ai/gateway_orchestrator_mixin.py:106-122` —
+    conditional call `enforce_tool_policy(request.workflow_id, policy.tools)`
+    между Шаг 5 (`_render_prompt`) и Шаг 6 (`_invoke_llm`).
+  - Skip если `policy.tools.whitelist + blacklist` empty (backward-compat
+    с pre-S76 политиками). Lazy import внутри условия (Ponytail).
+  - Semantic: `tool_name = request.workflow_id` per
+    docs/cookbooks/01-ai-agent-tools-whitelist.md.
+
+- **RLM (Routing Layer Model) fields** в `ModelRouterSpec` (`commit 31baf8e`):
+  - `src/backend/core/ai/policy/spec.py:29-66` — новые поля:
+    - `router_strategy: Literal["failover", "complexity"] = "failover"`
+    - `cheap_model: str | None = None`
+  - YAML example:
+    ```yaml
+    model_router:
+      primary: openai/gpt-4o
+      cheap_model: openai/gpt-4o-mini
+      router_strategy: complexity
+    ```
+  - Degradation: `cheap_model=None` → "failover" behaviour. Complexity
+    classifier implementation в `PydanticAIClient` deferred to S170+.
+
+- **DI Scope enum** в ModuleRegistry (`commit 9837610`):
+  - `src/backend/core/di/module_registry.py` — новый enum
+    `Scope { SINGLETON, SCOPED, TRANSIENT }` + parallel dict
+    `MODULE_SCOPES` (default = SINGLETON для backward-compat).
+  - Scope-aware `resolve_module()`: SINGLETON = sys.modules cache,
+    TRANSIENT = re-import каждый раз (test fixtures).
+  - Новая функция `get_module_scope(key) -> Scope`.
+  - 45 existing modules работают as-is (SINGLETON default).
+
+### Changed
+
+- **ConvertersMixin Stage 2.1 PoC clarification** (`commit 292ef21`):
+  - `src/backend/dsl/builders/converters.py:1-23` — module header
+    разделён на "Реализовано в Stage 2.1 PoC (5 методов)" +
+    "Planned для Stage 2.1 продолжения (S37+; НЕ реализовано)".
+  - 14 xfailed tests в `test_format_converters.py` теперь
+    правильно соответствуют docstring scope.
+
+### Fixed
+
+- **Layer linter cleanup** (`commit 874038f`):
+  - Per P15 protocol (deep-research skill): `--prune-allowlist` (4 STALE
+    removed) + `--update-allowlist` (2 NEW added).
+  - Removed: `extensions/core_entities/orders/workflows/orders_saga.py × 2`
+    + `src/backend/services/plugins/loader.py × 2` (файлы удалены в
+    S168 W15-W17 cascade).
+  - Added: `entrypoints/{dependencies,middlewares}/{rate_limit,ws_rate_limit}.py`
+    → `infrastructure.resilience.unified_rate_limiter` (framework exception).
+  - Net: `tools/check_layers_allowlist.txt` 208 → 206 entries.
+
+- **test_factory.py patch target** (`commit 98ebb30`):
+  - После migration `from ... import get_redis_client as redis_client` →
+    `client = get_redis_client()`, tests должны patch'ить функцию, не модуль.
+  - 3 tests fixed: `test_redis_client_uses_raw_client_attribute`,
+    `test_redis_client_falls_back_to_client_attribute`,
+    `test_redis_client_raises_if_not_initialized`.
+
+### Documentation
+
+- **ADR-0247** (`commit eda81ac`): S169 W2 Feature Pack closure — covers
+  6 atomic commits + pre-flight protocols + verification matrix.
+  `docs/adr/0247-s30-rlm-di-scope-tool-policy.md` (185 lines).
+- **INDEX.md** regenerated: 205 ADR files, 194 unique slots, 11 collisions.
+
+### Notes
+
+- **Audit-driven**: per DEEP-RESEARCH-gd_integration_tools-ULTRATHINK-2026-06-19.md
+  (33KB report, 4 subagent streams, 22 audit topics).
+- **Backlog closed (6)**: P0-1, P0-3, P1-2, P2-2, P3, P15.
+- **Backlog verified-already-done (4)**: P0-2 (INDEX.md:5),
+  P1-1 (S106 W1 — 12 models migrated), P1-4 (S18 W17 to_eventbus),
+  P2-1 (S29 W2 zeep+lxml), P2-3 (ragas+dspy+7 eval suites+4 pipelines).
+- **Deferred to S170+ (5)**: complexity classifier, ScopeContext,
+  34 ConvertersMixin methods, per-tool-name enforcement,
+  capability-checked wrapper migration.
+- **P1-3 deferred**: WebSocket real-time в Streamlit заменён на
+  `streamlit_autorefresh` паттерн (poll-based, simpler than WS).
+
+### Verification
+
+- `pytest tests/unit/ai/`: **23/23 passed** (P0-1 + P1-2 verified)
+- `pytest tests/unit/core/di/`: **131/131 passed** (P2-2 verified)
+- `pytest tests/unit/dsl/ -k converter`: **220 passed, 14 xfailed**
+  (xfailed = planned ConvertersMixin methods, validates doc honesty)
+- `pytest tests/unit/infrastructure/cache/test_factory.py`: **13/13 passed** (P3)
+- `python tools/check_layers.py`: **0 NEW, 0 STALE, 206 entries** (P15)
+- `python tools/build_adr_index.py`: **205 files, 194 unique slots** (ADR-0247)
+- **App smoke**: `from src.backend.main import app` → 412 routes (no regression)
+- **Health score**: 10/10 maintained (S168 baseline).
+
 ## [Sprint 30 — S168 Delta Closure, 2026-06-19] — Rule 3 + Rule 2
 
 ### Fixed
