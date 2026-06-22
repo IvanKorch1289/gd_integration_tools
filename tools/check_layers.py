@@ -196,9 +196,17 @@ def _imports(tree: ast.AST) -> Iterable[tuple[str, int, bool]]:
 
 
 def _is_lazy_import(tree: ast.AST, import_node: ast.AST) -> bool:
-    """Проверяет, является ли import lazy (внутри тела функции)."""
+    """Проверяет, является ли import lazy (внутри тела функции).
+
+    Sprint 43 QW1: добавлена проверка ``ast.AsyncFunctionDef`` — ранее
+    lazy-imports внутри ``async def`` функций ошибочно классифицировались
+    как top-level и проходили через allowlist вместо того чтобы считаться
+    lazy. Это позволяло extensions импортировать из infrastructure/services/
+    entrypoints через async def без CI-провала. См. deep-audit-2026-06-22.md
+    P0-1.
+    """
     for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         for child in ast.walk(node):
             if child is import_node:
