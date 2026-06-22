@@ -45,10 +45,15 @@ schema = export_aipolicy_json_schema()
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 from typing import Any
 
 from src.backend.core.ai.policy.spec import AIPolicySpec
+
+logger = get_logger(__name__)
+
 
 __all__ = (
     "export_aipolicy_json_schema",

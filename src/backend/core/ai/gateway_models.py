@@ -11,9 +11,14 @@ Backward compat: импорт ``from src.backend.core.ai.gateway import AIReques
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = get_logger(__name__)
+
 
 __all__ = ("AIRequest", "AIResponse")
 

@@ -44,11 +44,16 @@ loader'а + auto-export — Wave S26 W5.
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 import importlib
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
+
+logger = get_logger(__name__)
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable

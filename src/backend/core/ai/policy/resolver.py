@@ -8,6 +8,8 @@ Sprint 25 W2 (ADR-NEW-20). Полная реализация YAML-loader + per-t
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 import fnmatch
 from pathlib import Path
@@ -17,6 +19,9 @@ import yaml
 
 from src.backend.core.ai.policy.spec import AIPolicySpec
 from src.backend.core.ai.policy.specificity import find_specific_match
+
+logger = get_logger(__name__)
+
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

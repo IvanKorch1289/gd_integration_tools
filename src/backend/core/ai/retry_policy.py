@@ -18,8 +18,13 @@ import RetryPolicy`` продолжали работать.
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 from pydantic import BaseModel, ConfigDict, Field
+
+logger = get_logger(__name__)
+
 
 
 class RetryPolicy(BaseModel):

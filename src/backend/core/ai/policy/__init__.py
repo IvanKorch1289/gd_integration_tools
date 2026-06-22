@@ -24,6 +24,8 @@
 
 См. docs/adr/0067-ai-policy-spec-dsl.md.
 """
+from src.backend.core.logging import get_logger
+
 
 from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
 from src.backend.core.ai.policy.resolver import (
@@ -41,6 +43,9 @@ from src.backend.core.ai.policy.spec import (
     ModelRouterSpec,
     SanitizerRef,
 )
+
+logger = get_logger(__name__)
+
 
 __all__ = (
     "AIPolicyEnforcer",

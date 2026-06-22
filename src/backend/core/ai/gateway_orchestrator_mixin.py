@@ -16,12 +16,17 @@ Audit-context: импортируется из :mod:`gateway_audit_mixin` (T-P1.
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 import time
 from typing import TYPE_CHECKING
 
 from src.backend.core.ai.gateway_audit_mixin import _AuditContext
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+
+logger = get_logger(__name__)
+
 
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway_pipeline_mixin import (

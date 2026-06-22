@@ -12,10 +12,15 @@ fallback на subprocess.
 """
 
 from __future__ import annotations
+from src.backend.core.logging import get_logger
+
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
+
+logger = get_logger(__name__)
+
 
 if TYPE_CHECKING:
     from src.backend.core.ai.workspace_manager import WorkspaceHandle
