@@ -211,3 +211,5 @@ src/frontend/streamlit_app/pages/_editor/workflow_diff.py	frontend	src.backend.d
 src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.spec
 src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.template_registry_compat
 src/frontend/streamlit_app/pages/_groups/dsl/dsl_templates/workflow_templates_tab.py	frontend	src.backend.dsl.workflow.visualize
+src/backend/core/integrations/web_search.py	core	src.backend.infrastructure.clients.external.search_providers
+src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client

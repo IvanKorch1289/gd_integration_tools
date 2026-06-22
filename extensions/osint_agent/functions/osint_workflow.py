@@ -261,9 +261,7 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
     queries = _build_search_queries(inn, company_name)
 
     try:
-        from src.backend.infrastructure.clients.external.search_providers import (
-            get_web_search_service,
-        )
+        from src.backend.core.integrations.web_search import get_web_search_service
 
         service = get_web_search_service()
         results_general = await service.query(
@@ -289,7 +287,7 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
     )
 
     try:
-        from src.backend.services.ai.gateway.client import get_litellm_gateway
+        from src.backend.core.ai.llm_gateway import get_litellm_gateway
 
         gateway = get_litellm_gateway()
         response = await gateway.acompletion(
