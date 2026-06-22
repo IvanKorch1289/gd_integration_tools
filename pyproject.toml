@@ -425,7 +425,7 @@ multimodal-rag = [
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.
     # S31: upper bound снят <5 -> <6 для закрытия GHSA-69w3-r845-3855.
-    "transformers>=4.45,<6",
+    "transformers>=5.12.1,<6",
     # Sprint 11 K4 W1: audio resample / mel-spectrogram (Whisper STT).
     # openai-whisper не входит в multimodal-rag из-за отсутствия py3.14
     # wheels — установка через `pip install --no-build-isolation
