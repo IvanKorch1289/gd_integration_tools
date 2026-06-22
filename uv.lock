@@ -3032,7 +3032,7 @@ requires-dist = [
     { name = "jsonpath-ng", marker = "extra == 'dsl-extras'", specifier = ">=1.6.0,<2.0.0" },
     { name = "jupyter-client", marker = "extra == 'jupyter'", specifier = ">=8.0.0" },
     { name = "langchain-postgres", marker = "extra == 'ai-memory'", specifier = ">=0.0.10,<1.0.0" },
-    { name = "langfuse", marker = "extra == 'ai'", specifier = ">=2.0.0" },
+    { name = "langfuse", marker = "extra == 'ai'", specifier = ">=4.9.1" },
     { name = "langgraph", marker = "extra == 'ai'", specifier = ">=0.3.0" },
     { name = "language-tool-python", marker = "extra == 'docs-ru'", specifier = ">=2.8,<3" },
     { name = "ldap3", marker = "extra == 'dsl-extras-3'", specifier = ">=2.9,<3" },
@@ -4496,7 +4496,7 @@ wheels = [
 
 [[package]]
 name = "langfuse"
-version = "4.7.1"
+version = "4.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -4508,9 +4508,9 @@ dependencies = [
     { name = "pydantic", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "wrapt", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2c/74/a6f1a99893ee6d1a69439ae7eb92f8fe8806103492dc26531d5942dbd3bf/langfuse-4.7.1.tar.gz", hash = "sha256:f9e262eceedb353b191c1da1f8452d1e8ebf52297ca20e160cda0206608e3a40", size = 320620, upload-time = "2026-05-29T18:06:22.435Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/9a/c2e4b5c33a225a0158de0e774396823612a6c5beea21cde42e95b196c398/langfuse-4.9.1.tar.gz", hash = "sha256:e3d7162a8004f71abd6ad90fba2f3a7d0088cbdce1c77deea521837d49580ab4", size = 339957, upload-time = "2026-06-19T09:30:49.841Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/9a/bd3368f46b6c72ee2068b80536826b02ae86df53eff1c79941344503098f/langfuse-4.7.1-py3-none-any.whl", hash = "sha256:a4e59c81ad5e5b16a65d3849f4923ebc3ad6e67ec803ada83d50c0cb66149490", size = 562571, upload-time = "2026-05-29T18:06:20.517Z" },
+    { url = "https://files.pythonhosted.org/packages/15/9e/2b21989730ebb613118a667e59f652aebb5a1ca07de10984bf28a02a888f/langfuse-4.9.1-py3-none-any.whl", hash = "sha256:3feb00679aff2ff45b0e786574c748d7c40d23768452e17e3a02e8706b7cbce3", size = 599839, upload-time = "2026-06-19T09:30:48.4Z" },
 ]
 
 [[package]]

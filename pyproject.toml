@@ -115,7 +115,7 @@ ai = [
     # ReAct agent (create_react_agent), PostgresSaver checkpointer.
     # Lazy-import: langgraph imported inside functions, not at module level.
     "langgraph>=0.3.0",
-    "langfuse>=2.0.0",
+    "langfuse>=4.9.1",
     # Wave 1.7 (S1 R-V15-4): изолированный sandbox для AI code-execution.
     # Lazy-import внутри infrastructure/ai/e2b_sandbox.py; при отсутствии
     # пакета или E2B_API_KEY используется NoOpSandbox (явный отказ).
