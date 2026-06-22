@@ -11,11 +11,14 @@
 
 По умолчанию (default-OFF через ``feature_flags.audit_clickhouse_enabled``)
 сервис принимает emit/emit_batch без реального подключения к ClickHouse.
+
+S45 QW10: AuditService + get_unified_audit_service теперь импортируются
+из canonical ``core.audit.facade.audit_service`` (shim удалён в S45 W1).
 """
 
 from __future__ import annotations
 
-from src.backend.services.audit.audit_service import (
+from src.backend.core.audit.facade.audit_service import (  # noqa: E402,F401
     AuditService,
     get_unified_audit_service,
 )

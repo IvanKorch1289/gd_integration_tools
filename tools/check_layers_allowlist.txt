@@ -8,7 +8,6 @@ extensions/credit_pipeline/workflows/payments_saga.py	extensions	src.backend.dsl
 src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.infrastructure.ai.prompt_cache_middleware
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
-src/backend/core/ai/gateway_pipeline_mixin/observability_mixin.py	core	src.backend.services.audit.audit_service
 src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.services.ai.gateway
 src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
 src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
@@ -31,7 +30,6 @@ src/backend/core/db/external_facade.py	core	src.backend.infrastructure.database.
 src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.profile_store_memory
 src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.token_registry
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
-src/backend/core/di/providers/ai.py	core	src.backend.services.audit.audit_service
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
 src/backend/core/dsl/variables.py	core	src.backend.infrastructure.database.models
 src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
@@ -48,6 +46,7 @@ src/backend/core/messaging/event_bus.py	core	src.backend.infrastructure.clients.
 src/backend/core/net/outbound_http.py	core	src.backend.infrastructure.observability
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
+src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/observability/metrics.py	core	src.backend.infrastructure.observability.metrics_registry
 src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/plugin_runtime/dependency_resolver.py	core	src.backend.services.plugins.manifest_toml
@@ -206,4 +205,3 @@ src/backend/services/schema_registry/populator.py	services	src.backend.dsl.comma
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
 src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secrets
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
-src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer

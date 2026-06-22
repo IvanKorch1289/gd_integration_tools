@@ -714,7 +714,7 @@ async def test_audit_emit_no_service_silent_noop() -> None:
     response = AIResponse(content="hi")
     # Подменяем get_unified_audit_service чтобы он упал ImportError'ом
     with patch(
-        "src.backend.services.audit.audit_service.get_unified_audit_service",
+        "src.backend.core.audit.facade.audit_service.get_unified_audit_service",
         side_effect=ImportError("nope"),
     ):
         await mixin._audit_emit(req, None, response)  # no raise

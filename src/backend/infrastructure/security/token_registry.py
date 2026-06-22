@@ -28,7 +28,7 @@ Decisions (S25 W4, advisor 2026-05-25)
 См. также
 ---------
 * :class:`src.backend.core.security.pii_tokenizer.PIITokenizer` — основной caller;
-* :class:`src.backend.services.audit.audit_service.AuditService` — emit-таргет
+* :class:`src.backend.core.audit.facade.audit_service.AuditService` — emit-таргет
   ``ai.pii.tokenize.{store,retrieve,delete,decrypt_failed}``.
 """
 

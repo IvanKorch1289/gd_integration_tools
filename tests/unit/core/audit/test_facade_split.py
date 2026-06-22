@@ -80,9 +80,9 @@ def test_all_8_helpers_reexported_from_package() -> None:
 
 
 def test_audit_service_reexport_preserves_identity() -> None:
-    """``AuditService`` из facade = ``AuditService`` из services.audit (identity)."""
+    """S45 QW10: shim удалён, identity trivially через canonical import."""
     from src.backend.core.audit.facade import AuditService as Facade_AuditService
-    from src.backend.services.audit.audit_service import (
+    from src.backend.core.audit.facade.audit_service import (
         AuditService as Canonical_AuditService,
     )
 

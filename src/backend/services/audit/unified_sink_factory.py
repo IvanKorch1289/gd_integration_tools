@@ -40,7 +40,7 @@ def _create_emit_ai_invocation_event() -> None:
 
         if enabled:
             try:
-                from src.backend.services.audit.audit_service import (
+                from src.backend.core.audit.facade.audit_service import (
                     get_unified_audit_service,
                 )
 

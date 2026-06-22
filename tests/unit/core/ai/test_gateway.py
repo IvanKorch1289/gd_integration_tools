@@ -349,7 +349,7 @@ async def test_audit_emit_resolves_singleton_when_service_none(
     fake_audit = MagicMock()
     fake_audit.emit = AsyncMock()
 
-    import src.backend.services.audit.audit_service as audit_module
+    import src.backend.core.audit.facade.audit_service as audit_module
 
     monkeypatch.setattr(audit_module, "get_unified_audit_service", lambda: fake_audit)
 
@@ -366,7 +366,7 @@ async def test_audit_emit_swallows_singleton_lookup_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Если резолв singleton'а падает — emit просто no-op (не ломает invoke)."""
-    import src.backend.services.audit.audit_service as audit_module
+    import src.backend.core.audit.facade.audit_service as audit_module
 
     def _boom() -> Any:
         raise RuntimeError("AuditService недоступен")

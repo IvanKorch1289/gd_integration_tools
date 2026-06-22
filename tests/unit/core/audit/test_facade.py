@@ -3,7 +3,9 @@
 Verifies:
 * ``core.audit.facade`` re-exports ``AuditService`` и ``get_unified_audit_service``.
 * ``emit_audit()`` sync wrapper вызывает ``AuditService.emit()``.
-* Re-export identity: ``core.audit.facade.AuditService is services.audit.audit_service.AuditService``.
+
+S45 QW10: removed identity tests against deleted shim
+(services/audit/audit_service.py был удалён в S45 W1).
 """
 
 from __future__ import annotations
@@ -13,17 +15,24 @@ from src.backend.core.audit.facade import (
     emit_audit,
     get_unified_audit_service,
 )
-from src.backend.services.audit import audit_service as _svc_module
 
 
 def test_audit_service_identity() -> None:
-    """``core.audit.facade.AuditService is services.audit.audit_service.AuditService``."""
-    assert AuditService is _svc_module.AuditService
+    """Canonical class is the same object (S45 QW10: shim удалён, identity check trivially True)."""
+    from src.backend.core.audit.facade.audit_service import (
+        AuditService as CanonicalAuditService,
+    )
+
+    assert AuditService is CanonicalAuditService
 
 
 def test_get_unified_audit_service_identity() -> None:
-    """Canonical re-export: ``get_unified_audit_service`` same function."""
-    assert get_unified_audit_service is _svc_module.get_unified_audit_service
+    """Canonical function is the same object (S45 QW10)."""
+    from src.backend.core.audit.facade.audit_service import (
+        get_unified_audit_service as CanonicalGet,
+    )
+
+    assert get_unified_audit_service is CanonicalGet
 
 
 def test_emit_audit_calls_service() -> None:

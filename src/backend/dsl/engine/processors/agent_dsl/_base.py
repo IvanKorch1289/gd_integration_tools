@@ -245,7 +245,7 @@ class BaseAIProcessor(BaseProcessor):
     def _resolve_audit_service() -> Any | None:
         """Lazy-резолв Unified :class:`AuditService` (S17/K3)."""
         try:
-            from src.backend.services.audit.audit_service import (
+            from src.backend.core.audit.facade.audit_service import (
                 get_unified_audit_service,
             )
 

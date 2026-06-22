@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.services.audit.audit_service import (
+from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,
 )
