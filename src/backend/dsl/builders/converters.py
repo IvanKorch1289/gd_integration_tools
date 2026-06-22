@@ -1,13 +1,20 @@
 """Converters / format / data-quality / transform-helpers миксин.
 
-Группа: convert / convert_units / parse_ics / jsonpath / regex / hash /
-encrypt / decrypt / render_template / format_text / pdf_* / word_* /
-excel_* / ocr / image_resize / archive / compress / decompress /
-dq_check / export / web_search / markdown_to_html / html_to_markdown /
-avro_* / protobuf_* / toml_* / jsonl_* / polars_* / dask_compute /
-duckdb_query / transform helpers (as_, pick, drop, merge, batch_window,
-deduplicate, debounce, batch_by_field, poll_and_aggregate,
-filter_dispatch, cache_response, geoip).
+**Реализовано в Stage 2.1 PoC (5 методов):**
+- :meth:`ConvertersMixin.hash` — SHA-256/MD5/SHA-1/etc.
+- :meth:`ConvertersMixin.encrypt` / :meth:`ConvertersMixin.decrypt` — Fernet AES.
+- :meth:`ConvertersMixin.compress` / :meth:`ConvertersMixin.decompress` —
+  gzip/zlib/brotli.
+
+**Planned для Stage 2.1 продолжения (S37+; НЕ реализовано):**
+- convert / convert_units / parse_ics / jsonpath / regex
+- render_template / format_text / pdf_* / word_* / excel_* / ocr
+- image_resize / archive / dq_check / export / web_search
+- markdown_to_html / html_to_markdown / avro_* / protobuf_* / toml_* / jsonl_*
+- polars_* / dask_compute / duckdb_query
+- transform helpers: as_ / pick / drop / merge / batch_window / deduplicate /
+  debounce / batch_by_field / poll_and_aggregate / filter_dispatch /
+  cache_response / geoip
 
 Stateless — см. контракт в ``base.py``.
 """
