@@ -13,7 +13,7 @@ Order-ресурса из ядра в extensions/. Тяжёлая логика (
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
 
@@ -39,6 +39,61 @@ class OrdersPlugin(BasePlugin):
         """Сохраняет ``PluginContext`` для последующих хуков."""
         self._ctx = ctx
         logger.info("core_entities_orders plugin loaded")
+
+    async def on_register_actions(self, registry: Any) -> None:
+        """Регистрирует ``orders.*`` actions в реестре.
+
+        Layer-violation fix: ранее регистрация была прямой в
+        ``dsl/commands/setup.py`` (нарушение слоя). Теперь — через
+        PluginLoader lifecycle hook.
+        """
+        from extensions.core_entities.orders.services.orders import get_order_service
+
+        async def _add(**kwargs: Any) -> Any:
+            return await get_order_service().add(**kwargs)
+
+        async def _get(**kwargs: Any) -> Any:
+            return await get_order_service().get(**kwargs)
+
+        async def _update(**kwargs: Any) -> Any:
+            return await get_order_service().update(**kwargs)
+
+        async def _delete(**kwargs: Any) -> Any:
+            return await get_order_service().delete(**kwargs)
+
+        async def _create_skb_order(**kwargs: Any) -> Any:
+            return await get_order_service().create_skb_order(**kwargs)
+
+        async def _get_result(**kwargs: Any) -> Any:
+            return await get_order_service().get_order_result(**kwargs)
+
+        async def _get_file_and_json(**kwargs: Any) -> Any:
+            return await get_order_service().get_order_file_and_json_from_skb(**kwargs)
+
+        async def _get_file_from_storage(**kwargs: Any) -> Any:
+            return await get_order_service().get_order_file_from_storage(**kwargs)
+
+        async def _get_file_base64(**kwargs: Any) -> Any:
+            return await get_order_service().get_order_file_from_storage_base64(**kwargs)
+
+        async def _get_file_link(**kwargs: Any) -> Any:
+            return await get_order_service().get_order_file_from_storage_link(**kwargs)
+
+        async def _send_order_data(**kwargs: Any) -> Any:
+            return await get_order_service().send_order_data(**kwargs)
+
+        registry.register("orders.add", _add)
+        registry.register("orders.get", _get)
+        registry.register("orders.update", _update)
+        registry.register("orders.delete", _delete)
+        registry.register("orders.create_skb_order", _create_skb_order)
+        registry.register("orders.get_result", _get_result)
+        registry.register("orders.get_file_and_json", _get_file_and_json)
+        registry.register("orders.get_file_from_storage", _get_file_from_storage)
+        registry.register("orders.get_file_base64", _get_file_base64)
+        registry.register("orders.get_file_link", _get_file_link)
+        registry.register("orders.send_order_data", _send_order_data)
+        logger.info("orders actions registered via plugin")
 
     async def on_shutdown(self) -> None:
         """Логирует факт выключения плагина."""

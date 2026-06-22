@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
 
@@ -39,6 +39,33 @@ class FilesPlugin(BasePlugin):
         """Сохраняет ``PluginContext`` для последующих хуков."""
         self._ctx = ctx
         logger.info("core_entities_files plugin loaded")
+
+    async def on_register_actions(self, registry: Any) -> None:
+        """Регистрирует ``files.*`` actions в реестре.
+
+        Layer-violation fix: ранее регистрация была прямой в
+        ``dsl/commands/setup.py`` (нарушение слоя). Теперь — через
+        PluginLoader lifecycle hook.
+        """
+        from extensions.core_entities.files.services.files import get_file_service
+
+        async def _add(**kwargs: Any) -> Any:
+            return await get_file_service().add(**kwargs)
+
+        async def _get(**kwargs: Any) -> Any:
+            return await get_file_service().get(**kwargs)
+
+        async def _update(**kwargs: Any) -> Any:
+            return await get_file_service().update(**kwargs)
+
+        async def _delete(**kwargs: Any) -> Any:
+            return await get_file_service().delete(**kwargs)
+
+        registry.register("files.add", _add)
+        registry.register("files.get", _get)
+        registry.register("files.update", _update)
+        registry.register("files.delete", _delete)
+        logger.info("files actions registered via plugin")
 
     async def on_shutdown(self) -> None:
         """Логирует факт выключения плагина."""
