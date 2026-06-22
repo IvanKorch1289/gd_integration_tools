@@ -193,6 +193,7 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoin
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/messaging/eventbus_facade.py	services	src.backend.infrastructure.clients.messaging.event_bus
+src/backend/services/messaging/outbox_monitor.py	services	src.backend.infrastructure.messaging.outbox.stuck_monitor
 src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry
@@ -205,4 +206,3 @@ src/backend/services/schema_registry/populator.py	services	src.backend.dsl.comma
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
 src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secrets
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
-src/frontend/streamlit_app/pages/96_Outbox_Stuck_Monitor.py	frontend	src.backend.infrastructure.messaging.outbox
