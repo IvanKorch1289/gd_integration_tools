@@ -16,8 +16,7 @@ from src.backend.infrastructure.clients.storage.mongodb import (
     MongoDBClient,
     get_mongo_client,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("MongoFeedbackRepository",)
 
 logger = get_logger(__name__)

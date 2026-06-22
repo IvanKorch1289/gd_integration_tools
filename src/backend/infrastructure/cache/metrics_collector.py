@@ -11,8 +11,7 @@ from typing import Any
 from src.backend.infrastructure.cache.rag.metrics import (
     get_metrics_snapshot as get_rag_metrics_snapshot,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 __all__ = ("get_cache_metrics_snapshot",)

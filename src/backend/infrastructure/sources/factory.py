@@ -18,8 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.source import Source, SourceKind
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from src.backend.core.config.source_spec import SourceSpec
 

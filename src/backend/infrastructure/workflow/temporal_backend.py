@@ -27,8 +27,7 @@ from src.backend.core.workflow.backend import (
     WorkflowResult,
 )
 from src.backend.dsl.codec.json import canonical_json_bytes
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient
 

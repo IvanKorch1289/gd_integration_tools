@@ -15,8 +15,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
 
 logger = get_logger("security.api_keys")

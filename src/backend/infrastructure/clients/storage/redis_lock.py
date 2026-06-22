@@ -12,8 +12,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from redis.asyncio.lock import Lock as RedisAsyncLock
 

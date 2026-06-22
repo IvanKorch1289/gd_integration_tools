@@ -16,8 +16,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 
 logger = get_logger(__name__)

@@ -24,8 +24,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 # S165 W4: Purgatory Circuit Breaker для gRPC (Rule 6).
 # Per skill: per-pool long-lived manager → per-pool CB keyed by target.
 # Module-level per-target CB factory to avoid circular imports.

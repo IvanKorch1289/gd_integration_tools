@@ -22,8 +22,7 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("ListenNotifyCDCBackend",)
 
 

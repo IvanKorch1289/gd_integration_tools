@@ -44,8 +44,7 @@ from typing import Any, Protocol, runtime_checkable
 import orjson
 
 from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = (
     "AESGCMKeyProvider",
     "EnvAESGCMKeyProvider",

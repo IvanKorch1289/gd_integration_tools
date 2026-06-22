@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces import AsyncBatcher
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.observability.correlation import (
     get_correlation_id,
     get_tenant_id,

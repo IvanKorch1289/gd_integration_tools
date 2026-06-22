@@ -16,8 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter")
 
 logger = get_logger("entrypoints.rate_limiter")

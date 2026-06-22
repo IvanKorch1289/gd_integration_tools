@@ -9,8 +9,7 @@ from src.backend.infrastructure.cache.rag.invalidation import RagInvalidationBus
 from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 from src.backend.infrastructure.cache.rag.retrieval import L3RetrievalCache
 from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 __all__ = ("ThreeTierRagCache",)

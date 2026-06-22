@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("CacheGetCallable", "build_cache_fallbacks", "build_cache_primary")
 
 logger = get_logger(__name__)

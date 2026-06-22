@@ -9,8 +9,7 @@ from redis.exceptions import RedisError
 from src.backend.infrastructure.clients.storage.redis._protocol import (
     _RedisClientProtocol,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 redis_logger = get_logger("redis")
 
 

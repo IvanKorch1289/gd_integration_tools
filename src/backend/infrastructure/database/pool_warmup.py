@@ -28,8 +28,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.tenancy import current_tenant
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("PoolReconnectMonitor", "PoolWarmup", "WarmupResult")
 
 logger = get_logger(__name__)

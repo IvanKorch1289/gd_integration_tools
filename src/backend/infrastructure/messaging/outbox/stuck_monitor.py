@@ -38,7 +38,7 @@ import asyncio
 from dataclasses import dataclass
 
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.repositories.outbox import (
     count_stuck_pending,
     count_stuck_pending_by_transport,

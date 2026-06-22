@@ -16,8 +16,7 @@ from src.backend.core.domain.models.orders import Order  # noqa: F401
 from src.backend.core.domain.models.users import User  # noqa: F401
 from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
 from src.backend.infrastructure.database.migrations.types import load_types
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

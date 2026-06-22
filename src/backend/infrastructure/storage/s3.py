@@ -39,8 +39,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from src.backend.core.config.services.storage import FileStorageSettings
 from src.backend.core.errors import ServiceError
 from src.backend.core.interfaces.storage import ObjectStorage
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("S3ObjectStorage",)
 
 

@@ -20,8 +20,7 @@ from typing import Literal
 
 from src.backend.core.workflow.backend import WorkflowBackend
 from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("BackendKind", "create_workflow_backend")
 
 

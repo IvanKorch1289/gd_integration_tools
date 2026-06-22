@@ -24,8 +24,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("NatsConnectionPool",)
 
 _logger = get_logger("infrastructure.clients.transport.nats_pool")

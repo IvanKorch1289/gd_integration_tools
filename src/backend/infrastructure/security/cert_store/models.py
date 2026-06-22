@@ -37,8 +37,7 @@ import hashlib
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger("infrastructure.cert_store")
 
 

@@ -27,7 +27,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncContextManager, Final, Literal
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 if TYPE_CHECKING:

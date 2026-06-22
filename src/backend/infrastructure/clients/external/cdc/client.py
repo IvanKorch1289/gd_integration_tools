@@ -25,8 +25,7 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
     _LogMinerStrategy,  # S60 W2: cross-import
     _PollingStrategy,  # S60 W2: cross-import
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger("infrastructure.clients.cdc")
 
 

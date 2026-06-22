@@ -26,8 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     import httpx  # только для type-hints; runtime-импорт в `start()`.
 

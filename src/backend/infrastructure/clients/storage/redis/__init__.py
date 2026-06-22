@@ -24,7 +24,7 @@ from typing import Literal
 from redis.asyncio import Redis
 
 from src.backend.core.config.settings import RedisSettings, settings
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker
 
 redis_logger = get_logger("redis")

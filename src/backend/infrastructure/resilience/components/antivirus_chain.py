@@ -16,8 +16,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("AntivirusCallable", "build_antivirus_fallbacks", "build_antivirus_primary")
 
 logger = get_logger(__name__)

@@ -39,7 +39,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.security.cert_store.models import (
     CertEntry,
     _fingerprint,

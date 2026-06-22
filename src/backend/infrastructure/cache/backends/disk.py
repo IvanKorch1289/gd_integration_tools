@@ -15,8 +15,7 @@ import aiofiles
 import aiofiles.os
 
 from src.backend.core.interfaces.cache import CacheBackend
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("DiskCacheBackend",)
 
 _logger = get_logger("infrastructure.cache.disk")

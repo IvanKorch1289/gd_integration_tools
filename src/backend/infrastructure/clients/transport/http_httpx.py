@@ -43,7 +43,7 @@ from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
     build_cache_transport,
     is_hishel_available,
 )
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
 from src.backend.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,

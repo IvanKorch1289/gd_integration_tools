@@ -38,8 +38,7 @@ from src.backend.core.domain.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 _logger = get_logger("workflow.pg_runner_internals")
 
 # ─────────────────────────────── DTO ───────────────────────────────

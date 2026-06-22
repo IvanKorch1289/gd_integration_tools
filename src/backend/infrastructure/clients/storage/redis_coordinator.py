@@ -16,8 +16,7 @@ from typing import Any
 
 import orjson
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("RedisCursor", "RedisHash", "RedisPubSub", "RedisSet")
 
 logger = get_logger("core.redis_coordinator")

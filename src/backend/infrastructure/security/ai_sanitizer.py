@@ -18,8 +18,7 @@ import re
 from typing import Any
 
 from src.backend.core.interfaces.sanitization import MaskingEvent, SanitizationResult
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 # Re-export `MaskingEvent` / `SanitizationResult` для backward-compat:

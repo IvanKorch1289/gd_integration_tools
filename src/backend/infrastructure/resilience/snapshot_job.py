@@ -38,8 +38,7 @@ from typing import Any
 from sqlalchemy import Engine, Table, create_engine, delete, insert, select
 from sqlalchemy.engine import Connection
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = (
     "is_snapshot_fresh",
     "register_snapshot_job",

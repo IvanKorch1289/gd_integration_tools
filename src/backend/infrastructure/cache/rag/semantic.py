@@ -13,8 +13,7 @@ import orjson
 
 from src.backend.infrastructure.cache.rag.embedding_cache import EmbeddingVectorCache
 from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 __all__ = ("L2SemanticRagCache",)

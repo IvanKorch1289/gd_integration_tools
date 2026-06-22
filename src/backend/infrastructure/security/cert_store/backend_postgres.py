@@ -42,7 +42,7 @@ from sqlalchemy import select
 
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.security.cert_store.models import (
     CertEntry,
     _fingerprint,

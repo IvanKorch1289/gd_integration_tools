@@ -37,7 +37,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.security.cert_store.models import CertEntry
 
 logger = get_logger("infrastructure.cert_store")

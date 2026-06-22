@@ -29,8 +29,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import (
         HealthMode,

@@ -19,7 +19,7 @@ import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.sources.file_watcher import FileEvent
 
 __all__ = ("WebDAVSource", "WebDAVSourceConfig")

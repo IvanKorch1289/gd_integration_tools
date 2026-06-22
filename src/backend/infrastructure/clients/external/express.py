@@ -21,8 +21,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("ExpressClient", "get_express_client")
 
 logger = get_logger(__name__)

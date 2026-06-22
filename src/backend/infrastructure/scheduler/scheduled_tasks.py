@@ -1,5 +1,5 @@
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.schemas.base import EmailSchema
 
 __all__ = ("check_all_services", "consolidate_idle_sessions")

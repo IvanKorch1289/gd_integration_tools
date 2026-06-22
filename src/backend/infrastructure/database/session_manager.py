@@ -13,8 +13,7 @@ from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 db_logger = get_logger("database")
 
 breaker_registry = get_breaker_registry()

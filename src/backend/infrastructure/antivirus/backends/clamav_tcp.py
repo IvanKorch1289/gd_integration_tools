@@ -14,8 +14,7 @@ from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusSca
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     _parse_clamav_response,
 )
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("ClamAVTcpBackend",)
 
 logger = get_logger("infrastructure.antivirus.clamav_tcp")

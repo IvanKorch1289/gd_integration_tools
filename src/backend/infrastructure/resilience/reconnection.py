@@ -36,7 +36,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Final, TypeVar
 
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 _logger = get_logger(__name__)

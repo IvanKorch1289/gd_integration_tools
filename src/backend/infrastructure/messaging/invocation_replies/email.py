@@ -21,8 +21,7 @@ from src.backend.core.interfaces.invocation_reply import (
     ReplyChannelKind,
 )
 from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("EmailNotifier", "EmailReplyChannel")
 
 logger = get_logger("messaging.invocation_replies.email")

@@ -35,8 +35,7 @@ from src.backend.core.messaging.outbox import (
     OutboxEventStatus,
 )
 from src.backend.core.utils.task_registry import TaskRegistry, get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("DLQHandler", "OutboxDispatcher")
 
 _logger = get_logger("infrastructure.messaging.outbox")

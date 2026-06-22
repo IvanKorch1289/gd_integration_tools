@@ -20,8 +20,7 @@ from typing import Any, Final
 
 from jinja2 import Environment, StrictUndefined, select_autoescape
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 _logger = get_logger(__name__)
 
 

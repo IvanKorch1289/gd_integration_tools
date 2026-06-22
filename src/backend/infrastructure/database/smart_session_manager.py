@@ -52,8 +52,7 @@ from typing import Any, Literal
 
 from sqlalchemy import text
 
-from src.backend.infrastructure.logging.factory import get_logger
-
+from src.backend.core.logging import get_logger
 __all__ = ("SessionMode", "SmartSessionManager")
 
 SessionMode = Literal["read", "write"]
