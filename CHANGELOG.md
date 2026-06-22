@@ -5,6 +5,69 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 43 — Deep-Audit Quick Wins, 2026-06-22] — Rule 14 + Rule 3 + Rule 8
+
+3 atomic commits, deep-audit follow-up (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`).
+
+### Fixed
+
+- **Layer linter (P0-1)**: `tools/check_layers.py:201` — `_is_lazy_import()` теперь
+  распознаёт `ast.AsyncFunctionDef` (ранее только `ast.FunctionDef`). Lazy imports внутри
+  `async def` функций ошибочно классифицировались как top-level → extensions импортировали
+  из infrastructure/services/entrypoints через `async def` без CI-провала → V22 invariant
+  нарушен. После fix: `--root extensions` ловит 2 реальных violations
+  (`osint_agent/functions/osint_workflow.py` — `search_providers` + `litellm_gateway`).
+  Commit `4a431bf`.
+
+- **P7 risk (core/ai logger)**: 16 файлов в `src/backend/core/ai/` (38% от 42) использовали
+  `logger.*` ad-hoc без module-level инициализации. При инциденте в AI-слое логи могли не
+  попасть в centralised logger → audit-trail потерян. AST-based fix добавил
+  `logger = get_logger(__name__)` во все 16 файлов (после top-level imports, через
+  `ast.walk` чтобы избежать parenthesized multi-line imports). 0 NEW regressions,
+  все 9 failures в `tests/unit/core/ai/` pre-existing (reproduce на clean tree).
+  Commit `b287fdf`.
+
+### Removed
+
+- **11 deprecated schemas shims (S168 W15 P2-10 cleanup)**: `schemas/route_schemas/`
+  + `schemas/filter_schemas/` удалены (только `__init__.py` namespace markers оставлены).
+  Real schemas уже в `extensions/core_entities/<entity>/schemas/{route,filter}.py`
+  с S168 W15. 0 external consumers (verified через grep). -221 LOC.
+  Commit `16f1970`.
+
+### Audit corrections (false positives в DEEP-AUDIT)
+
+- **QW4** `services/ai/multi_agent/supervisor.py::_build_credit_pipeline_agents` —
+  NOT dead code, это reference implementation вызывается из
+  `get_credit_pipeline_supervisor():445` (smoke-тесты + template для extensions).
+- **QW5** `dsl/builders/_integration_group_{a,b}.py` chmod 600 — файлы не существуют.
+- **QW9** `codec/__init__.py` msgpack/parquet — РЕАЛИЗОВАНЫ (lines 91-124).
+- **QW9** "10 patterns R2" claim — не найдено в docs (R2 реализовано 31 patterns).
+- **S5** `core/utils/metrics_registry.py` vs `infrastructure/observability/metrics_registry.py`
+  — уже мигрировано в Sprint 20 (canonical в core, infrastructure = legacy reference).
+- **S6** `core/clients/jupyter_hub.py` (16 LOC) vs
+  `infrastructure/clients/external/jupyter_hub.py` (304 LOC) — НЕ duplicate,
+  core = interface/re-export, infrastructure = full impl.
+- **ResilienceCoordinator** отсутствует в `core/resilience/` scout заявлял — РЕАЛЬНО
+  находится в `infrastructure/resilience/coordinator.py:93`, корректно резолвится через
+  `resolve_module("resilience.coordinator")`.
+
+### Out of scope (deferred → Stabilization S1-S15)
+
+- QW2: `infrastructure/audit/event_log.py:22` string-bypass layer linter — в foreign WIP.
+- QW10: `services/audit/audit_service.py` — 9 consumers (multi-file refactor).
+- S1: 9 entrypoints→infra cross-layer imports (workflow_registry, ratelimit, signature, DLQ, cache metrics).
+- S2: 12 frontend→dsl/infra imports в allowlist (через `services.dsl_portal` facade).
+- S7: 226 legacy logger imports (`infrastructure.logging.factory` → `core.logging`).
+- S13: Circuit breaker middleware → shared state (K8s multi-pod safety).
+
+### Verification
+
+- `python tools/check_layers.py` → 0 новых (2140 файлов после QW3, 208 legacy)
+- `python tools/check_layers.py --root extensions` → 2 NEW (`osint_workflow.py` async def lazy)
+- `pytest tests/unit/core/ai/` → 9 failed (pre-existing), 430 passed
+- `git log --oneline -5` → `16f1970, b287fdf, 4a431bf` (3 atomic commits)
+
 ## [Sprint 30 — Security Patch: Dependabot 7 Vulnerabilities, 2026-06-19] — Rule 14
 
 ### Security Fixed
