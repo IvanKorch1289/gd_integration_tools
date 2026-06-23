@@ -31,6 +31,7 @@ src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.p
 src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.token_registry
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
+src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/dsl/variables.py	core	src.backend.infrastructure.database.models
 src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
 src/backend/core/integrations/web_search.py	core	src.backend.infrastructure.clients.external.search_providers
@@ -178,12 +179,6 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engin
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.spec.workflow
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.visualize
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.yaml_io
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader.loaders
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/messaging/eventbus_facade.py	services	src.backend.infrastructure.clients.messaging.event_bus

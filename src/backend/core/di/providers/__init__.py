@@ -3,13 +3,16 @@
 S38 P1.2c: ``providers.py`` → ``providers/{cache,db,http,ai,auth,workflow}.py``
 + этот ``__init__.py`` re-export facade.
 
-61 import site продолжают работать без изменений:
+S36-W23: добавлен ``storage.py`` (3 funcs) — single entry point для
+файлового хранилища (ObjectStorage + StorageFacade). 64 import site
+продолжают работать без изменений:
     from src.backend.core.di.providers import get_X_provider
 
 History:
 - Wave 6.2 (pre-split): один файл providers.py с 114 функциями
 - S38 P1.2b: providers.py → providers/_impl.py + __init__.py (re-exports)
 - S38 P1.2c: _impl.py → 6 domain files (cache/db/http/ai/auth/workflow)
+- S36-W23: + storage.py (3 funcs) — ObjectStorage + StorageFacade
 
 Структура split (per-domain _overrides для изоляции тестов):
 - cache.py     (20 funcs) — invalidation, SLO, health, response/RAG/redis caches
@@ -17,6 +20,7 @@ History:
 - http.py      (31 funcs) — http, smtp, express, browser, redis coord, stream
 - ai.py        (12 funcs) — sanitizer, PII tokenizer, LLM metrics, vault
 - auth.py      ( 6 funcs) — API keys, JWT backend (joserfc), JWKS cache
+- storage.py   ( 3 funcs) — ObjectStorage + StorageFacade + file repo (NEW S36-W23)
 - workflow.py  (30 funcs) — actions, scheduler, workflow state, resilience, loggers
 """
 
@@ -27,6 +31,7 @@ from src.backend.core.di.providers import (  # noqa: F401
     cache,
     db,
     http,
+    storage,
     workflow,
 )
 
@@ -135,6 +140,14 @@ from src.backend.core.di.providers.http import (  # noqa: F401
     set_redis_set_factory_provider,
     set_smtp_client_provider,
     set_stream_client_provider,
+)
+
+# --- storage.py (3, S36-W23) ---
+from src.backend.core.di.providers.storage import (  # noqa: F401
+    get_object_storage_provider,
+    get_storage_facade_provider,
+    set_object_storage_provider,
+    set_storage_facade_provider,
 )
 
 # --- workflow.py (30) ---
