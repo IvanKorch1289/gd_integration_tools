@@ -80,9 +80,7 @@ def _render_workflow_templates() -> None:
     # S44 W2: прямой импорт из services (был try/except с мёртвым
     # ``dsl.workflow.template_registry_compat``, модуль не существует,
     # всегда падал в fallback). Удалено: dead code.
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     registry = get_template_registry()
     all_templates = registry.load_all()

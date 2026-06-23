@@ -11,6 +11,7 @@ Layer policy: entrypoints -> services (allowed per V22).
 Этот facade — единственный разрешённый путь для entrypoints доступа
 к WorkflowRegistry без layer-violation.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.workflow.registry import (  # noqa: E402,F401

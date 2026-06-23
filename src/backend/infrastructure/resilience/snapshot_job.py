@@ -39,6 +39,7 @@ from sqlalchemy import Engine, Table, create_engine, delete, insert, select
 from sqlalchemy.engine import Connection
 
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "is_snapshot_fresh",
     "register_snapshot_job",
@@ -350,7 +351,6 @@ def register_snapshot_job(scheduler: Any) -> None:
         snapshot_cfg.interval_minutes,
         len(snapshot_cfg.tables),
     )
-
 
 
 # ──────────────────────────────────────────────────────────────────────

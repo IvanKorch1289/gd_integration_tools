@@ -16,10 +16,10 @@ L3 (disk / RAG tier) is configured separately in
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+
 __all__ = ("TieredCacheBackend",)
 
 logger = get_logger("infrastructure.cache.tiered")
@@ -35,10 +35,7 @@ class TieredCacheBackend(CacheBackend):
     """
 
     def __init__(
-        self,
-        l1: CacheBackend,
-        l2: CacheBackend,
-        promote_ttl: int = 60,
+        self, l1: CacheBackend, l2: CacheBackend, promote_ttl: int = 60
     ) -> None:
         self._l1 = l1
         self._l2 = l2

@@ -103,13 +103,14 @@ def _render_coverage_table() -> None:
                 "Pattern": pattern,
                 "Status": "✅" if info["status"].startswith("canonical") else "⚠️",
                 "Class": info["class_path"],
-                "Sprint": info["sprint"],
             }
         )
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
     canonical = sum(1 for r in rows if r["Status"] == "✅")
-    st.metric("EIP Coverage", f"{canonical}/10", delta="10/10 ✓ S63 W3.0")
+    st.metric(
+        "EIP Coverage", f"{canonical}/10", delta="10/10 — Apache Camel EIP patterns"
+    )
 
 
 def _render_descriptions() -> None:
@@ -119,12 +120,11 @@ def _render_descriptions() -> None:
         with st.expander(f"{pattern} — {info['description']}"):
             st.write(f"**Class:** `{info['class_path']}`")
             st.write(f"**Status:** {info['status']}")
-            st.write(f"**Sprint:** {info['sprint']}")
 
 
 def _render_s63_audit() -> None:
     """S63 W2-W3 audit summary."""
-    st.subheader("S63 W2-W3 Audit (ClaimCheck + Transactional/ProcessManager)")
+    st.subheader("Audit: ClaimCheck + Transactional/ProcessManager")
     st.markdown(
         """
         **S63 W2.1 (W2.1) — ClaimCheck dedup**

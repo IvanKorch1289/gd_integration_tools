@@ -7,6 +7,7 @@ connection pool registration + backend enablement checks.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -183,7 +184,11 @@ async def _warmup_connection_pools() -> None:
     redis_cache_client: Any = None
     if _redis_enabled():
         try:
-            redis_cache_client = await get_redis_client().get_client("cache")
+            redis_cache_client = await asyncio.wait_for(
+                get_redis_client().get_client("cache"), timeout=5.0
+            )
+        except asyncio.TimeoutError:
+            redis_cache_client = None
         except Exception as _:
             redis_cache_client = None
 

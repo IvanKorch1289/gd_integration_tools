@@ -33,7 +33,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:

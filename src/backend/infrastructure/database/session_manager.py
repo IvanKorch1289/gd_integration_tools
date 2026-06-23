@@ -7,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.backend.core.config.settings import settings
 from src.backend.core.errors import DatabaseError, NotFoundError
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
 from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )
-from src.backend.core.logging import get_logger
+
 db_logger = get_logger("database")
 
 breaker_registry = get_breaker_registry()

@@ -19,6 +19,7 @@ Layer policy: infrastructure -> core (allowed per ALLOWED matrix).
 S44 W5 sprint goal: убрать string-bypass в
 ``infrastructure/audit/event_log.py:22`` (deep-audit P0-2).
 """
+
 from __future__ import annotations
 
 from src.backend.services.io.indexers.log_indexer import (  # noqa: E402,F401

@@ -22,6 +22,7 @@ from pathlib import Path
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 from src.backend.core.logging import get_logger
+
 __all__ = ("ClamAVUnixBackend",)
 
 logger = get_logger("infrastructure.antivirus.clamav_unix")
@@ -47,7 +48,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(self._socket_path), timeout=2.0
             )
-        except (TimeoutError, OSError):
+        except TimeoutError, OSError:
             return False
         try:
             writer.write(b"zPING\0")

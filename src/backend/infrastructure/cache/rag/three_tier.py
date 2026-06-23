@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.cache.rag.exact import L1ExactCache
 from src.backend.infrastructure.cache.rag.invalidation import RagInvalidationBus
 from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 from src.backend.infrastructure.cache.rag.retrieval import L3RetrievalCache
 from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache
-from src.backend.core.logging import get_logger
+
 logger = get_logger(__name__)
 
 __all__ = ("ThreeTierRagCache",)

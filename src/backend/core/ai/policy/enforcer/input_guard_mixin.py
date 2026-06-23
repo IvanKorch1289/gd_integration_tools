@@ -140,7 +140,9 @@ class InputGuardMixin:
                     on_block=on_block,
                     content=prompt,
                 ) from exc
-            return GuardResult(guard_name=ref.name, verdict="passed")
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["rebuff_error"]
+            )
 
     async def _guard_input_lakera(
         self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
@@ -179,7 +181,9 @@ class InputGuardMixin:
                     on_block=on_block,
                     content=prompt,
                 ) from exc
-            return GuardResult(guard_name=ref.name, verdict="passed")
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["lakera_error"]
+            )
 
     async def _guard_input_llm_guard(
         self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
@@ -190,7 +194,9 @@ class InputGuardMixin:
                 "AIPolicyEnforcer: llm_guard input guard requires llm_guard_client "
                 "— skipped. Set LLAMA_GUARD_ENABLED=1 for self-hosted scanner."
             )
-            return GuardResult(guard_name=ref.name, verdict="passed")
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["llm_guard_disabled"]
+            )
         try:
             from src.backend.core.ai.guardrails.llm_guard_client import LLMGuardResult
 
@@ -217,4 +223,6 @@ class InputGuardMixin:
                     on_block=on_block,
                     content=prompt,
                 ) from exc
-            return GuardResult(guard_name=ref.name, verdict="passed")
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["llm_guard_error"]
+            )

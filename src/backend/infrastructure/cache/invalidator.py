@@ -30,6 +30,7 @@ import fnmatch
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "CacheBackendProtocol",
     "CacheInvalidator",

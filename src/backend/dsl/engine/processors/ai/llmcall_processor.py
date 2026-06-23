@@ -11,7 +11,6 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.services.ai.gateway.exceptions import GatewayRateLimited
 
-
 # S156 W8: fallback per-token cost table (litellm may not be installed,
 # or its API may change — we keep a simple model→rate table as fallback).
 # Test contract (test_llmcall_processor.py::test_gateway_enforce_uses_aigateway)
@@ -187,16 +186,13 @@ class LLMCallProcessor(BaseProcessor):
         # repeated LLM failures не должны дойти до retry-loop (cost control).
         from src.backend.core.resilience.breaker import (
             BreakerSpec,
-            CircuitOpen,
             get_breaker_registry,
         )
 
         _llm_breaker = get_breaker_registry().get_or_create(
             "llm_call_processor",
             BreakerSpec(
-                name="llm_call_processor",
-                failure_threshold=5,
-                recovery_timeout=30.0,
+                name="llm_call_processor", failure_threshold=5, recovery_timeout=30.0
             ),
         )
 
@@ -222,7 +218,7 @@ class LLMCallProcessor(BaseProcessor):
                         provider=self._provider,
                         model=self._model or "default",
                     )
-                except (GatewayRateLimited, ValueError):
+                except GatewayRateLimited, ValueError:
                     # Non-retryable + non-CB-failing — propagate.
                     raise
                 except RuntimeError as exc:

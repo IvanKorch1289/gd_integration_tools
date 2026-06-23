@@ -78,9 +78,9 @@ class WSSettings(BaseSettingsWithLoader):
         default=10,
         gt=0,
         description="DEPRECATED S168 W11 P1-3 follow-up: legacy token-bucket burst, "
-                    "ignored после миграции на Redis fixed-window. Оставлен для "
-                    "backward-compat. Для управления rate limit используйте "
-                    "rate_limit_per_minute.",
+        "ignored после миграции на Redis fixed-window. Оставлен для "
+        "backward-compat. Для управления rate limit используйте "
+        "rate_limit_per_minute.",
     )
 
 

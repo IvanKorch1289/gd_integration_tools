@@ -71,7 +71,7 @@ def _register_route_tools(mcp: Any) -> None:
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()

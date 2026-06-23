@@ -4,10 +4,10 @@ OrderAdmin moved to
 src.backend.extensions.core_entities.orders.admin per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
-from extensions.core_entities.orders.admin import (  # noqa: E402,F401
-    OrderAdmin,
-)
+
+from extensions.core_entities.orders.admin import OrderAdmin  # noqa: E402,F401
 
 warnings.warn(
     "src.backend.utilities.admin_panel.orders is deprecated "

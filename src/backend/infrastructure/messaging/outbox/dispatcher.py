@@ -29,13 +29,14 @@ from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
+from src.backend.core.logging import get_logger
 from src.backend.core.messaging.outbox import (
     OutboxBackend,
     OutboxEvent,
     OutboxEventStatus,
 )
 from src.backend.core.utils.task_registry import TaskRegistry, get_task_registry
-from src.backend.core.logging import get_logger
+
 __all__ = ("DLQHandler", "OutboxDispatcher")
 
 _logger = get_logger("infrastructure.messaging.outbox")

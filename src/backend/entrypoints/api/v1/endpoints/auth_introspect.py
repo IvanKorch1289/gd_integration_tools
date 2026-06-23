@@ -28,15 +28,26 @@ _logger = get_logger(__name__)
 router = APIRouter()
 
 _INTROSPECT_FIELDS = (
-    "scope", "client_id", "username", "token_type",
-    "exp", "iat", "nbf", "sub", "aud", "iss", "jti",
+    "scope",
+    "client_id",
+    "username",
+    "token_type",
+    "exp",
+    "iat",
+    "nbf",
+    "sub",
+    "aud",
+    "iss",
+    "jti",
 )
 
 
 @router.post("/introspect", summary="OAuth2 Token Introspection (RFC 7662)")
 async def introspect(
     token: str = Form(..., description="JWT для проверки"),
-    token_type_hint: str | None = Form(None, description="Игнорируется (only access_token)"),
+    token_type_hint: str | None = Form(
+        None, description="Игнорируется (only access_token)"
+    ),
 ) -> dict[str, Any]:
     """RFC 7662 token introspection (S165 W2: AuthFacade-backed)."""
     del token_type_hint

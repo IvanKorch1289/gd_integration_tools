@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import Literal
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("Inbox", "InboxFailMode", "InboxUnavailableError")
 
 logger = get_logger("eventing.inbox")

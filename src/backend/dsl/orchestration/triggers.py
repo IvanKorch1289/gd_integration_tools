@@ -55,7 +55,7 @@ class FileSensorTaskWrapper:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
 
@@ -142,7 +142,7 @@ class IntervalTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
         _log.info("IntervalTrigger: %s stopped", self.name)
@@ -201,9 +201,7 @@ class CronTrigger:
         self.cron_expr = cron_expr
         self.timezone_name = timezone_name
         self._payload = payload or {}
-        self._aps_trigger = _APSCron.from_crontab(
-            cron_expr, timezone=timezone_name
-        )
+        self._aps_trigger = _APSCron.from_crontab(cron_expr, timezone=timezone_name)
         self._task: asyncio.Task[None] | None = None
         self._stop = asyncio.Event()
 
@@ -214,9 +212,7 @@ class CronTrigger:
         async def _loop() -> None:
             while not self._stop.is_set():
                 now = _dt.datetime.now(_dt.timezone.utc)
-                next_fire = self._aps_trigger.get_next_fire_time(
-                    None, now
-                )
+                next_fire = self._aps_trigger.get_next_fire_time(None, now)
                 if next_fire is None:
                     return  # cron expression yields no future fire
                 sleep_s = max(0.0, (next_fire - now).total_seconds())
@@ -244,7 +240,7 @@ class CronTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
         _log.info("CronTrigger: %s stopped", self.name)

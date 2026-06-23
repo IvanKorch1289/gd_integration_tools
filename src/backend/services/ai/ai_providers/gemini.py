@@ -40,7 +40,7 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 

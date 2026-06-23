@@ -32,7 +32,9 @@ from src.backend.core.domain.models.base import (
 )
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.core.domain.models.dsl_snapshot import DslSnapshot
-from src.backend.core.domain.models.files import File  # S168 W14 P2-10: OrderFile moved to extensions/core_entities/files/
+from src.backend.core.domain.models.files import (
+    File,  # S168 W14 P2-10: OrderFile moved to extensions/core_entities/files/
+)
 from src.backend.core.domain.models.langmem_models import (
     LangMemEpisodic,
     LangMemProcedural,

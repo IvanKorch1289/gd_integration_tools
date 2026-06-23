@@ -247,9 +247,7 @@ class GRPCSettings(BaseSettingsWithLoader):
         description="Макс. размер входящего сообщения (bytes). Защита от OOM.",
     )
     keepalive_time_s: float = Field(
-        default=30.0,
-        gt=0,
-        description="Interval between keepalive pings (seconds).",
+        default=30.0, gt=0, description="Interval between keepalive pings (seconds)."
     )
     keepalive_timeout_s: float = Field(
         default=10.0,

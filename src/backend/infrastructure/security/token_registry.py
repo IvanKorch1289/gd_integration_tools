@@ -43,8 +43,9 @@ from typing import Any, Protocol, runtime_checkable
 
 import orjson
 
-from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
 from src.backend.core.logging import get_logger
+from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
+
 __all__ = (
     "AESGCMKeyProvider",
     "EnvAESGCMKeyProvider",
@@ -196,7 +197,7 @@ class EnvAESGCMKeyProvider:
             return None
         try:
             decoded = base64.b64decode(raw)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             _logger.warning(
                 "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name
             )

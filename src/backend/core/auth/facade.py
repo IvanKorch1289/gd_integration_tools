@@ -114,12 +114,7 @@ class AuthFacade:
             self._quotas = quotas
         return self._quotas
 
-    async def verify_request(
-        self,
-        token: str,
-        *,
-        method: str = "jwt",
-    ) -> AuthResult:
+    async def verify_request(self, token: str, *, method: str = "jwt") -> AuthResult:
         """S164 W2: verify request token (JWT/SAML/API-key).
 
         Args:
@@ -148,17 +143,10 @@ class AuthFacade:
                 return AuthResult(is_authenticated=False)
         except Exception as exc:
             logger.debug("verify_request failed: %s", exc)
-            return AuthResult(
-                is_authenticated=False,
-                metadata={"error": str(exc)},
-            )
+            return AuthResult(is_authenticated=False, metadata={"error": str(exc)})
         return AuthResult(is_authenticated=False)
 
-    def check_permission(
-        self,
-        auth: AuthResult,
-        required_capability: str,
-    ) -> bool:
+    def check_permission(self, auth: AuthResult, required_capability: str) -> bool:
         """S164 W2: check if authenticated subject has required capability.
 
         Args:

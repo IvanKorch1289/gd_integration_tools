@@ -69,9 +69,7 @@ class DryRunRequest(BaseModel):
     """Запрос на dry-run выполнение DSL route."""
 
     route: dict[str, Any] = Field(..., description="Route dict из YAML.safe_load")
-    sample_payload: Any = Field(
-        default=None, description="Sample payload для эмуляции"
-    )
+    sample_payload: Any = Field(default=None, description="Sample payload для эмуляции")
     seed: int = Field(default=0, description="Seed для deterministic latency")
 
 
@@ -151,10 +149,7 @@ class _DSLConsoleFacade:
             return InlineDSLResponse(status="error", error=str(exc))
 
     async def execute_registered_route(
-        self,
-        *,
-        route_id: str,
-        body: dict[str, Any] | None = None,
+        self, *, route_id: str, body: dict[str, Any] | None = None
     ) -> ExecuteRegisteredResponse:
         """Выполняет зарегистрированный route по route_id."""
         body = body or {}
@@ -167,8 +162,7 @@ class _DSLConsoleFacade:
             pipeline = get_route_pipeline(route_id)
             if pipeline is None:
                 return ExecuteRegisteredResponse(
-                    status="failed",
-                    error=f"route {route_id!r} не найден",
+                    status="failed", error=f"route {route_id!r} не найден"
                 )
 
             engine = ExecutionEngine()
@@ -191,11 +185,7 @@ class _DSLConsoleFacade:
             return ExecuteRegisteredResponse(status="error", error=str(exc))
 
     async def dry_run(
-        self,
-        *,
-        route: dict[str, Any],
-        sample_payload: Any = None,
-        seed: int = 0,
+        self, *, route: dict[str, Any], sample_payload: Any = None, seed: int = 0
     ) -> DryRunResponse:
         """Выполняет route в dry-run режиме (эмуляция, без side-effects)."""
         try:

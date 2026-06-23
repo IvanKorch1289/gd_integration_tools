@@ -36,6 +36,8 @@ from src.backend.entrypoints.api.v1.endpoints.admin_workflows.input_schema impor
 from src.backend.entrypoints.api.v1.endpoints.admin_workflows.schemas import (
     EventsQuery,  # S56 W4: re-export
     ListWorkflowsQuery,  # S56 W4: re-export
+    SagaHistoryPath,  # S56 W4: re-export
+    SagaHistoryQuery,  # S56 W4: re-export
     TriggerBody,  # S56 W4: re-export
     TriggerQuery,  # S56 W4: re-export
     WorkflowInstanceIdPath,  # S56 W4: re-export
@@ -65,6 +67,8 @@ __all__ = (
     "WorkflowNamePath",
     "ListWorkflowsQuery",
     "EventsQuery",
+    "SagaHistoryQuery",
+    "SagaHistoryPath",
     "TriggerQuery",
     "TriggerBody",
     "_AdminWorkflowsFacade",
@@ -171,6 +175,17 @@ builder.add_actions(
             query_model=TriggerQuery,
             body_model=TriggerBody,
             response_model=WorkflowInstanceRef,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="admin_get_saga_history",
+            method="GET",
+            path="/workflows/{workflow_id}/saga-history",
+            summary="Saga compensation timeline для workflow",
+            service_getter=_get_facade,
+            service_method="get_saga_history",
+            path_model=SagaHistoryPath,
+            query_model=SagaHistoryQuery,
             tags=common_tags,
         ),
     ]

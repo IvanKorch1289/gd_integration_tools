@@ -17,8 +17,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("GrpcSource",)

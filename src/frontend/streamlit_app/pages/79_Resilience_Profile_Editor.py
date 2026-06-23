@@ -14,7 +14,7 @@ from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (T
 
 setup_page("Resilience Profile Editor", "⚙️")
 st.title("⚙️ Resilience Profile Editor")
-st.caption("Sprint 13 K5 W2 — per-tenant override CB/RL/Retry/Bulkhead.")
+st.caption("Per-tenant override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
 
 client = get_api_client()
 

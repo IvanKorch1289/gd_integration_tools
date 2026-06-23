@@ -24,6 +24,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("OutboxEvent", "OutboxPublisher")
 
 logger = get_logger("eventing.outbox")

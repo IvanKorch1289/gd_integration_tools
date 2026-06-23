@@ -92,3 +92,15 @@ class TriggerBody(BaseModel):
     """Тело trigger-эндпоинта (произвольный payload)."""
 
     model_config = {"extra": "allow"}
+
+
+class SagaHistoryQuery(BaseModel):
+    """Query-параметры для saga history endpoint."""
+
+    limit: int = Field(default=50, ge=1, le=200, description="Максимум записей.")
+
+
+class SagaHistoryPath(BaseModel):
+    """Path-параметр workflow_id для saga history endpoint."""
+
+    workflow_id: str = Field(..., description="ID workflow-инстанса.")

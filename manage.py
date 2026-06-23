@@ -100,14 +100,23 @@ def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
     хаки sys.path.insert в 3 page-файлах. Запускать из project root.
     """
     project_root = Path.cwd().resolve()
+    # S46 fix: streamlit installed in .venv (uv python 3.14), but
+    # manage.py may run under system python (sys.executable != .venv python).
+    # Use .venv/bin/python explicitly for streamlit subprocess.
+    venv_python = project_root / ".venv" / "bin" / "python"
+    if not venv_python.exists():
+        typer.echo(
+            f"[WARNING] {venv_python} not found — falling back to sys.executable",
+            err=True,
+        )
+        venv_python = Path(sys.executable)
     env = os.environ.copy()
     existing = env.get("PYTHONPATH", "")
-    # prepend project_root, dedup, coerce to str
     paths_str = [str(project_root), *existing.split(os.pathsep)] if existing else [str(project_root)]
     env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(paths_str))
 
     cmd = [
-        sys.executable,
+        str(venv_python),
         "-m",
         "streamlit",
         "run",
@@ -134,6 +143,15 @@ def run_all(
             f"Starting backend on :{backend_port} + frontend on :{frontend_port}..."
         )
 
+        # S46 fix: streamlit in .venv, backend in sys.executable
+        venv_python = Path(__file__).parent / ".venv" / "bin" / "python"
+        if not venv_python.exists():
+            typer.echo(
+                f"[WARNING] {venv_python} not found — falling back to sys.executable",
+                err=True,
+            )
+            venv_python = Path(sys.executable)
+
         backend = subprocess.Popen(  # noqa: S603  # CLI developer tool: фиксированный sys.executable + literal args
             [
                 sys.executable,
@@ -148,9 +166,15 @@ def run_all(
         )
         procs.append(backend)
 
+        frontend_env = os.environ.copy()
+        project_root = Path.cwd().resolve()
+        existing = frontend_env.get("PYTHONPATH", "")
+        paths_str = [str(project_root), *existing.split(os.pathsep)] if existing else [str(project_root)]
+        frontend_env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(paths_str))
+
         frontend = subprocess.Popen(  # noqa: S603  # CLI developer tool: фиксированный sys.executable + literal args
             [
-                sys.executable,
+                str(venv_python),
                 "-m",
                 "streamlit",
                 "run",
@@ -159,7 +183,8 @@ def run_all(
                 str(frontend_port),
                 "--server.headless",
                 "true",
-            ]
+            ],
+            env=frontend_env,
         )
         procs.append(frontend)
 

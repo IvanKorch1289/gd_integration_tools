@@ -23,6 +23,7 @@ import os
 from collections.abc import Awaitable, Callable
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("SecretResolveCallable", "build_secrets_fallbacks", "build_secrets_primary")
 
 logger = get_logger(__name__)

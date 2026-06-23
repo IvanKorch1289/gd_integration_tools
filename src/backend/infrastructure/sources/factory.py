@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.source import Source, SourceKind
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from src.backend.core.config.source_spec import SourceSpec
 

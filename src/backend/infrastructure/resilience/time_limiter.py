@@ -17,6 +17,7 @@ from collections import deque
 from dataclasses import dataclass, field
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("TimeLimiter",)
 
 logger = get_logger("resilience.time_limiter")

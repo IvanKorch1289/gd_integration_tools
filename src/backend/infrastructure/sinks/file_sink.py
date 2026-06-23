@@ -59,9 +59,7 @@ class FileSink(Sink):
             base = Path(self.base_dir).resolve()
             resolved = target.resolve()
             if not str(resolved).startswith(str(base)):
-                raise ValueError(
-                    f"Path {target!r} outside base_dir {self.base_dir!r}"
-                )
+                raise ValueError(f"Path {target!r} outside base_dir {self.base_dir!r}")
         return target
 
     async def send(self, payload: Any) -> SinkResult:

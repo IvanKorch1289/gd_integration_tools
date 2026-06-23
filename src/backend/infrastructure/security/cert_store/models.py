@@ -38,6 +38,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from src.backend.core.logging import get_logger
+
 logger = get_logger("infrastructure.cert_store")
 
 

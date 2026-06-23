@@ -24,6 +24,7 @@ and is re-exported from ``lifespan.py`` for backward compatibility
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import TYPE_CHECKING
 
@@ -52,6 +53,9 @@ async def _start_event_bus(app: FastAPI) -> None:
 
     ponytail: minimal wiring. Если Redis недоступен — log+continue,
     DSL-процессор fallback'ит на ``exchange.properties``.
+    S46 fix: bus.start() обёрнут в asyncio.timeout(5) — FastStream Redis
+    broker падает с TimeoutError (BaseException) при недоступном Redis,
+    штатный except Exception не ловит. Ловим BaseException.
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -62,10 +66,18 @@ async def _start_event_bus(app: FastAPI) -> None:
             return
 
         bus = get_event_bus()
-        await bus.start(settings.redis.redis_url)
+        try:
+            async with asyncio.timeout(5.0):
+                await bus.start(settings.redis.redis_url)
+        except TimeoutError:
+            _logger.warning(
+                "EventBus start timed out (Redis %s unavailable) — skipping",
+                settings.redis.redis_url,
+            )
+            return
         app.state.event_bus = bus
         _logger.info("EventBus started on %s", settings.redis.redis_url)
-    except Exception as exc:
+    except BaseException as exc:  # noqa: BLE001 — ловим TimeoutError, CancelledError и др.
         _logger.warning("EventBus startup skipped: %s", exc)
 
 
@@ -154,7 +166,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                     raw_id = cid.removeprefix("outbox_msg_id:")
                     try:
                         await outbox_repo.mark_sent(int(raw_id))
-                    except (ValueError, TypeError):
+                    except ValueError, TypeError:
                         return
 
             async def _deliverer(event: OutboxEvent) -> None:
@@ -179,7 +191,9 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
             )
         else:
             # Legacy APScheduler worker (default, backwards-compat).
-            from src.backend.infrastructure.workflow.outbox_worker import start_outbox_worker
+            from src.backend.infrastructure.workflow.outbox_worker import (
+                start_outbox_worker,
+            )
 
             start_outbox_worker(interval_seconds=5, batch_size=100)
             _logger.info(
@@ -211,13 +225,13 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
         register_storage_singletons,
         validate_cache_layers,
     )
-    from src.backend.plugins.composition.lifecycle.protocols import (
-        register_protocol_providers,
-    )
     from src.backend.plugins.composition.lifecycle.plugin_loader import (
         bootstrap_v11_plugin_loader,
         bootstrap_v11_route_loader,
         start_v11_hot_reload,
+    )
+    from src.backend.plugins.composition.lifecycle.protocols import (
+        register_protocol_providers,
     )
     from src.backend.plugins.composition.lifecycle.watchers import (
         start_dsl_yaml_watcher,

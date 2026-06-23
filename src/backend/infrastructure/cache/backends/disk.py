@@ -16,6 +16,7 @@ import aiofiles.os
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+
 __all__ = ("DiskCacheBackend",)
 
 _logger = get_logger("infrastructure.cache.disk")
@@ -97,6 +98,7 @@ class DiskCacheBackend(CacheBackend):
         Args:
             pattern: Glob pattern (ignored, disk cache doesn't support pattern delete).
         """
+
         def _sync() -> None:
             for path in self._base.rglob("*"):
                 if path.is_file() and not path.name.endswith(".tmp"):

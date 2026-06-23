@@ -25,6 +25,7 @@ from typing import Any
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
 from src.backend.core.logging import get_logger
+
 __all__ = ("AuditCallable", "build_audit_fallbacks", "build_audit_primary")
 
 logger = get_logger(__name__)

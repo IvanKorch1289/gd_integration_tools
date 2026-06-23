@@ -36,15 +36,6 @@ from typing import Any
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON  # noqa: F401  # re-exported below
-
-# S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
-# to dsl_result.py. Re-exported here для backward-compat (existing
-# callers: tests/unit/entrypoints/graphql/test_schema.py).
-from src.backend.entrypoints.graphql.dsl_result import (  # noqa: E402,F401
-    DslResult,
-    ActionResult,
-    dispatch_action as _dispatch_action,
-)
 from strawberry.types import Info
 
 from src.backend.core.logging import get_logger
@@ -52,6 +43,17 @@ from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
 from src.backend.dsl.service import get_dsl_service
+
+# S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
+# to dsl_result.py. Re-exported here для backward-compat (existing
+# callers: tests/unit/entrypoints/graphql/test_schema.py).
+from src.backend.entrypoints.graphql.dsl_result import (  # noqa: E402,F401
+    ActionResult,
+    DslResult,
+)
+from src.backend.entrypoints.graphql.dsl_result import (
+    dispatch_action as _dispatch_action,
+)
 
 __all__ = ("graphql_router",)
 logger = get_logger(__name__)
@@ -480,7 +482,6 @@ import asyncio
 import re
 
 from src.backend.core.config.services.graphql import graphql_settings
-from src.backend.dsl.service import get_dsl_service
 
 _original_execute = schema.execute
 
@@ -550,9 +551,7 @@ def _is_introspection_query(query: str | None) -> bool:
 async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
     """S163 W21+W23: wrap schema.execute() с graphql validations."""
     # ── Per-request override через DslService facade.
-    request_context = kwargs.get("context_value") or (
-        args[0] if args else None
-    )
+    request_context = kwargs.get("context_value") or (args[0] if args else None)
     overrides: dict[str, object] = {}
     if request_context is not None:
         route_id = getattr(request_context, "route_id", None)
@@ -569,20 +568,14 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
     if not graphql_settings.enable_introspection:
         # Per-route override may override (route может explicitly allow).
         if overrides.get("enable_introspection", False) is False:
-            query_str = kwargs.get("query") or (
-                args[0] if args else None
-            )
+            query_str = kwargs.get("query") or (args[0] if args else None)
             if _is_introspection_query(
                 query_str if isinstance(query_str, str) else None
             ):
-                raise ValueError(
-                    "GraphQL introspection is disabled by configuration"
-                )
+                raise ValueError("GraphQL introspection is disabled by configuration")
 
     # ── Per-request depth limit (W23).
-    max_depth = overrides.get(
-        "max_query_depth", graphql_settings.max_query_depth
-    )
+    max_depth = overrides.get("max_query_depth", graphql_settings.max_query_depth)
     query_str = kwargs.get("query") or (args[0] if args else None)
     if isinstance(query_str, str):
         _check_query_depth(query_str, int(max_depth))
@@ -597,13 +590,10 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
     # ── Execute с timeout.
     try:
         return await asyncio.wait_for(
-            _original_execute(*args, **kwargs),
-            timeout=timeout_s,
+            _original_execute(*args, **kwargs), timeout=timeout_s
         )
     except asyncio.TimeoutError as exc:
-        raise TimeoutError(
-            f"GraphQL query timeout ({timeout_s}s)"
-        ) from exc
+        raise TimeoutError(f"GraphQL query timeout ({timeout_s}s)") from exc
 
 
 schema.execute = _execute_with_timeout  # type: ignore[method-assign]

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
-from src.backend.core.logging import get_logger
 from src.backend.infrastructure.observability.correlation import get_correlation_id
 
 __all__ = ("TracingMiddleware", "get_tracer")
@@ -57,7 +57,7 @@ class TracingMiddleware(ProcessorMiddleware):
             )
             key = f"{id(exchange)}:{processor_name}"
             self._spans[key] = span
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass
 
     async def after(
@@ -84,5 +84,5 @@ class TracingMiddleware(ProcessorMiddleware):
                     str(error)[:200],
                 )
             span.end()
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass

@@ -22,6 +22,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 from src.backend.core.logging import get_logger
+
 __all__ = ("EmailNotifier", "EmailReplyChannel")
 
 logger = get_logger("messaging.invocation_replies.email")
@@ -153,5 +154,5 @@ def _format_body(response: InvocationResponse) -> str:
         head = f"Status: {response.status.value.upper()}\n\n"
     try:
         return head + json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return head + repr(response)

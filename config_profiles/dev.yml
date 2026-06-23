@@ -39,7 +39,7 @@ security:
 
 database:
   type: "postgresql"
-  host: "127.0.0.1"
+  host: ${DATABASE_HOST:-127.0.0.1}
   port: 5432
   name: "main_db"
   ssl_mode: "prefer"
@@ -84,8 +84,8 @@ external_databases:
 
 
 redis:
-  enabled: true
-  host: "10.100.0.13"
+  enabled: false
+  host: "127.0.0.1"
   port: 6379
   db_cache: 2
   db_queue: 3
@@ -121,7 +121,7 @@ mongo:
 
 
 queue:
-  enabled: true
+  enabled: false
   type: "rabbitmq"
   host: "127.0.0.1"
   port: 5672
@@ -183,3 +183,11 @@ antivirus:
 jupyter_hub:
   enabled: false
   base_url: "http://localhost:8000"
+
+# S46: эти флаги — documented no-ops (валидатор _helpers.py:29-35).
+# lsp_server_strict → несуществующий LSP pipeline.
+# ai_prompt_sweep_strict → disabled sweep base, no actual enforcement.
+# Отключаем чтобы убрать CRITICAL log spam в dev-окружении.
+features:
+  lsp_server_strict: false
+  ai_prompt_sweep_strict: false

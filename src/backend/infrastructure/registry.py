@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
 
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import (
         HealthMode,

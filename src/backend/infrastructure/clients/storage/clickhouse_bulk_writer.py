@@ -34,6 +34,7 @@ import time
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("BulkWriterStats", "ClickHouseBulkWriter")
 
 logger = get_logger(__name__)

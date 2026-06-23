@@ -81,11 +81,7 @@ class RedisLimiterAdapter:
         try:
             await self._limiter.check(
                 name,
-                RateLimit(
-                    limit=weight,
-                    window_seconds=window,
-                    key_prefix="pyrate",
-                ),
+                RateLimit(limit=weight, window_seconds=window, key_prefix="pyrate"),
             )
         except RateLimitExceeded:
             return False

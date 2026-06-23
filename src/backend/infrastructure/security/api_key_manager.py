@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
 
 logger = get_logger("security.api_keys")

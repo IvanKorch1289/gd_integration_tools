@@ -169,6 +169,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
         else:
             a_part = content.strip()
         return {"query": q_part, "response": a_part}
+
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict. Возвращает None для non-serializable runtime state."""
         spec: dict[str, Any] = {
@@ -181,4 +182,3 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
         if self._inject_as != "feedback_examples":
             spec["inject_as"] = self._inject_as
         return {"get_feedback_examples": spec}
-

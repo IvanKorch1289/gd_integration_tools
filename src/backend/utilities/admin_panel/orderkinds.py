@@ -4,10 +4,10 @@ OrderKindAdmin moved to
 src.backend.extensions.core_entities.orderkinds.admin per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
-from extensions.core_entities.orderkinds.admin import (  # noqa: E402,F401
-    OrderKindAdmin,
-)
+
+from extensions.core_entities.orderkinds.admin import OrderKindAdmin  # noqa: E402,F401
 
 warnings.warn(
     "src.backend.utilities.admin_panel.orderkinds is deprecated "

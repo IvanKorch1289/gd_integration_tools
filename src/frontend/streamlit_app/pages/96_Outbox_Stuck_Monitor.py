@@ -32,8 +32,7 @@ setup_page("Outbox Stuck Monitor", "⏱")
 
 st.title("⏱ Outbox Stuck-Pending Monitor")
 st.caption(
-    "Sprint 75 W1 — Live dashboard для outbox_stuck_pending_count gauge "
-    "(S72 W2 → S73 W1 → S75 W1 chain)"
+    "Live dashboard для outbox_stuck_pending_count gauge (Pending → Sent → Failed)."
 )
 
 # Configuration section
@@ -113,9 +112,7 @@ else:
     in_memory_available = False
     try:
         # S44 W3: facade import (was direct infrastructure, layer violation).
-        from src.backend.services.messaging.outbox_monitor import (
-            default_stuck_monitor,
-        )
+        from src.backend.services.messaging.outbox_monitor import default_stuck_monitor
 
         monitor = default_stuck_monitor
         in_memory_available = True
@@ -159,7 +156,7 @@ systemctl restart gd-integration-tools
     )
 
 # Per-transport breakdown (S81 W4, ND-001 step 9)
-st.subheader("📊 Per-Transport Breakdown (S81 W4)")
+st.subheader("📊 Per-Transport Breakdown")
 
 if prometheus_url:
     # Query per-transport gauges (S81 W2: label-based)
@@ -207,7 +204,7 @@ else:
     )
 
 # Alert rules summary
-st.subheader("🚨 Alert Rules (S73 W1 + S81 W3)")
+st.subheader("🚨 Alert Rules")
 
 alert_rules: list[dict[str, Any]] = [
     {

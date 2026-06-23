@@ -101,3 +101,21 @@ class WorkflowsClient(BaseAPIClient):
             )
         except Exception:  # noqa: BLE001
             return None
+
+    def get_saga_history(
+        self, workflow_id: str, *, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """GET /api/v1/admin/workflows/{id}/saga-history — compensation timeline.
+
+        P6 thin-client миграция: вызывает HTTP endpoint вместо прямого импорта
+        ``workflows.saga_history.get_saga_history``.
+        """
+        try:
+            result = self._request(
+                "GET",
+                f"/api/v1/admin/workflows/{workflow_id}/saga-history",
+                params={"limit": limit},
+            )
+            return result if isinstance(result, list) else []
+        except Exception:  # noqa: BLE001
+            return []

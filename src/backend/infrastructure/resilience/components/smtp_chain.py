@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("SmtpSendCallable", "build_smtp_fallbacks", "build_smtp_primary")
 
 logger = get_logger(__name__)

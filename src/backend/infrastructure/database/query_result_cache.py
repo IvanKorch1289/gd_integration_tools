@@ -27,6 +27,7 @@ from typing import Any, Protocol
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "QueryResultCache",
     "PickleSerializer",

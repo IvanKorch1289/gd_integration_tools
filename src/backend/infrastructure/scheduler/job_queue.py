@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
+
 __all__ = ("JobQueue", "get_job_queue")
 
 logger = get_logger(__name__)
@@ -129,7 +130,7 @@ class JobQueue:
             scheduler.remove_job(job_id)
             logger.info("Задача %s отменена", job_id)
             return True
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:

@@ -14,12 +14,8 @@
 """
 
 import asyncio
-from typing import Any, ClassVar
+from typing import Any
 
-from pydantic import Field
-from pydantic_settings import SettingsConfigDict
-
-from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 

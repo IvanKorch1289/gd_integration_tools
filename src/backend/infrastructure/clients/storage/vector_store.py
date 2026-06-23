@@ -10,6 +10,7 @@ from typing import Any
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "BaseVectorStore",
     "ChromaVectorStore",
@@ -59,7 +60,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         try:
             await client.get_collection(self._collection_name)
-        except (UnexpectedResponse, ValueError):
+        except UnexpectedResponse, ValueError:
             await client.create_collection(
                 collection_name=self._collection_name,
                 vectors_config=VectorParams(

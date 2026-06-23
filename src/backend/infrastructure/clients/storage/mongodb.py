@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("MongoDBClient", "get_mongo_client")
 
 logger = get_logger(__name__)
@@ -218,7 +219,7 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

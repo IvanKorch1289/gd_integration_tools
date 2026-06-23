@@ -24,7 +24,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Tenant Inspection (S21)", "🛡️")
-st.header("Tenant Inspection — Sprint 21 multi-tenancy + resilience")
+st.header("Tenant Inspection")
 st.caption(
     "Read-only dashboard: cache hit-rates per tenant + RLS policy status + "
     "RPA session pool stats + Scheduler DLQ + last failed jobs."
@@ -82,7 +82,7 @@ cols_overview[3].metric("Cache misses (1h)", _safe_metric("cache_misses_total"))
 # ─────────────────────────────────────────────────────────────────────────
 # Section 2: RLS Policy Status
 # ─────────────────────────────────────────────────────────────────────────
-st.subheader("2. RLS Policy Status (S21 W1)")
+st.subheader("2. RLS Policy Status")
 st.caption(
     "RLS-policy на tenant-aware таблицах. `app.tenant_id` set через "
     "SQLAlchemy after_begin listener."
@@ -116,7 +116,7 @@ st.dataframe(rls_rows, hide_index=True, use_container_width=True)
 # ─────────────────────────────────────────────────────────────────────────
 # Section 3: RPA session pool stats
 # ─────────────────────────────────────────────────────────────────────────
-st.subheader("3. RPA Session Pool (S21 W6)")
+st.subheader("3. RPA Session Pool")
 st.caption(
     "DesktopRPASessionPool — persistent httpx-clients с session affinity. "
     "(Источник: pool.stats(); placeholder если pool не активен.)"
@@ -137,7 +137,7 @@ st.dataframe(pool_rows, hide_index=True, use_container_width=True)
 # ─────────────────────────────────────────────────────────────────────────
 # Section 4: Scheduler DLQ
 # ─────────────────────────────────────────────────────────────────────────
-st.subheader("4. Scheduler DLQ (S21 W4)")
+st.subheader("4. Scheduler DLQ")
 st.caption(
     "Последние failed APScheduler jobs. Endpoint: `GET /admin/scheduler/dlq?limit=10`."
 )
@@ -164,7 +164,7 @@ else:
 # ─────────────────────────────────────────────────────────────────────────
 # Section 5: Browser cookies persistence (S21 W7)
 # ─────────────────────────────────────────────────────────────────────────
-st.subheader("5. Browser Cookies Persistence (S21 W7)")
+st.subheader("5. Browser Cookies Persistence")
 st.caption(
     "BrowserCookieStore: Redis hash `browser:session:{tenant}:{user}:{domain}` "
     "TTL 24h. Feature-flag `browser_cookies_redis_persist` (default-OFF)."

@@ -257,7 +257,9 @@ class DSLYamlWatcher:
             self._pipeline_cache = old_cache
             logger.error("DSLYamlWatcher incremental reload failed: %s", exc)
 
-    def _collect_and_apply(self, incremental: bool = True) -> tuple[dict[Path, str], dict[Path, str]]:
+    def _collect_and_apply(
+        self, incremental: bool = True
+    ) -> tuple[dict[Path, str], dict[Path, str]]:
         """Полный rescan + atomic apply.
 
         - грузит все валидные YAML-файлы;

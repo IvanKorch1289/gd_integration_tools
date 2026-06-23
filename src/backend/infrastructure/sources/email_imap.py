@@ -33,6 +33,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("EmailIMAPSource", "EmailMessage")
 
 if TYPE_CHECKING:

@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("register_feedback_cron",)
 
 logger = get_logger("infra.scheduler.feedback_cron")

@@ -11,6 +11,10 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+# S164 W40: MqttSettings import (was missing — sibling's MQTT processor
+# referenced undefined symbol). Per Rule 8 (no dead code) + Rule 15
+# (zero TD): fix import.
+from src.backend.core.config.services.mqtt import MqttSettings
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
@@ -19,11 +23,6 @@ from src.backend.dsl.engine.processors.sink_publish.generic import (
     _resolve_payload,
     _store_result,
 )
-
-# S164 W40: MqttSettings import (was missing — sibling's MQTT processor
-# referenced undefined symbol). Per Rule 8 (no dead code) + Rule 15
-# (zero TD): fix import.
-from src.backend.core.config.services.mqtt import MqttSettings
 
 
 @dataclass(slots=True)
@@ -154,7 +153,6 @@ class MqttPublishProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         """Сохраняет MQTT broker config; клиент создаётся при ``process``."""
-        from src.backend.core.config.services.mqtt import mqtt_settings as _mqtt_settings
 
         if port is None:
             port = MqttSettings().broker_port

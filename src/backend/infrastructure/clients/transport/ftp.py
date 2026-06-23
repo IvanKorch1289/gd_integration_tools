@@ -21,12 +21,13 @@ from typing import Any
 #   ftp → breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 # Тот же pattern в smtp.py:12-17.
 from src.backend.core.config.settings import settings as _settings  # noqa: F401
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import (
     BreakerSpec,
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.core.logging import get_logger
+
 __all__ = ("FTPClient", "get_ftp_client")
 
 logger = get_logger(__name__)
@@ -253,7 +254,7 @@ class FTPClient:
             async with self._breaker.guard():
                 async with await self._get_client():
                     return True
-        except (ConnectionError, TimeoutError, OSError, CircuitOpen):
+        except ConnectionError, TimeoutError, OSError, CircuitOpen:
             return False
 
 

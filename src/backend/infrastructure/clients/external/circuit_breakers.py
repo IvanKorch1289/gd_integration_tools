@@ -4,12 +4,13 @@ from functools import lru_cache
 from typing import Any
 
 from src.backend.core.config.constants import consts
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerSpec,
     get_breaker_registry,
 )
-from src.backend.core.logging import get_logger
+
 __all__ = ("CircuitBreakerRegistry", "breaker_registry", "get_circuit_breaker_registry")
 
 logger = get_logger(__name__)

@@ -16,6 +16,7 @@ class APIVersion:
         deprecated: Whether this version is deprecated.
         sunset: Sunset date in ISO format (RFC 8594).
     """
+
     version: str
     deprecated: bool = False
     sunset: str | None = None  # ISO date (RFC 8594)

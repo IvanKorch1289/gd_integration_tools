@@ -4,10 +4,10 @@ FileAdmin moved to
 src.backend.extensions.core_entities.files.admin per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
-from extensions.core_entities.files.admin import (  # noqa: E402,F401
-    FileAdmin,
-)
+
+from extensions.core_entities.files.admin import FileAdmin  # noqa: E402,F401
 
 warnings.warn(
     "src.backend.utilities.admin_panel.files is deprecated "

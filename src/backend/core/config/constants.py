@@ -12,9 +12,9 @@ import httpx
 # S168 W10 P1-14: per-domain extraction. CB + retry defaults
 # re-exported from _resilience_consts.py для backward-compat.
 from src.backend.core.config._resilience_consts import (
+    DEFAULT_CB_FAILURE_THRESHOLD,
     DEFAULT_CB_FAST_FAILURE_THRESHOLD,
     DEFAULT_CB_FAST_RECOVERY_SECONDS,
-    DEFAULT_CB_FAILURE_THRESHOLD,
     DEFAULT_CB_RECOVERY_SECONDS,
     DEFAULT_RETRY_BACKOFF_MULTIPLIER,
     DEFAULT_RETRY_INITIAL_BACKOFF,

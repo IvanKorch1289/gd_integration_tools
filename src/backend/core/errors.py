@@ -101,7 +101,8 @@ class UnprocessableError(BaseError):
 
     def __init__(self, *_: Any, message: str = "Validation error") -> None:
         super().__init__(
-            message=message, status_code=status.HTTP_422_UNPROCESSABLE_CONTENT  # starlette 1.3.0+
+            message=message,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,  # starlette 1.3.0+
         )
 
 

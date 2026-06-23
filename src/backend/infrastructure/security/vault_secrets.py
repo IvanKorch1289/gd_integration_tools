@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     import hvac
 

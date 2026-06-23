@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 
 class DQSeverity(str, Enum):
     """Data quality violation severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -38,6 +39,7 @@ class DQSeverity(str, Enum):
 @dataclass(slots=True)
 class DQViolation:
     """Data quality violation record."""
+
     rule: str
     field: str
     severity: DQSeverity
@@ -48,6 +50,7 @@ class DQViolation:
 @dataclass(slots=True)
 class DQCheckResult:
     """Data quality check result."""
+
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0

@@ -390,10 +390,7 @@ class DocsIndexer:
 # Per Ponytail minimum: this commit does NOT delete this file.
 # Callers (2: ai/rag/__init__.py, tests/unit/ai/rag/test_docs_indexer.py)
 # продолжат работать через re-export. Actual deletion — separate WIP.
-from src.backend.services.ai.rag.project_docs import (  # noqa: E402,F401
+from src.backend.services.ai.rag.project_docs import (  # noqa: E402,F401,F811
     DocsIndexer,
     InMemoryQdrantFallback,
-    __all__ as __project_docs_all__,
 )
-
-__all__ = list(__project_docs_all__) + ["project_docs_module"]

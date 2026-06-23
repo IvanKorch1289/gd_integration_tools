@@ -34,9 +34,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
+from src.backend.core.logging import get_logger
 from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.core.net.waf import WafPolicy
-from src.backend.core.logging import get_logger
+
 __all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubUser", "JupyterHubServer")
 
 _logger = get_logger("infrastructure.jupyter_hub")

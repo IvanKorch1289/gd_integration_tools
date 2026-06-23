@@ -23,6 +23,7 @@ import os
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("init_otel", "instrument_asyncpg_if_enabled")
 
 logger = get_logger("infra.otel")

@@ -25,6 +25,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("NatsConnectionPool",)
 
 _logger = get_logger("infrastructure.clients.transport.nats_pool")

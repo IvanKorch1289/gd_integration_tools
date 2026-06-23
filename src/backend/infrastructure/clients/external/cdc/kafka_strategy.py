@@ -21,10 +21,8 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from src.backend.core.resilience.breaker import (
-    BreakerSpec,
-    get_breaker_registry,
-)
+from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,
     CDCSubscription,
@@ -32,7 +30,7 @@ from src.backend.infrastructure.clients.external.cdc.events import (
 from src.backend.infrastructure.clients.external.cdc.strategies import (
     _CDCStrategy,  # S167 W1.1: enforce Protocol contract (ABC base)
 )
-from src.backend.core.logging import get_logger
+
 logger = get_logger("infrastructure.clients.cdc.kafka")
 
 
@@ -64,9 +62,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         self._breaker = get_breaker_registry().get_or_create(
             "cdc-kafka-debezium",
             BreakerSpec(
-                name="cdc-kafka-debezium",
-                failure_threshold=5,
-                recovery_timeout=30.0,
+                name="cdc-kafka-debezium", failure_threshold=5, recovery_timeout=30.0
             ),
         )
 
@@ -114,9 +110,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         consumer.subscribe(topics)
 
         logger.info(
-            "CDC Kafka consumer started: topics=%s, group=%s",
-            topics,
-            self._group_id,
+            "CDC Kafka consumer started: topics=%s, group=%s", topics, self._group_id
         )
 
         try:
@@ -124,8 +118,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                 try:
                     # 1-second timeout to check sub.active
                     msg_batch = await asyncio.wait_for(
-                        consumer.getmany(timeout_ms=1000, max_records=100),
-                        timeout=2.0,
+                        consumer.getmany(timeout_ms=1000, max_records=100), timeout=2.0
                     )
                 except asyncio.TimeoutError:
                     continue
@@ -155,11 +148,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
             self._consumer = None
 
     def _parse_debezium_event(
-        self,
-        payload: dict[str, Any],
-        *,
-        table: str,
-        profile: str,
+        self, payload: dict[str, Any], *, table: str, profile: str
     ) -> CDCEvent | None:
         """Parse Debezium ChangeEvent → CDCEvent.
 

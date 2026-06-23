@@ -18,8 +18,9 @@ import tempfile
 from pathlib import Path
 
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.backend.core.models.connector_spec import ConnectorSpec, EndpointSpec
 from src.backend.core.logging import get_logger
+from src.backend.core.models.connector_spec import ConnectorSpec, EndpointSpec
+
 __all__ = ("WsdlImportGateway",)
 
 logger = get_logger("infrastructure.import_gateway.wsdl")

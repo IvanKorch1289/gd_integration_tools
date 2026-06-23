@@ -6,10 +6,11 @@ from typing import Any, Literal
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.storage.redis._protocol import (
     _RedisClientProtocol,
 )
-from src.backend.core.logging import get_logger
+
 redis_logger = get_logger("redis")
 
 
@@ -30,6 +31,7 @@ class StreamMixin(_RedisClientProtocol):
         Returns:
             True if stream exists.
         """
+
         async def op(conn: Redis) -> bool:
             return await conn.type(stream_name) == b"stream"
 
@@ -63,6 +65,7 @@ class StreamMixin(_RedisClientProtocol):
         Args:
             stream_name: Stream name to initialize.
         """
+
         async def op(conn: Redis) -> None:
             xadd_args: dict[str, Any] = {}
             if self.settings.max_stream_len:

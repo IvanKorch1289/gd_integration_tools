@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     import httpx
 

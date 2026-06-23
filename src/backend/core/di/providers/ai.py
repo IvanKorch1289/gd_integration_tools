@@ -102,7 +102,9 @@ def _resolve_pii_token_registry() -> Any:
 def _resolve_unified_audit_service() -> Any | None:
     """Lazy-резолв :class:`AuditService` (S17/K3); ``None`` при недоступности."""
     try:
-        from src.backend.core.audit.facade.audit_service import get_unified_audit_service
+        from src.backend.core.audit.facade.audit_service import (
+            get_unified_audit_service,
+        )
 
         return get_unified_audit_service()
     except Exception as _:

@@ -44,13 +44,13 @@ loader'а + auto-export — Wave S26 W5.
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 import importlib
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
+
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -392,6 +392,7 @@ class SkillRegistry:
             def make_handler(skill_id: str) -> Any:
                 async def handler(**kwargs: Any) -> Any:
                     return await self.invoke(skill_id, **kwargs)
+
                 handler.__name__ = skill_id.replace(".", "_")
                 handler.__doc__ = skill.description
                 return handler
@@ -409,6 +410,7 @@ class SkillRegistry:
             if skill.input_schema:
                 try:
                     from pathlib import Path
+
                     from pydantic import create_model
 
                     schema_path = Path(skill.input_schema)

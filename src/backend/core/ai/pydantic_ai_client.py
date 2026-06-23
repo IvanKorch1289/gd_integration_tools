@@ -28,10 +28,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.ai.errors import (
-    GatewayRateLimited,
-    GatewayUnavailable,
-)
+from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
@@ -106,6 +103,7 @@ class LLMResult:
 
 try:
     from pydantic_ai.models import Model as _PydanticAIModel
+
     _PYDANTIC_AI_AVAILABLE = True
 except ImportError:  # pragma: no cover — optional dep
     _PydanticAIModel = None  # type: ignore[assignment,misc]
@@ -416,27 +414,24 @@ class PydanticAIClient:
 
 if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
     from collections.abc import AsyncGenerator
-    from contextlib import asynccontextmanager
     from typing import Any as _Any
 
-    from pydantic_ai.messages import (
-        ModelMessage as _ModelMessage,
-        ModelRequest as _ModelRequest,
-        ModelResponse as _ModelResponse,
-        ModelResponsePart as _ModelResponsePart,
-        TextPart as _TextPart,
-    )
-    from pydantic_ai.models import (
-        ModelRequestParameters as _ModelRequestParameters,
-        ModelSettings as _ModelSettings,
-        StreamedResponse as _StreamedResponse,
-    )
-    from pydantic_ai.models import (
-        ModelRequestContext as _ModelRequestContext,
-    )
-    from pydantic_ai.usage import RequestUsage as _RequestUsage, Usage as _Usage
+    from pydantic_ai.messages import ModelMessage as _ModelMessage
+    from pydantic_ai.messages import ModelRequest as _ModelRequest
+    from pydantic_ai.messages import ModelResponse as _ModelResponse
+    from pydantic_ai.messages import ModelResponsePart as _ModelResponsePart
+    from pydantic_ai.messages import TextPart as _TextPart
+    from pydantic_ai.models import ModelRequestContext as _ModelRequestContext
+    from pydantic_ai.models import ModelRequestParameters as _ModelRequestParameters
+    from pydantic_ai.models import ModelSettings as _ModelSettings
+    from pydantic_ai.models import StreamedResponse as _StreamedResponse
+    from pydantic_ai.usage import RequestUsage as _RequestUsage
+    from pydantic_ai.usage import Usage as _Usage
+
     try:
-        from pydantic_ai.tools import AbstractNativeTool as _AbstractNativeTool  # type: ignore[attr-defined]
+        from pydantic_ai.tools import (
+            AbstractNativeTool as _AbstractNativeTool,  # type: ignore[attr-defined]
+        )
     except ImportError:  # pragma: no cover — version-specific
         _AbstractNativeTool = object  # type: ignore[assignment,misc]
 
@@ -454,11 +449,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         """
 
         def __init__(
-            self,
-            *,
-            gateway: _Any,
-            model_name: str,
-            provider: str = "litellm",
+            self, *, gateway: _Any, model_name: str, provider: str = "litellm"
         ) -> None:
             self._gateway = gateway
             self._model_name = model_name
@@ -494,15 +485,15 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             if isinstance(last_msg, _ModelRequest):
                 # Use parts (text only — tool calls separate path)
                 content = "".join(
-                    part.content for part in last_msg.parts
+                    part.content
+                    for part in last_msg.parts
                     if hasattr(part, "content") and isinstance(part.content, str)
                 )
             else:
                 content = ""
 
             response = await self._gateway.acompletion(
-                model=self._model_name,
-                messages=[{"role": "user", "content": content}],
+                model=self._model_name, messages=[{"role": "user", "content": content}]
             )
 
             # Wrap в pydantic_ai ModelResponse
@@ -524,21 +515,20 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             last_msg = messages[-1] if messages else None
             if isinstance(last_msg, _ModelRequest):
                 content = "".join(
-                    part.content for part in last_msg.parts
+                    part.content
+                    for part in last_msg.parts
                     if hasattr(part, "content") and isinstance(part.content, str)
                 )
             else:
                 content = ""
 
             async for chunk in await self._gateway.astream(
-                model=self._model_name,
-                messages=[{"role": "user", "content": content}],
+                model=self._model_name, messages=[{"role": "user", "content": content}]
             ):
                 text = self._extract_text(chunk)
                 if text:
                     yield _SimpleStreamedResponse(  # type: ignore[misc]
-                        model_name=self._model_name,
-                        text=text,
+                        model_name=self._model_name, text=text
                     )
 
         def customize_request_parameters(

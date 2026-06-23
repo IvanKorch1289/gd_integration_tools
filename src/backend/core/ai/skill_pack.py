@@ -23,12 +23,12 @@ retrieval policy и post-processing. Позволяет группировать
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

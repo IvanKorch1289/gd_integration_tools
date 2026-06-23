@@ -33,7 +33,10 @@ from src.backend.core.ai.errors import MCPToolError
 from src.backend.core.ai.skill_registry import SkillRegistry, SkillSpec
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import current_tenant
-from src.backend.infrastructure.workflow.registry import WorkflowDescriptor, workflow_registry
+from src.backend.infrastructure.workflow.registry import (
+    WorkflowDescriptor,
+    workflow_registry,
+)
 
 __all__ = ("FastMCPserver",)
 

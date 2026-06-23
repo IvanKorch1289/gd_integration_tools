@@ -70,9 +70,7 @@ async def dispatch_action(
         return ActionResult(action=action, success=True, data=data)
     except KeyError:
         return ActionResult(
-            action=action,
-            success=False,
-            error=f"Action '{action}' не зарегистрирован",
+            action=action, success=False, error=f"Action '{action}' не зарегистрирован"
         )
     except Exception as exc:
         return ActionResult(

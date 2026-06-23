@@ -40,6 +40,7 @@ from src.backend.core.config.services.resilience import (
     FallbackPolicy,
     ResilienceSettings,
 )
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience import DegradationManager, degradation_manager
 from src.backend.core.resilience.breaker import (
     Breaker,
@@ -48,7 +49,7 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     breaker_registry,
 )
-from src.backend.core.logging import get_logger
+
 __all__ = (
     "ComponentStatus",
     "ResilienceCoordinator",

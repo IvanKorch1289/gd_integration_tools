@@ -160,9 +160,7 @@ async def dispatch_action_or_dsl(
             )
 
         return await asyncio.wait_for(
-            _dispatch_dsl(
-                dsl_route_id=dsl_route_id, payload=payload, headers=headers
-            ),
+            _dispatch_dsl(dsl_route_id=dsl_route_id, payload=payload, headers=headers),
             timeout=float(action_timeout_s),
         )
     except asyncio.TimeoutError:

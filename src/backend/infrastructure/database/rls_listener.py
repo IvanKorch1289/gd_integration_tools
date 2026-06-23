@@ -31,8 +31,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import Session
 
 from src.backend.core.config.features import feature_flags
-from src.backend.core.tenancy import current_tenant
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy import current_tenant
+
 db_logger = get_logger("database")
 
 __all__ = ("install_rls_tenant_listener",)

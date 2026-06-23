@@ -12,6 +12,7 @@ Re-export canonical ``infrastructure.cache.metrics_collector`` +
 
 Layer policy: entrypoints -> services (allowed per V22).
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.cache.metrics_collector import (  # noqa: E402,F401

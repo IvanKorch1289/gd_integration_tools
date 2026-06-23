@@ -4,6 +4,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
 
+from extensions.core_entities.files.schemas.filter import FileFilter
+from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
+    FileSchemaIn,
+    FileSchemaOut,
+    FileVersionSchemaOut,
+)
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
@@ -11,12 +17,6 @@ from src.backend.entrypoints.api.generator.actions import (
     CrudSpec,
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
-from extensions.core_entities.files.schemas.filter import FileFilter
-from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
-    FileSchemaIn,
-    FileSchemaOut,
-    FileVersionSchemaOut,
-)
 from src.backend.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")

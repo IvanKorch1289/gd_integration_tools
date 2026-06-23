@@ -16,14 +16,13 @@ Audit-context: импортируется из :mod:`gateway_audit_mixin` (T-P1.
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 import time
 from typing import TYPE_CHECKING
 
 from src.backend.core.ai.gateway_audit_mixin import _AuditContext
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
     )
 else:
     _PipelineStepsMixin = object
+
 
 class EnforcedInvokeMixin(_PipelineStepsMixin):
     """9-step pipeline orchestrator (ADR-NEW-19, S25 W1..W5 + S27 W2..W5).
@@ -72,16 +72,22 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
         )
 
-        # Шаг 1.5 (S168 W9 P0-1): enforce tool policy per AIPolicySpec.tools.
-        # ToolsSpec declared in S76, but never wired — agents could call any
-        # tool regardless of whitelist/blacklist. Now enforced per
-        # ``enforce_tool_policy(tool_name=request.workflow_id, spec=policy.tools)``.
+        # Шаг 1.5 (S168 W9 P0-1 + S1 fix): enforce tool policy per AIPolicySpec.tools.
+        # ToolsSpec declared in S76, now wired. Pre-S1 bug: enforcement
+        # проверял ``request.workflow_id`` как "tool name", что не имело
+        # смысла (workflow_id ≠ конкретный tool). S1 fix: предпочитаем
+        # ``request.tool_name`` если задан; иначе — fallback на workflow_id
+        # для backward-compat с pre-S1 кодом (workflow-level enforcement).
         # on_violation ∈ {fail, warn, block} per spec.
+        # S1.b follow-up: per-tool-dispatch enforcement в ``ai_tool_dispatch.py``
+        # (там, где tool_name известен по факту вызова).
         if policy is not None and getattr(policy, "tools", None) is not None:
             from src.backend.core.ai.policy.enforcer.tools_policy import (
                 enforce_tool_policy,
             )
-            enforce_tool_policy(request.workflow_id, policy.tools)
+
+            enforced_name = request.tool_name or request.workflow_id
+            enforce_tool_policy(enforced_name, policy.tools)
 
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
         await self._check_capability(request)
@@ -111,19 +117,18 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         rendered = await self._render_prompt(request, policy, sanitized)
         ctx.rendered = rendered
 
-        # P0-1 (S36-W5): per-invoke tool policy enforcement (S76 W3 follow-up).
+        # P0-1 (S36-W5 + S1 fix): per-invoke tool policy enforcement (S76 W3 follow-up).
         # Проверяется ``AIPolicySpec.tools.whitelist/blacklist`` перед LLM call.
-        # Semantic ``tool_name = request.workflow_id`` (per docs/cookbooks/01).
-        # Skip если whitelist+blacklist пустые (backward-compat с pre-S76).
-        if (
-            policy is not None
-            and (policy.tools.whitelist or policy.tools.blacklist)
-        ):
+        # S1 fix: предпочитаем ``request.tool_name`` если задан; иначе —
+        # workflow_id (backward-compat). Skip если whitelist+blacklist пустые
+        # (backward-compat с pre-S76).
+        if policy is not None and (policy.tools.whitelist or policy.tools.blacklist):
             from src.backend.core.ai.policy.enforcer.tools_policy import (
                 enforce_tool_policy,
             )
 
-            enforce_tool_policy(request.workflow_id, policy.tools)
+            enforced_name = request.tool_name or request.workflow_id
+            enforce_tool_policy(enforced_name, policy.tools)
 
         # Шаг 6: invoke LLM
         completion = await self._invoke_llm(rendered, policy, request.stream)

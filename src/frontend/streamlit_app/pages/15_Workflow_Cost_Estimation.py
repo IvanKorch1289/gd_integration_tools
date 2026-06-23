@@ -15,7 +15,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Workflow Cost", "")
-st.header("Workflow Cost Estimation — Sprint 12 K3 W3 + K4 W2")
+st.header("Workflow Cost Estimation")
 
 st.caption(
     "Pre-run estimation для workflow на основе p50/p95 historical "

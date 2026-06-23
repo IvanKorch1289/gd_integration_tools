@@ -20,11 +20,9 @@ from typing import Any
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 from src.backend.core.config.settings import settings as _settings  # noqa: F401
-from src.backend.core.resilience.breaker import (
-    BreakerSpec,
-    get_breaker_registry,
-)
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+
 __all__ = ("BrowserClient", "get_browser_client")
 
 logger = get_logger(__name__)
@@ -167,7 +165,9 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self._timeout
+                )
                 await self._human_delay()
                 elements = await page.query_selector_all(selector)
                 texts = [await el.inner_text() for el in elements]
@@ -189,7 +189,9 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self._timeout
+                )
                 await self._human_delay()
                 return await page.evaluate(f"""
                     () => {{
@@ -222,7 +224,9 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self._timeout
+                )
                 for selector, value in fields.items():
                     await self._human_delay(50, 200)
                     await page.fill(selector, value)
@@ -248,7 +252,9 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self._timeout
+                )
                 await self._human_delay()
                 await page.click(selector)
                 await page.wait_for_load_state("domcontentloaded")
@@ -270,7 +276,9 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=self._timeout)
+                await page.goto(
+                    url, wait_until="domcontentloaded", timeout=self._timeout
+                )
                 await self._human_delay()
                 return await page.screenshot(full_page=full_page)
             finally:
@@ -304,7 +312,9 @@ class BrowserClient:
 
                     elif action == "click":
                         await page.click(step["selector"])
-                        results.append({"action": "click", "selector": step["selector"]})
+                        results.append(
+                            {"action": "click", "selector": step["selector"]}
+                        )
 
                     elif action == "fill":
                         await page.fill(step["selector"], step["value"])
@@ -322,7 +332,9 @@ class BrowserClient:
                         results.append({"action": "extract", "data": texts})
 
                     elif action == "screenshot":
-                        data = await page.screenshot(full_page=step.get("full_page", True))
+                        data = await page.screenshot(
+                            full_page=step.get("full_page", True)
+                        )
                         results.append({"action": "screenshot", "size": len(data)})
 
                     elif action == "scroll":

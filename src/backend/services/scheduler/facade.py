@@ -24,10 +24,7 @@ class SchedulerFacade:
     """
 
     def __init__(
-        self,
-        *,
-        capability_check: Any | None = None,
-        plugin: str = "extension",
+        self, *, capability_check: Any | None = None, plugin: str = "extension"
     ) -> None:
         self._check = capability_check
         self._plugin = plugin
@@ -37,11 +34,7 @@ class SchedulerFacade:
             self._check(self._plugin, action, resource)
 
     def add_job(
-        self,
-        job_id: str,
-        func: Any,
-        trigger: str = "cron",
-        **trigger_kwargs: Any,
+        self, job_id: str, func: Any, trigger: str = "cron", **trigger_kwargs: Any
     ) -> None:
         """Добавить задачу в планировщик.
 
@@ -56,12 +49,7 @@ class SchedulerFacade:
             from src.backend.core.scheduler import get_scheduler_manager
 
             manager = get_scheduler_manager()
-            manager.add_job(
-                job_id=job_id,
-                func=func,
-                trigger=trigger,
-                **trigger_kwargs,
-            )
+            manager.add_job(job_id=job_id, func=func, trigger=trigger, **trigger_kwargs)
         except Exception as exc:
             _logger.warning("Failed to add job %s: %s", job_id, exc)
             raise ServiceError(f"Failed to add job: {exc}") from exc

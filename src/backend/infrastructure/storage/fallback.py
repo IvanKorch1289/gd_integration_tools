@@ -32,6 +32,7 @@ from typing import Any
 
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+
 __all__ = ("FallbackObjectStorage",)
 
 _logger = get_logger("storage.fallback")

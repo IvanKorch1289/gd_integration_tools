@@ -11,10 +11,11 @@ import struct
 import time
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     _parse_clamav_response,
 )
-from src.backend.core.logging import get_logger
+
 __all__ = ("ClamAVTcpBackend",)
 
 logger = get_logger("infrastructure.antivirus.clamav_tcp")
@@ -41,7 +42,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0
             )
-        except (TimeoutError, OSError):
+        except TimeoutError, OSError:
             return False
         try:
             writer.write(b"zPING\0")

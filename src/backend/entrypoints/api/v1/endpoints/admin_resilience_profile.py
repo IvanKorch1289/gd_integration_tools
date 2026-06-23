@@ -204,12 +204,12 @@ async def upsert_profile(
     summary="Удалить resilience profile (global или per-tenant)",
     description=(
         "Удаляет ResilienceProfile. Опциональный tenant_id для per-tenant "
-        "scope. Возвращает {\"deleted\": true/false} в зависимости от "
+        'scope. Возвращает {"deleted": true/false} в зависимости от '
         "существования. Требует Operator role."
     ),
     tags=["Admin / Resilience"],
     responses={
-        200: {"description": "{\"deleted\": bool}."},
+        200: {"description": '{"deleted": bool}.'},
         403: {"description": "User lacks Operator role."},
     },
 )

@@ -12,6 +12,7 @@ from collections.abc import Iterable
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 from src.backend.core.logging import get_logger
+
 __all__ = ("ChainedAntivirusBackend", "create_antivirus_backend")
 
 logger = get_logger("infrastructure.antivirus.factory")

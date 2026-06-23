@@ -84,6 +84,7 @@ class DQViolation:
 @dataclass
 class DQCheckResult:
     """Data quality check result."""
+
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0

@@ -22,6 +22,7 @@ from typing import Any
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
+
 __all__ = ("ClickHouseClient", "get_clickhouse_client")
 
 logger = get_logger(__name__)
@@ -182,7 +183,12 @@ class ClickHouseClient:
 
     async def execute(self, query: str, params: dict[str, Any] | None = None) -> str:
         """Выполняет произвольный SQL-запрос с retry на transient errors."""
-        from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+        from tenacity import (
+            retry,
+            retry_if_exception_type,
+            stop_after_attempt,
+            wait_exponential,
+        )
 
         @retry(
             stop=stop_after_attempt(3),
@@ -290,7 +296,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

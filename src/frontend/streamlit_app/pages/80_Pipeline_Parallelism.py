@@ -16,7 +16,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Pipeline Parallelism", "🔀")
 st.title("🔀 Pipeline Parallelism Analysis")
-st.caption("Sprint 13 K5 W3 — DAG analyzer для DSL-маршрутов (PERF-6.8).")
+st.caption("DAG analyzer для DSL-маршрутов.")
 
 client = get_api_client()
 

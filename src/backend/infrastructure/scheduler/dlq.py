@@ -36,8 +36,9 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
-from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
 from src.backend.core.logging import get_logger
+from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason, DLQWriter
+
 if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 

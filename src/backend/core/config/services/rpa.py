@@ -82,21 +82,16 @@ class RPASettings(BaseSettingsWithLoader):
         description="Run browser in headless mode (False для локальной отладки).",
     )
     browser_viewport_width: int = Field(
-        default=1280,
-        gt=0,
-        description="Browser viewport width (pixels).",
+        default=1280, gt=0, description="Browser viewport width (pixels)."
     )
     browser_viewport_height: int = Field(
-        default=720,
-        gt=0,
-        description="Browser viewport height (pixels).",
+        default=720, gt=0, description="Browser viewport height (pixels)."
     )
 
     # ── OCR backend (feature-flag gated) ─────────────────────────────
 
     ocr_enabled: bool = Field(
-        default=False,
-        description="Enable OCR functionality (Pytesseract backend).",
+        default=False, description="Enable OCR functionality (Pytesseract backend)."
     )
     ocr_default_lang: str = Field(
         default="eng+rus",
@@ -106,19 +101,13 @@ class RPASettings(BaseSettingsWithLoader):
     # ── Resilience defaults (apply unless overridden per-route) ────
 
     desktop_cb_failure_threshold: int = Field(
-        default=5,
-        gt=0,
-        description="CB failure threshold для DesktopRpaClient/Pool.",
+        default=5, gt=0, description="CB failure threshold для DesktopRpaClient/Pool."
     )
     desktop_cb_recovery_seconds: float = Field(
-        default=30.0,
-        gt=0,
-        description="CB recovery timeout (seconds).",
+        default=30.0, gt=0, description="CB recovery timeout (seconds)."
     )
     desktop_retry_max_attempts: int = Field(
-        default=3,
-        gt=0,
-        description="Max retry attempts для DesktopRpaClient.execute.",
+        default=3, gt=0, description="Max retry attempts для DesktopRpaClient.execute."
     )
 
 

@@ -16,11 +16,12 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.config.services.cache import CacheSettings, cache_settings
 from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
 from src.backend.infrastructure.cache.backends.memcached import MemcachedBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.cache.backends.redis import RedisBackend
-from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from redis.asyncio import Redis
 

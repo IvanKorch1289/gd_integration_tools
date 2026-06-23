@@ -11,9 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 # S165 W5: Purgatory Circuit Breaker для Kafka DLQ writer (Rule 6).
 # Per skill: import settings pre-loads core.config.settings, breaking
@@ -22,6 +20,8 @@ from src.backend.core.resilience.breaker import (  # noqa: E402
     BreakerSpec,
     get_breaker_registry,
 )
+from src.backend.core.serialization.msgspec_hotpath import encode_json
+from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("KafkaDLQWriter",)
 
@@ -33,9 +33,7 @@ def _get_kafka_dlq_breaker() -> Any:
     return get_breaker_registry().get_or_create(
         "kafka_dlq_writer",
         BreakerSpec(
-            name="kafka_dlq_writer",
-            failure_threshold=5,
-            recovery_timeout=30.0,
+            name="kafka_dlq_writer", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 

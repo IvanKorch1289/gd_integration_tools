@@ -23,6 +23,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse
 from src.backend.core.logging import get_logger
+
 __all__ = ("WsConnection", "WsReplyChannel")
 
 logger = get_logger("messaging.invocation_replies.ws")

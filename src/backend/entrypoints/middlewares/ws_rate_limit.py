@@ -81,10 +81,7 @@ class WSRateLimitMiddleware:
 
         identifier = ws_identifier(scope)
         if not await self._check_rate_limit(identifier):
-            logger.warning(
-                "WSRateLimit: rate limit exceeded for %s",
-                identifier,
-            )
+            logger.warning("WSRateLimit: rate limit exceeded for %s", identifier)
             # Send close frame with code 1008 (policy violation).
             await send({"type": "websocket.close", "code": 1008})
             return
@@ -112,8 +109,7 @@ class WSRateLimitMiddleware:
             # Fail-open: allow request if Redis unavailable (consistent with
             # webhook/handler.py pattern). Log for observability.
             logger.warning(
-                "WSRateLimit: Redis failed (fail-open) for %s: %s",
-                identifier, exc,
+                "WSRateLimit: Redis failed (fail-open) for %s: %s", identifier, exc
             )
             return True
         return True

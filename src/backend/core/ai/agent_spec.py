@@ -35,11 +35,11 @@ Agent Registry
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Literal
+
+from src.backend.core.logging import get_logger
 
 __all__ = ("AgentSpec", "HandoffPolicy", "MemoryScope")
 
@@ -175,4 +175,3 @@ class AgentSpec:
 from src.backend.core.ai.retry_policy import RetryPolicy  # noqa: E402
 
 logger = get_logger(__name__)
-

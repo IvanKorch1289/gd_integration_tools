@@ -62,7 +62,9 @@ class RegexProcessor(BaseProcessor):
         if self._action == "extract":
             matches = re.findall(self._pattern, text)
             if self._target is None or self._target == "body":
-                exchange.set_out(body=matches, headers=dict(exchange.in_message.headers))
+                exchange.set_out(
+                    body=matches, headers=dict(exchange.in_message.headers)
+                )
             else:
                 exchange.set_property(self._target, matches)
         elif self._action == "replace":

@@ -30,6 +30,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("configure_otel", "setup_otel_metrics", "shutdown_otel_metrics")
 
 logger = get_logger("infra.otel.setup")

@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "get_temporal_metrics",
     "record_scale_event",
@@ -53,7 +54,7 @@ def _ensure_metrics() -> dict[str, Any]:
                 labels=("action",),
             ),
         }
-    except (ImportError, ValueError):
+    except ImportError, ValueError:
         _metrics = {"_disabled": True}
     return _metrics
 

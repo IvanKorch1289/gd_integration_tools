@@ -1,8 +1,8 @@
 """In-process LRU cache for embedding vectors (Sprint 86).
 
- ponytail: async-native rewrite — threading.Lock blocked event loop when called
- from async context (L2SemanticRagCache._embed is async). Fixed by replacing
- with asyncio.Lock and making get/set async.
+ponytail: async-native rewrite — threading.Lock blocked event loop when called
+from async context (L2SemanticRagCache._embed is async). Fixed by replacing
+with asyncio.Lock and making get/set async.
 """
 
 from __future__ import annotations

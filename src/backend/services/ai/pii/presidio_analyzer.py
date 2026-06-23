@@ -255,9 +255,7 @@ class PresidioSanitizerAdapter:
         for msg in messages:
             content = msg.get("content", "")
             result = await asyncio.to_thread(
-                self._presidio_sanitize_sync,
-                content,
-                language=self._default_language,
+                self._presidio_sanitize_sync, content, language=self._default_language
             )
             full_mapping.update(result.replacements)
             sanitized.append({**msg, "content": result.sanitized_text})

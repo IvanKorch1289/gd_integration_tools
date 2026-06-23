@@ -32,6 +32,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.base_connector import HealthMode
 
@@ -97,7 +98,7 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return "mode" in sig.parameters
 

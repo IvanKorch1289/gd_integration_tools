@@ -17,6 +17,7 @@ Layer policy: extensions → only core. Этот facade — единственн
 S44 W1 sprint goal: закрыть extensions violation в
 ``extensions/osint_agent/functions/osint_workflow.py:292``.
 """
+
 from __future__ import annotations
 
 from src.backend.services.ai.gateway.client import (  # noqa: E402,F401

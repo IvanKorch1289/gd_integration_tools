@@ -28,9 +28,7 @@ def _get_tgi_breaker():
     return get_breaker_registry().get_or_create(
         "tgi_batch_client",
         BreakerSpec(
-            name="tgi_batch_client",
-            failure_threshold=5,
-            recovery_timeout=30.0,
+            name="tgi_batch_client", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 

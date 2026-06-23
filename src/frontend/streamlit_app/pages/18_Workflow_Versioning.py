@@ -13,7 +13,7 @@ import streamlit as st
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Workflow Versioning", "")
-st.header("Workflow Versioning — Sprint 12 K3 W8")
+st.header("Workflow Versioning")
 st.caption(
     "Управление WorkflowVersionRegistry: pin default / rollback / "
     "running executions counter."

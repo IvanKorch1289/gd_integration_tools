@@ -48,6 +48,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("extract_from_headers", "inject_into_headers")
 
 _logger = get_logger(__name__)

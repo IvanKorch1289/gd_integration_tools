@@ -17,6 +17,7 @@ from typing import Any
 from cachetools import TTLCache
 
 from src.backend.core.logging import get_logger
+
 logger = get_logger("infrastructure.cache.lru")
 
 __all__ = ("LruMemoryCache",)

@@ -22,8 +22,9 @@ from dataclasses import dataclass, field
 from typing import Any, Final, Literal
 
 from src.backend.core.config.pooling import PoolingProfile
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
+
 _logger = get_logger(__name__)
 
 

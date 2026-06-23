@@ -18,6 +18,7 @@ Layer policy: extensions → only core. Этот facade — единственн
 S44 W3 sprint goal: закрыть последний frontend→infra import
 (``96_Outbox_Stuck_Monitor.py:115``).
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: E402,F401

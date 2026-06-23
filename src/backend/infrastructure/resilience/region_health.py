@@ -84,9 +84,7 @@ class RegionHealthChecker:
 
     async def check_all(self) -> None:
         """Run one health check round across all registered regions."""
-        from src.backend.infrastructure.resilience.region_routing import (
-            list_regions,
-        )
+        from src.backend.infrastructure.resilience.region_routing import list_regions
 
         regions = list_regions()
         checks = [(r.code, await self.probe(r)) for r in regions]

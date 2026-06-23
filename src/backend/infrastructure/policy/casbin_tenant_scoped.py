@@ -50,8 +50,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.backend.core.tenancy import current_tenant
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy import current_tenant
+
 if TYPE_CHECKING:
     from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
 

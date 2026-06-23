@@ -20,6 +20,7 @@ from src.backend.services.plugins.manifest_toml import (  # S168 W15-17: yaml ma
     PluginManifest,
     load_plugin_manifest,  # was load_manifest in old yaml manifest.py
 )
+
 # Backward-compat alias (S168 W15-17 deprecation shim)
 load_manifest = load_plugin_manifest
 from src.backend.services.plugins.registries import (

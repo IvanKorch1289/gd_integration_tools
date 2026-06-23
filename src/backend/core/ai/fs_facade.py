@@ -15,14 +15,13 @@ Capability-gate пробрасывается через ``capability_check`` cal
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 from collections.abc import Callable
 from pathlib import Path
 
 from src.backend.core.ai.errors import FsForbiddenWriteError
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

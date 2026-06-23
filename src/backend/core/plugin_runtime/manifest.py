@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from src.backend.services.plugins.manifest_toml import (  # noqa: F401
     PluginCompatibility,
-    PluginManifestError,
     PluginManifest,
+    PluginManifestError,
     PluginProvides,
     PluginSandbox,
     PluginTenantDecl,

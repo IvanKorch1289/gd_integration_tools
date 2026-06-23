@@ -4,10 +4,10 @@ Order model moved to
 src.backend.extensions.core_entities.orders.domain.models per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
-from extensions.core_entities.orders.domain.models import (  # noqa: E402,F401
-    Order,
-)
+
+from extensions.core_entities.orders.domain.models import Order  # noqa: E402,F401
 
 warnings.warn(
     "src.backend.core.domain.models.orders is deprecated "

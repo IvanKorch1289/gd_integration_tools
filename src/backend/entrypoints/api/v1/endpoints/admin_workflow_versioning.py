@@ -73,9 +73,7 @@ def _to_response(v: Any) -> WorkflowVersionResponse:
         "rollback selection. Read-only endpoint."
     ),
     tags=["Admin / Workflow Versioning"],
-    responses={
-        200: {"description": "Список версий workflow (может быть пустым)."},
-    },
+    responses={200: {"description": "Список версий workflow (может быть пустым)."}},
 )
 async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse]:
     """Возвращает все зарегистрированные версии workflow."""

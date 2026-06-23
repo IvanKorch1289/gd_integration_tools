@@ -110,8 +110,7 @@ class JsonFileTraceStorage:
         # Sanitize route_id: drop NUL bytes, replace path separators
         # and parent-dir references ("..") with "_" (S156 W7).
         safe = (
-            route_id
-            .replace("\x00", "")
+            route_id.replace("\x00", "")
             .replace("..", "_")
             .replace("/", "_")
             .replace("\\", "_")

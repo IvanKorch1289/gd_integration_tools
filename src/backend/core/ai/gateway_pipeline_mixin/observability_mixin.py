@@ -132,6 +132,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
         if budget is not None and budget.max_cost_usd > 0:
             if response.cost_usd > budget.max_cost_usd:
                 from src.backend.core.tenancy.token_budget import BudgetExceeded
+
                 # NOTE: BudgetExceeded signature is tenant-scoped, but our
                 # context is per-invocation. Pass workflow_id as tenant_id
                 # proxy; caller can identify via workflow_id in trace.

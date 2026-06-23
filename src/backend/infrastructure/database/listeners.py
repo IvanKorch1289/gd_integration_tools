@@ -4,6 +4,7 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from src.backend.core.logging import get_logger
+
 db_logger = get_logger("database")
 
 __all__ = ("DatabaseListener",)

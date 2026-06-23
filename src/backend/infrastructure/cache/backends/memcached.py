@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:  # pragma: no cover
     import aiomcache
 

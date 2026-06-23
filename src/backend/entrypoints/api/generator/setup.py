@@ -1,13 +1,13 @@
 from extensions.core_entities.orderkinds.services.orderkinds import (
     get_order_kind_service,
 )
+from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
+    OrderIdPathSchema,
+)
 from extensions.core_entities.orders.services.orders import get_order_service
 from src.backend.entrypoints.api.generator.registry import (
     ActionHandlerSpec,
     action_handler_registry,
-)
-from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
-    OrderIdPathSchema,
 )
 from src.backend.workflows.workflows_service import (  # type: ignore[import-not-found]  # legacy module path; not yet implemented, см. TD-NEW
     get_workflows_service,

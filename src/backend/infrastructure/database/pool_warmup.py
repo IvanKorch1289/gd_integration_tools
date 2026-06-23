@@ -27,8 +27,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.backend.core.tenancy import current_tenant
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy import current_tenant
+
 __all__ = ("PoolReconnectMonitor", "PoolWarmup", "WarmupResult")
 
 logger = get_logger(__name__)
@@ -365,7 +366,7 @@ class PoolReconnectMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
 

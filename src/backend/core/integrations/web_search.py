@@ -11,6 +11,7 @@ layer-linter violation. См. layer-linter exception для
 
 S44 W1 sprint goal: закрыть 2 extensions violations (Q1 sprint 43 audit catch).
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.clients.external.search_providers import (  # noqa: E402,F401

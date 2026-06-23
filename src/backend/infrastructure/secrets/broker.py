@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "SecretBackend",
     "SecretBroker",

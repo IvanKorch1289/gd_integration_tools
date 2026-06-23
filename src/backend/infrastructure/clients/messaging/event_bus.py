@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
+
 __all__ = (
     "EventBus",
     "EventSchemaValidationError",
@@ -45,6 +46,7 @@ class EventSchemaValidationError(BaseError):
 
 class OrderEvent(BaseModel):
     """Order event payload."""
+
     order_id: int
     action: str
     payload: dict[str, Any] = {}
@@ -52,6 +54,7 @@ class OrderEvent(BaseModel):
 
 class PipelineEvent(BaseModel):
     """Pipeline execution event payload."""
+
     route_id: str
     status: str
     correlation_id: str
@@ -60,12 +63,14 @@ class PipelineEvent(BaseModel):
 
 class FlagEvent(BaseModel):
     """Feature flag change event payload."""
+
     name: str
     enabled: bool
 
 
 class RouteEvent(BaseModel):
     """Route event payload."""
+
     route_id: str
     action: str
 

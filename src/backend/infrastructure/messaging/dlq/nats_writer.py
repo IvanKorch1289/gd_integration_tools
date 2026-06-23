@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.core.logging import get_logger
+from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("NATSDLQWriter",)

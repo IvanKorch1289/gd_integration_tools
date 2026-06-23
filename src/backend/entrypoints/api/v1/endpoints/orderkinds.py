@@ -1,5 +1,11 @@
 from fastapi import APIRouter, Depends, status
 
+from extensions.core_entities.orderkinds.schemas.filter import OrderKindFilter
+from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P2-10
+    OrderKindSchemaIn,
+    OrderKindSchemaOut,
+    OrderKindVersionSchemaOut,
+)
 from extensions.core_entities.orderkinds.services.orderkinds import (
     get_order_kind_service,
 )
@@ -18,12 +24,6 @@ from src.backend.entrypoints.api.generator.invocation import (
     default_payload_factory,
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
-from extensions.core_entities.orderkinds.schemas.filter import OrderKindFilter
-from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P2-10
-    OrderKindSchemaIn,
-    OrderKindSchemaOut,
-    OrderKindVersionSchemaOut,
-)
 
 __all__ = ("router",)
 

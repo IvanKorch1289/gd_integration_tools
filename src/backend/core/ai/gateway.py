@@ -226,12 +226,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
     # Per skill: Sandbox = CodeSandbox Protocol. When AIGateway runs
     # tools that execute agent-generated code (e.g. via tool dispatch),
     # delegate to self._sandbox.run() instead of executing in main loop.
-    async def run_agent_code(
-        self,
-        code: str,
-        *,
-        timeout_seconds: float = 30.0,
-    ) -> Any:
+    async def run_agent_code(self, code: str, *, timeout_seconds: float = 30.0) -> Any:
         """S166 W2: execute AI-generated code in sandbox (Rule 10).
 
         Returns:

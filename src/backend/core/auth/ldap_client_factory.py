@@ -23,9 +23,12 @@ process (per-env). Это соответствует pattern других core c
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from src.backend.services.auth.ad_directory_client import AdDirectoryClient
 
 __all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
 

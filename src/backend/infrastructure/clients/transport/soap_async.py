@@ -15,11 +15,9 @@ from typing import Any
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 from src.backend.core.config.settings import settings as _settings  # noqa: F401
-from src.backend.core.resilience.breaker import (
-    BreakerSpec,
-    get_breaker_registry,
-)
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+
 __all__ = ("AsyncSoapClient",)
 
 logger = get_logger("transport.soap_async")
@@ -90,9 +88,7 @@ class AsyncSoapClient:
         # S168 W10 P1-7: явный connection pool limits
         # (max_connections=50, max_keepalive_connections=20 — SOAP burst
         # обычно ≤20 RPS; httpx default 100/20 перебор для per-call).
-        limits = httpx.Limits(
-            max_connections=50, max_keepalive_connections=20
-        )
+        limits = httpx.Limits(max_connections=50, max_keepalive_connections=20)
         async with httpx.AsyncClient(
             http2=True, timeout=self.timeout, limits=limits
         ) as client:

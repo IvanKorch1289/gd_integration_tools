@@ -7,8 +7,9 @@ from typing import Any
 
 import orjson
 
-from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss
+
 logger = get_logger(__name__)
 
 __all__ = ("L1ExactCache",)

@@ -29,7 +29,7 @@ router = APIRouter(prefix="/admin/routes", tags=["Admin / DSL Parallelism"])
         200: {"description": "ParallelismReport с метриками и рекомендациями."},
         401: {"description": "Missing/invalid admin credentials."},
         403: {"description": "User lacks Operator/Read-Only role."},
-        404: {"description": f"Route не найден."},
+        404: {"description": "Route не найден."},
     },
 )
 async def parallelism_report(name: str) -> dict[str, Any]:

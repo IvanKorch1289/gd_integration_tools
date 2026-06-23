@@ -10,10 +10,16 @@ Ponytail: minimum surgical extraction. CB + retry defaults grouped
 
 from __future__ import annotations
 
-__all__ = ("DEFAULT_CB_FAILURE_THRESHOLD", "DEFAULT_CB_RECOVERY_SECONDS",
-           "DEFAULT_CB_FAST_FAILURE_THRESHOLD", "DEFAULT_CB_FAST_RECOVERY_SECONDS",
-           "DEFAULT_RETRY_MAX_ATTEMPTS", "DEFAULT_RETRY_INITIAL_BACKOFF",
-           "DEFAULT_RETRY_BACKOFF_MULTIPLIER", "DEFAULT_RETRY_JITTER")
+__all__ = (
+    "DEFAULT_CB_FAILURE_THRESHOLD",
+    "DEFAULT_CB_RECOVERY_SECONDS",
+    "DEFAULT_CB_FAST_FAILURE_THRESHOLD",
+    "DEFAULT_CB_FAST_RECOVERY_SECONDS",
+    "DEFAULT_RETRY_MAX_ATTEMPTS",
+    "DEFAULT_RETRY_INITIAL_BACKOFF",
+    "DEFAULT_RETRY_BACKOFF_MULTIPLIER",
+    "DEFAULT_RETRY_JITTER",
+)
 
 # Wave 6: дефолты circuit-breaker'а для инфраструктурных зависимостей
 # (используются, если в соответствующих *_settings нет своего значения).

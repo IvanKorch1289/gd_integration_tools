@@ -1,12 +1,5 @@
 from fastapi import APIRouter
 
-from src.backend.entrypoints.api.generator.actions import (
-    ActionRouterBuilder,
-    ActionSpec,
-)
-from src.backend.services.cache.metrics import (
-    get_cache_metrics_snapshot,
-)
 from extensions.core_admin.schemas.route import (
     AdminCacheInvalidatePatternSchema,
     AdminCacheInvalidateTableSchema,
@@ -16,6 +9,11 @@ from extensions.core_admin.schemas.route import (
     AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.services.cache.metrics import get_cache_metrics_snapshot
 from src.backend.services.core.admin import get_admin_service
 
 __all__ = ("router",)

@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 
 from src.backend.core.logging import get_logger
+
 logger = get_logger("infrastructure.sources.lifecycle")
 
 __all__ = ("graceful_cancel",)

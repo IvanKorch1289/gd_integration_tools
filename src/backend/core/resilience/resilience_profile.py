@@ -126,9 +126,7 @@ class ResilienceProfileStore(Protocol):
         """
         ...
 
-    async def list(
-        self, *, tenant_id: str | None = None
-    ) -> list[ResilienceProfile]:
+    async def list(self, *, tenant_id: str | None = None) -> list[ResilienceProfile]:
         """List all resilience profiles.
 
         Args:

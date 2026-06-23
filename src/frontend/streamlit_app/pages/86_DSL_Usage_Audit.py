@@ -23,7 +23,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("DSL Usage Audit", ":bar_chart:")
 st.header(":bar_chart: DSL Usage Audit")
-st.caption("K3 S19 W6 — статистика использования DSL процессоров")
+st.caption("Статистика использования DSL процессоров")
 
 client = get_api_client()
 

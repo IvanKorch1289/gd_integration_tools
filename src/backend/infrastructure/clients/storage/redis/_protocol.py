@@ -63,9 +63,7 @@ class _RedisClientProtocol(Protocol):
         """
         ...
 
-    async def get_client(
-        self, kind: RedisKind, force_reconnect: bool = False
-    ) -> Redis:
+    async def get_client(self, kind: RedisKind, force_reconnect: bool = False) -> Redis:
         """Get Redis client for kind.
 
         Args:

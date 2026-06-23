@@ -49,6 +49,10 @@ from src.backend.core.config.mongo import (
     MongoConnectionSettings,
     mongo_connection_settings,
 )
+from src.backend.core.config.plugin_loader import (
+    PluginLoaderSettings,
+    plugin_loader_settings,
+)
 from src.backend.core.config.rag import RAGSettings, rag_settings
 from src.backend.core.config.security import SecureSettings, secure_settings
 from src.backend.core.config.services import (
@@ -85,7 +89,6 @@ from src.backend.core.config.services.jupyter_hub import (
 )
 from src.backend.core.config.telegram import TelegramBotSettings, telegram_bot_settings
 from src.backend.core.config.transport import TransportSettings, transport_settings
-from src.backend.core.config.plugin_loader import PluginLoaderSettings, plugin_loader_settings
 from src.backend.core.config.vault import VaultSettings, vault_settings
 from src.backend.core.config.workflow import WorkflowSettings, workflow_settings
 

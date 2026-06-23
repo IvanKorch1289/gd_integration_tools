@@ -20,6 +20,7 @@ from typing import Any
 import orjson
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 
 logger = get_logger(__name__)

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("LocalMCPClient",)
 
 logger = get_logger(__name__)

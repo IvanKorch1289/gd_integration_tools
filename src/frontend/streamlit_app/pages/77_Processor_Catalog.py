@@ -16,7 +16,7 @@ from src.frontend.streamlit_app.shared.filters import text_search  # S44 W2 (TD-
 
 setup_page("Processor Catalog", "🔍")
 st.title("🔍 Processor Catalog Search")
-st.caption("Sprint 14 K3 W1 — fuzzy search across DSL processors (rapidfuzz).")
+st.caption("Fuzzy search across DSL processors (rapidfuzz).")
 
 client = get_api_client()
 

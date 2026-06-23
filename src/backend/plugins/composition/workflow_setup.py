@@ -76,6 +76,7 @@ def _bootstrap_default_declarations() -> list[CompiledWorkflow]:
     from extensions.core_entities.orders.workflows.orders_saga import (
         build_orders_saga_workflow,
     )
+
     from extensions.credit_pipeline.workflows.payments_saga import (
         build_payments_saga_workflow,
     )

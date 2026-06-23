@@ -293,11 +293,7 @@ class PersistenceMixin:
         )
 
     def lookup(
-        self,
-        key_from: str,
-        *,
-        target: str,
-        result_property: str = "lookup_result",
+        self, key_from: str, *, target: str, result_property: str = "lookup_result"
     ) -> "RouteBuilder":
         """Chainable lookup DSL method (S168 W10 P1-1, per master prompt).
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("ElasticSearchClient", "get_elasticsearch_client")
 
 logger = get_logger(__name__)
@@ -158,7 +159,7 @@ class ElasticSearchClient:
         try:
             await client.delete(index=self._prefixed(index), id=doc_id)
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
     async def create_index(
@@ -236,7 +237,7 @@ class ElasticSearchClient:
         try:
             client = await self._ensure_client()
             return await client.ping()
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

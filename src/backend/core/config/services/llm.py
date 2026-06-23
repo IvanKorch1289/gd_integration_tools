@@ -47,14 +47,10 @@ class LLMSettings(BaseSettingsWithLoader):
         description="Модель по умолчанию (если не указана в DSL/messages).",
     )
     default_timeout: float = Field(
-        default=60.0,
-        gt=0,
-        description="Default timeout для LLM-запросов (seconds).",
+        default=60.0, gt=0, description="Default timeout для LLM-запросов (seconds)."
     )
     default_max_tokens: int = Field(
-        default=1024,
-        gt=0,
-        description="Default max_tokens для generation.",
+        default=1024, gt=0, description="Default max_tokens для generation."
     )
 
     # ── Retry defaults (tenacity) ────────────────────────────────────
@@ -65,14 +61,10 @@ class LLMSettings(BaseSettingsWithLoader):
         description="Max retry attempts на transient failures (tenacity).",
     )
     retry_initial_backoff: float = Field(
-        default=1.0,
-        gt=0,
-        description="Initial backoff между retries (seconds).",
+        default=1.0, gt=0, description="Initial backoff между retries (seconds)."
     )
     retry_max_backoff: float = Field(
-        default=8.0,
-        gt=0,
-        description="Max backoff cap (seconds).",
+        default=8.0, gt=0, description="Max backoff cap (seconds)."
     )
 
     # ── Circuit Breaker defaults (purgatory) ────────────────────────
@@ -96,16 +88,13 @@ class LLMSettings(BaseSettingsWithLoader):
         description="TGI batch client concurrency limit (asyncio.Semaphore).",
     )
     tgi_timeout: float = Field(
-        default=60.0,
-        gt=0,
-        description="TGI request timeout (seconds).",
+        default=60.0, gt=0, description="TGI request timeout (seconds)."
     )
 
     # ── Cost tracking ────────────────────────────────────────────────
 
     cost_tracking_enabled: bool = Field(
-        default=True,
-        description="Enable cost tracking callbacks (Langfuse).",
+        default=True, description="Enable cost tracking callbacks (Langfuse)."
     )
     cost_budget_usd_per_hour: float | None = Field(
         default=None,

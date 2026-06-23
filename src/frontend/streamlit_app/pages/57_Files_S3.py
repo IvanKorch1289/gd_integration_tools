@@ -14,7 +14,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Files S3", "📁")
 st.title("📁 Files S3 — Object Browser")
-st.caption("Sprint 7 K5 — S3/MinIO bucket файлы с preview/upload/download.")
+st.caption("S3/MinIO bucket файлы с preview/upload/download.")
 
 # Mock buckets + objects
 _MOCK_BUCKETS = ["credit-documents", "reports", "uploads-staging"]

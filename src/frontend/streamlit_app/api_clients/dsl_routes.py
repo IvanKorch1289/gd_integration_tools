@@ -106,10 +106,7 @@ class DSLRoutesClient(BaseAPIClient):
             return {"status": "error", "error": str(exc), "body": None, "trace": []}
 
     def dry_run(
-        self,
-        route: dict[str, Any],
-        sample_payload: Any = None,
-        seed: int = 0,
+        self, route: dict[str, Any], sample_payload: Any = None, seed: int = 0
     ) -> dict[str, Any]:
         """POST /api/v1/dsl/dry-run — эмуляция выполнения route.
 

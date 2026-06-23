@@ -4,10 +4,10 @@ UserAdmin moved to
 src.backend.extensions.core_entities.users.admin per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
-from extensions.core_entities.users.admin import (  # noqa: E402,F401
-    UserAdmin,
-)
+
+from extensions.core_entities.users.admin import UserAdmin  # noqa: E402,F401
 
 warnings.warn(
     "src.backend.utilities.admin_panel.users is deprecated "

@@ -10,12 +10,12 @@ Provides:
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
+
 logger = get_logger(__name__)
 
 
@@ -229,6 +229,3 @@ if TYPE_CHECKING:
 # S168 W11 P2-6: RegionHealthChecker extracted to region_health.py
 # (per master prompt v8 P2-6 — Strategy pattern split). Re-export
 # здесь для backward-compat.
-from src.backend.infrastructure.resilience.region_health import (  # noqa: E402
-    RegionHealthChecker,
-)

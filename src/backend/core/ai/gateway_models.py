@@ -11,11 +11,11 @@ Backward compat: импорт ``from src.backend.core.ai.gateway import AIReques
 """
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -44,6 +44,14 @@ class AIRequest:
             путь для legacy кодопутей; S27 closure → запрещено).
         context: Переменные подстановки в template (Jinja2 / f-string).
         stream: Если ``True`` — стриминг chunks (SSE/WebSocket).
+        tool_name: Конкретный tool/action, который агент сейчас вызывает
+            (``"credit.score.calculate"``, ``"db.read.orders"``). Если
+            задан — используется для ``enforce_tool_policy`` вместо
+            ``workflow_id`` (S1 fix). Если ``None`` (default) — fallback
+            на ``workflow_id`` (backward compat с pre-S1 кодом, где
+            workflow-level enforcement был единственным уровнем).
+            Per-tool-dispatch enforcement (S1.b) будет задействовать
+            это поле в ``ai_tool_dispatch.py``.
     """
 
     workflow_id: str
@@ -53,6 +61,7 @@ class AIRequest:
     prompt_inline: str | None = None
     context: dict[str, Any] = field(default_factory=dict)
     stream: bool = False
+    tool_name: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

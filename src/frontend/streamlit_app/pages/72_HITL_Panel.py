@@ -106,7 +106,7 @@ render_pending_table()
 
 # ──────────────────────── Sprint 12 K5 W2: History ─────────────
 st.divider()
-st.subheader("📜 HITL History (Sprint 12 K5 W2)")
+st.subheader("📜 HITL History")
 st.caption(
     "Историческая запись HITL decisions из workflow_audit "
     "(hitl.approved/rejected/requested_info events)."

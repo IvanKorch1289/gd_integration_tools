@@ -17,6 +17,7 @@ import orjson
 
 from src.backend.core.interfaces.antivirus import AntivirusScanResult
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from redis.asyncio import Redis
 

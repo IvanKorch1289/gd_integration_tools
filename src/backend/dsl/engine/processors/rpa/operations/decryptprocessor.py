@@ -61,7 +61,9 @@ class DecryptProcessor(BaseProcessor):
             decrypted = f.decrypt(body)
             # W34: target resolution.
             if self._target is None or self._target == "body":
-                exchange.set_out(body=decrypted, headers=dict(exchange.in_message.headers))
+                exchange.set_out(
+                    body=decrypted, headers=dict(exchange.in_message.headers)
+                )
             else:
                 exchange.set_property(self._target, decrypted)
         except Exception as exc:

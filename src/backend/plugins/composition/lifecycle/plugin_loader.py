@@ -144,7 +144,6 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
             к ``pipeline.transport_config`` для outbound httpx clients +
             TimeoutMiddleware (S18 W6).
             """
-            from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 
             pipeline = load_pipeline_from_file(pipeline_path)
             if bool(getattr(manifest, "tenant_aware", False)):

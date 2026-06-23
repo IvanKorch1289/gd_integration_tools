@@ -59,9 +59,7 @@ class ConnectionManager:
         """
         return len(self._connections_by_action.get(action_id, set()))
 
-    def actions_with_capacity(
-        self, *, action_pool_size: int
-    ) -> dict[str, int]:
+    def actions_with_capacity(self, *, action_pool_size: int) -> dict[str, int]:
         """S163 W25-A: для diagnostics — все actions и их текущий count.
 
         Args:
@@ -97,9 +95,7 @@ class ConnectionManager:
         self._connections[client_id] = websocket
 
         bound_action = action_id if action_id else DEFAULT_ACTION_ID
-        self._connections_by_action.setdefault(bound_action, set()).add(
-            client_id
-        )
+        self._connections_by_action.setdefault(bound_action, set()).add(client_id)
 
         for group in groups or []:
             self._groups.setdefault(group, set()).add(client_id)
@@ -135,9 +131,7 @@ class ConnectionManager:
                 clients.discard(client_id)
             # Compact empty pools.
             self._connections_by_action = {
-                a: c
-                for a, c in self._connections_by_action.items()
-                if c
+                a: c for a, c in self._connections_by_action.items() if c
             }
 
         for group_members in self._groups.values():

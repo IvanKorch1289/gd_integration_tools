@@ -42,6 +42,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("HeartbeatCallback", "LongRunningSecretRotator", "SecretBackendLike")
 
 _logger = get_logger("infrastructure.secrets.long_running_rotation")

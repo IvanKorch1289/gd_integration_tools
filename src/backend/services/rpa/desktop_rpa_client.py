@@ -46,9 +46,7 @@ def _get_desktop_rpa_breaker():
     return get_breaker_registry().get_or_create(
         "desktop_rpa_client",
         BreakerSpec(
-            name="desktop_rpa_client",
-            failure_threshold=5,
-            recovery_timeout=30.0,
+            name="desktop_rpa_client", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 
@@ -74,9 +72,7 @@ async def _execute_with_protection(
     async with breaker.guard():
         from src.backend.core.net.migration_helper import make_http_client
 
-        async with make_http_client(
-            timeout=timeout, plugin=plugin
-        ) as http:
+        async with make_http_client(timeout=timeout, plugin=plugin) as http:
             return await http.post(url, json=params, headers=headers)
 
 

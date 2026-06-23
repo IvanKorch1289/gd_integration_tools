@@ -49,7 +49,9 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     Each subsystem is best-effort: log+continue on failure.
     """
     # Lazy imports (avoid pre-existing import-bugs in composition package).
-    from src.backend.plugins.composition.lifecycle.plugin_loader import shutdown_plugin_loaders
+    from src.backend.plugins.composition.lifecycle.plugin_loader import (
+        shutdown_plugin_loaders,
+    )
     from src.backend.plugins.composition.lifecycle.watchers import stop_dsl_yaml_watcher
 
     app = app  # type: ignore[assignment]

@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends
 
+from extensions.dadata.schemas.route import DadataGeolocateQuerySchema  # S168 W17 P2-10
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
-)
-from extensions.dadata.schemas.route import (  # S168 W17 P2-10
-    DadataGeolocateQuerySchema,
 )
 from src.backend.services.integrations.dadata import get_dadata_service
 

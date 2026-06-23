@@ -23,6 +23,7 @@ from src.backend.core.interfaces.invocation_reply import (
 )
 from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 from src.backend.core.logging import get_logger
+
 __all__ = ("ExpressNotifier", "ExpressReplyChannel")
 
 logger = get_logger("messaging.invocation_replies.express")
@@ -140,6 +141,6 @@ def _format_body(response: InvocationResponse) -> str:
     payload["mode"] = response.mode.value
     try:
         body = json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         body = repr(response)
     return f"```\n{body}\n```"

@@ -256,8 +256,6 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
         )
 
 
-
-
 # S165 W7: Consul KV source для non-secret runtime-config (Rule 7 hot-reload)
 
 
@@ -301,7 +299,7 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
             prefix = f"runtime/{self.yaml_group}/"
             data: dict[str, Any] = {}
             for key, value in store.items(prefix):
-                field_name = key[len(prefix):] if key.startswith(prefix) else key
+                field_name = key[len(prefix) :] if key.startswith(prefix) else key
                 data[field_name] = value
             return data
         except Exception:

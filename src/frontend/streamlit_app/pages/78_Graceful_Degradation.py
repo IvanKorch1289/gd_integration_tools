@@ -16,7 +16,9 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Graceful Degradation", "🛡️")
 st.title("🛡️ Graceful Degradation")
-st.caption("Sprint 13 K5 W1 — 5-уровневая система деградации (FULL → MAINTENANCE).")
+st.caption(
+    "5-уровневая система деградации: FULL → DEGRADED → MINIMAL → MAINTENANCE → OFFLINE."
+)
 
 client = get_api_client()
 

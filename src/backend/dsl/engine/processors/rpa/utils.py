@@ -22,13 +22,13 @@ def write_to_target(exchange: Exchange[Any], target: str, value: Any) -> None:
         value: Value to write.
     """
     if target.startswith("property:"):
-        exchange.set_property(target[len("property:"):], value)
+        exchange.set_property(target[len("property:") :], value)
         return
     if target == "body":
         exchange.in_message.body = value
         return
     if target.startswith("body."):
-        key = target[len("body."):]
+        key = target[len("body.") :]
         body = exchange.in_message.body
         if not isinstance(body, dict):
             body = {}
@@ -36,7 +36,7 @@ def write_to_target(exchange: Exchange[Any], target: str, value: Any) -> None:
         exchange.in_message.body = body
         return
     if target.startswith("header:"):
-        header_name = target[len("header:"):]
+        header_name = target[len("header:") :]
         if not hasattr(exchange.in_message, "headers"):
             exchange.in_message.headers = {}
         exchange.in_message.headers[header_name] = value

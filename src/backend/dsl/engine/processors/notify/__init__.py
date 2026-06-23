@@ -62,7 +62,9 @@ class NotifyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет отправку уведомления через NotificationGateway."""
-        from src.backend.core.notifications import get_gateway  # S167 W1.3: ADR-0207 facade (was infrastructure.notifications)
+        from src.backend.core.notifications import (
+            get_gateway,  # S167 W1.3: ADR-0207 facade (was infrastructure.notifications)
+        )
 
         body = exchange.in_message.body
         recipient = self.recipient or (

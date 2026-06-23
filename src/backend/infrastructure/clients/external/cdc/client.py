@@ -11,6 +11,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
@@ -25,7 +26,7 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
     _LogMinerStrategy,  # S60 W2: cross-import
     _PollingStrategy,  # S60 W2: cross-import
 )
-from src.backend.core.logging import get_logger
+
 logger = get_logger("infrastructure.clients.cdc")
 
 
@@ -140,7 +141,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)

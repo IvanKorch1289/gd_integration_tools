@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("PoolRegistration", "UnifiedPoolManager", "get_unified_pool_manager")
 
 logger = get_logger("infrastructure.clients.unified_pool_manager")

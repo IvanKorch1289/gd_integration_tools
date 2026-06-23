@@ -236,10 +236,7 @@ def get_cache_facade(enable_fallback: bool = True) -> Any:
     Pattern #18 (TTL+tag invalidation + fallback chain).
     """
     try:
-        from src.backend.core.cache.facade import (
-            FallbackCacheFacade,
-            MemoryCacheFacade,
-        )
+        from src.backend.core.cache.facade import FallbackCacheFacade, MemoryCacheFacade
     except ImportError:
         return None
 

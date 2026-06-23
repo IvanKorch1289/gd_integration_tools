@@ -50,14 +50,11 @@ class GraphQLSettings(BaseSettingsWithLoader):
     )
 
     max_query_complexity: int = Field(
-        default=1000,
-        gt=0,
-        description="Макс. complexity score для GraphQL-запроса.",
+        default=1000, gt=0, description="Макс. complexity score для GraphQL-запроса."
     )
 
     enable_introspection: bool = Field(
-        default=True,
-        description="Разрешить introspection queries (отключить в prod).",
+        default=True, description="Разрешить introspection queries (отключить в prod)."
     )
 
 

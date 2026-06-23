@@ -1,11 +1,11 @@
 """Типизированные ошибки AI Safety subsystem (V15 R-V15-4)."""
 
 from __future__ import annotations
-from src.backend.core.logging import get_logger
-
 
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

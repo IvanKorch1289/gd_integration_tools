@@ -23,7 +23,7 @@ from src.frontend.streamlit_app.shared.filters import multiselect_filter  # S45 
 
 setup_page("Plugin Onboarding", "🧪")
 st.title("🧪 Plugin Onboarding Wizard")
-st.caption("Sprint 14 K5 W6 — пошаговый scaffold V11 плагина.")
+st.caption("Пошаговый scaffold для V11 плагинов.")
 
 client = get_api_client()
 

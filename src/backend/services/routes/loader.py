@@ -32,8 +32,8 @@ from src.backend.core.security.capabilities import (
 )
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
 from src.backend.services.routes.manifest_toml import (
-    RouteManifestError,
     RouteManifest,
+    RouteManifestError,
     load_route_manifest,
 )
 
@@ -53,9 +53,7 @@ AuditCallback = Callable[[dict[str, Any]], None]
 _logger = get_logger("services.routes.loader")
 
 
-PipelineRegistrar = Callable[
-    [str, Path, RouteManifest, dict[str, Any] | None], None
-]
+PipelineRegistrar = Callable[[str, Path, RouteManifest, dict[str, Any] | None], None]
 """Подпись callback'а: ``(route_name, pipeline_path, manifest, route_overrides) -> None``.
 
 S163 W20: 4-й параметр ``route_overrides`` — dict из
@@ -381,9 +379,7 @@ class RouteLoader:
                 pipeline_path = manifest_path.parent / relative
                 if not pipeline_path.is_file():
                     raise FileNotFoundError(f"Pipeline file not found: {pipeline_path}")
-                self._registrar(
-                    manifest.name, pipeline_path, manifest, route_overrides
-                )
+                self._registrar(manifest.name, pipeline_path, manifest, route_overrides)
                 registered.append(pipeline_path)
         except Exception as exc:
             _logger.exception("Route %s pipeline registration failed", manifest.name)

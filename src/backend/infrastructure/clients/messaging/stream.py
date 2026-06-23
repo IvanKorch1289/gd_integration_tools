@@ -11,8 +11,9 @@ from faststream.security import BaseSecurity
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+
 stream_logger = get_logger("stream")
 
 breaker_registry = get_breaker_registry()

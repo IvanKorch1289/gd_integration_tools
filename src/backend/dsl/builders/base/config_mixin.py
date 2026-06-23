@@ -100,11 +100,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         return self
 
     def with_circuit_breaker(
-        self,
-        name: str,
-        *,
-        failure_threshold: int = 5,
-        recovery_timeout: float = 30.0,
+        self, name: str, *, failure_threshold: int = 5, recovery_timeout: float = 30.0
     ) -> Self:
         """Переопределяет Circuit Breaker для предыдущего step (S168 W10 P1-4).
 
@@ -130,9 +126,8 @@ class ConfigMixin(_RouteBuilderProtocol):
         # P9 fix: import via importlib to break circular chain
         # (breaker → core.logging → infrastructure.logging → core.interfaces → breaker).
         import importlib
-        _breaker_mod = importlib.import_module(
-            "src.backend.core.resilience.breaker"
-        )
+
+        _breaker_mod = importlib.import_module("src.backend.core.resilience.breaker")
         BreakerSpec = _breaker_mod.BreakerSpec
 
         last = self._last_processor_or_raise()
@@ -142,9 +137,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             recovery_timeout=recovery_timeout,
         )
         applied = self._set_first_attr(
-            last,
-            ("_circuit_breaker", "breaker_name", "circuit_breaker_name"),
-            spec,
+            last, ("_circuit_breaker", "breaker_name", "circuit_breaker_name"), spec
         )
         if applied is None:
             raise ValueError(
@@ -338,11 +331,17 @@ class ConfigMixin(_RouteBuilderProtocol):
                 .proxy(...)
         """
         if not isinstance(min_size, int) or min_size < 0:
-            raise ValueError(f"with_connection_pool: min_size должен быть int ≥ 0, получено {min_size!r}")
+            raise ValueError(
+                f"with_connection_pool: min_size должен быть int ≥ 0, получено {min_size!r}"
+            )
         if not isinstance(max_size, int) or max_size < 1:
-            raise ValueError(f"with_connection_pool: max_size должен быть int ≥ 1, получено {max_size!r}")
+            raise ValueError(
+                f"with_connection_pool: max_size должен быть int ≥ 1, получено {max_size!r}"
+            )
         if not isinstance(timeout, (int, float)) or timeout <= 0:
-            raise ValueError(f"with_connection_pool: timeout должен быть > 0, получено {timeout!r}")
+            raise ValueError(
+                f"with_connection_pool: timeout должен быть > 0, получено {timeout!r}"
+            )
         self._route_overrides["connection_pool"] = {
             "min_size": min_size,
             "max_size": max_size,
@@ -373,11 +372,17 @@ class ConfigMixin(_RouteBuilderProtocol):
                 .websocket(...)
         """
         if not isinstance(max_attempts, int) or max_attempts < 1:
-            raise ValueError(f"with_reconnection: max_attempts должен быть int ≥ 1, получено {max_attempts!r}")
+            raise ValueError(
+                f"with_reconnection: max_attempts должен быть int ≥ 1, получено {max_attempts!r}"
+            )
         if not isinstance(delay, (int, float)) or delay <= 0:
-            raise ValueError(f"with_reconnection: delay должен быть > 0, получено {delay!r}")
+            raise ValueError(
+                f"with_reconnection: delay должен быть > 0, получено {delay!r}"
+            )
         if not isinstance(backoff, (int, float)) or backoff < 1.0:
-            raise ValueError(f"with_reconnection: backoff должен быть ≥ 1.0, получено {backoff!r}")
+            raise ValueError(
+                f"with_reconnection: backoff должен быть ≥ 1.0, получено {backoff!r}"
+            )
         self._route_overrides["reconnection"] = {
             "max_attempts": max_attempts,
             "delay": delay,

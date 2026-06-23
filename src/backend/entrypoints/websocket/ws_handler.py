@@ -14,19 +14,16 @@ S163 W33: option (A) bind at handshake — extract ``action_id`` из
 ``pool_size`` через :func:`get_dsl_service().get_route_overrides`.
 """
 
+import asyncio
 from uuid import uuid4
 
-import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.backend.entrypoints.websocket.ws_manager import (
-    DEFAULT_ACTION_ID,
-    ws_manager,
-)
 from src.backend.dsl.service import get_dsl_service
+from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.entrypoints.websocket.ws_manager import DEFAULT_ACTION_ID, ws_manager
 
 __all__ = ("ws_router",)
 
@@ -52,9 +49,7 @@ async def _ws_heartbeat_loop(
                 await websocket.send_json({"action": "ping"})
             except Exception as exc:  # connection closed
                 logger.debug(
-                    "WS heartbeat stopped client_id=%s reason=%s",
-                    client_id,
-                    exc,
+                    "WS heartbeat stopped client_id=%s reason=%s", client_id, exc
                 )
                 return
     except asyncio.CancelledError:
@@ -74,11 +69,7 @@ def _resolve_pool_limit(action_id: str | None) -> int | None:
     try:
         overrides = get_dsl_service().get_route_overrides(action_id)
     except Exception as exc:
-        logger.debug(
-            "get_route_overrides failed for action_id=%s: %s",
-            action_id,
-            exc,
-        )
+        logger.debug("get_route_overrides failed for action_id=%s: %s", action_id, exc)
         return None
     pool_size = overrides.get("pool_size")
     if isinstance(pool_size, int) and pool_size > 0:
@@ -124,16 +115,13 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         return
 
     # S163 W33: per-action pool enforcement.
-    bound_action: str = (
-        action_id_param if action_id_param else DEFAULT_ACTION_ID
-    )
+    bound_action: str = action_id_param if action_id_param else DEFAULT_ACTION_ID
     pool_limit = _resolve_pool_limit(action_id_param)
     if pool_limit is not None:
         current = ws_manager.action_count(bound_action)
         if current >= pool_limit:
             await websocket.close(
-                code=1008,
-                reason=f"route pool full ({pool_limit} concurrent)",
+                code=1008, reason=f"route pool full ({pool_limit} concurrent)"
             )
             logger.warning(
                 "WS rejected: route pool full action_id=%s limit=%d",
@@ -143,9 +131,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             return
 
     client_id = uuid4().hex
-    await ws_manager.connect(
-        websocket, client_id, action_id=action_id_param
-    )
+    await ws_manager.connect(websocket, client_id, action_id=action_id_param)
 
     # S163 W16: heartbeat task (background ping per connection).
     # Отправляет {"action": "ping"} каждые heartbeat_interval_s секунд.
@@ -169,8 +155,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             try:
                 data = await asyncio.wait_for(
-                    websocket.receive_json(),
-                    timeout=ws_settings.message_timeout_s,
+                    websocket.receive_json(), timeout=ws_settings.message_timeout_s
                 )
             except asyncio.TimeoutError:
                 logger.warning(
@@ -222,7 +207,8 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     )
                     continue
                 await ws_manager.send_json(
-                    client_id, {"action": action, "result": bridge.data, "error": bridge.error}
+                    client_id,
+                    {"action": action, "result": bridge.data, "error": bridge.error},
                 )
             except Exception as exc:
                 logger.exception("WS ошибка обработки action=%s: %s", action, exc)

@@ -4,7 +4,9 @@ OrderKind model moved to
 src.backend.extensions.core_entities.orderkinds.domain.models per
 master prompt v8 P2-10. Will be removed в S169+.
 """
+
 import warnings
+
 from extensions.core_entities.orderkinds.domain.models import (  # noqa: E402,F401
     OrderKind,
 )

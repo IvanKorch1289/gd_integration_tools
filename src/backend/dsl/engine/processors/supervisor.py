@@ -50,11 +50,14 @@ class SupervisorProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Set supervisor parameters in exchange properties."""
         # ponytail: simplest implementation — store config in properties
-        exchange.set_property("supervisor_config", {
-            "max_restarts": self._max_restarts,
-            "timeout": self._timeout,
-            "backoff": self._backoff,
-        })
+        exchange.set_property(
+            "supervisor_config",
+            {
+                "max_restarts": self._max_restarts,
+                "timeout": self._timeout,
+                "backoff": self._backoff,
+            },
+        )
         _logger.debug(
             "Supervisor configured: max_restarts=%d, timeout=%.1f, backoff=%.1f",
             self._max_restarts,

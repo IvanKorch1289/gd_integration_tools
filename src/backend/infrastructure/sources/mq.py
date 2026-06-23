@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     pass
 

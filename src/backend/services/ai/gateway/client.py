@@ -173,9 +173,7 @@ class LiteLLMGateway:
             self._cb = get_breaker_registry().get_or_create(
                 "litellm_gateway",
                 BreakerSpec(
-                    name="litellm_gateway",
-                    failure_threshold=5,
-                    recovery_timeout=30.0,
+                    name="litellm_gateway", failure_threshold=5, recovery_timeout=30.0
                 ),
             )
         async with self._cb.guard():

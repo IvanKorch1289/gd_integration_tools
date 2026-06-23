@@ -2,17 +2,17 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Response
 
-from src.backend.core.enums.skb import ResponseTypeChoices
-from src.backend.entrypoints.api.dependencies.auth import require_api_key
-from src.backend.entrypoints.api.generator.actions import (
-    ActionRouterBuilder,
-    ActionSpec,
-)
 from extensions.skb.schemas.route import (  # S168 W15-17 P2-10
     APISKBOrderSchemaIn,
     SKBObjectsByAddressQuerySchema,
     SKBOrdersListQuerySchema,
     SKBResultQuerySchema,
+)
+from src.backend.core.enums.skb import ResponseTypeChoices
+from src.backend.entrypoints.api.dependencies.auth import require_api_key
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
 )
 from src.backend.services.integrations.skb import get_skb_service
 

@@ -475,11 +475,7 @@ class ControlFlowMixin:
         return self  # type: ignore[return-value]
 
     def supervisor(
-        self,
-        *,
-        max_restarts: int = 3,
-        timeout: float = 60.0,
-        backoff: float = 2.0,
+        self, *, max_restarts: int = 3, timeout: float = 60.0, backoff: float = 2.0
     ) -> RouteBuilder:
         """Supervisor pattern для fault-tolerant execution.
 

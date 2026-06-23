@@ -26,8 +26,6 @@
   :class:`AIGateway` (после S27 closure, проверяется
   ``tools/checks/check_ai_gateway_coverage.py``).
 """
-from src.backend.core.logging import get_logger
-
 
 from src.backend.core.ai.errors import (
     GuardrailViolationError,
@@ -38,6 +36,7 @@ from src.backend.core.ai.errors import (
 from src.backend.core.ai.fs_facade import AIFsFacade
 from src.backend.core.ai.gateway import AIGateway, AIRequest, AIResponse
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle
+from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

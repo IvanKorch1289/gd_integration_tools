@@ -22,6 +22,7 @@ from pathlib import Path
 
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+
 __all__ = ("get_local_fs_storage", "get_object_storage")
 
 logger = get_logger(__name__)

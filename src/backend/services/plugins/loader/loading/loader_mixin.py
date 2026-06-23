@@ -15,12 +15,10 @@ from src.backend.core.plugin_runtime.compat_checker import CompatViolation
 from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
 from src.backend.services.plugins.loader.discovery import LoadedPlugin
 from src.backend.services.plugins.loader.loading._protocol import _LoadingProtocol
-from src.backend.services.plugins.loader.validation import (
-    PluginInventoryConflictError,
-)
+from src.backend.services.plugins.loader.validation import PluginInventoryConflictError
 from src.backend.services.plugins.manifest_toml import (
-    PluginManifestError,
     PluginManifest,
+    PluginManifestError,
     load_plugin_manifest,
 )
 

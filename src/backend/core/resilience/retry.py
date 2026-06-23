@@ -87,6 +87,7 @@ def with_retry(
         Returns:
             Wrapped function with retry capability.
         """
+
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             """Wrapper that implements retry logic with budget tracking."""

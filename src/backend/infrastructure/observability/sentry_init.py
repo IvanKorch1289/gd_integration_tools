@@ -15,6 +15,7 @@ import os
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("init_sentry",)
 
 logger = get_logger("infra.sentry")

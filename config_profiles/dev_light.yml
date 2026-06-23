@@ -205,3 +205,8 @@ invoker:
     - "background"
     - "streaming"
   streaming_chunk_buffer_size: 16
+
+# S46: documented no-ops — same as dev.yml
+features:
+  lsp_server_strict: false
+  ai_prompt_sweep_strict: false

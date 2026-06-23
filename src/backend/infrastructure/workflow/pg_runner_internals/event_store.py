@@ -38,8 +38,8 @@ from src.backend.core.domain.models.workflow_event import (
     WorkflowEventType,
 )
 from src.backend.core.domain.models.workflow_instance import WorkflowInstance
-from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
     WorkflowEventRow,
 )

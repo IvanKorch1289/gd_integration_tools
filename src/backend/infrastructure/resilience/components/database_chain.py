@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("DBQueryCallable", "build_database_fallbacks", "build_database_primary")
 
 logger = get_logger(__name__)

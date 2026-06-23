@@ -19,6 +19,7 @@ from typing import Any
 
 from src.backend.core.interfaces.sanitization import MaskingEvent, SanitizationResult
 from src.backend.core.logging import get_logger
+
 logger = get_logger(__name__)
 
 # Re-export `MaskingEvent` / `SanitizationResult` для backward-compat:

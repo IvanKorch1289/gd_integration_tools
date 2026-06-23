@@ -308,6 +308,26 @@ class _AdminWorkflowsFacade:
             error=last_error if row.status == WorkflowStatus.failed else None,
         )
 
+    async def get_saga_history(
+        self, *, workflow_id: str, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """Возвращает timeline saga events для workflow_id (compensation only)."""
+        from src.backend.services.workflows.saga_history import get_saga_history as _get
+
+        records = await _get(workflow_id, limit=limit)
+        return [
+            {
+                "event_id": r.event_id,
+                "event_type": r.event_type,
+                "workflow_id": r.workflow_id,
+                "tenant_id": r.tenant_id,
+                "payload": r.payload,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "duration_ms": r.duration_ms,
+            }
+            for r in records
+        ]
+
 
 _FACADE = _AdminWorkflowsFacade()
 

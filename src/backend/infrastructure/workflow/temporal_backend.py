@@ -21,13 +21,14 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,
 )
 from src.backend.dsl.codec.json import canonical_json_bytes
-from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient
 

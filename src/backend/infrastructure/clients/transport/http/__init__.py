@@ -25,6 +25,7 @@ import asyncio
 import httpx
 
 from src.backend.core.config.settings import settings
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.transport.http.base import (
     BaseHttpClient,  # S61 W4: re-export
     FilePart,  # S61 W4: re-export
@@ -45,7 +46,7 @@ from src.backend.infrastructure.clients.transport.http.request_mixin import (
 from src.backend.infrastructure.clients.transport.http.session_mixin import (
     SessionMixin,  # S61 W4: MRO
 )
-from src.backend.core.logging import get_logger
+
 __all__ = (
     "HttpClient",
     "BaseHttpClient",

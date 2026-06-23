@@ -203,3 +203,4 @@ src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secre
 src/backend/services/security/__init__.py	services	src.backend.infrastructure.security.signatures
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow.registry
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
+src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run

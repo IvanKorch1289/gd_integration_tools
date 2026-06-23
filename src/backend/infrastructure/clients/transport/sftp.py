@@ -17,17 +17,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
+from src.backend.core.config.profile import AppProfileChoices, get_active_profile
+
 # NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 # ``core.config.profile`` загружается ПОСЛЕ settings, иначе profile не pre-loads core.interfaces.
 from src.backend.core.config.settings import settings as _settings  # noqa: F401
-from src.backend.core.config.profile import AppProfileChoices, get_active_profile
-from src.backend.core.resilience.breaker import (
-    BreakerSpec,
-    get_breaker_registry,
-)
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+
 __all__ = ("BaseSftpClient", "SftpClient", "_resolve_known_hosts", "get_sftp_client")
 
 logger = get_logger(__name__)
@@ -123,8 +122,7 @@ class SftpClient(BaseSftpClient):
         self.password = password
         # S163 W6: per-instance Circuit Breaker (canonical pattern из smtp.py).
         self._breaker = get_breaker_registry().get_or_create(
-            "sftp",
-            BreakerSpec(name="sftp", failure_threshold=5, recovery_timeout=60.0),
+            "sftp", BreakerSpec(name="sftp", failure_threshold=5, recovery_timeout=60.0)
         )
 
     @_sftp_retry

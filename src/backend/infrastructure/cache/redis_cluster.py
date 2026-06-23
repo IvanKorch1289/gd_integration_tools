@@ -23,6 +23,7 @@ from collections.abc import AsyncIterator, Sequence
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("RedisClusterAdapter",)
 
 if TYPE_CHECKING:  # pragma: no cover — только для типов

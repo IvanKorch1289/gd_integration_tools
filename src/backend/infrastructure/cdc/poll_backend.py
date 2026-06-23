@@ -23,6 +23,7 @@ from typing import Any
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 from src.backend.core.logging import get_logger
+
 __all__ = ("PollCDCBackend",)
 
 

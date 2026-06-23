@@ -137,9 +137,7 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
 
     reschedule_attempted = False
     try:
-        from src.backend.services.scheduler.admin import (
-            get_scheduler_manager,
-        )
+        from src.backend.services.scheduler.admin import get_scheduler_manager
 
         manager = get_scheduler_manager()
         scheduler = getattr(manager, "scheduler", None)

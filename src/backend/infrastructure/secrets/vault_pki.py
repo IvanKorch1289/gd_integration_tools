@@ -23,6 +23,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
+
 __all__ = ("CertificateBundle", "VaultPkiClient")
 
 _logger = get_logger("infrastructure.secrets.vault_pki")

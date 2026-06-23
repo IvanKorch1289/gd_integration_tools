@@ -65,7 +65,7 @@ with tabs[0]:
 # ────────────── Tab 2: Capability Graph (Sprint 14 K5 W5) ──────────
 
 with tabs[1]:
-    st.subheader("Capability Graph (Sprint 14 K5 W5)")
+    st.subheader("Capability Graph")
     st.caption(
         "plugin → capability → resource (Mermaid). Источник — "
         "``/api/v1/admin/capabilities/graph``."
@@ -97,7 +97,7 @@ with tabs[1]:
 # ────────────── Tab 3: Audit Log (Sprint 14 K1 W4) ─────────────────
 
 with tabs[2]:
-    st.subheader("Capability Audit Log (Sprint 14 K1 W4)")
+    st.subheader("Capability Audit Log")
     plugin_filter = st.text_input("Filter by plugin", "")
     tenant_filter = st.text_input("Filter by tenant", "")
     events = client.get_audit_events(

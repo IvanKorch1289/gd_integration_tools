@@ -46,6 +46,7 @@ from src.backend.core.resilience.breaker import (  # noqa: E402
     get_breaker_registry,
 )
 
+
 def _get_s3_breaker() -> Any:
     """S165 W3: Module-level shared CB singleton for S3Client (per-call pattern).
 
@@ -54,11 +55,7 @@ def _get_s3_breaker() -> Any:
     """
     return get_breaker_registry().get_or_create(
         "s3_client",
-        BreakerSpec(
-            name="s3_client",
-            failure_threshold=5,
-            recovery_timeout=30.0,
-        ),
+        BreakerSpec(name="s3_client", failure_threshold=5, recovery_timeout=30.0),
     )
 
 
@@ -192,7 +189,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -264,7 +261,10 @@ class S3Client(BaseS3Client):
             async with self.client_context() as client:
                 try:
                     await client.put_object(
-                        Bucket=self._settings.bucket, Key=key, Body=body, Metadata=metadata
+                        Bucket=self._settings.bucket,
+                        Key=key,
+                        Body=body,
+                        Metadata=metadata,
                     )
                     self.logger.info(f"Файл {key} успешно загружен")
                     return {"status": "success"}

@@ -55,9 +55,7 @@ def _get_pool_breaker():
     return get_breaker_registry().get_or_create(
         "desktop_rpa_pool",
         BreakerSpec(
-            name="desktop_rpa_pool",
-            failure_threshold=5,
-            recovery_timeout=30.0,
+            name="desktop_rpa_pool", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 
@@ -216,7 +214,9 @@ class DesktopRPASessionPool:
                 try:
                     await session.client.aclose()
                 except Exception as exc:
-                    _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
+                    _logger.debug(
+                        "desktop_rpa_pool: stale session aclose failed: %s", exc
+                    )
                 async with self._lock:
                     self._sessions.pop(app_name, None)
                 raise
@@ -248,9 +248,7 @@ class DesktopRPASessionPool:
         async with self.acquire(app_name) as client:
             try:
                 # Short timeout для healthcheck (5s).
-                response = await client.get(
-                    "/health", timeout=httpx.Timeout(5.0)
-                )
+                response = await client.get("/health", timeout=httpx.Timeout(5.0))
                 healthy = response.status_code == 200
                 _logger.debug(
                     "desktop_rpa_pool.healthcheck(%s): status=%d, healthy=%s",
@@ -261,9 +259,7 @@ class DesktopRPASessionPool:
                 return healthy
             except Exception as exc:
                 _logger.debug(
-                    "desktop_rpa_pool.healthcheck(%s) failed: %s",
-                    app_name,
-                    exc,
+                    "desktop_rpa_pool.healthcheck(%s) failed: %s", app_name, exc
                 )
                 return False
 

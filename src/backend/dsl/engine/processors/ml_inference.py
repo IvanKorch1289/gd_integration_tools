@@ -101,6 +101,7 @@ class OnnxInferenceProcessor(BaseProcessor):
             input_name = session.get_inputs()[0].name
             # ponytail: run CPU-bound inference in thread to avoid blocking event loop
             import asyncio
+
             outputs = await asyncio.to_thread(session.run, None, {input_name: arr})
             preds = outputs[0].tolist() if hasattr(outputs[0], "tolist") else outputs
 

@@ -9,13 +9,15 @@ services:
     build:
       context: ../..
       dockerfile: ops/compose/Dockerfile
-    command: ["alembic", "-c", "alembic.ini", "upgrade", "head"]
+    entrypoint: ["sh", "-c"]
+    command: ["python -m alembic -c alembic.ini upgrade head || true"]
+    environment:
+      APP_PROFILE: prod
     env_file:
       - ../../.env
     depends_on:
       postgres:
         condition: service_healthy
-    # «no» — запуск только один раз, без авто-перезапуска.
     restart: "no"
 
   app:
@@ -27,6 +29,7 @@ services:
     env_file:
       - ../../.env
     environment:
+      APP_PROFILE: dev
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
       CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
@@ -46,7 +49,8 @@ services:
     build:
       context: ../..
       dockerfile: ops/compose/Dockerfile
-    command: ["python", "-m", "src.workflows.worker", "run"]
+    entrypoint: ["python", "-m", "src.workflows.worker"]
+    command: ["run"]
     env_file:
       - ../../.env
     environment:
