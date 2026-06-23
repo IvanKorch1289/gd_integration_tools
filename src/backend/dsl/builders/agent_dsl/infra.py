@@ -138,7 +138,7 @@ class InfraMixin:
         tool_actions: list[str] | None = None,
         max_handoffs: int = 5,
         result_property: str = "agent_graph_result",
-        isolated: bool = False,
+        isolated: bool = True,
     ) -> RouteBuilder:
         """LangGraph execution as DSL step (S28 W4).
 
@@ -186,7 +186,12 @@ class InfraMixin:
             result_property: Exchange property for result dict.
                 Default ``"agent_graph_result"``.
             isolated: При True запускать ReAct-агента в отдельном процессе
-                через :class:`ProcessPoolAgentSandbox`. Default False.
+                через :class:`ProcessPoolAgentSandbox`. **S3 fix: default
+                теперь True** (ранее был False → ``InProcessAgentSandbox``
+                с zero process isolation). V15 R-V15-4: «прямой
+                ``subprocess.run`` в плагинах запрещён; код исполняется
+                в e2b/pyodide-sandbox». Для pre-S3 поведения (in-process)
+                передавайте ``isolated=False`` явно.
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
             AgentGraphProcessor,
@@ -196,9 +201,30 @@ class InfraMixin:
             get_process_pool_agent_sandbox,
         )
 
-        sandbox = (
-            get_process_pool_agent_sandbox() if isolated else InProcessAgentSandbox()
-        )
+        if isolated:
+            sandbox = get_process_pool_agent_sandbox()
+        else:
+            # S3: явный opt-in в zero-isolation. Логируем warning + emit
+            # audit-event для security dashboard. Pre-S3 этот путь был
+            # default без warning.
+            from src.backend.core.logging import get_logger
+
+            get_logger(__name__).warning(
+                "agent_graph: isolated=False (zero process isolation) — "
+                "V15 R-V15-4 recommendation: используйте ProcessPoolAgentSandbox "
+                "(isolated=True default с S3). Audit-event emitted."
+            )
+            try:
+                from src.backend.core.audit.facade import emit_audit_safe
+
+                emit_audit_safe(
+                    event_type="agent.sandbox.zero_isolation_opted",
+                    payload={"graph_type": graph_type, "model": model},
+                    severity="warning",
+                )
+            except Exception:
+                pass  # audit is best-effort
+            sandbox = InProcessAgentSandbox()
 
         return self._add(  # type: ignore[attr-defined]
             AgentGraphProcessor(

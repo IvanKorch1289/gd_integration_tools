@@ -31,6 +31,11 @@ from src.backend.dsl.workflow.visualize import (
     to_graphviz,
     to_mermaid,
 )
+from src.backend.dsl.workflow.yaml_io import (
+    load_all_workflows_from_directory,
+    load_workflow_from_file,
+    load_workflow_from_yaml,
+)
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 __all__ = (
@@ -44,7 +49,10 @@ __all__ = (
     "list_audit_records",
     "list_recent_trace_events",
     "list_route_ids",
+    "load_all_workflows_from_directory",
     "load_pipeline_from_yaml",
+    "load_workflow_from_file",
+    "load_workflow_from_yaml",
     "to_graphviz",
     "to_mermaid",
     "waterfall_lines",

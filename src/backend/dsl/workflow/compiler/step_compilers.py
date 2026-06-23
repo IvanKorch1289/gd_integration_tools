@@ -30,7 +30,11 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    CheckpointDeclaration,
+    EscalateDeclaration,
+    GuardrailDeclaration,
     PauseDeclaration,
+    ReflectDeclaration,
     ResumeDeclaration,
     RetryPolicy,
     SagaDeclaration,
@@ -51,7 +55,11 @@ __all__ = (
     "StepCompiler",
     "compile_activity_step",
     "compile_agent_invoke_step",
+    "compile_checkpoint_step",
+    "compile_escalate_step",
+    "compile_guardrail_step",
     "compile_pause_step",
+    "compile_reflect_step",
     "compile_resume_step",
     "compile_saga_step",
     "compile_sensor_step",
@@ -378,6 +386,194 @@ async def compile_agent_invoke_step(
     return result
 
 
+# S7 fix (S36-W8): добавлены 4 step-compilers для advanced declarations
+# (ReflectDeclaration, CheckpointDeclaration, GuardrailDeclaration,
+# EscalateDeclaration). До этого dispatch_step_compile() выбрасывал
+# TypeError при попытке скомпилировать эти шаги — они были declared
+# в advanced_declarations.py и accepted by WorkflowDeclaration (через
+# Annotated union), но не имели компиляторов.
+
+
+async def compile_reflect_step(decl: ReflectDeclaration, ctx: dict[str, Any]) -> Any:
+    """Reflect-шаг: procedural memory update (S28 W3 + S7).
+
+    В Temporal выполняется как ``workflow.execute_activity`` (background
+    activity для memory update). Async_mode=True → запускаем в фоне.
+
+    Args:
+        decl: Декларация reflect-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        ``True`` если reflect успешно запущен.
+    """
+    from temporalio import workflow
+
+    payload = {
+        "source_step": decl.source_step,
+        "memory_writes": list(decl.memory_writes),
+        "consolidation_policy": decl.consolidation_policy,
+        "async_mode": decl.async_mode,
+        "outputs_snapshot": ctx.get("_outputs", {}),
+    }
+    if decl.async_mode:
+        # Background (no await) — Temporal worker handles scheduling.
+        await workflow.start_activity(
+            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60)
+        )
+    else:
+        await workflow.execute_activity(
+            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60)
+        )
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = {"reflected": True}
+    return True
+
+
+async def compile_checkpoint_step(
+    decl: CheckpointDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Checkpoint-шаг: workflow state persistence (S28 W3 + S7).
+
+    В Temporal сохраняется через ``workflow.upsert_search_attributes``
+    (для visibility) + activity для durable snapshot. Это позволяет
+    resume/replay.
+
+    Args:
+        decl: Декларация checkpoint-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        ``checkpoint_id`` (auto-generated UUID если не задан).
+    """
+    import uuid as _uuid
+
+    from temporalio import workflow
+
+    checkpoint_id = decl.checkpoint_id or str(_uuid.uuid4())
+    outputs = ctx.get("_outputs", {})
+    # Если указаны include_steps — фильтруем; иначе весь state.
+    if decl.include_steps:
+        snapshot = {
+            sid: outputs.get(sid) for sid in decl.include_steps if sid in outputs
+        }
+    else:
+        snapshot = dict(outputs)
+
+    await workflow.execute_activity(
+        "workflow.checkpoint.put",
+        {
+            "checkpoint_id": checkpoint_id,
+            "snapshot": snapshot,
+            "metadata": dict(decl.metadata),
+        },
+        start_to_close_timeout=timedelta(seconds=30),
+    )
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = checkpoint_id
+    return checkpoint_id
+
+
+async def compile_guardrail_step(
+    decl: GuardrailDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Guardrail-шаг: проверка лимита + action on exceed (S28 W3 + S7).
+
+    Семантика: читает значение ``target`` из ctx, сравнивает с threshold.
+    При превышении — действие per ``on_exceed``:
+    - ``fail`` → raise exception → Temporal retries или fail.
+    - ``warn`` → log + continue.
+    - ``dlq`` → emit DLQ event + continue (не fail).
+    - ``escalate`` → set ctx flag ``_escalate_requested`` для downstream.
+
+    Args:
+        decl: Декларация guardrail-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        ``{"rule": str, "value": float, "exceeded": bool}``.
+    """
+    outputs = ctx.get("_outputs", {})
+    target = decl.target
+    value: float = 0.0
+    if target is None:
+        # Используем последний output (current step).
+        if outputs:
+            last = next(reversed(outputs.values()))
+            value = float(last) if isinstance(last, (int, float)) else 0.0
+    elif "." in target:
+        # Dot-path — простая навигация по dict.
+        cur: Any = outputs
+        for part in target.split("."):
+            if isinstance(cur, dict):
+                cur = cur.get(part)
+            else:
+                cur = None
+                break
+        value = float(cur) if isinstance(cur, (int, float)) else 0.0
+    else:
+        value = float(outputs.get(target, 0) or 0)
+
+    exceeded = value > decl.threshold
+    result = {"rule": decl.rule, "value": value, "exceeded": exceeded}
+    if exceeded:
+        if decl.on_exceed == "fail":
+            raise RuntimeError(
+                f"Guardrail {decl.rule!r} exceeded: value={value} > "
+                f"threshold={decl.threshold}"
+            )
+        if decl.on_exceed == "warn":
+            _logger.warning(
+                "guardrail %s exceeded: value=%s threshold=%s",
+                decl.rule,
+                value,
+                decl.threshold,
+            )
+        elif decl.on_exceed == "dlq":
+            ctx.setdefault("_dlq_events", []).append(
+                {"rule": decl.rule, "value": value, "threshold": decl.threshold}
+            )
+        elif decl.on_exceed == "escalate":
+            ctx["_escalate_requested"] = True
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = result
+    return result
+
+
+async def compile_escalate_step(decl: EscalateDeclaration, ctx: dict[str, Any]) -> Any:
+    """Escalate-шаг: переключение на другого агента/модель (S28 W3 + S7).
+
+    Реализация: обновляет ctx['_active_agent'] / ctx['_active_model'] —
+    downstream agent_invoke шаги подхватывают их. Логирует escalation
+    для audit-trail.
+
+    Args:
+        decl: Декларация escalate-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        ``{"to_agent": str | None, "to_model": str | None, "reason": str | None}``.
+    """
+    if decl.to_agent is not None:
+        ctx["_active_agent"] = decl.to_agent
+    if decl.to_model is not None:
+        ctx["_active_model"] = decl.to_model
+    _logger.info(
+        "workflow escalated: to_agent=%s to_model=%s reason=%s",
+        decl.to_agent,
+        decl.to_model,
+        decl.reason,
+    )
+    result = {
+        "to_agent": decl.to_agent,
+        "to_model": decl.to_model,
+        "reason": decl.reason,
+    }
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = result
+    return result
+
+
 _STEP_DISPATCH: dict[type, StepCompiler] = {
     ActivityDeclaration: compile_activity_step,
     SagaDeclaration: compile_saga_step,
@@ -387,6 +583,11 @@ _STEP_DISPATCH: dict[type, StepCompiler] = {
     ResumeDeclaration: compile_resume_step,
     SensorDeclaration: compile_sensor_step,
     AgentInvokeDeclaration: compile_agent_invoke_step,
+    # S7 fix: 4 advanced declarations registered.
+    ReflectDeclaration: compile_reflect_step,
+    CheckpointDeclaration: compile_checkpoint_step,
+    GuardrailDeclaration: compile_guardrail_step,
+    EscalateDeclaration: compile_escalate_step,
 }
 
 

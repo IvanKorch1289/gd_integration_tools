@@ -25,14 +25,27 @@ Public API:
 from __future__ import annotations
 
 import io
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from ruamel.yaml import YAML
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
-__all__ = ("FeatureDisabledError", "WorkflowDiff", "diff", "from_yaml", "to_yaml")
+logger = get_logger(__name__)
+
+__all__ = (
+    "FeatureDisabledError",
+    "WorkflowDiff",
+    "diff",
+    "from_yaml",
+    "load_all_workflows_from_directory",
+    "load_workflow_from_file",
+    "load_workflow_from_yaml",
+    "to_yaml",
+)
 
 
 class FeatureDisabledError(RuntimeError):
@@ -231,3 +244,88 @@ def diff(decl_a: WorkflowDeclaration, decl_b: WorkflowDeclaration) -> WorkflowDi
         modified_steps=tuple(modified),
         version_changed=version_changed,
     )
+
+
+# S8 fix (S36-W9): YAML loader API для workflow (аналог
+# load_pipeline_from_yaml). Ранее существовал только :func:`from_yaml`
+# (внутри yaml_io), без удобного public API для загрузки из файла/директории.
+# Теперь есть:
+# - load_workflow_from_yaml(yaml_text) — парсит YAML-строку
+# - load_workflow_from_file(path) — читает файл и парсит
+# - load_all_workflows_from_directory(dir) — bulk load с error tolerance
+
+
+def load_workflow_from_yaml(yaml_text: str) -> WorkflowDeclaration:
+    """Парсит YAML-строку в :class:`WorkflowDeclaration` (S8 fix).
+
+    Thin wrapper над :func:`from_yaml` для consistency с
+    :func:`load_pipeline_from_yaml` API. Respects feature-flag
+    ``workflow_yaml_round_trip``.
+
+    Args:
+        yaml_text: YAML-строка.
+
+    Returns:
+        Валидированная :class:`WorkflowDeclaration`.
+
+    Raises:
+        FeatureDisabledError: Если feature flag выключен.
+        pydantic.ValidationError: Если YAML не соответствует схеме.
+    """
+    return from_yaml(yaml_text)
+
+
+def load_workflow_from_file(path: str | Path) -> WorkflowDeclaration:
+    """Загрузить :class:`WorkflowDeclaration` из YAML-файла (S8 fix).
+
+    Args:
+        path: Путь к ``.workflow.yaml`` файлу.
+
+    Returns:
+        Валидированная :class:`WorkflowDeclaration`.
+
+    Raises:
+        FileNotFoundError: Если файла нет.
+        FeatureDisabledError: Если feature flag выключен.
+        pydantic.ValidationError: Если YAML невалиден.
+    """
+    file_path = Path(path)
+    if not file_path.is_file():
+        raise FileNotFoundError(f"Workflow YAML not found: {file_path}")
+    yaml_text = file_path.read_text(encoding="utf-8")
+    return load_workflow_from_yaml(yaml_text)
+
+
+def load_all_workflows_from_directory(
+    directory: str | Path, *, pattern: str = "*.workflow.yaml"
+) -> list[WorkflowDeclaration]:
+    """Загрузить все workflow YAML из директории (S8 fix).
+
+    Per-file errors логируются и пропускаются (не fail-fast) для
+    устойчивости к одному битому файлу.
+
+    Args:
+        directory: Путь к директории с ``.workflow.yaml`` файлами.
+        pattern: Glob-паттерн (default ``*.workflow.yaml``).
+
+    Returns:
+        Список :class:`WorkflowDeclaration` (успешно загруженных).
+    """
+    dir_path = Path(directory)
+    if not dir_path.is_dir():
+        raise ValueError(f"Not a directory: {directory}")
+
+    workflows: list[WorkflowDeclaration] = []
+    for yaml_file in sorted(dir_path.glob(pattern)):
+        try:
+            workflow = load_workflow_from_file(yaml_file)
+            workflows.append(workflow)
+            logger.info(
+                "Loaded workflow '%s' v%s from %s",
+                workflow.name,
+                workflow.version,
+                yaml_file.name,
+            )
+        except Exception as exc:
+            logger.error("Failed to load workflow from %s: %s", yaml_file, exc)
+    return workflows
