@@ -5,6 +5,32 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/keepachangelog/1.1.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Sprint 168 W14 — Backend Startup Resilience + Filter Schemas Fix, 2026-06-23]
+
+1 atomic commit + 2 doc files.
+
+### Fixed
+
+- **4 filter schemas**: `files`, `users`, `orders`, `orderkinds` — заменены
+  `importlib.import_module("src.backend.core.domain.models.*")` на прямые импорты из
+  `extensions.core_entities.*.domain.models` (S106 migration closure, S168 W14 P2-10)
+- **Backend startup**: EventBus TimeoutError → logged, not raised; Redis pool timeout 5s;
+  RedisLock._client() gracefully returns None on connection errors
+- **Docker compose**: migration-runner ENTRYPOINT conflict resolved; app/workflow-worker
+  use `APP_PROFILE=dev`; `DB_HOST=postgres` injected
+
+### Added
+
+- `docs/ops/docker-compose-gap.md` — prod gap analysis
+- `docs/ops/docs-audit-s168-w14.md` — documentation audit
+
+### Verified
+
+- `git log --oneline -1` → `0ecd00f`
+- Backend: HTTP 200 `/docs`, "130 actions, 130 DSL-маршрутов"
+- Frontend: HTTP 200 on `:8501`
+- 4 filter imports OK: `FileFilter`, `UserFilter`, `OrderFilter`, `OrderKindFilter`
+
 ## [Sprint 45 — Audit Backlog: QW10 + S1 Closure, 2026-06-22] — Rule 3 + Rule 8
 
 2 atomic commits, deep-audit backlog continuation (см. `docs/audit/DEEP-AUDIT-2026-06-22.md`,
