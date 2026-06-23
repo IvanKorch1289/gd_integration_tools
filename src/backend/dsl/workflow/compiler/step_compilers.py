@@ -497,8 +497,15 @@ async def compile_guardrail_step(
     target = decl.target
     value: float = 0.0
     if target is None:
-        # Используем последний output (current step).
+        # Используем последний output (current step). Warn если их >1 —
+        # implicit ordering сценарий хрупкий; рекомендуем explicit target.
         if outputs:
+            if len(outputs) > 1:
+                _logger.warning(
+                    "guardrail step with multiple outputs and no target — "
+                    "using last; prefer explicit target to avoid order-dependence",
+                    extra={"output_keys": list(outputs.keys()), "rule": decl.rule},
+                )
             last = next(reversed(outputs.values()))
             value = float(last) if isinstance(last, (int, float)) else 0.0
     elif "." in target:

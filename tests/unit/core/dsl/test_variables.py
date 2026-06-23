@@ -69,8 +69,13 @@ class TestVariableScope:
         assert s.identifier == "acme"
 
     def test_parse_default_is_global(self) -> None:
-        s = VariableScope.parse("anything")
-        assert s.kind == "global"
+        """Pre-fix: parse silently fell back to global. Post-fix: raises ValueError.
+
+        Failing-fast предпочтительнее silent swallow — помогает заметить
+        misconfig в YAML/ENV (S36-W17 follow-up).
+        """
+        with pytest.raises(ValueError, match="Invalid VariableScope"):
+            VariableScope.parse("anything")
 
     def test_immutable(self) -> None:
         s = VariableScope.global_scope()

@@ -14,7 +14,7 @@ Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLS
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 if TYPE_CHECKING:
     pass
@@ -67,6 +67,40 @@ __all__ = (
     "WorkflowSpec",
     "DurableWorkflowProcessor",
 )
+
+
+def _compensate_handler(
+    self: "DSLStepExecutor",
+    step: WorkflowStep,
+    state: WorkflowState,
+    instance: WorkflowInstanceRow,
+) -> StepResult:
+    """compensate kind: runner вызывает compensators отдельным путём при FAILED.
+
+    В normal flow возвращает CONTINUE (no-op).
+    """
+    return StepResult(outcome=StepOutcome.CONTINUE, events=[])
+
+
+# Ponytail: dispatch dict (O(1) lookup, easier to extend).
+# Mapping: step.kind → handler(self, step, state, instance) -> StepResult | Awaitable[StepResult]
+_STEP_KIND_DISPATCH: dict[str, Callable[..., Any]] = {
+    "sequential": lambda self, step, state, instance: self._exec_sequential(
+        step, state, instance
+    ),
+    "branch": lambda self, step, state, instance: self._exec_branch(
+        step, state, instance
+    ),
+    "loop": lambda self, step, state, instance: self._exec_loop(step, state, instance),
+    "for_each": lambda self, step, state, instance: self._exec_for_each(
+        step, state, instance
+    ),
+    "sub_flow": lambda self, step, state, instance: self._exec_sub_flow(
+        step, state, instance
+    ),
+    "wait": lambda self, step, state, instance: self._exec_wait(step, state),
+    "compensate": _compensate_handler,
+}
 
 
 class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin):
@@ -131,23 +165,15 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
         )
 
         # 3) Dispatch по kind. Каждая ветка формирует свой StepResult.
+        # Ponytail: dispatch через dict вместо if/elif — O(1) lookup,
+        # проще добавить новые kinds, audit-friendly.
         try:
-            if step.kind == "sequential":
-                return await self._exec_sequential(step, state, instance)  # type: ignore[misc]
-            if step.kind == "branch":
-                return await self._exec_branch(step, state, instance)  # type: ignore[misc]
-            if step.kind == "loop":
-                return await self._exec_loop(step, state, instance)  # type: ignore[misc]
-            if step.kind == "for_each":
-                return await self._exec_for_each(step, state, instance)  # type: ignore[misc]
-            if step.kind == "sub_flow":
-                return self._exec_sub_flow(step, state, instance)
-            if step.kind == "wait":
-                return self._exec_wait(step, state)
-            if step.kind == "compensate":
-                # compensate — специальный kind, не выполняется в normal flow;
-                # runner вызывает compensators отдельным путём при FAILED.
-                return StepResult(outcome=StepOutcome.CONTINUE, events=[])
+            handler = _STEP_KIND_DISPATCH.get(step.kind)
+            if handler is not None:
+                result = handler(self, step, state, instance)
+                if hasattr(result, "__await__"):
+                    return await result  # type: ignore[misc]
+                return result  # type: ignore[return-value]
             return StepResult(
                 outcome=StepOutcome.FAILED,
                 error_message=f"unknown step kind: {step.kind}",

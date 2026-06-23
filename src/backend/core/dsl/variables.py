@@ -92,13 +92,25 @@ class VariableScope:
 
     @classmethod
     def parse(cls, raw: str) -> "VariableScope":
-        """Parse scope string. Examples: `"global"`, `"tenant:acme"`."""
+        """Parse scope string. Examples: `"global"`, `"tenant:acme"`.
+
+        Raises:
+            ValueError: если ``raw`` имеет неизвестный формат (например,
+                `"hello-world"` без `:`). Pre-fix: silently fall back к
+                global scope, что могло замаскировать misconfig в YAML.
+        """
         if raw == "global":
             return cls.global_scope()
         if ":" in raw:
             kind, ident = raw.split(":", 1)
+            if not kind or not ident:
+                raise ValueError(
+                    f"Invalid VariableScope: {raw!r} (both kind and identifier required)"
+                )
             return cls(kind=kind, identifier=ident)
-        return cls(kind="global")
+        raise ValueError(
+            f"Invalid VariableScope: {raw!r} (expected 'global' or 'kind:identifier')"
+        )
 
 
 class VariableNotFoundError(KeyError):
