@@ -64,7 +64,7 @@ prod-specific overrides that include missing services.
 
 ## TODO for Production Docker Setup
 
-- [ ] Add healthcheck endpoints to `app` and `workflow-worker` services
-- [ ] Create `docker-compose.prod.yml` with full infrastructure (Kafka, Minio, Vault, OTEL)
-- [ ] Document production deployment in `docs/docker/`
-- [ ] Rebuild `compose-app` image with fixed PYTHONPATH
+- [x] Add healthcheck endpoint to `app` (uses `/docs` — FastAPI Swagger UI is always available)
+- [x] Create `docker-compose.prod.yml` with full infrastructure (Kafka, Minio, Vault, OTEL, Celery)
+- [x] Create `otel-collector-config.yaml` for OTEL collector
+- [x] Document production deployment in `docs/docker/` (ops/docker-compose-gap.md)

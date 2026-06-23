@@ -1,0 +1,273 @@
+# Production deployment — full infrastructure stack.
+#
+# Назначение:
+#     Поднимает полный стек: app + workflow-worker + Kafka + Minio +
+#     Vault + OTEL Collector + Schema Registry + Debezium Connect +
+#     Celery workers + Celery Beat.
+#
+# Профиль: production (APP_PROFILE=prod для app и workflow-worker).
+#
+# Требования prod.yml:
+#     - opentelemetry_endpoint: "http://otel-collector:4317"
+#     - telemetry_enabled: true
+#     - monitoring_enabled: true
+#     - kafka.enabled: true
+#     - vault.enabled: true
+#
+# Использование:
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+#
+# Связано:
+#     - docs/ops/docker-compose-gap.md — gap analysis
+#     - ADR-0092 — Vault zero-downtime rotation
+#     - ADR-0096 — Correlation→OTel trace_id binding
+
+services:
+  # ─── Observability ───────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector:0.99.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics
+    networks:
+      - compose_default
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      SPAN_STORAGE_TYPE: badger
+      BADGER_EPHEMERAL: "true"
+    ports:
+      - "16686:16686" # Jaeger UI
+    networks:
+      - compose_default
+
+  # ─── Kafka ────────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      kafka-zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - compose_default
+
+  kafka-zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - compose_default
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SCHEMAREGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMAREGISTRY_HOST_NAME: schema-registry
+      SCHEMAREGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8081:8081"
+    networks:
+      - compose_default
+
+  connect-distributed:
+    image: debezium/connect:2.4
+    depends_on:
+      kafka:
+        condition: service_healthy
+      schema-registry:
+        condition: service_started
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: compose-connect-cluster
+      CONFIG_STORAGE_TOPIC: compose-connect-configs
+      OFFSET_STORAGE_TOPIC: compose-connect-offsets
+      STATUS_STORAGE_TOPIC: compose-connect-statuses
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      OFFSET_FLUSH_INTERVAL_MS: 10000
+      OFFSET_FLUSH_TIMEOUT_MS: 5000
+    ports:
+      - "8083:8083"
+    networks:
+      - compose_default
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+      schema-registry:
+        condition: service_started
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+    ports:
+      - "8090:8080"
+    networks:
+      - compose_default
+
+  # ─── Object Storage ────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:RELEASE.2024-06-13T17-07-06Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - compose_default
+
+  # ─── Secrets ──────────────────────────────────────────────────────────
+  vault:
+    image: hashicorp/vault:1.15
+    command: server -dev -dev-root-token-id=gd-dev-token
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: gd-dev-token
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - compose_default
+
+  # ─── Celery ───────────────────────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    entrypoint: ["python", "-m", "celery", "-A", "src.backend.tasks.celery_app", "worker"]
+    command: ["--loglevel=INFO", "--concurrency=4"]
+    env_file:
+      - ../../.env
+    environment:
+      APP_PROFILE: prod
+      DB_HOST: postgres
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - compose_default
+
+  celery-beat:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    entrypoint: ["python", "-m", "celery", "-A", "src.backend.tasks.celery_app", "beat"]
+    command: ["--loglevel=INFO", "--scheduler=celery.beat:PersistentScheduler"]
+    env_file:
+      - ../../.env
+    environment:
+      APP_PROFILE: prod
+      DB_HOST: postgres
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - compose_default
+
+  # ─── Switch app + workers to prod profile ─────────────────────────────
+  app:
+    environment:
+      APP_PROFILE: prod
+      APP_SERVER: ${APP_SERVER:-granian}
+      APP_WORKERS: ${APP_WORKERS:-4}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      migration-runner:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/docs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  workflow-worker:
+    environment:
+      APP_PROFILE: prod
+      WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
+
+  migration-runner:
+    environment:
+      APP_PROFILE: prod
+
+  # ─── Volumes ──────────────────────────────────────────────────────────
+volumes:
+  minio_data:
+
+networks:
+  compose_default:
+    name: compose_prod_network
+    driver: bridge
