@@ -257,7 +257,7 @@ class ApplyMixin(_DataQualityProtocol):
             return None
         try:
             _dt.datetime.strptime(str(value), fmt)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return DQViolation(
                 rule.name,
                 rule.field,

@@ -236,7 +236,7 @@ class AgentRunProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception as _:
+        except ImportError, AttributeError, RuntimeError:
             return None
 
     def to_spec(self) -> dict[str, Any]:

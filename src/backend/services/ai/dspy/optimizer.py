@@ -138,7 +138,7 @@ class DSPyOptimizer:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.dspy_eval_pipeline_enabled)
-        except Exception as exc:
+        except (ImportError, AttributeError) as exc:
             logger.debug("DSPyOptimizer: feature_flags недоступны: %s", exc)
             return False
 

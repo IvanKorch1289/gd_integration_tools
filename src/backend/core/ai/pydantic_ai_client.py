@@ -170,8 +170,11 @@ class PydanticAIClient:
                 "PydanticAIClient retry counter",
                 labels=("model", "attempt"),
             )
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as exc:
+            # Metrics registration is best-effort — не должен ломать init клиента.
+            # Раньше except Exception: pass — скрывал TypeError при None
+            # metrics_registry (V22 K-OP-1).
+            logger.debug("PydanticAIClient metrics registration failed: %s", exc)
 
     # ── public API ─────────────────────────────────────────────────────────
 

@@ -69,7 +69,7 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
                     plugin=plugin,
                 )
             return facade
-    except Exception:
+    except ImportError, AttributeError, KeyError:
         pass
 
     from src.backend.infrastructure.storage.factory import get_object_storage

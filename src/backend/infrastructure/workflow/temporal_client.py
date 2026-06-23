@@ -179,7 +179,7 @@ class TemporalClientFactory:
                 "cert": bundle.certificate,
                 "key": bundle.private_key,
             }
-        except Exception as exc:
+        except (RuntimeError, OSError, AttributeError, KeyError) as exc:
             _logger.warning(
                 "Vault PKI cert issue failed (%s); fallback to file backend", exc
             )
@@ -267,7 +267,7 @@ class TemporalWorkerPool:
             for tq, worker in list(self._workers.items()):
                 try:
                     await worker.shutdown()
-                except Exception as _:
+                except RuntimeError, OSError, AttributeError:
                     _logger.exception(
                         "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )
