@@ -60,7 +60,9 @@ with tab_import:
             ImportSource,
             ImportSourceKind,
         )
-        from src.backend.services.integrations import get_import_service
+
+        # S6 fix: facade import через dsl_portal (R3.10d / S36).
+        from src.backend.services.dsl_portal import get_import_service
 
         content = uploaded.getvalue()
         source = ImportSource(

@@ -111,10 +111,10 @@ else:
     # Production deploy: используйте PROMETHEUS_URL или см. CLI helper ниже.
     in_memory_available = False
     try:
-        # S44 W3: facade import (was direct infrastructure, layer violation).
-        from src.backend.services.messaging.outbox_monitor import default_stuck_monitor
+        # S6 fix: facade import via dsl_portal (R3.10d / S36).
+        from src.backend.services.dsl_portal import get_default_stuck_monitor
 
-        monitor = default_stuck_monitor
+        monitor = get_default_stuck_monitor()
         in_memory_available = True
         st.metric(
             label="Stuck-pending count (in-memory)",

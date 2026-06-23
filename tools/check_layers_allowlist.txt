@@ -86,6 +86,7 @@ src/backend/entrypoints/api/v1/endpoints/admin_tenants.py	entrypoints	src.backen
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.dsl.workflow.versioning
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/admin_workflows/helpers.py	entrypoints	src.backend.dsl.commands.registry
+src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.execution_engine
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.yaml_loader
 src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.pipeline
@@ -172,15 +173,10 @@ src/backend/services/core/tech.py	services	src.backend.dsl.codec.converters
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.engine.pipeline
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.spec
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.visualize
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
@@ -203,4 +199,3 @@ src/backend/services/secrets/facade.py	services	src.backend.infrastructure.secre
 src/backend/services/security/__init__.py	services	src.backend.infrastructure.security.signatures
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow.registry
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
-src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run

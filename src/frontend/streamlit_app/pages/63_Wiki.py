@@ -20,16 +20,18 @@ setup_page("Wiki", "")
 st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.
-from src.backend.services.wiki.whoosh_index import WhooshIndex  # noqa: E402
+# S6 fix: facade import через dsl_portal (R3.10d / S36).
+from src.backend.services.dsl_portal import get_whoosh_index  # noqa: E402
 
+_WhooshIndex = get_whoosh_index()
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _DSL_DIR = _REPO_ROOT / "docs" / "dsl"
 
 
 @st.cache_resource(show_spinner=False)
-def _get_index() -> WhooshIndex:
+def _get_index() -> _WhooshIndex:
     """Создаёт/открывает WhooshIndex; сборка на первом обращении."""
-    idx = WhooshIndex()
+    idx = _WhooshIndex()
     idx.build(force=False)
     return idx
 

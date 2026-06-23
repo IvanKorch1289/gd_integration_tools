@@ -15,10 +15,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.services.dsl.builder_service import (  # noqa: E402
-    DSLBuilderService,
-    get_dsl_builder_service,
-)
+from src.backend.services.dsl_portal import get_dsl_builder_service  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("DSL Builder (write-back)", "📐")
@@ -29,7 +26,10 @@ st.caption(
 )
 
 
-def _service() -> DSLBuilderService:
+def _service():
+    # S6 fix: facade через dsl_portal (R3.10d / S36). Возвращаемый
+    # тип — :class:`services.dsl.builder_service.DSLBuilderService` (re-export
+    # через dsl_portal, signature-compatible).
     return get_dsl_builder_service()
 
 

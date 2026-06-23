@@ -173,11 +173,10 @@ _wf_id_compens = st.text_input("Workflow ID для saga timeline", key="saga_wf_
 
 if _wf_id_compens:
     try:
-        import asyncio
+        # S6 fix: facade через dsl_portal (R3.10d / S36).
+        from src.backend.services.dsl_portal import get_saga_history
 
-        from src.backend.services.workflows.saga_history import get_saga_history
-
-        records = asyncio.run(get_saga_history(_wf_id_compens, limit=50))
+        records = get_saga_history(_wf_id_compens, limit=50)
     except Exception as exc:  # noqa: BLE001
         records = []
         st.warning(f"Saga history недоступна: {exc}")

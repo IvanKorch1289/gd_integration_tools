@@ -63,16 +63,21 @@ def search_workflow_templates(query: str, top_k: int = 10) -> list[Any]:
 
 
 def get_ai_cost_snapshot(
-    *, window_hours: int = 24, tenant_id: str | None = None
+    *,
+    window_hours: int = 24,
+    tenant_id: str | None = None,
+    model_filter: str | None = None,
+    pipeline_filter: str | None = None,
+    top_n: int = 50,
 ) -> dict[str, Any]:
     """S6 fix: snapshot AI cost через :class:`AICostDashboard`.
 
     Frontend ``pages/23_AI_Cost_Tracking.py`` использовал прямой
-    импорт ``src.backend.services.ai.costs``.
+    импорт ``src.backend.services.ai.costs``. Поддерживает все фильтры
+    dashboard.snapshot() (window/tenant/model/pipeline/top_n).
 
     Returns:
-        Dict-снимок за ``window_hours`` (default 24) с фильтром по
-        ``tenant_id``.
+        Dict-снимок за ``window_hours`` (default 24) с фильтрами.
     """
     import asyncio as _asyncio
 
@@ -80,7 +85,13 @@ def get_ai_cost_snapshot(
 
     dashboard = AICostDashboard()
     return _asyncio.run(
-        dashboard.snapshot(window_hours=window_hours, tenant_id=tenant_id)
+        dashboard.snapshot(
+            window_hours=window_hours,
+            tenant_id=tenant_id,
+            model_filter=model_filter,
+            pipeline_filter=pipeline_filter,
+            top_n=top_n,
+        )
     )
 
 
@@ -140,6 +151,21 @@ def get_import_service() -> Any:
     from src.backend.services.integrations import get_import_service
 
     return get_import_service()
+
+
+def get_dsl_builder_service() -> Any:
+    """S6 fix: facade для ``services.dsl.builder_service.get_dsl_builder_service``.
+
+    Frontend ``pages/32_DSL_Builder.py`` импортировал
+    :class:`DSLBuilderService` напрямую. Возвращает service с
+    типизированным API (``list_routes``, ``get_pipeline``, ``render_yaml``,
+    ``preview_diff``, ``is_write_enabled``, ``save_route``).
+    """
+    from src.backend.services.dsl.builder_service import (
+        get_dsl_builder_service as _get_dsl_builder_service,
+    )
+
+    return _get_dsl_builder_service()
 
 
 def list_route_ids() -> list[str]:

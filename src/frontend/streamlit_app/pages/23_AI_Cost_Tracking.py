@@ -75,20 +75,17 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
     Применяется, когда REST endpoint /admin/ai-costs/dashboard ещё
     не подключён (R2 admin facade) или backend недоступен.
     """
-    import asyncio
-
     try:
-        from src.backend.services.ai.costs import AICostDashboard
+        # S6 fix: используем dsl_portal facade вместо прямого импорта
+        # ``src.backend.services.ai.costs`` (R3.10d).
+        from src.backend.services.dsl_portal import get_ai_cost_snapshot
 
-        dashboard = AICostDashboard()
-        snap = asyncio.run(
-            dashboard.snapshot(
-                window_hours=window_hours,
-                tenant_id=tenant_filter,
-                model_filter=model_filter,
-                pipeline_filter=pipeline_filter,
-                top_n=top_n,
-            )
+        snap = get_ai_cost_snapshot(
+            window_hours=window_hours,
+            tenant_id=tenant_filter,
+            model_filter=model_filter,
+            pipeline_filter=pipeline_filter,
+            top_n=top_n,
         )
         return snap.to_dict()
     except Exception as exc:  # noqa: BLE001
