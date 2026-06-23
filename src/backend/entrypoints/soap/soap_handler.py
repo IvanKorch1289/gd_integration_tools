@@ -15,6 +15,7 @@ from xml.etree import ElementTree as ET
 import orjson
 from fastapi import APIRouter, Depends, Request, Response
 
+from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.di.dependencies import get_invoker_dep
 from src.backend.core.errors import BaseError
 from src.backend.core.interfaces.invoker import (
@@ -146,6 +147,7 @@ async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
     response_class=Response,
     summary="SOAP endpoint",
     description="Принимает SOAP envelope и маршрутизирует через DSL или ActionHandlerRegistry.",
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def handle_soap_request(request: Request) -> Response:
     """Обработчик входящих SOAP-запросов.
@@ -400,6 +402,7 @@ def _build_invoke_response_envelope(
         "Принимает SOAP envelope <InvokeRequest> и пробрасывает в Invoker. "
         "Для async-режимов возвращает 202 + invocation_id."
     ),
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def soap_invoke(
     request: Request, invoker: "Invoker" = Depends(get_invoker_dep)

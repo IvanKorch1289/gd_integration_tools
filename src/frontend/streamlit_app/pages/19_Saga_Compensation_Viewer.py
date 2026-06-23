@@ -32,7 +32,7 @@ workflow_id = col3.text_input("Workflow ID (drill-down)", value="")
 
 @st.cache_data(ttl=60)
 def _fetch_stats(tenant: str, days: int) -> dict:
-    from src.backend.services.workflows.saga_history import aggregate_saga_stats
+    from src.backend.services.dsl_portal import get_saga_stats as aggregate_saga_stats
 
     to_dt = datetime.now(timezone.utc)
     from_dt = to_dt - timedelta(days=days)
@@ -43,7 +43,7 @@ def _fetch_stats(tenant: str, days: int) -> dict:
 
 @st.cache_data(ttl=60)
 def _fetch_history(wf_id: str) -> list:
-    from src.backend.services.workflows.saga_history import get_saga_history
+    from src.backend.services.dsl_portal import get_saga_history
 
     if not wf_id:
         return []

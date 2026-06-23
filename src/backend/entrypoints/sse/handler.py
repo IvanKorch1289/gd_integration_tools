@@ -15,10 +15,11 @@ import datetime
 from enum import Enum
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
+from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import encode_json_str
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
@@ -96,6 +97,7 @@ event_bus = EventBus()
     "/stream",
     summary="SSE event stream",
     description="Подключение к потоку серверных событий.",
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def sse_stream(request: Request) -> StreamingResponse:
     """SSE endpoint — стримит события клиенту.
@@ -178,6 +180,7 @@ class _InvokeRequest(BaseModel):
         "DSL-маршрут (Tier 3) и стримит результат как SSE-события "
         "``start``, ``result``/``error``, ``end``."
     ),
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingResponse:
     """Однократный action-вызов с SSE-ответом.
