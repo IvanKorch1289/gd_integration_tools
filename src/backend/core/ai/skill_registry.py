@@ -46,6 +46,7 @@ loader'а + auto-export — Wave S26 W5.
 from __future__ import annotations
 
 import importlib
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
@@ -206,14 +207,62 @@ class SkillRegistry:
         del func
         raise NotImplementedError("S26 W5: bridge с services/ai/tools/registry")
 
+    @staticmethod
+    def _validate_module_whitelist(
+        module_name: str, whitelist: Iterable[str], skill_id: str
+    ) -> None:
+        """S2 fix (V21 + K-ARCH-5): validate module against whitelist.
+
+        Whitelist semantics (same as
+        :meth:`CallFunctionProcessor._validate_module_whitelist`):
+        * ``module_name`` exact match → ok;
+        * ``module_name`` starts with ``prefix.`` and whitelist contains
+          ``prefix.*`` → ok (glob pattern);
+        * otherwise → ``PermissionError``.
+
+        Args:
+            module_name: Module из ``SkillSpec.handler`` (``"extensions.credit.fn"``).
+            whitelist: Iterable of allowed modules/patterns. Если пустой —
+                :class:`ValueError` (caller responsibility).
+            skill_id: Skill ID для audit-event context.
+
+        Raises:
+            ValueError: Whitelist пустой (caller не передал).
+            PermissionError: Module не в whitelist.
+        """
+        whitelist_set = set(whitelist)
+        if not whitelist_set:
+            raise ValueError(
+                f"SkillRegistry._validate_module_whitelist: empty whitelist "
+                f"for skill_id={skill_id!r}; caller must provide plugin.toml::"
+                f"call_function_modules or settings.call_function_modules"
+            )
+        if module_name in whitelist_set:
+            return
+        for entry in whitelist_set:
+            if entry.endswith(".*") and module_name.startswith(entry[:-2] + "."):
+                return
+        raise PermissionError(
+            f"SkillRegistry.invoke: module {module_name!r} not in whitelist "
+            f"(skill_id={skill_id!r})"
+        )
+
     async def invoke(
-        self, skill_id: str, timeout: float | None = None, **kwargs: Any
+        self,
+        skill_id: str,
+        timeout: float | None = None,
+        whitelist: Iterable[str] | None = None,
+        **kwargs: Any,
     ) -> Any:
         """Выполнить skill через handler (с capability check + module whitelist).
 
         Flow:
         1. Lookup skill in ``self._skills``.
-        2. Module-whitelist check (same logic as ``CallFunctionProcessor``).
+        2. Module-whitelist check (S2 fix): если ``whitelist`` передан —
+           проверить module handler'а на вхождение (exact или glob-паттерн
+           ``prefix.*``). Если не передан — no-op (backward-compat с
+           callers, которые уже выполнили check на уровне
+           SkillInvokeProcessor / V21 pattern).
         3. Capability check via ``CapabilityGate`` if available.
         4. Dynamic import ``module:function`` via ``importlib``.
         5. Call handler with ``**kwargs`` (with optional ``timeout``).
@@ -245,12 +294,15 @@ class SkillRegistry:
             )
         module_name, fn_name = skill.handler.rsplit(":", 1)
 
-        # Module-whitelist check (V21 pattern — same as CallFunctionProcessor)
-        # Skip in this MVP; the whitelist check is context-dependent
-        # and SkillRegistry.invoke() is typically called from SkillInvokeProcessor
-        # which runs within a context that has already done the check.
-        # Real enforcement: use _validate_module_whitelist(module_name, context)
-        # when context is available.
+        # Module-whitelist check (S2 fix V21 pattern — same as
+        # CallFunctionProcessor._validate_module_whitelist). Activated
+        # только если caller передал ``whitelist``; иначе — fallback
+        # на «best-effort» (legacy callers, которые делают check
+        # на уровне SkillInvokeProcessor).
+        if whitelist:
+            self._validate_module_whitelist(
+                module_name=module_name, whitelist=whitelist, skill_id=skill_id
+            )
 
         # Capability check — best-effort if CapabilityGate.check is available.
         # Skips silently if CapabilityGate not yet implemented (MVP phase).

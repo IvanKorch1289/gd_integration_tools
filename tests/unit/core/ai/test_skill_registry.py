@@ -104,6 +104,58 @@ class TestInvoke:
             with pytest.raises(AttributeError, match="has no attribute"):
                 await reg.invoke("s1")
 
+    async def test_whitelist_allowed_exact(self) -> None:
+        """S2 fix: whitelist с exact match — module разрешён."""
+        reg = SkillRegistry()
+        reg._skills["s1"] = SkillSpec(
+            id="s1", version="1", handler="extensions.credit:fn"
+        )
+        fake_mod = MagicMock()
+        fake_mod.fn = MagicMock(return_value=42)
+        with patch("importlib.import_module", return_value=fake_mod):
+            result = await reg.invoke(
+                "s1", whitelist={"extensions.credit", "other.module"}
+            )
+        assert result == 42
+
+    async def test_whitelist_allowed_glob(self) -> None:
+        """S2 fix: whitelist с glob-паттерном ``prefix.*`` — module разрешён."""
+        reg = SkillRegistry()
+        reg._skills["s1"] = SkillSpec(
+            id="s1", version="1", handler="extensions.credit.sub:fn"
+        )
+        fake_mod = MagicMock()
+        fake_mod.fn = MagicMock(return_value=42)
+        with patch("importlib.import_module", return_value=fake_mod):
+            result = await reg.invoke(
+                "s1", whitelist={"extensions.credit.*"}
+            )
+        assert result == 42
+
+    async def test_whitelist_denied(self) -> None:
+        """S2 fix: module не в whitelist — PermissionError, без import."""
+        reg = SkillRegistry()
+        reg._skills["s1"] = SkillSpec(
+            id="s1", version="1", handler="os.system:rm"
+        )
+        # import НЕ должен вызываться — guard срабатывает раньше
+        with patch("importlib.import_module") as mock_imp:
+            with pytest.raises(PermissionError, match="not in whitelist"):
+                await reg.invoke("s1", whitelist={"extensions.credit.*"})
+        mock_imp.assert_not_called()
+
+    async def test_whitelist_none_no_check(self) -> None:
+        """S2 backward-compat: whitelist=None — check не выполняется."""
+        reg = SkillRegistry()
+        reg._skills["s1"] = SkillSpec(
+            id="s1", version="1", handler="any.module:fn"
+        )
+        fake_mod = MagicMock()
+        fake_mod.fn = MagicMock(return_value="ok")
+        with patch("importlib.import_module", return_value=fake_mod):
+            result = await reg.invoke("s1")  # whitelist=None
+        assert result == "ok"
+
 
 class TestListSkills:
     def test_sorted(self) -> None:

@@ -99,10 +99,13 @@ class FastMCPserver:
         skill_registry: SkillRegistry | None = None,
         host: str = "127.0.0.1",
         port: int = 8765,
+        *,
+        module_whitelist: list[str] | None = None,
     ) -> None:
         self._skill_registry = skill_registry or SkillRegistry()
         self._host = host
         self._port = port
+        self._module_whitelist = module_whitelist  # S2 fix (V21 + K-ARCH-5)
         self._mcp: FastMCP | None = None
 
     # ── Properties ────────────────────────────────────────────────────────────
@@ -171,7 +174,9 @@ class FastMCPserver:
                 continue
             tool_name = skill.id.replace(".", "_").replace("-", "_")
             self._mcp.add_tool(
-                _build_tool_callback(skill, self._skill_registry),
+                _build_tool_callback(
+                    skill, self._skill_registry, self._module_whitelist
+                ),
                 name=tool_name,
                 description=skill.description or f"Skill: {skill.id}",
             )
@@ -224,7 +229,9 @@ class FastMCPserver:
 # ── Tool callback factory ──────────────────────────────────────────────────────
 
 
-def _build_tool_callback(skill: SkillSpec, registry: SkillRegistry) -> Any:
+def _build_tool_callback(
+    skill: SkillSpec, registry: SkillRegistry, module_whitelist: list[str] | None = None
+) -> Any:
     """Build an async tool callback for a given SkillSpec."""
 
     async def tool_callback(arguments: dict[str, Any]) -> str:
@@ -236,7 +243,10 @@ def _build_tool_callback(skill: SkillSpec, registry: SkillRegistry) -> Any:
                 raise MCPToolError("Tenant access denied")
 
             result = await registry.invoke(
-                skill.id, timeout=skill.timeout_s, **arguments
+                skill.id,
+                timeout=skill.timeout_s,
+                whitelist=module_whitelist,
+                **arguments,
             )
             return json.dumps(result, default=str, ensure_ascii=False)
         except MCPToolError as exc:
