@@ -145,8 +145,23 @@ class AgentGraphProcessor(BaseAIProcessor):
         self.tool_actions = list(tool_actions) if tool_actions else []
         self.max_handoffs = max_handoffs
         self.result_property = result_property
-        self._sandbox = sandbox or InProcessAgentSandbox()
         self._isolated = isolated
+        # S3 fix follow-up (S36-W15): explicit sandbox honoring ``isolated`` flag.
+        # До этого fix line 148: ``sandbox or InProcessAgentSandbox()`` —
+        # default-нулевая изоляция игнорировала ``isolated=True`` builder flag.
+        # Семантика: caller-инжектированный ``sandbox`` имеет приоритет; иначе
+        # ProcessPool при isolated=True (default с S3) / InProcess при isolated=False.
+        if sandbox is not None:
+            self._sandbox = sandbox
+        elif isolated:
+            from src.backend.services.ai.agent_sandbox import (
+                get_process_pool_agent_sandbox,
+            )
+
+            self._sandbox = get_process_pool_agent_sandbox()
+        else:
+            # Явный opt-in в zero-isolation: warning + audit event в _run.
+            self._sandbox = InProcessAgentSandbox()
 
     def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
         """Scope = first workflow_id for capability gate."""

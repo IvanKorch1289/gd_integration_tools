@@ -111,3 +111,12 @@ class WorkflowDeclaration(BaseModel):
             "помечается как breached + breach_action."
         ),
     )
+
+    # Runtime path docstring (S36-W16):
+    #   WorkflowDeclaration.compile_workflow() → dynamic Temporal
+    # @workflow.defn class → Temporal worker исполняет.
+    #   WorkflowDeclaration НЕ drive'ит DSLStepExecutor напрямую — для
+    #   pg-runner есть parallel-схема WorkflowSpec + WorkflowDescriptor
+    #   (registry.register(descriptor, route_id, spec=...)). Обе системы
+    #   сосуществуют; bridge между ними — out of scope этого модуля
+    #   (см. ADR TODO).

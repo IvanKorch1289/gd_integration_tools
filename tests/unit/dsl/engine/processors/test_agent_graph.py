@@ -134,3 +134,46 @@ def test_to_spec_omits_isolated_default() -> None:
     )
     spec = proc.to_spec()
     assert "isolated" not in spec["agent_graph"]
+
+
+def test_isolated_true_uses_process_pool_sandbox() -> None:
+    """S3 fix (S36-W15): isolated=True default → ProcessPoolAgentSandbox.
+
+    Pre-fix: ``sandbox or InProcessAgentSandbox()`` игнорировал isolated
+    flag → zero-isolation по умолчанию. Теперь: isolated=True →
+    ProcessPoolAgentSandbox.
+    """
+    from src.backend.services.ai.agent_sandbox import ProcessPoolAgentSandbox
+
+    proc = AgentGraphProcessor(
+        graph_type="react",
+        prompt_inline="test",
+        tool_actions=["db.query"],
+        isolated=True,
+    )
+    assert isinstance(proc._sandbox, ProcessPoolAgentSandbox)
+
+
+def test_isolated_false_explicit_uses_inprocess_sandbox() -> None:
+    """S3 fix: isolated=False explicit opt-in → InProcessAgentSandbox."""
+    from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
+
+    proc = AgentGraphProcessor(
+        graph_type="react",
+        prompt_inline="test",
+        tool_actions=["db.query"],
+        isolated=False,
+    )
+    assert isinstance(proc._sandbox, InProcessAgentSandbox)
+
+
+def test_explicit_sandbox_overrides_isolated() -> None:
+    """S3 fix: caller-инжектированный sandbox имеет приоритет над isolated flag."""
+    proc = AgentGraphProcessor(
+        graph_type="react",
+        prompt_inline="test",
+        tool_actions=["db.query"],
+        sandbox=_FakeSandbox(),
+        isolated=True,  # even with isolated=True, explicit sandbox wins
+    )
+    assert proc._sandbox.__class__.__name__ == "_FakeSandbox"
