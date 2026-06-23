@@ -7,11 +7,14 @@ S89 W4 (V2 P0 #6): verify that:
 4. Order model імпортується без помилок
 5. OrderFile (FK to Order) не ламається
 6. OrderKind (FK to Order) не ламається
+
+S168 W14: orders.py moved to extensions.core_entities.orders.domain.models
+(backward-compat re-export at src.backend.core.domain.models.orders removed).
 """
 
 from __future__ import annotations
 
-from src.backend.core.domain.models.orders import Order
+from src.backend.core.domain.models import Order  # S168 W14: was src.backend.core.domain.models.orders
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     _is_tenant_aware,

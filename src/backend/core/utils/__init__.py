@@ -6,7 +6,6 @@
 - ``async_utils`` — asyncer-обёртки (``run_sync_in_thread``,
   ``gather_with_timeout``, ``async_with_timeout``);
 - ``cache_keys`` — детерминированные ключи кэша;
-- ``circuit_breaker`` — простейший circuit-breaker (исторический модуль);
 - ``datetime_utils`` — pendulum/stdlib datetime хелперы (S57 W1);
 - ``json_utils`` — orjson-based JSON serialization;
 - ``metrics_registry`` — idempotent Prometheus factory;
@@ -18,8 +17,7 @@
 
 S5 fix (S36-W11): модули ``datetime_utils`` и ``json_utils`` мигрированы
 из удалённого ``core/util/`` пакета. Ранее сосуществовали ``core/util/``
-(2 файла) + ``core/utils/`` (8 файлов) — комментарий ``__init__.py`` даже
-ссылался на несуществующий ``circuit_breaker`` (S95 W4 dead reference).
+(2 файла) + ``core/utils/`` (8 файлов).
 """
 
 from src.backend.core.utils.async_helpers import AsyncChunkIterator

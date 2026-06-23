@@ -25,7 +25,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy_continuum import version_class, versioning_manager
 
-import src.backend.core.domain.models.users as users_module
+import extensions.core_entities.users.domain.models as users_module  # S168 W14: was src.backend.core.domain.models.users
 from src.backend.core.domain.models.base import Base
 from src.backend.dsl.audit_versioning import (
     OP_DELETE,

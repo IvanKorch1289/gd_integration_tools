@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.backend.core.util.datetime_utils import (
+from src.backend.core.utils.datetime_utils import (
     ensure_utc,
     humanize_delta,
     is_pendulum_available,

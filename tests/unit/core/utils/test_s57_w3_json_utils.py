@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 import orjson
 import pytest
 
-from src.backend.core.util.json_utils import dumps_bytes, dumps_str, loads
+from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
 
 # ── dumps_str ───────────────────────────────────────────────────────
 

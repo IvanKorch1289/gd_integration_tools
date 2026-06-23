@@ -12,7 +12,7 @@ import pytest
 
 from src.backend.core.tenancy import TenantContext
 
-# Load region_routing directly to avoid pulling heavy deps via package __init__.py.
+# Load region_routing and region_health directly to avoid pulling heavy deps via __init__.py.
 _region_routing_path = (
     pathlib.Path(__file__).resolve().parents[4]
     / "src"
@@ -21,14 +21,25 @@ _region_routing_path = (
     / "resilience"
     / "region_routing.py"
 )
-_spec = importlib.util.spec_from_file_location("region_routing", _region_routing_path)
-_rr = importlib.util.module_from_spec(_spec)
-# Dataclasses require the module to be present in sys.modules during exec.
+_region_health_path = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "src"
+    / "backend"
+    / "infrastructure"
+    / "resilience"
+    / "region_health.py"
+)
+_spec_rr = importlib.util.spec_from_file_location("region_routing", _region_routing_path)
+_rr = importlib.util.module_from_spec(_spec_rr)
+_spec_rh = importlib.util.spec_from_file_location("region_health", _region_health_path)
+_rh = importlib.util.module_from_spec(_spec_rh)
 sys.modules.setdefault("region_routing", _rr)
-_spec.loader.exec_module(_rr)
+sys.modules.setdefault("region_health", _rh)
+_spec_rr.loader.exec_module(_rr)
+_spec_rh.loader.exec_module(_rh)
 
 Region = _rr.Region
-RegionHealthChecker = _rr.RegionHealthChecker
+RegionHealthChecker = _rh.RegionHealthChecker  # S168 W11 P2-6: extracted to region_health.py
 RegionRouter = _rr.RegionRouter
 RegionStatus = _rr.RegionStatus
 get_active_region = _rr.get_active_region

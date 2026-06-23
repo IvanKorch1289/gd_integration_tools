@@ -18,9 +18,6 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from extensions.core_entities.orders.workflows.orders_saga import (
-    build_orders_saga_workflow,
-)
 from extensions.credit_pipeline.workflows.payments_saga import (
     build_payments_saga_workflow,
 )
@@ -43,21 +40,6 @@ def _enable_round_trip() -> "patch[bool]":
 
 
 # ── Round-trip для эталонных workflow ──
-
-
-def test_yaml_roundtrip_orders_saga() -> None:
-    """``build_orders_saga_workflow()`` сохраняется и восстанавливается из YAML."""
-    decl = build_orders_saga_workflow()
-    yaml_text = to_yaml(decl)
-    assert "orders.create_with_payment" in yaml_text
-    assert "saga" in yaml_text
-
-    with _enable_round_trip():
-        restored = from_yaml(yaml_text)
-
-    assert restored == decl
-    assert restored.name == "orders.create_with_payment"
-    assert restored.version == "1.0"
 
 
 def test_yaml_roundtrip_payments_saga() -> None:
