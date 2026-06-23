@@ -39,7 +39,7 @@ security:
 
 database:
   type: "postgresql"
-  host: ${DATABASE_HOST:-127.0.0.1}
+  host: "postgres"
   port: 5432
   name: "main_db"
   ssl_mode: "prefer"

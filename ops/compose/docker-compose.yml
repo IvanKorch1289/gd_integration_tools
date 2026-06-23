@@ -30,6 +30,7 @@ services:
       - ../../.env
     environment:
       APP_PROFILE: dev
+      DB_HOST: postgres
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
       CLAMAV_HOST: ${CLAMAV_HOST:-clamav}

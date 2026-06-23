@@ -373,7 +373,7 @@ async def test_guard_input_llm_guard_safe(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_no_client_warns() -> None:
-    """Без llm_guard_client guard пропускается с warning."""
+    """Без llm_guard_client guard пропускается с warning (Q-FIX: "warned", не silent "passed")."""
     enforcer = AIPolicyEnforcer(llm_guard_client=None)
 
     prompt = "any prompt"
@@ -385,9 +385,11 @@ async def test_guard_input_llm_guard_no_client_warns() -> None:
     ) as mock_log:
         results = await enforcer.guard_input(prompt, policy)
         mock_log.warning.assert_called()
-    # Returns passed since client is None
+    # Без client'а — degraded state, audit должен видеть "warned",
+    # а не silent "passed" (security fix S168).
     assert len(results) == 1
-    assert results[0].verdict == "passed"
+    assert results[0].verdict == "warned"
+    assert "llm_guard_disabled" in results[0].categories
 
 
 @pytest.mark.unit
@@ -408,8 +410,10 @@ async def test_guard_input_llm_guard_warns_on_error(
     ) as mock_log:
         results = await enforcer.guard_input(prompt, policy)
         mock_log.warning.assert_called()
-    # warn mode: returns passed despite error
-    assert results[0].verdict == "passed"
+    # warn mode: returns "warned" (Q-FIX: audit должен видеть degraded state),
+    # а не silent "passed" (security fix S168).
+    assert results[0].verdict == "warned"
+    assert "llm_guard_error" in results[0].categories
 
 
 @pytest.mark.unit
