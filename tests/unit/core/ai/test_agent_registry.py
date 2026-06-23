@@ -128,6 +128,11 @@ retry_backoff_coefficient = 3.0
 class TestHotReload:
     @pytest.mark.asyncio
     async def test_not_implemented(self, tmp_path) -> None:
+        """hot_reload opens the file and raises FileNotFoundError when .toml is missing.
+
+        The implementation calls from_toml_manifest which calls plugin_toml.open().
+        NotImplementedError was never raised — docstring claim S28 W2 is stale.
+        """
         reg = AgentRegistry()
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(FileNotFoundError):
             await reg.hot_reload(tmp_path / "x.toml")

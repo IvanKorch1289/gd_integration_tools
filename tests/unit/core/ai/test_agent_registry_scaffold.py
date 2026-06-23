@@ -169,7 +169,11 @@ def test_agent_registry_from_toml_missing_required_field(tmp_path: Path) -> None
 
 @pytest.mark.asyncio
 async def test_agent_registry_hot_reload_not_implemented() -> None:
-    """hot_reload() поднимает NotImplementedError в scaffold-фазе."""
+    """hot_reload() raises FileNotFoundError when .toml is missing.
+
+    The implementation tries to open the file and re-raises FileNotFoundError.
+    NotImplementedError was never raised — test written for scaffold stub phase.
+    """
     registry = AgentRegistry()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(FileNotFoundError):
         await registry.hot_reload(Path("/fake/plugin.toml"))
