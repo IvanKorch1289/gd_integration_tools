@@ -328,13 +328,13 @@ class S3ObjectStorage(ObjectStorage):
                     MultipartUpload={"Parts": parts},
                 )
                 return full_key
-            except Exception as exc:
+            except (OSError, RuntimeError, KeyError, ValueError) as exc:
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
                             Bucket=self._bucket, Key=full_key, UploadId=upload_id
                         )
-                    except Exception as abort_exc:
+                    except (OSError, RuntimeError, KeyError) as abort_exc:
                         self.logger.exception(
                             "S3ObjectStorage.upload_stream abort failed key=%s: %s",
                             full_key,

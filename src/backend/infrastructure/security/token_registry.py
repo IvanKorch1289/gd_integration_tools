@@ -338,7 +338,7 @@ class RedisTokenRegistry:
             return None
         try:
             token_map = self._deserialize(raw)
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
             _logger.warning(
                 "TokenMap deserialization failed for %s: %r", redis_key, exc
             )
@@ -456,5 +456,5 @@ class RedisTokenRegistry:
                 resource="pii_token_map",
                 details=details,
             )
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError, OSError) as exc:
             _logger.debug("audit emit failed for %s: %r", event, exc)
