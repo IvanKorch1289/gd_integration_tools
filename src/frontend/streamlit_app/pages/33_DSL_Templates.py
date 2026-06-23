@@ -77,13 +77,14 @@ def _render_route_blueprints() -> None:
 
 def _render_workflow_templates() -> None:
     """Sprint 12 K3 W5 + K5 W1 — workflow templates с Mermaid preview."""
-    # S44 W2: прямой импорт из services (был try/except с мёртвым
-    # ``dsl.workflow.template_registry_compat``, модуль не существует,
-    # всегда падал в fallback). Удалено: dead code.
-    from src.backend.services.workflows.template_registry import get_template_registry
+    # S6 fix: используем dsl_portal facade вместо прямого импорта
+    # ``src.backend.services.workflows.template_registry`` (R3.10d).
+    from src.backend.services.dsl_portal import (
+        list_workflow_templates,
+        search_workflow_templates,
+    )
 
-    registry = get_template_registry()
-    all_templates = registry.load_all()
+    all_templates = list_workflow_templates()
 
     if not all_templates:
         st.warning(
@@ -97,7 +98,7 @@ def _render_workflow_templates() -> None:
     )
 
     if query.strip():
-        matches = registry.search_semantic(query, top_k=10)
+        matches = search_workflow_templates(query, top_k=10)
         templates_to_show = [t for t, _ in matches]
     else:
         templates_to_show = all_templates

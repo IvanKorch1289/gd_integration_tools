@@ -23,6 +23,17 @@ References:
 
 from __future__ import annotations
 
+# S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
+# Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).
+from extensions.core_entities.files.domain.models import (  # noqa: E402,F401
+    File,
+    OrderFile,
+)
+from extensions.core_entities.orderkinds.domain.models import (
+    OrderKind,  # noqa: E402,F401
+)
+from extensions.core_entities.orders.domain.models import Order  # noqa: E402,F401
+from extensions.core_entities.users.domain.models import User  # noqa: E402,F401
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,
@@ -32,21 +43,15 @@ from src.backend.core.domain.models.base import (
 )
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.core.domain.models.dsl_snapshot import DslSnapshot
-from src.backend.core.domain.models.files import (
-    File,  # S168 W14 P2-10: OrderFile moved to extensions/core_entities/files/
-)
 from src.backend.core.domain.models.langmem_models import (
     LangMemEpisodic,
     LangMemProcedural,
 )
-from src.backend.core.domain.models.orderkinds import OrderKind
-from src.backend.core.domain.models.orders import Order
 from src.backend.core.domain.models.outbox import OutboxMessage
 from src.backend.core.domain.models.rule_engine import (
     RuleEngineBase,
     RuleEngineRulesetORM,
 )
-from src.backend.core.domain.models.users import User
 from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
@@ -68,22 +73,22 @@ __all__ = (
     "CertRecord",
     # dsl_snapshot
     "DslSnapshot",
-    # files
+    # files (S4: from extensions/core_entities/files/)
     "File",
-    # S168 W14 P2-10: OrderFile moved to extensions/core_entities/files/
+    "OrderFile",
     # langmem
     "LangMemEpisodic",
     "LangMemProcedural",
-    # orderkinds
+    # orderkinds (S4: from extensions/core_entities/orderkinds/)
     "OrderKind",
-    # orders
+    # orders (S4: from extensions/core_entities/orders/)
     "Order",
     # outbox
     "OutboxMessage",
     # rule_engine
     "RuleEngineBase",
     "RuleEngineRulesetORM",
-    # users
+    # users (S4: from extensions/core_entities/users/)
     "User",
     # workflow_event
     "WorkflowEvent",
