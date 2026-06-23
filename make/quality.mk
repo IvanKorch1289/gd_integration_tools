@@ -79,7 +79,11 @@ refurb-check: check-env ## Check for modern Python idioms
 deps-check: check-env ## Check for unused dependencies with Creosote
 	@$(INFO) "Checking dependencies..."
 	@if $(UV_RUN) creosote --version >/dev/null 2>&1; then \
-		$(UV_RUN) creosote -p $(SOURCE_DIR) || printf '%s\n' "Creosote found unused dependencies"; \
+		$(UV_RUN) creosote --include-deferred -p $(SOURCE_DIR) \
+			$(shell [ -f tools/checks/creosote_allowlist.txt ] && \
+				awk '!/^#/ && NF {printf " --exclude-dep %s", $$1}' \
+					tools/checks/creosote_allowlist.txt) \
+			|| printf '%s\n' "Creosote found unused dependencies"; \
 	else \
 		$(WARN) "Skipping creosote: install it with 'uv add --dev creosote'"; \
 	fi
@@ -88,7 +92,10 @@ deps-check: check-env ## Check for unused dependencies with Creosote
 deps-check-strict: check-env ## Strict dependency check with Creosote
 	@$(INFO) "Running strict dependency checks..."
 	@if $(UV_RUN) creosote --version >/dev/null 2>&1; then \
-		$(UV_RUN) creosote -p $(SOURCE_DIR); \
+		$(UV_RUN) creosote --include-deferred -p $(SOURCE_DIR) \
+			$(shell [ -f tools/checks/creosote_allowlist.txt ] && \
+				awk '!/^#/ && NF {printf " --exclude-dep %s", $$1}' \
+					tools/checks/creosote_allowlist.txt); \
 	else \
 		$(ERROR) "creosote is not installed in uv env"; \
 		printf '%s\n' "Run: uv add --dev creosote"; \

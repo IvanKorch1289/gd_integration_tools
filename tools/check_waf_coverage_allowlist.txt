@@ -18,6 +18,11 @@
 # больше не нарушители. Остались 6 S11 baseline-записей.
 #
 # Sprint 11 закрытие (2026-05-20, [wave:s10-carryover/waf-allowlist-tighten]):
-# все 6 S11 baseline-файлов мигрированы на ``make_http_client`` —
+# все 6 S11 baseline-файлов мигрированы на ``make_http_client` —
 # прямых httpx.AsyncClient(...) callsite'ов больше нет. Allowlist
 # пуст. Любой новый нарушитель → CI fails immediately.
+#
+# Sprint 36 (2026-06-23): SSE source мигрирован на OutboundHttpClient
+# через новый .stream() метод (добавлен в core/net/outbound_http.py).
+# Allowlist остаётся пустым — 0 нарушителей.
+

@@ -30,8 +30,12 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 __all__ = ("SSEEvent", "SSESource")
+
+if TYPE_CHECKING:
+    from src.backend.core.net.outbound_http import OutboundHttpClient
 
 
 @dataclass
@@ -66,6 +70,10 @@ class SSESource:
         reconnect_max_retries: Макс. reconnect attempts (None = infinite).
         reconnect_initial_delay_s: Initial backoff (exponential: x2).
         parse_json: Если True — пытается JSON-decode data в dict.
+        outbound_client: :class:`OutboundHttpClient` для WAF-aware
+            streaming (S36-W7 R-V15-5). Если ``None`` — создаётся
+            default-инстанс через :func:`make_http_client` lazy-import
+            (для backward compat с тестами и dev-сценариями без DI).
     """
 
     def __init__(
@@ -79,6 +87,7 @@ class SSESource:
         reconnect_max_retries: int | None = None,
         reconnect_initial_delay_s: float = 1.0,
         parse_json: bool = True,
+        outbound_client: OutboundHttpClient | None = None,
     ) -> None:
         self._url = url
         self._headers = dict(headers or {})
@@ -88,6 +97,7 @@ class SSESource:
         self._reconnect_max_retries = reconnect_max_retries
         self._reconnect_initial_delay_s = reconnect_initial_delay_s
         self._parse_json = parse_json
+        self._outbound_client = outbound_client
         self._stopped = asyncio.Event()
         self._subscription_id = str(uuid.uuid4())
 
@@ -149,42 +159,58 @@ class SSESource:
             connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0
         )
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            async with client.stream("GET", self._url, headers=request_headers) as resp:
-                resp.raise_for_status()
-                # SSE parsers — manual (httpx не парсит SSE)
-                event_type: str = "message"
-                event_id: str | None = None
-                data_lines: list[str] = []
+        # S36-W7 (R-V15-5): SSE consumer обязан идти через
+        # OutboundHttpClient.stream() — WAF pre-hook + correlation-id
+        # injection. Lazy-импортируем factory, чтобы избежать circular
+        # import (sse.py ← core.net ← ...). Если caller передал
+        # outbound_client — используем его (DI-friendly).
+        outbound_client = self._outbound_client
+        if outbound_client is None:
+            from src.backend.core.net.migration_helper import make_http_client
 
-                async for line in resp.aiter_lines():
-                    if self._stopped.is_set():
-                        return
-                    if not line:
-                        # Empty line = end of event
-                        if data_lines:
-                            yield self._make_event(data_lines, event_type, event_id)
-                            data_lines = []
-                            event_type = "message"
-                            event_id = None
-                        continue
-                    if line.startswith(":"):
-                        # Comment (keep-alive)
-                        continue
-                    if line.startswith("event:"):
-                        event_type = line[6:].strip()
-                    elif line.startswith("data:"):
-                        data_lines.append(line[5:].lstrip())
-                    elif line.startswith("id:"):
-                        event_id = line[3:].strip()
-                        self._last_event_id = event_id
-                    elif line.startswith("retry:"):
-                        # Server hint — ignore for now
-                        pass
+            outbound_client = make_http_client(
+                plugin=f"sse:{self._subscription_id[:8]}"
+            )
 
-                # Flush trailing event
-                if data_lines:
-                    yield self._make_event(data_lines, event_type, event_id)
+        # OutboundHttpClient.stream() возвращает async context manager
+        # (httpx API). WAF-check уже выполнен до открытия stream.
+        async with outbound_client.stream(
+            "GET", self._url, headers=request_headers, timeout=timeout
+        ) as resp:
+            resp.raise_for_status()
+            # SSE parsers — manual (httpx не парсит SSE)
+            event_type: str = "message"
+            event_id: str | None = None
+            data_lines: list[str] = []
+
+            async for line in resp.aiter_lines():
+                if self._stopped.is_set():
+                    return
+                if not line:
+                    # Empty line = end of event
+                    if data_lines:
+                        yield self._make_event(data_lines, event_type, event_id)
+                        data_lines = []
+                        event_type = "message"
+                        event_id = None
+                    continue
+                if line.startswith(":"):
+                    # Comment (keep-alive)
+                    continue
+                if line.startswith("event:"):
+                    event_type = line[6:].strip()
+                elif line.startswith("data:"):
+                    data_lines.append(line[5:].lstrip())
+                elif line.startswith("id:"):
+                    event_id = line[3:].strip()
+                    self._last_event_id = event_id
+                elif line.startswith("retry:"):
+                    # Server hint — ignore for now
+                    pass
+
+            # Flush trailing event
+            if data_lines:
+                yield self._make_event(data_lines, event_type, event_id)
 
     def _make_event(
         self, data_lines: list[str], event_type: str, event_id: str | None

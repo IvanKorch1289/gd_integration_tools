@@ -160,6 +160,63 @@ class OutboundHttpClient:
             request_kwargs["timeout"] = timeout
         return await self._client.request(**request_kwargs)
 
+    def stream(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, str] | None = None,
+        timeout: httpx.Timeout | float | None = None,
+    ) -> httpx.Response:
+        """Streaming HTTP-запрос с обязательной WAF-проверкой (S36-W7).
+
+        Используется для SSE / chunked download / long-poll сценариев,
+        где response_body заранее неизвестен. WAF проверяет только URL
+        (payload пустой) + headers, до открытия stream.
+
+        Usage::
+
+            async with client.stream("GET", url) as resp:
+                async for chunk in resp.aiter_bytes():
+                    ...
+
+        Args:
+            method: HTTP method (``"GET"``, ``"POST"``).
+            url: Полный URL.
+            headers: Опц. outgoing headers.
+            params: Опц. query params.
+            timeout: Per-request timeout.
+
+        Returns:
+            :class:`httpx.Response` — async context manager (НЕ awaitable).
+            Caller обязан использовать ``async with``.
+
+        Raises:
+            WafBypassError: WAF заблокировал запрос.
+            CapabilityDeniedError: Caller не имеет capability
+                ``net.outbound:<host>`` (если ``capability_check`` задан).
+        """
+        # WAF-evaluate до открытия stream (без payload).
+        decision = self._policy.evaluate(url, payload=None)
+        self._emit_audit(decision, method, url)
+        if not decision.allowed:
+            raise WafBypassError(decision)
+
+        if self._capability_check is not None:
+            self._capability_check(self._plugin, "net.outbound", decision.host)
+
+        effective_headers = self._inject_correlation_id(headers)
+
+        request_kwargs: dict[str, Any] = {"method": method, "url": url}
+        if effective_headers is not None:
+            request_kwargs["headers"] = effective_headers
+        if params is not None:
+            request_kwargs["params"] = params
+        if timeout is not None:
+            request_kwargs["timeout"] = timeout
+        return self._client.stream(**request_kwargs)
+
     @staticmethod
     def _inject_correlation_id(
         headers: Mapping[str, str] | None,

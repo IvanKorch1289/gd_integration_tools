@@ -1,0 +1,18 @@
+# Creosote exclude-dep allowlist (S36-W6 closure).
+#
+# Формат: <canonical dep name> — одно имя на строку. # = комментарий.
+# Эти deps объявлены в [project.dependencies], но не импортируются
+# напрямую (используются транзитивно, через extras, или как runtime
+# dep для другой зависимости). Проверено 2026-06-23.
+#
+# Причина для каждого:
+# aiocache           # documented НЕ используется (см. core/resilience/cache_decorators.py:5)
+# argon2-cffi        # transitive dep of auth/JWT backend; not imported directly
+# greenlet           # required by sqlalchemy[asyncio]; not imported directly
+# grpc-interceptor   # gRPC server middleware; loaded via server bootstrap
+# uvloop             # used by granian (not imported in src/)
+aiocache
+argon2-cffi
+greenlet
+grpc-interceptor
+uvloop
