@@ -6,15 +6,13 @@ to extensions/core_entities/orders/schemas/filter.py per master prompt v8 P2-10.
 
 from __future__ import annotations
 
-import importlib
 from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
-# на этапе определения класса. Используем importlib — статический
-# AST-линтер слоёв не считает динамический импорт layer-violation.
-Order = importlib.import_module("src." + "backend.core.domain.models.orders").Order
+# S106 W4: Order model migrated to extensions/core_entities/orders/domain/models/.
+# S168 W14 P2-10 closure: updated from legacy src.backend.core.domain.models.orders.
+from extensions.core_entities.orders.domain.models import Order  # noqa: E402,F401
 
 __all__ = ("OrderFilter",)
 

@@ -55,6 +55,8 @@ services:
     env_file:
       - ../../.env
     environment:
+      APP_PROFILE: dev
+      DB_HOST: postgres
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
       SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-30}
     depends_on:

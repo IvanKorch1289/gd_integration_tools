@@ -4,15 +4,12 @@ S168 W15 P2-10: moved from src/backend/schemas/filter_schemas/users.py
 to extensions/core_entities/users/schemas/filter.py per master prompt v8 P2-10.
 """
 
-import importlib
-
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import Field, SecretStr
 
-# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
-# на этапе определения класса. Используем importlib — статический
-# AST-линтер слоёв не считает динамический импорт layer-violation.
-User = importlib.import_module("src." + "backend.core.domain.models.users").User
+# S106 W4: User model migrated to extensions/core_entities/users/domain/models/.
+# S168 W14 P2-10 closure: updated from legacy src.backend.core.domain.models.users.
+from extensions.core_entities.users.domain.models import User  # noqa: E402,F401
 
 __all__ = ("UserFilter", "UserLogin")
 

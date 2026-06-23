@@ -36,13 +36,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src ./src
 COPY manage.py ./manage.py
 COPY alembic.ini ./
-COPY config_profiles ./config_profiles
+COPY config_profiles ./src/config_profiles
 
 FROM python:3.14-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app" \
+    PYTHONPATH="/app/src" \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
@@ -64,7 +64,7 @@ COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
 COPY --from=builder --chown=appuser:appuser /app/src ./src
 COPY --from=builder --chown=appuser:appuser /app/manage.py ./manage.py
 COPY --from=builder --chown=appuser:appuser /app/alembic.ini ./alembic.ini
-COPY --from=builder --chown=appuser:appuser /app/config_profiles ./config_profiles
+COPY --from=builder --chown=appuser:appuser /app/src/config_profiles ./src/config_profiles
 
 RUN chmod -R 750 /app && \
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true

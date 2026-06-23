@@ -4,16 +4,13 @@ S168 W15 P2-10: moved from src/backend/schemas/filter_schemas/orderkinds.py
 to extensions/core_entities/orderkinds/schemas/filter.py per master prompt v8 P2-10.
 """
 
-import importlib
-
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
-# на этапе определения класса. Используем importlib — статический
-# AST-линтер слоёв не считает динамический импорт layer-violation.
-OrderKind = importlib.import_module(
-    "src." + "backend.core.domain.models.orderkinds"
-).OrderKind
+# S106 W3: OrderKind model migrated to extensions/core_entities/orderkinds/domain/models/.
+# S168 W14 P2-10 closure: updated from legacy src.backend.core.domain.models.orderkinds.
+from extensions.core_entities.orderkinds.domain.models import (  # noqa: E402,F401
+    OrderKind,
+)
 
 __all__ = ("OrderKindFilter",)
 
