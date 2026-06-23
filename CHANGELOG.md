@@ -21,8 +21,12 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `docs/ops/docker-compose-gap.md` — prod gap analysis
+- `docs/ops/docker-compose-gap.md` — prod gap analysis + service map
 - `docs/ops/docs-audit-s168-w14.md` — documentation audit
+- `ops/compose/docker-compose.prod.yml` — full production infrastructure:
+  Kafka, Minio, Vault, OTEL Collector, Jaeger, Schema Registry, Debezium,
+  Celery workers, Celery Beat
+- `ops/compose/otel-collector-config.yaml` — OTEL collector config
 
 ### Verified
 
