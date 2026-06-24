@@ -88,11 +88,12 @@ class RateConvertProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"rate_convert:{from_currency}→{to_currency}")
+        from src.backend.core.config.settings import settings
+
         if not from_currency:
             raise ValueError("rate_convert: from_currency must be non-empty")
         if not to_currency:
             raise ValueError("rate_convert: to_currency must be non-empty")
-            from src.backend.core.config.settings import settings
 
         providers = settings.dsl.rate_convert_providers
         if provider not in providers:

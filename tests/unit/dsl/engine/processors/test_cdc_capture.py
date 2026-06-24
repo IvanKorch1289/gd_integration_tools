@@ -278,5 +278,5 @@ class TestCDCCaptureProcessorProcess:
 
 
 def test_allowed_strategies() -> None:
-    """Module defines correct allowed strategies."""
-    assert _ALLOWED_STRATEGIES == {"polling", "listen_notify", "logminer"}
+    """Module defines correct allowed strategies (polling/listen_notify/logminer/kafka)."""
+    assert _ALLOWED_STRATEGIES == {"polling", "listen_notify", "logminer", "kafka"}

@@ -302,6 +302,7 @@ async def test_image_resize_no_dimensions_copies_bytes(
     await proc.process(ex, context=MagicMock())
 
     assert ex.status != ExchangeStatus.failed
-    assert len(tracker) == 1
+    # tracker[0] = src (Image.open); src.copy() → new _TrackedImage → save().
+    # save() вызывается на новой копии, не на tracker[0]; проверяем copy_calls.
+    assert tracker[0].copy_calls == 1
     assert tracker[0].close_calls >= 1
-    assert tracker[0].save_calls == 1

@@ -25,17 +25,7 @@ from typing import Any
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
-from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 from src.backend.dsl.registry import route_registry
-from src.backend.dsl.workflow.spec.workflow import WorkflowDeclaration
-from src.backend.dsl.workflow.visualize import compute_step_diff, to_graphviz, to_mermaid
-from src.backend.dsl.workflow.versioning import get_global_registry
-from src.backend.dsl.workflow.yaml_io import (
-    load_all_workflows_from_directory,
-    load_workflow_from_file,
-    load_workflow_from_yaml,
-)
-from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
 from src.backend.services.workflows.template_registry import get_template_registry
 
 
@@ -69,7 +59,9 @@ def get_ai_cost_snapshot(
 ) -> dict[str, Any]:
     """S6 fix: snapshot AI cost через :class:`AICostDashboard`."""
     import asyncio as _asyncio
+
     from src.backend.services.ai.costs import AICostDashboard
+
     dashboard = AICostDashboard()
     return _asyncio.run(
         dashboard.snapshot(
@@ -85,19 +77,23 @@ def get_ai_cost_snapshot(
 def get_default_stuck_monitor() -> Any:
     """S6 fix: facade для ``services.messaging.outbox_monitor``."""
     from src.backend.services.messaging.outbox_monitor import default_stuck_monitor
+
     return default_stuck_monitor
 
 
 def get_whoosh_index() -> Any:
     """S6 fix: facade для ``services.wiki.whoosh_index``."""
     from src.backend.services.wiki.whoosh_index import WhooshIndex
+
     return WhooshIndex
 
 
 def get_saga_history(workflow_id: str, *, limit: int = 50) -> list[dict[str, Any]]:
     """S6 fix: facade для saga history service."""
     import asyncio as _asyncio
+
     from src.backend.services.workflows.saga_history import get_saga_history
+
     return _asyncio.run(get_saga_history(workflow_id, limit=limit))
 
 
@@ -106,7 +102,9 @@ def get_saga_stats(
 ) -> dict[str, Any]:
     """S6 fix: aggregate saga statistics."""
     import asyncio as _asyncio
+
     from src.backend.services.workflows.saga_history import aggregate_saga_stats
+
     return _asyncio.run(
         aggregate_saga_stats(tenant_id=tenant_id, from_dt=from_dt, to_dt=to_dt)
     )
@@ -115,6 +113,7 @@ def get_saga_stats(
 def get_import_service() -> Any:
     """S6 fix: facade для ``services.integrations.get_import_service``."""
     from src.backend.services.integrations import get_import_service
+
     return get_import_service()
 
 
@@ -123,6 +122,7 @@ def get_dsl_builder_service() -> Any:
     from src.backend.services.dsl.builder_service import (
         get_dsl_builder_service as _get_dsl_builder_service,
     )
+
     return _get_dsl_builder_service()
 
 
@@ -168,6 +168,7 @@ def list_audit_records(*, count: int = 50) -> list[dict[str, Any]]:
     from src.backend.entrypoints.middlewares.audit_replay import (
         list_audit_records as _list,
     )
+
     return asyncio.run(_list(count=count))
 
 
