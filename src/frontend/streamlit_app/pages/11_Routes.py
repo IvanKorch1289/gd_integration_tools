@@ -55,9 +55,9 @@ if routes:
         if c in df.columns
     ]
     if display_cols:
-        st.dataframe(df.select(display_cols), use_container_width=True)
+        st.dataframe(df.select(display_cols), width='stretch')
     else:
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
     st.caption(f"Всего: {len(routes)} маршрутов")
 else:
     st.info("Нет маршрутов, соответствующих фильтру.")

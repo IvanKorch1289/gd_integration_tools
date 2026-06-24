@@ -98,10 +98,10 @@ with st.sidebar:
     st.subheader("↩️ История изменений")
     hist_cols = st.columns([1, 1])
     hist_cols[0].button(
-        "↩️ Undo", use_container_width=True, disabled=not can_undo(), on_click=undo
+        "↩️ Undo", width='stretch', disabled=not can_undo(), on_click=undo
     )
     hist_cols[1].button(
-        "↪️ Redo", use_container_width=True, disabled=not can_redo(), on_click=redo
+        "↪️ Redo", width='stretch', disabled=not can_redo(), on_click=redo
     )
     if st.session_state.get("yaml_history"):
         idx = st.session_state.get("yaml_history_index", 0)
@@ -114,7 +114,7 @@ with st.sidebar:
     routes = client.list_dsl_routes()
     selected = st.selectbox("Открыть существующий", ["—"] + routes, key="route_select")
     cols = st.columns(2)
-    if cols[0].button("Загрузить", use_container_width=True, disabled=selected == "—"):
+    if cols[0].button("Загрузить", width='stretch', disabled=selected == "—"):
         detail = client.get_dsl_route(selected)
         if detail and "yaml" in detail:
             st.session_state.yaml = detail["yaml"]
@@ -123,7 +123,7 @@ with st.sidebar:
             st.rerun()
         else:
             st.error("Не удалось загрузить маршрут")
-    if cols[1].button("Новый", use_container_width=True):
+    if cols[1].button("Новый", width='stretch'):
         st.session_state.yaml = default_yaml()
         st.session_state.last_load_route = None
         st.rerun()
@@ -136,14 +136,14 @@ with st.sidebar:
         st.error(f"YAML невалиден: {err_check}")
     else:
         st.caption(f"route_id: `{pipeline_check.route_id}`")
-        if st.button("Сохранить (создать)", use_container_width=True):
+        if st.button("Сохранить (создать)", width='stretch'):
             try:
                 client.create_dsl_route(st.session_state.yaml)
                 st.success(f"Создан {pipeline_check.route_id!r}")
                 st.rerun()
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Ошибка создания: {exc}")
-        if st.button("Обновить (PUT)", use_container_width=True):
+        if st.button("Обновить (PUT)", width='stretch'):
             try:
                 client.update_dsl_route(pipeline_check.route_id, st.session_state.yaml)
                 st.success(f"Обновлён {pipeline_check.route_id!r}")
@@ -151,7 +151,7 @@ with st.sidebar:
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Ошибка обновления: {exc}")
         if st.session_state.last_load_route and st.button(
-            "Удалить", use_container_width=True
+            "Удалить", width='stretch'
         ):
             if client.delete_dsl_route(st.session_state.last_load_route):
                 st.success(f"Удалён {st.session_state.last_load_route!r}")
@@ -213,7 +213,7 @@ with tab_visual:
                 p, key=f"vis_p_{proc_type}_{p}", placeholder=f"значение для {p}"
             )
 
-        if st.button("+ Добавить процессор", use_container_width=True):
+        if st.button("+ Добавить процессор", width='stretch'):
             params_clean = {k: v for k, v in new_params.items() if v != ""}
             steps.append({"type": proc_type, "params": params_clean})
             st.session_state.yaml = build_yaml_from_steps(
@@ -301,7 +301,7 @@ with tab_yaml:
         push_history()
 
     cols = st.columns([1, 1, 4])
-    if cols[0].button("Валидировать (сервер)", use_container_width=True):
+    if cols[0].button("Валидировать (сервер)", width='stretch'):
         result = client.validate_dsl_route(st.session_state.yaml)
         if result.get("valid"):
             st.success(
@@ -312,7 +312,7 @@ with tab_yaml:
             st.error(f"Ошибка: {result.get('error')}")
 
     if (
-        cols[1].button("Сравнить с сохранённой версией", use_container_width=True)
+        cols[1].button("Сравнить с сохранённой версией", width='stretch')
         and st.session_state.last_load_route
     ):
         diff = client.diff_dsl_route(
@@ -405,7 +405,7 @@ with tab_canvas:
         selected_route = st.selectbox(
             "Открыть существующий", ["—"] + routes, key="route_load_select"
         )
-        if selected_route != "—" and st.button("Загрузить", use_container_width=True):
+        if selected_route != "—" and st.button("Загрузить", width='stretch'):
             try:
                 detail = client.get_dsl_route(selected_route)
                 if detail and "yaml" in detail:
@@ -419,7 +419,7 @@ with tab_canvas:
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Ошибка загрузки: {exc}")
 
-        if st.button("🆕 Новый маршрут", use_container_width=True):
+        if st.button("🆕 Новый маршрут", width='stretch'):
             st.session_state.meta_route = {
                 "route_id": "my.route",
                 "source": "internal:my",
@@ -590,7 +590,7 @@ with tab_canvas:
 
         col_val, col_down = st.columns(2)
         with col_val:
-            if st.button("✅ Валидировать", use_container_width=True):
+            if st.button("✅ Валидировать", width='stretch'):
                 try:
                     load_pipeline_from_yaml(st.session_state.yaml_output)
                     st.success("✅ YAML валиден!")
@@ -604,7 +604,7 @@ with tab_canvas:
                 data=yaml_bytes,
                 file_name=f"{st.session_state.meta_route.get('route_id', 'route')}.yaml",
                 mime="text/yaml",
-                use_container_width=True,
+                width='stretch',
             )
 
     with col_props:

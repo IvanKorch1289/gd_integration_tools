@@ -126,7 +126,7 @@ with col_invoke:
         ),
     )
 
-    _invoke_clicked = st.button("Вызвать", type="primary", use_container_width=True)
+    _invoke_clicked = st.button("Вызвать", type="primary", width='stretch')
 
     if _invoke_clicked:
         # Валидация JSON

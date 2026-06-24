@@ -25,7 +25,7 @@ except Exception as exc:
     items = []
 
 if items:
-    st.dataframe(items, use_container_width=True)
+    st.dataframe(items, width='stretch')
 else:
     st.info("Нет заказов.")
 

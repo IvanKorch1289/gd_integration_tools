@@ -183,7 +183,7 @@ if prometheus_url:
                     )
                 # Sort descending по count
                 transport_data.sort(key=lambda x: x["stuck_count"], reverse=True)
-                st.dataframe(transport_data, use_container_width=True, hide_index=True)
+                st.dataframe(transport_data, width='stretch', hide_index=True)
                 # Top transport highlight
                 if transport_data:
                     top = transport_data[0]
@@ -227,7 +227,7 @@ alert_rules: list[dict[str, Any]] = [
     },
 ]
 
-st.dataframe(alert_rules, use_container_width=True, hide_index=True)
+st.dataframe(alert_rules, width='stretch', hide_index=True)
 
 # Runbook
 st.subheader("📋 Runbook")

@@ -170,10 +170,10 @@ def _card(bp: dict[str, Any]) -> None:
                 file_name=f"{bp['name']}.yaml",
                 mime="text/yaml",
                 key=f"cp_{bp['name']}",
-                use_container_width=True,
+                width='stretch',
             )
         with c3:
-            if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", use_container_width=True):
+            if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", width='stretch'):
                 st.toast(
                     f"Mock-деплой '{bp['name']}' v{bp['version']} — реальный деплой через backend WIP",
                     icon="🚀",

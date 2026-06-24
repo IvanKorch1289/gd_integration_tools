@@ -86,10 +86,10 @@ def metric_row(metrics: list[tuple[str, Any]]) -> None:
 
 
 def dataframe_view(df: pd.DataFrame, **kwargs: Any) -> None:
-    """Render a DataFrame with consistent styling (use_container_width=True).
+    """Render a DataFrame with consistent styling (width='stretch').
 
     Replaces this pattern (used in 30+ pages):
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
 
     Args:
         df: pandas DataFrame to display.

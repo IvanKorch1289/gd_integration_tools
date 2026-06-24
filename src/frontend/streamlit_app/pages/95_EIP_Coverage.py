@@ -105,7 +105,7 @@ def _render_coverage_table() -> None:
                 "Class": info["class_path"],
             }
         )
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width='stretch', hide_index=True)
 
     canonical = sum(1 for r in rows if r["Status"] == "✅")
     st.metric(

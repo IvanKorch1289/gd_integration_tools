@@ -137,7 +137,7 @@ with tab_list:
         )
     with cols_filter[4]:
         st.write("")  # spacer
-        if st.button("🔄 Обновить", use_container_width=True):
+        if st.button("🔄 Обновить", width='stretch'):
             _cached_list.clear()
 
     instances = _cached_list(flt_status, flt_name, flt_tenant, int(flt_limit))

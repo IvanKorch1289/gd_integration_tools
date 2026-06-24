@@ -105,9 +105,9 @@ cols = st.columns(len(services) if services else 1)
 for i, svc in enumerate(services):
     with cols[i]:
         if svc.url:
-            st.link_button(svc.name, svc.url, use_container_width=True)
+            st.link_button(svc.name, svc.url, width='stretch')
         else:
-            st.button(svc.name, disabled=True, use_container_width=True)
+            st.button(svc.name, disabled=True, width='stretch')
 
         if svc.status == ServiceStatus.UP:
             st.markdown(
@@ -140,4 +140,4 @@ doc_services: dict[str, str] = {
 doc_cols = st.columns(len(doc_services))
 for i, (name, path) in enumerate(doc_services.items()):
     with doc_cols[i]:
-        st.link_button(name, f"{base_url}{path}", use_container_width=True)
+        st.link_button(name, f"{base_url}{path}", width='stretch')

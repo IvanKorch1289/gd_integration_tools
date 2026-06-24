@@ -126,7 +126,7 @@ if top_processors:
     )
 
     if show_details:
-        st.dataframe(df_display, use_container_width=True, height=400)
+        st.dataframe(df_display, width='stretch', height=400)
     else:
         st.dataframe(
             df_display[
@@ -138,7 +138,7 @@ if top_processors:
                     "Error Rate (%)",
                 ]
             ],
-            use_container_width=True,
+            width='stretch',
             height=400,
         )
 

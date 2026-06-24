@@ -108,7 +108,7 @@ with tab_step:
             ]
             st.dataframe(
                 df[columns] if columns else df,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
             )
             st.caption(f"Всего записей: {len(df)}")
@@ -212,7 +212,7 @@ with tab_live:
                 "либо tail пуст."
             )
             return
-        st.dataframe(records, use_container_width=True, height=600, hide_index=True)
+        st.dataframe(records, width='stretch', height=600, hide_index=True)
 
     if autorefresh:
         _render_tail()

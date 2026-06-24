@@ -80,11 +80,11 @@ with col2:
 
     col_run, col_lint, col_validate = st.columns(3)
     with col_run:
-        run_btn = st.button("▶ Запустить", type="primary", use_container_width=True)
+        run_btn = st.button("▶ Запустить", type="primary", width='stretch')
     with col_lint:
-        lint_btn = st.button("Линтер", use_container_width=True)
+        lint_btn = st.button("Линтер", width='stretch')
     with col_validate:
-        validate_btn = st.button("Валидировать", use_container_width=True)
+        validate_btn = st.button("Валидировать", width='stretch')
 
 # ─────────── Execution ───────────
 

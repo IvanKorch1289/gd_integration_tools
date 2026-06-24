@@ -57,13 +57,13 @@ if selected_id and selected_id != "(нет)":
     with st.expander("Квоты"):
         quotas = detail.get("quotas") or []
         if quotas:
-            st.dataframe(quotas, use_container_width=True, hide_index=True)
+            st.dataframe(quotas, width='stretch', hide_index=True)
         else:
             st.write("_(нет данных квот)_")
 
     with st.expander("Последние события аудита"):
         events = detail.get("audit_events_recent") or []
         if events:
-            st.dataframe(events, use_container_width=True, hide_index=True)
+            st.dataframe(events, width='stretch', hide_index=True)
         else:
             st.write("_(нет audit events)_")

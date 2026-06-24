@@ -223,7 +223,7 @@ _rows: list[dict[str, Any]] = [
     for e in _events
 ]
 
-st.dataframe(_rows, use_container_width=True, hide_index=True)
+st.dataframe(_rows, width='stretch', hide_index=True)
 
 # ---------------------------------------------------------------------------
 # Bulk replay
@@ -250,7 +250,7 @@ with _col_bulk_2:
         "Повторить выбранные",
         type="primary",
         disabled=not _selected_ids,
-        use_container_width=True,
+        width='stretch',
     )
 
 if _bulk_clicked and _selected_ids:
@@ -293,7 +293,7 @@ if _target_event is not None:
         )
     with _col_manual_2:
         _manual_clicked = st.button(
-            "Replay с переопределением", type="primary", use_container_width=True
+            "Replay с переопределением", type="primary", width='stretch'
         )
 
     if _manual_clicked:

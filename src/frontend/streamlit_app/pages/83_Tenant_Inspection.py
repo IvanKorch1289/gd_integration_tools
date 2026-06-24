@@ -110,7 +110,7 @@ rls_rows = [
         "policy": "(требует preceding add-tenant-id migration)",
     },
 ]
-st.dataframe(rls_rows, hide_index=True, use_container_width=True)
+st.dataframe(rls_rows, hide_index=True, width='stretch')
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ pool_rows = [
         "value": "desktop_rpa_session_pool_enabled (default-OFF)",
     },
 ]
-st.dataframe(pool_rows, hide_index=True, use_container_width=True)
+st.dataframe(pool_rows, hide_index=True, width='stretch')
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -156,7 +156,7 @@ except Exception:  # noqa: BLE001
 if dlq_entries:
     cols = st.columns(2)
     cols[0].metric("DLQ size (sample 10)", len(dlq_entries))
-    st.dataframe(dlq_entries, hide_index=True, use_container_width=True)
+    st.dataframe(dlq_entries, hide_index=True, width='stretch')
 else:
     st.info("Нет failed scheduler jobs или feature-flag scheduler_dlq_enabled=False.")
 

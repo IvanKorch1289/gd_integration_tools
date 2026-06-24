@@ -111,7 +111,7 @@ with tab_rag:
         st.subheader("Последние invalidate-события")
         events = client_k4.get_rag_invalidation_events(limit=100)
         if events:
-            st.dataframe(events, use_container_width=True)
+            st.dataframe(events, width='stretch')
         else:
             st.info("Событий пока нет.")
         if st.button("Очистить все tiers", key="flush-all"):

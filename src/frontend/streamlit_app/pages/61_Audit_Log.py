@@ -53,4 +53,4 @@ except Exception as exc:  # noqa: BLE001
 st.caption(f"Найдено: {len(records)}")
 
 if records:
-    st.dataframe(records, use_container_width=True, height=500)
+    st.dataframe(records, width='stretch', height=500)

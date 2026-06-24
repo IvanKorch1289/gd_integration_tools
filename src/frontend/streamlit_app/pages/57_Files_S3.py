@@ -103,7 +103,7 @@ with tab_mock:
                 }
                 for o in objects
             ],
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
         )
     else:

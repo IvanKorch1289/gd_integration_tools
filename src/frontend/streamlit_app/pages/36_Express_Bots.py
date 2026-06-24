@@ -84,7 +84,7 @@ with tab_send:
             "Текст сообщения", value="Привет! Это тест Express-интеграции."
         )
 
-        if st.button(":rocket: Отправить", type="primary", use_container_width=True):
+        if st.button(":rocket: Отправить", type="primary", width='stretch'):
             if not chat_id or not body:
                 st.error("Заполните chat_id и текст сообщения.")
             else:

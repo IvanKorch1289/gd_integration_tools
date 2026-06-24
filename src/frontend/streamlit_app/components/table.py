@@ -32,7 +32,7 @@ def paginated_table(
     start = page * page_size
     end = min(start + page_size, total)
 
-    st.dataframe(data[start:end], use_container_width=True, hide_index=True)
+    st.dataframe(data[start:end], width='stretch', hide_index=True)
 
     col_prev, col_info, col_next = st.columns([1, 2, 1])
     with col_prev:
@@ -61,4 +61,4 @@ def render_metrics_table(metrics: dict[str, Any]) -> None:
         st.warning("Метрики недоступны.")
         return
     rows = [{"Метрика": k, "Значение": v} for k, v in metrics.items()]
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width='stretch', hide_index=True)

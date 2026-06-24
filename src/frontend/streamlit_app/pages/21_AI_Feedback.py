@@ -123,7 +123,7 @@ def _render_labeled_tab() -> None:
             }
             for it in items
         ],
-        use_container_width=True,
+        width='stretch',
     )
 
 

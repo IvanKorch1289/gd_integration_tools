@@ -55,7 +55,7 @@ with tabs[0]:
             for cap in cap_names:
                 row[cap] = "✅" if cap in plug_caps else "·"
             rows.append(row)
-        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.dataframe(rows, width='stretch', hide_index=True)
     else:
         st.info(
             "Heatmap пуст: нет vocabulary или нет загруженных плагинов "
@@ -104,7 +104,7 @@ with tabs[2]:
         plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )
     if events:
-        st.dataframe(events, use_container_width=True, hide_index=True)
+        st.dataframe(events, width='stretch', hide_index=True)
     else:
         st.info("Нет событий по выбранным фильтрам.")
 
@@ -112,6 +112,6 @@ with tabs[2]:
 
 with tabs[3]:
     if vocab:
-        st.dataframe(vocab, use_container_width=True, hide_index=True)
+        st.dataframe(vocab, width='stretch', hide_index=True)
     else:
         st.write("_(словарь недоступен)_")

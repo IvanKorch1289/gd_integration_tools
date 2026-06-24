@@ -26,7 +26,7 @@ with tab1:
         import polars as pl
 
         df = pl.DataFrame(jobs)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
         st.caption(f"Всего: {len(jobs)} jobs")
     else:
         st.info("Нет запланированных задач")
@@ -67,7 +67,7 @@ with tab3:
             if c in df.columns
         ]
         st.dataframe(
-            df.select(display_cols) if display_cols else df, use_container_width=True
+            df.select(display_cols) if display_cols else df, width='stretch'
         )
     else:
         st.info("Нет запланированных webhooks")
