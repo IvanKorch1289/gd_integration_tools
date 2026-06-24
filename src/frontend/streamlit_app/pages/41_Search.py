@@ -34,8 +34,8 @@ async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any
         return []
 
 
-setup_page("Search", "🔎")
-st.title("🔎 Search")
+setup_page("Поиск", "🔎")
+st.title("🔎 Поиск")
 st.caption("Единый поиск по audit-логам, заказам и notebooks (Elasticsearch).")
 
 q = st.text_input("Запрос", value=st.session_state.get("search_q", ""))

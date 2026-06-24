@@ -20,7 +20,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 logger = get_logger(__name__)
 
-setup_page("Realtime Logs", ":memo:")
+setup_page("Логи в реальном времени", ":memo:")
 st.header(":memo: Логи в реальном времени (live tail)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

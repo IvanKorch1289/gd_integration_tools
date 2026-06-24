@@ -23,8 +23,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Tenant Feature Flags", ":busts_in_silhouette:")
-st.header("Tenant Feature Flags (per-tenant overrides)")
+setup_page("Feature-флаги тенантов", ":busts_in_silhouette:")
+st.header("Feature-флаги тенантов (per-tenant overrides)")
 st.caption(
     "Runtime overrides поверх статического реестра feature-flag. "
     "Per-tenant override побеждает global override; global побеждает default. "
@@ -39,7 +39,7 @@ def _render_snapshot(snapshot: dict[str, Any]) -> None:
     """Двухколоночный snapshot: global + per_tenant."""
     col_global, col_tenant = st.columns(2)
     with col_global:
-        st.subheader("Global overrides")
+        st.subheader("Глобальные overrides")
         global_overrides = snapshot.get("global", {})
         if not global_overrides:
             st.info("Нет global runtime-overrides — все flag'и берутся из default.")
@@ -87,7 +87,7 @@ st.divider()
 
 # ─── Set override ────────────────────────────────────────────────────
 st.subheader("Установить override")
-with st.form("set_override_form", clear_on_submit=False):
+with st.form("установить_override", clear_on_submit=False):
     flag_name = st.text_input(
         "flag", value="", placeholder="например, metrics_registry_strict"
     )
@@ -95,7 +95,7 @@ with st.form("set_override_form", clear_on_submit=False):
     kind = st.selectbox(
         "Тип значения", options=["boolean", "string", "integer", "json"]
     )
-    value_raw = st.text_input("value", value="true")
+    value_raw = st.text_input("значение", value="true")
     actor = st.text_input("actor (для audit)", value="ui")
     submitted = st.form_submit_button("Установить")
 
@@ -126,7 +126,7 @@ st.divider()
 
 # ─── Clear override ──────────────────────────────────────────────────
 st.subheader("Снять override")
-with st.form("clear_override_form", clear_on_submit=False):
+with st.form("снять_override", clear_on_submit=False):
     clear_flag = st.text_input("flag", value="", key="clear_flag")
     clear_tenant = st.text_input(
         "tenant_id (пусто = global)", value="", key="clear_tenant"

@@ -30,8 +30,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page("Replay DLQ", ":envelope_with_arrow:")
-st.header("Replay DLQ")
+setup_page("Воспроизведение DLQ", ":envelope_with_arrow:")
+st.header("Воспроизведение DLQ")
 
 # ---------------------------------------------------------------------------
 # Feature-flag guard

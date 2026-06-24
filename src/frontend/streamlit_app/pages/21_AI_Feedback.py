@@ -15,8 +15,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("AI Feedback", ":brain:")
-st.header("AI Feedback Loop")
+setup_page("Разметка AI", ":brain:")
+st.header("Цикл разметки AI")
 
 client = get_api_client()
 
@@ -28,10 +28,10 @@ def _render_stats() -> None:
         st.warning(f"Не удалось получить статистику: {exc}")
         return
     cols = st.columns(5)
-    cols[0].metric("Pending", stats.get("pending", 0))
-    cols[1].metric("Positive", stats.get("positive", 0))
-    cols[2].metric("Negative", stats.get("negative", 0))
-    cols[3].metric("Skip", stats.get("skip", 0))
+    cols[0].metric("На проверку", stats.get("pending", 0))
+    cols[1].metric("Положительные", stats.get("positive", 0))
+    cols[2].metric("Отрицательные", stats.get("negative", 0))
+    cols[3].metric("Пропущено", stats.get("skip", 0))
     cols[4].metric("Indexed в RAG", stats.get("indexed", 0))
 
 
@@ -174,7 +174,7 @@ def _render_counts_tab() -> None:
             f"/admin/feedback/labeled-count{('?tenant_id=' + tenant) if tenant else ''}"
         )
         count = data.get("count", 0) if isinstance(data, dict) else 0
-        st.metric("Labeled feedback", count)
+        st.metric("Размеченные ответы", count)
     except Exception as exc:  # noqa: BLE001
         st.error(f"Ошибка: {exc}")
 
@@ -188,7 +188,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
         "Размеченные",
         "Индексация в RAG",
         "DSPy Training",
-        "Labeled Counts",
+        "Счётчики разметки",
     ]
 )
 with tab1:

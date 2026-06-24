@@ -22,8 +22,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Admin Console", ":wrench:")
-st.header(":wrench: Admin Console")
+setup_page("Админ-консоль", ":wrench:")
+st.header(":wrench: Админ-консоль")
 st.caption(
     "Управление плагинами, пользователями и feature-flags. Все операции "
     "журналируются в audit (Sprint 2)."
@@ -31,7 +31,7 @@ st.caption(
 
 client = get_api_client()
 
-tab_plugins, tab_users, tab_flags = st.tabs(["Plugins", "Users", "Feature Flags"])
+tab_plugins, tab_users, tab_flags = st.tabs(["Плагины", "Пользователи", "Feature-флаги"])
 
 # ---------------------------------------------------------------------------
 # Tab: Plugins
@@ -60,7 +60,7 @@ with tab_plugins:
             col_name.write(f"**{name}**")
             col_ver.write(f"`{version}`")
             col_status.write(f"`{status}`")
-            label = "Disable" if is_active else "Enable"
+            label = "Отключить" if is_active else "Включить"
             if col_action.button(label, key=f"plugin_toggle_{name}"):
                 try:
                     client._request(
@@ -69,7 +69,7 @@ with tab_plugins:
                         json={"active": not is_active},
                     )
                     st.toast(
-                        f"Плагин `{name}` → {'disabled' if is_active else 'active'}"
+                        f"Плагин `{name}` → {'отключён' if is_active else 'активен'}"
                     )
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001

@@ -1,4 +1,4 @@
-"""Streamlit-страница Resilience Dashboard (S7 K5).
+"""Streamlit-страница Дашборд устойчивости (S7 K5).
 
 Назначение
 ----------
@@ -35,8 +35,8 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,  # noqa: E402
 )
 
-setup_page("Resilience Dashboard", ":shield:")
-st.header("Resilience Dashboard")
+setup_page("Дашборд устойчивости", ":shield:")
+st.header("Дашборд устойчивости")
 
 # ---------------------------------------------------------------------------
 # Feature-flag guard
@@ -165,7 +165,7 @@ def _render_circuit_breakers(items: list[dict[str, Any]]) -> None:
     Args:
         items: список словарей CB-снапшота.
     """
-    st.subheader("Circuit Breakers")
+    st.subheader("Circuit Breaker'ы")
     if not items:
         st.caption("Нет зарегистрированных CB.")
         return
@@ -189,7 +189,7 @@ def _render_rate_limiters(items: list[dict[str, Any]]) -> None:
     Args:
         items: список словарей RL-снапшота.
     """
-    st.subheader("Rate Limiters")
+    st.subheader("Rate Limiter'ы")
     if not items:
         st.caption("Нет активных rate-limiter'ов.")
         return
@@ -212,7 +212,7 @@ def _render_bulkheads(items: list[dict[str, Any]]) -> None:
     Args:
         items: список словарей Bulkhead-снапшота.
     """
-    st.subheader("Bulkheads")
+    st.subheader("Bulkhead'ы")
     if not items:
         st.caption("Нет зарегистрированных bulkhead'ов.")
         return
@@ -235,7 +235,7 @@ def _render_degradation(items: list[dict[str, Any]]) -> None:
     Args:
         items: список chain-снапшотов.
     """
-    st.subheader("Degradation chains")
+    st.subheader("Цепочки деградации")
     if not items:
         st.caption("Нет активных fallback-chains.")
         return

@@ -20,8 +20,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Plugin Marketplace", ":electric_plug:")
-st.header("Plugin Marketplace (V11)")
+setup_page("Маркетплейс плагинов", ":electric_plug:")
+st.header("Маркетплейс плагинов (V11)")
 st.caption(
     "Inventory загруженных в-tree плагинов из ``extensions/<name>/`` "
     "(см. ADR-042). Данные — ``/api/v1/plugins/inventory``."
@@ -49,9 +49,9 @@ for p in plugins:
 
 col_total, col_loaded, col_failed, col_skipped = st.columns(4)
 col_total.metric("Всего", len(plugins))
-col_loaded.metric("Loaded", status_counts.get("loaded", 0))
-col_failed.metric("Failed", status_counts.get("failed", 0))
-col_skipped.metric("Skipped", status_counts.get("skipped", 0))
+col_loaded.metric("Загружено", status_counts.get("loaded", 0))
+col_failed.metric("С ошибками", status_counts.get("failed", 0))
+col_skipped.metric("Пропущено", status_counts.get("skipped", 0))
 
 st.divider()
 
@@ -59,7 +59,7 @@ st.divider()
 # ────────────── Filters + table ──────────────────────────────────────
 
 status_filter = st.multiselect(
-    "Status",
+    "Статус",
     options=("loaded", "failed", "skipped"),
     default=("loaded", "failed", "skipped"),
     help="Фильтрация по статусу load-этапа",
@@ -74,7 +74,7 @@ if not filtered:
 
 # ────────────── Sprint 14 K5 W3: tabs (Inventory / Dependency Graph) ─
 
-tabs = st.tabs(["Inventory", "Dependency Graph"])
+tabs = st.tabs(["Inventory", "Граф зависимостей"])
 
 
 def _short(items: list[str], limit: int = 3) -> str:
@@ -143,7 +143,7 @@ col_meta, col_lists = st.columns([1, 2])
 with col_meta:
     st.markdown(f"**Имя:** `{selected['name']}`")
     st.markdown(f"**Версия:** `{selected.get('version', '—')}`")
-    st.markdown(f"**Status:** `{selected['status']}`")
+    st.markdown(f"**Статус:** `{selected['status']}`")
     st.markdown(f"**requires_core:** `{selected.get('requires_core', '—')}`")
     st.markdown(f"**tenant_aware:** `{selected.get('tenant_aware', False)}`")
     if selected.get("description"):

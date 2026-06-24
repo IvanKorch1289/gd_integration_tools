@@ -18,8 +18,8 @@ import streamlit as st
 from src.backend.services.dsl_portal import get_dsl_builder_service  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Builder (write-back)", "📐")
-st.header("DSL Builder — write-back YAML")
+setup_page("DSL Builder — запись в YAML", "📐")
+st.header("DSL Builder — запись в YAML")
 st.caption(
     "Сохраняет runtime-Pipeline (RouteRegistry) в YAMLStore. "
     "Доступно только в development (env-guard). Для редактирования — стр. 9."
@@ -42,7 +42,7 @@ def _render() -> None:
 
     cols = st.columns([2, 1])
     with cols[0]:
-        route_id = st.selectbox("Route", options=routes, key="dsl_builder_route_id")
+        route_id = st.selectbox("Маршрут", options=routes, key="dsl_builder_route_id")
     with cols[1]:
         st.metric("Всего routes", len(routes))
 
@@ -70,7 +70,7 @@ def _render() -> None:
             st.success("Изменений относительно YAMLStore нет.")
 
     st.divider()
-    st.subheader("Write-back")
+    st.subheader("Записать")
     write_enabled = svc.is_write_enabled()
     if not write_enabled:
         st.warning(
@@ -80,7 +80,7 @@ def _render() -> None:
 
     cols = st.columns(2)
     with cols[0]:
-        dry_clicked = st.button("Preview Save (dry-run)", use_container_width=True)
+        dry_clicked = st.button("Предпросмотр записи (dry-run)", use_container_width=True)
     with cols[1]:
         save_clicked = st.button(
             "Save to YAML",

@@ -16,7 +16,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Wiki", "")
+setup_page("Wiki — поиск", "")
 st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.
@@ -71,7 +71,7 @@ if query:
 
 # ── Live DSL examples (S8) ───────────────────────────────────────────────
 
-st.subheader("Live DSL examples")
+st.subheader("Живые примеры DSL")
 st.caption(f"Источник: `{_DSL_DIR.relative_to(_REPO_ROOT)}/`")
 
 if not _DSL_DIR.is_dir():
@@ -92,9 +92,9 @@ else:
 
 ctrl_cols = st.columns(2)
 if ctrl_cols[0].button("Перестроить индекс"):
-    with st.spinner("Reindex…"):
+    with st.spinner("Переиндексация…"):
         n = idx.build(force=True)
-    st.success(f"Reindex done: {n} docs")
+    st.success(f"Переиндексация завершена: {n} документов")
 
 if ctrl_cols[1].button("Проверить грамматику docs/ (ru)"):
     with st.spinner("Запуск ru-proofreader..."):

@@ -16,8 +16,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Config", ":gear:")
-st.header(":gear: Config Viewer")
+setup_page("Конфигурация", ":gear:")
+st.header(":gear: Просмотр конфигурации")
 
 SECRET_PATTERNS = re.compile(
     r"(password|secret|token|api_key|private|auth|client_secret|bearer)", re.IGNORECASE
@@ -75,7 +75,7 @@ if config:
 else:
     st.info("Конфигурация недоступна.")
 
-if st.button("Hot-reload config"):
+if st.button("Hot-reload конфига"):
     try:
         resp = client._request("POST", "/api/v1/admin/config/reload")
         st.success(f"Reload: {resp}")

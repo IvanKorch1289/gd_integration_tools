@@ -21,8 +21,8 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import multiselect_filter  # S45 W2
 
-setup_page("Plugin Onboarding", "🧪")
-st.title("🧪 Plugin Onboarding Wizard")
+setup_page("Онбординг плагина", "🧪")
+st.title("🧪 Мастер онбординга плагинов")
 st.caption("Пошаговый scaffold для V11 плагинов.")
 
 client = get_api_client()
@@ -82,7 +82,7 @@ if step == 1:
 # ── Step 2: Capabilities ────────────────────────────────────────
 
 elif step == 2:
-    st.subheader("Capabilities (ADR-044)")
+    st.subheader("Возможности (ADR-044)")
     catalog = client.get_capability_catalog()
     vocab = catalog.get("vocabulary", [])
     options = [c["name"] for c in vocab] or [
@@ -154,7 +154,7 @@ elif step == 4:
             features=data["features"],
             dry_run=True,
         )
-        st.write("**Preview:**")
+        st.write("**Предпросмотр:**")
         st.json(preview)
 
     if cols[2].button("Создать плагин", type="primary"):

@@ -12,8 +12,8 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 _root = Path(__file__).resolve().parents[4]
 
-setup_page("Onboarding", ":sparkles:")
-st.header("Onboarding Checklist")
+setup_page("Онбординг", ":sparkles:")
+st.header("Чек-лист онбординга")
 st.caption(
     "Sprint 10 K5 W5 — путь от чистого clone до первого route и плагина "
     "за ~1 час. Каждый шаг помечен ✅ когда выполнен (state в session)."

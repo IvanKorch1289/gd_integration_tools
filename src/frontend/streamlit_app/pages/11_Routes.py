@@ -11,7 +11,7 @@ setup_page(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.header("DSL Routes")
+st.header("DSL Маршруты")
 
 client = get_api_client()
 

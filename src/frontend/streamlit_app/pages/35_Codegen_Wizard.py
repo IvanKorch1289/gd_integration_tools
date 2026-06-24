@@ -22,7 +22,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Codegen Wizard", "")
+setup_page("Мастер Codegen", "")
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -35,7 +35,7 @@ def _run(args: list[str]) -> tuple[int, str, str]:
     return result.returncode, result.stdout, result.stderr
 
 
-st.header("Codegen Wizard (Wave 5.6)")
+st.header("Мастер Codegen (Wave 5.6)")
 
 tab_service, tab_swagger, tab_extract = st.tabs(
     ["New Service", "Import Swagger", "Extract YAML"]
@@ -44,7 +44,7 @@ tab_service, tab_swagger, tab_extract = st.tabs(
 with tab_service:
     st.subheader("Создать новый сервис")
     name = st.text_input("name (snake_case, мн.ч.)", value="customers")
-    domain = st.selectbox("domain", ["core", "ai", "integrations", "ops"])
+    domain = st.selectbox("домен", ["core", "ai", "integrations", "ops"])
     crud = st.checkbox("CRUD методы", value=True)
     fields_json = st.text_area(
         "fields JSON",
@@ -66,7 +66,7 @@ with tab_service:
             if crud:
                 cmd.append("--crud")
             rc, out, err = _run(cmd)
-            with st.expander("Output", expanded=True):
+            with st.expander("Результат", expanded=True):
                 st.code(out)
                 if err:
                     st.code(err)
@@ -80,7 +80,7 @@ with tab_service:
 with tab_swagger:
     st.subheader("Импорт Swagger/OpenAPI")
     uploaded = st.file_uploader("swagger.json или .yaml", type=["json", "yaml", "yml"])
-    connector = st.text_input("connector name", value="petstore")
+    connector = st.text_input("имя коннектора", value="petstore")
     write_module = st.checkbox("Записать сгенерированный модуль", value=False)
     if st.button("Импортировать") and uploaded is not None:
         tmp_path = Path(tempfile.gettempdir()) / uploaded.name
@@ -103,7 +103,7 @@ with tab_swagger:
             st.success(f"Импортирован {connector}")
 
 with tab_extract:
-    st.subheader("Extract: Service → YAML")
+    st.subheader("Извлечь: Service → YAML")
     service_path = st.text_input(
         "Путь к service-файлу", value="src/backend/services/core/admin.py"
     )

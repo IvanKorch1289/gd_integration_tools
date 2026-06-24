@@ -15,8 +15,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("API Caller", ":satellite_antenna:")
-st.header(":satellite_antenna: REST API Caller")
+setup_page("API-вызов", ":satellite_antenna:")
+st.header(":satellite_antenna: Вызов REST API")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
@@ -27,9 +27,9 @@ path = col2.text_input(
 )
 
 headers_raw = st.text_area(
-    "Headers (JSON)", value='{\n  "Content-Type": "application/json"\n}', height=100
+    "Заголовки (JSON)", value='{\n  "Content-Type": "application/json"\n}', height=100
 )
-body_raw = st.text_area("Body (JSON)", value="", height=150) if method != "GET" else ""
+body_raw = st.text_area("Тело (JSON)", value="", height=150) if method != "GET" else ""
 
 if "api_history" not in st.session_state:
     st.session_state["api_history"] = []

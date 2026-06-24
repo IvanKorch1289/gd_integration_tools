@@ -13,15 +13,15 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("HITL Panel", ":busts_in_silhouette:")
-st.header(":busts_in_silhouette: HITL Approval Panel")
+setup_page("HITL-панель", ":busts_in_silhouette:")
+st.header(":busts_in_silhouette: HITL-панель согласования")
 
 client = get_api_client()
 
 with st.sidebar:
-    st.subheader("Filter")
+    st.subheader("Фильтр")
     tenant_filter = st.text_input("Tenant ID (опц.)", value="")
-    auto_refresh = st.toggle("Auto-refresh каждые 5s", value=False)
+    auto_refresh = st.toggle("Авто-обновление каждые 5s", value=False)
 
 
 def _fetch_pending(tenant: str | None) -> list[dict]:
@@ -33,7 +33,7 @@ def _fetch_pending(tenant: str | None) -> list[dict]:
         response.raise_for_status()
         return response.json().get("items", [])
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Failed to fetch pending signals: {exc}")
+        st.error(f"Не удалось получить pending-сигналы: {exc}")
         return []
 
 
@@ -45,7 +45,7 @@ def render_pending_table() -> None:
         st.info("Нет pending HITL signals в выбранном tenant.")
         return
 
-    st.metric("Pending signals", len(pending))
+    st.metric("Pending-сигналов", len(pending))
     for signal in pending:
         with st.expander(
             f":hourglass: {signal['title']} — workflow {signal['workflow_id']}",
@@ -55,17 +55,17 @@ def render_pending_table() -> None:
             with col_left:
                 st.json(signal["payload"], expanded=False)
                 st.caption(
-                    f"Created: {signal['created_at']} | "
-                    f"Initiator: {signal['initiator']}"
+                    f"Создан: {signal['created_at']} | "
+                    f"Инициатор: {signal['initiator']}"
                 )
             with col_right:
                 operator = st.text_input(
-                    "Operator (your name)",
+                    "Оператор (ваше имя)",
                     value=st.session_state.get("operator_name", ""),
                     key=f"op-{signal['signal_id']}",
                 )
                 comment = st.text_area(
-                    "Comment", value="", key=f"comment-{signal['signal_id']}", height=80
+                    "Комментарий", value="", key=f"comment-{signal['signal_id']}", height=80
                 )
                 col_a, col_b, col_c = st.columns(3)
                 if col_a.button(
@@ -75,14 +75,14 @@ def render_pending_table() -> None:
                 if col_b.button(":x: Reject", key=f"rej-{signal['signal_id']}"):
                     _resolve(signal["signal_id"], "reject", operator, comment)
                 if col_c.button(
-                    ":mag: Request info", key=f"info-{signal['signal_id']}"
+                    ":mag: Запросить инфо", key=f"info-{signal['signal_id']}"
                 ):
                     _resolve(signal["signal_id"], "request_info", operator, comment)
 
 
 def _resolve(signal_id: str, action: str, operator: str, comment: str) -> None:
     if not operator.strip():
-        st.warning("Заполните Operator (your name)")
+        st.warning("Заполните поле «Оператор (ваше имя)»")
         return
     try:
         response = client.post(
@@ -94,11 +94,11 @@ def _resolve(signal_id: str, action: str, operator: str, comment: str) -> None:
             },
         )
         response.raise_for_status()
-        st.success(f"Resolved {signal_id} as {action}")
+        st.success(f"Сигнал {signal_id} обработан: {action}")
         st.session_state["operator_name"] = operator.strip()
         st.rerun()
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Resolve failed: {exc}")
+        st.error(f"Не удалось обработать: {exc}")
 
 
 render_pending_table()
@@ -113,16 +113,16 @@ st.caption(
 )
 
 col_h1, col_h2, col_h3, col_h4 = st.columns(4)
-hist_tenant = col_h1.text_input("Tenant filter", key="hist_tenant")
+hist_tenant = col_h1.text_input("Фильтр tenant", key="hist_tenant")
 hist_action = col_h2.selectbox(
-    "Action filter",
+    "Фильтр действия",
     options=["", "approve", "reject", "request_info"],
     key="hist_action",
 )
-hist_operator = col_h3.text_input("Operator filter", key="hist_op")
-hist_limit = col_h4.number_input("Limit", min_value=10, max_value=1000, value=100)
+hist_operator = col_h3.text_input("Фильтр оператора", key="hist_op")
+hist_limit = col_h4.number_input("Лимит", min_value=10, max_value=1000, value=100)
 
-if st.button("Load history", type="primary"):
+if st.button("Загрузить историю", type="primary"):
     try:
         params: dict = {"limit": int(hist_limit)}
         if hist_tenant:
@@ -150,7 +150,7 @@ if st.button("Load history", type="primary"):
                 csv_buffer = io.StringIO()
                 df.to_csv(csv_buffer, index=False)
                 st.download_button(
-                    "Export CSV",
+                    "Экспорт CSV",
                     csv_buffer.getvalue(),
                     file_name="hitl_history.csv",
                     mime="text/csv",
@@ -158,4 +158,4 @@ if st.button("Load history", type="primary"):
             except ImportError:
                 pass
     except Exception as exc:  # noqa: BLE001
-        st.error(f"History load failed: {exc}")
+        st.error(f"Не удалось загрузить историю: {exc}")

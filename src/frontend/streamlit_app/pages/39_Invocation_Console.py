@@ -27,8 +27,8 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 __all__: tuple[str, ...] = ()
 
-setup_page("Invocation Console", ":zap:")
-st.header(":zap: Invocation Console (W22)")
+setup_page("Консоль вызовов", ":zap:")
+st.header(":zap: Консоль вызовов (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 WS_URL = os.environ.get(
@@ -89,11 +89,11 @@ if "invocation_history" not in st.session_state:
 with st.form("invoke-form"):
     col1, col2 = st.columns([3, 2])
     action = col1.text_input(
-        "Action",
+        "Action (имя в ActionDispatcher)",
         value="users.list",
         help="Имя action в ActionDispatcher (e.g. 'orders.add').",
     )
-    mode = col2.selectbox("Mode", MODES, index=0)
+    mode = col2.selectbox("Режим", MODES, index=0)
 
     payload_raw = st.text_area(
         "Payload (JSON)",
@@ -102,13 +102,13 @@ with st.form("invoke-form"):
         help="JSON-объект, который будет передан action.",
     )
     reply_channel = st.selectbox(
-        "Reply channel",
+        "Канал ответа",
         REPLY_KINDS,
         index=0,
         help="Тип канала ответа. Пусто = выбирается автоматически по mode.",
     )
 
-    submitted = st.form_submit_button("Invoke", type="primary")
+    submitted = st.form_submit_button("Вызвать", type="primary")
 
 if submitted:
     try:
@@ -135,9 +135,9 @@ if submitted:
         elapsed_ms = (time.perf_counter() - started) * 1000
 
         cols = st.columns(3)
-        cols[0].metric("Channel", "WebSocket")
+        cols[0].metric("Канал", "WebSocket")
         cols[1].metric("Время, мс", f"{elapsed_ms:.1f}")
-        cols[2].metric("Chunks", len(chunks))
+        cols[2].metric("Чанков", len(chunks))
 
         if err:
             st.error(f"WS error: {err}")
@@ -185,7 +185,7 @@ if submitted:
         cols[1].metric("Время, мс", f"{elapsed_ms:.1f}")
         try:
             data = resp.json()
-            cols[2].metric("Status", data.get("status", "—"))
+            cols[2].metric("Статус", data.get("status", "—"))
             st.json(data)
             invocation_id = data.get("invocation_id")
             if invocation_id and data.get("status") == "accepted":

@@ -28,9 +28,9 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Outbox Stuck Monitor", "⏱")
+setup_page("Монитор зависших сообщений Outbox", "⏱")
 
-st.title("⏱ Outbox Stuck-Pending Monitor")
+st.title("⏱ Монитор зависших сообщений Outbox")
 st.caption(
     "Live dashboard для outbox_stuck_pending_count gauge (Pending → Sent → Failed)."
 )

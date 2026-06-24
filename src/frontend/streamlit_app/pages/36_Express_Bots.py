@@ -18,8 +18,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Express Bots", ":speech_balloon:")
-st.header(":speech_balloon: Express Bots")
+setup_page("Экспресс-боты", ":speech_balloon:")
+st.header(":speech_balloon: Экспресс-боты")
 
 try:
     from src.backend.core.config.express import express_settings
@@ -72,7 +72,7 @@ with tab_send:
         with col1:
             bot_name = st.selectbox("Бот", options=[b["name"] for b in bots], index=0)
             chat_id = st.text_input(
-                "group_chat_id",
+                "group_chat_id (UUID чата)",
                 value=express_settings.default_chat_id or "",
                 placeholder="UUID чата",
             )

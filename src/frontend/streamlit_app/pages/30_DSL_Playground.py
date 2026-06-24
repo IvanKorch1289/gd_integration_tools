@@ -5,8 +5,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Playground", ":test_tube:")
-st.header("DSL Playground")
+setup_page("DSL Песочница", ":test_tube:")
+st.header("DSL Песочница")
 st.caption("Напиши код → Запусти → Посмотри результат. Dry-run доступен.")
 
 # ─────────── Example templates ───────────
@@ -72,7 +72,7 @@ with col1:
 with col2:
     st.subheader("Код маршрута")
     code = st.text_area(
-        "RouteBuilder code",
+        "Код RouteBuilder",
         value=st.session_state.get("dsl_code", EXAMPLES["Hello World"]),
         height=400,
         key="dsl_code",
@@ -82,9 +82,9 @@ with col2:
     with col_run:
         run_btn = st.button("▶ Запустить", type="primary", use_container_width=True)
     with col_lint:
-        lint_btn = st.button("Lint", use_container_width=True)
+        lint_btn = st.button("Линтер", use_container_width=True)
     with col_validate:
-        validate_btn = st.button("Validate", use_container_width=True)
+        validate_btn = st.button("Валидировать", use_container_width=True)
 
 # ─────────── Execution ───────────
 

@@ -15,8 +15,8 @@ try:
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
-setup_page("Model Registry", "🧬")
-st.title("🧬 AI Model Registry")
+setup_page("Реестр моделей", "🧬")
+st.title("🧬 Реестр AI-моделей")
 st.caption(
     "Composite MLflow + Hugging Face Hub. "
     "Активируется feature-flag `ai_model_registry_ui`."
@@ -62,16 +62,16 @@ def main() -> None:
 
     with col_detail:
         st.subheader(chosen["name"])
-        st.write(f"**Version**: `{chosen['version']}`")
-        st.write(f"**Stage**: `{chosen['stage']}`")
-        st.write(f"**Backend**: `{chosen['extra'].get('backend', 'unknown')}`")
+        st.write(f"**Версия**: `{chosen['version']}`")
+        st.write(f"**Стадия**: `{chosen['stage']}`")
+        st.write(f"**Бэкенд**: `{chosen['extra'].get('backend', 'unknown')}`")
         if chosen.get("artifact_uri"):
             st.code(chosen["artifact_uri"], language="text")
 
         st.markdown("**Метаданные**")
         st.json(chosen.get("tags", {}))
 
-        if st.button("📋 Use in route", type="primary"):
+        if st.button("📋 Использовать в route", type="primary"):
             try:
                 resp = _client().post(
                     f"/admin/model-registry/models/{chosen['name']}/use-in-route",

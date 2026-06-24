@@ -14,8 +14,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Debugger", "🐛")
-st.title("🐛 DSL Debugger & Replay")
+setup_page("Отладчик DSL", "🐛")
+st.title("🐛 Отладчик DSL и воспроизведение")
 
 mode = st.radio(
     "Режим", ["Пошаговый Debugger", "Replay Audit", "Route Trace"], horizontal=True

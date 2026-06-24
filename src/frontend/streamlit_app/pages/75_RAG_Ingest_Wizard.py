@@ -10,8 +10,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import K4APIClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("RAG Ingest Wizard", "📥")
-st.title("📥 RAG Ingest Wizard")
+setup_page("Мастер ингеста RAG", "📥")
+st.title("📥 Мастер ингеста RAG")
 
 if "ingest_step" not in st.session_state:
     st.session_state["ingest_step"] = 1
@@ -52,8 +52,8 @@ elif step == 3:
         "bge-m3",
         "openai",
     ]
-    st.session_state["ingest_provider"] = st.selectbox("Provider", providers)
-    st.session_state["ingest_collection"] = st.text_input("Collection", value="default")
+    st.session_state["ingest_provider"] = st.selectbox("Провайдер", providers)
+    st.session_state["ingest_collection"] = st.text_input("Коллекция", value="default")
     if st.button("Далее →"):
         st.session_state["ingest_step"] = 4
         st.rerun()
@@ -73,7 +73,7 @@ elif step == 4:
             st.error(f"Не удалось запустить ingest: {result}")
 
 elif step == 5:
-    st.subheader("5. Verification")
+    st.subheader("5. Проверка")
     task_id = st.session_state.get("ingest_task_id")
     if task_id:
         status = client.rag_ingest_status(task_id) or st.session_state.get(

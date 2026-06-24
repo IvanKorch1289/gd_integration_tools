@@ -1,4 +1,4 @@
-"""Streamlit-страница Pool Monitor (S7 K5).
+"""Streamlit-страница Монитор пулов (S7 K5).
 
 Назначение
 ----------
@@ -9,7 +9,7 @@ Kafka / ClickHouse) через REST endpoint ``/api/v1/admin/pools/snapshot``.
 
 * **Worker pool (Granian)** — динамическая фабрика воркеров; in_use, available,
   max_workers, last_fork_at;
-* **Connection pools** — на каждый backend: in_use / available / max +
+* **Пулы соединений** — на каждый backend: in_use / available / max +
   trend-линия (rolling 60 точек, 1 точка / sec).
 
 Активация: feature_flag ``pool_monitor_enabled``.
@@ -27,8 +27,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page("Pool Monitor", ":swimmer:")
-st.header("Pool Monitor")
+setup_page("Монитор пулов", ":swimmer:")
+st.header("Монитор пулов")
 
 # ---------------------------------------------------------------------------
 # Feature-flag guard

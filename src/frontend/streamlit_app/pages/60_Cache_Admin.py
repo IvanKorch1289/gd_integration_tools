@@ -12,13 +12,13 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import K4APIClient, get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Cache Admin", ":package:")
-st.header(":package: Cache Admin")
+setup_page("Админ кэша", ":package:")
+st.header(":package: Админ кэша")
 
 tab_redis, tab_rag = st.tabs(["Redis Cache", "RAG Cache"])
 
 with tab_redis:
-    st.subheader("Cache Explorer")
+    st.subheader("Обозреватель кэша")
     client = get_api_client()
 
     pattern = st.text_input(
@@ -59,7 +59,7 @@ with tab_redis:
     invalidate_pattern = st.text_input(
         "Pattern для инвалидации", value="", key="inv_pat"
     )
-    if st.button("Invalidate") and invalidate_pattern:
+    if st.button("Инвалидировать") and invalidate_pattern:
         try:
             resp = client._request(
                 "POST",
@@ -90,13 +90,13 @@ with tab_rag:
 
         col_state, col_hits, col_misses, col_rate = st.columns(4)
         col_state.metric("Состояние", "ON" if is_enabled else "OFF")
-        col_hits.metric("Hits", hits)
-        col_misses.metric("Misses", misses)
-        col_rate.metric("Hit-rate", f"{hit_rate:.1f}%")
+        col_hits.metric("Попадания", hits)
+        col_misses.metric("Промахи", misses)
+        col_rate.metric("Доля попаданий", f"{hit_rate:.1f}%")
 
-        if st.button(f"Flush {tier_name}", key=f"flush-{tier_key}"):
+        if st.button(f"Очистить {tier_name}", key=f"flush-{tier_key}"):
             result = client_k4.flush_rag_cache_tier(tier_key)
-            st.success(f"Flush результат: {result}")
+            st.success(f"Результат flush: {result}")
 
     with tab_l1:
         _render_tier("L1", "l1")
@@ -114,5 +114,5 @@ with tab_rag:
             st.dataframe(events, use_container_width=True)
         else:
             st.info("Событий пока нет.")
-        if st.button("Flush all tiers", key="flush-all"):
+        if st.button("Очистить все tiers", key="flush-all"):
             st.warning(client_k4.flush_rag_cache_tier(None))

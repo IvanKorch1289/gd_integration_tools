@@ -11,7 +11,7 @@ setup_page(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.header("Feature Flags")
+st.header("Feature-флаги")
 
 client = get_api_client()
 

@@ -36,7 +36,7 @@ from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     setup_page,
 )
 
-setup_page("Workflow Replay · gd_integration_tools", "⏯️")
+setup_page("Воспроизведение Workflow · gd_integration_tools", "⏯️")
 client = get_api_client()
 
 
@@ -111,7 +111,7 @@ def _render_event_filters(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def main() -> None:
     """Точка входа Streamlit-страницы."""
-    st.title("⏯️ Workflow Replay")
+    st.title("⏯️ Воспроизведение Workflow")
     st.caption(
         "Drill-down на event-timeline конкретного Temporal-workflow для "
         "отладки и audit-трейла. Sprint 4 Wave F."

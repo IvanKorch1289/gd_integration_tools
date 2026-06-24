@@ -1,4 +1,4 @@
-"""Action Bus — страница вызова зарегистрированных actions (K5 W2).
+"""Шина действий — страница вызова зарегистрированных actions (K5 W2).
 
 Позволяет:
 
@@ -22,8 +22,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Action Bus", ":electric_plug:")
-st.header("Action Bus")
+setup_page("Шина действий", ":electric_plug:")
+st.header("Шина действий")
 
 # ---------------------------------------------------------------------------
 # Feature-flag guard
@@ -126,7 +126,7 @@ with col_invoke:
         ),
     )
 
-    _invoke_clicked = st.button("Invoke", type="primary", use_container_width=True)
+    _invoke_clicked = st.button("Вызвать", type="primary", use_container_width=True)
 
     if _invoke_clicked:
         # Валидация JSON
@@ -141,21 +141,21 @@ with col_invoke:
             st.code(json.dumps(_result, ensure_ascii=False, indent=2), language="json")
 
     # Metadata expander
-    with st.expander("Registered metadata"):
+    with st.expander("Метаданные регистрации"):
         if _selected_action:
             _spec = get_action_spec(_selected_action)
             if _spec:
                 st.write(f"**Описание**: {_spec.get('description', '—')}")
                 _params_schema = _spec.get("params_schema")
                 if _params_schema:
-                    st.write("**Params JSON-Schema**:")
+                    st.write("**JSON-схема параметров**:")
                     st.code(
                         json.dumps(_params_schema, ensure_ascii=False, indent=2),
                         language="json",
                     )
                 _result_schema = _spec.get("result_schema")
                 if _result_schema:
-                    st.write("**Result JSON-Schema**:")
+                    st.write("**JSON-схема результата**:")
                     st.code(
                         json.dumps(_result_schema, ensure_ascii=False, indent=2),
                         language="json",

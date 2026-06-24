@@ -16,7 +16,7 @@ from src.backend.core.config.features import feature_flags  # noqa: E402
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Workflow Logs", ":memo:")
+setup_page("Логи Workflow", ":memo:")
 if not feature_flags.frontend_workflow_logs_page:
     st.warning(
         ":warning: Страница отключена "
@@ -24,7 +24,7 @@ if not feature_flags.frontend_workflow_logs_page:
     )
     st.stop()
 
-st.title(":clipboard: Workflow Logs")
+st.title(":clipboard: Логи Workflow")
 st.caption(
     "Визуализация записей workflow_step_log (ClickHouse) — фильтр по "
     "workflow/tenant/date/status, waterfall по длительностям, drill-down. "
@@ -38,7 +38,7 @@ tab_step, tab_live = st.tabs(["Step Logs", "Live Audit Tail"])
 with tab_step:
     st.subheader("Фильтры Step Logs")
     workflow_name = st.text_input(
-        "Workflow name",
+        "Имя workflow",
         placeholder="credit_assessment",
         help="Substring match по имени workflow.",
         key="step_workflow",
@@ -50,17 +50,17 @@ with tab_step:
         key="step_tenant",
     )
     date_from = st.date_input(
-        "Date from", value=datetime.utcnow().date() - timedelta(days=1), key="step_from"
+        "Дата с", value=datetime.utcnow().date() - timedelta(days=1), key="step_from"
     )
-    date_to = st.date_input("Date to", value=datetime.utcnow().date(), key="step_to")
+    date_to = st.date_input("Дата по", value=datetime.utcnow().date(), key="step_to")
     status_filter = st.multiselect(
-        "Status",
+        "Статус",
         options=["ok", "fail", "retry", "timeout"],
         default=["ok", "fail"],
         key="step_status",
     )
     limit = st.number_input(
-        "Limit", min_value=10, max_value=1000, value=100, step=10, key="step_limit"
+        "Лимит", min_value=10, max_value=1000, value=100, step=10, key="step_limit"
     )
 
     with st.spinner("Загрузка step-логов..."):
@@ -140,7 +140,7 @@ with tab_step:
                 st.info("Нет workflow_id в текущей выборке для drill-down.")
             else:
                 selected_workflow = st.selectbox(
-                    "Workflow ID",
+                    "ID Workflow",
                     options=ids,
                     help="Выберите workflow для подробного просмотра steps.",
                 )
@@ -152,7 +152,7 @@ with tab_step:
                     st.json(detail)
 
 with tab_live:
-    st.header(":memo: Workflow Live Logs (read-only)")
+    st.header(":memo: Логи Workflow в реальном времени (только чтение)")
     st.caption(
         "Стрим audit-событий из ClickHouse (`audit_events` table). Обновление "
         "каждые ~2 секунды. Только чтение — workflow-engine не вызывается."
@@ -160,19 +160,19 @@ with tab_live:
 
     st.subheader("Фильтры tail")
     workflow_filter = st.text_input(
-        "workflow_id / route_name substring",
+        "Подстрока workflow_id / route_name",
         value="",
         help="Фильтр по имени workflow или route. Пусто — все события.",
         key="live_workflow",
     )
     severity_filter = st.selectbox(
-        "Severity",
+        "Уровень важности",
         options=["all", "info", "warning", "error"],
         index=0,
         key="live_severity",
     )
     tail_size = st.number_input(
-        "Tail size",
+        "Размер tail",
         min_value=10,
         max_value=500,
         value=100,
@@ -180,7 +180,7 @@ with tab_live:
         help="Число последних событий для отображения.",
         key="live_size",
     )
-    autorefresh = st.toggle("Auto refresh (~2s)", value=True, key="live_refresh")
+    autorefresh = st.toggle("Авто-обновление (~2s)", value=True, key="live_refresh")
 
     def _fetch_audit_tail() -> list[dict]:
         params: dict[str, object] = {"limit": int(tail_size)}

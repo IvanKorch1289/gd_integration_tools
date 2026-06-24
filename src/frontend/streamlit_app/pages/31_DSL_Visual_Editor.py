@@ -46,8 +46,8 @@ from src.frontend.streamlit_app.pages._editor.properties import render_propertie
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Editor", "")
-st.header("DSL Visual Editor")
+setup_page("DSL Редактор", "")
+st.header("DSL Визуальный редактор")
 st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "
     "Сохранение в YAMLStore через Admin API."
@@ -163,7 +163,7 @@ with st.sidebar:
 
 
 tab_visual, tab_yaml, tab_python, tab_diff, tab_canvas = st.tabs(
-    ["Visual", "YAML", "Python", "Workflow Diff", "Canvas (Drag-Drop)"]
+    ["Visual", "YAML", "Python", "Сравнение workflow", "Канвас (Drag-Drop)"]
 )
 
 
@@ -228,7 +228,7 @@ with tab_visual:
             st.rerun()
 
     with col_right:
-        st.subheader("🔗 Pipeline (drag to reorder)")
+        st.subheader("🔗 Pipeline (перетащите для изменения порядка)")
         st.caption("Перетащите процессоры для изменения порядка")
 
         # Render drag-drop pipeline
@@ -301,7 +301,7 @@ with tab_yaml:
         push_history()
 
     cols = st.columns([1, 1, 4])
-    if cols[0].button("Validate (server)", use_container_width=True):
+    if cols[0].button("Валидировать (сервер)", use_container_width=True):
         result = client.validate_dsl_route(st.session_state.yaml)
         if result.get("valid"):
             st.success(
@@ -312,7 +312,7 @@ with tab_yaml:
             st.error(f"Ошибка: {result.get('error')}")
 
     if (
-        cols[1].button("Diff vs saved", use_container_width=True)
+        cols[1].button("Сравнить с сохранённой версией", use_container_width=True)
         and st.session_state.last_load_route
     ):
         diff = client.diff_dsl_route(
@@ -327,7 +327,7 @@ with tab_yaml:
     if err:
         st.error(f"Локальная валидация: {err}")
     else:
-        with st.expander("JSON spec"):
+        with st.expander("JSON спецификация"):
             st.json(pipeline.to_dict())
 
 
@@ -356,10 +356,10 @@ with tab_canvas:
     col_palette, col_canvas, col_props = st.columns([1, 2, 1])
 
     with col_palette:
-        st.subheader("📦 Step Palette")
+        st.subheader("📦 Палитра шагов")
 
         palette_category = st.selectbox(
-            "Category",
+            "Категория",
             options=["all"]
             + sorted(
                 set("core control_flow routing transformation resilience".split())
@@ -376,16 +376,16 @@ with tab_canvas:
                 if k in ["log", "validate", "transform", "retry"]
             }
 
-        st.markdown("**Click to add to canvas:**")
+        st.markdown("**Нажмите чтобы добавить в канвас:**")
         for proc_type, params in filtered_processors.items():
             icon = PROCESSOR_ICONS.get(proc_type, "🔧")
             with st.container(border=True):
                 c1, c2 = st.columns([4, 1])
                 with c1:
                     st.markdown(f"**{icon} {proc_type}**")
-                    st.caption(f"Params: {', '.join(params) if params else 'none'}")
+                    st.caption(f"Параметры: {', '.join(params) if params else 'нет'}")
                 with c2:
-                    if st.button("➕", key=f"add_{proc_type}", help=f"Add {proc_type}"):
+                    if st.button("➕", key=f"add_{proc_type}", help=f"Добавить {proc_type}"):
                         st.session_state.canvas_steps.append(
                             {"type": proc_type, "params": {p: "" for p in params}}
                         )
@@ -396,16 +396,16 @@ with tab_canvas:
                         st.rerun()
 
         st.divider()
-        st.subheader("💾 Load Route")
+        st.subheader("💾 Загрузить маршрут")
         routes = []
         try:
             routes = client.list_dsl_routes()
         except Exception:  # noqa: BLE001
-            st.caption("Could not load routes list")
+            st.caption("Не удалось загрузить список маршрутов")
         selected_route = st.selectbox(
-            "Open existing", ["—"] + routes, key="route_load_select"
+            "Открыть существующий", ["—"] + routes, key="route_load_select"
         )
-        if selected_route != "—" and st.button("Load", use_container_width=True):
+        if selected_route != "—" and st.button("Загрузить", use_container_width=True):
             try:
                 detail = client.get_dsl_route(selected_route)
                 if detail and "yaml" in detail:
@@ -414,12 +414,12 @@ with tab_canvas:
                     st.session_state.canvas_steps = steps
                     st.session_state.selected_step_index = None
                     sync_yaml()
-                    st.success(f"Loaded: {selected_route}")
+                    st.success(f"Загружено: {selected_route}")
                     st.rerun()
             except Exception as exc:  # noqa: BLE001
-                st.error(f"Load error: {exc}")
+                st.error(f"Ошибка загрузки: {exc}")
 
-        if st.button("🆕 New Route", use_container_width=True):
+        if st.button("🆕 Новый маршрут", use_container_width=True):
             st.session_state.meta_route = {
                 "route_id": "my.route",
                 "source": "internal:my",
@@ -431,7 +431,7 @@ with tab_canvas:
             st.rerun()
 
     with col_canvas:
-        st.subheader("🎨 Canvas — Pipeline Steps")
+        st.subheader("🎨 Канвас — шаги Pipeline")
 
         m1, m2 = st.columns(2)
         with m1:
@@ -467,7 +467,7 @@ with tab_canvas:
         st.divider()
 
         if not st.session_state.canvas_steps:
-            st.info("🖱️ Drag steps from palette or click ➕ to add. Configure on right.")
+            st.info("🖱️ Перетащите шаги из палитры или нажмите ➕ чтобы добавить. Настройте справа.")
         else:
             st.markdown(f"**Steps ({len(st.session_state.canvas_steps)}):**")
 
@@ -577,7 +577,7 @@ with tab_canvas:
                             st.rerun()
 
         st.divider()
-        st.subheader("📄 YAML Preview")
+        st.subheader("📄 Превью YAML")
         yaml_preview = st.text_area(
             "YAML",
             value=st.session_state.yaml_output,
@@ -590,10 +590,10 @@ with tab_canvas:
 
         col_val, col_down = st.columns(2)
         with col_val:
-            if st.button("✅ Validate", use_container_width=True):
+            if st.button("✅ Валидировать", use_container_width=True):
                 try:
                     load_pipeline_from_yaml(st.session_state.yaml_output)
-                    st.success("✅ YAML valid!")
+                    st.success("✅ YAML валиден!")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"❌ Invalid: {exc}")
 

@@ -5,8 +5,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Logs", ":scroll:", layout="wide", initial_sidebar_state="expanded")
-st.header("Trace Logs")
+setup_page("Логи", ":scroll:", layout="wide", initial_sidebar_state="expanded")
+st.header("Логи трассировки")
 
 client = get_api_client()
 
@@ -15,7 +15,7 @@ client = get_api_client()
 col1, col2, col3 = st.columns(3)
 route_filter = col1.text_input("Route ID")
 corr_filter = col2.text_input("Correlation ID")
-level_filter = col3.selectbox("Level", ["All", "Error", "Warning", "Info", "Debug"])
+level_filter = col3.selectbox("Уровень", ["All", "Error", "Warning", "Info", "Debug"])
 
 # ──────────── Загрузка логов ────────────
 

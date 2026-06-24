@@ -21,8 +21,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Usage Audit", ":bar_chart:")
-st.header(":bar_chart: DSL Usage Audit")
+setup_page("Аудит использования DSL", ":bar_chart:")
+st.header(":bar_chart: Аудит использования DSL")
 st.caption("Статистика использования DSL процессоров")
 
 client = get_api_client()
@@ -169,7 +169,7 @@ if top_processors:
     # Error rate chart
     if show_details and "Error Rate (%)" in df_display.columns:
         st.divider()
-        st.write("**Error Rate (%)**")
+        st.write("**Доля ошибок (%)**")
         error_data = df_display[["Processor Name", "Error Rate (%)"]].set_index(
             "Processor Name"
         )

@@ -14,8 +14,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Blueprint Gallery", ":art:")
-st.header(":art: Blueprint Gallery")
+setup_page("Галерея blueprint'ов", ":art:")
+st.header(":art: Галерея blueprint'ов")
 st.caption(
     "Каталог шаблонов маршрутов R2/R2.5 — 3-column grid, фильтры, preview, copy."
 )
@@ -161,11 +161,11 @@ def _card(bp: dict[str, Any]) -> None:
         yaml_text = _yaml_preview(bp)
         c1, c2, c3 = st.columns(3)
         with c1:
-            with st.popover("👁 Preview"):
+            with st.popover("👁 Предпросмотр"):
                 st.code(yaml_text, language="yaml")
         with c2:
             st.download_button(
-                "📋 Copy",
+                "📋 Скопировать",
                 data=yaml_text,
                 file_name=f"{bp['name']}.yaml",
                 mime="text/yaml",
@@ -173,9 +173,9 @@ def _card(bp: dict[str, Any]) -> None:
                 use_container_width=True,
             )
         with c3:
-            if st.button("🚀 Deploy", key=f"dp_{bp['name']}", use_container_width=True):
+            if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", use_container_width=True):
                 st.toast(
-                    f"Mock deploy '{bp['name']}' v{bp['version']} — реальный deploy через backend WIP",
+                    f"Mock-деплой '{bp['name']}' v{bp['version']} — реальный деплой через backend WIP",
                     icon="🚀",
                 )
 
@@ -242,7 +242,7 @@ for i in range(0, len(flt), 3):
 # ─────────── Summary table ───────────
 
 st.divider()
-st.subheader("📚 Все blueprints")
+st.subheader("📚 Все blueprint'ы")
 rows = [
     {
         "Имя": b["name"],
