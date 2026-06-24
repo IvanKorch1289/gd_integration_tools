@@ -43,6 +43,12 @@ DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     "/openapi.json",
     "/static",
     "/favicon.ico",
+    # S171: auth endpoints must be public for Login page to work.
+    # Login page needs to call /api/v1/auth/methods to show available
+    # methods BEFORE user is authenticated. Without these, /Login crashes
+    # with traceback visible to user.
+    "/api/v1/auth/methods",
+    "/api/v1/auth/login",
 )
 
 
