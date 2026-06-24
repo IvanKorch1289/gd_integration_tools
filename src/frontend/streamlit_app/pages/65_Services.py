@@ -12,8 +12,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Services", ":link:")
-st.header("External Services")
+setup_page("Сервисы", ":link:")
+st.header("Внешние сервисы")
 
 client = get_api_client()
 
@@ -98,7 +98,7 @@ def _build_services() -> list[ServiceInfo]:
     return result
 
 
-st.subheader("Infrastructure Services")
+st.subheader("Инфраструктурные сервисы")
 services = _build_services()
 
 cols = st.columns(len(services) if services else 1)
@@ -112,19 +112,19 @@ for i, svc in enumerate(services):
         if svc.status == ServiceStatus.UP:
             st.markdown(
                 f":green[{svc.status.value.upper()}]"
-                + (f" ({svc.latency_ms}ms)" if svc.latency_ms else "")
+                + (f" ({svc.latency_ms} мс)" if svc.latency_ms else "")
             )
         elif svc.status == ServiceStatus.DOWN:
-            st.markdown(":red[DOWN]" + (" — check connectivity" if svc.url else ""))
+            st.markdown(":red[НЕДОСТУПЕН]" + (" — проверьте подключение" if svc.url else ""))
         else:
-            st.markdown(":gray[URL not configured]")
+            st.markdown(":gray[URL не настроен]")
 
         if svc.description:
             st.caption(svc.description)
 
 
 st.divider()
-st.subheader("Documentation portals")
+st.subheader("Документация")
 try:
     config = client.get_config()
 except Exception:

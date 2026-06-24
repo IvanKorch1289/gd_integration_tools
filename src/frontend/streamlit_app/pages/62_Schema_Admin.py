@@ -15,11 +15,11 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Schema Admin", ":card_index_dividers:")
-st.header(":card_index_dividers: Schema Admin")
+setup_page("Админ схем", ":card_index_dividers:")
+st.header(":card_index_dividers: Админ схем")
 
 tab_import, tab_registry, tab_viewer = st.tabs(
-    ["Import Schema", "Schema Registry", "API Schemas"]
+    ["Импорт схемы", "Реестр схем", "API-схемы"]
 )
 
 with tab_import:
@@ -38,7 +38,7 @@ with tab_import:
     )
     prefix = st.text_input("Префикс для operation_id", value="ext", key="imp_prefix")
     dry_run = st.checkbox(
-        "Dry-run (не регистрировать actions)", value=False, key="imp_dry"
+        "Пробный прогон (не регистрировать actions)", value=False, key="imp_dry"
     )
 
     uploaded = st.file_uploader(
@@ -188,7 +188,7 @@ with tab_registry:
             with col_dl:
                 filename = schema_path.name if schema_path else f"schema.{lang}"
                 st.download_button(
-                    label="Download",
+                    label="Скачать",
                     data=content.encode("utf-8"),
                     file_name=filename,
                     mime="text/plain",
@@ -197,7 +197,7 @@ with tab_registry:
 
             with col_val:
                 if validate_fn:
-                    if st.button("Validate", key=f"validate_{kind}"):
+                    if st.button("Валидировать", key=f"validate_{kind}"):
                         ok, msg = validate_openapi(content)
                         if ok:
                             st.success(msg)
@@ -205,14 +205,14 @@ with tab_registry:
                             st.error(msg)
                 else:
                     st.button(
-                        "Validate",
+                        "Валидировать",
                         key=f"validate_{kind}",
                         disabled=True,
                         help="Валидация недоступна для данного типа схем.",
                     )
 
             with col_diff:
-                if st.button("Diff vs", key=f"diff_btn_{kind}"):
+                if st.button("Сравнить с", key=f"diff_btn_{kind}"):
                     st.session_state[f"show_diff_{kind}"] = True
 
             if st.session_state.get(f"show_diff_{kind}"):

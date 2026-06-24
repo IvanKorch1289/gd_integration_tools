@@ -18,10 +18,10 @@ setup_page("DSL Debugger", "🐛")
 st.title("🐛 DSL Debugger & Replay")
 
 mode = st.radio(
-    "Режим", ["Step-through Debugger", "Replay Audit", "Route Trace"], horizontal=True
+    "Режим", ["Пошаговый Debugger", "Replay Audit", "Route Trace"], horizontal=True
 )
 
-if mode == "Step-through Debugger":
+if mode == "Пошаговый Debugger":
     st.markdown("""
     Выполняет DSL маршрут с детальной трассировкой.
     Каждый процессор показывает input/output/duration.
@@ -32,28 +32,28 @@ if mode == "Step-through Debugger":
 
         available_routes = list_route_ids()
     except Exception as exc:
-        st.error(f"Routes unavailable: {exc}")
+        st.error(f"Маршруты недоступны: {exc}")
         available_routes = []
 
     route_id = (
-        st.selectbox("Route ID", available_routes)
+        st.selectbox("ID маршрута", available_routes)
         if available_routes
-        else st.text_input("Route ID")
+        else st.text_input("ID маршрута")
     )
-    body_str = st.text_area("Request body (JSON)", value="{}", height=120)
+    body_str = st.text_area("Тело запроса (JSON)", value="{}", height=120)
 
-    if st.button("▶️ Execute with trace"):
+    if st.button("▶️ Выполнить с трассировкой"):
         try:
             body = json.loads(body_str)
         except json.JSONDecodeError as exc:
-            st.error(f"Invalid JSON: {exc}")
+            st.error(f"Некорректный JSON: {exc}")
         else:
             try:
                 result = DSLRoutesClient().execute_registered_route(route_id, body)
 
                 col_result, col_trace = st.columns([1, 1])
                 with col_result:
-                    st.subheader("Result")
+                    st.subheader("Результат")
                     st.json(
                         {
                             "status": result["status"],
@@ -62,18 +62,18 @@ if mode == "Step-through Debugger":
                         }
                     )
                 with col_trace:
-                    st.subheader("Trace")
+                    st.subheader("Трассировка")
                     trace = result["trace"]
                     if trace:
                         for idx, entry in enumerate(trace):
                             with st.expander(
-                                f"{idx + 1}. {entry.get('processor', 'unknown')} — {entry.get('duration_ms', 0):.1f}ms"
+                                f"{idx + 1}. {entry.get('processor', 'unknown')} — {entry.get('duration_ms', 0):.1f}мс"
                             ):
                                 st.json(entry)
                     else:
-                        st.info("No trace data")
+                        st.info("Нет данных трассировки")
             except Exception as exc:
-                st.error(f"Execution failed: {exc}")
+                st.error(f"Ошибка выполнения: {exc}")
 
 elif mode == "Replay Audit":
     st.markdown("""
@@ -82,31 +82,31 @@ elif mode == "Replay Audit":
     """)
 
     limit = st.slider("Записей", 10, 500, 50)
-    if st.button("🔄 Refresh"):
+    if st.button("🔄 Обновить"):
         try:
             from src.backend.services.dsl_portal import list_audit_records
 
             records = list_audit_records(count=limit)
             if not records:
-                st.info("No audit records")
+                st.info("Нет записей аудита")
             else:
                 for rec in records:
                     with st.expander(
                         f"{rec.get('method', '?')} {rec.get('path', '?')} — "
-                        f"{rec.get('status_code', '?')} [{rec.get('duration_ms', 0):.1f}ms]"
+                        f"{rec.get('status_code', '?')} [{rec.get('duration_ms', 0):.1f}мс]"
                     ):
                         st.json(rec)
                         if st.button(
-                            "🔁 Replay", key=f"replay_{rec.get('timestamp', '')}"
+                            "🔁 Повторить", key=f"replay_{rec.get('timestamp', '')}"
                         ):
                             st.info(
-                                "Replay functionality: send stored request to same path"
+                                "Функциональность replay: отправка сохранённого запроса по тому же пути"
                             )
         except Exception as exc:
-            st.error(f"Audit stream unavailable: {exc}")
+            st.error(f"Audit stream недоступен: {exc}")
 
 else:  # Route Trace
-    st.markdown("Live route executions через DSL tracer.")
+    st.markdown("Live-исполнения маршрутов через DSL tracer.")
     try:
         from src.backend.services.dsl_portal import list_recent_trace_events
 
@@ -115,6 +115,6 @@ else:  # Route Trace
             for ev in events:
                 st.json(ev)
         else:
-            st.info("No recent events")
+            st.info("Нет недавних событий")
     except Exception as exc:
-        st.warning(f"Tracer unavailable: {exc}")
+        st.warning(f"Tracer недоступен: {exc}")

@@ -18,8 +18,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Capabilities", "🔐")
-st.header("Capability Matrix")
+setup_page("Возможности", "🔐")
+st.header("Матрица возможностей")
 st.caption(
     "Каталог capabilities (ADR-044) + plugin × capability heatmap. "
     "Источники — `/api/v1/admin/capabilities` и `/api/v1/plugins/inventory`."
@@ -33,19 +33,19 @@ vocab = catalog.get("vocabulary") or []
 plugins = plugins_inv.get("plugins") or []
 
 cols = st.columns(3)
-cols[0].metric("Capabilities", len(vocab))
-cols[1].metric("Plugins", len(plugins))
-cols[2].metric("Public caps", sum(1 for c in vocab if c.get("public")))
+cols[0].metric("Возможности", len(vocab))
+cols[1].metric("Плагины", len(plugins))
+cols[2].metric("Публичные", sum(1 for c in vocab if c.get("public")))
 
 st.divider()
 
-tabs = st.tabs(["Matrix", "Capability Graph", "Audit Log", "Vocabulary"])
+tabs = st.tabs(["Матрица", "Граф возможностей", "Журнал аудита", "Словарь"])
 
 # ────────────── Tab 1: Heatmap ─────────────────────────────────────
 
 with tabs[0]:
     if vocab and plugins:
-        st.subheader("Plugin × Capability matrix")
+        st.subheader("Матрица Плагин × Возможности")
 
         cap_names = [c["name"] for c in vocab]
         rows = []
@@ -65,14 +65,14 @@ with tabs[0]:
 # ────────────── Tab 2: Capability Graph (Sprint 14 K5 W5) ──────────
 
 with tabs[1]:
-    st.subheader("Capability Graph")
+    st.subheader("Граф возможностей")
     st.caption(
-        "plugin → capability → resource (Mermaid). Источник — "
+        "плагин → возможность → ресурс (Mermaid). Источник — "
         "``/api/v1/admin/capabilities/graph``."
     )
     graph = client.get_capability_graph()
     if graph.get("error"):
-        st.warning(f"backend unavailable: {graph['error']}")
+        st.warning(f"бэкенд недоступен: {graph['error']}")
     elif not graph.get("nodes"):
         st.info("Нет данных для графа.")
     else:
@@ -97,9 +97,9 @@ with tabs[1]:
 # ────────────── Tab 3: Audit Log (Sprint 14 K1 W4) ─────────────────
 
 with tabs[2]:
-    st.subheader("Capability Audit Log")
-    plugin_filter = st.text_input("Filter by plugin", "")
-    tenant_filter = st.text_input("Filter by tenant", "")
+    st.subheader("Журнал аудита возможностей")
+    plugin_filter = st.text_input("Фильтр по плагину", "")
+    tenant_filter = st.text_input("Фильтр по тенанту", "")
     events = client.get_audit_events(
         plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )
@@ -114,4 +114,4 @@ with tabs[3]:
     if vocab:
         st.dataframe(vocab, use_container_width=True, hide_index=True)
     else:
-        st.write("_(vocabulary недоступен)_")
+        st.write("_(словарь недоступен)_")

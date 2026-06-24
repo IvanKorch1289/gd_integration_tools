@@ -12,8 +12,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Files S3", "📁")
-st.title("📁 Files S3 — Object Browser")
+setup_page("Файлы S3", "📁")
+st.title("📁 Файлы S3 — Объектный браузер")
 st.caption("S3/MinIO bucket файлы с preview/upload/download.")
 
 # Mock buckets + objects
@@ -53,13 +53,13 @@ _MOCK_OBJECTS: dict[str, list[dict[str, object]]] = {
 
 client = get_api_client()
 
-tab_mock, tab_api = st.tabs(["Object Browser (Mock)", "Unified Storage"])
+tab_mock, tab_api = st.tabs(["Объектный браузер (Mock)", "Унифицированное хранилище"])
 
 with tab_mock:
-    st.subheader("Mock S3 Browser")
-    bucket = st.selectbox("Bucket", options=_MOCK_BUCKETS, index=0, key="mock_bucket")
+    st.subheader("Mock S3 Браузер")
+    bucket = st.selectbox("Бакет", options=_MOCK_BUCKETS, index=0, key="mock_bucket")
     prefix = st.text_input(
-        "Prefix filter", value="", placeholder="напр. skb/contracts/", key="mock_prefix"
+        "Фильтр по префиксу", value="", placeholder="напр. skb/contracts/", key="mock_prefix"
     )
     uploaded = st.file_uploader(
         "Выбрать файл для upload",
@@ -69,7 +69,7 @@ with tab_mock:
     )
     if uploaded is not None:
         target_key = st.text_input(
-            "Target key (path)",
+            "Целевой ключ (путь)",
             value=f"uploads-staging/{uploaded.name}",
             key="mock_target",
         )
@@ -86,12 +86,12 @@ with tab_mock:
 
     objects = _filter_objects(bucket, prefix)
     col1, col2, col3 = st.columns(3)
-    col1.metric("Bucket", bucket)
-    col2.metric("Objects", len(objects))
+    col1.metric("Бакет", bucket)
+    col2.metric("Объекты", len(objects))
     total_size = sum(int(o["size_bytes"]) for o in objects)
-    col3.metric("Total size", f"{total_size / 1024:.1f} KB")
+    col3.metric("Общий размер", f"{total_size / 1024:.1f} KB")
 
-    st.subheader(f"Objects in `s3://{bucket}/{prefix}`")
+    st.subheader(f"Объекты в `s3://{bucket}/{prefix}`")
     if objects:
         st.dataframe(
             [
@@ -107,10 +107,10 @@ with tab_mock:
             hide_index=True,
         )
     else:
-        st.info(f"Bucket `{bucket}` пустой или нет объектов по prefix `{prefix}`.")
+        st.info(f"Бакет `{bucket}` пустой или нет объектов по prefix `{prefix}`.")
 
     st.markdown("---")
-    st.subheader("Preview / Download")
+    st.subheader("Предпросмотр / Скачать")
     if objects:
         selected_key = st.selectbox(
             "Объект", options=[str(o["key"]) for o in objects], index=0, key="mock_sel"
@@ -128,7 +128,7 @@ with tab_mock:
                 st.info("Binary-объект: preview не доступен. Используйте download.")
         with col_b:
             st.download_button(
-                "💾 Download",
+                "💾 Скачать",
                 data=f"Mock content of {selected_key}".encode(),
                 file_name=selected_key.split("/")[-1],
                 mime="application/octet-stream",
@@ -136,11 +136,11 @@ with tab_mock:
             )
 
     st.caption(
-        f"Last refresh: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+        f"Последнее обновление: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
     )
 
 with tab_api:
-    st.header(":file_folder: Unified Storage Files")
+    st.header(":file_folder: Файлы унифицированного хранилища")
     st.caption(
         "Единый UI для S3 / MinIO / LocalFS. Provider выбирается на backend "
         "через `settings.storage.provider`."
@@ -148,7 +148,7 @@ with tab_api:
 
     st.subheader("Фильтры")
     api_bucket = st.text_input(
-        "Bucket / root",
+        "Бакет / корень",
         value="",
         help="Опционально — имя бакета (S3/MinIO) или поддиректория (LocalFS).",
         key="api_bucket",
@@ -189,7 +189,7 @@ with tab_api:
             cols[1].write(f"{size} bytes")
             cols[2].write(modified)
 
-            if cols[3].button("Preview", key=f"prev_{idx}_{key}"):
+            if cols[3].button("Предпросмотр", key=f"prev_{idx}_{key}"):
                 try:
                     content = client._request(
                         "GET",
@@ -206,9 +206,9 @@ with tab_api:
                     )
                     st.code(preview)
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"Preview failed: {exc}")
+                    st.error(f"Предпросмотр не удался: {exc}")
 
-            if cols[4].button("Download", key=f"dl_{idx}_{key}"):
+            if cols[4].button("Скачать", key=f"dl_{idx}_{key}"):
                 try:
                     resp = client._request(
                         "GET",
@@ -222,10 +222,10 @@ with tab_api:
                         st.markdown(f"[Скачать]({resp['url']})")
                     else:
                         st.download_button(
-                            "Save as file",
+                            "Сохранить как файл",
                             data=resp if isinstance(resp, (bytes, str)) else str(resp),
                             file_name=key.rsplit("/", 1)[-1] or "file",
                             key=f"save_{idx}_{key}",
                         )
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"Download failed: {exc}")
+                    st.error(f"Скачивание не удалось: {exc}")

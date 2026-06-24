@@ -24,7 +24,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Workflows · gd_integration_tools", "🔁")
+setup_page("Рабочие процессы · gd_integration_tools", "🔁")
 client = get_api_client()
 
 
@@ -105,14 +105,14 @@ def _fmt_timestamp(value: Any) -> str:
 # -- UI ---------------------------------------------------------------
 
 
-st.title("🔁 Durable Workflows")
+st.title("🔁 Устойчивые рабочие процессы")
 st.caption(
     "Admin dashboard для durable workflow instances. "
     "Источник данных — `/api/v1/admin/workflows` (IL-WF1.5)."
 )
 
 tab_list, tab_timeline, tab_trigger = st.tabs(
-    ["📋 Instances", "📈 Timeline", "🚀 Trigger"]
+    ["📋 Экземпляры", "📈 Таймлайн", "🚀 Запуск"]
 )
 
 # ======================================================================
@@ -123,21 +123,21 @@ with tab_list:
     cols_filter = st.columns([1, 1, 1, 1, 1])
     with cols_filter[0]:
         flt_status = st.selectbox(
-            "Status", options=[""] + list(STATUS_BADGES.keys()), index=0
+            "Статус", options=[""] + list(STATUS_BADGES.keys()), index=0
         )
     with cols_filter[1]:
         flt_name = st.text_input(
-            "Workflow name", value="", placeholder="orders.skb_flow"
+            "Имя рабочего процесса", value="", placeholder="orders.skb_flow"
         )
     with cols_filter[2]:
-        flt_tenant = st.text_input("Tenant", value="", placeholder="default")
+        flt_tenant = st.text_input("Тенант", value="", placeholder="default")
     with cols_filter[3]:
         flt_limit = st.number_input(
-            "Limit", min_value=10, max_value=500, value=100, step=10
+            "Лимит", min_value=10, max_value=500, value=100, step=10
         )
     with cols_filter[4]:
         st.write("")  # spacer
-        if st.button("🔄 Refresh", use_container_width=True):
+        if st.button("🔄 Обновить", use_container_width=True):
             _cached_list.clear()
 
     instances = _cached_list(flt_status, flt_name, flt_tenant, int(flt_limit))
@@ -156,36 +156,36 @@ with tab_list:
             )
             with st.expander(header, expanded=False):
                 cols = st.columns([2, 2, 1, 1, 1])
-                cols[0].metric("Created", _fmt_timestamp(inst.get("created_at")))
+                cols[0].metric("Создан", _fmt_timestamp(inst.get("created_at")))
                 cols[1].metric(
-                    "Next attempt", _fmt_timestamp(inst.get("next_attempt_at"))
+                    "Следующая попытка", _fmt_timestamp(inst.get("next_attempt_at"))
                 )
-                cols[2].metric("Attempts", inst.get("attempts", 0))
-                cols[3].metric("Tenant", inst.get("tenant_id", "default"))
-                cols[4].metric("Version", inst.get("current_version", 0))
+                cols[2].metric("Попытки", inst.get("attempts", 0))
+                cols[3].metric("Тенант", inst.get("tenant_id", "default"))
+                cols[4].metric("Версия", inst.get("current_version", 0))
 
                 # Actions
                 action_cols = st.columns([1, 1, 1, 3])
                 instance_id = inst.get("id", "")
-                if action_cols[0].button("🔁 Retry", key=f"retry_{instance_id}"):
+                if action_cols[0].button("🔁 Повторить", key=f"retry_{instance_id}"):
                     if client.retry_workflow(instance_id):
                         st.success("Запланирован retry. Обновите список.")
                         _cached_list.clear()
                     else:
-                        st.error("Retry failed.")
-                if action_cols[1].button("🚫 Cancel", key=f"cancel_{instance_id}"):
+                        st.error("Повтор не удался.")
+                if action_cols[1].button("🚫 Отменить", key=f"cancel_{instance_id}"):
                     if client.cancel_workflow(instance_id, reason="admin UI"):
-                        st.success("Cancel queued.")
+                        st.success("Отмена поставлена в очередь.")
                         _cached_list.clear()
                     else:
-                        st.error("Cancel failed.")
-                if action_cols[2].button("▶ Resume", key=f"resume_{instance_id}"):
+                        st.error("Отмена не удалась.")
+                if action_cols[2].button("▶ Возобновить", key=f"resume_{instance_id}"):
                     if client.resume_workflow(instance_id):
-                        st.success("Resumed.")
+                        st.success("Возобновлено.")
                         _cached_list.clear()
                     else:
-                        st.error("Resume failed.")
-                if action_cols[3].button("📈 View Timeline", key=f"tl_{instance_id}"):
+                        st.error("Возобновление не удалось.")
+                if action_cols[3].button("📈 Показать таймлайн", key=f"tl_{instance_id}"):
                     st.session_state["_workflow_focus_id"] = instance_id
 
 
@@ -195,13 +195,13 @@ with tab_list:
 
 with tab_timeline:
     focus_id = st.text_input(
-        "Instance ID",
+        "ID экземпляра",
         value=st.session_state.get("_workflow_focus_id", ""),
         placeholder="UUID",
     )
     if not focus_id:
         st.info(
-            "Введите instance ID или выберите «View Timeline» из вкладки Instances."
+            "Введите instance ID или выберите «Показать таймлайн» из вкладки Instances."
         )
     else:
         instance = _cached_instance(focus_id)
@@ -212,15 +212,15 @@ with tab_timeline:
         else:
             # Header
             colh = st.columns([2, 2, 1, 1])
-            colh[0].metric("Workflow", instance.get("workflow_name", "—"))
-            colh[1].metric("Status", _status_label(instance.get("status", "?")))
-            colh[2].metric("Events", len(events))
-            colh[3].metric("Attempts", instance.get("attempts", 0))
+            colh[0].metric("Рабочий процесс", instance.get("workflow_name", "—"))
+            colh[1].metric("Статус", _status_label(instance.get("status", "?")))
+            colh[2].metric("События", len(events))
+            colh[3].metric("Попытки", instance.get("attempts", 0))
 
             # Event timeline
-            st.subheader(f"📜 Event log ({len(events)} events)")
+            st.subheader(f"📜 Журнал событий ({len(events)} events)")
             if not events:
-                st.caption("_No events yet._")
+                st.caption("_Событий пока нет._")
             else:
                 for ev in events:
                     ev_icon = EVENT_ICONS.get(ev.get("event_type", ""), "•")
@@ -237,8 +237,8 @@ with tab_timeline:
 
             # Snapshot state (if available)
             if instance.get("snapshot_state"):
-                st.subheader("📸 Snapshot state")
-                with st.expander("state JSON", expanded=False):
+                st.subheader("📸 Состояние снапшота")
+                with st.expander("JSON состояния", expanded=False):
                     st.json(instance["snapshot_state"])
 
 
@@ -252,28 +252,28 @@ with tab_trigger:
     )
 
     trg_name = st.text_input(
-        "Workflow name", value="", placeholder="orders.full_processing"
+        "Имя рабочего процесса", value="", placeholder="orders.full_processing"
     )
     payload_str = st.text_area(
-        "Input payload (JSON)",
+        "Входной payload (JSON)",
         value="{}",
         height=200,
         placeholder='{"order_id": 123, "email_for_answer": "user@example.com"}',
     )
     col_opts = st.columns([1, 1, 3])
-    wait = col_opts[0].checkbox("Wait (sync)", value=False)
+    wait = col_opts[0].checkbox("Ждать (синхронно)", value=False)
     timeout_s = col_opts[1].number_input(
-        "Timeout (s)", min_value=5, max_value=600, value=30, step=5
+        "Таймаут (сек)", min_value=5, max_value=600, value=30, step=5
     )
 
-    if st.button("🚀 Trigger", type="primary"):
+    if st.button("🚀 Запустить", type="primary"):
         if not trg_name:
-            st.error("Укажите workflow name.")
+            st.error("Укажите имя рабочего процесса.")
         else:
             try:
                 payload = json.loads(payload_str)
             except json.JSONDecodeError as exc:
-                st.error(f"Invalid JSON: {exc}")
+                st.error(f"Невалидный JSON: {exc}")
                 payload = None
 
             if payload is not None:
@@ -281,19 +281,19 @@ with tab_trigger:
                     trg_name, payload, wait=wait, timeout_s=int(timeout_s)
                 )
                 if result is None:
-                    st.error("Trigger failed (check API error logs).")
+                    st.error("Запуск не удался (проверьте логи ошибок API).")
                 else:
-                    st.success("Triggered!")
+                    st.success("Запущено!")
                     st.json(result)
                     if result.get("id"):
                         st.session_state["_workflow_focus_id"] = result["id"]
                         st.caption(
-                            "➡ Переключитесь на вкладку **Timeline** для просмотра."
+                            "➡ Переключитесь на вкладку **Таймлайн** для просмотра."
                         )
 
     st.markdown("---")
     st.caption(
-        "**Tip:** список зарегистрированных workflows доступен через MCP tool "
+        "**Совет:** список зарегистрированных workflows доступен через MCP tool "
         "`workflow_list` или через admin-UI `/api/v1/admin/workflows` фильтрацией "
         "по `workflow_name`."
     )

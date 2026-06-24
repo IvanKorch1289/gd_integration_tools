@@ -14,18 +14,18 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import text_search  # S44 W2 (TD-008)
 
-setup_page("Processor Catalog", "🔍")
-st.title("🔍 Processor Catalog Search")
-st.caption("Fuzzy search across DSL processors (rapidfuzz).")
+setup_page("Каталог процессоров", "🔍")
+st.title("🔍 Поиск по каталогу процессоров")
+st.caption("Нечёткий поиск по DSL-процессорам (rapidfuzz).")
 
 client = get_api_client()
 
 
 with st.sidebar:
-    st.header("Filters")
-    query = text_search("Search query", placeholder="например: 'split aggregate'")
+    st.header("Фильтры")
+    query = text_search("Поисковый запрос", placeholder="например: 'split aggregate'")
     namespace = st.selectbox(
-        "Namespace",
+        "Пространство имён",
         options=[
             "",
             "core",
@@ -50,7 +50,7 @@ with st.sidebar:
         ],
         index=0,
     )
-    limit = st.slider("Limit", min_value=5, max_value=100, value=25, step=5)
+    limit = st.slider("Лимит", min_value=5, max_value=100, value=25, step=5)
 
 
 payload = client.get_processor_catalog(
@@ -58,7 +58,7 @@ payload = client.get_processor_catalog(
 )
 
 if "error" in payload:
-    st.error(f"Search failed: {payload['error']}")
+    st.error(f"Поиск не удался: {payload['error']}")
 elif payload.get("total", 0) == 0:
     st.info("Нет процессоров для текущего фильтра.")
 else:
@@ -68,8 +68,8 @@ else:
             cols = st.columns([3, 1])
             with cols[0]:
                 st.markdown(f"### `{item['name']}`")
-                st.caption(f"Namespace: `{item.get('category', '—')}`")
+                st.caption(f"Пространство имён: `{item.get('category', '—')}`")
                 if item.get("description"):
                     st.write(item["description"])
             with cols[1]:
-                st.metric("Match score", item.get("score", 0))
+                st.metric("Оценка совпадения", item.get("score", 0))

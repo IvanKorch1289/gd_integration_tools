@@ -30,8 +30,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page("DLQ Replay", ":envelope_with_arrow:")
-st.header("DLQ Replay")
+setup_page("Replay DLQ", ":envelope_with_arrow:")
+st.header("Replay DLQ")
 
 # ---------------------------------------------------------------------------
 # Feature-flag guard
@@ -46,7 +46,7 @@ except Exception:  # noqa: BLE001
 with st.sidebar:
     st.subheader("Настройки")
     st.toggle(
-        "DLQ Replay UI",
+        "UI Replay DLQ",
         value=_flag_enabled,
         help="feature_flags.dlq_unified_enabled (FEATURE_DLQ_UNIFIED_ENABLED)",
         disabled=True,
@@ -158,20 +158,20 @@ _ensure_demo_data(_outbox)
 with st.sidebar:
     st.subheader("Фильтры DLQ")
     _transport_filter: str = st.text_input(
-        "Transport", value="", help="http / kafka / grpc / webhook / soap / mqtt / ..."
+        "Транспорт", value="", help="http / kafka / grpc / webhook / soap / mqtt / ..."
     )
-    _action_filter: str = st.text_input("Action", value="", help="Имя action или route")
+    _action_filter: str = st.text_input("Действие", value="", help="Имя action или route")
     _error_class_filter: str = st.text_input(
-        "Error class",
+        "Класс ошибки",
         value="",
         help="Имя класса исключения (RuntimeError, TimeoutError, ...)",
     )
-    _tenant_filter: str = st.text_input("Tenant ID", value="", help="Tenant-контекст")
+    _tenant_filter: str = st.text_input("ID тенанта", value="", help="Tenant-контекст")
     _hours_back: int = st.number_input(
         "За последние N часов", min_value=1, max_value=24 * 7, value=24, step=1
     )
     _limit: int = st.number_input(
-        "Limit", min_value=10, max_value=1000, value=100, step=10
+        "Лимит", min_value=10, max_value=1000, value=100, step=10
     )
 
 # ---------------------------------------------------------------------------
@@ -228,7 +228,7 @@ st.dataframe(_rows, use_container_width=True, hide_index=True)
 # ---------------------------------------------------------------------------
 # Bulk replay
 # ---------------------------------------------------------------------------
-st.subheader("Bulk replay")
+st.subheader("Массовый replay")
 
 _event_id_options: list[str] = [e.event_id for e in _events]
 _event_label_by_id: dict[str, str] = {
@@ -244,10 +244,10 @@ _selected_ids: list[str] = st.multiselect(
 
 _col_bulk_1, _col_bulk_2 = st.columns([1, 1])
 with _col_bulk_1:
-    _dry_run_bulk: bool = st.checkbox("Dry-run", value=False, key="bulk_dry_run")
+    _dry_run_bulk: bool = st.checkbox("Пробный прогон", value=False, key="bulk_dry_run")
 with _col_bulk_2:
     _bulk_clicked = st.button(
-        "Replay selected",
+        "Повторить выбранные",
         type="primary",
         disabled=not _selected_ids,
         use_container_width=True,
@@ -264,7 +264,7 @@ if _bulk_clicked and _selected_ids:
 # ---------------------------------------------------------------------------
 # Manual edit-and-replay
 # ---------------------------------------------------------------------------
-st.subheader("Manual edit-and-replay")
+st.subheader("Ручное edit-and-replay")
 
 _manual_event_id: str = st.selectbox(
     "Событие",
@@ -280,7 +280,7 @@ _target_event: OutboxEvent | None = next(
 if _target_event is not None:
     _initial_payload = json.dumps(_target_event.payload, ensure_ascii=False, indent=2)
     _override_raw: str = st.text_area(
-        "Override payload (JSON)",
+        "Переопределить payload (JSON)",
         value=_initial_payload,
         height=200,
         help="Отредактируйте payload — он будет использован при replay.",
@@ -289,11 +289,11 @@ if _target_event is not None:
     _col_manual_1, _col_manual_2 = st.columns([1, 1])
     with _col_manual_1:
         _dry_run_manual: bool = st.checkbox(
-            "Dry-run", value=False, key="manual_dry_run"
+            "Пробный прогон", value=False, key="manual_dry_run"
         )
     with _col_manual_2:
         _manual_clicked = st.button(
-            "Replay with override", type="primary", use_container_width=True
+            "Replay с переопределением", type="primary", use_container_width=True
         )
 
     if _manual_clicked:
@@ -326,7 +326,7 @@ if _target_event is not None:
 # ---------------------------------------------------------------------------
 # Подвал — текущий статус backend
 # ---------------------------------------------------------------------------
-with st.expander("Backend info", expanded=False):
+with st.expander("Информация о backend", expanded=False):
     st.write(f"Тип backend: `{type(_outbox).__name__}`")
     if isinstance(_outbox, FakeOutbox):
         _stats = _run_async(_outbox.stats())

@@ -14,8 +14,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Workflow Cost", "")
-st.header("Workflow Cost Estimation")
+setup_page("Оценка стоимости Workflow", "")
+st.header("Оценка стоимости Workflow")
 
 st.caption(
     "Pre-run estimation для workflow на основе p50/p95 historical "
@@ -33,22 +33,22 @@ except Exception:  # noqa: BLE001
     all_ids = []
 
 workflow_id = st.selectbox(
-    "Workflow ID",
+    "ID Workflow",
     options=all_ids + ["(введите вручную)"] if all_ids else ["(введите вручную)"],
     key="cost_wf",
 )
 if workflow_id == "(введите вручную)":
     workflow_id = st.text_input("workflow_id", value="")
 
-version = st.text_input("Version (опц.)", value="")
+version = st.text_input("Версия (опц.)", value="")
 input_size = st.number_input(
-    "Input payload size (bytes)", min_value=0, value=1024, step=1024
+    "Размер входного payload (байт)", min_value=0, value=1024, step=1024
 )
 sample_period_days = st.slider(
-    "Historical period (days)", min_value=1, max_value=90, value=30
+    "Исторический период (дни)", min_value=1, max_value=90, value=30
 )
 
-if st.button("Estimate", type="primary", disabled=not workflow_id):
+if st.button("Оценить", type="primary", disabled=not workflow_id):
     try:
         import httpx as requests
 
@@ -67,18 +67,18 @@ if st.button("Estimate", type="primary", disabled=not workflow_id):
             st.error(f"HTTP {resp.status_code}: {resp.text}")
         else:
             body = resp.json()
-            st.subheader("Estimate")
-            tab_main, tab_ai = st.tabs(["Overview", "AI breakdown"])
+            st.subheader("Оценка")
+            tab_main, tab_ai = st.tabs(["Обзор", "Разбивка по ИИ"])
             with tab_main:
                 col1, col2, col3 = st.columns(3)
-                col1.metric("p50 duration (ms)", f"{body['p50_duration_ms']:.0f}")
-                col2.metric("p95 duration (ms)", f"{body['p95_duration_ms']:.0f}")
-                col3.metric("Sample size", body["sample_size"])
+                col1.metric("p50 длительность (мс)", f"{body['p50_duration_ms']:.0f}")
+                col2.metric("p95 длительность (мс)", f"{body['p95_duration_ms']:.0f}")
+                col3.metric("Размер выборки", body["sample_size"])
                 col4, col5 = st.columns(2)
                 col4.metric(
-                    "Compute (seconds)", f"{body['estimated_compute_seconds']:.2f}"
+                    "Вычисления (сек)", f"{body['estimated_compute_seconds']:.2f}"
                 )
-                col5.metric("Storage (bytes)", body["estimated_storage_bytes"])
+                col5.metric("Хранилище (байт)", body["estimated_storage_bytes"])
 
             with tab_ai:
                 breakdown = body.get("llm_breakdown")
@@ -88,10 +88,10 @@ if st.button("Estimate", type="primary", disabled=not workflow_id):
                         "знает declaration."
                     )
                 else:
-                    st.metric("Total tokens", breakdown["total_tokens"])
-                    st.metric("Total cost (USD)", f"${breakdown['total_usd']}")
-                    st.subheader("Per model")
+                    st.metric("Всего токенов", breakdown["total_tokens"])
+                    st.metric("Общая стоимость (USD)", f"${breakdown['total_usd']}")
+                    st.subheader("По моделям")
                     for model, cost in breakdown["per_model"].items():
                         st.write(f"**{model}**: ${cost}")
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Estimation failed: {exc}")
+        st.error(f"Ошибка оценки: {exc}")

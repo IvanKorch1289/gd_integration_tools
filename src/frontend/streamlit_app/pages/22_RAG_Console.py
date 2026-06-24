@@ -15,31 +15,31 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.rag import RAGClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("RAG Console", "📄", layout="wide", initial_sidebar_state="expanded")
+setup_page("Консоль RAG", "📄", layout="wide", initial_sidebar_state="expanded")
 
-st.title("RAG Console")
+st.title("Консоль RAG")
 
 client = RAGClient()
 
 with st.expander("Статус RAG"):
     namespace = st.text_input("Namespace (опционально)", "")
-    if st.button("Get stats"):
+    if st.button("Получить статистику"):
         result = client.get_stats(collection=namespace or None)
         st.json(result)
 
 st.divider()
 
 st.subheader("Поиск")
-query = st.text_input("Query", "")
+query = st.text_input("Запрос", "")
 top_k = st.slider("top_k", 1, 20, 5)
 search_ns = st.text_input("Namespace (search)", "")
-if st.button("Search") and query:
+if st.button("Искать") and query:
     result = client.search(query, top_k, namespace=search_ns or None)
     st.json(result)
 
 st.divider()
 
-st.subheader("Upload (PDF / DOCX / MD / TXT)")
+st.subheader("Загрузка (PDF / DOCX / MD / TXT)")
 uploaded = st.file_uploader(
     "Документ", type=["pdf", "docx", "md", "txt"], accept_multiple_files=False
 )
@@ -47,7 +47,7 @@ upload_ns = st.text_input("Namespace (upload)", "default")
 upload_meta = st.text_area(
     "Metadata JSON (опционально)", '{"source": "streamlit"}', height=80
 )
-if st.button("Upload") and uploaded is not None:
+if st.button("Загрузить") and uploaded is not None:
     data: dict[str, str] = {"namespace": upload_ns}
     if upload_meta.strip():
         try:
@@ -66,21 +66,21 @@ if st.button("Upload") and uploaded is not None:
 
 st.divider()
 st.subheader("Augment (с freshness badge)")
-augment_query = st.text_input("Augment query", "", key="augment-q")
+augment_query = st.text_input("Запрос для Augment", "", key="augment-q")
 augment_top_k = st.slider("top_k (augment)", 1, 20, 5, key="augment-tk")
 augment_ns = st.text_input("Namespace (augment)", "", key="augment-ns")
 max_staleness = st.number_input(
-    "Max staleness (hours, 0=без фильтра)", min_value=0.0, value=72.0, step=24.0
+    "Максимальная устарелость (часы, 0=без фильтра)", min_value=0.0, value=72.0, step=24.0
 )
-if st.button("Augment") and augment_query:
+if st.button("Дополнить") and augment_query:
     result = client.augment(
         augment_query, namespace=augment_ns or None, top_k=augment_top_k
     )
     worst = result.get("worst_freshness", "fresh")
     badge = {
-        "fresh": ":green_circle: FRESH",
-        "stale": ":yellow_circle: STALE",
-        "expired": ":red_circle: EXPIRED",
+        "fresh": ":green_circle: СВЕЖИЙ",
+        "stale": ":yellow_circle: УСТАРЕВШИЙ",
+        "expired": ":red_circle: ПРОСРОЧЕН",
     }.get(worst, worst)
-    st.markdown(f"Freshness: {badge}")
+    st.markdown(f"Свежесть: {badge}")
     st.json(result)

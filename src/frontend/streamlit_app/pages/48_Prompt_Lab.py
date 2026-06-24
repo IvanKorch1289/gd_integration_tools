@@ -16,12 +16,12 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Prompt Lab", ":test_tube:")
-st.header(":test_tube: Prompt Lab — A/B versioning")
+st.header(":test_tube: Prompt Lab — A/B версионирование")
 
 client = get_api_client()
 
 tab_list, tab_compare, tab_create = st.tabs(
-    [":mag: Browse prompts", ":bar_chart: A/B Compare", ":pencil2: Create version"]
+    [":mag: Просмотр prompt'ов", ":bar_chart: A/B Сравнение", ":pencil2: Создать версию"]
 )
 
 
@@ -31,24 +31,24 @@ with tab_list:
         names_response.raise_for_status()
         names = names_response.json().get("items", [])
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Failed to fetch prompt names: {exc}")
+        st.error(f"Не удалось получить список prompt'ов: {exc}")
         names = []
 
-    selected_name = st.selectbox("Prompt name", options=[""] + names, key="prompt-name")
+    selected_name = st.selectbox("Имя prompt'а", options=[""] + names, key="prompt-name")
     if selected_name:
         try:
             versions_resp = client.get(f"/admin/prompt-versions/{selected_name}")
             versions_resp.raise_for_status()
             versions = versions_resp.json().get("items", [])
         except Exception as exc:  # noqa: BLE001
-            st.error(f"Failed to fetch versions: {exc}")
+            st.error(f"Не удалось получить версии: {exc}")
             versions = []
 
         for ver in versions:
-            badge = ":green_circle: ACTIVE" if ver["is_active"] else ":white_circle:"
+            badge = ":green_circle: АКТИВНАЯ" if ver["is_active"] else ":white_circle:"
             with st.expander(
                 f"{badge} v{ver['version']} — {ver['model']} "
-                f"(created {ver['created_at'][:19]})",
+                f"(создана {ver['created_at'][:19]})",
                 expanded=ver["is_active"],
             ):
                 col_a, col_b = st.columns([2, 1])
@@ -56,32 +56,32 @@ with tab_list:
                     st.code(ver["body"], language="text")
                 with col_b:
                     st.json(ver["parameters"], expanded=False)
-                    st.metric("Accuracy", ver["metrics"].get("accuracy", "—"))
+                    st.metric("Точность", ver["metrics"].get("accuracy", "—"))
                     st.metric(
-                        "p95 latency, ms", ver["metrics"].get("p95_latency_ms", "—")
+                        "p95 латентность, мс", ver["metrics"].get("p95_latency_ms", "—")
                     )
-                    st.metric("Cost USD/1k", ver["metrics"].get("cost_usd_per_1k", "—"))
+                    st.metric("Стоимость USD/1k", ver["metrics"].get("cost_usd_per_1k", "—"))
                     if not ver["is_active"] and st.button(
-                        f"Activate v{ver['version']}", key=f"act-{ver['version']}"
+                        f"Активировать v{ver['version']}", key=f"act-{ver['version']}"
                     ):
                         try:
                             client.post(
                                 f"/admin/prompt-versions/{selected_name}/activate",
                                 json={"version": ver["version"]},
                             ).raise_for_status()
-                            st.success(f"Activated v{ver['version']}")
+                            st.success(f"v{ver['version']} активирована")
                             st.rerun()
                         except Exception as exc:  # noqa: BLE001
-                            st.error(f"Activate failed: {exc}")
+                            st.error(f"Ошибка активации: {exc}")
 
 
 with tab_compare:
     st.subheader("A/B сравнение версий")
-    compare_name = st.text_input("Prompt name", key="compare-name")
+    compare_name = st.text_input("Имя prompt'а", key="compare-name")
     col_va, col_vb = st.columns(2)
-    version_a = col_va.number_input("Version A", min_value=1, value=1)
-    version_b = col_vb.number_input("Version B", min_value=1, value=2)
-    if st.button("Compare") and compare_name:
+    version_a = col_va.number_input("Версия A", min_value=1, value=1)
+    version_b = col_vb.number_input("Версия B", min_value=1, value=2)
+    if st.button("Сравнить") and compare_name:
         try:
             resp = client.get(
                 f"/admin/prompt-versions/{compare_name}/compare",
@@ -89,31 +89,31 @@ with tab_compare:
             )
             resp.raise_for_status()
             data = resp.json()
-            st.subheader("Metric diffs (B − A)")
+            st.subheader("Разница метрик (B − A)")
             for metric, diff in data.get("metric_diffs", {}).items():
                 color = ":green_circle:" if diff < 0 else ":red_circle:"
                 st.metric(metric, f"{diff:+.4f}", delta_color="inverse")
                 st.write(f"{color} {metric}")
-            with st.expander("Raw comparison"):
+            with st.expander("Сырое сравнение"):
                 st.json(data)
         except Exception as exc:  # noqa: BLE001
-            st.error(f"Compare failed: {exc}")
+            st.error(f"Ошибка сравнения: {exc}")
 
 
 with tab_create:
-    st.subheader("Create new version")
-    new_name = st.text_input("Prompt name (existing or new)", key="new-name")
-    new_body = st.text_area("Prompt body", height=200, key="new-body")
-    new_model = st.text_input("Model", value="gpt-4o-mini", key="new-model")
+    st.subheader("Создать новую версию")
+    new_name = st.text_input("Имя prompt'а (существующий или новый)", key="new-name")
+    new_body = st.text_area("Тело prompt'а", height=200, key="new-body")
+    new_model = st.text_input("Модель", value="gpt-4o-mini", key="new-model")
     new_params_raw = st.text_area(
         "Parameters JSON", value='{"temperature": 0.0, "top_p": 1.0}', height=80
     )
-    new_author = st.text_input("Author (your name)", key="new-author")
-    if st.button("Create"):
+    new_author = st.text_input("Автор (ваше имя)", key="new-author")
+    if st.button("Создать"):
         try:
             params_dict = json.loads(new_params_raw or "{}")
         except json.JSONDecodeError as exc:
-            st.error(f"Invalid JSON: {exc}")
+            st.error(f"Некорректный JSON: {exc}")
             params_dict = None
         if params_dict is not None and new_name and new_body:
             try:
@@ -129,7 +129,7 @@ with tab_create:
                 )
                 resp.raise_for_status()
                 created = resp.json()
-                st.success(f"Created {created['name']}:v{created['version']}")
+                st.success(f"Создано {created['name']}:v{created['version']}")
                 st.json(created)
             except Exception as exc:  # noqa: BLE001
-                st.error(f"Create failed: {exc}")
+                st.error(f"Ошибка создания: {exc}")

@@ -31,8 +31,8 @@ except Exception:  # noqa: BLE001
             return resp.json()
 
 
-setup_page("AI Cost Tracking", "💸")
-st.title("AI Cost Tracking")
+setup_page("Отслеживание затрат AI", "💸")
+st.title("Отслеживание затрат AI")
 st.caption(
     "K4 Sprint 6 Wave 3 — финальный дашборд cost-аналитики "
     "(LangFuse + per-tenant + token trends + alerts)."
@@ -41,12 +41,12 @@ st.caption(
 
 # ─── Filters bar ──────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("Filters")
-    window_hours = st.selectbox("Window (hours)", [1, 6, 24, 72, 168], index=2)
-    tenant_filter = st.text_input("Tenant ID", value="").strip() or None
-    model_filter = st.text_input("Model contains", value="").strip() or None
-    pipeline_filter = st.text_input("Pipeline contains", value="").strip() or None
-    top_n = st.slider("Top N", min_value=5, max_value=100, value=20)
+    st.header("Фильтры")
+    window_hours = st.selectbox("Окно (часы)", [1, 6, 24, 72, 168], index=2)
+    tenant_filter = st.text_input("ID тенанта", value="").strip() or None
+    model_filter = st.text_input("Содержит модель", value="").strip() or None
+    pipeline_filter = st.text_input("Содержит pipeline", value="").strip() or None
+    top_n = st.slider("Топ N", min_value=5, max_value=100, value=20)
 
 
 @st.cache_data(ttl=60)
@@ -110,13 +110,13 @@ elif backend == "error":
 
 
 tab_model, tab_tenant, tab_trend, tab_alerts = st.tabs(
-    ["Usage by model", "Cost by tenant", "Token rate trends", "Alerts active"]
+    ["Использование по моделям", "Стоимость по тенантам", "Тренды токенов", "Активные алерты"]
 )
 
 
 # ─── Section 1: Usage by model ────────────────────────────────────────────
 with tab_model:
-    st.subheader("Usage by model (bar)")
+    st.subheader("Использование по моделям (bar)")
     by_model = data.get("by_model") or []
     if by_model:
         # Streamlit bar_chart: x=model, y=total_cost_usd.
@@ -129,7 +129,7 @@ with tab_model:
 
 # ─── Section 2: Cost by tenant ────────────────────────────────────────────
 with tab_tenant:
-    st.subheader("Cost by tenant (pie + table)")
+    st.subheader("Стоимость по тенантам (pie + table)")
     by_tenant = data.get("by_tenant") or []
     if by_tenant:
         # Streamlit не имеет встроенного pie chart — используем bar_chart
@@ -144,14 +144,14 @@ with tab_tenant:
         with col2:
             st.dataframe(by_tenant)
         total = sum(item.get("total_cost_usd", 0.0) for item in by_tenant)
-        st.metric("Total cost (window)", f"${total:,.4f}")
+        st.metric("Общая стоимость (окно)", f"${total:,.4f}")
     else:
         st.info("Нет данных по тенантам.")
 
 
 # ─── Section 3: Token rate trends ─────────────────────────────────────────
 with tab_trend:
-    st.subheader("Token rate trends (rolling 24h)")
+    st.subheader("Тренды токенов (скользящее 24ч)")
     trends = data.get("token_trends") or []
     if trends:
         chart = {
@@ -166,13 +166,13 @@ with tab_trend:
 
 # ─── Section 4: Alerts active ─────────────────────────────────────────────
 with tab_alerts:
-    st.subheader("Alerts active")
+    st.subheader("Активные алерты")
     alerts = data.get("alerts") or []
     if alerts:
         for idx, alert in enumerate(alerts):
             with st.expander(f"{alert.get('key')} (z>=2σ)"):
                 st.json(alert)
-                if st.button("Acknowledge", key=f"ack-{idx}"):
-                    st.success(f"Acknowledged {alert.get('key')} (audit-event logged)")
+                if st.button("Подтвердить", key=f"ack-{idx}"):
+                    st.success(f"Подтверждено {alert.get('key')} (audit-event записан)")
     else:
         st.info("Активных аномалий не обнаружено.")

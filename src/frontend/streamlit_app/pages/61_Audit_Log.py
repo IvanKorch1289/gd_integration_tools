@@ -15,8 +15,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Audit", ":mag:", layout="wide", initial_sidebar_state="expanded")
-st.header(":mag: Audit Log")
+setup_page("Аудит", ":mag:", layout="wide", initial_sidebar_state="expanded")
+st.header(":mag: Журнал аудита")
 
 client = get_api_client()
 

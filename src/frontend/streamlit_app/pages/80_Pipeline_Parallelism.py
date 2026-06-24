@@ -14,18 +14,18 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Pipeline Parallelism", "🔀")
-st.title("🔀 Pipeline Parallelism Analysis")
+setup_page("Параллелизм конвейера", "🔀")
+st.title("🔀 Анализ параллелизма конвейера")
 st.caption("DAG analyzer для DSL-маршрутов.")
 
 client = get_api_client()
 
 
-tab_route, tab_topn = st.tabs(["🎯 Analyse Route", "📊 Top-N by speedup"])
+tab_route, tab_topn = st.tabs(["🎯 Анализ маршрута", "📊 Top-N по ускорению"])
 
 
 with tab_route:
-    st.subheader("Route Parallelism Report")
+    st.subheader("Отчёт о параллелизме маршрута")
     try:
         routes = client.get("/api/v1/routes")
         names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
@@ -33,32 +33,32 @@ with tab_route:
         names = []
 
     selected = (
-        st.selectbox("Select route", options=names)
+        st.selectbox("Выбрать маршрут", options=names)
         if names
-        else st.text_input("Route name")
+        else st.text_input("Имя маршрута")
     )
 
-    if selected and st.button("Run analysis", type="primary"):
+    if selected and st.button("Запустить анализ", type="primary"):
         try:
             report = client.get(f"/api/v1/admin/routes/{selected}/parallelism-report")
             col1, col2 = st.columns([2, 1])
             with col1:
-                st.markdown("### DAG groups")
+                st.markdown("### Группы DAG")
                 for level_idx, group in enumerate(report.get("parallel_groups", [])):
                     box = "🔵" if len(group) > 1 else "⚪"
-                    st.markdown(f"**Level {level_idx}** {box} — {', '.join(group)}")
-                st.markdown("### Dependencies")
+                    st.markdown(f"**Уровень {level_idx}** {box} — {', '.join(group)}")
+                st.markdown("### Зависимости")
                 for d in report.get("dependencies", []):
                     st.text(f"  {d['from']} ───[{d['via']}]──→ {d['to']}")
 
             with col2:
-                st.metric("Total steps", report.get("total_steps", 0))
+                st.metric("Всего шагов", report.get("total_steps", 0))
                 st.metric(
-                    "Estimated speedup", f"{report.get('estimated_speedup', 1.0):.2f}x"
+                    "Ожидаемое ускорение", f"{report.get('estimated_speedup', 1.0):.2f}x"
                 )
                 hints = report.get("suggested_optimizations", [])
                 if hints:
-                    st.markdown("### Suggestions")
+                    st.markdown("### Предложения")
                     for h in hints:
                         icon = "💡" if h["severity"] == "info" else "⚠️"
                         st.info(f"{icon} **{h['rule']}**: {h['message']}")
@@ -67,13 +67,13 @@ with tab_route:
 
 
 with tab_topn:
-    st.subheader("Top-N Routes by Speedup Potential")
+    st.subheader("Top-N маршрутов по потенциалу ускорения")
     st.info(
         "Эта секция вызовет анализ для всех известных routes и "
         "отсортирует по estimated_speedup (highest impact first)."
     )
     n = st.slider("Top-N", 5, 50, 10)
-    if st.button("Compute"):
+    if st.button("Вычислить"):
         try:
             routes = client.get("/api/v1/routes")
             names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
@@ -88,4 +88,4 @@ with tab_topn:
             for rid, speedup in results[:n]:
                 st.markdown(f"- **{rid}** — `{speedup:.2f}x` speedup")
         except Exception as exc:  # noqa: BLE001
-            st.error(f"Top-N failed: {exc}")
+            st.error(f"Top-N не удался: {exc}")

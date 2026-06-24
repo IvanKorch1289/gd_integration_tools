@@ -17,7 +17,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("Tenants", "🏛️", layout="wide", initial_sidebar_state="expanded")
-st.header("Tenants — admin dashboard")
+st.header("Тенанты — админ-панель")
 st.caption(
     "Per-tenant overview: quotas, billing, SLO, recent audit events. "
     "Источник — `/api/v1/admin/tenants`."
@@ -54,14 +54,14 @@ if selected_id and selected_id != "(нет)":
     cols[1].metric("Rate limit", detail.get("rate_limit", "—"))
     cols[2].metric("RLS", "ON" if detail.get("rls_state", {}).get("enabled") else "OFF")
 
-    with st.expander("Quotas"):
+    with st.expander("Квоты"):
         quotas = detail.get("quotas") or []
         if quotas:
             st.dataframe(quotas, use_container_width=True, hide_index=True)
         else:
             st.write("_(нет данных квот)_")
 
-    with st.expander("Recent audit events"):
+    with st.expander("Последние события аудита"):
         events = detail.get("audit_events_recent") or []
         if events:
             st.dataframe(events, use_container_width=True, hide_index=True)

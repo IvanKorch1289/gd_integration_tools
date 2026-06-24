@@ -36,7 +36,7 @@ st.caption(
 )
 
 # Configuration section
-st.subheader("⚙️ Configuration")
+st.subheader("⚙️ Конфигурация")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -64,7 +64,7 @@ st.caption(
 )
 
 # Live status section
-st.subheader("📊 Live Status")
+st.subheader("📊 Текущий статус")
 
 prometheus_url = os.getenv("PROMETHEUS_URL", "")
 
@@ -94,7 +94,7 @@ if prometheus_url:
                         f"Check runbook below."
                     )
                 else:
-                    st.success("✅ No stuck messages. Worker healthy.")
+                    st.success("✅ Нет застрявших сообщений. Worker работает штатно.")
             else:
                 st.info("No data points yet. Wait for first sample (60s).")
         else:

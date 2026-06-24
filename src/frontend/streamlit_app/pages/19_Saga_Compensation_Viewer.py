@@ -16,8 +16,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Saga Compensation Viewer", "")
-st.header("Saga Compensation Viewer")
+setup_page("Просмотр Saga Compensation", "")
+st.header("Просмотр Saga Compensation")
 st.caption(
     "Timeline saga compensation events (workflow.compensation_* из "
     "workflow_audit). Drill-down по конкретной saga + aggregated stats."
@@ -25,9 +25,9 @@ st.caption(
 
 
 col1, col2, col3 = st.columns(3)
-tenant_id = col1.text_input("Tenant ID (опц.)", value="")
-days_back = col2.slider("Period (days)", 1, 90, 7)
-workflow_id = col3.text_input("Workflow ID (drill-down)", value="")
+tenant_id = col1.text_input("ID тенанта (опц.)", value="")
+days_back = col2.slider("Период (дни)", 1, 90, 7)
+workflow_id = col3.text_input("ID Workflow (drill-down)", value="")
 
 
 @st.cache_data(ttl=60)
@@ -60,20 +60,20 @@ def _fetch_history(wf_id: str) -> list:
     ]
 
 
-st.subheader("Aggregated stats")
+st.subheader("Сводная статистика")
 try:
     stats = _fetch_stats(tenant_id, days_back)
     cols = st.columns(4)
-    cols[0].metric("Total sagas (рассчитано)", stats["total_sagas"])
-    cols[1].metric("Succeeded", stats["succeeded"])
-    cols[2].metric("Failed", stats["failed"])
-    cols[3].metric("Avg duration (ms)", f"{stats['avg_duration_ms']:.0f}")
+    cols[0].metric("Всего saga (рассчитано)", stats["total_sagas"])
+    cols[1].metric("Успешно", stats["succeeded"])
+    cols[2].metric("С ошибкой", stats["failed"])
+    cols[3].metric("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}")
 except Exception as exc:  # noqa: BLE001
     st.warning(f"Не удалось загрузить stats: {exc}")
 
 
 if workflow_id:
-    st.subheader(f"Timeline {workflow_id!r}")
+    st.subheader(f"Таймлайн {workflow_id!r}")
     try:
         events = _fetch_history(workflow_id)
         if not events:

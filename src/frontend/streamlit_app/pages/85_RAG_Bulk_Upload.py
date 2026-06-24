@@ -19,7 +19,7 @@ from src.frontend.streamlit_app.api_clients import K4APIClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page("RAG Bulk Upload", "📤")
-st.title("📤 RAG Bulk Upload")
+st.title("📤 RAG — массовая загрузка в RAG")
 
 FEATURE_FLAG_NAME = "multipart_rag_ingest"
 
@@ -70,7 +70,7 @@ with tab_file:
                 f"  • `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)"
             )
 
-        if st.button("Ingest Files", type="primary", key="ingest_files"):
+        if st.button("Загрузить файлы", type="primary", key="ingest_files"):
             documents = []
             for f in uploaded_files:
                 try:
@@ -84,7 +84,7 @@ with tab_file:
                 documents.append({"content": content, "metadata": metadata})
 
             if documents:
-                with st.spinner("Ingesting..."):
+                with st.spinner("Загрузка..."):
                     try:
                         result = client._request(
                             "POST",
@@ -94,10 +94,10 @@ with tab_file:
                                 "collection": file_collection,
                             },
                         )
-                        st.success("Bulk ingest completed!")
+                        st.success("Массовая загрузка завершена!")
                         st.json(result)
                     except Exception as exc:  # noqa: BLE001
-                        st.error(f"Bulk ingest failed: {exc}")
+                        st.error(f"Ошибка загрузки: {exc}")
 
 # ─── Tab 2: JSON Input ───────────────────────────────────────────────────────
 
@@ -133,9 +133,9 @@ with tab_json:
 
     col1, col2 = st.columns([1, 4])
     with col1:
-        parse_btn = st.button("Validate JSON", type="secondary")
+        parse_btn = st.button("Проверить JSON", type="secondary")
     with col2:
-        ingest_btn = st.button("Ingest JSON", type="primary")
+        ingest_btn = st.button("Загрузить JSON", type="primary")
 
     if parse_btn:
         try:
@@ -158,11 +158,11 @@ with tab_json:
         try:
             documents = json.loads(json_input)
             if not isinstance(documents, list):
-                st.error("Input must be a JSON array of documents")
+                st.error("Входные данные должны быть JSON-массивом документов")
             elif len(documents) == 0:
-                st.error("Array is empty")
+                st.error("Массив пуст")
             else:
-                with st.spinner("Ingesting..."):
+                with st.spinner("Загрузка..."):
                     try:
                         result = client._request(
                             "POST",
@@ -172,18 +172,18 @@ with tab_json:
                                 "collection": json_collection,
                             },
                         )
-                        st.success("Bulk ingest completed!")
+                        st.success("Массовая загрузка завершена!")
                         st.json(result)
                     except Exception as exc:  # noqa: BLE001
-                        st.error(f"Bulk ingest failed: {exc}")
+                        st.error(f"Ошибка загрузки: {exc}")
         except json.JSONDecodeError as exc:
             st.error(f"JSON decode error: {exc}")
 
 # ─── Status Section ─────────────────────────────────────────────────────────
 
 st.divider()
-st.subheader("Recent Ingest Tasks")
-if st.button("Refresh Status", key="refresh_status"):
+st.subheader("Последние задачи ingest")
+if st.button("Обновить статус", key="refresh_status"):
     try:
         recent = client._request(
             "GET", "/api/v1/rag/ingest/recent", params={"limit": 5}
@@ -196,6 +196,6 @@ if st.button("Refresh Status", key="refresh_status"):
                 ):
                     st.json(item)
         else:
-            st.info("No recent ingest tasks found.")
+            st.info("Нет последних задач ingest.")
     except Exception as exc:  # noqa: BLE001
         st.warning(f"Could not fetch recent tasks: {exc}")

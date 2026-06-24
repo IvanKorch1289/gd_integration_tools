@@ -21,11 +21,11 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("EIP Coverage Dashboard", "📊")
+setup_page("Покрытие EIP", "📊")
 
-st.title("📊 EIP Coverage Dashboard")
+st.title("📊 Покрытие EIP")
 st.caption(
-    "Sprint 63 W4 (docs/audit) — Apache Camel EIP patterns coverage in gd_integration_tools"
+    "Sprint 63 W4 (docs/audit) — покрытие Apache Camel EIP patterns в gd_integration_tools"
 )
 
 # Канонические 10 EIP patterns (Apache Camel). Mapping к нашему коду.
@@ -114,8 +114,8 @@ def _render_coverage_table() -> None:
 
 
 def _render_descriptions() -> None:
-    """Render details of each pattern."""
-    st.subheader("Pattern details")
+    """Рендер деталей каждого паттерна."""
+    st.subheader("Детали паттернов")
     for pattern, info in EIP_PATTERN_MAP.items():
         with st.expander(f"{pattern} — {info['description']}"):
             st.write(f"**Class:** `{info['class_path']}`")
@@ -124,7 +124,7 @@ def _render_descriptions() -> None:
 
 def _render_s63_audit() -> None:
     """S63 W2-W3 audit summary."""
-    st.subheader("Audit: ClaimCheck + Transactional/ProcessManager")
+    st.subheader("Аудит: ClaimCheck + Transactional/ProcessManager")
     st.markdown(
         """
         **S63 W2.1 (W2.1) — ClaimCheck dedup**

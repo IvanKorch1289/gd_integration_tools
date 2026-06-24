@@ -35,11 +35,11 @@ setup_page("Route Debugger", ":mag:", layout="wide", initial_sidebar_state="expa
 # wrapper не expose get_dsl_route_traces (lazy domain dispatch).
 client = DSLRoutesClient()  # type: ignore[abstract]
 _ = get_api_client()  # warm-up singleton init (back-compat)
-st.header("Route Debugger — visual trace")
+st.header("Route Debugger — визуальная трассировка")
 st.caption(
-    "Timeline процессоров с timing, status, input/output snapshot. "
-    "S44 W1: real data через /api/v1/admin/dsl-routes/{id}/traces. "
-    "Fallback на demo data если backend unavailable."
+    "Таймлайн процессоров с timing, status, input/output snapshot. "
+    "S44 W1: реальные данные через /api/v1/admin/dsl-routes/{id}/traces. "
+    "Fallback на demo data, если backend недоступен."
 )
 
 # ──────────── Demo / fallback data ────────────
@@ -93,7 +93,7 @@ def _fetch_traces(route_id: str, limit: int = 100) -> tuple[list[dict[str, Any]]
         # Backend returned empty list — это легитимный ответ.
         return [], "backend"
     except Exception as exc:  # noqa: BLE001
-        st.warning(f"Backend unavailable ({exc!r}), показано demo data.")
+        st.warning(f"Backend недоступен ({exc!r}), показаны demo data.")
         return DEMO_TRACE, "demo"
 
 
@@ -101,19 +101,19 @@ def _fetch_traces(route_id: str, limit: int = 100) -> tuple[list[dict[str, Any]]
 
 col1, col2, col3 = st.columns([2, 1, 1])  # type: ignore[misc]
 route_filter = col1.text_input(
-    "Route ID", placeholder="orders.* или конкретный ID", value="demo.hello"
+    "ID маршрута", placeholder="orders.* или конкретный ID", value="demo.hello"
 )
 limit_input = col2.number_input(
-    "Limit", min_value=10, max_value=1000, value=100, step=10
+    "Лимит", min_value=10, max_value=1000, value=100, step=10
 )
-reload = col3.button("Reload", type="primary")
+reload = col3.button("Обновить", type="primary")
 
 # ──────────── Fetch + render ────────────
 
 events, source = _fetch_traces(route_filter, limit=int(limit_input))
 if source == "backend" and not events:
     st.info(
-        f"Маршрут {route_filter!r} ещё не выполнялся или buffer очищен "
+        f"Маршрут {route_filter!r} ещё не выполнялся или буфер очищен "
         "(post-restart). Persistent storage = TD-026 (S45+ D)."
     )
 
@@ -122,11 +122,11 @@ if source == "backend" and not events:
 # the same keys — единый pipeline.
 filtered = list(events)
 if source == "demo":
-    st.caption(":test_tube: Demo data — backend trace buffer пуст.")
+    st.caption(":test_tube: Demo data — буфер трассировки backend пуст.")
 
-st.subheader(f"Timeline ({len(filtered)} events)")
+st.subheader(f"Таймлайн ({len(filtered)} событий)")
 if not filtered:
-    st.info("No trace events to display.")
+    st.info("Нет событий трассировки для отображения.")
 else:
     for event in filtered:
         proc = event.get("processor_name", "?")
@@ -140,10 +140,10 @@ else:
             c1, c2, c3, c4 = st.columns([2, 3, 2, 1])  # type: ignore[misc]
             c1.code(str(ts), language=None)
             c2.markdown(f"**{proc}** (`{ptype}`)")
-            c3.markdown(f"`{phase}` · {duration} ms")
+            c3.markdown(f"`{phase}` · {duration} мс")
             color = "🟢" if status == "ok" else "🔴"
             c4.markdown(f"{color} {status}")
-            with st.expander(f"Details — {proc}", expanded=False):
+            with st.expander(f"Детали — {proc}", expanded=False):
                 payload: dict[str, Any] = {
                     "ts": ts,
                     "phase": phase,
@@ -156,7 +156,7 @@ else:
 
 # ──────────── Summary stats ────────────
 
-st.subheader("Summary")
+st.subheader("Сводка")
 if filtered:
     total_duration: float = sum(
         float(e.get("duration_ms") or 0.0)
@@ -164,11 +164,11 @@ if filtered:
     )
     error_count: int = sum(1 for e in filtered if e.get("error"))
     cols = st.columns(3)
-    cols[0].metric("Total events", str(len(filtered)))  # type: ignore[union-attr]
-    cols[1].metric("Σ duration", f"{total_duration:.1f} ms")  # type: ignore[union-attr]
-    cols[2].metric("Errors", str(error_count))  # type: ignore[union-attr]
+    cols[0].metric("Всего событий", str(len(filtered)))  # type: ignore[union-attr]
+    cols[1].metric("Σ длительность", f"{total_duration:.1f} мс")  # type: ignore[union-attr]
+    cols[2].metric("Ошибок", str(error_count))  # type: ignore[union-attr]
 else:
-    st.caption("No events to summarize.")
+    st.caption("Нет событий для сводки.")
 
 st.caption(
     "S42 W4 baseline + S44 W1 backend wiring. "

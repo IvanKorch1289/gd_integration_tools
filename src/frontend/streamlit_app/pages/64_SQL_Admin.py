@@ -12,8 +12,8 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("SQL", ":floppy_disk:", layout="wide", initial_sidebar_state="expanded")
-st.header(":floppy_disk: SQL Admin Console")
+setup_page("SQL Admin", ":floppy_disk:", layout="wide", initial_sidebar_state="expanded")
+st.header(":floppy_disk: Консоль админа SQL")
 
 st.warning(
     "Разрешены **только SELECT-запросы** с автоматическим LIMIT 1000. "
@@ -23,8 +23,8 @@ st.warning(
 client = get_api_client()
 
 default_query = "SELECT schemaname, tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename"
-sql = st.text_area("SQL", value=default_query, height=180)
-limit = st.number_input("LIMIT", min_value=1, max_value=10_000, value=1000, step=100)
+sql = st.text_area("SQL-запрос", value=default_query, height=180)
+limit = st.number_input("Лимит (LIMIT)", min_value=1, max_value=10_000, value=1000, step=100)
 
 if st.button("Выполнить", type="primary"):
     try:

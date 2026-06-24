@@ -12,8 +12,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Workflow Versioning", "")
-st.header("Workflow Versioning")
+setup_page("Версионирование Workflow", "")
+st.header("Версионирование Workflow")
 st.caption(
     "Управление WorkflowVersionRegistry: pin default / rollback / "
     "running executions counter."
@@ -33,10 +33,10 @@ except Exception as exc:  # noqa: BLE001
 if not all_ids:
     st.info("Реестр пуст. Зарегистрируйте workflow через @workflow_versioned('X.Y.Z').")
 else:
-    selected = st.selectbox("Workflow ID", all_ids)
+    selected = st.selectbox("ID Workflow", all_ids)
     history = registry.history(selected)
 
-    st.subheader(f"History {selected!r}")
+    st.subheader(f"История {selected!r}")
     if not history:
         st.write("(пусто)")
     else:
@@ -45,7 +45,7 @@ else:
             cols = st.columns([3, 1, 1])
             cols[0].write(f"**v{v.semver}** {marker}")
             if not v.default_version:
-                if cols[1].button("Pin as default", key=f"pin_{v.semver}"):
+                if cols[1].button("Сделать default", key=f"pin_{v.semver}"):
                     try:
                         import httpx as requests
 
@@ -62,19 +62,19 @@ else:
                             timeout=5,
                         )
                         if resp.status_code == 200:
-                            st.success(f"Pinned v{v.semver} as default")
+                            st.success(f"v{v.semver} закреплена как default")
                             st.rerun()
                         else:
                             st.error(f"HTTP {resp.status_code}: {resp.text}")
                     except Exception as exc:  # noqa: BLE001
-                        st.error(f"Pin failed: {exc}")
+                        st.error(f"Ошибка закрепления: {exc}")
             else:
                 cols[1].write("")
             cols[2].write(f"major={v.major}")
 
         if len(history) >= 2:
             st.divider()
-            if st.button("Rollback to previous version", type="primary"):
+            if st.button("Откатить на предыдущую версию", type="primary"):
                 try:
                     import httpx as requests
 
@@ -90,17 +90,17 @@ else:
                     if resp.status_code == 200:
                         body = resp.json()
                         st.success(
-                            f"Rolled back. New default: "
+                            f"Откат выполнен. Новый default: "
                             f"v{body['new_default']['semver']}"
                         )
                         st.rerun()
                     else:
                         st.error(f"HTTP {resp.status_code}: {resp.text}")
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"Rollback failed: {exc}")
+                    st.error(f"Ошибка отката: {exc}")
 
     st.divider()
-    st.subheader("Running executions per version")
+    st.subheader("Запущенные исполнения по версиям")
     try:
         import httpx as requests
 
@@ -122,4 +122,4 @@ else:
                     "count_running_per_version."
                 )
     except Exception as exc:  # noqa: BLE001
-        st.warning(f"Running count unavailable: {exc}")
+        st.warning(f"Счётчик запущенных недоступен: {exc}")

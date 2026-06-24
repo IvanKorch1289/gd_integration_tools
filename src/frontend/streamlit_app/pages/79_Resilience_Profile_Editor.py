@@ -12,23 +12,23 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (TD-008)
 
-setup_page("Resilience Profile Editor", "⚙️")
-st.title("⚙️ Resilience Profile Editor")
+setup_page("Редактор профилей устойчивости", "⚙️")
+st.title("⚙️ Редактор профилей устойчивости")
 st.caption("Per-tenant override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
 
 client = get_api_client()
 
 
 with st.sidebar:
-    tenant_id = st.text_input("Tenant ID (empty = global)", value="")
+    tenant_id = st.text_input("ID тенанта (пусто = глобально)", value="")
 
 tab_list, tab_edit, tab_compare = st.tabs(
-    ["📋 List Profiles", "✏️ Edit Profile", "🔍 Compare"]
+    ["📋 Список профилей", "✏️ Редактировать профиль", "🔍 Сравнить"]
 )
 
 
 with tab_list:
-    st.subheader("All Resilience Profiles")
+    st.subheader("Все профили устойчивости")
     try:
         params = {"tenant_id": tenant_id} if tenant_id else {}
         data = client.get("/api/v1/admin/resilience-profiles", params=params)
@@ -43,22 +43,22 @@ with tab_list:
 
 
 with tab_edit:
-    st.subheader("Create / Edit Profile")
-    name = st.text_input("Profile name", placeholder="например: external_api_default")
+    st.subheader("Создать / Редактировать профиль")
+    name = st.text_input("Имя профиля", placeholder="например: external_api_default")
 
     st.markdown("### Retry policy")
     col1, col2, col3 = st.columns(3)
-    max_attempts = col1.slider("Max attempts", 1, 10, 3)
-    base_delay_ms = col2.slider("Base delay (ms)", 10, 5000, 100)
-    exp_base = col3.slider("Exp base", 1.1, 3.0, 2.0)
+    max_attempts = col1.slider("Макс. попыток", 1, 10, 3)
+    base_delay_ms = col2.slider("Базовая задержка (мс)", 10, 5000, 100)
+    exp_base = col3.slider("База экспоненты", 1.1, 3.0, 2.0)
 
     st.markdown("### Circuit Breaker")
     col1, col2 = st.columns(2)
-    failure_threshold = col1.slider("Failure threshold", 3, 50, 5)
-    recovery_timeout_s = col2.slider("Recovery timeout (s)", 10, 3600, 30)
+    failure_threshold = col1.slider("Порог ошибок", 3, 50, 5)
+    recovery_timeout_s = col2.slider("Таймаут восстановления (с)", 10, 3600, 30)
 
-    st.markdown("### Rate Limit (optional)")
-    enable_rl = st.checkbox("Enable rate limit")
+    st.markdown("### Rate Limit (опционально)")
+    enable_rl = st.checkbox("Включить rate limit")
     rl_rps = slider_filter(
         "RPS", min_value=1, max_value=10000, default=100, key="rl_rps"
     )
@@ -66,8 +66,8 @@ with tab_edit:
         "Burst", min_value=1, max_value=100, default=20, key="rl_burst"
     )
 
-    st.markdown("### Bulkhead (optional)")
-    enable_bh = st.checkbox("Enable bulkhead")
+    st.markdown("### Bulkhead (опционально)")
+    enable_bh = st.checkbox("Включить bulkhead")
     bh_high = slider_filter(
         "High watermark", min_value=10, max_value=1000, default=100, key="bh_high"
     )
@@ -75,9 +75,9 @@ with tab_edit:
         "Low watermark", min_value=5, max_value=500, default=50, key="bh_low"
     )
 
-    if st.button("💾 Save Profile", type="primary"):
+    if st.button("💾 Сохранить профиль", type="primary"):
         if not name.strip():
-            st.error("Profile name is required.")
+            st.error("Имя профиля обязательно.")
         else:
             payload = {
                 "retry": {
@@ -108,14 +108,14 @@ with tab_edit:
                     json=payload,
                     params=params,
                 )
-                st.success(f"Profile '{name}' saved.")
+                st.success(f"Профиль '{name}' сохранён.")
             except Exception as exc:  # noqa: BLE001
-                st.error(f"Save failed: {exc}")
+                st.error(f"Сохранение не удалось: {exc}")
 
 
 with tab_compare:
-    st.subheader("Compare global vs tenant override")
-    compare_name = st.text_input("Profile name to compare")
+    st.subheader("Сравнение глобального и тенантного override")
+    compare_name = st.text_input("Имя профиля для сравнения")
     if compare_name:
         try:
             global_p = client.get(f"/api/v1/admin/resilience-profiles/{compare_name}")
@@ -129,13 +129,13 @@ with tab_compare:
             )
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown("**Global**")
+                st.markdown("**Глобальный**")
                 st.json(global_p)
             with col2:
-                st.markdown("**Tenant**" if tenant_id else "**(no tenant)**")
+                st.markdown("**Тенант**" if tenant_id else "**(нет тенанта)**")
                 if tenant_p:
                     st.json(tenant_p)
                 else:
                     st.info("Tenant override отсутствует.")
         except Exception as exc:  # noqa: BLE001
-            st.error(f"Compare failed: {exc}")
+            st.error(f"Сравнение не удалось: {exc}")

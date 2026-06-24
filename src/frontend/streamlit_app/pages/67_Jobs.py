@@ -5,17 +5,17 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Jobs", ":gear:")
-st.header("Background Jobs")
+setup_page("Задачи", ":gear:")
+st.header("Фоновые задачи")
 
 client = get_api_client()
 
-tab1, tab2, tab3 = st.tabs(["Scheduled", "Queue Depths", "Webhooks"])
+tab1, tab2, tab3 = st.tabs(["Запланированные", "Глубина очередей", "Webhooks"])
 
 # ─────────── Scheduled Jobs (APScheduler) ───────────
 
 with tab1:
-    st.subheader("APScheduler Jobs")
+    st.subheader("Задачи APScheduler")
     try:
         jobs = client._request("GET", "/api/v1/admin/scheduler/jobs")
     except Exception as exc:
@@ -34,7 +34,7 @@ with tab1:
 # ─────────── Queue Depths ───────────
 
 with tab2:
-    st.subheader("Queue Depths (RabbitMQ/Kafka)")
+    st.subheader("Глубина очередей (RabbitMQ/Kafka)")
     try:
         queues = client._request("GET", "/api/v1/admin/queue/stats")
     except Exception:
@@ -51,7 +51,7 @@ with tab2:
 # ─────────── Scheduled Webhooks ───────────
 
 with tab3:
-    st.subheader("Scheduled Webhooks")
+    st.subheader("Запланированные webhooks")
     try:
         hooks = client._request("GET", "/api/v1/webhooks/scheduled")
     except Exception:
@@ -77,9 +77,9 @@ with tab3:
         with st.form("schedule_webhook"):
             url = st.text_input("URL")
             payload = st.text_area("Payload (JSON)", value="{}")
-            cron = st.text_input("Cron (optional)", placeholder="*/5 * * * *")
-            delay = st.number_input("Delay seconds (optional)", min_value=0, value=0)
-            if st.form_submit_button("Schedule"):
+            cron = st.text_input("Cron (опционально)", placeholder="*/5 * * * *")
+            delay = st.number_input("Задержка, сек (опционально)", min_value=0, value=0)
+            if st.form_submit_button("Запланировать"):
                 import json
 
                 try:

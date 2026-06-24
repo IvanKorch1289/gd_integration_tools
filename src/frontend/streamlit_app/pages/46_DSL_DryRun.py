@@ -14,12 +14,12 @@ setup_page("DSL Dry-Run", ":fast_forward:")
 st.header("DSL Dry-Run")
 st.caption(
     "Sprint 10 K3 W4: вставь YAML маршрута, sample JSON-payload и нажми "
-    "'Execute (dry-run)' — посмотришь waterfall с per-step latency."
+    "'Выполнить (dry-run)' — посмотришь waterfall с per-step latency."
 )
 
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("YAML route")
+    st.subheader("YAML маршрута")
     yaml_text = st.text_area(
         "DSL YAML",
         height=400,
@@ -35,9 +35,9 @@ with col1:
         key="yaml_input",
     )
 with col2:
-    st.subheader("Sample payload")
+    st.subheader("Пример payload")
     payload_text = st.text_area(
-        "Sample JSON (опционально)",
+        "Пример JSON (опционально)",
         height=400,
         value='{"customer_id": 123, "amount": 1000}',
         key="payload_input",
@@ -45,7 +45,7 @@ with col2:
 
 col_run, col_seed = st.columns([3, 1])
 with col_run:
-    run = st.button("▶ Execute (dry-run)", type="primary")
+    run = st.button("▶ Выполнить (dry-run)", type="primary")
 with col_seed:
     seed = st.number_input("Seed", value=0, step=1)
 
@@ -53,10 +53,10 @@ if run:
     try:
         route = _yaml.safe_load(yaml_text) or {}
     except _yaml.YAMLError as exc:
-        st.error(f"YAML parse error: {exc}")
+        st.error(f"Ошибка парсинга YAML: {exc}")
         st.stop()
     if not isinstance(route, dict):
-        st.error("YAML root должен быть mapping")
+        st.error("Корень YAML должен быть mapping")
         st.stop()
 
     payload = None
@@ -64,18 +64,18 @@ if run:
         try:
             payload = json.loads(payload_text)
         except json.JSONDecodeError as exc:
-            st.error(f"JSON parse error: {exc}")
+            st.error(f"Ошибка парсинга JSON: {exc}")
             st.stop()
 
     result = DSLRoutesClient().dry_run(route, sample_payload=payload, seed=int(seed))
 
     if result.get("error"):
-        st.error(f"Dry-run error: {result['error']}")
+        st.error(f"Ошибка dry-run: {result['error']}")
         st.stop()
 
     st.success(
-        f"Dry-run завершён за {result.get('total_ms', 0):.2f}ms "
-        f"({len(result.get('steps', []))} steps)"
+        f"Dry-run завершён за {result.get('total_ms', 0):.2f}мс "
+        f"({len(result.get('steps', []))} шагов)"
     )
 
     # Waterfall (ASCII).
@@ -84,10 +84,10 @@ if run:
     if waterfall:
         st.code("\n".join(waterfall), language="text")
     else:
-        st.info("No waterfall data")
+        st.info("Нет данных waterfall")
 
     # Таблица per-step.
-    st.subheader("Per-step latency")
+    st.subheader("Латентность по шагам")
     rows = [
         {
             "idx": s.get("index"),
@@ -100,12 +100,12 @@ if run:
     ]
     dataframe_view(rows, hide_index=True)
 
-    with st.expander("Raw JSON result"):
+    with st.expander("Сырой JSON результат"):
         st.json(result)
 
 st.divider()
 st.markdown(
-    "**Note:** Dry-run не делает реальных side-effects — latency симулирована "
-    "профилем для каждого step-типа. Реальный запуск через "
+    "**Замечание:** Dry-run не делает реальных side-effects — латентность симулирована "
+    "профилем для каждого типа шага. Реальный запуск через "
     "`POST /api/v1/admin/dsl/playground` или `make simulate`."
 )
