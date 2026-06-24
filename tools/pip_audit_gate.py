@@ -13,13 +13,11 @@ from pathlib import Path
 
 IGNORED_VULNS: frozenset[str] = frozenset(
     [
-        # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache now uses JSONDisk
-        # instead of default pickle-based Disk (s19 diskcache upgrade).
-        # pip-audit checks package VERSION, not usage pattern — CVE stays in ignore.
-        "CVE-2025-69872",  # diskcache: no fix version available (MITIGATED via JSONDisk)
         # S29 W2 carryover — dependency constraint, NOT unfixable:
         "PYSEC-2026-87",  # lxml: fix 6.1.0 available but no Python 3.14 wheels
         # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
+        # NOTE: CVE-2025-69872 (diskcache) REMOVED in s170 — diskcache
+        # dependency eliminated; replaced with custom JSONDisk cache.
     ]
 )
 

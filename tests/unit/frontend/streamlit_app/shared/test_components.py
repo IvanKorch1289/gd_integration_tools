@@ -117,19 +117,19 @@ def test_metric_row_single() -> None:
 # ── dataframe_view ──────────────────────────────────────────────────
 
 
-def test_dataframe_view_default_use_container_width() -> None:
-    """dataframe_view auto-sets use_container_width=True by default."""
+def test_dataframe_view_default_width_stretch() -> None:
+    """dataframe_view auto-sets width='stretch' by default."""
     df = MagicMock(name="DataFrame")
     dataframe_view(df)
-    _streamlit_mock.dataframe.assert_called_once_with(df, use_container_width=True)
+    _streamlit_mock.dataframe.assert_called_once_with(df, width="stretch")
 
 
-def test_dataframe_view_respects_explicit_kwarg() -> None:
-    """dataframe_view allows override of use_container_width."""
+def test_dataframe_view_respects_explicit_width() -> None:
+    """dataframe_view allows override of width."""
     df = MagicMock(name="DataFrame")
-    dataframe_view(df, use_container_width=False, height=300)
+    dataframe_view(df, width="content", height=300)
     _streamlit_mock.dataframe.assert_called_once_with(
-        df, use_container_width=False, height=300
+        df, width="content", height=300
     )
 
 
@@ -140,4 +140,4 @@ def test_dataframe_view_forwards_extra_kwargs() -> None:
     call_kwargs = _streamlit_mock.dataframe.call_args.kwargs
     assert call_kwargs["hide_index"] is True
     assert call_kwargs["column_config"] == {"a": "A"}
-    assert call_kwargs["use_container_width"] is True
+    assert call_kwargs["width"] == "stretch"

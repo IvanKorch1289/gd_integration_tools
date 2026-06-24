@@ -95,5 +95,5 @@ def dataframe_view(df: pd.DataFrame, **kwargs: Any) -> None:
         df: pandas DataFrame to display.
         **kwargs: Forwarded to st.dataframe.
     """
-    kwargs.setdefault("use_container_width", True)
+    kwargs.setdefault("width", "stretch")
     st.dataframe(df, **kwargs)
