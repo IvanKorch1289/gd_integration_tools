@@ -53,9 +53,11 @@ def upgrade() -> None:
 
     # 2. Trigger на INSERT; срабатывает PER ROW.
     # Только новые события — update/delete не триггерят NOTIFY.
+    # S171: split into 2 statements — asyncpg не поддерживает multi-statement
+    # prepared statements (cannot insert multiple commands into a prepared statement).
+    op.execute("DROP TRIGGER IF EXISTS trg_outbox_notify ON outbox_messages;")
     op.execute(
         """
-        DROP TRIGGER IF EXISTS trg_outbox_notify ON outbox_messages;
         CREATE TRIGGER trg_outbox_notify
         AFTER INSERT ON outbox_messages
         FOR EACH ROW

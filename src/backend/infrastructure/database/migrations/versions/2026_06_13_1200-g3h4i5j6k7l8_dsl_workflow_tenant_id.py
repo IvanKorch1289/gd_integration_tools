@@ -1,6 +1,6 @@
 """add dsl_snapshots.tenant_id + workflow_events.tenant_id columns (S101 W4, V2 P0 #6 continue)
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: g3h4i5j6k7l8
 Revises: f8a9b0c1d2e3
 Create Date: 2026-06-13 12:00:00.000000
 
@@ -38,7 +38,7 @@ from typing import Sequence, Union
 
 from alembic import op
 
-revision: str = "a1b2c3d4e5f6"
+revision: str = "g3h4i5j6k7l8"
 down_revision: Union[str, None] = "f8a9b0c1d2e3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

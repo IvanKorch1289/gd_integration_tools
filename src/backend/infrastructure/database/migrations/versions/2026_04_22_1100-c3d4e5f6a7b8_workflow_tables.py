@@ -75,7 +75,6 @@ $$ LANGUAGE plpgsql;
 """
 
 NOTIFY_TRIGGER_SQL = """
-DROP TRIGGER IF EXISTS trg_workflow_notify ON workflow_events;
 CREATE TRIGGER trg_workflow_notify
 AFTER INSERT ON workflow_events
 FOR EACH ROW EXECUTE FUNCTION fn_workflow_notify();
@@ -235,6 +234,9 @@ def upgrade() -> None:
     )
 
     # --- pg_notify trigger ------------------------------------------------
+    # S171: split DROP + CREATE — asyncpg не поддерживает multi-statement
+    # prepared statements.
+    op.execute("DROP TRIGGER IF EXISTS trg_workflow_notify ON workflow_events;")
     op.execute(NOTIFY_FN_SQL)
     op.execute(NOTIFY_TRIGGER_SQL)
 
