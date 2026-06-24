@@ -80,7 +80,7 @@ with tab_switch:
     )
     if st.button("Применить переключение", type="primary"):
         if not reason.strip():
-            st.error("Reason обязателен для compliance.")
+            st.error("Поле reason обязательно для compliance.")
         else:
             try:
                 client.patch(
@@ -112,4 +112,4 @@ with tab_history:
                         st.caption(t["reason"])
                     st.divider()
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Не удалось получить historic transitions: {exc}")
+        st.error(f"Не удалось получить историю переходов режима: {exc}")

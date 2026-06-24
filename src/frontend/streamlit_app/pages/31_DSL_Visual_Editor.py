@@ -82,7 +82,7 @@ if "meta_route" not in st.session_state:
     st.session_state.meta_route = {
         "route_id": "my.route",
         "source": "internal:my",
-        "description": "New route",
+        "description": "Новый маршрут",
     }
 
 
@@ -527,7 +527,7 @@ with tab_canvas:
                         if is_selected:
                             c1.markdown("👉")
                         else:
-                            if c1.button(f"#{i + 1}", key=f"sel_{i}", help="Select"):
+                            if c1.button(f"#{i + 1}", key=f"sel_{i}", help="Выбрать"):
                                 st.session_state.selected_step_index = i
                                 st.rerun()
 
@@ -538,7 +538,7 @@ with tab_canvas:
 
                         col_up, col_down, col_del = c3, c4, st.columns(2)[1]
                         if col_up.button(
-                            "⬆️", key=f"up_{i}", help="Move up", disabled=i == 0
+                            "⬆️", key=f"up_{i}", help="Переместить вверх", disabled=i == 0
                         ):
                             (
                                 st.session_state.canvas_steps[i - 1],
@@ -552,7 +552,7 @@ with tab_canvas:
                         if col_down.button(
                             "⬇️",
                             key=f"down_{i}",
-                            help="Move down",
+                            help="Переместить вниз",
                             disabled=i == len(st.session_state.canvas_steps) - 1,
                         ):
                             (
@@ -564,7 +564,7 @@ with tab_canvas:
                             )
                             sync_yaml()
                             st.rerun()
-                        if col_del.button("🗑️", key=f"del_{i}", help="Delete"):
+                        if col_del.button("🗑️", key=f"del_{i}", help="Удалить"):
                             st.session_state.canvas_steps.pop(i)
                             if st.session_state.selected_step_index == i:
                                 st.session_state.selected_step_index = None
@@ -595,12 +595,12 @@ with tab_canvas:
                     load_pipeline_from_yaml(st.session_state.yaml_output)
                     st.success("✅ YAML валиден!")
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"❌ Invalid: {exc}")
+                    st.error(f"❌ Невалидно: {exc}")
 
         with col_down:
             yaml_bytes = st.session_state.yaml_output.encode("utf-8")
             st.download_button(
-                "📥 Download YAML",
+                "📥 Скачать YAML",
                 data=yaml_bytes,
                 file_name=f"{st.session_state.meta_route.get('route_id', 'route')}.yaml",
                 mime="text/yaml",

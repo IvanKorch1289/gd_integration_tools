@@ -80,8 +80,8 @@ def render_step_palette():
     """
 
     st.sidebar.markdown("---")
-    st.sidebar.subheader("📦 Step Palette")
-    st.sidebar.markdown("Drag a processor to the pipeline area below, or click to add:")
+    st.sidebar.subheader("📦 Палитра шагов")
+    st.sidebar.markdown("Перетащите процессор в область конвейера ниже, или нажмите чтобы добавить:")
     st.components.v1.html(html, height=400, scrolling=True)
 
     # Show clickable buttons as alternative to drag

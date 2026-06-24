@@ -25,10 +25,10 @@ def render_properties_panel(client: Any) -> None:
         client: API client instance (e.g., ``get_api_client()``) для
             ``create_dsl_route`` / ``update_dsl_route`` calls.
     """
-    st.subheader("⚙️ Properties")
+    st.subheader("⚙️ Свойства")
 
     if st.session_state.selected_step_index is None:
-        st.info("Select a step on canvas to edit its properties.")
+        st.info("Выберите шаг на канвасе, чтобы редактировать его свойства.")
     else:
         idx = st.session_state.selected_step_index
         if idx >= len(st.session_state.canvas_steps):
@@ -39,7 +39,7 @@ def render_properties_panel(client: Any) -> None:
         step_type = step["type"]
         icon = PROCESSOR_ICONS.get(step_type, "🔧")
 
-        st.markdown(f"**{icon} {step_type}** — Step #{idx + 1}")
+        st.markdown(f"**{icon} {step_type}** — Шаг №{idx + 1}")
 
         available_params = VISUAL_PROCESSORS.get(step_type, [])
         current_params = step.get("params", {})
@@ -52,7 +52,7 @@ def render_properties_panel(client: Any) -> None:
                 param,
                 value=default_val,
                 key=f"prop_{idx}_{param}",
-                placeholder=f"value for {param}",
+                placeholder=f"значение для {param}",
             )
             new_params[param] = new_val
             if new_val != default_val:
@@ -66,13 +66,13 @@ def render_properties_panel(client: Any) -> None:
 
         c_del, c_clr = st.columns(2)
         with c_del:
-            if st.button("🗑️ Delete Step", width='stretch'):
+            if st.button("🗑️ Удалить шаг", width='stretch'):
                 st.session_state.canvas_steps.pop(idx)
                 st.session_state.selected_step_index = None
                 sync_yaml()
                 st.rerun()
         with c_clr:
-            if st.button("Clear Params", width='stretch'):
+            if st.button("Очистить параметры", width='stretch'):
                 st.session_state.canvas_steps[idx]["params"] = {
                     p: "" for p in available_params
                 }
@@ -80,38 +80,38 @@ def render_properties_panel(client: Any) -> None:
                 st.rerun()
 
     st.divider()
-    st.subheader("💾 Save")
+    st.subheader("💾 Сохранение")
 
     col_save, col_upd = st.columns(2)
     with col_save:
-        if st.button("💾 Save (Create)", width='stretch'):
+        if st.button("💾 Создать", width='stretch'):
             try:
                 result = client.create_dsl_route(st.session_state.yaml_output)
-                st.success(f"Created: {result.get('route_id', 'OK')}")
+                st.success(f"Создано: {result.get('route_id', 'OK')}")
             except Exception as exc:  # noqa: BLE001
-                st.error(f"Create error: {exc}")
+                st.error(f"Ошибка создания: {exc}")
 
     with col_upd:
         route_id = st.session_state.meta_route.get("route_id", "")
         if route_id and route_id != "my.route":
-            if st.button("🔄 Update", width='stretch'):
+            if st.button("🔄 Обновить", width='stretch'):
                 try:
                     client.update_dsl_route(route_id, st.session_state.yaml_output)
-                    st.success(f"Updated: {route_id}")
+                    st.success(f"Обновлено: {route_id}")
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"Update error: {exc}")
+                    st.error(f"Ошибка обновления: {exc}")
         else:
-            st.caption("Set route_id to enable update")
+            st.caption("Укажите route_id чтобы включить обновление")
 
     st.divider()
-    st.subheader("📋 Pipeline Spec")
+    st.subheader("📋 Спецификация конвейера")
     try:
         from src.backend.services.dsl_portal import load_pipeline_from_yaml
 
         pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
-        with st.expander("JSON spec"):
+        with st.expander("JSON спецификация"):
             st.json(pipeline.to_dict())
-        with st.expander("Python code"):
+        with st.expander("Python код"):
             st.code(pipeline.to_python(), language="python")
     except Exception as exc:  # noqa: BLE001
-        st.caption(f"Spec unavailable: {exc}")
+        st.caption(f"Спецификация недоступна: {exc}")

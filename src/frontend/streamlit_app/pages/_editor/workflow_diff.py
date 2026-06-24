@@ -19,7 +19,7 @@ def render_workflow_diff() -> None:
     4. Render 2 Graphviz charts side-by-side.
     5. List step-by-step delta (🟢 added, 🔴 removed, 🟠 modified).
     """
-    st.subheader("Workflow Diff — side-by-side Graphviz")
+    st.subheader("Сравнение workflow — параллельный Graphviz")
     st.caption(
         "Сравните 2 версии workflow по WorkflowVersionRegistry. "
         "Color-coded: зелёный=added, красный=removed, оранжевый=modified."
@@ -40,7 +40,7 @@ def render_workflow_diff() -> None:
                 "через @workflow_versioned('X.Y.Z')."
             )
         else:
-            selected_wf = st.selectbox("Workflow ID", all_wf_ids, key="diff_wf")
+            selected_wf = st.selectbox("ID Workflow", all_wf_ids, key="diff_wf")
             history = registry.history(selected_wf)
             versions = [v.semver for v in history]
 
@@ -50,11 +50,11 @@ def render_workflow_diff() -> None:
                 col_a, col_b = st.columns(2)
                 with col_a:
                     ver_a = st.selectbox(
-                        "Version A (база)", versions, index=0, key="diff_va"
+                        "Версия A (база)", versions, index=0, key="diff_va"
                     )
                 with col_b:
                     ver_b = st.selectbox(
-                        "Version B (новая)", versions, index=1, key="diff_vb"
+                        "Версия B (новая)", versions, index=1, key="diff_vb"
                     )
 
                 if ver_a and ver_b and ver_a != ver_b:
@@ -75,17 +75,17 @@ def render_workflow_diff() -> None:
                         )
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.markdown(f"**Version A (v{ver_a})**")
+                            st.markdown(f"**Версия A (v{ver_a})**")
                             st.graphviz_chart(
                                 to_graphviz(decl_a, color_map=color_map_a)
                             )
                         with col2:
-                            st.markdown(f"**Version B (v{ver_b})**")
+                            st.markdown(f"**Версия B (v{ver_b})**")
                             st.graphviz_chart(
                                 to_graphviz(decl_b, color_map=color_map_b)
                             )
 
-                        st.markdown("**Step-by-step diff**")
+                        st.markdown("**Пошаговый diff**")
                         for r in diff_results:
                             icon = {
                                 "added": "🟢",
@@ -93,7 +93,13 @@ def render_workflow_diff() -> None:
                                 "modified": "🟠",
                                 "unchanged": "⚪",
                             }.get(r.status, "·")
-                            st.write(f"{icon} `{r.identity}` — {r.status}")
+                            status_ru = {
+                                "added": "добавлено",
+                                "removed": "удалено",
+                                "modified": "изменено",
+                                "unchanged": "без изменений",
+                            }.get(r.status, r.status)
+                            st.write(f"{icon} `{r.identity}` — {status_ru}")
                 else:
                     st.info("Выберите две разные версии для сравнения.")
     except Exception as exc:  # noqa: BLE001
