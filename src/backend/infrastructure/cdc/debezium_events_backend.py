@@ -16,8 +16,11 @@ Schema Debezium-события (упрощённо)::
 
 Backend парсит это в `CDCEvent` и поддерживает Kafka offset-cursor.
 
-Этот модуль — scaffold; полная реализация требует поднятия
-``faststream[kafka]`` consumer'а (Wave R3).
+S168 W14 P0-1: 322-LOC implementation, не scaffold.
+
+Реализация использует ``aiokafka`` (НЕ faststream — faststream wheels
+отсутствуют под Python 3.14). Поддерживает subscribe/ack/replay/close
+через полный lifecycle CDC-источника.
 """
 
 from __future__ import annotations

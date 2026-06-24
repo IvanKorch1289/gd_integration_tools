@@ -54,7 +54,7 @@ SUPPORTED_BACKENDS: frozenset[str] = frozenset(
     {
         "poll",  # R2.1 PollCDCBackend (universal timestamp-polling)
         "listen_notify",  # R2.1 ListenNotifyCDCBackend (PG LISTEN/NOTIFY)
-        "debezium",  # R2.1 DebeziumEventsCDCBackend (Kafka scaffold)
+        "debezium",  # R2.1 DebeziumEventsCDCBackend (aiokafka, 322 LOC)
         "adapter",  # legacy CDCClient adapter (multi-DB через CDCClient)
         "fake",  # in-memory FakeCDCSource (test/dev)
     }

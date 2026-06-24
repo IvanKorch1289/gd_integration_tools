@@ -175,8 +175,8 @@ class InfrastructureFlags(BaseSettings):
         description=(
             "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-7-cdc-status-doc]. "
             "Owner: K2 Platform. При False CDC-source'ы не активируются в "
-            "lifespan; PollCDCBackend и ListenNotifyCDCBackend готовы к "
-            "production, DebeziumEventsCDCBackend — scaffold (Sprint R3.4). "
+            "lifespan. PollCDCBackend, ListenNotifyCDCBackend, "
+            "DebeziumEventsCDCBackend (aiokafka) готовы к production. "
             "Default-OFF до явного staging-smoke."
         ),
     )
