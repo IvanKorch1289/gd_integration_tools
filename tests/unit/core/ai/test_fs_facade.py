@@ -107,7 +107,8 @@ async def test_create_new_capability_check_invoked(manager: AIWorkspaceManager) 
     fs = AIFsFacade(workspace_manager=manager, capability_check=fake_check)
     handle = await manager.create_new(tenant="t1")
     fs.create_new(handle, "report.json", b"{}")
-    assert seen == [("ai-agent", "fs.create_new", handle.path.as_posix())]
+    # ai_safety_capability_unify=True (default, S19 W5): unified fs.write scope
+    assert seen == [("ai-agent", "fs.write", f"workspace.{handle.session_id}")]
 
 
 @pytest.mark.asyncio

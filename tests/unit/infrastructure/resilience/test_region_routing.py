@@ -13,6 +13,10 @@ import pytest
 from src.backend.core.tenancy import TenantContext
 
 # Load region_routing and region_health directly to avoid pulling heavy deps via __init__.py.
+# IMPORTANT: region_health imports from "src.backend.infrastructure.resilience.region_routing"
+# (absolute import inside region_health.py). We must register _rr under the FULL path
+# BEFORE loading region_health, otherwise region_health creates a SEPARATE module instance
+# with its own _REGION_HEALTH dict (sys.modules key mismatch).
 _region_routing_path = (
     pathlib.Path(__file__).resolve().parents[4]
     / "src"
@@ -31,11 +35,15 @@ _region_health_path = (
 )
 _spec_rr = importlib.util.spec_from_file_location("region_routing", _region_routing_path)
 _rr = importlib.util.module_from_spec(_spec_rr)
+# Register under BOTH possible import keys BEFORE any code that might import region_routing
+sys.modules["region_routing"] = _rr
+sys.modules["src.backend.infrastructure.resilience.region_routing"] = _rr
+_spec_rr.loader.exec_module(_rr)
+
 _spec_rh = importlib.util.spec_from_file_location("region_health", _region_health_path)
 _rh = importlib.util.module_from_spec(_spec_rh)
-sys.modules.setdefault("region_routing", _rr)
-sys.modules.setdefault("region_health", _rh)
-_spec_rr.loader.exec_module(_rr)
+sys.modules["region_health"] = _rh
+sys.modules["src.backend.infrastructure.resilience.region_health"] = _rh
 _spec_rh.loader.exec_module(_rh)
 
 Region = _rr.Region
@@ -152,7 +160,7 @@ class TestRegionRegistry:
                 status=RegionStatus.HEALTHY,
             )
         )
-        assert get_region_status("ru-1") is RegionStatus.HEALTHY
+        assert get_region_status("ru-1") == RegionStatus.HEALTHY
 
     @pytest.mark.unit
     def test_get_region_status_unknown(self) -> None:
@@ -170,7 +178,7 @@ class TestRegionRegistry:
             )
         )
         set_region_status("ru-1", RegionStatus.DEGRADED)
-        assert get_region_status("ru-1") is RegionStatus.DEGRADED
+        assert get_region_status("ru-1") == RegionStatus.DEGRADED
         reg = get_region("ru-1")
         assert reg is not None
         assert reg.status is RegionStatus.DEGRADED
@@ -417,7 +425,7 @@ class TestRegionHealthChecker:
         )
         checker = RegionHealthChecker()
         await checker._record("ru-1", ok=True)
-        assert get_region_status("ru-1") is RegionStatus.HEALTHY
+        assert get_region_status("ru-1") == RegionStatus.HEALTHY
         assert checker._failure_counts["ru-1"] == 0
 
     @pytest.mark.unit
@@ -433,11 +441,11 @@ class TestRegionHealthChecker:
         )
         checker = RegionHealthChecker(unhealth_threshold=3)
         await checker._record("ru-1", ok=False)
-        assert get_region_status("ru-1") is RegionStatus.DEGRADED
+        assert get_region_status("ru-1") == RegionStatus.DEGRADED
         await checker._record("ru-1", ok=False)
-        assert get_region_status("ru-1") is RegionStatus.DEGRADED
+        assert get_region_status("ru-1") == RegionStatus.DEGRADED
         await checker._record("ru-1", ok=False)
-        assert get_region_status("ru-1") is RegionStatus.UNHEALTHY
+        assert get_region_status("ru-1") == RegionStatus.UNHEALTHY
 
     @pytest.mark.unit
     @pytest.mark.asyncio
