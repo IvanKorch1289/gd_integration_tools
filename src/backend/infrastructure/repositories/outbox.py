@@ -121,10 +121,11 @@ async def write(
 
     Открывает и коммитит собственную транзакцию.
     """
-    async with main_session_manager.transaction() as session:
-        return await write_within_session(
-            session, topic=topic, payload=payload, headers=headers, transport=transport
-        )
+    async with main_session_manager.create_session() as session:
+        async with main_session_manager.transaction(session):
+            return await write_within_session(
+                session, topic=topic, payload=payload, headers=headers, transport=transport
+            )
 
 
 async def fetch_pending(limit: int = 100) -> list[OutboxMessage]:
@@ -231,74 +232,75 @@ async def claim_pending(
 
     lock_key = _advisory_lock_key(worker_id)
     now = datetime.now(UTC)
-    async with main_session_manager.transaction() as session:
-        # 1. Try acquire per-worker advisory lock (coarse batch-level)
-        got_lock = bool(
-            (
-                await session.execute(
-                    text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
-                )
-            ).scalar()
-        )
-        if not got_lock:
-            return []
-
-        # 2. S72 W2: per-row claim с status='processing' + claimed_by +
-        # claimed_at + claimed_until. Один atomic statement с
-        # FOR UPDATE SKIP LOCKED предотвращает гонки даже в пределах
-        # одной сессии.
-        result = await session.execute(
-            text(
-                """
-                UPDATE outbox_messages
-                SET status = 'processing',
-                    retry_count = retry_count + 1,
-                    claimed_by = :worker_id,
-                    claimed_at = :now,
-                    claimed_until = :claimed_until
-                WHERE id IN (
-                    SELECT id FROM outbox_messages
-                    WHERE status = 'pending'
-                      AND next_attempt_at <= :now
-                    ORDER BY created_at
-                    LIMIT :limit
-                    FOR UPDATE SKIP LOCKED
-                )
-                RETURNING id, topic, payload, headers, status, retry_count,
-                          last_error, transport, published_at, next_attempt_at,
-                          created_at, updated_at,
-                          claimed_by, claimed_at, claimed_until
-                """
-            ),
-            {
-                "worker_id": worker_id,
-                "now": now,
-                "claimed_until": now + timedelta(seconds=lease_seconds),
-                "limit": limit,
-            },
-        )
-        rows = result.fetchall()
-        # Преобразуем RawRow → OutboxMessage ORM-объекты
-        return [
-            OutboxMessage(
-                id=row.id,
-                topic=row.topic,
-                payload=row.payload,
-                headers=row.headers or {},
-                status=row.status,
-                retry_count=row.retry_count,
-                last_error=row.last_error,
-                transport=row.transport,
-                published_at=row.published_at,
-                next_attempt_at=row.next_attempt_at,
-                created_at=row.created_at,
-                updated_at=row.updated_at,
-                claimed_by=row.claimed_by,
-                claimed_at=row.claimed_at,
-                claimed_until=row.claimed_until,
+    async with main_session_manager.create_session() as session:
+        async with main_session_manager.transaction(session):
+            # 1. Try acquire per-worker advisory lock (coarse batch-level)
+            got_lock = bool(
+                (
+                    await session.execute(
+                        text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
+                    )
+                ).scalar()
             )
-            for row in rows
-        ]
+            if not got_lock:
+                return []
+
+            # 2. S72 W2: per-row claim с status='processing' + claimed_by +
+            # claimed_at + claimed_until. Один atomic statement с
+            # FOR UPDATE SKIP LOCKED предотвращает гонки даже в пределах
+            # одной сессии.
+            result = await session.execute(
+                text(
+                    """
+                    UPDATE outbox_messages
+                    SET status = 'processing',
+                        retry_count = retry_count + 1,
+                        claimed_by = :worker_id,
+                        claimed_at = :now,
+                        claimed_until = :claimed_until
+                    WHERE id IN (
+                        SELECT id FROM outbox_messages
+                        WHERE status = 'pending'
+                          AND next_attempt_at <= :now
+                        ORDER BY created_at
+                        LIMIT :limit
+                        FOR UPDATE SKIP LOCKED
+                    )
+                    RETURNING id, topic, payload, headers, status, retry_count,
+                              last_error, transport, published_at, next_attempt_at,
+                              created_at, updated_at,
+                              claimed_by, claimed_at, claimed_until
+                    """
+                ),
+                {
+                    "worker_id": worker_id,
+                    "now": now,
+                    "claimed_until": now + timedelta(seconds=lease_seconds),
+                    "limit": limit,
+                },
+            )
+            rows = result.fetchall()
+            # Преобразуем RawRow → OutboxMessage ORM-объекты
+            return [
+                OutboxMessage(
+                    id=row.id,
+                    topic=row.topic,
+                    payload=row.payload,
+                    headers=row.headers or {},
+                    status=row.status,
+                    retry_count=row.retry_count,
+                    last_error=row.last_error,
+                    transport=row.transport,
+                    published_at=row.published_at,
+                    next_attempt_at=row.next_attempt_at,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                    claimed_by=row.claimed_by,
+                    claimed_at=row.claimed_at,
+                    claimed_until=row.claimed_until,
+                )
+                for row in rows
+            ]
 
 
 async def reset_stuck_processing(
@@ -350,30 +352,31 @@ async def reset_stuck_processing(
     """
     now = datetime.now(UTC)
     cutoff = now - timedelta(seconds=threshold_seconds)
-    async with main_session_manager.transaction() as session:
-        result = await session.execute(
-            text(
-                """
-                UPDATE outbox_messages
-                SET status = 'pending',
-                    claimed_by = NULL,
-                    claimed_at = NULL,
-                    claimed_until = NULL
-                WHERE id IN (
-                    SELECT id FROM outbox_messages
-                    WHERE status = 'processing'
-                      AND claimed_until IS NOT NULL
-                      AND claimed_until < :cutoff
-                    ORDER BY claimed_until
-                    LIMIT :limit
-                )
-                RETURNING id
-                """
-            ),
-            {"cutoff": cutoff, "limit": limit},
-        )
-        rows = result.fetchall()
-        return len(rows)
+    async with main_session_manager.create_session() as session:
+        async with main_session_manager.transaction(session):
+            result = await session.execute(
+                text(
+                    """
+                    UPDATE outbox_messages
+                    SET status = 'pending',
+                        claimed_by = NULL,
+                        claimed_at = NULL,
+                        claimed_until = NULL
+                    WHERE id IN (
+                        SELECT id FROM outbox_messages
+                        WHERE status = 'processing'
+                          AND claimed_until IS NOT NULL
+                          AND claimed_until < :cutoff
+                        ORDER BY claimed_until
+                        LIMIT :limit
+                    )
+                    RETURNING id
+                    """
+                ),
+                {"cutoff": cutoff, "limit": limit},
+            )
+            rows = result.fetchall()
+            return len(rows)
 
 
 async def fetch_stuck_pending(
@@ -474,18 +477,19 @@ async def mark_sent(message_id: int) -> None:
     ``status='sent'``, claim metadata не нужен.
     """
     now = datetime.now(UTC)
-    async with main_session_manager.transaction() as session:
-        await session.execute(
-            update(OutboxMessage)
-            .where(OutboxMessage.id == message_id)
-            .values(
-                status="sent",
-                published_at=now,
-                claimed_by=None,
-                claimed_at=None,
-                claimed_until=None,
+    async with main_session_manager.create_session() as session:
+        async with main_session_manager.transaction(session):
+            await session.execute(
+                update(OutboxMessage)
+                .where(OutboxMessage.id == message_id)
+                .values(
+                    status="sent",
+                    published_at=now,
+                    claimed_by=None,
+                    claimed_at=None,
+                    claimed_until=None,
+                )
             )
-        )
 
 
 async def mark_failed(
@@ -499,23 +503,24 @@ async def mark_failed(
         max_retries: Предел повторов до перевода в финальный ``failed``.
         backoff_seconds: База экспоненциального backoff.
     """
-    async with main_session_manager.transaction() as session:
-        result = await session.execute(
-            select(OutboxMessage).where(OutboxMessage.id == message_id)
-        )
-        msg = result.scalar_one_or_none()
-        if msg is None:
-            return
+    async with main_session_manager.create_session() as session:
+        async with main_session_manager.transaction(session):
+            result = await session.execute(
+                select(OutboxMessage).where(OutboxMessage.id == message_id)
+            )
+            msg = result.scalar_one_or_none()
+            if msg is None:
+                return
 
-        msg.retry_count += 1
-        msg.last_error = error[:1024]
-        # S72 W2: release claim lease (row освобождается для sweeper/retry).
-        msg.claimed_by = None
-        msg.claimed_at = None
-        msg.claimed_until = None
-        if msg.retry_count >= max_retries:
-            msg.status = "failed"
-        else:
-            # Экспоненциальный backoff: 60с, 120с, 240с, 480с, …
-            delay = backoff_seconds * (2 ** (msg.retry_count - 1))
-            msg.next_attempt_at = datetime.now(UTC) + timedelta(seconds=delay)
+            msg.retry_count += 1
+            msg.last_error = error[:1024]
+            # S72 W2: release claim lease (row освобождается для sweeper/retry).
+            msg.claimed_by = None
+            msg.claimed_at = None
+            msg.claimed_until = None
+            if msg.retry_count >= max_retries:
+                msg.status = "failed"
+            else:
+                # Экспоненциальный backoff: 60с, 120с, 240с, 480с, …
+                delay = backoff_seconds * (2 ** (msg.retry_count - 1))
+                msg.next_attempt_at = datetime.now(UTC) + timedelta(seconds=delay)
