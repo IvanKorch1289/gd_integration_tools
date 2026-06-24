@@ -67,10 +67,11 @@ class QuotaTracker:
         # effect. Was 'from ... import get_redis_client as redis_client'
         # which used local binding and ignored patches.
         # Per pattern #11 (S157 W2 fix).
-        from src.backend.infrastructure.clients.storage import redis as _redis_mod
-
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_redis_client_factory as _get_redis_factory_fn,
+        )
         try:
-            redis_client = _redis_mod.get_redis_client()
+            redis_client = _get_redis_factory_fn()()
         except ImportError, AttributeError:
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 

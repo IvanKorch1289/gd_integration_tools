@@ -333,9 +333,10 @@ class PostgresVariableBackend:
             return None
         from sqlalchemy import select
 
-        from src.backend.infrastructure.database.models import (  # type: ignore[attr-defined]
-            dsl_variables,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_dsl_variables_attr as _get_dsl_var_attr,
         )
+        dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = select(
             dsl_variables.c.value,
@@ -362,9 +363,10 @@ class PostgresVariableBackend:
             return
         from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-        from src.backend.infrastructure.database.models import (  # type: ignore[attr-defined]
-            dsl_variables,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_dsl_variables_attr as _get_dsl_var_attr,
         )
+        dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = pg_insert(dsl_variables).values(
             scope=str(scope),
@@ -389,9 +391,10 @@ class PostgresVariableBackend:
             return False
         from sqlalchemy import delete
 
-        from src.backend.infrastructure.database.models import (  # type: ignore[attr-defined]
-            dsl_variables,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_dsl_variables_attr as _get_dsl_var_attr,
         )
+        dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = delete(dsl_variables).where(
             dsl_variables.c.scope == str(scope), dsl_variables.c.key == key
@@ -405,9 +408,10 @@ class PostgresVariableBackend:
             return []
         from sqlalchemy import select
 
-        from src.backend.infrastructure.database.models import (  # type: ignore[attr-defined]
-            dsl_variables,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_dsl_variables_attr as _get_dsl_var_attr,
         )
+        dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = select(dsl_variables.c.key).where(dsl_variables.c.scope == str(scope))
         result = await self.session.execute(stmt)

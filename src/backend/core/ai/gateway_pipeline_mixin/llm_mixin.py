@@ -203,10 +203,12 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         # S127 W4 (TD-022): inject Anthropic prompt cache_control
         # для cacheable моделей (50-90% token savings на повторных
         # вызовах с идентичным prompt).
-        from src.backend.infrastructure.ai.prompt_cache_middleware import (
-            inject_openai_prompt_cache,
-            inject_prompt_cache,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_inject_openai_prompt_cache as _get_iopc,
+            get_inject_prompt_cache as _get_ipc,
         )
+        inject_openai_prompt_cache = _get_iopc()
+        inject_prompt_cache = _get_ipc()
 
         messages = [{"role": "user", "content": rendered}]
         if model is not None:

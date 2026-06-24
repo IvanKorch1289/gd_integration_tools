@@ -18,9 +18,11 @@ Related:
 
 from __future__ import annotations
 
-from src.backend.infrastructure.database.session_manager import (  # noqa: F401
-    get_main_session_manager,
-    main_session_manager,
+from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+    get_main_session_manager_factory as _get_main_session_mgr,
+    get_main_session_manager_getter as _get_main_session_mgr_getter,
 )
+main_session_manager = _get_main_session_mgr()
+get_main_session_manager = _get_main_session_mgr_getter()
 
 __all__ = ("get_main_session_manager", "main_session_manager")

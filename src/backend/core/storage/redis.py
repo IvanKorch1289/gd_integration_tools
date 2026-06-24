@@ -11,9 +11,11 @@ Migration path:
 
 from __future__ import annotations
 
-from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401
-    RedisClient,
-    get_redis_client,
+from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+    get_redis_client_class as _get_redis_client_cls,
+    get_redis_client_factory as _get_redis_client_fn,
 )
+RedisClient = _get_redis_client_cls()
+get_redis_client = _get_redis_client_fn()
 
 __all__ = ("RedisClient", "get_redis_client")

@@ -90,7 +90,10 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         )
 
     if backend == "poll":
-        from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_poll_cdc_backend_class as _get_pcb_cls,
+        )
+        PollCDCBackend = _get_pcb_cls()
 
         return PollCDCBackend(
             profile=kwargs["profile"],
@@ -100,18 +103,20 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
             feed=kwargs.get("feed"),
         )
     if backend == "listen_notify":
-        from src.backend.infrastructure.cdc.listen_notify_backend import (
-            ListenNotifyCDCBackend,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_listen_notify_cdc_backend_class as _get_lncb_cls,
         )
+        ListenNotifyCDCBackend = _get_lncb_cls()
 
         return ListenNotifyCDCBackend(
             dsn=kwargs.get("dsn") or kwargs.get("profile", ""),
             channel=kwargs.get("channel", "cdc_events"),
         )
     if backend == "debezium":
-        from src.backend.infrastructure.cdc.debezium_events_backend import (
-            DebeziumEventsCDCBackend,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_debezium_events_cdc_backend_class as _get_decb_cls,
         )
+        DebeziumEventsCDCBackend = _get_decb_cls()
 
         return DebeziumEventsCDCBackend(
             bootstrap_servers=kwargs.get("bootstrap_servers")
@@ -121,7 +126,10 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         )
     if backend == "adapter":
         # Legacy: wraps CDCClient в CDCSource Protocol.
-        from src.backend.infrastructure.cdc.cdc_client_adapter import CDCClientAdapter
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_cdc_client_adapter_class as _get_cdc_ca_cls,
+        )
+        CDCClientAdapter = _get_cdc_ca_cls()
 
         return CDCClientAdapter(
             profile=kwargs["profile"],

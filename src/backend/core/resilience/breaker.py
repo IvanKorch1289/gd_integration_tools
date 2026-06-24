@@ -218,7 +218,10 @@ class BreakerRegistry:
                 # Import внутри функции — AST walker видит модуль,
                 # но это bridge pattern (protocol→impl в runtime).
                 try:
-                    from src.backend.infrastructure.observability import client_metrics
+                    from src.backend.core.di.providers.infrastructure_facade import (
+                        get_client_metrics_module as _get_cm_mod_fn,
+                    )
+                    client_metrics = _get_cm_mod_fn()
 
                     client_metrics.record_circuit_state(
                         client=client, host=host, state=state

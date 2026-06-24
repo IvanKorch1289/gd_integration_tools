@@ -19,7 +19,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
+    from src.backend.core.di.providers.infrastructure_facade import (
+        get_dlq_envelope_class as _get_dlq_env_cls,
+    )
+    DLQEnvelope = _get_dlq_env_cls()
 
 __all__ = ("DLQPolicy", "DLQPolicyRegistry", "default_policy_registry")
 

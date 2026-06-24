@@ -18,21 +18,14 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 
-if TYPE_CHECKING:
-    # Lazy import: Bulkhead и BulkheadRegistry используются только для типов.
-    # Это не создаёт runtime-зависимость core → infrastructure.
-    from src.backend.infrastructure.resilience.bulkhead import (
-        Bulkhead,
-        BulkheadRegistry,
-    )
-
-
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):
-            from src.backend.infrastructure.resilience import bulkhead
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_bulkhead_attr as _get_bh_attr,
+            )
 
-            return getattr(bulkhead, name)
+            return _get_bh_attr(name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

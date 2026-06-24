@@ -745,27 +745,6 @@ def get_debezium_events_cdc_backend_class() -> Any:
     return DebeziumEventsCDCBackend
 
 
-def get_poll_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.poll_backend.PollCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
-
-    return PollCDCBackend
-
-
-def get_listen_notify_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.listen_notify_backend.ListenNotifyCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
-
-    return ListenNotifyCDCBackend
-
-
-def get_cdc_client_adapter_class() -> Any:
-    """Возвращает ``cdc.cdc_client_adapter.CDCClientAdapter`` class."""
-    from src.backend.infrastructure.cdc.cdc_client_adapter import CDCClientAdapter
-
-    return CDCClientAdapter
-
-
 def get_in_memory_resilience_profile_store_class() -> Any:
     """Возвращает ``resilience.profile_store_memory.InMemoryResilienceProfileStore`` class."""
     from src.backend.infrastructure.resilience.profile_store_memory import (
@@ -782,13 +761,6 @@ def get_env_aesgcm_key_provider_class() -> Any:
     return EnvAESGCMKeyProvider
 
 
-def get_redis_token_registry_class() -> Any:
-    """Возвращает ``security.token_registry.RedisTokenRegistry`` class."""
-    from src.backend.infrastructure.security.token_registry import RedisTokenRegistry
-
-    return RedisTokenRegistry
-
-
 def get_external_db_registry_factory() -> Any:
     """Возвращает ``database.database.accessors.get_external_db_registry`` factory."""
     from src.backend.infrastructure.database.database.accessors import get_external_db_registry
@@ -801,33 +773,6 @@ def get_dsl_variables_attr(name: str) -> Any:
     from src.backend.infrastructure.database import models
 
     return getattr(models, name)
-
-
-def get_record_scale_event() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.record_scale_event``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        record_scale_event,
-    )
-
-    return record_scale_event
-
-
-def get_set_task_queue_depth() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.set_task_queue_depth``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        set_task_queue_depth,
-    )
-
-    return set_task_queue_depth
-
-
-def get_set_workers_active() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.set_workers_active``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        set_workers_active,
-    )
-
-    return set_workers_active
 
 
 def get_inject_openai_prompt_cache_factory() -> Any:
@@ -858,13 +803,6 @@ def get_correlation_module() -> Any:
     return correlation
 
 
-def get_dlq_envelope_class() -> Any:
-    """Возвращает ``messaging.dlq_base.DLQEnvelope`` class."""
-    from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
-
-    return DLQEnvelope
-
-
 def get_dlq_reason_class() -> Any:
     """Возвращает ``messaging.dlq_base.DLQReason`` class."""
     from src.backend.infrastructure.messaging.dlq_base import DLQReason
@@ -886,33 +824,9 @@ def get_default_labels_attr(name: str) -> Any:
     return getattr(metrics_registry, name)
 
 
-def get_metrics_registry_class() -> Any:
-    """Возвращает ``observability.metrics_registry.MetricsRegistry`` class."""
-    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
-
-    return MetricsRegistry
-
-
 def get_metrics_registry_factory() -> Any:
     """Возвращает ``observability.metrics_registry.metrics_registry`` singleton."""
     from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
     return metrics_registry
 
-
-def get_bulkhead_attr(name: str) -> Any:
-    """Возвращает атрибут из ``resilience.bulkhead`` (Bulkhead, BulkheadRegistry)."""
-    from src.backend.infrastructure.resilience import bulkhead
-
-    return getattr(bulkhead, name)
-
-
-def get_unified_rate_limiter_attr(name: str) -> Any:
-    """Возвращает атрибут из ``resilience.unified_rate_limiter``.
-
-    Args:
-        name: имя атрибута (RateLimit, RateLimitExceeded, RedisRateLimiter, get_rate_limiter).
-    """
-    from src.backend.infrastructure.resilience import unified_rate_limiter
-
-    return getattr(unified_rate_limiter, name)

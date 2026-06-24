@@ -22,17 +22,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    # Lazy re-export: infrastructure реализации импортируются только
-    # при type-checking (mypy) и не создают runtime-зависимость core → infrastructure.
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (
-        RateLimit,
-        RateLimitExceeded,
-        RedisRateLimiter,
-        get_rate_limiter,
-    )
-
-
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in (
@@ -41,9 +30,11 @@ def __getattr__(name: str) -> Any:
             "RedisRateLimiter",
             "get_rate_limiter",
         ):
-            from src.backend.infrastructure.resilience import unified_rate_limiter
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_unified_rate_limiter_attr as _get_rl_attr,
+            )
 
-            return getattr(unified_rate_limiter, name)
+            return _get_rl_attr(name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

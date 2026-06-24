@@ -45,7 +45,10 @@ Backend = Literal["redis", "memory", "disk", "multi"]
 
 def _build_underlying(*, ttl: int, key_prefix: str, backend: Backend) -> Any:
     """Lazy-конструктор :class:`CachingDecorator` с фиксированным backend-режимом."""
-    from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
+    from src.backend.core.di.providers.infrastructure_facade import (
+        get_caching_decorator_class as _get_cd_cls,
+    )
+    CachingDecorator = _get_cd_cls()
 
     if backend == "redis":
         use_memory = False
@@ -118,9 +121,10 @@ def cached(
         ) -> str:
             return key_builder(*args, **kwargs)
 
-        from src.backend.infrastructure.decorators.caching.decorator import (
-            CachingDecorator,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_caching_decorator_class as _get_cd_cls2,
         )
+        CachingDecorator = _get_cd_cls2()
 
         decorator_instance = CachingDecorator(
             expire=ttl,
@@ -164,9 +168,10 @@ def invalidate(
             # Lazy-import redis_client — core не должен иметь статической
             # зависимости от infrastructure.
             try:
-                from src.backend.infrastructure.clients.storage.redis import (
-                    get_redis_client,
+                from src.backend.core.di.providers.infrastructure_facade import (
+                    get_redis_client_factory as _get_redis_client_fn,
                 )
+                get_redis_client = _get_redis_client_fn()
 
                 redis_client = get_redis_client()
                 await redis_client.cache_delete_pattern(key_pattern)

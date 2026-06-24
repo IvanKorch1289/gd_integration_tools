@@ -16,22 +16,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    # Lazy re-export: infrastructure реализации импортируются только
-    # при type-checking (mypy) и не создают runtime-зависимость core → infrastructure.
-    from src.backend.infrastructure.messaging.dlq_base import (
-        DLQEnvelope,
-        DLQReason,
-        DLQWriter,
-    )
-
-
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("DLQEnvelope", "DLQReason", "DLQWriter"):
-            from src.backend.infrastructure.messaging import dlq_base
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_dlq_base_module as _get_dlq_base_fn,
+            )
 
-            return getattr(dlq_base, name)
+            return getattr(_get_dlq_base_fn(), name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

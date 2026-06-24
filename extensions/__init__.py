@@ -7,7 +7,7 @@ extension'а. Вместо:
 
     from src.backend.core.interfaces.plugin import BasePlugin
     from src.backend.core.services.base_service import BaseService
-    from src.backend.core.repositories.base import SQLAlchemyRepository
+    # SQLAlchemyRepository loaded lazily via __getattr__ (ponytail D111)
     from src.backend.core.errors import ServiceError, NotFoundError
     from src.backend.core.database.session import main_session_manager
     from src.backend.core.domain.models.base import BaseModel
@@ -47,7 +47,7 @@ from src.backend.core.interfaces.plugin import (
 from src.backend.core.services.base_service import BaseService
 
 # Repository base (canonical from core.repositories.base)
-from src.backend.core.repositories.base import SQLAlchemyRepository
+# SQLAlchemyRepository loaded lazily via __getattr__ (ponytail D111)
 
 # Common errors (canonical from core.errors)
 from src.backend.core.errors import (
@@ -93,3 +93,11 @@ __all__ = [
     "OrderRepositoryProtocol",
     "UserRepositoryProtocol",
 ]
+
+
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
+    """PEP 562 lazy attribute access (Sprint 36 — ponytail D111)."""
+    if name == "SQLAlchemyRepository":
+        from src.backend.core.repositories.base import SQLAlchemyRepository
+        return SQLAlchemyRepository
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

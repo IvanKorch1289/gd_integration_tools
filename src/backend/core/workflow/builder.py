@@ -10,13 +10,18 @@ Re-export public surface. Workflow DSL — критичный cross-layer API.
 
 from __future__ import annotations
 
-from src.backend.infrastructure.workflow.builder import WorkflowBuilder  # noqa: F401
-from src.backend.infrastructure.workflow.executor import (  # noqa: F401
-    DSLStepExecutor,
-    DurableWorkflowProcessor,
-    WorkflowSpec,
-    WorkflowStep,
+from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+    get_workflow_builder_class as _get_workflow_builder_cls,
+    get_dsl_step_executor_class as _get_dsl_step_executor_cls,
+    get_durable_workflow_processor_class as _get_durable_wp_cls,
+    get_workflow_spec_class as _get_workflow_spec_cls,
+    get_workflow_step_class as _get_workflow_step_cls,
 )
+WorkflowBuilder = _get_workflow_builder_cls()
+DSLStepExecutor = _get_dsl_step_executor_cls()
+DurableWorkflowProcessor = _get_durable_wp_cls()
+WorkflowSpec = _get_workflow_spec_cls()
+WorkflowStep = _get_workflow_step_cls()
 
 __all__ = (
     "DSLStepExecutor",

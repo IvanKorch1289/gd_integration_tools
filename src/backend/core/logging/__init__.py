@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     # Type-checkers видят явный public API
-    from src.backend.infrastructure.logging.base import LoggerProtocol
+    from src.backend.core.di.providers.infrastructure_facade import (
+        get_logger_protocol_class as _get_logger_protocol_cls,
+    )
+    LoggerProtocol = _get_logger_protocol_cls()
 
 __all__ = (
     "LoggerProtocol",

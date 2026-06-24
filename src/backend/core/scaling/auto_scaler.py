@@ -174,15 +174,14 @@ class TemporalWorkerScaler:
         if self._metrics_exporter is not None:
             return self._metrics_exporter
         try:
-            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-                record_scale_event as _record,
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_record_scale_event as _get_rse,
+                get_set_task_queue_depth as _get_stqd,
+                get_set_workers_active as _get_swa,
             )
-            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-                set_task_queue_depth as _set_depth,
-            )
-            from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-                set_workers_active as _set_active,
-            )
+            _record = _get_rse()
+            _set_depth = _get_stqd()
+            _set_active = _get_swa()
 
             class _MetricsExporter:
                 """Local adapter, matching TemporalMetricsExporter."""

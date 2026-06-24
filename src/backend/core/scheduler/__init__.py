@@ -7,10 +7,12 @@ ADR-0207: services/scheduler/cron_dashboard_service.py импортирует
 
 from __future__ import annotations
 
-from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401
-    SchedulerManager,
-    get_scheduler_manager,
-    scheduler_manager,
+from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+    get_scheduler_manager_class as _get_sm_cls,
+    get_scheduler_manager_factory as _get_sm_fn,
 )
+SchedulerManager = _get_sm_cls()
+get_scheduler_manager = _get_scheduler_manager = _get_sm_fn()
+scheduler_manager = _get_sm_fn()()
 
 __all__ = ("SchedulerManager", "get_scheduler_manager", "scheduler_manager")
