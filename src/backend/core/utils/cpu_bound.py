@@ -1,8 +1,13 @@
 """CPU-bound helper (S171 M6 — performance).
 
 Для RPA операций (PDF, OCR, image resize) которые требуют CPU.
-Паттерн: ProcessPoolExecutor для heavy CPU (parallel across cores),
+Pattern: ProcessPoolExecutor для heavy CPU (parallel across cores),
 asyncio.to_thread для I/O-bound (parallel within event loop).
+
+Example::
+
+    result = await run_cpu_bound(_merge_pdfs, pdf_bytes_list)
+    result = await run_cpu_bound(_ocr_image, image, use_process_pool=True)
 """
 from __future__ import annotations
 

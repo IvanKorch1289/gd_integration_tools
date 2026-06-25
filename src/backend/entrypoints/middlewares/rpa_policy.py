@@ -8,15 +8,14 @@ Security policy:
 - Audit all denied requests
 - All other paths → pass through
 
-Layer 1 (early exit) — blocks malicious RCE-shaped requests до того,
+Layer 1 (early exit) — блокирует malicious RCE-shaped requests до того,
 как они дойдут до capability_check на уровне DSL процессора.
 
-Capability interaction: DSL processors (ShellExecProcessor,
-FileDeleteProcessor, FileWatchProcessor) уже требуют
-``rpa.shell.exec`` / ``rpa.file.delete`` / ``rpa.file.watch``.
-Middleware добавляет coarse-grained role-based check на HTTP edge.
-
 Defense in depth: 2 layers (HTTP role + DSL capability).
+
+Example::
+
+    mw = RpaPolicyMiddleware(app, rpa_path_prefix="/api/v1/rpa")
 """
 from __future__ import annotations
 

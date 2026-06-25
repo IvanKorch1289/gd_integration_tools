@@ -1,11 +1,18 @@
 """Timeout helper (S171 M5 — централизация для 8+ scattered call sites).
 
-Единый wrapper над :func:`asyncio.wait_for` с:
-- structured logging на slow_call (``slow_threshold``);
-- context-manager для inline-использования.
+Единый wrapper над :func:`asyncio.wait_for` с structured logging на slow_call
+и context-manager для inline-использования.
 
-Pattern (Ponytail, D139): thin wrapper, no abstractions.
-Заменяет дубли в jupyter_mixin / health / gateway / agent_sandbox / lineage / sla_alerting.
+Pattern (Ponytail, D139): thin wrapper без абстракций.
+Заменяет дубли в jupyter_mixin / health / gateway / agent_sandbox /
+lineage / sla_alerting.
+
+Example::
+
+    result = await with_timeout(
+        fetch_data(), timeout=5.0,
+        op="http.fetch", slow_threshold=2.0,
+    )
 """
 from __future__ import annotations
 

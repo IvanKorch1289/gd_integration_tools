@@ -1,12 +1,17 @@
 """RetryPolicyHelper (S171 M5 — централизация tenacity-style retry).
 
-Единый wrapper для retry-логики. Заменяет:
-- src/backend/infrastructure/clients/transport/http/request_mixin.py:76 (http retry)
-- src/backend/infrastructure/clients/storage/clickhouse.py:193 (clickhouse retry)
-- другие manual ``for attempt in range(max)`` loops
+Единый wrapper для retry-логики. Заменяет http/clickhouse retry и manual
+``for attempt in range(max)`` loops.
 
-Pattern (Ponytail, D140): thin wrapper, no decorators.
+Pattern (Ponytail, D140): thin wrapper без декораторов.
 Использует :func:`tenacity.AsyncRetrying` под капотом.
+
+Example::
+
+    result = await retry_async(
+        flaky_db_query, max_attempts=5,
+        base_delay=0.5, op="db.query",
+    )
 """
 from __future__ import annotations
 
