@@ -29,17 +29,14 @@ setup_page()
 
 # ──────────── S1: Quick Access в sidebar (вверху) ────────────
 
-_QUICK_PAGES = [
-    "00_Вход",
-    "16_Воркфлоу",
-    "20_AI_Чат",
-    "10_Заказы",
-    "11_Маршруты",
-    "12_Логи",
-    "51_Проверка_здоровья",
-    "73_Просмотр_конфига",
-    "50_Фича_флаги",
-    "96_Монитор_зависших_сообщений",
+# Группировка страниц по доменам для улучшения discoverability.
+# Каждая группа отображается в sidebar со своим эмодзи + заголовком.
+_QUICK_PAGE_GROUPS = [
+    ("🚀 Onboarding", ["00_Вход", "04_Обучение", "00_Главная"]),
+    ("🔌 Integration", ["10_Заказы", "11_Маршруты", "62_Админ_схем"]),
+    ("⚙️ Workflows", ["16_Воркфлоу", "12_Логи", "51_Проверка_здоровья"]),
+    ("🤖 AI", ["20_AI_Чат", "22_RAG_Консоль", "23_AI_Учёт_затрат"]),
+    ("🛡 Admin", ["50_Фича_флаги", "73_Просмотр_конфига", "96_Монитор_зависших_сообщений"]),
 ]
 
 with st.sidebar:
@@ -52,10 +49,10 @@ with st.sidebar:
         )
         submitted = st.form_submit_button("Искать")
     if submitted and search:
+        # Поиск по ВСЕМ 70 страницам (не только Quick Access)
         matches = [
             (name, meta) for name, meta in PAGE_METADATA.items()
             if search.lower() in meta["title"].lower()
-            and name in _QUICK_PAGES
         ]
         if matches:
             st.markdown("**Найдено:**")
@@ -65,10 +62,16 @@ with st.sidebar:
             st.caption("Ничего не найдено")
 
     st.markdown("### ⚡ Быстрый доступ")
-    for name in _QUICK_PAGES:
-        if name in PAGE_METADATA:
-            meta = PAGE_METADATA[name]
-            st.page_link(f"pages/{name}.py", label=meta["title"], icon=meta["icon"])
+    for group_title, group_pages in _QUICK_PAGE_GROUPS:
+        with st.expander(group_title, expanded=False):
+            for name in group_pages:
+                if name in PAGE_METADATA:
+                    meta = PAGE_METADATA[name]
+                    st.page_link(
+                        f"pages/{name}.py",
+                        label=meta["title"],
+                        icon=meta["icon"],
+                    )
 
     st.divider()
     st.caption(f"📚 Всего {len(PAGE_METADATA)} страниц в sidebar →")
