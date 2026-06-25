@@ -1,0 +1,35 @@
+"""ASGI middleware <MIDDLEWARE_NAME>.
+
+<DESCRIPTION>
+
+Layer: <LAYER> (1=early exit 0-249, 2=request mgmt 250-499,
+                 3=body/auth 500-749, 4=logging 750-999)
+Order: <ORDER> (within layer)
+"""
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+if TYPE_CHECKING:
+    from fastapi import Request, Response
+
+
+class <MIDDLEWARE_CLASS>(BaseHTTPMiddleware):
+    """<DESCRIPTION>."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        super().__init__(app)
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        # BEFORE
+        response = await call_next(request)
+        # AFTER
+        return response

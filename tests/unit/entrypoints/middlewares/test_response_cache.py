@@ -133,10 +133,10 @@ class TestResponseCacheMiddleware:
                 "src.backend.entrypoints.middlewares.response_cache._USE_XXHASH", False
             ),
             patch(
-                "src.backend.entrypoints.middlewares.response_cache.hashlib.sha256"
-            ) as mock_hash,
+                "src.backend.entrypoints.middlewares._body_hash.etag_hash",
+                return_value='"abc1230000000000"',
+            ),
         ):
-            mock_hash.return_value.hexdigest.return_value = "abc1230000000000"
             expected_etag = '"abc1230000000000"'
 
             request = Request(

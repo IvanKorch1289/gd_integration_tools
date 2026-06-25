@@ -10,8 +10,7 @@ try:
 
     _USE_XXHASH = True
 except ImportError:
-    import hashlib
-
+    
     _USE_XXHASH = False
 
 from fastapi import Request, Response
@@ -58,7 +57,8 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
         if _USE_XXHASH:
             etag = f'"{xxhash.xxh64(body).hexdigest()}"'
         else:
-            etag = f'"{hashlib.sha256(body).hexdigest()[:16]}"'
+            from src.backend.entrypoints.middlewares._body_hash import etag_hash
+            etag = etag_hash(body)
 
         if_none_match = request.headers.get("if-none-match")
         if if_none_match and if_none_match == etag:

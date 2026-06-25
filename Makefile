@@ -76,8 +76,13 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \
 	import-swagger import-postman import-wsdl \
-	testkit-smoke new-plugin perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale \
+	testkit-smoke new-plugin new-middleware \
+	perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale \
 new-adr release-notes
+
+.PHONY: new-middleware
+new-middleware: ##@ Scaffolding Scaffold new ASGI middleware (D136)
+	@uv run python ops/scripts/new_middleware.py $(NAME) $(ARGS)
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"

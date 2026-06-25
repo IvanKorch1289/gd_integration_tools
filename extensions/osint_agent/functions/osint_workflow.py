@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from src.backend.core.logging import get_logger
+from src.backend.dsl.helpers.banking import validate_inn
 logger = get_logger("osint_agent.workflow")
 from typing import Any
 
@@ -64,27 +65,6 @@ OSINT_REPORT_TEMPLATE = """\
 ═══════════════════════════════════════════════"""
 
 MAX_REPORT_LENGTH = 3000
-
-
-def validate_inn(inn: str) -> bool:
-    """Validate Russian INN (10 or 12 digits with checksums).
-
-    Args:
-        inn: INN string to validate.
-
-    Returns:
-        True if INN is valid.
-    """
-    if not inn or not inn.isdigit() or len(inn) not in (10, 12):
-        return False
-    if len(inn) == 10:
-        weights = [2, 4, 10, 3, 5, 9, 4, 6, 8]
-        check = sum(int(inn[i]) * weights[i] for i in range(9)) % 11 % 10
-        return check == int(inn[9])
-    weights_11 = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
-    check_11 = sum(int(inn[i]) * weights_11[i] for i in range(10)) % 11 % 10
-    check_12 = sum(int(inn[i]) * weights_11[i - 1] for i in range(1, 11)) % 11 % 10
-    return check_11 == int(inn[10]) and check_12 == int(inn[11])
 
 
 def _build_search_queries(inn: str, company_name: str) -> dict[str, str]:

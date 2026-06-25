@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import time as _time
 from datetime import UTC, datetime
 
@@ -90,7 +89,8 @@ class AdminAuditMiddleware(BaseHTTPMiddleware):
         )
         method_kind = getattr(auth_ctx, "method", None)
         admin_roles = sorted(r.value for r in extract_admin_roles(auth_ctx))
-        payload_hash = hashlib.sha256(body_bytes).hexdigest() if body_bytes else ""
+        from src.backend.entrypoints.middlewares._body_hash import payload_hash as _ph
+        payload_hash = _ph(body_bytes)
         correlation_id = getattr(request.state, "correlation_id", "") or ""
 
         _admin_logger.info(

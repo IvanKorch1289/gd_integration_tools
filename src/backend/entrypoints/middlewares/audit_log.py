@@ -13,7 +13,7 @@
 - Graylog — для централизованного логирования.
 """
 
-import hashlib
+from src.backend.entrypoints.middlewares import _body_hash
 import time as _time
 from datetime import UTC, datetime
 
@@ -68,7 +68,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         # WHAT
         payload_hash = ""
         if body_bytes:
-            payload_hash = hashlib.sha256(body_bytes).hexdigest()[:16]
+            payload_hash = _body_hash.payload_hash(body_bytes, prefix_len=16)
 
         # CORRELATION
         request_id = getattr(request.state, "request_id", "n/a")
