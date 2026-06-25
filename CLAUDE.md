@@ -461,6 +461,7 @@ python tools/checks/check_layers.py
     vault/session-*-summary.md — архив сессий
     docs/middleware/MIDDLEWARE.md — middleware guide (Sprint 171 M5)
     docs/rpa/RPA_GUIDE.md — RPA tools guide (Sprint 171 M6)
+    docs/config/SETTINGS_GUIDE.md — settings + Consul + hot-reload (Sprint 171 M6.1)
     docs/ai/BEST_PRACTICES.md — AI/LLM best practices (Sprint 170 M3)
 
 ## Sprint 171 M5 — Middleware Audit (2026-06-24)
@@ -497,7 +498,19 @@ python tools/checks/check_layers.py
 
 ## Sprint 171 M6 — RPA + Security (2026-06-25)
 
-Полная инвентаризация RPA + 4 новых DSL процессора + deny-by-default security.
+Полная инвентаризация RPA + 9 новых DSL процессоров + deny-by-default security.
+
+### Sprint 171 M6.1 — Re-review + settings audit (2026-06-25)
+- 5 more DSL: CsvRead, CsvWrite, EmailRead (IMAP), FtpUpload, HttpRequest
+- aiohttp → httpx replacement (Ponytail: no new deps, better API)
+- Domain re-review: no duplicates with Camel HTTP / marshal CSV
+- Settings: 30+ pydantic-settings модулей + hot-reload (watchfiles) verified
+- YAML profiles: 5 files (base + dev + dev_light + staging + prod) = 1274 lines, 38 keys
+- Constants: src/backend/core/config/constants.py (Constants dataclass + 7 re-exports)
+- Consul: ConsulCertBackend + ConsulConfigSettingsSource (opt-in, file fallback)
+- D-rules D155-D159 (config patterns)
+
+См. `docs/config/SETTINGS_GUIDE.md`.
 
 ### Новые RPA DSL (M6 gap-fill)
 - `FileDeleteProcessor` (rpa.file.delete) — secure file/dir deletion

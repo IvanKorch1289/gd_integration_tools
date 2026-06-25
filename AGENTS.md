@@ -57,6 +57,17 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
   `src/backend/core/utils/cpu_bound.py`
 - См. `docs/rpa/RPA_GUIDE.md`
 
+**Sprint 171 (S170+): M6.1 RPA re-review + settings audit (commit 2705bcd).**
+- 5 more DSL: CsvRead, CsvWrite, EmailRead (IMAP), FtpUpload, HttpRequest (httpx)
+- Domain re-review: no duplicates with Camel HTTP / marshal CSV / ScriptRunner
+- Settings: 30+ pydantic-settings модулей + hot-reload (watchfiles) verified
+- YAML profiles: 5 files (base+dev+dev_light+staging+prod) = 1274 lines, 38 keys
+- Constants: `src/backend/core/config/constants.py` (Constants dataclass + 7 re-exports)
+- Consul: ConsulCertBackend + ConsulConfigSettingsSource (opt-in, file fallback)
+- D-rules D155-D159 (config patterns)
+- aiohttp → httpx (no new deps, better API)
+- См. `docs/config/SETTINGS_GUIDE.md`
+
 ---
 
 ## Что читать сначала
