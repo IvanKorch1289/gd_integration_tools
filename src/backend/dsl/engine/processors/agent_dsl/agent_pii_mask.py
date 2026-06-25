@@ -215,12 +215,3 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
         exchange.set_property("pii_detected", detected)
 
 
-# Backwards-compat aliases (factory pattern for short DSL syntax)
-def AgentToolPIIMaskProcessor(*args: Any, **kwargs: Any) -> AgentDictPIIMaskProcessor:
-    """DEPRECATED — используйте :meth:`AgentDictPIIMaskProcessor.for_tools`."""
-    return AgentDictPIIMaskProcessor.for_tools(**kwargs)
-
-
-def AgentActionPIIMaskProcessor(*args: Any, **kwargs: Any) -> AgentDictPIIMaskProcessor:
-    """DEPRECATED — используйте :meth:`AgentDictPIIMaskProcessor.for_actions`."""
-    return AgentDictPIIMaskProcessor.for_actions(**kwargs)

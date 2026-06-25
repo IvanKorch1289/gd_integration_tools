@@ -89,5 +89,3 @@ async def retry_async(
         if exc.last_attempt and exc.last_attempt.exception():
             raise exc.last_attempt.exception() from None
         raise
-    # Should never reach here (reraise=True), but for type-checker:
-    raise RuntimeError("retry_async exited without result")
