@@ -572,8 +572,10 @@ python tools/checks/check_layers.py
 - Call types: sync/async/deferred/background/distributed/multithreaded
 
 ### M7 NEW: Directory scan DSL
-- `DirectoryScanProcessor` — recursive `**` + min_size/max_size/modified_after
+- `FilteredDirectoryScanProcessor` (M7) — recursive `**` + min_size/max_size/modified_after
+- Safety: max_results=10_000 + asyncio.wait_for timeout (M7 deep-review P0-1)
 - Differs from FileListProcessor (M6): recursive + metadata filters
+- Differs from `fs_directory_scan.DirectoryScanProcessor` (S35): returns string paths, not dicts with metadata
 
 ### M7 NEW: AI Agent Guide (8 sections, 503 LOC)
 - Policies + masking + workflow + prompts + memory + RLM + decision matrix
@@ -582,6 +584,12 @@ python tools/checks/check_layers.py
 ### Existing (M3): CDC + External DB DSL
 - `db_call_procedure.py` — any SQL DB (PG/MSSQL/Oracle/MySQL/DB2)
 - `cdc_capture.py` + `cdc_transform.py` — Debezium/Kafka/Postgres
+
+### M7+ deep-review fixes (general-20 swarm)
+- DirectoryScanProcessor → FilteredDirectoryScanProcessor (name collision fix with S35)
+- 16 facade primitives (9 eager + 7 lazy) — was wrongly claimed 17
+- YAML-in-Python block in AGENT_GUIDE.md fixed
+- 3 P0 + 6 P1 + 5 P2 findings from end-of-milestone review
 
 ### D-rules (M7 promotions)
 - D160: Unified middleware facade pattern
