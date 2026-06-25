@@ -6,95 +6,95 @@
 [groups.home]
 title = "Home / Getting Started"
 pages = [
-    "00_Home",
-    "04_Onboarding",
+    "00_Главная",
+    "04_Обучение",
 ]
 
 [groups.ai]
 title = "AI / RAG"
 pages = [
-    "20_AI_Chat",
-    "21_AI_Feedback",
-    "22_RAG_Console",
-    "23_AI_Cost_Tracking",
-    "47_AI_Safety",
-    "48_Prompt_Lab",
-    "49_Model_Registry",
-    "75_RAG_Ingest_Wizard",
-    "81_Adaptive_RAG_Dashboard",
-    "85_RAG_Bulk_Upload",
+    "20_AI_Чат",
+    "21_AI_Обратная_связь",
+    "22_RAG_Консоль",
+    "23_AI_Учёт_затрат",
+    "47_AI_Безопасность",
+    "48_Лаборатория_промптов",
+    "49_Реестр_моделей",
+    "75_Мастер_загрузки_RAG",
+    "81_Адаптивная_RAG_панель",
+    "85_Массовая_загрузка_RAG",
 ]
 
 [groups.dsl]
 title = "DSL / Codegen"
 pages = [
-    "30_DSL_Playground",
-    "32_DSL_Builder",
-    "33_DSL_Templates",
-    "34_DSL_Debugger",
-    "35_Codegen_Wizard",
-    "36_Express_Bots",
-    "37_API_Caller",
-    "38_Blueprint_Gallery",
-    "39_Invocation_Console",
-    "46_DSL_DryRun",
+    "30_DSL_Площадка",
+    "32_DSL_Конструктор",
+    "33_DSL_Шаблоны",
+    "34_DSL_Отладчик",
+    "35_Мастер_генерации_кода",
+    "36_Экспресс_боты",
+    "37_API_Вызовы",
+    "38_Галерея_блюпринтов",
+    "39_Консоль_вызовов",
+    "46_DSL_Пробный_прогон",
 ]
 
 [groups.workflow]
 title = "Workflows / Execution"
 pages = [
-    "10_Orders",
-    "11_Routes",
-    "15_Workflow_Cost_Estimation",
-    "16_Workflows",
-    "17_Workflow_Replay",
-    "18_Workflow_Versioning",
-    "19_Saga_Compensation_Viewer",
-    "66_Workflow_Logs",
+    "10_Заказы",
+    "11_Маршруты",
+    "15_Оценка_стоимости_Workflow",
+    "16_Воркфлоу",
+    "17_Replay_Воркфлоу",
+    "18_Версионирование_Воркфлоу",
+    "19_Saga_Компенсации",
+    "66_Логи_Воркфлоу",
 ]
 
 [groups.ops]
 title = "Ops / Monitoring"
 pages = [
-    "12_Logs",
-    "13_Cron_Builder",
-    "14_Cron_Dashboard",
-    "41_Search",
-    "43_Realtime_Logs",
-    "51_Healthcheck",
-    "52_Resilience",
-    "53_Queue_Monitor",
-    "54_DLQ_Replay",
-    "55_Pool_Monitor",
-    "56_Processes",
-    "57_Files_S3",
-    "58_Action_Bus",
-    "60_Cache_Admin",
-    "61_Audit_Log",
-    "62_Schema_Admin",
-    "63_Wiki",
-    "64_SQL_Admin",
-    "65_Services",
-    "67_Jobs",
-    "78_Graceful_Degradation",
-    "79_Resilience_Profile_Editor",
-    "80_Pipeline_Parallelism",
+    "12_Логи",
+    "13_Конструктор_Cron",
+    "14_Панель_Cron",
+    "41_Поиск",
+    "43_Логи_в_реальном_времени",
+    "51_Проверка_здоровья",
+    "52_Устойчивость",
+    "53_Монитор_очереди",
+    "54_Replay_DLQ",
+    "55_Монитор_пула",
+    "56_Процессы",
+    "57_Файлы_S3",
+    "58_Шина_действий",
+    "60_Админ_кеша",
+    "61_Журнал_аудита",
+    "62_Админ_схем",
+    "63_Вики",
+    "64_SQL_Админ",
+    "65_Сервисы",
+    "67_Задачи",
+    "78_Плавная_деградация",
+    "79_Редактор_профиля_устойчивости",
+    "80_Параллелизм_конвейера",
 ]
 
 [groups.admin]
 title = "Admin / Platform"
 pages = [
-    "45_admin",
-    "50_Feature_Flags",
-    "68_Plugin_Marketplace",
-    "70_Tenants",
-    "71_Capabilities",
-    "72_HITL_Panel",
-    "73_Config_Viewer",
-    "76_Plugin_Onboarding",
-    "77_Processor_Catalog",
-    "82_Tenant_Feature_Flags",
-    "83_Tenant_Inspection",
+    "45_Админ",
+    "50_Фича_флаги",
+    "68_Маркетплейс_плагинов",
+    "70_Тенанты",
+    "71_Возможности",
+    "72_HITL_Панель",
+    "73_Просмотр_конфига",
+    "76_Подключение_плагинов",
+    "77_Каталог_процессоров",
+    "82_Тенантные_фича_флаги",
+    "83_Инспекция_тенанта",
 ]
 
 [notes]
