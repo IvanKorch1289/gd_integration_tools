@@ -1,11 +1,11 @@
-"""Главная страница GD Integration Tools (merged APP + Home, S171).
+"""Главная страница GD Integration Tools (S172 entry-point).
 
-Combines:
-- Dashboard: KPI метрики + Component Health (from app.py)
-- Navigation: группы страниц + redirects (from _groups/home/)
-- Login button: для неаутентифицированных пользователей
+Это Streamlit entry point (ранее был app.py как redirect).
+Содержит dashboard + Quick Access + Search + Metrics + Health.
+Запуск: ``python manage.py run-frontend``.
 
-Единая точка входа для русскоязычных пользователей.
+S172 refactor: entry-point filename стал Cyrillic 'Главная.py' чтобы
+убрать 'app' label в sidebar (Streamlit использует filename для entry label).
 """
 
 from __future__ import annotations
@@ -26,6 +26,8 @@ from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
 _project_root = Path(__file__).resolve().parents[3]
 
 setup_page()
+
+
 
 # ──────────── S1: Quick Access в sidebar (вверху) ────────────
 
@@ -56,14 +58,14 @@ with st.sidebar:
         ]
         if matches:
             st.markdown("**Найдено:**")
-            for name, meta in matches[:5]:
+            for name, meta in matches[:8]:
                 st.page_link(f"pages/{name}.py", label=meta["title"], icon=meta["icon"])
         else:
-            st.caption("Ничего не найдено")
+            st.caption(f"Ничего не найдено по запросу «{search}»")
 
     st.markdown("### ⚡ Быстрый доступ")
     for group_title, group_pages in _QUICK_PAGE_GROUPS:
-        with st.expander(group_title, expanded=False):
+        with st.expander(group_title, expanded=True):
             for name in group_pages:
                 if name in PAGE_METADATA:
                     meta = PAGE_METADATA[name]

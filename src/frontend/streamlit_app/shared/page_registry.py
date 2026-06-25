@@ -9,7 +9,6 @@ from __future__ import annotations
 # Mapping: filename (without .py) → {"title": str, "icon": str}
 # Used by setup_page() for auto-resolve.
 PAGE_METADATA: dict[str, dict[str, str]] = {
-    "00_Главная": {"title": "Главная", "icon": ":material/home:"},
     "00_Вход": {"title": "Вход", "icon": ":material/login:"},
     "04_Обучение": {"title": "Обучение", "icon": ":material/school:"},
     "10_Заказы": {"title": "Заказы", "icon": ":material/receipt_long:"},
