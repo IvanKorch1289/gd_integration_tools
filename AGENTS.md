@@ -37,6 +37,15 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
 
 `PLAN.md` V22 — источник правды по roadmap и архитектурным решениям.
 
+**Sprint 171 (S170+): M5 Middleware audit complete (commit 60f96f9).**
+- 30+ ASGI middleware inventoried + centralization: INN validation (3→1),
+  body-hash (4→1)
+- D136 scaffolding: `make new-middleware NAME=foo [--layer 1-4]`
+- 4 new helpers: `with_timeout`, `retry_async`, `StreamingBodyHasher`,
+  `ObservabilityMiddleware` facade
+- Все в `src/backend/core/utils/` + `src/backend/entrypoints/middlewares/`
+- См. `docs/middleware/MIDDLEWARE.md`
+
 ---
 
 ## Что читать сначала

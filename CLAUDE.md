@@ -459,5 +459,39 @@ python tools/checks/check_layers.py
     .claude/DECISIONS.md — устойчивые решения
     .claude/KNOWN_ISSUES.md — открытый техдолг
     vault/session-*-summary.md — архив сессий
+    docs/middleware/MIDDLEWARE.md — middleware guide (Sprint 171 M5)
+    docs/ai/BEST_PRACTICES.md — AI/LLM best practices (Sprint 170 M3)
+
+## Sprint 171 M5 — Middleware Audit (2026-06-24)
+
+Полная инвентаризация 30+ ASGI middleware + 3 DSL middleware.
+
+### Централизация (D-rules D137, D138)
+- `extensions/osint_agent` теперь использует `src/backend/dsl/helpers/banking.validate_inn`
+  (раньше — локальная дублирующая копия)
+- `audit_log`, `admin_audit`, `response_cache` теперь используют
+  `src/backend/entrypoints/middlewares/_body_hash.payload_hash/etag_hash`
+  (раньше — 4× копия inline hashlib.sha256(...).hexdigest()[:16])
+
+### Scaffolding (D-rule D136)
+- `make new-middleware NAME=foo [--layer 1-4] [--description '...']`
+- Создаёт `src/.../foo.py` + `tests/.../test_foo.py` с правильным order для слоя
+- Layer 1: 0-249 (early exit), Layer 2: 250-499 (request mgmt),
+  Layer 3: 500-749 (body/auth), Layer 4: 750-999 (logging/metrics)
+
+### Новые helpers (D-rules D139-D142)
+| Helper | Назначение | Replaces |
+|--------|-----------|----------|
+| `core.utils.timeout_helper.with_timeout` | asyncio.wait_for + structured logging | 8+ scattered uses |
+| `core.utils.timeout_helper.async_timeout` | async context manager (soft) | inline blocks |
+| `core.utils.retry_helper.retry_async` | tenacity retry with logging | inline `for attempt in range` loops |
+| `entrypoints.middlewares._streaming_hash.StreamingBodyHasher` | incremental sha256 | OOM risk in data_masking.py |
+| `entrypoints.middlewares._streaming_hash.hash_stream` | async iterator hashing | n/a |
+| `entrypoints.middlewares.observability.ObservabilityMiddleware` | facade OTel+Prom+Audit (opt-in) | 3 separate middlewares (additive, not replacement) |
+
+### Test results
+- 19/19 M5 новых тестов pass (4 + 5 + 6 + 4)
+- Middleware suite: 258/258 pass
+- Core: 45 failed = HEAD baseline (zero new regression)
 
 Версия CLAUDE.md: V22 (2026-06-05). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
