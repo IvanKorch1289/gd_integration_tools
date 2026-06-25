@@ -243,6 +243,24 @@ def validate_report(raw_text: str) -> dict[str, Any]:
     return {"raw_text": raw_text, **sections}
 
 
+async def _scrape_url(url: str, *, max_chars: int = 2000) -> str:
+    """Scrape URL content via httpx (S170 M3 helper).
+
+    Ponytail: используем прямой httpx (не facade) — это helper для
+    OSINT workflow, не infrastructure-layer component.
+    """
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            resp = await client.get(url, headers={"User-Agent": "GD-OSINT/1.0"})
+            resp.raise_for_status()
+            text = resp.text[:max_chars]
+            return text
+    except Exception as exc:
+        logger.warning("scrape failed for %s: %s", url, exc)
+        return ""
+
+
 async def _search_multi_provider(
     query: str, *, max_results: int = 10
 ) -> dict[str, Any]:
@@ -264,7 +282,7 @@ async def _search_multi_provider(
             query, max_results=max_results, provider="tavily"
         )
     except Exception as exc:
-        logger.warning("scrape failed for %s: %s", url, exc)
+        logger.warning("search failed for %r: %s", query, exc)
     # Scrape top URLs from Tavily
     tavily_items = results["tavily"]
     if isinstance(tavily_items, dict):
@@ -272,13 +290,10 @@ async def _search_multi_provider(
     for item in tavily_items[:3]:
         if isinstance(item, dict) and item.get("url"):
             try:
-                from src.backend.infrastructure.clients.external.search_providers import (
-                    _scrape_url,
-                )
                 scraped = await _scrape_url(item["url"], max_chars=2000)
                 results["scraped"].append({"url": item["url"], "content": scraped})
-            except Exception:
-                continue
+            except Exception as exc:
+                logger.warning("scrape failed for %s: %s", item["url"], exc)
     return results
 
 
