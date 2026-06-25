@@ -46,6 +46,17 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
 - Все в `src/backend/core/utils/` + `src/backend/entrypoints/middlewares/`
 - См. `docs/middleware/MIDDLEWARE.md`
 
+**Sprint 171 (S170+): M6 RPA + Security complete (commit 0600ed3).**
+- 4 new RPA DSL: `FileDeleteProcessor`, `FileListProcessor`,
+  `FileWatchProcessor` (watchdog), `TerminalExecProcessor` (asyncio)
+- Security: `RpaPolicyMiddleware` (deny-by-default для `/api/v1/rpa/*`)
+- Performance: `cpu_bound.run_cpu_bound(use_process_pool=True)` для PDF/OCR/image
+- 3-layer defense: HTTP role check + DSL capability + audit events
+- Все в `src/backend/dsl/engine/processors/rpa/`,
+  `src/backend/entrypoints/middlewares/rpa_policy.py`,
+  `src/backend/core/utils/cpu_bound.py`
+- См. `docs/rpa/RPA_GUIDE.md`
+
 ---
 
 ## Что читать сначала

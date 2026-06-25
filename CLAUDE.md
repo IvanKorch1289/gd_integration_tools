@@ -460,6 +460,7 @@ python tools/checks/check_layers.py
     .claude/KNOWN_ISSUES.md — открытый техдолг
     vault/session-*-summary.md — архив сессий
     docs/middleware/MIDDLEWARE.md — middleware guide (Sprint 171 M5)
+    docs/rpa/RPA_GUIDE.md — RPA tools guide (Sprint 171 M6)
     docs/ai/BEST_PRACTICES.md — AI/LLM best practices (Sprint 170 M3)
 
 ## Sprint 171 M5 — Middleware Audit (2026-06-24)
@@ -492,6 +493,41 @@ python tools/checks/check_layers.py
 ### Test results
 - 19/19 M5 новых тестов pass (4 + 5 + 6 + 4)
 - Middleware suite: 258/258 pass
+- Core: 45 failed = HEAD baseline (zero new regression)
+
+## Sprint 171 M6 — RPA + Security (2026-06-25)
+
+Полная инвентаризация RPA + 4 новых DSL процессора + deny-by-default security.
+
+### Новые RPA DSL (M6 gap-fill)
+- `FileDeleteProcessor` (rpa.file.delete) — secure file/dir deletion
+- `FileListProcessor` (rpa.file.list) — glob-поиск через `asyncio.to_thread`
+- `FileWatchProcessor` (rpa.file.watch) — watchdog Observer wrapper
+- `TerminalExecProcessor` (rpa.shell.exec) — async subprocess с timeout
+
+### Security (defense in depth — 3 слоя)
+1. `RpaPolicyMiddleware` (Layer 1) — deny-by-default для `/api/v1/rpa/*`,
+   требует `rpa.admin` role в `X-Roles` header
+2. DSL `required_capability` (Layer 2) — per-processor capability string
+3. Audit events `rpa.*` (Layer 3) — ClickHouse/Redis
+
+### Performance helpers (D146)
+- `src.backend.core.utils.cpu_bound.run_cpu_bound(fn, *, use_process_pool=False)`
+  - Default: `asyncio.to_thread` (lightweight)
+  - `use_process_pool=True`: `ProcessPoolExecutor` (cpu_count - 1)
+  - Для PDF merge, OCR, image resize
+
+### D-rules (M6 promotions)
+- D143: RPA thin wrapper pattern (1-line delegation)
+- D144: RCE-shaped capability gating (audit + role)
+- D145: async subprocess pattern (create_subprocess_shell + wait_for)
+- D146: file I/O via asyncio.to_thread (non-blocking event loop)
+- D147: RpaPolicyMiddleware deny-by-default
+- D148: Russian docstring requirement + RPA documentation pattern
+
+### Test results
+- M6 new: 15/15 pass (6 RPA DSL + 4 rpa_policy + 5 cpu_bound)
+- Total: 3037 passed (+251 от M5 baseline 2786)
 - Core: 45 failed = HEAD baseline (zero new regression)
 
 Версия CLAUDE.md: V22 (2026-06-05). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
