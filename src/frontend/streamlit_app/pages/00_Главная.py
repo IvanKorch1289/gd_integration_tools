@@ -131,7 +131,7 @@ if health:
             else:
                 st.error(f"✗ {name}")
 else:
-    st.info("Health данные недоступны.")
+    st.info("Здоровье компонентов: данные недоступны.")
 
 # ──────────── Auto-refresh ────────────
 

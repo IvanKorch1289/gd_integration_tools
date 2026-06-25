@@ -143,7 +143,7 @@ with tab_list:
     instances = _cached_list(flt_status, flt_name, flt_tenant, int(flt_limit))
 
     if not instances:
-        st.info("Нет instances по заданным фильтрам.")
+        st.info("Нет экземпляров по заданным фильтрам.")
     else:
         st.caption(f"Найдено: **{len(instances)}** instances")
 

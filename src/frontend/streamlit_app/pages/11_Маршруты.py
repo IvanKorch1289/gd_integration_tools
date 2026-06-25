@@ -15,8 +15,8 @@ client = get_api_client()
 # ──────────── Фильтры ────────────
 
 col1, col2 = st.columns([3, 1])
-search = col1.text_input("Поиск по route ID", placeholder="orders.*")
-status_filter = col2.selectbox("Status", ["All", "Enabled", "Disabled"])
+search = col1.text_input("Поиск по ID маршрута", placeholder="orders.*")
+status_filter = col2.selectbox("Статус", ["All", "Enabled", "Disabled"])
 
 # ──────────── Таблица ────────────
 

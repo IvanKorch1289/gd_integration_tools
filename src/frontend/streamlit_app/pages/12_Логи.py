@@ -13,7 +13,7 @@ client = get_api_client()
 # ──────────── Фильтры ────────────
 
 col1, col2, col3 = st.columns(3)
-route_filter = col1.text_input("Route ID")
+route_filter = col1.text_input("ID маршрута")
 corr_filter = col2.text_input("ID корреляции")
 level_filter = col3.selectbox("Уровень", ["All", "Error", "Warning", "Info", "Debug"])
 

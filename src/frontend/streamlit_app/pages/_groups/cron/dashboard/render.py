@@ -110,7 +110,7 @@ def _render_body() -> None:
                     st.success(f"Triggered {name}")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Ошибка run-now: {exc}")
-            if action_cols[3].button("Delete", key=f"delete_{name}"):
+            if action_cols[3].button("Удалить", key=f"delete_{name}"):
                 try:
                     asyncio.run(client.delete_schedule(name)) if hasattr(
                         client, "delete_schedule"

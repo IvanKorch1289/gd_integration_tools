@@ -117,7 +117,7 @@ def _render_body() -> None:
             "callable_ref (module.path:function)",
             value="src.backend.infrastructure.scheduler.scheduled_tasks:check_all_services",
         )
-        if st.button("Save"):
+        if st.button("Сохранить"):
             try:
                 import httpx as requests
 
