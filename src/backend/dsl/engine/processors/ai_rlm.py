@@ -66,11 +66,15 @@ class RLMConfig:
         max_tokens: int = 4000,
         temperature: float = 0.7,
         context_threshold: int = 10000,
+        sandbox_enabled: bool = True,
     ) -> None:
         self.max_iterations = max_iterations
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.context_threshold = context_threshold
+        # Backward-compat field (deprecated — real sandboxing via core.ai.sandbox).
+        # Kept to preserve public API + test compatibility.
+        self.sandbox_enabled = sandbox_enabled
 
 
 class AIRLMProcessor(BaseProcessor):
