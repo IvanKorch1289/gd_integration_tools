@@ -15,6 +15,12 @@ from __future__ import annotations
 
 from src.frontend.streamlit_app.api_clients.admin import AdminClient
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient, get_base_client
+from src.frontend.streamlit_app.api_clients.cached import (
+    cached_get_health,
+    cached_get_metrics,
+    cached_get_orders,
+    clear_api_cache,
+)
 from src.frontend.streamlit_app.api_clients.capability import CapabilityClient
 from src.frontend.streamlit_app.api_clients.chat import ChatClient
 from src.frontend.streamlit_app.api_clients.config import ConfigClient
@@ -51,4 +57,9 @@ __all__ = (
     "InventoryClient",
     "CapabilityClient",
     "LogsClient",
+    # S3: cached API helpers
+    "cached_get_metrics",
+    "cached_get_health",
+    "cached_get_orders",
+    "clear_api_cache",
 )
