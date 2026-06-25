@@ -545,4 +545,56 @@ python tools/checks/check_layers.py
 - Total: 3037 passed (+251 от M5 baseline 2786)
 - Core: 45 failed = HEAD baseline (zero new regression)
 
+## Sprint 171 M7 — Integration Layer (2026-06-25)
+
+### Унифицированные middleware facades (D160)
+- `src/backend/core/facades.py` — единая точка импорта для 17 primitives
+  (auth + timeout + retry + ratelimit + CB + bulkhead)
+- Заменяет 40+ unique facade imports
+- Lazy `__getattr__` для circular deps
+- 8/8 tests pass
+
+### Per-route policies (policy_mixin.py, 8 types)
+- `.policy.cache(ttl_seconds=60)` — idempotent reads
+- `.policy.circuit_breaker(threshold=5, recovery_seconds=30)` — external APIs
+- `.policy.rate_limit(rate=100, per_seconds=1)` — public endpoints
+- `.policy.timeout(seconds=10)` — slow ops
+- `.policy.retry(max_attempts=3)` — transient failures
+- `.policy.bulkhead(limit=10)` — concurrent limits
+- `.policy.adaptive_timeout()` — ML-based
+- `.policy.idempotency(ttl=86400)` — webhook dedup
+
+### Multi-protocol (14+) + Routes
+- 8 routes в `routes/` + plugin routes (extensible)
+- Multi-protocol: REST/SOAP/WSDL/gRPC/GraphQL/AsyncAPI/WS/SSE/MCP/MQTT/
+  HTTP3/CDC/email/filewatcher/scheduler
+- Entity CRUD auto-gen (entity.py: 5 ops)
+- Call types: sync/async/deferred/background/distributed/multithreaded
+
+### M7 NEW: Directory scan DSL
+- `DirectoryScanProcessor` — recursive `**` + min_size/max_size/modified_after
+- Differs from FileListProcessor (M6): recursive + metadata filters
+
+### M7 NEW: AI Agent Guide (8 sections, 503 LOC)
+- Policies + masking + workflow + prompts + memory + RLM + decision matrix
+- Тестирование (unit + integration + AsyncMock + runtime)
+
+### Existing (M3): CDC + External DB DSL
+- `db_call_procedure.py` — any SQL DB (PG/MSSQL/Oracle/MySQL/DB2)
+- `cdc_capture.py` + `cdc_transform.py` — Debezium/Kafka/Postgres
+
+### D-rules (M7 promotions)
+- D160: Unified middleware facade pattern
+- D161: Per-route DSL (8 policies)
+- D162: Multi-protocol auto-registration
+- D163: Call type DSL (6 types)
+- D164: External DB facade
+- D165: CDC DSL
+- D166: Directory scan DSL
+
+### Test results
+- 45 failed = HEAD baseline (zero regression)
+- M7: 19/19 pass
+- Total: 3058 passed (+11)
+
 Версия CLAUDE.md: V22 (2026-06-05). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
