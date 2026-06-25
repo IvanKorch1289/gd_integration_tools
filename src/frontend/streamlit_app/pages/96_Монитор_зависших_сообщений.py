@@ -211,7 +211,7 @@ alert_rules: list[dict[str, Any]] = [
         "name": "OutboxStuckPendingHigh",
         "severity": "warning",
         "condition": "aggregate > 0 для 5 min",
-        "action": "Slack #platform-alerts  # канал оповещений,
+        "action": "Slack #platform-alerts  # канал оповещений",
     },
     {
         "name": "OutboxStuckPendingCritical",
