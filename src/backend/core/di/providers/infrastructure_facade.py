@@ -859,13 +859,5 @@ def get_mongodb_client_class() -> Any:
 
 def get_kafka_producer_class() -> Any:
     """Возвращает ``clients.messaging.kafka_producer.KafkaProducer`` class."""
-    try:
-        from src.backend.infrastructure.clients.messaging.kafka_producer import KafkaProducer
-        return KafkaProducer
-    except ImportError:
-        # Fallback to aiokafka-based producer if available
-        try:
-            from src.backend.infrastructure.clients.messaging.stream import StreamClient
-            return StreamClient
-        except ImportError:
-            return None
+    from src.backend.infrastructure.clients.messaging.kafka_producer import KafkaProducer
+    return KafkaProducer

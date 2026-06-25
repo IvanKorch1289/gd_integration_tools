@@ -93,7 +93,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
     """PEP 562 lazy attribute access (Sprint 36 — ponytail D111)."""
     if name == "SQLAlchemyRepository":
         from src.backend.core.repositories.base import SQLAlchemyRepository

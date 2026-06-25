@@ -43,6 +43,8 @@ class MiniMaxProvider:
 
     async def embeddings(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
         """Embeddings через MiniMax API."""
+        if not self.api_key:
+            raise RuntimeError("MINIMAX_API_KEY not set")
         return await self._delegate.embeddings(texts, **kwargs)
 
     async def extract_text(self, content: bytes, **kwargs: Any) -> str:

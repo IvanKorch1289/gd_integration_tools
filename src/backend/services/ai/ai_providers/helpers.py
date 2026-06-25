@@ -50,9 +50,9 @@ def register_extended_providers(agent: Any) -> int:
         ollama = OllamaProvider()
         agent._providers["ollama"] = ollama.chat
 
-    minimax_p = MiniMaxProvider()
-    agent._providers["minimax"] = minimax_p.chat
-        agent._providers["local"] = ollama.chat
+    if os.environ.get("MINIMAX_API_KEY"):
+        minimax_p = MiniMaxProvider()
+        agent._providers["minimax"] = minimax_p.chat
         registered += 1
 
     logger.info("Registered %d extended AI providers", registered)

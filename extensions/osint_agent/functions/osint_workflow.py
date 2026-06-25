@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+from src.backend.core.logging import get_logger
+logger = get_logger("osint_agent.workflow")
 from typing import Any
 
 OSINT_REPORT_TEMPLATE = """\
@@ -261,8 +263,8 @@ async def _search_multi_provider(
         results["tavily"] = await service.query(
             query, max_results=max_results, provider="tavily"
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("scrape failed for %s: %s", url, exc)
     # Scrape top URLs from Tavily
     tavily_items = results["tavily"]
     if isinstance(tavily_items, dict):
