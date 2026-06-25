@@ -41,7 +41,7 @@ st.subheader("⚙️ Конфигурация")
 col1, col2 = st.columns(2)
 with col1:
     threshold = st.number_input(
-        "Threshold (seconds)",
+        "Порог (секунды)",
         min_value=60,
         max_value=3600,
         value=int(os.getenv("STUCK_MONITOR_THRESHOLD_SECONDS", "300")),
@@ -50,7 +50,7 @@ with col1:
     )
 with col2:
     sample_interval = st.number_input(
-        "Sample interval (seconds)",
+        "Интервал сэмпла (секунды)",
         min_value=10,
         max_value=600,
         value=int(os.getenv("STUCK_MONITOR_SAMPLE_INTERVAL_SECONDS", "60")),
@@ -96,7 +96,7 @@ if prometheus_url:
                 else:
                     st.success("✅ Нет застрявших сообщений. Worker работает штатно.")
             else:
-                st.info("No data points yet. Wait for first sample (60s).")
+                st.info("Нет точек данных. Подождите первого сэмпла (60 сек).")
         else:
             st.error(f"Prometheus query failed: HTTP {response.status_code}")
     except Exception as exc:

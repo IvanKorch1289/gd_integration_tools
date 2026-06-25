@@ -157,19 +157,19 @@ with col_meta:
 with col_lists:
     capabilities = selected.get("capabilities") or []
     if capabilities:
-        st.markdown("**Capabilities**")
+        st.markdown("**Возможности**")
         for cap in capabilities:
             st.markdown(f"- `{cap}`")
     else:
-        st.markdown("**Capabilities**: —")
+        st.markdown("**Возможности**: —")
 
     provides = selected.get("provides") or {}
     if any(provides.values()):
-        st.markdown("**Provides**")
+        st.markdown("**Предоставляет**")
         for kind, items in provides.items():
             if items:
                 with st.expander(f"{kind} ({len(items)})", expanded=False):
                     for item in items:
                         st.markdown(f"- `{item}`")
     else:
-        st.markdown("**Provides**: —")
+        st.markdown("**Предоставляет**: —")

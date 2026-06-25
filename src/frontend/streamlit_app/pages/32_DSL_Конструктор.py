@@ -83,7 +83,7 @@ def _render() -> None:
         dry_clicked = st.button("Предпросмотр записи (dry-run)", width='stretch')
     with cols[1]:
         save_clicked = st.button(
-            "Save to YAML",
+            "Сохранить в YAML",
             type="primary",
             disabled=not write_enabled,
             width='stretch',

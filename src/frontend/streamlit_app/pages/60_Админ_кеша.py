@@ -71,7 +71,7 @@ with tab_redis:
             st.error(str(exc))
 
 with tab_rag:
-    st.subheader("RAG Cache Dashboard")
+    st.subheader("RAG панель кеша")
     client_k4 = K4APIClient()
     stats = client_k4.get_rag_cache_stats()
     counters = stats.get("counters", {"hits": {}, "misses": {}})

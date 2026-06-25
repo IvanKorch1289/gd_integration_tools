@@ -140,7 +140,7 @@ with tab_step:
                 st.info("Нет workflow_id в текущей выборке для drill-down.")
             else:
                 selected_workflow = st.selectbox(
-                    "ID Workflow",
+                    "ID Воркфлоу",
                     options=ids,
                     help="Выберите workflow для подробного просмотра steps.",
                 )

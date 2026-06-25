@@ -33,7 +33,7 @@ except Exception as exc:  # noqa: BLE001
 if not all_ids:
     st.info("Реестр пуст. Зарегистрируйте workflow через @workflow_versioned('X.Y.Z').")
 else:
-    selected = st.selectbox("ID Workflow", all_ids)
+    selected = st.selectbox("ID Воркфлоу", all_ids)
     history = registry.history(selected)
 
     st.subheader(f"История {selected!r}")

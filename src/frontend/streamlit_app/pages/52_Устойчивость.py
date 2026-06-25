@@ -51,7 +51,7 @@ except Exception:  # noqa: BLE001
 with st.sidebar:
     st.subheader("Настройки")
     st.toggle(
-        "Resilience Dashboard",
+        "Панель устойчивости",
         value=_flag_enabled,
         help="feature_flags.resilience_dashboard_enabled (FEATURE_RESILIENCE_DASHBOARD_ENABLED)",
         disabled=True,
@@ -63,7 +63,7 @@ with st.sidebar:
 
 if not _flag_enabled:
     st.warning(
-        "Resilience Dashboard отключён "
+        "Панель устойчивости отключён "
         "(feature_flag: `resilience_dashboard_enabled = false`). "
         "Установите `FEATURE_RESILIENCE_DASHBOARD_ENABLED=true` для активации."
     )

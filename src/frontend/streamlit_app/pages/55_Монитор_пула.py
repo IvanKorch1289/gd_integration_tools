@@ -43,7 +43,7 @@ except Exception:  # noqa: BLE001
 with st.sidebar:
     st.subheader("Настройки")
     st.toggle(
-        "Pool Monitor",
+        "Монитор пула",
         value=_flag_enabled,
         help="feature_flags.pool_monitor_enabled (FEATURE_POOL_MONITOR_ENABLED)",
         disabled=True,
@@ -55,7 +55,7 @@ with st.sidebar:
 
 if not _flag_enabled:
     st.warning(
-        "Pool Monitor отключён (feature_flag: `pool_monitor_enabled = false`). "
+        "Монитор пула отключён (feature_flag: `pool_monitor_enabled = false`). "
         "Установите `FEATURE_POOL_MONITOR_ENABLED=true` для активации."
     )
     st.stop()
@@ -201,7 +201,7 @@ def _render_connection_pools(pools: list[dict[str, Any]]) -> None:
     Args:
         pools: список словарей connection pool снапшотов.
     """
-    st.subheader("Connection pools")
+    st.subheader("Пулы соединений")
     if not pools:
         st.caption("Нет зарегистрированных connection pool'ов.")
         return
@@ -250,7 +250,7 @@ _render_dashboard()
 
 with st.expander("О странице"):
     st.write(
-        "Pool Monitor читает REST endpoint `/api/v1/admin/pools/snapshot`. "
+        "Монитор пула читает REST endpoint `/api/v1/admin/pools/snapshot`. "
         "Trend-линии (60 точек, 1 точка / 5 сек) хранятся в `st.session_state` "
         "и сбрасываются между сессиями браузера."
     )

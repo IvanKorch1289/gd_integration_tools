@@ -38,7 +38,7 @@ except Exception:  # noqa: BLE001
 with st.sidebar:
     st.subheader("Настройки")
     _sidebar_toggle = st.toggle(
-        "Action Bus UI",
+        "UI шины действий",
         value=_flag_enabled,
         help="feature_flags.frontend_action_bus_ui (FEATURE_FRONTEND_ACTION_BUS_UI)",
         disabled=True,  # изменение только через env/config
@@ -50,7 +50,7 @@ with st.sidebar:
 
 if not _flag_enabled:
     st.warning(
-        "Action Bus UI отключён (feature_flag: `frontend_action_bus_ui = false`). "
+        "UI шины действий отключён (feature_flag: `frontend_action_bus_ui = false`). "
         "Установите `FEATURE_FRONTEND_ACTION_BUS_UI=true` для активации."
     )
     st.stop()

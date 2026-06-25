@@ -110,7 +110,7 @@ with tab_extract:
     if st.button("Extract"):
         cmd = ["tools/codegen_extract.py", "--service", service_path]
         rc, out, err = _run(cmd)
-        with st.expander("YAML output", expanded=True):
+        with st.expander("YAML результат", expanded=True):
             st.code(out, language="yaml")
             if err:
                 st.code(err)

@@ -26,8 +26,8 @@ from src.frontend.streamlit_app.shared.components import setup_page
 setup_page("Инспекция тенантов (S21)", "🛡️")
 st.header("Инспекция тенантов")
 st.caption(
-    "Read-only dashboard: cache hit-rates per tenant + RLS policy status + "
-    "RPA session pool stats + Scheduler DLQ + last failed jobs."
+    "Только-для-чтения дашборд: cache hit-rates по тенантам + статус RLS-политик + "
+    "статистика пула RPA-сессий + DLQ планировщика + последние неудачные задачи."
 )
 
 # Auto-refresh каждые 10 сек
@@ -166,8 +166,8 @@ else:
 # ─────────────────────────────────────────────────────────────────────────
 st.subheader("5. Сохранение cookies в браузере")
 st.caption(
-    "BrowserCookieStore: Redis hash `browser:session:{tenant}:{user}:{domain}` "
-    "TTL 24h. Feature-flag `browser_cookies_redis_persist` (default-OFF)."
+    "BrowserCookieStore: Redis hash `browser:session:{тенант}:{user}:{domain}` "
+    "TTL 24h. Фича-флаг `browser_cookies_redis_persist` (default-OFF)."
 )
 st.write(
     f"Selected tenant scope: `{selected_id}` — детальный просмотр persisted "

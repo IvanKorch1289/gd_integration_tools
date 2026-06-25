@@ -5,7 +5,7 @@
 * **Plugins** — список установленных плагинов с toggle enable/disable
   (через ``/api/v1/admin/plugins``).
 * **Users** — read-only список пользователей (через ``/api/v1/users/all``).
-* **Feature Flags** — toggle переключатели (через
+* **Фича-флаги** — toggle переключатели (через
   ``/api/v1/admin/feature-flags``).
 
 Страница вызывает только публичный REST-API через
@@ -96,10 +96,10 @@ with tab_users:
         st.info("Пользователи не найдены или endpoint недоступен.")
 
 # ---------------------------------------------------------------------------
-# Tab: Feature Flags
+# Tab: Фича-флаги
 # ---------------------------------------------------------------------------
 with tab_flags:
-    st.subheader("Feature Flags")
+    st.subheader("Фича-флаги")
 
     try:
         flags = client.get_flags()

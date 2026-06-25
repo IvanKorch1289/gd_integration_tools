@@ -14,7 +14,7 @@ from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (T
 
 setup_page("Редактор профилей устойчивости", "⚙️")
 st.title("⚙️ Редактор профилей устойчивости")
-st.caption("Per-tenant override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
+st.caption("Тенантный override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
 
 client = get_api_client()
 

@@ -32,7 +32,7 @@ st.divider()
 st.subheader("Поиск")
 query = st.text_input("Запрос", "")
 top_k = st.slider("top_k", 1, 20, 5)
-search_ns = st.text_input("Namespace (search)", "")
+search_ns = st.text_input("Namespace (поиск)", "")
 if st.button("Искать") and query:
     result = client.search(query, top_k, namespace=search_ns or None)
     st.json(result)
@@ -43,7 +43,7 @@ st.subheader("Загрузка (PDF / DOCX / MD / TXT)")
 uploaded = st.file_uploader(
     "Документ", type=["pdf", "docx", "md", "txt"], accept_multiple_files=False
 )
-upload_ns = st.text_input("Namespace (upload)", "default")
+upload_ns = st.text_input("Namespace (загрузка)", "default")
 upload_meta = st.text_area(
     "Metadata JSON (опционально)", '{"source": "streamlit"}', height=80
 )

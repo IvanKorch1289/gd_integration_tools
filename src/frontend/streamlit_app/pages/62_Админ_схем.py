@@ -1,8 +1,8 @@
-"""Schema Admin — объединение Import Schema, Schema Registry и Schema Viewer.
+"""Schema Admin — объединение Import Schema, Реестр схем и Schema Viewer.
 
 Вкладки:
 * Import Schema — OpenAPI / Postman / WSDL → ConnectorSpec.
-* Schema Registry — просмотр, валидация, diff схем.
+* Реестр схем — просмотр, валидация, diff схем.
 * API Schemas — OpenAPI/GraphQL/gRPC/AsyncAPI/SOAP/XML.
 """
 
@@ -133,7 +133,7 @@ with tab_registry:
             key="reg_flag",
         )
 
-    st.subheader("Schema Registry")
+    st.subheader("Реестр схем")
     st.caption(
         "Единый каталог схем проекта: OpenAPI / WSDL / XSD / Protobuf / AsyncAPI / GraphQL SDL. "
         "Download · Validate · Diff."
@@ -283,7 +283,7 @@ with tab_viewer:
 
     with tab_gql:
         st.subheader("GraphQL")
-        st.markdown("- [GraphiQL playground](/graphql)")
+        st.markdown("- [GraphiQL playground](/graphql)  # playground на русском оставляем как proper noun")
         st.info(
             "Схема генерируется из strawberry-классов в src/entrypoints/graphql/schema.py"
         )

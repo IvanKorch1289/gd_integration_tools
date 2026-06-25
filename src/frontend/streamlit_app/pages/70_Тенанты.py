@@ -19,7 +19,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 setup_page("Тенанты", "🏛️", layout="wide", initial_sidebar_state="expanded")
 st.header("Тенанты — админ-панель")
 st.caption(
-    "Per-tenant overview: quotas, billing, SLO, recent audit events. "
+    "Обзор по тенантам: квоты, биллинг, SLO, последние события аудита. "
     "Источник — `/api/v1/admin/tenants`."
 )
 

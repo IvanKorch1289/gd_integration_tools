@@ -6,7 +6,7 @@ Sprint 12 K5 W1 — расширение для workflow templates:
 * live YAML preview;
 * Mermaid graph rendering (через ``to_mermaid``);
 * semantic search вход;
-* "Deploy as new workflow" → POST /admin/workflow-templates/{name}/deploy.
+* "Задеплоить как новый Воркфлоу" → POST /admin/workflow-templates/{name}/deploy.
 
 Sources:
     * Route blueprints — :mod:`app.dsl.templates_library` (legacy через
@@ -94,7 +94,7 @@ def _render_workflow_templates() -> None:
         return
 
     query = st.text_input(
-        "Search (semantic)", placeholder="incident handling / kyc / data..."
+        "Поиск (семантический)", placeholder="incident handling / kyc / data..."
     )
 
     if query.strip():
@@ -128,12 +128,12 @@ def _render_workflow_templates() -> None:
                     st.error(f"Mermaid render failed: {exc}")
 
             target = st.text_input(
-                "Target directory",
+                "Целевая директория",
                 value=f"extensions/{tmpl.name}/workflows",
                 key=f"target_{tmpl.name}",
             )
             if st.button(
-                "Deploy as new workflow", key=f"deploy_{tmpl.name}", type="primary"
+                "Задеплоить как новый Воркфлоу", key=f"deploy_{tmpl.name}", type="primary"
             ):
                 try:
                     import httpx as requests

@@ -60,7 +60,7 @@ with tab_file:
     )
 
     file_collection = st.text_input(
-        "Collection (namespace)", value="default", key="file_ns"
+        "Коллекция (namespace)", value="default", key="file_ns"
     )
 
     if uploaded_files:
@@ -121,14 +121,14 @@ with tab_json:
     )
 
     json_input = st.text_area(
-        "Documents JSON",
+        "Документы (JSON)",
         value=default_json,
         height=300,
         help="JSON массив документов с полями content (str) и metadata (dict, опционально)",
     )
 
     json_collection = st.text_input(
-        "Collection (namespace)", value="default", key="json_ns"
+        "Коллекция (namespace)", value="default", key="json_ns"
     )
 
     col1, col2 = st.columns([1, 4])
@@ -150,7 +150,7 @@ with tab_json:
                     else:
                         st.write(f"  Document {i}: {doc.get('content', '')[:60]}...")
             else:
-                st.error("Input must be a JSON array (list), not a single object")
+                st.error("Входные данные должны быть JSON-массивом (list), не одним объектом")
         except json.JSONDecodeError as exc:
             st.error(f"Invalid JSON: {exc}")
 

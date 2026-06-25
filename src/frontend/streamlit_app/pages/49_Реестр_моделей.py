@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover
 setup_page("Реестр моделей", "🧬")
 st.title("🧬 Реестр AI-моделей")
 st.caption(
-    "Composite MLflow + Hugging Face Hub. "
+    "Композитный MLflow + Hugging Face Hub. "
     "Активируется feature-flag `ai_model_registry_ui`."
 )
 

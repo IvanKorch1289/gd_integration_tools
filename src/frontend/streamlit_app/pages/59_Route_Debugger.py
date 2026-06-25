@@ -171,6 +171,6 @@ else:
     st.caption("Нет событий для сводки.")
 
 st.caption(
-    "S42 W4 baseline + S44 W1 backend wiring. "
+    "S42 W4 базовая версия + S44 W1 backend-обвязка. "
     "Persistent trace storage = TD-026 (S45+ D)."
 )

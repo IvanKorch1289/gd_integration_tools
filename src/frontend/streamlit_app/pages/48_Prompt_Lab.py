@@ -106,7 +106,7 @@ with tab_create:
     new_body = st.text_area("Тело prompt'а", height=200, key="new-body")
     new_model = st.text_input("Модель", value="gpt-4o-mini", key="new-model")
     new_params_raw = st.text_area(
-        "Parameters JSON", value='{"temperature": 0.0, "top_p": 1.0}', height=80
+        "Параметры (JSON)", value='{"temperature": 0.0, "top_p": 1.0}', height=80
     )
     new_author = st.text_input("Автор (ваше имя)", key="new-author")
     if st.button("Создать"):

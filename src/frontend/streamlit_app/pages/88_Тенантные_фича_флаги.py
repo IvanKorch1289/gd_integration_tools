@@ -47,7 +47,7 @@ def _render_snapshot(snapshot: dict[str, Any]) -> None:
             st.json(global_overrides, expanded=True)
 
     with col_tenant:
-        st.subheader("Per-tenant overrides")
+        st.subheader("Тенантные overrides")
         per_tenant = snapshot.get("per_tenant", {})
         if not per_tenant:
             st.info("Нет per-tenant overrides.")

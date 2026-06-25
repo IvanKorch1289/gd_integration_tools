@@ -33,7 +33,7 @@ except Exception:  # noqa: BLE001
     all_ids = []
 
 workflow_id = st.selectbox(
-    "ID Workflow",
+    "ID Воркфлоу",
     options=all_ids + ["(введите вручную)"] if all_ids else ["(введите вручную)"],
     key="cost_wf",
 )

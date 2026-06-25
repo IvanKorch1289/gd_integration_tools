@@ -33,8 +33,8 @@ else:
 
 with st.expander("Создать заказ"):
     with st.form("create_order", clear_on_submit=True):
-        pledge_gd_id = st.number_input("Pledge GD ID", min_value=1, step=1)
-        order_kind_id = st.number_input("Order Kind ID", min_value=1, step=1)
+        pledge_gd_id = st.number_input("ID заявки GD", min_value=1, step=1)
+        order_kind_id = st.number_input("ID вида заказа", min_value=1, step=1)
 
         if st.form_submit_button("Создать"):
             try:

@@ -1,4 +1,4 @@
-"""EIP Coverage Dashboard — Sprint 63 W4 (docs/audit).
+"""Покрытие EIP Dashboard — Sprint 63 W4 (docs/audit).
 
 Показывает покрытие 10 канонических Apache Camel EIP patterns в проекте.
 Auto-generated из runtime introspection:
@@ -8,7 +8,7 @@ Auto-generated из runtime introspection:
 
 Use:
   streamlit run src/frontend/streamlit_app/app.py
-  → Navigate to "EIP Coverage" в sidebar.
+  → Navigate to "Покрытие EIP" в sidebar.
 """
 
 # ruff: noqa: I001
@@ -109,7 +109,7 @@ def _render_coverage_table() -> None:
 
     canonical = sum(1 for r in rows if r["Status"] == "✅")
     st.metric(
-        "EIP Coverage", f"{canonical}/10", delta="10/10 — Apache Camel EIP patterns"
+        "Покрытие EIP", f"{canonical}/10", delta="10/10 — Apache Camel EIP patterns"
     )
 
 
