@@ -13,7 +13,6 @@ Streamlit page ``13_Cron_Builder.py`` (149 LOC, S12 K3 W2) — visual builder
   import + setup_page + render_body (mode radio + expression + preview +
   save + dry-run). Импортируется из thin ``13_Cron_Builder.py``.
 
-**Pattern reference**: :mod:`src.frontend.streamlit_app.pages._groups.home.home_page`
 (S142 W2 PoC, simpler 1-render-path pattern).
 
 **Backward-compatible**: flat ``13_Cron_Builder.py`` остаётся
