@@ -92,7 +92,7 @@ from src.backend.core.facades import (
 )
 ```
 
-Single import → 17 middleware primitives across 6 categories (auth, timeout, retry, rate-limit, CB, bulkhead).
+Single import → 16 middleware primitives across 6 categories (auth, timeout, retry, rate-limit, CB, bulkhead).
 
 ## Call types (6 supported)
 
@@ -147,13 +147,19 @@ from src.backend.dsl.engine.processors.rpa.operations.directoryscanprocessor imp
     DirectoryScanProcessor,
 )
 
-p = DirectoryScanProcessor(
+p = FilteredDirectoryScanProcessor(  # M7 NEW (renamed from DirectoryScanProcessor)
     directory="/incoming",
     pattern="**/*.csv",
     min_size=100,
     modified_after=datetime(2026, 6, 1),
+    max_results=10_000,        # Safety cap (M7 deep-review P0-1 fix)
+    timeout_seconds=30.0,     # asyncio.wait_for (M7 deep-review P0-1 fix)
     to="body.files",
 )
+
+# Note: original `DirectoryScanProcessor` (fs_directory_scan.py, S35) still exists
+# for backward compat — returns dicts with metadata. Use `FilteredDirectoryScanProcessor`
+# for string-path list with size/mtime filters.
 ```
 
 Differences from FileListProcessor: recursive (`**`), size/mtime filters, sorted.

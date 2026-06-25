@@ -1,6 +1,6 @@
 # RPA Guide (Sprint 171 — M6)
 
-> **Domain-agnostic RPA infrastructure.** 35+ DSL processors covering
+> **Domain-agnostic RPA infrastructure.** 37+ DSL processors covering
 > file operations, terminal/shell, documents (PDF/Word/Excel), browser
 > automation (patchright), desktop (pywinauto), OCR (pytesseract),
 > image processing, banking integrations (Citrix/Terminal3270).
@@ -24,6 +24,7 @@ Audit Events (rpa.* в ClickHouse/Redis)
 | `FileMoveProcessor` | `rpa.file.move` | copy/move/rename |
 | `FileDeleteProcessor` | `rpa.file.delete` | secure file/dir deletion |
 | `FileListProcessor` | `rpa.file.list` | glob-поиск (async via `to_thread`) |
+| `FilteredDirectoryScanProcessor` (M7) | `rpa.directory.scan` | recursive `**` + size/mtime filters |
 | `FileWatchProcessor` | `rpa.file.watch` | watchdog create/modify/delete |
 | `ArchiveProcessor` | `rpa.file.archive` | ZIP/TAR/GZ |
 | `HashProcessor` | `rpa.file.hash` | SHA256/MD5 |

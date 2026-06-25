@@ -375,10 +375,11 @@ p = AIRLMProcessor(
 
 ```python
 # src/backend/dsl/engine/processors/ai_rlm.py
-RLMConfig:
-  max_iterations: 10   # prevent infinite loops
-  max_tokens: 4000      # per iteration
-  sandbox_enabled: true # (deprecated — actual sandbox via core.ai.sandbox)
+p = AIRLMProcessor(
+    max_iterations=10,    # prevent infinite loops
+    max_tokens=4000,      # per iteration
+    sandbox_enabled=True, # backward-compat (deprecated — actual sandbox via core.ai.sandbox)
+)
 ```
 
 ---
@@ -414,7 +415,7 @@ RLMConfig:
 | Single Q&A | Direct LLM | minimax, openai, etc. |
 | Multi-turn chat | Memory DSL | langmem |
 | Tool calling | LangGraph DSL | langgraph |
-| Document Q&A (>4K) | RAG | hybrid_rag |
+| Document Q&A (>4K) | RAG | src/backend/services/ai/hybrid_rag.py |
 | Document Q&A (>10K) | RLM | ai_rlm |
 | Structured output | Instructor + pydantic | instructor |
 | OSINT workflow | Pre-built route | osint_agent |

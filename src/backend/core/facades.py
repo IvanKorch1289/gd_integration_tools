@@ -56,7 +56,7 @@ __all__ = (
 def __getattr__(name: str) -> object:
     """Lazy import для модулей с circular dependencies (M7).
 
-    Реальный набор: 17 primitives (9 eager + 8 lazy).
+    Реальный набор: 16 primitives (9 eager + 7 lazy).
     """
     if name in ("RateLimit", "RedisRateLimiter", "get_rate_limiter", "RateLimitExceeded"):
         from src.backend.infrastructure.resilience import unified_rate_limiter as _m
