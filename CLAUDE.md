@@ -463,6 +463,8 @@ python tools/checks/check_layers.py
     docs/rpa/RPA_GUIDE.md — RPA tools guide (Sprint 171 M6)
     docs/config/SETTINGS_GUIDE.md — settings + Consul + hot-reload (Sprint 171 M6.1)
     docs/ai/BEST_PRACTICES.md — AI/LLM best practices (Sprint 170 M3)
+    docs/ai/AGENT_GUIDE.md — AI agent workflow (Sprint 171 M7)
+    docs/integration/INTEGRATION_GUIDE.md — integration layer (Sprint 171 M7)
 
 ## Sprint 171 M5 — Middleware Audit (2026-06-24)
 
