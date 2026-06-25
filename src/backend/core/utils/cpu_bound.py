@@ -27,6 +27,9 @@ def default_cpu_pool() -> ProcessPoolExecutor:
     """Singleton ProcessPoolExecutor (lazy init).
 
     Использовать для CPU-bound tasks: PDF merge, OCR, image resize, hash.
+
+    Returns:
+        ProcessPoolExecutor с ``max_workers=cpu_count - 1``.
     """
     global _default_pool
     if _default_pool is None:

@@ -35,12 +35,18 @@ _logger = get_logger(__name__)
 
 
 class RpaPolicyMiddleware(BaseHTTPMiddleware):
-    """Deny-by-default policy для RPA endpoints.
+    """Deny-by-default policy для RPA endpoints (S171 M6).
+
+    Блокирует все запросы к ``rpa_path_prefix`` если в ``X-Roles`` header
+    нет ``required_role``. Audit denied requests.
 
     Args:
         app: ASGI app.
         rpa_path_prefix: Prefix для RPA endpoints (default ``"/api/v1/rpa"``).
         required_role: Required role в X-Roles header (default ``"rpa.admin"``).
+
+    Example:
+        >>> mw = RpaPolicyMiddleware(app, rpa_path_prefix="/api/v1/rpa")
     """
 
     def __init__(
