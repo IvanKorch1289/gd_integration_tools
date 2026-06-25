@@ -7,6 +7,7 @@ from src.backend.core.logging import get_logger
 from src.backend.services.ai.ai_providers.claude import ClaudeProvider
 from src.backend.services.ai.ai_providers.gemini import GeminiProvider
 from src.backend.services.ai.ai_providers.ollama import OllamaProvider
+from src.backend.services.ai.ai_providers.minimax import MiniMaxProvider
 from src.backend.services.ai.ai_providers.openai import OpenAIProvider
 
 logger = get_logger("services.ai.ai_providers.helpers")
@@ -48,6 +49,9 @@ def register_extended_providers(agent: Any) -> int:
     ):
         ollama = OllamaProvider()
         agent._providers["ollama"] = ollama.chat
+
+    minimax_p = MiniMaxProvider()
+    agent._providers["minimax"] = minimax_p.chat
         agent._providers["local"] = ollama.chat
         registered += 1
 

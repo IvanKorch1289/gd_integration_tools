@@ -460,6 +460,7 @@ ai_providers:
     - "openrouter"
     - "nim"
     - "openai"
+    - "minimax"
   enable_data_sanitization: true
   sanitize_emails: true
   sanitize_phones: true

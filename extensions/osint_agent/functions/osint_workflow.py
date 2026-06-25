@@ -241,8 +241,53 @@ def validate_report(raw_text: str) -> dict[str, Any]:
     return {"raw_text": raw_text, **sections}
 
 
+async def _search_multi_provider(
+    query: str, *, max_results: int = 10
+) -> dict[str, Any]:
+    """Search через Tavily + Perplexity + scraping (Sprint 170 M3 dir 11).
+
+    Returns dict с результатами от каждого провайдера + scraped content.
+    """
+    results: dict[str, Any] = {"perplexity": [], "tavily": [], "scraped": []}
+    try:
+        from src.backend.core.integrations.web_search import get_web_search_service
+
+        service = get_web_search_service()
+        # Perplexity — research-grade synthesis
+        results["perplexity"] = await service.query(
+            query, max_results=max_results, provider="perplexity"
+        )
+        # Tavily — fresh web content with citations
+        results["tavily"] = await service.query(
+            query, max_results=max_results, provider="tavily"
+        )
+    except Exception:
+        pass
+    # Scrape top URLs from Tavily
+    tavily_items = results["tavily"]
+    if isinstance(tavily_items, dict):
+        tavily_items = tavily_items.get("results", [])
+    for item in tavily_items[:3]:
+        if isinstance(item, dict) and item.get("url"):
+            try:
+                from src.backend.infrastructure.clients.external.search_providers import (
+                    _scrape_url,
+                )
+                scraped = await _scrape_url(item["url"], max_chars=2000)
+                results["scraped"].append({"url": item["url"], "content": scraped})
+            except Exception:
+                continue
+    return results
+
+
 async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
     """Execute OSINT workflow for a company by INN.
+
+    Pipeline (Sprint 170 M3):
+    1. Validate INN
+    2. Multi-provider search: Tavily + Perplexity + scraping
+    3. LLM summarization via OpenAI-compatible provider
+    4. Validate report format
 
     Args:
         payload: Dict with 'inn' and optional 'company_name'.
@@ -260,23 +305,15 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
     company_name = str(payload.get("company_name", "")).strip()
     queries = _build_search_queries(inn, company_name)
 
+    # Multi-provider search (Tavily + Perplexity + scraping)
     try:
-        from src.backend.core.integrations.web_search import get_web_search_service
-
-        service = get_web_search_service()
-        results_general = await service.query(
-            queries["general"], max_results=10, provider="perplexity"
-        )
-        results_courts = await service.query(
-            queries["courts"], max_results=10, provider="perplexity"
-        )
-        results_negative = await service.query(
-            queries["negative"], max_results=10, provider="perplexity"
-        )
+        results_general = await _search_multi_provider(queries["general"])
+        results_courts = await _search_multi_provider(queries["courts"])
+        results_negative = await _search_multi_provider(queries["negative"])
     except Exception:
-        results_general = None
-        results_courts = None
-        results_negative = None
+        results_general = {"perplexity": None, "tavily": None, "scraped": []}
+        results_courts = {"perplexity": None, "tavily": None, "scraped": []}
+        results_negative = {"perplexity": None, "tavily": None, "scraped": []}
 
     prompt = compose_prompt(
         inn=inn,

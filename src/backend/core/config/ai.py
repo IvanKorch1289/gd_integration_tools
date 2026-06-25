@@ -7,6 +7,7 @@
 4. OpenRouter — агрегатор моделей по OpenAI-совместимому API.
 5. Nvidia NIM — OpenAI-совместимые микросервисы NVIDIA (build.nvidia.com).
 6. OpenAI — Assistants API / OpenAI-совместимые прокси (vLLM, LiteLLM, Ollama).
+7. MiniMax M-series — китайская LLM (minimax-m2, minimax-m2.5), OpenAI-compatible API.
 """
 
 from pathlib import Path
@@ -24,12 +25,14 @@ __all__ = (
     "MarkitdownSettings",
     "NimSettings",
     "OpenAISettings",
+    "MiniMaxSettings",
     "OpenRouterSettings",
     "OpenWebUISettings",
     "PerplexitySettings",
     "ai_providers_settings",
     "ai_workspace_settings",
     "markitdown_settings",
+    "minimax_settings",
     "nim_settings",
     "openai_settings",
     "openrouter_settings",
@@ -197,6 +200,32 @@ class OpenAISettings(BaseSettingsWithLoader):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
 
 
+class MiniMaxSettings(BaseSettingsWithLoader):
+    """MiniMax M-series — китайская LLM-платформа с M2/M2.5 моделями.
+
+    OpenAI-совместимый API. Endpoint: https://api.minimax.chat/v1
+    Используется для русскоязычных задач, генерации кода и RAG.
+    """
+
+    yaml_group: ClassVar[str] = "minimax"
+    model_config = SettingsConfigDict(env_prefix="MINIMAX_", extra="forbid")
+
+    api_key: str = Field(default="", description="MiniMax API-ключ")
+    model: str = Field(
+        default="MiniMax-Text-01",
+        description="Слаг модели (MiniMax-Text-01, minimax-m2, minimax-m2.5, etc).",
+    )
+    base_url: str = Field(
+        default="https://api.minimax.chat/v1",
+        description="Base URL для MiniMax OpenAI-compatible API.",
+    )
+    timeout: float = Field(
+        default=30.0, ge=1.0, description="Таймаут запроса к MiniMax API (сек)"
+    )
+    max_retries: int = Field(default=3, ge=0, description="Количество retry при ошибках")
+
+
+
 class AIProvidersSettings(BaseSettingsWithLoader):
     """Агрегированные настройки AI-провайдеров.
 
@@ -211,7 +240,7 @@ class AIProvidersSettings(BaseSettingsWithLoader):
         default="perplexity",
         description=(
             "Провайдер по умолчанию (perplexity, huggingface, open_webui, "
-            "openrouter, nim, openai)."
+            "openrouter, nim, openai, minimax)."
         ),
     )
 
@@ -223,6 +252,7 @@ class AIProvidersSettings(BaseSettingsWithLoader):
             "openrouter",
             "nim",
             "openai",
+            "minimax",
         ],
         description="Порядок fallback при недоступности провайдера.",
     )
@@ -336,6 +366,7 @@ class MarkitdownSettings(BaseSettingsWithLoader):
 
 
 ai_providers_settings = AIProvidersSettings()
+minimax_settings = MiniMaxSettings()
 ai_workspace_settings = AIWorkspaceSettings()
 markitdown_settings = MarkitdownSettings()
 openrouter_settings = OpenRouterSettings()
