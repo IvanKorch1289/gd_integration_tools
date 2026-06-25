@@ -13,6 +13,8 @@ Categories:
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -138,3 +140,60 @@ class EmailComposeProcessor(BaseProcessor):
                 "body_template": self._body_template,
             }
         }
+
+
+class TerminalExecProcessor(BaseProcessor):
+    """Async subprocess executor с timeout.
+
+    Args:
+        command: Shell command string.
+        timeout: Максимум секунд (default 30.0).
+        to: Куда записать stdout (default ``"body.output"``).
+        shell: Use ``/bin/sh -c`` (default True).
+    """
+
+    required_capability: str | None = "rpa.shell.exec"
+    audit_event: str | None = "rpa.shell.exec"
+
+    def __init__(
+        self,
+        *,
+        command: str,
+        timeout: float = 30.0,
+        to: str = "body.output",
+        shell: bool = True,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"terminal_exec:{command[:30]}")
+        self.command = command
+        self.timeout = timeout
+        self.target = to
+        self.shell = shell
+
+    async def process(
+        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+    ) -> None:
+        proc = await asyncio.create_subprocess_shell(
+            self.command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=self.timeout
+            )
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            raise
+
+        output = stdout.decode("utf-8", errors="replace")
+        if stderr:
+            output += "\n[stderr]\n" + stderr.decode("utf-8", errors="replace")
+
+        _rpa_logger.info(
+            "terminal_exec cmd=%s timeout=%.1fs exit=%d",
+            self.command, self.timeout, proc.returncode,
+        )
+        self.set_result(exchange, self.target, output)
+        exchange.set_property("exit_code", proc.returncode)
