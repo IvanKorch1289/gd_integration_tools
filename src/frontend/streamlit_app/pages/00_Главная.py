@@ -14,11 +14,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients import (
-    get_api_client,
-    cached_get_metrics,
-    cached_get_health,
-)
+from src.frontend.streamlit_app.api_clients import cached_get_health, cached_get_metrics
 from src.frontend.streamlit_app.shared.auth_state import is_authenticated
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
