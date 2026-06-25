@@ -844,3 +844,28 @@ def get_health_check_factory() -> Any:
     from src.backend.infrastructure.application.health_aggregator import get_health_check
 
     return get_health_check
+
+def get_clickhouse_client_class() -> Any:
+    """Возвращает ``clients.storage.clickhouse.ClickHouseClient`` class."""
+    from src.backend.infrastructure.clients.storage.clickhouse import ClickHouseClient
+    return ClickHouseClient
+
+
+def get_mongodb_client_class() -> Any:
+    """Возвращает ``clients.storage.mongodb.MongoDBClient`` class."""
+    from src.backend.infrastructure.clients.storage.mongodb import MongoDBClient
+    return MongoDBClient
+
+
+def get_kafka_producer_class() -> Any:
+    """Возвращает ``clients.messaging.kafka_producer.KafkaProducer`` class."""
+    try:
+        from src.backend.infrastructure.clients.messaging.kafka_producer import KafkaProducer
+        return KafkaProducer
+    except ImportError:
+        # Fallback to aiokafka-based producer if available
+        try:
+            from src.backend.infrastructure.clients.messaging.stream import StreamClient
+            return StreamClient
+        except ImportError:
+            return None
