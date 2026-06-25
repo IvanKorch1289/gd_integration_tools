@@ -7,7 +7,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+UTC = timezone.utc
 
 import pandas as pd
 import streamlit as st
@@ -50,9 +52,9 @@ with tab_step:
         key="step_tenant",
     )
     date_from = st.date_input(
-        "Дата с", value=datetime.utcnow().date() - timedelta(days=1), key="step_from"
+        "Дата с", value=datetime.now(UTC).date() - timedelta(days=1), key="step_from"
     )
-    date_to = st.date_input("Дата по", value=datetime.utcnow().date(), key="step_to")
+    date_to = st.date_input("Дата по", value=datetime.now(UTC).date(), key="step_to")
     status_filter = st.multiselect(
         "Статус",
         options=["ok", "fail", "retry", "timeout"],
