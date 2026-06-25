@@ -52,6 +52,8 @@ class DirectoryScanProcessor(BaseProcessor):
         max_size: int | None = None,
         modified_after: datetime | None = None,
         to: str = "body.files",
+        max_results: int = 10_000,
+        timeout_seconds: float = 30.0,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or "directory_scan")
@@ -61,6 +63,8 @@ class DirectoryScanProcessor(BaseProcessor):
         self.max_size = max_size
         self.modified_after = modified_after
         self.target = to
+        self.max_results = max_results
+        self.timeout_seconds = timeout_seconds
 
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
@@ -70,8 +74,14 @@ class DirectoryScanProcessor(BaseProcessor):
             if not root.exists():
                 return []
             results: list[str] = []
-            matches = list(root.glob(self.pattern))
-            for path in matches:
+            # Safety cap: prevent OOM/hang on large trees (P0-1 fix)
+            for path in root.glob(self.pattern):
+                if len(results) >= self.max_results:
+                    _rpa_logger.warning(
+                        "directory_scan cap reached: max_results=%d",
+                        self.max_results,
+                    )
+                    break
                 if not path.is_file():
                     continue
                 try:
@@ -89,7 +99,17 @@ class DirectoryScanProcessor(BaseProcessor):
                 results.append(str(path))
             return sorted(results)
 
-        files = await asyncio.to_thread(_scan)
+        # Timeout protection (P0-1 fix)
+        try:
+            files = await asyncio.wait_for(
+                asyncio.to_thread(_scan), timeout=self.timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            _rpa_logger.warning(
+                "directory_scan timeout dir=%s pattern=%s timeout=%.1fs",
+                self.directory, self.pattern, self.timeout_seconds,
+            )
+            files = []
         _rpa_logger.info(
             "directory_scan dir=%s pattern=%s count=%d",
             self.directory, self.pattern, len(files),

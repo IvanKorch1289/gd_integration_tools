@@ -28,22 +28,36 @@ from src.backend.core.utils.retry_helper import (
 
 # CB + Cache + Rate limit + Bulkhead — lazy import (project has circular deps)
 __all__ = (
-    # Auth
+    # Auth (eager)
     "AuthorizationGateway",
     "CapabilityGate",
     "PIITokenizer",
     "get_pii_tokenizer_provider",
-    # Timeout
+    # Timeout (eager)
     "with_timeout",
     "async_timeout",
-    # Retry
+    # Retry (eager)
     "retry_async",
     "default_retryable",
+    # Rate limit (lazy — see __getattr__)
+    "RateLimit",
+    "RedisRateLimiter",
+    "get_rate_limiter",
+    "RateLimitExceeded",
+    # CB (lazy)
+    "ClientCircuitBreaker",
+    # Bulkhead (lazy)
+    "Bulkhead",
+    "BulkheadExhausted",
+    "BulkheadDefaults",
 )
 
 
 def __getattr__(name: str) -> object:
-    """Lazy import для модулей с circular dependencies (M7)."""
+    """Lazy import для модулей с circular dependencies (M7).
+
+    Реальный набор: 17 primitives (9 eager + 8 lazy).
+    """
     if name in ("RateLimit", "RedisRateLimiter", "get_rate_limiter", "RateLimitExceeded"):
         from src.backend.infrastructure.resilience import unified_rate_limiter as _m
         return getattr(_m, name)
@@ -54,3 +68,8 @@ def __getattr__(name: str) -> object:
         from src.backend.infrastructure.resilience import bulkhead as _m
         return getattr(_m, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    """Поддержка dir(facades) для tooling (P1-1 fix)."""
+    return list(__all__)

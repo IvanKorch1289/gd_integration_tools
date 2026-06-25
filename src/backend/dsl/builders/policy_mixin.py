@@ -32,9 +32,12 @@ Feature flag: ``feature_flags.policy_chainable_enabled`` (default-OFF).
 """
 
 from __future__ import annotations
-
 import contextlib
 from typing import TYPE_CHECKING, Any
+
+from src.backend.core.logging import get_logger
+
+_logger = get_logger("dsl.builder.policy")
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -274,8 +277,14 @@ class PolicyMarkerProcessor:
             coordinator = ResilienceCoordinator()
             register = getattr(coordinator, f"register_{self.policy_name}", None)
             if register and callable(register):
-                with contextlib.suppress(Exception):
+                try:
                     register(**self.params)
+                except Exception as exc:
+                    # P1-10 fix: log instead of silent suppress
+                    _logger.warning(
+                        "policy_marker: register_%s failed: %s (params=%s)",
+                        self.policy_name, exc, self.params,
+                    )
         except ImportError:
             pass
 
