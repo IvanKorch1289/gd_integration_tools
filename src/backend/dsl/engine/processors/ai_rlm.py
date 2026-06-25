@@ -55,7 +55,6 @@ class RLMConfig:
             Default 4000.
         temperature: Sampling temperature.
             Default 0.7.
-        sandbox_enabled: Whether to use sandboxed REPL execution.
             Default True.
         context_threshold: Token count threshold for triggering RLM mode.
             Default 10000.
@@ -66,13 +65,11 @@ class RLMConfig:
         max_iterations: int = 10,
         max_tokens: int = 4000,
         temperature: float = 0.7,
-        sandbox_enabled: bool = True,
         context_threshold: int = 10000,
     ) -> None:
         self.max_iterations = max_iterations
         self.max_tokens = max_tokens
         self.temperature = temperature
-        self.sandbox_enabled = sandbox_enabled
         self.context_threshold = context_threshold
 
 
@@ -308,7 +305,6 @@ class AIRLMProcessor(BaseProcessor):
                 "max_iterations": self.config.max_iterations,
                 "max_tokens": self.config.max_tokens,
                 "temperature": self.config.temperature,
-                "sandbox_enabled": self.config.sandbox_enabled,
                 "context_threshold": self.config.context_threshold,
                 "prompt_template": self.prompt_template,
                 "result_property": self.result_property,

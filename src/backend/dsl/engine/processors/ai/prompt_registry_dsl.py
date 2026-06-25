@@ -18,11 +18,19 @@ _logger = get_logger(__name__)
 
 
 class PromptGetProcessor(BaseProcessor):
-    """Получает prompt template через PromptRegistry.
+    """DSL-процессор ``prompt_get``.
+
+    Возвращает скомпилированный template из PromptRegistry по имени.
+    Поддерживает выбор версии (``version``) и label (default: ``"production"``).
 
     Args:
         name: Имя prompt в registry.
-        to: Куда записать template string.
+        to: Куда записать template string (default ``"body.prompt"``).
+        version: Конкретная версия (default — production).
+        processor_name: Имя процессора (default ``"prompt_get:<name>"``).
+
+    Example:
+        >>> p = PromptGetProcessor(name="osint_report", version="v2")
     """
 
     def __init__(
@@ -42,8 +50,17 @@ class PromptGetProcessor(BaseProcessor):
         from src.backend.services.ai.prompt_registry import get_prompt_registry
         registry = get_prompt_registry()
         # Ponytail: 1-2 LOC over registry interface
-        if self.version is not None:
-            template = registry.get_version(self.prompt_name, self.version)
-        else:
-            template = registry.get(self.prompt_name)
+        # P0 fix (S170 review): get() is async — must await
+        # get_version() does NOT exist — version is kwarg to get()
+        version_obj = await registry.get(
+            self.prompt_name,
+            version=self.version,
+            label="production",
+        )
+        # version_obj is PromptVersion dataclass — extract .compiled
+        template = (
+            getattr(version_obj, "compiled", None) or
+            getattr(version_obj, "text", None) or
+            str(version_obj)
+        )
         self.set_result(exchange, self.target, template)

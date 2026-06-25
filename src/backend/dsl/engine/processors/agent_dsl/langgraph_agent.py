@@ -20,13 +20,19 @@ _logger = get_logger(__name__)
 
 
 class LangGraphAgentProcessor(BaseAIProcessor):
-    """Wraps LangGraph ReAct-agent через DSL.
+    """DSL-процессор ``langgraph_agent``.
+
+    Wraps LangGraph ReAct-agent через :func:`services.ai.ai_graph.build_and_run_agent`.
 
     Args:
-        query: Запрос агенту (или :class:`Expression` для runtime-resolve).
-        to: Куда записать ``output`` агента (``body.field`` или property).
+        query: Запрос агенту.
+        to: Куда записать ``output`` агента (default ``"body.answer"``).
         thread_id: Optional thread-id (для checkpointing).
         max_iterations: Лимит LangGraph iterations (default 10).
+        name: Имя процессора.
+
+    Example:
+        >>> p = LangGraphAgentProcessor(query="What is INN 7707083893?", thread_id="t1")
     """
 
     required_capability: str | None = "agent.run"

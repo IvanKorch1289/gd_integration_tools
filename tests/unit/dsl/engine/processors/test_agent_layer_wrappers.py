@@ -92,8 +92,12 @@ class TestPromptRegistryDSL:
         ex.in_message.body = {}
         ex.set_property = MagicMock()
         ctx = MagicMock()
+        # Real PromptRegistry.get is async and returns a PromptVersion-like
+        # object with .compiled attribute. Mock MUST reflect both.
+        mock_version = MagicMock()
+        mock_version.compiled = "template content here"
         mock_registry = MagicMock()
-        mock_registry.get = MagicMock(return_value="template content here")
+        mock_registry.get = AsyncMock(return_value=mock_version)
         with patch(
             "src.backend.services.ai.prompt_registry.get_prompt_registry",
             return_value=mock_registry,

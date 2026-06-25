@@ -18,13 +18,19 @@ _logger = get_logger(__name__)
 
 
 class RAGSearchProcessor(BaseProcessor):
-    """Hybrid RAG search через DSL.
+    """DSL-процессор ``rag_search``.
+
+    Hybrid RAG search через :class:`HybridRAGSearch` (BM25 + vector + reranker).
 
     Args:
         query: Поисковый запрос.
-        collection: Имя коллекции (default ``"default"``).
-        to: Куда записать список docs (``body.field`` или property).
+        to: Куда записать список docs (default ``"body.docs"``).
         top_k: Количество результатов (default 5).
+        namespace: Namespace для multi-tenancy (default ``None``).
+        name: Имя процессора (default ``"rag_search:<query>"``).
+
+    Example:
+        >>> p = RAGSearchProcessor(query="OSINT INN", namespace="tenant1")
     """
 
     def __init__(

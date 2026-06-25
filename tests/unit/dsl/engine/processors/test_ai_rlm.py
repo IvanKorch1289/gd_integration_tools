@@ -228,7 +228,6 @@ class TestToSpec:
         assert "max_iterations" in ai_rlm_spec
         assert "max_tokens" in ai_rlm_spec
         assert "temperature" in ai_rlm_spec
-        assert "sandbox_enabled" in ai_rlm_spec
         assert "context_threshold" in ai_rlm_spec
         assert "result_property" in ai_rlm_spec
 

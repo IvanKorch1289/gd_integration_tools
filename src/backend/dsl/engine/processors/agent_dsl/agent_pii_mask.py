@@ -3,23 +3,15 @@
 User explicitly requested: "Дополнительный DSL-процессор для маскирования,
 если есть сомнения, что общий PII не справится".
 
-Two specialized processors:
+Two specialized scenarios (both delegate to same recursive mask helper):
 
-1. :class:`AgentToolPIIMaskProcessor` — masks PII in tool_call args BEFORE
-   tool execution (defense-in-depth: tool args may contain sensitive data
-   that general PII misses — e.g., bearer tokens in headers, internal IDs,
-   free-form text from LLM with non-standard PII).
+1. :class:`AgentDictPIIMaskProcessor.for_tools` — masks PII in tool_call
+   args BEFORE tool execution (defense-in-depth).
 
-2. :class:`AgentActionPIIMaskProcessor` — masks PII in action params
-   (DB queries, API requests, MCP tool calls). Same rationale: action
-   params may have custom PII patterns not covered by general recognizers.
+2. :class:`AgentDictPIIMaskProcessor.for_actions` — masks PII in action
+   params (DB queries, API requests, MCP tool calls).
 
-Both use the same :class:`PIITokenizer` (Presidio-backed) but with
-agent-specific audit + capability scopes:
-- ``pii.tokenize.reversible.agent_tools`` — for tool calls
-- ``pii.tokenize.reversible.agent_actions`` — for actions
-
-Pattern: thin wrapper (Ponytail) — no new abstractions.
+Ponytail: один класс с classmethods для разных scope-семантик.
 """
 from __future__ import annotations
 
@@ -32,10 +24,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
-__all__ = (
-    "AgentToolPIIMaskProcessor",
-    "AgentActionPIIMaskProcessor",
-)
+__all__ = ("AgentDictPIIMaskProcessor",)
 _logger = get_logger(__name__)
 
 
@@ -54,7 +43,7 @@ async def _mask_dict_values(
     for k, v in d.items():
         if isinstance(v, str):
             result = await tokenizer.mask_reversible(v, language=language)
-            text = result.get("text", v) if isinstance(result, dict) else v  # already awaited
+            text = result.get("text", v) if isinstance(result, dict) else v
             tok_map = result.get("token_map", {}) if isinstance(result, dict) else {}
             if tok_map:
                 detected = True
@@ -70,26 +59,67 @@ async def _mask_dict_values(
     return out, merged_tokens, detected
 
 
-class AgentToolPIIMaskProcessor(BaseAIProcessor):
-    """Маскирует PII в tool_call args ПЕРЕД выполнением tool.
+def _resolve_dict_at_path(exchange: Any, path: str) -> dict[str, Any] | None:
+    """Resolve dot-path ``body.x.y.z`` against exchange.in_message.body.
 
-    Используется в agent workflows между dispatch и execution::
+    Returns dict at end of path, or None if any segment missing/non-dict.
+    """
+    head, _, rest = path.partition(".")
+    if head != "body":
+        return None
+    cursor: Any = exchange.in_message.body
+    if not isinstance(cursor, dict):
+        return None
+    for part in rest.split("."):
+        if not isinstance(cursor, dict):
+            return None
+        cursor = cursor.get(part)
+    return cursor if isinstance(cursor, dict) else None
 
-        - ai_tool_dispatch:
-            available_tool_ids: [send_email]
-        - agent_pii_tool_mask:
-            scope: banking
-        - tool: send_email
+
+def _write_dict_at_path(exchange: Any, path: str, value: Any) -> None:
+    """Write value to dot-path against exchange.in_message.body (mutates)."""
+    head, _, rest = path.partition(".")
+    if head != "body":
+        return
+    body = exchange.in_message.body
+    if not isinstance(body, dict):
+        return
+    parts = rest.split(".")
+    parent: Any = body
+    for p in parts[:-1]:
+        parent = parent.get(p, {}) if isinstance(parent, dict) else {}
+    if parts:
+        if isinstance(parent, dict):
+            parent[parts[-1]] = value
+
+
+class AgentDictPIIMaskProcessor(BaseAIProcessor):
+    """Маскирует PII в dict (tool args / action params) перед исполнением.
 
     Args:
         scope: Capability scope (``"banking"`` / ``"hr"``).
-        source_property: Где искать ``args`` dict (default ``body.args``).
-        target_property: Куда записать masked ``args`` (default in-place).
+        source_property: Где искать dict (default ``"body.args"``).
+        target_property: Куда записать masked dict (default = source).
         language: Presidio NER language (default ``"ru"``).
+
+    Use classmethods:
+        - :meth:`for_tools` — для tool_call args (capability/audit pre-set)
+        - :meth:`for_actions` — для action params (capability/audit pre-set)
+
+    Example::
+
+        - agent_pii_mask: for_tools
+        - agent_pii_mask: for_actions
     """
 
-    required_capability: ClassVar[str | None] = "pii.tokenize.reversible.agent_tools"
-    audit_event: ClassVar[str | None] = "ai.agent.pii.tool_mask"
+    _CAPABILITY_FOR_TOOLS: ClassVar[str] = "pii.tokenize.reversible.agent_tools"
+    _AUDIT_FOR_TOOLS: ClassVar[str] = "ai.agent.pii.tool_mask"
+    _CAPABILITY_FOR_ACTIONS: ClassVar[str] = "pii.tokenize.reversible.agent_actions"
+    _AUDIT_FOR_ACTIONS: ClassVar[str] = "ai.agent.pii.action_mask"
+
+    required_capability: ClassVar[str | None] = _CAPABILITY_FOR_TOOLS
+    audit_event: ClassVar[str | None] = _AUDIT_FOR_TOOLS
 
     def __init__(
         self,
@@ -101,134 +131,96 @@ class AgentToolPIIMaskProcessor(BaseAIProcessor):
         name: str | None = None,
     ) -> None:
         if not scope:
-            raise ValueError("AgentToolPIIMaskProcessor: scope обязателен")
-        super().__init__(name=name or f"agent_pii_tool_mask:{scope}")
+            raise ValueError("AgentDictPIIMaskProcessor: scope обязателен")
+        super().__init__(name=name or f"agent_pii_mask:{scope}")
         self.scope = scope
         self.source_property = source_property
         self.target_property = target_property or source_property
         self.language = language
 
-    async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
+    @classmethod
+    def for_tools(
+        cls,
+        *,
+        scope: str,
+        source_property: str = "body.args",
+        target_property: str | None = None,
+        language: str = "ru",
+    ) -> "AgentDictPIIMaskProcessor":
+        """Маскирование tool_call args.
 
-        provider = get_pii_tokenizer_provider()
-        tokenizer = provider() if provider else None
-        if tokenizer is None:
-            _logger.warning(
-                "%s: PIITokenizer недоступен — pass-through", self.name
-            )
-            exchange.set_property("pii_detected", False)
-            return
-
-        # Resolve args dict from source_property (supports body.args, body.tool_call.args, etc.)
-        head, _, rest = self.source_property.partition(".")
-        cursor: Any = (
-            exchange.in_message.body if head == "body" else None
+        Capability: pii.tokenize.reversible.agent_tools
+        Audit: ai.agent.pii.tool_mask
+        """
+        instance = cls(
+            scope=scope,
+            source_property=source_property,
+            target_property=target_property,
+            language=language,
         )
-        for part in [rest] if not rest else rest.split("."):
-            if cursor is None:
-                break
-            cursor = cursor.get(part) if isinstance(cursor, dict) else None
+        instance.required_capability = cls._CAPABILITY_FOR_TOOLS
+        instance.audit_event = cls._AUDIT_FOR_TOOLS
+        instance.name = f"agent_pii_tool_mask:{scope}"
+        return instance
 
-        if not isinstance(cursor, dict):
-            exchange.set_property("pii_detected", False)
-            return
-
-        masked, token_map, detected = await _mask_dict_values(
-            cursor, tokenizer, self.language
-        )
-
-        # Write masked back to target_property
-        target_head, _, target_rest = self.target_property.partition(".")
-        target_body: Any = (
-            exchange.in_message.body if target_head == "body" else None
-        )
-        if target_body is not None and isinstance(target_body, dict):
-            # Last segment is the dict key itself
-            parts = target_rest.split(".") if target_rest else []
-            if parts:
-                parent = target_body
-                for p in parts[:-1]:
-                    parent = parent.get(p, {}) if isinstance(parent, dict) else {}
-                parent[parts[-1]] = masked
-            else:
-                exchange.in_message.body = masked
-
-        exchange.set_property("pii_token_map", token_map)
-        exchange.set_property("pii_detected", detected)
-
-
-class AgentActionPIIMaskProcessor(BaseAIProcessor):
-    """Маскирует PII в action params ПЕРЕД action execution (DB/API/MCP).
-
-    Args:
-        scope: Capability scope.
-        source_property: Где искать ``params`` dict (default ``body.params``).
-        target_property: Куда записать masked ``params`` (default in-place).
-        language: Presidio NER language (default ``"ru"``).
-    """
-
-    required_capability: ClassVar[str | None] = (
-        "pii.tokenize.reversible.agent_actions"
-    )
-    audit_event: ClassVar[str | None] = "ai.agent.pii.action_mask"
-
-    def __init__(
-        self,
+    @classmethod
+    def for_actions(
+        cls,
         *,
         scope: str,
         source_property: str = "body.params",
         target_property: str | None = None,
         language: str = "ru",
-        name: str | None = None,
-    ) -> None:
-        if not scope:
-            raise ValueError("AgentActionPIIMaskProcessor: scope обязателен")
-        super().__init__(name=name or f"agent_pii_action_mask:{scope}")
-        self.scope = scope
-        self.source_property = source_property
-        self.target_property = target_property or source_property
-        self.language = language
+    ) -> "AgentDictPIIMaskProcessor":
+        """Маскирование action params.
+
+        Capability: pii.tokenize.reversible.agent_actions
+        Audit: ai.agent.pii.action_mask
+        """
+        instance = cls(
+            scope=scope,
+            source_property=source_property,
+            target_property=target_property,
+            language=language,
+        )
+        instance.required_capability = cls._CAPABILITY_FOR_ACTIONS
+        instance.audit_event = cls._AUDIT_FOR_ACTIONS
+        instance.name = f"agent_pii_action_mask:{scope}"
+        return instance
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
 
         provider = get_pii_tokenizer_provider()
         tokenizer = provider() if provider else None
+        # Always set token_map (even if empty) — pii_unmask expects consistent schema
         if tokenizer is None:
+            _logger.warning("%s: PIITokenizer недоступен — pass-through", self.name)
+            exchange.set_property("pii_token_map", {})
             exchange.set_property("pii_detected", False)
             return
 
-        head, _, rest = self.source_property.partition(".")
-        cursor: Any = (
-            exchange.in_message.body if head == "body" else None
-        )
-        for part in [rest] if not rest else rest.split("."):
-            if cursor is None:
-                break
-            cursor = cursor.get(part) if isinstance(cursor, dict) else None
-
-        if not isinstance(cursor, dict):
+        cursor = _resolve_dict_at_path(exchange, self.source_property)
+        if cursor is None:
+            # Source path missing or non-dict — no PII to mask, but still set token_map
+            exchange.set_property("pii_token_map", {})
             exchange.set_property("pii_detected", False)
             return
 
         masked, token_map, detected = await _mask_dict_values(
             cursor, tokenizer, self.language
         )
-
-        target_head, _, target_rest = self.target_property.partition(".")
-        target_body: Any = (
-            exchange.in_message.body if target_head == "body" else None
-        )
-        if target_body is not None and isinstance(target_body, dict):
-            parts = target_rest.split(".") if target_rest else []
-            if parts:
-                parent = target_body
-                for p in parts[:-1]:
-                    parent = parent.get(p, {}) if isinstance(parent, dict) else {}
-                parent[parts[-1]] = masked
-            else:
-                exchange.in_message.body = masked
-
+        _write_dict_at_path(exchange, self.target_property, masked)
         exchange.set_property("pii_token_map", token_map)
         exchange.set_property("pii_detected", detected)
+
+
+# Backwards-compat aliases (factory pattern for short DSL syntax)
+def AgentToolPIIMaskProcessor(*args: Any, **kwargs: Any) -> AgentDictPIIMaskProcessor:
+    """DEPRECATED — используйте :meth:`AgentDictPIIMaskProcessor.for_tools`."""
+    return AgentDictPIIMaskProcessor.for_tools(**kwargs)
+
+
+def AgentActionPIIMaskProcessor(*args: Any, **kwargs: Any) -> AgentDictPIIMaskProcessor:
+    """DEPRECATED — используйте :meth:`AgentDictPIIMaskProcessor.for_actions`."""
+    return AgentDictPIIMaskProcessor.for_actions(**kwargs)
