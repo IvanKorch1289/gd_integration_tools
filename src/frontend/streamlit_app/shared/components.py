@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
+from src.frontend.streamlit_app.shared.page_registry import get_page_metadata
+
 if TYPE_CHECKING:
     import pandas as pd
 
@@ -59,7 +61,6 @@ def setup_page(
         auto_resolve: If True, use page_registry to fill missing args.
     """
     if auto_resolve and (title is None or icon is None):
-        from src.frontend.streamlit_app.shared.page_registry import get_page_metadata
         import inspect
         caller_file = inspect.stack()[1].filename
         # Extract page filename without .py

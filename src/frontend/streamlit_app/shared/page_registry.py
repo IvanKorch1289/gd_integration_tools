@@ -77,8 +77,8 @@ PAGE_METADATA: dict[str, dict[str, str]] = {
     "85_Массовая_загрузка_RAG": {"title": "Массовая загрузка RAG", "icon": ":material/cloud_upload:"},
     "86_Аудит_использования_DSL": {"title": "Аудит использования DSL", "icon": ":material/summarize:"},
     "88_Тенантные_фича_флаги": {"title": "Тенантные фича-флаги", "icon": ":material/flag_circle:"},
-    "95_EIP_Coverage": {"title": "Покрытие EIP", "icon": ":material/checklist:"},
-    "96_Outbox_Stuck_Monitor": {"title": "Outbox Stuck Monitor", "icon": ":material/warning:"},
+    "95_Покрытие_EIP": {"title": "Покрытие EIP", "icon": ":material/checklist:"},
+    "96_Монитор_зависших_сообщений": {"title": "Outbox Stuck Monitor", "icon": ":material/warning:"},
 }
 
 
