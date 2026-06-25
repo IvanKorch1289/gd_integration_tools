@@ -17,10 +17,57 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.auth_state import is_authenticated
 from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
 
 _project_root = Path(__file__).resolve().parents[3]
 
 setup_page()
+
+# ──────────── S1: Quick Access в sidebar (вверху) ────────────
+
+_QUICK_PAGES = [
+    "00_Вход",
+    "16_Воркфлоу",
+    "20_AI_Чат",
+    "10_Заказы",
+    "11_Маршруты",
+    "12_Логи",
+    "51_Проверка_здоровья",
+    "73_Просмотр_конфига",
+    "50_Фича_флаги",
+    "96_Outbox_Stuck_Monitor",
+]
+
+with st.sidebar:
+    st.markdown("### 🔍 Поиск по разделам")
+    with st.form("sidebar_search", clear_on_submit=False):
+        search = st.text_input(
+            "Поиск",
+            placeholder="Введите название...",
+            label_visibility="collapsed",
+        )
+        submitted = st.form_submit_button("Искать")
+    if submitted and search:
+        matches = [
+            (name, meta) for name, meta in PAGE_METADATA.items()
+            if search.lower() in meta["title"].lower()
+            and name in _QUICK_PAGES
+        ]
+        if matches:
+            st.markdown("**Найдено:**")
+            for name, meta in matches[:5]:
+                st.page_link(f"pages/{name}.py", label=meta["title"], icon=meta["icon"])
+        else:
+            st.caption("Ничего не найдено")
+
+    st.markdown("### ⚡ Быстрый доступ")
+    for name in _QUICK_PAGES:
+        if name in PAGE_METADATA:
+            meta = PAGE_METADATA[name]
+            st.page_link(f"pages/{name}.py", label=meta["title"], icon=meta["icon"])
+
+    st.divider()
+    st.caption(f"📚 Всего {len(PAGE_METADATA)} страниц в sidebar →")
 
 # ──────────── Header с логотипом ────────────
 
