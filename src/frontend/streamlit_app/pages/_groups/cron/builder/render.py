@@ -63,7 +63,7 @@ def _render_body() -> None:
 
     client = get_api_client()
 
-    if st.button("Preview Next executions", type="primary"):
+    if st.button("Предпросмотр следующих запусков", type="primary"):
         try:
             resp = client._request(
                 "POST",
@@ -161,8 +161,8 @@ def render() -> None:
 
     from src.frontend.streamlit_app.shared.components import setup_page
 
-    setup_page("Cron Builder", "")
-    st.header("Cron Builder")
+    setup_page("Конструктор Cron", "")
+    st.header("Конструктор Cron")
     st.caption(
         "Постройте cron-выражение визуально или вручную, посмотрите Next 5 "
         "execution times в выбранном timezone, и зарегистрируйте задачу "

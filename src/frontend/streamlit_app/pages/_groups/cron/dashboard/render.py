@@ -132,8 +132,8 @@ def render() -> None:
 
     from src.frontend.streamlit_app.shared.components import setup_page
 
-    setup_page("Cron Dashboard", "")
-    st.header("Cron Schedule Dashboard")
+    setup_page("Панель Cron", "")
+    st.header("Панель расписания Cron")
     st.caption(
         "Все scheduled workflows: cron-expr, next/last run, success rate (7d). "
         "Auto-refresh каждые 30 секунд."

@@ -7,7 +7,7 @@ Kafka / ClickHouse) через REST endpoint ``/api/v1/admin/pools/snapshot``.
 
 Структура:
 
-* **Worker pool (Granian)** — динамическая фабрика воркеров; in_use, available,
+* **Пул воркеров (Granian)** — динамическая фабрика воркеров; in_use, available,
   max_workers, last_fork_at;
 * **Пулы соединений** — на каждый backend: in_use / available / max +
   trend-линия (rolling 60 точек, 1 точка / sec).
@@ -180,7 +180,7 @@ def _render_worker_pool(wp: dict[str, Any]) -> None:
     Args:
         wp: словарь снапшота worker pool.
     """
-    st.subheader("Worker pool (Granian)")
+    st.subheader("Пул воркеров (Granian)")
     _in_use = int(wp.get("in_use", 0))
     _available = int(wp.get("available", 0))
     _maximum = int(wp.get("max_workers", _in_use + _available)) or 1

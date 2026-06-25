@@ -18,7 +18,7 @@ import streamlit as st
 from src.backend.services.dsl_portal import get_dsl_builder_service  # noqa: E402
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Builder — запись в YAML", "📐")
+setup_page("DSL Конструктор — запись в YAML", "📐")
 st.header("DSL Builder — запись в YAML")
 st.caption(
     "Сохраняет runtime-Pipeline (RouteRegistry) в YAMLStore. "

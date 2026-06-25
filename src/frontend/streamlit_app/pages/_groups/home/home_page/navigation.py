@@ -16,7 +16,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 def render_home() -> None:
     """Render Home page (S142 W2 PoC: extracted from 00_Home.py)."""
-    setup_page("Home", "🏠")
+    setup_page("Главная", "🏠")
 
     st.title("GD Integration Tools — Home")
 
