@@ -18,7 +18,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Экспресс-боты", ":speech_balloon:")
+setup_page()
 st.header(":speech_balloon: Экспресс-боты")
 
 try:

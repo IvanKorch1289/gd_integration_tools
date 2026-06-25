@@ -21,7 +21,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Аудит использования DSL", ":bar_chart:")
+setup_page()
 st.header(":bar_chart: Аудит использования DSL")
 st.caption("Статистика использования DSL процессоров")
 

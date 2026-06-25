@@ -14,7 +14,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Отладчик DSL", "🐛")
+setup_page()
 st.title("🐛 Отладчик DSL и воспроизведение")
 
 mode = st.radio(

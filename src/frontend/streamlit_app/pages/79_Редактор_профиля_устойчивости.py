@@ -12,7 +12,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (TD-008)
 
-setup_page("Редактор профилей устойчивости", "⚙️")
+setup_page()
 st.title("⚙️ Редактор профилей устойчивости")
 st.caption("Тенантный override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
 

@@ -161,7 +161,7 @@ def render() -> None:
 
     from src.frontend.streamlit_app.shared.components import setup_page
 
-    setup_page("Конструктор Cron", "")
+    setup_page()
     st.header("Конструктор Cron")
     st.caption(
         "Постройте cron-выражение визуально или вручную, посмотрите Next 5 "

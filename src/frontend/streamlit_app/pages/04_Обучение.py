@@ -12,7 +12,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 _root = Path(__file__).resolve().parents[4]
 
-setup_page("Онбординг", ":sparkles:")
+setup_page()
 st.header("Чек-лист онбординга")
 st.caption(
     "Sprint 10 K5 W5 — путь от чистого clone до первого route и плагина "

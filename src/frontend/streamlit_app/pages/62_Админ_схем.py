@@ -15,7 +15,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Админ схем", ":card_index_dividers:")
+setup_page()
 st.header(":card_index_dividers: Админ схем")
 
 tab_import, tab_registry, tab_viewer = st.tabs(

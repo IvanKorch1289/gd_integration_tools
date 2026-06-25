@@ -23,7 +23,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Feature-флаги тенантов", ":busts_in_silhouette:")
+setup_page()
 st.header("Feature-флаги тенантов (per-tenant overrides)")
 st.caption(
     "Runtime overrides поверх статического реестра feature-flag. "

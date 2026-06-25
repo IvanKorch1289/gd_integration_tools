@@ -5,10 +5,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page(
-    "Фича-флаги",
-    ":triangular_flag_on_post:",
-    layout="wide",
+setup_page(layout="wide",
     initial_sidebar_state="expanded",
 )
 st.header("Feature-флаги")

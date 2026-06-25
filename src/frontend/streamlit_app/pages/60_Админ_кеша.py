@@ -12,7 +12,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import K4APIClient, get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Админ кэша", ":package:")
+setup_page()
 st.header(":package: Админ кэша")
 
 tab_redis, tab_rag = st.tabs(["Redis Cache", "RAG Cache"])

@@ -5,7 +5,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Песочница", ":test_tube:")
+setup_page()
 st.header("DSL Песочница")
 st.caption("Напиши код → Запусти → Посмотри результат. Dry-run доступен.")
 

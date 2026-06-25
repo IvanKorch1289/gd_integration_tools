@@ -17,6 +17,7 @@ Usage:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import streamlit as st
@@ -28,13 +29,17 @@ __all__ = ("setup_page", "metric_row", "dataframe_view")
 
 
 def setup_page(
-    title: str,
-    icon: str,
+    title: str | None = None,
+    icon: str | None = None,
     *,
     layout: str = "wide",
     initial_sidebar_state: str = "expanded",
+    auto_resolve: bool = True,
 ) -> None:
     """Standard page setup: replaces 5-line st.set_page_config boilerplate.
+
+    S171 (S2 optimization): If title/icon not provided, auto-resolves from
+    page_registry.PAGE_METADATA by inspecting caller filename.
 
     Replaces this pattern (used in 66+ pages):
         st.set_page_config(
@@ -46,10 +51,32 @@ def setup_page(
 
     Args:
         title: Page title (shown in browser tab + Streamlit sidebar).
-        icon: Emoji or URL to use as page icon.
+               If None and auto_resolve=True, looked up from registry.
+        icon: Material icon / emoji / URL. If None and auto_resolve=True,
+              looked up from registry.
         layout: "centered" or "wide" (default: "wide").
         initial_sidebar_state: "auto" | "expanded" | "collapsed".
+        auto_resolve: If True, use page_registry to fill missing args.
     """
+    if auto_resolve and (title is None or icon is None):
+        from src.frontend.streamlit_app.shared.page_registry import get_page_metadata
+        import inspect
+        caller_file = inspect.stack()[1].filename
+        # Extract page filename without .py
+        page_name = Path(caller_file).stem
+        meta = get_page_metadata(page_name)
+        if meta:
+            if title is None:
+                title = meta["title"]
+            if icon is None:
+                icon = meta["icon"]
+
+    # Fallback defaults
+    if title is None:
+        title = "GD Integration Tools"
+    if icon is None:
+        icon = ":material/extension:"
+
     st.set_page_config(
         page_title=title,
         page_icon=icon,

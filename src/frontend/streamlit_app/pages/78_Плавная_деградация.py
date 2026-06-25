@@ -14,7 +14,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Плавная деградация", "🛡️")
+setup_page()
 st.title("🛡️ Плавная деградация")
 st.caption(
     "5-уровневая система деградации: FULL → DEGRADED → MINIMAL → MAINTENANCE → OFFLINE."

@@ -23,7 +23,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Инспекция тенантов (S21)", "🛡️")
+setup_page()
 st.header("Инспекция тенантов")
 st.caption(
     "Только-для-чтения дашборд: cache hit-rates по тенантам + статус RLS-политик + "

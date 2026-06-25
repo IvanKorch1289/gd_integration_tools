@@ -11,7 +11,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Монитор очередей", ":inbox_tray:", layout="wide", initial_sidebar_state="expanded")
+setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header(":inbox_tray: Монитор очередей")
 
 client = get_api_client()

@@ -36,7 +36,7 @@ from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     setup_page,
 )
 
-setup_page("Воспроизведение Workflow · gd_integration_tools", "⏯️")
+setup_page()
 client = get_api_client()
 
 

@@ -16,7 +16,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Просмотр Saga Compensation", "")
+setup_page()
 st.header("Просмотр Saga Compensation")
 st.caption(
     "Timeline saga compensation events (workflow.compensation_* из "

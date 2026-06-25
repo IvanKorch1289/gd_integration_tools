@@ -30,7 +30,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page("Воспроизведение DLQ", ":envelope_with_arrow:")
+setup_page()
 st.header("Воспроизведение DLQ")
 
 # ---------------------------------------------------------------------------

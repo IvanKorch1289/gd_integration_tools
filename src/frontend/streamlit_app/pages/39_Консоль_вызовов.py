@@ -27,7 +27,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 __all__: tuple[str, ...] = ()
 
-setup_page("Консоль вызовов", ":zap:")
+setup_page()
 st.header(":zap: Консоль вызовов (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

@@ -24,7 +24,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Рабочие процессы · gd_integration_tools", "🔁")
+setup_page()
 client = get_api_client()
 
 

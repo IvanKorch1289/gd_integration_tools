@@ -12,7 +12,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Версионирование Workflow", "")
+setup_page()
 st.header("Версионирование Workflow")
 st.caption(
     "Управление WorkflowVersionRegistry: pin default / rollback / "

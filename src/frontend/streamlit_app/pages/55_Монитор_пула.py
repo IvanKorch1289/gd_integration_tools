@@ -27,7 +27,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
 
-setup_page("Монитор пулов", ":swimmer:")
+setup_page()
 st.header("Монитор пулов")
 
 # ---------------------------------------------------------------------------

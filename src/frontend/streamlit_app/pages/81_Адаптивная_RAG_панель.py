@@ -15,7 +15,7 @@ try:
 except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
-setup_page("Дашборд Adaptive RAG", "🧠")
+setup_page()
 st.title("🧠 Дашборд стратегий Adaptive RAG")
 st.caption(
     "Распределение стратегий retrieval (`dense`/`hybrid`/`hyde`/`multi_query`). "

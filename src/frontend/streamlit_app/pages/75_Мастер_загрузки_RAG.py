@@ -10,7 +10,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import K4APIClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Мастер ингеста RAG", "📥")
+setup_page()
 st.title("📥 Мастер ингеста RAG")
 
 if "ingest_step" not in st.session_state:

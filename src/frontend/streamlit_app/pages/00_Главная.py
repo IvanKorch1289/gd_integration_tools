@@ -20,7 +20,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 _project_root = Path(__file__).resolve().parents[3]
 
-setup_page("Главная", "🏠")
+setup_page()
 
 # ──────────── Header с логотипом ────────────
 

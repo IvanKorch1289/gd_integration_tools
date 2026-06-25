@@ -30,7 +30,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID25
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Отладчик маршрутов", ":mag:", layout="wide", initial_sidebar_state="expanded")
+setup_page(layout="wide", initial_sidebar_state="expanded")
 # Sprint 44 W1: используем DSLRoutesClient напрямую — APIClient generic
 # wrapper не expose get_dsl_route_traces (lazy domain dispatch).
 client = DSLRoutesClient()  # type: ignore[abstract]

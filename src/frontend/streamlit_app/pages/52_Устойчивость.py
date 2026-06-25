@@ -35,7 +35,7 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,  # noqa: E402
 )
 
-setup_page("Дашборд устойчивости", ":shield:")
+setup_page()
 st.header("Дашборд устойчивости")
 
 # ---------------------------------------------------------------------------

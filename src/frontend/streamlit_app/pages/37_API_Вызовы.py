@@ -15,7 +15,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("API-вызов", ":satellite_antenna:")
+setup_page()
 st.header(":satellite_antenna: Вызов REST API")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

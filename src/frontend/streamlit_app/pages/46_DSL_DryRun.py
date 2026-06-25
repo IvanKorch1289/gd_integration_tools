@@ -10,7 +10,7 @@ import yaml as _yaml
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
 
-setup_page("Пробный прогон DSL", ":fast_forward:")
+setup_page()
 st.header("Пробный прогон DSL")
 st.caption(
     "Sprint 10 K3 W4: вставь YAML маршрута, sample JSON-payload и нажми "

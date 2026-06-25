@@ -28,7 +28,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Монитор зависших сообщений Outbox", "⏱")
+setup_page()
 
 st.title("⏱ Монитор зависших сообщений Outbox")
 st.caption(

@@ -21,7 +21,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Покрытие EIP", "📊")
+setup_page()
 
 st.title("📊 Покрытие EIP")
 st.caption(

@@ -21,7 +21,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import multiselect_filter  # S45 W2
 
-setup_page("Онбординг плагина", "🧪")
+setup_page()
 st.title("🧪 Мастер онбординга плагинов")
 st.caption("Пошаговый scaffold для V11 плагинов.")
 

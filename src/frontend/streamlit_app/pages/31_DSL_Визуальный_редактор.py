@@ -46,7 +46,7 @@ from src.frontend.streamlit_app.pages._editor.properties import render_propertie
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("DSL Редактор", "")
+setup_page()
 st.header("DSL Визуальный редактор")
 st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "

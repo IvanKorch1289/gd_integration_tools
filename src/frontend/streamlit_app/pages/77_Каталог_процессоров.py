@@ -14,7 +14,7 @@ from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.filters import text_search  # S44 W2 (TD-008)
 
-setup_page("Каталог процессоров", "🔍")
+setup_page()
 st.title("🔍 Поиск по каталогу процессоров")
 st.caption("Нечёткий поиск по DSL-процессорам (rapidfuzz).")
 

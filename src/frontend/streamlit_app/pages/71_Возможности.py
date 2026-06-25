@@ -18,7 +18,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Возможности", "🔐")
+setup_page()
 st.header("Матрица возможностей")
 st.caption(
     "Каталог capabilities (ADR-044) + plugin × capability heatmap. "

@@ -17,7 +17,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import setup_page
 
-setup_page("Безопасность ИИ", ":shield:")
+setup_page()
 st.header(":shield: Безопасность ИИ / Guardrails")
 
 client = get_api_client()
