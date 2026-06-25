@@ -123,7 +123,7 @@ st.caption(
 )
 
 pool_rows = [
-    {"metric": "Total sessions", "value": "—"},
+    {"metric": "Всего сессий", "value": "—"},
     {"metric": "In use", "value": "—"},
     {"metric": "Idle", "value": "—"},
     {

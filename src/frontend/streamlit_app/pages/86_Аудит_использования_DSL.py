@@ -74,7 +74,7 @@ def run_audit(top: int = 20) -> dict:
         else:
             return {"error": result.stderr or f"Exit code: {result.returncode}"}
     except subprocess.TimeoutExpired:
-        return {"error": "Audit timed out after 60s"}
+        return {"error": "Аудит превысил таймаут (60 сек)"}
     except Exception as exc:
         return {"error": str(exc)}
 
@@ -116,11 +116,11 @@ if top_processors:
     # Rename columns for display
     df_display = df.rename(
         columns={
-            "processor_name": "Processor Name",
+            "processor_name": "Имя процессора",
             "processor_class": "Class",
             "usage_count": "Usage Count",
-            "avg_latency_ms": "Avg Latency (ms)",
-            "error_rate_pct": "Error Rate (%)",
+            "avg_latency_ms": "Средняя задержка (мс)",
+            "error_rate_pct": "Доля ошибок (%)",
             "samples": "Samples",
         }
     )
@@ -131,11 +131,11 @@ if top_processors:
         st.dataframe(
             df_display[
                 [
-                    "Processor Name",
+                    "Имя процессора",
                     "Class",
                     "Usage Count",
-                    "Avg Latency (ms)",
-                    "Error Rate (%)",
+                    "Средняя задержка (мс)",
+                    "Доля ошибок (%)",
                 ]
             ],
             width='stretch',
@@ -152,8 +152,8 @@ if top_processors:
     with chart_col1:
         st.write("**Использование по процессорам**")
         if not df_display.empty:
-            chart_data = df_display[["Processor Name", "Usage Count"]].set_index(
-                "Processor Name"
+            chart_data = df_display[["Имя процессора", "Usage Count"]].set_index(
+                "Имя процессора"
             )
             st.bar_chart(chart_data, horizontal=True, height=400)
 
@@ -161,17 +161,17 @@ if top_processors:
     with chart_col2:
         st.write("**Средняя латентность (ms)**")
         if not df_display.empty:
-            latency_data = df_display[["Processor Name", "Avg Latency (ms)"]].set_index(
-                "Processor Name"
+            latency_data = df_display[["Имя процессора", "Средняя задержка (мс)"]].set_index(
+                "Имя процессора"
             )
             st.bar_chart(latency_data, horizontal=True, height=400)
 
     # Error rate chart
-    if show_details and "Error Rate (%)" in df_display.columns:
+    if show_details and "Доля ошибок (%)" in df_display.columns:
         st.divider()
         st.write("**Доля ошибок (%)**")
-        error_data = df_display[["Processor Name", "Error Rate (%)"]].set_index(
-            "Processor Name"
+        error_data = df_display[["Имя процессора", "Доля ошибок (%)"]].set_index(
+            "Имя процессора"
         )
         st.bar_chart(error_data, horizontal=True, height=300)
 

@@ -33,7 +33,7 @@ st.caption(
 
 api = get_api_client()
 
-tab_step, tab_live = st.tabs(["Step Logs", "Live Audit Tail"])
+tab_step, tab_live = st.tabs(["Step Logs", "Live-хвост аудита"])
 
 with tab_step:
     st.subheader("Фильтры Step Logs")
@@ -44,7 +44,7 @@ with tab_step:
         key="step_workflow",
     )
     tenant_id = st.text_input(
-        "Tenant ID",
+        "ID тенанта",
         placeholder="all tenants",
         help="Если пусто — все tenant'ы.",
         key="step_tenant",

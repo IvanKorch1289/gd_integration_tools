@@ -39,7 +39,7 @@ def _fetch_pending(tenant: str | None) -> list[dict]:
 
 @st.fragment(run_every=5 if "auto_refresh" not in st.session_state else None)
 def render_pending_table() -> None:
-    """Real-time refresh table."""
+    """Таблица с автообновлением в реальном времени."""
     pending = _fetch_pending(tenant_filter or None)
     if not pending:
         st.info("Нет pending HITL signals в выбранном tenant.")

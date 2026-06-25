@@ -33,9 +33,9 @@ else:
         st.subheader(broker_name)
         cols = st.columns(4)
         cols[0].metric("Topics", stats.get("topics", 0))
-        cols[1].metric("Total messages", stats.get("messages", 0))
+        cols[1].metric("Всего сообщений", stats.get("messages", 0))
         cols[2].metric("DLQ", stats.get("dlq", 0))
-        cols[3].metric("Consumer lag", stats.get("lag", 0))
+        cols[3].metric("Lag consumer'а", stats.get("lag", 0))
 
         topics = stats.get("topics_detail") or []
         if topics:

@@ -46,7 +46,7 @@ except Exception:  # noqa: BLE001
 with st.sidebar:
     st.subheader("Настройки")
     st.toggle(
-        "UI Replay DLQ",
+        "UI воспроизведения DLQ",
         value=_flag_enabled,
         help="feature_flags.dlq_unified_enabled (FEATURE_DLQ_UNIFIED_ENABLED)",
         disabled=True,

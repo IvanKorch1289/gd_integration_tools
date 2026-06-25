@@ -60,7 +60,7 @@ STEPS: list[dict] = [
             "make streamlit\n"
             "```\n"
             "Откроется этот dashboard (`http://localhost:8501/`). 60+ pages: "
-            "Routes / Workflows / RAG / AI Chat / DSL Playground / etc."
+            "Маршруты / Воркфлоу / RAG / AI Чат / DSL Площадка / и т.д."
         ),
     },
     {

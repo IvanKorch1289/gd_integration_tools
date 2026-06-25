@@ -63,12 +63,12 @@ def _build_services() -> list[ServiceInfo]:
         {
             "name": "S3 / MinIO",
             "url": config.get("storage_interface_endpoint"),
-            "description": "Object storage",
+            "description": "Объектное хранилище",
         },
         {
             "name": "Graylog",
             "url": config.get("graylog_url"),
-            "description": "Log aggregation",
+            "description": "Агрегация логов",
         },
         {
             "name": "LangFuse",
@@ -78,7 +78,7 @@ def _build_services() -> list[ServiceInfo]:
         {
             "name": "RabbitMQ",
             "url": config.get("queue_ui_url"),
-            "description": "Message queue UI",
+            "description": "UI очереди сообщений",
         },
     ]
 

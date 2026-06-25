@@ -38,7 +38,7 @@ def _run(args: list[str]) -> tuple[int, str, str]:
 st.header("Мастер Codegen (Wave 5.6)")
 
 tab_service, tab_swagger, tab_extract = st.tabs(
-    ["New Service", "Import Swagger", "Extract YAML"]
+    ["New Service", "Импорт Swagger", "Extract YAML"]
 )
 
 with tab_service:
@@ -47,7 +47,7 @@ with tab_service:
     domain = st.selectbox("домен", ["core", "ai", "integrations", "ops"])
     crud = st.checkbox("CRUD методы", value=True)
     fields_json = st.text_area(
-        "fields JSON",
+        "поля (JSON)",
         value='{"name": "str", "email": "str"}',
         help="Словарь поле:py_type для Create/Update схем",
     )
@@ -75,7 +75,7 @@ with tab_service:
             else:
                 st.error(f"codegen failed (rc={rc})")
         except json.JSONDecodeError as exc:
-            st.error(f"fields JSON невалиден: {exc}")
+            st.error(f"поля (JSON) невалиден: {exc}")
 
 with tab_swagger:
     st.subheader("Импорт Swagger/OpenAPI")

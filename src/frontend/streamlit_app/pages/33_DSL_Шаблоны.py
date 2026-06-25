@@ -28,7 +28,7 @@ st.header(":scroll: Шаблоны DSL")
 
 mode = st.radio(
     "Каталог",
-    options=["Route Blueprints", "Workflow Templates"],
+    options=["Блюпринты маршрутов", "Шаблоны Воркфлоу"],
     horizontal=True,
     key="templates_mode",
 )
@@ -153,7 +153,7 @@ def _render_workflow_templates() -> None:
                     st.error(f"Deploy failed: {exc}")
 
 
-if mode == "Route Blueprints":
+if mode == "Блюпринты маршрутов":
     _render_route_blueprints()
 else:
     _render_workflow_templates()

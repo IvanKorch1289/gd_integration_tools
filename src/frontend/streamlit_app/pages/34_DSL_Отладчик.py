@@ -18,7 +18,7 @@ setup_page("Отладчик DSL", "🐛")
 st.title("🐛 Отладчик DSL и воспроизведение")
 
 mode = st.radio(
-    "Режим", ["Пошаговый Debugger", "Replay Audit", "Route Trace"], horizontal=True
+    "Режим", ["Пошаговый Debugger", "Аудит Replay", "Route Trace"], horizontal=True
 )
 
 if mode == "Пошаговый Debugger":
@@ -75,7 +75,7 @@ if mode == "Пошаговый Debugger":
             except Exception as exc:
                 st.error(f"Ошибка выполнения: {exc}")
 
-elif mode == "Replay Audit":
+elif mode == "Аудит Replay":
     st.markdown("""
     Показывает историю HTTP запросов из Redis audit stream.
     Клик по записи — детальный просмотр + replay.

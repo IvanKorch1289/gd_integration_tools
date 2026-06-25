@@ -26,7 +26,7 @@ dt_from = col1.date_input("С даты", value=datetime.utcnow().date() - timede
 dt_to = col2.date_input("По дату", value=datetime.utcnow().date())
 
 col3, col4, col5 = st.columns(3)
-route_filter = col3.text_input("Route ID substring")
+route_filter = col3.text_input("Подстрока ID маршрута")
 user_filter = col4.text_input("User ID")
 status_filter = col5.selectbox("Status", ["all", "success", "error"])
 

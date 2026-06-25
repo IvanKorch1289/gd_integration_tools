@@ -54,7 +54,7 @@ def _render() -> None:
     yaml_text = svc.render_yaml(route_id)
     diff_text = svc.preview_diff(route_id)
 
-    tabs = st.tabs(["YAML preview", "Diff vs YAMLStore"])
+    tabs = st.tabs(["YAML preview", "Сравнение с YAMLStore"])
     with tabs[0]:
         if yaml_text:
             st.code(yaml_text, language="yaml")

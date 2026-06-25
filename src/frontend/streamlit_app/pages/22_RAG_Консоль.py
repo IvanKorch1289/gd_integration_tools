@@ -68,7 +68,7 @@ st.divider()
 st.subheader("Augment (с freshness badge)")
 augment_query = st.text_input("Запрос для Augment", "", key="augment-q")
 augment_top_k = st.slider("top_k (augment)", 1, 20, 5, key="augment-tk")
-augment_ns = st.text_input("Namespace (augment)", "", key="augment-ns")
+augment_ns = st.text_input("Namespace (расширение)", "", key="augment-ns")
 max_staleness = st.number_input(
     "Максимальная устарелость (часы, 0=без фильтра)", min_value=0.0, value=72.0, step=24.0
 )

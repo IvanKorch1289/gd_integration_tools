@@ -83,7 +83,7 @@ if prometheus_url:
             if results:
                 value = float(results[0]["value"][1])
                 st.metric(
-                    label="Stuck-pending count (current)",
+                    label="Количество зависших (текущее)",
                     value=int(value),
                     delta=None,
                     delta_color="inverse" if value > 0 else "off",
@@ -91,7 +91,7 @@ if prometheus_url:
                 if value > 0:
                     st.warning(
                         f"⚠️ {int(value)} messages stuck older than {threshold}s. "
-                        f"Check runbook below."
+                        f"См. runbook ниже."
                     )
                 else:
                     st.success("✅ Нет застрявших сообщений. Worker работает штатно.")
@@ -104,7 +104,7 @@ if prometheus_url:
 else:
     st.info(
         "Set `PROMETHEUS_URL` env var для live queries. "
-        "Showing in-memory state (best-effort, same-process only)."
+        "Показано состояние из памяти (best-effort, только в текущем процессе)."
     )
     # In-memory fallback: try to read from default_stuck_monitor.
     # Только работает если streamlit запущен в ТОМ ЖЕ process что и stuck_monitor.
@@ -117,7 +117,7 @@ else:
         monitor = get_default_stuck_monitor()
         in_memory_available = True
         st.metric(
-            label="Stuck-pending count (in-memory)",
+            label="Количество зависших (в памяти)",
             value=monitor.last_count if monitor.last_count >= 0 else "—",
             delta=f"{monitor.samples_total} samples taken",
         )
@@ -211,7 +211,7 @@ alert_rules: list[dict[str, Any]] = [
         "name": "OutboxStuckPendingHigh",
         "severity": "warning",
         "condition": "aggregate > 0 для 5 min",
-        "action": "Slack #platform-alerts",
+        "action": "Slack #platform-alerts  # канал оповещений,
     },
     {
         "name": "OutboxStuckPendingCritical",

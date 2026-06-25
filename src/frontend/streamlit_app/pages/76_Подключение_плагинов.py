@@ -146,7 +146,7 @@ elif step == 4:
         _goto(3)
         st.rerun()
 
-    if cols[1].button("Dry-run preview"):
+    if cols[1].button("Предпросмотр dry-run"):
         preview = client.scaffold_plugin(
             data["name"],
             description=data["description"],

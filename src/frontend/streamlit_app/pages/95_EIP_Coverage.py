@@ -32,49 +32,49 @@ st.caption(
 # Hand-verified в S63 W2-W3.
 EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     "1. Aggregator": {
-        "description": "Combines multiple messages into one.",
+        "description": "Объединяет несколько сообщений в одно.",
         "class_path": "src.backend.dsl.engine.processors.eip.flow_control.AggregatorProcessor",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "2. Splitter": {
-        "description": "Splits one message into many.",
+        "description": "Разделяет одно сообщение на несколько.",
         "class_path": "src.backend.dsl.engine.processors.eip.transformation.SplitterProcessor",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "3. Content-Based Router": {
-        "description": "Routes messages based on content.",
+        "description": "Маршрутизирует сообщения по содержимому.",
         "class_path": "src.backend.dsl.engine.processors.eip.filter_router_sampling.ContentBasedRouter",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "4. Message Filter": {
-        "description": "Filters out unwanted messages.",
+        "description": "Фильтрует нежелательные сообщения.",
         "class_path": "src.backend.dsl.engine.processors.core.FilterProcessor",
         "status": "canonical (deduped S55)",
         "sprint": "S55 W6",
     },
     "5. Recipient List": {
-        "description": "Sends message to multiple recipients.",
+        "description": "Отправляет сообщение нескольким получателям.",
         "class_path": "src.backend.dsl.engine.processors.eip.routing.RecipientListProcessor",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "6. Dead Letter": {
-        "description": "Handles messages that cannot be delivered.",
+        "description": "Обрабатывает недоставляемые сообщения.",
         "class_path": "src.backend.dsl.engine.processors.eip.resilience.DeadLetterProcessor",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "7. Idempotent Receiver": {
-        "description": "Ensures message is processed only once.",
+        "description": "Гарантирует обработку сообщения только один раз.",
         "class_path": "src.backend.dsl.engine.processors.eip.idempotency.IdempotentConsumerProcessor",
         "status": "canonical",
         "sprint": "pre-V22",
     },
     "8. Claim Check": {
-        "description": "Stores large payload externally, passes token.",
+        "description": "Хранит большой payload вне, передаёт токен.",
         "class_path": "src.backend.dsl.engine.processors.eip.transformation.ClaimCheckProcessor",
         "status": "canonical (post-S63 W2.1 dedup)",
         "sprint": "S63 W2.1",
@@ -86,7 +86,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
         "sprint": "S63 W3.0",
     },
     "10. Process Manager": {
-        "description": "Long-running orchestration with state persistence.",
+        "description": "Долгоиграющая оркестрация с сохранением состояния.",
         "class_path": "src.backend.dsl.engine.processors.eip.transactional.ProcessManagerProcessor",
         "status": "canonical (S63 W3.0 NEW, facade over SagaProcessor)",
         "sprint": "S63 W3.0",

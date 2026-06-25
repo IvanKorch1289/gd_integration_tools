@@ -96,7 +96,7 @@ with st.form("invoke-form"):
     mode = col2.selectbox("Режим", MODES, index=0)
 
     payload_raw = st.text_area(
-        "Payload (JSON)",
+        "Полезная нагрузка (JSON)",
         value="{}",
         height=120,
         help="JSON-объект, который будет передан action.",
