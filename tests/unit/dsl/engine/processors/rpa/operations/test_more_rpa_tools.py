@@ -145,36 +145,27 @@ class TestHttpRequestProcessor:
         ex.set_property = MagicMock()
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
-        # Mock via module-level: aiohttp is imported in process()
+        # Mock httpx.AsyncClient (already in pyproject deps)
         mock_resp = MagicMock()
-        mock_resp.status = 200
+        mock_resp.status_code = 200
         mock_resp.headers = {"content-type": "application/json"}
-        mock_resp.text = AsyncMock(return_value='{"ok": true}')
+        mock_resp.json = MagicMock(return_value={"ok": True})
+        mock_resp.text = '{"ok": true}'
 
-        class _MockRequest:
-            async def __aenter__(s):
-                return mock_resp
-            async def __aexit__(s, *a):
-                return False
-
-        class _MockSession:
-            def request(self, *a, **kw):
-                return _MockRequest()
+        class _MockClient:
             async def __aenter__(self):
                 return self
             async def __aexit__(self, *a):
                 return False
+            async def request(self, *a, **kw):
+                return mock_resp
 
         from src.backend.dsl.engine.processors.rpa.operations import httprequestprocessor as hr_mod
-        with patch.object(hr_mod, "aiohttp") as mock_aiohttp:
-            mock_aiohttp.ClientSession.return_value = _MockSession()
-            mock_aiohttp.ClientTimeout = MagicMock()
+        with patch.object(hr_mod.httpx, "AsyncClient", return_value=_MockClient()):
             await p.process(ex, MagicMock())
 
-        # Result written via set_property (BaseProcessor helper)
         assert ex.set_property.called
         call_args = ex.set_property.call_args_list[-1]
-        # call('body', {'status': ..., 'headers': ..., 'data': ...})
         target, value = call_args[0]
         assert target == "body"
         assert value["status"] == 200

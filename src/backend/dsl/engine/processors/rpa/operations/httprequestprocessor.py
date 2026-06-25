@@ -1,13 +1,16 @@
 """S171 M6.1 — HttpRequestProcessor (gap fill).
 
-Async HTTP request через :mod:`aiohttp` (асинхронный HTTP client).
+Async HTTP request через :mod:`httpx` (modern async HTTP client,
+уже в pyproject deps). Заменяет aiohttp — меньше deps, лучше type hints.
+
 Capability: rpa.http.request (medium risk — network egress).
 """
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import TYPE_CHECKING, Any
+
+import httpx
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -15,10 +18,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
-
-# Module-level import (not lazy) for patchability in tests.
-# aiohttp is heavy — only import here at module-load time.
-import aiohttp  # noqa: E402
 
 _rpa_logger = get_logger("dsl.rpa")
 
@@ -32,7 +31,7 @@ class HttpRequestProcessor(BaseProcessor):
         headers: Request headers (dict).
         body: Request body (dict → JSON, str → raw).
         timeout: Request timeout seconds (default 30).
-        to: Куда записать ``{status, headers, data}`` (default ``"body"``).
+        to: Куда записать ``{status, headers, data}``.
     """
 
     required_capability: str | None = "rpa.http.request"
@@ -62,30 +61,30 @@ class HttpRequestProcessor(BaseProcessor):
     ) -> None:
         request_kwargs: dict[str, Any] = {
             "headers": self.headers,
-            "timeout": aiohttp.ClientTimeout(total=self.timeout),
+            "timeout": self.timeout,
         }
         if self.body is not None:
             if isinstance(self.body, (dict, list)):
                 request_kwargs["json"] = self.body
             else:
-                request_kwargs["data"] = str(self.body)
+                request_kwargs["content"] = str(self.body)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.request(
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
                 self.method, self.url, **request_kwargs
-            ) as resp:
-                text = await resp.text()
-                try:
-                    data = json.loads(text)
-                except (json.JSONDecodeError, ValueError):
-                    data = text
+            )
+
+        try:
+            data = response.json()
+        except (json.JSONDecodeError, ValueError):
+            data = response.text
 
         _rpa_logger.info(
             "http_request method=%s url=%s status=%d",
-            self.method, self.url, resp.status,
+            self.method, self.url, response.status_code,
         )
         self.set_result(exchange, self.target, {
-            "status": resp.status,
-            "headers": dict(resp.headers),
+            "status": response.status_code,
+            "headers": dict(response.headers),
             "data": data,
         })
