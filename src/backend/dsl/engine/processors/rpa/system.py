@@ -197,3 +197,67 @@ class TerminalExecProcessor(BaseProcessor):
         )
         self.set_result(exchange, self.target, output)
         exchange.set_property("exit_code", proc.returncode)
+
+
+class EmailReadProcessor(BaseProcessor):
+    """Async IMAP email read.
+
+    Args:
+        host: IMAP host.
+        port: IMAP port (default 993).
+        user: Username.
+        password: Password.
+        folder: Mailbox folder (default ``"INBOX"``).
+        to: Куда записать emails (default ``"body.emails"``).
+    """
+
+    required_capability: str | None = "rpa.email.read"
+    audit_event: str | None = "rpa.email.read"
+
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: int = 993,
+        user: str = "",
+        password: str = "",
+        folder: str = "INBOX",
+        to: str = "body.emails",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"email_read:{host}")
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.folder = folder
+        self.target = to
+
+    async def process(
+        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+    ) -> None:
+        import imaplib
+
+        def _fetch() -> list[dict[str, str]]:
+            conn = imaplib.IMAP4_SSL(self.host, self.port)
+            try:
+                if self.user:
+                    conn.login(self.user, self.password)
+                conn.select(self.folder)
+                _, msg_ids = conn.search(None, "ALL")
+                emails = []
+                for msg_id in (msg_ids[0] or b"").split():
+                    _, data = conn.fetch(msg_id, "(RFC822)")
+                    for part in data:
+                        if isinstance(part, tuple) and len(part) >= 2:
+                            emails.append({"raw": part[1].decode("utf-8", errors="replace")})
+                return emails
+            finally:
+                try:
+                    conn.logout()
+                except Exception:
+                    pass
+
+        emails = await asyncio.to_thread(_fetch)
+        _rpa_logger.info("email_read host=%s folder=%s count=%d", self.host, self.folder, len(emails))
+        self.set_result(exchange, self.target, emails)
