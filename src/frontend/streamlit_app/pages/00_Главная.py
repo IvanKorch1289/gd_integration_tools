@@ -14,7 +14,11 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients import cached_get_health, cached_get_metrics
+from src.frontend.streamlit_app.api_clients import (
+    cached_get_health,
+    cached_get_metrics,
+    clear_api_cache,
+)
 from src.frontend.streamlit_app.shared.auth_state import is_authenticated
 from src.frontend.streamlit_app.shared.components import setup_page
 from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
@@ -135,6 +139,7 @@ st.divider()
 col_refresh, col_interval = st.columns([1, 3])
 with col_refresh:
     if st.button("Обновить", key="home_refresh"):
+        clear_api_cache()
         st.rerun()
 with col_interval:
     st.caption("Данные обновляются при нажатии «Обновить» или перезагрузке страницы.")

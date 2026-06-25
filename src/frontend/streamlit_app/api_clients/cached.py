@@ -15,11 +15,18 @@ Tradeoffs:
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+
+# Cache TTLs — configurable via env, sensible defaults.
+# Production: set via STREAMLIT_CACHE_TTL_METRICS etc.
+TTL_METRICS = int(os.getenv("STREAMLIT_CACHE_TTL_METRICS", "10"))
+TTL_HEALTH = int(os.getenv("STREAMLIT_CACHE_TTL_HEALTH", "5"))
+TTL_ORDERS = int(os.getenv("STREAMLIT_CACHE_TTL_ORDERS", "15"))
 
 __all__ = ("cached_get_metrics", "cached_get_health", "cached_get_orders")
 
@@ -27,7 +34,7 @@ __all__ = ("cached_get_metrics", "cached_get_health", "cached_get_orders")
 # ──────────── Cached wrappers (module-level для cache_data) ────────────
 
 
-@st.cache_data(ttl=10, show_spinner=False)
+@st.cache_data(ttl=TTL_METRICS, show_spinner=False)
 def cached_get_metrics() -> dict[str, Any]:
     """Metrics dashboard: route counts, actions, services.
 
@@ -40,7 +47,7 @@ def cached_get_metrics() -> dict[str, Any]:
         return {}
 
 
-@st.cache_data(ttl=5, show_spinner=False)
+@st.cache_data(ttl=TTL_HEALTH, show_spinner=False)
 def cached_get_health() -> dict[str, Any]:
     """Health components: per-service up/down status.
 
@@ -53,7 +60,7 @@ def cached_get_health() -> dict[str, Any]:
         return {}
 
 
-@st.cache_data(ttl=15, show_spinner=False)
+@st.cache_data(ttl=TTL_ORDERS, show_spinner=False)
 def cached_get_orders(page: int = 1, size: int = 50) -> Any:
     """Orders list с pagination.
 
