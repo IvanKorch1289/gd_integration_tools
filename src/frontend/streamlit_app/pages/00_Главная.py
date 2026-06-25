@@ -41,7 +41,7 @@ if not is_authenticated():
         "необходимо войти."
     )
     if st.button("Войти", type="primary", key="home_login_btn"):
-        st.switch_page("00_Вход")
+        st.switch_page("pages/00_Вход.py")
     st.divider()
 
 # ──────────── KPI Метрики ────────────
