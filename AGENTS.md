@@ -68,6 +68,23 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
 - aiohttp → httpx (no new deps, better API)
 - См. `docs/config/SETTINGS_GUIDE.md`
 
+**Sprint 171 (S170+): M7 Integration Layer complete (commits 8038907-0ea7b28).**
+- Unified middleware facades: `src/backend/core/facades.py` (D160)
+  - 17 primitives: auth + timeout + retry + ratelimit + CB + bulkhead
+  - Replaces 40+ unique facade imports
+  - 8/8 tests pass
+- Per-route policies: `policy_mixin.py` (8 types, already exists)
+  - cache/CB/rate_limit/timeout/retry/bulkhead/adaptive_timeout/idempotency
+- Multi-protocol: 14+ (REST/SOAP/WSDL/gRPC/GraphQL/AsyncAPI/WS/SSE/MCP/MQTT/HTTP3/CDC/email/filewatcher/scheduler)
+- Entity CRUD: 5 methods (entity_create/get/update/list/delete)
+- Call types: 6 (sync/async/deferred/background/distributed/multithreaded)
+- Directory scan DSL: `DirectoryScanProcessor` (D166) — recursive + filters
+- AI Agent Guide: `docs/ai/AGENT_GUIDE.md` (8 sections, 503 LOC)
+  - policies/masking/workflow/prompts/memory/RLM/decision matrix/testing
+- Integration Layer Guide: `docs/integration/INTEGRATION_GUIDE.md` (193 LOC)
+- D-rules D160-D166 (integration patterns)
+- См. `docs/integration/INTEGRATION_GUIDE.md` + `docs/ai/AGENT_GUIDE.md`
+
 ---
 
 ## Что читать сначала
