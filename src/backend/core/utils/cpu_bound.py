@@ -59,6 +59,22 @@ async def run_cpu_bound(
         result = await run_cpu_bound(_merge_pdfs, pdf_bytes_list)
     """
     if use_process_pool:
+        # ProcessPoolExecutor requires picklable top-level functions.
+        # Lambda/closure/local fn → fallback to thread pool + warning.
+        import pickle
+        try:
+            pickle.dumps(fn)
+            picklable = True
+        except (pickle.PicklingError, TypeError, AttributeError):
+            picklable = False
+        if not picklable:
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).warning(
+                "cpu_bound: use_process_pool=True requires picklable fn, "
+                "got %s — falling back to asyncio.to_thread",
+                getattr(fn, "__qualname__", repr(fn)),
+            )
+            return await asyncio.to_thread(fn, *args, **kwargs)
         loop = asyncio.get_running_loop()
         bound = partial(fn, *args, **kwargs)
         return await loop.run_in_executor(default_cpu_pool(), bound)

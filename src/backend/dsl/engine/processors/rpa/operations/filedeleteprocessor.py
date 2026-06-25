@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+import asyncio
+
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -51,15 +53,18 @@ class FileDeleteProcessor(BaseProcessor):
             raise ValueError("FileDeleteProcessor: path обязателен")
         import shutil
 
-        try:
-            if os.path.isdir(path) and not os.path.islink(path):
-                shutil.rmtree(path)
-            else:
-                os.remove(path)
-            deleted = True
-        except FileNotFoundError:
-            if not self.missing_ok:
-                raise
-            deleted = False
+        def _do_delete() -> bool:
+            try:
+                if os.path.isdir(path) and not os.path.islink(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+                return True
+            except FileNotFoundError:
+                if not self.missing_ok:
+                    raise
+                return False
+
+        deleted = await asyncio.to_thread(_do_delete)
         _rpa_logger.info("file_delete path=%s deleted=%s", path, deleted)
         exchange.in_message.body["deleted"] = deleted

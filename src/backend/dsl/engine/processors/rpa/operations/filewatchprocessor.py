@@ -8,7 +8,6 @@ from __future__ import annotations
 import asyncio
 
 import threading
-import time
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
@@ -103,4 +102,3 @@ class FileWatchProcessor(BaseProcessor):
         self.set_result(exchange, self.target, collector.changes)
 
 
-import asyncio  # noqa: E402 (after class def)

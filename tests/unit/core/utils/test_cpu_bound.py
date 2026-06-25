@@ -35,3 +35,36 @@ class TestRunCpuBound:
         p1 = default_cpu_pool()
         p2 = default_cpu_pool()
         assert p1 is p2  # singleton
+
+
+class TestPickleFallback:
+    @pytest.mark.asyncio
+    async def test_lambda_falls_back_to_thread(self) -> None:
+        """use_process_pool=True with lambda → fallback to asyncio.to_thread."""
+        from src.backend.core.utils.cpu_bound import run_cpu_bound
+        # Lambda is NOT picklable
+        result = await run_cpu_bound(lambda x: x * 2, 21, use_process_pool=True)
+        assert result == 42
+
+    @pytest.mark.asyncio
+    async def test_closure_falls_back_to_thread(self) -> None:
+        """Closure с nonlocal state → fallback to thread."""
+        from src.backend.core.utils.cpu_bound import run_cpu_bound
+        multiplier = 3
+
+        def closure(x: int) -> int:
+            return x * multiplier
+
+        result = await run_cpu_bound(closure, 14, use_process_pool=True)
+        assert result == 42
+
+    @pytest.mark.asyncio
+    async def test_picklable_top_level_uses_process_pool(self) -> None:
+        """Top-level function → process pool works."""
+        from src.backend.core.utils.cpu_bound import run_cpu_bound
+
+        def top_level_fn(x: int) -> int:
+            return x + 1
+
+        result = await run_cpu_bound(top_level_fn, 41, use_process_pool=True)
+        assert result == 42
