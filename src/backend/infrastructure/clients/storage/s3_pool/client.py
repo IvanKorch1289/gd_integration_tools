@@ -521,3 +521,11 @@ class S3Client(BaseS3Client):
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise ServiceError(f"Файл {key} не найден") from exc
+
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}

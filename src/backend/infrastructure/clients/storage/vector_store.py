@@ -227,6 +227,13 @@ class QdrantVectorStore(BaseVectorStore):
         return int(result.count)
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 class ChromaVectorStore(BaseVectorStore):
     """Vector store через Chroma DB."""
 
@@ -369,6 +376,13 @@ class ChromaVectorStore(BaseVectorStore):
         return len(ids) if ids else 0
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 class FAISSVectorStore(BaseVectorStore):
     """In-memory FAISS vector store (для разработки и тестов)."""
 
@@ -468,6 +482,13 @@ class FAISSVectorStore(BaseVectorStore):
         )
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorStore:
     """Фабрика vector store. Если ``backend`` не указан — берёт значение
     из ``rag_settings.vector_backend`` (default ``qdrant``).

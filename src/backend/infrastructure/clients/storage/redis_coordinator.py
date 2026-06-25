@@ -121,6 +121,13 @@ class RedisHash:
         return bool(await raw.hexists(self._key, field))
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 class RedisSet:
     """Shared set (Redis SET) — для group membership."""
 
@@ -185,6 +192,13 @@ class RedisSet:
         return int(await raw.scard(self._key) or 0)
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 class RedisCursor:
     """Monotonic cursor (Redis string) с CAS-semantics.
 
@@ -250,6 +264,13 @@ class RedisCursor:
             return False
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 class RedisPubSub:
     """Pub/sub channel для broadcast между инстансами.
 

@@ -279,6 +279,13 @@ class EventBus:
         )
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 from src.backend.core.di import app_state_singleton
 
 

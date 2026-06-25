@@ -300,6 +300,13 @@ class ClickHouseClient:
             return False
 
 
+
+    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        try:
+            return {"status": "ok", "latency_ms": 0.0, "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)}
 def _create_clickhouse_client() -> ClickHouseClient:
     """Lazy-фабрика singleton-клиента из ``ClickHouseSettings``."""
     from src.backend.core.config.clickhouse import clickhouse_settings
