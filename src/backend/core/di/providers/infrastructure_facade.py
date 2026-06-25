@@ -830,3 +830,17 @@ def get_metrics_registry_factory() -> Any:
 
     return metrics_registry
 
+
+
+def get_object_storage_class() -> Any:
+    """Возвращает ``storage.object_storage.ObjectStorage`` class."""
+    from src.backend.infrastructure.storage.object_storage import ObjectStorage
+
+    return ObjectStorage
+
+
+def get_health_check_factory() -> Any:
+    """Возвращает ``application.health_aggregator.get_health_check`` factory."""
+    from src.backend.infrastructure.application.health_aggregator import get_health_check
+
+    return get_health_check
