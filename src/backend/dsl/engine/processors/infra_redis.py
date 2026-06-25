@@ -44,12 +44,4 @@ class InfraRedisGetProcessor(BaseProcessor):
         )
         client = get_redis_client_class()(context)
         value = await client.get(self.key)
-        if self.target.startswith("body."):
-            field = self.target[len("body."):]
-            body = exchange.in_message.body
-            if not isinstance(body, dict):
-                body = {}
-                exchange.in_message.body = body
-            body[field] = value
-        else:
-            exchange.set_property(self.target, value)
+        self.set_result(exchange, self.target, value)

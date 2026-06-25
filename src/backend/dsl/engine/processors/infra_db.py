@@ -46,12 +46,4 @@ class InfraDbQueryProcessor(BaseProcessor):
         async with sm.session() as session:
             result = await session.execute(self.sql)
             rows = [dict(r) for r in result]
-        if self.target.startswith("body."):
-            field = self.target[len("body."):]
-            body = exchange.in_message.body
-            if not isinstance(body, dict):
-                body = {}
-                exchange.in_message.body = body
-            body[field] = rows
-        else:
-            exchange.set_property(self.target, rows)
+        self.set_result(exchange, self.target, rows)

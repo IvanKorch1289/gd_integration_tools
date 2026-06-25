@@ -42,6 +42,28 @@ class BaseProcessor(ABC):
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__
 
+    def set_result(self, exchange, target: str, value) -> None:
+        """Записать значение в Exchange (body.<field> или property).
+
+        Args:
+            exchange: Текущий Exchange.
+            target: Куда положить (body.<field>, properties.<name> или просто name).
+            value: Значение.
+        """
+        if target.startswith("body."):
+            field = target[len("body."):]
+            body = exchange.in_message.body
+            if not isinstance(body, dict):
+                body = {}
+                exchange.in_message.body = body
+            body[field] = value
+            return
+        if target.startswith("properties."):
+            field = target[len("properties."):]
+            exchange.set_property(field, value)
+            return
+        exchange.set_property(target, value)
+
     @abstractmethod
     async def process(
         self, exchange: Exchange[Any], context: ExecutionContext

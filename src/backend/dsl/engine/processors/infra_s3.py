@@ -44,12 +44,4 @@ class InfraS3GetProcessor(BaseProcessor):
         )
         storage = get_object_storage_class()(context)
         content = await storage.get(self.key)
-        if self.target.startswith("body."):
-            field = self.target[len("body."):]
-            body = exchange.in_message.body
-            if not isinstance(body, dict):
-                body = {}
-                exchange.in_message.body = body
-            body[field] = content
-        else:
-            exchange.set_property(self.target, content)
+        self.set_result(exchange, self.target, content)

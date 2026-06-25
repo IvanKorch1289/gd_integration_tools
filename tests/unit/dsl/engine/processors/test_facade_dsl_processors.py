@@ -154,3 +154,42 @@ class TestInfraDbQueryProcessor:
         ):
             await p.process(ex, ctx)
         assert body.get("result") == [{"?column?": 1}]
+
+
+
+class TestDSLProcessorErrorPropagation:
+    """Verify DSL processors propagate errors from underlying infra."""
+
+    @pytest.mark.asyncio
+    async def test_infra_s3_propagates_storage_error(self) -> None:
+        from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+        p = InfraS3GetProcessor(key="missing.json", to="body.content")
+        ex = MagicMock()
+        ex.in_message.body = {}
+        ctx = MagicMock()
+        storage_instance = MagicMock()
+        storage_instance.get = AsyncMock(side_effect=ConnectionError("S3 down"))
+        storage_class = MagicMock(return_value=storage_instance)
+        with patch(
+            "src.backend.core.di.providers.infrastructure_facade.get_object_storage_class",
+            return_value=storage_class,
+        ):
+            with pytest.raises(ConnectionError):
+                await p.process(ex, ctx)
+
+    @pytest.mark.asyncio
+    async def test_infra_redis_propagates_client_error(self) -> None:
+        from src.backend.dsl.engine.processors.infra_redis import InfraRedisGetProcessor
+        p = InfraRedisGetProcessor(key="missing", to="body.value")
+        ex = MagicMock()
+        ex.in_message.body = {}
+        ctx = MagicMock()
+        client_instance = MagicMock()
+        client_instance.get = AsyncMock(side_effect=ConnectionError("Redis down"))
+        client_class = MagicMock(return_value=client_instance)
+        with patch(
+            "src.backend.core.di.providers.infrastructure_facade.get_redis_client_class",
+            return_value=client_class,
+        ):
+            with pytest.raises(ConnectionError):
+                await p.process(ex, ctx)

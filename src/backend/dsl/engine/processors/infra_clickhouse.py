@@ -43,12 +43,4 @@ class InfraClickHouseQueryProcessor(BaseProcessor):
         )
         client = get_clickhouse_client_class()(context)
         result = await client.query(self.sql)
-        if self.target.startswith("body."):
-            field = self.target[len("body."):]
-            body = exchange.in_message.body
-            if not isinstance(body, dict):
-                body = {}
-                exchange.in_message.body = body
-            body[field] = result
-        else:
-            exchange.set_property(self.target, result)
+        self.set_result(exchange, self.target, result)

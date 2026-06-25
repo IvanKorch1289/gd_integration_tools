@@ -212,7 +212,7 @@ class BreakerRegistry:
                 CircuitBreakerMetricsRecorder,
             )
 
-            # Nested function: infra import за法律的 внутри тела,
+            # Nested function: infra import внутри тела (lazy via facade),
             # ast.walk всё равно увидит, но pattern — bridge pattern.
             def _record(client: str, host: str, state: str) -> None:
                 # Import внутри функции — AST walker видит модуль,

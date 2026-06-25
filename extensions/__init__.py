@@ -47,8 +47,6 @@ from src.backend.core.interfaces.plugin import (
 from src.backend.core.services.base_service import BaseService
 
 # Repository base (canonical from core.repositories.base)
-# SQLAlchemyRepository loaded lazily via __getattr__ (ponytail D111)
-
 # Common errors (canonical from core.errors)
 from src.backend.core.errors import (
     NotFoundError,
@@ -95,7 +93,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):  # type: ignore[no-untyped-def]
+def __getattr__(name: str) -> Any:
     """PEP 562 lazy attribute access (Sprint 36 — ponytail D111)."""
     if name == "SQLAlchemyRepository":
         from src.backend.core.repositories.base import SQLAlchemyRepository

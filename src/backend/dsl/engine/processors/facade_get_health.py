@@ -45,12 +45,4 @@ class FacadeGetHealthProcessor(BaseProcessor):
         )
         health_fn = get_health_check_factory()(self.component_name)
         result = await health_fn()
-        if self.target.startswith("body."):
-            field = self.target[len("body."):]
-            body = exchange.in_message.body
-            if not isinstance(body, dict):
-                body = {}
-                exchange.in_message.body = body
-            body[field] = result
-        else:
-            exchange.set_property(self.target, result)
+        self.set_result(exchange, self.target, result)

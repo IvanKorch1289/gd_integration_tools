@@ -112,6 +112,7 @@ __all__ = (
     "get_redis_client_class",
     "get_e2b_sandbox_class",
     "get_logger_protocol_class",
+    "get_logger_factory",
     "get_sqlalchemy_repository_class",
     "get_repository_for_model_factory",
     "get_prompt_cache_middleware",
@@ -553,13 +554,6 @@ def get_rate_limiter_factory() -> Any:
 
 
 
-def get_health_check_factory() -> Any:
-    """Возвращает ``clients.base_connector.get_health_check`` factory."""
-    from src.backend.infrastructure.clients.base_connector import get_health_check
-
-    return get_health_check
-
-
 def get_prometheus_temporal_exporter_class() -> Any:
     """Возвращает ``observability.prometheus_temporal_exporter.PrometheusTemporalExporter`` class."""
     from src.backend.infrastructure.observability.prometheus_temporal_exporter import PrometheusTemporalExporter
@@ -732,6 +726,12 @@ def get_logger_protocol_class() -> Any:
     """Возвращает ``logging.base.LoggerProtocol`` class."""
     from src.backend.infrastructure.logging.base import LoggerProtocol
     return LoggerProtocol
+
+
+def get_logger_factory() -> Any:
+    """Возвращает ``core.logging.get_logger`` factory."""
+    from src.backend.core.logging import get_logger
+    return get_logger
 
 def get_web_search_service_factory() -> Any:
     """Возвращает ``clients.external.search_providers.get_web_search_service`` factory."""

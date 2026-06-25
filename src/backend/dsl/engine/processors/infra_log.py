@@ -41,7 +41,9 @@ class InfraLogWriteProcessor(BaseProcessor):
         self.message = message
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.backend.core.logging import get_logger
-        logger = get_logger("dsl.infra_log")
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_logger_factory as _get_logger_factory_fn,
+        )
+        logger = _get_logger_factory_fn()("dsl.infra_log")
         log_fn = getattr(logger, self.level)
         log_fn(self.message)
