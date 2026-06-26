@@ -132,10 +132,19 @@ __all__ = (
 
 
 def get_correlation_id() -> Any:
-    """Возвращает ``correlation.get_correlation_id`` function."""
-    from src.backend.infrastructure.observability.correlation import get_correlation_id
+    """Возвращает текущий correlation_id из contextvar (string).
 
-    return get_correlation_id
+    Per D102 (single-source-of-truth через facade), provider
+    вызывает underlying function и возвращает её value,
+    а не саму function.
+
+    S171 M12 R4 #3 fix: ранее возвращалась function <get_correlation_id>,
+    что ломало audit_service.emit (test_emit_uses_correlation_id_from_contextvar).
+    """
+    from src.backend.infrastructure.observability.correlation import (
+        get_correlation_id as _get_cid,
+    )
+    return _get_cid()
 
 
 def get_client_metrics() -> Any:
