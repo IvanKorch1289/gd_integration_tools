@@ -50,7 +50,7 @@ def render_login() -> None:
     """Render login form. После успеха — st.rerun() → auth_state.is_authenticated."""
     if auth_state.is_authenticated():
         # Уже залогинен — редирект на Home
-        st.switch_page("../Главная.py")
+        st.switch_page("../app.py")
         return
 
     # Logo / title
