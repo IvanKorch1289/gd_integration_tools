@@ -231,9 +231,15 @@ class TestModuleSingleton:
 
 
 class TestAllExports:
-    @pytest.mark.skip(reason="S171 M11 R5: test-bug — m is instance, not module (m.__all__ invalid) — defer (see docs/m11_deferred_tests.md)")
     def test_all(self) -> None:
-        from src.backend.core.utils import metrics_registry as m
+        """Модуль metrics_registry экспортирует DEFAULT_LABELS, MetricsRegistry, metrics_registry.
+
+        M13.1 fix: ``from .. import metrics_registry`` shadowing модуль классом
+        (через __init__.py re-export). Тест использует importlib.import_module
+        чтобы получить НАСТОЯЩИЙ модуль, не class reference.
+        """
+        import importlib
+        m = importlib.import_module("src.backend.core.utils.metrics_registry")
 
         assert set(m.__all__) == {
             "DEFAULT_LABELS",
