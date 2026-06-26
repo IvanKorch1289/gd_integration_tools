@@ -66,3 +66,10 @@ def check_expectations(
 ) -> list[ExpectationResult]:
     rows = list(rows)
     return [e.check(rows) for e in expectations]
+
+
+# S171 M10 P2: schema-registry (R1, D175)
+from src.backend.dsl.contracts.schema_registry import (
+    SchemaNotFoundError,
+    SchemaRegistry,
+)
