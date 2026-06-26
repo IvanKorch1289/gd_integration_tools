@@ -21,14 +21,14 @@ import pytest
 
 
 def _page_path() -> Path:
-    """Вернуть абсолютный путь к Streamlit-странице 66_Workflow_Logs.py."""
+    """Вернуть абсолютный путь к Streamlit-странице 66_Логи_Воркфлоу.py."""
     return (
         Path(__file__).resolve().parents[3]
         / "src"
         / "frontend"
         / "streamlit_app"
         / "pages"
-        / "66_Workflow_Logs.py"
+        / "66_Логи_Воркфлоу.py"
     )
 
 
@@ -38,7 +38,7 @@ def _page_path() -> Path:
 
 
 def test_page_disabled_by_flag() -> None:
-    """66_Workflow_Logs.py содержит проверку feature_flag и st.stop().
+    """66_Логи_Воркфлоу.py содержит проверку feature_flag и st.stop().
 
     Эквивалент unit-теста ``test_page_disabled_by_flag`` без запуска
     Streamlit runtime: проверяем источники модуля и AST-валидность.

@@ -27,7 +27,7 @@ def _page_path(filename: str) -> Path:
     )
 
 
-@pytest.mark.parametrize("filename", ["45_admin.py"])
+@pytest.mark.parametrize("filename", ["45_Админ.py"])
 def test_streamlit_page_is_valid_python(filename: str) -> None:
     """Страница парсится как валидный Python-модуль.
 
@@ -41,7 +41,7 @@ def test_streamlit_page_is_valid_python(filename: str) -> None:
     compile(source, str(page), "exec")  # AST-валидация
 
 
-@pytest.mark.parametrize("filename", ["45_admin.py"])
+@pytest.mark.parametrize("filename", ["45_Админ.py"])
 def test_streamlit_page_spec_loadable(filename: str) -> None:
     """``importlib.util.spec_from_file_location`` возвращает spec.
 
@@ -58,8 +58,8 @@ def test_streamlit_page_spec_loadable(filename: str) -> None:
 
 
 def test_admin_page_uses_api_client() -> None:
-    """45_admin.py обращается только через REST API (get_api_client)."""
-    src = _page_path("45_admin.py").read_text(encoding="utf-8")
+    """45_Админ.py обращается только через REST API (get_api_client)."""
+    src = _page_path("45_Админ.py").read_text(encoding="utf-8")
     assert "get_api_client" in src, "Страница admin должна использовать APIClient"
     # Запрет прямого импорта infrastructure из frontend (CLAUDE.md).
     assert "from src.backend.infrastructure" not in src

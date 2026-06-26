@@ -18,8 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 STREAMLIT_FILES = [
     "src/frontend/streamlit_app/app.py",
-    "src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py",
-    "src/frontend/streamlit_app/pages/86_DSL_Usage_Audit.py",
+    "src/frontend/streamlit_app/pages/31_DSL_Визуальный_редактор.py",
+    "src/frontend/streamlit_app/pages/86_Аудит_использования_DSL.py",
 ]
 
 

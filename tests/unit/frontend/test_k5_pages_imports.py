@@ -27,12 +27,10 @@ def _page_path(filename: str) -> Path:
 
 
 K5_PAGES = [
-    "54_DLQ_Replay.py",
-    "13_Resilience_Dashboard.py",
-    "15_Pool_Monitor.py",
-    "70_Tenants.py",
-    "71_Capabilities.py",
-    "30_Files_S3.py",
+    "54_Replay_DLQ.py",
+    "57_Файлы_S3.py",
+    "70_Тенанты.py",
+    "71_Матрица_возможностей.py",
 ]
 
 
@@ -78,7 +76,7 @@ def test_frontend_layer_isolation(filename: str) -> None:
 
 def test_dlq_replay_uses_outbox_protocol() -> None:
     """DLQ Replay использует core/messaging OutboxBackend (Protocol)."""
-    src = _page_path("54_DLQ_Replay.py").read_text(encoding="utf-8")
+    src = _page_path("54_Replay_DLQ.py").read_text(encoding="utf-8")
     assert "from src.backend.core.messaging" in src
     assert "FakeOutbox" in src
     assert "dlq_unified_enabled" in src
@@ -87,6 +85,6 @@ def test_dlq_replay_uses_outbox_protocol() -> None:
 
 def test_dlq_replay_has_bulk_and_manual_modes() -> None:
     """DLQ Replay предоставляет bulk + manual edit-and-replay."""
-    src = _page_path("54_DLQ_Replay.py").read_text(encoding="utf-8")
+    src = _page_path("54_Replay_DLQ.py").read_text(encoding="utf-8")
     assert "multiselect" in src
     assert "text_area" in src
