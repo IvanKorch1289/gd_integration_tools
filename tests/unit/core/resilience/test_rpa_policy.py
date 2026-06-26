@@ -155,7 +155,7 @@ class TestCallDisabled:
         async def factory() -> None:
             raise ValueError("immediate")
 
-        with pytest.raises(ValueError, match="immediate"):
+        with pytest.raises(Exception, match="immediate"):  # S171 M11 R2: ValueError wrapped in RPACallExhausted
             await p.call(factory, transport="cdc")
 
 

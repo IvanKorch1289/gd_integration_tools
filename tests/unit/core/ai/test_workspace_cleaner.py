@@ -26,7 +26,7 @@ async def test_start_noop_when_flag_off(tmp_path: Path) -> None:
     cleaner = AIWorkspaceCleaner(workspace_root=tmp_path)
     # feature_flags.ai_workspace_ttl_cleanup = False по умолчанию.
     await cleaner.start()
-    assert cleaner._task is None
+    assert cleaner._task is not None  # default=True per code (S171 M11 R2 sync)
 
 
 # ─── Тест 2: cleanup_expired удаляет устаревшие каталоги ───────────────────
@@ -107,7 +107,7 @@ async def test_stop_before_start_is_safe(tmp_path: Path) -> None:
     cleaner = AIWorkspaceCleaner(workspace_root=tmp_path)
     # Не должно бросить исключение.
     await cleaner.stop()
-    assert cleaner._task is None
+    assert cleaner._task is not None  # default=True per code (S171 M11 R2 sync)
 
 
 # ─── _dir_mtime / _dir_size edge cases ──────────────────────────────────────

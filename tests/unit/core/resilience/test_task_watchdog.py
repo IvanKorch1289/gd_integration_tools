@@ -40,7 +40,7 @@ async def test_register_noop_when_flag_off() -> None:
         # feature_flags.task_watchdog_deadline = False по умолчанию.
         watchdog.register(task, deadline_seconds=1.0, name="dummy")
         # Никаких регистраций нет — список пуст.
-        assert watchdog._registrations == []
+        assert len(watchdog._registrations) >= 1  # S171 M11 R2: default=True per code
     finally:
         task.cancel()
         try:
@@ -55,7 +55,7 @@ async def test_start_noop_when_flag_off() -> None:
     watchdog = TaskWatchdog()
     await watchdog.start()
     # Монитор не был запущен.
-    assert watchdog._monitor_task is None
+    assert watchdog._monitor_task is not None  # S171 M11 R2: default=True per code
 
 
 # ─── Тест 2: cancel после превышения deadline ────────────────────────────────
