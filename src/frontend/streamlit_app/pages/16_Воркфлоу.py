@@ -155,14 +155,13 @@ with tab_list:
                 f"— status={inst.get('status', '?')}"
             )
             with st.expander(header, expanded=False):
-                cols = st.columns([2, 2, 1, 1, 1])
-                cols[0].metric("Создан", _fmt_timestamp(inst.get("created_at")))
-                cols[1].metric(
-                    "Следующая попытка", _fmt_timestamp(inst.get("next_attempt_at"))
-                )
-                cols[2].metric("Попытки", inst.get("attempts", 0))
-                cols[3].metric("Тенант", inst.get("tenant_id", "default"))
-                cols[4].metric("Версия", inst.get("current_version", 0))
+                metric_row([
+                    ("Создан", _fmt_timestamp(inst.get("created_at"))),
+                    ("Следующая попытка", _fmt_timestamp(inst.get("next_attempt_at"))),
+                    ("Попытки", inst.get("attempts", 0)),
+                    ("Тенант", inst.get("tenant_id", "default")),
+                    ("Версия", inst.get("current_version", 0)),
+                ])
 
                 # Actions
                 action_cols = st.columns([1, 1, 1, 3])
