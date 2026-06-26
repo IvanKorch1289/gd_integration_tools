@@ -7,15 +7,11 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.pages._groups.schema.import_tab import (
-    render_import_tab,
-)
+from src.frontend.streamlit_app.pages._groups.schema.import_tab import render_import_tab
 from src.frontend.streamlit_app.pages._groups.schema.registry_tab import (
     render_registry_tab,
 )
-from src.frontend.streamlit_app.pages._groups.schema.viewer_tab import (
-    render_viewer_tab,
-)
+from src.frontend.streamlit_app.pages._groups.schema.viewer_tab import render_viewer_tab
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,

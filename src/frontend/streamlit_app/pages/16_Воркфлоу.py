@@ -22,7 +22,10 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 client = get_api_client()

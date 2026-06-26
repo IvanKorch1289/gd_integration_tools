@@ -7,10 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.pages._editor.yaml_sync import (
-    push_history,
-    try_load,
-)
+from src.frontend.streamlit_app.pages._editor.yaml_sync import push_history, try_load
 
 
 def render_yaml_tab(client) -> None:

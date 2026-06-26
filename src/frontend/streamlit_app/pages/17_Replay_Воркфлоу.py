@@ -33,8 +33,8 @@ from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     dataframe_view,
     date_range_filter,
     multiselect_filter,
-    setup_page,
     related_pages_footer,
+    setup_page,
 )
 
 setup_page()

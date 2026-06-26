@@ -32,8 +32,8 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import (
     dataframe_view,  # noqa: E402
-    setup_page,  # noqa: E402
     related_pages_footer,
+    setup_page,  # noqa: E402
 )
 
 setup_page()

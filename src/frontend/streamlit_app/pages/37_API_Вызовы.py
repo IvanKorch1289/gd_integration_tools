@@ -13,7 +13,10 @@ import time
 import httpx
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import related_pages_footer, setup_page
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 st.header(":satellite_antenna: Вызов REST API")

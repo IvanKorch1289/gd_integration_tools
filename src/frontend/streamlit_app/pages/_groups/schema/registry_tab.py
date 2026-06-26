@@ -18,10 +18,10 @@ def _render_schema_tab(
     st.subheader(label)
 
     from src.frontend.streamlit_app.services.schema_registry_client import (
+        diff_schemas,
         list_schemas,
         read_schema,
         validate_openapi,
-        diff_schemas,
     )
 
     available = list_schemas(kind)

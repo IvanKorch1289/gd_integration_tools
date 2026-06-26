@@ -25,7 +25,9 @@ from typing import Any
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    setup_page,  # noqa: E402, related_pages_footer
+)
 
 setup_page()
 st.header("Монитор пулов")

@@ -16,7 +16,10 @@ import httpx
 import streamlit as st
 
 from src.backend.core.logging import get_logger
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 logger = get_logger(__name__)
 

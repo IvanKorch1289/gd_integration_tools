@@ -7,14 +7,17 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import Any
 
 import httpx
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
-
-import os
+from src.frontend.streamlit_app.shared.components import (
+    dataframe_view,
+    related_pages_footer,
+    setup_page,
+)
 
 
 def _get_api_base() -> str:

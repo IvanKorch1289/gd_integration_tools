@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.pages._groups.replay.render import (
-    render_dlq_replay,
-)
+from src.frontend.streamlit_app.pages._groups.replay.render import render_dlq_replay
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,

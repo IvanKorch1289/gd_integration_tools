@@ -9,9 +9,7 @@ import json as _json
 
 import streamlit as st
 
-from src.frontend.streamlit_app.pages._editor.canvas import (
-    render_drag_drop_pipeline,
-)
+from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pipeline
 from src.frontend.streamlit_app.pages._editor.constants import VISUAL_PROCESSORS
 from src.frontend.streamlit_app.pages._editor.history import push_history
 from src.frontend.streamlit_app.pages._editor.yaml_sync import (

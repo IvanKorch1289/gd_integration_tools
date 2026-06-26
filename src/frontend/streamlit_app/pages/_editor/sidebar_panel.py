@@ -13,11 +13,7 @@ from src.frontend.streamlit_app.pages._editor.history import (
     redo,
     undo,
 )
-from src.frontend.streamlit_app.pages._editor.yaml_sync import (
-    build_yaml_from_steps,
-    push_history,
-    try_load,
-)
+from src.frontend.streamlit_app.pages._editor.yaml_sync import try_load
 
 
 def render_editor_sidebar(client) -> None:
@@ -86,7 +82,9 @@ def render_editor_sidebar(client) -> None:
         ):
             if client.delete_dsl_route(st.session_state.last_load_route):
                 st.success(f"Удалён {st.session_state.last_load_route!r}")
-                from src.frontend.streamlit_app.pages._editor.yaml_sync import default_yaml
+                from src.frontend.streamlit_app.pages._editor.yaml_sync import (
+                    default_yaml,
+                )
                 st.session_state.yaml = default_yaml()
                 st.session_state.last_load_route = None
                 st.rerun()

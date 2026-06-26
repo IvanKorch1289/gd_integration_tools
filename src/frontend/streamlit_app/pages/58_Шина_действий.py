@@ -20,7 +20,10 @@ import json
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 st.header("Шина действий")

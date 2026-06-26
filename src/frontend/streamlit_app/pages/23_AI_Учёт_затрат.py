@@ -16,16 +16,19 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
 except Exception:  # noqa: BLE001
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        import httpx
-
         import os
+
+        import httpx
         base_url = os.environ.get("API_BASE_URL", "http://localhost:8000")
         with httpx.Client(timeout=10) as client:
             resp = client.get(f"{base_url}/api/v1{path}", params=params)

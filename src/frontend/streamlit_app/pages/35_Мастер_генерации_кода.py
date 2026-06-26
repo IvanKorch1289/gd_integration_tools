@@ -20,7 +20,10 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 ROOT = Path(__file__).resolve().parents[4]

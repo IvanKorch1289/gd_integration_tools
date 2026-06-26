@@ -13,13 +13,8 @@ from src.frontend.streamlit_app.pages._editor.constants import (
     PROCESSOR_ICONS,
     VISUAL_PROCESSORS,
 )
-from src.frontend.streamlit_app.pages._editor.properties import (
-    render_properties_panel,
-)
-from src.frontend.streamlit_app.pages._editor.yaml_sync import (
-    sync_yaml,
-    yaml_to_steps,
-)
+from src.frontend.streamlit_app.pages._editor.properties import render_properties_panel
+from src.frontend.streamlit_app.pages._editor.yaml_sync import sync_yaml, yaml_to_steps
 
 
 def render_canvas_tab(client) -> None:

@@ -8,7 +8,11 @@ import streamlit as st
 import yaml as _yaml
 
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    dataframe_view,
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 st.header("Пробный прогон DSL")

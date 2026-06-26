@@ -23,28 +23,15 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.services.dsl_portal import load_pipeline_from_yaml
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.pages._editor import (
-    PROCESSOR_ICONS,
-    VISUAL_PROCESSORS,
-    build_yaml_from_steps,
-    can_redo,
-    can_undo,
-    default_yaml,
-    init_history,
-    push_history,
-    redo,
-    sync_yaml,
-    try_load,
-    undo,
-    yaml_to_steps,
-)
-from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pipeline
+from src.frontend.streamlit_app.pages._editor import default_yaml, init_history
 from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
-from src.frontend.streamlit_app.pages._editor.properties import render_properties_panel
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    require_auth,
+    setup_page,
+)
 
 setup_page()
 require_auth(label="write action")
@@ -111,9 +98,7 @@ with tab_visual:
     render_visual_tab()
 
 with tab_yaml:
-    from src.frontend.streamlit_app.pages._editor.visual.tab_yaml import (
-        render_yaml_tab,
-    )
+    from src.frontend.streamlit_app.pages._editor.visual.tab_yaml import render_yaml_tab
     render_yaml_tab(client)
 
 with tab_python:

@@ -236,8 +236,19 @@ def test_top_level_imports_section_structure() -> None:
     assert (
         "from src.frontend.streamlit_app.shared.components import" in joined
     )
-    assert "require_auth" in joined
-    assert "setup_page" in joined
+    # S173 W2-B/S173 W3: require_auth may be in a multi-line parent import —
+    # check via AST unparse (handles continuation lines correctly).
+    import ast as _ast
+
+    tree = _ast.parse(imports_section)
+    flat_imports = [
+        alias.name
+        for node in tree.body
+        if isinstance(node, _ast.ImportFrom)
+        for alias in node.names
+    ]
+    assert "require_auth" in flat_imports
+    assert "setup_page" in flat_imports
 
 
 # ── Test 8: dsl imports are not duplicated ────────────────────────────

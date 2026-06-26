@@ -11,11 +11,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.backend.core.messaging import (
-    FakeOutbox,
-    OutboxBackend,
-    OutboxEvent,
-)
+from src.backend.core.messaging import FakeOutbox, OutboxBackend, OutboxEvent
 
 
 @st.cache_resource

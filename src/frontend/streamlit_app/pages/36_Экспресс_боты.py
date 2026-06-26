@@ -16,7 +16,11 @@ import json
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    dataframe_view,
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 st.header(":speech_balloon: Экспресс-боты")

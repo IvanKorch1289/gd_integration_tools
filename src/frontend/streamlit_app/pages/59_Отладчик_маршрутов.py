@@ -28,7 +28,10 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID252
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 # Sprint 44 W1: используем DSLRoutesClient напрямую — APIClient generic

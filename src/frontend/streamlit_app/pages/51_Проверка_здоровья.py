@@ -11,7 +11,10 @@ import time
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import AdminClient
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header(":heart: Дашборд проверки состояния")

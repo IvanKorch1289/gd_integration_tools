@@ -23,7 +23,11 @@ import httpx
 import streamlit as st
 import websockets
 
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    require_auth,
+    setup_page,
+)
 
 __all__: tuple[str, ...] = ()
 

@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.pages._editor.yaml_sync import (
-    try_load,
-)
+from src.frontend.streamlit_app.pages._editor.yaml_sync import try_load
 
 
 def render_python_tab() -> None:
