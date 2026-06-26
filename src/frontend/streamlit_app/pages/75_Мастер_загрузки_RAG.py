@@ -47,7 +47,12 @@ elif step == 2:
 
 elif step == 3:
     st.subheader("3. Выбор embedding-провайдера")
-    providers = client.list_embedding_providers() or [
+    try:
+        _providers = client.list_embedding_providers()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка API: {exc}")
+        _providers = None
+    providers = _providers or [
         "sentence-transformers",
         "bge-m3",
         "openai",
@@ -63,7 +68,11 @@ elif step == 4:
     files = st.session_state.get("ingest_files", [])
     collection = st.session_state.get("ingest_collection", "default")
     if st.button("Старт", type="primary"):
-        result = client.rag_ingest_start(files=files, collection=collection)
+        try:
+            result = client.rag_ingest_start(files=files, collection=collection)
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Ошибка API: {exc}")
+            result = {}
         st.session_state["ingest_task_id"] = result.get("task_id")
         st.session_state["ingest_result"] = result
         if result.get("task_id"):
@@ -76,9 +85,13 @@ elif step == 5:
     st.subheader("5. Проверка")
     task_id = st.session_state.get("ingest_task_id")
     if task_id:
-        status = client.rag_ingest_status(task_id) or st.session_state.get(
-            "ingest_result", {}
-        )
+        try:
+            status = client.rag_ingest_status(task_id) or st.session_state.get(
+                "ingest_result", {}
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Ошибка API: {exc}")
+            status = {}
         st.json(status)
     else:
         st.warning("task_id отсутствует.")
