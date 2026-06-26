@@ -23,11 +23,32 @@ _logger = get_logger("dsl.security.waf_check")
 # Простые regex-паттерны для базовой WAF защиты (path traversal, SQLi, XSS).
 # В проде — заменить на OWASP CRS или библиотеку (например, `waftester`).
 _DEFAULT_PATTERNS = (
+    # Path traversal + LFI
     (r"\.\./", "path_traversal"),
-    (r"<script", "xss"),
+    (r"(?i)/etc/passwd", "lfi_etc_passwd"),
+    (r"(?i)/proc/self", "lfi_proc"),
+    (r"(?i)\\windows\\system32", "lfi_windows"),
+    # XSS (extended per OWASP CRS 941)
+    (r"<script", "xss_script_tag"),
+    (r"(?i)on(error|load|click|mouseover)\s*=", "xss_event_handler"),
+    (r"(?i)javascript:", "xss_javascript_uri"),
+    (r"(?i)<iframe", "xss_iframe"),
+    # SQL injection (extended per OWASP CRS 942)
     (r"(?i)\bunion\s+select\b", "sqli_union"),
     (r"(?i)\bor\s+1=1\b", "sqli_or"),
-    (r"(?i)/etc/passwd", "lfi_etc_passwd"),
+    (r"(?i)\bdrop\s+table\b", "sqli_drop"),
+    (r"(?i)\bexec\s*\(", "sqli_exec"),
+    # Command injection (OWASP CRS 932)
+    (r";\s*\b(cat|ls|rm|wget|curl)\b", "cmdi"),
+    (r"\$\(", "cmdi_subst"),
+    (r"\|\s*\b(sh|bash|cmd)\b", "cmdi_pipe"),
+    # XML/XXE (OWASP CRS 23)
+    (r"(?i)<!ENTITY", "xxe_entity"),
+    (r"(?i)SYSTEM\s+['\"]file:", "xxe_system_file"),
+    # LDAP injection
+    (r"[\(\)\\*\\]", "ldap_inject"),
+    # NoSQL injection
+    (r"\$ne\b|\$gt\b|\$regex\b", "nosqli_operator"),
 )
 
 
