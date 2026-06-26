@@ -54,7 +54,7 @@ except Exception as exc:  # noqa: BLE001
 if config:
     masked = mask_secrets(config)
     st.caption("Секреты скрыты. Фильтр по ключам:")
-    filter_q = st.text_input("Поиск", value="")
+    filter_q = st.text_input("Поиск", value="", help="Фильтр по ключу конфига (например: database.host)")
 
     def _match(d: dict, q: str) -> dict:
         ql = q.lower()
