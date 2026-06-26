@@ -14,7 +14,14 @@ import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
-API_BASE = st.session_state.get("api_base", "http://localhost:8000/api/v1")
+import os
+
+
+def _get_api_base() -> str:
+    """Resolve API base URL (env var → session_state → localhost default)."""
+    return st.session_state.get(
+        "api_base", os.environ.get("API_BASE_URL", "http://localhost:8000") + "/api/v1"
+    )
 
 
 def _run(coro: Any) -> Any:
@@ -22,7 +29,7 @@ def _run(coro: Any) -> Any:
 
 
 async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any]:
-    url = f"{API_BASE}/search{path}"
+    url = f"{_get_api_base()}/search{path}"
     clean = {k: v for k, v in params.items() if v not in (None, "")}
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
