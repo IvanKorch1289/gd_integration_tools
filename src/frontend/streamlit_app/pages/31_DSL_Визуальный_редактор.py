@@ -26,6 +26,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.pages._editor import default_yaml, init_history
 from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
+from src.frontend.streamlit_app.pages._editor.sidebar_panel import render_editor_sidebar
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
