@@ -57,3 +57,9 @@ __all__ = (
 def create_cert_store() -> CertStore:
     """Фабрика по умолчанию — собирает store из глобальных настроек."""
     return CertStore.from_settings(cert_store_settings)
+
+
+# S171 M16: file watcher для cert hot-reload (D245)
+from src.backend.infrastructure.security.cert_store.hot_reload import (
+    CertFileWatcher,
+)

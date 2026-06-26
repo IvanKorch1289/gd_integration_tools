@@ -63,6 +63,23 @@ class CertStoreSettings(BaseSettingsWithLoader):
         ),
         examples=[30, 14],
     )
+    watch_enabled: bool = Field(
+        default=False,
+        description=(
+            "Включить file-watcher для cert директории (S171 M16, D245). "
+            "При изменении/добавлении/удалении .pem/.crt файла CertStore "
+            "автоматически обновляется + уведомляет подписчиков."
+        ),
+        examples=[True, False],
+    )
+    watch_path: str = Field(
+        default="/etc/certs",
+        description=(
+            "Путь к директории с .pem/.crt файлами для hot-reload. "
+            "Используется только при watch_enabled=True."
+        ),
+        examples=["/etc/certs", "./certs"],
+    )
 
 
 cert_store_settings = CertStoreSettings()

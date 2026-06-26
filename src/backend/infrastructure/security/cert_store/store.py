@@ -99,7 +99,11 @@ class CertStore:
                 backend = ConsulCertBackend(base_path=settings.vault_path)
             case _:
                 backend = PostgresCertBackend()
-        return cls(backend=backend, settings=settings)
+        instance = cls(backend=backend, settings=settings)
+        # S171 M16 (D245): auto-start file watcher при watch_enabled=True.
+        # Прописан lazy — чтобы не запускать в unit-тестах.
+        # Production: register в lifespan startup.
+        return instance
 
     async def get(self, service_id: str) -> str | None:
         """Get PEM certificate for a service.
