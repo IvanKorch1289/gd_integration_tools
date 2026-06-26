@@ -132,10 +132,10 @@ def route_template(route_id: str, source: str) -> str:
 
 
 def cmd_processor(args: argparse.Namespace) -> None:
-    """Создаёт файл процессора в ``src/dsl/engine/processors/<module>.py``."""
+    """Создаёт файл процессора в ``src/backend/dsl/engine/processors/<module>.py``."""
     module = args.module or "custom"
     class_name = args.name
-    path = SRC / "dsl" / "engine" / "processors" / f"{module}.py"
+    path = SRC / "backend" / "dsl" / "engine" / "processors" / f"{module}.py"
     code = processor_template(class_name)
     _emit(path, code, args.dry_run)
 
@@ -145,16 +145,16 @@ def cmd_service(args: argparse.Namespace) -> None:
     group = args.group or "core"
     class_name = args.name
     filename = class_name.lower() + ".py"
-    path = SRC / "services" / group / filename
+    path = SRC / "backend" / "services" / group / filename
     code = service_template(class_name)
     _emit(path, code, args.dry_run)
 
 
 def cmd_route(args: argparse.Namespace) -> None:
-    """Создаёт файл маршрута в ``src/dsl/routes/<name>.py``."""
+    """Создаёт файл маршрута в ``src/backend/dsl/routes/<name>.py``."""
     # Используем route_id в имени файла: "invoices.sync" → "invoices_sync.py"
     safe_name = args.name.replace(".", "_")
-    path = SRC / "dsl" / "routes" / f"{safe_name}.py"
+    path = SRC / "backend" / "dsl" / "routes" / f"{safe_name}.py"
     code = route_template(args.name, args.source or "internal:manual")
     _emit(path, code, args.dry_run)
 
