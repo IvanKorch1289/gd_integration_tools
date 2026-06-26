@@ -126,7 +126,7 @@ class TestOutboxSettingsDefaults:
 
     def test_defaults(self) -> None:
         s = OutboxSettings()
-        assert s.enabled is False  # default-OFF feature flag
+        assert s.enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert s.poll_interval_seconds == 1.0
         assert s.batch_size == 100
         assert s.max_retries == 5
@@ -149,7 +149,7 @@ class TestOutboxSettingsDefaults:
         and have the documented defaults (so a missing YAML section is a
         no-op, not a crash)."""
         assert isinstance(outbox_settings, OutboxSettings)
-        assert outbox_settings.enabled is False  # default-OFF feature flag
+        assert outbox_settings.enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert outbox_settings.batch_size == 100
 
     def test_all_fields_have_descriptions(self) -> None:

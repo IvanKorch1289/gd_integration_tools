@@ -12,7 +12,7 @@ class TestWafSettings:
         s = WafSettings()
         assert s.strict is False  # default-OFF feature flag
         assert s.max_payload_bytes == 10 * 1024 * 1024
-        assert s.clamav_enabled is False  # default-OFF feature flag
+        assert s.clamav_enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert s.clamav_fail_open is True
 
     def test_custom(self) -> None:
