@@ -43,6 +43,35 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Recent improvements (Sprint 171, M9-M10)
+
+### Workflow (Temporal best practices)
+- **Worker Versioning** (D172) — `Worker(build_id=...)` + `WorkerDeploymentOptions` для безопасного rollout workflow-кода
+- **Continue-AsNew** (D169) — `WorkflowContinueAsNewProcessor` + runtime handler для предотвращения роста Event History
+- **Claim Check** (D170) — `WorkflowClaimCheckProcessor` для payload >1MB (s3/redis/local backends)
+
+### Workflow (compensation + extensibility)
+- **CompensateWorkflow** (D173) — Saga-pattern compensation через `COMPENSATE_SIGNAL = "_compensation_request"`
+- **WorkflowSubprocess** + **WorkflowConvert** (M8) — sub-workflow invoke + format conversion
+
+### Security
+- **EnvelopeEncryptionService** (D174) — at-rest encryption с per-tenant DEK + Vault transit KEK
+- **WafCheckProcessor** (D171) — DSL обёртка над core/net/waf (19 OWASP CRS patterns)
+
+### Observability
+- **Grafana dashboards** (D172, D173) — Circuit Breaker (7 panels) + Rate Limit (6 panels) detail
+- **OTEL + Sentry + Prometheus** — full observability stack
+
+### DSL
+- **Schema-registry R1** (D175) — in-memory JSON-Schema catalog для LSP/AsyncAPI export
+- **Middleware facades** (D160/D187) — `core.facades.py` — 16 primitives (9 eager + 7 lazy)
+- **FilteredDirectoryScanProcessor** — OWASP-safe file operations (max_results + timeout)
+
+### Infra
+- 33 feature flags → default=False (проект не в проде)
+- 18 новых repository pattern tests для 4 core_entities
+- 14 → 0 pre-existing test failures в core/config/ (test/code consistency)
+
 ## Протоколы
 
 | Протокол | Endpoint | Описание |
