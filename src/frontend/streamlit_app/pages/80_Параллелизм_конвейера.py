@@ -36,7 +36,7 @@ with tab_route:
     selected = (
         st.selectbox("Выбрать маршрут", options=names)
         if names
-        else st.text_input("Имя маршрута")
+        else st.text_input("Имя маршрута", help="route_id для анализа DAG и parallelism")
     )
 
     if selected and st.button("Запустить анализ", type="primary"):

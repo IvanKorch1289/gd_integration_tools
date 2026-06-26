@@ -38,7 +38,7 @@ if mode == "Пошаговый Debugger":
     route_id = (
         st.selectbox("ID маршрута", available_routes)
         if available_routes
-        else st.text_input("ID маршрута")
+        else st.text_input("ID маршрута", help="route_id существующего маршрута (например: orders.create)")
     )
     body_str = st.text_area("Тело запроса (JSON)", value="{}", height=120)
 
