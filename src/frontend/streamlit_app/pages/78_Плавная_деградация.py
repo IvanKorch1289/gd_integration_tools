@@ -12,7 +12,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("🛡️ Плавная деградация")
@@ -113,3 +113,5 @@ with tab_history:
                     st.divider()
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось получить историю переходов режима: {exc}")
+
+related_pages_footer("78_Плавная_деградация")

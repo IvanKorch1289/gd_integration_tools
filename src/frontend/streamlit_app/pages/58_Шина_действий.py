@@ -20,7 +20,7 @@ import json
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("Шина действий")
@@ -167,3 +167,5 @@ with col_invoke:
                 )
             else:
                 st.info(f"Спецификация для `{_selected_action}` не найдена (404).")
+
+related_pages_footer("58_Шина_действий")

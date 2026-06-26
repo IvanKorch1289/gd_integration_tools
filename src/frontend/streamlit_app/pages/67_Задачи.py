@@ -3,7 +3,7 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("Фоновые задачи")
@@ -100,3 +100,5 @@ with tab3:
 
 if st.button("Обновить"):
     st.rerun()
+
+related_pages_footer("67_Задачи")

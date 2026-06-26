@@ -16,7 +16,7 @@ import httpx
 import streamlit as st
 
 from src.backend.core.logging import get_logger
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 logger = get_logger(__name__)
 
@@ -123,3 +123,5 @@ if not pause:
 
     time.sleep(2)
     st.rerun()
+
+related_pages_footer("43_Логи_в_реальном_времени")

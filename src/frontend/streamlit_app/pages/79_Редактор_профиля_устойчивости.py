@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (TD-008)
 
 setup_page()
@@ -140,3 +140,5 @@ with tab_compare:
                     st.info("Tenant override отсутствует.")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Сравнение не удалось: {exc}")
+
+related_pages_footer("79_Редактор_профиля_устойчивости")

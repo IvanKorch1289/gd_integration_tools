@@ -12,7 +12,7 @@ from typing import Any
 import httpx
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
 API_BASE = st.session_state.get("api_base", "http://localhost:8000/api/v1")
 
@@ -108,3 +108,5 @@ with tab_agg:
             _get("/aggregations", index=index, field=field, q=q or None, size=int(size))
         )
         st.json(result)
+
+related_pages_footer("41_Поиск")

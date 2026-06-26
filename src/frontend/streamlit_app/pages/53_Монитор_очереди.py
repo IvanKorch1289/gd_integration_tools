@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header(":inbox_tray: Монитор очередей")
@@ -46,3 +46,5 @@ if auto_refresh:
 
     time.sleep(10)
     st.rerun()
+
+related_pages_footer("53_Монитор_очереди")

@@ -21,7 +21,7 @@ import streamlit as st
 
 from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="write action")
@@ -158,3 +158,5 @@ if mode == "Блюпринты маршрутов":
     _render_route_blueprints()
 else:
     _render_workflow_templates()
+
+related_pages_footer("33_DSL_Шаблоны")

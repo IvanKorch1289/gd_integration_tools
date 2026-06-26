@@ -12,7 +12,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("🔀 Анализ параллелизма конвейера")
@@ -89,3 +89,5 @@ with tab_topn:
                 st.markdown(f"- **{rid}** — `{speedup:.2f}x` speedup")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Top-N не удался: {exc}")
+
+related_pages_footer("80_Параллелизм_конвейера")

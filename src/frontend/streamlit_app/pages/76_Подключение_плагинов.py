@@ -18,7 +18,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 from src.frontend.streamlit_app.shared.filters import multiselect_filter  # S45 W2
 
 setup_page()
@@ -170,3 +170,5 @@ elif step == 4:
             st.success(f"Плагин создан: `{result.get('path')}`")
         else:
             st.error(f"Не удалось создать: {result}")
+
+related_pages_footer("76_Подключение_плагинов")

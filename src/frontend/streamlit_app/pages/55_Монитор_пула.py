@@ -25,7 +25,7 @@ from typing import Any
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
+from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402, related_pages_footer
 
 setup_page()
 st.header("Монитор пулов")
@@ -254,3 +254,5 @@ with st.expander("О странице"):
         "Trend-линии (60 точек, 1 точка / 5 сек) хранятся в `st.session_state` "
         "и сбрасываются между сессиями браузера."
     )
+
+related_pages_footer("55_Монитор_пула")

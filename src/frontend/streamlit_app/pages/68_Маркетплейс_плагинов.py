@@ -18,7 +18,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("Маркетплейс плагинов (V11)")
@@ -173,3 +173,5 @@ with col_lists:
                         st.markdown(f"- `{item}`")
     else:
         st.markdown("**Предоставляет**: —")
+
+related_pages_footer("68_Маркетплейс_плагинов")

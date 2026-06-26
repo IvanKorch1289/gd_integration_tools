@@ -16,7 +16,7 @@ import json
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import K4APIClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("📤 RAG — массовая загрузка в RAG")
@@ -199,3 +199,5 @@ if st.button("Обновить статус", key="refresh_status"):
             st.info("Нет последних задач ingest.")
     except Exception as exc:  # noqa: BLE001
         st.warning(f"Could not fetch recent tasks: {exc}")
+
+related_pages_footer("85_Массовая_загрузка_RAG")

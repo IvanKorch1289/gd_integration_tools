@@ -16,7 +16,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("Матрица возможностей")
@@ -115,3 +115,5 @@ with tabs[3]:
         st.dataframe(vocab, width='stretch', hide_index=True)
     else:
         st.write("_(словарь недоступен)_")
+
+related_pages_footer("71_Матрица_возможностей")

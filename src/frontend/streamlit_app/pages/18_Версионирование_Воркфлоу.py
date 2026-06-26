@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="write action")
@@ -124,3 +124,5 @@ else:
                 )
     except Exception as exc:  # noqa: BLE001
         st.warning(f"Счётчик запущенных недоступен: {exc}")
+
+related_pages_footer("18_Версионирование_Воркфлоу")

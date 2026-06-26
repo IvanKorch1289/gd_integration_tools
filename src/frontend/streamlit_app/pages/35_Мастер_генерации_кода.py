@@ -20,7 +20,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 ROOT = Path(__file__).resolve().parents[4]
@@ -119,3 +119,5 @@ with tab_extract:
             st.code(out, language="yaml")
             if err:
                 st.code(err)
+
+related_pages_footer("35_Мастер_генерации_кода")

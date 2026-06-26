@@ -19,7 +19,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 
@@ -152,3 +152,5 @@ st.divider()
 _render_descriptions()
 st.divider()
 _render_s63_audit()
+
+related_pages_footer("95_Покрытие_EIP")

@@ -21,7 +21,7 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="admin")
@@ -152,3 +152,5 @@ with st.form("снять_override", clear_on_submit=False):
                 st.rerun()
             else:
                 st.warning("Override не найден (404) или backend недоступен.")
+
+related_pages_footer("88_Тенантные_фича_флаги")

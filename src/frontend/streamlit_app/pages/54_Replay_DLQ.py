@@ -28,7 +28,7 @@ from typing import Any
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402
+from src.frontend.streamlit_app.shared.components import setup_page  # noqa: E402, related_pages_footer
 
 setup_page()
 st.header("Воспроизведение DLQ")
@@ -343,3 +343,5 @@ with st.expander("Информация о backend", expanded=False):
         "Когда S5 К2 закоммитит OutboxDispatcher, DI-контейнер автоматически "
         "заменит Fake на production-backend (Postgres-table dlq_events)."
     )
+
+related_pages_footer("54_Replay_DLQ")

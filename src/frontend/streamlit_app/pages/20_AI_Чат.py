@@ -3,7 +3,7 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header("AI Ассистент")
@@ -55,3 +55,5 @@ with col1:
         st.rerun()
 with col2:
     st.caption(f"Session: {st.session_state.session_id}")
+
+related_pages_footer("20_AI_Чат")

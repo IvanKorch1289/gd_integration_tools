@@ -16,7 +16,7 @@ import json
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
 setup_page()
 st.header(":speech_balloon: Экспресс-боты")
@@ -148,3 +148,5 @@ with tab_metrics:
     st.info(
         "Открыть в Prometheus / Grafana: см. дашборд ``Integration Bots`` (Wave 5.2)."
     )
+
+related_pages_footer("36_Экспресс_боты")

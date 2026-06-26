@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("📁 Файлы S3 — Объектный браузер")
@@ -229,3 +229,5 @@ with tab_api:
                         )
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Скачивание не удалось: {exc}")
+
+related_pages_footer("57_Файлы_S3")

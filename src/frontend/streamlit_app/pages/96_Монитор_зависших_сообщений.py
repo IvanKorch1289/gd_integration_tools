@@ -26,7 +26,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 
@@ -265,3 +265,5 @@ st.caption(
     "Chain: count_stuck_pending() → Prometheus gauge (per-transport) → "
     "Grafana alerts (3 rules) → this page."
 )
+
+related_pages_footer("96_Монитор_зависших_сообщений")

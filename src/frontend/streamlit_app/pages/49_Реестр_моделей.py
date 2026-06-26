@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 try:
     from src.frontend.streamlit_app.api_clients import APIClient
@@ -85,3 +85,5 @@ def main() -> None:
 
 
 main()
+
+related_pages_footer("49_Реестр_моделей")

@@ -16,7 +16,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.backend.services.dsl_portal import get_dsl_builder_service  # noqa: E402
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("DSL Builder — запись в YAML")
@@ -109,3 +109,5 @@ def _render() -> None:
 
 
 _render()
+
+related_pages_footer("32_DSL_Конструктор")

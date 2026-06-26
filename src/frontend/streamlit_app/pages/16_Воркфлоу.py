@@ -22,7 +22,7 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 client = get_api_client()
@@ -297,3 +297,5 @@ with tab_trigger:
         "`workflow_list` или через admin-UI `/api/v1/admin/workflows` фильтрацией "
         "по `workflow_name`."
     )
+
+related_pages_footer("16_Воркфлоу")

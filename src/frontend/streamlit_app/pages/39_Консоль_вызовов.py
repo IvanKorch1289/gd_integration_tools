@@ -23,7 +23,7 @@ import httpx
 import streamlit as st
 import websockets
 
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 __all__: tuple[str, ...] = ()
 
@@ -254,3 +254,5 @@ st.caption(
     f"Чтение завершается по тайм-ауту простоя {WS_IDLE_TIMEOUT_SECONDS}s или "
     "при штатном закрытии соединения сервером."
 )
+
+related_pages_footer("39_Консоль_вызовов")

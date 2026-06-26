@@ -3,7 +3,7 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("DSL Песочница")
@@ -125,3 +125,5 @@ if run_btn or lint_btn or validate_btn:
             st.code(str(result))
     except Exception as exc:
         st.error(f"Ошибка: {exc}")
+
+related_pages_footer("30_DSL_Площадка")

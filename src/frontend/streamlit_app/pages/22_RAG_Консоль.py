@@ -13,7 +13,7 @@ import json
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients.rag import RAGClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 
@@ -84,3 +84,5 @@ if st.button("Дополнить") and augment_query:
     }.get(worst, worst)
     st.markdown(f"Свежесть: {badge}")
     st.json(result)
+
+related_pages_footer("22_RAG_Консоль")

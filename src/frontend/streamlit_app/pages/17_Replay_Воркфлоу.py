@@ -34,6 +34,7 @@ from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     date_range_filter,
     multiselect_filter,
     setup_page,
+    related_pages_footer,
 )
 
 setup_page()
@@ -196,3 +197,5 @@ if _wf_id_compens:
                 st.json(rec.payload)
                 if rec.duration_ms is not None:
                     st.caption(f"duration_ms = {rec.duration_ms}")
+
+related_pages_footer("17_Replay_Воркфлоу")

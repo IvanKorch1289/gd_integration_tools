@@ -10,7 +10,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 require_auth(label="admin")
@@ -42,3 +42,5 @@ if st.button("Выполнить", type="primary"):
                 st.error(result["error"])
     except Exception as exc:  # noqa: BLE001
         st.error(str(exc))
+
+related_pages_footer("64_SQL_Админ")

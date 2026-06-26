@@ -12,7 +12,7 @@ import json
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("🐛 Отладчик DSL и воспроизведение")
@@ -118,3 +118,5 @@ else:  # Route Trace
             st.info("Нет недавних событий")
     except Exception as exc:
         st.warning(f"Tracer недоступен: {exc}")
+
+related_pages_footer("34_DSL_Отладчик")

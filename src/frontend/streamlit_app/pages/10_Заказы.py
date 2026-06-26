@@ -3,7 +3,7 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 require_auth(label="write action")
@@ -64,3 +64,5 @@ with st.expander("Удалить заказ"):
             st.rerun()
         except Exception as exc:
             st.error(f"Ошибка: {exc}")
+
+related_pages_footer("10_Заказы")

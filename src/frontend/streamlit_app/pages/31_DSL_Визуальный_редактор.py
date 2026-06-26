@@ -44,7 +44,7 @@ from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pip
 from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
 from src.frontend.streamlit_app.pages._editor.properties import render_properties_panel
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="write action")
@@ -610,3 +610,5 @@ with tab_canvas:
 
     with col_props:
         render_properties_panel(client)
+
+related_pages_footer("31_DSL_Визуальный_редактор")

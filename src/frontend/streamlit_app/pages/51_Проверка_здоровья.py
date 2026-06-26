@@ -11,7 +11,7 @@ import time
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import AdminClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header(":heart: Дашборд проверки состояния")
@@ -54,3 +54,5 @@ for idx, (name, info) in enumerate(sorted(components.items())):
 if auto:
     time.sleep(5)
     st.rerun()
+
+related_pages_footer("51_Проверка_здоровья")

@@ -16,7 +16,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
@@ -176,3 +176,5 @@ with tab_alerts:
                     st.success(f"Подтверждено {alert.get('key')} (audit-event записан)")
     else:
         st.info("Активных аномалий не обнаружено.")
+
+related_pages_footer("23_AI_Учёт_затрат")

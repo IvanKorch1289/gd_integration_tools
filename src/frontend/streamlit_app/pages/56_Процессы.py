@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded"
 )
@@ -48,3 +48,5 @@ try:
     cols[3].metric("p95, мс", stats.get("p95_ms", 0))
 except Exception:
     st.caption("Статистика недоступна.")
+
+related_pages_footer("56_Процессы")

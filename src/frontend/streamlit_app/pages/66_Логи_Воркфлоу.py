@@ -16,7 +16,7 @@ import streamlit as st
 
 from src.backend.core.config.features import feature_flags  # noqa: E402
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 if not feature_flags.frontend_workflow_logs_page:
@@ -225,3 +225,5 @@ with tab_live:
             st.info(
                 "Auto refresh отключён. Нажмите «Обновить tail» для разовой загрузки."
             )
+
+related_pages_footer("66_Логи_Воркфлоу")

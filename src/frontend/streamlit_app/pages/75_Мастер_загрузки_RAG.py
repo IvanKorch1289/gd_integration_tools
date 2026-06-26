@@ -8,7 +8,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import K4APIClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.title("📥 Мастер ингеста RAG")
@@ -93,3 +93,5 @@ elif step == 5:
         ):
             st.session_state.pop(key, None)
         st.rerun()
+
+related_pages_footer("75_Мастер_загрузки_RAG")

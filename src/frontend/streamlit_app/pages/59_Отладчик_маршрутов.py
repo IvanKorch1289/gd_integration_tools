@@ -28,7 +28,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID252
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 # Sprint 44 W1: используем DSLRoutesClient напрямую — APIClient generic
@@ -174,3 +174,5 @@ st.caption(
     "S42 W4 базовая версия + S44 W1 backend-обвязка. "
     "Persistent trace storage = TD-026 (S45+ D)."
 )
+
+related_pages_footer("59_Отладчик_маршрутов")

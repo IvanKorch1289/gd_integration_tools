@@ -12,7 +12,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="write action")
@@ -97,3 +97,5 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
                         st.write(f"**{model}**: ${cost}")
     except Exception as exc:  # noqa: BLE001
         st.error(f"Ошибка оценки: {exc}")
+
+related_pages_footer("15_Оценка_стоимости_Workflow")

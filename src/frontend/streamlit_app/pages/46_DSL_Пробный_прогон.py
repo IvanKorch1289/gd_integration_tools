@@ -8,7 +8,7 @@ import streamlit as st
 import yaml as _yaml
 
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
 setup_page()
 st.header("Пробный прогон DSL")
@@ -109,3 +109,5 @@ st.markdown(
     "профилем для каждого типа шага. Реальный запуск через "
     "`POST /api/v1/admin/dsl/playground` или `make simulate`."
 )
+
+related_pages_footer("46_DSL_Пробный_прогон")

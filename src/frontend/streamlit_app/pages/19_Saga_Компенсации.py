@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
 
 setup_page()
 st.header("Просмотр Saga Compensation")
@@ -91,3 +91,5 @@ if workflow_id:
                         st.caption(f"duration_ms = {ev['duration_ms']}")
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось загрузить timeline: {exc}")
+
+related_pages_footer("19_Saga_Компенсации")

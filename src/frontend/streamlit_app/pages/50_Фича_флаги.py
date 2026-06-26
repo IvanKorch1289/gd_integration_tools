@@ -3,7 +3,7 @@
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page, related_pages_footer
 
 setup_page(layout="wide",
     initial_sidebar_state="expanded",
@@ -42,3 +42,5 @@ if flags:
     st.caption(f"Всего: {len(flags)} флагов")
 else:
     st.info("Нет feature flags или API недоступен.")
+
+related_pages_footer("50_Фича_флаги")

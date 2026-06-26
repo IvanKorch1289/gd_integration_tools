@@ -33,6 +33,7 @@ import streamlit as st
 from src.frontend.streamlit_app.shared.components import (
     dataframe_view,  # noqa: E402
     setup_page,  # noqa: E402
+    related_pages_footer,
 )
 
 setup_page()
@@ -279,3 +280,5 @@ with st.expander("О странице"):
         "При отсутствии endpoint UI показывает mock-данные для UX-демонстрации."
     )
     st.write("Авто-обновление через `@st.fragment(run_every=5)` каждые 5 секунд.")
+
+related_pages_footer("52_Устойчивость")

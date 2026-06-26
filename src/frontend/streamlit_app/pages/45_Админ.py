@@ -20,7 +20,7 @@ import streamlit as st
 
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import dataframe_view, require_auth, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, require_auth, setup_page, related_pages_footer
 
 setup_page()
 require_auth(label="admin")
@@ -129,3 +129,5 @@ with tab_flags:
                     st.toast(f"Flag `{name}` → {'ON' if new_state else 'OFF'}")
                 else:
                     st.error(f"Не удалось переключить флаг `{name}`")
+
+related_pages_footer("45_Админ")

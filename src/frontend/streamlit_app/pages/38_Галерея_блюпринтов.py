@@ -12,7 +12,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page
+from src.frontend.streamlit_app.shared.components import dataframe_view, setup_page, related_pages_footer
 
 setup_page()
 st.header(":art: Галерея blueprint'ов")
@@ -255,3 +255,5 @@ rows = [
     for b in all_blueprints
 ]
 dataframe_view(rows, hide_index=True)
+
+related_pages_footer("38_Галерея_блюпринтов")
