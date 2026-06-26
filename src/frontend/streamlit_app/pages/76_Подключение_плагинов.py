@@ -67,7 +67,8 @@ st.divider()
 if step == 1:
     st.subheader("Базовая информация")
     data["name"] = st.text_input(
-        "Имя плагина (snake_case)", value=data["name"], placeholder="credit_pipeline"
+        "Имя плагина (snake_case)", value=data["name"], placeholder="credit_pipeline",
+        help="snake_case идентификатор плагина (используется в route_id)",
     )
     data["description"] = st.text_area(
         "Описание",
