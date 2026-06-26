@@ -74,11 +74,11 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
                 col1.metric("p50 длительность (мс)", f"{body['p50_duration_ms']:.0f}")
                 col2.metric("p95 длительность (мс)", f"{body['p95_duration_ms']:.0f}")
                 col3.metric("Размер выборки", body["sample_size"])
-                col4, col5 = st.columns(2)
-                col4.metric(
+                bottom_col1, bottom_col2 = st.columns(2)
+                bottom_col1.metric(
                     "Вычисления (сек)", f"{body['estimated_compute_seconds']:.2f}"
                 )
-                col5.metric("Хранилище (байт)", body["estimated_storage_bytes"])
+                bottom_col2.metric("Хранилище (байт)", body["estimated_storage_bytes"])
 
             with tab_ai:
                 breakdown = body.get("llm_breakdown")
@@ -88,8 +88,9 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
                         "знает declaration."
                     )
                 else:
-                    st.metric("Всего токенов", breakdown["total_tokens"])
-                    st.metric("Общая стоимость (USD)", f"${breakdown['total_usd']}")
+                    ai_col1, ai_col2 = st.columns(2)
+                    ai_col1.metric("Всего токенов", breakdown["total_tokens"])
+                    ai_col2.metric("Общая стоимость (USD)", f"${breakdown['total_usd']}")
                     st.subheader("По моделям")
                     for model, cost in breakdown["per_model"].items():
                         st.write(f"**{model}**: ${cost}")
