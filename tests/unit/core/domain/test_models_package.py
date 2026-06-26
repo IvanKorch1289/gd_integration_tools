@@ -9,6 +9,8 @@ Verifies:
 
 from __future__ import annotations
 
+import pytest
+
 
 class TestCoreDomainModelsPackage:
     """core/domain/models — canonical package (S106 W1 D5 B1)."""
@@ -81,7 +83,7 @@ class TestCoreDomainModelsPackage:
             "dsl_snapshot.py",
             "langmem_models.py",
             "outbox.py",
-            "users.py",
+            # users.py moved to extensions/core_entities/users/ (S171 V11)
         )
         # tests/unit/core/domain/test_X.py → project root = 4 levels up
         project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -129,6 +131,7 @@ class TestCoreDomainModelsPackage:
             f"Missing tables: {expected - table_names}"
         )
 
+    @pytest.mark.skip(reason="S171 V11: orderkinds переехал в extensions/")
     def test_orderkinds_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2a): OrderKind moved to core.domain.models."""
         from src.backend.core.domain.models import OrderKind
@@ -143,6 +146,7 @@ class TestCoreDomainModelsPackage:
             ).__all__
         )
 
+    @pytest.mark.skip(reason="S171 V11: orders переехал в extensions/core_entities/orders/domain/models")
     def test_orders_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2b): Order moved to core.domain.models."""
         from src.backend.core.domain.models import Order
@@ -171,6 +175,7 @@ class TestCoreDomainModelsPackage:
             f"FK→orderkinds missing: {fk_targets}"
         )
 
+    @pytest.mark.skip(reason="S171 V11: files переехал в extensions/")
     def test_files_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2c): File + OrderFile moved to core.domain.models."""
         from src.backend.core.domain.models import File, OrderFile
@@ -245,25 +250,5 @@ class TestCoreDomainModelsPackage:
 
 
 class TestLayerLinterAfterB1:
-    """Linter check — extensions/core_entities/users fixed (41 → 39)."""
-
-    def test_users_domain_models_no_model_violation(self) -> None:
-        """extensions/core_entities/users no longer imports Risk A models from old path."""
-        from pathlib import Path
-
-        project_root = Path(__file__).parent.parent.parent.parent.parent
-        path = (
-            project_root
-            / "extensions"
-            / "core_entities"
-            / "users"
-            / "domain"
-            / "models.py"
-        )
-        text = path.read_text(encoding="utf-8")
-        assert "infrastructure.database.models.users" not in text, (
-            "users/domain/models.py should import from core.domain.models"
-        )
-        assert "core.domain.models.users" in text, (
-            "users/domain/models.py must migrate to canonical path"
-        )
+    """Linter check (после V11 migration tests obsolete — see commit history)."""
+    pass

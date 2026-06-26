@@ -196,19 +196,19 @@ def test_tenant_mixin_consumers_still_work_via_canonical() -> None:
     # Если imports сломаны — тест упадёт на collection.
     from src.backend.core.domain.models import (  # noqa: F401
         dsl_snapshot,
-        files,
-        orderkinds,
-        orders,
-        users,
         workflow_event,
         workflow_instance,
     )
+    from extensions.core_entities.files.domain.models import File  # noqa: F401
+    from extensions.core_entities.orderkinds.domain.models import OrderKind  # noqa: F401
+    from extensions.core_entities.orders.domain.models import Order  # noqa: F401
+    from extensions.core_entities.users.domain.models import User  # noqa: F401
     from src.backend.infrastructure.workflow import saga_state  # noqa: F401
 
 
 def test_dialect_types_consumers_still_work_via_canonical() -> None:
     """Domain models + saga_state импортируют json_b/uuid_t из canonical."""
-    from src.backend.core.domain.models import (  # noqa: F401
+    from extensions.core_entities.files.domain.models import (  # noqa: F401
         dsl_snapshot,
         workflow_event,
         workflow_instance,
