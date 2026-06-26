@@ -16,6 +16,7 @@ from src.frontend.streamlit_app.shared.components import setup_page, related_pag
 
 setup_page()
 st.title("🐛 Отладчик DSL и воспроизведение")
+st.caption("Три режима: пошаговый Debugger (trace per процессор), Аудит Replay, Route Trace")
 
 mode = st.radio(
     "Режим", ["Пошаговый Debugger", "Аудит Replay", "Route Trace"], horizontal=True
