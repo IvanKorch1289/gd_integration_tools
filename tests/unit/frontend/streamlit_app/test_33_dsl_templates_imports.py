@@ -1,42 +1,13 @@
 # ruff: noqa: S101
 """S70 W2: tests для 33_DSL_Templates.py top-level dsl imports.
 
-Проверяют:
-1. Top-level imports: WorkflowDeclaration + to_mermaid consolidated
-   at module top (style cleanup от S70 W2).
-2. AST-based: zero lazy dsl imports ВНУТРИ function bodies
-   (за исключением ``template_registry_compat`` fallback — это
-   genuine optional loading с services fallback).
-3. Optional loading works: compat import fails → services fallback
-   импортируется успешно.
-4. Graceful degradation: Mermaid rendering path обёрнут в try/except
-   (runtime errors, не import errors).
-
-Honest scope: DOES NOT close layer violation (top-level dsl imports
-наружу всё ещё count). STYLE CLEANUP, не violation closure.
-
 S173 STATUS: файл ``pages/33_DSL_Templates.py`` (англ.) НЕ существует —
 был переименован в ``33_DSL_Шаблоны.py``. Тесты адаптированы под
-новое имя и ``src.backend.services.dsl_portal`` facade pattern.
-
-PRE-EXISTING ISSUE: ``builder_facade`` не re-экспортирует
-``WorkflowDeclaration``/``to_mermaid`` (broken re-export chain).
-Эти тесты skip'нуты — нуждаются в отдельном fix бэкенда
-(``src/backend/services/dsl_portal/builder_facade.py``).
-См. KNOWN_ISSUES / pre-existing tech debt.
+новое имя и ``src.backend.services.dsl_portal`` facade pattern
+(builder_facade re-exports пофикшены в S173).
 """
 
 from __future__ import annotations
-
-import pytest
-
-pytest.skip(
-    "S173: тесты ссылаются на устаревший S70 W2 contract — "
-    "broken re-export chain в builder_facade.py "
-    "(WorkflowDeclaration/to_mermaid недоступны). "
-    "Out of UI/UX audit scope.",
-    allow_module_level=True,
-)
 
 import ast
 import importlib
@@ -79,30 +50,33 @@ def _read_source() -> str:
 def test_dsl_imports_top_level() -> None:
     """WorkflowDeclaration + to_mermaid consolidated at top (S70 W2).
 
-    До S70 W2: 2 lazy dsl imports ВНУТРИ ``_render_workflow_templates``
-    (lines 89, 90 в исходной версии).
-    После: top-level imports only (между streamlit и frontend imports).
+    До S70 W2: 2 lazy dsl imports ВНУТРИ ``_render_workflow_templates``.
+    После: top-level imports only (через dsl_portal facade).
+
+    S173: импорт идёт через ``src.backend.services.dsl_portal``
+    facade (1 import вместо 2), но семантически — те же символы
+    top-level, а не lazy.
     """
     source = _read_source()
     # Top-level imports section: lines 18-25 (между ``from __future__``
     # и первым ``setup_page(...)`` вызовом).
     top_section = "\n".join(source.split("\n")[17:27])
 
-    # 2 стабильных dsl imports должны быть в top-level
+    # S173: facade consolidated
     assert (
-        "from src.backend.dsl.workflow.spec import WorkflowDeclaration" in top_section
+        "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid"
+        in top_section
     )
-    assert "from src.backend.dsl.workflow.visualize import to_mermaid" in top_section
 
-    # Проверяем, что они идут ДО frontend imports (alphabetical/sectioned)
-    spec_idx = top_section.find(
-        "from src.backend.dsl.workflow.spec import WorkflowDeclaration"
+    # Проверяем, что dsl импорт идёт ДО frontend imports (sectioned)
+    dsl_idx = top_section.find(
+        "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid"
     )
     frontend_idx = top_section.find(
         "from src.frontend.streamlit_app.api_clients import get_api_client"
     )
-    assert 0 <= spec_idx < frontend_idx, (
-        f"dsl imports должны быть ПЕРЕД frontend imports (got spec={spec_idx}, "
+    assert 0 <= dsl_idx < frontend_idx, (
+        f"dsl imports должны быть ПЕРЕД frontend imports (got dsl={dsl_idx}, "
         f"frontend={frontend_idx})"
     )
 
