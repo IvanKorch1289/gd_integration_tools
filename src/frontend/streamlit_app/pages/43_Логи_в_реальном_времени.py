@@ -28,7 +28,7 @@ st.header(":memo: Логи в реальном времени (live tail)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
-# ── Фильтры
+# ── Фильтры (вне fragment, чтобы изменения мгновенно применялись)
 col_a, col_b, col_c = st.columns([2, 2, 1])
 level = col_a.selectbox(
     "Минимальный уровень", ["DEBUG", "INFO", "WARNING", "ERROR"], index=1
@@ -73,60 +73,65 @@ def _start_sse_thread() -> None:
     st.session_state["_sse_started"] = True
 
 
-with st.spinner("Подключение к /sse/logs..."):
-    _start_sse_thread()
+@st.fragment(run_every="2s")
+def _render_log_stream() -> None:
+    """Auto-refresh fragment: polls SSE queue every 2s and renders logs.
 
-# ── Забор пачки логов
-q = _log_queue()
-batch: list[dict[str, Any]] = []
-while not q.empty() and len(batch) < 100:
-    try:
-        import orjson
+    Заменяет time.sleep + st.rerun() pattern (freezes Streamlit thread).
+    Streamlit 1.33+ supports ``@st.fragment(run_every=...)`` — fragment
+    reruns independently от full app, no UI freeze.
+    """
+    if pause:
+        st.caption("⏸ Пауза — auto-refresh приостановлен")
+        return
 
-        batch.append(orjson.loads(q.get_nowait()))
-    except Exception:  # noqa: BLE001
-        logger.debug("failed to parse log payload from SSE queue", exc_info=True)
-        continue
+    with st.spinner("Подключение к /sse/logs..."):
+        _start_sse_thread()
 
-if "log_history" not in st.session_state:
-    st.session_state["log_history"] = []
+    # Забор пачки логов
+    q = _log_queue()
+    batch: list[dict[str, Any]] = []
+    while not q.empty() and len(batch) < 100:
+        try:
+            import orjson
 
-if not pause:
+            batch.append(orjson.loads(q.get_nowait()))
+        except Exception:  # noqa: BLE001
+            logger.debug("failed to parse log payload from SSE queue", exc_info=True)
+            continue
+
+    if "log_history" not in st.session_state:
+        st.session_state["log_history"] = []
+
     st.session_state["log_history"] = (st.session_state["log_history"] + batch)[-1000:]
 
-levels_order = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
-threshold = levels_order[level]
-filtered = [
-    item
-    for item in st.session_state["log_history"]
-    if levels_order.get(str(item.get("level", "INFO")).upper(), 20) >= threshold
-    and (not module or module.lower() in str(item.get("logger", "")).lower())
-]
+    levels_order = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
+    threshold = levels_order[level]
+    filtered = [
+        item
+        for item in st.session_state["log_history"]
+        if levels_order.get(str(item.get("level", "INFO")).upper(), 20) >= threshold
+        and (not module or module.lower() in str(item.get("logger", "")).lower())
+    ]
 
-# ── Отображение
-st.caption(
-    f"Записей в буфере: {len(st.session_state['log_history'])}, после фильтра: {len(filtered)}"
-)
-for item in reversed(filtered[-200:]):
-    ts = item.get("timestamp", "")
-    lvl = item.get("level", "INFO")
-    msg = item.get("event") or item.get("message", "")
-    logger_name = item.get("logger", "—")
-    icon = (
-        ":red_circle:"
-        if lvl == "ERROR"
-        else ":large_orange_circle:"
-        if lvl == "WARNING"
-        else ":large_blue_circle:"
+    st.caption(
+        f"Записей в буфере: {len(st.session_state['log_history'])}, после фильтра: {len(filtered)}"
     )
-    st.markdown(f"{icon} `{ts}` **{logger_name}** — {msg}")
+    for item in reversed(filtered[-200:]):
+        ts = item.get("timestamp", "")
+        lvl = item.get("level", "INFO")
+        msg = item.get("event") or item.get("message", "")
+        logger_name = item.get("logger", "—")
+        icon = (
+            ":red_circle:"
+            if lvl == "ERROR"
+            else ":large_orange_circle:"
+            if lvl == "WARNING"
+            else ":large_blue_circle:"
+        )
+        st.markdown(f"{icon} `{ts}` **{logger_name}** — {msg}")
 
-# Авто-рефреш каждые 2с
-if not pause:
-    import time
 
-    with st.spinner("Авто-рефреш логов через 2 сек..."):
-        time.sleep(2)
-    st.rerun()
+_render_log_stream()
 
 related_pages_footer("43_Логи_в_реальном_времени")

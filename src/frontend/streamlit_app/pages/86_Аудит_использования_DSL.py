@@ -191,12 +191,23 @@ st.caption(
     "Latency и error rate отражают только доступные из SLO-трекера данные."
 )
 
-if auto_refresh:
-    import time
+if not auto_refresh:
+    st.caption("⏸ Авто-обновление отключено")
+
+
+@st.fragment(run_every="30s")
+def _render_audit_refresh() -> None:
+    """Auto-refresh audit fragment (Streamlit 1.33+ run_every)."""
+    if not auto_refresh:
+        return
 
     st.caption("Авто-обновление через 30 секунд...")
-    with st.spinner("Авто-обновление аудита через 30 сек..."):
-        time.sleep(30)
-    st.rerun()
+    # Force re-execution by accessing session state trigger
+    if "audit_data" in st.session_state:
+        del st.session_state["audit_data"]
+    st.rerun(scope="fragment")
+
+
+_render_audit_refresh()
 
 related_pages_footer("86_Аудит_использования_DSL")
