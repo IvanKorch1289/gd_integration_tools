@@ -25,8 +25,10 @@ except Exception:  # noqa: BLE001
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         import httpx
 
+        import os
+        base_url = os.environ.get("API_BASE_URL", "http://localhost:8000")
         with httpx.Client(timeout=10) as client:
-            resp = client.get(f"http://localhost:8000/api/v1{path}", params=params)
+            resp = client.get(f"{base_url}/api/v1{path}", params=params)
             resp.raise_for_status()
             return resp.json()
 
