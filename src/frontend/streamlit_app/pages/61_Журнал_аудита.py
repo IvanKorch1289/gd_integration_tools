@@ -46,7 +46,8 @@ if status_filter != "all":
     params["status"] = status_filter
 
 try:
-    records = client._request("GET", "/api/v1/admin/audit", params=params)
+    with st.spinner("Загрузка audit-логов..."):
+        records = client._request("GET", "/api/v1/admin/audit", params=params)
     if not isinstance(records, list):
         records = []
 except Exception as exc:  # noqa: BLE001

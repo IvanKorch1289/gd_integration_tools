@@ -25,7 +25,8 @@ st.caption(
 )
 
 client = get_api_client()
-tenants_payload = client.get_tenants()
+with st.spinner("Загрузка тенантов..."):
+    tenants_payload = client.get_tenants()
 
 if tenants_payload.get("stub"):
     st.info(

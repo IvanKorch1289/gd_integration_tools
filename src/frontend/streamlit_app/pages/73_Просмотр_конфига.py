@@ -45,7 +45,8 @@ def mask_secrets(obj: Any, parent_key: str = "") -> Any:
 client = get_api_client()
 
 try:
-    config = client._request("GET", "/api/v1/admin/config")
+    with st.spinner("Загрузка конфигурации..."):
+        config = client._request("GET", "/api/v1/admin/config")
 except Exception as exc:  # noqa: BLE001
     config = {}
     st.error(f"Не удалось получить конфиг: {exc}")
