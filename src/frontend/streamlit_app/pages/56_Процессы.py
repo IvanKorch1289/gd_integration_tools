@@ -12,6 +12,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     setup_page,
 )
@@ -47,11 +48,12 @@ st.divider()
 st.subheader("Статистика за 60 секунд")
 try:
     stats = client._request("GET", "/api/v1/admin/processes/stats")
-    cols = st.columns(4)
-    cols[0].metric("Запущено", stats.get("started", 0))
-    cols[1].metric("Успешно", stats.get("succeeded", 0))
-    cols[2].metric("Ошибок", stats.get("failed", 0))
-    cols[3].metric("p95, мс", stats.get("p95_ms", 0))
+    metric_row([
+        ("Запущено", stats.get("started", 0)),
+        ("Успешно", stats.get("succeeded", 0)),
+        ("Ошибок", stats.get("failed", 0)),
+        ("p95, мс", stats.get("p95_ms", 0)),
+    ])
 except Exception:
     st.caption("Статистика недоступна.")
 

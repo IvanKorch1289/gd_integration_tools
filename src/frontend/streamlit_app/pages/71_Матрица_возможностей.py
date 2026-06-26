@@ -17,6 +17,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     setup_page,
 )
@@ -45,10 +46,11 @@ except Exception as exc:  # noqa: BLE001
 vocab = catalog.get("vocabulary") or []
 plugins = plugins_inv.get("plugins") or []
 
-cols = st.columns(3)
-cols[0].metric("Возможности", len(vocab))
-cols[1].metric("Плагины", len(plugins))
-cols[2].metric("Публичные", sum(1 for c in vocab if c.get("public")))
+metric_row([
+    ("Возможности", len(vocab)),
+    ("Плагины", len(plugins)),
+    ("Публичные", sum(1 for c in vocab if c.get("public"))),
+])
 
 st.divider()
 

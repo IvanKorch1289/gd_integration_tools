@@ -139,10 +139,11 @@ if submitted:
             )
         elapsed_ms = (time.perf_counter() - started) * 1000
 
-        cols = st.columns(3)
-        cols[0].metric("Канал", "WebSocket")
-        cols[1].metric("Время, мс", f"{elapsed_ms:.1f}")
-        cols[2].metric("Чанков", len(chunks))
+        metric_row([
+            ("Канал", "WebSocket"),
+            ("Время, мс", f"{elapsed_ms:.1f}"),
+            ("Чанков", len(chunks)),
+        ])
 
         if err:
             st.error(f"WS error: {err}")

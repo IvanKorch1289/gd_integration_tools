@@ -15,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     setup_page,
 )
@@ -66,11 +67,12 @@ def _fetch_history(wf_id: str) -> list:
 st.subheader("Сводная статистика")
 try:
     stats = _fetch_stats(tenant_id, days_back)
-    cols = st.columns(4)
-    cols[0].metric("Всего saga (рассчитано)", stats["total_sagas"])
-    cols[1].metric("Успешно", stats["succeeded"])
-    cols[2].metric("С ошибкой", stats["failed"])
-    cols[3].metric("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}")
+    metric_row([
+        ("Всего saga (рассчитано)", stats["total_sagas"]),
+        ("Успешно", stats["succeeded"]),
+        ("С ошибкой", stats["failed"]),
+        ("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}"),
+    ])
 except Exception as exc:  # noqa: BLE001
     st.warning(f"Не удалось загрузить stats: {exc}")
 
