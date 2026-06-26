@@ -10,9 +10,10 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import K4APIClient, get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="admin")
 st.header(":package: Админ кэша")
 
 tab_redis, tab_rag = st.tabs(["Redis Cache", "RAG Cache"])

@@ -21,9 +21,10 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="admin")
 st.header("Feature-флаги тенантов (per-tenant overrides)")
 st.caption(
     "Runtime overrides поверх статического реестра feature-flag. "

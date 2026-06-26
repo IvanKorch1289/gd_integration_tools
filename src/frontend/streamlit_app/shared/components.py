@@ -27,7 +27,43 @@ from src.frontend.streamlit_app.shared.page_registry import get_page_metadata
 if TYPE_CHECKING:
     import pandas as pd
 
-__all__ = ("setup_page", "metric_row", "dataframe_view")
+__all__ = (
+    "setup_page",
+    "metric_row",
+    "dataframe_view",
+    "require_auth",
+)
+
+
+def require_auth(*, label: str = "этот раздел") -> bool:
+    """Gate страницы за аутентификацией.
+
+    Если пользователь не залогинен — показывает warning + кнопку
+    «Войти» (redirect на 00_Вход) + ``st.stop()``.
+
+    Это дополнительная защита (frontend layer). Backend всё равно
+    проверяет RBAC через JWT — этот gate просто не показывает admin UI
+    неаутентифицированным.
+
+    Args:
+        label: Название раздела для сообщения ("admin", "write action").
+
+    Returns:
+        True если пользователь аутентифицирован (выполнение продолжается).
+    """
+    from src.frontend.streamlit_app.shared.auth_state import is_authenticated
+
+    if is_authenticated():
+        return True
+
+    st.warning(
+        f"🔒 Требуется вход для доступа к разделу «{label}». "
+        "Backend отвергнет запросы без валидного JWT."
+    )
+    if st.button("Войти", type="primary", key="require_auth_login"):
+        st.switch_page("pages/00_Вход.py")
+    st.stop()
+    return False  # unreachable, but explicit for type-checkers
 
 
 def setup_page(
