@@ -84,7 +84,8 @@ if step == 1:
 
 elif step == 2:
     st.subheader("Возможности (ADR-044)")
-    catalog = client.get_capability_catalog()
+    with st.spinner("Загрузка каталога возможностей..."):
+        catalog = client.get_capability_catalog()
     vocab = catalog.get("vocabulary", [])
     options = [c["name"] for c in vocab] or [
         "db.read",

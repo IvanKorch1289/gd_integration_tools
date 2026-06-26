@@ -29,7 +29,8 @@ limit = st.number_input("Лимит (LIMIT)", min_value=1, max_value=10_000, val
 
 if st.button("Выполнить", type="primary"):
     try:
-        result = client._request(
+        with st.spinner("Выполнение SQL..."):
+            result = client._request(
             "POST", "/api/v1/admin/sql/query", json={"query": sql, "limit": int(limit)}
         )
         if isinstance(result, dict):
