@@ -37,23 +37,22 @@ else:
 
 # ──────────── Создание заказа ────────────
 
-with st.expander("Создать заказ"):
-    with st.form("create_order", clear_on_submit=True):
-        pledge_gd_id = st.number_input("ID заявки GD", min_value=1, step=1)
-        order_kind_id = st.number_input("ID вида заказа", min_value=1, step=1)
+with st.expander("Создать заказ"), st.form("create_order", clear_on_submit=True):
+    pledge_gd_id = st.number_input("ID заявки GD", min_value=1, step=1)
+    order_kind_id = st.number_input("ID вида заказа", min_value=1, step=1)
 
-        if st.form_submit_button("Создать"):
-            try:
-                result = client.create_order(
-                    {
-                        "pledge_gd_id": int(pledge_gd_id),
-                        "order_kind_id": int(order_kind_id),
-                    }
-                )
-                st.success(f"Заказ создан: {result}")
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Ошибка: {exc}")
+    if st.form_submit_button("Создать"):
+        try:
+            result = client.create_order(
+                {
+                    "pledge_gd_id": int(pledge_gd_id),
+                    "order_kind_id": int(order_kind_id),
+                }
+            )
+            st.success(f"Заказ создан: {result}")
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Ошибка: {exc}")
 
 # ──────────── Удаление заказа ────────────
 

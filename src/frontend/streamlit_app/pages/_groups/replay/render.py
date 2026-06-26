@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import streamlit as st
@@ -51,7 +51,7 @@ def render_dlq_replay() -> None:
         )
 
     # ──────────── Загрузка DLQ ────────────
-    since = datetime.now(timezone.utc) - timedelta(hours=int(hours_back))
+    since = datetime.now(UTC) - timedelta(hours=int(hours_back))
 
     events: list[OutboxEvent] = list(
         run_async(

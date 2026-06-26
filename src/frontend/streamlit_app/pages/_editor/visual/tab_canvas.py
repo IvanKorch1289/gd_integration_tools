@@ -28,7 +28,7 @@ def render_canvas_tab(client) -> None:
             "Категория",
             options=["all"]
             + sorted(
-                set("core control_flow routing transformation resilience".split())
+                set(["core", "control_flow", "routing", "transformation", "resilience"])
             ),
             index=0,
             key="canvas_category",
@@ -53,7 +53,7 @@ def render_canvas_tab(client) -> None:
                 with c2:
                     if st.button("➕", key=f"add_{proc_type}", help=f"Добавить {proc_type}"):
                         st.session_state.canvas_steps.append(
-                            {"type": proc_type, "params": {p: "" for p in params}}
+                            {"type": proc_type, "params": dict.fromkeys(params, "")}
                         )
                         st.session_state.selected_step_index = (
                             len(st.session_state.canvas_steps) - 1

@@ -28,7 +28,7 @@ st.caption(
 )
 
 
-def _client() -> "APIClient":
+def _client() -> APIClient:
     if APIClient is None:
         st.error("APIClient недоступен (frontend split). Используйте REST напрямую.")
         st.stop()

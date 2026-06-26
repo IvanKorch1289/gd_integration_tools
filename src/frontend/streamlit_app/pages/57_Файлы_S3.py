@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import streamlit as st
 
@@ -139,7 +139,7 @@ with tab_mock:
             )
 
     st.caption(
-        f"Последнее обновление: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+        f"Последнее обновление: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}"
     )
 
 with tab_api:

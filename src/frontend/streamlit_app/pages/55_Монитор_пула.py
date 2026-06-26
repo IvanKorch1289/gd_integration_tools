@@ -19,7 +19,7 @@ Auto-refresh: ``@st.fragment(run_every=5)``.
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
@@ -77,7 +77,7 @@ def _mock_pools_snapshot() -> dict[str, Any]:
         Снапшот worker + connection pools.
     """
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "worker_pool": {
             "name": "granian",
             "in_use": 6,

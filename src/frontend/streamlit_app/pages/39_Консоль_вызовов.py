@@ -71,7 +71,7 @@ async def _stream_invocation(
                     raw = await asyncio.wait_for(
                         ws.recv(), timeout=WS_IDLE_TIMEOUT_SECONDS
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     return chunks, None
                 except websockets.ConnectionClosedOK:
                     return chunks, None

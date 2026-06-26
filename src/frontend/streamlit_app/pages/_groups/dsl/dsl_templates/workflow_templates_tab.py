@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 __all__ = ("render_workflow_templates",)
 
 
-def render_workflow_templates(client: "APIClient") -> None:
+def render_workflow_templates(client: APIClient) -> None:
     """S12 K3 W5 + K5 W1: workflow templates с Mermaid preview.
 
     Args:
@@ -85,7 +85,7 @@ def render_workflow_templates(client: "APIClient") -> None:
             _render_template_card(tmpl, client)
 
 
-def _render_template_card(tmpl, client: "APIClient") -> None:
+def _render_template_card(tmpl, client: APIClient) -> None:
     """Per-template expander content: YAML/Mermaid tabs + Deploy flow.
 
     Args:
@@ -123,7 +123,7 @@ def _render_template_card(tmpl, client: "APIClient") -> None:
         _deploy_template(tmpl, target, client)
 
 
-def _deploy_template(tmpl, target: str, client: "APIClient") -> None:
+def _deploy_template(tmpl, target: str, client: APIClient) -> None:
     """POST /api/v1/admin/workflow-templates/{name}/deploy.
 
     Args:

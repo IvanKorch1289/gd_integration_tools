@@ -164,9 +164,8 @@ def _card(bp: dict[str, Any]) -> None:
 
         yaml_text = _yaml_preview(bp)
         c1, c2, c3 = st.columns(3)
-        with c1:
-            with st.popover("👁 Предпросмотр"):
-                st.code(yaml_text, language="yaml")
+        with c1, st.popover("👁 Предпросмотр"):
+            st.code(yaml_text, language="yaml")
         with c2:
             st.download_button(
                 "📋 Скопировать",

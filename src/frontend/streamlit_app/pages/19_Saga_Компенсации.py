@@ -10,7 +10,7 @@ aggregated stats.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import streamlit as st
 
@@ -37,7 +37,7 @@ workflow_id = col3.text_input("ID Workflow (drill-down)", value="")
 def _fetch_stats(tenant: str, days: int) -> dict:
     from src.backend.services.dsl_portal import get_saga_stats as aggregate_saga_stats
 
-    to_dt = datetime.now(timezone.utc)
+    to_dt = datetime.now(UTC)
     from_dt = to_dt - timedelta(days=days)
     return asyncio.run(
         aggregate_saga_stats(tenant_id=tenant or None, from_dt=from_dt, to_dt=to_dt)

@@ -24,7 +24,7 @@ Auto-refresh: ``@st.fragment(run_every=5)`` — обновление матри�
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
@@ -85,7 +85,7 @@ def _mock_snapshot() -> dict[str, Any]:
         Снапшот по 4 категориям resilience-блоков.
     """
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "circuit_breakers": [
             {"name": "skb_api", "state": "CLOSED", "failures": 0, "last_failure": None},
             {
