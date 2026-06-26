@@ -57,3 +57,20 @@ class CertEntry:
     expires_at: datetime
     description: str | None = None
     version: int = 1
+
+
+
+def make_cert_entry(service_id: str, pem: str) -> CertEntry:
+    """Factory для CertEntry с дефолтным fingerprint + expires_at.
+
+    Используется в backend'ах без полной metadata (file, env).
+    Production backends (vault, postgres) сохраняют реальные fingerprint + expires_at.
+    """
+    from datetime import datetime, timezone
+    from src.backend.infrastructure.security.cert_store.models import _fingerprint
+    return CertEntry(
+        service_id=service_id,
+        pem=pem,
+        fingerprint=_fingerprint(pem),
+        expires_at=datetime.now(timezone.utc).replace(year=2099),
+    )
