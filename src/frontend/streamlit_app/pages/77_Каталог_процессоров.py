@@ -53,9 +53,13 @@ with st.sidebar:
     limit = st.slider("Лимит", min_value=5, max_value=100, value=25, step=5)
 
 
-payload = client.get_processor_catalog(
+try:
+    payload = client.get_processor_catalog(
     query=query, namespace=namespace or None, limit=limit
-)
+    )
+except Exception as exc:  # noqa: BLE001
+    st.error(f"Ошибка API: {exc}")
+    payload = {}
 
 if "error" in payload:
     st.error(f"Поиск не удался: {payload['error']}")
