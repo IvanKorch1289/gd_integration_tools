@@ -1,0 +1,104 @@
+{
+  "uid": "gd-circuit-breaker-detail",
+  "title": "Circuit Breaker — детальный мониторинг (D172)",
+  "tags": ["gd_integration_tools", "K2-S7", "resilience", "circuit-breaker"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "15s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Активные Breakers (closed)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(infra_client_circuit_state == 0)", "refId": "A"}],
+      "options": {"colorMode": "value", "reduceOptions": {"calcs": ["lastNotNull"]}}
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Half-open (тестируют)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(infra_client_circuit_state == 1)", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "yellow"}}}
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Open (блокируют трафик)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(infra_client_circuit_state == 2)", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "red"}}}
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Всего breaker'ов",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "count(infra_client_circuit_state)", "refId": "A"}]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "State transitions (closed ↔ open за 5m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "rate(infra_client_circuit_transitions_total[5m])", "legendFormat": "{{name}}", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Failures per breaker (rate per 5m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "rate(infra_client_circuit_failures_total[5m])", "legendFormat": "{{name}}", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Calls per state (rate per 1m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+      "targets": [
+        {"expr": "rate(infra_client_circuit_calls_total[1m])", "legendFormat": "{{name}} → {{outcome}}", "refId": "A"}
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "breaker_name",
+        "label": "Breaker",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(infra_client_circuit_state, name)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "CB Opens",
+        "datasource": "Prometheus",
+        "enable": true,
+        "expr": "changes(infra_client_circuit_state[5m]) > 0 and infra_client_circuit_state == 2",
+        "titleFormat": "CB OPEN: {{name}}"
+      }
+    ]
+  }
+}

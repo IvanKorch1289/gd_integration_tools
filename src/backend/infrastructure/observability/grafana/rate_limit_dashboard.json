@@ -1,0 +1,88 @@
+{
+  "uid": "gd-rate-limit-detail",
+  "title": "Rate Limit — детальный мониторинг (D173)",
+  "tags": ["gd_integration_tools", "K2-S7", "resilience", "rate-limit"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Allowed (за 1m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(rate(rate_limit_decisions_total{decision=\"allowed\"}[1m]))", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "green"}}}
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Blocked (за 1m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(rate(rate_limit_decisions_total{decision=\"blocked\"}[1m]))", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "red"}}}
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Throttled (за 1m)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(rate(rate_limit_decisions_total{decision=\"throttled\"}[1m]))", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "orange"}}}
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Reject ratio (блок/total)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {"expr": "sum(rate(rate_limit_decisions_total{decision=\"blocked\"}[5m])) / sum(rate(rate_limit_decisions_total[5m]))", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Решения по resource (allowed vs blocked)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 24, "h": 8},
+      "targets": [
+        {"expr": "sum by (resource, decision) (rate(rate_limit_decisions_total[1m]))", "legendFormat": "{{resource}} — {{decision}}", "refId": "A"}
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Top-10 заблокированных (по tenant)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "topk(10, sum by (tenant) (rate(rate_limit_decisions_total{decision=\"blocked\"}[5m])))",
+          "legendFormat": "{{tenant}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "resource",
+        "label": "Resource",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(rate_limit_decisions_total, resource)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  }
+}
