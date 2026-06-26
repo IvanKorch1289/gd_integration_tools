@@ -247,12 +247,24 @@ class TemporalWorkerPool:
                     },
                 )
 
+            # Worker Versioning (S171 M10 P0, D172): kwargs из helper.
+            # При use_versioning=False (default) — backward-compat: kwargs пустые.
+            from src.backend.infrastructure.workflow.versioning.worker_versioning import (
+                WorkerVersioningHelper,
+            )
+            versioning_helper = WorkerVersioningHelper(
+                deployment_name=getattr(self._factory, "deployment_name", "gd-integration-tools"),
+                build_id=getattr(self._factory, "build_id", "0.0.0"),
+            )
+            worker_kwargs = versioning_helper.build_worker_kwargs()
+
             worker = Worker(
                 client,
                 task_queue=task_queue,
                 workflows=workflows,
                 activities=activities,
                 interceptors=interceptors,
+                **worker_kwargs,
             )
             self._workers[task_queue] = worker
             from src.backend.core.utils.task_registry import get_task_registry
