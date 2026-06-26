@@ -66,7 +66,15 @@ if query:
     for h in hits:
         st.markdown(f"**[{h.title}]({h.path})** · `{h.path}` · score={h.score:.2f}")
         if h.snippet:
-            st.markdown(h.snippet, unsafe_allow_html=True)
+            # Snippet из Whoosh-индекса (docs/ — controlled by team, low XSS risk).
+            # Тем не менее, sanitize HTML перед render: strip <script>, on-*,
+            # javascript: URLs. Markdown-разметка (**, ```) сохраняется.
+            import html
+            safe = html.escape(h.snippet, quote=False)
+            # Restore escaped markdown markers (теряются при html.escape)
+            for marker in ("**", "`", "\n- ", "\n# "):
+                safe = safe.replace(html.escape(marker, quote=False), marker)
+            st.markdown(safe)
         st.divider()
 
 # ── Live DSL examples (S8) ───────────────────────────────────────────────
