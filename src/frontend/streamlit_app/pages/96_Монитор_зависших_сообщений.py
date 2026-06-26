@@ -162,11 +162,12 @@ if prometheus_url:
     # Query per-transport gauges (S81 W2: label-based)
     per_transport_query = 'outbox_stuck_pending_count{transport!="_aggregate_"}'
     try:
-        response = httpx.get(
-            f"{prometheus_url}/api/v1/query",
-            params={"query": per_transport_query},
-            timeout=5.0,
-        )
+        with st.spinner("Запрос per-transport метрик к Prometheus..."):
+            response = httpx.get(
+                f"{prometheus_url}/api/v1/query",
+                params={"query": per_transport_query},
+                timeout=5.0,
+            )
         if response.status_code == 200:
             data = response.json()
             results = data.get("data", {}).get("result", [])

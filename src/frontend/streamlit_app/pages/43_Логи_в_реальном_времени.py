@@ -70,7 +70,8 @@ def _start_sse_thread() -> None:
     st.session_state["_sse_started"] = True
 
 
-_start_sse_thread()
+with st.spinner("Подключение к /sse/logs..."):
+    _start_sse_thread()
 
 # ── Забор пачки логов
 q = _log_queue()
