@@ -13,7 +13,7 @@ import time
 import httpx
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import related_pages_footer, setup_page
 
 setup_page()
 st.header(":satellite_antenna: Вызов REST API")
@@ -88,3 +88,5 @@ for item in st.session_state.get("api_history", []):
     st.write(
         f"{item['method']} `{item['path']}` — **{item['status']}** ({item['ms']} ms)"
     )
+
+related_pages_footer("37_API_Вызовы")
