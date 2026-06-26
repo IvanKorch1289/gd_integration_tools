@@ -88,13 +88,19 @@ async def dispatch_action(
 
 
 class BaseEntrypoint(ABC):
-    """Абстрактный базовый класс для всех entrypoints.
+    """Абстрактный базовый класс для всех entrypoints (S171 M10 P2, D176).
 
     Унифицирует:
     - dispatch через ActionHandlerRegistry
     - error handling (единый формат ошибок)
     - metrics collection (latency, success/error count)
     - correlation ID propagation
+
+    .. deprecated:: S171 M10
+        BaseEntrypoint определён, но НЕ наследуется ни одним протоколом.
+        Реальная унификация идёт через свободную функцию ``dispatch_action()``.
+        Класс сохранён для backward-compat (внешние интеграции могут импортировать).
+        Новые протоколы должны использовать ``dispatch_action()`` напрямую.
     """
 
     protocol: str = "unknown"
