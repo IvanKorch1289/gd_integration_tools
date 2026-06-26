@@ -41,7 +41,8 @@ with tab_plugins:
     st.subheader("Установленные плагины")
 
     try:
-        plugins = client._request("GET", "/api/v1/admin/plugins")
+        with st.spinner("Загрузка списка плагинов..."):
+            plugins = client._request("GET", "/api/v1/admin/plugins")
         if not isinstance(plugins, list):
             plugins = []
     except Exception as exc:  # noqa: BLE001
@@ -84,7 +85,8 @@ with tab_users:
     st.caption("Полноценное управление пользователями — через `/admin` (sqladmin).")
 
     try:
-        users = client._request("GET", "/api/v1/users/all")
+        with st.spinner("Загрузка пользователей..."):
+            users = client._request("GET", "/api/v1/users/all")
         if not isinstance(users, list):
             users = []
     except Exception as exc:  # noqa: BLE001
