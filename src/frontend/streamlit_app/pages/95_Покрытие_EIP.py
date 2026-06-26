@@ -105,7 +105,10 @@ def _render_coverage_table() -> None:
                 "Class": info["class_path"],
             }
         )
-    st.dataframe(rows, width='stretch', hide_index=True)
+    if rows:
+        st.dataframe(rows, width='stretch', hide_index=True)
+    else:
+        st.info("EIP_PATTERN_MAP пуст — coverage неизвестен.")
 
     canonical = sum(1 for r in rows if r["Status"] == "✅")
     st.metric(

@@ -39,6 +39,8 @@ if st.button("Выполнить", type="primary"):
             st.caption(f"Строк: {len(rows)}, колонок: {len(columns)}")
             if rows:
                 st.dataframe(rows, width='stretch', height=500)
+            else:
+                st.info("Запрос выполнен, но вернул 0 строк.")
             if result.get("error"):
                 st.error(result["error"])
     except Exception as exc:  # noqa: BLE001
