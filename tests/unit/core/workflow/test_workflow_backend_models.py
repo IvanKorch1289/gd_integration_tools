@@ -129,5 +129,12 @@ class TestWorkflowBackendProtocol:
 
             async def replay(self, *, workflow_name: str, history: bytes) -> None: ...
 
+            async def compensate_workflow(
+                self,
+                *,
+                handle: WorkflowHandle,
+                request: "CompensateWorkflowRequest",
+            ) -> None: ...
+
         assert issubclass(FakeBackend, WorkflowBackend)
         assert isinstance(FakeBackend(), WorkflowBackend)

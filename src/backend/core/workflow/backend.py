@@ -96,6 +96,17 @@ class WorkflowBackend(Protocol):
         ...
 
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
+        ...
+
+    async def compensate_workflow(
+        self, *, handle: WorkflowHandle, request: "CompensateWorkflowRequest"
+    ) -> None:
+        """Saga compensation: signal workflow с COMPENSATE_SIGNAL.
+
+        Temporal не имеет native compensation — используется signal.
+        Worker должен зарегистрировать handler для COMPENSATE_SIGNAL.
+        """
+        ...
         """Отменить выполняющийся workflow."""
         ...
 

@@ -121,6 +121,14 @@ class _FakeBackend:
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
         pass
 
+    async def compensate_workflow(
+        self,
+        *,
+        handle: WorkflowHandle,
+        request: "CompensateWorkflowRequest",
+    ) -> None:
+        pass
+
     async def await_completion(
         self, *, handle: WorkflowHandle, timeout: timedelta | None = None
     ) -> WorkflowResult:
