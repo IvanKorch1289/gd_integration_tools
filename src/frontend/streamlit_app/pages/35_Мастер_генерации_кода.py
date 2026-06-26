@@ -36,6 +36,11 @@ def _run(args: list[str]) -> tuple[int, str, str]:
 
 
 st.header("Мастер Codegen (Wave 5.6)")
+st.caption(
+    "Wizard для запуска codegen-инструментов из UI: "
+    "создание нового service, импорт swagger.json, "
+    "extract YAML round-trip."
+)
 
 tab_service, tab_swagger, tab_extract = st.tabs(
     ["New Service", "Импорт Swagger", "Extract YAML"]

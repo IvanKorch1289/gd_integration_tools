@@ -17,6 +17,10 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page()
 st.header(":satellite_antenna: Вызов REST API")
+st.caption(
+    "Универсальный клиент к backend: выполнение любого эндпоинта "
+    "без curl/Postman. История последних 20 вызовов."
+)
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 

@@ -19,6 +19,11 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page()
 st.header(":shield: Безопасность ИИ / Guardrails")
+st.caption(
+    "Метрики guardrail-проверок per-tenant: "
+    "block_rate, false_positive_rate, per-reason breakdown "
+    "(PII / toxic / off-topic / jailbreak)."
+)
 
 client = get_api_client()
 

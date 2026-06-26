@@ -7,6 +7,7 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header("Заказы")
+st.caption("CRUD заказов: просмотр списка, создание и удаление.")
 
 client = get_api_client()
 

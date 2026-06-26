@@ -17,6 +17,10 @@ from src.frontend.streamlit_app.shared.components import setup_page
 
 setup_page()
 st.header(":test_tube: Prompt Lab — A/B версионирование")
+st.caption(
+    "Управление версиями prompt'ов, A/B-сравнение, rollback. "
+    "LangFuse 3.x backend (staging rollout)."
+)
 
 client = get_api_client()
 
