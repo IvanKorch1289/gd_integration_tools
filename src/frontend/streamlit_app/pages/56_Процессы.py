@@ -6,6 +6,8 @@ correlation-id. Данные берутся из ExecutionEngine trace-buffer'а
 
 from __future__ import annotations
 
+import httpx
+
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
@@ -23,7 +25,7 @@ client = get_api_client()
 try:
     with st.spinner("Загрузка процессов..."):
         active = client._request("GET", "/api/v1/admin/processes/active")
-except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
+except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     active = []
 
 if not active:

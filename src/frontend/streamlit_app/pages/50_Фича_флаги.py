@@ -19,7 +19,7 @@ client = get_api_client()
 
 try:
     flags = client.get_flags()
-except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
+except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     flags = []
 
 if flags:

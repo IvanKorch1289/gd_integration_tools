@@ -41,7 +41,7 @@ with tab2:
     st.subheader("Глубина очередей (RabbitMQ/Kafka)")
     try:
         queues = client._request("GET", "/api/v1/admin/queue/stats")
-    except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
+    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
         queues = {}
 
     if queues:

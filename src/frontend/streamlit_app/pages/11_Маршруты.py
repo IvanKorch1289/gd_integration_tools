@@ -27,7 +27,7 @@ try:
     routes = client.get_routes()
     if not isinstance(routes, list):
         routes = []
-except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
+except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     routes = []
 
 if search:

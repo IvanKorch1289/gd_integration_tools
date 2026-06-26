@@ -108,7 +108,7 @@ if run_btn or lint_btn or validate_btn:
             result = client._request(
                 "POST", endpoint, json={"code": code, "mode": mode}
             )
-        except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
+        except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
             result = {
                 "status": "offline",
                 "message": "API endpoint не реализован — работаем локально",
