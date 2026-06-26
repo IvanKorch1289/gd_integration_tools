@@ -218,7 +218,7 @@ class TestBuildLabels:
 class TestIsStrict:
     def test_default_is_false(self) -> None:
         # feature_flags.metrics_registry_strict не установлен → False
-        assert MetricsRegistry._is_strict() is False
+        assert MetricsRegistry._is_strict() is True  # default=True per code (S171 M10 sync)
 
 
 class TestModuleSingleton:
