@@ -26,7 +26,7 @@ try:
     logs = client.get_trace_logs(limit=200)
     if not isinstance(logs, list):
         logs = []
-except Exception:
+except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
     logs = []
 
 if route_filter:

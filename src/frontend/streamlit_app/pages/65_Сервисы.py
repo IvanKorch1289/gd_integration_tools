@@ -47,7 +47,7 @@ def _ping_url(url: str, timeout: float = 3.0) -> tuple[ServiceStatus, int | None
         if response.status_code < 500:
             return ServiceStatus.UP, latency
         return ServiceStatus.DOWN, latency
-    except Exception:
+    except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
         return ServiceStatus.DOWN, None
 
 

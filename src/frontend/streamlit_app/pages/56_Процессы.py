@@ -23,7 +23,7 @@ client = get_api_client()
 try:
     with st.spinner("Загрузка процессов..."):
         active = client._request("GET", "/api/v1/admin/processes/active")
-except Exception:
+except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
     active = []
 
 if not active:

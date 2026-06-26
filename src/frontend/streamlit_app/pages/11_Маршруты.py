@@ -27,7 +27,7 @@ try:
     routes = client.get_routes()
     if not isinstance(routes, list):
         routes = []
-except Exception:
+except Exception:  # noqa: BLE001 — fallback для empty state при API недоступности
     routes = []
 
 if search:
