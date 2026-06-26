@@ -21,7 +21,8 @@ auto = st.toggle("Авто-обновление (5s)", value=True)
 client = AdminClient()
 
 try:
-    data = client.get_ready()
+    with st.spinner("Проверка состояния..."):
+        data = client.get_ready()
 except Exception as exc:  # noqa: BLE001
     data = {"status": "error", "components": {}}
     st.error(f"Не удалось получить /ready: {exc}")

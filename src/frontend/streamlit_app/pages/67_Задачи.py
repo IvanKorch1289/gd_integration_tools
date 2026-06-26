@@ -17,7 +17,8 @@ tab1, tab2, tab3 = st.tabs(["Запланированные", "Глубина о
 with tab1:
     st.subheader("Задачи APScheduler")
     try:
-        jobs = client._request("GET", "/api/v1/admin/scheduler/jobs")
+        with st.spinner("Загрузка задач..."):
+            jobs = client._request("GET", "/api/v1/admin/scheduler/jobs")
     except Exception as exc:
         st.error(f"Ошибка: {exc}")
         jobs = []

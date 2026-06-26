@@ -168,7 +168,8 @@ with tab_api:
         params["bucket"] = api_bucket
 
     try:
-        items = client._request("GET", "/api/v1/storage/list", params=params)
+        with st.spinner("Загрузка..."):
+            items = client._request("GET", "/api/v1/storage/list", params=params)
         if not isinstance(items, list):
             items = []
     except Exception as exc:  # noqa: BLE001

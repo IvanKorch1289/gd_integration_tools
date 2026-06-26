@@ -96,7 +96,8 @@ with tab_switch:
 with tab_history:
     st.subheader("Недавние переходы")
     try:
-        history = client.get("/tech/degradation/history")
+        with st.spinner("Загрузка истории..."):
+            history = client.get("/tech/degradation/history")
         items = history.get("transitions", [])
         if not items:
             st.info("История пуста.")

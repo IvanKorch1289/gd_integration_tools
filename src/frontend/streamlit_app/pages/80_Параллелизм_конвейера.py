@@ -27,7 +27,8 @@ tab_route, tab_topn = st.tabs(["🎯 Анализ маршрута", "📊 Top-N
 with tab_route:
     st.subheader("Отчёт о параллелизме маршрута")
     try:
-        routes = client.get("/api/v1/routes")
+        with st.spinner("Загрузка маршрутов..."):
+            routes = client.get("/api/v1/routes")
         names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
     except Exception:  # noqa: BLE001
         names = []

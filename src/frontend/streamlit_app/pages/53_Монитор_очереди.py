@@ -21,7 +21,8 @@ if auto_refresh:
     st.caption("Страница обновится автоматически")
 
 try:
-    summary = client._request("GET", "/api/v1/admin/queues/summary")
+    with st.spinner("Загрузка очередей..."):
+        summary = client._request("GET", "/api/v1/admin/queues/summary")
 except Exception as exc:  # noqa: BLE001
     summary = {}
     st.warning(f"Не удалось получить сводку: {exc}")

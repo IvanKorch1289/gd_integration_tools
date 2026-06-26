@@ -26,7 +26,8 @@ async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any
     clean = {k: v for k, v in params.items() if v not in (None, "")}
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(url, params=clean)
+            with st.spinner("Поиск..."):
+                resp = await client.get(url, params=clean)
             resp.raise_for_status()
             return resp.json()
     except Exception as exc:  # noqa: BLE001

@@ -32,7 +32,8 @@ with tab_list:
     st.subheader("Все профили устойчивости")
     try:
         params = {"tenant_id": tenant_id} if tenant_id else {}
-        data = client.get("/api/v1/admin/resilience-profiles", params=params)
+        with st.spinner("Загрузка профилей..."):
+            data = client.get("/api/v1/admin/resilience-profiles", params=params)
         profiles = data.get("profiles", [])
         if not profiles:
             st.info("Нет зарегистрированных профилей.")

@@ -18,7 +18,8 @@ st.header(":arrows_clockwise: Выполняющиеся процессы")
 client = get_api_client()
 
 try:
-    active = client._request("GET", "/api/v1/admin/processes/active")
+    with st.spinner("Загрузка процессов..."):
+        active = client._request("GET", "/api/v1/admin/processes/active")
 except Exception:
     active = []
 

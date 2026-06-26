@@ -51,7 +51,8 @@ def _ping_url(url: str, timeout: float = 3.0) -> tuple[ServiceStatus, int | None
 def _build_services() -> list[ServiceInfo]:
     """Build service list from config + live health checks."""
     try:
-        config = client.get_config()
+        with st.spinner("Загрузка конфигурации..."):
+            config = client.get_config()
     except Exception:
         config = {}
     try:
