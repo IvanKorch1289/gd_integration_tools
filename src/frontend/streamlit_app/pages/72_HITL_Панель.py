@@ -11,9 +11,10 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="write action")
 st.header(":busts_in_silhouette: HITL-панель согласования")
 
 client = get_api_client()

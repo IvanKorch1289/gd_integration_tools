@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="write action")
 st.header("Версионирование Workflow")
 st.caption(
     "Управление WorkflowVersionRegistry: pin default / rollback / "

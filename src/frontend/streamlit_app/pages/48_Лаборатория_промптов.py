@@ -13,9 +13,10 @@ import json
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="write action")
 st.header(":test_tube: Prompt Lab — A/B версионирование")
 st.caption(
     "Управление версиями prompt'ов, A/B-сравнение, rollback. "

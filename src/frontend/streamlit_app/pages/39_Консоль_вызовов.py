@@ -23,11 +23,12 @@ import httpx
 import streamlit as st
 import websockets
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 __all__: tuple[str, ...] = ()
 
 setup_page()
+require_auth(label="write action")
 st.header(":zap: Консоль вызовов (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")

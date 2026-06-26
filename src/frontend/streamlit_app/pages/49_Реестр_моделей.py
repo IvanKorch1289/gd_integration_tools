@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 try:
     from src.frontend.streamlit_app.api_clients import APIClient
@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover
     APIClient = None  # type: ignore[misc]
 
 setup_page()
+require_auth(label="write action")
 st.title("🧬 Реестр AI-моделей")
 st.caption(
     "Композитный MLflow + Hugging Face Hub. "

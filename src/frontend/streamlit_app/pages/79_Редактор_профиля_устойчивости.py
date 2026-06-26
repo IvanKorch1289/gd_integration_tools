@@ -9,10 +9,11 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 from src.frontend.streamlit_app.shared.filters import slider_filter  # S45 W2 (TD-008)
 
 setup_page()
+require_auth(label="write action")
 st.title("⚙️ Редактор профилей устойчивости")
 st.caption("Тенантный override: Circuit Breaker / Rate Limit / Retry / Bulkhead.")
 

@@ -44,9 +44,10 @@ from src.frontend.streamlit_app.pages._editor.canvas import render_drag_drop_pip
 from src.frontend.streamlit_app.pages._editor.palette import render_step_palette
 from src.frontend.streamlit_app.pages._editor.properties import render_properties_panel
 from src.frontend.streamlit_app.pages._editor.workflow_diff import render_workflow_diff
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import require_auth, setup_page
 
 setup_page()
+require_auth(label="write action")
 st.header("DSL Визуальный редактор")
 st.caption(
     "Round-trip Visual ↔ YAML ↔ Python через RouteBuilder. "

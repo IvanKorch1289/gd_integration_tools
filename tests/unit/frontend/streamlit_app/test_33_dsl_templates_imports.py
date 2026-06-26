@@ -203,12 +203,13 @@ def test_top_level_imports_section_structure() -> None:
 
     S173: ``WorkflowDeclaration`` и ``to_mermaid`` консолидированы через
     ``src.backend.services.dsl_portal`` facade (1 import вместо 2).
-    Ожидаемая структура: 5 импортов.
+    Ожидаемая структура: 5 imports.
     1. from __future__ import annotations
     2. import streamlit as st
     3. dsl_portal facade (WorkflowDeclaration, to_mermaid)
     4. frontend api_clients (get_api_client)
-    5. frontend components (setup_page)
+    5. frontend components (require_auth, setup_page) — require_auth
+       добавлен в ту же строку import (S173 P0 security gate)
     """
     source = _read_source()
     lines = source.split("\n")
@@ -233,8 +234,10 @@ def test_top_level_imports_section_structure() -> None:
     assert "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid" in joined
     assert "from src.frontend.streamlit_app.api_clients import get_api_client" in joined
     assert (
-        "from src.frontend.streamlit_app.shared.components import setup_page" in joined
+        "from src.frontend.streamlit_app.shared.components import" in joined
     )
+    assert "require_auth" in joined
+    assert "setup_page" in joined
 
 
 # ── Test 8: dsl imports are not duplicated ────────────────────────────
