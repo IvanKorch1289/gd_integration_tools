@@ -30,10 +30,10 @@ from src.frontend.streamlit_app.shared.page_registry import (  # noqa: E402
 )
 
 
-def test_registry_has_70_pages() -> None:
-    """PAGE_METADATA должна содержать все 70 pages."""
-    assert len(PAGE_METADATA) == 70, (
-        f"Expected 70 pages, got {len(PAGE_METADATA)}"
+def test_registry_has_69_pages() -> None:
+    """PAGE_METADATA должна содержать все 69 pages (S172: Home переехал в entry-point)."""
+    assert len(PAGE_METADATA) == 69, (
+        f"Expected 69 pages, got {len(PAGE_METADATA)}"
     )
 
 
@@ -104,7 +104,7 @@ def test_get_page_metadata_unknown() -> None:
 def test_specific_pages_present() -> None:
     """Critical pages must be in registry."""
     expected = {
-        "00_Главная": "Главная",
+        # Note: S172 "Главная" is the entry-point (root), not in pages/
         "00_Вход": "Вход",
         "10_Заказы": "Заказы",
         "62_Админ_схем": "Админ схем",
