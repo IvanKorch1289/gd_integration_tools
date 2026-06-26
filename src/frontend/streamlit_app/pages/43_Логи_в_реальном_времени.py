@@ -122,7 +122,8 @@ for item in reversed(filtered[-200:]):
 if not pause:
     import time
 
-    time.sleep(2)
+    with st.spinner("Авто-рефреш логов через 2 сек..."):
+        time.sleep(2)
     st.rerun()
 
 related_pages_footer("43_Логи_в_реальном_времени")

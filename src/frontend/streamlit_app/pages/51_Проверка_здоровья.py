@@ -53,7 +53,8 @@ for idx, (name, info) in enumerate(sorted(components.items())):
             st.caption(status)
 
 if auto:
-    time.sleep(5)
+    with st.spinner("Авто-проверка через 5 сек..."):
+        time.sleep(5)
     st.rerun()
 
 related_pages_footer("51_Проверка_здоровья")

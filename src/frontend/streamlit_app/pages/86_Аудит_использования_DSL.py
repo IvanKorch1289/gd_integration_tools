@@ -192,7 +192,8 @@ if auto_refresh:
     import time
 
     st.caption("Авто-обновление через 30 секунд...")
-    time.sleep(30)
+    with st.spinner("Авто-обновление аудита через 30 сек..."):
+        time.sleep(30)
     st.rerun()
 
 related_pages_footer("86_Аудит_использования_DSL")

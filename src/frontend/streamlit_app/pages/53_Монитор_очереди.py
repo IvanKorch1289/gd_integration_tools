@@ -45,7 +45,8 @@ else:
 if auto_refresh:
     import time
 
-    time.sleep(10)
+    with st.spinner("Авто-рефреш очереди через 10 сек..."):
+        time.sleep(10)
     st.rerun()
 
 related_pages_footer("53_Монитор_очереди")
