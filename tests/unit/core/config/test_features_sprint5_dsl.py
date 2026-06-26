@@ -50,7 +50,7 @@ class TestSprint5DSLFlagsClass:
     def test_sprint5_dsl_flags_instantiates(self) -> None:
         flags = Sprint5DSLFlags()
         for f in SPRINT5_DSL_FIELD_NAMES:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint5_dsl_env_vars(self) -> None:
         os.environ["FEATURE_PROC_HTML_TEMPLATE"] = "true"

@@ -53,8 +53,7 @@ class LiteLLMGatewaySettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LITELLM_", extra="ignore")
 
     enabled: bool = Field(
-        default=False, description="Включить LiteLLM-шлюз. Default-OFF в MVP."
-    )
+        default=False,     )
     default_model: str = Field(
         default="gpt-4o-mini",
         description="Модель по умолчанию (litellm-slug, напр. 'openai/gpt-4o-mini').",
@@ -74,8 +73,7 @@ class LiteLLMGatewaySettings(BaseSettingsWithLoader):
         default=60.0, ge=1.0, description="Таймаут одного запроса (сек)."
     )
     langfuse_callback: bool = Field(
-        default=False, description="Подключить Langfuse-callback (если установлен)."
-    )
+        default=False,     )
 
 
 class RagCacheSettings(BaseSettingsWithLoader):
@@ -89,8 +87,7 @@ class RagCacheSettings(BaseSettingsWithLoader):
     )
     l1_ttl: int = Field(default=3600, ge=1, description="TTL L1 KV-кэша (секунды).")
     l2_enabled: bool = Field(
-        default=False,
-        description="L2 semantic cache по эмбеддингам (Qdrant). Default-OFF в MVP.",
+        default=False,         description="L2 semantic cache по эмбеддингам (Qdrant). Default-OFF в MVP.",
     )
     l2_threshold: float = Field(
         default=0.92,
@@ -112,8 +109,7 @@ class RagCacheSettings(BaseSettingsWithLoader):
         description="Redis pub/sub-канал для invalidate_by_tag.",
     )
     warm_on_ingest: bool = Field(
-        default=False,
-        description="Прогревать L1/L2/L3 cache на ingest (×2 cost — default-OFF).",
+        default=False,         description="Прогревать L1/L2/L3 cache на ingest (×2 cost — default-OFF).",
     )
 
 
@@ -124,8 +120,7 @@ class RagIngestSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="RAG_INGEST_", extra="ignore")
 
     deferred: bool = Field(
-        default=False,
-        description="Очередить ingest через Temporal-activity вместо inline-исполнения.",
+        default=False,         description="Очередить ingest через Temporal-activity вместо inline-исполнения.",
     )
     state_backend: str = Field(
         default="memory",
@@ -138,7 +133,7 @@ class RagIngestSettings(BaseSettingsWithLoader):
         default=86_400, ge=60, description="TTL Redis-ключей со state ingest-задач."
     )
     pii_mask_on_ingest: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 1.3 (gap-ai-1.3, ADR-0072): one-way PII-anonymize "
             "содержимого документа ДО передачи в RAGService.ingest. "
@@ -159,8 +154,7 @@ class BGESettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="BGE_", extra="ignore")
 
     enabled: bool = Field(
-        default=False,
-        description="Включить BGE-провайдер (lazy-load модели на первом запросе).",
+        default=False,         description="Включить BGE-провайдер (lazy-load модели на первом запросе).",
     )
     embedding_model: str = Field(
         default="BAAI/bge-m3", description="Имя модели BGE-M3 (1024-dim dense)."
@@ -202,8 +196,7 @@ class LangMemSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LANGMEM_", extra="ignore")
 
     enabled: bool = Field(
-        default=False, description="Включить LangMem-сервис. Default-OFF в MVP."
-    )
+        default=False,     )
     pg_dsn: str = Field(
         default="",
         description="DSN Postgres для episodic/procedural таблиц (если пусто, "
@@ -231,8 +224,7 @@ class LangMemSettings(BaseSettingsWithLoader):
         description="Минимальная confidence факта для записи в semantic.",
     )
     rlm_enabled: bool = Field(
-        default=False,
-        description="Включить RLM (Reinforcement Learning from Memory) re-ranking.",
+        default=False,         description="Включить RLM (Reinforcement Learning from Memory) re-ranking.",
     )
     rlm_boost_factor: float = Field(
         default=0.1,
@@ -254,8 +246,7 @@ class LangFuseSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LANGFUSE_", extra="ignore")
 
     enabled: bool = Field(
-        default=False, description="Включить LangFuse-callback и LangFuse-reader."
-    )
+        default=False,     )
     host: str = Field(default="", description="LangFuse host URL.")
     public_key: str = Field(default="", description="LangFuse public key.")
     secret_key: str = Field(default="", description="LangFuse secret key.")
@@ -285,8 +276,7 @@ class McpSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="MCP_", extra="ignore")
 
     http_enabled: bool = Field(
-        default=False, description="Монтировать /mcp как ASGI sub-app."
-    )
+        default=False,     )
     bind_path: str = Field(
         default="/mcp", description="Path-prefix для FastMCP ASGI app."
     )
@@ -295,11 +285,10 @@ class McpSettings(BaseSettingsWithLoader):
         description="Допустимые методы: api_key, jwt.",
     )
     legacy_description_schema: bool = Field(
-        default=False,
-        description="Сохранять JSON-Schema в description (graceful migration).",
+        default=False,         description="Сохранять JSON-Schema в description (graceful migration).",
     )
     tool_authz_enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 1.4 (gap-ai-1.4, ADR-0072/0070): per-tool authz при "
             "MCP dispatch. При True каждый action-tool проверяет, что "
@@ -358,7 +347,7 @@ class AIAgentSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="AI_AGENT_", extra="ignore")
 
     policy_gate_enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 1.5 (gap-ai-1.5, ADR-0072/0066): AuthorizationGateway "
             "проверка перед каждым LLM-вызовом через AIAgentService.chat(). "

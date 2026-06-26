@@ -37,8 +37,7 @@ class WafSettings(BaseSettingsWithLoader):
     )
 
     strict: bool = Field(
-        default=False,
-        description="При True пустой allow_hosts трактуется как deny-all.",
+        default=False,         description="При True пустой allow_hosts трактуется как deny-all.",
     )
 
     max_payload_bytes: int = Field(
@@ -62,7 +61,7 @@ class WafSettings(BaseSettingsWithLoader):
     # активируется явно через ``WAF_CLAMAV_ENABLED=true`` в окружении,
     # где clamd доступен по TCP. См. infrastructure.antivirus.payload_scanner.
     clamav_enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Включить ClamAVPayloadScanner как async_payload_scanner для "
             "WafPolicy. Требует доступного clamd по TCP (см. clamav_host/port)."

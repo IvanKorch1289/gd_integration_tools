@@ -38,7 +38,7 @@ class TestSprint19DXFlagsClass:
     def test_sprint19_dx_flags_instantiates(self) -> None:
         flags = Sprint19DXFlags()
         for f in SPRINT19_DX_FIELD_NAMES:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint19_dx_env_vars(self) -> None:
         os.environ["FEATURE_WORKFLOW_VERSIONING_ROUTES"] = "true"

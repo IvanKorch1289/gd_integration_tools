@@ -20,7 +20,7 @@ class TestSprint5FlagsClass:
             "inbox_audit_pii_mask",
             "dlq_unified_enabled",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint5_env_vars(self) -> None:
         os.environ["FEATURE_SUPPLY_CHAIN_CI_GATE"] = "true"

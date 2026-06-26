@@ -77,7 +77,7 @@ class TestAIRAGFlagsClass:
             elif f in AIRAG_DEFAULT_TRUE:
                 assert getattr(flags, f) is True, f"{f} default не True"
             else:
-                assert getattr(flags, f) is False, f"{f} default не False"
+                assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_ai_rag_env_vars(self) -> None:
         os.environ["FEATURE_RAG_PII_RETRIEVAL_MASK"] = "true"

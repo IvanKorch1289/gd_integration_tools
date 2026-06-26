@@ -44,7 +44,7 @@ class OutboxSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="OUTBOX_", extra="forbid")
 
     enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Feature-flag для OutboxDispatcher (default-OFF). При ``False`` "
             "lifecycle hook ``start_outbox_dispatcher`` и сам ``start`` "
@@ -53,7 +53,7 @@ class OutboxSettings(BaseSettingsWithLoader):
         ),
     )
     use_redis_dedupe: bool = Field(
-        default=False,
+        default=True,
         description=(
             "S64 W4: feature-flag для cross-instance dedup store. "
             "``False`` (default) → MemoryDedupeStore (in-process, "

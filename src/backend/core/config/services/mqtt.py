@@ -41,12 +41,11 @@ class MqttSettings(BaseSettingsWithLoader):
         description="Топики для подписки (поддерживаются wildcards + и #)",
     )
     qos: int = Field(default=1, ge=0, le=2, description="Quality of Service (0, 1, 2)")
-    enabled: bool = Field(default=False, description="Включить MQTT-подписку")
+    enabled: bool = Field(default=True, description="Включить MQTT-подсистему"),  # S171 M9: enable (project not in prod)
 
     # TLS / mTLS (A2 / ADR-004). Для prod/внешних брокеров TLS обязателен.
     tls_enabled: bool = Field(
-        default=False,
-        description="Включить TLS для MQTT (обязательно для публичных брокеров)",
+        default=False,         description="Включить TLS для MQTT (обязательно для публичных брокеров)",
     )
     ca_cert_path: str = Field(
         default="", description="Путь к CA-сертификату брокера (PEM)"

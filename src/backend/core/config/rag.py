@@ -150,7 +150,7 @@ class RAGSettings(BaseSettingsWithLoader):
 
     # --- Block 3.5 (gap-ai-3.5, ADR-0074): embedding provenance --------
     embedding_strict_mode: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 3.5: retrieval фильтрует chunks с "
             "metadata.embedding_model != current rag.embedding_model. "
@@ -162,7 +162,7 @@ class RAGSettings(BaseSettingsWithLoader):
 
     # --- Block 3.2 (gap-ai-3.2): hybrid retrieval ---------------------
     hybrid_enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 3.2: hybrid retriever (dense + BM25 + RRF) поверх "
             "vector store. При True RAGService.search комбинирует семантику "

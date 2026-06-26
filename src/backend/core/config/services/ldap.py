@@ -75,7 +75,7 @@ class LdapSettings(BaseSettingsWithLoader):
     # === Опциональные параметры (default values подходят для AD 2016+) ===
 
     use_ssl: bool = Field(
-        default=False,
+        default=True,
         description=(
             "True для ``ldaps://``. Авто-derive из ``server_uri`` "
             "(если URI начинается с ``ldaps://`` → True). Override возможен."

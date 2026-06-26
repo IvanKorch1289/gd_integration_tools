@@ -47,13 +47,11 @@ class TelegramBotSettings(BaseBotChannelSettings):
         description="Режим парсинга сообщений по умолчанию",
     )
     disable_notification: bool = Field(
-        default=False,
-        title="Без звука",
+        default=False,         title="Без звука",
         description="Отправлять сообщения с отключёнными уведомлениями",
     )
     polling_mode: bool = Field(
-        default=False,
-        title="Long-polling",
+        default=False,         title="Long-polling",
         description=(
             "True = long-polling (getUpdates); False = webhook. "
             "Для prod рекомендуется webhook."

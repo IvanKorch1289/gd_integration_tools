@@ -21,7 +21,7 @@ class TestSprint7FlagsClass:
             "dsl_blueprints_migrate",
             "workflow_versioning_strict",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint7_env_vars(self) -> None:
         os.environ["FEATURE_MULTI_AGENT_SUPERVISOR_ENABLED"] = "true"

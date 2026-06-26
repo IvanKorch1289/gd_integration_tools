@@ -14,7 +14,7 @@ class TestSecurityFlagsClass:
 
     def test_security_flags_instantiates(self) -> None:
         flags = SecurityFlags()
-        assert flags.vault_rotation_enabled is False
+        assert flags.vault_rotation_enabled is False  # default-OFF feature flag
 
     def test_vault_rotation_via_env_var(self) -> None:
         os.environ["FEATURE_VAULT_ROTATION_ENABLED"] = "true"
@@ -35,7 +35,7 @@ class TestSecurityFlagsClass:
 class TestSecurityFlagsComposition:
     def test_feature_flags_inherits_vault_field(self) -> None:
         assert hasattr(feature_flags, "vault_rotation_enabled")
-        assert feature_flags.vault_rotation_enabled is False
+        assert feature_flags.vault_rotation_enabled is False  # default-OFF feature flag
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

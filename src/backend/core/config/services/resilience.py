@@ -132,7 +132,7 @@ class ResilienceSettings(BaseSettingsWithLoader):
         ),
     )
     new_resilience_v2: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Sprint 1 V16 Single-Entry feature-flag. ``True`` включает миграцию "
             "callsite'ов на canonical-импорты ``core.resilience.{breaker,retry,"

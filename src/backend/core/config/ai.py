@@ -119,7 +119,7 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     use_waf: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Проксировать через WAF (false по-умолчанию: OpenWebUI во "
             "внутреннем контуре, WAF не требуется)."

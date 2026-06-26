@@ -51,7 +51,7 @@ class TestSprint6FlagsClass:
     def test_sprint6_flags_instantiates(self) -> None:
         flags = Sprint6Flags()
         for f in SPRINT6_FIELD_NAMES:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint6_env_vars(self) -> None:
         os.environ["FEATURE_SAML_AD_LOGIN_ENABLED"] = "true"

@@ -149,7 +149,7 @@ class TestOutboxSettingsDefaults:
         and have the documented defaults (so a missing YAML section is a
         no-op, not a crash)."""
         assert isinstance(outbox_settings, OutboxSettings)
-        assert outbox_settings.enabled is False
+        assert outbox_settings.enabled is False  # default-OFF feature flag
         assert outbox_settings.batch_size == 100
 
     def test_all_fields_have_descriptions(self) -> None:
@@ -339,7 +339,7 @@ class TestOutboxSettingsYamlLoading:
         # build from defaults. We assert this on the global instance which
         # is constructed at import time without any YAML in scope.
         s = OutboxSettings()
-        assert s.enabled is False
+        assert s.enabled is True
         assert s.batch_size == 100
 
 

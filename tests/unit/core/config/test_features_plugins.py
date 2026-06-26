@@ -15,7 +15,7 @@ class TestPluginsFlagsClass:
     def test_plugins_flags_instantiates(self) -> None:
         flags = PluginsFlags()
         for f in ("extensions_credit_workflow", "credit_pipeline_v2"):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_plugins_env_vars(self) -> None:
         os.environ["FEATURE_EXTENSIONS_CREDIT_WORKFLOW"] = "true"

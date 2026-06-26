@@ -36,8 +36,7 @@ class WorkflowSettings(BaseSettingsWithLoader):
     )
 
     bootstrap_defaults_enabled: bool = Field(
-        default=False,
-        title="Подключить дефолтные saga-декларации на startup",
+        default=False,         title="Подключить дефолтные saga-декларации на startup",
         description=(
             "Если True — на startup регистрируются orders_saga + "
             "payments_saga из src.backend.workflows. По умолчанию "

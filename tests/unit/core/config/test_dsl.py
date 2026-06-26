@@ -13,7 +13,7 @@ class TestDSLSettings:
     def test_defaults(self) -> None:
         s = DSLSettings()
         assert s.routes_dir == Path("dsl_routes")
-        assert s.hot_reload_enabled is False
+        assert s.hot_reload_enabled is False  # default-OFF feature flag
         assert s.hot_reload_debounce_ms == 500
 
     def test_custom_values(self) -> None:

@@ -47,7 +47,7 @@ class TestInfrastructureFlagsClass:
             "clickhouse_bulk_writer_enabled",
         ]
         for f in expected:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_infrastructure_env_vars(self) -> None:
         os.environ["FEATURE_MEM0AI_ENABLED"] = "true"

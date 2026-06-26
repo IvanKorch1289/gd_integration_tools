@@ -50,8 +50,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
     # ── Обязательные параметры (при enabled=True) ──
 
     enabled: bool = Field(
-        default=False, description="Включить интеграцию с JupyterHub."
-    )
+        default=False,     )
 
     base_url: str = Field(
         default=_DEFAULT_BASE_URL,

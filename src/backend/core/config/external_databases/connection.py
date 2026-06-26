@@ -129,8 +129,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     )
 
     pool_use_lifo: bool = Field(
-        default=False,
-        description="SQLAlchemy pool_use_lifo: True — LIFO, False — FIFO (default).",
+        default=False,         description="SQLAlchemy pool_use_lifo: True — LIFO, False — FIFO (default).",
         examples=[False],
     )
 

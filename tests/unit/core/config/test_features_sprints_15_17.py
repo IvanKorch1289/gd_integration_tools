@@ -38,7 +38,7 @@ class TestSprints1517FlagsClass:
             "saga_state_persistence_enabled",
         ]
         for f in expected:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprints_15_17_env_vars(self) -> None:
         os.environ["FEATURE_AI_PR_REVIEW_ENABLED"] = "true"

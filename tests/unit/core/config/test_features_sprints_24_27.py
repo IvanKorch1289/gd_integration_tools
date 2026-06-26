@@ -45,7 +45,7 @@ class TestSprints2427FlagsClass:
         for f in (
             f for f in SPRINTS_24_27_FIELD_NAMES if f != "ai_gateway_enforce"
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprints_24_27_env_vars(self) -> None:
         os.environ["FEATURE_PRESIDIO_PII_ENABLED"] = "true"

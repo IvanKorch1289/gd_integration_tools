@@ -40,6 +40,7 @@ class TestSprints1821FlagsClass:
         assert Sprints1821Flags is not None
 
     def test_sprints_18_21_flags_instantiates(self) -> None:
+        """Проверяет, что флаги можно инстанциировать."""
         flags = Sprints1821Flags()
         for f in SPRINTS_18_21_FIELD_NAMES:
             assert getattr(flags, f) is False, f"{f} default не False"

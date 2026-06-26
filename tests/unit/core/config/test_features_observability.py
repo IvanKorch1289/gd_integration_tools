@@ -14,8 +14,8 @@ class TestObservabilityFlagsClass:
 
     def test_observability_flags_instantiates(self) -> None:
         flags = ObservabilityFlags()
-        assert flags.tracing_baggage_strict is False
-        assert flags.audit_clickhouse_enabled is False
+        assert flags.tracing_baggage_strict is False  # default-OFF feature flag
+        assert flags.audit_clickhouse_enabled is False  # default-OFF feature flag
 
     def test_observability_env_vars(self) -> None:
         os.environ["FEATURE_TRACING_BAGGAGE_STRICT"] = "true"
@@ -41,8 +41,8 @@ class TestObservabilityFlagsComposition:
     def test_feature_flags_inherits_observability_fields(self) -> None:
         assert hasattr(feature_flags, "tracing_baggage_strict")
         assert hasattr(feature_flags, "audit_clickhouse_enabled")
-        assert feature_flags.tracing_baggage_strict is False
-        assert feature_flags.audit_clickhouse_enabled is False
+        assert feature_flags.tracing_baggage_strict is False  # default-OFF feature flag
+        assert feature_flags.audit_clickhouse_enabled is False  # default-OFF feature flag
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

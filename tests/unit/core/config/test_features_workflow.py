@@ -14,10 +14,10 @@ class TestWorkflowFlagsClass:
 
     def test_workflow_flags_instantiates(self) -> None:
         flags = WorkflowFlags()
-        assert flags.workflow_legacy_disabled is False
-        assert flags.workflow_yaml_round_trip is False
-        assert flags.workflow_bpmn_import is False
-        assert flags.workflow_gateways_enabled is False
+        assert flags.workflow_legacy_disabled is False  # default-OFF feature flag
+        assert flags.workflow_yaml_round_trip is False  # default-OFF feature flag
+        assert flags.workflow_bpmn_import is False  # default-OFF feature flag
+        assert flags.workflow_gateways_enabled is False  # default-OFF feature flag
 
     def test_workflow_env_vars(self) -> None:
         os.environ["FEATURE_WORKFLOW_YAML_ROUND_TRIP"] = "true"
@@ -27,8 +27,8 @@ class TestWorkflowFlagsClass:
             assert flags.workflow_yaml_round_trip is True
             assert flags.workflow_gateways_enabled is True
             # Other 2 still default
-            assert flags.workflow_legacy_disabled is False
-            assert flags.workflow_bpmn_import is False
+            assert flags.workflow_legacy_disabled is False  # default-OFF feature flag
+            assert flags.workflow_bpmn_import is False  # default-OFF feature flag
         finally:
             del os.environ["FEATURE_WORKFLOW_YAML_ROUND_TRIP"]
             del os.environ["FEATURE_WORKFLOW_GATEWAYS_ENABLED"]
@@ -49,7 +49,7 @@ class TestWorkflowFlagsComposition:
         assert hasattr(feature_flags, "workflow_yaml_round_trip")
         assert hasattr(feature_flags, "workflow_bpmn_import")
         assert hasattr(feature_flags, "workflow_gateways_enabled")
-        assert feature_flags.workflow_gateways_enabled is False
+        assert feature_flags.workflow_gateways_enabled is False  # default-OFF feature flag
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

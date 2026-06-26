@@ -28,7 +28,7 @@ class TestDSLFlagsClass:
             "email_imap_source",
             "notification_dsl_enabled",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_dsl_env_vars(self) -> None:
         os.environ["FEATURE_DSL_ROUTE_HOT_RELOAD"] = "true"

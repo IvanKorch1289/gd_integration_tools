@@ -262,8 +262,7 @@ class GRPCSettings(BaseSettingsWithLoader):
 
     # TLS / mTLS (ADR-004). Для dev/unix-socket TLS может быть отключён.
     tls_enabled: bool = Field(
-        default=False,
-        description="Включить TLS для gRPC (обязательно в prod для TCP-портов)",
+        default=False,         description="Включить TLS для gRPC (обязательно в prod для TCP-портов)",
     )
     server_cert_path: str = Field(
         default="", description="Путь к серверному сертификату (PEM)"
@@ -275,8 +274,7 @@ class GRPCSettings(BaseSettingsWithLoader):
         default="", description="Путь к CA-сертификату для mTLS (опционально)"
     )
     require_client_auth: bool = Field(
-        default=False, description="Требовать клиентский сертификат (mTLS)"
-    )
+        default=False,     )
 
     @computed_field(description="Сформировать URI для подключения к сокету")
     def socket_uri(self) -> str:

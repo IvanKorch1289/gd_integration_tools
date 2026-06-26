@@ -199,7 +199,7 @@ class RedisSettings(BaseSettingsWithLoader):
     # меняется, используется обычный ``redis.asyncio.Redis``. Включение
     # cluster_mode требует непустого ``cluster_nodes`` (см. валидатор).
     cluster_mode: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Включить кластерный режим Redis "
             "(``redis.asyncio.cluster.RedisCluster``). При ``true`` стартовые "
@@ -331,7 +331,7 @@ class CacheSettings(BaseSettingsWithLoader):
         description="Размер L1 cachetools.TTLCache по умолчанию.",
     )
     keydb_active_replica: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Включить multi-master режим KeyDB (active-active). "
             "Требует соответствующего deployment."

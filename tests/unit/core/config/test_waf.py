@@ -10,9 +10,9 @@ from src.backend.core.config.waf import WafSettings
 class TestWafSettings:
     def test_defaults(self) -> None:
         s = WafSettings()
-        assert s.strict is False
+        assert s.strict is False  # default-OFF feature flag
         assert s.max_payload_bytes == 10 * 1024 * 1024
-        assert s.clamav_enabled is False
+        assert s.clamav_enabled is False  # default-OFF feature flag
         assert s.clamav_fail_open is True
 
     def test_custom(self) -> None:
@@ -25,7 +25,7 @@ class TestWafSettings:
         assert s.strict is True
         assert s.max_payload_bytes == 1024
         assert s.clamav_host == "clamav"
-        assert s.clamav_fail_open is False
+        assert s.clamav_fail_open is False  # explicit override
 
     def test_bounds(self) -> None:
         with pytest.raises(Exception):

@@ -20,7 +20,7 @@ class TestAuthFlagsClass:
 
     def test_auth_flags_instantiates(self) -> None:
         flags = AuthFlags()
-        assert flags.auth_mtls_client is False
+        assert flags.auth_mtls_client is False  # intentionally left OFF (see comment in auth.py)
 
     def test_auth_flags_has_env_prefix(self) -> None:
         # FEATURE_AUTH_MTLS_CLIENT=true → auth_mtls_client=True
@@ -52,7 +52,7 @@ class TestFeatureFlagsComposition:
     def test_feature_flags_inherits_auth_fields(self) -> None:
         # feature_flags singleton имеет auth_mtls_client через inheritance
         assert hasattr(feature_flags, "auth_mtls_client")
-        assert feature_flags.auth_mtls_client is False
+        assert feature_flags.auth_mtls_client is False  # default-OFF feature flag
 
     def test_feature_flags_inherits_other_flags(self) -> None:
         # Existing flags (waf, ai) still in __init__.py
@@ -79,7 +79,7 @@ class TestAuthFlagsBackwardsCompat:
 
     def test_field_default_values(self) -> None:
         # auth flag — default False
-        assert feature_flags.auth_mtls_client is False
+        assert feature_flags.auth_mtls_client is False  # default-OFF feature flag
 
 
 class TestAuthJoserfcFlagRemoved:

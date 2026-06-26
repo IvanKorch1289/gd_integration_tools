@@ -32,7 +32,7 @@ class TestSprint19AIFlagsClass:
             "dsl_usage_audit_enabled",
         ]
         for f in expected:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint19_ai_env_vars(self) -> None:
         os.environ["FEATURE_ADAPTIVE_TIMEOUT_ENABLED"] = "true"

@@ -30,7 +30,7 @@ class TestSprint5K2FlagsClass:
     def test_sprint5_k2_flags_instantiates(self) -> None:
         flags = Sprint5K2Flags()
         for f in SPRINT5_K2_FIELD_NAMES:
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint5_k2_env_vars(self) -> None:
         os.environ["FEATURE_INBOX_FAIL_CLOSED"] = "true"

@@ -73,8 +73,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
     )
 
     force_close: bool = Field(
-        default=False,
-        title="Принудительное закрытие соединения",
+        default=False,         title="Принудительное закрытие соединения",
         description="При значении True принудительно закрывает соединения после завершения работы",
         examples=[False],
     )
@@ -97,8 +96,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
     )
 
     enable_connection_purging: bool = Field(
-        default=False,
-        title="Включение очистки пула соединений",
+        default=False,         title="Включение очистки пула соединений",
         description="При значении True автоматически очищает пул соединений после определенного интервала",
         examples=[False],
     )

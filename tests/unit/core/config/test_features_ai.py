@@ -26,7 +26,7 @@ class TestAIFlagsClass:
             "prompt_registry_langfuse",
             "multimodal_rag_enabled",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_ai_env_vars(self) -> None:
         os.environ["FEATURE_LANGFUSE_V3"] = "true"

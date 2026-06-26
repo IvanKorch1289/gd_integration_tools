@@ -91,8 +91,7 @@ class RPASettings(BaseSettingsWithLoader):
     # ── OCR backend (feature-flag gated) ─────────────────────────────
 
     ocr_enabled: bool = Field(
-        default=False, description="Enable OCR functionality (Pytesseract backend)."
-    )
+        default=False,     )
     ocr_default_lang: str = Field(
         default="eng+rus",
         description="Default Tesseract language code (``eng``, ``rus``, ``eng+rus``).",

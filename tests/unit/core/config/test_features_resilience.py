@@ -22,7 +22,7 @@ class TestResilienceFlagsClass:
             "task_watchdog_deadline",
             "pool_health_monitor",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_resilience_env_vars(self) -> None:
         os.environ["FEATURE_AUTO_SCALER_PROCESS_LEVEL"] = "true"

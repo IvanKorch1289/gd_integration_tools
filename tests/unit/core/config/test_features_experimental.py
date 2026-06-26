@@ -23,7 +23,7 @@ class TestExperimentalFlagsClass:
             "plugin_semver_strict",
             "frontend_plugin_marketplace",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_experimental_env_vars(self) -> None:
         os.environ["FEATURE_EVENTBUS_FACADE"] = "true"

@@ -77,8 +77,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     echo: bool = Field(
-        default=False, description="Включить логирование SQL-запросов", examples=[False]
-    )
+        default=False,     )
 
     username: str = Field(
         default="",

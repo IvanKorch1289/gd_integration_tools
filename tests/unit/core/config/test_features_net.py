@@ -14,9 +14,9 @@ class TestNetFlagsClass:
 
     def test_net_flags_instantiates(self) -> None:
         flags = NetFlags()
-        assert flags.metering_per_host is False
-        assert flags.connection_reuse_manager is False
-        assert flags.waf_outbound_via_facade is False
+        assert flags.metering_per_host is False  # default-OFF feature flag
+        assert flags.connection_reuse_manager is False  # default-OFF feature flag
+        assert flags.waf_outbound_via_facade is False  # default-OFF feature flag
 
     def test_net_env_vars(self) -> None:
         os.environ["FEATURE_METERING_PER_HOST"] = "true"
@@ -47,7 +47,7 @@ class TestNetFlagsComposition:
         assert hasattr(feature_flags, "metering_per_host")
         assert hasattr(feature_flags, "connection_reuse_manager")
         assert hasattr(feature_flags, "waf_outbound_via_facade")
-        assert feature_flags.metering_per_host is False
+        assert feature_flags.metering_per_host is False  # default-OFF feature flag
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

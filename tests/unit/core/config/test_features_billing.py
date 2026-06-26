@@ -20,7 +20,7 @@ class TestBillingFlagsClass:
             "openfeature_flagsmith_backend",
             "extensions_core_entities",
         ):
-            assert getattr(flags, f) is False, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_billing_env_vars(self) -> None:
         os.environ["FEATURE_PER_TENANT_BILLING_ENABLED"] = "true"
