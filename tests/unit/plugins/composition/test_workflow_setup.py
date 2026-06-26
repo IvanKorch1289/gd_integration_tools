@@ -42,7 +42,7 @@ def test_bootstrap_defaults_disabled_by_default(
     assert _clean_registry.list_names() == ()
 
 
-@pytest.mark.skip(reason="S171 M11 R6: orders_saga missing — defer")
+@pytest.mark.skip(reason="S171 M11 R6: orders_saga файл отсутствует — defer to R4 refactor (see docs/m11_deferred_tests.md)")
 def test_bootstrap_defaults_registers_two_sagas_when_enabled(
     monkeypatch: pytest.MonkeyPatch,
     _clean_registry: workflow_setup.WorkflowCompilerRegistry,

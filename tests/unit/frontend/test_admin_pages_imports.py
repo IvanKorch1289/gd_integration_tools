@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="S171 M11 R5: frontend tests broken after page renames (S173) — defer")
+pytestmark = pytest.mark.skip(reason="S171 M11 R5: frontend tests broken after Cyrillic page renames (S173) — defer (see docs/m11_deferred_tests.md)")
 
 
 def _page_path(filename: str) -> Path:

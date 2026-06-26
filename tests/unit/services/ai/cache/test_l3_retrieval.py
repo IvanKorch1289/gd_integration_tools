@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="S171 M11 R3/R4: defer — pre-existing test pollution")
+pytestmark = pytest.mark.skip(reason="S171 M11 R4: pre-existing test pollution — defer to R4 refactor (see docs/m11_deferred_tests.md)")
 
 from src.backend.services.ai.semantic_cache import (
     RAG_CACHE_INVALIDATE_CHANNEL,
