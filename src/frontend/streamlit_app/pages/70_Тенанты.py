@@ -26,7 +26,12 @@ st.caption(
 
 client = get_api_client()
 with st.spinner("Загрузка тенантов..."):
-    tenants_payload = client.get_tenants()
+    try:
+        tenants_payload = client.get_tenants()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка API: {exc}")
+        st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
+        st.stop()
 
 if tenants_payload.get("stub"):
     st.info(

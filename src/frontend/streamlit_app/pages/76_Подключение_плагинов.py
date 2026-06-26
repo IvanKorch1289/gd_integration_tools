@@ -85,7 +85,12 @@ if step == 1:
 elif step == 2:
     st.subheader("Возможности (ADR-044)")
     with st.spinner("Загрузка каталога возможностей..."):
-        catalog = client.get_capability_catalog()
+        try:
+            catalog = client.get_capability_catalog()
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Ошибка API: {exc}")
+            st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
+            st.stop()
     vocab = catalog.get("vocabulary", [])
     options = [c["name"] for c in vocab] or [
         "db.read",
