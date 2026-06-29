@@ -101,7 +101,8 @@ def render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | Non
             </div>
         </div>
         <div id="empty-msg" class="pipeline-empty" style="display: none;">
-            �_empty_placeholder😐 Перетащите процессор из палитры или добавьте через форму слева
+            �_empty_placeholder😐 Перетащите процессор из палитры или
+            добавьте через форму слева
         </div>
     </div>
 
@@ -127,9 +128,13 @@ def render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | Non
                 <span class="step-num">${{i + 1}}</span>
                 <div class="step-content">
                     <div class="step-type">▶ ${{step.type}}</div>
-                    <div class="step-params">${{Object.keys(step.params || {{}}).length > 0
-                        ? Object.entries(step.params || {{}}).map(([k,v]) => `${{k}}=${{v}}`).join(', ')
-                        : 'без параметров'}}</div>
+                    <div class="step-params">${{
+                        Object.keys(step.params || {{}}).length > 0
+                            ? Object.entries(step.params || {{}}).map(
+                                ([k,v]) => `${{k}}=${{v}}`
+                            ).join(', ')
+                            : 'без параметров'
+                    }}</div>
                 </div>
             </div>
         `).join('');
@@ -157,7 +162,9 @@ def render_drag_drop_pipeline(steps: list[dict], meta: dict) -> list[dict] | Non
         e.target.classList.remove('dragging');
         draggedIndex = null;
         // Remove drag-over from all zones
-        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        document.querySelectorAll('.drag-over').forEach(
+            el => el.classList.remove('drag-over')
+        );
     }}
 
     // Drop zone events

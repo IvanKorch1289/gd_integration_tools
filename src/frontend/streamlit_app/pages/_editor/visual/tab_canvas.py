@@ -51,7 +51,11 @@ def render_canvas_tab(client) -> None:
                     st.markdown(f"**{icon} {proc_type}**")
                     st.caption(f"Параметры: {', '.join(params) if params else 'нет'}")
                 with c2:
-                    if st.button("➕", key=f"add_{proc_type}", help=f"Добавить {proc_type}"):
+                    if st.button(
+                        "➕",
+                        key=f"add_{proc_type}",
+                        help=f"Добавить {proc_type}",
+                    ):
                         st.session_state.canvas_steps.append(
                             {"type": proc_type, "params": dict.fromkeys(params, "")}
                         )
@@ -133,7 +137,10 @@ def render_canvas_tab(client) -> None:
         st.divider()
 
         if not st.session_state.canvas_steps:
-            st.info("🖱️ Перетащите шаги из палитры или нажмите ➕ чтобы добавить. Настройте справа.")
+            st.info(
+                "🖱️ Перетащите шаги из палитры или нажмите ➕ чтобы добавить."
+                " Настройте справа."
+            )
         else:
             st.markdown(f"**Steps ({len(st.session_state.canvas_steps)}):**")
 
@@ -204,7 +211,10 @@ def render_canvas_tab(client) -> None:
 
                         col_up, col_down, col_del = c3, c4, st.columns(2)[1]
                         if col_up.button(
-                            "⬆️", key=f"up_{i}", help="Переместить вверх", disabled=i == 0
+                            "⬆️",
+                            key=f"up_{i}",
+                            help="Переместить вверх",
+                            disabled=i == 0
                         ):
                             (
                                 st.session_state.canvas_steps[i - 1],
@@ -268,7 +278,9 @@ def render_canvas_tab(client) -> None:
             st.download_button(
                 "📥 Скачать YAML",
                 data=yaml_bytes,
-                file_name=f"{st.session_state.meta_route.get('route_id', 'route')}.yaml",
+                file_name=(
+                    f"{st.session_state.meta_route.get('route_id', 'route')}.yaml"
+                ),
                 mime="text/yaml",
                 width='stretch',
             )
