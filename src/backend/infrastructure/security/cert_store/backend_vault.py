@@ -61,24 +61,77 @@ class VaultCertBackend(CertBackend):
 
     name = "vault"
 
-    def __init__(self, base_path: str) -> None:
+    def __init__(
+        self,
+        base_path: str,
+        *,
+        vault_url: str | None = None,
+        token: str | None = None,
+        role_id: str | None = None,
+        secret_id: str | None = None,
+        kubernetes_role: str | None = None,
+    ) -> None:
+        """VaultCertBackend с поддержкой 3 auth methods (D255).
+
+        Args:
+            base_path: Базовый путь в Vault KV v2.
+            vault_url: Vault URL (если None — из settings).
+            token: Static token (fallback auth, D255 backward compat).
+            role_id: AppRole role_id (D255 NEW, preferred для prod).
+            secret_id: AppRole secret_id (D255 NEW).
+            kubernetes_role: K8s auth role (D255 NEW, для Vault Agent sidecar).
+
+        Приоритет: kubernetes_role > role_id/secret_id > token.
+        """
         self._base = base_path.rstrip("/")
-        self._client_factory: Callable[[], Any] | None = None
+        self._vault_url = vault_url
+        self._token = token
+        self._role_id = role_id
+        self._secret_id = secret_id
+        self._kubernetes_role = kubernetes_role
+        self._client: Any = None  # lazy init
 
-    def _client(self) -> Any:
-        from hvac import Client  # лениво, чтобы тесты без Vault работали
-
+    def _resolve_url(self) -> str | None:
+        """Получить vault_url: kwarg → settings."""
+        if self._vault_url:
+            return self._vault_url
         from src.backend.core.config.settings import settings
-
-        url = getattr(settings, "vault_url", None) or getattr(
+        return getattr(settings, "vault_url", None) or getattr(
             settings.app, "vault_url", None
         )
-        token = getattr(settings, "vault_token", None) or getattr(
-            settings.app, "vault_token", None
-        )
-        client = Client(url=url, token=token)
+
+    def _authenticate(self, client: Any) -> None:
+        """AppRole/K8s/static token auth (D255).
+
+        Приоритет:
+        1. kubernetes_role (Vault Agent sidecar, JWT in pod)
+        2. role_id + secret_id (AppRole, rotating secrets)
+        3. static token (legacy, dev)
+        """
+        if self._kubernetes_role:
+            client.auth.kubernetes.login(role=self._kubernetes_role)
+            return
+        if self._role_id and self._secret_id:
+            resp = client.auth.approle.login(
+                role_id=self._role_id, secret_id=self._secret_id
+            )
+            return
+        if self._token:
+            client.token = self._token
+            return
+        raise ConnectionError("Vault: no auth method configured")
+
+    def _client(self) -> Any:
+        """Lazy hvac.Client + auth (D255)."""
+        if self._client is not None:
+            return self._client
+        from hvac import Client  # лениво, чтобы тесты без Vault работали
+        url = self._resolve_url()
+        client = Client(url=url)
+        self._authenticate(client)
         if not client.is_authenticated():
             raise ConnectionError("Vault: не аутентифицирован")
+        self._client = client
         return client
 
     async def get(self, service_id: str) -> CertEntry | None:
