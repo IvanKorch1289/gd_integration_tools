@@ -23,6 +23,7 @@ from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 setup_page()
 st.header(":bar_chart: Аудит использования DSL")
@@ -33,7 +34,7 @@ client = get_api_client()
 # ── Controls
 col1, col2, col3 = st.columns(3)
 top_n = col1.number_input(
-    "Top N процессоров", min_value=1, max_value=100, value=20, step=5
+    "Top N процессоров", min_value=1, max_value=100, value=config.AUDIT_DEFAULT_LIMIT // 2, step=5
 )
 auto_refresh = col2.toggle("Авто-обновление (30s)", value=False)
 show_details = col3.toggle("Показать детали", value=True)
@@ -69,7 +70,7 @@ def run_audit(top: int = 20) -> dict:
             ],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=config.HTTP_TIMEOUT_LONG_SEC,
             cwd=str(project_root),
         )
         if result.returncode == 0:
@@ -129,7 +130,7 @@ if top_processors:
     )
 
     if show_details:
-        st.dataframe(df_display, width='stretch', height=400)
+        st.dataframe(df_display, width='stretch', height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
     else:
         st.dataframe(
             df_display[
@@ -142,7 +143,7 @@ if top_processors:
                 ]
             ],
             width='stretch',
-            height=400,
+            height=config.DATAFRAME_DEFAULT_HEIGHT - 100,
         )
 
     # ── Charts
@@ -158,7 +159,7 @@ if top_processors:
             chart_data = df_display[["Имя процессора", "Usage Count"]].set_index(
                 "Имя процессора"
             )
-            st.bar_chart(chart_data, horizontal=True, height=400)
+            st.bar_chart(chart_data, horizontal=True, height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
 
     # Latency bar chart
     with chart_col2:
@@ -169,7 +170,7 @@ if top_processors:
             ].set_index(
                 "Имя процессора"
             )
-            st.bar_chart(latency_data, horizontal=True, height=400)
+            st.bar_chart(latency_data, horizontal=True, height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
 
     # Error rate chart
     if show_details and "Доля ошибок (%)" in df_display.columns:
@@ -178,7 +179,7 @@ if top_processors:
         error_data = df_display[["Имя процессора", "Доля ошибок (%)"]].set_index(
             "Имя процессора"
         )
-        st.bar_chart(error_data, horizontal=True, height=300)
+        st.bar_chart(error_data, horizontal=True, height=config.CODE_BLOCK_HEIGHT * 2)
 
 else:
     st.info(
