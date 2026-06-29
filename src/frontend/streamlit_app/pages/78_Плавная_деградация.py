@@ -20,7 +20,9 @@ from src.frontend.streamlit_app.shared.components import (
 setup_page()
 st.title("🛡️ Плавная деградация")
 st.caption(
-    "5-уровневая система деградации: FULL → DEGRADED → MINIMAL → MAINTENANCE → OFFLINE."
+    "5-уровневая система деградации: FULL → DEGRADED "
+
+    "→ MINIMAL → MAINTENANCE → OFFLINE."
 )
 
 client = get_api_client()
@@ -73,7 +75,9 @@ with tab_status:
 with tab_switch:
     st.subheader("Ручное переключение режима деградации")
     st.warning(
-        "⚠️ Только для OPERATOR/SUPER_ADMIN. Action audited через AdminAuditMiddleware."
+        "⚠️ Только для OPERATOR/SUPER_ADMIN. Action "
+
+        "audited через AdminAuditMiddleware."
     )
 
     new_mode = st.radio("Целевой режим", options=_MODE_OPTIONS, index=0, horizontal=True)

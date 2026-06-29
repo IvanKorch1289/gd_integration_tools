@@ -164,7 +164,9 @@ def _render_dspy_tab() -> None:
     runs = data.get("runs", []) if isinstance(data, dict) else []
     if not runs:
         st.info(
-            "Нет завершённых runs. Cron `ai_feedback_dspy_nightly` запускается в 03:00 при включённом feature-flag."
+            "Нет завершённых runs. Cron `ai_feedback_dspy_nightly` "
+
+            "запускается в 03:00 при включённом feature-flag."
         )
     else:
         for r in runs:

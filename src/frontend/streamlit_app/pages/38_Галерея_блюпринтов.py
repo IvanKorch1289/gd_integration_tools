@@ -21,7 +21,9 @@ from src.frontend.streamlit_app.shared.components import (
 setup_page()
 st.header(":art: Галерея blueprint'ов")
 st.caption(
-    "Каталог шаблонов маршрутов R2/R2.5 — 3-column grid, фильтры, preview, copy."
+    "Каталог шаблонов маршрутов R2/R2.5 — 3-column "
+
+    "grid, фильтры, preview, copy."
 )
 
 BLUEPRINTS_DIR = Path("src/backend/dsl/blueprints")

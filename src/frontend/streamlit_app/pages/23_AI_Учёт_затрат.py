@@ -108,7 +108,9 @@ except Exception:  # noqa: BLE001
 backend = data.get("backend") or "unknown"
 if backend == "disabled":
     st.warning(
-        "Dashboard disabled — включите feature_flag FEATURE_AI_COST_DASHBOARD_STRICT=true."
+        "Dashboard disabled — включите feature_flag "
+
+        "FEATURE_AI_COST_DASHBOARD_STRICT=true."
     )
 elif backend == "error":
     st.error(f"Ошибка получения данных: {data.get('error')}")

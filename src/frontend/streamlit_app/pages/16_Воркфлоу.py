@@ -204,7 +204,9 @@ with tab_timeline:
     )
     if not focus_id:
         st.info(
-            "Введите instance ID или выберите «Показать таймлайн» из вкладки Instances."
+            "Введите instance ID или выберите «Показать "
+
+            "таймлайн» из вкладки Instances."
         )
     else:
         instance = _cached_instance(focus_id)
@@ -251,7 +253,9 @@ with tab_timeline:
 
 with tab_trigger:
     st.caption(
-        "Запуск нового workflow instance через `POST /api/v1/admin/workflows/trigger/{name}`."
+        "Запуск нового workflow instance через `POST "
+
+        "/api/v1/admin/workflows/trigger/{name}`."
     )
 
     trg_name = st.text_input(
@@ -291,7 +295,9 @@ with tab_trigger:
                     if result.get("id"):
                         st.session_state["_workflow_focus_id"] = result["id"]
                         st.caption(
-                            "➡ Переключитесь на вкладку **Таймлайн** для просмотра."
+                            "➡ Переключитесь на вкладку **Таймлайн** "
+
+                            "для просмотра."
                         )
 
     st.markdown("---")

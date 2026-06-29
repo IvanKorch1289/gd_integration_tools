@@ -32,7 +32,9 @@ setup_page()
 
 st.title("⏱ Монитор зависших сообщений Outbox")
 st.caption(
-    "Live dashboard для outbox_stuck_pending_count gauge (Pending → Sent → Failed)."
+    "Live dashboard для outbox_stuck_pending_count "
+
+    "gauge (Pending → Sent → Failed)."
 )
 
 # Configuration section
