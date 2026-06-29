@@ -34,9 +34,13 @@ def render_dlq_replay() -> None:
     with st.sidebar:
         st.subheader("Фильтры DLQ")
         transport_filter: str = st.text_input(
-            "Транспорт", value="", help="http / kafka / grpc / webhook / soap / mqtt / ..."
+            "Транспорт",
+            value="",
+            help="http / kafka / grpc / webhook / soap / mqtt / ...",
         )
-        action_filter: str = st.text_input("Действие", value="", help="Имя action или route")
+        action_filter: str = st.text_input(
+            "Действие", value="", help="Имя action или route"
+        )
         error_class_filter: str = st.text_input(
             "Класс ошибки",
             value="",

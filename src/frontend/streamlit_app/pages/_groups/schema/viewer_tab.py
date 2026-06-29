@@ -1,6 +1,7 @@
 """API Viewer tab — extracted from pages/62_Админ_схем.py (S173).
 
-Просмотр API-схем: REST (OpenAPI), GraphQL, gRPC (protobuf), AsyncAPI, SOAP (WSDL), XML/XSD.
+Просмотр API-схем: REST (OpenAPI), GraphQL, gRPC (protobuf), AsyncAPI,
+SOAP (WSDL), XML/XSD.
 """
 
 from __future__ import annotations
@@ -38,9 +39,13 @@ def render_viewer_tab() -> None:
 
     with tab_gql:
         st.subheader("GraphQL")
-        st.markdown("- [GraphiQL playground](/graphql)  # playground на русском оставляем как proper noun")
+        st.markdown(
+            "- [GraphiQL playground](/graphql)  # playground на русском "
+            "оставляем как proper noun"
+        )
         st.info(
-            "Схема генерируется из strawberry-классов в src/entrypoints/graphql/schema.py"
+            "Схема генерируется из strawberry-классов в "
+            "src/entrypoints/graphql/schema.py"
         )
 
     with tab_grpc:
@@ -60,8 +65,9 @@ def render_viewer_tab() -> None:
     with tab_soap:
         st.subheader("SOAP (WSDL)")
         st.caption(
-            "Парсер WSDL на zeep — отображает порты, операции и messages. "
-            "Полезно при интеграции с legacy-сервисами (1С, банковский шлюз, госуслуги)."
+            "Парсер WSDL на zeep — отображает порты, операции и messages."
+            " Полезно при интеграции с legacy-сервисами"
+            " (1С, банковский шлюз, госуслуги)."
         )
         wsdl_url = st.text_input(
             "WSDL URL или путь к файлу",
