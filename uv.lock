@@ -91,15 +91,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aiocache"
-version = "0.12.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7a/64/b945b8025a9d1e6e2138845f4022165d3b337f55f50984fbc6a4c0a1e355/aiocache-0.12.3.tar.gz", hash = "sha256:f528b27bf4d436b497a1d0d1a8f59a542c153ab1e37c3621713cb376d44c4713", size = 132196, upload-time = "2024-09-25T13:20:23.823Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/d7/15d67e05b235d1ed8c3ce61688fe4d84130e72af1657acadfaac3479f4cf/aiocache-0.12.3-py2.py3-none-any.whl", hash = "sha256:889086fc24710f431937b87ad3720a289f7fc31c4fd8b68e9f918b9bacd8270d", size = 28199, upload-time = "2024-09-25T13:20:22.688Z" },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -276,11 +267,11 @@ wheels = [
 
 [[package]]
 name = "aiosmtplib"
-version = "3.0.2"
+version = "5.1.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/91/2a/812517f8350cd317aad2ba1ce25dfc213c6f1f2e62e1cbf662b4bdc51d34/aiosmtplib-3.0.2.tar.gz", hash = "sha256:08fd840f9dbc23258025dca229e8a8f04d2ccf3ecb1319585615bfc7933f7f47", size = 59941, upload-time = "2024-07-31T05:13:10.065Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/25/d36d056e62a1dc3dd51ce76e7647c62966702193dc91eafa7fd4e1006a91/aiosmtplib-5.1.2.tar.gz", hash = "sha256:04a0ea3c678f5b719f998f290dce010ca512e1385836d3944206299df03b060f", size = 71031, upload-time = "2026-06-20T15:00:48.269Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/35/441faea7a11159795881a6ec869454f40269e4e3806dced935a35d83a412/aiosmtplib-3.0.2-py3-none-any.whl", hash = "sha256:8783059603a34834c7c90ca51103c3aa129d5922003b5ce98dbaa6d4440f10fc", size = 27111, upload-time = "2024-07-31T05:13:08.515Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/ec/c5a415cd1309eaac28ad3c599458194d25ba07189bb07a1bac2c6713c17e/aiosmtplib-5.1.2-py3-none-any.whl", hash = "sha256:070d467cc329dafd0af59108ba5d217d973cba10309910fed359a2a7bfb52d7a", size = 28394, upload-time = "2026-06-20T15:00:47.299Z" },
 ]
 
 [[package]]
@@ -2690,7 +2681,6 @@ version = "0.20.0"
 source = { editable = "." }
 dependencies = [
     { name = "aio-pika", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "aiocache", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiofiles", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aioimaplib", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiokafka", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2974,13 +2964,12 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.5,<10.0.0" },
-    { name = "aiocache", specifier = ">=0.12.0,<1.0.0" },
     { name = "aiofiles", specifier = ">=24.1.0,<25.0.0" },
     { name = "aioimaplib", specifier = ">=1.0.0,<2.0.0" },
     { name = "aiokafka", specifier = ">=0.12.0,<1.0.0" },
     { name = "aiomqtt", specifier = ">=2.0.0,<3.0.0" },
     { name = "aioquic", marker = "extra == 'http3'", specifier = ">=1.1.0,<2.0.0" },
-    { name = "aiosmtplib", specifier = ">=3.0.2,<4.0.0" },
+    { name = "aiosmtplib", specifier = ">=5.1.2,<6.0.0" },
     { name = "aiosqlite", marker = "extra == 'dev-light'", specifier = ">=0.20.0,<1.0.0" },
     { name = "alembic", specifier = ">=1.13.3,<2.0.0" },
     { name = "altair", marker = "extra == 'frontend'", specifier = ">=5.0.0,<6.0.0" },
