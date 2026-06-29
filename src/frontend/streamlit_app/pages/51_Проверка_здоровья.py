@@ -42,7 +42,10 @@ def _render_health_dashboard() -> None:
         "error": ":red_circle:",
     }
 
-    st.subheader(f"{colors.get(overall, ':grey_question:')} Overall: **{overall.upper()}**")
+    st.subheader(
+        f"{colors.get(overall, ':grey_question:')} "
+        f"Overall: **{overall.upper()}**"
+    )
     st.caption(f"Timestamp: {data.get('timestamp', '—')}")
 
     components = data.get("components", {}) or {}

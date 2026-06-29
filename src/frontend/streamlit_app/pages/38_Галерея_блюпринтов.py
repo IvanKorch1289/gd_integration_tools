@@ -180,7 +180,8 @@ def _card(bp: dict[str, Any]) -> None:
         with c3:
             if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", width='stretch'):
                 st.toast(
-                    f"Mock-деплой '{bp['name']}' v{bp['version']} — реальный деплой через backend WIP",
+                    f"Mock-деплой '{bp['name']}' v{bp['version']} — "
+                    "реальный деплой через backend WIP",
                     icon="🚀",
                 )
 
@@ -199,7 +200,7 @@ if not all_blueprints:
     st.stop()
 
 st.caption(
-    f"Всего: **{len(all_blueprints)}** (YAML: {len(yaml_bps)}, Python: {len(PYTHON_BP)})"
+    (f"Всего: **{len(all_blueprints)}** "f"(YAML: {len(yaml_bps)}, Python: {len(PYTHON_BP)})")
 )
 
 # ─────────── Filters ───────────

@@ -62,7 +62,10 @@ with tab_mock:
     st.subheader("Mock S3 Браузер")
     bucket = st.selectbox("Бакет", options=_MOCK_BUCKETS, index=0, key="mock_bucket")
     prefix = st.text_input(
-        "Фильтр по префиксу", value="", placeholder="напр. skb/contracts/", key="mock_prefix"
+        "Фильтр по префиксу",
+        value="",
+        placeholder="напр. skb/contracts/",
+        key="mock_prefix",
     )
     uploaded = st.file_uploader(
         "Выбрать файл для upload",
@@ -78,7 +81,10 @@ with tab_mock:
         )
         if st.button("Загрузить в S3", type="primary", key="mock_btn"):
             st.success(
-                f"✓ Mock-upload: '{uploaded.name}' → '{bucket}/{target_key}' ({uploaded.size} bytes)"
+                (
+                f"✓ Mock-upload: '{uploaded.name}' → '{bucket}/{target_key}' "
+                f"({uploaded.size} bytes)"
+            )
             )
 
     def _filter_objects(bucket: str, prefix: str) -> list[dict[str, object]]:

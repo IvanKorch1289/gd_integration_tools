@@ -115,7 +115,10 @@ def _render_log_stream() -> None:
     ]
 
     st.caption(
-        f"Записей в буфере: {len(st.session_state['log_history'])}, после фильтра: {len(filtered)}"
+        (
+            f"Записей в буфере: {len(st.session_state['log_history'])}, "
+            f"после фильтра: {len(filtered)}"
+        )
     )
     for item in reversed(filtered[-200:]):
         ts = item.get("timestamp", "")

@@ -54,7 +54,10 @@ with st.sidebar:
     st.toggle(
         "Панель устойчивости",
         value=_flag_enabled,
-        help="feature_flags.resilience_dashboard_enabled (FEATURE_RESILIENCE_DASHBOARD_ENABLED)",
+        help=(
+            "feature_flags.resilience_dashboard_enabled "
+            "(FEATURE_RESILIENCE_DASHBOARD_ENABLED)"
+        ),
         disabled=True,
     )
     st.caption(

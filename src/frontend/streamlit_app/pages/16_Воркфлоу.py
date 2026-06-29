@@ -188,7 +188,9 @@ with tab_list:
                         _cached_list.clear()
                     else:
                         st.error("Возобновление не удалось.")
-                if action_cols[3].button("📈 Показать таймлайн", key=f"tl_{instance_id}"):
+                if action_cols[3].button(
+                        "📈 Показать таймлайн", key=f"tl_{instance_id}"
+                    ):
                     st.session_state["_workflow_focus_id"] = instance_id
 
 

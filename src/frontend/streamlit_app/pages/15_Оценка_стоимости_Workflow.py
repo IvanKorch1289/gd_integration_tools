@@ -95,7 +95,9 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
                 else:
                     ai_col1, ai_col2 = st.columns(2)
                     ai_col1.metric("Всего токенов", breakdown["total_tokens"])
-                    ai_col2.metric("Общая стоимость (USD)", f"${breakdown['total_usd']}")
+                    ai_col2.metric(
+                        "Общая стоимость (USD)", f"${breakdown['total_usd']}"
+                    )
                     st.subheader("По моделям")
                     for model, cost in breakdown["per_model"].items():
                         st.write(f"**{model}**: ${cost}")

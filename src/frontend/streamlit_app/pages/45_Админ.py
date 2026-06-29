@@ -1,4 +1,5 @@
-"""Admin Console — управление плагинами, пользователями и feature-flags (Sprint 7 Team T4).
+"""Admin Console — управление плагинами, пользователями и
+feature-flags (Sprint 7 Team T4).
 
 Объединяет три admin-функции в одной странице через REST к backend:
 
@@ -37,7 +38,9 @@ st.caption(
 
 client = get_api_client()
 
-tab_plugins, tab_users, tab_flags = st.tabs(["Плагины", "Пользователи", "Feature-флаги"])
+tab_plugins, tab_users, tab_flags = st.tabs(
+    ["Плагины", "Пользователи", "Feature-флаги"]
+)
 
 # ---------------------------------------------------------------------------
 # Tab: Plugins

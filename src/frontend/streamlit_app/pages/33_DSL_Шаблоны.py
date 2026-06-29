@@ -138,7 +138,9 @@ def _render_workflow_templates() -> None:
                 key=f"target_{tmpl.name}",
             )
             if st.button(
-                "Задеплоить как новый Воркфлоу", key=f"deploy_{tmpl.name}", type="primary"
+                "Задеплоить как новый Воркфлоу",
+                key=f"deploy_{tmpl.name}",
+                type="primary",
             ):
                 try:
                     import httpx as requests

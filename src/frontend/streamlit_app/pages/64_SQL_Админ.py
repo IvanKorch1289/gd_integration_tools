@@ -27,9 +27,14 @@ st.warning(
 
 client = get_api_client()
 
-default_query = "SELECT schemaname, tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename"
+default_query = (
+    "SELECT schemaname, tablename FROM pg_tables "
+    "WHERE schemaname='public' ORDER BY tablename"
+)
 sql = st.text_area("SQL-запрос", value=default_query, height=180)
-limit = st.number_input("Лимит (LIMIT)", min_value=1, max_value=10_000, value=1000, step=100)
+limit = st.number_input(
+    "Лимит (LIMIT)", min_value=1, max_value=10_000, value=1000, step=100
+)
 
 if st.button("Выполнить", type="primary"):
     try:
