@@ -116,7 +116,7 @@ ai = [
     # Wave 1.7 (S1 R-V15-4): изолированный sandbox для AI code-execution.
     # Lazy-import внутри infrastructure/ai/e2b_sandbox.py; при отсутствии
     # пакета или E2B_API_KEY используется NoOpSandbox (явный отказ).
-    "e2b-code-interpreter>=1.0.0,<3.0.0",
+    "e2b-code-interpreter>=2.8.1,<3.0.0",
     # K4 Sprint 6: AI evaluation framework + prompt optimization.
     # inspect-ai — UK AI Safety Institute eval framework (suites, scorers).
     # dspy-ai — Stanford DSPy programming model для LLM pipeline optimization.
