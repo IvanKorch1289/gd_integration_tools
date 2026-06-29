@@ -11,9 +11,13 @@
 - D255 — Vault AppRole/K8s auth (4/4 sync tests GREEN)
 - D256 — list_expiring admin endpoint (3/3 tests GREEN)
 
-**DEFERRED to M22+** (per plan):
-- D257 — subscribe_updates Redis transport (8-12h) [DEFER]
-- D258 — backend registry plugin pattern (1-2d) [DEFER]
+**S171 M22 SHIPPED** (latest):
+- D257 — RedisCertTransport (Pub/Sub, 5/5 tests GREEN)
+- D258 — CertBackendRegistry (plugin pattern, 6/6 tests GREEN)
+
+**DEFERRED to M23+**:
+- D259 — Prometheus cert_expired alert (M22 deferred, 4-6h)
+- D260 — Cert rotation workflow (M22+ deferred, 1-2d)
 
 
 ## Часть 1: Sprint 171 итоги (M10-M17)
