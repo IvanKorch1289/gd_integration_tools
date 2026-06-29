@@ -19,7 +19,9 @@ from src.frontend.streamlit_app.shared.components import (
 
 setup_page()
 st.title("🐛 Отладчик DSL и воспроизведение")
-st.caption("Три режима: пошаговый Debugger (trace per процессор), Аудит Replay, Route Trace")
+st.caption(
+    "Три режима: пошаговый Debugger (trace per процессор), Аудит Replay, Route Trace"
+)
 
 mode = st.radio(
     "Режим", ["Пошаговый Debugger", "Аудит Replay", "Route Trace"], horizontal=True
@@ -42,7 +44,10 @@ if mode == "Пошаговый Debugger":
     route_id = (
         st.selectbox("ID маршрута", available_routes)
         if available_routes
-        else st.text_input("ID маршрута", help="route_id существующего маршрута (например: orders.create)")
+        else st.text_input(
+            "ID маршрута",
+            help="route_id существующего маршрута (например: orders.create)",
+        )
     )
     body_str = st.text_area("Тело запроса (JSON)", value="{}", height=120)
 
@@ -71,7 +76,10 @@ if mode == "Пошаговый Debugger":
                     if trace:
                         for idx, entry in enumerate(trace):
                             with st.expander(
-                                f"{idx + 1}. {entry.get('processor', 'unknown')} — {entry.get('duration_ms', 0):.1f}мс"
+                                (
+                                    f"{idx + 1}. {entry.get('processor', 'unknown')} — "
+                                    f"{entry.get('duration_ms', 0):.1f}мс"
+                                )
                             ):
                                 st.json(entry)
                     else:
@@ -97,14 +105,18 @@ elif mode == "Аудит Replay":
                 for rec in records:
                     with st.expander(
                         f"{rec.get('method', '?')} {rec.get('path', '?')} — "
-                        f"{rec.get('status_code', '?')} [{rec.get('duration_ms', 0):.1f}мс]"
+(
+                            f"{rec.get('status_code', '?')} "
+                            f"[{rec.get('duration_ms', 0):.1f}мс]"
+                        )
                     ):
                         st.json(rec)
                         if st.button(
                             "🔁 Повторить", key=f"replay_{rec.get('timestamp', '')}"
                         ):
                             st.info(
-                                "Функциональность replay: отправка сохранённого запроса по тому же пути"
+                                "Функциональность replay: отправка сохранённого "
+                                "запроса по тому же пути"
                             )
         except Exception as exc:
             st.error(f"Audit stream недоступен: {exc}")

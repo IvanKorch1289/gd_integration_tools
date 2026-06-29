@@ -19,13 +19,17 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page, related_pages_footer
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 
 st.title("📊 Покрытие EIP")
 st.caption(
-    "Sprint 63 W4 (docs/audit) — покрытие Apache Camel EIP patterns в gd_integration_tools"
+    "Sprint 63 W4 (docs/audit) — покрытие Apache Camel EIP patterns "
+    "в gd_integration_tools"
 )
 
 # Канонические 10 EIP patterns (Apache Camel). Mapping к нашему коду.
