@@ -91,15 +91,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aiocache"
-version = "0.12.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7a/64/b945b8025a9d1e6e2138845f4022165d3b337f55f50984fbc6a4c0a1e355/aiocache-0.12.3.tar.gz", hash = "sha256:f528b27bf4d436b497a1d0d1a8f59a542c153ab1e37c3621713cb376d44c4713", size = 132196, upload-time = "2024-09-25T13:20:23.823Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/d7/15d67e05b235d1ed8c3ce61688fe4d84130e72af1657acadfaac3479f4cf/aiocache-0.12.3-py2.py3-none-any.whl", hash = "sha256:889086fc24710f431937b87ad3720a289f7fc31c4fd8b68e9f918b9bacd8270d", size = 28199, upload-time = "2024-09-25T13:20:22.688Z" },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2267,7 +2258,7 @@ pydantic = [
 
 [[package]]
 name = "fastapi"
-version = "0.136.3"
+version = "0.138.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2276,9 +2267,9 @@ dependencies = [
     { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "typing-inspection", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/2d/ff8d91d7b564d464629a0fd50a4489c97fcb836ac230bf3a7269232a9b1f/fastapi-0.136.3.tar.gz", hash = "sha256:e487fae93ad408e6f47641ee4dfe389864fd7bec92e547ea8498fc13f43e83ab", size = 396410, upload-time = "2026-05-23T18:53:15.192Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/c9/5e8defe249899c0dc900643695fc07829a67fc88b4ff2cdb03fcbdbf5a4b/fastapi-0.138.1.tar.gz", hash = "sha256:96e3702dce09ee0dce48856135620d3d865ca684a79fe7513fd7b13a12f82862", size = 419646, upload-time = "2026-06-25T15:40:42.115Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/82/45359b62a067409bd929ae8a56b8ed13e5a8c8a61194b3c236920999ab83/fastapi-0.136.3-py3-none-any.whl", hash = "sha256:3d2a69bdf04b7e9f3afa292c3bc7a98816bbfafa10bc9b45f3f3700d2f761620", size = 117481, upload-time = "2026-05-23T18:53:16.924Z" },
+    { url = "https://files.pythonhosted.org/packages/38/a9/69a6924f645eb4dd8cd625bf255b3625990eb3e14e073438a53c405dcd3e/fastapi-0.138.1-py3-none-any.whl", hash = "sha256:b994cae7ba8b82c976a728b544244de31333fa5f7d261f9a1dffe526444cae23", size = 129182, upload-time = "2026-06-25T15:40:40.771Z" },
 ]
 
 [[package]]
@@ -2690,7 +2681,6 @@ version = "0.20.0"
 source = { editable = "." }
 dependencies = [
     { name = "aio-pika", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "aiocache", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiofiles", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aioimaplib", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiokafka", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2974,7 +2964,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.5,<10.0.0" },
-    { name = "aiocache", specifier = ">=0.12.0,<1.0.0" },
     { name = "aiofiles", specifier = ">=24.1.0,<25.0.0" },
     { name = "aioimaplib", specifier = ">=1.0.0,<2.0.0" },
     { name = "aiokafka", specifier = ">=0.12.0,<1.0.0" },
@@ -3006,7 +2995,7 @@ requires-dist = [
     { name = "duckduckgo-search", marker = "extra == 'search-providers'", specifier = ">=6.0.0,<7.0.0" },
     { name = "e2b-code-interpreter", marker = "extra == 'ai'", specifier = ">=1.0.0,<3.0.0" },
     { name = "elasticsearch", extras = ["async"], specifier = ">=8.0,<9.0" },
-    { name = "fastapi", specifier = ">=0.116.0" },
+    { name = "fastapi", specifier = ">=0.138.1" },
     { name = "fastapi-filter", specifier = ">=2.0.0,<3.0.0" },
     { name = "fastapi-limiter", specifier = ">=0.1.6,<1.0.0" },
     { name = "fastapi-pagination", specifier = ">=0.12.34,<1.0.0" },
