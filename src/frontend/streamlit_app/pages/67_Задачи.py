@@ -83,7 +83,12 @@ with tab3:
             url = st.text_input("URL", help="HTTP endpoint для webhook (https://...)")
             payload = st.text_area("Полезная нагрузка (JSON)", value="{}")
             cron = st.text_input("Cron (опционально)", placeholder="*/5 * * * *")
-            delay = st.number_input("Задержка, сек (опционально)", min_value=0, value=0, help="Задержка перед первым запуском задачи")
+            delay = st.number_input(
+        "Задержка, сек (опционально)",
+        min_value=0,
+        value=0,
+        help="Задержка перед первым запуском задачи",
+    )
             if st.form_submit_button("Запланировать"):
                 import json
 

@@ -70,7 +70,10 @@ def render_pending_table() -> None:
                     key=f"op-{signal['signal_id']}",
                 )
                 comment = st.text_area(
-                    "Комментарий", value="", key=f"comment-{signal['signal_id']}", height=80
+                    "Комментарий",
+                    value="",
+                    key=f"comment-{signal['signal_id']}",
+                    height=80,
                 )
                 col_a, col_b, col_c = st.columns(3)
                 if col_a.button(

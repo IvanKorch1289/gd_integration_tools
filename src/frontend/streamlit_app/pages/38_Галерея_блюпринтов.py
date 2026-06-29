@@ -200,7 +200,10 @@ if not all_blueprints:
     st.stop()
 
 st.caption(
-    (f"Всего: **{len(all_blueprints)}** "f"(YAML: {len(yaml_bps)}, Python: {len(PYTHON_BP)})")
+    (
+        f"Всего: **{len(all_blueprints)}** "f"(YAML: {len(yaml_bps)}, "
+        f"Python: {len(PYTHON_BP)})"
+    )
 )
 
 # ─────────── Filters ───────────

@@ -39,7 +39,9 @@ with tab_route:
     selected = (
         st.selectbox("Выбрать маршрут", options=names)
         if names
-        else st.text_input("Имя маршрута", help="route_id для анализа DAG и parallelism")
+        else st.text_input(
+            "Имя маршрута", help="route_id для анализа DAG и parallelism"
+        )
     )
 
     if selected and st.button("Запустить анализ", type="primary"):
@@ -58,7 +60,8 @@ with tab_route:
             with col2:
                 st.metric("Всего шагов", report.get("total_steps", 0))
                 st.metric(
-                    "Ожидаемое ускорение", f"{report.get('estimated_speedup', 1.0):.2f}x"
+                    "Ожидаемое ускорение",
+                    f"{report.get('estimated_speedup', 1.0):.2f}x",
                 )
                 hints = report.get("suggested_optimizations", [])
                 if hints:

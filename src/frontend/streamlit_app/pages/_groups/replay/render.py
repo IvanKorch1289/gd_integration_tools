@@ -46,7 +46,9 @@ def render_dlq_replay() -> None:
             value="",
             help="Имя класса исключения (RuntimeError, TimeoutError, ...)",
         )
-        tenant_filter: str = st.text_input("ID тенанта", value="", help="Tenant-контекст")
+        tenant_filter: str = st.text_input(
+            "ID тенанта", value="", help="Tenant-контекст"
+        )
         hours_back: int = st.number_input(
             "За последние N часов", min_value=1, max_value=24 * 7, value=24, step=1
         )
@@ -116,7 +118,9 @@ def render_dlq_replay() -> None:
 
     col_bulk_1, col_bulk_2 = st.columns([1, 1])
     with col_bulk_1:
-        dry_run_bulk: bool = st.checkbox("Пробный прогон", value=False, key="bulk_dry_run")
+        dry_run_bulk: bool = st.checkbox(
+        "Пробный прогон", value=False, key="bulk_dry_run"
+    )
     with col_bulk_2:
         bulk_clicked = st.button(
             "Повторить выбранные",

@@ -153,7 +153,8 @@ def _render_s63_audit() -> None:
     st.markdown(
         """
         **S63 W2.1 (W2.1) — ClaimCheck dedup**
-        * **Removed:** `src/backend/dsl/processors/claim_check_processor.py` (132 LOC кастома).
+        * **Removed:** `src/backend/dsl/processors/claim_check_processor.py`
+(132 LOC кастома).
         * **Canonical:** `eip/transformation.py:177` (Redis+S3 composite).
         * **Coverage:** не теряется (8 тестов в `test_transformation.py`).
         * **Net:** -332 LOC, 0 dead code.
@@ -162,7 +163,8 @@ def _render_s63_audit() -> None:
         * **NEW:** `src/backend/dsl/engine/processors/eip/transactional.py` (190 LOC).
         * **TransactionalClient:** outbox pattern через `OutboxBackend.enqueue` (S5 K2).
         * **ProcessManager:** thin facade over `SagaProcessor` + `persist_state` option.
-        * **Tests:** 17 passed (5 Init + 2 HappyPath + 4 FailureModes + 3 PM Init + 2 PM Alias + 1 ClassVars).
+        * **Tests:** 17 passed (5 Init + 2 HappyPath + 4 FailureModes
++ 3 PM Init + 2 PM Alias + 1 ClassVars).
         * **Reuse:** 0 production-логики дублируется.
 
         **EIP coverage: 8/10 → 10/10** (pre-S63 vs post-S63 W3.0).

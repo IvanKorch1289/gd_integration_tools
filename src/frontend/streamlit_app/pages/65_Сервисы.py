@@ -119,7 +119,10 @@ for i, svc in enumerate(services):
                 + (f" ({svc.latency_ms} мс)" if svc.latency_ms else "")
             )
         elif svc.status == ServiceStatus.DOWN:
-            st.markdown(":red[НЕДОСТУПЕН]" + (" — проверьте подключение" if svc.url else ""))
+            st.markdown(
+                ":red[НЕДОСТУПЕН]"
+                + (" — проверьте подключение" if svc.url else "")
+            )
         else:
             st.markdown(":gray[URL не настроен]")
 

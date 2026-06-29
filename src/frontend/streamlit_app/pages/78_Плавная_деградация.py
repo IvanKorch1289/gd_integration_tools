@@ -80,7 +80,9 @@ with tab_switch:
         "audited через AdminAuditMiddleware."
     )
 
-    new_mode = st.radio("Целевой режим", options=_MODE_OPTIONS, index=0, horizontal=True)
+    new_mode = st.radio(
+        "Целевой режим", options=_MODE_OPTIONS, index=0, horizontal=True
+    )
     reason = st.text_area(
         "Причина переключения (обязательно для compliance)",
         placeholder="например: DB primary failure, switching to READ_ONLY",

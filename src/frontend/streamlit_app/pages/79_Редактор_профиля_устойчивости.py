@@ -121,7 +121,10 @@ with tab_edit:
 
 with tab_compare:
     st.subheader("Сравнение глобального и тенантного override")
-    compare_name = st.text_input("Имя профиля для сравнения", help="profile_name существующего resilience-профиля")
+    compare_name = st.text_input(
+        "Имя профиля для сравнения",
+        help="profile_name существующего resilience-профиля",
+    )
     if compare_name:
         try:
             global_p = client.get(f"/api/v1/admin/resilience-profiles/{compare_name}")

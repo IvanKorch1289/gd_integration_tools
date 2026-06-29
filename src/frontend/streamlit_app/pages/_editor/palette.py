@@ -81,7 +81,10 @@ def render_step_palette():
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("📦 Палитра шагов")
-    st.sidebar.markdown("Перетащите процессор в область конвейера ниже, или нажмите чтобы добавить:")
+    st.sidebar.markdown(
+        "Перетащите процессор в область конвейера ниже,"
+        " или нажмите чтобы добавить:"
+    )
     st.components.v1.html(html, height=400, scrolling=True)
 
     # Show clickable buttons as alternative to drag
@@ -92,7 +95,10 @@ def render_step_palette():
     )
     if selected_palette_proc != "—":
         st.sidebar.info(
-            f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже или добавьте через форму слева."
+            (
+            f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже "
+            f"или добавьте через форму слева."
+        )
         )
         # Auto-select in the visual editor form
         st.session_state.vis_proc_type = selected_palette_proc

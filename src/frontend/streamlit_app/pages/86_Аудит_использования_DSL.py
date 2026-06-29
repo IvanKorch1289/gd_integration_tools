@@ -164,7 +164,9 @@ if top_processors:
     with chart_col2:
         st.write("**Средняя латентность (ms)**")
         if not df_display.empty:
-            latency_data = df_display[["Имя процессора", "Средняя задержка (мс)"]].set_index(
+            latency_data = df_display[
+                ["Имя процессора", "Средняя задержка (мс)"]
+            ].set_index(
                 "Имя процессора"
             )
             st.bar_chart(latency_data, horizontal=True, height=400)
