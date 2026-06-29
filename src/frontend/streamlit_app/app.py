@@ -92,7 +92,9 @@ def render_dashboard() -> None:
         st.title("GD Integration Tools")
         st.caption("Корпоративная интеграционная шина — Панель управления")
     with col_logo:
-        logo_path = _project_root / "src" / "static" / "images" / "kuban_credit_logo.svg"
+        logo_path = (
+            _project_root / "src" / "static" / "images" / "kuban_credit_logo.svg"
+        )
         if logo_path.exists():
             st.image(str(logo_path), width=120)
 
@@ -148,7 +150,9 @@ def render_dashboard() -> None:
             clear_api_cache()
             st.rerun()
     with col_interval:
-        st.caption("Данные обновляются при нажатии «Обновить» или перезагрузке страницы.")
+        st.caption(
+            "Данные обновляются при нажатии «Обновить» или перезагрузке страницы."
+        )
 
     # Onboarding tips
     st.divider()
@@ -157,7 +161,8 @@ def render_dashboard() -> None:
         """
 **Быстрый старт**
 
-- 👋 Если вы здесь впервые — откройте **🎓 Обучение** в боковой панели (7-шаговый онбординг).
+- 👋 Если вы здесь впервые — откройте **🎓 Обучение** в боковой панели
+  (7-шаговый онбординг).
 - 🔍 Не знаете, куда идти? Воспользуйтесь **поиском по разделам** выше.
 - 📚 Полный список страниц — в боковой панели (sidebar).
 
@@ -188,7 +193,9 @@ NAV_SECTIONS: dict[str, list[str]] = {
     "🤖 ИИ": [
         "20_AI_Чат", "21_AI_Обратная_связь", "22_RAG_Консоль", "23_AI_Учёт_затрат",
         "47_AI_Безопасность", "48_Лаборатория_промптов", "49_Реестр_моделей",
-        "81_Адаптивная_RAG_панель", "75_Мастер_загрузки_RAG", "85_Массовая_загрузка_RAG",
+        "81_Адаптивная_RAG_панель",
+        "75_Мастер_загрузки_RAG",
+        "85_Массовая_загрузка_RAG",
     ],
     "🛠 DSL": [
         "30_DSL_Площадка", "31_DSL_Визуальный_редактор", "32_DSL_Конструктор",
@@ -226,7 +233,9 @@ def _build_navigation() -> st.navigation:
 
     # Dashboard — default
     pages_by_section["🏠 Главная"] = [
-        st.Page(render_dashboard, title="Главная", icon=":material/home:", default=True),
+        st.Page(
+            render_dashboard, title="Главная", icon=":material/home:", default=True
+        ),
     ]
 
     missing: list[str] = []
