@@ -37,7 +37,7 @@ st.caption(
 EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     "1. Aggregator": {
         "description": "Объединяет несколько сообщений в одно.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "flow_control.AggregatorProcessor",
         "status": "canonical",
@@ -45,7 +45,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "2. Splitter": {
         "description": "Разделяет одно сообщение на несколько.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "transformation.SplitterProcessor",
         "status": "canonical",
@@ -53,7 +53,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "3. Content-Based Router": {
         "description": "Маршрутизирует сообщения по содержимому.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip.filter_router_sampling." \
         "ContentBasedRouter",
         "status": "canonical",
@@ -67,7 +67,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "5. Recipient List": {
         "description": "Отправляет сообщение нескольким получателям.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "routing.RecipientListProcessor",
         "status": "canonical",
@@ -75,7 +75,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "6. Dead Letter": {
         "description": "Обрабатывает недоставляемые сообщения.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "resilience.DeadLetterProcessor",
         "status": "canonical",
@@ -83,7 +83,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "7. Idempotent Receiver": {
         "description": "Гарантирует обработку сообщения только один раз.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip.idempotency." \
         "IdempotentConsumerProcessor",
         "status": "canonical",
@@ -91,7 +91,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "8. Claim Check": {
         "description": "Хранит большой payload вне, передаёт токен.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "transformation.ClaimCheckProcessor",
         "status": "canonical (post-S63 W2.1 dedup)",
@@ -99,7 +99,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "9. Transactional Client": {
         "description": "Atomic action + outbox enqueue for exactly-once.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip.transactional." \
         "TransactionalClientProcessor",
         "status": "canonical (S63 W3.0 NEW)",
@@ -107,7 +107,7 @@ EIP_PATTERN_MAP: dict[str, dict[str, Any]] = {
     },
     "10. Process Manager": {
         "description": "Долгоиграющая оркестрация с сохранением состояния.",
-        "class_path": 
+        "class_path":
         "src.backend.dsl.engine.processors.eip." \
         "transactional.ProcessManagerProcessor",
         "status": "canonical (S63 W3.0 NEW, facade over SagaProcessor)",
