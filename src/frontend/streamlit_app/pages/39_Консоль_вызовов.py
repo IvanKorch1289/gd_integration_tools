@@ -24,6 +24,7 @@ import streamlit as st
 import websockets
 
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     require_auth,
     setup_page,

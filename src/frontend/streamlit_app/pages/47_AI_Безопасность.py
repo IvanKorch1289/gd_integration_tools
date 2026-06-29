@@ -16,7 +16,6 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
-    metric_row,
     related_pages_footer,
     require_auth,
     setup_page,
