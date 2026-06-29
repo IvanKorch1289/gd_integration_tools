@@ -14,7 +14,10 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.frontend.streamlit_app.shared.components import setup_page
+from src.frontend.streamlit_app.shared.components import (
+    related_pages_footer,
+    setup_page,
+)
 
 setup_page()
 st.title("Wiki — поиск по документации")
@@ -125,3 +128,5 @@ if ctrl_cols[1].button("Проверить грамматику docs/ (ru)"):
                 st.markdown(f"* `{issue}`")
     else:
         st.success("Замечаний по грамматике не найдено (или scope пуст).")
+
+related_pages_footer("63_Вики")

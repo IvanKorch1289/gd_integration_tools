@@ -15,6 +15,8 @@ This file is now a thin shim (Streamlit-discoverable entry-point).
 
 from __future__ import annotations
 
+import streamlit as st
+
 from src.frontend.streamlit_app.pages._groups.cron.dashboard import render
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -24,5 +26,7 @@ from src.frontend.streamlit_app.shared.components import (
 
 setup_page()
 require_auth(label="admin")
+st.header("📅 Панель Cron")
+st.caption("Dashboard всех scheduled workflows с метриками и actions")
 render()
 related_pages_footer("14_Панель_Cron")

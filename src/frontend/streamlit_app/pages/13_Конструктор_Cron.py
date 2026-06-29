@@ -17,6 +17,8 @@ This file is now a thin shim (Streamlit-discoverable entry-point).
 
 from __future__ import annotations
 
+import streamlit as st
+
 from src.frontend.streamlit_app.pages._groups.cron.builder import render
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -26,5 +28,7 @@ from src.frontend.streamlit_app.shared.components import (
 
 setup_page()
 require_auth(label="admin")
+st.header("⏰ Конструктор Cron")
+st.caption("Создание и редактирование cron-задач для APScheduler")
 render()
 related_pages_footer("13_Конструктор_Cron")
