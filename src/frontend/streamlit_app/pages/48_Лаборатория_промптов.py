@@ -30,7 +30,11 @@ st.caption(
 client = get_api_client()
 
 tab_list, tab_compare, tab_create = st.tabs(
-    [":mag: Просмотр prompt'ов", ":bar_chart: A/B Сравнение", ":pencil2: Создать версию"]
+    [
+        ":mag: Просмотр prompt'ов",
+        ":bar_chart: A/B Сравнение",
+        ":pencil2: Создать версию",
+    ]
 )
 
 
@@ -43,7 +47,9 @@ with tab_list:
         st.error(f"Не удалось получить список prompt'ов: {exc}")
         names = []
 
-    selected_name = st.selectbox("Имя prompt'а", options=[""] + names, key="prompt-name")
+    selected_name = st.selectbox(
+        "Имя prompt'а", options=[""] + names, key="prompt-name"
+    )
     if selected_name:
         try:
             versions_resp = client.get(f"/admin/prompt-versions/{selected_name}")
@@ -69,7 +75,10 @@ with tab_list:
                     st.metric(
                         "p95 латентность, мс", ver["metrics"].get("p95_latency_ms", "—")
                     )
-                    st.metric("Стоимость USD/1k", ver["metrics"].get("cost_usd_per_1k", "—"))
+                    st.metric(
+                        "Стоимость USD/1k",
+                        ver["metrics"].get("cost_usd_per_1k", "—"),
+                    )
                     if not ver["is_active"] and st.button(
                         f"Активировать v{ver['version']}", key=f"act-{ver['version']}"
                     ):

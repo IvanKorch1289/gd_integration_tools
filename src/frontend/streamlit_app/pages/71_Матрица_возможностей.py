@@ -99,7 +99,10 @@ with tabs[1]:
             elif node["kind"] == "resource":
                 shape_open, shape_close = "{{", "}}"
             diagram.append(
-                f'    {node["id"].replace(":", "_")}{shape_open}"{node["label"]}"{shape_close}'
+                (
+                    f'    {node["id"].replace(":", "_")}'
+                    f'{shape_open}"{node["label"]}"{shape_close}'
+                )
             )
         for edge in graph["edges"]:
             label = f"|{edge['label']}|" if edge.get("label") else ""
@@ -113,8 +116,12 @@ with tabs[1]:
 
 with tabs[2]:
     st.subheader("Журнал аудита возможностей")
-    plugin_filter = st.text_input("Фильтр по плагину", "", help="Substring-фильтр по имени плагина")
-    tenant_filter = st.text_input("Фильтр по тенанту", "", help="Substring-фильтр по ID тенанта")
+    plugin_filter = st.text_input(
+        "Фильтр по плагину", "", help="Substring-фильтр по имени плагина"
+    )
+    tenant_filter = st.text_input(
+        "Фильтр по тенанту", "", help="Substring-фильтр по ID тенанта"
+    )
     events = client.get_audit_events(
         plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )

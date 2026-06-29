@@ -70,7 +70,10 @@ with tab_file:
         st.write(f"**Выбрано файлов:** {len(uploaded_files)}")
         for f in uploaded_files:
             st.write(
-                f"  • `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)"
+                (
+                    f"  • `{getattr(f, 'name', 'unnamed')}` "
+                    f"({getattr(f, 'size', '?')} bytes)"
+                )
             )
 
         if st.button("Загрузить файлы", type="primary", key="ingest_files"):
@@ -127,7 +130,10 @@ with tab_json:
         "Документы (JSON)",
         value=default_json,
         height=300,
-        help="JSON массив документов с полями content (str) и metadata (dict, опционально)",
+        help=(
+            "JSON массив документов с полями content (str) "
+            "и metadata (dict, опционально)"
+        ),
     )
 
     json_collection = st.text_input(
@@ -153,7 +159,10 @@ with tab_json:
                     else:
                         st.write(f"  Document {i}: {doc.get('content', '')[:60]}...")
             else:
-                st.error("Входные данные должны быть JSON-массивом (list), не одним объектом")
+                st.error(
+                "Входные данные должны быть JSON-массивом (list),"
+                " не одним объектом"
+            )
         except json.JSONDecodeError as exc:
             st.error(f"Invalid JSON: {exc}")
 
@@ -195,7 +204,10 @@ if st.button("Обновить статус", key="refresh_status"):
         if items:
             for item in items:
                 with st.expander(
-                    f"Task: {item.get('task_id', '?')[:8]}... — {item.get('status', '?')}"
+                    (
+                        f"Task: {item.get('task_id', '?')[:8]}... — "
+                        f"{item.get('status', '?')}"
+                    )
                 ):
                     st.json(item)
         else:
