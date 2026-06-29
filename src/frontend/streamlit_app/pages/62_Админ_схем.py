@@ -19,7 +19,8 @@ from src.frontend.streamlit_app.shared.components import (
 
 setup_page()
 st.header(":card_index_dividers: Админ схем")
-st.caption("Единый раздел для управления схемами: импорт OpenAPI/Postman/WSDL, реестр схем, просмотр API-контрактов")
+st.caption("Единый раздел для управления схемами: импорт "
+            "OpenAPI/Postman/WSDL, реестр схем, просмотр API-контрактов")
 
 tab_import, tab_registry, tab_viewer = st.tabs(
     ["Импорт схемы", "Реестр схем", "API-схемы"]

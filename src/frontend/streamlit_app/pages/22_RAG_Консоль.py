@@ -21,7 +21,8 @@ from src.frontend.streamlit_app.shared.components import (
 setup_page(layout="wide", initial_sidebar_state="expanded")
 
 st.title("Консоль RAG")
-st.caption("Управление RAG: статистика, семантический поиск, загрузка документов через /api/v1/rag/*")
+st.caption("Управление RAG: статистика, семантический поиск, "
+            "загрузка документов через /api/v1/rag/*")
 
 client = RAGClient()
 
