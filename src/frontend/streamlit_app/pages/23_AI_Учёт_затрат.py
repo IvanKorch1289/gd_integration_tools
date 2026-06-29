@@ -20,6 +20,7 @@ from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
@@ -30,7 +31,7 @@ except Exception:  # noqa: BLE001
 
         import httpx
         base_url = os.environ.get("API_BASE_URL", "http://localhost:8000")
-        with httpx.Client(timeout=10) as client:
+        with httpx.Client(timeout=config.HTTP_TIMEOUT_SEC) as client:
             resp = client.get(f"{base_url}/api/v1{path}", params=params)
             resp.raise_for_status()
             return resp.json()
