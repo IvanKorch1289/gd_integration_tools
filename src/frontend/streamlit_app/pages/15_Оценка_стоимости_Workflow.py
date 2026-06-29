@@ -17,6 +17,7 @@ from src.frontend.streamlit_app.shared.components import (
     require_auth,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 setup_page()
 require_auth(label="write action")
@@ -47,7 +48,7 @@ if workflow_id == "(введите вручную)":
 
 version = st.text_input("Версия (опц.)", value="")
 input_size = st.number_input(
-    "Размер входного payload (байт)", min_value=0, value=1024, step=1024
+    "Размер входного payload (байт)", min_value=0, value=config.SEARCH_DEFAULT_LIMIT * 51, step=1024
 )
 sample_period_days = st.slider(
     "Исторический период (дни)", min_value=1, max_value=90, value=30
@@ -66,7 +67,7 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
         if version:
             payload["version"] = version
         resp = requests.post(
-            f"{base_url}/api/v1/admin/workflow-cost/estimate", json=payload, timeout=10
+            f"{base_url}/api/v1/admin/workflow-cost/estimate", json=payload, timeout=config.HTTP_TIMEOUT_SEC
         )
         if resp.status_code != 200:
             st.error(f"HTTP {resp.status_code}: {resp.text}")
