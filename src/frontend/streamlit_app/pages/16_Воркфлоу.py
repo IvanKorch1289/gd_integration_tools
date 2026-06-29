@@ -27,6 +27,7 @@ from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 setup_page()
 client = get_api_client()
@@ -137,7 +138,7 @@ with tab_list:
         flt_tenant = st.text_input("Тенант", value="", placeholder="default", key="wf_text_2")
     with cols_filter[3]:
         flt_limit = st.number_input(
-            "Лимит", min_value=10, max_value=500, value=100, step=10
+            "Лимит", min_value=10, max_value=500, value=config.SEARCH_DEFAULT_LIMIT * 5, step=10
         )
     with cols_filter[4]:
         st.write("")  # spacer
