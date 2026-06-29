@@ -1,4 +1,5 @@
-"""Durable workflows: admin/workflows (list, detail, events, retry, cancel, resume, trigger)."""
+"""Durable workflows: admin/workflows
+(list, detail, events, retry, cancel, resume, trigger)."""
 
 from __future__ import annotations
 

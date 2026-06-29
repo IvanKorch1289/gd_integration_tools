@@ -73,7 +73,9 @@ def render_properties_panel(client: Any) -> None:
                 st.rerun()
         with c_clr:
             if st.button("Очистить параметры", width='stretch'):
-                st.session_state.canvas_steps[idx]["params"] = dict.fromkeys(available_params, "")
+                st.session_state.canvas_steps[idx]["params"] = dict.fromkeys(
+                    available_params, "",
+                )
                 sync_yaml()
                 st.rerun()
 

@@ -9,7 +9,8 @@ def status_badge(status: str | bool, label: str | None = None) -> None:
     """Показать badge статуса с цветовой индикацией.
 
     Args:
-        status: Статус (True/False для ok/fail, или строка 'ok'/'fail'/'pending'/'retry').
+        status: Статус (True/False для ok/fail, или строка
+'ok'/'fail'/'pending'/'retry').
         label: Опциональный текст (по умолчанию — status).
     """
     text = label or str(status)

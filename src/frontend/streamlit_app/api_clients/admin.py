@@ -180,7 +180,8 @@ class AdminClient(BaseAPIClient):
     def get_langgraph_sessions(
         self, limit: int = 50, offset: int = 0
     ) -> dict[str, Any]:
-        """GET /api/v1/admin/langgraph/checkpoints — список активных LangGraph сессий."""
+        """GET /api/v1/admin/langgraph/checkpoints — список активных
+LangGraph сессий."""
         try:
             return self.get(
                 "/api/v1/admin/langgraph/checkpoints",

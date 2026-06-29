@@ -126,8 +126,8 @@ def render_registry_tab() -> None:
 
     st.subheader("Реестр схем")
     st.caption(
-        "Единый каталог схем проекта: OpenAPI / WSDL / XSD / Protobuf / AsyncAPI / GraphQL SDL. "
-        "Download · Validate · Diff."
+        "Единый каталог схем проекта: OpenAPI / WSDL / XSD / Protobuf / "
+        "AsyncAPI / GraphQL SDL. Download · Validate · Diff."
     )
 
     if not flag_override:
