@@ -2,9 +2,7 @@
 
 Содержит:
 
-- ``async_helpers`` — async-итераторы (``AsyncChunkIterator``);
-- ``async_utils`` — asyncer-обёртки (``run_sync_in_thread``,
-  ``gather_with_timeout``, ``async_with_timeout``);
+- ``async_helpers`` — async iterator (``async_chunk_iterator``);
 - ``cache_keys`` — детерминированные ключи кэша;
 - ``datetime_utils`` — pendulum/stdlib datetime хелперы (S57 W1);
 - ``json_utils`` — orjson-based JSON serialization;
@@ -20,12 +18,7 @@ S5 fix (S36-W11): модули ``datetime_utils`` и ``json_utils`` мигрир
 (2 файла) + ``core/utils/`` (8 файлов).
 """
 
-from src.backend.core.utils.async_helpers import AsyncChunkIterator
-from src.backend.core.utils.async_utils import (
-    async_with_timeout,
-    gather_with_timeout,
-    run_sync_in_thread,
-)
+from src.backend.core.utils.async_helpers import async_chunk_iterator
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.core.utils.datetime_utils import (
     ensure_utc,
@@ -48,8 +41,21 @@ from src.backend.core.utils.task_registry import (
 )
 from src.backend.core.utils.watchdog import Watchdog
 
+from src.backend.core.utils.async_utils import (
+    gather_with_timeout,
+    safe_gather,
+    run_sync_in_thread,
+)
+
 __all__ = (
-    "AsyncChunkIterator",
+    "gather_with_timeout",
+    "safe_gather",
+    "run_sync_in_thread",
+    "build_cache_key",
+    "load_json",
+    "dump_json",
+    "now_utc",
+    "async_chunk_iterator",
     "FallbackCache",
     "MetricsRegistry",
     "RedisErrorCategory",
@@ -57,18 +63,11 @@ __all__ = (
     "RouteTimeoutSpec",
     "TaskRegistry",
     "Watchdog",
-    "async_with_timeout",
-    "build_cache_key",
-    "dumps_bytes",
-    "dumps_str",
-    "ensure_utc",
-    "gather_with_timeout",
     "get_task_registry",
     "humanize_delta",
     "loads",
     "metrics_registry",
     "parse_dt",
     "reset_task_registry",
-    "run_sync_in_thread",
     "utc_now",
 )
