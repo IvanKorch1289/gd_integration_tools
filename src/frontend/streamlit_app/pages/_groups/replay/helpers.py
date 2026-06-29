@@ -12,8 +12,10 @@ from typing import Any
 import streamlit as st
 
 from src.backend.core.frontend_facade import (  # noqa: E402, F401
-
-from src.backend.core.frontend_facade import FakeOutbox, OutboxBackend, OutboxEvent  # noqa: E402, F401
+    FakeOutbox,
+    OutboxBackend,
+    OutboxEvent,
+)
 
 
 @st.cache_resource
