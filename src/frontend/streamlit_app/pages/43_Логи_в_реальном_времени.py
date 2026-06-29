@@ -15,8 +15,6 @@ from typing import Any
 import httpx
 import streamlit as st
 
-from src.backend.core.frontend_facade import (  # noqa: E402, F401
-
 from src.backend.core.frontend_facade import get_logger  # noqa: E402, F401
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
