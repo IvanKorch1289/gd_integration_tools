@@ -18,6 +18,7 @@ from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 
 def _get_api_base() -> str:
@@ -35,7 +36,7 @@ async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any
     url = f"{_get_api_base()}/search{path}"
     clean = {k: v for k, v in params.items() if v not in (None, "")}
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT_SEC) as client:
             with st.spinner("Поиск..."):
                 resp = await client.get(url, params=clean)
             resp.raise_for_status()
@@ -63,7 +64,7 @@ with tab_logs:
     with col2:
         tenant_id = st.text_input("tenant_id", value="", key="logs_tenant")
     with col3:
-        limit = st.number_input("limit", value=20, min_value=1, max_value=200)
+        limit = st.number_input("limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT)
     rows = _run(
         _get(
             "/logs",
@@ -84,7 +85,7 @@ with tab_orders:
         status = st.text_input("status", value="", key="orders_status")
     with col2:
         limit = st.number_input(
-            "limit", value=20, min_value=1, max_value=200, key="orders_limit"
+            "limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT, key="orders_limit"
         )
     rows = _run(_get("/orders", q=q or None, status=status or None, limit=int(limit)))
     if rows:
@@ -98,7 +99,7 @@ with tab_notebooks:
         tag = st.text_input("tag", value="", key="notebooks_tag")
     with col2:
         limit = st.number_input(
-            "limit", value=20, min_value=1, max_value=200, key="notebooks_limit"
+            "limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT, key="notebooks_limit"
         )
     rows = _run(_get("/notebooks", q=q or None, tag=tag or None, limit=int(limit)))
     if rows:
@@ -113,7 +114,7 @@ with tab_agg:
     with col2:
         field = st.text_input("Поле для terms", value="entity_type", key="search_terms_2")
     with col3:
-        size = st.number_input("size", value=10, min_value=1, max_value=100)
+        size = st.number_input("size", value=config.TERMS_DEFAULT_SIZE, min_value=config.TERMS_MIN_SIZE, max_value=config.TERMS_MAX_SIZE)
     if st.button("Посчитать"):
         result = _run(
             _get("/aggregations", index=index, field=field, q=q or None, size=int(size))
