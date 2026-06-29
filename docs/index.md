@@ -4,6 +4,13 @@ Universal domain-agnostic integration platform (Python 3.14+, Apache-Camel/Airfl
 
 **Public API**: at subpackage level (`src.backend.core`, `src.backend.services`, `src.backend.dsl`, `src.backend.entrypoints`).
 
+## Diátaxis toctree
+
+- [Tutorials](tutorials/index.md)
+- [How-to Guides](how-to/index.md)
+- [Reference](reference/index.md)
+- [Explanation](explanation/index.md)
+
 ## Quick Links
 
 - [Architecture](ARCHITECTURE.md)
