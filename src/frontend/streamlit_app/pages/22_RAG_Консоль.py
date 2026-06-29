@@ -60,14 +60,19 @@ if st.button("Загрузить") and uploaded is not None:
             data["metadata_json"] = upload_meta
         except json.JSONDecodeError:
             st.warning("metadata_json: невалидный JSON, передаю без metadata")
-    result = client.upload(
-        file_bytes=uploaded.getvalue(),
-        filename=uploaded.name,
-        content_type=uploaded.type,
-        namespace=upload_ns,
-        metadata_json=data.get("metadata_json"),
-    )
-    st.json(result)
+    try:
+        result = client.upload(
+            file_bytes=uploaded.getvalue(),
+            filename=uploaded.name,
+            content_type=uploaded.type,
+            namespace=upload_ns,
+            metadata_json=data.get("metadata_json"),
+        )
+    except Exception as exc:  # noqa: BLE001 — пользователь должен видеть ошибку upload
+        st.error(f"Ошибка загрузки файла: {exc}")
+    else:
+        st.json(result)
+        st.success(f"✓ Загружено: {uploaded.name} → namespace={upload_ns}")
 
 st.divider()
 st.subheader("Augment (с freshness badge)")
