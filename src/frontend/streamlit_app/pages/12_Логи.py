@@ -24,9 +24,10 @@ level_filter = col3.selectbox("Уровень", ["All", "Error", "Warning", "Inf
 # ──────────── Загрузка логов ────────────
 
 try:
-    logs = client.get_trace_logs(limit=200)
-    if not isinstance(logs, list):
-        logs = []
+    with st.spinner("Загрузка логов..."):
+        logs = client.get_trace_logs(limit=200)
+        if not isinstance(logs, list):
+            logs = []
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     logs = []
 

@@ -93,15 +93,7 @@ with tab_send:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
                 try:
-                    from src.backend.core.frontend_facade import (  # noqa: E402, F401
-                        get_express_bot_client_factory_provider,
-                        get_express_botx_message_class_provider,
-                    )
-                    from src.backend.core.frontend_facade import (  # noqa: E402, F401
-                        get_express_bot_client_factory_provider,
-                        get_express_botx_message_class_provider,
-                    )
-                    from src.backend.core.frontend_facade import (  # noqa: E402, F401
+                    from src.backend.core.frontend_facade import (  # noqa: E402, F401  # noqa: E402, F401  # noqa: E402, F401
                         get_express_bot_client_factory_provider,
                         get_express_botx_message_class_provider,
                     )

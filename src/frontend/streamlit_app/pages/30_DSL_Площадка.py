@@ -106,9 +106,10 @@ if run_btn or lint_btn or validate_btn:
 
         client = get_api_client()
         try:
-            result = client._request(
-                "POST", endpoint, json={"code": code, "mode": mode}
-            )
+            with st.spinner("Выполнение..."):
+                result = client._request(
+                    "POST", endpoint, json={"code": code, "mode": mode}
+                )
         except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
             result = {
                 "status": "offline",

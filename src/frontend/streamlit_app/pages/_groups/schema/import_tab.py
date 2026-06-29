@@ -45,11 +45,7 @@ def render_import_tab() -> None:
         return "wsdl"
 
     if uploaded and st.button("Импортировать", key="imp_btn"):
-        from src.backend.core.frontend_facade import (  # noqa: E402, F401
-            get_default_import_service,
-            get_import_service,
-        )
-        from src.backend.core.frontend_facade import (  # noqa: E402, F401
+        from src.backend.core.frontend_facade import (  # noqa: E402, F401  # noqa: E402, F401
             get_default_import_service,
             get_import_service,
         )

@@ -25,9 +25,10 @@ status_filter = col2.selectbox("Статус", ["All", "Enabled", "Disabled"])
 # ──────────── Таблица ────────────
 
 try:
-    routes = client.get_routes()
-    if not isinstance(routes, list):
-        routes = []
+    with st.spinner("Загрузка маршрутов..."):
+        routes = client.get_routes()
+        if not isinstance(routes, list):
+            routes = []
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     routes = []
 

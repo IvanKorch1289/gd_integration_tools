@@ -61,10 +61,11 @@ def _list_workflow_ids(limit: int = 50) -> list[str]:
 def _fetch_events(workflow_id: str, page: int, size: int) -> list[dict[str, Any]]:
     """Получить events с пагинацией."""
     try:
-        result = client.get_workflow_events(workflow_id, page=page, size=size)
-        if isinstance(result, dict):
-            return list(result.get("items") or result.get("data") or [])
-        return list(result or [])
+        with st.spinner("Загрузка событий..."):
+            result = client.get_workflow_events(workflow_id, page=page, size=size)
+            if isinstance(result, dict):
+                return list(result.get("items") or result.get("data") or [])
+            return list(result or [])
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось получить events: {exc}")
         return []
