@@ -16,6 +16,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     require_auth,
     setup_page,
@@ -55,10 +56,12 @@ else:
     total_fp = sum(m["false_positives"] for m in metrics)
     overall_block_rate = total_block / total if total else 0.0
     overall_fp_rate = total_fp / total_block if total_block else 0.0
-    overview_cols[0].metric("Всего проверок", total)
-    overview_cols[1].metric("Всего блокировок", total_block)
-    overview_cols[2].metric("Доля блокировок", f"{overall_block_rate:.2%}")
-    overview_cols[3].metric("Доля FP", f"{overall_fp_rate:.2%}")
+    metric_row([
+        ("Всего проверок", total),
+        ("Всего блокировок", total_block),
+        ("Доля блокировок", f"{overall_block_rate:.2%}"),
+        ("Доля FP", f"{overall_fp_rate:.2%}"),
+    ])
 
     st.divider()
     st.subheader(":mag: Детали по тенантам")

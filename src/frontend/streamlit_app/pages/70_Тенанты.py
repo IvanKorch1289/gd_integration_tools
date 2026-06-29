@@ -15,6 +15,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     require_auth,
     setup_page,
@@ -60,10 +61,11 @@ selected_id = st.selectbox(
 if selected_id and selected_id != "(нет)":
     detail = client.get_tenant_detail(selected_id)
     st.subheader(f"Профиль `{selected_id}`")
-    cols = st.columns(3)
-    cols[0].metric("Plan", detail.get("plan", "—"))
-    cols[1].metric("Rate limit", detail.get("rate_limit", "—"))
-    cols[2].metric("RLS", "ON" if detail.get("rls_state", {}).get("enabled") else "OFF")
+    metric_row([
+        ("Plan", detail.get("plan", "—")),
+        ("Rate limit", detail.get("rate_limit", "—")),
+        ("RLS", "ON" if detail.get("rls_state", {}).get("enabled") else "OFF"),
+    ])
 
     with st.expander("Квоты"):
         quotas = detail.get("quotas") or []

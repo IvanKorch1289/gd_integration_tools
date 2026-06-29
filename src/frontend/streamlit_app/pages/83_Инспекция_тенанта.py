@@ -22,6 +22,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     require_auth,
     setup_page,
@@ -159,8 +160,9 @@ except Exception:  # noqa: BLE001
     )
 
 if dlq_entries:
-    cols = st.columns(2)
-    cols[0].metric("DLQ size (sample 10)", len(dlq_entries))
+    metric_row([
+        ("DLQ size (sample 10)", len(dlq_entries)),
+    ])
     st.dataframe(dlq_entries, hide_index=True, width='stretch')
 else:
     st.info("Нет failed scheduler jobs или feature-flag scheduler_dlq_enabled=False.")

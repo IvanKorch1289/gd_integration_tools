@@ -59,7 +59,7 @@ with tab3:
     st.subheader("Запланированные webhooks")
     try:
         hooks = client._request("GET", "/api/v1/webhooks/scheduled")
-    except Exception:
+    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
         hooks = []
 
     if hooks:

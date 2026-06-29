@@ -53,7 +53,7 @@ try:
         ("Ошибок", stats.get("failed", 0)),
         ("p95, мс", stats.get("p95_ms", 0)),
     ])
-except Exception:
+except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     st.caption("Статистика недоступна.")
 
 related_pages_footer("56_Процессы")

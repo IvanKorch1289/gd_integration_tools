@@ -14,6 +14,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     setup_page,
 )
@@ -30,12 +31,13 @@ def _render_stats() -> None:
     except Exception as exc:
         st.warning(f"Не удалось получить статистику: {exc}")
         return
-    cols = st.columns(5)
-    cols[0].metric("На проверку", stats.get("pending", 0))
-    cols[1].metric("Положительные", stats.get("positive", 0))
-    cols[2].metric("Отрицательные", stats.get("negative", 0))
-    cols[3].metric("Пропущено", stats.get("skip", 0))
-    cols[4].metric("Indexed в RAG", stats.get("indexed", 0))
+    metric_row([
+        ("На проверку", stats.get("pending", 0)),
+        ("Положительные", stats.get("positive", 0)),
+        ("Отрицательные", stats.get("negative", 0)),
+        ("Пропущено", stats.get("skip", 0)),
+        ("Indexed в RAG", stats.get("indexed", 0)),
+    ])
 
 
 def _render_pending_tab() -> None:

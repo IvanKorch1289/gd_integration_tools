@@ -56,7 +56,7 @@ def _build_services() -> list[ServiceInfo]:
     try:
         with st.spinner("Загрузка конфигурации..."):
             config = client.get_config()
-    except Exception:
+    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
         config = {}
     try:
         client.get_health()  # verify endpoint reachable
@@ -131,7 +131,7 @@ st.divider()
 st.subheader("Документация")
 try:
     config = client.get_config()
-except Exception:
+except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     config = {}
 base_url = config.get("base_url", "http://localhost:8000")
 

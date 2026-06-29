@@ -29,6 +29,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID252
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import (
+    metric_row,
     related_pages_footer,
     setup_page,
 )
@@ -166,10 +167,11 @@ if filtered:
         for e in filtered  # type: ignore[misc]
     )
     error_count: int = sum(1 for e in filtered if e.get("error"))
-    cols = st.columns(3)
-    cols[0].metric("Всего событий", str(len(filtered)))  # type: ignore[union-attr]
-    cols[1].metric("Σ длительность", f"{total_duration:.1f} мс")  # type: ignore[union-attr]
-    cols[2].metric("Ошибок", str(error_count))  # type: ignore[union-attr]
+    metric_row([
+        ("Всего событий", str(len(filtered))),
+        ("Σ длительность", f"{total_duration:.1f} мс"),
+        ("Ошибок", str(error_count)),
+    ])
 else:
     st.caption("Нет событий для сводки.")
 
