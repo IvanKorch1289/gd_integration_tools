@@ -124,3 +124,13 @@ dadata:
 
 antivirus:
   base_url: "https://kkdrweb.bank.srv:443"
+
+cert_store:
+  backend: "vault"
+  hot_cache_ttl: 300
+  vault_path: "secret/certs"
+  mongo_collection: "certs"
+  expire_warn_days: 30
+  fallback_enabled: true
+  watch_enabled: true
+  watch_path: "/etc/certs"

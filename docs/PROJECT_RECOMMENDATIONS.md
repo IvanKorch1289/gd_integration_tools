@@ -3,6 +3,20 @@
 ## Дата: 2026-06-26
 ## Scope: Project-wide recommendations для будущих спринтов
 
+**S171 M20 SHIPPED** (commit c06d487):
+- D252 — FallbackCertBackend integration (CertStoreSettings.fallback_enabled)
+- D254 — docs/security/cert_loading.md (comprehensive onboarding-гайд)
+- P1 cleanup — fallback.py dead code removed
+- P1 YAML profiles — watch_enabled/watch_path добавлены в base/prod/staging
+- D253 — Lifespan wiring example (docs/security/cert_hot_reload.md)
+
+**DEFERRED to M21+** (per plan):
+- D255 Vault AppRole/K8s auth (6-8h)
+- D256 list_expiring admin endpoint (4-6h)
+- D257 subscribe_updates Redis transport (8-12h)
+- D258 backend registry plugin pattern (1-2d)
+
+
 ## Часть 1: Sprint 171 итоги (M10-M17)
 
 | M | Что | Failures fixed | BUG fixes | New tests |

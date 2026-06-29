@@ -362,6 +362,9 @@ cert_store:
   vault_path: "secret/certs"
   mongo_collection: "certs"
   expire_warn_days: 30
+  fallback_enabled: false  # S171 M20 (D252): auto-wrap в FallbackCertBackend
+  watch_enabled: false     # S171 M16 (D245): opt-in file watcher
+  watch_path: "/etc/certs"
 
 
 rag:

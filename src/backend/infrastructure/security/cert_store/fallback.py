@@ -58,13 +58,6 @@ class FallbackCertBackend(CertBackend):
         from src.backend.infrastructure.security.cert_store.backend_base import CertEntry
         return []
 
-
-        self._chain = [
-            ("primary", primary),
-            ("secondary", secondary),
-            ("tertiary", tertiary),
-        ]
-
     async def get(self, service_id: str) -> CertEntry | None:
         for name, backend in self._chain:
             if backend is None:
