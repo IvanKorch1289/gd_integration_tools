@@ -96,3 +96,51 @@ class FeedbackTrainer:
             backend=backend,
             elapsed_seconds=elapsed,
         )
+
+
+class DSPyFeedbackTrainer:
+    """Thin wrapper над FeedbackTrainer (S171 M28-P1-3, D287).
+
+    Pattern (D287, Ponytail): aggregating wrapper, D237 TDD-friendly.
+    """
+
+    def __init__(
+        self,
+        *,
+        dataset_builder: Any = None,
+        prompt_storage: Any = None,
+    ) -> None:
+        self._inner: FeedbackTrainer | None = None
+        if dataset_builder is not None and prompt_storage is not None:
+            self._inner = FeedbackTrainer(
+                dataset_builder=dataset_builder,
+                prompt_storage=prompt_storage,
+            )
+
+    def collect_feedback(self, items: list[dict[str, Any]]) -> dict[str, Any]:
+        """Собрать метрики из feedback items.
+
+        Args:
+            items: list of dicts with 'input', 'expected', 'actual', 'score'.
+
+        Returns:
+            {'total': int, 'correct': int, 'accuracy': float}
+        """
+        total = len(items)
+        correct = sum(1 for it in items if it.get("score", 0) >= 1.0)
+        accuracy = (correct / total) if total > 0 else 0.0
+        return {"total": total, "correct": correct, "accuracy": accuracy}
+
+    def optimize(self) -> dict[str, Any]:
+        """Optimization stub (D287, full DSPy в M28+).
+
+        Returns:
+            dict with status and config.
+        """
+        if self._inner is None:
+            return {"status": "noop", "reason": "no inner trainer configured"}
+        return {
+            "status": "ready",
+            "backend": "dspy",
+            "inner": str(type(self._inner).__name__),
+        }
