@@ -139,7 +139,7 @@ def _render_index_tab() -> None:
         "с metadata `source=ai_feedback`."
     )
     agent_filter = st.text_input("agent_id (опционально)", key="idx_agent")
-    limit = st.number_input("Максимум документов", 1, 1000, 100, key="idx_limit")
+    limit = st.number_input("Максимум документов", min_value=0, max_value=1, value=1000, step=100, key="idx_limit")
     if st.button("Перевести в RAG", type="primary"):
         with st.spinner("Индексирую..."):
             try:
