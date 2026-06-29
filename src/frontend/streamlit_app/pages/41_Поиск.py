@@ -49,7 +49,7 @@ setup_page()
 st.title("🔎 Поиск")
 st.caption("Единый поиск по audit-логам, заказам и notebooks (Elasticsearch).")
 
-q = st.text_input("Запрос", value=st.session_state.get("search_q", ""))
+q = st.text_input("Запрос", value=st.session_state.get("search_q", "", key="search_text_1"))
 st.session_state["search_q"] = q
 
 tab_logs, tab_orders, tab_notebooks, tab_agg = st.tabs(
@@ -111,7 +111,7 @@ with tab_agg:
     with col1:
         index = st.selectbox("Индекс", options=["audit_logs", "orders", "notebooks"])
     with col2:
-        field = st.text_input("Поле для terms", value="entity_type")
+        field = st.text_input("Поле для terms", value="entity_type", key="search_terms_2")
     with col3:
         size = st.number_input("size", value=10, min_value=1, max_value=100)
     if st.button("Посчитать"):

@@ -118,10 +118,10 @@ with tabs[2]:
     st.subheader("Журнал аудита возможностей")
     plugin_filter = st.text_input(
         "Фильтр по плагину", "", help="Substring-фильтр по имени плагина"
-    )
+    , key="caps_text_1")
     tenant_filter = st.text_input(
         "Фильтр по тенанту", "", help="Substring-фильтр по ID тенанта"
-    )
+    , key="caps_text_2")
     events = client.get_audit_events(
         plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )

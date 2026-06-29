@@ -48,9 +48,9 @@ st.caption(
 with st.sidebar:
     st.header("Фильтры")
     window_hours = st.selectbox("Окно (часы)", [1, 6, 24, 72, 168], index=2)
-    tenant_filter = st.text_input("ID тенанта", value="").strip() or None
-    model_filter = st.text_input("Содержит модель", value="").strip() or None
-    pipeline_filter = st.text_input("Содержит pipeline", value="").strip() or None
+    tenant_filter = st.text_input("ID тенанта", value="", key="ai_cost_id_1").strip() or None
+    model_filter = st.text_input("Содержит модель", value="", key="ai_cost_text_2").strip() or None
+    pipeline_filter = st.text_input("Содержит pipeline", value="", key="ai_cost_pipeline_3").strip() or None
     top_n = st.slider("Топ N", min_value=5, max_value=100, value=20)
 
 

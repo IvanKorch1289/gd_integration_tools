@@ -132,9 +132,9 @@ with tab_list:
     with cols_filter[1]:
         flt_name = st.text_input(
             "Имя рабочего процесса", value="", placeholder="orders.skb_flow"
-        )
+        , key="wf_text_1")
     with cols_filter[2]:
-        flt_tenant = st.text_input("Тенант", value="", placeholder="default")
+        flt_tenant = st.text_input("Тенант", value="", placeholder="default", key="wf_text_2")
     with cols_filter[3]:
         flt_limit = st.number_input(
             "Лимит", min_value=10, max_value=500, value=100, step=10
@@ -201,7 +201,7 @@ with tab_list:
 with tab_timeline:
     focus_id = st.text_input(
         "ID экземпляра",
-        value=st.session_state.get("_workflow_focus_id", ""),
+        value=st.session_state.get("_workflow_focus_id", "", key="wf_id_3"),
         placeholder="UUID",
     )
     if not focus_id:
@@ -262,7 +262,7 @@ with tab_trigger:
 
     trg_name = st.text_input(
         "Имя рабочего процесса", value="", placeholder="orders.full_processing"
-    )
+    , key="wf_text_4")
     payload_str = st.text_area(
         "Входной payload (JSON)",
         value="{}",

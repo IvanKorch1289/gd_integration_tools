@@ -88,7 +88,7 @@ with tab_service:
 with tab_swagger:
     st.subheader("Импорт Swagger/OpenAPI")
     uploaded = st.file_uploader("swagger.json или .yaml", type=["json", "yaml", "yml"])
-    connector = st.text_input("имя коннектора", value="petstore")
+    connector = st.text_input("имя коннектора", value="petstore", key="codegen_text_1")
     write_module = st.checkbox("Записать сгенерированный модуль", value=False)
     if st.button("Импортировать") and uploaded is not None:
         tmp_path = Path(tempfile.gettempdir()) / uploaded.name
@@ -114,7 +114,7 @@ with tab_extract:
     st.subheader("Извлечь: Service → YAML")
     service_path = st.text_input(
         "Путь к service-файлу", value="src/backend/services/core/admin.py"
-    )
+    , key="codegen_service_2")
     if st.button("Extract"):
         cmd = ["tools/codegen_extract.py", "--service", service_path]
         rc, out, err = _run(cmd)

@@ -43,7 +43,7 @@ workflow_id = st.selectbox(
     key="cost_wf",
 )
 if workflow_id == "(введите вручную)":
-    workflow_id = st.text_input("workflow_id", value="")
+    workflow_id = st.text_input("workflow_id", value="", key="cost_wf_workflow_id_1")
 
 version = st.text_input("Версия (опц.)", value="")
 input_size = st.number_input(

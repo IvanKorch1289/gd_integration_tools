@@ -35,7 +35,7 @@ with st.expander("Статус RAG"):
 st.divider()
 
 st.subheader("Поиск")
-query = st.text_input("Запрос", "")
+query = st.text_input("Запрос", "", key="rag_text_1")
 top_k = st.slider("top_k", 1, 20, 5)
 search_ns = st.text_input("Namespace (поиск)", "")
 if st.button("Искать") and query:
