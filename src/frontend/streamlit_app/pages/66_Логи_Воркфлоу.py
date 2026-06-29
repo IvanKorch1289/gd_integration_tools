@@ -20,6 +20,7 @@ from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.streamlit_config import config
 
 setup_page()
 if not feature_flags.frontend_workflow_logs_page:
@@ -65,7 +66,7 @@ with tab_step:
         key="step_status",
     )
     limit = st.number_input(
-        "Лимит", min_value=10, max_value=1000, value=100, step=10, key="step_limit"
+        "Лимит", min_value=10, max_value=1000, value=config.SEARCH_DEFAULT_LIMIT * 5, step=10, key="step_limit"
     )
 
     with st.spinner("Загрузка step-логов..."):
@@ -180,7 +181,7 @@ with tab_live:
         "Размер tail",
         min_value=10,
         max_value=500,
-        value=100,
+        value=config.SEARCH_DEFAULT_LIMIT * 5,
         step=10,
         help="Число последних событий для отображения.",
         key="live_size",
@@ -217,7 +218,7 @@ with tab_live:
                 "либо tail пуст."
             )
             return
-        st.dataframe(records, width='stretch', height=600, hide_index=True)
+        st.dataframe(records, width='stretch', height=config.DATAFRAME_DEFAULT_HEIGHT + 100, hide_index=True)
 
     if autorefresh:
         _render_tail()
