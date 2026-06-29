@@ -1,5 +1,7 @@
 """Background Job Dashboard — APScheduler + queues + webhooks."""
 
+import httpx
+
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
