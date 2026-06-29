@@ -303,7 +303,7 @@ sources-cdc = [
     "psycopg[binary]>=3.1,<4.0.0",
 ]
 sources-mq-nats = [
-    "faststream[nats]>=0.6.7,<1.0.0",
+    "faststream[nats]>=0.7.1,<1.0.0",
 ]
 # PLAN V20 (Sprint 16 K1 W4 closure): scaffolding-extras удалены — iot/web3/
 # legacy/banking/enterprise/datalake/temporal/beam не наполнены за 5 спринтов;
