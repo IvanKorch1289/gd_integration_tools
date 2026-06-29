@@ -51,12 +51,14 @@ class CertRotationWatcher:
         rotation_threshold_days: int = 30,
         prometheus_exporter: "CertPrometheusExporter | None" = None,
         auto_rotate: bool = False,
+        renewal_callback=None,
     ) -> None:
         self._cert_store = cert_store
         self._check_interval_seconds = check_interval_seconds
         self._rotation_threshold_days = rotation_threshold_days
         self._prometheus_exporter = prometheus_exporter
         self._auto_rotate = auto_rotate
+        self._renewal_callback = renewal_callback
         self._task: asyncio.Task[None] | None = None
         self._stop_event = asyncio.Event()
 
@@ -84,13 +86,26 @@ class CertRotationWatcher:
                 sid, days_remaining, self._rotation_threshold_days,
             )
             if self._auto_rotate and days_remaining <= 0:
-                # Auto-rotate: реальная rotation в Vault
-                logger.info(
-                    "cert.rotation.auto_rotate_triggered cert=%s", sid,
-                )
-                # Конкретная rotation logic — out of scope (D260 thin wrapper)
-                # Только mark metric
-                self._record_rotation(success=True)
+                # Auto-rotate: вызов renewal callback (D274, opt-in)
+                if self._renewal_callback is not None:
+                    try:
+                        await self._renewal_callback(sid)
+                        logger.info(
+                            "cert.rotation.auto_rotate_success cert=%s", sid,
+                        )
+                        self._record_rotation(success=True)
+                    except Exception as exc:
+                        logger.error(
+                            "cert.rotation.auto_rotate_failed cert=%s: %s",
+                            sid, exc,
+                        )
+                        self._record_rotation(success=False)
+                else:
+                    # Без callback — log only
+                    logger.info(
+                        "cert.rotation.auto_rotate_triggered cert=%s", sid,
+                    )
+                    self._record_rotation(success=True)
             elif self._auto_rotate:
                 logger.info(
                     "cert.rotation.scheduled cert=%s days=%.1f",
