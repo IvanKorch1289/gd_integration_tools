@@ -15,9 +15,11 @@
 - D257 — RedisCertTransport (Pub/Sub, 5/5 tests GREEN)
 - D258 — CertBackendRegistry (plugin pattern, 6/6 tests GREEN)
 
-**DEFERRED to M23+**:
-- D259 — Prometheus cert_expired alert (M22 deferred, 4-6h)
-- D260 — Cert rotation workflow (M22+ deferred, 1-2d)
+**S171 M23 SHIPPED** (latest):
+- D259 — CertPrometheusExporter (4/4 tests GREEN)
+- D260 — CertRotationWatcher (4/4 tests GREEN)
+
+**SPRINT 171 COMPLETE** (M10-M23): 14 D-rules, 49+ atomic commits, 95+ tests added, 415 routes
 
 
 ## Часть 1: Sprint 171 итоги (M10-M17)
