@@ -30,6 +30,7 @@ try:
         if not isinstance(routes, list):
             routes = []
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     routes = []
 
 if search:

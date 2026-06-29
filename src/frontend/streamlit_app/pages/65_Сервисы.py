@@ -48,6 +48,7 @@ def _ping_url(url: str, timeout: float = 3.0) -> tuple[ServiceStatus, int | None
             return ServiceStatus.UP, latency
         return ServiceStatus.DOWN, latency
     except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         return ServiceStatus.DOWN, None
 
 
@@ -57,10 +58,12 @@ def _build_services() -> list[ServiceInfo]:
         with st.spinner("Загрузка конфигурации..."):
             config = client.get_config()
     except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         config = {}
     try:
         client.get_health()  # verify endpoint reachable
     except Exception:  # noqa: S110
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         pass
 
     services_raw: list[dict[str, Any]] = [
@@ -135,6 +138,7 @@ st.subheader("Документация")
 try:
     config = client.get_config()
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     config = {}
 base_url = config.get("base_url", "http://localhost:8000")
 

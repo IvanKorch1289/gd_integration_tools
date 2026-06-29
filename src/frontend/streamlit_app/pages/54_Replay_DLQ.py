@@ -24,6 +24,7 @@ try:
 
     _flag_enabled: bool = bool(getattr(_ff, "dlq_unified_enabled", False))
 except Exception:  # noqa: BLE001
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     _flag_enabled = False
 
 with st.sidebar:

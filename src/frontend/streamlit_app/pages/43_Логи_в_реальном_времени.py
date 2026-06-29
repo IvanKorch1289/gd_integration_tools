@@ -64,9 +64,11 @@ def _start_sse_thread() -> None:
                             try:
                                 q.put_nowait(payload)
                             except queue.Full:
+                                st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
                                 q.get_nowait()  # вытесняем старое
                                 q.put_nowait(payload)
         except Exception:  # noqa: BLE001
+            st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
             logger.debug("SSE logs stream consumer terminated", exc_info=True)
 
     threading.Thread(target=consume, daemon=True, name="sse-logs").start()
@@ -97,6 +99,7 @@ def _render_log_stream() -> None:
 
             batch.append(orjson.loads(q.get_nowait()))
         except Exception:  # noqa: BLE001
+            st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
             logger.debug("failed to parse log payload from SSE queue", exc_info=True)
             continue
 

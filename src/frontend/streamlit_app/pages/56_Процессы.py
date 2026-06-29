@@ -26,6 +26,7 @@ try:
     with st.spinner("Загрузка процессов..."):
         active = client._request("GET", "/api/v1/admin/processes/active")
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     active = []
 
 if not active:
@@ -54,6 +55,7 @@ try:
         ("p95, мс", stats.get("p95_ms", 0)),
     ])
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     st.caption("Статистика недоступна.")
 
 related_pages_footer("56_Процессы")

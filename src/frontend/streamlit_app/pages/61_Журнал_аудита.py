@@ -55,6 +55,7 @@ try:
     if not isinstance(records, list):
         records = []
 except Exception as exc:  # noqa: BLE001
+    st.error(f"Ошибка: {exc}")
     records = []
     st.warning(f"Не удалось получить аудит: {exc}")
 

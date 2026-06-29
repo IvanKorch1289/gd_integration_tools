@@ -199,6 +199,7 @@ with tab_live:
             if isinstance(records, list):
                 return records
         except Exception:  # noqa: BLE001
+            st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
             try:
                 records = api._request("GET", "/api/v1/admin/audit", params=params)
                 if isinstance(records, list):

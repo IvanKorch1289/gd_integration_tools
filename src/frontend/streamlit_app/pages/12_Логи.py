@@ -29,6 +29,7 @@ try:
         if not isinstance(logs, list):
             logs = []
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     logs = []
 
 if route_filter:

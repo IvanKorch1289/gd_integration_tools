@@ -97,6 +97,7 @@ def _fetch_traces(route_id: str, limit: int = 100) -> tuple[list[dict[str, Any]]
         # Backend returned empty list — это легитимный ответ.
         return [], "backend"
     except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка: {exc}")
         st.warning(f"Backend недоступен ({exc!r}), показаны demo data.")
         return DEMO_TRACE, "demo"
 

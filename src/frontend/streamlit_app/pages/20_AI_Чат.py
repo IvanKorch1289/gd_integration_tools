@@ -41,6 +41,7 @@ if prompt := st.chat_input("Задайте вопрос..."):
             try:
                 response = client.chat(prompt, st.session_state.session_id)
             except Exception as exc:
+                st.error(f"Ошибка: {exc}")
                 response = f"Ошибка: {exc}"
         st.write(response)
 

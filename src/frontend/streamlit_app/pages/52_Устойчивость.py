@@ -49,6 +49,7 @@ try:
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
 except Exception:  # noqa: BLE001
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     _flag_enabled = False
 
 with st.sidebar:
@@ -151,6 +152,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         if isinstance(_data, dict) and _data:
             return _data, True
     except Exception:  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         return _mock_snapshot(), False
     return _mock_snapshot(), False
 

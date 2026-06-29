@@ -46,6 +46,7 @@ if _refresh_seconds > 0:
 
         st_autorefresh(interval=_refresh_seconds * 1000, key="s21_inspect_refresh")
     except ImportError:
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         st.sidebar.caption("(streamlit-autorefresh не установлен — обновляйте через R)")
 
 client = get_api_client()
@@ -77,6 +78,7 @@ def _safe_metric(name: str, default: str = "—") -> str:
         if isinstance(metrics, dict):
             return str(metrics.get(name, default))
     except Exception:  # noqa: BLE001
+        st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         return default
     return default
 
@@ -154,6 +156,7 @@ try:
     if isinstance(raw, list):
         dlq_entries = raw
 except Exception:  # noqa: BLE001
+    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     st.warning(
         "Не удалось получить /admin/scheduler/dlq. "
         "Возможно scheduler_dlq_enabled=False или endpoint не зарегистрирован."
