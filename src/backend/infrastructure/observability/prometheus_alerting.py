@@ -16,7 +16,6 @@ _logger = get_logger("infrastructure.observability.prometheus_alerting")
 
 __all__ = ("PrometheusAlertManager",)
 
-
 class PrometheusAlertManager:
     """Реестр Prometheus alert rules.
 
@@ -111,3 +110,8 @@ class PrometheusAlertManager:
             lines.append(f"          summary: {cfg['summary']}")
             lines.append(f"          description: {cfg['description']}")
         return "\n".join(lines) + "\n"
+
+    def save_rules(self, path: Path) -> None:
+        """Сохранить rules в YAML файл (для CI deploy)."""
+        path.write_text(self.render_rules_yaml(), encoding="utf-8")
+        _logger.info("prometheus_alert.saved path=%s count=%d", path, len(self._alerts))
