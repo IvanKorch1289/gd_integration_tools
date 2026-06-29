@@ -12,11 +12,22 @@ from typing import Any
 
 import streamlit as st
 
-from src.backend.core.messaging import (
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
+
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,
-    OutboxEventStatus,
+)
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
+    FakeOutbox,
+    OutboxBackend,
+    OutboxEvent,
+)
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
+    FakeOutbox,
+    OutboxBackend,
+    OutboxEvent,
 )
 from src.frontend.streamlit_app.pages._groups.replay.helpers import (
     ensure_demo_data,

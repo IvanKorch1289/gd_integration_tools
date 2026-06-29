@@ -14,7 +14,9 @@ UTC = UTC
 import pandas as pd
 import streamlit as st
 
-from src.backend.core.config.features import feature_flags  # noqa: E402
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
+
+from src.backend.core.frontend_facade import feature_flags  # noqa: E402, F401
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,

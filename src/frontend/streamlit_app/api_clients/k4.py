@@ -21,7 +21,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
+from src.backend.core.frontend_facade import (  # noqa: E402, F401
+
+from src.backend.core.frontend_facade import get_logger  # noqa: E402, F401
 from src.frontend.streamlit_app.api_clients.generic import APIClient
 
 logger = get_logger(__name__)

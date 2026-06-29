@@ -43,7 +43,7 @@ st.header("Дашборд устойчивости")
 # Feature-flag guard
 # ---------------------------------------------------------------------------
 try:
-    from src.backend.core.config.features import feature_flags as _ff  # noqa: PLC0415
+    from src.backend.core.frontend_facade import feature_flags  # noqa: E402, F401
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
 except Exception:  # noqa: BLE001
