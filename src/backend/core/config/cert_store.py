@@ -63,6 +63,15 @@ class CertStoreSettings(BaseSettingsWithLoader):
         ),
         examples=[30, 14],
     )
+    fallback_enabled: bool = Field(
+        default=False,
+        description=(
+            "Включить fallback chain (vault → file → env_inline, D252). "
+            "CertStore.from_settings автоматически оборачивает backend в "
+            "FallbackCertBackend при True. Рекомендуется для production."
+        ),
+        examples=[True, False],
+    )
     watch_enabled: bool = Field(
         default=False,
         description=(
