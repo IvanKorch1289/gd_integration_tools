@@ -82,7 +82,7 @@ else:
                 st.write(f"- {reason}: {count}")
 
             fp_count = st.number_input(
-                "Отметить как false-positive (количество)",
+                "Отметить как false-positive (количество)", min_value=0,
                 min_value=0,
                 value=0,
                 key=f"fp-{metric['tenant_id']}",

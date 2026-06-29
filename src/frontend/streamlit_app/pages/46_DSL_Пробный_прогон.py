@@ -51,7 +51,7 @@ col_run, col_seed = st.columns([3, 1])
 with col_run:
     run = st.button("▶ Выполнить (dry-run)", type="primary")
 with col_seed:
-    seed = st.number_input("Seed", value=0, step=1)
+    seed = st.number_input("Seed", min_value=0, value=0, step=1)
 
 if run:
     try:
