@@ -325,6 +325,16 @@ class AIWorkspaceSettings(BaseSettingsWithLoader):
     )
 
 
+    default_agent_sandbox: Literal["in_process", "process_pool", "e2b"] = Field(
+        default="process_pool",
+        description=(
+            "Default sandbox type для agent execution (D270, P0 security). "
+            "process_pool рекомендуется для production; in_process — dev only. "
+            "e2b — cloud sandbox (production-grade, требует E2B API key)."
+        ),
+        examples=["process_pool", "in_process", "e2b"],
+    )
+
 class MarkitdownSettings(BaseSettingsWithLoader):
     """Настройки markitdown-engine для document_parsers (Sprint S5 hotfix).
 
@@ -363,6 +373,7 @@ class MarkitdownSettings(BaseSettingsWithLoader):
             "'waf' — через OutboundHttpClient + capability net.outbound."
         ),
     )
+
 
 
 ai_providers_settings = AIProvidersSettings()
