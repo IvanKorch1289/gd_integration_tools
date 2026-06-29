@@ -99,7 +99,7 @@ dependencies = [
     "typer>=0.12.0,<1.0.0",
     "pydash>=8.0,<9.0",
     "glom>=25.12.0",
-    "presidio-analyzer>=2.2.362",
+    "presidio-analyzer>=2.2.363",
     # S66 W1: pendulum УЖЕ pinned в [project].dependencies:48 с явной
     # версией "pendulum>=3.2.0,<4.0.0". Удалён дубль (была строка 107
     # без версии — старый baseline до S57 W1).
@@ -126,7 +126,7 @@ ai = [
     "dspy-ai>=2.5",
 ]
 security = [
-    "presidio-analyzer>=2.2.0",
+    "presidio-analyzer>=2.2.363",
     # K1 S3 W3: supply-chain CI gate scaffold (BLOCKER #4).
     "cyclonedx-bom>=5.0.0",  # bumped from 4.x to resolve lxml>=6.1.0 conflict (PYSEC-2026-87)
     # pip-audit — vulnerability scanner поверх PyPI advisory database.
@@ -153,7 +153,7 @@ security = [
 # установлен, conflict с hypothesis/llm-guard тиктокен остаётся
 # в S35 W4 note.
 ai-safety = [
-    "presidio-analyzer>=2.2.0",
+    "presidio-analyzer>=2.2.363",
     "presidio-anonymizer>=2.2.0",
     "spacy>=3.8.13",
 ]
