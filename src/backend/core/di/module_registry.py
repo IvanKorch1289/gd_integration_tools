@@ -43,13 +43,28 @@ from enum import Enum
 from types import ModuleType
 from typing import Final
 
+from src.backend.core.di.module_registry_extensions import (
+    ExtensionRegistrationError,
+    clear_extension_modules,
+    is_extension_path,
+    list_extension_modules,
+    register_extension_module,
+    unregister_extension_module,
+)
+
 __all__ = (
+    "ExtensionRegistrationError",
     "INFRA_MODULES",
     "MODULE_SCOPES",
     "ModuleRegistryError",
     "Scope",
+    "clear_extension_modules",
     "get_module_scope",
+    "is_extension_path",
+    "list_extension_modules",
+    "register_extension_module",
     "resolve_module",
+    "unregister_extension_module",
     "validate_modules",
 )
 
@@ -189,41 +204,70 @@ def get_module_scope(key: str) -> Scope:
 
 
 def resolve_module(key: str) -> ModuleType:
-    """Резолвит infrastructure-модуль по ключу из :data:`INFRA_MODULES`.
+    """Резолвит infrastructure-модуль по ключу.
 
-    Scope-aware behaviour (S169 W2):
-    - :attr:`Scope.SINGLETON` — кеширует import в ``sys.modules`` (default).
-    - :attr:`Scope.TRANSIENT` — re-import каждый раз (для test fixtures).
-    - :attr:`Scope.SCOPED` — fallback to SINGLETON до реализации scope-context
-      (S170+).
+    Resolution order (S172 M3 — ARC-006):
 
-    Параметры
-    ---------
-    key:
-        Короткое имя модуля в реестре (например ``"clients.storage.redis"``).
+    1. **Static core**: keys из :data:`INFRA_MODULES` (hard-coded).
+    2. **Extension-registered**: keys добавленные через
+       :func:`register_extension_module` (extension lifecycle hook).
+    3. :class:`ModuleRegistryError` если ключ не найден ни в одном.
 
-    Возвращает
+    Scope-aware behaviour (S169 W2) применяется только к static-core
+    modules через :data:`MODULE_SCOPES`. Extension-registered keys
+    следуют scope конвенциям своего ``dotted_path`` (single-import via
+    sys.modules cache = :attr:`Scope.SINGLETON` semantic).
+
+    Parameters
     ----------
+    key :
+        Short module name в реестре (например ``"clients.storage.redis"``).
+
+    Returns
+    -------
     types.ModuleType
         Импортированный модуль (через :func:`importlib.import_module`).
 
-    Исключения
-    ----------
+    Raises
+    ------
     ModuleRegistryError
-        Если ``key`` отсутствует в :data:`INFRA_MODULES`.
+        Если ``key`` отсутствует в обоих реестрах.
     """
-    scope = get_module_scope(key)
-    if scope is Scope.TRANSIENT:
-        # Force re-import для transient (bypass sys.modules cache).
-        dotted_path = INFRA_MODULES[key]
-        spec = importlib.util.find_spec(dotted_path)
-        if spec is None:
-            raise ModuleNotFoundError(f"Cannot find spec for {dotted_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)  # type: ignore[union-attr]
-        return module
-    # SINGLETON (default) + SCOPED fallback — use standard import (sys.modules cache).
-    return _resolve_singleton(key)
+    # Extension-registered lookup (S172 M3 ARC-006 fix A-6-3):
+    # extension wins over core (extensions add new modules, не
+    # override core). Single snapshot через dict membership-test.
+    ext_modules = list_extension_modules()
+    if key in ext_modules:
+        dotted_path = ext_modules[key]
+    elif key in INFRA_MODULES:
+        scope = get_module_scope(key)
+        if scope is Scope.TRANSIENT:
+            dotted_path = INFRA_MODULES[key]
+            spec = importlib.util.find_spec(dotted_path)
+            if spec is None:
+                raise ModuleNotFoundError(
+                    f"Cannot find spec for {dotted_path}"
+                )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)  # type: ignore[union-attr]
+            return module
+        return _resolve_singleton(key)
+    else:
+        known = ", ".join(
+            sorted(INFRA_MODULES)[:5] + sorted(ext_modules)[:5]
+        )
+        raise ModuleRegistryError(
+            f"Неизвестный ключ infrastructure-модуля: {key!r}. "
+            f"Известные ключи (первые 5 core + 5 extensions): {known}, ... "
+            f"всего {len(INFRA_MODULES) + len(ext_modules)}."
+        )
+    # Extension registered → standard import (SINGLETON semantic).
+    try:
+        return importlib.import_module(dotted_path)
+    except ImportError as exc:
+        raise ModuleRegistryError(
+            f"extension module {key!r} → {dotted_path!r} import failed: {exc}"
+        ) from exc
 
 
 def _resolve_singleton(key: str) -> ModuleType:
@@ -257,7 +301,7 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except ImportError, ModuleNotFoundError, ValueError:
+        except (ImportError, ModuleNotFoundError, ValueError):
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg2, faststream и т.п.). Считаем такой случай
