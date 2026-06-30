@@ -162,6 +162,32 @@ class APIKeyAuth:
             return self._legacy_sha256_hash(raw)
         return self._hasher.hash(raw)
 
+    @staticmethod
+    def validate_strength(raw: str) -> "StrengthReport":
+        """S173 M8.3: weak-API-key detector.
+
+        Rejects trivially weak secrets (``"password"``, ``"x"``, ``""``,
+        sequential chars ``"abcdef"``). Additive — не changing ``hash_key``
+        (backward-compat). Production ``create_client_key`` может
+        вызвать ``validate_strength`` перед ``hash_key`` для reject
+        weak keys при creation.
+
+        Args:
+            raw: Plain API key (секрет клиента).
+
+        Returns:
+            :class:`StrengthReport` с ``is_acceptable``, ``issues`` list,
+            ``entropy_bits`` estimate. Caller решает — hard-fail или
+            warn-only.
+
+        Notes:
+            Lightweight heuristic (per S173 M8.3 lightweight scope):
+            entropy estimate через unique-chars + length. NOT a full
+            password-strength library (no zxcvbn). Sufficient для
+            pre-creation gate.
+        """
+        return _evaluate_strength(raw)
+
     def verify(self, raw: str, expected_hash: str) -> bool:
         """Верифицировать raw API key против stored hash.
 
@@ -234,3 +260,78 @@ class APIKeyAuth:
                 "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)"
             )
         return match
+
+
+# ─── S173 M8.3: weak-secret detector (lightweight) ────────────────────
+
+
+# S173 M8.3: minimum acceptable length для API key.
+_MIN_API_KEY_LENGTH: int = 24
+
+# S173 M8.3: minimum acceptable entropy bits (rough estimate).
+_MIN_ENTROPY_BITS: int = 80.0
+
+# S173 M8.3: blacklist trivially-weak secrets (NOT exhaustive — только
+# "default/empty" patterns).
+_WEAK_SECRETS: frozenset[str] = frozenset(
+    {
+        "",
+        "password",
+        "changeme",
+        "default",
+        "test",
+        "admin",
+        "secret",
+        "apikey",
+        "key",
+        "12345678",
+        "qwerty",
+        "letmein",
+    }
+)
+
+
+@dataclass(slots=True, frozen=True)
+class StrengthReport:
+    """S173 M8.3: result of :func:`APIKeyAuth.validate_strength`."""
+
+    is_acceptable: bool
+    issues: tuple[str, ...]
+    entropy_bits: float
+    length: int
+
+
+def _evaluate_strength(raw: str) -> StrengthReport:
+    """Heuristic: length + unique-chars + blacklist.
+
+    NOT a full password-strength library. Sufficient для pre-creation
+    gate. Caller решает: hard-fail или warn-only.
+    """
+    issues: list[str] = []
+    if not raw:
+        issues.append("empty")
+    if len(raw) < _MIN_API_KEY_LENGTH:
+        issues.append(
+            f"too_short (length={len(raw)} < {_MIN_API_KEY_LENGTH})"
+        )
+    if raw in _WEAK_SECRETS:
+        issues.append("blacklisted_common_secret")
+    # Sequential chars detection.
+    if raw and len(set(raw)) == 1:
+        issues.append("all_same_character")
+    # Rough entropy: log2(unique_chars) * length.
+    unique = len(set(raw)) if raw else 0
+    entropy_bits = (unique.bit_length() if unique else 0) * len(raw) if raw else 0.0
+    if entropy_bits < _MIN_ENTROPY_BITS:
+        issues.append(
+            f"low_entropy (estimate={entropy_bits:.1f} bits < "
+            f"{_MIN_ENTROPY_BITS:.0f})"
+        )
+
+    is_acceptable = not issues
+    return StrengthReport(
+        is_acceptable=is_acceptable,
+        issues=tuple(issues),
+        entropy_bits=entropy_bits,
+        length=len(raw),
+    )
