@@ -228,7 +228,13 @@ def _build_navigation() -> st.navigation:
     """Собрать sections dict и вернуть ``st.navigation``.
 
     Missing page-keys логируются в stderr (НЕ крашат boot — fallback to flat).
+    S172 M7.2: structured audit-event emit вместо bare print — observability
+    через ClickHouse / Redis stream (через ``emit_audit_safe`` facade,
+    lazy-import для dev-environments).
     """
+    import time
+
+    bootstrap_start = time.monotonic()
     pages_by_section: dict[str, list[st.Page]] = {}
 
     # Dashboard — default
@@ -256,13 +262,34 @@ def _build_navigation() -> st.navigation:
         if section_pages:
             pages_by_section[section_name] = section_pages
 
+    bootstrap_ms = int((time.monotonic() - bootstrap_start) * 1000)
+
     if missing:
         import sys
-        print(
-            f"[app.py] WARN: {len(missing)} page-key(s) missing from PAGE_METADATA: "
-            f"{missing}",
-            file=sys.stderr,
-        )
+
+        # S172 M7.2: structured audit-event вместо bare print. Lazy-import
+        # для dev-environments без full DI stack.
+        warning_payload = {
+            "missing_count": len(missing),
+            "missing_keys": missing,
+            "bootstrap_ms": bootstrap_ms,
+        }
+        try:
+            from src.backend.core.audit.facade import emit_audit_safe
+
+            emit_audit_safe(
+                event_type="frontend.nav.missing_pages",
+                payload=warning_payload,
+                severity="warning",
+            )
+        except Exception as exc:  # never fail caller
+            # Fallback to stderr (backward-compat pre-Sept-2026 deployments).
+            print(
+                f"[app.py] WARN: {warning_payload['missing_count']} "
+                f"page-key(s) missing from PAGE_METADATA: {missing} "
+                f"(audit-event emit failed: {exc})",
+                file=sys.stderr,
+            )
 
     return st.navigation(pages_by_section)
 
