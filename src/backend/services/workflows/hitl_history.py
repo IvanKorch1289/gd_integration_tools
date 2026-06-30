@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.logging_helpers import log_audit_event_lite
 
 __all__ = ("HitlHistoryRecord", "HitlHistoryService")
 
@@ -88,7 +89,15 @@ class HitlHistoryService:
         try:
             client = await self._get_client()
         except Exception as exc:
-            _logger.warning("CH unavailable: %s", exc)
+            # S176 M11.1: structured log (audit-event-type field).
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="hitl_history.clickhouse_unavailable",
+                message=f"CH unavailable: {exc}",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return []
 
         conditions = [
@@ -122,14 +131,22 @@ class HitlHistoryService:
         try:
             result = await client.query(sql, parameters=params)
         except Exception as exc:
-            _logger.warning("CH query failed: %s", exc)
+            # S176 M11.1: structured log (audit-event-type field).
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="hitl_history.clickhouse_query_failed",
+                message=f"CH query failed: {exc}",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return []
 
         records: list[HitlHistoryRecord] = []
         for row in getattr(result, "result_rows", []):
             try:
                 payload = json.loads(row[4]) if row[4] else {}
-            except TypeError, json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 payload = {}
             event_type = row[2]
             action_str = event_type.removeprefix("hitl.")
