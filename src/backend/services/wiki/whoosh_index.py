@@ -19,6 +19,7 @@ from pathlib import Path
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.logging_helpers import log_audit_event_lite
 
 __all__ = ("Hit", "WhooshIndex", "get_wiki_index")
 
@@ -150,7 +151,17 @@ class WhooshIndex:
                 try:
                     content = md.read_text(encoding="utf-8")
                 except Exception as exc:
-                    logger.warning("wiki: cannot read %s (%s)", md, exc)
+                    # S174 M9.2: structured log (audit-event-type field)
+                    # — observability через structlog/OTel pipeline.
+                    log_audit_event_lite(
+                        logger,
+                        severity="warning",
+                        event="wiki.index.read_failed",
+                        message=f"wiki: cannot read {md} ({exc})",
+                        file_path=str(md),
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
                     continue
                 writer.update_document(
                     path=rel,
@@ -169,7 +180,15 @@ class WhooshIndex:
             raise
 
         self._ix = ix
-        logger.info("wiki: indexed %d documents", count)
+        # S174 M9.2: structured log (audit-event-type field).
+        log_audit_event_lite(
+            logger,
+            severity="info",
+            event="wiki.index.rebuilt",
+            message=f"wiki: indexed {count} documents",
+            count=count,
+            cache_dir=str(self._index_dir),
+        )
         return count
 
     def search(
