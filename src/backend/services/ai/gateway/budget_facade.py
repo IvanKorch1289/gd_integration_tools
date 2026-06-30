@@ -19,7 +19,11 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy.budget_enforcer import enforce_post_call, enforce_pre_call
-from src.backend.core.tenancy.token_budget import BudgetExceeded, TokenBudget
+from src.backend.core.tenancy.token_budget import (
+    BudgetEnforcementError,
+    BudgetExceeded,
+    TokenBudget,
+)
 from src.backend.services.ai.usage_meter import (
     UsageStats,
     estimate_tokens,
@@ -29,18 +33,6 @@ from src.backend.services.ai.usage_meter import (
 __all__ = ("BudgetEnforcementError", "LiteLLMBudgetFacade")
 
 logger = get_logger(__name__)
-
-
-class BudgetEnforcementError(Exception):
-    """Поднимается endpoint-слою для маппинга в 429.
-
-    Attributes:
-        body: JSON-ready payload (см. :func:`render_429`).
-    """
-
-    def __init__(self, *, body: dict[str, Any]) -> None:
-        super().__init__(body.get("message", "token_budget_exceeded"))
-        self.body = body
 
 
 class LiteLLMBudgetFacade:

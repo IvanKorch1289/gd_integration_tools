@@ -142,9 +142,9 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 enforce_pre_call,
                 render_429,
             )
-            from src.backend.core.tenancy.token_budget import BudgetExceeded
-            from src.backend.services.ai.gateway.budget_facade import (
+            from src.backend.core.tenancy.token_budget import (
                 BudgetEnforcementError,
+                BudgetExceeded,
             )
 
             snapshot = await enforce_pre_call(
@@ -208,9 +208,9 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 enforce_post_call,
                 render_429,
             )
-            from src.backend.core.tenancy.token_budget import BudgetExceeded
-            from src.backend.services.ai.gateway.budget_facade import (
+            from src.backend.core.tenancy.token_budget import (
                 BudgetEnforcementError,
+                BudgetExceeded,
             )
 
             snapshot = await enforce_post_call(

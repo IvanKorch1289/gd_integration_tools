@@ -26,7 +26,6 @@ src/backend/core/clients/jupyter_hub.py	core	src.backend.infrastructure.clients.
 src/backend/core/clients/pool_health.py	core	src.backend.infrastructure.clients.pool_health
 src/backend/core/database/initializer.py	core	src.backend.infrastructure.database.session_manager
 src/backend/core/database/session.py	core	src.backend.infrastructure.database.session_manager
-src/backend/core/db/external_facade.py	core	src.backend.infrastructure.database.database.accessors
 src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.profile_store_memory
 src/backend/core/di/providers/ai.py	core	src.backend.infrastructure.security.token_registry
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
@@ -68,6 +67,7 @@ src/backend/core/services/base.py	core	src.backend.services.core.base_external_a
 src/backend/core/services/base_service.py	core	src.backend.services.core.base
 src/backend/core/storage/redis.py	core	src.backend.infrastructure.clients.storage.redis
 src/backend/core/tenancy/quotas.py	core	src.backend.infrastructure.clients.storage
+src/backend/core/workflow/builder.py	core	src.backend.core.di.providers.infrastructure_facade
 src/backend/core/workflow/builder.py	core	src.backend.infrastructure.workflow.builder
 src/backend/core/workflow/builder.py	core	src.backend.infrastructure.workflow.executor
 src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.service
@@ -153,7 +153,7 @@ src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.d
 src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.context
 src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.exchange
 src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.middleware
-src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.langmem_service
+src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem.consolidation
 src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.backend.services.ai.pii.presidio_analyzer
 src/backend/infrastructure/sinks/file_sink.py	infrastructure	src.backend.dsl.codec.json
 src/backend/infrastructure/sinks/grpc_sink.py	infrastructure	src.backend.dsl.codec.json

@@ -24,6 +24,7 @@ import pytest
 from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 from src.backend.core.tenancy.budget_enforcer import render_429
 from src.backend.core.tenancy.token_budget import (
+    BudgetEnforcementError,
     BudgetExceeded,
     BudgetPeriod,
     InMemoryTokenBudgetBackend,
@@ -236,8 +237,6 @@ class TestBudgetEnforced:
             prompt_inline="X" * 1000,  # 1000 chars → ~250 estimated
         )
 
-        from src.backend.services.ai.gateway.budget_facade import BudgetEnforcementError
-
         with pytest.raises(BudgetEnforcementError) as ctx:
             await gw._enforced_invoke(request)
         # Body JSON shape (per render_429 contract).
@@ -271,8 +270,6 @@ class TestBudgetEnforced:
         gw._token_budget = _build_budget(hard_limit=2000)
 
         request = _build_request(tenant_id="t-post-breach")
-
-        from src.backend.services.ai.gateway.budget_facade import BudgetEnforcementError
 
         with pytest.raises(BudgetEnforcementError) as ctx:
             await gw._enforced_invoke(request)

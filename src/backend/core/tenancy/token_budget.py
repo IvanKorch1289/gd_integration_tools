@@ -20,9 +20,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
+    "BudgetEnforcementError",
     "BudgetExceeded",
     "BudgetPeriod",
     "BudgetSnapshot",
@@ -46,6 +47,24 @@ class BudgetExceeded(Exception):
         self.used = used
         self.hard_limit = hard_limit
         self.period = period
+
+
+class BudgetEnforcementError(Exception):
+    """Поднимается endpoint-слою для маппинга в 429.
+
+    ARC-005: этот класс — canonical home в ``core/tenancy/`` (рядом с
+    :class:`BudgetExceeded`). Бывший импорт из
+    ``src.backend.services.ai.gateway.budget_facade`` нарушал layer
+    policy (core → services). S172 M6 re-home.
+
+    Attributes:
+        body: JSON-ready payload (см. :func:`render_429` в
+        ``core.tenancy.budget_enforcer``).
+    """
+
+    def __init__(self, *, body: dict[str, Any]) -> None:
+        super().__init__(body.get("message", "token_budget_exceeded"))
+        self.body = body
 
 
 class BudgetPeriod:
