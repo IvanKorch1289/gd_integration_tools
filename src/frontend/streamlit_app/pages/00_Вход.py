@@ -148,18 +148,80 @@ def _render_login_form(
         if submit:
             if not username or not password:
                 st.error("Введите логин и пароль.")
+                # S174 M9.4: failed-submission telemetry (security
+                # observability — repeated empty-submits могут указывать
+                # на credential-stuffing).
+                _emit_login_submit_event(
+                    outcome="empty",
+                    method=method,
+                )
                 return
             try:
                 auth_state.login(username=username, password=password, method=method)
                 st.success("Вход выполнен!")
+                _emit_login_submit_event(
+                    outcome="success",
+                    method=method,
+                )
                 st.rerun()
             except PermissionError as exc:
                 st.error(
                     "Неверный логин или пароль. Проверьте данные и попробуйте снова."
                 )
                 st.caption(f"Backend: {exc}")
+                # S174 M9.4: auth-failure telemetry (security).
+                _emit_login_submit_event(
+                    outcome="auth_failure",
+                    method=method,
+                )
             except httpx.HTTPError as exc:
                 st.error(f"Ошибка соединения с сервером: {exc}")
+                _emit_login_submit_event(
+                    outcome="connection_error",
+                    method=method,
+                )
+
+
+# S174 M9.4: login-submit audit-event helper.
+def _emit_login_submit_event(
+    *,
+    outcome: str,
+    method: str,
+) -> None:
+    """Emit ``frontend.auth.login_submit`` audit-event.
+
+    Args:
+        outcome: ``success`` / ``auth_failure`` / ``empty`` /
+            ``connection_error``.
+        method: ``password`` / ``ldap``.
+
+    Notes:
+        Lightweight — non-blocking. Lazy-import emit_audit_safe
+        (dev-envs без DI не сломаются). Graceful fallback.
+
+        Signature: ``emit_audit_safe(*, event, action='', outcome,
+        details=None, severity=None, extra=None)``.
+    """
+    try:
+        from src.backend.core.audit.facade import emit_audit_safe
+
+        emit_audit_safe(
+            event="frontend.auth.login_submit",
+            action="auth.login_submit",
+            outcome=("success" if outcome == "success" else "failure"),
+            details={
+                "submit_outcome": outcome,
+                "method": method,
+                "page_key": "00_Вход",
+            },
+            severity=("info" if outcome == "success" else "warning"),
+        )
+    except Exception as _exc:  # pragma: no cover — never fail caller
+        import logging as _logging
+
+        _logging.getLogger("frontend.pages.00_Вход").debug(
+            "frontend.auth.login_submit: audit-event emit failed: %s", _exc
+        )
 
 
 # Streamlit entry point
