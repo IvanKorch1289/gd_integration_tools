@@ -205,6 +205,18 @@ class JwtBackend:
             )
         if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
             raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
+        # S174 M9.3: weak-secret gate для HS256/384/512 (per S172 M8.3
+        # pattern extension). 256-bit secret (32 bytes / 256-bit) минимум
+        # для HS256 — RFC 7518. 32+ chars обеспечивают ≥ 256 бит entropy
+        # при random-bytes secret. Reject trivially weak secrets.
+        if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and self.secret:
+            strength = _validate_jwt_secret_strength(self.secret)
+            if not strength.is_acceptable:
+                raise ValueError(
+                    f"JwtBackend: weak HS-secret rejected ({len(strength.issues)} "
+                    f"issue(s)): {', '.join(strength.issues)}. "
+                    f"Use random-bytes secret of ≥ 32 chars (RFC 7518 256-bit)."
+                )
 
     async def _resolve_key(self, header: dict[str, Any]) -> Any:
         alg = header.get("alg")
@@ -362,3 +374,78 @@ def _parse_header_unsafe(token: str) -> dict[str, Any]:
     if not isinstance(header, dict):
         raise JwtVerificationError("JWT header не является объектом")
     return header
+
+
+# ─── S174 M9.3: weak-HS-secret detector (lightweight) ────────────────────
+
+
+# S174 M9.3: minimum acceptable length для HS256/384/512 secret.
+# Per RFC 7518: 256-bit secret (32 bytes / 256-bit) минимум для HS256.
+# Reject < 32 chars per production hardening convention.
+_MIN_JWT_SECRET_LENGTH: int = 32
+
+# S174 M9.3: blacklist trivially-weak HS secrets.
+_WEAK_JWT_SECRETS: frozenset[str] = frozenset(
+    {
+        "",
+        "secret",
+        "changeme",
+        "default",
+        "test",
+        "admin",
+        "password",
+        "jwt-secret",
+        "my-secret",
+        "supersecret",
+    }
+)
+
+
+@dataclass(frozen=True, slots=True)
+class JwtSecretStrengthReport:
+    """S174 M9.3: result of :func:`_validate_jwt_secret_strength`."""
+
+    is_acceptable: bool
+    issues: tuple[str, ...]
+    length: int
+    entropy_bits: float
+
+
+def _validate_jwt_secret_strength(secret: str) -> JwtSecretStrengthReport:
+    """Heuristic: length + blacklist + entropy.
+
+    Per S174 M9.3 lightweight scope: NOT zxcvbn-level analysis.
+    Production-grade HS256 secret: 32+ chars random bytes
+    (``secrets.token_urlsafe(32)``).
+    """
+    issues: list[str] = []
+    if not secret:
+        issues.append("empty")
+    if len(secret) < _MIN_JWT_SECRET_LENGTH:
+        issues.append(
+            f"too_short (length={len(secret)} < {_MIN_JWT_SECRET_LENGTH})"
+        )
+    if secret in _WEAK_JWT_SECRETS:
+        issues.append("blacklisted_common_secret")
+    if secret and len(set(secret)) == 1:
+        issues.append("all_same_character")
+    unique = len(set(secret)) if secret else 0
+    entropy_bits = (unique.bit_length() if unique else 0) * len(secret) if secret else 0.0
+    # S174 M9.3: heuristic — не strict RFC 7518 enforcement.
+    # Length ≥ 32 chars — primary gate (RFC 7518). Entropy check —
+    # только warning-level (если unique chars < 8, flag для явных
+    # patterns). RFC 7518 min entropy 256 — теоретически max bound
+    # для brute-force-resistance.
+    if entropy_bits < 128.0 and len(secret) >= 32:
+        issues.append(
+            f"low_entropy (estimate={entropy_bits:.1f} bits; "
+            f"RFC 7518 recommends 256+ for HS256)"
+        )
+
+    is_acceptable = not issues
+    return JwtSecretStrengthReport(
+        is_acceptable=is_acceptable,
+        issues=tuple(issues),
+        length=len(secret),
+        entropy_bits=entropy_bits,
+    )
