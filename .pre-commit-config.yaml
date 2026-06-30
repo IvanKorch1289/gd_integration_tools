@@ -111,6 +111,18 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+      # S176 M11.4: sprint health-check signal — 5 quick signals
+      # (audit-event wiring, pre-commit hooks, secret detector,
+      # strength validators, workspace isolation). Pre-push stage
+      # (~5 sec). Non-blocking (no --strict).
+      - id: verify-sprint-health
+        name: "Sprint health check (5 quick signals per M10.4)"
+        entry: uv run python tools/verify_sprint_health.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
       # TODO (V15 GAP Gap 4 follow-up): добавить hook `discover-plugin-caps`,
       # который будет рекомендовать (НЕ блокировать) capabilities для
       # `extensions/*/plugin.py` через `tools/discover_plugin_capabilities.py`.
