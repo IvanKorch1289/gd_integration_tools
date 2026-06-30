@@ -100,6 +100,17 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # S174 M9.1 — simple secret-leakage detector (S173 M8.4 tool).
+      # Lightweight pre-push gate: complement к existing detect-secrets,
+      # works как fallback. --strict flag → exit 1 на any finding.
+      - id: check-secrets-simple
+        name: "Simple secret-leakage detector (AWS/GitHub/PEM/JWT/Slack/Stripe)"
+        entry: uv run python tools/check_secrets_simple.py --strict
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
       # TODO (V15 GAP Gap 4 follow-up): добавить hook `discover-plugin-caps`,
       # который будет рекомендовать (НЕ блокировать) capabilities для
       # `extensions/*/plugin.py` через `tools/discover_plugin_capabilities.py`.
