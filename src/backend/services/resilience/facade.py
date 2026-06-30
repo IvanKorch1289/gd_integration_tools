@@ -10,6 +10,7 @@ from typing import Any
 
 from src.backend.core.errors import ServiceError
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.logging_helpers import log_audit_event_lite
 
 __all__ = ("ResilienceFacade",)
 
@@ -56,7 +57,17 @@ class ResilienceFacade:
             result = await limiter.check(identifier, policy)
             return result.get("allowed", True)
         except Exception as exc:
-            _logger.warning("Rate limit check failed: %s", exc)
+            # S175 M10.1: structured log (audit-event-type field)
+            # — observability через structlog/OTel pipeline.
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="resilience.rate_limit.check_failed",
+                message=f"Rate limit check failed: {exc}",
+                identifier=identifier,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return True  # Fail-open for rate limiting
 
     def get_breaker(self, name: str) -> Any:
@@ -75,5 +86,14 @@ class ResilienceFacade:
             registry = get_breaker_registry()
             return registry.get_or_create(name)
         except Exception as exc:
-            _logger.warning("Failed to get breaker %s: %s", name, exc)
+            # S175 M10.1: structured log (audit-event-type field).
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="resilience.breaker.get_failed",
+                message=f"Failed to get breaker {name}: {exc}",
+                breaker_name=name,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             raise ServiceError(f"Failed to get breaker: {exc}") from exc
